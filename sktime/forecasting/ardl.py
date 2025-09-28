@@ -17,7 +17,7 @@ __author__ = ["kcc-lion"]
 class ARDL(_StatsModelsAdapter):
     """Autoregressive Distributed Lag (ARDL) Model.
 
-    Direct interface for statsmodels.tsa.ardl.ARDL
+    Direct interface for ``statsmodels.tsa.ardl.ARDL``
 
     Parameters
     ----------
@@ -94,6 +94,7 @@ class ARDL(_StatsModelsAdapter):
               default is Bartlett.
           - ``use_correction`` bool (optional) : If true, use small sample
               correction.
+
     cov_kwds : dict, optional
         A dictionary of keyword arguments to pass to the covariance
         estimator. ``nonrobust`` and ``HC#`` do not support cov_kwds.
@@ -182,18 +183,17 @@ class ARDL(_StatsModelsAdapter):
     >>> from sktime.datasets import load_macroeconomic
     >>> from sktime.forecasting.ardl import ARDL
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> data = load_macroeconomic()  # doctest: +SKIP
-    >>> oos = data.iloc[-5:, :]  # doctest: +SKIP
-    >>> data = data.iloc[:-5, :]  # doctest: +SKIP
-    >>> y = data.realgdp  # doctest: +SKIP
-    >>> X = data[["realcons", "realinv"]]  # doctest: +SKIP
-    >>> X_oos = oos[["realcons", "realinv"]]  # doctest: +SKIP
-    >>> ardl = ARDL(lags=2, order={"realcons": 1, "realinv": 2}, trend="c")\
-    # doctest: +SKIP
-    >>> ardl.fit(y=y, X=X)  # doctest: +SKIP
+    >>> data = load_macroeconomic()
+    >>> oos = data.iloc[-5:, :]
+    >>> data = data.iloc[:-5, :]
+    >>> y = data.realgdp
+    >>> X = data[["realcons", "realinv"]]
+    >>> X_oos = oos[["realcons", "realinv"]]
+    >>> ardl = ARDL(lags=2, order={"realcons": 1, "realinv": 2}, trend="c")
+    >>> ardl.fit(y=y, X=X)
     ARDL(lags=2, order={'realcons': 1, 'realinv': 2})
-    >>> fh = ForecastingHorizon([1, 2, 3])  # doctest: +SKIP
-    >>> y_pred = ardl.predict(fh=fh, X=X_oos)  # doctest: +SKIP
+    >>> fh = ForecastingHorizon([1, 2, 3])
+    >>> y_pred = ardl.predict(fh=fh, X=X_oos)
     """
 
     _tags = {

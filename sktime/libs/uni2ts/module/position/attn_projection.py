@@ -15,7 +15,7 @@
 
 import abc
 from functools import cached_property
-from typing import Any, Optional
+from typing import Any
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -111,10 +111,10 @@ class QueryKeyProjection(nn.Module):
         num_heads: int,
         num_groups: int,
         proj_layer: type[Projection],
-        kwargs: Optional[dict[str, Any]] = None,
-        key_proj_layer: Optional[type[Projection]] = None,
-        key_kwargs: Optional[dict[str, Any]] = None,
-        partial_factor: Optional[tuple[float, float]] = None,
+        kwargs: dict[str, Any] | None = None,
+        key_proj_layer: type[Projection] | None = None,
+        key_kwargs: dict[str, Any] | None = None,
+        partial_factor: tuple[float, float] | None = None,
     ):
         super().__init__()
         if partial_factor is not None:

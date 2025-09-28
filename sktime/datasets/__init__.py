@@ -52,6 +52,8 @@ __all__ = [
     "ShampooSales",
     "Solar",
     "USChange",
+    "ForecastingData",
+    "M5Dataset",
     "ArrowHead",
     "BasicMotions",
     "GunPoint",
@@ -123,8 +125,10 @@ from sktime.datasets.classification import (
 )
 from sktime.datasets.forecasting import (
     Airline,
+    ForecastingData,
     Longley,
     Lynx,
+    M5Dataset,
     Macroeconomic,
     ShampooSales,
     Solar,

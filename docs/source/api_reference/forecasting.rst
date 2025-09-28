@@ -753,6 +753,7 @@ Model selection and tuning
 
     ForecastingGridSearchCV
     ForecastingRandomizedSearchCV
+    ForecastingOptCV
     ForecastingSkoptSearchCV
     ForecastingOptunaSearchCV
 

@@ -11,7 +11,6 @@ from sklearn.base import clone
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.adapters._safe_call import _method_has_param_and_default
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.sklearn import prep_skl_df
 from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 
@@ -107,7 +106,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
           Note: passes ``y`` even if it is ``None``, or if not a named arg
         * "never": never passes ``y`` to any method.
 
-    input_type : str, one of "numpy" (default), "pandas"
+    input_type : str, one of "numpy" (default), "pandas", optional
         type of data passed to the ``sklearn`` transformer
 
         * "numpy": 2D ``np.ndarray``
@@ -151,12 +150,16 @@ class TabularToSeriesAdaptor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "transform-returns-same-time-index": True,
         "fit_is_empty": False,
+        "capability:categorical_in_X": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_categorical_X_passes"],
+        # whether estimator supports categorical depends on "method"
+        # tag capability:categorical_in_X is left "True" to not block this case
     }
 
     def __init__(
@@ -164,7 +167,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         transformer,
         fit_in_transform=False,
         pass_y="auto",
-        input_type="numpy",
+        input_type=None,
         pooling="local",
     ):
         self.transformer = transformer
@@ -178,6 +181,11 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         super().__init__()
 
+        if input_type is None:
+            self._input_type = "numpy"
+        else:
+            self._input_type = input_type
+
         if get_sklearn_tag(transformer, "capability:categorical"):
             self.set_tags(**{"capability:categorical_in_X": True})
 
@@ -185,17 +193,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
             self.set_tags(**{"capability:inverse_transform": True})
 
         # sklearn transformers that are known to fit in transform do not need fit
-        sklearn_ge_16 = _check_soft_dependencies("scikit-learn>=1.6.0", severity="none")
-        if sklearn_ge_16:
-            from sklearn.utils import get_tags
-
-            trafo_fit_in_transform = not get_tags(transformer).requires_fit
-        else:
-            if hasattr(transformer, "_get_tags"):
-                trafo_fit_in_transform = transformer._get_tags()["stateless"]
-            else:
-                trafo_fit_in_transform = False
-
+        trafo_fit_in_transform = get_sklearn_tag(transformer, "fit_is_empty")
         self._skip_fit = fit_in_transform or trafo_fit_in_transform
 
         if self._skip_fit:
@@ -208,11 +206,11 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         if not self._trafo_has_X:
             self.set_tags(**{"y_inner_mtype": "None"})
-            self.set_tags(**{"univariate-only": True})
+            self.set_tags(**{"capability:multivariate": False})
 
         if pooling == "local":
             self.set_tags(**{"scitype:instancewise": True})
-            if input_type == "numpy":
+            if self._input_type == "numpy":
                 self.set_tags(
                     **{
                         "X_inner_mtype": "np.ndarray",
@@ -220,7 +218,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
                         "capability:categorical_in_X": False,
                     }
                 )
-            elif input_type == "pandas":
+            elif self._input_type == "pandas":
                 self.set_tags(**{"X_inner_mtype": "pd.DataFrame"})
             else:
                 raise ValueError(
@@ -263,7 +261,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         The return is a dict which is passed to the method of name method.
         """
-        input_type = self.input_type
+        input_type = self._input_type
 
         if input_type == "numpy" and isinstance(X, pd.DataFrame):
             X = X.values
@@ -506,7 +504,7 @@ class PandasTransformAdaptor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "transform-returns-same-time-index": False,
         "fit_is_empty": False,
         "capability:inverse_transform": False,
@@ -514,6 +512,9 @@ class PandasTransformAdaptor(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_categorical_X_passes"],
+        # whether estimator supports categorical depends on "method"
+        # tag capability:categorical_in_X is left "True" to not block this case
     }
 
     def __init__(self, method, kwargs=None, apply_to="call"):

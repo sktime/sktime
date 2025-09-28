@@ -111,6 +111,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "scitype:y": "univariate",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(

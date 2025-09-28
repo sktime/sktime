@@ -1,8 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositors for performing forecasting by group."""
 
-from typing import Union
-
 import pandas as pd
 
 from sktime.base._meta import _HeterogenousMetaEstimator
@@ -199,15 +197,15 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     >>> group_forecaster = GroupbyCategoryForecaster(
     ...     forecasters =
     ...         {"smooth": NaiveForecaster(),
-    ...         "erratic": Croston(),
-    ...         "intermittent": PolynomialTrendForecaster()},
+    ...         "erratic": PolynomialTrendForecaster(),
+    ...         "intermittent": Croston()},
     ...     transformer=ADICVTransformer(features=["class"]))
 
     >>> generated_data = _generate_erratic_series()
 
     The fit function firstly passes the data through the given transformer
     to generate a given category. This category can be seen by the variable
-    self.category_.
+    ``self.category_``.
 
     >>> group_forecaster = group_forecaster.fit(generated_data, fh=50)
     >>> #print(f"The chosen category is: {group_forecaster.category}")
@@ -620,7 +618,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             else:
                 self.fallback_forecaster = forecaster
 
-    def _loc_group(self, df: pd.DataFrame, group: Union[pd.DataFrame, None]):
+    def _loc_group(self, df: pd.DataFrame, group: pd.DataFrame | None):
         """
         Return the indexes of the given dataframe that match the given group.
 

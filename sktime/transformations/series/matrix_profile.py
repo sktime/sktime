@@ -53,7 +53,7 @@ class MatrixProfileTransformer(BaseTransformer):
         "X_inner_mtype": ["np.ndarray"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": True,  # for unit test cases
         # testing configuration
         # ---------------------

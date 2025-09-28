@@ -4,7 +4,6 @@
 
 __author__ = ["fkiraly", "ltsaprounis"]
 
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -96,6 +95,11 @@ class BaggingForecaster(BaseForecaster):
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": True,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # ... for in-sample horizons?
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],  # bug 8832
     }
 
     def __init__(
@@ -103,7 +107,7 @@ class BaggingForecaster(BaseForecaster):
         bootstrap_transformer: BaseTransformer = None,
         forecaster: BaseForecaster = None,
         sp: int = 2,
-        random_state: Union[int, np.random.RandomState] = None,
+        random_state: int | np.random.RandomState = None,
     ):
         self.bootstrap_transformer = bootstrap_transformer
         self.forecaster = forecaster
