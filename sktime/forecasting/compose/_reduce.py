@@ -3676,218 +3676,96 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_return
 
-    # def _predict_out_of_sample_v1(self, X_pool, fh):
-    #     """Recursive reducer: predict out of sample (ahead of cutoff).
+    def _predict_out_of_sample_v1(self, X_pool, _fh):
+        """Recursive reducer: predict out of sample (ahead of cutoff) — v1 semantics.
 
-    #     Prior state before PR 7380 - left for comparison and potential refactor.
-    #     """
-    #     # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
-
-    #     fh_idx = self._get_expected_pred_idx(fh=fh)
-    #     y_cols = self._y.columns
-
-    #     lagger_y_to_X = self.lagger_y_to_X_
-
-    #     y_abs_no_gaps, y_lags_no_gaps = self._generate_fh_no_gaps(fh)
-
-    #     # we will keep growing y_plus_preds recursively
-    #     y_plus_preds = self._y
-    #     y_pred_list = []
-
-    #     for _ in y_lags_no_gaps:
-    #         if hasattr(self.fh, "freq") and self.fh.freq is not None:
-    #             # y_plus_preds = apply_method_per_series(
-    #             #     y_plus_preds,
-    #             #     "asfreq",
-    #             #     self.fh.freq,
-    #             #     how="start",
-    #             # )
-
-    #             y_plus_preds = _asfreq_per_series_safe(
-    #                 y_plus_preds, self.fh.freq, how="start"
-    #             )
-    #         Xt = lagger_y_to_X.transform(y_plus_preds)
-
-    #         # column names will be kept for consistency
-    #         lag_plus = Lag(lags=1, index_out="extend", keep_column_names=True)
-
-    #         if self._impute_method is not None:
-    #             lag_plus = lag_plus * self._impute_method.clone()
-
-    #         Xtt = lag_plus.fit_transform(Xt)
-    #         y_plus_one = lag_plus.fit_transform(y_plus_preds)
-    #         predict_idx = y_plus_one.iloc[[-1]].index.get_level_values(-1)[0]
-    #         Xtt_predrow = slice_at_ix(Xtt, predict_idx)
-    #         if X_pool is not None:
-    #             # apply lag of 1 on X_pool to include predict_idx in X_pool
-    #             # otherwise it gives error
-    #             X_pool = lag_plus.fit_transform(X_pool)
-    #             Xtt_predrow = pd.concat(
-    #                 [slice_at_ix(X_pool, predict_idx), Xtt_predrow], axis=1
-    #             )
-
-    #         Xtt_predrow = prep_skl_df(Xtt_predrow)
-
-    #         estimator = self.estimator_
-
-    #         # if = no training indices in _fit, fill in y training mean
-    #         if isinstance(estimator, pd.Series):
-    #             y_pred_i = pd.DataFrame(index=[0], columns=y_cols)
-    #             y_pred_i.iloc[0] = estimator
-    #         # otherwise proceed as per direct reduction algorithm
-    #         else:
-    #             y_pred_i = estimator.predict(Xtt_predrow)
-
-    #         y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
-    #         y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
-
-    #         y_pred_list.append(y_pred_new)
-    #         y_plus_preds = y_plus_preds.combine_first(y_pred_new)
-
-    #     y_pred = pd.concat(y_pred_list).sort_index()
-    #     y_pred = y_pred.loc[fh_idx]
-
-    #     return y_pred
-
-    def _predict_out_of_sample_v1(self, X_pool, fh):
-        """v1 recursive prediction loop; supports both local & global pooling.
-
-        Notes
-        -----
-        This builds up y step-by-step and, at each step, predicts the next value.
-        With exogenous X, we align/extend X using Lag(index_out="extend") and
-        select the correct row for the current predict index across *all* series.
+        Use strict index typing & accumulator behaviour to match v2 outputs.
         """
-        # build the no-gap absolute index & dense lags
-        y_abs_no_gaps, y_lags_no_gaps = self._generate_fh_no_gaps(fh)
+        # this routine has a bug for relative fh
+        # instead of tracking it down, just use absolute fh
+        fh = _fh.to_absolute(self.cutoff)
 
-        # gappy fh index we finally want back (MultiIndex for pooled global)
-        # fh_idx = self._get_expected_pred_idx(fh=fh)
-
+        # final, possibly gappy index we must return (typed like v2)
+        fh_idx = self._get_expected_pred_idx(fh=fh)
         self._assert_future_X_coverage(X_pool, fh)
 
-        # last-level time index/column names
-        # time_level_name = self._y.index.names[-1]
-        # y_cols = (
-        #    self._y.columns if isinstance(self._y, pd.DataFrame) else pd.Index(["y"])
-        # )
+        # dense horizon driver (just for loop count)
+        _, y_lags_no_gaps = self._generate_fh_no_gaps(fh)
 
-        # start state: observed y (possibly multi-series), no gaps enforced where needed
+        # recursive state starts at the observed y
         y_plus_preds = self._y
 
-        # window summarizer: lags for recursion (extend index by one step per iteration)
-        # lagger_y_to_X = Lag(
-        #     lags=list(range(1, self.window_length + 1)),
-        #     index_out="extend",
-        #     keep_column_names=True,
-        # )
-        # use the pre-fitted lagger from fit
+        # use the *fitted* lagger from training, not a new one
         lagger_y_to_X = self.lagger_y_to_X_
 
-        lag_plus = Lag(lags=[1], index_out="extend", keep_column_names=True)
+        # extend-by-one helper; include impute if configured (like original v1)
+        lag_plus = Lag(lags=1, index_out="extend", keep_column_names=True)
+        if self._impute_method is not None:
+            lag_plus = lag_plus * self._impute_method.clone()
+
+        # exogenous pool we may extend in lock-step
         X_ext = X_pool
 
-        # if we have X, extend it in lock-step with y via lag_plus inside the loop
-        # y_pred_list = []
-
-        fh_obj = (
-            fh
-            if isinstance(fh, ForecastingHorizon)
-            else ForecastingHorizon(fh, is_relative=True)
-        )
-        # gapless absolute index covering 1..max(fh)
-        fh_abs_gapless, _ = self._generate_fh_no_gaps(fh_obj)
-        # make sure dtype/freq/tz matches training index type (like v2 does)
-        fh_abs_gapless = self._get_expected_pred_idx(fh_abs_gapless)
-
-        # empty forecast frame we will fill step-by-step
-        y_pred_full = _create_fcst_df(
-            fh_abs_gapless, self._y
-        )  # same helper used elsewhere
+        # pre-allocate an accumulator exactly on requested horizons (typed)
+        y_pred_full = _create_fcst_df(fh_idx, self._y)
 
         for _ in y_lags_no_gaps:
+            # keep frequency consistent if fh carries a freq
             if getattr(self.fh, "freq", None) is not None:
                 y_plus_preds = _asfreq_per_series_safe(
                     y_plus_preds, self.fh.freq, how="start"
                 )
-            # extend y by one step to get the next predict index
+
+            # expose the next prediction timestamp
             y_plus_one = lag_plus.fit_transform(y_plus_preds)
-            predict_idx = (
+            next_time_raw = (
                 y_plus_one.index.get_level_values(-1)[-1]
                 if isinstance(y_plus_one.index, pd.MultiIndex)
                 else y_plus_one.index[-1]
             )
 
-            # make recursive features from y (lags 0..window_length-1)
-            # Xtt = lagger_y_to_X.fit_transform(y_plus_preds)
-            Xtt = lagger_y_to_X.transform(y_plus_preds)
-            # if exog present, lag/extend it to the same predict index and align columns
+            # recursive design from y-lags, extended by one to include next_time_raw
+            Xt = lagger_y_to_X.transform(y_plus_preds)
+            Xtt = Xt.copy()
+            # Xtt = lag_plus.fit_transform(Xt)
+
+            # pick the single design row for the next timestamp
+            if isinstance(Xtt.index, pd.MultiIndex):
+                Xtt_row = Xtt.xs(next_time_raw, level=-1, drop_level=False)
+            else:
+                Xtt_row = Xtt.loc[[next_time_raw]]
+
+            # if exog is present: extend/slice it in lock-step and concat to design
             if X_ext is not None:
                 X_ext = lag_plus.fit_transform(X_ext)
                 if isinstance(X_ext.index, pd.MultiIndex):
-                    ex_pool_predrow = X_ext.xs(predict_idx, level=-1, drop_level=False)
+                    X_ex_row = X_ext.xs(next_time_raw, level=-1, drop_level=False)
                 else:
-                    ex_pool_predrow = X_ext.loc[[predict_idx]]
+                    X_ex_row = X_ext.loc[[next_time_raw]]
+                Xtt_row = pd.concat([X_ex_row, Xtt_row], axis=1)
 
-                if isinstance(Xtt.index, pd.MultiIndex):
-                    Xtt_predrow = Xtt.xs(predict_idx, level=-1, drop_level=False)
-                else:
-                    Xtt_predrow = Xtt.loc[[predict_idx]]
+            Xtt_row = prep_skl_df(Xtt_row)
 
-                # fill missing exogenous columns from the pool, keep ordering stable
-                Xtt_predrow = pd.concat([ex_pool_predrow, Xtt_predrow], axis=1)
-            else:
-                # no X: just take the y-derived features at predict_idx
-                if isinstance(Xtt.index, pd.MultiIndex):
-                    Xtt_predrow = Xtt.xs(predict_idx, level=-1, drop_level=False)
-                else:
-                    Xtt_predrow = Xtt.loc[[predict_idx]]
+            # build the *typed* index for this step so it matches v2 exactly
+            step_idx = self._get_expected_pred_idx(fh=[next_time_raw])
+            n_rows = len(step_idx)
 
-            # ensure sklearn-friendly tabular
-            Xtt_predrow = prep_skl_df(Xtt_predrow)
-
-            # # predict for *all* rows present (one per series if global pooling)
-            # y_pred_i = self.estimator_.predict(Xtt_predrow)
-            # # turn into a frame with proper index
-            # y_pred_i = pd.DataFrame(y_pred_i, index=Xtt_predrow.index, columns=y_cols)
-
+            # 1-step prediction for all series present at this timestamp
             est = self.estimator_
             if isinstance(est, pd.Series):
-                # constant-mean fallback: repeat the mean row, correct shape/columns
-                rows = len(Xtt_predrow.index)
-                vals = np.tile(est.values, (rows, 1))
-                y_pred_i = pd.DataFrame(
-                    vals, index=Xtt_predrow.index, columns=self._y.columns
-                )
+                # constant-mean fallback: repeat row-wise
+                vals = np.tile(est.values, (n_rows, 1))
+                y_step = pd.DataFrame(vals, index=step_idx, columns=self._y.columns)
             else:
-                y_pred_i = est.predict(Xtt_predrow)
-                y_pred_i = pd.DataFrame(
-                    y_pred_i, index=Xtt_predrow.index, columns=self._y.columns
-                )
+                y_hat = est.predict(Xtt_row)
+                y_step = pd.DataFrame(y_hat, index=step_idx, columns=self._y.columns)
 
-            # append the new predictions to the running y (so next loop sees them)
-            # y_plus_preds = pd.concat([y_plus_preds, y_pred_i], axis=0)
-            y_plus_preds = y_plus_preds.combine_first(y_pred_i)
+            # write into accumulator (last value wins) and into recursive state
+            y_pred_full.update(y_step)
+            y_plus_preds = y_plus_preds.combine_first(y_step)
 
-            # y_pred_list.append(y_pred_i)
-            y_pred_full.update(y_pred_i)
-
-        # stack all single-step predictions and pick only requested gappy fh indices
-        # y_pred = pd.concat(y_pred_list, axis=0).sort_index()
-        # keep exactly the requested times / series (preserve order)
-        # reindex ensures we *keep* gappy items even if
-        # some steps were not emitted by the loop
-        # y_pred = y_pred.reindex(fh_idx)
-
-        # --- return only the requested (possibly gappy) horizons -----------------
-        fh_abs_req = fh_obj.to_absolute(self.cutoff).to_pandas()
-        # coerce dtype like v2 so Period/Timestamp + tz/freq matches
-        fh_abs_req = self._get_expected_pred_idx(fh_abs_req)
-
-        # Select by *label* (no silent NaNs) and keep expected columns
-        y_pred = y_pred_full.loc[fh_abs_req]
-
-        return y_pred
+        # return exactly the requested horizons, already typed
+        return y_pred_full.loc[fh_idx]
 
     def _predict_in_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (in past of of cutoff)."""

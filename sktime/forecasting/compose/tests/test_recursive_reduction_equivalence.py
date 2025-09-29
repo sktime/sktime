@@ -29,6 +29,43 @@ from sklearn.linear_model import LinearRegression
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose._reduce import RecursiveReductionForecaster
 
+
+def eprint(*args, **kwargs):
+    print(*args, flush=True, **kwargs)
+
+
+# Verbose wrapper for LinearRegression
+class VerboseLinearRegression(LinearRegression):
+    def fit(self, X, y, sample_weight=None):
+        eprint(
+            "[VerboseLinearRegression.fit] X shape=",
+            getattr(X, "shape", None),
+            " y shape=",
+            getattr(y, "shape", None),
+        )
+        try:
+            eprint("X:\n", X)
+        except Exception:
+            raise ValueError("Failed to print X")
+        try:
+            eprint("y:\n", y)
+        except Exception:
+            raise ValueError("Failed to print y")
+        return super().fit(X, y, sample_weight=sample_weight)
+
+    def predict(self, X):
+        eprint("[VerboseLinearRegression.predict] X shape=", getattr(X, "shape", None))
+        try:
+            eprint("X:\n", X)
+        except Exception:
+            raise ValueError("Failed to print X")
+
+        preds = super().predict(X)
+        eprint("Pred shape=", getattr(preds, "shape", None))
+        eprint(f"preds = {preds}")
+        return preds
+
+
 RANDOM_SEED = 42
 
 
@@ -46,7 +83,7 @@ def _make_series(n=40, cols=1, freq="D", seed=RANDOM_SEED):
 
 def _fit_local_model(y, window_length=4):
     forecaster = RecursiveReductionForecaster(
-        estimator=LinearRegression(),
+        estimator=VerboseLinearRegression(),
         window_length=window_length,
         pooling="local",
         impute_method=None,  # keep simple to avoid side effects
@@ -65,6 +102,10 @@ def _compare_fast_vs_v1(y, fh_list):
     fh_list : list[int]
         Forecasting horizon steps (relative, positive)
     """
+    print("_compare_fast_vs_v1: entered")
+    pd.set_option("display.max_rows", None)
+    print(f"y = {y}")
+
     fh = ForecastingHorizon(fh_list, is_relative=True, freq=y.index)
     f = _fit_local_model(y)
 
@@ -72,7 +113,7 @@ def _compare_fast_vs_v1(y, fh_list):
     y_pred_public = f.predict(fh=fh)
 
     # direct legacy path call (no exogenous passed) .. always returns only requested fh
-    y_pred_v1 = f._predict_out_of_sample_v1(X_pool=None, fh=fh)
+    y_pred_v1 = f._predict_out_of_sample_v1(X_pool=None, _fh=fh)
 
     # shape & index equality
     assert list(y_pred_public.index) == list(y_pred_v1.index)
