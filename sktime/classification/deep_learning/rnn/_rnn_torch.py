@@ -1,6 +1,6 @@
 """Time Recurrent Neural Network (RNN) for classification in PyTorch."""
 
-__author__ = ["RecreationalMath"]
+__authors__ = ["RecreationalMath"]
 __all__ = ["SimpleRNNClassifierTorch"]
 
 import numpy as np
@@ -71,7 +71,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
     _tags = {
         # packaging info
         # --------------
-        "author": ["RecreationalMath"],
+        "authors": ["RecreationalMath"],
         "maintainers": ["RecreationalMath"],
         "python_version": ">=3.9",
         "python_dependencies": "torch",

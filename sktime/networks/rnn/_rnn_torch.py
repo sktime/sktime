@@ -1,6 +1,6 @@
 """Recurrent Neural Network (RNN) for Classification and Regression in PyTorch."""
 
-__author__ = ["RecreationalMath"]
+__authors__ = ["RecreationalMath"]
 
 
 import numpy as np
@@ -19,8 +19,6 @@ nnLinear = _safe_import("torch.nn.Linear")
 torchFrom_numpy = _safe_import("torch.from_numpy")
 nnInitXavier_uniform_ = _safe_import("torch.nn.init.xavier_uniform_")
 nnInitOrthogonal_ = _safe_import("torch.nn.init.orthogonal_")
-nnReLU = _safe_import("torch.nn.ReLU")
-nnTanh = _safe_import("torch.nn.Tanh")
 
 
 class RNNNetworkTorch(NNModule):
@@ -62,7 +60,7 @@ class RNNNetworkTorch(NNModule):
     _tags = {
         # packaging info
         # --------------
-        "author": ["RecreationalMath"],
+        "authors": ["RecreationalMath"],
         "maintainers": ["RecreationalMath"],
         "python_version": ">=3.9",
         "python_dependencies": "torch",
@@ -115,7 +113,7 @@ class RNNNetworkTorch(NNModule):
             input_size=in_features,
             hidden_size=self.hidden_dim,
             num_layers=self.n_layers,
-            nonlinearity=self._get_activation(self.activation),
+            nonlinearity=self.activation,
             bias=self.bias,
             batch_first=self.batch_first,
             dropout=self.dropout,
@@ -175,44 +173,3 @@ class RNNNetworkTorch(NNModule):
                 nnInitOrthogonal_(param.data)
             elif "bias" in name:
                 param.data.fill_(0)
-
-    def _get_activation(self, activation):
-        """Get callable object of the activation function to use inside each RNN cell.
-
-        Parameters
-        ----------
-        input : str or callable object
-            The activation function name or a callable object
-            only "relu" and "tanh" are supported.
-
-        Returns
-        -------
-        output : callable object
-            The callable object of the activation function
-        """
-        if isinstance(activation, str):
-            if activation.lower() == "relu":
-                return nnReLU()
-            elif activation.lower() == "tanh":
-                return nnTanh()
-            else:
-                raise ValueError(
-                    "Only 'relu' and 'tanh' are supported "
-                    "as activation functions inside a RNN cell. "
-                    f"Unknown activation function: {activation}"
-                )
-        elif callable(activation):
-            if activation in [nnReLU, nnTanh]:
-                return activation()
-            else:
-                raise ValueError(
-                    "Only 'torch.nn.relu' and 'torch.nn.tanh' are supported "
-                    "as activation functions inside a RNN cell. "
-                    f"Unknown activation function: {activation}"
-                )
-        else:
-            raise TypeError(
-                f"Invalid activation type: {type(activation)} provided. "
-                "Only 'relu' and 'tanh' are supported "
-                "as activation functions inside a RNN cell."
-            )

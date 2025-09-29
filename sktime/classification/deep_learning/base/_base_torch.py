@@ -1,6 +1,6 @@
 """Abstract base class for the Pytorch neural network classifiers."""
 
-__author__ = ["geetu040", "RecreationalMath"]
+__authors__ = ["geetu040", "RecreationalMath"]
 
 __all__ = ["BaseDeepClassifierPytorch"]
 
