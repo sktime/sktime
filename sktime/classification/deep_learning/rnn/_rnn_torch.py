@@ -66,6 +66,16 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         Seed to ensure reproducibility.
     metrics : list of str, default = ["accuracy"]
         List of metrics to be used for evaluation.
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning.rnn import SimpleRNNClassifierTorch
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> clf = SimpleRNNClassifierTorch(n_epochs=50,batch_size=2) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
+    SimpleRNNClassifierTorch(...)
     """
 
     _tags = {
