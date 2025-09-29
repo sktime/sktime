@@ -18,10 +18,18 @@ if _check_soft_dependencies("torch", severity="none"):
 
     OPTIMIZERS = {
         "Adadelta": torch.optim.Adadelta,
+        "Adafactor": torch.optim.Adafactor,
         "Adagrad": torch.optim.Adagrad,
         "Adam": torch.optim.Adam,
         "AdamW": torch.optim.AdamW,
+        "SparseAdam": torch.optim.SparseAdam,
+        "Adamax": torch.optim.Adamax,
+        "ASGD": torch.optim.ASGD,
+        "LBFGS": torch.optim.LBFGS,
+        "NAdam": torch.optim.NAdam,
+        "RAdam": torch.optim.RAdam,
         "RMSprop": torch.optim.RMSprop,
+        "Rprop": torch.optim.Rprop,
         "SGD": torch.optim.SGD,
     }
 else:
