@@ -8,10 +8,6 @@ from abc import abstractmethod
 
 from skbase.base import BaseObject
 
-from sktime.classification.base import BaseClassifier
-from sktime.datasets.base import BaseDataset
-from sktime.forecasting.base import BaseForecaster
-from sktime.performance_metrics.base import BaseMetric
 from sktime.registry import craft
 
 
@@ -43,7 +39,7 @@ class BaseCollection(BaseObject):
         """
         pass
 
-    def get(self, item_type="all"):
+    def get(self, item_type="all", as_object=False):
         """Get items from the collection based on type.
 
         Parameters
@@ -51,55 +47,57 @@ class BaseCollection(BaseObject):
         item_type : str, default="all"
             Type of items to retrieve. Options:
             - "all": all item types
-            - "dataset_loaders": dataset loader items
-            - "estimators": estimator items
-            - "metrics": metric items
-            - Other custom types based on item attributes
+            - or one of categories returned by `available_categories` method
+
+        as_object : bool, default=False
+            If True, return the crafted object instances.
+            Otherwise, return item names as strings.
 
         Returns
         -------
-        dict[str, Any]
-            dictionary with item names/ids as keys and object instances as values
+        list[str] or list[Any]
+            List of names (default) or crafted objects.
         """
-        if self._cached_items is None:
-            names = self._get()
-            self._cached_items = {name: craft(name) for name in names}
+        names_dict = self._get()
 
-        items = self._cached_items
+        if item_type != "all" and item_type not in names_dict:
+            raise KeyError(
+                f"Invalid item_type '{item_type}'. "
+                f"Available keys: {list(names_dict.keys())}"
+            )
+
+        if not as_object:
+            if item_type == "all":
+                return [name for names in names_dict.values() for name in names]
+            else:
+                return names_dict[item_type]
+
+        if self._cached_items is None:
+            self._cached_items = {}
 
         if item_type == "all":
-            return items
+            all_objects = []
+            for key, names in names_dict.items():
+                if key not in self._cached_items:
+                    self._cached_items[key] = [craft(name) for name in names]
+                all_objects.extend(self._cached_items[key])
+            return all_objects
         else:
-            return self._filter_items_by_type(items, item_type)
+            if item_type not in self._cached_items:
+                self._cached_items[item_type] = [
+                    craft(name) for name in names_dict[item_type]
+                ]
+            return self._cached_items[item_type]
 
-    def _filter_items_by_type(self, items, item_type):
-        """Filter items by their type.
-
-        Parameters
-        ----------
-        items : dict[str, Any]
-            Items to filter
-        item_type : str
-            Type to filter by (e.g., "dataset_loaders", "estimators", "metrics")
+    def available_categories(self):
+        """Return the available item categories in the collection.
 
         Returns
         -------
-        dict[str, Any]
-            Filtered items dictionary
+        list[str]
+            List of keys from _get(), e.g., ['datasets', 'estimators', 'metrics'].
         """
-        filtered = {}
-
-        for name, obj in items.items():
-            if item_type == "dataset_loaders" and isinstance(obj, BaseDataset):
-                filtered[name] = obj
-            elif item_type == "estimators" and (
-                isinstance(obj, BaseForecaster) or isinstance(obj, BaseClassifier)
-            ):
-                filtered[name] = obj
-            elif item_type == "metrics" and isinstance(obj, BaseMetric):
-                filtered[name] = obj
-
-        return filtered
+        return list(self._get().keys())
 
     def __len__(self):
         """Return the total number of items in the collection."""
