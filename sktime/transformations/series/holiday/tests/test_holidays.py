@@ -177,3 +177,26 @@ def test_holiday_not_in_window():
     X = pd.Series(14, index=ix)
     X_transformed = holiday_transformer.fit_transform(X)
     assert X_transformed.shape[0] == X.shape[0]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_period_index(calendar):
+    X_period = pd.DataFrame(
+        {"values": np.arange(1, 6)},
+        index=pd.period_range("2022-05-01", periods=5, freq="D"),
+    )
+    X_datetime = pd.DataFrame(
+        {"values": np.arange(1, 6)},
+        index=pd.date_range("2022-05-01", periods=5, freq="D"),
+    )
+    transformer = HolidayFeatures(
+        calendar=calendar, return_indicator=True, return_dummies=True
+    )
+    result_period = transformer.fit_transform(X_period)
+    result_datetime = transformer.fit_transform(X_datetime)
+    assert isinstance(result_period.index, pd.PeriodIndex)
+    result_datetime.index = pd.PeriodIndex(result_datetime.index, freq="D")
+    assert_frame_equal(result_period, result_datetime)

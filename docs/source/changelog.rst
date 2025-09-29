@@ -16,6 +16,263 @@ available on GitHub.
 
 For our long-term plan, see our :ref:`roadmap`.
 
+
+Version 0.39.0 - 2025-09-22
+---------------------------
+
+Release focusing on:
+
+* python 3.9 end-of-life
+* changes to tag framework, testing framework
+* scheduled deprecations
+
+Also includes new estimators relying on changes to tag and testing framework.
+
+Highlights
+~~~~~~~~~~
+
+* TiRex foundation model forecaster (:pr:`8683`) :user:`sinemkilicdere`
+* Toto foundation model forecaster (:pr:`8708`) :user:`JATAYU000`
+* Dataset Loader Class to load UCR UEA Datasets from ``sktime`` ``huggingface`` repo (:pr:`8786`) :user:`jgyasu`
+* Dataset Loader Class to load Monash Forecasting Datasets from ``sktime`` ``huggingface`` repo (:pr:`8751`) :user:`jgyasu`
+* ``hyperactive`` based tuners for forecasting and time series classification (:pr:`8705`) :user:`fkiraly`, :user:`SimonBlanke`
+* ``prophetverse`` hierarchical forecasters updated; new configurable API, intermittent/hurdle distributions (:pr:`8792`) :user:`felipeangelimvieira`, :user:`tingiskhan`
+* ``ConvTimeNet`` for time series classification (:pr:`8761`) :user:`Tanuj-Taneja1`
+* Element-wise arithmetic operator transformer (:pr:`8711`) :user:`oresthes`
+
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``python 3.9`` is no longer supported; minimum python version is now ``3.10``.
+* ``numba`` bound, where present in dependency sets, has been updated to ``<0.63``.
+* the following packages have been removed from dependency sets due to being
+  unmaintained, rarely used, or subject to strict implied secondary dependency bounds:
+  ``dtaidistance``, ``filterpy``, ``mne``, ``seasonal``, ``stumpy``, ``tbats``.
+  These dependencies are still tested in separate test VMs, and users can still
+  use estimators depending on them by installing the packages separately, e.g.,
+  manually, or through using the ``registry.deps`` utility.
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+* capability tags for exogenous variables and multivariate data
+  (``capability:exogenous``, ``capability:multivariate``) replace the
+  ``ignores-exogeneous-X`` and ``univariate-only`` tags, respectively.
+  See details below.
+
+* new tags for stochasticity and determinism of estimators are introduced:
+  ``capability:random_state``, a boolean tag, indicating whether the estimator
+  has a ``random_state`` parameter; and ``property:randomness``, a string tag
+  with values ``"deterministic"``, ``"stochastic"``, and
+  ``"derandomized"``, indicating whether the estimator is deterministic, stochastic,
+  or deterministic after setting ``random_state``, respectively.
+  These tags can be used for retrieval, and are also used in the test framework.
+  Maintainers of third party estimators should set these tags appropriately,
+  and suite tests will check whether they are correctly set. However,
+  code will not break if these tags are not set.
+
+* the default for ``capability:categorical_in_X`` in transformation estimators
+  is now ``True``. This prevents blockage in composition cases where the tag
+  is not explicitly set, e.g., using a ``FunctionTransformer`` with a categorical
+  compatible function in a pipeline. As this default is more permissive, user code
+  will not break. Maintainers of third party estimators should set this tag
+  in their transformation estimators, if they do not support categorical data in ``X``.
+
+* a new ``capability:categorical_in_y`` tag for transformatoin estimators has been
+  added, with a default of ``True``. This tag indicates whether the transformation
+  estimator can handle categorical data in ``y``. Users whose estimators can
+  handle ``y``, but not categorical ``y``, should set this tag to ``False``.
+  All other estimators do not need to set this tag.
+
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+On-board libraries
+^^^^^^^^^^^^^^^^^^
+
+* The ``sktime.libs.pykalman`` module is deprecated.
+  It will redierct to the ``pykalman`` package from 0.42.0
+  onwards, and will be removed entirely in version 1.0.0.
+  Users of ``pykalman`` based estimators in ``sktime`` can continue to use them,
+  and the estimator API itself will not change. However, users will need
+  to install ``pykalman`` separately, as it is no longer included in ``sktime``.
+  Users of the ``sktime.libs.pykalman`` fork should migrate their imports
+  to the ``pykalman`` package distributed via PyPI before ``sktime`` 1.0.0.
+  The ``pykalman`` package is now maintained by the ``sktime`` team.
+
+Estimator Tags
+^^^^^^^^^^^^^^
+
+* The ``ignores-exogeneous-X`` tag for forecasters is replaced
+  by ``capability:exogenous``.
+  The logic of the tag is flipped, i.e., if ``capability:exogenous=True``,
+  the estimator can handle exogenous variables.
+  Until 1.0.0, the old tag can still be used, but will emit a warning.
+  Users and maintainers of third party estimators should update their
+  code and estimators to use the new tag.
+
+* the ``univariate-only`` tag present in multiple estimator types is
+  renamed to ``capability:multivariate``,
+  with boolean flip. If ``capability:multivariate=True``, the estimator
+  can handle multivariate data. Until 1.0.0, the old tag can still be used,
+  but will emit a warning. Users and maintainers of third party estimators
+  should update their code and estimators to use the new tag.
+
+Forecasting
+^^^^^^^^^^^
+
+* ``EnbPIForecaster`` default bootstrap method has now changed to
+  ``sktime`` ``MovingBlockBootstrapTransformer``
+* ``statsforecast`` estimators no longer imply ``scipy<1.16`` in the
+  ``python_dependencies`` tag, as ``statsforecast`` now supports
+  ``scipy>=1.16``.
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] replace ``ignores-exogeneous-X`` tag by ``capability:exogenous`` (:pr:`8353`) :user:`fkiraly`
+* [ENH] improvements to ``check_estimator`` (:pr:`8799`) :user:`fkiraly`
+* [ENH] rename ``univariate-only`` tag to ``capability:multivariate``, with boolean flip (:pr:`8818`) :user:`fkiraly`
+* [ENH] tags for stochasticity/determinism in estimators and conditional test logic (:pr:`8765`) :user:`fkiraly`
+* [ENH] set some missing tags (:pr:`8831`) :user:`fkiraly`
+* [ENH] tag deprecation test extension to warn third party developers of deprecated tags (:pr:`8846`) :user:`fkiraly`
+* [ENH] remove dead code ``TagManager`` that was moved to ``scikit-base`` (:pr:`8850`) :user:`fkiraly`
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``sklearn`` compatibility - fork ``scikit-learn`` ``_weighted_percentage`` (:pr:`8805`) :user:`fkiraly`
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] fpp3 dataset was updated on CRAN; updated loader to use the latest (:pr:`8778`) :user:`ericjb`
+* [ENH] Dataset Loader Class for UCR UEA Datasets (:pr:`8786`) :user:`jgyasu`
+* [ENH] Dataset Loader Class for Monash Forecasting Datasets (:pr:`8751`) :user:`jgyasu`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] TiRex foundation model forecaster (:pr:`8683`) :user:`sinemkilicdere`
+* [ENH] skip failures of exogenous forecast tests from issue #8787 until resolved (:pr:`8803`) :user:`fkiraly`
+* [ENH] replace ``ignores-exogeneous-X`` tag by ``capability:exogenous`` (:pr:`8353`) :user:`fkiraly`
+* [ENH] Interface Toto foundation model (:pr:`8708`) :user:`JATAYU000`
+* [ENH] allow transformer instance as deseasonalizer in ``ThetaForecaster``, fix test cases (:pr:`8817`) :user:`fkiraly`
+* [ENH] rename ``univariate-only`` tag to ``capability:multivariate``, with boolean flip (:pr:`8818`) :user:`fkiraly`
+* [ENH] fix ``UpdateRefitsEvery`` and ``UpdateEvery`` stream update compositors to work with newer ``pandas`` ``DateOffset`` (:pr:`8822`) :user:`fkiraly`
+* [ENH] ``hyperactive`` based tuners for forecasting (:pr:`8705`) :user:`fkiraly`, :user:`SimonBlanke`
+* [ENH] add testing for ``PykanForecaster`` (:pr:`8733`) :user:`fkiraly`
+* [ENH] Update ``Prophetverse`` version bounds (:pr:`8792`) :user:`felipeangelimvieira`
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] rename ``univariate-only`` tag to ``capability:multivariate``, with boolean flip (:pr:`8818`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] relax tests for ``TEASER`` estimator (:pr:`8824`) :user:`fkiraly`
+* [ENH] ``hyperactive`` based tuners for time series classification (:pr:`8705`) :user:`fkiraly`, :user:`SimonBlanke`
+* [ENH] ``ConvTimeNet`` for time series classification (:pr:`8761`) :user:`Tanuj-Taneja1`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] set default for ``capability:categorical_in_X`` to ``True`` for transformation estimators (:pr:`8758`) :user:`fkiraly`
+* [ENH] rename ``univariate-only`` tag to ``capability:multivariate``, with boolean flip (:pr:`8818`) :user:`fkiraly`
+* [ENH] Element-wise arithmetic operator transformer (:pr:`8711`) :user:`oresthes`
+* [ENH] Extend ``IxToX`` with level selector shorthands and add unit tests (:pr:`8802`) :user:`RobKuebler`
+* [ENH] Add second test parameter set for ``SAX`` (:pr:`8839`) :user:`piyushbiraje`
+
+Test framework
+^^^^^^^^^^^^^^
+
+* [ENH] test for consistency of placeholder record signatures (:pr:`8825`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] add missing docs page for ``plot_critical_difference`` (:pr:`8757`) :user:`fkiraly`
+* [DOC] improve docstring of ``check_estimator`` (:pr:`8756`) :user:`fkiraly`
+* [DOC] Fix Install Command (:pr:`8788`) :user:`jgyasu`
+* [DOC] better documentation of time series scitypes, full mathematical documentation of ``Hierarchical`` and ``Table`` type (:pr:`8795`) :user:`fkiraly`
+* [DOC] assorted documentation fixes (:pr:`8816`) :user:`fkiraly`
+* [DOC] pre-filled transformer extension template for series-to-features transformers (:pr:`8834`) :user:`fkiraly`
+* [DOC] restructure dataset docs (:pr:`8854`) :user:`fkiraly`
+* [DOC] Update developer guide on how to run doctests (:pr:`8853`) :user:`Astrael1`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Bump ``actions/setup-python`` from ``5`` to ``6`` (:pr:`8773`) :user:`dependabot[bot]`
+* [MNT] Bump ``actions/setup-node`` from ``4`` to ``5`` (:pr:`8772`) :user:`dependabot[bot]`
+* [MNT] Update ``pytest-randomly`` requirement from ``<3.17,>=3.15`` to ``>=3.15,<4.1`` (:pr:`8790`) :user:`dependabot[bot]`
+* [MNT] python 3.9 end-of-life (:pr:`8800`) :user:`fkiraly`
+* [MNT] remove some rare and outdated soft dependencies (:pr:`8804`) :user:`fkiraly`
+* [MNT] remove more rare / abandoned packages from soft dependency set (:pr:`8812`) :user:`fkiraly`
+* [MNT] 0.39.0 deprecations and change actions (:pr:`8783`) :user:`fkiraly`
+* [MNT] Update ``ruff`` linting target version to python 3.10, additional drops of 3.9 references (:pr:`8801`) :user:`yarnabrina`
+* [MNT] [Dependabot](deps): Update numba requirement from ``<0.62`` to ``<0.63`` (:pr:`8821`) :user:`dependabot[bot]`
+* [MNT] remove ``python<3.13`` bound in some dependency sets for ``numba`` (:pr:`8823`) :user:`fkiraly`
+* [MNT] deprecation of ``pykalman`` fork in ``sktime`` (:pr:`8829`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix bug in ``_safe_import`` when importing package and ``pkg_name`` is not ``None`` (:pr:`8763`) :user:`fkiraly`
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Fix ``n_instances`` test and its values in the tags (:pr:`8794`) :user:`jgyasu`
+* [BUG] fix incorrect paths for ``UCRUEADataset`` (:pr:`8815`) :user:`fkiraly`
+* [BUG] fix ``HierarchicalToyData`` dataset ``n_instances`` tag value (:pr:`8819`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] fix ``DirectReductionForecaster`` failure on newer ``pandas`` (:pr:`8782`) :user:`fkiraly`
+* [BUG] fix ``PykanForecaster`` test failures (:pr:`8764`) :user:`JATAYU000`
+* [BUG] fix ``predict_var`` of ``ResidualBoostingForecaster`` (:pr:`8806`) :user:`fkiraly`
+
+Time Series Anomalies, Changepoints, Segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[BUG] partially fix non-conformance of ``IGTS`` estimator (:pr:`8833`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] fix ``DirectReductionForecaster`` failure on newer ``pandas`` (:pr:`8782`) :user:`fkiraly`
+* [BUG] fix ``MatrixProfile`` ``TypeError`` (:pr:`8798`) :user:`JATAYU000`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Astrael1`,
+:user:`ericjb`,
+:user:`felipeangelimvieira`,
+:user:`fkiraly`,
+:user:`JATAYU000`,
+:user:`jgyasu`,
+:user:`oresthes`,
+:user:`piyushbiraje`,
+:user:`RobKuebler`,
+:user:`SimonBlanke`,
+:user:`sinemkilicdere`,
+:user:`Tanuj-Taneja1`,
+:user:`tingiskhan`,
+:user:`yarnabrina`
+
 Version 0.38.5 - 2025-08-21
 ---------------------------
 

@@ -9,7 +9,7 @@ Authors: Lorenzo Stella <stellalo@amazon.com>, Abdul Fatir Ansari <ansarnd@amazo
 
 import warnings
 from dataclasses import dataclass
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
@@ -299,11 +299,11 @@ class ChronosModel(nn.Module):
         self,
         input_ids,
         attention_mask,
-        prediction_length: Optional[int] = None,
-        num_samples: Optional[int] = None,
-        temperature: Optional[float] = None,
-        top_k: Optional[int] = None,
-        top_p: Optional[float] = None,
+        prediction_length: int | None = None,
+        num_samples: int | None = None,
+        temperature: float | None = None,
+        top_k: int | None = None,
+        top_p: float | None = None,
     ):
         """Predict future sample tokens for the given token sequences.
 
@@ -434,11 +434,11 @@ class ChronosPipeline:
     def predict(
         self,
         context,
-        prediction_length: Optional[int] = None,
-        num_samples: Optional[int] = None,
-        temperature: Optional[float] = None,
-        top_k: Optional[int] = None,
-        top_p: Optional[float] = None,
+        prediction_length: int | None = None,
+        num_samples: int | None = None,
+        temperature: float | None = None,
+        top_k: int | None = None,
+        top_p: float | None = None,
         limit_prediction_length: bool = True,
     ):
         """

@@ -4,7 +4,6 @@
 __author__ = ["ericjb"]
 
 import calendar
-from typing import Optional
 
 import pandas as pd
 
@@ -101,13 +100,15 @@ class SeasonalDummiesOneHot(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_categorical_X_passes"],
+        # fails since the data is RangeIndex, unrelated to categorical
     }
 
     def __init__(
         self,
-        sp: Optional[int] = None,
-        freq: Optional[str] = None,
-        drop: Optional[bool] = True,
+        sp: int | None = None,
+        freq: str | None = None,
+        drop: bool | None = True,
     ):
         self.sp = sp
         self.freq = freq
