@@ -75,6 +75,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         "maintainers": ["RecreationalMath"],
         "python_version": ">=3.9",
         "python_dependencies": "torch",
+        "capability:random_state": True,
     }
 
     def __init__(
