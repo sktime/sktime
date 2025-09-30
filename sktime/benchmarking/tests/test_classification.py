@@ -3,6 +3,7 @@
 __author__ = ["jgyasu"]
 
 import pandas as pd
+import pytest
 from sklearn.metrics import accuracy_score, brier_score_loss
 from sklearn.model_selection import KFold
 
@@ -10,9 +11,14 @@ from sktime.benchmarking.classification import ClassificationBenchmark
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.dummy import DummyClassifier
 from sktime.datasets import ArrowHead, UCRUEADataset, load_unit_test
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.panel import make_classification_problem
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 def test_classification_benchmark(tmp_path):
     """Test classification benchmark with single estimator and task."""
     benchmark = ClassificationBenchmark()
@@ -49,6 +55,10 @@ def test_classification_benchmark(tmp_path):
         assert metric in result_rows, f"{metric} not found in result rows"
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 def test_add_list_estimators(tmp_path):
     """Test adding list of estimators."""
     benchmark = ClassificationBenchmark()
@@ -72,6 +82,10 @@ def test_add_list_estimators(tmp_path):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 def test_add_dict_estimators(tmp_path):
     """Test adding dict of estimators."""
     benchmark = ClassificationBenchmark()
@@ -93,6 +107,10 @@ def test_add_dict_estimators(tmp_path):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 def test_add_estimator_twice(tmp_path):
     """Test adding the same estimator twice."""
     benchmark = ClassificationBenchmark()
@@ -115,6 +133,10 @@ def test_add_estimator_twice(tmp_path):
     assert len(benchmark.estimators.entities) == 2, msg
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 def test_add_multiple_task(tmp_path):
     """Test adding multiple tasks for benchmarking."""
     benchmark = ClassificationBenchmark()
@@ -146,6 +168,10 @@ def test_add_multiple_task(tmp_path):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 def test_multiple_dataset_format(tmp_path):
     benchmark = ClassificationBenchmark()
     benchmark.add_estimator(DummyClassifier())
