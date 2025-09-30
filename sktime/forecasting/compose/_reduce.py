@@ -2768,6 +2768,12 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 f"but found {impute_method}"
             )
 
+    def _cutoff_scalar(self):
+        c = self.cutoff
+        return (
+            c[0] if isinstance(c, (pd.Index, pd.PeriodIndex, pd.DatetimeIndex)) else c
+        )
+
     def create_lagged_features(self, y):
         """Create lagged time-based features from y and shift them for alignment.
 
@@ -3269,7 +3275,8 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _create_fallback_df(self, fh):
         """Return fallback predictions (constant mean if available else NaN)."""
-        index = fh.to_absolute(self.cutoff).to_pandas()
+        # index = fh.to_absolute(self.cutoff).to_pandas()
+        index = fh.to_absolute(self._cutoff_scalar()).to_pandas()
         y_pred = pd.DataFrame(index=index, columns=self._y.columns)
         est = getattr(self, "estimator_", None)
         if isinstance(est, pd.Series):
@@ -3826,7 +3833,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         """
         # this routine has a bug for relative fh
         # instead of tracking it down, just use absolute fh
-        fh = _fh.to_absolute(self.cutoff)
+        fh = _fh.to_absolute(self._cutoff_scalar())
 
         # final, possibly gappy index we must return (typed like v2)
         fh_idx = self._get_expected_pred_idx(fh=fh)
@@ -3917,7 +3924,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         lagger_y_to_X = self.lagger_y_to_X_
 
-        fh_abs = fh.to_absolute(self.cutoff)
+        fh_abs = fh.to_absolute(self._cutoff_scalar())
         y = self._y
 
         Xt = lagger_y_to_X.transform(y)
@@ -4033,7 +4040,6 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
     _tags.update(
         {
             "capability:multivariate": True,  # do not split DataFrame columns
-            "capability:hierarchical": True,  # do not split MultiIndex panels
             # keep inner mtypes broad so our _fit/_predict see the full object
             "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.DataFrame"],
             "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
