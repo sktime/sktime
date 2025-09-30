@@ -53,7 +53,7 @@ class USChange(_ForecastingDatasetFromLoader):
         "is_empty": False,
         "has_nans": False,
         "has_exogenous": True,
-        "n_instances": 187,
+        "n_instances": 1,
         "n_timepoints": 187,
         "frequency": "Q",
         "n_dimensions": 5,  # 5 explanatory variables

@@ -686,6 +686,8 @@ class ProximityStump(BaseClassifier):
         # estimator type
         # --------------
         "capability:multithreading": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "X_inner_mtype": "nested_univ",  # input in nested dataframe
     }
 
@@ -712,6 +714,10 @@ class ProximityStump(BaseClassifier):
         self.entropy = None
         self._random_object = None
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -992,6 +998,8 @@ class ProximityTree(BaseClassifier):
         # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "X_inner_mtype": "nested_univ",
     }
 
@@ -1023,6 +1031,10 @@ class ProximityTree(BaseClassifier):
         self._random_object = None
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -1293,6 +1305,8 @@ class ProximityForest(BaseClassifier):
         "X_inner_mtype": "nested_univ",
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "distance",
     }
 
@@ -1324,6 +1338,10 @@ class ProximityForest(BaseClassifier):
         self._random_object = None
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def pick_distance_measure(self):
         """Pick a distance measure.

@@ -42,11 +42,13 @@ class MrSEQL(_DelegatedClassifier):
         # --------------
         "authors": ["lnthach", "heerme", "fkiraly"],
         "maintainers": ["lnthach", "heerme", "fkiraly"],
-        "python_dependencies": "mrseql",
-        "requires_cython": True,
+        "python_dependencies": ["mrseql", "numba"],
         # estimator type
         # --------------
         "X_inner_mtype": "nested_univ",
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(

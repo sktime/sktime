@@ -5,10 +5,10 @@
 __author__ = ["aiwalter", "mloning", "fkiraly", "topher-lo", "hazrulakmal"]
 __all__ = ["evaluate"]
 
+import collections.abc
 import time
 import warnings
 from copy import deepcopy
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -413,12 +413,12 @@ def evaluate(
     y,
     X=None,
     strategy: str = "refit",
-    scoring: Optional[Union[callable, list[callable]]] = None,
+    scoring: collections.abc.Callable | list[collections.abc.Callable] | None = None,
     return_data: bool = False,
-    error_score: Union[str, int, float] = np.nan,
-    backend: Optional[str] = None,
+    error_score: str | int | float = np.nan,
+    backend: str | None = None,
     cv_X=None,
-    backend_params: Optional[dict] = None,
+    backend_params: dict | None = None,
     return_model: bool = False,
     cv_global=None,
     cv_global_temporal=None,
@@ -430,7 +430,7 @@ def evaluate(
 
     The experiment run is the following:
 
-    In  case of non-global evaluation (cv_global=None):
+    In case of non-global evaluation (cv_global=None):
 
     Denote by :math:`y_{train, 1}, y_{test, 1}, \dots, y_{train, K}, y_{test, K}`
     the train/test folds produced by the generator ``cv.split_series(y)``.

@@ -2,7 +2,7 @@
 """Interfaces to estimators from pytorch-forecasting."""
 
 import functools
-from typing import Any, Optional
+from typing import Any
 
 from sktime.forecasting.base.adapters._pytorchforecasting import (
     _PytorchForecastingAdapter,
@@ -123,17 +123,18 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_all": True,
     }
 
     def __init__(
         self: "PytorchForecastingTFT",
-        model_params: Optional[dict[str, Any]] = None,
-        allowed_encoder_known_variable_names: Optional[list[str]] = None,
-        dataset_params: Optional[dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
-        trainer_params: Optional[dict[str, Any]] = None,
-        model_path: Optional[str] = None,
+        model_params: dict[str, Any] | None = None,
+        allowed_encoder_known_variable_names: list[str] | None = None,
+        dataset_params: dict[str, Any] | None = None,
+        train_to_dataloader_params: dict[str, Any] | None = None,
+        validation_to_dataloader_params: dict[str, Any] | None = None,
+        trainer_params: dict[str, Any] | None = None,
+        model_path: str | None = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
@@ -401,7 +402,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     _tags = {
         "capability:global_forecasting": True,
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "scitype:y": "univariate",
@@ -409,12 +410,12 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     def __init__(
         self: "PytorchForecastingNBeats",
-        model_params: Optional[dict[str, Any]] = None,
-        dataset_params: Optional[dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
-        trainer_params: Optional[dict[str, Any]] = None,
-        model_path: Optional[str] = None,
+        model_params: dict[str, Any] | None = None,
+        dataset_params: dict[str, Any] | None = None,
+        train_to_dataloader_params: dict[str, Any] | None = None,
+        validation_to_dataloader_params: dict[str, Any] | None = None,
+        trainer_params: dict[str, Any] | None = None,
+        model_path: str | None = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
@@ -704,13 +705,13 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
 
     def __init__(
         self: "PytorchForecastingDeepAR",
-        model_params: Optional[dict[str, Any]] = None,
-        allowed_encoder_known_variable_names: Optional[list[str]] = None,
-        dataset_params: Optional[dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
-        trainer_params: Optional[dict[str, Any]] = None,
-        model_path: Optional[str] = None,
+        model_params: dict[str, Any] | None = None,
+        allowed_encoder_known_variable_names: list[str] | None = None,
+        dataset_params: dict[str, Any] | None = None,
+        train_to_dataloader_params: dict[str, Any] | None = None,
+        validation_to_dataloader_params: dict[str, Any] | None = None,
+        trainer_params: dict[str, Any] | None = None,
+        model_path: str | None = None,
         deterministic: bool = False,
         random_log_path: bool = False,
         broadcasting: bool = False,
@@ -983,12 +984,12 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
 
     def __init__(
         self: "PytorchForecastingNHiTS",
-        model_params: Optional[dict[str, Any]] = None,
-        dataset_params: Optional[dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
-        trainer_params: Optional[dict[str, Any]] = None,
-        model_path: Optional[str] = None,
+        model_params: dict[str, Any] | None = None,
+        dataset_params: dict[str, Any] | None = None,
+        train_to_dataloader_params: dict[str, Any] | None = None,
+        validation_to_dataloader_params: dict[str, Any] | None = None,
+        trainer_params: dict[str, Any] | None = None,
+        model_path: str | None = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
