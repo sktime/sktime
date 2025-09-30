@@ -302,6 +302,12 @@ class _ReducerMixin:
 
     #     return fh_idx
 
+    def _cutoff_scalar(self):
+        c = self.cutoff
+        return (
+            c[0] if isinstance(c, (pd.Index, pd.PeriodIndex, pd.DatetimeIndex)) else c
+        )
+
     def _get_expected_pred_idx(self, fh):
         """Construct DataFrame Index expected in y_pred, return of _predict.
 
@@ -381,7 +387,7 @@ class _ReducerMixin:
             if not isinstance(fh, ForecastingHorizon)
             else fh
         )
-        abs_times = fh.to_absolute(self.cutoff).to_pandas()
+        abs_times = fh.to_absolute(self._cutoff_scalar()).to_pandas()
 
         # Build the required index we need to see in X
         if isinstance(self._y.index, pd.MultiIndex):
@@ -2545,7 +2551,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         lagger_y_to_X = self.lagger_y_to_X_
 
         fh_rel = fh.to_relative(self.cutoff)
-        fh_abs = fh.to_absolute(self.cutoff)
+        fh_abs = fh.to_absolute(self._cutoff_scalar())
         y_lags = list(fh_rel)
         y_abs = list(fh_abs)
 
@@ -2767,12 +2773,6 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 f"impute_method must be str, None, or sktime transformer, "
                 f"but found {impute_method}"
             )
-
-    def _cutoff_scalar(self):
-        c = self.cutoff
-        return (
-            c[0] if isinstance(c, (pd.Index, pd.PeriodIndex, pd.DatetimeIndex)) else c
-        )
 
     def create_lagged_features(self, y):
         """Create lagged time-based features from y and shift them for alignment.
