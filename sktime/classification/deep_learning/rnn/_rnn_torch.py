@@ -226,7 +226,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "num_epochs": 50,
             "batch_size": 2,
             "optimizer": "RMSprop",
-            "criterion": "None",
+            "criterion": None,
             "criterion_kwargs": None,
             "optimizer_kwargs": None,
             "lr": 0.001,
