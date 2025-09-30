@@ -13,6 +13,11 @@ from sktime.benchmarking._benchmarking_dataclasses import (
 )
 from sktime.benchmarking._storage_handlers import get_storage_backend
 from sktime.benchmarking._utils import _check_id_format
+from sktime.catalogues.base import BaseCatalogue
+from sktime.classification.base import BaseClassifier
+from sktime.datasets.base import BaseDataset
+from sktime.forecasting.base import BaseForecaster
+from sktime.performance_metrics.base import BaseMetric
 from sktime.utils.unique_str import _make_strings_unique
 
 
@@ -287,6 +292,24 @@ class BaseBenchmark:
     def add_task(self, *args, **kwargs):
         """Register a task to the benchmark."""
         raise NotImplementedError("This method must be implemented by a subclass.")
+
+    def add_catalogue(self, catalogue: BaseCatalogue):
+        """Add all items from a catalogue to the benchmark.
+
+        Parameters
+        ----------
+        catalogue : BaseCatalogue
+            A catalogue containing estimators, datasets, or metrics.
+        """
+        catalogue = catalogue.clone()
+        objects = catalogue.get("all", as_object=True)
+
+        for obj in objects:
+            if isinstance(obj, (BaseForecaster, BaseClassifier)):
+                self.add_estimator(obj)
+
+            elif isinstance(obj, (BaseDataset, BaseMetric)):
+                self.add_task(obj)
 
     def _run(self, results_path: str, force_rerun: str | list[str] = "none"):
         """
