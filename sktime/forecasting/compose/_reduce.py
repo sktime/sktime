@@ -323,7 +323,7 @@ class _ReducerMixin:
         """
         # normalize fh to a pandas Index of absolute time points
         if isinstance(fh, ForecastingHorizon):
-            fh_abs = pd.Index(fh.to_absolute_index(self.cutoff))
+            fh_abs = pd.Index(fh.to_absolute_index(self._cutoff_scalar()))
         else:
             fh_abs = pd.Index(fh)
 
