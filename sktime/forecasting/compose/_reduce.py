@@ -304,9 +304,30 @@ class _ReducerMixin:
 
     def _cutoff_scalar(self):
         c = self.cutoff
-        return (
-            c[0] if isinstance(c, (pd.Index, pd.PeriodIndex, pd.DatetimeIndex)) else c
-        )
+        # unwrap 1-elem Index to a scalar
+        if isinstance(c, (pd.Index, pd.PeriodIndex, pd.DatetimeIndex)):
+            c = c[-1]
+        # if it's a Period without freq, attach one from training index (or infer)
+        if isinstance(c, pd.Period) and getattr(c, "freq", None) is None:
+            y_idx = getattr(self, "_y", None)
+            freq = None
+            if y_idx is not None:
+                y_idx = y_idx.index
+                if isinstance(y_idx, (pd.PeriodIndex, pd.DatetimeIndex)):
+                    freq = getattr(y_idx, "freq", None)
+                    if freq is None:
+                        try:
+                            freq = pd.infer_freq(y_idx)
+                        except Exception:
+                            freq = None
+            if freq is not None:
+                try:
+                    # rebuild Period with explicit freq
+                    c = pd.Period(str(c), freq=freq)
+                except Exception:
+                    # fallback via timestamp if needed
+                    c = pd.Period(c.to_timestamp(), freq=freq)
+        return c
 
     def _get_expected_pred_idx(self, fh):
         """Construct DataFrame Index expected in y_pred, return of _predict.
