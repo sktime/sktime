@@ -1,27 +1,27 @@
-"""TSC Bakeoff 2017 Collection."""
+"""TSC Bakeoff 2017 catalogue."""
 
-from sktime.collections.base import BaseCollection
+from sktime.catalogues.base import BaseCatalogue
 
 
-class TSCBakeOff2017(BaseCollection):
-    """Collection of datasets, estimators, and metrics from TSC Bake Off 2017.
+class TSCBakeOff2017(BaseCatalogue):
+    """catalogue of datasets, estimators, and metrics from TSC Bake Off 2017.
 
     Examples
     --------
-    >>> from sktime.collections import TSCBakeOff2017
-    >>> collection = TSCBakeOff2017()
-    >>> available_categories = collection.available_categories()
-    >>> all_items = collection.get("all")
-    >>> dataset_loaders = collection.get("dataset_loaders")
-    >>> classifiers = collection.get("estimators")
+    >>> from sktime.catalogues import TSCBakeOff2017
+    >>> catalogue = TSCBakeOff2017()
+    >>> available_categories = catalogue.available_categories()
+    >>> all_items = catalogue.get("all")
+    >>> datasets = catalogue.get("dataset")
+    >>> classifiers = catalogue.get("classifier")
     """
 
     _tags = {
         "authors": "jgyasu",
         "maintainers": "jgyasu",
-        "collection_type": "mixed",
+        "catalogue_type": "mixed",
         "info:name": "The Great Time Series Classification Bake Off",
-        "info:source": "https://arxiv.org/pdf/1602.01711",
+        "info:source": "https://doi.org/10.1007/s10618-016-0483-9",
     }
 
     def _get(self):
@@ -29,7 +29,7 @@ class TSCBakeOff2017(BaseCollection):
         return items
 
 
-dataset_loaders = [
+datasets = [
     "LargeKitchenAppliances",
     "SmallKitchenAppliances",
     "OSULeaf",
@@ -117,11 +117,11 @@ dataset_loaders = [
     "BirdChicken",
 ]
 
-estimators = [
-    "KNeighborsTimeSeriesClassifier",
+classifiers = [
+    "KNeighborsTimeSeriesClassifier()",
 ]
 
 items = {
-    "dataset_loaders": [f"UCRUEADataset('{ds}')" for ds in dataset_loaders],
-    "estimators": estimators,
+    "dataset": [f"UCRUEADataset('{dataset}')" for dataset in datasets],
+    "classifier": classifiers,
 }
