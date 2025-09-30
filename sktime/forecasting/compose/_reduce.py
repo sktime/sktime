@@ -605,20 +605,14 @@ class _Reducer(_BaseWindowForecaster, _ReducerMixin):
         if isinstance(self._y.index, pd.MultiIndex):
             names = self._y.index.names
             series_keys = self._y.index.droplevel(-1).unique()
-            # base = last timestamp seen in training (same across series in our tests)
             base_time = self._y.index.get_level_values(-1).max()
             cutoff = _shift(pd.Index([base_time]), by=shift, return_index=True)
             relative_int = pd.Index(range(-self.window_length_ + 1, 2))
             times = _index_range(relative_int, cutoff)
-            # build combined index (series by window times)
-            full_idx = (
-                pd.MultiIndex.from_product([series_keys, times], names=names)
-                if not isinstance(series_keys, pd.MultiIndex)
-                else pd.MultiIndex.from_tuples(
-                    [(*k, t) for k in series_keys for t in times], names=names
-                )
-            )
-            y_raw = _create_fcst_df(full_idx, self._y)
+
+            # Build forecast frame via _create_fcst_df expand left-levels by times.
+            # NB: pass only time index (times), not a pre-built product MultiIndex.
+            y_raw = _create_fcst_df(times, self._y)
             y_raw.update(self._y)
             if y_update is not None:
                 y_raw.update(y_update)
