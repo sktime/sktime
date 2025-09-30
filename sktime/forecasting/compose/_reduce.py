@@ -4587,6 +4587,6 @@ class YfromX(BaseForecaster, _ReducerMixin):
                 "pooling": "global",
             }
 
-        params = params + [params3]
+            params = params + [params3]
 
         return params
