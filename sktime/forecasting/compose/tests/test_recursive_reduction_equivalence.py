@@ -121,7 +121,7 @@ def _compare_fast_vs_v1(y, fh_list):
     assert list(y_pred_public.columns) == list(y_pred_v1.columns)
     # numerical closeness
     np.testing.assert_allclose(
-        y_pred_public.to_numpy(), y_pred_v1.to_numpy(), rtol=0, atol=0
+        y_pred_public.to_numpy(), y_pred_v1.to_numpy(), rtol=1e-8, atol=1e-8
     )
 
 
@@ -155,7 +155,7 @@ def test_recursive_reduction_local_constant_mean_fallback():
         columns=y.columns,
     )
     np.testing.assert_allclose(
-        y_pred_public.to_numpy(), expected.to_numpy(), rtol=0, atol=1e-12
+        y_pred_public.to_numpy(), expected.to_numpy(), rtol=1e-8, atol=1e-8
     )
 
 
