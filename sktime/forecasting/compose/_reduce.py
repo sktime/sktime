@@ -768,7 +768,7 @@ class _DirectReducer(_Reducer):
         )
 
     def _transform(self, y, X=None):
-        fh = self.fh.to_relative(self.cutoff)
+        fh = self.fh.to_relative(self._cutoff_scalar())
         return _sliding_window_transform(
             y,
             window_length=self.window_length_,
@@ -871,11 +871,11 @@ class _DirectReducer(_Reducer):
         # Iterate over forecasting horizon, fitting a separate estimator for each step.
         self.estimators_ = []
         for i in range(len(self.fh)):
-            fh_rel = fh.to_relative(self.cutoff)
+            fh_rel = fh.to_relative(self._cutoff_scalar())
             estimator = clone(self.estimator)
 
             if self.transformers_ is not None:
-                fh_rel = fh.to_relative(self.cutoff)
+                fh_rel = fh.to_relative(self._cutoff_scalar())
                 Xt_cut = _cut_df(Xt, n_timepoints - fh_rel[i] + 1, type="head")
                 yt_cut = _cut_df(yt, n_timepoints - fh_rel[i] + 1)
             elif self.windows_identical is True or (fh_rel[i] - 1) == 0:
@@ -965,7 +965,7 @@ class _DirectReducer(_Reducer):
                 return y_pred
 
         if self.pooling == "global":
-            fh_abs = fh.to_absolute_index(self.cutoff)
+            fh_abs = fh.to_absolute_index(self._cutoff_scalar())
             y_preds = []
 
             for i, estimator in enumerate(self.estimators_):
@@ -1039,7 +1039,7 @@ class _MultioutputReducer(_Reducer):
     }
 
     def _transform(self, y, X=None):
-        fh = self.fh.to_relative(self.cutoff)
+        fh = self.fh.to_relative(self._cutoff_scalar())
         return _sliding_window_transform(
             y,
             window_length=self.window_length,
@@ -1278,7 +1278,7 @@ class _RecursiveReducer(_Reducer):
                 return self._predict_nan(fh)
 
         if self.pooling == "global":
-            fh_max = fh.to_relative(self.cutoff)[-1]
+            fh_max = fh.to_relative(self._cutoff_scalar())[-1]
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
             index_range = _index_range(relative, self.cutoff)
             if isinstance(self.cutoff, pd.DatetimeIndex):
@@ -1307,7 +1307,7 @@ class _RecursiveReducer(_Reducer):
             else:
                 n_columns = X.shape[1] + 1
             window_length = self.window_length_
-            fh_max = fh.to_relative(self.cutoff)[-1]
+            fh_max = fh.to_relative(self._cutoff_scalar())[-1]
 
             y_pred = np.zeros(fh_max)
 
@@ -1376,7 +1376,7 @@ class _DirRecReducer(_Reducer):
     def _transform(self, y, X=None):
         # Note that the transform for dirrec is the same as in the direct
         # strategy.
-        fh = self.fh.to_relative(self.cutoff)
+        fh = self.fh.to_relative(self._cutoff_scalar())
         return _sliding_window_transform(
             y,
             window_length=self.window_length,
@@ -2395,7 +2395,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.lagger_y_to_X_ = lagger_y_to_X
 
         # lagger_y_to_y_ will lag y to obtain the sklearn y
-        fh_rel = fh.to_relative(self.cutoff)
+        fh_rel = fh.to_relative(self._cutoff_scalar())
         y_lags = list(fh_rel)
         y_lags = [-x for x in y_lags]
         lagger_y_to_y = Lag(lags=y_lags, index_out="original", keep_column_names=True)
@@ -2469,7 +2469,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         lags = self._lags
 
         # lagger_y_to_y_ will lag y to obtain the sklearn y
-        fh_rel = fh.to_relative(self.cutoff)
+        fh_rel = fh.to_relative(self._cutoff_scalar())
         y_lags = list(fh_rel)
         y_lags = [-x for x in y_lags]
 
@@ -2550,7 +2550,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         lagger_y_to_X = self.lagger_y_to_X_
 
-        fh_rel = fh.to_relative(self.cutoff)
+        fh_rel = fh.to_relative(self._cutoff_scalar())
         fh_abs = fh.to_absolute(self._cutoff_scalar())
         y_lags = list(fh_rel)
         y_abs = list(fh_abs)
@@ -3323,7 +3323,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         if np.isnan(ys).any() or np.isinf(ys).any():
             return self._create_fallback_df(fh)
 
-        fh_max = fh.to_relative(self.cutoff)[-1]
+        fh_max = fh.to_relative(self._cutoff_scalar())[-1]
         relative = pd.Index(list(map(int, range(1, fh_max + 1))))
         index_range = _index_range(relative, self.cutoff)
         if isinstance(self.cutoff, pd.Timestamp) and self.cutoff.tz is not None:
@@ -3434,7 +3434,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # Pre-allocate arrays.
         n_columns = 1
         window_length = self.window_length
-        fh_max = fh.to_relative(self.cutoff)[-1]
+        fh_max = fh.to_relative(self._cutoff_scalar())[-1]
 
         y_pred = np.zeros(fh_max)
 
