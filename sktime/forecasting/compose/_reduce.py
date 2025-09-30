@@ -38,7 +38,6 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.pipeline import make_pipeline
-from skpro.regression.residual import ResidualDouble
 
 from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
@@ -533,6 +532,9 @@ class _Reducer(_BaseWindowForecaster, _ReducerMixin):
         self_supports_proba = cls.__name__ in PROBA_IMPLEMENTED
 
         if _check_soft_dependencies("skpro", severity="none") and self_supports_proba:
+            # local import to keep skpro optional at import time
+            from skpro.regression.residual import ResidualDouble
+
             params_proba_local = {
                 "estimator": ResidualDouble.create_test_instance(),
                 "pooling": "local",
@@ -543,8 +545,8 @@ class _Reducer(_BaseWindowForecaster, _ReducerMixin):
                 "pooling": "global",
                 "window_length": 4,
             }
-            params = params + [params_proba_local, params_proba_global]
 
+            params = params + [params_proba_local, params_proba_global]
         return params
 
     def _get_shifted_window(self, shift=0, y_update=None, X_update=None):
@@ -4320,9 +4322,16 @@ class YfromX(BaseForecaster, _ReducerMixin):
             if _est_type == "regressor":
                 estimator = DummyRegressor()
             else:  # "proba_regressor"
+                if not _check_soft_dependencies("skpro", severity="none"):
+                    raise ModuleNotFoundError(
+                        "Probability forecasting with reduction requires optional "
+                        "dependency 'skpro'. Please `pip install skpro` to use this "
+                        "mode."
+                    )
+                from skpro.regression.residual import ResidualDouble
+
                 dummy = DummyRegressor()
                 estimator = ResidualDouble(dummy)
-
             X = prep_skl_df(y, copy_df=True)
         else:
             X = prep_skl_df(X, copy_df=True)
@@ -4571,10 +4580,13 @@ class YfromX(BaseForecaster, _ReducerMixin):
         params = [params1, params2]
 
         if _check_soft_dependencies("skpro", severity="none"):
+            from skpro.regression.residual import ResidualDouble
+
             params3 = {
                 "estimator": ResidualDouble.create_test_instance(),
                 "pooling": "global",
             }
-            params = params + [params3]
+
+        params = params + [params3]
 
         return params
