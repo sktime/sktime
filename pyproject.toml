@@ -448,7 +448,6 @@ allowed-confusables=["σ"]
   "D104", # Missing docstring in public package
   "D106", # Missing docstring in public nested class
 ]
-"sktime/libs/tirex/**/*.py" = ["ALL"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

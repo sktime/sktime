@@ -20,7 +20,7 @@ It does not require any training or data input.
 #       estimators of your own do not need to have permissive or BSD-3 copyright
 
 # todo: uncomment the following line, enter authors' GitHub IDs
-__author__ = ["sinemkilicdere"]
+__author__ = ["sinemkilicdere", "martinloretzzz"]
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -61,17 +61,17 @@ class _cached_TiRex:
         self._obj = None
 
     def load(self):
-        from sktime.libs.tirex.base import load_model
+        from tirex import load_model
 
         if self._obj is None:
-            self._obj = load_model(self.model, device=self.device)
+            self._obj = load_model(self.model, device=self.device, backend="torch")
         return self._obj
 
 
 class TiRexForecaster(BaseForecaster):
     """Interface to the TiRex Zero-Shot Forecaster.
 
-    This forecaster loads the TiRex model from ``sktime.libs.tirex`` when fit() is
+    This forecaster loads the TiRex model from the ``tirex-ts`` package when fit() is
     called. Instead of training, it takes the given data as context, and predict()
     uses that context to produce forecasts for the requested future time points.
     ``torch`` is required at runtime and a clear error is raised if unavailable.
@@ -180,7 +180,7 @@ class TiRexForecaster(BaseForecaster):
         "maintainers": ["sinemkilicdere"],
         # valid values: str or list of str, should be GitHub handles
         # remove tag if maintained by sktime core team
-        "python_dependencies": ["torch", "dacite", "lightning", "xlstm"],
+        "python_dependencies": ["torch", "tirex-ts"],
         "tests:vm": True,
     }
 
@@ -208,19 +208,20 @@ class TiRexForecaster(BaseForecaster):
                 "To accept the license, set the `license_accepted` parameter to True "
                 "to confirm that you have read and accepted the license terms. "
                 "To print and view the license for TiRex, "
-                "call `TiRexForecaster.print_license()`."
+                "call `TiRexForecaster.print_license()`"
+                "or go to https://github.com/NX-AI/tirex/blob/main/LICENSE."
             )
 
     @classmethod
     def print_license(self):
         """Print the license terms of TiRex."""
-        import os
+        import urllib.request
 
-        from sktime.libs.tirex import __path__ as tirex_path
+        url = "https://raw.githubusercontent.com/NX-AI/tirex/refs/heads/main/LICENSE"
 
-        license_path = os.path.join(tirex_path[0], "LICENSE")
-        with open(license_path, encoding="utf-8") as f:
-            license_text = f.read()
+        with urllib.request.urlopen(url) as response:
+            license_text = response.read().decode('utf-8')
+
         print(license_text)
 
     # todo: implement this, mandatory
@@ -290,6 +291,7 @@ class TiRexForecaster(BaseForecaster):
         context_values = y.to_numpy()[None, :]
 
         _check_soft_dependencies("torch", severity="error")
+        _check_soft_dependencies("tirex-ts", severity="error")
         context_tensor = torch.as_tensor(context_values, dtype=torch.float32)
 
         predict_len = len(fh)
