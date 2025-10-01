@@ -379,12 +379,12 @@ def test_forecasterX_regression():
     pd.testing.assert_series_equal(result, result_general)
 
 
-@pytest.mark.skipif(
-    not run_test_module_changed(
-        ["sktime.pipeline", "sktime.forecasting", "sktime.transformations"]
-    ),
-    reason="Run test only if relevant modules have changed",
-)
+# @pytest.mark.skipif(
+#     not run_test_module_changed(
+#         ["sktime.pipeline", "sktime.forecasting", "sktime.transformations"]
+#     ),
+#     reason="Run test only if relevant modules have changed",
+# )
 def test_lagged_y_prediction():
     """Regression test for issue 5830."""
     y = load_airline()

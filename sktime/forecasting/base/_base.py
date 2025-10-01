@@ -318,7 +318,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         else:
             return ColumnSelect(key) ** self
 
-    def fit(self, y, X=None, fh=None):
+    def fit(self, y, X=None, fh=None, **kwargs):
         """Fit forecaster to training data.
 
         State change:
@@ -393,7 +393,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
-            self._fit(y=y_inner, X=X_inner, fh=fh)
+            self._fit(y=y_inner, X=X_inner, fh=fh, **kwargs)
         else:
             # otherwise we call the vectorized version of fit
             self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
@@ -2080,7 +2080,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 y_pred.columns = y_pred.columns.droplevel(1)
             return y_pred
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X, fh, **kwargs):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit

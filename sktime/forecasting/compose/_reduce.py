@@ -516,7 +516,7 @@ class _DirectReducer(_Reducer):
             windows_identical=self.windows_identical,
         )
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X, fh, **kwargs):
         """Fit to training data.
 
         Parameters
@@ -783,7 +783,7 @@ class _MultioutputReducer(_Reducer):
             scitype=self._estimator_scitype,
         )
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X, fh, **kwargs):
         """Fit to training data.
 
         Parameters
@@ -877,7 +877,7 @@ class _RecursiveReducer(_Reducer):
             pooling=self.pooling,
         )
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X, fh, **kwargs):
         """Fit to training data.
 
         Parameters
@@ -969,8 +969,20 @@ class _RecursiveReducer(_Reducer):
             yt = yt.ravel()
 
         self.estimator_ = clone(self.estimator)
-        Xt = pd.DataFrame(Xt, columns=self._X_metadata["feature_names"])
-        yt = pd.Series(yt, name=self._y_metadata["feature_names"][0])
+        if "save_feature_names" in kwargs and kwargs["save_feature_names"]:
+            if Xt is not None:
+                X_cols = X.columns if X is not None else []
+                Xt_cols = (
+                    [col for col in Xt.columns if col not in X_cols]
+                    if hasattr(Xt, "columns")
+                    else []
+                )
+                merged_cols = X_cols + Xt_cols
+                Xt = pd.DataFrame(Xt, columns=merged_cols)
+            if yt is not None:
+                yt = pd.Series(
+                    yt  # todo series name and index
+                )
         self.estimator_.fit(Xt, yt)
         return self
 
@@ -1122,7 +1134,7 @@ class _DirRecReducer(_Reducer):
             scitype=self._estimator_scitype,
         )
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X, fh, **kwargs):
         """Fit to training data.
 
         Parameters

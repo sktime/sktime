@@ -133,6 +133,7 @@ def check_eval(test_input, expected):
     not run_test_for_class(_RecursiveReducer),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+@pytest.mark.parametrize("save_feature_names", [True, False])
 @pytest.mark.parametrize(
     "y, index_names",
     [
@@ -154,7 +155,7 @@ def check_eval(test_input, expected):
         ),
     ],
 )
-def test_recursive_reduction(y, index_names, y_dict):
+def test_recursive_reduction(save_feature_names, y, index_names, y_dict):
     """Test index column names match input names for recursive reduction."""
     y = y_dict[y]
 
@@ -171,7 +172,7 @@ def test_recursive_reduction(y, index_names, y_dict):
         pooling="global",
     )
 
-    forecaster2.fit(y, fh=[1, 2])
+    forecaster2.fit(y, fh=[1, 2], save_feature_names=save_feature_names)
     y_pred = forecaster2.predict(fh=[1, 2, 12])
     check_eval(y_pred.index.names, index_names)
 
