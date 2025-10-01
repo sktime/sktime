@@ -969,6 +969,8 @@ class _RecursiveReducer(_Reducer):
             yt = yt.ravel()
 
         self.estimator_ = clone(self.estimator)
+        Xt = pd.DataFrame(Xt, columns=self._X_metadata["feature_names"])
+        yt = pd.Series(yt, name=self._y_metadata["feature_names"][0])
         self.estimator_.fit(Xt, yt)
         return self
 

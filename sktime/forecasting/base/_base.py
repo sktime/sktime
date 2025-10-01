@@ -1636,7 +1636,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # checking X
         if X is not None:
             # request only required metadata from checks
-            X_metadata_required = ["feature_kind"]
+            X_metadata_required = ["n_features", "feature_names", "feature_kind"]
             if not self.get_tag("capability:missing_values"):
                 X_metadata_required += ["has_nans"]
 
@@ -1678,6 +1678,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 )
 
             X_scitype = X_metadata["scitype"]
+            self._X_metadata = X_metadata
             X_requires_vectorization = X_scitype not in X_inner_scitype
             requires_vectorization = requires_vectorization or X_requires_vectorization
 
