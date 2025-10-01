@@ -380,11 +380,14 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
                     param.requires_grad = False
 
                 # Adjust requires_grad for layers with mismatched sizes
-                for key, _, _ in info["mismatched_keys"]:
+                for key in info["mismatched_keys"]:
                     _model = self.model
                     for attr_name in key.split(".")[:-1]:
                         _model = getattr(_model, attr_name)
-                    _model.weight.requires_grad = True
+                    if hasattr(_model, "position_enc"):
+                        _model.position_enc.requires_grad = True
+                    else:
+                        _model.weight.requires_grad = True
 
                 # Adjust requires_grad for layers with missing keys
                 for key in info["missing_keys"]:
