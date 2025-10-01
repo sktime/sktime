@@ -1,0 +1,1 @@
+"""A dummy classification catalogue."""
