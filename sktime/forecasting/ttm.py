@@ -189,6 +189,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     few_shot_ratio : float, optional, default=None
         Fraction of training data to use for few-shot learning.
         Must be between 0 and 1. If None, uses all available data.
+        If 1.0, no sampling is performed (equivalent to None).
         Smaller values (e.g., 0.05, 0.1) enable faster training but may
         reduce performance. Recommended range: 0.1 to 0.5.
         The model automatically samples the most recent data points to maintain
@@ -196,7 +197,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
     few_shot_random_state : int, optional, default=42
         Random seed for reproducible few-shot sampling.
-        Only used when few_shot_ratio is not None.
+        Only used when few_shot_ratio is not None and not 1.0.
 
     References
     ----------
@@ -593,7 +594,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             X_eval = None
 
         # Apply few-shot sampling if enabled
-        if self.few_shot_ratio is not None:
+        if self.few_shot_ratio is not None and self.few_shot_ratio != 1:
             y_train, X_train = self._apply_few_shot_sampling(
                 y_train,
                 X_train,
