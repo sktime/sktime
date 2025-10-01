@@ -220,7 +220,7 @@ class TiRexForecaster(BaseForecaster):
         url = "https://raw.githubusercontent.com/NX-AI/tirex/refs/heads/main/LICENSE"
 
         with urllib.request.urlopen(url) as response:
-            license_text = response.read().decode('utf-8')
+            license_text = response.read().decode("utf-8")
 
         print(license_text)
 
