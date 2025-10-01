@@ -18,6 +18,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.datasets.base import BaseDataset
 from sktime.forecasting.base import BaseForecaster
 from sktime.performance_metrics.base import BaseMetric
+from sktime.split.base import BaseSplitter
 from sktime.utils.unique_str import _make_strings_unique
 
 
@@ -299,17 +300,29 @@ class BaseBenchmark:
         Parameters
         ----------
         catalogue : BaseCatalogue
-            A catalogue containing estimators, datasets, or metrics.
+            A catalogue containing estimators, datasets, metrics, or CV splitters.
         """
         catalogue = catalogue.clone()
         objects = catalogue.get("all", as_object=True)
 
+        dataset_loaders = []
+        metrics = []
+        cv_splitters = ""
+
         for obj in objects:
             if isinstance(obj, (BaseForecaster, BaseClassifier)):
                 self.add_estimator(obj)
+            elif isinstance(obj, BaseDataset):
+                dataset_loaders.append(obj)
+            elif isinstance(obj, BaseMetric):
+                metrics.append(obj)
+            elif isinstance(obj, BaseSplitter):
+                cv_splitters = obj
 
-            elif isinstance(obj, (BaseDataset, BaseMetric)):
-                self.add_task(obj)
+        for dataset_loader in dataset_loaders:
+            self.add_task(
+                dataset_loader=dataset_loader, scorers=metrics, cv_splitter=cv_splitters
+            )
 
     def _run(self, results_path: str, force_rerun: str | list[str] = "none"):
         """
