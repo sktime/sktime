@@ -638,10 +638,147 @@ class _Reducer(_BaseWindowForecaster, _ReducerMixin):
         if isinstance(self._y.index, pd.MultiIndex):
             names = self._y.index.names
             series_keys = self._y.index.droplevel(-1).unique()
-            base_time = self._y.index.get_level_values(-1).max()
-            cutoff = _shift(pd.Index([base_time]), by=shift, return_index=True)
+            time_idx = self._y.index.get_level_values(-1)
+            base_time = time_idx.max()
+            # try to carry/derive a frequency for the 1-elem cutoff index
+            freq = getattr(time_idx, "freq", None)
+            if freq is None:
+                try:
+                    freq = pd.infer_freq(time_idx)
+                except Exception:
+                    freq = None
+            tz = getattr(time_idx, "tz", None)
+
+            # period-aware construction of the 1-element "cutoff" index
+            if isinstance(base_time, pd.Period):
+                cutoff0 = pd.PeriodIndex([base_time], freq=base_time.freq)
+            elif isinstance(time_idx, pd.PeriodIndex):
+                # base_time may be a scalar period pulled from a PeriodIndex
+                cutoff0 = pd.PeriodIndex([base_time], freq=time_idx.freq)
+            elif freq is not None:
+                cutoff0 = pd.date_range(start=base_time, periods=1, freq=freq, tz=tz)
+            else:
+                cutoff0 = pd.DatetimeIndex([base_time], tz=tz)
+
+            if isinstance(cutoff0, pd.DatetimeIndex) and cutoff0.freq is None:
+                # try the panel's time-level frequency we computed above
+                freq1 = freq
+
+                # if still unknown, infer from any series (robust to panel concat)
+                if freq1 is None:
+                    try:
+                        first_key = (
+                            series_keys[0]
+                            if not isinstance(series_keys, pd.MultiIndex)
+                            else series_keys[0]
+                        )
+                        ser_idx = self._y.loc[first_key].index
+                        # prefer explicit freq on the single-series index, else infer
+                        freq1 = getattr(ser_idx, "freq", None) or pd.infer_freq(ser_idx)
+                    except Exception:
+                        freq1 = None
+
+                if freq1 is not None:
+                    # rebuild 1-element index with an actual freq so _shift can work
+                    cutoff0 = pd.date_range(
+                        start=cutoff0[0], periods=1, freq=freq1, tz=cutoff0.tz
+                    )
+                else:
+                    # last resort: make an index with a fixed delta from single series
+                    try:
+                        ser_idx = self._y.loc[first_key].index  # re-use if available
+                        if len(ser_idx) >= 2:
+                            delta = ser_idx[1] - ser_idx[0]
+                        else:
+                            delta = pd.Timedelta(days=1)
+                    except Exception:
+                        delta = pd.Timedelta(days=1)
+                    start = cutoff0[0]
+                    # create a fake 2-step range to give _shift something to work with
+                    cutoff0 = pd.DatetimeIndex([start, start + delta], tz=start.tz)[:1]
+
+            # shift the one-element cutoff index; if it has no freq, recover one
+            try:
+                cutoff = _shift(cutoff0, by=shift, return_index=True)
+            except Exception:
+                # (a) try the panel time-level freq you already computed
+                freq1 = freq
+                ser_idx = None
+
+                # (b) if still unknown, infer from any one series (no duplicate times)
+                if freq1 is None:
+                    try:
+                        first_key = (
+                            series_keys[0]
+                            if not isinstance(series_keys, pd.MultiIndex)
+                            else series_keys[0]
+                        )
+                        ser_idx = self._y.loc[first_key].index
+                        freq1 = getattr(ser_idx, "freq", None) or pd.infer_freq(ser_idx)
+                    except Exception:
+                        freq1 = None
+
+                if freq1 is not None:
+                    # rebuild a 1-elem DatetimeIndex with a real freq, then shift
+                    cutoff0 = pd.date_range(
+                        start=base_time, periods=1, freq=freq1, tz=tz
+                    )
+                    cutoff = _shift(cutoff0, by=shift, return_index=True)
+                else:
+                    # (c) last resort: manual shift by a constant step delta
+                    try:
+                        delta = (
+                            ser_idx[1] - ser_idx[0]
+                            if ser_idx is not None and len(ser_idx) >= 2
+                            else pd.Timedelta(days=1)
+                        )
+                    except Exception:
+                        delta = pd.Timedelta(days=1)
+                    # produce the shifted single timestamp directly
+                    cutoff = pd.DatetimeIndex([base_time + shift * delta], tz=tz)
+
             relative_int = pd.Index(range(-self.window_length_ + 1, 2))
-            times = _index_range(relative_int, cutoff)
+
+            if isinstance(cutoff, pd.DatetimeIndex) and cutoff.freq is None:
+                # try the panel time-level freq you computed above
+                freq1 = freq
+
+                # if still unknown, infer from any single series (no duplicates)
+                if freq1 is None:
+                    try:
+                        first_key = (
+                            series_keys[0]
+                            if not isinstance(series_keys, pd.MultiIndex)
+                            else series_keys[0]
+                        )
+                        ser_idx = self._y.loc[first_key].index
+                        freq1 = getattr(ser_idx, "freq", None) or pd.infer_freq(ser_idx)
+                    except Exception:
+                        freq1 = None
+
+                if freq1 is not None:
+                    # rebuild 1-elem cutoff with a real freq, then use _index_range
+                    cutoff = pd.date_range(
+                        start=cutoff[0], periods=1, freq=freq1, tz=cutoff.tz
+                    )
+                    times = _index_range(relative_int, cutoff)
+                else:
+                    # last-resort: constant step from one series (works when regular)
+                    try:
+                        if len(ser_idx) >= 2:
+                            delta = ser_idx[1] - ser_idx[0]
+                        else:
+                            delta = pd.Timedelta(days=1)
+                    except NameError:
+                        # ser_idx may not exist if earlier try failed
+                        delta = pd.Timedelta(days=1)
+                    base = cutoff[0]
+                    times = pd.DatetimeIndex(
+                        [base + i * delta for i in relative_int], tz=base.tz
+                    )
+            else:
+                # PeriodIndex cutoff (or DatetimeIndex with freq) → normal path
+                times = _index_range(relative_int, cutoff)
 
             # Build forecast frame via _create_fcst_df expand left-levels by times.
             # NB: pass only time index (times), not a pre-built product MultiIndex.
@@ -1305,10 +1442,49 @@ class _RecursiveReducer(_Reducer):
         if self.pooling == "global":
             fh_max = fh.to_relative(self._cutoff_scalar())[-1]
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
-            index_range = _index_range(relative, self.cutoff)
-            if isinstance(self.cutoff, pd.DatetimeIndex):
-                if self.cutoff.tz is not None:
-                    index_range = index_range.tz_localize(self.cutoff.tz)
+
+            # Build a 1-element cutoff index that carries/inherits freq, if possible
+            c = self._cutoff_scalar()
+            if isinstance(c, pd.Period):
+                cutoff_idx = pd.PeriodIndex([c], freq=c.freq)
+            elif isinstance(c, pd.Timestamp):
+                # Try to inherit or infer a real freq for the 1-elem cutoff index.
+                freq = None
+                y_idx = getattr(self, "_y", None)
+                y_idx = getattr(y_idx, "index", None)
+
+                if isinstance(y_idx, pd.MultiIndex):
+                    # infer from one series (avoid duplicate times in pooled level)
+                    try:
+                        keys = y_idx.droplevel(-1).unique()
+                        first_key = (
+                            keys[0] if not isinstance(keys, pd.MultiIndex) else keys[0]
+                        )
+                        ser_idx = self._y.loc[first_key].index
+                        freq = getattr(ser_idx, "freq", None) or pd.infer_freq(ser_idx)
+                    except Exception:
+                        freq = None
+                else:
+                    # single-series case: infer directly
+                    if y_idx is not None:
+                        freq = getattr(y_idx, "freq", None)
+                        if freq is None:
+                            try:
+                                freq = pd.infer_freq(y_idx)
+                            except Exception:
+                                freq = None
+
+                cutoff_idx = (
+                    pd.date_range(start=c, periods=1, freq=freq, tz=c.tz)
+                    if freq is not None
+                    else pd.DatetimeIndex([c], tz=c.tz)
+                )
+            elif isinstance(c, (pd.PeriodIndex, pd.DatetimeIndex, pd.Index)):
+                cutoff_idx = c[:1]
+            else:
+                cutoff_idx = pd.Index([c])
+
+            index_range = _index_range(relative, cutoff_idx)
 
             y_pred = _create_fcst_df(index_range, self._y)
 
