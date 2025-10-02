@@ -2,7 +2,7 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from inspect import isclass
+from inspect import signature, isclass
 
 from sklearn.base import BaseEstimator as SklearnBaseEstimator
 from sklearn.base import ClassifierMixin, ClusterMixin, RegressorMixin, TransformerMixin
@@ -10,6 +10,41 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 
 __author__ = ["fkiraly"]
+
+
+def is_in_sklearn(obj):
+    """Check whether obj is in sklearn.
+
+    Parameters
+    ----------
+    obj : any class or object
+
+    Returns
+    -------
+    is_in_sklearn : bool, whether obj is in sklearn (class or instance)
+    """
+    mod = getattr(obj, "__module__", "")
+    if not (mod.startswith("sklearn.") or mod == "sklearn"):
+        return False
+
+    return True
+
+
+def is_sklearn_object(obj):
+    """Check whether obj is an sklearn object.
+
+    Parameters
+    ----------
+    obj : any class or object
+
+    Returns
+    -------
+    is_sklearn_obj : bool, whether obj is an sklearn object (class or instance)
+    """
+    res = is_sklearn_estimator(obj)
+    res = res or is_sklearn_metric(obj)
+    res = res or is_sklearn_splitter(obj)
+    return res
 
 
 def is_sklearn_estimator(obj):
@@ -55,16 +90,25 @@ def sklearn_scitype(obj, var_name="obj"):
     Returns
     -------
     str, the sklearn scitype of obj, inferred from inheritance tree, one of
-        "classifier" - supervised classifier
-        "clusterer" - unsupervised clusterer
-        "regressor" - supervised regressor
-        "transformer" - transformer (pipeline element, feature extractor, unsupervised)
-        "estimator" - sklearn estimator of indeterminate type
+
+    * "classifier" - supervised classifier
+    * "clusterer" - unsupervised clusterer
+    * "metric" - sklearn metric function
+    * "regressor" - supervised regressor
+    * "splitter" - sklearn splitter (cross-validation generator)
+    * "transformer" - transformer (pipeline element, feature extractor, unsupervised)
+    * "estimator" - sklearn estimator of indeterminate type
 
     Raises
     ------
     TypeError if obj is not an sklearn estimator, according to is_sklearn_estimator
     """
+    if is_sklearn_metric(obj):
+        return "metric"
+
+    if is_sklearn_splitter(obj):
+        return "splitter"
+
     if not is_sklearn_estimator(obj):
         raise TypeError(f"{var_name} is not an sklearn estimator, has type {type(obj)}")
 
@@ -146,3 +190,104 @@ def is_sklearn_clusterer(obj):
     bool, whether obj is an sklearn clusterer
     """
     return is_sklearn_estimator(obj) and sklearn_scitype(obj) == "clusterer"
+
+
+def is_sklearn_splitter(obj):
+    """Check whether obj is an sklearn splitter.
+
+    Check whether a class conforms to the sklearn splitter API signature.
+    Does not check input/output contract.
+
+    Conditions:
+
+    - Has a callable ``split(X, y=None, groups=None)`` method
+    - Has a callable ``get_n_splits(X=None, y=None, groups=None)`` method
+    - splitter import location is in ``sklearn`` module
+
+    Parameters
+    ----------
+    obj : any object
+
+    Returns
+    -------
+    bool, whether obj is an sklearn splitter
+    """
+    from skbase.base import BaseObject
+
+    # if obj is a sktime BaseObject, return False right away
+    if not is_in_sklearn(obj) or issubclass(type(obj), BaseObject):
+        return False
+
+    # Instantiate if a class is passed
+    try:
+        obj = obj() if isclass(obj) else obj
+    except Exception:
+        return False
+
+    # 1. Check `split`
+    if not hasattr(obj, "split") or not callable(getattr(obj, "split")):
+        return False
+    split_sig = signature(obj.split)
+    split_params = list(split_sig.parameters.keys())
+    if len(split_params) < 1 or split_params[0] != "X":
+        return False
+
+    # 2. Check `get_n_splits`
+    if not hasattr(obj, "get_n_splits") or not callable(getattr(obj, "get_n_splits")):
+        return False
+    gns_sig = signature(obj.get_n_splits)
+    gns_params = list(gns_sig.parameters.keys())
+    if len(gns_params) > 3:
+        return False
+
+    return True
+
+
+def is_sklearn_metric(obj):
+    """Check whether obj is an sklearn metric.
+
+    Check whether an object conforms to sklearn's metric API signature.
+    Does not check input/output contract.
+    
+    Conditions:
+
+    - Callable
+    - Signature: (y_true, y_pred, ...)
+    - splitter import location is in ``sklearn`` module
+
+    Parameters
+    ----------
+    obj : any object
+
+    Returns
+    -------
+    bool, whether obj is an sklearn metric
+    """
+    from skbase.base import BaseObject
+
+    # if obj is a sktime BaseObject, return False right away
+    if not is_in_sklearn(obj) or issubclass(type(obj), BaseObject):
+        return False
+
+    # 1. Must be callable
+    if not callable(obj):
+        return False
+
+    # 2. Must be from sklearn.*
+    mod = getattr(obj, "__module__", "")
+    if not (mod.startswith("sklearn.") or mod == "sklearn"):
+        return False
+
+    # 3. Must have correct signature
+    try:
+        sig = signature(obj)
+    except (TypeError, ValueError):
+        return False
+
+    params = list(sig.parameters.values())
+    if len(params) < 2:
+        return False
+    if params[0].name != "y_true" or params[1].name != "y_pred":
+        return False
+
+    return True
