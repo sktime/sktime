@@ -9,10 +9,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.summarize import (
     ALLOWED_SUM_FUNCS,
     SummaryTransformer,
+    WindowSummarizer,
 )
 from sktime.utils._testing.series import _make_series
 
@@ -127,3 +129,42 @@ def test_summarize_no_lossy_setitem():
     transformer = SummaryTransformer()
     transformer.fit(data)
     assert True  # Reaching here means no LossySetitemError was raised
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_window_summarizer_bfill_multiindex_no_cross_series_leakage():
+    """Ensure bfill does not borrow values across MultiIndex series boundaries."""
+
+    # Create 2 series with distinct values
+    index = pd.MultiIndex.from_product(
+        [["A", "B"], range(10)], names=["series", "time"]
+    )
+    # Series A: 10-19, Series B: 100-109
+    y = pd.DataFrame(
+        {"value": list(range(10, 20)) + list(range(100, 110))}, index=index
+    )
+
+    # Split: last 2 points as test
+    y_train, y_test = temporal_train_test_split(y=y, test_size=2)
+    y_pred = pd.DataFrame(index=y_test.index)
+
+    ws = WindowSummarizer(lag_feature={"lag": [1]}, truncate="bfill", n_jobs=1)
+    ws.fit(X=y_train, y=y_train)
+    result = ws.transform(X=y_pred, y=y_pred)
+
+    # Check Series A last point doesn't have Series B values
+    series_a_values = result.loc["A"].dropna().values
+    if len(series_a_values) > 0:
+        assert series_a_values.max() < 100, (
+            f"Series A has value {series_a_values.max()} from Series B"
+        )
+
+    # Check Series B first point doesn't have Series A values
+    series_b_values = result.loc["B"].dropna().values
+    if len(series_b_values) > 0:
+        assert series_b_values.min() >= 100, (
+            f"Series B has value {series_b_values.min()} from Series A"
+        )

@@ -483,8 +483,8 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
 
     # Handle backfill
     if bfill is True:
-        if isinstance(Z.index, pd.MultiIndex):
-            feat = feat.groupby(level=list(range(Z.index.nlevels - 1))).bfill()
+        if isinstance(Z, pd.core.groupby.GroupBy):
+            feat = feat.groupby(level=list(range(feat.index.nlevels - 1))).bfill()
         else:
             feat = feat.bfill()
 
