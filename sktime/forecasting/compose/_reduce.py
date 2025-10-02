@@ -1725,9 +1725,15 @@ class DirectTabularRegressionForecaster(_DirectReducer):
     estimator : Estimator
         A tabular regression estimator as provided by scikit-learn.
     window_length : int, optional (default=10)
-        The length of the sliding window used to transform the series into
-        a tabular matrix.
+        The length of the sliding window used to transform the series
+        into a tabular matrix.
     """
+
+    _tags = {
+        **_DirectReducer._tags,  # inherit parent tags if it defines any
+        "capability:exogenous": True,
+        "capability:hierarchical": True,
+    }
 
     def __init__(
         self,
@@ -1737,7 +1743,7 @@ class DirectTabularRegressionForecaster(_DirectReducer):
         pooling="local",
         windows_identical=True,
     ):
-        super(_DirectReducer, self).__init__(
+        super().__init__(
             estimator=estimator, window_length=window_length, transformers=transformers
         )
         self.pooling = pooling
