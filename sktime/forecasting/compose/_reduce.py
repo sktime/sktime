@@ -2363,6 +2363,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
         # -----------------
+        "capability:missing_values": True,
         "tests:libs": ["sktime.transformations.series.lag"],
     }
 
