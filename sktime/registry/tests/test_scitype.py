@@ -155,3 +155,12 @@ def test_sklearn_scitypes():
     )
     assert scitype(reg_pipe) == "regressor_tabular"
     assert is_scitype(reg_pipe, "regressor_tabular")
+
+    from sklearn.model_selection import GridSearchCV
+
+    reg_gscv = GridSearchCV(
+        reg_pipe,
+        param_grid={"regressor__fit_intercept": [True, False]},
+    )
+    assert scitype(reg_gscv) == "regressor_tabular"
+    assert is_scitype(reg_gscv, "regressor_tabular")
