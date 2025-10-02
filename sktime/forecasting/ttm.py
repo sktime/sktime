@@ -838,20 +838,24 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         """
         # Calculate sample size
         total_length = len(y_train)
-        sample_size = int(total_length * ratio)
 
         # Ensure minimum sample size based on model requirements
         min_samples = max(1, config.context_length + config.prediction_length)
+
+        effective_samples = total_length - min_samples + 1
+        sample_size = int(effective_samples * ratio)
+
+        if min_samples > total_length:
+            raise ValueError(
+                "The dataset is too small to create even one training sample."
+            )
+
         if sample_size < min_samples:
             warn(
                 f"few_shot_ratio={ratio} results in {sample_size} samples, "
                 f"but minimum required is {min_samples}. Using minimum size."
             )
             sample_size = min_samples
-
-        # If sample size is >= total length, return original data
-        if sample_size >= total_length:
-            return y_train, X_train
 
         # Sample from the end to maintain temporal order (most recent data)
         if not isinstance(y_train.index, pd.MultiIndex):
