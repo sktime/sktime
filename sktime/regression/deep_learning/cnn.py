@@ -99,7 +99,9 @@ class CNNRegressor(BaseDeepRegressor):
         loss="mean_squared_error",
         metrics=None,
         random_state=0,
-        activation="linear",
+        activation=None,
+        activation_hidden="sigmoid",
+        activation_output="linear",
         use_bias=True,
         optimizer=None,
         filter_sizes=None,
@@ -117,19 +119,34 @@ class CNNRegressor(BaseDeepRegressor):
         self.loss = loss
         self.metrics = metrics
         self.random_state = random_state
-        self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
         self.filter_sizes = filter_sizes
         self.padding = padding
 
+        # handle deprecated activation
+        if activation is not None:
+            import warnings
+
+            warnings.warn(
+                "`activation` is deprecated. "
+                "Use `activation_hidden` and `activation_output` instead. "
+                "For backward compatibility, treating `activation` as "
+                "`activation_output`.",
+                FutureWarning,
+            )
+            activation_output = activation
+
+        self.activation_hidden = activation_hidden
+        self.activation_output = activation_output
+
         self._network = CNNNetwork(
             kernel_size=self.kernel_size,
             avg_pool_size=self.avg_pool_size,
             n_conv_layers=self.n_conv_layers,
             filter_sizes=self.filter_sizes,
-            activation=self.activation,
+            activation=self.activation_hidden,
             padding=self.padding,
             random_state=self.random_state,
         )
@@ -165,7 +182,7 @@ class CNNRegressor(BaseDeepRegressor):
 
         output_layer = keras.layers.Dense(
             units=1,
-            activation=self.activation,
+            activation=self.activation_output,
             use_bias=self.use_bias,
         )(output_layer)
 
