@@ -1,6 +1,6 @@
 """Time Convolutional Neural Network (CNN) for regression."""
 
-__author__ = ["AurumnPegasus", "achieveordie"]
+__author__ = ["AurumnPegasus", "achieveordie", "noxthot"]
 __all__ = ["CNNRegressor"]
 
 from copy import deepcopy
@@ -129,7 +129,6 @@ class CNNRegressor(BaseDeepRegressor):
             avg_pool_size=self.avg_pool_size,
             n_conv_layers=self.n_conv_layers,
             filter_sizes=self.filter_sizes,
-            activation=self.activation,
             padding=self.padding,
             random_state=self.random_state,
         )
