@@ -2,7 +2,7 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from inspect import signature, isclass
+from inspect import isclass, signature
 
 from sklearn.base import BaseEstimator as SklearnBaseEstimator
 from sklearn.base import ClassifierMixin, ClusterMixin, RegressorMixin, TransformerMixin
@@ -248,7 +248,7 @@ def is_sklearn_metric(obj):
 
     Check whether an object conforms to sklearn's metric API signature.
     Does not check input/output contract.
-    
+
     Conditions:
 
     - Callable
