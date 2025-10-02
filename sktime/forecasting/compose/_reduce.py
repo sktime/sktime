@@ -970,21 +970,27 @@ class _RecursiveReducer(_Reducer):
 
         self.estimator_ = clone(self.estimator)
         if "save_feature_names" in kwargs and kwargs["save_feature_names"]:
-            if Xt is not None:
-                X_cols = X.columns if X is not None else []
-                Xt_cols = (
-                    [col for col in Xt.columns if col not in X_cols]
-                    if hasattr(Xt, "columns")
-                    else []
-                )
-                merged_cols = X_cols + Xt_cols
-                Xt = pd.DataFrame(Xt, columns=merged_cols)
-            if yt is not None:
-                yt = pd.Series(
-                    yt  # todo series name and index
-                )
+            yt, Xt = self._reassign_feature_names(X, Xt, yt)
         self.estimator_.fit(Xt, yt)
         return self
+
+    def _reassign_feature_names(self, X, Xt, yt):
+        if Xt is not None:
+            Xt_cols = self._get_Xt_features(X, Xt)
+            merged_cols = Xt_cols
+            Xt = pd.DataFrame(Xt, columns=merged_cols)
+        if yt is not None:
+            yt = pd.DataFrame(yt, index=Xt.index)
+        return yt, Xt
+
+    def _get_Xt_features(self, X, Xt):
+        X_cols = X.columns if X is not None else []
+        Xt_cols = (
+            [col for col in Xt.columns if col not in X_cols]
+            if hasattr(Xt, "columns")
+            else []
+        )
+        return X_cols + Xt_cols
 
     def _predict_last_window(self, fh, X=None, **kwargs):
         """.

@@ -175,6 +175,11 @@ def test_recursive_reduction(save_feature_names, y, index_names, y_dict):
     forecaster2.fit(y, fh=[1, 2], save_feature_names=save_feature_names)
     y_pred = forecaster2.predict(fh=[1, 2, 12])
     check_eval(y_pred.index.names, index_names)
+    if save_feature_names:
+        check_eval(
+            forecaster2.estimator_.feature_names_in_,
+            ["y_lag_1", "y_mean_1_3", "y_mean_1_12", "y_std_1_4"],
+        )
 
 
 @pytest.mark.skipif(
