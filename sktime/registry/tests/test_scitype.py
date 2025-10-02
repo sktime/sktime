@@ -108,6 +108,8 @@ def test_is_scitype():
 
 def test_sklearn_scitypes():
     """Test that scitype correctly identifies sklearn scitypes."""
+    from sklearn.metrics import accuracy_score, mean_squared_error
+    from sklearn.model_selection import KFold
     from sklearn.linear_model import LinearRegression
     from sklearn.preprocessing import StandardScaler
     from sklearn.svm import SVC
@@ -118,6 +120,10 @@ def test_sklearn_scitypes():
     assert scitype(StandardScaler()) == "transformer_tabular"
     assert scitype(SVC) == "classifier_tabular"
     assert scitype(SVC()) == "classifier_tabular"
+    assert scitype(accuracy_score) == "metric_tabular"
+    assert scitype(mean_squared_error) == "metric_tabular"
+    assert scitype(KFold) == "splitter_tabular"
+    assert scitype(KFold()) == "splitter_tabular"
 
     assert is_scitype(LinearRegression, "regressor_tabular")
     assert is_scitype(LinearRegression(), "regressor_tabular")
@@ -125,6 +131,10 @@ def test_sklearn_scitypes():
     assert is_scitype(StandardScaler(), "transformer_tabular")
     assert is_scitype(SVC, "classifier_tabular")
     assert is_scitype(SVC(), "classifier_tabular")
+    assert is_scitype(accuracy_score, "metric_tabular")
+    assert is_scitype(mean_squared_error, "metric_tabular")
+    assert is_scitype(KFold, "splitter_tabular")
+    assert is_scitype(KFold(), "splitter_tabular")
 
     from sklearn.pipeline import Pipeline
 
