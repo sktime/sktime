@@ -38,8 +38,8 @@ class CNNRegressor(BaseDeepRegressor):
     metrics         : list of strings, default=["accuracy"],
     random_state    : int or None, default=None
         Seed for random number generation.
-    activation      : string or a tf callable, default="softmax"
-        Activation function used in the output linear layer.
+    activation      : string or a tf callable, default="linear"
+        Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
     use_bias        : boolean, default = True
