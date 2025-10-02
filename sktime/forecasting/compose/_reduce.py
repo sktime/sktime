@@ -35,6 +35,7 @@ from sklearn.multioutput import MultiOutputRegressor
 
 from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.registry import is_scitype, scitype
@@ -2379,6 +2380,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
+        _DelegatedForecaster._set_delegated_tags(self, estimator)
         super().__init__()
 
         warn(
@@ -2416,6 +2418,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 f"impute_method must be str, None, or sktime transformer, "
                 f"but found {impute_method}"
             )
+
+    def _get_delegate(self):
+        """Return the delegate estimator."""
+        return self.estimator
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
