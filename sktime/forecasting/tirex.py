@@ -215,13 +215,10 @@ class TiRexForecaster(BaseForecaster):
     @classmethod
     def print_license(self):
         """Print the license terms of TiRex."""
-        import urllib.request
+        import importlib
 
-        url = "https://raw.githubusercontent.com/NX-AI/tirex/refs/heads/main/LICENSE"
-
-        with urllib.request.urlopen(url) as response:
-            license_text = response.read().decode("utf-8")
-
+        dist = importlib.metadata.distribution("tirex-ts")
+        license_text = dist.read_text("licenses/LICENSE")
         print(license_text)
 
     # todo: implement this, mandatory
