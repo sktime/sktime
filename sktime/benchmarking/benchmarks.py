@@ -307,7 +307,7 @@ class BaseBenchmark:
 
         dataset_loaders = []
         metrics = []
-        cv_splitters = ""
+        cv_splitters = []
 
         for obj in objects:
             if isinstance(obj, (BaseForecaster, BaseClassifier)):
@@ -317,12 +317,15 @@ class BaseBenchmark:
             elif isinstance(obj, BaseMetric):
                 metrics.append(obj)
             elif isinstance(obj, BaseSplitter):
-                cv_splitters = obj
+                cv_splitters.append(obj)
 
         for dataset_loader in dataset_loaders:
-            self.add_task(
-                dataset_loader=dataset_loader, scorers=metrics, cv_splitter=cv_splitters
-            )
+            for cv_splitter in cv_splitters:
+                self.add_task(
+                    dataset_loader=dataset_loader,
+                    scorers=metrics,
+                    cv_splitter=cv_splitter,
+                )
 
     def _run(self, results_path: str, force_rerun: str | list[str] = "none"):
         """

@@ -52,8 +52,7 @@ class BaseCatalogue(BaseObject):
 
         as_object : bool, default=False
             If True, return object instances.
-            If False, return specification strings that can be turned
-            into objects using `craft`.
+            If False, return specification strings or function names.
 
         Returns
         -------
@@ -68,28 +67,29 @@ class BaseCatalogue(BaseObject):
                 f"Available keys: {list(names_dict.keys())}"
             )
 
-        if not as_object:
-            if object_type == "all":
-                return [name for names in names_dict.values() for name in names]
-            else:
-                return names_dict[object_type]
+        items = (
+            [item for items in names_dict.values() for item in items]
+            if object_type == "all"
+            else names_dict[object_type]
+        )
 
+        if not as_object:
+            return [type(item).__name__ if callable(item) else item for item in items]
+
+        # as_object=True path
         if self._cached_objects is None:
             self._cached_objects = {}
 
-        if object_type == "all":
-            all_objects = []
-            for key, names in names_dict.items():
-                if key not in self._cached_objects:
-                    self._cached_objects[key] = [craft(name) for name in names]
-                all_objects.extend(self._cached_objects[key])
-            return all_objects
-        else:
-            if object_type not in self._cached_objects:
-                self._cached_objects[object_type] = [
-                    craft(name) for name in names_dict[object_type]
-                ]
-            return self._cached_objects[object_type]
+        if object_type not in self._cached_objects:
+            processed = []
+            for item in items:
+                if isinstance(item, str):
+                    processed.append(craft(item))
+                else:
+                    processed.append(item)
+            self._cached_objects[object_type] = processed
+
+        return self._cached_objects[object_type]
 
     def available_categories(self):
         """Return the available item categories in the catalogue.

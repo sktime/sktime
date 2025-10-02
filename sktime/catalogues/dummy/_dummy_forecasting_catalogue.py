@@ -4,7 +4,7 @@ from sktime.catalogues.base import BaseCatalogue
 
 
 class DummyForecastingCatalogue(BaseCatalogue):
-    """Dummy catalogue of datasets, forecasters, and metrics."""
+    """Dummy catalogue of datasets, forecasters, metrics, and cv."""
 
     _tags = {
         "authors": "jgyasu",
