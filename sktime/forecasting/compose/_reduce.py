@@ -1129,17 +1129,31 @@ class _DirectReducer(_Reducer):
         if self.pooling == "global":
             fh_abs = fh.to_absolute_index(self._cutoff_scalar())
             y_preds = []
-
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_last, **kwargs)
-                if est_type == "regressor":
-                    y_pred_i = _create_fcst_df([fh_abs[i]], self._y, fill=y_pred_est)
-                else:  # est_type == "regressor_proba"
-                    y_pred_v = _coerce_to_numpy(y_pred_est)
-                    y_pred_i = _create_fcst_df([fh_abs[i]], y_pred_est, fill=y_pred_v)
+
+                # --- normalize and slice to the current horizon i (panel/global) ---
+                y_arr = _coerce_to_numpy(y_pred_est)  # 1D or 2D -> numpy
+                if y_arr.ndim == 1:
+                    y_arr = y_arr.reshape(-1, 1)
+
+                # number of series in the panel (last level is time)
+                n_series = (
+                    len(self._y.index.droplevel(-1).unique())
+                    if isinstance(self._y.index, pd.MultiIndex)
+                    else 1
+                )
+
+                # some estimators may return (#series * #fh, n_targets)
+                # even in direct mode; # in that case, slice out the
+                # block for the current horizon i
+                if y_arr.shape[0] == n_series * len(self.estimators_):
+                    y_arr = y_arr[i * n_series : (i + 1) * n_series]
+
+                # --- build the one-step frame for fh_abs[i] ---
+                y_pred_i = _create_fcst_df([fh_abs[i]], self._y, fill=y_arr)
                 y_preds.append(y_pred_i)
             y_pred = pool_preds(y_preds)
-
         else:
             # Pre-allocate arrays.
             if self._X is None:
