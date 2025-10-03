@@ -8,12 +8,17 @@ the lower the better.
 """
 
 import numpy as np
+import pandas as pd
+from scipy.stats import gmean
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._common import _relative_error
 from sktime.performance_metrics.forecasting._functions import (
     _get_kwarg,
 )
+
+# Small epsilon to replace zero values for geometric mean calculation
+EPS = np.finfo(np.float64).eps
 
 
 class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetric):
@@ -112,6 +117,55 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetric):
         "requires-y-pred-benchmark": True,
         "univariate-only": False,
     }
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs.
+
+        private _evaluate containing core logic, called from evaluate
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : float or np.ndarray
+            Calculated metric, possibly averaged by variable given ``multioutput``.
+
+            * float if ``multioutput="uniform_average" or array-like,
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              i-th entry is the, metric calculated for i-th variable
+        """
+        multioutput = self.multioutput
+
+        y_pred_benchmark = _get_kwarg("y_pred_benchmark", **kwargs)
+
+        # Calculate relative errors
+        relative_errors = np.abs(_relative_error(y_true, y_pred, y_pred_benchmark))
+
+        # Apply sample weights if provided
+        relative_errors = self._get_weighted_df(relative_errors, **kwargs)
+
+        # Replace zeros with small epsilon to avoid issues with geometric mean
+        relative_errors_arr = np.where(
+            relative_errors == 0.0, EPS, relative_errors.values
+        )
+
+        # Calculate geometric mean over time axis (axis=0)
+        gmrae_values = gmean(relative_errors_arr, axis=0)
+
+        # Convert back to pandas Series for consistent handling
+        gmrae_series = pd.Series(gmrae_values, index=y_true.columns)
+
+        return self._handle_multioutput(gmrae_series, multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
