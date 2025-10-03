@@ -20,25 +20,25 @@ class CNNRegressor(BaseDeepRegressor):
 
     Parameters
     ----------
-    n_epochs       : int, default = 2000
+    n_epochs          : int, default = 2000
         the number of epochs to train the model
-    batch_size      : int, default = 16
+    batch_size        : int, default = 16
         the number of samples per gradient update.
-    kernel_size     : int, default = 7
+    kernel_size       : int, default = 7
         the length of the 1D convolution window
-    avg_pool_size   : int, default = 3
+    avg_pool_size     : int, default = 3
         size of the average pooling windows
-    n_conv_layers   : int, default = 2
+    n_conv_layers     : int, default = 2
         the number of convolutional plus average pooling layers
-    callbacks       : list of keras.callbacks, default = None
-    verbose         : boolean, default = False
+    callbacks         : list of keras.callbacks, default = None
+    verbose           : boolean, default = False
         whether to output extra information
-    loss            : string, default="mean_squared_error"
+    loss              : string, default="mean_squared_error"
         fit parameter for the keras model
-    metrics         : list of strings, default=["accuracy"],
-    random_state    : int or None, default=None
+    metrics           : list of strings, default=["accuracy"],
+    random_state      : int or None, default=None
         Seed for random number generation.
-    activation      : string or a tf callable, default="linear"
+    activation        : string or a tf callable, default="linear"
         Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
@@ -48,10 +48,10 @@ class CNNRegressor(BaseDeepRegressor):
         https://keras.io/api/layers/activations/
     use_bias          : boolean, default = True
         whether the layer uses a bias vector.
-    optimizer       : keras.optimizers object, default = Adam(lr=0.01)
+    optimizer         : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
-    filter_sizes    : array of shape (n_conv_layers) default = [6, 12]
-    padding : string, default = "auto"
+    filter_sizes      : array of shape (n_conv_layers) default = [6, 12]
+    padding           : string, default = "auto"
         Controls padding logic for the convolutional layers,
         i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
         - "auto": as per original implementation, ``"same"`` is passed if
