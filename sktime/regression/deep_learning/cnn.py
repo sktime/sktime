@@ -89,6 +89,10 @@ class CNNRegressor(BaseDeepRegressor):
         "maintainers": ["AurumnPegasus", "achieveordie"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        #
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,  # run in VM due to memory requirement
     }
 
     def __init__(
