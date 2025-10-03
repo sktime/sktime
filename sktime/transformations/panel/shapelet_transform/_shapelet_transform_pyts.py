@@ -129,7 +129,7 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         "python_dependencies": "pyts",
         # univariate-only controls whether internal X can be univariate/multivariate
         # if True (only univariate), always applies vectorization over variables
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": False,

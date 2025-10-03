@@ -426,6 +426,8 @@ class GreedyGaussianSegmentation(BaseDetector):
         "fit_is_empty": True,
         "task": "segmentation",
         "learning_type": "unsupervised",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(

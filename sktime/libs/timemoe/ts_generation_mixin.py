@@ -14,7 +14,7 @@
 """ts_generation_mixin."""
 
 import warnings
-from typing import Any, Optional, Union
+from typing import Any
 
 from sktime.utils.dependencies import _safe_import
 
@@ -43,14 +43,14 @@ class TSGenerationMixin(GenerationMixin):
         input_ids,
         logits_processor=None,
         stopping_criteria=None,
-        max_length: Optional[int] = None,
-        pad_token_id: Optional[int] = None,
-        eos_token_id: Optional[Union[int, list[int]]] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        output_scores: Optional[bool] = None,
-        output_logits: Optional[bool] = None,
-        return_dict_in_generate: Optional[bool] = None,
+        max_length: int | None = None,
+        pad_token_id: int | None = None,
+        eos_token_id: int | list[int] | None = None,
+        output_attentions: bool | None = None,
+        output_hidden_states: bool | None = None,
+        output_scores: bool | None = None,
+        output_logits: bool | None = None,
+        return_dict_in_generate: bool | None = None,
         synced_gpus: bool = False,
         streamer=None,
         **model_kwargs,

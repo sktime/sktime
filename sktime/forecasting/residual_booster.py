@@ -72,7 +72,7 @@ class ResidualBoostingForecaster(BaseForecaster):
     _tags = {
         "authors": ["Sanchay117", "felipeangelimvieira"],
         "capability:pred_int": True,
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": True,
         "capability:missing_values": False,
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
@@ -87,20 +87,18 @@ class ResidualBoostingForecaster(BaseForecaster):
         super().__init__()
 
         exog = self.base_forecaster.get_tag(
-            "ignores-exogeneous-X"
-        ) or self.residual_forecaster.get_tag("ignores-exogeneous-X")
+            "capability:exogenous"
+        ) or self.residual_forecaster.get_tag("capability:exogenous")
 
         miss = self.base_forecaster.get_tag(
             "capability:missing_values"
         ) and self.residual_forecaster.get_tag("capability:missing_values")
 
-        pred_int = self.base_forecaster.get_tag(
-            "capability:pred_int"
-        ) and self.residual_forecaster.get_tag("capability:pred_int")
+        pred_int = self.residual_forecaster.get_tag("capability:pred_int")
 
         in_sample = self.base_forecaster.get_tag(
             "capability:insample"
-        ) or self.residual_forecaster.get_tag("capability:insample")
+        ) and self.residual_forecaster.get_tag("capability:insample")
 
         cat = self.base_forecaster.get_tag(
             "capability:categorical_in_X"
@@ -112,7 +110,7 @@ class ResidualBoostingForecaster(BaseForecaster):
 
         self.set_tags(
             **{
-                "ignores-exogeneous-X": exog,
+                "capability:exogenous": exog,
                 "capability:missing_values": miss,
                 "capability:insample": in_sample,
                 "capability:pred_int:insample": pred_int_insample,
@@ -168,25 +166,32 @@ class ResidualBoostingForecaster(BaseForecaster):
         y_resid = self.residual_forecaster_.predict(fh=fh, X=X)
         return y_base + y_resid
 
+    def _add_det_to_proba(self, y_proba, y_pred):
+        """Add multiindex columns to probabilistic forecasts."""
+        y_proba = y_proba.copy()
+        for col in y_proba.columns:
+            var = col[0]
+            y_proba[col] = y_proba[col] + y_pred[var]
+        return y_proba
+
     def _predict_interval(self, fh, X=None, coverage=0.9):
         """Combine prediction intervals from base and residual models."""
-        i_base = self.base_future_.predict_interval(fh=fh, X=X, coverage=coverage)
+        i_base = self.base_future_.predict(fh=fh, X=X)
         i_res = self.residual_forecaster_.predict_interval(
             fh=fh, X=X, coverage=coverage
         )
-        return i_base + i_res
+        return self._add_det_to_proba(i_res, i_base)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Combine arbitrary quantile forecasts."""
-        q_base = self.base_future_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        q_base = self.base_future_.predict(fh=fh, X=X)
         q_res = self.residual_forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
-        return q_base + q_res
+        return self._add_det_to_proba(q_res, q_base)
 
     def _predict_var(self, fh, X=None, cov=False):
         """Combine predictive variances (or full covariances)."""
-        v_base = self.base_future_.predict_var(fh=fh, X=X, cov=cov)
         v_res = self.residual_forecaster_.predict_var(fh=fh, X=X, cov=cov)
-        return v_base + v_res
+        return v_res
 
     def _predict_proba(self, fh, X=None, marginal=True):
         """Combine full distribution forecasts from base & residual models."""

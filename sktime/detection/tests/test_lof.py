@@ -78,3 +78,18 @@ def test_predict(X, y_expected):
     model.fit(X)
     y_actual = model.predict(X)
     pd.testing.assert_frame_equal(y_actual, y_expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SubLOF),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_sublof_does_not_mutate_input():
+    """Check that SubLOF does not modify the input DataFrame."""
+    X = pd.DataFrame([0, 0.5, 100, 0.1, 0, 0.2, 0.3, 50])
+    X_original = X.copy(deep=True)
+
+    model = SubLOF(n_neighbors=2, window_size=2, novelty=True)
+    _ = model.fit_transform(X)
+
+    pd.testing.assert_frame_equal(X, X_original)

@@ -51,8 +51,8 @@ class SqueezeHierarchy(BaseTransformer):
         "y_inner_mtype": "None",
         "capability:inverse_transform": True,  # does transformer have inverse
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,

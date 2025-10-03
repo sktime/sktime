@@ -161,7 +161,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         "scitype:y": "both",
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["optuna"],

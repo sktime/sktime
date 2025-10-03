@@ -48,7 +48,6 @@ __all__ = [
 ]
 
 from itertools import product
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -75,19 +74,19 @@ from sktime.utils.sklearn import (
 )
 
 # single/multiple primitives
-Primitive = Union[np.integer, int, float, str]
+Primitive = np.integer | int | float | str
 Primitives = np.ndarray
 
 # tabular/cross-sectional data
-Tabular = Union[pd.DataFrame, np.ndarray]  # 2d arrays
+Tabular = pd.DataFrame | np.ndarray  # 2d arrays
 
 # univariate/multivariate series
-UnivariateSeries = Union[pd.Series, np.ndarray]
-MultivariateSeries = Union[pd.DataFrame, np.ndarray]
-Series = Union[UnivariateSeries, MultivariateSeries]
+UnivariateSeries = pd.Series | np.ndarray
+MultivariateSeries = pd.DataFrame | np.ndarray
+Series = UnivariateSeries | MultivariateSeries
 
 # panel/longitudinal/series-as-features data
-Panel = Union[pd.DataFrame, np.ndarray]  # 3d or nested array
+Panel = pd.DataFrame | np.ndarray  # 3d or nested array
 
 
 def _coerce_to_list(obj):
@@ -115,7 +114,7 @@ class BaseTransformer(BaseEstimator):
         "capability:inverse_transform:range": None,
         "capability:inverse_transform:exact": True,
         # inverting range of inverse transform = domain of invertibility of transform
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
@@ -135,7 +134,8 @@ class BaseTransformer(BaseEstimator):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
-        "capability:categorical_in_X": False,
+        "capability:categorical_in_X": True,
+        "capability:categorical_in_y": True,
         # does the transformer apply hierarchical reconciliation?
         "remember_data": False,  # whether all data seen is remembered as self._X
         "python_version": None,  # PEP 440 python version specifier to limit versions
@@ -1100,11 +1100,12 @@ class BaseTransformer(BaseEstimator):
                 msg, var_name=msg_X, allowed_msg=allowed_msg, raise_exception=True
             )
 
-        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"] and not self.get_tag(
-            "capability:categorical_in_X"
-        ):
+        cat_in_X = DtypeKind.CATEGORICAL in X_metadata["feature_kind"]
+        supports_cat_in_X = self.get_tag("capability:categorical_in_X")
+        if cat_in_X and not supports_cat_in_X:
             raise TypeError(
-                f"Transformer {self} does not support categorical features in X."
+                f"Transformer {self} does not support categorical features in X, "
+                "but categorical data was passed."
             )
 
         X_scitype = X_metadata["scitype"]
@@ -1126,7 +1127,7 @@ class BaseTransformer(BaseEstimator):
         metadata["_convert_case"] = case
 
         # checking X vs tags
-        inner_univariate = self.get_tag("univariate-only")
+        inner_univariate = not self.get_tag("capability:multivariate")
         # we remember whether we need to vectorize over columns, and at all
         req_vec_because_cols = inner_univariate and not X_metadata["is_univariate"]
         requires_vectorization = req_vec_because_rows or req_vec_because_cols
@@ -1171,9 +1172,12 @@ class BaseTransformer(BaseEstimator):
                 y_scitype = y_metadata["scitype"]
                 y_mtype = y_metadata["mtype"]
 
-                if DtypeKind.CATEGORICAL in y_metadata["feature_kind"]:
+                cat_in_y = DtypeKind.CATEGORICAL in y_metadata["feature_kind"]
+                supports_cat_in_y = self.get_tag("capability:categorical_in_y")
+                if cat_in_y and not supports_cat_in_y:
                     raise TypeError(
-                        "Transformers do not support categorical features in y."
+                        f"Transformer {self} not support categorical features in y, "
+                        "but categorical data was passed."
                     )
 
         else:

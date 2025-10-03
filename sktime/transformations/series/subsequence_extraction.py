@@ -74,7 +74,7 @@ class SubsequenceExtractionTransformer(BaseTransformer):
     """
 
     _tags = {
-        "univariate-only": False,
+        "capability:multivariate": True,
         "authors": ["wirrywoo"],
         "maintainers": ["wirrywoo"],
         "scitype:transform-input": "Series",

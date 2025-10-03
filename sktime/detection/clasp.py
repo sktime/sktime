@@ -223,7 +223,7 @@ class ClaSPSegmentation(BaseDetector):
         # --------------
         "task": "change_point_detection",
         "learning_type": "unsupervised",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": True,
         "python_dependencies": "numba",
         "X_inner_mtype": "pd.Series",

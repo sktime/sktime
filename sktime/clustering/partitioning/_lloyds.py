@@ -1,7 +1,6 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -216,13 +215,13 @@ class BaseTimeSeriesLloyds(BaseClusterer):
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Union[str, Callable] = "random",
-        metric: Union[str, Callable] = "euclidean",
+        init_algorithm: str | Callable = "random",
+        metric: str | Callable = "euclidean",
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-6,
         verbose: bool = False,
-        random_state: Union[int, RandomState] = None,
+        random_state: int | RandomState = None,
         distance_params: dict = None,
     ):
         self.init_algorithm = init_algorithm

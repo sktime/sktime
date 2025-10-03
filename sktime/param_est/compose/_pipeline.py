@@ -112,8 +112,8 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
 
         # can handle multivariate iff: both estimator and all transformers can
         multivariate = param_est.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both estimator and all transformers can,
         #   *or* transformer chain removes missing data

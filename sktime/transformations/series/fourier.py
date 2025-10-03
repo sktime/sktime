@@ -4,7 +4,6 @@
 __author__ = ["ltsaprounis", "blazingbhavneek"]
 
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -109,7 +108,7 @@ class FourierFeatures(BaseTransformer):
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
@@ -133,14 +132,20 @@ class FourierFeatures(BaseTransformer):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
+        # testing configuration
+        # ---------------------
+        "tests:skip_by_name": [
+            "test_categorical_y_raises_error",
+            "test_categorical_X_passes",
+        ],  # estimator works for categorical X, but test parameters are not compatible
     }
 
     def __init__(
         self,
         sp_list: list[float],
         fourier_terms_list: list[int],
-        freq: Optional[str] = None,
-        keep_original_columns: Optional[bool] = False,
+        freq: str | None = None,
+        keep_original_columns: bool | None = False,
     ):
         self.sp_list = sp_list
         self.fourier_terms_list = fourier_terms_list
@@ -380,12 +385,13 @@ class FourierTransform(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "requires_y": False,
         "fit_is_empty": True,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self):

@@ -308,8 +308,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         not support categorical natively. These are the cases where error is expected
         to be raised.
         """
-        if not estimator_instance.get_tag(
-            "ignores-exogeneous-X"
+        if estimator_instance.get_tag(
+            "capability:exogenous"
         ) and not estimator_instance.get_tag("capability:categorical_in_X"):
             X_train = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c"]})
             y_train = _make_series(n_timepoints=6, n_columns=2)
@@ -768,10 +768,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         self, estimator_instance, n_columns, update_params
     ):
         """Test update method with exogenous variables"""
-        # Skip test if forecaster ignores exogenous variables
-        if estimator_instance.get_tag("ignores-exogeneous-X"):
-            return None
-
         index = pd.date_range("2020-01-01", periods=25, freq="D")
 
         # Create y data

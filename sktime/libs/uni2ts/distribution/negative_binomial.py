@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Optional
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -59,7 +58,7 @@ class NegativeBinomial(Distribution):
         self,
         total_count,
         logits,
-        validate_args: Optional[bool] = None,
+        validate_args: bool | None = None,
     ):
         (
             self.total_count,

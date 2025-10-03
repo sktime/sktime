@@ -11,19 +11,20 @@ class ScitypePanel(BaseDatatype):
 
     The ``Panel`` data type is an abstract data type (= :term:`scitype`).
 
-    It represents an indexed collection of many single monotonously indexed sequences,
+    A ``Panel`` represents an indexed collection of
+    many single monotonously indexed sequences,
     that is, an indexed collection of objects that follow the ``Series`` data type.
 
-    This including the sub-case of a panel of "time series" if the index is interpreted
-    as time.
+    This including the sub-case of a collection of "time series",
+    if the index is interpreted as time.
 
     Formally, an abstract ``Panel`` object that contains :math:`N` time series has:
 
     * an index :math:`s_1, \dots, s_N`, with :math:`s_i` being an integer or
       a categorical type, representing the series identifier, also called
       "instance index" or "case index"
-    * individual time series :math:`S_i` for :math:`i = 1, \dots, N`, each being an
-      object of abstract ``Series`` type
+    * individual time series :math:`S_i` for :math:`i = 1, \dots, N`,
+      where each :math:`S_i` is an object of abstract ``Series`` type
 
     The object :math:`S_i` is interpreted as the time series (or sequence) at
     the instance index :math:`s_i`.
@@ -44,13 +45,13 @@ class ScitypePanel(BaseDatatype):
     Parameters
     ----------
     is_univariate: bool
-        True iff table has one variable
+        True iff all series in the panel have one variable
     is_equally_spaced : bool
-        True iff series index is equally spaced
+        True iff all series in the panel are equally spaced
     is_equal_length: bool
-        True iff all series in panel are of equal length
+        True iff all series in the panel are of equal length
     is_empty: bool
-        True iff table has no variables or no instances
+        True iff panel has no variables or no instances
     is_one_series: bool
         True iff there is only one series in the panel of time series
     has_nans: bool
@@ -58,15 +59,17 @@ class ScitypePanel(BaseDatatype):
     n_instances: int
         number of instances in the panel of time series
     n_features: int
-        number of variables in table
+        number of variables in the panel
     feature_names: list of int or object
-        names of variables in table
+        names of variables in the panel
     dtypekind_dfip: list of DtypeKind enum
         list of DtypeKind enum values for each feature in the panel,
-        following the data frame interface protocol
+        following the data frame interface protocol.
+        In same order as ``feature_names``.
     feature_kind: list of str
-        list of feature kind strings for each feature in the panel,
-        coerced to FLOAT or CATEGORICAL type
+        list of feature-kind strings for each feature in the panel,
+        coerced to ``"FLOAT"`` or ``"CATEGORICAL"`` type string.
+        In same order as ``feature_names``.
     """
 
     _tags = {

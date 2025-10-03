@@ -11,7 +11,7 @@ Installation
 
 ``sktime`` currently supports:
 
-* environments with python version 3.8, 3.9, 3.10, 3.11, or 3.12.
+* environments with python version 3.10, 3.11, 3.12, or 3.13.
 * operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
 * installation via ``PyPi`` or ``conda``
 

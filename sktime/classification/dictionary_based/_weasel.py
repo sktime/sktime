@@ -27,12 +27,13 @@ class WEASEL(BaseClassifier):
     on this bag.
 
     There are these primary parameters:
-            - alphabet_size: alphabet size
-            - p-threshold: threshold used for chi^2-feature selection to
-                        select best words.
-            - anova: select best l/2 fourier coefficients other than first ones
-            - bigrams: using bigrams of SFA words
-            - binning_strategy: the binning strategy used to discretise into SFA words.
+
+    - alphabet_size: alphabet size
+    - p-threshold: threshold used for chi^2-feature selection to select best words.
+    - anova: select best l/2 fourier coefficients other than first ones
+    - bigrams: using bigrams of SFA words
+    - binning_strategy: the binning strategy used to discretise into SFA words.
+
     WEASEL slides a window length *w* along the series. The *w* length window
     is shortened to an *l* length word through taking a Fourier transform and
     keeping the best *l/2* complex coefficients using an anova one-sided
@@ -129,6 +130,8 @@ class WEASEL(BaseClassifier):
         # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "dictionary",
     }
 

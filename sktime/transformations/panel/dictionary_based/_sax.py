@@ -55,7 +55,7 @@ class SAXlegacy(BaseTransformer):
 
     _tags = {
         "authors": ["MatthewMiddlehurst"],
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -64,6 +64,7 @@ class SAXlegacy(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict require for y?
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
