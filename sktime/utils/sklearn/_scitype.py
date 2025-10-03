@@ -103,8 +103,9 @@ def sklearn_scitype(obj, var_name="obj"):
     ------
     TypeError if obj is not an sklearn estimator, according to is_sklearn_estimator
     """
-    if is_sklearn_metric(obj):
-        return "metric"
+    is_metric, metric_type = is_sklearn_metric(obj, return_type=True)
+    if is_metric:
+        return metric_type
 
     if is_sklearn_splitter(obj):
         return "splitter"
@@ -243,7 +244,7 @@ def is_sklearn_splitter(obj):
     return True
 
 
-def is_sklearn_metric(obj):
+def is_sklearn_metric(obj, return_type=False):
     """Check whether obj is an sklearn metric.
 
     Check whether an object conforms to sklearn's metric API signature.
@@ -258,36 +259,56 @@ def is_sklearn_metric(obj):
     Parameters
     ----------
     obj : any object
+    return_type : bool, optional, default=False
+        whether to return the type of metric if obj is a metric
 
     Returns
     -------
-    bool, whether obj is an sklearn metric
+    bool : whether obj is an sklearn metric
+    type : str, one of
+
+        * "metric": non-probabilistic metric for regression or classification,
+          of signature (y_true, y_pred, ...)
+        * "metric_proba": metric that takes probability estimates as second argument,
+          of signature (y_true, y_proba, ...)
+        * None: if obj is not an sklearn metric
     """
+    def _ret(res, typ):
+        if return_type:
+            return res, typ
+        return res
+
     from skbase.base import BaseObject
 
     # if obj is a sktime BaseObject, return False right away
     if not is_in_sklearn(obj) or issubclass(type(obj), BaseObject):
-        return False
+        return _ret(False, None)
 
     # 1. Must be callable
     if not callable(obj):
-        return False
+        return _ret(False, None)
 
     # 2. Must be from sklearn.*
     mod = getattr(obj, "__module__", "")
     if not (mod.startswith("sklearn.") or mod == "sklearn"):
-        return False
+        return _ret(False, None)
 
     # 3. Must have correct signature
     try:
         sig = signature(obj)
     except (TypeError, ValueError):
-        return False
+        return _ret(False, None)
 
     params = list(sig.parameters.values())
     if len(params) < 2:
-        return False
-    if params[0].name != "y_true" or params[1].name != "y_pred":
-        return False
+        return _ret(False, None)
+    if params[0].name != "y_true" or params[1].name not in {"y_pred", "y_proba"}:
+        return _ret(False, None)
 
-    return True
+    if params[1].name == "y_pred":
+        return _ret(True, "metric")
+    if params[1].name == "y_proba":
+        return _ret(True, "metric_proba")
+
+    # unreachable due to "not in" above, but for code checkers
+    _ret(False, None)

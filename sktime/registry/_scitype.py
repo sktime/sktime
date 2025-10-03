@@ -95,7 +95,8 @@ def scitype(
 
             * ``"classifier_tabular"`` - ``sklearn`` classifier
             * ``"clusterer_tabular"`` - ``sklearn`` clusterer
-            * ``"metric_tabular"`` - ``sklearn`` metric function
+            * ``"metric_tabular"`` - ``sklearn`` metric function (non-probabilistic)
+            * ``"metric_proba_tabular"`` - ``sklearn`` proba classification metric
             * ``"regressor_tabular"`` - ``sklearn`` regressor
             * ``"splitter_tabular"`` - ``sklearn`` splitter (cross-validation generator)
             * ``"transformer_tabular"`` - ``sklearn`` transformation
