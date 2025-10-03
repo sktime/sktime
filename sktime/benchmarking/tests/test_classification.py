@@ -10,7 +10,7 @@ from sklearn.model_selection import KFold
 from sktime.benchmarking.classification import ClassificationBenchmark
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.dummy import DummyClassifier
-from sktime.datasets import ArrowHead, UCRUEADataset, load_unit_test
+from sktime.datasets import ArrowHead, UCRUEADataset, load_arrow_head, load_unit_test
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.panel import make_classification_problem
 
@@ -176,7 +176,7 @@ def test_multiple_dataset_format(tmp_path):
     benchmark = ClassificationBenchmark()
     benchmark.add_estimator(DummyClassifier())
 
-    dataset_loaders = [ArrowHead, UCRUEADataset("Beef")]
+    dataset_loaders = [load_arrow_head, ArrowHead, UCRUEADataset("Beef")]
     cv_splitter = KFold(n_splits=3)
     scorers = [accuracy_score]
 
@@ -193,8 +193,9 @@ def test_multiple_dataset_format(tmp_path):
     pd.testing.assert_series_equal(
         pd.Series(
             [
+                "[dataset=load_arrow_head]_[cv_splitter=KFold]",
                 "[dataset=ArrowHead]_[cv_splitter=KFold]",
-                "_[cv_splitter=KFold]",
+                "[dataset=Beef]_[cv_splitter=KFold]",
             ],
             name="validation_id",
         ),
