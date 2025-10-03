@@ -1,6 +1,5 @@
 """Time Convolutional Neural Network (CNN) for classification."""
 
-__author__ = ["James-Large", "TonyBagnall"]
 __all__ = ["CNNClassifier"]
 
 from copy import deepcopy
@@ -77,7 +76,7 @@ class CNNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large"],
+        "authors": ["hfawaz", "James-Large", "noxthot"],
         # hfawaz for dl-4-tsc
         "maintainers": ["James-Large"],
         "python_dependencies": "tensorflow",

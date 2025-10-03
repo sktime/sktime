@@ -1,6 +1,5 @@
 """Time Convolutional Neural Network (CNN) for regression."""
 
-__author__ = ["AurumnPegasus", "achieveordie", "noxthot"]
 __all__ = ["CNNRegressor"]
 
 from copy import deepcopy
@@ -84,7 +83,7 @@ class CNNRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "AurumnPegasus", "achieveordie"],
+        "authors": ["hfawaz", "AurumnPegasus", "achieveordie", "noxthot"],
         # hfawaz for dl-4-tsc
         "maintainers": ["AurumnPegasus", "achieveordie"],
         "python_dependencies": "tensorflow",
