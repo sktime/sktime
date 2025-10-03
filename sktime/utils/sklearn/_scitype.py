@@ -273,6 +273,7 @@ def is_sklearn_metric(obj, return_type=False):
           of signature (y_true, y_proba, ...)
         * None: if obj is not an sklearn metric
     """
+
     def _ret(res, typ):
         if return_type:
             return res, typ
