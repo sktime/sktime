@@ -1746,7 +1746,6 @@ class DirectTabularRegressionForecaster(_DirectReducer):
     _tags = {
         **_DirectReducer._tags,  # inherit parent tags if it defines any
         "capability:exogenous": True,
-        "capability:hierarchical": True,
     }
 
     def __init__(
@@ -2532,6 +2531,10 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "maintainers": "hliebert",
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
+        "X-allowed": True,
+        "capability:exogenous": True,
+        "capability:multivariate": True,
+        "capability:insample": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
@@ -4262,8 +4265,12 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
         {
             "capability:multivariate": True,  # do not split DataFrame columns
             # keep inner mtypes broad so our _fit/_predict see the full object
+            "X-allowed": True,
+            "capability:exogenous": True,
+            "capability:insample": True,
             "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.DataFrame"],
             "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+            "tests:core": True,
         }
     )
 
