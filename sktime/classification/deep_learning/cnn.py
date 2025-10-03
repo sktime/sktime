@@ -38,8 +38,12 @@ class CNNClassifier(BaseDeepClassifier):
     metrics         : list of strings, default=["accuracy"],
     random_state    : int or None, default=None
         Seed for random number generation.
-    activation      : string or a tf callable, default="softmax"
-        Activation function used in the output linear layer.
+    activation       : string or a tf callable, default="softmax"
+        Activation function used in the output layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="sigmoid"
+        Activation function used in the hidden layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
     use_bias        : boolean, default = True
@@ -93,6 +97,7 @@ class CNNClassifier(BaseDeepClassifier):
         metrics=None,
         random_state=None,
         activation="softmax",
+        activation_hidden="sigmoid",
         use_bias=True,
         optimizer=None,
         filter_sizes=None,
@@ -112,6 +117,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.metrics = metrics
         self.random_state = random_state
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
@@ -125,7 +131,7 @@ class CNNClassifier(BaseDeepClassifier):
             avg_pool_size=self.avg_pool_size,
             n_conv_layers=self.n_conv_layers,
             filter_sizes=self.filter_sizes,
-            activation=self.activation,
+            activation=self.activation_hidden,
             padding=self.padding,
             random_state=self.random_state,
         )
