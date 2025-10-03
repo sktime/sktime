@@ -42,7 +42,11 @@ class CNNRegressor(BaseDeepRegressor):
         Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
-    use_bias        : boolean, default = True
+    activation_hidden : string or a tf callable, default="sigmoid"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    use_bias          : boolean, default = True
         whether the layer uses a bias vector.
     optimizer       : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
@@ -100,6 +104,7 @@ class CNNRegressor(BaseDeepRegressor):
         metrics=None,
         random_state=0,
         activation="linear",
+        activation_hidden="sigmoid",
         use_bias=True,
         optimizer=None,
         filter_sizes=None,
@@ -118,6 +123,7 @@ class CNNRegressor(BaseDeepRegressor):
         self.metrics = metrics
         self.random_state = random_state
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
@@ -128,6 +134,7 @@ class CNNRegressor(BaseDeepRegressor):
             kernel_size=self.kernel_size,
             avg_pool_size=self.avg_pool_size,
             n_conv_layers=self.n_conv_layers,
+            activation=self.activation_hidden,
             filter_sizes=self.filter_sizes,
             padding=self.padding,
             random_state=self.random_state,
