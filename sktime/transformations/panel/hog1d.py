@@ -42,8 +42,8 @@ class HOG1DTransformer(BaseTransformer):
     scaling_factor : float, default=0.1
         a constant that is multiplied to modify the distribution.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.transformations.panel.hog1d import HOG1DTransformer
     >>> from sktime.datasets import load_arrow_head
     >>>
@@ -59,7 +59,11 @@ class HOG1DTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["vnicholson1"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -68,6 +72,7 @@ class HOG1DTransformer(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self, num_intervals=2, num_bins=8, scaling_factor=0.1):

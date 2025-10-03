@@ -7,28 +7,59 @@ from sktime.datatypes._base import BaseDatatype
 
 
 class ScitypeSeries(BaseDatatype):
-    """Series data type. Represents a single time series.
+    r"""Series data type. Represents a single time series.
+
+    The ``Series`` data type is an abstract data type (= :term:`scitype`).
+
+    It represents a single monotonously indexed sequence, including the sub-case of
+    "time series" if the index is interpreted as time.
+
+    Formally, an abstract ``Series`` object has:
+
+    * an index :math:`t_1, \dots, t_T`, with :math:`t_i` being an integer or
+      an orderable datetime-like type, representing the time point (or index)
+    * values :math:`y_1, \dots, y_T`, with :math:`y_i`, taking values in
+      an abstract typed data frame row domain :math:`\mathcal{Y}`,
+      i.e., vectors with entries being numbers
+      (float, integer) or categorical, always the same type at the same entry
+
+    The value :math:`y_i` is interpreted to be "observed at time point" :math:`t_i`.
+
+    The indices are assumed distinct and ordered, i.e., :math:`t_{i-1} < t_i`
+    for all :math:`i`.
+
+    Concrete types implementing the ``Series`` data type must specify:
+
+    * variables: how the dimensions of :math:`\mathcal{Y}` are represented
+    * variable names: optional, names of the variable dimensions
+    * time points: how the value "observed at" a given time point is represented
+    * time index: how the time index is represented
+
+    Concrete implementations may implement only sub-cases of the full abstract type.
 
     Parameters
     ----------
     is_univariate: bool
-        True iff table has one variable
+        True iff the series has one variable, i.e., :math:`y_i` is a scalar
     is_equally_spaced : bool
-        True iff series index is equally spaced
+        True iff the series index is equally spaced, i.e.,
+        :math:`t_{i} - t_{i-1}` does not depend on :math:`i`
     is_empty: bool
-        True iff table has no variables or no instances
+        True iff the series has no variables, or no instances
     has_nans: bool
-        True iff the table contains NaN values
+        True iff the the series contains NaN values
     n_features: int
-        number of variables in table
+        number of variables in the series
     feature_names: list of int or object
-        names of variables in table
+        names of variables in the series
     dtypekind_dfip: list of DtypeKind enum
-        list of DtypeKind enum values for each feature in the panel,
-        following the data frame interface protocol
+        list of DtypeKind enum values for each feature in the series,
+        following the data frame interface protocol.
+        In same order as ``feature_names``.
     feature_kind: list of str
-        list of feature kind strings for each feature in the panel,
-        coerced to FLOAT or CATEGORICAL type
+        list of feature-kind strings for each feature in the series,
+        coerced to ``"FLOAT"`` or ``"CATEGORICAL"`` type string.
+        In same order as ``feature_names``.
     """
 
     _tags = {

@@ -27,12 +27,13 @@ class WEASEL(BaseClassifier):
     on this bag.
 
     There are these primary parameters:
-            - alphabet_size: alphabet size
-            - p-threshold: threshold used for chi^2-feature selection to
-                        select best words.
-            - anova: select best l/2 fourier coefficients other than first ones
-            - bigrams: using bigrams of SFA words
-            - binning_strategy: the binning strategy used to discretise into SFA words.
+
+    - alphabet_size: alphabet size
+    - p-threshold: threshold used for chi^2-feature selection to select best words.
+    - anova: select best l/2 fourier coefficients other than first ones
+    - bigrams: using bigrams of SFA words
+    - binning_strategy: the binning strategy used to discretise into SFA words.
+
     WEASEL slides a window length *w* along the series. The *w* length window
     is shortened to an *l* length word through taking a Fourier transform and
     keeping the best *l/2* complex coefficients using an anova one-sided
@@ -129,6 +130,8 @@ class WEASEL(BaseClassifier):
         # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "dictionary",
     }
 
@@ -180,6 +183,10 @@ class WEASEL(BaseClassifier):
         from numba import set_num_threads
 
         set_num_threads(n_jobs)
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).

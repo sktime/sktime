@@ -10,11 +10,7 @@ if _check_soft_dependencies("lightning", severity="none"):
 
 from sktime.forecasting.base import _BaseGlobalForecaster
 
-if _check_soft_dependencies(
-    "huggingface-hub",
-    severity="none",
-    package_import_alias={"huggingface-hub": "huggingface_hub"},
-):
+if _check_soft_dependencies("huggingface-hub", severity="none"):
     from huggingface_hub import hf_hub_download
 
 
@@ -73,6 +69,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     >>> y = pd.DataFrame(y, index=index)
     >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)
     >>> morai_forecaster.fit(y, X=X)
+    MOIRAIForecaster(checkpoint_path='sktime/moirai-1.0-R-small')
     >>> X_test = pd.DataFrame(np.random.normal(0, 1, (10, 2)),
     ...                      columns=["x1", "x2"],
     ...                      index=pd.date_range("2020-01-31", periods=10, freq="D"),
@@ -86,11 +83,11 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": False,
         "python_dependencies": [
             "gluonts",
@@ -113,11 +110,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
         # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
         "maintainers": ["pranavvp16"],
-        "python_dependencies_alias": {
-            "salesforce-uni2ts": "uni2ts",
-            "huggingface-hub": "huggingface_hub",
-            "hydra-core": "hydra",
-        },
     }
 
     def __init__(
@@ -159,11 +151,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             )
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
-    if _check_soft_dependencies(
-        ["lightning", "huggingface-hub"],
-        severity="none",
-        package_import_alias={"huggingface-hub": "huggingface_hub"},
-    ):
+    if _check_soft_dependencies(["lightning", "huggingface-hub"], severity="none"):
         from sktime.libs.uni2ts.forecast import MoiraiForecast
 
         @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})

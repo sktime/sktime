@@ -65,10 +65,14 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, pw_trafo, transformers):
         self.pw_trafo = pw_trafo
+        self.pw_trafo_ = pw_trafo.clone()
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
@@ -76,13 +80,15 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = pw_trafo.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both classifier and all transformers can,
         #   *or* transformer chain removes missing data
         missing = pw_trafo.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -105,6 +111,15 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.pw_trafo)]
+
+    @property
+    def steps_(self):
+        """Concatenated list of sktime transformers and pairwise panel transformer."""
+        return self._transformers + [self._coerce_estimator_tuple(self.pw_trafo_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated PwTrafoPanelPipeline, trafos on left.
@@ -155,10 +170,7 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
-        trafos = self.transformers_.clone()
-        pw_trafo = self.pw_trafo
-
-        Xt = trafos.fit_transform(X)
+        Xt = self.transformers_.fit_transform(X)
 
         # find out whether we know that the resulting matrix is symmetric
         #   since aligner distances are always symmetric,
@@ -166,9 +178,10 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
         if X2 is None:
             X2t = None
         else:
-            X2t = trafos.fit_transform(X2)
+            X2t = self.transformers_.fit_transform(X2)
 
-        distmat = pw_trafo.transform(Xt, X2t)
+        distmat = self.pw_trafo_.transform(Xt, X2t)
+
         return distmat
 
     def get_params(self, deep=True):

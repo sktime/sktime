@@ -4,7 +4,6 @@ __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["LowerBounding", "resolve_bounding_matrix"]
 
 from enum import Enum
-from typing import Union
 
 import numpy as np
 
@@ -59,16 +58,17 @@ class LowerBounding(Enum):
 
     References
     ----------
-    .. [1]  H. Sakoe, S. Chiba, "Dynamic programming algorithm optimization for
+    .. [1]  H. Sakoe and S. Chiba, "Dynamic programming algorithm optimization for
             spoken word recognition," IEEE Transactions on Acoustics, Speech and
-            Signal Processing, vol. 26(1), pp. 43--49, 1978.
+            Signal Processing, vol. 26, no. 1, pp. 43--49, 1978.
     .. [2]  F. Itakura, "Minimum prediction residual principle applied to speech
-            recognition," in IEEE Transactions on Acoustics, Speech, and Signal
+            recognition," IEEE Transactions on Acoustics, Speech, and Signal
             Processing, vol. 23, no. 1, pp. 67-72, February 1975,
             doi: 10.1109/TASSP.1975.1162641.
-    .. [3]  Ratanamahatana, Chotirat & Keogh, Eamonn. (2004). Making Time-Series
-            Classification More Accurate Using Learned Constraints.
-            10.1137/1.9781611972740.2.
+    .. [3]  C. A. Ratanamahatana and E. Keogh, "Making Time-Series
+            Classification More Accurate Using Learned Constraints," in Proceedings
+            of the 2004 SIAM International Conference on Data Mining (SDM), 2004,
+            doi: 10.1137/1.9781611972740.2.
     """
 
     NO_BOUNDING = 1  # No bounding on the matrix
@@ -83,8 +83,8 @@ class LowerBounding(Enum):
         self,
         x: np.ndarray,
         y: np.ndarray,
-        sakoe_chiba_window_radius: Union[float, None] = None,
-        itakura_max_slope: Union[float, int, None] = None,
+        sakoe_chiba_window_radius: float | None = None,
+        itakura_max_slope: float | int | None = None,
     ) -> np.ndarray:
         """Create a bounding matrix.
 
@@ -179,8 +179,8 @@ class LowerBounding(Enum):
 def resolve_bounding_matrix(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
 ) -> np.ndarray:
     """Resolve the bounding matrix parameters.

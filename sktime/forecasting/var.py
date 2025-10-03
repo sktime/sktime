@@ -93,10 +93,11 @@ class VAR(_StatsModelsAdapter):
         "scitype:y": "multivariate",
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "univariate-only": False,
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(

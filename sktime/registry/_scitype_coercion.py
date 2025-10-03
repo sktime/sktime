@@ -17,14 +17,18 @@ _coerce_register[("transformer_tabular", "transformer")] = (
 
 
 def _coerce_series_annotator_to_transformer(obj):
-    from sktime.annotation.compose._as_transform import AnnotatorAsTransformer
+    from sktime.detection.compose._as_transform import DetectorAsTransformer
 
-    return AnnotatorAsTransformer(obj)
+    return DetectorAsTransformer(obj)
 
 
+# todo 1.0.0 - remove series-annotator
 _coerce_register[("series-annotator", "transformer")] = (
     _coerce_series_annotator_to_transformer
 )
+
+
+_coerce_register[("detector", "transformer")] = _coerce_series_annotator_to_transformer
 
 
 def _coerce_clusterer_to_transformer(obj):
@@ -99,6 +103,7 @@ def coerce_scitype(
     TypeError if ``raise_on_mismatch``, and ``from_scitype`` is not None, and
         the detected scitype does not match the expected scitype ``from_scitype``.
     """
+    from sktime.base._base import _safe_clone
     from sktime.registry._scitype import scitype
     from sktime.utils.sklearn import is_sklearn_estimator, sklearn_scitype
 
@@ -119,7 +124,13 @@ def coerce_scitype(
             )
 
     # case 1: detected scitype is not assumed scitype
-    if from_scitype is not None and detected_scitype not in from_scitype:
+    mismatch_raise = (
+        need_detect
+        and from_scitype is not None
+        and detected_scitype not in from_scitype
+    )
+
+    if mismatch_raise:
         # if raise_on_mismatch, raise an error
         if raise_on_mismatch:
             raise TypeError(
@@ -132,14 +143,11 @@ def coerce_scitype(
 
     if from_scitype is None or len(from_scitype) >= 2:
         from_scitype = detected_scitype
+    else:
+        from_scitype = from_scitype[0]
 
     if clone_obj:
-        if is_sklearn_estimator(obj) or not hasattr(obj, "clone"):
-            from sklearn.base import clone
-
-            obj = clone(obj)
-        else:
-            obj = obj.clone()
+        obj = _safe_clone(obj)
 
     if (from_scitype, to_scitype) not in _coerce_register:
         return obj
@@ -152,3 +160,23 @@ def coerce_scitype(
 
     coerced_obj = coerce_func(obj)
     return coerced_obj
+
+
+def all_coercible_to(to_scitype):
+    """List all scitypes that can be coerced to a given scitype.
+
+    Parameters
+    ----------
+    to_scitype : str
+        scitype to coerce to
+
+    Returns
+    -------
+    coercible_scitypes : list of str
+        list of scitypes that can be coerced to the given scitype, excluding to_scitype
+    """
+    coercible_scitypes = []
+    for from_scitype, to_scitype_ in _coerce_register.keys():
+        if to_scitype_ == to_scitype and from_scitype != to_scitype:
+            coercible_scitypes.append(from_scitype)
+    return coercible_scitypes

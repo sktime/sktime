@@ -47,8 +47,8 @@ class DilationMappingTransformer(BaseTransformer):
        Accurate and Memory Constrained Time Series Classification", 2023,
        arXiv preprint arXiv:2301.10194.
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.transformations.series.dilation_mapping import \
     ...     DilationMappingTransformer
     >>> from sktime.datasets import load_airline
@@ -69,12 +69,12 @@ class DilationMappingTransformer(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "requires_y": False,
         "fit_is_empty": True,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
     }
 
     def __init__(self, dilation=2):

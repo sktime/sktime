@@ -16,10 +16,12 @@
 import math
 from contextlib import contextmanager
 from copy import deepcopy
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
+
+from sktime.utils.dependencies import _safe_import
 
 if _check_soft_dependencies("lightning", severity="none"):
     import lightning as L
@@ -39,16 +41,19 @@ if _check_soft_dependencies("torch", severity="none"):
 if _check_soft_dependencies("einops", severity="none"):
     from einops import rearrange, reduce, repeat
 
-if _check_soft_dependencies(["gluonts", "torch"], severity="none"):
-    from gluonts.model import Input, InputSpec
-    from gluonts.torch import PyTorchPredictor
-    from gluonts.transform import (
-        AddObservedValuesIndicator,
-        AsNumpyArray,
-        ExpandDimArray,
-        TestSplitSampler,
-    )
-    from gluonts.transform.split import TFTInstanceSplitter
+Input = _safe_import("gluonts.model.Input")
+InputSpec = _safe_import("gluonts.model.InputSpec")
+
+PyTorchPredictor = _safe_import("gluonts.torch.PyTorchPredictor")
+
+AddObservedValuesIndicator = _safe_import(
+    "gluonts.transform.AddObservedValuesIndicator"
+)
+AsNumpyArray = _safe_import("gluonts.transform.AsNumpyArray")
+ExpandDimArray = _safe_import("gluonts.transform.ExpandDimArray")
+TestSplitSampler = _safe_import("gluonts.transform.TestSplitSampler")
+
+TFTInstanceSplitter = _safe_import("gluonts.transform.split.TFTInstanceSplitter")
 
 
 from sktime.libs.uni2ts.common.torch_util import safe_div
@@ -91,14 +96,14 @@ class MoiraiForecast(L.LightningModule):
         feat_dynamic_real_dim: int,
         past_feat_dynamic_real_dim: int,
         context_length: int,
-        module_kwargs: Optional[dict[str, Any]] = None,
+        module_kwargs: dict[str, Any] | None = None,
         module=None,
         patch_size="auto",
         num_samples: int = 100,
     ):
-        assert (module is not None) or (
-            module_kwargs is not None
-        ), "if module is not provided, module_kwargs is required"
+        assert (module is not None) or (module_kwargs is not None), (
+            "if module is not provided, module_kwargs is required"
+        )
         super().__init__()
         self.save_hyperparameters(ignore=["module"])
         self.module = MoiraiModule(**module_kwargs) if module is None else module
@@ -107,13 +112,13 @@ class MoiraiForecast(L.LightningModule):
     @contextmanager
     def hparams_context(
         self,
-        prediction_length: Optional[int] = None,
-        target_dim: Optional[int] = None,
-        feat_dynamic_real_dim: Optional[int] = None,
-        past_feat_dynamic_real_dim: Optional[int] = None,
-        context_length: Optional[int] = None,
+        prediction_length: int | None = None,
+        target_dim: int | None = None,
+        feat_dynamic_real_dim: int | None = None,
+        past_feat_dynamic_real_dim: int | None = None,
+        context_length: int | None = None,
         patch_size=None,
-        num_samples: Optional[int] = None,
+        num_samples: int | None = None,
     ):
         kwargs = {
             "prediction_length": prediction_length,
@@ -258,7 +263,7 @@ class MoiraiForecast(L.LightningModule):
         observed_feat_dynamic_real=None,
         past_feat_dynamic_real=None,
         past_observed_feat_dynamic_real=None,
-        num_samples: Optional[int] = None,
+        num_samples: int | None = None,
     ):
         if self.hparams.patch_size == "auto":
             val_loss = []
@@ -457,7 +462,7 @@ class MoiraiForecast(L.LightningModule):
         x,
         dim: int,
         left: bool = True,
-        value: Optional[float] = None,
+        value: float | None = None,
     ):
         if dim >= 0:
             dim = -x.ndim + dim

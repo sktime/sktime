@@ -48,7 +48,7 @@ class ClaSPTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.series.clasp import ClaSPTransformer
-    >>> from sktime.annotation.clasp import find_dominant_window_sizes
+    >>> from sktime.detection.clasp import find_dominant_window_sizes
     >>> from sktime.datasets import load_electric_devices_segmentation
     >>> X, true_period_size, true_cps = load_electric_devices_segmentation()
     >>> dominant_period_size = find_dominant_window_sizes(X) # doctest: +SKIP
@@ -72,7 +72,7 @@ class ClaSPTransformer(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": True,
     }
 

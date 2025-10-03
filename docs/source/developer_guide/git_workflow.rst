@@ -10,15 +10,29 @@ GitHub, clone, and develop on a new branch.
 
 The workflow consists of two main parts:
 
-* **Creating a fork**: This sets up your own copy of the ``sktime`` repository on GitHub.
-  This needs to be done only once, when you start contributing to ``sktime``.
-* **Developing a feature**: This is the process of developing a new feature, e.g.,
-  a bugfix or new estimator.
-  This is done every time you want to contribute a new feature.
+* **First-time setup: Creating a fork and cloning the repository**: This section will help you set up your own forked copy of the ``sktime``
+repository on GitHub and a local copy of the forked repository on your machine. This needs to be done only once, when you
+start contributing to ``sktime``.
+
+* **Every-time workflow: Developing a feature**: This is the process of developing a new feature, e.g., a bugfix or new estimator.
+This is done every time you want to contribute a new feature.
 
 
-Creating a fork - Initial one time setup
-----------------------------------------
+.. note::
+
+    GUI-based solutions to carry out the below workflow steps are also available.
+    For example, to manage branches and commits, you can use:
+
+    * `GitHub Desktop <https://desktop.github.com/>`_. This is the official GitHub GUI client and also integrates with your browser.
+    * `Visual Studio Code <https://code.visualstudio.com/>`_, with suitable git extensions.
+    * `pycharm <https://www.jetbrains.com/pycharm/>`_ (native installation).
+
+    These solutions will carry out the same steps under the hood, but with a graphical interface.
+    Even if you use a GUI, we recommended to understand the underlying commands, and try them out in the terminal at least once.
+
+
+Creating a fork and cloning the repository - initial one time setup
+-------------------------------------------------------------------
 
 1.  Fork the `project
     repository <https://github.com/sktime/sktime>`__ by
@@ -56,9 +70,19 @@ Creating a fork - Initial one time setup
        > upstream  https://github.com/sktime/sktime.git (fetch)
        > upstream  https://github.com/sktime/sktime.git (push)
 
+.. note::
 
-Contributing a feature - for every new feature
-----------------------------------------------
+    Step 1 needs to be done once per GitHub account, and need to be repeated
+    only if you are using a second GitHub account, or if you are intentionally
+    resetting your fork.
+
+    Steps 2-4 need to be done once per local machine, and need to be repeated
+    only if you are working on a new machine, or after a reset of your local setup,
+    e.g., after an operating system reinstall.
+
+
+Developing a feature - repeat for every new feature
+---------------------------------------------------
 
 1.  `Sync <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_
     the ``main`` branch of your fork with the upstream repository:
@@ -138,6 +162,15 @@ Contributing a feature - for every new feature
     This will first update ``main`` branch of your fork with the latest changes from the
     ``main`` branch of the sktime repo, and then update your feature branch with those
     changes. If there are any merge conflicts, you will need to resolve them manually.
+
+.. note::
+
+    We strongly, emphatically, recommend to never use ``rebase`` for updating your
+    feature branch when contributing to ``sktime``.
+    ``rebase`` can lead to states that are very hard to recover from,
+    because it rewrites history. **Always use ``merge`` to update your feature branch.**
+    We squash all pull requests to a single commit on ``main``,
+    so the history of your feature branch is not important.
 
 
 Managing Branches - Advanced Guide

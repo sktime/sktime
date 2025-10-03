@@ -1,19 +1,14 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositors for performing forecasting by group."""
 
-from typing import Union
-
 import pandas as pd
 
 from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
-from sktime.forecasting.croston import Croston
-from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.registry import coerce_scitype
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.adi_cv import ADICVTransformer
 
 __author__ = ["fkiraly", "felipeangelimvieira"]
 __all__ = ["ForecastByLevel", "GroupbyCategoryForecaster"]
@@ -67,11 +62,14 @@ class ForecastByLevel(_DelegatedForecaster):
     _tags = {
         "authors": ["fkiraly"],
         "requires-fh-in-fit": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "scitype:y": "both",
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -136,13 +134,17 @@ class ForecastByLevel(_DelegatedForecaster):
 
 
 class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
-    """Compositor that utilizes varying forecasters based on inferred category.
+    """Choosing a global forecaster based on category or cluster of time series.
+
+    Programmatic generalization of "cluster then apply forecaster" approach,
+    or the Syntetos/Boylan heuristic to apply forecaster by categories
+    smooth, erratic, intermittent, lumpy.
 
     Applies a series-to-primitives transformer on a given time series. Series are
     grouped by the generated value from the transformer, and the corresponding
     forecaster is used to predict the time series.
 
-    Differently from `TransformSelectForecaster`, this compositor passes all timeseries
+    Different from ``TransformSelectForecaster``, this compositor passes all timeseries
     of a given category to the forecaster, instead of passing only one at a time.
 
     Parameters
@@ -151,9 +153,12 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         dict of forecasters with the key corresponding to categories generated
         by the given transformer and the value corresponding to a sktime forecaster.
 
-    transformer : sktime transformer, default = ADICVTransformer()
-        A series-to-primitives sk-time transformer that generates a value
+    transformer : sktime transformer or clusterer, default = ADICVTransformer()
+        A series-to-primitives sktime transformer that generates a value
         which can be used to quantify a choice of forecaster for the time series.
+
+        If a clusterer is used, it must support cluster assignment,
+        i.e, have the ``capability:predict`` tag.
 
         Note: To ensure correct functionality, the transformer must store the
         generated category in the first column of the returned values when
@@ -172,7 +177,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     --------
     This example showcases how the GroupbyCategoryForecaster can be utilized to select
     appropriate forecasters on the basis of the time series category determined by
-    the ADICVTransformer!
+    the ADICVTransformer:
 
     >>> from sktime.forecasting.compose import GroupbyCategoryForecaster
     >>> from sktime.forecasting.croston import Croston
@@ -180,27 +185,27 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.series.adi_cv import ADICVTransformer
 
-    # Importing the methods which can generate data of specific categories
+    Importing the methods which can generate data of specific categories
     depending on their variance and average demand intervals.
 
     >>> from sktime.transformations.series.tests.test_adi_cv import (
     ...     _generate_erratic_series)
 
-    # The forecaster is defined which accepts a dictionary of forecasters,
+    The forecaster is defined which accepts a dictionary of forecasters,
     a transformer and optionally a fallback_forecaster
 
     >>> group_forecaster = GroupbyCategoryForecaster(
     ...     forecasters =
     ...         {"smooth": NaiveForecaster(),
-    ...         "erratic": Croston(),
-    ...         "intermittent": PolynomialTrendForecaster()},
+    ...         "erratic": PolynomialTrendForecaster(),
+    ...         "intermittent": Croston()},
     ...     transformer=ADICVTransformer(features=["class"]))
 
     >>> generated_data = _generate_erratic_series()
 
-    # The fit function firstly passes the data through the given transformer
-    # to generate a given category. This category can be seen by the variable
-    # self.category_.
+    The fit function firstly passes the data through the given transformer
+    to generate a given category. This category can be seen by the variable
+    ``self.category_``.
 
     >>> group_forecaster = group_forecaster.fit(generated_data, fh=50)
     >>> #print(f"The chosen category is: {group_forecaster.category}")
@@ -221,15 +226,14 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             "pd_multiindex_hier",
         ],
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
         "authors": ["felipeangelimvieira", "shlok191"],
         "maintainers": ["felipeangelimvieira"],
         "python_version": None,
+        "visual_block_kind": "parallel",
     }
-
-    _steps_attr = "_forecasters"
 
     def __init__(
         self,
@@ -242,12 +246,14 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             self.transformer = transformer
 
         else:
+            from sktime.transformations.series.adi_cv import ADICVTransformer
+
             self.transformer = ADICVTransformer(features=["class"])
 
         self.forecasters = forecasters
         self.fallback_forecaster = fallback_forecaster
 
-        self.transformer_ = self.transformer.clone()
+        self.transformer_ = coerce_scitype(self.transformer, "transformer").clone()
 
         super().__init__()
 
@@ -262,10 +268,10 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         # Assigning all capabilities on the basis of the capabilities
         # of the passed forecasters
         true_if_all_tags = {
-            "ignores-exogeneous-X": True,
+            "capability:exogenous": False,
             "X-y-must-have-same-index": True,
             "enforce_index_type": True,
-            "handles-missing-data": True,
+            "capability:missing_values": True,
             "capability:insample": True,
             "capability:pred_int": True,
             "capability:pred_int:insample": True,
@@ -320,6 +326,14 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             self._predict_interval = _predict_interval
             self._predict_var = _predict_var
             self._predict_proba = _predict_proba
+
+    @property
+    def _steps(self):
+        return [self._coerce_estimator_tuple(self.transformer)] + self._forecasters
+
+    @property
+    def steps_(self):
+        return [self._coerce_estimator_tuple(self.transformer_)] + self._forecasters
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -497,6 +511,12 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.clustering.dbscan import TimeSeriesDBSCAN
+        from sktime.forecasting.croston import Croston
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
+        from sktime.transformations.series.adi_cv import ADICVTransformer
+
         param1 = {
             "forecasters": {
                 "smooth": NaiveForecaster(),
@@ -515,7 +535,14 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             "fallback_forecaster": Croston(),
         }
 
-        params = [param1, param2]
+        # use with clusterer
+        param3 = {
+            "forecasters": {},
+            "transformer": TimeSeriesDBSCAN.create_test_instance(),
+            "fallback_forecaster": Croston(),
+        }
+
+        params = [param1, param2, param3]
         return params
 
     def _iterate_predict_method_over_categories(
@@ -570,8 +597,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             fallback forecaster with the category: "fallback_forecaster"
         """
         return list(self.forecasters.items()) + [
-            "fallback_forecaster",
-            self.fallback_forecaster,
+            ("fallback_forecaster", self.fallback_forecaster)
         ]
 
     @_forecasters.setter
@@ -592,7 +618,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             else:
                 self.fallback_forecaster = forecaster
 
-    def _loc_group(self, df: pd.DataFrame, group: Union[pd.DataFrame, None]):
+    def _loc_group(self, df: pd.DataFrame, group: pd.DataFrame | None):
         """
         Return the indexes of the given dataframe that match the given group.
 

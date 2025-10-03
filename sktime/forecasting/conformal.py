@@ -127,12 +127,15 @@ class ConformalIntervals(BaseForecaster):
         # --------------
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
-        "ignores-exogeneous-X": False,
+        "capability:missing_values": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "X_inner_mtype": MTYPE_LIST_SERIES,
         "y_inner_mtype": MTYPE_LIST_SERIES,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     ALLOWED_METHODS = [
@@ -171,8 +174,8 @@ class ConformalIntervals(BaseForecaster):
 
         tags_to_clone = [
             "requires-fh-in-fit",
-            "ignores-exogeneous-X",
-            "handles-missing-data",
+            "capability:exogenous",
+            "capability:missing_values",
             "X-y-must-have-same-index",
             "enforce_index_type",
         ]

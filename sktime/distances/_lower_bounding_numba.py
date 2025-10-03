@@ -3,7 +3,6 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
 import math
-from typing import Union
 
 import numpy as np
 
@@ -14,7 +13,7 @@ from sktime.utils.numba.njit import njit
 def create_shape_on_matrix(
     bounding_matrix: np.ndarray,
     y_upper_line: np.ndarray,
-    y_lower_line: Union[np.ndarray, None] = None,
+    y_lower_line: np.ndarray | None = None,
     x_step_size: int = 1,
     start_val: int = 0,
 ) -> np.ndarray:
@@ -51,8 +50,7 @@ def create_shape_on_matrix(
 
     if upper_line_y_values != lower_line_y_values:
         raise ValueError(
-            "The number of upper line values must equal the number of lower line "
-            "values"
+            "The number of upper line values must equal the number of lower line values"
         )
 
     for i in range(start_val, upper_line_y_values):

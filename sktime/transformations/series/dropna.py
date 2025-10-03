@@ -40,12 +40,25 @@ class DropNA(BaseTransformer):
         If True, drops the same rows/columns in transform as in fit. If false,
         drops rows/columns according to the NAs seen in transform (equivalent
         to PandasTransformAdaptor(method="dropna")).
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.dropna import DropNA
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> X = pd.DataFrame({'a': [1, 2, np.nan, 4], 'b': [5, np.nan, 7, 8]})
+    >>> transformer = DropNA(axis=0, how='any')
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> print(X_transformed)
+         a    b
+    0  1.0  5.0
+    3  4.0  8.0
     """
 
     _tags = {
         "authors": ["hliebert"],
         "maintainers": ["hliebert"],
-        "univariate-only": False,
+        "capability:multivariate": True,
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
@@ -54,7 +67,10 @@ class DropNA(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     VALID_AXIS_VALUES = [0, "index", 1, "columns"]
@@ -147,9 +163,9 @@ class DropNA(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns
@@ -184,9 +200,9 @@ class DropNA(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns

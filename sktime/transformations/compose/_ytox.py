@@ -121,13 +121,16 @@ class YtoX(BaseTransformer):
         "authors": ["fkiraly"],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "scitype:y": "both",
         "fit_is_empty": True,
         "requires_X": False,
         "requires_y": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, subset_index=False):
@@ -177,3 +180,22 @@ class YtoX(BaseTransformer):
             return y.loc[X.index.intersection(y.index)]
         else:
             return y
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+        Name of the set of test parameters to return, for use in tests. If no
+        special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : list of dict
+        Parameters to create testing instances of the class.
+        """
+        param1 = {"subset_index": False}
+        param2 = {"subset_index": True}
+        return [param1, param2]

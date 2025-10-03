@@ -56,26 +56,31 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         min_samples_split samples.
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
+
         - If int, then consider ``min_samples_split`` as the minimum number.
         - If float, then ``min_samples_split`` is a fraction and
           ``ceil(min_samples_split * n_samples)`` are the minimum
           number of samples for each split.
+
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
         least ``min_samples_leaf`` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
+
         - If int, then consider ``min_samples_leaf`` as the minimum number.
         - If float, then ``min_samples_leaf`` is a fraction and
           ``ceil(min_samples_leaf * n_samples)`` are the minimum
           number of samples for each node.
+
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
+
         - If int, then consider ``max_features`` features at each split.
         - If float, then ``max_features`` is a fraction and
           ``int(max_features * n_features)`` features are considered at each
@@ -84,6 +89,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         - If "sqrt", then ``max_features=sqrt(n_features)`` (same as "auto").
         - If "log2", then ``max_features=log2(n_features)``.
         - If None, then ``max_features=n_features``.
+
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
@@ -168,6 +174,8 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     _tags = {
         "python_dependencies": ["joblib"],
         "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -239,18 +247,31 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         """Wrap predict_proba to call BaseRegressor.predict_proba."""
         return BaseRegressor.predict_proba(self, X=X, **kwargs)
 
+    def _repr_html_inner(self):
+        """Return HTML representation of class.
+
+        This function is returned by the @property `_repr_html_` to make
+        `hasattr(BaseObject, "_repr_html_") return `True` or `False` depending
+        on `self.get_config()["display"]`.
+        """
+        return BaseRegressor._repr_html_inner(self)
+
+    def _repr_mimebundle_(self, **kwargs):
+        """Mime bundle used by jupyter kernels to display instances of BaseObject."""
+        return BaseRegressor._repr_mimebundle_(self, **kwargs)
+
     def _fit(self, X, y):
         BaseTimeSeriesForest._fit(self, X=X, y=y)
 
     def _validate_estimator(self):
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
-                "n_estimators must be an integer, " f"got {type(self.n_estimators)}."
+                f"n_estimators must be an integer, got {type(self.n_estimators)}."
             )
 
         if self.n_estimators <= 0:
             raise ValueError(
-                "n_estimators must be greater than zero, " f"got {self.n_estimators}."
+                f"n_estimators must be greater than zero, got {self.n_estimators}."
             )
 
         # Set base estimator
@@ -412,4 +433,16 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"n_estimators": 3}
+        param1 = {"n_estimators": 3}
+        param2 = {
+            "n_estimators": 5,
+            "max_depth": 5,
+            "min_samples_split": 4,
+            "random_state": 42,
+        }
+        param3 = {
+            "n_estimators": 10,
+            "max_depth": 7,
+            "min_samples_split": 0.2,
+        }
+        return [param1, param2, param3]

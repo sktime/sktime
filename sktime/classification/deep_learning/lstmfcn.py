@@ -15,10 +15,8 @@ from sktime.networks.lstmfcn import LSTMFCNNetwork
 class LSTMFCNClassifier(BaseDeepClassifier):
     """Implementation of LSTMFCNClassifier from Karim et al (2019) [1].
 
-    Overview
-    --------
-     Combines an LSTM arm with a CNN arm. Optionally uses an attention mechanism in the
-     LSTM which the author indicates provides improved performance.
+    Combines an LSTM arm with a CNN arm. Optionally uses an attention mechanism in the
+    LSTM which the author indicates provides improved performance.
 
     Parameters
     ----------

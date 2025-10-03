@@ -9,15 +9,12 @@ __all__ = [
 ]
 
 import os
-import shutil
-import tempfile
-import zipfile
-from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 
+from sktime.datasets._dataset_downloader import DatasetDownloader
 from sktime.datasets._readers_writers.ts import load_from_tsfile
 from sktime.datasets._readers_writers.utils import _alias_mtype_check
 from sktime.datatypes import convert
@@ -29,52 +26,6 @@ CLASSIF_URLS = [
     "https://timeseriesclassification.com/aeon-toolkit",  # main mirror (UEA)
     "https://github.com/sktime/sktime-datasets/raw/main/TSC",  # backup mirror (sktime)
 ]
-
-
-def _download_and_extract(url, extract_path=None):
-    """Download and unzip datasets (helper function).
-
-    This code was modified from
-    https://github.com/tslearn-team/tslearn/blob
-    /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L28
-
-    Parameters
-    ----------
-    url : string
-        Url pointing to file to download
-    extract_path : string, optional (default: None)
-        path to extract downloaded zip to, None defaults
-        to sktime/datasets/data
-
-    Returns
-    -------
-    extract_path : string or None
-        if successful, string containing the path of the extracted file, None
-        if it wasn't successful
-    """
-    file_name = os.path.basename(url)
-    dl_dir = tempfile.mkdtemp()
-    zip_file_name = os.path.join(dl_dir, file_name)
-    urlretrieve(url, zip_file_name)
-
-    if extract_path is None:
-        extract_path = os.path.join(MODULE, "local_data/%s/" % file_name.split(".")[0])
-    else:
-        extract_path = os.path.join(extract_path, "%s/" % file_name.split(".")[0])
-
-    try:
-        if not os.path.exists(extract_path):
-            os.makedirs(extract_path)
-        zipfile.ZipFile(zip_file_name, "r").extractall(extract_path)
-        shutil.rmtree(dl_dir)
-        return extract_path
-    except zipfile.BadZipFile:
-        shutil.rmtree(dl_dir)
-        if os.path.exists(extract_path):
-            shutil.rmtree(extract_path)
-        raise zipfile.BadZipFile(
-            "Could not unzip dataset. Please make sure the URL is valid."
-        )
 
 
 def _list_available_datasets(extract_path, origin_repo=None):
@@ -161,25 +112,13 @@ def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
                     f"(attempt {repeat} of {repeats} total). "
                 )
 
-            try:
-                _download_and_extract(name_url, extract_path=extract_path)
-                return extract_path, u, repeat
+            downloader = DatasetDownloader(
+                hf_repo_name="sktime/tsc-datasets",
+                folder_name=name,
+                fallback_urls=[name_url],
+            )
 
-            except zipfile.BadZipFile:
-                if verbose:
-                    if repeat < repeats - 1:
-                        print(  # noqa: T201
-                            "Download failed, continuing with next attempt. "
-                        )
-                    else:
-                        print(  # noqa: T201
-                            "All attempts for mirror failed, "
-                            "continuing with next mirror."
-                        )
-
-    raise RuntimeError(
-        f"Dataset with name ={name} could not be downloaded from any of the mirrors."
-    )
+            downloader.download(download_path=extract_path)
 
 
 def _mkdir_if_not_exist(*path):
@@ -202,7 +141,9 @@ def _mkdir_if_not_exist(*path):
     return full_path
 
 
-def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
+def _load_dataset(
+    name, split, return_X_y, return_type=None, extract_path=None, y_dtype="str"
+):
     """Load time series classification datasets (helper function).
 
     Parameters
@@ -229,6 +170,8 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
         path to extract downloaded zip to
         None defaults to sktime/datasets/data if the data exists there, otherwise
         defaults to sktime/datasets/local_data and downloads data there
+    y_dtype : str, optional(default: 'str')
+        dtype of the target variable
 
     Returns
     -------
@@ -246,7 +189,9 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
         check_path = extract_path
 
     def _get_data_from(path):
-        return _load_provided_dataset(name, split, return_X_y, return_type, path)
+        return _load_provided_dataset(
+            name, split, return_X_y, return_type, path, y_dtype=y_dtype
+        )
 
     # if the dataset exists in check_path = sktime/datasets/data, retrieve it from there
     if name in _list_available_datasets(check_path):
@@ -283,6 +228,7 @@ def _load_provided_dataset(
     return_X_y=True,
     return_type=None,
     extract_path=None,
+    y_dtype="str",
 ):
     """Load baked in time series classification datasets (helper function).
 
@@ -310,6 +256,8 @@ def _load_provided_dataset(
         Exception is raised if the data cannot be stored in the requested type.
     extract_path: default = join(MODULE, DIRNAME) = os.path.dirname(__file__) + "/data"
         path to extract downloaded zip to
+    y_dtype : str, optional (default: 'str')
+        dtype of the target variable
 
     Returns
     -------
@@ -328,16 +276,22 @@ def _load_provided_dataset(
     if split in ("TRAIN", "TEST"):
         fname = name + "_" + split + ".ts"
         abspath = os.path.join(extract_path, name, fname)
-        X, y = load_from_tsfile(abspath, return_data_type="nested_univ")
+        X, y = load_from_tsfile(
+            abspath, return_data_type="nested_univ", y_dtype=y_dtype
+        )
     # if split is None, load both train and test set
     elif split is None:
         fname = name + "_TRAIN.ts"
         abspath = os.path.join(extract_path, name, fname)
-        X_train, y_train = load_from_tsfile(abspath, return_data_type="nested_univ")
+        X_train, y_train = load_from_tsfile(
+            abspath, return_data_type="nested_univ", y_dtype=y_dtype
+        )
 
         fname = name + "_TEST.ts"
         abspath = os.path.join(extract_path, name, fname)
-        X_test, y_test = load_from_tsfile(abspath, return_data_type="nested_univ")
+        X_test, y_test = load_from_tsfile(
+            abspath, return_data_type="nested_univ", y_dtype=y_dtype
+        )
 
         X = pd.concat([X_train, X_test])
         X = X.reset_index(drop=True)

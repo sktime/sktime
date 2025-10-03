@@ -8,6 +8,7 @@ __all__ = ["STLForecaster"]
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class STLForecaster(BaseForecaster):
@@ -138,11 +139,11 @@ class STLForecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"],
+        "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
         "maintainers": ["tensorflow-as-tf"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
@@ -191,15 +192,13 @@ class STLForecaster(BaseForecaster):
             self.forecaster_seasonal,
             self.forecaster_resid,
         ):
-            if forecaster is not None and not forecaster.get_tag(
-                "ignores-exogeneous-X"
-            ):
-                ignore_exogenous = False
+            if forecaster is not None and forecaster.get_tag("capability:exogenous"):
+                capa_exo = True
                 break
         else:  # none of the forecasters (if provided) use exogenous feature variables
-            ignore_exogenous = True  # corresponding to NaiveForecaster in missing case
+            capa_exo = False  # corresponding to NaiveForecaster in missing case
 
-        self.set_tags(**{"ignores-exogeneous-X": ignore_exogenous})
+        self.set_tags(**{"capability:exogenous": capa_exo})
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -326,6 +325,49 @@ class STLForecaster(BaseForecaster):
         self.forecaster_trend_.update(y=self.trend_, X=X, update_params=update_params)
         self.forecaster_resid_.update(y=self.resid_, X=X, update_params=update_params)
         return self
+
+    def plot_components(self, title=None):
+        """Plot the observed, trend, seasonal, and residual components.
+
+        Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+        """
+        _check_soft_dependencies(
+            ["matplotlib", "seaborn"], obj="STLForecaster.plot_components"
+        )
+        import matplotlib.pyplot as plt
+
+        from sktime.utils.plotting import plot_series
+
+        self.check_is_fitted()
+
+        fig, ax = plt.subplots(4, 1, sharex=True)
+
+        plot_series(self._y, ax=ax[0], markers=[""])
+        plot_series(self.trend_, ax=ax[1], markers=[""])
+        plot_series(self.seasonal_, ax=ax[2], markers=[""])
+        plot_series(self.resid_, ax=ax[3])
+        # Get the lines from the 4th plot and remove them (or at least make them
+        # invisible, while keeping the markers)
+        for line in ax[3].lines:
+            line.set_linestyle("None")
+        ax[3].axhline(0, color="black", linestyle="-")
+        ax[0].text(
+            1.02, 0.5, "Obs", transform=ax[0].transAxes, va="center", rotation=-90
+        )
+        ax[1].text(
+            1.02, 0.5, "Trend", transform=ax[1].transAxes, va="center", rotation=-90
+        )
+        ax[2].text(
+            1.02, 0.5, "Season", transform=ax[2].transAxes, va="center", rotation=-90
+        )
+        ax[3].text(
+            1.02, 0.5, "Resid", transform=ax[3].transAxes, va="center", rotation=-90
+        )
+
+        if title is not None:
+            fig.suptitle(title)
+        plt.tight_layout()
+        return fig, ax
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

@@ -7,9 +7,11 @@ __all__ = [
     "ExpandingGreedySplitter",
     "ExpandingWindowSplitter",
     "ExpandingSlidingWindowSplitter",
+    "ForecastingHorizonSplitter",
     "InstanceSplitter",
     "SameLocSplitter",
     "SingleWindowSplitter",
+    "SlidingGreedySplitter",
     "SlidingWindowSplitter",
     "TemporalTrainTestSplitter",
     "TestPlusTrainSplitter",
@@ -21,9 +23,11 @@ from sktime.split.expandingcutoff import ExpandingCutoffSplitter
 from sktime.split.expandinggreedy import ExpandingGreedySplitter
 from sktime.split.expandingslidingwindow import ExpandingSlidingWindowSplitter
 from sktime.split.expandingwindow import ExpandingWindowSplitter
+from sktime.split.fh import ForecastingHorizonSplitter
 from sktime.split.instance import InstanceSplitter
 from sktime.split.sameloc import SameLocSplitter
 from sktime.split.singlewindow import SingleWindowSplitter
+from sktime.split.slidinggreedy import SlidingGreedySplitter
 from sktime.split.slidingwindow import SlidingWindowSplitter
 from sktime.split.temporal_train_test_split import (
     TemporalTrainTestSplitter,

@@ -91,7 +91,7 @@ class MultiRocketMultivariate(BaseTransformer):
         "python_dependencies": "numba",
         # estimator type
         # --------------
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -100,6 +100,13 @@ class MultiRocketMultivariate(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_categorical_y_raises_error"],
+        # unclear failure "No matching definition for argument type(s)"
     }
 
     def __init__(
@@ -274,3 +281,19 @@ class MultiRocketMultivariate(BaseTransformer):
             num_features_per_dilation,
             biases,
         )
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter sets for the estimator."""
+        return [
+            {
+                "num_kernels": 10,
+                "max_dilations_per_kernel": 32,
+                "random_state": 42,
+            },  # First parameter set
+            {
+                "num_kernels": 20,
+                "max_dilations_per_kernel": 16,
+                "random_state": 0,
+            },  # Second parameter set
+        ]

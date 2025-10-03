@@ -1,8 +1,8 @@
 """InceptionTime for classification."""
 
-__author__ = "james-large"
 __all__ = ["InceptionTimeClassifier"]
 
+import warnings
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
@@ -14,6 +14,21 @@ from sktime.utils.dependencies import _check_dl_dependencies
 
 class InceptionTimeClassifier(BaseDeepClassifier):
     """InceptionTime Deep Learning Classifier.
+
+    Adapted from the implementation from Fawaz et. al
+    https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
+
+    Described in [1]_, InceptionTime is a deep learning model designed for
+    time series classification. It is based on the Inception architecture
+    for images. The model is made up of a series of Inception modules.
+
+    ``InceptionTimeClassifier`` is a single instance of InceptionTime model
+    described in the original publication [1]_, which uses an ensemble of 5
+    single instances.
+
+    To build an ensemble of models mirroring [1]_, use the ``BaggingClassifier`` with
+    ``n_estimators=5``, ``bootstrap=False``, and ``estimator`` being an instance of
+    this ``InceptionTimeClassifier``.
 
     Parameters
     ----------
@@ -34,17 +49,23 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         whether to print runtime information
     loss: str, default="categorical_crossentropy"
     metrics: optional
+    class_weight: dict, optional, default=None
+        Dictionary mapping class labels to a weight (float) value to
+        be used during model training.
+        For example, ``{"A": 1.0, "B": 2.5}`` will assign a weight of 1.0 to class "A"
+        and 2.5 to class "B".
+        This is passed directly to Keras' ``fit`` method as the ``class_weight``
+        argument after converting labels to integer encoding.
+        If None, all classes are given equal weight.
 
     Notes
     -----
     ..[1] Fawaz et. al, InceptionTime: Finding AlexNet for Time Series
     Classification, Data Mining and Knowledge Discovery, 34, 2020
 
-    Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
-
     Examples
     --------
+    Single instance of InceptionTime model:
     >>> from sktime.classification.deep_learning import InceptionTimeClassifier
     >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
     >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
@@ -52,14 +73,37 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     >>> clf = InceptionTimeClassifier()  # doctest: +SKIP
     >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     InceptionTimeClassifier(...)
+
+    To build an ensemble of models mirroring [1]_, use the ``BaggingClassifier``
+    as follows:
+    >>> from sktime.classification.ensemble import BaggingClassifier
+    >>> from sktime.classification.deep_learning import InceptionTimeClassifier
+    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> clf = BaggingClassifier(
+    ...     InceptionTimeClassifier(),
+    ...     n_estimators=5,
+    ...     bootstrap=False
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    BaggingClassifier(...)
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["james-large"],
+        "authors": ["hfawaz", "james-large"],
         "maintainers": ["james-large"],
         # estimator type handled by parent class
+        # capabilities
+        # ------------
+        "capability:class_weight": True,
+        # testing configuration
+        # ---------------------
+        "tests:skip_by_name": ["test_fit_idempotent"],
+        "tests:libs": ["sktime.networks.inceptiontime"],
+        "tests:vm": True,
     }
 
     def __init__(
@@ -77,6 +121,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         verbose=False,
         loss="categorical_crossentropy",
         metrics=None,
+        class_weight=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -94,6 +139,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         self.use_bottleneck = use_bottleneck
         self.use_residual = use_residual
         self.verbose = verbose
+        self.class_weight = class_weight
 
         super().__init__()
 
@@ -172,6 +218,25 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
         callbacks = self._check_callbacks(self.callbacks)
 
+        # Convert class_weight dict from label to integer encoding
+        class_weight = self.class_weight
+        if class_weight is not None:
+            valid_labels = set(self.label_encoder.classes_)
+            # keep only labels present in training data
+            filtered_class_weight = {
+                self.label_encoder.transform([label])[0]: weight
+                for label, weight in class_weight.items()
+                if label in valid_labels
+            }
+            if len(filtered_class_weight) < len(class_weight):
+                warnings.warn(
+                    "class_weight contains labels not observed in the training data; "
+                    "these labels are ignored.",
+                    UserWarning,
+                )
+            # if nothing valid left, set to None so keras treats all equally
+            class_weight = filtered_class_weight if filtered_class_weight else None
+
         self.history = self.model_.fit(
             X,
             y_onehot,
@@ -179,6 +244,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=deepcopy(callbacks) if callbacks else [],
+            class_weight=class_weight,
         )
         return self
 

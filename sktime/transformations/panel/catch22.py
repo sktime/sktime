@@ -6,7 +6,6 @@ A transformer for the Catch22 features.
 __author__ = ["MatthewMiddlehurst", "julnow"]
 __all__ = ["Catch22"]
 
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -134,6 +133,27 @@ FEATURE_NAMES = CATCH22_FEATURE_NAMES  # for backwards compatibility, this was p
 
 
 def _verify_features(features, catch24: bool):
+    """
+    Verify and validate the requested feature indices for catch22 or catch24 features.
+
+    Parameters
+    ----------
+    features : str, int, list, or tuple
+        The features to verify. Options include:
+        - `"all"`: Select all features.
+        - A string: The name of a single feature (either full or short name).
+        - An integer: The index of a single feature (0-based).
+        - A list or tuple: A collection of feature names or indices (mixed types also).
+
+    catch24 : bool
+        If `True`, uses the catch24 feature set (24 features). If `False`, uses the
+        catch22 feature set (22 features).
+
+    Returns
+    -------
+    f_idx : list of int
+        A list of validated feature indices corresponding to the requested features.
+    """
     feature_names = ALL_FEATURE_NAMES if catch24 else CATCH22_FEATURE_NAMES
     short_feature_names = (
         ALL_SHORT_FEATURE_NAMES if catch24 else CATCH22_SHORT_FEATURE_NAMES
@@ -264,16 +284,17 @@ class Catch22(BaseTransformer):
         # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:instancewise": True,
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
         self,
-        features: Union[int, str, list[Union[int, str]]] = "all",
+        features: int | str | list[int | str] = "all",
         catch24: bool = False,
         outlier_norm: bool = False,
         replace_nans: bool = False,
@@ -334,6 +355,7 @@ class Catch22(BaseTransformer):
             number of features requested, containing Catch22 features for X.
             column index is determined by self.col_names
         """
+        X = X.astype(float)
         Xt_np = self._transform_case(X, self.f_idx)
         cols = self._prepare_output_col_names(len(self.f_idx))
 
@@ -344,8 +366,27 @@ class Catch22(BaseTransformer):
 
     # todo: remove case_id
     def _transform_single_feature(
-        self, X: pd.Series, feature: Union[int, str], case_id="deprecated"
+        self, X: pd.Series, feature: int | str, case_id="deprecated"
     ):
+        """
+        Transform a single feature  into a Catch22 or Catch24 feature.
+
+        Parameters
+        ----------
+        X : pd.Series or pd.DataFrame
+            The input time series data.
+
+        feature : int or str
+            The feature to compute.
+
+        case_id : str, optional, default="deprecated"
+            Deprecated argument, maintained for compatibility.
+
+        Returns
+        -------
+        np.ndarray: A 1D NumPy array of shape `(n_instances,)` containing the
+        transformed feature values for each instance in the input data.
+        """
         if case_id != "deprecated":
             warn(
                 "In Catch22._transform_single_feature, the argument "
@@ -455,13 +496,13 @@ class Catch22(BaseTransformer):
             return self.METHODS_DICT.get(ALL_FEATURE_NAMES[feature])
         else:
             raise TypeError(
-                "Invalide type in Catch22.__get_feature_function_int. "
+                "Invalid type in Catch22.__get_feature_function_int. "
                 f"Expected int, got {type(feature)}."
             )
 
     def _prepare_output_col_names(
         self, n_features: int
-    ) -> Union[range, list[int], list[str]]:
+    ) -> range | list[int] | list[str]:
         """Prepare output column names.
 
         It selects the naming style according to self.col_names.

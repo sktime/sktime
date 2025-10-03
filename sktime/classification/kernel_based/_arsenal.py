@@ -102,7 +102,7 @@ class Arsenal(BaseClassifier):
     >>> from sktime.classification.kernel_based import Arsenal
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test =load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
     >>> clf = Arsenal(num_kernels=100, n_estimators=5) # doctest: +SKIP
     >>> clf.fit(X_train, y_train) # doctest: +SKIP
     Arsenal(...)
@@ -122,6 +122,8 @@ class Arsenal(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "kernel",
     }
 
@@ -161,6 +163,10 @@ class Arsenal(BaseClassifier):
         self._weight_sum = 0
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Fit Arsenal to training data.
@@ -462,12 +468,20 @@ class Arsenal(BaseClassifier):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
-            params = {"num_kernels": 20, "n_estimators": 5}
-        else:
-            params = {
-                "num_kernels": 10,
-                "n_estimators": 2,
-                "save_transformed_data": True,
-            }
+            return {"num_kernels": 20, "n_estimators": 5}
 
-        return params
+        params0 = {
+            "num_kernels": 10,
+            "n_estimators": 2,
+            "save_transformed_data": True,
+        }
+        params1 = {
+            "num_kernels": 23,
+            "n_estimators": 20,
+            "rocket_transform": "minirocket",
+            "max_dilations_per_kernel": 28,
+            "n_features_per_kernel": 2,
+            "contract_max_n_estimators": 113,
+            "save_transformed_data": True,
+        }
+        return [params0, params1]
