@@ -689,13 +689,23 @@ class _Reducer(_BaseWindowForecaster, _ReducerMixin):
                         ser_idx = self._y.loc[first_key].index  # re-use if available
                         if len(ser_idx) >= 2:
                             delta = ser_idx[1] - ser_idx[0]
+                            # normalize numeric (eg from RangeIndex) to Timedelta
+                            if not isinstance(
+                                delta, (pd.Timedelta, pd.DateOffset, np.timedelta64)
+                            ):
+                                delta = pd.Timedelta(int(delta), unit="D")
                         else:
                             delta = pd.Timedelta(days=1)
+                        # ----------------------------------------------------------
                     except Exception:
                         delta = pd.Timedelta(days=1)
                     start = cutoff0[0]
-                    # create a fake 2-step range to give _shift something to work with
-                    cutoff0 = pd.DatetimeIndex([start, start + delta], tz=start.tz)[:1]
+                    # # create a fake 2-step range to give _shift something to work with
+                    # # cutoff0=pd.DatetimeIndex([start,start+delta],tz=start.tz)[:1]
+                    # build 1-step range with explicit freq so shift logic has a freq
+                    cutoff0 = pd.date_range(
+                        start=start, periods=1, freq=delta, tz=start.tz
+                    )
 
             # shift the one-element cutoff index; if it has no freq, recover one
             try:
@@ -727,11 +737,15 @@ class _Reducer(_BaseWindowForecaster, _ReducerMixin):
                 else:
                     # (c) last resort: manual shift by a constant step delta
                     try:
-                        delta = (
-                            ser_idx[1] - ser_idx[0]
-                            if ser_idx is not None and len(ser_idx) >= 2
-                            else pd.Timedelta(days=1)
-                        )
+                        if len(ser_idx) >= 2:
+                            delta = ser_idx[1] - ser_idx[0]
+                            # normalize deltas (e.g., from RangeIndex) to a Timedelta
+                            if not isinstance(
+                                delta, (pd.Timedelta, pd.DateOffset, np.timedelta64)
+                            ):
+                                delta = pd.Timedelta(int(delta), unit="D")
+                        else:
+                            delta = pd.Timedelta(days=1)
                     except Exception:
                         delta = pd.Timedelta(days=1)
                     # produce the shifted single timestamp directly
@@ -767,6 +781,11 @@ class _Reducer(_BaseWindowForecaster, _ReducerMixin):
                     try:
                         if len(ser_idx) >= 2:
                             delta = ser_idx[1] - ser_idx[0]
+                            # normalize deltas (e.g., from RangeIndex) to a Timedelta
+                            if not isinstance(
+                                delta, (pd.Timedelta, pd.DateOffset, np.timedelta64)
+                            ):
+                                delta = pd.Timedelta(int(delta), unit="D")
                         else:
                             delta = pd.Timedelta(days=1)
                     except NameError:
@@ -1150,8 +1169,27 @@ class _DirectReducer(_Reducer):
                 if y_arr.shape[0] == n_series * len(self.estimators_):
                     y_arr = y_arr[i * n_series : (i + 1) * n_series]
 
+                # build columns for quantiles output: (var_name, alpha) per column
+                alphas = kwargs.get("alpha", [])
+                # infer var names from “last window” y (single-step frame)
+                varnames = list(
+                    getattr(y_last, "columns", getattr(self._y, "columns", ["var_0"]))
+                )
+
+                if alphas:
+                    # MultiIndex with (variable, alpha)
+                    # matches width len(varnames) * len(alphas)
+                    qcols = pd.MultiIndex.from_product([varnames, alphas])
+                else:
+                    # fallback: just use variable names (e.g., predict, not quantiles)
+                    qcols = varnames
+
                 # --- build the one-step frame for fh_abs[i] ---
-                y_pred_i = _create_fcst_df([fh_abs[i]], self._y, fill=y_arr)
+                # y_pred_i = _create_fcst_df([fh_abs[i]], self._y, fill=y_arr)
+                y_pred_i = _create_fcst_df(
+                    [fh_abs[i]], self._y, fill=y_arr, columns=qcols
+                )
+
                 y_preds.append(y_pred_i)
             y_pred = pool_preds(y_preds)
         else:
@@ -2286,7 +2324,7 @@ def _cut_df(X, n_obs=1, type="tail"):
 #     return res
 
 
-def _create_fcst_df(target_date, origin_df, fill=None):
+def _create_fcst_df(target_date, origin_df, fill=None, columns=None):
     """Create an empty forecasting frame aligned to origin_df's index structure.
 
     Parameters
@@ -2345,11 +2383,12 @@ def _create_fcst_df(target_date, origin_df, fill=None):
             index.name = idx0.name
 
     # Columns / values
-    columns = (
-        [origin_df.name]
-        if isinstance(origin_df, pd.Series)
-        else list(origin_df.columns)
-    )
+    if columns is None:
+        columns = (
+            [origin_df.name]
+            if isinstance(origin_df, pd.Series)
+            else list(origin_df.columns)
+        )
     values = 0 if fill is None else fill
 
     res = pd.DataFrame(values, index=index, columns=columns, dtype="float64")
@@ -2532,7 +2571,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "maintainers": "hliebert",
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
-        "X-allowed": True,
         "capability:exogenous": True,
         "capability:multivariate": True,
         "capability:insample": True,
@@ -4274,7 +4312,6 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
         {
             "capability:multivariate": True,  # do not split DataFrame columns
             # keep inner mtypes broad so our _fit/_predict see the full object
-            "X-allowed": True,
             "capability:exogenous": True,
             "capability:insample": True,
             "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.DataFrame"],
