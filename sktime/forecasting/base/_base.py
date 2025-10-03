@@ -318,7 +318,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         else:
             return ColumnSelect(key) ** self
 
-    def fit(self, y, X=None, fh=None, **kwargs):
+    def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
         State change:
@@ -393,7 +393,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
-            self._fit(y=y_inner, X=X_inner, fh=fh, **kwargs)
+            self._fit(y=y_inner, X=X_inner, fh=fh)
         else:
             # otherwise we call the vectorized version of fit
             self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
@@ -1636,7 +1636,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # checking X
         if X is not None:
             # request only required metadata from checks
-            X_metadata_required = ["n_features", "feature_names", "feature_kind"]
+            X_metadata_required = ["feature_kind"]
             if not self.get_tag("capability:missing_values"):
                 X_metadata_required += ["has_nans"]
 
@@ -1678,7 +1678,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 )
 
             X_scitype = X_metadata["scitype"]
-            self._X_metadata = X_metadata
             X_requires_vectorization = X_scitype not in X_inner_scitype
             requires_vectorization = requires_vectorization or X_requires_vectorization
 
@@ -2080,7 +2079,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 y_pred.columns = y_pred.columns.droplevel(1)
             return y_pred
 
-    def _fit(self, y, X, fh, **kwargs):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit

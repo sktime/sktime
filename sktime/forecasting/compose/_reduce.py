@@ -516,7 +516,7 @@ class _DirectReducer(_Reducer):
             windows_identical=self.windows_identical,
         )
 
-    def _fit(self, y, X, fh, **kwargs):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -783,7 +783,7 @@ class _MultioutputReducer(_Reducer):
             scitype=self._estimator_scitype,
         )
 
-    def _fit(self, y, X, fh, **kwargs):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -861,6 +861,22 @@ class _MultioutputReducer(_Reducer):
 
 class _RecursiveReducer(_Reducer):
     strategy = "recursive"
+
+    def __init__(
+        self,
+        estimator,
+        window_length=10,
+        transformers=None,
+        pooling="local",
+        save_feat_names=False,
+    ):
+        super().__init__(
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
+            pooling=pooling,
+        )
+        self.save_feat_names = save_feat_names
 
     def _transform(self, y, X=None):
         # For the recursive strategy, the forecasting horizon for the sliding-window
@@ -969,7 +985,7 @@ class _RecursiveReducer(_Reducer):
             yt = yt.ravel()
 
         self.estimator_ = clone(self.estimator)
-        if "save_feature_names" in kwargs and kwargs["save_feature_names"]:
+        if self.save_feat_names:
             yt, Xt = self._reassign_feature_names(X, Xt, yt)
         self.estimator_.fit(Xt, yt)
         return self
@@ -1140,7 +1156,7 @@ class _DirRecReducer(_Reducer):
             scitype=self._estimator_scitype,
         )
 
-    def _fit(self, y, X, fh, **kwargs):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -1348,9 +1364,13 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         window_length=10,
         transformers=None,
         pooling="local",
+        save_feat_names=False,
     ):
-        super(_RecursiveReducer, self).__init__(
-            estimator=estimator, window_length=window_length, transformers=transformers
+        super().__init__(
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
+            save_feat_names=save_feat_names,
         )
         self.pooling = pooling
 
@@ -1447,6 +1467,22 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
         a tabular matrix.
     """
 
+    def __init__(
+        self,
+        estimator,
+        window_length=10,
+        transformers=None,
+        pooling="local",
+        save_feat_names=False,
+    ):
+        super().__init__(
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
+            pooling=pooling,
+            save_feat_names=save_feat_names,
+        )
+
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
     }
@@ -1483,6 +1519,7 @@ def make_reduction(
     transformers=None,
     pooling="local",
     windows_identical=True,
+    save_feat_names=False,
 ):
     r"""Make forecaster based on reduction to tabular or time-series regression.
 
@@ -1643,6 +1680,7 @@ def make_reduction(
         "transformers": transformers,
         "pooling": pooling,
         "windows_identical": windows_identical,
+        "save_feat_names": save_feat_names,
     }
 
     return construct_dispatch(Forecaster, dispatch_params)

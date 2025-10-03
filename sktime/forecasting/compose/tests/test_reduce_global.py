@@ -170,15 +170,18 @@ def test_recursive_reduction(save_feature_names, y, index_names, y_dict):
         window_length=None,
         strategy="recursive",
         pooling="global",
+        save_feat_names=save_feature_names,
     )
 
-    forecaster2.fit(y, fh=[1, 2], save_feature_names=save_feature_names)
+    forecaster2.fit(y, fh=[1, 2])
     y_pred = forecaster2.predict(fh=[1, 2, 12])
     check_eval(y_pred.index.names, index_names)
     if save_feature_names:
+        feat_suffixes = ["_lag_1", "_mean_1_3", "_mean_1_12", "_std_1_4"]
+        prefix = y.name if hasattr(y, "name") else y.columns[0]
         check_eval(
             forecaster2.estimator_.feature_names_in_,
-            ["y_lag_1", "y_mean_1_3", "y_mean_1_12", "y_std_1_4"],
+            [prefix + s for s in feat_suffixes],
         )
 
 
