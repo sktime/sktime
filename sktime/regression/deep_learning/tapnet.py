@@ -92,7 +92,7 @@ class TapNetRegressor(BaseDeepRegressor):
         dilation=1,
         layers=(500, 300),
         use_rp=True,
-        activation=None,
+        activation="linear",
         rp_params=(-1, 3),
         use_bias=True,
         use_att=True,
