@@ -1746,6 +1746,7 @@ class DirectTabularRegressionForecaster(_DirectReducer):
     _tags = {
         **_DirectReducer._tags,  # inherit parent tags if it defines any
         "capability:exogenous": True,
+        "capability:pred_int": False,
     }
 
     def __init__(
@@ -2784,12 +2785,16 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         for i, lag in enumerate(y_lags):
             predict_idx = y_abs[i]
-
-            lag_plus = Lag(lag, index_out="extend", keep_column_names=True)
-
             Xt = lagger_y_to_X[-lag].transform(X=self._y, y=X_pool)
-            Xtt = lag_plus.fit_transform(Xt)
-            Xtt_predrow = slice_at_ix(Xtt, predict_idx)
+
+            if self.X_treatment == "shifted":
+                # features taken at cutoff for all horizons
+                base_ix = self.cutoff
+            else:
+                # concurrent features at the absolute target time
+                base_ix = predict_idx
+
+            Xtt_predrow = slice_at_ix(Xt, base_ix)  # robust “floor” selection
             Xtt_predrow = prep_skl_df(Xtt_predrow)
 
             estimator = self.estimators_[i]
