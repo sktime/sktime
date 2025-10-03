@@ -38,7 +38,7 @@ class TapNetRegressor(BaseDeepRegressor):
         dropout rate, in the range [0, 1)
     dilation            : int, default = 1
         dilation value
-    activation          : str, default = "sigmoid"
+    activation          : str, default = "linear"
         activation function for the last output layer
     loss                : str, default = "mean_squared_error"
         loss function for the classifier
