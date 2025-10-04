@@ -30,9 +30,17 @@ __all__ = [
 
 import numpy as np
 import pandas as pd
+import sklearn
+from packaging import version
 from sklearn.base import clone
+
+try:
+    from sklearn.utils import get_tags as sklearn_get_tags
+except ImportError:
+    sklearn_get_tags = None
 from sklearn.multioutput import MultiOutputRegressor
 
+from sktime.base import BaseEstimator
 from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
@@ -2363,6 +2371,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
         # -----------------
+        "capability:missing_values": True,
         "tests:libs": ["sktime.transformations.series.lag"],
     }
 
@@ -2378,6 +2387,25 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
+
+        if isinstance(self.estimator, BaseEstimator):
+            # sktime estimator
+            handles_missing = self.estimator.get_tag(
+                "capability:missing_values", tag_value_default=False
+            )
+            self.set_tags(**{"capability:missing_values": handles_missing})
+        else:
+            # sklearn-compatible regressors
+            if sklearn_get_tags is not None and version.parse(
+                sklearn.__version__
+            ) >= version.parse("1.6"):
+                tags = sklearn_get_tags(self.estimator)
+                self.set_tags(
+                    **{"capability:missing_values": tags.input_tags.allow_nan}
+                )
+            else:
+                self.set_tags(**{"capability:missing_values": False})
+
         super().__init__()
 
         warn(
