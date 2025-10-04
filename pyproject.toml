@@ -339,7 +339,7 @@ Repository = "https://github.com/sktime/sktime"
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = [
-  "setuptools>61",
+  "setuptools>=78.1.1",
 ]
 
 [tool.setuptools.package-data]
