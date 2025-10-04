@@ -26,7 +26,7 @@ def _coerce_data_for_evaluate(dataset_loader):
         elif "dataset_classification" in dataset_loader().get_tags()["object_type"]:
             data = (X, y)
     elif hasattr(dataset_loader, "load"):
-        # Case 3: Dataset instance, e.g., ForecastingDataset("hospital_dataset")
+        # Case 3: Dataset instance, e.g., ForecastingData("hospital_dataset")
         X = dataset_loader.load("X")
         y = dataset_loader.load("y")
         if "dataset_forecasting" in dataset_loader.get_tags()["object_type"]:
