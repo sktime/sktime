@@ -15,8 +15,10 @@ from sktime.split.singlewindow import SingleWindowSplitter
 def _coerce_data_for_evaluate(dataset_loader):
     """Coerce data input object to a dict to pass to forecasting evaluate."""
     if callable(dataset_loader) and not hasattr(dataset_loader, "load"):
+        # Case 1: Loader function, e.g., load_longley
         data = dataset_loader()
     elif callable(dataset_loader) and hasattr(dataset_loader, "load"):
+        # Case 2: Dataset class, e.g., Longley
         X = dataset_loader().load("X")
         y = dataset_loader().load("y")
         if "dataset_forecasting" in dataset_loader().get_tags()["object_type"]:
@@ -24,6 +26,7 @@ def _coerce_data_for_evaluate(dataset_loader):
         elif "dataset_classification" in dataset_loader().get_tags()["object_type"]:
             data = (X, y)
     elif hasattr(dataset_loader, "load"):
+        # Case 3: Dataset instance, e.g., ForecastingData("hospital_dataset")
         X = dataset_loader.load("X")
         y = dataset_loader.load("y")
         if "dataset_forecasting" in dataset_loader.get_tags()["object_type"]:
