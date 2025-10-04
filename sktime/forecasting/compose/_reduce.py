@@ -33,6 +33,11 @@ import pandas as pd
 import sklearn
 from packaging import version
 from sklearn.base import clone
+
+try:
+    from sklearn.utils import get_tags as sklearn_get_tags
+except ImportError:
+    sklearn_get_tags = None
 from sklearn.multioutput import MultiOutputRegressor
 
 from sktime.base import BaseEstimator
@@ -2384,24 +2389,20 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self._lags = list(range(window_length))
 
         if isinstance(self.estimator, BaseEstimator):
-            # sktime estimator: use get_tag with default
+            # sktime estimator
             handles_missing = self.estimator.get_tag(
                 "capability:missing_values", tag_value_default=False
             )
             self.set_tags(**{"capability:missing_values": handles_missing})
         else:
             # sklearn-compatible regressors
-            # Only attempt _get_tags for sklearn >= 0.24, otherwise default to False
-            if hasattr(self.estimator, "_get_tags") and version.parse(
+            if sklearn_get_tags is not None and version.parse(
                 sklearn.__version__
-            ) >= version.parse("0.24"):
-                try:
-                    tags = self.estimator._get_tags()
-                    self.set_tags(
-                        **{"capability:missing_values": tags.get("allow_nan", False)}
-                    )
-                except Exception:
-                    self.set_tags(**{"capability:missing_values": False})
+            ) >= version.parse("1.6"):
+                tags = sklearn_get_tags(self.estimator)
+                self.set_tags(
+                    **{"capability:missing_values": tags.get("allow_nan", False)}
+                )
             else:
                 self.set_tags(**{"capability:missing_values": False})
 
