@@ -769,7 +769,11 @@ class SkforecastRecursive(BaseForecaster):
         y_new = self._make_index_compatible(y, "y")
         X_new = self._make_index_compatible(X, "X")
 
-        self._forecaster.fit(y_new, exog=self._coerce_column_names(X_new))
+        self._forecaster.fit(
+            y_new,
+            exog=self._coerce_column_names(X_new),
+            store_in_sample_residuals=self.store_in_sample_residuals,
+        )
 
         return self
 
