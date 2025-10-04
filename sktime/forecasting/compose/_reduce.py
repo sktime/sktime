@@ -1784,7 +1784,7 @@ class DirectTabularRegressionForecaster(_DirectReducer):
     _tags = {
         **_DirectReducer._tags,  # inherit parent tags if it defines any
         "capability:exogenous": True,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -2429,7 +2429,23 @@ def slice_at_ix(df, ix):
     - Simple Index: choose the greatest label <= ix (if none, choose earliest).
     - MultiIndex: apply the rule on the last level and return all rows at that time.
     """
-    if isinstance(ix, (list, pd.Index)):
+    # Normalize ForecastingHorizon to a pandas Index (absolute if already resolvable)
+    try:
+        _FH = ForecastingHorizon
+    except Exception:  # very defensive: avoid import-time issues
+        _FH = ()  # tuple so isinstance(..., _FH) is always False if import fails
+
+    if isinstance(ix, _FH):
+        # slice_at_ix doesn't know a cutoff; it must be given an **absolute** FH.
+        if getattr(ix, "is_relative", False):
+            raise TypeError(
+                "slice_at_ix expects an absolute ForecastingHorizon; "
+                "pass fh.to_absolute(cutoff) (or a pandas Index) instead."
+            )
+        # absolute FH to plain pandas Index, no cutoff required
+        ix = ix.to_pandas() if hasattr(ix, "to_pandas") else pd.Index(ix)
+
+    if isinstance(ix, (list, np.ndarray, pd.Index)):
         # concatenate results for each element
         parts = [slice_at_ix(df, x) for x in ix]
         return pd.concat([p for p in parts if p is not None and not p.empty])
@@ -2570,7 +2586,6 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "authors": "fkiraly",
         "maintainers": "hliebert",
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        "ignores-exogeneous-X": False,
         "capability:exogenous": True,
         "capability:multivariate": True,
         "capability:insample": True,
