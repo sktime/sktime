@@ -17,7 +17,19 @@ def _coerce_data_for_evaluate(dataset_loader):
     if callable(dataset_loader) and not hasattr(dataset_loader, "load"):
         data = dataset_loader()
     elif callable(dataset_loader) and hasattr(dataset_loader, "load"):
-        data = dataset_loader.load()
+        X = dataset_loader().load("X")
+        y = dataset_loader().load("y")
+        if "dataset_forecasting" in dataset_loader().get_tags()["object_type"]:
+            data = (y, X)
+        elif "dataset_classification" in dataset_loader().get_tags()["object_type"]:
+            data = (X, y)
+    elif hasattr(dataset_loader, "load"):
+        X = dataset_loader.load("X")
+        y = dataset_loader.load("y")
+        if "dataset_forecasting" in dataset_loader.get_tags()["object_type"]:
+            data = (y, X)
+        elif "dataset_classification" in dataset_loader.get_tags()["object_type"]:
+            data = (X, y)
     else:
         data = dataset_loader
 
