@@ -4,6 +4,7 @@ import time
 import pytest
 
 from sktime.datasets._dataset_downloader import HuggingFaceDownloader, URLDownloader
+from sktime.tests.test_switch import run_test_module_changed
 
 HF_REPO_NAME = "sktime/tsc-datasets"
 FOLDER_NAME = "Beef"
@@ -11,6 +12,10 @@ URL = ["https://timeseriesclassification.com/aeon-toolkit/Beef.zip"]
 EXPECTED_FILES = ["Beef_TRAIN.ts", "Beef_TEST.ts"]
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datasets"),
+    reason="run test only if datasets module has changed",
+)
 @pytest.mark.datadownload
 @pytest.mark.parametrize(
     "strategy",
