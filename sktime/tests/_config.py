@@ -306,7 +306,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "TSFreshClassifier",
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
-        "TimeBinner",
+        # "TimeBinner",
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
         "TruncationTransformer",
