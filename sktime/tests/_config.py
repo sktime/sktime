@@ -278,7 +278,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "PELT",
         "PaddingTransformer",
         "PlateauFinder",
-        "Prophet",
         "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
         "RandomIntervalClassifier",
