@@ -13,7 +13,6 @@ import math
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from scipy import stats
 from sklearn.preprocessing import normalize
 from sklearn.utils import check_random_state
@@ -29,6 +28,8 @@ from sktime.distances import (
 )
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
+from sktime.utils.parallel import parallelize
+from sktime.utils.warnings import warn
 
 # todo unit tests / sort out current unit tests
 # todo logging package rather than print to screen
@@ -659,12 +660,46 @@ class ProximityStump(BaseClassifier):
     Parameters
     ----------
     random_state: integer, the random state
+
     distance_measure: ``None`` (default) or str; if str, one of
         "euclidean", "dtw", "ddtw", "wdtw", "wddtw", "msm", "lcss", "erp"
         distance measure to use
         if ``None``, selects distances randomly from the list of available distances
+
     verbosity: logging verbosity
-    n_jobs: number of jobs to run in parallel *across threads"
+
+    backend : {None, "dask", "loky", "threading"}, by default "loky".
+        Runs in parallel mode if specified. For ProximityStump, "multiprocessing"
+        will result in an error during parallelization, so it cannot be used.
+        Specify None if no parallelization is needed.
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+
+        Recommendation: Use "dask" or "loky" for parallelization.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
 
     Examples
     --------
@@ -692,16 +727,21 @@ class ProximityStump(BaseClassifier):
     }
 
     def __init__(
+        # move newer params to the end and order of docstring to match this
         self,
         random_state=None,
         distance_measure=None,
         verbosity=0,
-        n_jobs=1,
+        n_jobs="deprecated",
+        backend="loky",
+        backend_params=None,
     ):
         self.random_state = random_state
         self.distance_measure = distance_measure
         self.verbosity = verbosity
         self.n_jobs = n_jobs
+        self.backend = backend
+        self.backend_params = backend_params
 
         # set in fit
         self.label_encoder = None
@@ -713,11 +753,40 @@ class ProximityStump(BaseClassifier):
         self.y = None
         self.entropy = None
         self._random_object = None
+
         super().__init__()
 
-        from sktime.utils.validation import check_n_jobs
+        # TODO, 0.40.0 remove n_jobs parameter and below logic
+        if n_jobs != "deprecated":
+            self.backend_params = {"n_jobs": n_jobs}
+            warn(
+                f"Parameter n_jobs of {self.__class__.__name__} will be removed "
+                "in sktime 0.32.0 and will be no longer used. "
+                "Instead, the backend and backend_params parameters should be used. "
+                "If n_jobs is required, set it as a parameter of backend_params"
+                "to pass n_jobs or other parallelization parameters. ",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            if backend_params is None:
+                self._backend_params = {}
+            else:
+                self._backend_params = backend_params
+            self._backend_params.update(**{"n_jobs": n_jobs})
+        else:
+            self._backend_params = backend_params
 
-        self._threads_to_use = check_n_jobs(n_jobs)
+        if self.backend == "multiprocessing":
+            warn(
+                "Parallelization method multiprocessing has some incompatability "
+                "issues with the pickles library. Some of the functions inside "
+                "proximity forest may not work as intended "
+                "For a more compatible or valid parallelization method,"
+                "see the docstring for the 'backend' parameter",
+                UserWarning,
+                obj=self,
+            )
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -745,7 +814,7 @@ class ProximityStump(BaseClassifier):
         return distance_predefined_params(distance_measure, **param_perm)
 
     @staticmethod
-    def _distance_to_exemplars_inst(exemplars, instance, distance_measure):
+    def _distance_to_exemplars_inst(x, meta):
         """Find distance between a given instance and the exemplar instances.
 
         Parameters
@@ -758,6 +827,10 @@ class ProximityStump(BaseClassifier):
         -------
         list of distances to each exemplar
         """
+        exemplars = meta["exemplars"]
+        distance_measure = meta["distance_measure"]
+        instance = x
+
         n_exemplars = len(exemplars)
         distances = np.empty(n_exemplars)
         min_distance = math.inf
@@ -828,19 +901,22 @@ class ProximityStump(BaseClassifier):
         ret: 2d numpy array of distances from each instance to each
             exemplar (instance by exemplar)
         """
-        if self._threads_to_use > 1:
-            parallel = Parallel(self._threads_to_use)
-            distances = parallel(
-                delayed(self._distance_to_exemplars_inst)(
-                    self.X_exemplar, X.iloc[index, :], self._distance_measure()
-                )
-                for index in range(X.shape[0])
+        # set the meta vars
+        meta = {}
+        meta["exemplars"] = self.X_exemplar
+        meta["distance_measure"] = self._distance_measure()
+        if self.backend:
+            iters = [X.iloc[index, :] for index in range(X.shape[0])]
+            distances = parallelize(
+                fun=self._distance_to_exemplars_inst,
+                iter=iters,
+                meta=meta,
+                backend=self.backend,
+                backend_params=self._backend_params,
             )
         else:
             distances = [
-                self._distance_to_exemplars_inst(
-                    self.X_exemplar, X.iloc[index, :], self._distance_measure()
-                )
+                self._distance_to_exemplars_inst(x=X.iloc[index, :], meta=meta)
                 for index in range(X.shape[0])
             ]
         distances = np.nan_to_num(np.vstack(np.array(distances)))
@@ -945,11 +1021,21 @@ class ProximityStump(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {
-            "random_state": 0,
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        params1 = {"random_state": 0, "backend": "loky"}
+        params2 = {
+            "random_state": 42,
+            "distance_measure": "dtw",
+            "backend": "threading",
         }
-        params2 = {"random_state": 42, "distance_measure": "dtw"}
-        return [params1, params2]
+        params_set = [params1, params2]
+        if _check_soft_dependencies("dask", severity="none"):
+            params3 = {
+                "backend": "dask",
+            }
+            params_set.append(params3)
+        return params_set
 
 
 class ProximityTree(BaseClassifier):
@@ -972,9 +1058,40 @@ class ProximityTree(BaseClassifier):
     verbosity: 0 or 1
         number reflecting the verbosity of logging
         0 = no logging, 1 = verbose logging
-    n_jobs: int or None, default=1
-        number of parallel threads to use while building
     n_stump_evaluations: number of stump evaluations to do if find_stump method is None
+
+    backend : {None, "dask", "loky", "threading"}, by default "loky".
+        Runs in parallel mode if specified. For ProximityStump, "multiprocessing"
+        will result in an error during parallelization, so it cannot be used.
+        Specify None if no parallelization is needed.
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+
+        Recommendation: Use "dask" or "loky" for parallelization.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
 
     Examples
     --------
@@ -1010,8 +1127,10 @@ class ProximityTree(BaseClassifier):
         max_depth=math.inf,
         is_leaf=pure,
         verbosity=0,
-        n_jobs=1,
+        n_jobs="deprecated",
         n_stump_evaluations=5,
+        backend="loky",
+        backend_params=None,
     ):
         self.verbosity = verbosity
         self.n_stump_evaluations = n_stump_evaluations
@@ -1021,6 +1140,8 @@ class ProximityTree(BaseClassifier):
         self.distance_measure = distance_measure
         self.n_jobs = n_jobs
         self.depth = 0
+        self.backend = backend
+        self.backend_params = backend_params
 
         # below set in fit method
         self.label_encoder = None
@@ -1032,9 +1153,37 @@ class ProximityTree(BaseClassifier):
 
         super().__init__()
 
-        from sktime.utils.validation import check_n_jobs
+        # TODO, 0.40.0 remove n_jobs parameter and below logic
+        if n_jobs != "deprecated":
+            self.backend_params = {"n_jobs": n_jobs}
+            warn(
+                f"Parameter n_jobs of {self.__class__.__name__} will be removed "
+                "in sktime 0.32.0 and will be no longer used. "
+                "Instead, the backend and backend_params parameters should be used. "
+                "If n_jobs is required, set it as a parameter of backend_params"
+                "to pass n_jobs or other parallelization parameters. ",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            if backend_params is None:
+                self._backend_params = {}
+            else:
+                self._backend_params = backend_params
+            self._backend_params.update(**{"n_jobs": n_jobs})
+        else:
+            self._backend_params = backend_params
 
-        self._threads_to_use = check_n_jobs(n_jobs)
+        if self.backend == "multiprocessing":
+            warn(
+                "Parallelization method multiprocessing has some incompatability "
+                "issues with the pickles library. Some of the functions inside "
+                "proximity forest may not work as intended "
+                "For a more compatible or valid parallelization method,"
+                "see the docstring for the 'backend' parameter",
+                UserWarning,
+                obj=self,
+            )
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -1088,12 +1237,13 @@ class ProximityTree(BaseClassifier):
                 sub_y = self.stump.y_branches[index]
                 if not self.is_leaf(sub_y):
                     sub_tree = ProximityTree(
+                        backend=self.backend,
+                        backend_params=self._backend_params,
                         random_state=self.random_state,
                         distance_measure=self.distance_measure,
                         is_leaf=self.is_leaf,
                         verbosity=self.verbosity,
                         max_depth=self.max_depth,
-                        n_jobs=self._threads_to_use,
                     )
                     sub_tree.label_encoder = self.label_encoder
                     sub_tree.depth = self.depth + 1
@@ -1157,10 +1307,11 @@ class ProximityTree(BaseClassifier):
         stumps = []
         for _ in range(self.n_stump_evaluations):
             stump = ProximityStump(
+                backend=self.backend,
+                backend_params=self._backend_params,
                 random_state=self.random_state,
                 distance_measure=self.distance_measure,
                 verbosity=self.verbosity,
-                n_jobs=self.n_jobs,
             )
             stump.fit(self.X, self.y)
             stump.grow()
@@ -1235,9 +1386,29 @@ class ProximityTree(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        params1 = {"max_depth": 1, "n_stump_evaluations": 1}
-        params2 = {"max_depth": 5, "n_stump_evaluations": 2, "distance_measure": "dtw"}
-        return [params1, params2]
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        params1 = {
+            "max_depth": 5,
+            "n_stump_evaluations": 2,
+            "distance_measure": "dtw",
+            "backend": "threading",
+        }
+        params2 = {
+            "max_depth": 4,
+            "backend": "loky",
+        }
+        params_set = [params1, params2]
+
+        if _check_soft_dependencies("dask", severity="none"):
+            params3 = {
+                "max_depth": 5,
+                "n_stump_evaluations": 2,
+                "distance_measure": "dtw",
+                "backend": "dask",
+            }
+            params_set.append(params3)
+        return params_set
 
 
 class ProximityForest(BaseClassifier):
@@ -1263,10 +1434,42 @@ class ProximityForest(BaseClassifier):
         maximum depth of the tree
     is_leaf: function, default=pure
         function to decide when to mark a node as a leaf node
-    n_jobs: int, default=1
         number of jobs to run in parallel *across threads"
     n_stump_evaluations: int, default=5
         number of stump evaluations to do if find_stump method is None
+
+    backend : {None, "dask", "loky", "threading"}, by default "loky".
+        Runs in parallel mode if specified. For ProximityStump, "multiprocessing"
+        will result in an error during parallelization, so it cannot be used.
+        Specify None if no parallelization is needed.
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        Recommendation: Use "dask" or "loky" for parallelization.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
 
     References
     ----------
@@ -1318,8 +1521,10 @@ class ProximityForest(BaseClassifier):
         verbosity=0,
         max_depth=math.inf,
         is_leaf=pure,
-        n_jobs=1,
+        n_jobs="deprecated",
         n_stump_evaluations=5,
+        backend="loky",
+        backend_params=None,
     ):
         self.is_leaf = is_leaf
         self.verbosity = verbosity
@@ -1329,6 +1534,8 @@ class ProximityForest(BaseClassifier):
         self.n_jobs = n_jobs
         self.n_stump_evaluations = n_stump_evaluations
         self.distance_measure = distance_measure
+        self.backend = backend
+        self.backend_params = backend_params
 
         # set in fit method
         self.label_encoder = None
@@ -1339,9 +1546,37 @@ class ProximityForest(BaseClassifier):
 
         super().__init__()
 
-        from sktime.utils.validation import check_n_jobs
+        # TODO, 0.40.0 remove n_jobs parameter and below logic
+        if n_jobs != "deprecated":
+            self.backend_params = {"n_jobs": n_jobs}
+            warn(
+                f"Parameter n_jobs of {self.__class__.__name__} will be removed "
+                "in sktime 0.32.0 and will be no longer used. "
+                "Instead, the backend and backend_params parameters should be used. "
+                "If n_jobs is required, set it as a parameter of backend_params"
+                "to pass n_jobs or other parallelization parameters. ",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            if backend_params is None:
+                self._backend_params = {}
+            else:
+                self._backend_params = backend_params
+            self._backend_params.update(**{"n_jobs": n_jobs})
+        else:
+            self._backend_params = backend_params
 
-        self._threads_to_use = check_n_jobs(n_jobs)
+        if self.backend == "multiprocessing":
+            warn(
+                "Parallelization method multiprocessing has some incompatability "
+                "issues with the pickles library. Some of the functions inside "
+                "proximity forest may not work as intended "
+                "For a more compatible or valid parallelization method,"
+                "see the docstring for the 'backend' parameter",
+                UserWarning,
+                obj=self,
+            )
 
     def pick_distance_measure(self):
         """Pick a distance measure.
@@ -1368,7 +1603,7 @@ class ProximityForest(BaseClassifier):
         distance_measure = param_perm.pop("distance_measure")
         return distance_predefined_params(distance_measure, **param_perm)
 
-    def _fit_tree(self, X, y, index, random_state):
+    def _fit_tree(self, index, meta):
         """Build the classifierr on the training set (X, y).
 
         Parameters
@@ -1376,6 +1611,7 @@ class ProximityForest(BaseClassifier):
         X : array-like or sparse matrix of shape = [n_instances,n_columns]
             The training input samples.  If a Pandas data frame is passed,
             column 0 is extracted.
+        meta : dict containing y, index, and a random_state. See below for details
         y : array-like, shape = [n_instances]
             The class labels.
         index : index of the tree to be constructed
@@ -1385,15 +1621,20 @@ class ProximityForest(BaseClassifier):
         -------
         self : object
         """
+        X = meta["X"]
+        y = meta["y"]
+        random_state = meta["_random_object"].randint(0, self.n_estimators)
+
         if self.verbosity > 0:
             print("tree " + str(index) + " building")
         tree = ProximityTree(
+            backend=self.backend,
+            backend_params=self._backend_params,
             random_state=random_state,
             verbosity=self.verbosity,
             distance_measure=self.distance_measure,
             max_depth=self.max_depth,
             is_leaf=self.is_leaf,
-            n_jobs=1,
             n_stump_evaluations=self.n_stump_evaluations,
         )
         tree.fit(X, y)
@@ -1418,30 +1659,35 @@ class ProximityForest(BaseClassifier):
         self._random_object = check_random_state(self.random_state)
         self.y = y
 
-        if self._threads_to_use > 1:
-            parallel = Parallel(self._threads_to_use)
-            self.trees = parallel(
-                delayed(self._fit_tree)(
-                    X, y, index, self._random_object.randint(0, self.n_estimators)
-                )
-                for index in range(self.n_estimators)
+        meta = {}
+        meta["X"] = self.X
+        meta["y"] = self.y
+        meta["_random_object"] = self._random_object
+        if self.backend:
+            iters = [index for index in range(self.n_estimators)]
+            self.trees = parallelize(
+                fun=self._fit_tree,
+                iter=iters,
+                meta=meta,
+                backend=self.backend,
+                backend_params=self._backend_params,
             )
         else:
             self.trees = [
-                self._fit_tree(
-                    X, y, index, self._random_object.randint(0, self.n_estimators)
-                )
+                self._fit_tree(index=index, meta=meta)
                 for index in range(self.n_estimators)
             ]
-
         return self
 
     @staticmethod
-    def _predict_proba_tree(X, tree):
+    def _predict_proba_tree(tree, meta):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
         ----------
+        meta : dict
+            dictionary containing parameters to find probability estimates
+            See below for details
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.
             If a Pandas data frame is passed (sktime format)
@@ -1456,6 +1702,7 @@ class ProximityForest(BaseClassifier):
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
         """
+        X = meta["X"]
         return tree.predict_proba(X)
 
     def _predict_proba(self, X) -> np.ndarray:
@@ -1477,13 +1724,23 @@ class ProximityForest(BaseClassifier):
         output : array of shape = [n_instances, n_classes] of probabilities
         """
         X = _negative_dataframe_indices(X)
-        if self._threads_to_use > 1:
-            parallel = Parallel(self._threads_to_use)
-            distributions = parallel(
-                delayed(self._predict_proba_tree)(X, tree) for tree in self.trees
+
+        # set meta vars
+        meta = {}
+        meta["X"] = X
+        if self.backend:
+            iters = self.trees
+            distributions = parallelize(
+                fun=self._predict_proba_tree,
+                iter=iters,
+                meta=meta,
+                backend=self.backend,
+                backend_params=self._backend_params,
             )
         else:
-            distributions = [self._predict_proba_tree(X, tree) for tree in self.trees]
+            iters = self.trees
+            distributions = [self._predict_proba_tree(tree, meta) for tree in iters]
+
         distributions = np.array(distributions)
         distributions = np.sum(distributions, axis=0)
         normalize(distributions, copy=False, norm="l1")
@@ -1557,17 +1814,42 @@ class ProximityForest(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
+        from sktime.utils.dependencies import _check_soft_dependencies
+
         if parameter_set == "results_comparison":
             return {"n_estimators": 3, "max_depth": 2, "n_stump_evaluations": 2}
         else:
-            param1 = {"n_estimators": 2, "max_depth": 1, "n_stump_evaluations": 1}
-            param2 = {
-                "n_estimators": 4,
-                "max_depth": 2,
-                "n_stump_evaluations": 3,
-                "distance_measure": "dtw",
+            params_set = []
+            params1 = {
+                "n_estimators": 1,
+                "max_depth": 1,
+                "n_stump_evaluations": 1,
+                "backend": "loky",
             }
-            return [param1, param2]
+            params_set.append(params1)
+            params2 = {
+                "n_estimators": 3,
+                "max_depth": 5,
+                "n_stump_evaluations": 2,
+                "backend": "threading",
+            }
+            params_set.append(params2)
+            params3 = {
+                "n_estimators": 2,
+                "max_depth": 3,
+                "n_stump_evaluations": 2,
+                "backend": None,
+            }
+            params_set.append(params3)
+
+            if _check_soft_dependencies("dask", severity="none"):
+                params4 = {
+                    "n_estimators": 1,
+                    "max_depth": 2,
+                    "backend": "dask",
+                }
+                params_set.append(params4)
+            return params_set
 
 
 # start of util functions
