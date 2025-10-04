@@ -85,7 +85,6 @@ class MACNNRegressor(BaseDeepRegressor):
         kernel_size=(3, 6, 12),
         reduction=16,
         loss="mean_squared_error",
-        activation="sigmoid",
         use_bias=True,
         metrics=None,
         optimizer=None,
@@ -105,7 +104,6 @@ class MACNNRegressor(BaseDeepRegressor):
         self.kernel_size = kernel_size
         self.reduction = reduction
         self.loss = loss
-        self.activation = activation
         self.use_bias = use_bias
         self.metrics = metrics
         self.optimizer = optimizer
