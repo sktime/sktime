@@ -1,6 +1,6 @@
 """Tests the SkforecastAutoreg model."""
 
-__author__ = ["Abhay-Lejith"]
+__author__ = ["Abhay-Lejith", "yarnabrina"]
 
 import pandas as pd
 import pytest
