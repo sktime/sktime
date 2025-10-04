@@ -303,12 +303,17 @@ def is_sklearn_metric(obj, return_type=False):
     params = list(sig.parameters.values())
     if len(params) < 2:
         return _ret(False, None)
-    if params[0].name != "y_true" or params[1].name not in {"y_pred", "y_proba"}:
+    if params[0].name != "y_true":
+        return _ret(False, None)
+    # deterministic metrics have signature (y_true, y_pred, ...)
+    # probabilistic metrics have signature (y_true, y_proba, ...)
+    # earlier versions of sklearn sometimes use "y_prob" instead of "y_proba"
+    if params[1].name not in {"y_pred", "y_proba", "y_prob"}:
         return _ret(False, None)
 
     if params[1].name == "y_pred":
         return _ret(True, "metric")
-    if params[1].name == "y_proba":
+    if params[1].name in ["y_proba", "y_prob"]:
         return _ret(True, "metric_proba")
 
     # unreachable due to "not in" above, but for code checkers
