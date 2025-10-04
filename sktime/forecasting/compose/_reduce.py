@@ -2324,47 +2324,158 @@ def _cut_df(X, n_obs=1, type="tail"):
 #     return res
 
 
+# def _create_fcst_df(target_date, origin_df, fill=None, columns=None):
+#     """Create an empty forecasting frame aligned to origin_df's index structure.
+
+#     Parameters
+#     ----------
+#     target_date : iterable of dates or ForecastingHorizon (abs or already resolvable)
+#         New timepoints for the forecast frame (last level of the index).
+#     origin_df : pd.Series or pd.DataFrame
+#         Provides the original index structure (including outer levels & names)
+#         and the column names (for DataFrame) or name (for Series).
+#     fill : scalar or array-like, optional
+#         If provided, pre-fill the frame with this value; otherwise zeros.
+
+#     Returns
+#     -------
+#     pd.Series or pd.DataFrame
+#         With the same outer index levels and column structure as origin_df, and
+#         the last level replaced by target_date.
+#     """
+#     # Normalize target_date to a pandas Index
+#     if isinstance(target_date, ForecastingHorizon):
+#         # Try to treat it as already absolute; fall back to a plain Index if needed
+#         try:
+#             td = target_date.to_absolute()
+#             tgt = td.to_pandas() if hasattr(td, "to_pandas") else pd.Index(td)
+#         except TypeError:
+#             tgt = pd.Index(target_date)
+#     else:
+#         tgt = pd.Index(target_date)
+
+#     idx0 = origin_df.index
+#     # Build the forecast index to mirror origin_df's structure
+#     if isinstance(idx0, pd.MultiIndex):
+#         left = idx0.droplevel(-1).unique()
+#         names = idx0.names
+
+#         if isinstance(left, pd.MultiIndex):
+#             tuples = [(*lvl, t) for lvl in left for t in tgt]
+#             index = pd.MultiIndex.from_tuples(tuples, names=names)
+#         else:
+#             index = pd.MultiIndex.from_product([left, tgt], names=names)
+#     else:
+#         # Single-level time index: preserve dtype where possible
+#         if isinstance(idx0, pd.PeriodIndex):
+#             try:
+#                 tgt = pd.PeriodIndex(tgt, freq=idx0.freq)
+#             except Exception:
+#                 tgt = pd.Index(tgt)
+#         elif isinstance(idx0, pd.DatetimeIndex):
+#             try:
+#                 tgt = pd.DatetimeIndex(tgt, tz=idx0.tz)
+#             except Exception:
+#                 tgt = pd.Index(tgt)
+#         index = tgt
+#         # carry over name if present
+#         if getattr(idx0, "name", None) is not None:
+#             index.name = idx0.name
+
+#     # Columns / values
+#     if columns is None:
+#         columns = (
+#             [origin_df.name]
+#             if isinstance(origin_df, pd.Series)
+#             else list(origin_df.columns)
+#         )
+#     values = 0 if fill is None else fill
+
+#     res = pd.DataFrame(values, index=index, columns=columns, dtype="float64")
+
+#     # If the origin was a Series and the result isn't hierarchical, return a Series
+#     if isinstance(origin_df, pd.Series) and not isinstance(index, pd.MultiIndex):
+#         res = res.iloc[:, 0]
+#         res.name = origin_df.name
+
+#     return res
+
+
 def _create_fcst_df(target_date, origin_df, fill=None, columns=None):
     """Create an empty forecasting frame aligned to origin_df's index structure.
 
     Parameters
     ----------
-    target_date : iterable of dates or ForecastingHorizon (abs or already resolvable)
-        New timepoints for the forecast frame (last level of the index).
+    target_date : iterable of dates, MultiIndex, or ForecastingHorizon
+        New timepoints for the forecast frame. Can be:
+        * time-only index (usual case), or
+        * a full MultiIndex matching origin_df.index (e.g., (series, time)), or
+        * a ForecastingHorizon that can be resolved to absolute times.
     origin_df : pd.Series or pd.DataFrame
         Provides the original index structure (including outer levels & names)
         and the column names (for DataFrame) or name (for Series).
     fill : scalar or array-like, optional
         If provided, pre-fill the frame with this value; otherwise zeros.
+    columns : sequence, optional
+        Column names to use instead of origin_df's.
 
     Returns
     -------
     pd.Series or pd.DataFrame
         With the same outer index levels and column structure as origin_df, and
-        the last level replaced by target_date.
+        the last level replaced by target_date (if time-only was given) or
+        exactly `target_date` (if a full MultiIndex was given).
     """
-    # Normalize target_date to a pandas Index
+    # --- normalize target_date to a pandas Index / MultiIndex ---
     if isinstance(target_date, ForecastingHorizon):
-        # Try to treat it as already absolute; fall back to a plain Index if needed
         try:
-            td = target_date.to_absolute()
-            tgt = td.to_pandas() if hasattr(td, "to_pandas") else pd.Index(td)
+            td_abs = target_date.to_absolute()
+            tgt = (
+                td_abs.to_pandas() if hasattr(td_abs, "to_pandas") else pd.Index(td_abs)
+            )
         except TypeError:
             tgt = pd.Index(target_date)
     else:
-        tgt = pd.Index(target_date)
+        # If it's already a (Multi)Index, use as-is; otherwise wrap in Index
+        if isinstance(target_date, (pd.Index, pd.MultiIndex)):
+            tgt = target_date
+        else:
+            tgt = pd.Index(target_date)
 
     idx0 = origin_df.index
-    # Build the forecast index to mirror origin_df's structure
-    if isinstance(idx0, pd.MultiIndex):
-        left = idx0.droplevel(-1).unique()
-        names = idx0.names
 
-        if isinstance(left, pd.MultiIndex):
-            tuples = [(*lvl, t) for lvl in left for t in tgt]
-            index = pd.MultiIndex.from_tuples(tuples, names=names)
+    # Helper: detect "Index of tuples" with tuple length == nlevels
+    def _is_full_tuple_index(ix, nlevels):
+        if not isinstance(ix, pd.Index) or isinstance(ix, pd.MultiIndex):
+            return False
+        if ix.dtype != object:
+            return False
+        vals = ix.tolist()
+        return len(vals) > 0 and all(
+            isinstance(v, tuple) and len(v) == nlevels for v in vals
+        )
+
+    # --- build the forecast index to mirror origin_df's structure ---
+    if isinstance(idx0, pd.MultiIndex):
+        names = idx0.names
+        nlevels = idx0.nlevels
+
+        if isinstance(tgt, pd.MultiIndex):
+            # If caller supplied a full MultiIndex, trust it (but set names)
+            index = tgt
+            if index.names != names:
+                index = index.set_names(names)
+        elif _is_full_tuple_index(tgt, nlevels):
+            # Caller passed an Index of tuples matching full shape -> make MultiIndex
+            index = pd.MultiIndex.from_tuples(list(tgt), names=names)
         else:
-            index = pd.MultiIndex.from_product([left, tgt], names=names)
+            # Usual case: caller passed time-only; replicate across outer levels
+            left = idx0.droplevel(-1).unique()
+            if isinstance(left, pd.MultiIndex):
+                tuples = [(*lvl, t) for lvl in left for t in tgt]
+                index = pd.MultiIndex.from_tuples(tuples, names=names)
+            else:
+                index = pd.MultiIndex.from_product([left, tgt], names=names)
     else:
         # Single-level time index: preserve dtype where possible
         if isinstance(idx0, pd.PeriodIndex):
@@ -2380,7 +2491,10 @@ def _create_fcst_df(target_date, origin_df, fill=None, columns=None):
         index = tgt
         # carry over name if present
         if getattr(idx0, "name", None) is not None:
-            index.name = idx0.name
+            try:
+                index = index.set_names(idx0.name)
+            except Exception:
+                index.name = idx0.name
 
     # Columns / values
     if columns is None:
@@ -2467,6 +2581,46 @@ def slice_at_ix(df, ix):
         if idxer[0] == -1:
             idxer = [0]
         return df.iloc[[idxer[0]]]
+
+
+def _combine_exog_frames(
+    X_new: pd.DataFrame | None,
+    X_old: pd.DataFrame | None,
+    y_index: pd.Index | None = None,
+) -> pd.DataFrame | None:
+    """Safely combine exogenous frames.
+
+    Needed when one index is MultiIndex (panel) and the other is
+    single-level (time). If needed, broadcast X_new to the MultiIndex
+    of X_old so .combine_first can align without raising.
+    """
+    if X_old is None:
+        return X_new
+    if X_new is None:
+        return X_old
+
+    if isinstance(X_old.index, pd.MultiIndex) and not isinstance(
+        X_new.index, pd.MultiIndex
+    ):
+        # Get series keys & index names from the stored training exog
+        mi_names = X_old.index.names  # typically ['series', 'time']
+        series_levels = X_old.index.droplevel(-1).unique()
+        times = X_new.index
+
+        # Broadcast X_new over series_levels -> MultiIndex aligned to X_old
+        # Create the target MultiIndex first
+        target_mi = pd.MultiIndex.from_product([series_levels, times], names=mi_names)
+
+        # Repeat X_new rows for each series key and set the MultiIndex
+        X_rep = X_new.loc[times].copy()
+        X_rep = X_rep.loc[np.repeat(X_rep.index.values, len(series_levels))]
+        X_rep.index = target_mi
+
+        # Now the indices are compatible
+        return X_rep.combine_first(X_old)
+
+    # Otherwise, both are single-level or both already compatible
+    return X_new.combine_first(X_old)
 
 
 def _get_notna_idx(df):
@@ -3188,7 +3342,12 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             Point predictions
         """
         if X is not None and self._X is not None:
-            X_pool = X.combine_first(self._X)
+            # X_pool = X.combine_first(self._X)
+            X_pool = _combine_exog_frames(
+                X,
+                self._X,
+                getattr(self, "_y", None).index if hasattr(self, "_y") else None,
+            )
         elif X is None and self._X is not None:
             X_pool = self._X
         else:
@@ -4342,6 +4501,31 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
     _time_name: str = "time"
     _series_name: str = "series"
 
+    def _broadcast_X_to_panel(self, X: pd.DataFrame, y_index: pd.Index) -> pd.DataFrame:
+        """Alignment of indexes of y and X.
+
+        If y is panel (MultiIndex ['series','time']) and X is 1-level over time,
+        broadcast X across the series level so X and y share the same index shape/names.
+        """
+        if (
+            X is None
+            or not isinstance(y_index, pd.MultiIndex)
+            or isinstance(X.index, pd.MultiIndex)
+        ):
+            return X
+
+        # series + time from y
+        series_levels = y_index.get_level_values(0).unique()
+
+        # rep X for each series; creae a MultiIndex with names ['series','time']
+        X_broadcast = pd.concat(
+            {s: X.copy() for s in series_levels}, names=["series", "time"]
+        )
+
+        # Make sure time level matches X's index name if it had one;
+        # tests usually care about names (y already has names ['series','time'])
+        return X_broadcast
+
     def fit(self, y, X=None, fh=None):
         # remember original index/columns for roundtripping
         # (you already set these in _to_long_from_wide; keep that behavior)
@@ -4353,6 +4537,8 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
             # keep state consistent
             self._was_wide_input = False
             self._was_long_input = isinstance(getattr(y, "index", None), pd.MultiIndex)
+
+        X = self._broadcast_X_to_panel(X, y.index)
 
         # IMPORTANT:
         # call base public fit (not _fit), so BaseForecaster stores y_metadata, etc
