@@ -457,7 +457,7 @@ def _get_all_changed_classes(vm=False, r=False):
         r_deps = cls.get_class_tag("r_dependencies", None)
         return r_deps is not None
 
-    cc = [(name, est) for name, est in all_estimators() if _changed_class(est) == r]
+    cc = [(name, est) for name, est in all_estimators() if _changed_class(est)]
     # filter by r dependencies tag
     cc = [(name, est) for name, est in cc if _is_r_class(est) == r]
     # return only the name strings
