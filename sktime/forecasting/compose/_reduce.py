@@ -4164,18 +4164,29 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             # advance one step according to index type
             if isinstance(label, pd.Period):
                 return label + n
+
             if isinstance(label, pd.Timestamp):
-                # use training index freq if available; else infer; else day
-                freq = getattr(getattr(self, "_y", None), "index", None)
-                freq = getattr(freq, "freq", None) or (
-                    pd.infer_freq(self._y.index) if hasattr(self._y, "index") else None
-                )
+                # prefer stored freq; else infer from y.index
+                idx = getattr(getattr(self, "_y", None), "index", None)
+                if isinstance(idx, pd.MultiIndex):
+                    # use the time level for frequency inference
+                    idx = idx.get_level_values(-1)
+
+                freq = getattr(idx, "freq", None)
+                if freq is None and idx is not None:
+                    try:
+                        freq = pd.infer_freq(idx)
+                    except Exception:
+                        freq = None
+
                 if freq is None:
-                    # default to 1 day if nothing avail (works for tests w/ daily data)
+                    # default to daily step if nothing is available
                     return label + pd.Timedelta(days=n)
+
                 return pd.date_range(
                     start=label, periods=n + 1, freq=freq, tz=label.tz
                 )[-1]
+
             # integer-like
             return label + n
 
@@ -4188,10 +4199,21 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             )
         elif isinstance(last_abs, pd.Timestamp):
             # same tz and inferred/original frequency
-            freq = getattr(getattr(self, "_y", None), "index", None)
-            freq = getattr(freq, "freq", None) or (
-                pd.infer_freq(self._y.index) if hasattr(self._y, "index") else None
-            )
+            # Get a 1D time index to infer frequency from (handles MultiIndex panels)
+            _idx = getattr(getattr(self, "_y", None), "index", None)
+            if isinstance(_idx, pd.MultiIndex):
+                _time_idx = _idx.get_level_values(-1)
+            else:
+                _time_idx = _idx
+
+            # Try explicit .freq first, then infer; if unavailable, leave as None
+            freq = getattr(_time_idx, "freq", None)
+            if freq is None and _time_idx is not None:
+                try:
+                    freq = pd.infer_freq(_time_idx)
+                except Exception:
+                    freq = None
+
             if freq is None:
                 # fallback: day
                 gapless_abs = pd.date_range(
