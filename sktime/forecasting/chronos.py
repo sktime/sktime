@@ -2,6 +2,7 @@
 
 __author__ = ["abdulfatir", "lostella", "Z-Fran", "benheid", "geetu040", "PranavBhatP"]
 # abdulfatir and lostella for amazon-science/chronos-forecasting
+# diagnostic PR: no-op change to trigger test failure
 
 __all__ = ["ChronosForecaster"]
 
