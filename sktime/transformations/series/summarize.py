@@ -483,7 +483,10 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
 
     # Handle backfill
     if bfill is True:
-        feat = feat.bfill()
+        if isinstance(Z, pd.core.groupby.GroupBy):
+            feat = feat.groupby(level=list(range(feat.index.nlevels - 1))).bfill()
+        else:
+            feat = feat.bfill()
 
     if callable(summarizer):
         name = summarizer.__name__
