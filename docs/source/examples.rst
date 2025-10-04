@@ -92,3 +92,4 @@ Benchmarking
 
     examples/04_benchmarking.ipynb
     examples/04_benchmarking_v2.ipynb
+    examples/04_classifier_benchmarking.ipynb
