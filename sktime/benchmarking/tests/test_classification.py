@@ -172,6 +172,7 @@ def test_add_multiple_task(tmp_path):
     not run_test_module_changed("sktime.benchmarking"),
     reason="run test only if benchmarking module has changed",
 )
+@pytest.mark.datadownload
 def test_multiple_dataset_format(tmp_path):
     benchmark = ClassificationBenchmark()
     benchmark.add_estimator(DummyClassifier())
