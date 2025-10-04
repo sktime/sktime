@@ -230,7 +230,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "CNTCNetwork",
         "CanonicalIntervalForest",
         "CircularBinarySegmentation",
-        "ClaSPTransformer",
         "ClearSky",
         "ColumnEnsembleClassifier",
         "ColumnwiseTransformer",
