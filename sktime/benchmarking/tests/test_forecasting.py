@@ -379,6 +379,7 @@ def test_raise_id_restraint():
     not run_test_module_changed("sktime.benchmarking"),
     reason="run test only if benchmarking module has changed",
 )
+@pytest.mark.datadownload
 def test_dataset_classes(tmp_path):
     benchmark = ForecastingBenchmark()
     benchmark.add_estimator(NaiveForecaster())
