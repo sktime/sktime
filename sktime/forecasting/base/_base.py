@@ -374,6 +374,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
+        # print("BaseForecaster::fit(): entered")
+        # print(f"BaseForecaster::fit(): y = \n{y}\n fh = {fh}\n X = {X}")
+
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
@@ -446,6 +449,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         # handle inputs
         self.check_is_fitted()
+
+        # print("BaseForecaster::predict(): entered")
+        # print(f"BaseForecaster::predict(): fh = {fh}\n X = {X}")
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
