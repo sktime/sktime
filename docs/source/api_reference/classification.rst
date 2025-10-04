@@ -80,6 +80,7 @@ Deep learning
     resnet.ResNetClassifier
     rnn.SimpleRNNClassifier
     tapnet.TapNetClassifier
+    tlenet.TleNetClassifier
 
 Foundation models
 -----------------
