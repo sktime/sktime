@@ -2902,7 +2902,67 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         lags = self._lags
 
         # lagger_y_to_y_ will lag y to obtain the sklearn y
-        fh_rel = fh.to_relative(self._cutoff_scalar())
+
+        # convert FH to relative; if no freq, fall back to step counts
+        cutoff_scalar = self._cutoff_scalar()
+        try:
+            fh_rel = fh.to_relative(cutoff_scalar)
+        except Exception:
+            # Fallback path for absolute datetime FH when no freq is set/inferable.
+            # Compute int steps rel to cutoff, using index positions when possible.
+            y_idx = getattr(y, "index", None)
+
+            # if panel, extract the time level for freq inference/position lookups
+            if isinstance(y_idx, pd.MultiIndex) and ("time" in (y_idx.names or [])):
+                base_idx = y_idx.get_level_values("time")
+            else:
+                base_idx = y_idx
+
+            # try to get a usable freq for date_range fallback (may remain None)
+            freq = getattr(base_idx, "freq", None)
+            if freq is None:
+                try:
+                    freq = pd.infer_freq(base_idx)
+                except Exception:
+                    freq = None
+
+            # normalize cutoff to a scalar Timestamp
+            if isinstance(cutoff_scalar, pd.Index):
+                if len(cutoff_scalar) == 0:
+                    raise
+                cutoff_scalar = cutoff_scalar[-1]
+            cutoff_scalar = pd.Timestamp(cutoff_scalar)
+
+            def _steps(c, t):
+                t = pd.Timestamp(t)
+                # 1) prefer positional difference if both are in base_idx
+                if isinstance(base_idx, pd.DatetimeIndex):
+                    try:
+                        cpos = base_idx.get_loc(c)
+                        tpos = base_idx.get_loc(t)
+                        if isinstance(cpos, (np.ndarray, list)) or isinstance(
+                            tpos, (np.ndarray, list)
+                        ):
+                            # pathological; fall back to date_range counting
+                            raise KeyError
+                        return int(tpos - cpos)
+                    except KeyError:
+                        pass
+                # 2) otherwise, count periods in the correct direction
+                if freq is None:
+                    if t >= c:
+                        return len(pd.date_range(start=c, end=t, freq="D")) - 1
+                    else:
+                        return -(len(pd.date_range(start=t, end=c, freq="D")) - 1)
+                else:
+                    if t >= c:
+                        return len(pd.date_range(start=c, end=t, freq=freq)) - 1
+                    else:
+                        return -(len(pd.date_range(start=t, end=c, freq=freq)) - 1)
+
+            rel = [_steps(cutoff_scalar, t) for t in list(fh)]
+            fh_rel = ForecastingHorizon(rel, is_relative=True)
+
         y_lags = list(fh_rel)
         y_lags = [-x for x in y_lags]
 
@@ -2983,8 +3043,58 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         lagger_y_to_X = self.lagger_y_to_X_
 
-        fh_rel = fh.to_relative(self._cutoff_scalar())
-        fh_abs = fh.to_absolute(self._cutoff_scalar())
+        try:
+            fh_rel = fh.to_relative(self._cutoff_scalar())
+            fh_abs = fh.to_absolute(self._cutoff_scalar())
+        except Exception:
+            # Fallback when fh is absolute with freq=None
+            # (e.g., imputer creates sparse/irregular datetimes)
+            # Recompute relative steps from cutoff
+            # using base index positions or date-range counting.
+            base_idx = (
+                self._y.index.get_level_values("time")
+                if isinstance(self._y.index, pd.MultiIndex)
+                else self._y.index
+            )
+            cutoff = self._cutoff_scalar()
+            freq = getattr(fh, "_freq", None)
+
+            def _steps(c, t):
+                t = pd.Timestamp(t)
+                # 1) prefer positional difference if both are in base_idx
+                if isinstance(base_idx, pd.DatetimeIndex):
+                    try:
+                        cpos = base_idx.get_loc(c)
+                        tpos = base_idx.get_loc(t)
+                        if isinstance(cpos, (np.ndarray, list)) or isinstance(
+                            tpos, (np.ndarray, list)
+                        ):
+                            # pathological; fall back to date_range counting
+                            raise KeyError
+                        return int(tpos - cpos)
+                    except KeyError:
+                        pass
+                # 2) otherwise, count periods in the correct direction
+                if freq is None:
+                    if t >= c:
+                        return len(pd.date_range(start=c, end=t)) - 1
+                    else:
+                        return -(len(pd.date_range(start=t, end=c)) - 1)
+                else:
+                    return int(pd.Period(t, freq=freq) - pd.Period(c, freq=freq))
+
+            # absolute target times = the "time" level of fh_idx
+            fh_abs = (
+                fh_idx.get_level_values("time")
+                if isinstance(fh_idx, pd.MultiIndex)
+                else fh_idx
+            )
+            if not isinstance(fh_abs, pd.DatetimeIndex):
+                fh_abs = pd.DatetimeIndex(fh_abs)
+
+            # now make fh_rel as integer steps from cutoff
+            fh_rel = pd.Index([_steps(cutoff, t) for t in fh_abs])
+
         y_lags = list(fh_rel)
         y_abs = list(fh_abs)
 
