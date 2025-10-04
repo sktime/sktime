@@ -893,7 +893,7 @@ class _RecursiveReducer(_Reducer):
             pooling=self.pooling,
         )
 
-    def _fit(self, y, X, fh, **kwargs):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
