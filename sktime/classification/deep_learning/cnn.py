@@ -1,6 +1,5 @@
 """Time Convolutional Neural Network (CNN) for classification."""
 
-__author__ = ["James-Large", "TonyBagnall"]
 __all__ = ["CNNClassifier"]
 
 from copy import deepcopy
@@ -20,33 +19,37 @@ class CNNClassifier(BaseDeepClassifier):
 
     Parameters
     ----------
-    n_epochs       : int, default = 2000
+    n_epochs : int, default = 2000
         the number of epochs to train the model
-    batch_size      : int, default = 16
+    batch_size : int, default = 16
         the number of samples per gradient update.
-    kernel_size     : int, default = 7
+    kernel_size : int, default = 7
         the length of the 1D convolution window
-    avg_pool_size   : int, default = 3
+    avg_pool_size : int, default = 3
         size of the average pooling windows
-    n_conv_layers   : int, default = 2
+    n_conv_layers : int, default = 2
         the number of convolutional plus average pooling layers
-    callbacks       : list of keras.callbacks, default = None
-    verbose         : boolean, default = False
+    callbacks : list of keras.callbacks, default = None
+    verbose : boolean, default = False
         whether to output extra information
-    loss            : string, default="categorical_crossentropy"
+    loss : string, default="categorical_crossentropy"
         fit parameter for the keras model
-    metrics         : list of strings, default=["accuracy"],
-    random_state    : int or None, default=None
+    metrics : list of strings, default=["accuracy"],
+    random_state : int or None, default=None
         Seed for random number generation.
-    activation      : string or a tf callable, default="softmax"
-        Activation function used in the output linear layer.
+    activation : string or a tf callable, default="softmax"
+        Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
-    use_bias        : boolean, default = True
+    activation_hidden : string or a tf callable, default="sigmoid"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    use_bias : boolean, default = True
         whether the layer uses a bias vector.
-    optimizer       : keras.optimizers object, default = Adam(lr=0.01)
+    optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
-    filter_sizes    : array of shape (n_conv_layers) default = [6, 12]
+    filter_sizes : array of shape (n_conv_layers) default = [6, 12]
     padding : string, default = "auto"
         Controls padding logic for the convolutional layers,
         i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
@@ -73,11 +76,15 @@ class CNNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large"],
+        "authors": ["hfawaz", "James-Large", "noxthot"],
         # hfawaz for dl-4-tsc
         "maintainers": ["James-Large"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        #
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,  # run in VM due to memory requirement
     }
 
     def __init__(
@@ -93,6 +100,7 @@ class CNNClassifier(BaseDeepClassifier):
         metrics=None,
         random_state=None,
         activation="softmax",
+        activation_hidden="sigmoid",
         use_bias=True,
         optimizer=None,
         filter_sizes=None,
@@ -112,6 +120,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.metrics = metrics
         self.random_state = random_state
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
@@ -125,7 +134,7 @@ class CNNClassifier(BaseDeepClassifier):
             avg_pool_size=self.avg_pool_size,
             n_conv_layers=self.n_conv_layers,
             filter_sizes=self.filter_sizes,
-            activation=self.activation,
+            activation=self.activation_hidden,
             padding=self.padding,
             random_state=self.random_state,
         )
