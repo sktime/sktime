@@ -90,6 +90,6 @@ Benchmarking
 .. nbgallery::
     :glob:
 
-    examples/04_benchmarking.ipynb
-    examples/04_benchmarking_v2.ipynb
-    examples/04_classifier_benchmarking.ipynb
+    examples/04_benchmarking_classifiers.ipynb
+    examples/04_benchmarking_forecasters.ipynb
+    examples/04_benchmarking_legacy.ipynb
