@@ -2400,7 +2400,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 sklearn.__version__
             ) >= version.parse("1.6"):
                 tags = sklearn_get_tags(self.estimator)
-                self.set_tags(**{"capability:missing_values": tags["allow_nan"]})
+                self.set_tags(
+                    **{"capability:missing_values": tags.input_tags.allow_nan}
+                )
             else:
                 self.set_tags(**{"capability:missing_values": False})
 
