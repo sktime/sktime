@@ -356,14 +356,16 @@ class DatasetDownloader(DatasetDownloadStrategy):
     Examples
     --------
     >>> from sktime.datasets._dataset_downloader import (  # doctest: +SKIP
-    ...     DatasetDownloader
+    ...     DatasetDownloader,
     ... )
     >>> hf_repo_name = "sktime/tsc-datasets"  # doctest: +SKIP
-    >>> urls = ["https://timeseriesclassification.com/aeon-toolkit/Beef.zip"]
+    >>> urls = [  # doctest: +SKIP
+    ...     "https://timeseriesclassification.com/aeon-toolkit/Beef.zip",
+    ... ]
     >>> downloader = DatasetDownloader(  # doctest: +SKIP
     ...     hf_repo_name=hf_repo_name,
     ...     folder_name="Beef",
-    ...     fallback_urls=urls
+    ...     fallback_urls=urls,
     ... )
     >>> downloader.download()  # doctest: +SKIP
     """
