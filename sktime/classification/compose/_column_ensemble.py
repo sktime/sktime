@@ -294,7 +294,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
                 n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
             )
             param1 = {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
-            param2 = {**param1, "remainder": TSFC(n_estimators=2)}
+            param2 = {**param1, "remainder": "passthrough"}
 
             return [param1, param2]
         else:
@@ -304,7 +304,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
                     ("tsf2", TSFC(n_estimators=2), 0),
                 ]
             }
-            param2 = {**param1, "remainder": TSFC(n_estimators=2)}
+            param2 = {**param1, "remainder": "passthrough"}
 
             return [param1, param2]
 
