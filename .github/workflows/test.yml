@@ -115,7 +115,7 @@ jobs:
           UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: uv list
+        run: uv pip list
 
       - name: Run example notebooks
         run: build_tools/run_examples.sh
@@ -140,8 +140,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv install --upgrade pip
-          uv install .[notebooks,binder]
+          uv pip install --upgrade pip
+          uv pip install .[notebooks,binder]
         env:
           UV_SYSTEM_PYTHON: 1
 

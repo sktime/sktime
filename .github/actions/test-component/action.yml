@@ -52,7 +52,7 @@ runs:
         UV_SYSTEM_PYTHON: 1
 
     - name: Show dependencies
-      run: uv pip install list
+      run: uv pip list
       shell: bash
 
     - name: Show available branches
