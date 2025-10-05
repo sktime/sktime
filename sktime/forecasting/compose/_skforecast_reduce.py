@@ -460,8 +460,6 @@ class SkforecastAutoreg(BaseForecaster):
         return [param1, param2]
 
 
-# TODO: SkforecastRecursive has significant duplication with SkforecastAutoreg
-# https://github.com/sktime/sktime/issues/7451
 class SkforecastRecursive(BaseForecaster):
     """Adapter for ``skforecast.recursive.ForecasterRecursive`` class [1]_.
 
