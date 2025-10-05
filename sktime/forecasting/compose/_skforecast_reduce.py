@@ -637,9 +637,7 @@ class SkforecastRecursive(BaseForecaster):
 
         self._clone_estimators()
 
-        # Dynamically set the capability tag based on store_in_sample_residuals
-        if self.store_in_sample_residuals:
-            self.set_tags(**{"capability:pred_int:insample": True})
+        self.set_tags(**{"capability:pred_int": self.store_in_sample_residuals})
 
     def _clone_estimators(self: "SkforecastRecursive"):
         """Clone the regressor and transformers."""
