@@ -14,6 +14,7 @@ from sktime.utils._testing.scenarios_classification import (
     scenarios_regression,
 )
 from sktime.utils._testing.scenarios_clustering import scenarios_clustering
+from sktime.utils._testing.scenarios_detection import scenarios_detectors
 from sktime.utils._testing.scenarios_forecasting import scenarios_forecasting
 from sktime.utils._testing.scenarios_param_est import scenarios_param_est
 from sktime.utils._testing.scenarios_transformers import scenarios_transformers
@@ -33,6 +34,7 @@ scenarios["regressor"] = scenarios_regression
 scenarios["transformer"] = scenarios_transformers
 scenarios["transformer-pairwise"] = scenarios_transformers_pairwise
 scenarios["transformer-pairwise-panel"] = scenarios_transformers_pairwise_panel
+scenarios["detector"] = scenarios_detectors
 
 
 def retrieve_scenarios(obj, filter_tags=None):
