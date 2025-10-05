@@ -35,8 +35,6 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 
 * `timesfm` - partial fork of TimesFM, adapted from [google-research/timesfm](https://github.com/google-research/timesfm). This is an unofficial fork created to address the lack of recent updates of `timesfm` package on [pypi](https://pypi.org/project/timesfm/) and the instability caused by significant interface changes in recent versions without prior deprecation warnings. The fork has minimal dependencies and focuses on the core features required for compatibility with the `sktime` forecaster.
 
-* `tirex` - partial fork of `tirex` package, from [NX-AI/tirex](https://github.com/NX-AI/tirex). Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
-
 * `uni2ts` - a package implementing the MOIRAIForecaster. Unofficial fork of
  the package with minimal dependencies and code specific to the forecaster.
  Official package available at [pypi](https://pypi.org/project/uni2ts/).
