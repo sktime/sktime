@@ -29,8 +29,6 @@ ONLY_CHANGED_MODULES = False
 # DO NOT ADD ESTIMATORS HERE ANYMORE
 # ADD TEST SKIPS TO TAG tag tests:skip_all INSTEAD
 EXCLUDE_ESTIMATORS = [
-    # PlateauFinder seems to be broken, see #2259
-    "PlateauFinder",
     # below are removed due to mac failures we don't fully understand, see #3103
     "HIVECOTEV1",
     "HIVECOTEV2",
