@@ -455,19 +455,26 @@ class BOSSEnsemble(BaseClassifier):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
-            return {
+            param1 = {
                 "max_ensemble_size": 5,
                 "feature_selection": "none",
                 "use_boss_distance": False,
                 "alphabet_size": 4,
             }
+            param2 = param1.copy()
+            param2["feature_selection"] = "chi2"
+
         else:
-            return {
+            param1 = {
                 "max_ensemble_size": 2,
                 "save_train_predictions": True,
                 "feature_selection": "none",
                 "use_boss_distance": False,
             }
+            param2 = param1.copy()
+            param2["feature_selection"] = "chi2"
+
+        return [param1, param2]
 
 
 class IndividualBOSS(BaseClassifier):
