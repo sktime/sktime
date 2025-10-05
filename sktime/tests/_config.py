@@ -232,7 +232,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "CircularBinarySegmentation",
         "ClaSPTransformer",
         "ClearSky",
-        "ColumnEnsembleClassifier",
         "ColumnwiseTransformer",
         "ContractableBOSS",
         "DOBIN",
