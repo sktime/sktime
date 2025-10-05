@@ -131,10 +131,13 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
 
     Examples
     --------
-    >>> from sktime.datasets._dataset_downloader import HuggingFaceDownloader
+    >>> from sktime.datasets._dataset_downloader import (  # doctest: +SKIP
+    ...     HuggingFaceDownloader
+    ... )
     >>> hf_repo_name = "sktime/tsc-datasets"
     >>> downloader = HuggingFaceDownloader(hf_repo_name, folder_name="Beef")
     >>> downloader.download()
+
 
     References
     ----------
@@ -351,7 +354,9 @@ class DatasetDownloader(DatasetDownloadStrategy):
 
     Examples
     --------
-    >>> from sktime.datasets._dataset_downloader import DatasetDownloader
+    >>> from sktime.datasets._dataset_downloader import (  # doctest: +SKIP
+    ...     DatasetDownloader
+    ... )
     >>> hf_repo_name = "sktime/tsc-datasets"
     >>> urls = ["https://timeseriesclassification.com/aeon-toolkit/Beef.zip"]
     >>> downloader = DatasetDownloader(

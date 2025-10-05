@@ -25,7 +25,7 @@ class UCRUEADataset(BaseClassificationDataset):
 
     Examples
     --------
-    >>> from sktime.datasets import UCRUEADataset
+    >>> from sktime.datasets import UCRUEADataset # doctest: +SKIP
     >>> dataset = UCRUEADataset(name="Beef")
     >>> X, y = dataset.load() # load full dataset
     >>> X_train, y_train = dataset.load("X_train", "y_train") # load training split
