@@ -27,6 +27,11 @@ runs:
       run: git fetch --depth 1
       shell: bash
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
+
     - name: python environment step
       uses: actions/setup-python@v5
       with:
@@ -35,16 +40,19 @@ runs:
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"
       shell: bash
+
     - name: Install OSX packages
       run: ./.github/scripts/install_osx_dependencies.sh
       shell: bash
 
     - name: Install sktime and dependencies
-      run: python3 -m pip install .[${{ inputs.sktime-component-identifier }},tests]
+      run: uv pip install .[${{ inputs.sktime-component-identifier }},tests]
       shell: bash
+      env:
+        UV_SYSTEM_PYTHON: 1
 
     - name: Show dependencies
-      run: python -m pip list
+      run: uv pip install list
       shell: bash
 
     - name: Show available branches

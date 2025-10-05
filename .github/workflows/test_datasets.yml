@@ -24,19 +24,31 @@ jobs:
     steps:
       - name: repository checkout step
         uses: actions/checkout@v5
+
       - name: update tracking reference step
         run: git remote set-branches origin main
         shell: bash
+
       - name: shallow clone update step
         run: git fetch --depth 1
         shell: bash
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: python environment step
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: dependencies installation step
-        run: python3 -m pip install .[tests]
+        run: uv pip install .[tests]
         shell: bash
+        env:
+          UV_SYSTEM_PYTHON: 1
+
       - name: unit test step
         run: python3 -m pytest -m "not datadownload" sktime/datasets
         shell: bash
@@ -60,19 +72,29 @@ jobs:
     steps:
       - name: repository checkout step
         uses: actions/checkout@v5
+
       - name: update tracking reference step
         run: git remote set-branches origin main
         shell: bash
+
       - name: shallow clone update step
         run: git fetch --depth 1
         shell: bash
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: python environment step
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: dependencies installation step
-        run: python3 -m pip install .[tests,datasets]
+        run: uv pip install .[tests,datasets]
         shell: bash
+
       - name: unit test step
         run: python3 -m pytest -m "datadownload" sktime/datasets
         shell: bash
