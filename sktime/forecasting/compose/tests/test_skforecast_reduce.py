@@ -284,9 +284,11 @@ def test_SkforecastRecursive_capability_tags():
     # Default case (store_in_sample_residuals=False)
     forecaster = SkforecastRecursive(LinearRegression(), 2)
     assert not forecaster.get_tag("capability:pred_int:insample")
+    assert not forecaster.get_tag("capability:pred_int")
 
     # When store_in_sample_residuals=True
     forecaster = SkforecastRecursive(
         LinearRegression(), 2, store_in_sample_residuals=True
     )
-    assert forecaster.get_tag("capability:pred_int:insample")
+    assert not forecaster.get_tag("capability:pred_int:insample")
+    assert forecaster.get_tag("capability:pred_int")
