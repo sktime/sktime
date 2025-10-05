@@ -10,6 +10,7 @@ from sktime.utils.sklearn._scitype import (
     is_sklearn_transformer,
     sklearn_scitype,
 )
+from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 
 __all__ = [
     "prep_skl_df",
@@ -19,4 +20,5 @@ __all__ = [
     "is_sklearn_regressor",
     "is_sklearn_clusterer",
     "sklearn_scitype",
+    "get_sklearn_tag",
 ]

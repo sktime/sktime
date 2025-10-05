@@ -62,3 +62,14 @@ def get_sklearn_tag(estimator, tagname):
                 return estimator._get_tags()["stateless"]
             else:
                 return False
+
+    elif tagname == "capability:missing_values":
+        if _check_soft_dependencies("scikit-learn>=1.6", severity="none"):
+            from sklearn.utils import get_tags
+
+            return get_tags(estimator).input_tags.allow_nan
+        else:
+            if hasattr(estimator, "_get_tags"):
+                return estimator._get_tags().get("allow_nan", False)
+            else:
+                return False
