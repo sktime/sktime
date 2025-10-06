@@ -6,7 +6,6 @@ __author__ = ["abdulfatir", "lostella", "Z-Fran", "benheid", "geetu040", "Pranav
 __all__ = ["ChronosForecaster"]
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -184,6 +183,16 @@ class ChronosForecaster(BaseForecaster):
     developed by Amazon for time-series forecasting. This method has been
     proposed in [2]_ and official code is given at [1]_.
 
+    Note: vanilla Chronos is not exogenous capable despite being so advertised in [2]_.
+    The "exogenous capable" version is actually a composite forecaster rather than
+    an exogenous capable foundation model.
+
+    To obtain this "exogenous capable" version of Chronos as advertised in [2]_,
+    combine ``ChronosForecaster`` with an exogenous capable forecaster via
+    ``ResidualBoostingForecaster``. The original reference uses
+    tabularized linear regression, i.e., ``YtoX(LinearRegression())``,
+    with ``YtoX`` from ``sktime`` and ``LinearRegression`` from ``sklearn``.
+
     Parameters
     ----------
     model_path : str
@@ -336,7 +345,7 @@ class ChronosForecaster(BaseForecaster):
         self,
         model_path: str,
         config: dict = None,
-        seed: Optional[int] = None,
+        seed: int | None = None,
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):

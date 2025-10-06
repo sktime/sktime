@@ -18,10 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: python environment step
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -29,7 +29,7 @@ jobs:
         run: python3 -m pip install pre-commit
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -65,7 +65,7 @@ jobs:
     outputs:
       notebooks: ${{ steps.check.outputs.notebooks }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0  # Needed to access the full git history
 
@@ -88,10 +88,10 @@ jobs:
     if: ${{ needs.detect-notebooks-change.outputs.notebooks == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
 
@@ -112,10 +112,10 @@ jobs:
     if: ${{ needs.detect-notebooks-change.outputs.notebooks == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
 
@@ -140,14 +140,14 @@ jobs:
       obj_list_length: ${{ steps.get-change-list.outputs.obj_list_length }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - run: git remote set-branches origin 'main'
 
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -163,8 +163,8 @@ jobs:
           OBJ_LIST_LENGTH=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; obj_list = _get_all_changed_classes(vm=True); print(len(obj_list))')
           echo "OBJ_LIST=$OBJ_LIST" >> $GITHUB_ENV
           echo "OBJ_LIST_LENGTH=$OBJ_LIST_LENGTH" >> $GITHUB_ENV
-          echo "::set-output name=obj_list::$OBJ_LIST"
-          echo "::set-output name=obj_list_length::$OBJ_LIST_LENGTH"
+          echo "obj_list=$OBJ_LIST" >> $GITHUB_OUTPUT
+          echo "obj_list_length=$OBJ_LIST_LENGTH" >> $GITHUB_OUTPUT
 
       - name: Print changed classes
         run: |
@@ -179,22 +179,27 @@ jobs:
       fail-fast: false
       matrix:
         flag: ${{ fromJson(needs.detect-changed-classes.outputs.obj_list) }}
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.10', '3.11', '3.12', '3.13']
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install OSX packages
         run: ./.github/scripts/install_osx_dependencies.sh
+
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
 
       - name: Install sktime with dev dependencies
         run: |
@@ -225,7 +230,7 @@ jobs:
     outputs:
       sktime: ${{ steps.check.outputs.sktime }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0  # Needed to access the full git history
 
@@ -247,11 +252,11 @@ jobs:
     needs: detect-package-change
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: 3.11
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -268,11 +273,11 @@ jobs:
     if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: 3.11
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -290,16 +295,16 @@ jobs:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - run: git remote set-branches origin 'main'
 
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: 3.11
 
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
@@ -322,12 +327,12 @@ jobs:
         mlflow-version: ['2.9.2', '3.latest']
     name: test-mlflow-${{ matrix.mlflow-version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: 3.11
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
@@ -345,49 +350,18 @@ jobs:
       - name: Run tests
         run: make test_mlflow
 
-  test-cython-estimators:
-    needs: test-nosoftdeps
-    runs-on: macos-13
-    steps:
-      - uses: actions/checkout@v4
-
-      - run: git remote set-branches origin 'main'
-
-      - run: git fetch --depth 1
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.9
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install OSX packages
-        shell: bash
-        run: ./.github/scripts/install_osx_dependencies.sh
-
-      - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[dev,cython_extras] --no-cache-dir
-
-      - name: Show dependencies
-        run: python -m pip list
-
-      - name: Run tests
-        run: make PYTESTOPTIONS="--only_cython_estimators=True --matrixdesign=False --timeout=600" test_check_suite
-
   test-lowerdeps:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - run: git remote set-branches origin 'main'
 
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
 
@@ -414,7 +388,7 @@ jobs:
       datasets: ${{ steps.filter.outputs.datasets }}
       pyproject: ${{ steps.filter.outputs.pyproject }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -456,19 +430,19 @@ jobs:
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-        os: [ubuntu-latest, macos-13, windows-latest, ubuntu-22.04-arm]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, macos-latest, windows-latest, ubuntu-22.04-arm]
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - run: git remote set-branches origin 'main'
 
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -477,6 +451,11 @@ jobs:
 
       - name: Install OSX packages
         run: ./.github/scripts/install_osx_dependencies.sh
+
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
 
       - name: Install sktime and dependencies
         shell: bash
@@ -496,17 +475,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - run: git remote set-branches origin 'main'
 
       - run: git fetch --depth 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 

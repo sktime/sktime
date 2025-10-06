@@ -27,6 +27,7 @@ class DummyClassifier(BaseClassifier):
     strategy : {"most_frequent", "prior", "stratified", "uniform", \
             "constant"}, default="prior"
         Strategy to use to generate predictions.
+
         * "most_frequent": the ``predict`` method always returns the most
           frequent class label in the observed ``y`` argument passed to ``fit``.
           The ``predict_proba`` method returns the matching one-hot encoded
@@ -47,13 +48,13 @@ class DummyClassifier(BaseClassifier):
           of unique classes observed in ``y``, i.e. each class has equal
           probability.
         * "constant": always predicts a constant label that is provided by
-          the user. This is useful for metrics that evaluate a non-majority
-          class.
+          the user. This is useful for metrics that evaluate a non-majority class.
+
     random_state : int, RandomState instance or None, default=None
         Controls the randomness to generate the predictions when
         ``strategy='stratified'`` or ``strategy='uniform'``.
         Pass an int for reproducible output across multiple function calls.
-        See :term:`Glossary <random_state>`.
+
     constant : int or str or array-like of shape (n_outputs,), default=None
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
@@ -83,6 +84,8 @@ class DummyClassifier(BaseClassifier):
         "capability:unequal_length": True,
         "capability:multivariate": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
