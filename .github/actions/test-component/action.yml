@@ -35,6 +35,7 @@ runs:
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"
       shell: bash
+
     - name: Install OSX packages
       run: ./.github/scripts/install_osx_dependencies.sh
       shell: bash
