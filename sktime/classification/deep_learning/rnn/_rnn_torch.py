@@ -44,13 +44,15 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         If True, then the RNN is bidirectional.
     num_epochs : int, optional (default=100)
         The number of epochs to train the model.
-    optimizer : str, default = "RMSprop"
+    optimizer : case insensitive str or an instance of optimizers
+        defined in torch.optim, optional (default = "RMSprop").
         The optimizer to use for training the model.
         List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
     batch_size : int, optional (default=1)
         The size of each mini-batch during training.
-    criterion : str, optional (default="CrossEntropyLoss")
+    criterion : case insensitive str, or an instance of a loss function
+        defined in PyTorch, optional (default="CrossEntropyLoss").
         The loss function to be used in training the neural network.
         List of available loss functions:
         https://pytorch.org/docs/stable/nn.html#loss-functions
@@ -145,11 +147,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             verbose=self.verbose,
             random_state=self.random_state,
         )
-
-        # allowed loss functions
-        self.criterions = {
-            "CrossEntropyLoss": nnCrossEntropyLoss,
-        }
 
     def _build_network(self, X, y):
         """Build the RNN network.

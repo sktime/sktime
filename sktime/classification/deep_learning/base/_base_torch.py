@@ -17,19 +17,42 @@ if _check_soft_dependencies("torch", severity="none"):
     from torch.utils.data import DataLoader, Dataset
 
     OPTIMIZERS = {
-        "Adadelta": torch.optim.Adadelta,
-        "Adagrad": torch.optim.Adagrad,
-        "Adam": torch.optim.Adam,
-        "AdamW": torch.optim.AdamW,
-        "SparseAdam": torch.optim.SparseAdam,
-        "Adamax": torch.optim.Adamax,
-        "ASGD": torch.optim.ASGD,
-        "LBFGS": torch.optim.LBFGS,
-        "NAdam": torch.optim.NAdam,
-        "RAdam": torch.optim.RAdam,
-        "RMSprop": torch.optim.RMSprop,
-        "Rprop": torch.optim.Rprop,
-        "SGD": torch.optim.SGD,
+        "adadelta": torch.optim.Adadelta,
+        "adagrad": torch.optim.Adagrad,
+        "adam": torch.optim.Adam,
+        "adamw": torch.optim.AdamW,
+        "sparseadam": torch.optim.SparseAdam,
+        "adamax": torch.optim.Adamax,
+        "asgd": torch.optim.ASGD,
+        "lbfgs": torch.optim.LBFGS,
+        "nadam": torch.optim.NAdam,
+        "radam": torch.optim.RAdam,
+        "rmsprop": torch.optim.RMSprop,
+        "rprop": torch.optim.Rprop,
+        "sgd": torch.optim.SGD,
+    }
+    CRITERIONS = {
+        "l1loss": torch.nn.L1Loss,
+        "mseloss": torch.nn.MSELoss,
+        "crossentropyloss": torch.nn.CrossEntropyLoss,
+        "ctcloss": torch.nn.CTCLoss,
+        "nllloss": torch.nn.NLLLoss,
+        "poissonnllloss": torch.nn.PoissonNLLLoss,
+        "gaussiannllloss": torch.nn.GaussianNLLLoss,
+        "kldivloss": torch.nn.KLDivLoss,
+        "bceloss": torch.nn.BCELoss,
+        "bcewithlogitsloss": torch.nn.BCEWithLogitsLoss,
+        "marginrankingloss": torch.nn.MarginRankingLoss,
+        "hingeembeddingloss": torch.nn.HingeEmbeddingLoss,
+        "multilabelmarginloss": torch.nn.MultiLabelMarginLoss,
+        "huberloss": torch.nn.HuberLoss,
+        "smoothl1loss": torch.nn.SmoothL1Loss,
+        "softmarginloss": torch.nn.SoftMarginLoss,
+        "multilabelsoftmarginloss": torch.nn.MultiLabelSoftMarginLoss,
+        "cosineembeddingloss": torch.nn.CosineEmbeddingLoss,
+        "multimarginloss": torch.nn.MultiMarginLoss,
+        "tripletmarginloss": torch.nn.TripletMarginLoss,
+        "tripletmarginwithdistanceloss": torch.nn.TripletMarginWithDistanceLoss,
     }
 else:
 
@@ -81,7 +104,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         super().__init__()
 
         # instantiate optimizers
-        self.optimizers = OPTIMIZERS
+        self._all_optimizers = OPTIMIZERS
+        self._all_criterions = CRITERIONS
 
     def _fit(self, X, y):
         y = self._encode_y(y)
@@ -110,38 +134,68 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             print(f"Epoch {epoch + 1}: Loss: {np.average(losses)}")
 
     def _instantiate_optimizer(self):
-        if self.optimizer:
-            if self.optimizer in self.optimizers.keys():
+        # if no optimizer is passed, use Adam as default
+        if not self.optimizer:
+            return torch.optim.Adam(self.network.parameters(), lr=self.lr)
+        # if optimizer is a string, look it up in the available optimizers
+        if isinstance(self.optimizer, str):
+            if self.optimizer.lower() in self._all_optimizers.keys():
                 if self.optimizer_kwargs:
-                    return self.optimizers[self.optimizer](
+                    return self._all_optimizers[self.optimizer.lower()](
                         self.network.parameters(), lr=self.lr, **self.optimizer_kwargs
                     )
                 else:
-                    return self.optimizers[self.optimizer](
+                    return self._all_optimizers[self.optimizer.lower()](
                         self.network.parameters(), lr=self.lr
                     )
             else:
-                raise TypeError(
-                    f"Please pass one of {self.optimizers.keys()} for `optimizer`."
+                raise ValueError(
+                    f"Unknown optimizer: {self.optimizer}. "
+                    f"Please pass one of {self._all_optimizers.keys()} for `optimizer`."
                 )
+        # if optimizer is already an instance of torch.optim.Optimizer, use it directly
+        elif isinstance(self.optimizer, torch.optim.Optimizer):
+            return self.optimizer
+        # if optimizer is neither a string nor an instance of
+        # a valid PyTorch optimizer, raise an error
         else:
-            # default optimizer
-            return torch.optim.Adam(self.network.parameters(), lr=self.lr)
+            raise TypeError(
+                "`optimizer` can either be None, a str or an instance of "
+                "optimizers defined in torch.optim. "
+                "See https://pytorch.org/docs/stable/optim.html#algorithms. "
+                f"But got {type(self.optimizer)} instead."
+            )
 
     def _instantiate_criterion(self):
-        if self.criterion:
-            if self.criterion in self.criterions.keys():
-                if self.criterion_kwargs:
-                    return self.criterions[self.criterion](**self.criterion_kwargs)
-                else:
-                    return self.criterions[self.criterion]()
-            else:
-                raise TypeError(
-                    f"Please pass one of {self.criterions.keys()} for `criterion`."
-                )
-        else:
-            # default criterion
+        # if no criterion is passed, use CrossEntropyLoss as default
+        if not self.criterion:
             return torch.nn.CrossEntropyLoss()
+        # if criterion is a string, look it up in the available criterions
+        if isinstance(self.criterion, str):
+            if self.criterion.lower() in self._all_criterions.keys():
+                if self.criterion_kwargs:
+                    return self._all_criterions[self.criterion.lower()](
+                        **self.criterion_kwargs
+                    )
+                else:
+                    return self._all_criterions[self.criterion.lower()]()
+            else:
+                raise ValueError(
+                    f"Unknown criterion: {self.criterion}. "
+                    f"Please pass one of {self._all_criterions.keys()} for `criterion`."
+                )
+        # if criterion is already an instance of torch.nn.modules.loss._Loss, use it
+        elif isinstance(self.criterion, torch.nn.modules.loss._Loss):
+            return self.criterion
+        else:
+            # if criterion is neither a string nor an instance of
+            # a valid PyTorch loss function, raise an error
+            raise TypeError(
+                "`criterion` can either be None, a str or an instance of "
+                "loss functions defined in "
+                "https://pytorch.org/docs/stable/nn.html#loss-functions "
+                f"But got {type(self.criterion)} instead."
+            )
 
     @abc.abstractmethod
     def _build_network(self):
