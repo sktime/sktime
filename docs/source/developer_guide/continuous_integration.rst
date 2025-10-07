@@ -59,12 +59,13 @@ To install, if not already installed:
    For trouble shooting on different operating systems, please see our detailed
    :doc:`installation instructions </installation>`.
 
-
-If you want to test your code against older versions of dependencies that ``sktime`` supports, run:
+``sktime`` is also expected to work for older package versions of its core dependencies.
+For local testing against a 2023 state of ``sktime`` core dependencies, instead run:
 
    .. code:: bash
 
       pip install -e ".[dev,dependencies_lower]"
+
 
 Code quality checks
 ~~~~~~~~~~~~~~~~~~~
