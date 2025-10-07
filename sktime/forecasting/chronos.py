@@ -177,8 +177,7 @@ class ChronosBoltStrategy(ChronosModelStrategy):
 
 
 class ChronosForecaster(BaseForecaster):
-    """
-    Interface to the Chronos and Chronos-Bolt Zero-Shot Forecaster by Amazon Research.
+    """Chronos and Chronos-Bolt Zero-Shot Forecaster by Amazon Research.
 
     Chronos and Chronos-Bolt are pretrained time-series foundation models
     developed by Amazon for time-series forecasting. This method has been

@@ -219,7 +219,7 @@ jobs:
         env:
           FLAG: ${{ matrix.flag }}
         shell: bash
-        run: python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('${{ matrix.flag }}')"
+        run: pytest -v build_tools/check_estimator.py --estimator ${{ matrix.flag }}
 
   detect-package-change:
     needs: code-quality
