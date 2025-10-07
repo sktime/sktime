@@ -158,7 +158,12 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         -------
         self : reference to self
         """
-        del fh  # avoid being detected as unused by ``vulture`` like tools
+        if fh is not None and hasattr(self, "_trend_forecaster"):
+            self._trend_forecaster._fh = (
+                fh  # pass the fh to _trend_forecaster in case it needs it
+            )
+        else:
+            del fh  # avoid being detected as unused by ``vulture`` like tools
 
         self._forecaster = self._instantiate_model()
 
@@ -493,7 +498,8 @@ class StatsForecastBackAdapter:
         -------
         self : returns an instance of self.
         """
-        self.estimator = self.estimator.fit(y=y, X=X)
+        fh = getattr(self, "_fh", None)
+        self.estimator = self.estimator.fit(y=y, X=X, fh=fh)
 
         return self
 
