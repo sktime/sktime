@@ -59,6 +59,10 @@ To install, if not already installed:
    For troubleshooting on different operating systems, please see our detailed
    :doc:`installation instructions </installation>`.
 
+
+Alternative environment: 2023 versions of dependencies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ``sktime`` is also expected to work for older package versions of its core dependencies.
 For local testing against a 2023 state of ``sktime`` core dependencies, instead run:
 
