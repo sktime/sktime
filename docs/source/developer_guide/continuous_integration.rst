@@ -64,7 +64,7 @@ If you want to test your code against older versions of dependencies that ``skti
 
    .. code:: bash
 
-      pip install -e ".[dependencies_lower,dev]"
+      pip install -e ".[dev,dependencies_lower]"
 
 Code quality checks
 ~~~~~~~~~~~~~~~~~~~
