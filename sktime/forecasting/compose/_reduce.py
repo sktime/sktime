@@ -453,6 +453,8 @@ class _Reducer(_BaseWindowForecaster):
             y_raw.update(y_update)
         # The y_raw dataframe will is updated with recursively forecast values.
 
+        # comment to trigger tests
+
         if len(self.transformers_) == 1:
             X_from_y = self.transformers_[0].fit_transform(y_raw)
         else:
