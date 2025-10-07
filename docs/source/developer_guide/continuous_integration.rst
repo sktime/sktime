@@ -56,7 +56,7 @@ To install, if not already installed:
 
 .. note::
 
-   For trouble shooting on different operating systems, please see our detailed
+   For troubleshooting on different operating systems, please see our detailed
    :doc:`installation instructions </installation>`.
 
 ``sktime`` is also expected to work for older package versions of its core dependencies.
