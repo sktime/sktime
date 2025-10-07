@@ -51,7 +51,7 @@ def test_statsforecast_mstl(mock_autoets):
     not run_test_for_class(StatsForecastMSTL),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("fh", [[1, 2, 3], None])
+@pytest.mark.parametrize("fh", [[1, 2, 3], None], ids=["valid fh", "None fh"])
 def test_statsforecast_mstl_with_fh(fh):
     """
     Check that StatsForecast MSTL adapter calls trend forecaster with
