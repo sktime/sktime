@@ -689,6 +689,12 @@ class ProximityStump(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "X_inner_mtype": "nested_univ",  # input in nested dataframe
+        # pickling problem with local method see #2490
+        "tests:skip_by_name": [
+            "test_persistence_via_pickle",
+            "test_fit_does_not_overwrite_hyper_params",
+            "test_save_estimators_to_file",
+        ],
     }
 
     def __init__(
