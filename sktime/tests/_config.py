@@ -223,7 +223,6 @@ EXCLUDED_TESTS = {
 # exclude tests but keyed by test name
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
-        "BOSSEnsemble",
         "CAPA",
         "CNTCNetwork",
         "CanonicalIntervalForest",
@@ -287,7 +286,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "RandomShapeletTransform",
         "RecursiveTabularRegressionForecaster",
         "RecursiveTimeSeriesRegressionForecaster",
-        "ReducerTransform",
         "SAXlegacy",
         "SFA",
         "SFAFast",
@@ -304,7 +302,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TSFreshClassifier",
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
-        "TimeBinner",
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
         "TruncationTransformer",

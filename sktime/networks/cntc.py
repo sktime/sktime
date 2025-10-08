@@ -185,11 +185,15 @@ class CNTCNetwork(BaseDeepNetwork):
 
         # Adding output MLP Layer
         mlp1 = keras.layers.Dense(
-            self.dense_size, kernel_initializer="glorot_uniform", activation=self.activation
+            self.dense_size,
+            kernel_initializer="glorot_uniform",
+            activation=self.activation,
         )(att)
         mlp1 = keras.layers.Dropout(0.1)(mlp1)
         mlp2 = keras.layers.Dense(
-            self.dense_size, kernel_initializer="glorot_uniform", activation=self.activation
+            self.dense_size,
+            kernel_initializer="glorot_uniform",
+            activation=self.activation,
         )(mlp1)
         mlp2 = keras.layers.Dropout(0.1)(mlp2)
         flat = keras.layers.Flatten()(mlp2)
