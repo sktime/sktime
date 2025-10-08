@@ -19,10 +19,15 @@ class CNTCNetwork(BaseDeepNetwork):
         size of the average pooling windows
     n_conv_layers   : int, default = 2
         the number of convolutional plus average pooling layers
-    filter_sizes    : array of int, shape = (nb_conv_layers)
-    activation      : string, default = sigmoid
-        keras activation function
-    random_state    : int, default = 0
+    activation : string, default = "relu"
+        activation function used for hidden layers (excluding self attention module);
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
+    activation_attention: string, default = "sigmoid"
+        activation function inside the self attention module;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
+    random_state : int, default = 0
         seed to any needed random actions
 
     Notes
@@ -63,9 +68,13 @@ class CNTCNetwork(BaseDeepNetwork):
         kernel_sizes=(1, 1),
         lstm_size=8,
         dense_size=64,
+        activation="relu",
+        activation_attention="sigmoid",
     ):
         _check_dl_dependencies(severity="error")
 
+        self.activation = activation
+        self.activation_attention = activation_attention
         self.random_state = random_state
         self.rnn_layer = rnn_layer
         self.filter_sizes = filter_sizes
@@ -102,7 +111,7 @@ class CNTCNetwork(BaseDeepNetwork):
         conv1 = keras.layers.Conv1D(
             self.filter_sizes[0],
             self.kernel_sizes[0],
-            activation="relu",
+            activation=self.activation,
             use_bias=True,
             kernel_initializer="glorot_uniform",
         )(input_layers[0])
@@ -116,7 +125,7 @@ class CNTCNetwork(BaseDeepNetwork):
         # RNN for CNN Arm (CCNN)
         rnn1 = keras.layers.SimpleRNN(
             self.rnn_layer * input_shape[1],
-            activation="relu",
+            activation=self.activation,
             use_bias=True,
             kernel_initializer="glorot_uniform",
         )(input_layers[1])
@@ -133,7 +142,7 @@ class CNTCNetwork(BaseDeepNetwork):
         conv2 = keras.layers.Conv1D(
             self.filter_sizes[1],
             self.kernel_sizes[1],
-            activation="relu",
+            activation=self.activation,
             kernel_initializer="glorot_uniform",
             name="standard_cnn_layer",
         )(conc1)
@@ -150,7 +159,7 @@ class CNTCNetwork(BaseDeepNetwork):
             self.lstm_size * input_shape[1],
             return_sequences=False,
             kernel_initializer="glorot_uniform",
-            activation="relu",
+            activation=self.activation,
         )(input_layers[2])
         lstm1 = keras.layers.Reshape((self.lstm_size, input_shape[1]))(lstm1)
         lstm1 = keras.layers.Dropout(self.dropout)(lstm1)
@@ -167,7 +176,7 @@ class CNTCNetwork(BaseDeepNetwork):
         # Adding self attention
         att = SeqSelfAttention(
             attention_width=10,
-            attention_activation="sigmoid",
+            attention_activation=self.activation_attention,
             name="Attention",
             attention_type="multiplicative",
         )(avg)
@@ -175,11 +184,11 @@ class CNTCNetwork(BaseDeepNetwork):
 
         # Adding ouutput MLP Layer
         mlp1 = keras.layers.Dense(
-            self.dense_size, kernel_initializer="glorot_uniform", activation="relu"
+            self.dense_size, kernel_initializer="glorot_uniform", activation=self.activation
         )(att)
         mlp1 = keras.layers.Dropout(0.1)(mlp1)
         mlp2 = keras.layers.Dense(
-            self.dense_size, kernel_initializer="glorot_uniform", activation="relu"
+            self.dense_size, kernel_initializer="glorot_uniform", activation=self.activation
         )(mlp1)
         mlp2 = keras.layers.Dropout(0.1)(mlp2)
         flat = keras.layers.Flatten()(mlp2)
