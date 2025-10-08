@@ -37,6 +37,10 @@ class FCNClassifier(BaseDeepClassifier):
         Activation function used in the output linear layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
     use_bias        : boolean, default = True
         whether the layer uses a bias vector.
     optimizer       : keras.optimizers object, default = Adam(lr=0.01)
@@ -81,6 +85,7 @@ class FCNClassifier(BaseDeepClassifier):
         metrics=None,
         random_state=None,
         activation="sigmoid",
+        activation_hidden="relu",
         use_bias=True,
         optimizer=None,
     ):
@@ -94,14 +99,18 @@ class FCNClassifier(BaseDeepClassifier):
         self.metrics = metrics
         self.random_state = random_state
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
 
         super().__init__()
 
-        self._network = FCNNetwork(random_state=self.random_state)
-
+        self._network = FCNNetwork(
+                            activation=self.activation_hidden,
+                            random_state=self.random_state,
+        )
+        
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
 
