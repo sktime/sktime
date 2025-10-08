@@ -183,7 +183,7 @@ class CNTCNetwork(BaseDeepNetwork):
         )(avg)
         att = keras.layers.Dropout(0.1)(att)
 
-        # Adding ouutput MLP Layer
+        # Adding output MLP Layer
         mlp1 = keras.layers.Dense(
             self.dense_size, kernel_initializer="glorot_uniform", activation=self.activation
         )(att)
