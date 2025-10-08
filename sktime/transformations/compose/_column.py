@@ -6,9 +6,15 @@ __author__ = ["fkiraly", "mloning"]
 
 __all__ = ["ColumnEnsembleTransformer", "ColumnwiseTransformer"]
 
+from copy import deepcopy
+
 import pandas as pd
 
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
+from sktime.datatypes._convert_utils._coerce import (
+    _coerce_variable_name,
+    _restore_variable_name,
+)
 from sktime.transformations.base import BaseTransformer
 from sktime.utils._estimator_html_repr import _VisualBlock
 from sktime.utils.multiindex import rename_multiindex
@@ -293,6 +299,12 @@ class ColumnEnsembleTransformer(
         -------
         self: reference to self
         """
+        X, self._Xoldnames, self._Xnewnames = _coerce_variable_name(
+            deepcopy(X), prefix="X", strategy="none"
+        )
+        y, self._yoldnames, self._ynewnames = _coerce_variable_name(
+            deepcopy(y), prefix="y", strategy="none"
+        )
         transformers = self._check_transformers(X)
 
         self.transformers_ = []
@@ -323,11 +335,25 @@ class ColumnEnsembleTransformer(
         -------
         transformed version of X
         """
+        X, Xoldnames, Xnewnames = _coerce_variable_name(
+            deepcopy(X), prefix="X", strategy="none"
+        )
+        y, yoldnames, ynewnames = _coerce_variable_name(
+            deepcopy(y), prefix="y", strategy="none"
+        )
         Xts = []
         keys = []
         for name, est, index in getattr(self, self._steps_fitted_attr):
             Xts += [est.transform(X.loc[:, index], y)]
             keys += [name]
+
+        for i in range(len(Xts)):
+            if len(Xts[i].columns) > 0:
+                Xoldnames_ = [
+                    c if c not in Xnewnames else Xoldnames[Xnewnames.index(c)]
+                    for c in Xts[i].columns
+                ]
+                Xts[i] = _restore_variable_name(Xts[i], Xoldnames_, Xts[i].columns)
 
         Xt = pd.concat(Xts, axis=1, keys=keys)
 
