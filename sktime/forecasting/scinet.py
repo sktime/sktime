@@ -215,7 +215,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
             input_dim=self._y.shape[-1],
             pred_len=fh,
             hid_size=self.hid_size,
-            num_stacks=self.hid_size,
+            num_stacks=self.num_stacks,
             num_levels=self.num_levels,
             num_decoder_layer=self.num_decoder_layer,
             concat_len=self.concat_len,
@@ -250,6 +250,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
+                "num_stacks": 1,
             },
             {
                 "seq_len": 16,
@@ -257,6 +258,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
                 "optimizer": "Adam",
                 "batch_size": 4,
                 "num_epochs": 2,
+                "num_stacks": 2,
             },
         ]
 
