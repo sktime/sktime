@@ -254,7 +254,7 @@ binder = [
 cython_extras = [
   "mrseql < 0.0.3",
   'mrsqm; python_version < "3.11"',
-  "numba<0.63; python_version < "3.14"",
+  'numba<0.63; python_version < "3.14"',
 ]
 datasets = [
   "huggingface-hub",
