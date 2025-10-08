@@ -57,7 +57,7 @@ class ResidualBoostingChainForecaster(_HeterogenousMetaEstimator, BaseForecaster
     Example
     -------
     >>> from sktime.datasets import load_longley
-    >>> from sktime.forecasting.residual_chain_booster import (
+    >>> from sktime.forecasting.residual_booster import (
     ...     ResidualBoostingChainForecaster,
     ... )
     >>> from sktime.forecasting.naive import NaiveForecaster
@@ -265,26 +265,31 @@ class ResidualBoostingChainForecaster(_HeterogenousMetaEstimator, BaseForecaster
 
         from skpro.distributions import MeanScale
 
-        y_base = self.base_future_.predict(fh=fh, X=X)
-
-        if not getattr(self, "_resid_futures_", []):
+        resid_stages = getattr(self, "_resid_futures_", [])
+        if not resid_stages:
             return super()._predict_proba(fh=fh, X=X, marginal=marginal)
 
-        _, f = self._resid_futures_[0]
-        if not hasattr(f, "predict_proba"):
+        y_shift = self.base_future_.predict(fh=fh, X=X)
+        if len(resid_stages) > 1:
+            for _, f in resid_stages[:-1]:
+                y_add = f.predict(fh=fh, X=X)
+                if hasattr(y_add, "reindex"):
+                    y_add = y_add.reindex(y_shift.index)
+                y_add = y_add.fillna(0)
+                y_shift += y_add
+
+        _, f_last = resid_stages[-1]
+        if not hasattr(f_last, "predict_proba"):
             return super()._predict_proba(fh=fh, X=X, marginal=marginal)
 
-        p_res = f.predict_proba(fh=fh, X=X, marginal=marginal)
+        p_last = f_last.predict_proba(fh=fh, X=X, marginal=marginal)
 
-        if hasattr(y_base, "reindex") and hasattr(p_res, "index"):
-            if not y_base.index.equals(p_res.index):
-                mu = y_base.reindex(p_res.index)
-            else:
-                mu = y_base
-        else:
-            mu = y_base
+        mu = y_shift
+        if hasattr(p_last, "index") and hasattr(y_shift, "reindex"):
+            if not y_shift.index.equals(p_last.index):
+                mu = y_shift.reindex(p_last.index)
 
-        return MeanScale(d=p_res, mu=mu, sigma=1)
+        return MeanScale(d=p_last, mu=mu, sigma=1)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
