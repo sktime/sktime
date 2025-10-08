@@ -33,6 +33,10 @@ class MCDCNNNetwork(BaseDeepNetwork):
         The type of padding to be applied to pooling layers.
     random_state : int, optional (default=0)
         The seed to any random action.
+    activation : string, optional (default="relu")
+        Activation function used for hidden layers;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
     """
 
     _tags = {
@@ -49,10 +53,12 @@ class MCDCNNNetwork(BaseDeepNetwork):
         conv_padding="same",
         pool_padding="same",
         random_state=0,
+        activation="relu",
     ):
         _check_dl_dependencies(severity="error")
         super().__init__()
 
+        self.activation = activation
         self.kernel_size = kernel_size
         self.pool_size = pool_size
         self.filter_sizes = filter_sizes
@@ -92,7 +98,7 @@ class MCDCNNNetwork(BaseDeepNetwork):
             conv1 = keras.layers.Conv1D(
                 self.filter_sizes[0],
                 kernel_size=self.kernel_size,
-                activation="relu",
+                activation=self.activation,
                 padding=self.conv_padding,
             )(input_layer)
             conv1 = keras.layers.MaxPooling1D(
@@ -103,7 +109,7 @@ class MCDCNNNetwork(BaseDeepNetwork):
             conv2 = keras.layers.Conv1D(
                 self.filter_sizes[1],
                 kernel_size=self.kernel_size,
-                activation="relu",
+                activation=self.activation,
                 padding=self.conv_padding,
             )(conv1)
             conv2 = keras.layers.MaxPooling1D(
@@ -122,7 +128,7 @@ class MCDCNNNetwork(BaseDeepNetwork):
         else:
             output_layer = keras.layers.Concatenate(axis=-1)(conv2_layers)
 
-        output_layer = keras.layers.Dense(units=self.dense_units, activation="relu")(
+        output_layer = keras.layers.Dense(units=self.dense_units, activation=self.activation)(
             output_layer
         )
 
