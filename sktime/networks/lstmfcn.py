@@ -34,6 +34,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         lstm_size=8,
         dropout=0.8,
         attention=False,
+        activation="relu",
     ):
         """Initialize a new LSTMFCNNetwork object.
 
@@ -52,7 +53,13 @@ class LSTMFCNNetwork(BaseDeepNetwork):
             controls dropout rate of LSTM layer
         attention: boolean, default=False
             If True, uses custom attention LSTM layer
+        activation : string, default = "relu"
+            activation function used for hidden layers;
+            List of available keras activation functions:
+            https://keras.io/api/layers/activations/
         """
+
+        self.activation = activation
         self.random_state = random_state
         self.kernel_sizes = kernel_sizes
         self.filter_sizes = filter_sizes
@@ -94,7 +101,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
             kernel_initializer="he_uniform",
         )(input_layer)
         y = keras.layers.BatchNormalization()(y)
-        y = keras.layers.Activation("relu")(y)
+        y = keras.layers.Activation(self.activation)(y)
 
         y = keras.layers.Conv1D(
             self.filter_sizes[1],
@@ -103,7 +110,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
             kernel_initializer="he_uniform",
         )(y)
         y = keras.layers.BatchNormalization()(y)
-        y = keras.layers.Activation("relu")(y)
+        y = keras.layers.Activation(self.activation)(y)
 
         y = keras.layers.Conv1D(
             self.filter_sizes[2],
@@ -112,7 +119,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
             kernel_initializer="he_uniform",
         )(y)
         y = keras.layers.BatchNormalization()(y)
-        y = keras.layers.Activation("relu")(y)
+        y = keras.layers.Activation(self.activation)(y)
 
         y = keras.layers.GlobalAveragePooling1D()(y)
 
