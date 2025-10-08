@@ -20,6 +20,14 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
     Parameters
     ----------
+    activation : string or a tf callable, default="softmax"
+        Activation function used in the output layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
     n_epochs: int, default=2000
      the number of epochs to train the model
     batch_size: int, default=128
@@ -85,8 +93,12 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         callbacks=None,
         random_state=None,
         verbose=0,
+        activation="softmax",
+        activation_hidden="relu",
     ):
         # predefined
+        self.activation = activation
+        self.activation_hidden = activation_hidden
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.kernel_sizes = kernel_sizes
@@ -102,6 +114,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         super().__init__()
 
         self._network = LSTMFCNNetwork(
+            activation=self.activation_hidden,
             kernel_sizes=self.kernel_sizes,
             filter_sizes=self.filter_sizes,
             random_state=self.random_state,
@@ -132,7 +145,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
         input_layers, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(units=n_classes, activation="softmax")(
+        output_layer = keras.layers.Dense(units=n_classes, activation=self.activation)(
             output_layer
         )
 
