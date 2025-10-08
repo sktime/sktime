@@ -293,10 +293,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             cif = CanonicalIntervalForest(
                 n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
             )
-            param1 = {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
-            param2 = {**param1, "remainder": "passthrough"}
-
-            return [param1, param2]
+            return {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
         else:
             param1 = {
                 "estimators": [
