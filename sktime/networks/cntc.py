@@ -13,12 +13,13 @@ class CNTCNetwork(BaseDeepNetwork):
 
     Parameters
     ----------
-    kernel_size     : int, default = 7
+    kernel_size : int, default = 7
         specifying the length of the 1D convolution window
-    avg_pool_size   : int, default = 3
+    avg_pool_size : int, default = 3
         size of the average pooling windows
-    n_conv_layers   : int, default = 2
+    n_conv_layers : int, default = 2
         the number of convolutional plus average pooling layers
+    filter_sizes : array of int, shape = (nb_conv_layers)
     activation : string, default = "relu"
         activation function used for hidden layers (excluding self attention module);
         List of available keras activation functions:
