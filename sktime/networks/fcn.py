@@ -18,6 +18,10 @@ class FCNNetwork(BaseDeepNetwork):
     ----------
     random_states : int, default = 0
         seed to any needed random actions
+    activation : string, default = "relu"
+        activation function used for hidden layers;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
 
     References
     ----------
@@ -39,10 +43,12 @@ class FCNNetwork(BaseDeepNetwork):
     def __init__(
         self,
         random_state=0,
+        activation="relu",
     ):
         super().__init__()
         _check_dl_dependencies(severity="error")
         self.random_state = random_state
+        self.activation = activation
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
@@ -65,15 +71,15 @@ class FCNNetwork(BaseDeepNetwork):
             input_layer
         )
         conv1 = keras.layers.BatchNormalization()(conv1)
-        conv1 = keras.layers.Activation(activation="relu")(conv1)
+        conv1 = keras.layers.Activation(activation=self.activation)(conv1)
 
         conv2 = keras.layers.Conv1D(filters=256, kernel_size=5, padding="same")(conv1)
         conv2 = keras.layers.BatchNormalization()(conv2)
-        conv2 = keras.layers.Activation(activation="relu")(conv2)
+        conv2 = keras.layers.Activation(activation=self.activation)(conv2)
 
         conv3 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv2)
         conv3 = keras.layers.BatchNormalization()(conv3)
-        conv3 = keras.layers.Activation(activation="relu")(conv3)
+        conv3 = keras.layers.Activation(activation=self.activation)(conv3)
 
         gap_layer = keras.layers.GlobalAveragePooling1D()(conv3)
 
