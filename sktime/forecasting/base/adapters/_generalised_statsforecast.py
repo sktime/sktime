@@ -33,6 +33,9 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
         # "enforce_index_type": None,  # TODO: need to check (how?)
         "capability:missing_values": False,
+        # CI and test flags
+        # -----------------
+        "tests:libs": ["sktime.forecasting.base.adapters._generalised_statsforecast"],
     }
 
     def __init__(self):
