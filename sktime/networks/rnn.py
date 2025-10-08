@@ -14,6 +14,10 @@ class RNNNetwork(BaseDeepNetwork):
         the number of recurring units
     random_state    : int, default = 0
         seed to any needed random actions
+    activation      : str, default = "linear"
+        activation function to use in the RNN layer;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
     """
 
     _tags = {
@@ -31,7 +35,9 @@ class RNNNetwork(BaseDeepNetwork):
         self,
         units=6,
         random_state=0,
+        activation="linear",
     ):
+        self.activation = activation
         self.random_state = random_state
         self.units = units
         super().__init__()
@@ -73,7 +79,7 @@ class RNNNetwork(BaseDeepNetwork):
         output_layer = keras.layers.SimpleRNN(
             units=self.units,
             input_shape=input_layer.shape,
-            activation="linear",
+            activation=self.activation,
             use_bias=False,
             kernel_initializer="glorot_uniform",
             recurrent_initializer="orthogonal",
