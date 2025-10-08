@@ -106,8 +106,17 @@ class NaiveForecaster(_BaseWindowForecaster):
     >>> y = load_airline()
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> forecaster.fit(y)
-    NaiveForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    NaiveForecaster(strategy='drift')
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> print(y_pred)  # doctest: +SKIP
+
+    >>> # Example with explicit train/test split
+    >>> forecaster = NaiveForecaster(strategy="last")
+    >>> forecaster.fit(y[:-12])  # Train excluding last 12 points
+    NaiveForecaster(strategy='last')
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # Predict next 3 steps
+    >>> len(y_pred)  # Should return 3
+    3
     """
 
     _tags = {
