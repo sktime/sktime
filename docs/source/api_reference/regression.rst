@@ -72,6 +72,7 @@ Deep learning
     resnet.ResNetRegressor
     rnn.SimpleRNNRegressor
     tapnet.TapNetRegressor
+    tlenet.TleNetRegressor
 
 Distance-based
 --------------
