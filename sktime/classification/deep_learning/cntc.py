@@ -19,6 +19,18 @@ class CNTCClassifier(BaseDeepClassifier):
 
     Parameters
     ----------
+    activation : string or a tf callable, default="softmax"
+        Activation function used in the output layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_attention: string, default = "sigmoid"
+        Activation function inside the self attention module;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
     n_epochs       : int, default = 2000
         the number of epochs to train the model
     batch_size      : int, default = 16
@@ -110,9 +122,15 @@ class CNTCClassifier(BaseDeepClassifier):
         loss="categorical_crossentropy",
         metrics=None,
         random_state=0,
+        activation="softmax",
+        activation_attention="sigmoid",
+        activation_hidden="relu",
     ):
         _check_dl_dependencies(severity="error")
 
+        self.activation = activation
+        self.activation_attention = activation_attention
+        self.activation_hidden = activation_hidden
         self.kernel_sizes = kernel_sizes  # used plural
         self.filter_sizes = filter_sizes  # used plural
         self.rnn_size = rnn_size
@@ -128,7 +146,10 @@ class CNTCClassifier(BaseDeepClassifier):
 
         super().__init__()
 
-        self._network = CNTCNetwork()
+        self._network = CNTCNetwork(
+                            activation=self.activation_hidden,
+                            activation_attention=self.activation_attention,
+        )
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -152,7 +173,7 @@ class CNTCClassifier(BaseDeepClassifier):
         metrics = ["accuracy"] if self.metrics is None else self.metrics
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(units=n_classes, activation="softmax")(
+        output_layer = keras.layers.Dense(units=n_classes, activation=self.activation)(
             output_layer
         )
 
