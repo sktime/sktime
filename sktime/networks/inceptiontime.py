@@ -38,6 +38,8 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         depth=6,
         kernel_size=40,
         random_state=0,
+        activation="relu",
+        activation_inception="linear",
     ):
         """Initialize Inception Time.
 
@@ -50,10 +52,20 @@ class InceptionTimeNetwork(BaseDeepNetwork):
          window
         :param bottleneck_size: int,
         :param random_state: int, seed to any needed random actions
+        :param activation: string, default = "relu"
+            activation function used for hidden layers;
+            List of available keras activation functions:
+            https://keras.io/api/layers/activations/
+        :param activation_inception: string, default = "linear"
+            activation function used inside the inception module;
+            List of available keras activation functions:
+            https://keras.io/api/layers/activations/
         """
         _check_dl_dependencies(severity="error")
         super().__init__()
 
+        self.activation = activation
+        self.activation_inception = activation_inception
         self.n_filters = n_filters
         self.use_residual = use_residual
         self.use_bottleneck = use_bottleneck
@@ -62,7 +74,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         self.bottleneck_size = bottleneck_size
         self.random_state = random_state
 
-    def _inception_module(self, input_tensor, stride=1, activation="linear"):
+    def _inception_module(self, input_tensor, activation, stride=1):
         from tensorflow import keras
 
         if self.use_bottleneck and int(input_tensor.shape[-1]) > 1:
@@ -109,10 +121,10 @@ class InceptionTimeNetwork(BaseDeepNetwork):
 
         x = keras.layers.Concatenate(axis=2)(conv_list)
         x = keras.layers.BatchNormalization()(x)
-        x = keras.layers.Activation(activation="relu")(x)
+        x = keras.layers.Activation(activation=activation)(x)
         return x
 
-    def _shortcut_layer(self, input_tensor, out_tensor):
+    def _shortcut_layer(self, input_tensor, out_tensor, activation):
         from tensorflow import keras
 
         shortcut_y = keras.layers.Conv1D(
@@ -124,7 +136,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         shortcut_y = keras.layers.BatchNormalization()(shortcut_y)
 
         x = keras.layers.Add()([shortcut_y, out_tensor])
-        x = keras.layers.Activation("relu")(x)
+        x = keras.layers.Activation(activation=activation)(x)
         return x
 
     def build_network(self, input_shape, **kwargs):
@@ -147,10 +159,10 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         input_res = input_layer
 
         for d in range(self.depth):
-            x = self._inception_module(x)
+            x = self._inception_module(x, self.activation_inception)
 
             if self.use_residual and d % 3 == 2:
-                x = self._shortcut_layer(input_res, x)
+                x = self._shortcut_layer(input_res, x, self.activation)
                 input_res = x
 
         gap_layer = keras.layers.GlobalAveragePooling1D()(x)
