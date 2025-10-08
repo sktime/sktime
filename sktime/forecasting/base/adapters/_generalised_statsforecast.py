@@ -162,8 +162,6 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         if fh is not None and hasattr(self, "_trend_forecaster"):
             # pass the fh to _trend_forecaster in case it needs it
             self._trend_forecaster.set_fh(fh)
-        else:
-            del fh  # avoid being detected as unused by ``vulture`` like tools
 
         self._forecaster = self._instantiate_model()
 
