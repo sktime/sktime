@@ -1,7 +1,5 @@
 """Inception Time."""
 
-__author__ = ["JamesLarge", "Withington"]
-
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -25,7 +23,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
     """
 
     _tags = {
-        "authors": ["hfawaz", "JamesLarge", "Withington"],
+        "authors": ["hfawaz", "JamesLarge", "Withington", "noxthot"],
         "python_dependencies": "tensorflow",
     }
 

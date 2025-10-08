@@ -1,7 +1,5 @@
 """Time Convolutional Neural Network (CNN) (minus the final output layer)."""
 
-__author__ = ["James-Large", "Withington", "TonyBagnall"]
-
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -42,7 +40,7 @@ class CNNNetwork(BaseDeepNetwork):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz"],
+        "authors": ["hfawaz", "James-Large", "Withington", "TonyBagnall", "noxthot"],
         "python_dependencies": "tensorflow",
     }
 

@@ -1,7 +1,5 @@
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
 
-__author__ = ["jnrusson1", "solen0id"]
-
 from sktime.networks.base import BaseDeepNetwork
 
 
@@ -24,7 +22,10 @@ class LSTMFCNNetwork(BaseDeepNetwork):
     https://arxiv.org/pdf/1801.04503.pdf
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        "authors": ["jnrusson1", "solen0id", "noxthot"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,

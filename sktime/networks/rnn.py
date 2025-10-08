@@ -1,7 +1,5 @@
 """Time Recurrent Neural Network (RNN) (minus the final output layer)."""
 
-__authors__ = ["James-Large", "Withington", "TonyBagnall", "achieveordie"]
-
 from sktime.networks.base import BaseDeepNetwork
 
 
@@ -17,6 +15,17 @@ class RNNNetwork(BaseDeepNetwork):
     random_state    : int, default = 0
         seed to any needed random actions
     """
+
+    _tags = {
+        "authors": [
+            "James-Large",
+            "Withington",
+            "TonyBagnall",
+            "achieveordie",
+            "noxthot",
+        ],
+        "python_dependencies": ["tensorflow"],
+    }
 
     def __init__(
         self,

@@ -1,7 +1,5 @@
 """Fully Connected Neural Network (FCN) (minus the final output layer)."""
 
-__author__ = ["James-Large", "AurumnPegasus"]
-
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -38,7 +36,10 @@ class FCNNetwork(BaseDeepNetwork):
     }
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        "authors": ["James-Large", "AurumnPegasus", "noxthot"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,

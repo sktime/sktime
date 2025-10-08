@@ -1,7 +1,5 @@
 """Multi-scale Attention Convolutional Neural Network (MACNN)."""
 
-__author__ = ["jnrusson1"]
-
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -36,7 +34,10 @@ class MACNNNetwork(BaseDeepNetwork):
         https://keras.io/api/layers/activations/
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        "authors": ["jnrusson1", "noxthot"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,

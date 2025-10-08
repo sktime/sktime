@@ -1,6 +1,5 @@
 """Residual Network (ResNet) (minus the final output layer)."""
 
-__author__ = ["James-Large", "Withington", "nilesh05apr"]
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
@@ -31,7 +30,7 @@ class ResNetNetwork(BaseDeepNetwork):
     """
 
     _tags = {
-        "authors": ["hfawaz", "James-Large", "Withington", "nilesh05apr"],
+        "authors": ["hfawaz", "James-Large", "Withington", "nilesh05apr", "noxthot"],
         "python_dependencies": ["tensorflow"],
     }
 

@@ -1,9 +1,5 @@
 """Time Convolutional Neural Network (CNN) (minus the final output layer)."""
 
-__author__ = [
-    "jnrusson1",
-]
-
 import math
 
 import numpy as np
@@ -51,7 +47,10 @@ class TapNetNetwork(BaseDeepNetwork):
     34(4), 6845-6852, 2020
     """
 
-    _tags = {"python_dependencies": ["tensorflow"]}
+    _tags = {
+        "authors": ["jnrusson1", "noxthot"],
+        "python_dependencies": ["tensorflow"],
+    }
 
     def __init__(
         self,

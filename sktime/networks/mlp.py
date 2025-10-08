@@ -1,7 +1,5 @@
 """Multi Layer Perceptron (MLP) (minus the final output layer)."""
 
-__author__ = ["James-Large", "Withington", "AurumnPegasus"]
-
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -34,7 +32,7 @@ class MLPNetwork(BaseDeepNetwork):
     """
 
     _tags = {
-        "authors": ["hfawaz", "James-Large", "Withington", "AurumnPegasus"],
+        "authors": ["hfawaz", "James-Large", "Withington", "AurumnPegasus", "noxthot"],
         "python_dependencies": "tensorflow",
     }
 

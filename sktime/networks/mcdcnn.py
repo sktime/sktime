@@ -1,7 +1,5 @@
 """Multi Channel Deep Convolution Neural Network (MCDCNN)."""
 
-__author__ = ["James-Large", "Withington"]
-
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -40,7 +38,7 @@ class MCDCNNNetwork(BaseDeepNetwork):
     """
 
     _tags = {
-        "authors": ["hfawaz", "James-Large", "Withington"],
+        "authors": ["hfawaz", "James-Large", "Withington", "noxthot"],
         "python_dependencies": "tensorflow",
     }
 

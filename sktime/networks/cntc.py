@@ -1,7 +1,5 @@
 """a combination of CCNN and CLSTM as feature extractors."""
 
-__author__ = ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"]
-
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -56,7 +54,13 @@ class CNTCNetwork(BaseDeepNetwork):
     """
 
     _tags = {
-        "authors": ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"],
+        "authors": [
+            "James-Large",
+            "Withington",
+            "TonyBagnall",
+            "AurumnPegasus",
+            "noxthot",
+        ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
         "python_dependencies": ["tensorflow"],
     }
