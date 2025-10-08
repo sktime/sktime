@@ -15,6 +15,10 @@ class ResNetNetwork(BaseDeepNetwork):
     ----------
     random_state : int, optional (default = 0)
         The random seed to use random activities.
+    activation : string, optional (default = "relu")
+        Activation function used for hidden layers;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
 
     References
     ----------
@@ -34,10 +38,12 @@ class ResNetNetwork(BaseDeepNetwork):
         "python_dependencies": ["tensorflow"],
     }
 
-    def __init__(self, random_state=0):
+    def __init__(self, random_state=0, activation="relu"):
         _check_dl_dependencies(severity="error")
         super().__init__()
         self.random_state = random_state
+        self.activation = activation
+
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
@@ -66,13 +72,13 @@ class ResNetNetwork(BaseDeepNetwork):
             filters=n_feature_maps, kernel_size=8, padding="same"
         )(input_layer)
         conv_x = keras.layers.BatchNormalization()(conv_x)
-        conv_x = keras.layers.Activation("relu")(conv_x)
+        conv_x = keras.layers.Activation(self.activation)(conv_x)
 
         conv_y = keras.layers.Conv1D(
             filters=n_feature_maps, kernel_size=5, padding="same"
         )(conv_x)
         conv_y = keras.layers.BatchNormalization()(conv_y)
-        conv_y = keras.layers.Activation("relu")(conv_y)
+        conv_y = keras.layers.Activation(self.activation)(conv_y)
 
         conv_z = keras.layers.Conv1D(
             filters=n_feature_maps, kernel_size=3, padding="same"
@@ -86,7 +92,7 @@ class ResNetNetwork(BaseDeepNetwork):
         shortcut_y = keras.layers.BatchNormalization()(shortcut_y)
 
         output_block_1 = keras.layers.add([shortcut_y, conv_z])
-        output_block_1 = keras.layers.Activation("relu")(output_block_1)
+        output_block_1 = keras.layers.Activation(self.activation)(output_block_1)
 
         # 2nd residual block
 
@@ -94,13 +100,13 @@ class ResNetNetwork(BaseDeepNetwork):
             filters=n_feature_maps * 2, kernel_size=8, padding="same"
         )(output_block_1)
         conv_x = keras.layers.BatchNormalization()(conv_x)
-        conv_x = keras.layers.Activation("relu")(conv_x)
+        conv_x = keras.layers.Activation(self.activation)(conv_x)
 
         conv_y = keras.layers.Conv1D(
             filters=n_feature_maps * 2, kernel_size=5, padding="same"
         )(conv_x)
         conv_y = keras.layers.BatchNormalization()(conv_y)
-        conv_y = keras.layers.Activation("relu")(conv_y)
+        conv_y = keras.layers.Activation(self.activation)(conv_y)
 
         conv_z = keras.layers.Conv1D(
             filters=n_feature_maps * 2, kernel_size=3, padding="same"
@@ -114,7 +120,7 @@ class ResNetNetwork(BaseDeepNetwork):
         shortcut_y = keras.layers.BatchNormalization()(shortcut_y)
 
         output_block_2 = keras.layers.add([shortcut_y, conv_z])
-        output_block_2 = keras.layers.Activation("relu")(output_block_2)
+        output_block_2 = keras.layers.Activation(self.activation)(output_block_2)
 
         # 3rd residual block
 
@@ -122,13 +128,13 @@ class ResNetNetwork(BaseDeepNetwork):
             filters=n_feature_maps * 2, kernel_size=8, padding="same"
         )(output_block_2)
         conv_x = keras.layers.BatchNormalization()(conv_x)
-        conv_x = keras.layers.Activation("relu")(conv_x)
+        conv_x = keras.layers.Activation(self.activation)(conv_x)
 
         conv_y = keras.layers.Conv1D(
             filters=n_feature_maps * 2, kernel_size=5, padding="same"
         )(conv_x)
         conv_y = keras.layers.BatchNormalization()(conv_y)
-        conv_y = keras.layers.Activation("relu")(conv_y)
+        conv_y = keras.layers.Activation(self.activation)(conv_y)
 
         conv_z = keras.layers.Conv1D(
             filters=n_feature_maps * 2, kernel_size=3, padding="same"
@@ -139,7 +145,7 @@ class ResNetNetwork(BaseDeepNetwork):
         shortcut_y = keras.layers.BatchNormalization()(output_block_2)
 
         output_block_3 = keras.layers.add([shortcut_y, conv_z])
-        output_block_3 = keras.layers.Activation("relu")(output_block_3)
+        output_block_3 = keras.layers.Activation(self.activation)(output_block_3)
 
         # global average pooling
 
