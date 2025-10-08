@@ -7,6 +7,7 @@ from warnings import warn
 import pandas
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._base import ForecastingHorizon
 from sktime.utils.adapters.forward import _clone_fitted_params
 
 __all__ = ["_GeneralisedStatsForecastAdapter", "StatsForecastBackAdapter"]
@@ -159,9 +160,9 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         self : reference to self
         """
         if fh is not None and hasattr(self, "_trend_forecaster"):
-            self._trend_forecaster._fh = (
-                fh  # pass the fh to _trend_forecaster in case it needs it
-            )
+            self._trend_forecaster = self._trend_forecaster.set_fh(
+                fh
+            )  # pass the fh to _trend_forecaster in case it needs it
         else:
             del fh  # avoid being detected as unused by ``vulture`` like tools
 
@@ -485,6 +486,24 @@ class StatsForecastBackAdapter:
         _self.__dict__.update(self.__dict__)
         return _self
 
+    def set_fh(self, fh: ForecastingHorizon | None):
+        """Set forecasting horizon.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon, optional
+            Forecasting horizon to set.
+
+        Returns
+        -------
+        self : returns reference to self
+        """
+        self._fh = fh
+
+    def _get_fh(self):
+        """Get forecasting horizon."""
+        return getattr(self, "_fh", None)
+
     def fit(self, y, X=None):
         """Fit to training data.
 
@@ -498,7 +517,7 @@ class StatsForecastBackAdapter:
         -------
         self : returns an instance of self.
         """
-        fh = getattr(self, "_fh", None)
+        fh = self._get_fh()
         self.estimator = self.estimator.fit(y=y, X=X, fh=fh)
 
         return self
