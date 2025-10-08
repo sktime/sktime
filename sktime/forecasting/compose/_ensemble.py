@@ -71,10 +71,38 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         trained ensemble models. If None, it will be set to 0.25.
     random_state : int, RandomState instance or None, default=None
         Used to set random_state of the default regressor.
-    n_jobs : int or None, optional, default=None
-        The number of jobs to run in parallel for fit. None means 1 unless
-        in a joblib.parallel_backend context.
-        -1 means using all processors.
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+          e.g., ``scheduler``
 
     Attributes
     ----------
@@ -122,7 +150,9 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         regressor=None,
         test_size=None,
         random_state=None,
-        n_jobs=None,
+        backend=None,
+        backend_params=None,
+        n_jobs="deprecated",
     ):
         self.method = method
         self.regressor = regressor
@@ -131,6 +161,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         super().__init__(
             forecasters=forecasters,
+            backend=backend,
+            backend_params=backend_params,
             n_jobs=n_jobs,
         )
 
@@ -290,10 +322,41 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         * estimator without string will be assigned unique name based on class name
         * (str, estimator, count) tuples: the estimator will be replicated count times.
 
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+        Runs parallel evaluate if specified and ``strategy`` is set as "refit".
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+          e.g., ``scheduler``
     n_jobs : int or None, optional, default=None
-        The number of jobs to run in parallel for fit. None means 1 unless
-        in a joblib.parallel_backend context.
-        -1 means using all processors.
+        Deprecated, use backend_params instead.
+        The number of jobs to run in parallel for fit.
     aggfunc : str, {'mean', 'median', 'min', 'max'}, default='mean'
         The function to aggregate prediction from individual forecasters.
     weights : list of floats
@@ -316,7 +379,9 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     ... ]
     >>> forecaster = EnsembleForecaster(forecasters=forecasters, weights=[4, 10])
     >>> forecaster.fit(y=y, fh=[1,2,3])
-    EnsembleForecaster(...)
+    EnsembleForecaster(forecasters=[('trend', PolynomialTrendForecaster()),
+                                    ('naive', NaiveForecaster())],
+                       weights=[4, 10])
     >>> y_pred = forecaster.predict()
     """
 
@@ -333,13 +398,27 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
+    def __init__(
+        self,
+        forecasters,
+        n_jobs="deprecated",  # deprecated
+        aggfunc="mean",
+        weights=None,
+        backend=None,
+        backend_params=None,
+    ):
         self.aggfunc = aggfunc
         self.weights = weights
 
         fc = self._parse_fc_multiplicities(forecasters)
 
-        super().__init__(forecasters=forecasters, n_jobs=n_jobs, fc_alt=fc)
+        super().__init__(
+            forecasters=forecasters,
+            fc_alt=fc,
+            n_jobs=n_jobs,
+            backend=backend,
+            backend_params=backend_params,
+        )
 
         # the ensemble requires fh in fit
         # iff any of the component forecasters require fh in fit
