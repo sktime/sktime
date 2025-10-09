@@ -136,7 +136,8 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
 
         return self._handle_multioutput(raw_values, multioutput)
 
+    @classmethod
     def get_test_params(cls, parameter_set="default") -> list[dict[str, Any]]:
         default_params = {}
-        raw_values_params =  {'multioutput': 'raw_values'}
+        raw_values_params =  {"multioutput": "raw_values"}
         return [default_params, raw_values_params]
