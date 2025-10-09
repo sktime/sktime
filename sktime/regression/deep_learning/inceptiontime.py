@@ -45,7 +45,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         Activation function used in the hidden layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
-    activation_inception : string or a tf callable, default="relu"
+    activation_inception : string or a tf callable, default="linear"
         Activation function used in the inception layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
