@@ -33,7 +33,11 @@ class FCNRegressor(BaseDeepRegressor):
         fit parameter for the keras model
     metrics         : list of strings, default=["accuracy"],
     activation      : string or a tf callable, default="sigmoid"
-        Activation function used in the output linear layer.
+        Activation function used in the output layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
     use_bias        : boolean, default = True
@@ -65,6 +69,7 @@ class FCNRegressor(BaseDeepRegressor):
         metrics=None,
         random_state=None,
         activation="sigmoid",
+        activation_hidden="relu",
         use_bias=True,
         optimizer=None,
     ):
@@ -78,6 +83,7 @@ class FCNRegressor(BaseDeepRegressor):
         self.metrics = metrics
         self.random_state = random_state
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
@@ -85,6 +91,7 @@ class FCNRegressor(BaseDeepRegressor):
         super().__init__()
 
         self._network = FCNNetwork(
+            activation=self.activation_hidden,
             random_state=self.random_state,
         )
 
