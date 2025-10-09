@@ -127,7 +127,11 @@ class CNTCRegressor(BaseDeepRegressor):
 
         super().__init__()
 
-        self._network = CNTCNetwork(activation=self.activation_hidden, activation_attention=self.activation_attention)
+        self._network = CNTCNetwork(
+                            activation=self.activation_hidden,
+                            activation_attention=self.activation_attention,
+                            random_state=self.random_state,
+        )
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

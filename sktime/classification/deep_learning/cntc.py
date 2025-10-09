@@ -149,6 +149,7 @@ class CNTCClassifier(BaseDeepClassifier):
         self._network = CNTCNetwork(
                             activation=self.activation_hidden,
                             activation_attention=self.activation_attention,
+                            random_state=self.random_state,
         )
 
     def build_model(self, input_shape, n_classes, **kwargs):
