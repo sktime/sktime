@@ -162,9 +162,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         -------
         self : reference to self
         """
-        if fh is not None and hasattr(self, "_trend_forecaster"):
-            # pass the fh to _trend_forecaster in case it needs it
-            self._trend_forecaster.set_fh(fh)
+        self.set_fh_to_trend_forecaster(fh)
 
         self._forecaster = self._instantiate_model()
 
@@ -194,6 +192,8 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         horizon_positions = fh.to_indexer(self.cutoff)
 
         level_arguments = None if levels is None else [100 * level for level in levels]
+
+        self.set_fh_to_trend_forecaster(fh)
 
         if fh_type == "in-sample":
             predict_method = self._fitted_forecaster.predict_in_sample
@@ -540,7 +540,8 @@ class StatsForecastBackAdapter:
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
-        mean = self.estimator.predict(fh=range(1, h + 1), X=X)[:, 0]
+        fh = self._get_fh()
+        mean = self.estimator.predict(fh=fh, X=X)[:, 0]
         if level is None:
             return {"mean": mean}
         # if a level is passed, and if prediction_intervals has not been instantiated
@@ -553,9 +554,7 @@ class StatsForecastBackAdapter:
         level = sorted(level)
         coverage = [round(_l / 100, 2) for _l in level]
 
-        pred_int = self.estimator.predict_interval(
-            fh=range(1, h + 1), X=X, coverage=coverage
-        )
+        pred_int = self.estimator.predict_interval(fh=fh, X=X, coverage=coverage)
 
         return self.format_pred_int("mean", mean, pred_int, coverage, level)
 

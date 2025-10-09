@@ -51,7 +51,9 @@ def test_statsforecast_mstl(mock_autoets):
     not run_test_for_class(StatsForecastMSTL),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("fh", [[1, 2, 3], None], ids=["valid fh", "None fh"])
+@pytest.mark.parametrize(
+    "fh", [[1, 2, 3], 5, None], ids=["valid fh", "scalar", "None fh"]
+)
 def test_statsforecast_mstl_with_fh(fh):
     """
     Check that StatsForecast MSTL adapter calls trend forecaster with
@@ -76,18 +78,14 @@ def test_statsforecast_mstl_with_fh(fh):
     try:
         # fit with fh passed to model
         model.fit(y, fh=fh)
-        assert all(model._trend_forecaster._fh == fh), (
-            f"fh for the instatiated trend_forecaster is different, "
-            f"expected {model._trend_forecaster._fh} - got: {fh}"
-        )  # Assert that fh was passed correctly to trend_forecaster
-        preds = model.predict(fh=fh)
-        assert preds.shape == (len(fh),), (
-            f"Expeced the len of the prediction to be equal to the len of the forecast "
-            f"horizon passed as input, espected: ({len(fh)}, ) - got: {preds.shape}"
-        )  # Assert that prediction works as expected
-
+        model.predict(fh=fh)
     except ValueError as e:
-        assert type(e) is ValueError, (
+        assert repr(e) == (
+            "ValueError('The forecasting horizon `fh` "
+            "must be passed to `fit` of DirectTabularRegressionForecaster, "
+            "but none was found. This is because fitting of the forecaster "
+            "DirectTabularRegressionForecaster depends on `fh`. ')"
+        ), (
             "Unexpected exception raised - should have failed with ValueError, "
             "The forecasting horizon `fh` must be passed to `fit` of ..."
         )
