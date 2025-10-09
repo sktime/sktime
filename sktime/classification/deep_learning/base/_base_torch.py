@@ -52,9 +52,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.label_encoder = None
         super().__init__()
 
-        torchManual_seed = _safe_import("torch.manual_seed")
         # set random seed for torch
         if self.random_state is not None:
+            torchManual_seed = _safe_import("torch.manual_seed")
             torchManual_seed(self.random_state)
 
         # optimizers and criterions will be instantiated in
@@ -113,7 +113,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         torchOptimizer = _safe_import("torch.optim.Optimizer")
         # if optimizer is a string, look it up in the available optimizers
         if isinstance(self.optimizer, str):
-            if self.optimizer.lower() in self._all_optimizers.keys():
+            if self.optimizer.lower() in self._all_optimizers:
                 if self.optimizer_kwargs:
                     return self._all_optimizers[self.optimizer.lower()](
                         self.network.parameters(), lr=self.lr, **self.optimizer_kwargs
@@ -124,8 +124,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     )
             else:
                 raise ValueError(
-                    f"Unknown optimizer: {self.optimizer}. "
-                    f"Please pass one of {self._all_optimizers.keys()} for `optimizer`."
+                    f"Unknown optimizer: {self.optimizer}. Please pass one of "
+                    f"{', '.join(self._all_optimizers)} for `optimizer`."
                 )
         # if optimizer is already an instance of torch.optim.Optimizer, use it directly
         elif isinstance(self.optimizer, torchOptimizer):
@@ -177,7 +177,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         torchLossFunction = _safe_import("torch.nn.modules.loss._Loss")
         # if criterion is a string, look it up in the available criterions
         if isinstance(self.criterion, str):
-            if self.criterion.lower() in self._all_criterions.keys():
+            if self.criterion.lower() in self._all_criterions:
                 if self.criterion_kwargs:
                     return self._all_criterions[self.criterion.lower()](
                         **self.criterion_kwargs
@@ -186,8 +186,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     return self._all_criterions[self.criterion.lower()]()
             else:
                 raise ValueError(
-                    f"Unknown criterion: {self.criterion}. "
-                    f"Please pass one of {self._all_criterions.keys()} for `criterion`."
+                    f"Unknown criterion: {self.criterion}. Please pass one of "
+                    f"{', '.join(self._all_criterions)} for `criterion`."
                 )
         # if criterion is already an instance of torch.nn.modules.loss._Loss, use it
         elif isinstance(self.criterion, torchLossFunction):

@@ -35,7 +35,7 @@ class RNNNetworkTorch(NNModule):
         E.g., setting n_layers=2 would mean stacking two RNNs together to form
         a stacked RNN, with the second RNN taking in outputs of the first RNN
         and computing the final results.
-    activation : str/callable
+    activation : str
         The activation function applied inside the RNN.
         Can be either 'tanh' or 'relu'. Default is 'relu'.
     bias : bool

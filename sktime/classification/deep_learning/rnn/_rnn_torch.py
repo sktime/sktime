@@ -3,6 +3,8 @@
 __authors__ = ["RecreationalMath"]
 __all__ = ["SimpleRNNClassifierTorch"]
 
+from collections.abc import Callable
+
 import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
@@ -24,9 +26,8 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         E.g., setting n_layers=2 would mean stacking two RNNs together to form
         a stacked RNN, with the second RNN taking in outputs of the first RNN
         and computing the final results.
-    activation : str/callable
+    activation : str, default = "relu"
         The activation function to use. Can be either 'tanh' or 'relu'.
-        Default is 'relu'.
     batch_first : bool, default = False
         If True, then the input and output tensors are provided
         as (batch, seq, feature).
@@ -105,8 +106,8 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         # base classifier specific
         num_epochs: int = 100,
         batch_size: int = 1,
-        optimizer: str = "RMSprop",
-        criterion: str = "CrossEntropyLoss",
+        optimizer: str | Callable = "RMSprop",
+        criterion: str | Callable = "CrossEntropyLoss",
         criterion_kwargs: dict = None,
         optimizer_kwargs: dict = None,
         lr: float = 0.001,
