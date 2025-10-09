@@ -155,6 +155,6 @@ class TruncationTransformer(BaseTransformer):
         params = [
             {"lower": None, "upper": None},
             {"lower": 5},
-            {"upper": 5},
+            {"lower": 1, "upper": 2},
         ]
         return params
