@@ -36,6 +36,10 @@ class ResNetClassifier(BaseDeepClassifier):
         Activation function used in the output linear layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
     use_bias        : boolean, default = True
         whether the layer uses a bias vector.
     optimizer       : keras.optimizers object, default = Adam(lr=0.01)
@@ -84,6 +88,7 @@ class ResNetClassifier(BaseDeepClassifier):
         batch_size=16,
         random_state=None,
         activation="sigmoid",
+        activation_hidden="relu",
         use_bias=True,
         optimizer=None,
     ):
@@ -97,13 +102,14 @@ class ResNetClassifier(BaseDeepClassifier):
         self.batch_size = batch_size
         self.random_state = random_state
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
 
         super().__init__()
 
         self.history = None
-        self._network = ResNetNetwork(random_state=random_state)
+        self._network = ResNetNetwork(activation=activation_hidden, random_state=random_state)
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
