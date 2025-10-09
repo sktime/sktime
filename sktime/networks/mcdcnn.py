@@ -126,9 +126,10 @@ class MCDCNNNetwork(BaseDeepNetwork):
         else:
             output_layer = keras.layers.Concatenate(axis=-1)(conv2_layers)
 
-        output_layer = keras.layers.Dense(units=self.dense_units, activation=self.activation)(
-            output_layer
-        )
+        output_layer = keras.layers.Dense(
+            units=self.dense_units,
+            activation=self.activation,
+        )(output_layer)
 
         return input_layers, output_layer
 

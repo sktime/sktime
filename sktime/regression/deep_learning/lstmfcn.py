@@ -146,7 +146,10 @@ class LSTMFCNRegressor(BaseDeepRegressor):
 
         input_layers, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(activation=self.activation, units=1)(output_layer)
+        output_layer = keras.layers.Dense(
+            activation=self.activation,
+            units=1,
+        )(output_layer)
 
         model = keras.models.Model(inputs=input_layers, outputs=output_layer)
 

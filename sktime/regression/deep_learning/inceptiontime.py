@@ -136,7 +136,10 @@ class InceptionTimeRegressor(BaseDeepRegressor):
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(activation=self.activation, units=1)(output_layer)
+        output_layer = keras.layers.Dense(
+            activation=self.activation,
+            units=1,
+        )(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
 

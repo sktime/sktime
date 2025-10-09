@@ -162,7 +162,11 @@ class MACNNRegressor(BaseDeepRegressor):
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(activation=self.activation, units=1, use_bias=self.use_bias)(output_layer)
+        output_layer = keras.layers.Dense(
+            activation=self.activation,
+            units=1,
+            use_bias=self.use_bias,
+        )(output_layer)
 
         self.optimizer_ = (
             keras.optimizers.Adam(learning_rate=0.0001)

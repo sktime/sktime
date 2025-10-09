@@ -99,7 +99,10 @@ class ResNetRegressor(BaseDeepRegressor):
         super().__init__()
 
         self.history = None
-        self._network = ResNetNetwork(activation_hidden=self.activation_hidden, random_state=random_state)
+        self._network = ResNetNetwork(
+            activation_hidden=self.activation_hidden,
+            random_state=random_state,
+        )
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

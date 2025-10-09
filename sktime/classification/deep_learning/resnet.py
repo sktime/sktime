@@ -108,7 +108,10 @@ class ResNetClassifier(BaseDeepClassifier):
         super().__init__()
 
         self.history = None
-        self._network = ResNetNetwork(activation=activation_hidden, random_state=random_state)
+        self._network = ResNetNetwork(
+            activation=activation_hidden,
+            random_state=random_state,
+        )
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

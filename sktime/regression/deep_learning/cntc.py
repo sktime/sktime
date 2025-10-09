@@ -80,13 +80,11 @@ class CNTCRegressor(BaseDeepRegressor):
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],
-        
         "tests:skip_by_name": [
-            "test_fit_idempotent",  # `test_fit_idempotent` fails with `AssertionError`, see #3616
+            "test_fit_idempotent",  # fails with `AssertionError`, see #3616
             "test_save_estimators_to_file",
         ],
-        # isolated due to suspected memory leaks, see #8518
-        "tests:vm": True,
+        "tests:vm": True,  # isolated due to suspected memory leaks, see #8518
     }
 
     def __init__(
@@ -128,9 +126,9 @@ class CNTCRegressor(BaseDeepRegressor):
         super().__init__()
 
         self._network = CNTCNetwork(
-                            activation=self.activation_hidden,
-                            activation_attention=self.activation_attention,
-                            random_state=self.random_state,
+            activation=self.activation_hidden,
+            activation_attention=self.activation_attention,
+            random_state=self.random_state,
         )
 
     def build_model(self, input_shape, **kwargs):
@@ -153,7 +151,10 @@ class CNTCRegressor(BaseDeepRegressor):
         metrics = ["accuracy"] if self.metrics is None else self.metrics
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(activation=self.activation, units=1)(output_layer)
+        output_layer = keras.layers.Dense(
+            activation=self.activation,
+            units=1,
+        )(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
         model.compile(

@@ -106,10 +106,10 @@ class FCNClassifier(BaseDeepClassifier):
         super().__init__()
 
         self._network = FCNNetwork(
-                            activation=self.activation_hidden,
-                            random_state=self.random_state,
+            activation=self.activation_hidden,
+            random_state=self.random_state,
         )
-        
+
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
 

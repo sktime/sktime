@@ -102,7 +102,11 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         super().__init__()
 
         self.history = None
-        self._network = RNNNetwork(activation=self.activation_hidden, random_state=random_state, units=units)
+        self._network = RNNNetwork(
+            activation=self.activation_hidden,
+            random_state=random_state,
+            units=units,
+        )
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

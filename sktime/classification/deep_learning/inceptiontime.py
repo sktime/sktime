@@ -194,7 +194,10 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(n_classes, activation=self.activation)(output_layer)
+        output_layer = keras.layers.Dense(
+            n_classes,
+            activation=self.activation,
+        )(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
 
