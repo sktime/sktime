@@ -67,8 +67,9 @@ class FCNClassifier(BaseDeepClassifier):
         "maintainers": ["James-Large", "AurumnPegasus"],
         # estimator type handled by parent class
         "tests:skip_all": True,
-        # test behaviour
-        "tests:skip_by_name": ["test_fit_idempotent"],
+        # testing configuration
+        # ---------------------
+        "tests:skip_by_name": ["test_multioutput"],
     }
 
     def __init__(
