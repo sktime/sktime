@@ -1,6 +1,5 @@
 """Residual Network (ResNet) for classification."""
 
-__author__ = ["James-Large", "AurumnPegasus", "nilesh05apr"]
 __all__ = ["ResNetClassifier"]
 
 from copy import deepcopy
@@ -64,7 +63,7 @@ class ResNetClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr"],
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
         # hfawaz for dl-4-tsc
         "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],

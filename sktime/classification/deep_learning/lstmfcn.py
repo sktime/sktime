@@ -1,7 +1,5 @@
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
 
-__author__ = ["jnrusson1", "solen0id"]
-
 __all__ = ["LSTMFCNClassifier"]
 
 from copy import deepcopy
@@ -75,7 +73,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jnrusson1", "solen0id"],
+        "authors": ["jnrusson1", "solen0id", "noxthot"],
         "maintainers": ["jnrusson1", "solen0id"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class

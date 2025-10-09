@@ -105,7 +105,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "james-large"],
+        "authors": ["hfawaz", "james-large", "noxthot"],
         "maintainers": ["james-large"],
         # estimator type handled by parent class
         # capabilities

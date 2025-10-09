@@ -1,6 +1,5 @@
 """Contextual Time-series Neural Classifier for TSC."""
 
-__author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNTCClassifier"]
 from copy import deepcopy
 
@@ -92,6 +91,7 @@ class CNTCClassifier(BaseDeepClassifier):
             "Withington",
             "TonyBagnall",
             "AurumnPegasus",
+            "noxthot",
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
         "python_dependencies": ["tensorflow"],

@@ -1,6 +1,5 @@
 """InceptionTime for Regression."""
 
-__author__ = "james-large"
 __all__ = ["InceptionTimeRegressor"]
 
 from copy import deepcopy
@@ -59,7 +58,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "james-large"],
+        "authors": ["hfawaz", "james-large", "noxthot"],
         "maintainers": ["james-large", "niles05apr"],
         # estimator type handled by parent class
     }

@@ -1,7 +1,5 @@
 """Multi Channel Deep Convolutional Neural Regressor (MCDCNN)."""
 
-__author__ = ["James-Large"]
-
 from copy import deepcopy
 
 from numpy import squeeze
@@ -84,7 +82,7 @@ class MCDCNNRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large"],
+        "authors": ["hfawaz", "James-Large", "noxthot"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
     }

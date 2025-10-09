@@ -1,7 +1,6 @@
 #!/usr/bin/env python3 -u
 """Time Recurrent Neural Network (RNN) for regression."""
 
-__author__ = ["mloning"]
 __all__ = ["SimpleRNNRegressor"]
 
 from copy import deepcopy
@@ -64,7 +63,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["mloning"],
+        "authors": ["mloning", "noxthot"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
     }

@@ -1,6 +1,5 @@
 """Fully Convolutional Network (FCN) for classification."""
 
-__author__ = ["James-Large", "AurumnPegasus"]
 __all__ = ["FCNClassifier"]
 
 from copy import deepcopy
@@ -66,7 +65,7 @@ class FCNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large", "AurumnPegasus"],
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "noxthot"],
         # hfawaz for dl-4-tsc
         "maintainers": ["James-Large", "AurumnPegasus"],
         # estimator type handled by parent class

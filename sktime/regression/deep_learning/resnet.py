@@ -1,7 +1,5 @@
 """Residual Network (ResNet) for regression."""
 
-__author__ = ["James-Large", "Withington"]
-
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
@@ -65,7 +63,7 @@ class ResNetRegressor(BaseDeepRegressor):
         # --------------
         "authors": ["hfawaz", "James-Large", "Withington"],
         # hfawaz for dl-4-tsc
-        "maintainers": ["Withington"],
+        "authors": ["hfawaz", "James-Large", "Withington", "noxthot"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
     }

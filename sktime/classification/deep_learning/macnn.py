@@ -1,7 +1,5 @@
 """Multi-scale Attention Convolutional Neural Classifier."""
 
-__author__ = ["jnrusson1"]
-
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
@@ -85,7 +83,7 @@ class MACNNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jnrusson1"],
+        "authors": ["jnrusson1", "noxthot"],
         "maintainers": "jnrusson1",
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class

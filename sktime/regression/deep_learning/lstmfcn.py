@@ -1,7 +1,5 @@
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
 
-__author__ = ["jnrusson1", "solen0id", "nilesh05apr"]
-
 __all__ = ["LSTMFCNRegressor"]
 
 from copy import deepcopy
@@ -77,7 +75,7 @@ class LSTMFCNRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jnrusson1", "solen0id"],
+        "authors": ["jnrusson1", "solen0id", "nilesh05apr", "noxthot"],
         "maintainers": ["jnrusson1", "solen0id", "nilesh05apr"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class

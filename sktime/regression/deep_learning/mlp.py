@@ -1,6 +1,5 @@
 """Multi Layer Perceptron Network (MLP) for regression."""
 
-__author__ = ["James-Large", "AurumnPegasus", "nilesh05apr"]
 __all__ = ["MLPRegressor"]
 
 from copy import deepcopy
@@ -66,7 +65,7 @@ class MLPRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large", "AurumnPegasus"],
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
         "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         # estimator type handled by parent class
     }

@@ -1,6 +1,5 @@
 """Contextual Time-series Neural Regressor for TSC."""
 
-__author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNTCRegressor"]
 import numpy as np
 from sklearn.utils import check_random_state
@@ -76,6 +75,8 @@ class CNTCRegressor(BaseDeepRegressor):
             "James-Large",
             "Withington",
             "AurumnPegasus",
+            "TonyBagnall",
+            "noxthot",
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],

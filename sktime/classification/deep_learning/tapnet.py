@@ -1,10 +1,5 @@
 """Time Convolutional Neural Network (CNN) for classification."""
 
-__author__ = [
-    "jnrusson1",
-    "TonyBagnall",
-    "achieveordie",
-]
 __all__ = [
     "TapNetClassifier",
 ]
@@ -92,7 +87,7 @@ class TapNetClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jnrusson1", "TonyBagnall", "achieveordie"],
+        "authors": ["jnrusson1", "TonyBagnall", "achieveordie", "noxthot"],
         "maintainers": ["jnrusson1", "achieveordie"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class

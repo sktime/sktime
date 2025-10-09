@@ -1,7 +1,6 @@
 #!/usr/bin/env python3 -u
 """Time Recurrent Neural Network (RNN) for classification."""
 
-__author__ = ["mloning"]
 __all__ = ["SimpleRNNClassifier"]
 
 from copy import deepcopy
@@ -64,7 +63,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["mloning"],
+        "authors": ["mloning", "noxthot"],
         # estimator type handled by parent class
     }
 
