@@ -61,9 +61,9 @@ class ResNetRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large", "Withington"],
-        # hfawaz for dl-4-tsc
         "authors": ["hfawaz", "James-Large", "Withington", "noxthot"],
+        # hfawaz for dl-4-tsc
+        "maintainers": ["Withington"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
     }
