@@ -27,7 +27,7 @@ class TruncationTransformer(BaseTransformer):
     >>> from sktime.transformations.panel.truncation import TruncationTransformer
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical(same_cutoff=False)
-    >>> tt = TruncationTransformer()
+    >>> tt = TruncationTransformer(lower=5)
     >>> tt.fit(X)
     TruncationTransformer(...)
     >>> X_transformed = tt.transform(X)
@@ -152,5 +152,9 @@ class TruncationTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = {"lower": 5}
+        params = [
+            {"lower": None, "upper": None},
+            {"lower": 5},
+            {"upper": 5},
+        ]
         return params
