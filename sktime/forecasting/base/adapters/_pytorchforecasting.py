@@ -48,7 +48,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html
     """  # noqa: E501
 
     _tags = {
@@ -674,3 +674,4 @@ def _series_to_frame(data):
     else:
         _data = None
     return _data, converted
+
