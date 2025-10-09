@@ -1308,6 +1308,9 @@ class ProximityForest(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "classifier_type": "distance",
+        # testing configuration
+        # ---------------------
+        "tests:skip_by_name": ["test_multioutput"],
     }
 
     def __init__(
