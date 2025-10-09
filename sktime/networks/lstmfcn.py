@@ -59,7 +59,6 @@ class LSTMFCNNetwork(BaseDeepNetwork):
             List of available keras activation functions:
             https://keras.io/api/layers/activations/
         """
-
         self.activation = activation
         self.random_state = random_state
         self.kernel_sizes = kernel_sizes
