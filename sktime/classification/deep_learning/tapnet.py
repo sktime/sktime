@@ -43,6 +43,10 @@ class TapNetClassifier(BaseDeepClassifier):
         dilation value
     activation          : str, default = "sigmoid"
         activation function for the last output layer
+        List of available activation functions: https://keras.io/api/layers/activations/
+    activation_hidden   : str, default = "leaky_relu"
+        activation function for the hidden layers
+        List of available activation functions: https://keras.io/api/layers/activations/
     loss                : str, default = "binary_crossentropy"
         loss function for the classifier
     optimizer           : str or None, default = "Adam(lr=0.01)"
@@ -117,6 +121,7 @@ class TapNetClassifier(BaseDeepClassifier):
         use_rp=True,
         rp_params=(-1, 3),
         activation="sigmoid",
+        activation_hidden="leaky_relu",
         use_bias=True,
         use_att=True,
         use_lstm=True,
@@ -138,6 +143,7 @@ class TapNetClassifier(BaseDeepClassifier):
         self.rp_params = rp_params
         self.filter_sizes = filter_sizes
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_att = use_att
         self.use_bias = use_bias
 
@@ -161,6 +167,7 @@ class TapNetClassifier(BaseDeepClassifier):
         super().__init__()
 
         self._network = TapNetNetwork(
+            activation=self.activation_hidden,
             dropout=self.dropout,
             filter_sizes=self.filter_sizes,
             kernel_size=self.kernel_size,
