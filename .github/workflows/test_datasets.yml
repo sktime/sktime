@@ -49,6 +49,9 @@ jobs:
         env:
           UV_SYSTEM_PYTHON: 1
 
+      - name: Show dependencies
+        run: uv pip list
+
       - name: unit test step
         run: python3 -m pytest -m "not datadownload" sktime/datasets
         shell: bash
@@ -94,6 +97,9 @@ jobs:
       - name: dependencies installation step
         run: uv pip install .[tests,datasets]
         shell: bash
+
+      - name: Show dependencies
+        run: uv pip list
 
       - name: unit test step
         run: python3 -m pytest -m "datadownload" sktime/datasets

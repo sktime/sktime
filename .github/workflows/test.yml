@@ -191,8 +191,8 @@ jobs:
           OBJ_LIST_LENGTH=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; obj_list = _get_all_changed_classes(vm=True); print(len(obj_list))')
           echo "OBJ_LIST=$OBJ_LIST" >> $GITHUB_ENV
           echo "OBJ_LIST_LENGTH=$OBJ_LIST_LENGTH" >> $GITHUB_ENV
-          echo "::set-output name=obj_list::$OBJ_LIST"
-          echo "::set-output name=obj_list_length::$OBJ_LIST_LENGTH"
+          echo "obj_list=$OBJ_LIST" >> $GITHUB_OUTPUT
+          echo "obj_list_length=$OBJ_LIST_LENGTH" >> $GITHUB_OUTPUT
 
       - name: Print changed classes
         run: |
@@ -228,6 +228,11 @@ jobs:
 
       - name: Install OSX packages
         run: ./.github/scripts/install_osx_dependencies.sh
+
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
 
       - name: Install sktime with dev dependencies
         run: |
@@ -527,6 +532,11 @@ jobs:
 
       - name: Install OSX packages
         run: ./.github/scripts/install_osx_dependencies.sh
+
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
 
       - name: Install sktime and dependencies
         shell: bash
