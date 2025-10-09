@@ -48,6 +48,14 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         environment).
     random_state : int or None, default=None
         Seed for random, integer.
+    activation : string or a tf callable, default="linear"
+        Activation function used in the output layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
 
     References
     ----------
@@ -87,8 +95,12 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         callbacks=None,
         random_state=None,
         verbose=0,
+        activation="linear",
+        activation_hidden="relu",
     ):
         # predefined
+        self.activation = activation
+        self.activation_hidden = activation_hidden
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.kernel_sizes = kernel_sizes
@@ -108,6 +120,7 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         self.history = None
 
         self._network = LSTMFCNNetwork(
+            activation=self.activation_hidden,
             kernel_sizes=self.kernel_sizes,
             filter_sizes=self.filter_sizes,
             random_state=self.random_state,
@@ -135,7 +148,7 @@ class LSTMFCNRegressor(BaseDeepRegressor):
 
         input_layers, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(units=1)(output_layer)
+        output_layer = keras.layers.Dense(activation=self.activation, units=1)(output_layer)
 
         model = keras.models.Model(inputs=input_layers, outputs=output_layer)
 
