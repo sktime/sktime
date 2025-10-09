@@ -3690,7 +3690,9 @@
       "profile": "https://github.com/RecreationalMath",
       "contributions": [
         "code",
-        "doc"
+        "doc",
+        "design",
+        "bug"
       ]
     }
   ]

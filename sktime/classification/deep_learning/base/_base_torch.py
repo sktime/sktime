@@ -10,54 +10,7 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
 from sktime.classification.base import BaseClassifier
-from sktime.utils.dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    from torch.utils.data import DataLoader, Dataset
-
-    OPTIMIZERS = {
-        "adadelta": torch.optim.Adadelta,
-        "adagrad": torch.optim.Adagrad,
-        "adam": torch.optim.Adam,
-        "adamw": torch.optim.AdamW,
-        "sparseadam": torch.optim.SparseAdam,
-        "adamax": torch.optim.Adamax,
-        "asgd": torch.optim.ASGD,
-        "lbfgs": torch.optim.LBFGS,
-        "nadam": torch.optim.NAdam,
-        "radam": torch.optim.RAdam,
-        "rmsprop": torch.optim.RMSprop,
-        "rprop": torch.optim.Rprop,
-        "sgd": torch.optim.SGD,
-    }
-    CRITERIONS = {
-        "l1loss": torch.nn.L1Loss,
-        "mseloss": torch.nn.MSELoss,
-        "crossentropyloss": torch.nn.CrossEntropyLoss,
-        "ctcloss": torch.nn.CTCLoss,
-        "nllloss": torch.nn.NLLLoss,
-        "poissonnllloss": torch.nn.PoissonNLLLoss,
-        "gaussiannllloss": torch.nn.GaussianNLLLoss,
-        "kldivloss": torch.nn.KLDivLoss,
-        "bceloss": torch.nn.BCELoss,
-        "bcewithlogitsloss": torch.nn.BCEWithLogitsLoss,
-        "marginrankingloss": torch.nn.MarginRankingLoss,
-        "hingeembeddingloss": torch.nn.HingeEmbeddingLoss,
-        "multilabelmarginloss": torch.nn.MultiLabelMarginLoss,
-        "huberloss": torch.nn.HuberLoss,
-        "smoothl1loss": torch.nn.SmoothL1Loss,
-        "softmarginloss": torch.nn.SoftMarginLoss,
-        "multilabelsoftmarginloss": torch.nn.MultiLabelSoftMarginLoss,
-        "cosineembeddingloss": torch.nn.CosineEmbeddingLoss,
-        "multimarginloss": torch.nn.MultiMarginLoss,
-        "tripletmarginloss": torch.nn.TripletMarginLoss,
-        "tripletmarginwithdistanceloss": torch.nn.TripletMarginWithDistanceLoss,
-    }
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
+from sktime.utils.dependencies import _safe_import
 
 
 class BaseDeepClassifierPytorch(BaseClassifier):
@@ -95,23 +48,26 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.verbose = verbose
         self.random_state = random_state
 
-        if self.random_state is not None:
-            if _check_soft_dependencies("torch", severity="none"):
-                torch.manual_seed(self.random_state)
-
         # use this when y has str
         self.label_encoder = None
         super().__init__()
 
-        # instantiate optimizers
-        self._all_optimizers = OPTIMIZERS
-        self._all_criterions = CRITERIONS
+        torchManual_seed = _safe_import("torch.manual_seed")
+        # set random seed for torch
+        if self.random_state is not None:
+            torchManual_seed(self.random_state)
+
+        # optimizers and criterions will be instantiated in
+        # _instantiate_optimizer & _instantiate_criterion methods respectively
+        self._all_optimizers = None
+        self._all_criterions = None
 
     def _fit(self, X, y):
         y = self._encode_y(y)
 
         self.network = self._build_network(X, y)
 
+        # instantiate loss function and optimizer
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
 
@@ -134,9 +90,27 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             print(f"Epoch {epoch + 1}: Loss: {np.average(losses)}")
 
     def _instantiate_optimizer(self):
+        if self._all_optimizers is None:
+            self._all_optimizers = {
+                "adadelta": _safe_import("torch.optim.Adadelta"),
+                "adagrad": _safe_import("torch.optim.Adagrad"),
+                "adam": _safe_import("torch.optim.Adam"),
+                "adamw": _safe_import("torch.optim.AdamW"),
+                "sparseadam": _safe_import("torch.optim.SparseAdam"),
+                "adamax": _safe_import("torch.optim.Adamax"),
+                "asgd": _safe_import("torch.optim.ASGD"),
+                "lbfgs": _safe_import("torch.optim.LBFGS"),
+                "nadam": _safe_import("torch.optim.NAdam"),
+                "radam": _safe_import("torch.optim.RAdam"),
+                "rmsprop": _safe_import("torch.optim.RMSprop"),
+                "rprop": _safe_import("torch.optim.Rprop"),
+                "sgd": _safe_import("torch.optim.SGD"),
+            }
         # if no optimizer is passed, use Adam as default
         if not self.optimizer:
-            return torch.optim.Adam(self.network.parameters(), lr=self.lr)
+            return self._all_optimizers["adam"](self.network.parameters(), lr=self.lr)
+        # import the base class for all optimizers in PyTorch
+        torchOptimizer = _safe_import("torch.optim.Optimizer")
         # if optimizer is a string, look it up in the available optimizers
         if isinstance(self.optimizer, str):
             if self.optimizer.lower() in self._all_optimizers.keys():
@@ -154,7 +128,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     f"Please pass one of {self._all_optimizers.keys()} for `optimizer`."
                 )
         # if optimizer is already an instance of torch.optim.Optimizer, use it directly
-        elif isinstance(self.optimizer, torch.optim.Optimizer):
+        elif isinstance(self.optimizer, torchOptimizer):
             return self.optimizer
         # if optimizer is neither a string nor an instance of
         # a valid PyTorch optimizer, raise an error
@@ -167,9 +141,40 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             )
 
     def _instantiate_criterion(self):
+        if self._all_criterions is None:
+            self._all_criterions = {
+                "l1loss": _safe_import("torch.nn.L1Loss"),
+                "mseloss": _safe_import("torch.nn.MSELoss"),
+                "crossentropyloss": _safe_import("torch.nn.CrossEntropyLoss"),
+                "ctcloss": _safe_import("torch.nn.CTCLoss"),
+                "nllloss": _safe_import("torch.nn.NLLLoss"),
+                "poissonnllloss": _safe_import("torch.nn.PoissonNLLLoss"),
+                "gaussiannllloss": _safe_import("torch.nn.GaussianNLLLoss"),
+                "kldivloss": _safe_import("torch.nn.KLDivLoss"),
+                "bceloss": _safe_import("torch.nn.BCELoss"),
+                "bcewithlogitsloss": _safe_import("torch.nn.BCEWithLogitsLoss"),
+                "marginrankingloss": _safe_import("torch.nn.MarginRankingLoss"),
+                "hingeembeddingloss": _safe_import("torch.nn.HingeEmbeddingLoss"),
+                "multilabelmarginloss": _safe_import("torch.nn.MultiLabelMarginLoss"),
+                "huberloss": _safe_import("torch.nn.HuberLoss"),
+                "smoothl1loss": _safe_import("torch.nn.SmoothL1Loss"),
+                "softmarginloss": _safe_import("torch.nn.SoftMarginLoss"),
+                "multilabelsoftmarginloss": _safe_import(
+                    "torch.nn.MultiLabelSoftMarginLoss"
+                ),  # noqa: E501
+                "cosineembeddingloss": _safe_import("torch.nn.CosineEmbeddingLoss"),
+                "multimarginloss": _safe_import("torch.nn.MultiMarginLoss"),
+                "tripletmarginloss": _safe_import("torch.nn.TripletMarginLoss"),
+                "tripletmarginwithdistanceloss": _safe_import(
+                    "torch.nn.TripletMarginWithDistanceLoss"
+                ),  # noqa: E501
+            }
+
         # if no criterion is passed, use CrossEntropyLoss as default
         if not self.criterion:
-            return torch.nn.CrossEntropyLoss()
+            return self._all_criterions["crossentropyloss"]()
+        # import the base class for all loss functions in PyTorch
+        torchLossFunction = _safe_import("torch.nn.modules.loss._Loss")
         # if criterion is a string, look it up in the available criterions
         if isinstance(self.criterion, str):
             if self.criterion.lower() in self._all_criterions.keys():
@@ -185,7 +190,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     f"Please pass one of {self._all_criterions.keys()} for `criterion`."
                 )
         # if criterion is already an instance of torch.nn.modules.loss._Loss, use it
-        elif isinstance(self.criterion, torch.nn.modules.loss._Loss):
+        elif isinstance(self.criterion, torchLossFunction):
             return self.criterion
         else:
             # if criterion is neither a string nor an instance of
@@ -205,6 +210,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         # default behaviour if estimator doesnot implement
         # dataloader of its own
         dataset = PytorchDataset(X, y)
+        DataLoader = _safe_import("torch.utils.data.DataLoader")
         return DataLoader(dataset, self.batch_size)
 
     def _predict(self, X):
@@ -269,8 +275,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             2nd dimension indices correspond to possible labels (integers)
             (i, j)-th entry is predictive probability that i-th instance is of class j
         """
-        import torch.nn.functional as F
-        from torch import cat
+        Fsoftmax = _safe_import("torch.nn.functional.softmax")
+        cat = _safe_import("torch.cat")
 
         self.network.eval()
         dataloader = self._build_dataloader(X)
@@ -279,7 +285,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             y_pred.append(self.network(**inputs).detach())
         y_pred = cat(y_pred, dim=0)
         # (batch_size, num_outputs)
-        y_pred = F.softmax(y_pred, dim=-1)
+        y_pred = Fsoftmax(y_pred, dim=-1)
         y_pred = y_pred.numpy()
         return y_pred
 
@@ -338,6 +344,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         return []
 
 
+Dataset = _safe_import("torch.utils.data.Dataset")
+
+
 class PytorchDataset(Dataset):
     """Dataset for use in sktime deep learning classifier based on pytorch."""
 
@@ -355,8 +364,11 @@ class PytorchDataset(Dataset):
 
     def __getitem__(self, i):
         """Get item at index."""
+        torchTensor = _safe_import("torch.tensor")
+        torchFLoat = _safe_import("torch.float")
+        torchLong = _safe_import("torch.long")
         x = self.X[i]
-        x = torch.tensor(x, dtype=torch.float)
+        x = torchTensor(x, dtype=torchFLoat)
         inputs = {"X": x}
         # to make it reusable for predict
         if self.y is None:
@@ -364,5 +376,5 @@ class PytorchDataset(Dataset):
 
         # return y during fit
         y = self.y[i]
-        y = torch.tensor(y, dtype=torch.long)
+        y = torchTensor(y, dtype=torchLong)
         return inputs, y
