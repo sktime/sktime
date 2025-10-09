@@ -40,6 +40,10 @@ class TapNetRegressor(BaseDeepRegressor):
         dilation value
     activation          : str, default = "linear"
         activation function for the last output layer
+        List of available activation functions: https://keras.io/api/layers/activations/
+    activation_hidden   : str, default = "leaky_relu"
+        activation function for the hidden layers
+        List of available activation functions: https://keras.io/api/layers/activations/
     loss                : str, default = "mean_squared_error"
         loss function for the classifier
     optimizer           : str or None, default = "Adam(lr=0.01)"
@@ -93,6 +97,7 @@ class TapNetRegressor(BaseDeepRegressor):
         layers=(500, 300),
         use_rp=True,
         activation="linear",
+        activation_hidden="leaky_relu",
         rp_params=(-1, 3),
         use_bias=True,
         use_att=True,
@@ -115,6 +120,7 @@ class TapNetRegressor(BaseDeepRegressor):
         self.rp_params = rp_params
         self.filter_sizes = filter_sizes
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_att = use_att
         self.use_bias = use_bias
 
@@ -138,6 +144,7 @@ class TapNetRegressor(BaseDeepRegressor):
         super().__init__()
 
         self._network = TapNetNetwork(
+            activation=self.activation_hidden,
             dropout=self.dropout,
             filter_sizes=self.filter_sizes,
             kernel_size=self.kernel_size,
