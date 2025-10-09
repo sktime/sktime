@@ -295,12 +295,15 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             )
             return {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
         else:
-            return {
+            param1 = {
                 "estimators": [
                     ("tsf1", TSFC(n_estimators=2), 0),
                     ("tsf2", TSFC(n_estimators=2), 0),
                 ]
             }
+            param2 = {**param1, "remainder": "passthrough"}
+
+            return [param1, param2]
 
 
 def _get_column(X, key):
