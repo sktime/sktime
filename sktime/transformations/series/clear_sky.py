@@ -103,6 +103,10 @@ class ClearSky(BaseTransformer):
         "capability:missing_values": False,
         "capability:missing_values:removes": True,
         "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_categorical_y_raises_error"],
+        # skip due to mismatch of index, not estimator but test issue, see issue #8828
     }
 
     def __init__(
