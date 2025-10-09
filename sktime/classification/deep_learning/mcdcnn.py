@@ -44,8 +44,13 @@ class MCDCNNClassifier(BaseDeepClassifier):
         The name of the loss function to be used during training,
         should be supported by keras.
     activation : str, optional (default="sigmoid")
-        The activation function to apply at the output. It should be
-        "software" if response variable has more than two types.
+        The activation function to apply at the output.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
     use_bias : bool, optional (default=True)
         Whether bias should be included in the output layer.
     metrics : None or string, optional (default=None)
@@ -97,6 +102,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         pool_padding="same",
         loss="categorical_crossentropy",
         activation="sigmoid",
+        activation_hidden="relu",
         use_bias=True,
         callbacks=None,
         metrics=None,
@@ -116,6 +122,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         self.pool_padding = pool_padding
         self.loss = loss
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.callbacks = callbacks
         self.metrics = metrics
@@ -127,6 +134,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
 
         self.history = None
         self._network = MCDCNNNetwork(
+            activation=self.activation_hidden,
             kernel_size=self.kernel_size,
             pool_size=self.pool_size,
             filter_sizes=self.filter_sizes,
