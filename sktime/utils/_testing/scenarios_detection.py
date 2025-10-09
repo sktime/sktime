@@ -1,35 +1,60 @@
-"""Test scenarios for detectors.
+"""Test scenarios for detector estimators.
 
-Defines minimal test scenarios so that detector estimators
-can be tested in a consistent way across the library.
+Contains TestScenario concrete children to run in tests for detector estimators.
 """
 
-__all__ = ["DetectorUnivariateSimple", "scenarios_detectors"]
+__all__ = ["scenarios_detectors"]
 
+from inspect import isclass
+
+from sktime.base import BaseObject
 from sktime.utils._testing.scenarios import TestScenario
 from sktime.utils._testing.series import _make_series
 
-# Random seed for reproducibility
+# Random seeds for reproducibility
 RAND_SEED = 42
+RAND_SD2 = 84
 
 
-class DetectorUnivariateSimple(TestScenario):
-    """Simple univariate detector scenario with default settings.
+def get_tag(obj, tag_name):
+    """Shorthand for get_tag vs get_class_tag, obj can be class or object."""
+    if isclass(obj):
+        return obj.get_class_tag(tag_name)
+    else:
+        return obj.get_tag(tag_name)
 
-    This provides a minimal example of detector input data (Z)
-    to be used in smoke or unit tests for detector estimators.
-    """
 
-    _tags = {"is_enabled": True, "scitype": "detector"}
+class DetectorTestScenario(TestScenario, BaseObject):
+    """Generic test scenario for detectors."""
+
+    def is_applicable(self, obj):
+        """Check whether scenario is applicable to obj."""
+        obj_has_c_multivariate = get_tag(obj, "capability:multivariate")
+        scenario_is_multivariate = not self.get_tag("X_univariate")
+        if not obj_has_c_multivariate and scenario_is_multivariate:
+            return False
+        return True
+
+
+class DetectorUnivariateSimple(DetectorTestScenario):
+    """Simple univariate detector scenario with default settings."""
+
+    _tags = {
+        "is_enabled": True,
+        "scitype": "detector",
+        "X_univariate": True,
+    }
 
     @property
     def args(self):
-        # Z represents a univariate time series input
         Z = _make_series(n_timepoints=20, random_state=RAND_SEED)
-        return {"fit": {"X": Z}}
+        return {
+            "fit": {"X": Z},
+            "predict": {"X": Z},
+            "transform": {"X": Z},
+        }
 
-    # Defines the default sequence of methods to call
-    default_method_sequence = ["fit"]
+    default_method_sequence = ["fit", "predict", "transform"]
 
 
 # List of scenarios to be imported by tests
