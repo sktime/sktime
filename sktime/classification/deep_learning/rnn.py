@@ -38,6 +38,9 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     activation : string or a tf callable, default="sigmoid"
         Activation function used in the output layer.
         List of available activation functions: https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="linear"
+        Activation function used in the hidden layers.
+        List of available activation functions: https://keras.io/api/layers/activations/
     use_bias : boolean, default = True
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = RMSprop(lr=0.001)
@@ -77,6 +80,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         loss="mean_squared_error",
         metrics=None,
         activation="sigmoid",
+        activation_hidden="linear",
         use_bias=True,
         optimizer=None,
     ):
@@ -92,13 +96,14 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self.loss = loss
         self.metrics = metrics
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
 
         super().__init__()
 
         self.history = None
-        self._network = RNNNetwork(random_state=random_state, units=units)
+        self._network = RNNNetwork(activation=self.activation_hidden, random_state=random_state, units=units)
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
