@@ -225,7 +225,6 @@ EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "CAPA",
         "CNTCNetwork",
-        "CanonicalIntervalForest",
         "CircularBinarySegmentation",
         "ClaSPTransformer",
         "ClearSky",

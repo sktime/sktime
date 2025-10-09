@@ -50,13 +50,13 @@ class CanonicalIntervalForest(BaseClassifier):
         Minimum length of an interval.
     max_interval : int or None, default=None
         Maximum length of an interval, if None set to (series_length / 2).
-    base_estimator : BaseEstimator or str, default="DTC"
+    base_estimator : BaseEstimator or str, default="CIT"
         Base estimator for the ensemble, can be supplied a sklearn BaseEstimator or a
         string for suggested options.
-        "DTC" uses the sklearn DecisionTreeClassifier using entropy as a splitting
-        measure.
         "CIT" uses the sktime ContinuousIntervalTree, an implementation of the original
         tree used with embedded attribute processing for faster predictions.
+        "DTC" uses the sklearn DecisionTreeClassifier using entropy as a splitting
+        measure.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
@@ -410,4 +410,7 @@ class CanonicalIntervalForest(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"n_estimators": 10, "n_intervals": 2, "att_subsample_size": 4}
         else:
-            return {"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2}
+            param1 = {"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2}
+            param2 = {**param1, "base_estimator": "CIT"}
+
+            return [param1, param2]
