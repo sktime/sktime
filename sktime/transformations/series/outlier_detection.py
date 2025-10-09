@@ -64,7 +64,8 @@ class HampelFilter(BaseTransformer):
         "fit_is_empty": True,
         "capability:missing_values": True,
         "skip-inverse-transform": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self, window_length=10, n_sigma=3, k=1.4826, return_bool=False):

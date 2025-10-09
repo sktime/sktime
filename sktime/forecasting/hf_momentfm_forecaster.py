@@ -152,13 +152,13 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "scitype:y": "both",
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "y_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": True,
         "python_dependencies": [
             "torch",
