@@ -32,7 +32,11 @@ class ResNetRegressor(BaseDeepRegressor):
     optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
     metrics         : list of strings, default=["mean_squared_error"],
     activation      : string or a tf callable, default="linear"
-        Activation function used in the output linear layer.
+        Activation function used in the output layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
     use_bias        : boolean, default = True
@@ -76,6 +80,7 @@ class ResNetRegressor(BaseDeepRegressor):
         batch_size=16,
         random_state=None,
         activation="linear",
+        activation_hidden="relu",
         use_bias=True,
         optimizer=None,
     ):
@@ -89,13 +94,14 @@ class ResNetRegressor(BaseDeepRegressor):
         self.batch_size = batch_size
         self.random_state = random_state
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
 
         super().__init__()
 
         self.history = None
-        self._network = ResNetNetwork(random_state=random_state)
+        self._network = ResNetNetwork(activation_hidden=self.activation_hidden, random_state=random_state)
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
