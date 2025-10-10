@@ -156,6 +156,7 @@ class FABBA(BaseTransformer):
         "capability:multivariate": False,
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
+        "capability:unequal_length:adds": True,
         "capability:missing_values": False,
         "capability:missing_values:removes": True,
         "capability:random_state": True,

@@ -1384,6 +1384,12 @@ class BaseTransformer(BaseEstimator):
                 else:
                     # Input must have been Panel, output should be Series
                     X_output_mtype = "pd.DataFrame"
+            elif self.get_tag("capability:unequal_length:adds"):
+                # Output is Panel or Hierarchical
+                # if the transformation can create unequal length series
+                # we need to convert to a type that supports this
+                X_output_mtype = ["pd-multiindex", "pd_multiindex_hier"]
+                output_scitype = ["Panel", "Hierarchical"]
             else:
                 # Input can be Panel or Hierarchical, since it is supported
                 # by the used mtype
