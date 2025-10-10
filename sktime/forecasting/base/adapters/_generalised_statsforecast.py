@@ -148,6 +148,10 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             and hasattr(self, "_trend_forecaster")
         ):
             fh = self._check_fh(fh)
+
+            # Convert fh to relative if it is absolute before setting it
+            fh = fh.to_relative(self.cutoff)
+
             # pass the fh to _trend_forecaster in case it needs it
             self._trend_forecaster.set_fh(fh)
 
@@ -521,9 +525,7 @@ class StatsForecastBackAdapter:
         fh = getattr(self, "_fh", None)
 
         if fh is not None:
-            cutoff = getattr(self.estimator, "cutoff", None)
-            maximum_forecast_horizon = fh.to_relative(cutoff)[-1]
-
+            maximum_forecast_horizon = fh[-1]
             return range(1, maximum_forecast_horizon + 1)
         else:
             return None
