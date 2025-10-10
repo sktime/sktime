@@ -132,13 +132,15 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         params = self._get_validated_statsforecast_params()
         return cls(**params)
 
-    def _set_fh_to_trend_forecaster(self, fh):
+    def _set_fh_to_trend_forecaster(self, fh, y):
         """Set forecasting horizon to trend forecaster if it exists.
 
         Parameters
         ----------
         fh : ForecastingHorizon or None
             The forecasting horizon with the steps ahead to to predict.
+        y : pd.Series
+            The time series data used for fitting.
         """
         from statsforecast.models import MSTL
 
@@ -152,6 +154,12 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             # Convert fh to relative if it is absolute before setting it
             fh = fh.to_relative(self.cutoff)
 
+            in_sample_horizon, out_of_sample_horizon = self._split_horizon(fh)
+
+            if in_sample_horizon:
+                fh = y.index
+            else:
+                fh = out_of_sample_horizon
             # pass the fh to _trend_forecaster in case it needs it
             self._trend_forecaster.set_fh(fh)
 
@@ -186,7 +194,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         self : reference to self
         """
         self._forecaster = self._instantiate_model()
-        self._set_fh_to_trend_forecaster(fh)
+        self._set_fh_to_trend_forecaster(fh, y)
 
         y_fit_input = y.to_numpy(copy=False)
 
