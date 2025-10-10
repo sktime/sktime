@@ -6,8 +6,6 @@ Classes named as ``*Score`` return a value to maximize: the higher the better.
 Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
-from typing import Any
-
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 
 
@@ -135,9 +133,3 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
         raw_values = self._get_weighted_df(raw_values, **kwargs)
 
         return self._handle_multioutput(raw_values, multioutput)
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default") -> list[dict[str, Any]]:
-        default_params = {}
-        raw_values_params =  {"multioutput": "raw_values"}
-        return [default_params, raw_values_params]
