@@ -692,7 +692,8 @@ class ProximityStump(BaseClassifier):
         # testing configuration
         # ---------------------
         "tests:skip_by_name": [
-            "test_multioutput", "test_classifier_on_unit_test_data"
+            "test_multioutput",
+            "test_classifier_on_unit_test_data",
         ],  # see 8946
     }
 
@@ -1009,7 +1010,8 @@ class ProximityTree(BaseClassifier):
         # testing configuration
         # ---------------------
         "tests:skip_by_name": [
-            "test_multioutput", "test_classifier_on_unit_test_data"
+            "test_multioutput",
+            "test_classifier_on_unit_test_data",
         ],  # see 8946
     }
 
