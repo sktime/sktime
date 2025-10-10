@@ -203,14 +203,3 @@ class CNTCNetwork(BaseDeepNetwork):
         flat = keras.layers.Flatten()(mlp2)
         return input_layers, flat
 
-    @staticmethod
-    def get_custom_objects():
-        """Return the custom objects needed for loading the model.
-
-        Returns
-        -------
-        dict of str to type, mapping names to classes
-        """
-        from sktime.libs._keras_self_attention import SeqSelfAttention
-
-        return SeqSelfAttention.get_custom_objects()
