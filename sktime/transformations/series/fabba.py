@@ -21,7 +21,7 @@ from sklearn.cluster import KMeans, MiniBatchKMeans
 from sktime.transformations.base import BaseTransformer
 
 
-class fABBA(BaseTransformer):
+class FABBA(BaseTransformer):
     """fABBA - An efficient symbolic aggregate approximation for temporal data.
 
     fABBA_[1] is a dimensionality reduction technique that works by making
