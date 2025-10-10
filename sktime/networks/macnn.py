@@ -26,9 +26,9 @@ class MACNNNetwork(BaseDeepNetwork):
         The output size of Conv1D layers within each MACNN Block.
     reduction : int, optional (default=16)
         The factor by which the first dense layer of a MACNN Block will be divided by.
-    random_state: int, optional (default=0)
+    random_state : int, optional (default=0)
         The seed to any random action.
-    activation: string, optional (default="relu")
+    activation : string, optional (default="relu")
         Activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/

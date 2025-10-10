@@ -26,24 +26,24 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         Activation function used in the hidden layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
-    n_epochs: int, default=2000
+    n_epochs : int, default=2000
      the number of epochs to train the model
-    batch_size: int, default=128
+    batch_size : int, default=128
         the number of samples per gradient update.
-    dropout: float, default=0.8
+    dropout : float, default=0.8
         controls dropout rate of LSTM layer
-    kernel_sizes: list of ints, default=[8, 5, 3]
+    kernel_sizes : list of ints, default=[8, 5, 3]
         specifying the length of the 1D convolution windows
-    filter_sizes: int, list of ints, default=[128, 256, 128]
+    filter_sizes : int, list of ints, default=[128, 256, 128]
         size of filter for each conv layer
-    lstm_size: int, default=8
+    lstm_size : int, default=8
         output dimension for LSTM layer
-    attention: boolean, default=False
+    attention : boolean, default=False
         If True, uses custom attention LSTM layer
-    callbacks: keras callbacks, default=ReduceLRonPlateau
+    callbacks : keras callbacks, default=ReduceLRonPlateau
         Keras callbacks to use such as learning rate reduction or saving best model
         based on validation error
-    verbose: 'auto', 0, 1, or 2. Verbosity mode.
+    verbose : 'auto', 0, 1, or 2. Verbosity mode.
         0 = silent, 1 = progress bar, 2 = one line per epoch.
         'auto' defaults to 1 for most cases, but 2 when used with
         ``ParameterServerStrategy``. Note that the progress bar is not
