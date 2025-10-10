@@ -674,4 +674,3 @@ def _series_to_frame(data):
     else:
         _data = None
     return _data, converted
-
