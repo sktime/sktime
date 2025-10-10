@@ -233,6 +233,13 @@ class BaseDeepRegressor(BaseRegressor):
         shutil.rmtree(path)
         return ZipFile(path.with_name(f"{path.stem}.zip"))
 
+    def get_custom_objects(cls):
+        """Return the custom objects needed for loading the model.
+        Will be overridden in child classes if necessary.
+        """
+        
+        return None
+
     @classmethod
     def load_from_serial(cls, serial):
         """Load object from serialized memory container.
@@ -272,7 +279,9 @@ class BaseDeepRegressor(BaseRegressor):
         else:
             with open("diskless.h5", "wb") as store_:
                 store_.write(in_memory_model)
-                cls.model_ = load_model("diskless.h5")
+                cls.model_ = load_model(
+                    "diskless.h5", custom_objects=cls.get_custom_objects()
+                )
 
         cls.history = pickle.loads(in_memory_history)
         return pickle.loads(serial)
