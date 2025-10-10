@@ -16,11 +16,11 @@ class TruncationTransformer(BaseTransformer):
     Parameters
     ----------
     lower : int, optional (default=None) minimum length, inclusive
-                Cannot be less than the length of the shortest series in the panel.
-                If None, will find the length of the shortest series and use instead.
+        Cannot be less than the length of the shortest series in the panel.
+        If None, will find the length of the shortest series and use instead.
     upper : int, optional (default=None) maximum length, exclusive
-                This is used to calculate the range between.
-                If None, will truncate to the lower bound.
+        This is used to calculate the range between.
+        If None, will truncate to the lower bound.
 
     Examples
     --------

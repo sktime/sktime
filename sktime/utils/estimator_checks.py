@@ -127,7 +127,10 @@ def check_estimator(
     All tests PASSED!
     {'test_clone[ExponentTransformer-1]': 'PASSED'}
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies import (
+        _check_estimator_deps,
+        _check_soft_dependencies,
+    )
 
     msg = (
         "check_estimator is a testing utility for developers, and "
@@ -140,6 +143,17 @@ def check_estimator(
         " `pip install sktime[dev]`"
     )
     _check_soft_dependencies("pytest", msg=msg)
+
+    try:
+        _check_estimator_deps(estimator)
+    except ModuleNotFoundError as e:
+        msg = (
+            "check_estimator requires all dependencies of the tested object "
+            "to be present in the python environment, "
+            "but some were not found. "
+            f"Details: {e}"
+        )
+        raise ModuleNotFoundError(msg) from e
 
     from sktime.tests.test_class_register import get_test_classes_for_obj
 
