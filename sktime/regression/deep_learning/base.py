@@ -233,7 +233,8 @@ class BaseDeepRegressor(BaseRegressor):
         shutil.rmtree(path)
         return ZipFile(path.with_name(f"{path.stem}.zip"))
 
-    def get_custom_objects(cls):
+    @staticmethod
+    def get_custom_objects():
         """Return the custom objects needed for loading the model.
 
         Will be overridden in child classes if necessary.

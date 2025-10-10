@@ -203,7 +203,8 @@ class CNTCNetwork(BaseDeepNetwork):
         flat = keras.layers.Flatten()(mlp2)
         return input_layers, flat
 
-    def get_custom_objects(cls):
+    @staticmethod
+    def get_custom_objects():
         """Return the custom objects needed for loading the model.
 
         Returns
