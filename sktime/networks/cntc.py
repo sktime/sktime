@@ -202,4 +202,3 @@ class CNTCNetwork(BaseDeepNetwork):
         mlp2 = keras.layers.Dropout(0.1)(mlp2)
         flat = keras.layers.Flatten()(mlp2)
         return input_layers, flat
-
