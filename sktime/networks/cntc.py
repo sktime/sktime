@@ -20,8 +20,6 @@ class CNTCNetwork(BaseDeepNetwork):
     n_conv_layers   : int, default = 2
         the number of convolutional plus average pooling layers
     filter_sizes    : array of int, shape = (nb_conv_layers)
-    activation      : string, default = sigmoid
-        keras activation function
     random_state    : int, default = 0
         seed to any needed random actions
 
