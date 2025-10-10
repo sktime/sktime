@@ -304,7 +304,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TemporalDictionaryEnsemble",
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
-        "TruncationTransformer",
         "UnobservedComponents",
         "WEASEL",
         "WhiteNoiseAugmenter",
