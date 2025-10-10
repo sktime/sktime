@@ -5,7 +5,6 @@ __all__ = ["MiniRocketMultivariateVariable"]
 
 import multiprocessing
 import warnings
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -320,7 +319,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
 
 def _nested_dataframe_to_transposed2D_array_and_len_list(
-    X: list[pd.DataFrame], pad: Union[int, float, None] = 0
+    X: list[pd.DataFrame], pad: int | float | None = 0
 ):
     """Convert a nested dataframe to a 2D array and a list of lengths.
 

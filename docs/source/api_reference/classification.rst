@@ -65,6 +65,7 @@ Deep learning
     :toctree: auto_generated/
     :template: class.rst
 
+    convtimenet.ConvTimeNetClassifier
     cnn.CNNClassifier
     cntc.CNTCClassifier
     fcn.FCNClassifier
