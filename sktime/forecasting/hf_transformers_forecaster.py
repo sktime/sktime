@@ -453,7 +453,21 @@ class HFTransformersForecaster(BaseForecaster):
                 "training_args": base_training_args,
                 "config": base_config,
                 "deterministic": True,
-            }
+            },
+            {
+                "model_path": "huggingface/autoformer-tourism-monthly",
+                "fit_strategy": "minimal",
+                "training_args": base_training_args,
+                "config": base_config,
+                "deterministic": True,
+            },
+            {
+                "model_path": "huggingface/informer-tourism-monthly",
+                "fit_strategy": "minimal",
+                "training_args": base_training_args,
+                "config": base_config,
+                "deterministic": True,
+            },
         ]
 
         # Add PEFT-specific test case if PEFT is available
