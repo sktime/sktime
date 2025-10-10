@@ -235,9 +235,9 @@ class BaseDeepRegressor(BaseRegressor):
 
     def get_custom_objects(cls):
         """Return the custom objects needed for loading the model.
+
         Will be overridden in child classes if necessary.
         """
-
         return None
 
     @classmethod
