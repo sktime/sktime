@@ -76,7 +76,7 @@ class CNNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large", "noxthot"],
+        "authors": ["hfawaz", "James-Large"],
         # hfawaz for dl-4-tsc
         "maintainers": ["James-Large"],
         "python_dependencies": "tensorflow",
