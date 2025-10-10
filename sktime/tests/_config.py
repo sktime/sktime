@@ -343,7 +343,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MedianSquaredError",
         "MeanAbsolutePercentageError",
         "MeanAbsoluteScaledError",
-        "MeanAbsoluteError",
         "MedianAbsoluteError",
         "MeanSquaredPercentageError",
         "MedianAbsolutePercentageError",
