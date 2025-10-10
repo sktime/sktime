@@ -136,10 +136,10 @@ class FABBA(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.dummies import SeasonalDummiesOneHot
+    >>> from sktime.transformations.series.fabba import FABBA
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = fABBA(
+    >>> transformer = FABBA(
     ...     n_jobs=1,
     ...     random_state=42,
     ...     return_start_values=True,
