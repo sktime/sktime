@@ -42,19 +42,18 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         """Initialize Inception Time.
 
         ----------
-        :param n_filters: int,
-        :param use_residual: boolean,
-        :param use_bottleneck: boolean,
-        :param depth: int
-        :param kernel_size: int, specifying the length of the 1D convolution
-         window
-        :param bottleneck_size: int,
-        :param random_state: int, seed to any needed random actions
-        :param activation: string, default = "relu"
+        n_filters : int,
+        use_residual : boolean,
+        use_bottleneck : boolean,
+        depth : int
+        kernel_size : int, specifying the length of the 1D convolution window
+        bottleneck_size : int,
+        random_state : int, seed to any needed random actions
+        activation : string, default = "relu"
             activation function used for hidden layers;
             List of available keras activation functions:
             https://keras.io/api/layers/activations/
-        :param activation_inception: string, default = "linear"
+        activation_inception : string, default = "linear"
             activation function used inside the inception module;
             List of available keras activation functions:
             https://keras.io/api/layers/activations/

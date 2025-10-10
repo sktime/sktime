@@ -30,13 +30,13 @@ class InceptionTimeRegressor(BaseDeepRegressor):
     bottleneck_size : int, default=32
     depth : int, default=6
     callbacks : list of tf.keras.callbacks.Callback objects
-    random_state: int, optional, default=None
+    random_state : int, optional, default=None
         random seed for internal random number generator
-    verbose: boolean, default=False
+    verbose : boolean, default=False
         whether to print runtime information
-    loss: str, default="mean_squared_error"
-    metrics: optional
-    activation: string or a tf callable, default="linear"
+    loss : str, default="mean_squared_error"
+    metrics : optional
+    activation : string or a tf callable, default="linear"
         Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
