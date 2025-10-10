@@ -130,6 +130,8 @@ class BaseTransformer(BaseEstimator):
         # can the transformer handle unequal length time series (if passed Panel)?
         "capability:unequal_length:removes": False,
         # is transform result always guaranteed to be equal length (and series)?
+        "capability:unequal_length:adds": False,
+        # can transform result be unequal length, even if input is equal length?
         "capability:missing_values": False,  # can estimator handle missing data?
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
