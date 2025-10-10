@@ -33,11 +33,26 @@ class fABBA(BaseTransformer):
 
     Parameters
     ----------
+    method : str, optional (default="agg", {"agg", "kmeans", "mini-kmeans"})
+        clustering method to use for symbolization
+
     tolerance : float, optional (default=0.2, greater than 0)
         tolerance for polygonal chain approximation
 
-    method : str, optional (default="agg", {"agg", "kmeans", "mini-kmeans"})
-        clustering method to use for symbolization
+    alpha : float, optional (default=0.5, greater than 0)
+        distance threshold for aggregation
+        used only if method is "agg" and auto_digitize is False
+        if auto_digitize is True, alpha is determined automatically
+
+    auto_digitize : bool, optional (default=False)
+        whether to automatically determine alpha for aggregation
+        used only if method is "agg"
+        if auto_digitize is True, alpha is determined automatically
+        and input alpha is ignored
+
+    sorting : str, optional (default="norm", {"norm", "pca", None})
+        sorting method to use for aggregation/clustering
+        used only if method is "agg"
 
     k : int, optional (default=2, greater equal 2)
         number of clusters to form, used only if method is "kmeans" or "mini-kmeans"
@@ -46,27 +61,33 @@ class fABBA(BaseTransformer):
         number of samples per batch for MiniBatchKMeans
         used only if method is "mini-kmeans"
 
-    sorting : str, optional (default="norm", {"norm", "pca", None})
-        sorting method to use for aggregation/clustering
-        used only if method is "agg"
-
-    scl : float, optional (default=1, greater equal 0)
-        scaling factor for length in clustering
-
     max_iter : int, optional (default=2, greater equal 1)
         maximum number of iterations for clustering methods
         used only if method is "kmeans" or "mini-kmeans"
 
+    scl : float, optional (default=1, greater equal 0)
+        scaling factor for length in clustering
+
+    if_parition: bool, optinal(default=False)
+        determines if to parition series for parallel processing
+        used only if input is a single series
+        uses parition_rate or num_partition or parition_idx
+
     partition_rate : float, optional (default=None, greater equal 0)
         rate to determine number of partitions for parallel processing
-        used only if input is a single series
+        used only if input is a single series and if_parition is True
         if partition_rate is None, number of partitions is set to
         number of processors
 
-    partition : int, optional (default=None, greater equal 1)
+    num_partition : int, optional (default=None, greater equal 1)
         number of partitions for parallel processing
-        used only if input is a single series
+        used only if input is a single series and if_parition is True
         if partition is None, number of partitions is set based on partition_rate
+
+    partition_idx : list(int), optional (default=None, list of int greater equal 0)
+        indexes to partition on for parallel processing
+        used only if input is a single series and if_parition is True
+        if partition_idx is None, number of partitions is set based on parition
 
     max_len : int, optional (default=np.inf, greater equal 1 or -1)
         maximum length of segments for polygonal chain approximation
@@ -84,17 +105,6 @@ class fABBA(BaseTransformer):
         start value is returned as first value in transformed data
         neccessary for inverse transform
 
-    auto_digitize : bool, optional (default=False)
-        whether to automatically determine alpha for aggregation
-        used only if method is "agg"
-        if auto_digitize is True, alpha is determined automatically
-        and input alpha is ignored
-
-    alpha : float, optional (default=0.5, greater than 0)
-        distance threshold for aggregation
-        used only if method is "agg" and auto_digitize is False
-        if auto_digitize is True, alpha is determined automatically
-
     alphabet_set : int or list, optional (default=0, {0, 1} or list of strings)
         alphabet set to use for symbolization
         if int 0 uses mixed case, if int 1 uses upper case then lower case
@@ -105,14 +115,24 @@ class fABBA(BaseTransformer):
 
     References
     ----------
-    .. [1] Chen, X., and Güttel, S.
+    .. [1] X. Chen.
     An efficient aggregation method for the symbolic representation of temporal data.
     arXiv preprint arXiv:2201.05697 (2022).
     https://arxiv.org/abs/2201.05697
 
-    .. [2] nla-group. fABBA: Fast Adaptive Binning and Bit Allocation.
-    GitHub repository (2022).
-    https://github.com/nla-group/fABBA/tree/master
+    .. [2] X. Chen and S. Güttel.
+    fABBA: A Python library for the fast symbolic approximation of time series.
+    Journal of Open Source Software (2024).
+    https://joss.theoj.org/papers/10.21105/joss.06294
+
+    .. [3] X. Chen and S. Güttel.
+    An Efficient Aggregation Method for the Symbolic Representation of Temporal Data.
+    ACM Trans. Knowl. Discov. Data (2023).
+    https://dl.acm.org/doi/abs/10.1145/3532622
+
+    .. [4] S. Elsworth and S. Güttel.
+    ABBA: adaptive Brownian bridge-based symbolic aggregation of time serie.
+    https://arxiv.org/abs/2003.12469
     """
 
     _tags = {
@@ -144,45 +164,55 @@ class fABBA(BaseTransformer):
         "maintainers": ["poopsiclepooding"],
         "python_version": None,
         "python_dependencies": None,
+        "tests:skip_by_name": [
+            "test_fit_idempotent",  # numpy3d not supported for unequal length series
+            "test_multiprocessing_idempotent",  # if_parition true causes issues
+        ],
     }
 
     def __init__(
         self,
-        tolerance: float = 0.2,
         method: str = "agg",
+        tolerance: float = 0.2,
+        alpha: float | None = 0.5,
+        auto_digitize: bool = False,
+        sorting: str | None = "norm",
         k: int = 2,
         batch_size: int = 1024,
-        sorting: str | None = "norm",
         scl: float = 1.0,
         max_iter: int = 2,
+        if_partition: bool = False,
         partition_rate: float | None = None,
-        partition: int | None = None,
+        num_partition: int | None = None,
+        partition_idx: list[int] | int | None = None,
         max_len: int | None = None,
         random_state: int | None = None,
         return_as_strings: bool = False,
         return_start_values: bool = False,
-        auto_digitize: bool = False,
-        alpha: float | None = 0.5,
         alphabet_set: int | list = 0,
         n_jobs: int = -1,
     ):
-        self.tolerance = tolerance
         self.method = method
-        self.batch_size = batch_size
+        self.tolerance = tolerance
+        self.alpha = alpha
+        self.auto_digitize = auto_digitize
         self.sorting = sorting
+        self.k = k
+        self.batch_size = batch_size
         self.scl = scl
         self.max_iter = max_iter
+        self.if_partition = if_partition
         self.partition_rate = partition_rate
-        self.return_as_strings = return_as_strings
-        self.partition = partition
+        self.num_partition = num_partition
+        if not isinstance(partition_idx, list) and partition_idx is not None:
+            self.partition_idx = [partition_idx]
+        self.partition_idx = partition_idx
         self.max_len = max_len
         self.random_state = random_state
         self.alphabet_set = alphabet_set
-        self.n_jobs = n_jobs
-        self.k = k
-        self.alpha = alpha
-        self.auto_digitize = auto_digitize
+        self.return_as_strings = return_as_strings
         self.return_start_values = return_start_values
+        self.n_jobs = n_jobs
 
         self._k = k
         self._alpha = alpha
@@ -299,39 +329,78 @@ class fABBA(BaseTransformer):
             if single_series.dtype != "float64":
                 single_series = np.asarray(single_series).astype("float64")
 
-            # No point in more jobs than series len
-            if n_jobs > len(single_series):
+            # if parition is to be done
+            if self.if_partition:
+                # No point in more jobs than series len
+                if n_jobs > len(single_series):
+                    n_jobs = 1
+
+                # Partition the time series
+                # If not given index to parition at
+                if self.partition_idx:
+                    if self.num_partition is None:
+                        if self.partition_rate is None:
+                            partition = n_jobs
+                        else:
+                            partition = (
+                                int(np.round(np.exp(1 / self.partition_rate), 0))
+                                * n_jobs
+                            )
+                            if partition > len(single_series):
+                                warnings.warn(
+                                    """Partition has exceed the
+                                    maximum length of series."""
+                                )
+                                partition = len(single_series)
+                    else:
+                        if self.num_partition < len(single_series):
+                            partition = self.num_partition
+                            if n_jobs > partition:  # to prevent useless processors
+                                n_jobs = partition
+                        else:
+                            warnings.warn("""Partition has exceed the
+                                          maximum length of series.""")
+                            partition = n_jobs
+
+                    # Interval of partition
+                    interval = int(len(single_series) / partition)
+                    # Get series in a list of 1D ndarrays
+                    series = [
+                        single_series[i * interval : (i + 1) * interval]
+                        for i in range(partition)
+                    ]
+                # if given index to parition at
+                else:
+                    partition_idx = sorted(set(self.partition_idx))
+                    # If parition_idx out of bounds raise error
+                    if (
+                        partition_idx[0] < 0
+                        or partition_idx[-1] > single_series.shape[0]
+                    ):
+                        raise ValueError("Partition indices out of range.")
+
+                    # Add last and first element if it doesn't exist
+                    if partition_idx[0] != 0:
+                        partition_idx = [0] + partition_idx
+                    if partition_idx[-1] != len(single_series):
+                        partition_idx.append(len(single_series))
+
+                    # to prevent useless processors
+                    if n_jobs > len(partition_idx) - 1:
+                        n_jobs = len(partition_idx) - 1
+
+                    # Make list of series from paritioning
+                    series = [
+                        single_series[partition_idx[i] : partition_idx[i + 1]]
+                        for i in range(len(partition_idx) - 1)
+                    ]
+            # if no parition
+            else:
+                # to prevent useless processors
                 n_jobs = 1
 
-            # Partition the time series
-            if self.partition is None:
-                if self.partition_rate is None:
-                    partition = n_jobs
-                else:
-                    partition = (
-                        int(np.round(np.exp(1 / self.partition_rate), 0)) * n_jobs
-                    )
-                    if partition > len(single_series):
-                        warnings.warn(
-                            """Partition has exceed the maximum length of series."""
-                        )
-                        partition = len(single_series)
-            else:
-                if self.partition < len(single_series):
-                    partition = self.partition
-                    if n_jobs > partition:  # to prevent useless processors
-                        n_jobs = partition
-                else:
-                    warnings.warn("Partition has exceed the maximum length of series.")
-                    partition = n_jobs
-
-            # Interval of partition
-            interval = int(len(single_series) / partition)
-            # Get series in a list of 1D ndarrays
-            series = [
-                single_series[i * interval : (i + 1) * interval]
-                for i in range(partition)
-            ]
+                # no parition
+                series = [single_series]
 
         # if multiple series then convert them to list of ndarray
         else:
@@ -1046,7 +1115,7 @@ class fABBA(BaseTransformer):
         else:
             single_ts = False
 
-        # If univariate, process series in parts for speed
+        # If single series, process series in parts for speed
         if single_ts:
             single_series = np.asarray(X[0].values)
 
@@ -1054,46 +1123,90 @@ class fABBA(BaseTransformer):
             if single_series.dtype != "float64":
                 single_series = np.asarray(single_series).astype("float64")
 
-            # No point in more jobs than series len
-            if n_jobs > len(single_series):
+            # if parition is to be done
+            if self.if_partition:
+                # No point in more jobs than series len
+                if n_jobs > len(single_series):
+                    n_jobs = 1
+
+                # Partition the time series
+                # If not given index to parition at
+                if self.partition_idx:
+                    if self.num_partition is None:
+                        if self.partition_rate is None:
+                            partition = n_jobs
+                        else:
+                            partition = (
+                                int(np.round(np.exp(1 / self.partition_rate), 0))
+                                * n_jobs
+                            )
+                            if partition > len(single_series):
+                                warnings.warn(
+                                    """Partition has exceed the
+                                    maximum length of series."""
+                                )
+                                partition = len(single_series)
+                    else:
+                        if self.num_partition < len(single_series):
+                            partition = self.num_partition
+                            if n_jobs > partition:  # to prevent useless processors
+                                n_jobs = partition
+                        else:
+                            warnings.warn("""Partition has exceed the
+                                          maximum length of series.""")
+                            partition = n_jobs
+
+                    # Interval of partition
+                    interval = int(len(single_series) / partition)
+                    # Get series in a list of 1D ndarrays
+                    series = [
+                        single_series[i * interval : (i + 1) * interval]
+                        for i in range(partition)
+                    ]
+                # if given index to parition at
+                else:
+                    partition_idx = sorted(set(self.partition_idx))
+                    # If parition_idx out of bounds raise error
+                    if (
+                        partition_idx[0] < 0
+                        or partition_idx[-1] > single_series.shape[0]
+                    ):
+                        raise ValueError("Partition indices out of range.")
+
+                    # Add last and first element if it doesn't exist
+                    if partition_idx[0] != 0:
+                        partition_idx = [0] + partition_idx
+                    if partition_idx[-1] != len(single_series):
+                        partition_idx.append(len(single_series))
+
+                    # to prevent useless processors
+                    if n_jobs > len(partition_idx) - 1:
+                        n_jobs = len(partition_idx) - 1
+
+                    # Make list of series from paritioning
+                    series = [
+                        single_series[partition_idx[i] : partition_idx[i + 1]]
+                        for i in range(len(partition_idx) - 1)
+                    ]
+            # if no parition
+            else:
+                # to prevent useless processors
                 n_jobs = 1
 
-            # Partition the time series
-            if self.partition is None:
-                if self.partition_rate is None:
-                    partition = n_jobs
-                else:
-                    partition = (
-                        int(np.round(np.exp(1 / self.partition_rate), 0)) * n_jobs
-                    )
-                    if partition > len(single_series):
-                        warnings.warn(
-                            """Partition has exceed the maximum length of series."""
-                        )
-                        partition = len(single_series)
-            else:
-                if self.partition < len(single_series):
-                    partition = self.partition
-                    if n_jobs > partition:  # to prevent useless processors
-                        n_jobs = partition
-                else:
-                    warnings.warn("Partition has exceed the maximum length of series.")
-                    partition = n_jobs
+                # no parition
+                series = [single_series]
 
-            # Interval of partition
-            interval = int(len(single_series) / partition)
-
-            # Get series in a list of 1D ndarrays
-            series = [
-                single_series[i * interval : (i + 1) * interval]
-                for i in range(partition)
-            ]
+        # if multiple series then convert them to list of ndarray
         else:
             # Get series in a list of 1D ndarrays
             series = [np.asarray(X[i].values) for i in range(len(X))]
             for i in range(len(series)):
                 if series[i].dtype != "float64":
                     series[i] = np.asarray(series[i]).astype("float64")
+
+            # No point in more jobs than no of series
+            if n_jobs > len(series):
+                n_jobs = len(series)
 
         # Transform each of the series into symbols
         symbols = list()
@@ -1117,16 +1230,16 @@ class fABBA(BaseTransformer):
             for i in range(len(start_set)):
                 symbols[i].insert(0, start_set[i])
 
-        # Pad all symbols till max length with -1 if returning labels
-        if not self.return_as_strings:
-            max_len = max([len(symbol) for symbol in symbols])
-            for i in range(len(symbols)):
-                symbols[i] = symbols[i] + [-1] * (max_len - len(symbols[i]))
-        # Pad all symbols till max length with '' if returning strings
-        else:
-            max_len = max([len(symbol) for symbol in symbols])
-            for i in range(len(symbols)):
-                symbols[i] = symbols[i] + [""] * (max_len - len(symbols[i]))
+        # # Padding all symbols till max length with -1 if returning labels
+        # if not self.return_as_strings:
+        #     max_len = max([len(symbol) for symbol in symbols])
+        #     for i in range(len(symbols)):
+        #         symbols[i] = symbols[i] + [-1] * (max_len - len(symbols[i]))
+        # # Padding all symbols till max length with '' if returning strings
+        # else:
+        #     max_len = max([len(symbol) for symbol in symbols])
+        #     for i in range(len(symbols)):
+        #         symbols[i] = symbols[i] + [""] * (max_len - len(symbols[i]))s
 
         # Return as list of df
         return_data = list()
@@ -1268,7 +1381,7 @@ class fABBA(BaseTransformer):
         # Get pieces from symbols
         pieces = self._custom_inverse_symbolize(symbol_sequence)
 
-        #
+        # Quantize the lengths to nearest int
         pieces = self._custom_quantize_lengths(pieces)
 
         # Get back time series from inverse compress
@@ -1311,12 +1424,12 @@ class fABBA(BaseTransformer):
                 # Flatten the single column to a 1D array
                 col_values = item.iloc[:, 0].values
 
-                # Remove padding values
-                col_values = (
-                    col_values[col_values != -1]
-                    if not self.return_as_strings
-                    else col_values[col_values != ""]
-                )
+                # # Remove padding values
+                # col_values = (
+                #     col_values[col_values != -1]
+                #     if not self.return_as_strings
+                #     else col_values[col_values != ""]
+                # )
 
                 # First value
                 start_values.append(col_values[0])
@@ -1351,6 +1464,10 @@ class fABBA(BaseTransformer):
 
         # Get series fromr results
         series = [res.get() for res in result]
+
+        # If was paritioned before then return original series
+        if self.if_partition:
+            series = np.concatenate(series)
 
         # Return as a df-list
         return_data = list()
