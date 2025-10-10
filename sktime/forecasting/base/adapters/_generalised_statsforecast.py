@@ -211,8 +211,6 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         level_arguments = None if levels is None else [100 * level for level in levels]
 
-        self._set_fh_to_trend_forecaster(fh)
-
         if fh_type == "in-sample":
             predict_method = self._fitted_forecaster.predict_in_sample
             # Before v1.5.0 (from statsforecast) not all foreasters
@@ -520,7 +518,12 @@ class StatsForecastBackAdapter:
 
     def _get_fh(self):
         """Get forecasting horizon."""
-        return getattr(self, "_fh", None)
+        fh = getattr(self, "_fh", None)
+
+        cutoff = getattr(self.estimator, "cutoff", None)
+        maximum_forecast_horizon = fh.to_relative(cutoff)[-1]
+
+        return range(1, maximum_forecast_horizon + 1)
 
     def fit(self, y, X=None):
         """Fit to training data.
