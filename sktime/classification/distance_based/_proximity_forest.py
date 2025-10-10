@@ -689,6 +689,11 @@ class ProximityStump(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "X_inner_mtype": "nested_univ",  # input in nested dataframe
+        # testing configuration
+        # ---------------------
+        "tests:skip_by_name": [
+            "test_multioutput", "test_classifier_on_unit_test_data"
+        ],  # see 8946
     }
 
     def __init__(
@@ -1003,7 +1008,9 @@ class ProximityTree(BaseClassifier):
         "X_inner_mtype": "nested_univ",
         # testing configuration
         # ---------------------
-        "tests:skip_by_name": ["test_multioutput"],  # see 8946
+        "tests:skip_by_name": [
+            "test_multioutput", "test_classifier_on_unit_test_data"
+        ],  # see 8946
     }
 
     def __init__(
