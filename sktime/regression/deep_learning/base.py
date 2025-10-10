@@ -4,7 +4,6 @@ The reason for this class between BaseClassifier and deep_learning classifiers i
 because we can generalise tags and _predict
 """
 
-__author__ = ["AurumnPegasus", "achieveordie"]
 __all__ = ["BaseDeepRegressor"]
 
 import os
@@ -34,6 +33,7 @@ class BaseDeepRegressor(BaseRegressor):
     """
 
     _tags = {
+        "authors": ["AurumnPegasus", "achieveordie", "noxthot"],
         "X_inner_mtype": "numpy3D",
         "capability:multivariate": True,
         "python_dependencies": "tensorflow",
@@ -237,7 +237,7 @@ class BaseDeepRegressor(BaseRegressor):
         """Return the custom objects needed for loading the model.
         Will be overridden in child classes if necessary.
         """
-        
+
         return None
 
     @classmethod
@@ -280,7 +280,8 @@ class BaseDeepRegressor(BaseRegressor):
             with open("diskless.h5", "wb") as store_:
                 store_.write(in_memory_model)
                 cls.model_ = load_model(
-                    "diskless.h5", custom_objects=cls.get_custom_objects()
+                    "diskless.h5",
+                    custom_objects=cls.get_custom_objects(),
                 )
 
         cls.history = pickle.loads(in_memory_history)
