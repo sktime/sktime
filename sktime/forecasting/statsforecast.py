@@ -934,19 +934,6 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             "trend_forecaster": self._trend_forecaster,
         }
 
-    def set_fh_to_trend_forecaster(self, fh):
-        """Set forecasting horizon to trend forecaster if it exists.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon or None
-            The forecasting horizon with the steps ahead to to predict.
-        """
-        if fh is not None and hasattr(self, "_trend_forecaster"):
-            fh = self._check_fh(fh)
-            # pass the fh to _trend_forecaster in case it needs it
-            self._trend_forecaster.set_fh(fh)
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.

@@ -132,6 +132,25 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         params = self._get_validated_statsforecast_params()
         return cls(**params)
 
+    def _set_fh_to_trend_forecaster(self, fh):
+        """Set forecasting horizon to trend forecaster if it exists.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon or None
+            The forecasting horizon with the steps ahead to to predict.
+        """
+        from statsforecast.models import MSTL
+
+        if (
+            fh is not None
+            and self._get_statsforecast_class() is MSTL
+            and hasattr(self, "_trend_forecaster")
+        ):
+            fh = self._check_fh(fh)
+            # pass the fh to _trend_forecaster in case it needs it
+            self._trend_forecaster.set_fh(fh)
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -162,9 +181,8 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         -------
         self : reference to self
         """
-        self.set_fh_to_trend_forecaster(fh)
-
         self._forecaster = self._instantiate_model()
+        self._set_fh_to_trend_forecaster(fh)
 
         y_fit_input = y.to_numpy(copy=False)
 
@@ -193,7 +211,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
         level_arguments = None if levels is None else [100 * level for level in levels]
 
-        self.set_fh_to_trend_forecaster(fh)
+        self._set_fh_to_trend_forecaster(fh)
 
         if fh_type == "in-sample":
             predict_method = self._fitted_forecaster.predict_in_sample
