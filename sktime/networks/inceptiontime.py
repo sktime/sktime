@@ -71,7 +71,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         self.bottleneck_size = bottleneck_size
         self.random_state = random_state
 
-    def _inception_module(self, input_tensor, activation, stride=1):
+    def _inception_module(self, input_tensor, activation, activation_output, stride=1):
         from tensorflow import keras
 
         if self.use_bottleneck and int(input_tensor.shape[-1]) > 1:
@@ -118,7 +118,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
 
         x = keras.layers.Concatenate(axis=2)(conv_list)
         x = keras.layers.BatchNormalization()(x)
-        x = keras.layers.Activation(activation=activation)(x)
+        x = keras.layers.Activation(activation=activation_output)(x)
         return x
 
     def _shortcut_layer(self, input_tensor, out_tensor, activation):
@@ -156,7 +156,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         input_res = input_layer
 
         for d in range(self.depth):
-            x = self._inception_module(x, self.activation_inception)
+            x = self._inception_module(x, self.activation_inception, self.activation)
 
             if self.use_residual and d % 3 == 2:
                 x = self._shortcut_layer(input_res, x, self.activation)
