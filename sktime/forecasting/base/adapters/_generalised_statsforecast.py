@@ -520,10 +520,13 @@ class StatsForecastBackAdapter:
         """Get forecasting horizon."""
         fh = getattr(self, "_fh", None)
 
-        cutoff = getattr(self.estimator, "cutoff", None)
-        maximum_forecast_horizon = fh.to_relative(cutoff)[-1]
+        if fh is not None:
+            cutoff = getattr(self.estimator, "cutoff", None)
+            maximum_forecast_horizon = fh.to_relative(cutoff)[-1]
 
-        return range(1, maximum_forecast_horizon + 1)
+            return range(1, maximum_forecast_horizon + 1)
+        else:
+            return None
 
     def fit(self, y, X=None):
         """Fit to training data.
