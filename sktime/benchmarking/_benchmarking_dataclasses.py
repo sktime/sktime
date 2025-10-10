@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.benchmarking.base import BaseMetric
+from sktime.registry import is_scitype
 from sktime.split.base._base_splitter import BaseSplitter
 from sktime.split.singlewindow import SingleWindowSplitter
 
@@ -15,9 +16,29 @@ from sktime.split.singlewindow import SingleWindowSplitter
 def _coerce_data_for_evaluate(dataset_loader):
     """Coerce data input object to a dict to pass to forecasting evaluate."""
     if callable(dataset_loader) and not hasattr(dataset_loader, "load"):
+        # Case 1: Loader function, e.g., load_longley
         data = dataset_loader()
-    elif callable(dataset_loader) and hasattr(dataset_loader, "load"):
-        data = dataset_loader.load()
+
+    elif isinstance(dataset_loader, type) and hasattr(dataset_loader, "load"):
+        # Case 2: Dataset class, e.g., Longley
+        X = dataset_loader().load("X")
+        y = dataset_loader().load("y")
+        if is_scitype(dataset_loader(), "dataset_forecasting"):
+            data = (y, X)
+        else:
+            # For classification and regression
+            data = (X, y)
+
+    elif hasattr(dataset_loader, "load"):
+        # Case 3: Dataset instance, e.g., ForecastingData("hospital_dataset")
+        X = dataset_loader.load("X")
+        y = dataset_loader.load("y")
+        if is_scitype(dataset_loader, "dataset_forecasting"):
+            data = (y, X)
+        else:
+            # For classification and regression
+            data = (X, y)
+
     else:
         data = dataset_loader
 
