@@ -1,6 +1,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extension template for transformers, SIMPLE version.
 
+For series-to-series transformations, that transform a time series to another
+time series, e.g., smoothing, deseasonalization, exponentiation.
+
+For transformations that transform a time series to a feature vector,
+e.g., summary statistics, word counts, see transformer_supersimple_features.py
+
+For advanced cases, e.g., transforming panels, hierarchical data, inverse transform,
+see extension templates in transformer.py or transformer_simple.py
+
 Contains only bare minimum of implementation requirements for a functional transformer.
 Covers only the case of series-to-series transformation.
 Assumes pd.DataFrame used internally, and no hierarchical functionality.

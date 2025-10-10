@@ -76,6 +76,7 @@ class ThetaLinesTransformer(BaseTransformer):
         "transform-returns-same-time-index": True,
         "capability:multivariate": False,
         "fit_is_empty": True,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self, theta=(0, 2)):

@@ -35,7 +35,6 @@ EXCLUDE_ESTIMATORS = [
     "HIVECOTEV1",
     "HIVECOTEV2",
     "RandomIntervalSpectralEnsemble",
-    "RandomInvervals",
     "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
@@ -43,11 +42,9 @@ EXCLUDE_ESTIMATORS = [
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     # DL classifier suspected to cause hangs and memouts, see #4610
     "EditDist",
-    "CNNClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
     "MLPRegressor",
-    "CNNRegressor",
     "ResNetRegressor",
     "FCNRegressor",
     "LSTMFCNRegressor",
@@ -226,7 +223,6 @@ EXCLUDED_TESTS = {
 # exclude tests but keyed by test name
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
-        "BOSSEnsemble",
         "CAPA",
         "CNTCNetwork",
         "CanonicalIntervalForest",
@@ -286,13 +282,10 @@ EXCLUDED_TESTS_BY_TEST = {
         "RandomIntervalFeatureExtractor",
         "RandomIntervalSegmenter",
         "RandomIntervalSpectralEnsemble",
-        "RandomIntervals",
         "RandomSamplesAugmenter",
         "RandomShapeletTransform",
         "RecursiveTabularRegressionForecaster",
         "RecursiveTimeSeriesRegressionForecaster",
-        "ReducerTransform",
-        "SAX",
         "SAXlegacy",
         "SFA",
         "SFAFast",
@@ -309,7 +302,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TSFreshClassifier",
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
-        "TimeBinner",
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
         "TruncationTransformer",

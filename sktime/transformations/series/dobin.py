@@ -87,6 +87,7 @@ class DOBIN(BaseTransformer):
         "X_inner_mtype": "pd.DataFrame",
         "fit_is_empty": False,
         "skip-inverse-transform": True,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
