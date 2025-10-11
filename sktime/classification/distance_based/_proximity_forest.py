@@ -754,6 +754,28 @@ class ProximityStump(BaseClassifier):
         distance_measure = param_perm.pop("distance_measure")
         return distance_predefined_params(distance_measure, **param_perm)
 
+    def _distance_to_exemplars_inst_wrapper(
+        self, exemplars, instance, distance_measure_seed, X_for_measure
+    ):
+        """Wrapper to compute distance that recreates distance measure.
+
+        Parameters
+        ----------
+        exemplars: the exemplars to use
+        instance: the instance to compare to each exemplar
+        distance_measure_seed: random seed to recreate distance measure
+        X_for_measure: dataset needed for distance measure creation
+
+        Returns
+        -------
+        list of distances to each exemplar
+        """
+        # Recreate distance measure from seed to avoid pickling closure
+        distance_measure = self.pick_distance_measure(distance_measure_seed)
+        return self._distance_to_exemplars_inst(
+            exemplars, instance, distance_measure
+        )
+
     @staticmethod
     def _distance_to_exemplars_inst(exemplars, instance, distance_measure):
         """Find distance between a given instance and the exemplar instances.
@@ -842,18 +864,21 @@ class ProximityStump(BaseClassifier):
         ret: 2d numpy array of distances from each instance to each
             exemplar (instance by exemplar)
         """
-        # Get the distance measure once to ensure consistency
-        distance_measure = self._distance_measure()
-
         if self._threads_to_use > 1:
+            # Use wrapper to avoid pickling closure
             parallel = Parallel(self._threads_to_use)
             distances = parallel(
-                delayed(self._distance_to_exemplars_inst)(
-                    self.X_exemplar, X.iloc[index, :], distance_measure
+                delayed(self._distance_to_exemplars_inst_wrapper)(
+                    self.X_exemplar,
+                    X.iloc[index, :],
+                    self._distance_measure_random_seed,
+                    self.X,
                 )
                 for index in range(X.shape[0])
             )
         else:
+            # Get the distance measure once to ensure consistency
+            distance_measure = self._distance_measure()
             distances = [
                 self._distance_to_exemplars_inst(
                     self.X_exemplar, X.iloc[index, :], distance_measure
