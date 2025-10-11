@@ -450,6 +450,27 @@ class ChronosForecaster(BaseForecaster):
         }
         return str(sorted(kwargs_plus_model_path.items()))
 
+    def __getstate__(self):
+        """Return state for pickling, handling unpickleable model pipeline."""
+        state = self.__dict__.copy()
+        if hasattr(self, "model_pipeline"):
+            state["model_pipeline"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state from the unpickled state dictionary."""
+        self.__dict__.update(state)
+
+    def _ensure_model_pipeline_loaded(self):
+        """Ensure model pipeline is loaded, recreating if needed after unpickling."""
+        if not hasattr(self, "model_pipeline") or self.model_pipeline is None:
+            if hasattr(self, "_is_fitted") and self._is_fitted:
+                self.model_pipeline = self.model_strategy.create_pipeline(
+                    key=self._get_unique_chronos_key(),
+                    kwargs=self._get_chronos_kwargs(),
+                    use_source_package=self.use_source_package,
+                ).load_from_checkpoint()
+
     def predict(self, fh=None, X=None, y=None):
         """Forecast time series at future horizon.
 
@@ -536,6 +557,8 @@ class ChronosForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Predicted forecasts.
         """
+        self._ensure_model_pipeline_loaded()
+
         transformers.set_seed(self._seed)
         if fh is not None:
             # needs to be integer not np.int64
