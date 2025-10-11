@@ -4,7 +4,6 @@ The reason for this class between BaseClassifier and deep_learning classifiers i
 because we can generalise tags and _predict
 """
 
-__author__ = ["AurumnPegasus", "achieveordie"]
 __all__ = ["BaseDeepRegressor"]
 
 import os
@@ -34,6 +33,7 @@ class BaseDeepRegressor(BaseRegressor):
     """
 
     _tags = {
+        "authors": ["AurumnPegasus", "achieveordie", "noxthot"],
         "X_inner_mtype": "numpy3D",
         "capability:multivariate": True,
         "python_dependencies": "tensorflow",
@@ -233,6 +233,14 @@ class BaseDeepRegressor(BaseRegressor):
         shutil.rmtree(path)
         return ZipFile(path.with_name(f"{path.stem}.zip"))
 
+    @staticmethod
+    def get_custom_objects():
+        """Return the custom objects needed for loading the model.
+
+        Will be overridden in child classes if necessary.
+        """
+        return None
+
     @classmethod
     def load_from_serial(cls, serial):
         """Load object from serialized memory container.
@@ -272,7 +280,10 @@ class BaseDeepRegressor(BaseRegressor):
         else:
             with open("diskless.h5", "wb") as store_:
                 store_.write(in_memory_model)
-                cls.model_ = load_model("diskless.h5")
+                cls.model_ = load_model(
+                    "diskless.h5",
+                    custom_objects=cls.get_custom_objects(),
+                )
 
         cls.history = pickle.loads(in_memory_history)
         return pickle.loads(serial)

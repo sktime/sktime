@@ -1,7 +1,5 @@
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
 
-__author__ = ["jnrusson1", "solen0id"]
-
 from sktime.networks.base import BaseDeepNetwork
 
 
@@ -24,7 +22,10 @@ class LSTMFCNNetwork(BaseDeepNetwork):
     https://arxiv.org/pdf/1801.04503.pdf
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        "authors": ["jnrusson1", "solen0id", "noxthot"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,
@@ -34,25 +35,31 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         lstm_size=8,
         dropout=0.8,
         attention=False,
+        activation="relu",
     ):
         """Initialize a new LSTMFCNNetwork object.
 
         Parameters
         ----------
-        kernel_sizes: List[int], default=[8, 5, 3]
+        kernel_sizes : List[int], default=[8, 5, 3]
             specifying the length of the 1D convolution
          windows
-        filter_sizes: List[int], default=[128, 256, 128]
+        filter_sizes : List[int], default=[128, 256, 128]
             size of filter for each conv layer
-        random_state: int, default=0
+        random_state : int, default=0
             seed to any needed random actions
-        lstm_size: int, default=8
+        lstm_size : int, default=8
             output dimension for LSTM layer
-        dropout: float, default=0.8
+        dropout : float, default=0.8
             controls dropout rate of LSTM layer
-        attention: boolean, default=False
+        attention : boolean, default=False
             If True, uses custom attention LSTM layer
+        activation : string, default = "relu"
+            activation function used for hidden layers;
+            List of available keras activation functions:
+            https://keras.io/api/layers/activations/
         """
+        self.activation = activation
         self.random_state = random_state
         self.kernel_sizes = kernel_sizes
         self.filter_sizes = filter_sizes
@@ -94,7 +101,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
             kernel_initializer="he_uniform",
         )(input_layer)
         y = keras.layers.BatchNormalization()(y)
-        y = keras.layers.Activation("relu")(y)
+        y = keras.layers.Activation(self.activation)(y)
 
         y = keras.layers.Conv1D(
             self.filter_sizes[1],
@@ -103,7 +110,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
             kernel_initializer="he_uniform",
         )(y)
         y = keras.layers.BatchNormalization()(y)
-        y = keras.layers.Activation("relu")(y)
+        y = keras.layers.Activation(self.activation)(y)
 
         y = keras.layers.Conv1D(
             self.filter_sizes[2],
@@ -112,7 +119,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
             kernel_initializer="he_uniform",
         )(y)
         y = keras.layers.BatchNormalization()(y)
-        y = keras.layers.Activation("relu")(y)
+        y = keras.layers.Activation(self.activation)(y)
 
         y = keras.layers.GlobalAveragePooling1D()(y)
 
