@@ -1,0 +1,331 @@
+"""ConvTimeNet (PyTorch) Forecaster for time series forecasting."""
+
+__author__ = ["Tanuj-Taneja1"]
+__all__ = ["ConvTimeNetForecaster"]
+
+from sktime.forecasting.base.adapters import _pytorch
+
+
+class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
+    """ConvTimeNet for time series forecasting.
+
+    ConvTimeNet is a hierarchical pure convolutional model designed.
+    Unlike prevalent methods centered around self-attention mechanisms,
+    ConvTimeNet introduces two key innovations:
+
+    1. A deformable patch layer that adaptively perceives local patterns of
+       temporally dependent basic units in a data-driven manner.
+    2. Hierarchical pure convolutional blocks that capture dependency relationships
+        among the representations of basic units at different scales.
+
+    The model employs a large kernel mechanism allowing convolutional blocks
+    to be deeply stacked, achieving a larger receptive field. This architecture
+    effectively models both local patterns and their multi-scale dependencies
+    within a single model, addressing common challenges in time series analysis
+    such as adaptive perception of local patterns and multi-scale dependency capture.
+
+    This forecaster has been wrapped around implementations from [1]_, [2]_ and [3]_.
+
+    Parameters
+    ----------
+    context_window : int
+        Length of the input sequence (context window).
+    target_window : int
+        Length of the output sequence to forecast (target window).
+    patch_ks : int
+        Kernel size for patch creation. Determines the size of each patch extracted
+        from the input sequence for patch embedding.
+    patch_sd : int
+        Stride length for patch creation. Determines the step size for moving the
+        patch window across the input sequence.
+    dw_ks : tuple, optional (default=(9))
+        Kernel sizes for depthwise convolution layers.
+    d_model : int, optional (default=64)
+        Dimension of the model (number of features in the hidden state).
+    d_ff : int, optional (default=256)
+        Dimension of the feedforward network.
+    norm : str, optional (default="batch")
+        Type of normalization to use ("batch", "layer", or "instance").
+    dropout : float, optional (default=0.0)
+        Dropout rate to apply to layers.
+    act : str, optional (default="gelu")
+        Activation function to use ("relu", "gelu", etc.).
+    head_dropout : float, optional (default=0)
+        Dropout rate for the head layer.
+    padding_patch : int or None, optional (default=None)
+        Padding size for patch embedding. If None, no padding is applied.
+    head_type : str, optional (default="flatten")
+        Type of head layer ("flatten", "mlp", etc.).
+    revin : bool, optional (default=True)
+        Whether to use RevIN normalization.
+    affine : bool, optional (default=True)
+        Whether RevIN uses affine transformation.
+    subtract_last : bool, optional (default=False)
+        Whether to subtract the last value in RevIN.
+    deformable : bool, optional (default=True)
+        Whether to use deformable patch embedding.
+    enable_res_param : bool, optional (default=True)
+        Whether to enable residual parameterization.
+    re_param : bool, optional (default=True)
+        Whether to use re-parameterization.
+    re_param_kernel : int, optional (default=3)
+        Kernel size for re-parameterization.
+    num_epochs : int, optional (default=16)
+        The number of epochs to train the model.
+    batch_size : int, optional (default=8)
+        The size of each mini-batch during training.
+    criterion : callable, optional (default=None)
+        The loss function to use. If None, MSELoss will be used.
+    criterion_kwargs : dict, optional (default=None)
+        Additional keyword arguments to pass to the loss function.
+    optimizer : str or torch.optim.Optimizer, optional (default=None)
+        The optimizer to use. If None, Adam will be used.
+    optimizer_kwargs : dict, optional (default=None)
+        Additional keyword arguments to pass to the optimizer.
+    lr : float, optional (default=0.001)
+        The learning rate to use for the optimizer.
+    device : str, optional (default="cpu")
+        Device to use for computation ("cpu" or "cuda").
+
+    Examples
+    --------
+    >>> from sktime.forecasting.convtimenet import ConvTimeNetForecaster
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> # Create a sample univariate time series
+    >>> y = pd.Series(np.arange(1024))  # Example univariate time series data
+    >>> # Create and fit the forecaster
+    >>> forecaster = ConvTimeNetForecaster(
+    ...     context_window=48,
+    ...     target_window=12,
+    ...     patch_ks=8,
+    ...     patch_sd=1,
+    ...     dw_ks=(13,7),
+    ...     d_model=128,
+    ...     d_ff=128,
+    ...     norm="batch",
+    ...     dropout=0.01,
+    ...     act="gelu",
+    ...     head_dropout=0.01,
+    ...     padding_patch=None,
+    ...     head_type="flatten",
+    ...     revin=True,
+    ...     affine=True,
+    ...     subtract_last=False,
+    ...     deformable=True,
+    ...     enable_res_param=True,
+    ...     re_param=True,
+    ...     re_param_kernel=3,
+    ...     num_epochs=10,
+    ...     batch_size=64,
+    ...     lr=0.002,
+    ...     device="cpu",
+    ...     random_state=42
+    ... )  # doctest: +SKIP
+    >>> forecaster.fit(y, fh=[1,2,3,4,5,6,7,8,9,10,11,12])  # doctest: +SKIP
+    ConvTimeNetForecaster(...)
+    >>> # Make predictions
+    >>> y_pred = forecaster.predict(fh=[1,2,3,4,5,6,7,8,9,10,11,12])  # doctest: +SKIP
+    >>> print(y_pred)  # doctest: +SKIP
+
+    References
+    ----------
+    .. [1] Cheng, M., Yang, J., Pan, T., Liu, Q., & Li, Z. (2024). ConvTimeNet: A deep
+        hierarchical fully convolutional model for multivariate time series analysis.
+        arXiv preprint arXiv:2403.01493. https://arxiv.org/abs/2403.01493
+    .. [2] https://github.com/Mingyue-Cheng/ConvTimeNet
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["Mingyue-Cheng", "0russewt0", "pty12345", "Tanuj-Taneja1"],
+        "maintainers": ["Tanuj-Taneja1"],
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            "test_update_predict_predicted_index",
+        ],
+        "python_dependencies": ["torch"],
+        # estimator type
+        # --------------
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # CI and testing
+        # --------------
+        "tests:libs": [
+            "sktime.networks.convtimenet.forecaster._convtimenet",
+            "sktime.networks.convtimenet.forecaster.revin",
+            "sktime.networks.convtimenet.forecaster.patch_layers",
+            "sktime.networks.convtimenet.forecaster._convtimenet_backbone",
+        ],
+    }
+
+    def __init__(
+        self,
+        context_window,
+        target_window,
+        patch_ks,
+        patch_sd,
+        dw_ks=(9, 3),
+        d_model=64,
+        d_ff=256,
+        norm="batch",
+        dropout=0.0,
+        act="gelu",
+        head_dropout=0,
+        padding_patch=None,
+        head_type="flatten",
+        revin=True,
+        affine=True,
+        subtract_last=False,
+        deformable=True,
+        enable_res_param=True,
+        re_param=True,
+        re_param_kernel=3,
+        num_epochs=16,
+        batch_size=8,
+        criterion_kwargs=None,
+        criterion=None,
+        optimizer=None,
+        optimizer_kwargs=None,
+        lr=0.001,
+        device="cpu",
+        random_state=None,
+    ):
+        self.context_window = context_window
+        self.target_window = target_window
+        self.patch_ks = patch_ks
+        self.patch_sd = patch_sd
+        self.dw_ks = dw_ks
+        self.d_model = d_model
+        self.d_ff = d_ff
+        self.norm = norm
+        self.dropout = dropout
+        self.act = act
+        self.head_dropout = head_dropout
+        self.padding_patch = padding_patch
+        self.head_type = head_type
+        self.revin = revin
+        self.affine = affine
+        self.subtract_last = subtract_last
+        self.deformable = deformable
+        self.enable_res_param = enable_res_param
+        self.re_param = re_param
+        self.re_param_kernel = re_param_kernel
+        self.num_epochs = num_epochs
+        self.batch_size = batch_size
+        self.criterion_kwargs = criterion_kwargs
+        self.optimizer = optimizer
+        self.optimizer_kwargs = optimizer_kwargs
+        self.lr = lr
+        self.device = device
+        self.random_state = random_state
+        self.criterion = criterion
+        self.custom_dataset_train = None
+        self.custom_dataset_pred = None
+        super().__init__(
+            num_epochs=self.num_epochs,
+            batch_size=self.batch_size,
+            criterion_kwargs=self.criterion_kwargs,
+            optimizer=self.optimizer,
+            optimizer_kwargs=self.optimizer_kwargs,
+            lr=self.lr,
+        )
+
+    def _build_network(self, fh):
+        from sktime.networks.convtimenet.forecaster._convtimenet import Model
+
+        self.n_layers = len(self.dw_ks)
+
+        configs = {
+            "enc_in": self._y.shape[-1],
+            "seq_len": self.context_window,
+            "pred_len": fh,
+            "d_model": self.d_model,
+            "d_ff": self.d_ff,
+            "e_layers": self.n_layers,
+            "patch_ks": self.patch_ks,
+            "patch_sd": self.patch_sd,
+            "dw_ks": self.dw_ks,
+            "dropout": self.dropout,
+            "head_dropout": self.head_dropout,
+            "padding_patch": self.padding_patch,
+            "revin": self.revin,
+            "affine": self.affine,
+            "subtract_last": self.subtract_last,
+            "deformable": self.deformable,
+            "enable_res_param": self.enable_res_param,
+            "re_param": self.re_param,
+            "re_param_kernel": self.re_param_kernel,
+            "device": self.device,
+        }
+        model = Model(
+            configs,
+            norm=self.norm,
+            act=self.act,
+            head_type=self.head_type,
+            random_state=self.random_state,
+        )
+
+        # Add required properties for the adapter
+        model.seq_len = self.context_window
+        model.pred_len = fh
+
+        return model
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params1 = {
+            "context_window": 10,
+            "target_window": 12,
+            "patch_ks": 6,
+            "patch_sd": 3,
+            "num_epochs": 1,
+        }
+
+        params2 = {
+            "context_window": 8,
+            "target_window": 24,
+            "patch_ks": 8,
+            "patch_sd": 4,
+            "d_model": 128,
+            "d_ff": 512,
+            "dropout": 0.1,
+            "num_epochs": 1,
+        }
+        params3 = {
+            "context_window": 16,
+            "target_window": 8,
+            "patch_ks": 4,
+            "patch_sd": 2,
+            "dw_ks": (7, 3),
+            "d_model": 32,
+            "d_ff": 64,
+            "dropout": 0.05,
+            "act": "relu",
+            "head_dropout": 0.05,
+            "padding_patch": 1,
+            "revin": False,
+            "deformable": False,
+            "enable_res_param": False,
+            "re_param": False,
+            "num_epochs": 1,
+        }
+
+        return [params1, params2, params3]
