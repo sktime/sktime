@@ -28,6 +28,7 @@ scenarios["aligner"] = scenarios_aligners
 scenarios["classifier"] = scenarios_classification
 scenarios["early_classifier"] = scenarios_early_classification
 scenarios["clusterer"] = scenarios_clustering
+scenarios["detector"] = scenarios_detectors
 scenarios["forecaster"] = scenarios_forecasting
 scenarios["param_est"] = scenarios_param_est
 scenarios["regressor"] = scenarios_regression
