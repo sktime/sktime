@@ -589,8 +589,8 @@ class _ForecasterExogTester(BaseForecaster):
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-def test_panel_with_inner_freq():
-    """Test that panel data with inner frequency set returns the correct predictions."""
+def test_exog_is_passed():
+    """Test that exogenous data is passed correctly."""
     from sktime.datasets import load_airline
 
     y = load_airline()
@@ -600,4 +600,8 @@ def test_panel_with_inner_freq():
     fh = np.arange(1, 13)
 
     f = _ForecasterExogTester()
+
+    # the tester should have the tag capability:exogenous=True
+    assert f.get_tag("capability:exogenous")
+
     f.fit(y_train, X=X.iloc[:-12], fh=fh)
