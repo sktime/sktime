@@ -113,15 +113,22 @@ class DMLForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
     }
 
-    def __init__(self, forecaster_y, forecaster_ex, exposure_vars, forecaster_res=None):
+    def __init__(
+        self, forecaster_y, forecaster_ex, forecaster_res=None, exposure_vars=None
+    ):
         self.forecaster_y = forecaster_y
         self.forecaster_ex = forecaster_ex
         self.forecaster_res = forecaster_res
         self.exposure_vars = exposure_vars
 
+        # fitted copies of user passed forecasters
+        self.forecaster_y_ = None
+        self.forecaster_ex_ = None
+        self.forecaster_res_ = None
+
         super().__init__()
 
-        # Set default forecaster_res if not provided
+        # Handle null forecaster_res
         if self.forecaster_res is None:
             from sktime.forecasting.compose import make_reduction
 
@@ -129,11 +136,9 @@ class DMLForecaster(BaseForecaster):
                 LinearRegression(), strategy="recursive"
             )
 
-        # Validate exposure_vars
-        if self.exposure_vars is None or len(self.exposure_vars) == 0:
-            raise ValueError(
-                "exposure_vars must be specified and contain at least one variable"
-            )
+        # Handle null exposure_vars
+        if self.exposure_vars is None:
+            self.exposure_vars = []
 
         # Update tags based on component forecasters
         self._update_tags_from_components()
@@ -189,7 +194,7 @@ class DMLForecaster(BaseForecaster):
             }
         )
 
-    def _split_exogenous_data(self, X):
+    def _split_exogenous_data(self, X=None):
         """Split exogenous data into exposure and confounder variables.
 
         Parameters
@@ -205,7 +210,7 @@ class DMLForecaster(BaseForecaster):
             Confounder variables
         """
         if X is None:
-            raise ValueError("X cannot be None for DML forecasting")
+            return None, None
 
         # Check that all exposure variables exist in X
         missing_vars = set(self.exposure_vars) - set(X.columns)
@@ -218,8 +223,10 @@ class DMLForecaster(BaseForecaster):
         X_ex = X[self.exposure_vars].copy()
         X_conf = X.drop(columns=self.exposure_vars).copy()
 
-        # Handle case where no confounders remain
-        if X_conf.shape[1] == 0:
+        if X_ex.empty:
+            X_ex = None
+
+        if X_conf.empty:
             X_conf = None
 
         return X_ex, X_conf
