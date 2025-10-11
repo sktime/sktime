@@ -17,7 +17,11 @@ class TruncationTransformer(BaseTransformer):
     """
     Truncates unequal length panels between lower/upper length ranges.
 
-    Used to transform hierarchical data.
+    Used to transform hierarchical data. By default it will truncate
+    data to match the shortest series in the panel.
+
+    There is also possibility to set a user defined range to pick
+    by specifying lower/upper bounds.
 
     Parameters
     ----------
