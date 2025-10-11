@@ -43,7 +43,6 @@ from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.forecasting.compose.dump_utils import dump_obj
 from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.reduce import Tabularizer
@@ -2609,8 +2608,8 @@ def _combine_exog_frames(
     If X_old has a MultiIndex (panel) and X_new is single-level (time),
     broadcast X_new across the series levels so .combine_first can align.
     """
-    print(f"_combine_exog_frames: entered:   \nX_old = {X_old} \n\n")
-    print(f"X_new = {X_new} \n\n y_index = {y_index}")
+    # print(f"_combine_exog_frames: entered:   \nX_old = {X_old} \n\n")
+    # print(f"X_new = {X_new} \n\n y_index = {y_index}")
 
     if X_old is None:
         return X_new
@@ -2645,11 +2644,11 @@ def _combine_exog_frames(
 
         X_rep = X_rep.reindex(target_mi)
         combo = X_rep.combine_first(X_old)
-        print(f"_combine_exog_frames: \n combo = {combo}")
+        # print(f"_combine_exog_frames: \n combo = {combo}")
         return combo
 
     # Otherwise, both are single-level or already compatible
-    print(f"_combine_exog_frames: here 1:   \nX_old = {X_old} \n\n X_new = {X_new}")
+    # print(f"_combine_exog_frames: here 1:   \nX_old = {X_old} \n\n X_new = {X_new}")
     return X_new.combine_first(X_old)
 
 
@@ -3481,7 +3480,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred : pd.DataFrame, same type as y in _fit
             Point predictions
         """
-        print("OriginalRecursiveReductionForecaster.predict() - entered")
+        # print("OriginalRecursiveReductionForecaster.predict() - entered")
         if X is not None and self._X is not None:
             # X_pool = X.combine_first(self._X)
             X_pool = _combine_exog_frames(
@@ -3489,17 +3488,16 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 self._X,
                 getattr(self, "_y", None).index if hasattr(self, "_y") else None,
             )
-            print("OriginalRecursiveReductionForecaster.predict() - here 1")
+            # print("OriginalRecursiveReductionForecaster.predict() - here 1")
         elif X is None and self._X is not None:
             X_pool = self._X
-            print("OriginalRecursiveReductionForecaster.predict() - here 2")
+            # print("OriginalRecursiveReductionForecaster.predict() - here 2")
         else:
             X_pool = X
-            print("OriginalRecursiveReductionForecaster.predict() - here 3")
+            # print("OriginalRecursiveReductionForecaster.predict() - here 3")
 
-        print(
-            f"OriginalRecursiveReductionForecaster.predict() - here 4   X_pool={X_pool}"
-        )
+        # print("OriginalRecursiveReductionForecaster.predict()")
+        # print(f" - here 4   X_pool={X_pool}")
 
         ##        fh_oos = fh.to_out_of_sample(self.cutoff)
         ##        fh_ins = fh.to_in_sample(self.cutoff)
@@ -4403,9 +4401,9 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             y_pred = self._predict_out_of_sample_v1(X_pool, fh)
             already_filtered = True
         elif self.pooling == "global" and isinstance(self._y.index, pd.MultiIndex):
-            print(
-                "OriginalRecursiveReductionForecaster._predict_out_of_sample() - here"
-            )
+            # print(
+            #     "OriginalRecursiveReductionForecaster._predict_out_of_sample() - here"
+            # )
             y_pred = self._predict_out_of_sample_v2_global(X_pool, fh)
             # v2_global falls back to v1 when X is present; v1 already returns only the
             # requested fh rows, so skip the second filtering step.
@@ -4478,15 +4476,15 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         X_ext = X_pool
 
         if X_ext is not None and self.X_treatment == "shifted":
-            print(f"X_ext pre = {X_ext}")
+            # print(f"X_ext pre = {X_ext}")
             X_ext = X_ext.shift(1)
-            print(f"X_ext post = {X_ext}")
+            # print(f"X_ext post = {X_ext}")
 
         # pre-allocate an accumulator exactly on requested horizons (typed)
         y_pred_full = _create_fcst_df(fh_idx, self._y)
 
-        print("OriginalRecursiveReductionForecaster._predict_out_of_sample_v1()")
-        print(f"- steps_no_gaps = {steps_no_gaps}")
+        # print("OriginalRecursiveReductionForecaster._predict_out_of_sample_v1()")
+        # print(f"- steps_no_gaps = {steps_no_gaps}")
 
         for _ in steps_no_gaps:
             # keep frequency consistent if fh carries a freq
@@ -4503,8 +4501,8 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 else y_plus_one.index[-1]
             )
 
-            print("OriginalRecursiveReductionForecaster._predict_out_of_sample_v1()")
-            print(f" - next_time_raw = {next_time_raw}")
+            # print("OriginalRecursiveReductionForecaster._predict_out_of_sample_v1()")
+            # print(f" - next_time_raw = {next_time_raw}")
 
             # recursive design from y-lags, extended by one to include next_time_raw
             Xt = lagger_y_to_X.transform(y_plus_preds)
@@ -4523,10 +4521,10 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                     X_ex_row = X_ext.xs(next_time_raw, level=-1, drop_level=False)
                 else:
                     X_ex_row = X_ext.loc[[next_time_raw]]
-                print(
-                    "OriginalRecursiveReductionForecaster._predict_out_of_sample_v1()"
-                )
-                print(f" - X_ex_row = {X_ex_row}")
+                # print(
+                #     "OriginalRecursiveReductionForecaster._predict_out_of_sample_v1()"
+                # )
+                # print(f" - X_ex_row = {X_ex_row}")
                 Xtt_row = pd.concat([X_ex_row, Xtt_row], axis=1)
 
             Xtt_row = prep_skl_df(Xtt_row)
@@ -4725,8 +4723,8 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
     def fit(self, y, X=None, fh=None):
         # remember original index/columns for roundtripping
         # (you already set these in _to_long_from_wide; keep that behavior)
-        dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
-        dump_obj("RecursiveReductionForecaster.fit()", "X", X)
+        # dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
+        # dump_obj("RecursiveReductionForecaster.fit()", "X", X)
         if getattr(self, "pooling", None) == "global" and self._is_wide(y):
             y = self._to_long_from_wide(y)
             self._was_wide_input = True
@@ -4744,14 +4742,14 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
 
     # 3) Override PUBLIC predict to roundtrip back to WIDE if we trained from WIDE.
     def predict(self, fh=None, X=None):
-        dump_obj("RecursiveReductionForecaster.predict() - entered", "X", X)
+        # dump_obj("RecursiveReductionForecaster.predict() - entered", "X", X)
         y_pred = super().predict(
             fh=fh, X=X
         )  # will return LONG mtype because we trained on LONG
         if getattr(self, "_was_wide_input", False):
             # convert pooled LONG back to WIDE columns in original order
             y_pred = self._to_wide_from_long(y_pred)
-        dump_obj("RecursiveReductionForecaster.predict() - exiting", "y_pred", y_pred)
+        # dump_obj("RecursiveReductionForecaster.predict() - exiting", "y_pred", y_pred)
         return y_pred
 
     # -------- helpers --------
