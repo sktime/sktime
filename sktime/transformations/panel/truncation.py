@@ -20,8 +20,8 @@ class TruncationTransformer(BaseTransformer):
     Used to transform hierarchical data. By default it will truncate
     data to match the shortest series in the panel.
 
-    There is also possibility to set a user defined range to pick
-    by specifying lower/upper bounds.
+    There is also possibility to set a user defined range by specifying
+    lower/upper bounds. In this case data will be truncated to given range.
 
     Parameters
     ----------
@@ -48,6 +48,15 @@ class TruncationTransformer(BaseTransformer):
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical(same_cutoff=False)
     >>> tt = TruncationTransformer(lower=5)
+    >>> tt.fit(X)
+    TruncationTransformer(...)
+    >>> X_transformed = tt.transform(X)
+
+    Pick range from index 1 (inclusively) to 3 (exclusively):
+    >>> from sktime.transformations.panel.truncation import TruncationTransformer
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> X = _make_hierarchical(same_cutoff=False)
+    >>> tt = TruncationTransformer(lower=1, upper=3)
     >>> tt.fit(X)
     TruncationTransformer(...)
     >>> X_transformed = tt.transform(X)
