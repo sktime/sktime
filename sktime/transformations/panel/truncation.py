@@ -1,4 +1,8 @@
-"""Truncation transformer - truncate unequal length panels to lower/upper bounds."""
+"""Truncation transformer - truncate unequal length panels to lower/upper bounds.
+
+This estimator can truncate unequal length panels to the shortest series
+in hierarchical data or just truncate to a user defined length.
+"""
 
 import numpy as np
 import pandas as pd
