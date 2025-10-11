@@ -374,8 +374,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
-        # print("BaseForecaster::fit(): entered")
-        # print(f"BaseForecaster::fit(): y = \n{y}\n fh = {fh}\n X = {X}")
+        print("BaseForecaster::fit(): entered")
+        print(f"BaseForecaster::fit(): y = \n{y}\n fh = {fh}\n X = {X}")
 
         # if fit is called, estimator is reset, including fitted state
         self.reset()
@@ -450,19 +450,38 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # handle inputs
         self.check_is_fitted()
 
-        # print("BaseForecaster::predict(): entered")
-        # print(f"BaseForecaster::predict(): fh = {fh}\n X = {X}")
+        print("BaseForecaster::predict(): entered")
+        print(f"BaseForecaster::predict(): fh = {fh}\n X = {X}")
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
 
+        print(f"BaseForecaster::predict(): X_inner = {X_inner}")
+
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
 
+        ##------------------------------------------------------------------------------
+        # print("\n[TRACE] after _check_fh:")
+        # print("  type(fh):", type(fh))
+        # try:
+        #     print("  fh._freq:", fh._freq)
+        # except Exception as e:
+        #     print("  fh has no _freq:", e)
+        # try:
+        #     p = fh.to_pandas()
+        #     print("  fh.to_pandas().freq:", getattr(p, "freq", None))
+        #     print("  fh.to_pandas():", p)
+        # except Exception as e:
+        #     print("  fh.to_pandas() failed:", e)
+        ##------------------------------------------------------------------------------
+
         # we call the ordinary _predict if no looping/vectorization needed
         if not self._is_vectorized:
+            print("here self._is_vectorized is False")
             y_pred = self._predict(fh=fh, X=X_inner)
         else:
+            print("here self._is_vectorized is True")
             # otherwise we call the vectorized version of predict
             y_pred = self._vectorize("predict", X=X_inner, fh=fh)
 

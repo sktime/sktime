@@ -43,6 +43,7 @@ from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
+from sktime.forecasting.compose.dump_utils import dump_obj
 from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.reduce import Tabularizer
@@ -329,6 +330,52 @@ class _ReducerMixin:
                     c = pd.Period(c.to_timestamp(), freq=freq)
         return c
 
+    def _cutoff_as_1elem_index_with_freq(self):
+        """Return a 1-element Index at the cutoff that carries/inherits a usable freq.
+
+        This avoids `to_offset(None)` issues when converting relative FH to absolute.
+        """
+        c = self._cutoff_scalar()
+
+        if isinstance(c, pd.Period):
+            return pd.PeriodIndex([c], freq=c.freq)
+
+        if isinstance(c, pd.Timestamp):
+            # Try to inherit or infer a real freq for the 1-elem cutoff index.
+            freq = None
+            y_idx = getattr(self, "_y", None)
+            y_idx = getattr(y_idx, "index", None)
+
+            if isinstance(y_idx, pd.MultiIndex):
+                # infer from one series (avoid duplicate times in pooled level)
+                try:
+                    keys = y_idx.droplevel(-1).unique()
+                    ser_idx = self._y.loc[keys[0]].index
+                    freq = getattr(ser_idx, "freq", None) or pd.infer_freq(ser_idx)
+                except Exception:
+                    freq = None
+            else:
+                # single-series case: infer directly
+                if y_idx is not None:
+                    freq = getattr(y_idx, "freq", None)
+                    if freq is None:
+                        try:
+                            freq = pd.infer_freq(y_idx)
+                        except Exception:
+                            freq = None
+
+            return (
+                pd.date_range(start=c, periods=1, freq=freq, tz=c.tz)
+                if freq is not None
+                else pd.DatetimeIndex([c], tz=c.tz)
+            )
+
+        if isinstance(c, (pd.PeriodIndex, pd.DatetimeIndex, pd.Index)):
+            return c[:1]
+
+        # last resort: plain Index
+        return pd.Index([c])
+
     def _get_expected_pred_idx(self, fh):
         """Construct DataFrame Index expected in y_pred, return of _predict.
 
@@ -416,11 +463,19 @@ class _ReducerMixin:
 
         # Build the required index we need to see in X
         if isinstance(self._y.index, pd.MultiIndex):
-            series_level = self._y.index.get_level_values(0).unique()
-            required_idx = pd.MultiIndex.from_product(
-                [series_level, abs_times],
-                names=self._y.index.names,  # usually ['series','time']
-            )
+            # everything except the last level is the series key (1+ levels)
+            left = self._y.index.droplevel(-1).unique()
+            mi_names = self._y.index.names  # e.g. ['gender','grade','time']
+
+            if isinstance(left, pd.MultiIndex):
+                # 3+ levels total: make tuples (series_key..., t)
+                tuples = [(*lvl, t) for lvl in left for t in abs_times]
+                required_idx = pd.MultiIndex.from_tuples(tuples, names=mi_names)
+            else:
+                # classic 2 levels: (series_key, time)
+                required_idx = pd.MultiIndex.from_product(
+                    [left, abs_times], names=mi_names
+                )
         else:
             required_idx = abs_times
 
@@ -1496,46 +1551,7 @@ class _RecursiveReducer(_Reducer):
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
 
             # Build a 1-element cutoff index that carries/inherits freq, if possible
-            c = self._cutoff_scalar()
-            if isinstance(c, pd.Period):
-                cutoff_idx = pd.PeriodIndex([c], freq=c.freq)
-            elif isinstance(c, pd.Timestamp):
-                # Try to inherit or infer a real freq for the 1-elem cutoff index.
-                freq = None
-                y_idx = getattr(self, "_y", None)
-                y_idx = getattr(y_idx, "index", None)
-
-                if isinstance(y_idx, pd.MultiIndex):
-                    # infer from one series (avoid duplicate times in pooled level)
-                    try:
-                        keys = y_idx.droplevel(-1).unique()
-                        first_key = (
-                            keys[0] if not isinstance(keys, pd.MultiIndex) else keys[0]
-                        )
-                        ser_idx = self._y.loc[first_key].index
-                        freq = getattr(ser_idx, "freq", None) or pd.infer_freq(ser_idx)
-                    except Exception:
-                        freq = None
-                else:
-                    # single-series case: infer directly
-                    if y_idx is not None:
-                        freq = getattr(y_idx, "freq", None)
-                        if freq is None:
-                            try:
-                                freq = pd.infer_freq(y_idx)
-                            except Exception:
-                                freq = None
-
-                cutoff_idx = (
-                    pd.date_range(start=c, periods=1, freq=freq, tz=c.tz)
-                    if freq is not None
-                    else pd.DatetimeIndex([c], tz=c.tz)
-                )
-            elif isinstance(c, (pd.PeriodIndex, pd.DatetimeIndex, pd.Index)):
-                cutoff_idx = c[:1]
-            else:
-                cutoff_idx = pd.Index([c])
-
+            cutoff_idx = self._cutoff_as_1elem_index_with_freq()
             index_range = _index_range(relative, cutoff_idx)
 
             y_pred = _create_fcst_df(index_range, self._y)
@@ -2590,10 +2606,12 @@ def _combine_exog_frames(
 ) -> pd.DataFrame | None:
     """Safely combine exogenous frames.
 
-    Needed when one index is MultiIndex (panel) and the other is
-    single-level (time). If needed, broadcast X_new to the MultiIndex
-    of X_old so .combine_first can align without raising.
+    If X_old has a MultiIndex (panel) and X_new is single-level (time),
+    broadcast X_new across the series levels so .combine_first can align.
     """
+    print(f"_combine_exog_frames: entered:   \nX_old = {X_old} \n\n")
+    print(f"X_new = {X_new} \n\n y_index = {y_index}")
+
     if X_old is None:
         return X_new
     if X_new is None:
@@ -2602,24 +2620,36 @@ def _combine_exog_frames(
     if isinstance(X_old.index, pd.MultiIndex) and not isinstance(
         X_new.index, pd.MultiIndex
     ):
-        # Get series keys & index names from the stored training exog
-        mi_names = X_old.index.names  # typically ['series', 'time']
-        series_levels = X_old.index.droplevel(-1).unique()
+        mi_names = X_old.index.names
+        left = X_old.index.droplevel(-1).unique()
         times = X_new.index
 
-        # Broadcast X_new over series_levels -> MultiIndex aligned to X_old
-        # Create the target MultiIndex first
-        target_mi = pd.MultiIndex.from_product([series_levels, times], names=mi_names)
+        if isinstance(left, pd.MultiIndex):
+            tuples = [(*lvl, t) for lvl in left for t in times]
+            target_mi = pd.MultiIndex.from_tuples(tuples, names=mi_names)
+            # build broadcast frame by per-key concat
+            parts = []
+            for lvl in left:
+                Xi = X_new.copy()
+                Xi.index = pd.MultiIndex.from_tuples(
+                    [(*lvl, t) for t in times],
+                    names=mi_names,
+                )
+                parts.append(Xi)
+            X_rep = pd.concat(parts).sort_index()
+        else:
+            # single left level
+            target_mi = pd.MultiIndex.from_product([left, times], names=mi_names)
+            X_rep = pd.concat([X_new] * len(left), keys=left)
+            X_rep.index.set_names(mi_names, inplace=True)
 
-        # Repeat X_new rows for each series key and set the MultiIndex
-        X_rep = X_new.loc[times].copy()
-        X_rep = X_rep.loc[np.repeat(X_rep.index.values, len(series_levels))]
-        X_rep.index = target_mi
+        X_rep = X_rep.reindex(target_mi)
+        combo = X_rep.combine_first(X_old)
+        print(f"_combine_exog_frames: \n combo = {combo}")
+        return combo
 
-        # Now the indices are compatible
-        return X_rep.combine_first(X_old)
-
-    # Otherwise, both are single-level or both already compatible
+    # Otherwise, both are single-level or already compatible
+    print(f"_combine_exog_frames: here 1:   \nX_old = {X_old} \n\n X_new = {X_new}")
     return X_new.combine_first(X_old)
 
 
@@ -3451,6 +3481,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred : pd.DataFrame, same type as y in _fit
             Point predictions
         """
+        print("OriginalRecursiveReductionForecaster.predict() - entered")
         if X is not None and self._X is not None:
             # X_pool = X.combine_first(self._X)
             X_pool = _combine_exog_frames(
@@ -3458,13 +3489,22 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 self._X,
                 getattr(self, "_y", None).index if hasattr(self, "_y") else None,
             )
+            print("OriginalRecursiveReductionForecaster.predict() - here 1")
         elif X is None and self._X is not None:
             X_pool = self._X
+            print("OriginalRecursiveReductionForecaster.predict() - here 2")
         else:
             X_pool = X
+            print("OriginalRecursiveReductionForecaster.predict() - here 3")
 
-        fh_oos = fh.to_out_of_sample(self.cutoff)
-        fh_ins = fh.to_in_sample(self.cutoff)
+        print(
+            f"OriginalRecursiveReductionForecaster.predict() - here 4   X_pool={X_pool}"
+        )
+
+        ##        fh_oos = fh.to_out_of_sample(self.cutoff)
+        ##        fh_ins = fh.to_in_sample(self.cutoff)
+        fh_oos = fh.to_out_of_sample(self._cutoff_scalar())
+        fh_ins = fh.to_in_sample(self._cutoff_scalar())
 
         if len(fh_oos) == 0:
             y_pred = self._predict_in_sample(X_pool, fh_ins)
@@ -3839,9 +3879,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 y_pred[col] = est[col] if col in est.index else np.nan
         return y_pred
 
-    def _predict_out_of_sample_v2_global(
-        self, X_pool, fh
-    ):  # TODO: why are exogenous features not used?
+    def _predict_out_of_sample_v2_global(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff).
 
         Copied and hacked from _RecursiveReducer._predict_last_window.
@@ -3878,9 +3916,11 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         if np.isnan(ys).any() or np.isinf(ys).any():
             return self._create_fallback_df(fh)
 
-        fh_max = fh.to_relative(self._cutoff_scalar())[-1]
+        cutoff_idx = self._cutoff_as_1elem_index_with_freq()
+        fh_max = fh.to_relative(cutoff_idx)[-1]
         relative = pd.Index(list(map(int, range(1, fh_max + 1))))
-        index_range = _index_range(relative, self.cutoff)
+        index_range = _index_range(relative, cutoff_idx)
+
         if isinstance(self.cutoff, pd.Timestamp) and self.cutoff.tz is not None:
             index_range = index_range.tz_localize(self.cutoff.tz)
 
@@ -4337,12 +4377,12 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             # integers
             gapless_abs = pd.Index(range(int(first_abs), int(last_abs) + 1))
 
-        # 5) dense lags have the same length as the gapless absolute index
-        y_lags_no_gaps = range(1, len(gapless_abs) + 1)
+        # 5) steps has the same length as the gapless absolute index
+        steps_no_gaps = range(1, len(gapless_abs) + 1)
 
         # return as absolute FH (callers use .to_pandas())
         dense_fh_abs = ForecastingHorizon(gapless_abs, is_relative=False)
-        return dense_fh_abs, y_lags_no_gaps
+        return dense_fh_abs, steps_no_gaps
 
     def _predict_out_of_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff)."""
@@ -4363,6 +4403,9 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             y_pred = self._predict_out_of_sample_v1(X_pool, fh)
             already_filtered = True
         elif self.pooling == "global" and isinstance(self._y.index, pd.MultiIndex):
+            print(
+                "OriginalRecursiveReductionForecaster._predict_out_of_sample() - here"
+            )
             y_pred = self._predict_out_of_sample_v2_global(X_pool, fh)
             # v2_global falls back to v1 when X is present; v1 already returns only the
             # requested fh rows, so skip the second filtering step.
@@ -4410,14 +4453,14 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         """
         # this routine has a bug for relative fh
         # instead of tracking it down, just use absolute fh
-        fh = _fh.to_absolute(self._cutoff_scalar())
+        fh = _fh.to_absolute(self._cutoff_as_1elem_index_with_freq())
 
         # final, possibly gappy index we must return (typed like v2)
         fh_idx = self._get_expected_pred_idx(fh=fh)
         self._assert_future_X_coverage(X_pool, fh)
 
         # dense horizon driver (just for loop count)
-        _, y_lags_no_gaps = self._generate_fh_no_gaps(fh)
+        _, steps_no_gaps = self._generate_fh_no_gaps(fh)
 
         # recursive state starts at the observed y
         y_plus_preds = self._y
@@ -4431,12 +4474,21 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             lag_plus = lag_plus * self._impute_method.clone()
 
         # exogenous pool we may extend in lock-step
+
         X_ext = X_pool
+
+        if X_ext is not None and self.X_treatment == "shifted":
+            print(f"X_ext pre = {X_ext}")
+            X_ext = X_ext.shift(1)
+            print(f"X_ext post = {X_ext}")
 
         # pre-allocate an accumulator exactly on requested horizons (typed)
         y_pred_full = _create_fcst_df(fh_idx, self._y)
 
-        for _ in y_lags_no_gaps:
+        print("OriginalRecursiveReductionForecaster._predict_out_of_sample_v1()")
+        print(f"- steps_no_gaps = {steps_no_gaps}")
+
+        for _ in steps_no_gaps:
             # keep frequency consistent if fh carries a freq
             if getattr(self.fh, "freq", None) is not None:
                 y_plus_preds = _asfreq_per_series_safe(
@@ -4451,6 +4503,9 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 else y_plus_one.index[-1]
             )
 
+            print("OriginalRecursiveReductionForecaster._predict_out_of_sample_v1()")
+            print(f" - next_time_raw = {next_time_raw}")
+
             # recursive design from y-lags, extended by one to include next_time_raw
             Xt = lagger_y_to_X.transform(y_plus_preds)
             Xtt = Xt.copy()
@@ -4464,11 +4519,14 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
             # if exog is present: extend/slice it in lock-step and concat to design
             if X_ext is not None:
-                X_ext = lag_plus.fit_transform(X_ext)
                 if isinstance(X_ext.index, pd.MultiIndex):
                     X_ex_row = X_ext.xs(next_time_raw, level=-1, drop_level=False)
                 else:
                     X_ex_row = X_ext.loc[[next_time_raw]]
+                print(
+                    "OriginalRecursiveReductionForecaster._predict_out_of_sample_v1()"
+                )
+                print(f" - X_ex_row = {X_ex_row}")
                 Xtt_row = pd.concat([X_ex_row, Xtt_row], axis=1)
 
             Xtt_row = prep_skl_df(Xtt_row)
@@ -4634,11 +4692,12 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
     _series_name: str = "series"
 
     def _broadcast_X_to_panel(self, X: pd.DataFrame, y_index: pd.Index) -> pd.DataFrame:
-        """Alignment of indexes of y and X.
+        """Handle y when MultiIndex (..., time) and X is single-level (time).
 
-        If y is panel (MultiIndex ['series','time']) and X is 1-level over time,
-        broadcast X across the series level so X and y share the same index shape/names.
+        Broadcast X across the leading levels so X and y share the same index.
+        Works for any number of leading levels.
         """
+        # nothing to do if: no X, y is not MultiIndex, or X already MultiIndex
         if (
             X is None
             or not isinstance(y_index, pd.MultiIndex)
@@ -4646,21 +4705,28 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
         ):
             return X
 
-        # series + time from y
-        series_levels = y_index.get_level_values(0).unique()
+        # all leading levels form the "instance" key; last level is time
+        # e.g. names ["gender","grade","time"] -> keys are tuples (gender, grade)
+        leading_names = list(y_index.names[:-1])
+        full_names = list(y_index.names)
+        if not leading_names:
+            # edge case: y has only one level (shouldn't come here), just return X
+            return X
 
-        # rep X for each series; creae a MultiIndex with names ['series','time']
-        X_broadcast = pd.concat(
-            {s: X.copy() for s in series_levels}, names=["series", "time"]
-        )
+        # unique keys in the same order as they appear in y
+        leading_keys = y_index.droplevel(
+            -1
+        ).unique()  # MultiIndex of tuples (or Index if 1 level)
 
-        # Make sure time level matches X's index name if it had one;
-        # tests usually care about names (y already has names ['series','time'])
+        # Broadcast: a dict with tuple keys is expanded into multiple outer index levels
+        X_broadcast = pd.concat(dict.fromkeys(leading_keys, X), names=full_names)
         return X_broadcast
 
     def fit(self, y, X=None, fh=None):
         # remember original index/columns for roundtripping
         # (you already set these in _to_long_from_wide; keep that behavior)
+        dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
+        dump_obj("RecursiveReductionForecaster.fit()", "X", X)
         if getattr(self, "pooling", None) == "global" and self._is_wide(y):
             y = self._to_long_from_wide(y)
             self._was_wide_input = True
@@ -4678,12 +4744,14 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
 
     # 3) Override PUBLIC predict to roundtrip back to WIDE if we trained from WIDE.
     def predict(self, fh=None, X=None):
+        dump_obj("RecursiveReductionForecaster.predict() - entered", "X", X)
         y_pred = super().predict(
             fh=fh, X=X
         )  # will return LONG mtype because we trained on LONG
         if getattr(self, "_was_wide_input", False):
             # convert pooled LONG back to WIDE columns in original order
             y_pred = self._to_wide_from_long(y_pred)
+        dump_obj("RecursiveReductionForecaster.predict() - exiting", "y_pred", y_pred)
         return y_pred
 
     # -------- helpers --------
@@ -4786,9 +4854,10 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
         self._was_long_input = False
         return OriginalRecursiveReductionForecaster._fit(self, y=y, X=X, fh=fh)
 
-    def _predict(self, fh=None, X=None):
-        y_pred = OriginalRecursiveReductionForecaster._predict(self, fh=fh, X=X)
-        return y_pred
+
+#    def _predict(self, fh=None, X=None):
+#        y_pred = OriginalRecursiveReductionForecaster._predict(self, fh=fh, X=X)
+#        return y_pred
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
