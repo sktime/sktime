@@ -52,20 +52,33 @@ jobs:
     steps:
       - name: checkout pull request branch
         uses: actions/checkout@v5
+
       - name: update local git tracking reference
         run: git remote set-branches origin main
+
       - name: update local shallow clone
         run: git fetch --depth 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: create python virtual environment
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install OSX packages
         shell: bash
         run: ./.github/scripts/install_osx_dependencies.sh
+
       - name: install core, test and all soft dependencies
         shell: bash
-        run: python3 -m pip install .[all_extras_pandas2,tests]
+        run: uv pip install .[all_extras_pandas2,tests]
+        env:
+          UV_SYSTEM_PYTHON: 1
+
       - name: run unit tests
         run: >-
           python3

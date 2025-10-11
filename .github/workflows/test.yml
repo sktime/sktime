@@ -20,13 +20,20 @@ jobs:
       - name: repository checkout step
         uses: actions/checkout@v5
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: python environment step
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
       - name: install pre-commit
-        run: python3 -m pip install pre-commit
+        run: uv pip install pre-commit
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Checkout code
         uses: actions/checkout@v5
@@ -90,6 +97,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -97,11 +109,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[notebooks,binder,dev]
+          uv pip install --upgrade pip
+          uv pip install .[notebooks,binder,dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run example notebooks
         run: build_tools/run_examples.sh
@@ -114,6 +128,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -121,11 +140,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[notebooks,binder]
+          uv pip install --upgrade pip
+          uv pip install .[notebooks,binder]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run example notebooks
         run: build_tools/run_blogposts.sh
@@ -146,6 +167,11 @@ jobs:
 
       - run: git fetch --depth 1
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -153,8 +179,10 @@ jobs:
 
       - name: Install sktime with dev dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[dev]
+          uv pip install --upgrade pip
+          uv pip install .[dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Get list of names of changed classes
         id: get-change-list
@@ -188,6 +216,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -203,8 +236,10 @@ jobs:
 
       - name: Install sktime with dev dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[dev]
+          uv pip install --upgrade pip
+          uv pip install .[dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Install dependencies for ${{ matrix.flag }}
         run: |
@@ -213,7 +248,7 @@ jobs:
         continue-on-error: true
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run tests with ${{ matrix.flag }}
         env:
@@ -253,16 +288,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: 3.11
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .
+          uv pip install .
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Run pytest-free tests
         run: |
@@ -274,19 +318,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: 3.11
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[dev]
+          uv pip install .[dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run tests
         run: make test_softdeps
@@ -301,6 +354,11 @@ jobs:
 
       - run: git fetch --depth 1
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -311,10 +369,12 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[dev]
+          uv pip install .[dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run tests
         run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
@@ -329,23 +389,31 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: 3.11
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
         run: |
           if [[ "${{ matrix.mlflow-version }}" == "2.9.2'" ]]; then
-            python -m pip install .[all_extras,dev,mlflow_tests,mlflow2] --no-cache-dir
+            uv pip install .[all_extras,dev,mlflow_tests,mlflow2] --no-cache-dir
           else
-            python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
+            uv pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
           fi
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run tests
         run: make test_mlflow
@@ -360,6 +428,11 @@ jobs:
 
       - run: git fetch --depth 1
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -370,10 +443,12 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[dev,dependencies_lower]
+          uv pip install .[dev,dependencies_lower]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run tests
         run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
@@ -389,6 +464,7 @@ jobs:
       pyproject: ${{ steps.filter.outputs.pyproject }}
     steps:
       - uses: actions/checkout@v5
+
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -441,6 +517,11 @@ jobs:
 
       - run: git fetch --depth 1
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -459,10 +540,12 @@ jobs:
 
       - name: Install sktime and dependencies
         shell: bash
-        run: python -m pip install .[all_extras_pandas2,dev,dl,compatibility_tests] --no-cache-dir
+        run: uv pip install .[all_extras_pandas2,dev,dl,compatibility_tests] --no-cache-dir
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Show available branches
         run: git branch -a
@@ -484,6 +567,11 @@ jobs:
 
       - run: git fetch --depth 1
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -494,10 +582,12 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras,dev,pandas1,numpy1] --no-cache-dir
+          uv pip install .[all_extras,dev,pandas1,numpy1] --no-cache-dir
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Show available branches
         run: git branch -a
