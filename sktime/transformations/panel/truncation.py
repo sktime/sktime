@@ -1,4 +1,8 @@
-"""Truncation transformer - truncate unequal length panels to lower/upper bounds."""
+"""Truncation transformer - truncate unequal length panels to lower/upper bounds.
+
+This estimator can truncate unequal length panels to the shortest series
+in hierarchical data or just truncate to a user defined length.
+"""
 
 import numpy as np
 import pandas as pd
@@ -13,6 +17,8 @@ class TruncationTransformer(BaseTransformer):
     """
     Truncates unequal length panels between lower/upper length ranges.
 
+    Used to transform hierarchical data.
+
     Parameters
     ----------
     lower : int, optional (default=None) minimum length, inclusive
@@ -24,10 +30,20 @@ class TruncationTransformer(BaseTransformer):
 
     Examples
     --------
+    Truncate only unequal length panels in data:
     >>> from sktime.transformations.panel.truncation import TruncationTransformer
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical(same_cutoff=False)
     >>> tt = TruncationTransformer()
+    >>> tt.fit(X)
+    TruncationTransformer(...)
+    >>> X_transformed = tt.transform(X)
+
+    Truncate each panel to first 5 elements:
+    >>> from sktime.transformations.panel.truncation import TruncationTransformer
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> X = _make_hierarchical(same_cutoff=False)
+    >>> tt = TruncationTransformer(lower=5)
     >>> tt.fit(X)
     TruncationTransformer(...)
     >>> X_transformed = tt.transform(X)
@@ -152,5 +168,9 @@ class TruncationTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = {"lower": 5}
+        params = [
+            {"lower": None, "upper": None},
+            {"lower": 5},
+            {"lower": 1, "upper": 2},
+        ]
         return params
