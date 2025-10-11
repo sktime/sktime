@@ -335,6 +335,7 @@ class BaseDeepClassifier(BaseClassifier):
         """
         _check_soft_dependencies("h5py")
         import pickle
+        import tempfile
 
         from tensorflow.keras.models import load_model
 
@@ -355,9 +356,10 @@ class BaseDeepClassifier(BaseClassifier):
         if in_memory_model is None:
             cls.model_ = None
         else:
-            with open("diskless.h5", "wb") as store_:
-                store_.write(in_memory_model)
-                cls.model_ = load_model("diskless.h5")
+            with tempfile.NamedTemporaryFile() as tmpfile:
+                with open(tmpfile.name, "wb") as store_:
+                    store_.write(in_memory_model)
+                    cls.model_ = load_model(tmpfile.name)
 
         cls.history = pickle.loads(in_memory_history)
         return pickle.loads(serial)
