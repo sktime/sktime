@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License
-"""Tests for DMLForecaster."""
+"""Tests for DoubleMLForecaster."""
 
 __author__ = ["XAheli"]
 
@@ -9,25 +9,25 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 
 from sktime.datasets import load_longley
-from sktime.forecasting.compose import DMLForecaster, make_reduction
+from sktime.forecasting.compose import DoubleMLForecaster, make_reduction
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.utils.estimator_checks import check_estimator
 
 
 # @pytest.mark.skipif(
-#     not run_test_for_class(DMLForecaster),
+#     not run_test_for_class(DoubleMLForecaster),
 #     reason="run test only if softdeps are present and incrementally (if requested)",
 # )
-class TestDMLForecaster:
-    """Test class for DMLForecaster."""
+class TestDoubleMLForecaster:
+    """Test class for DoubleMLForecaster."""
 
     def test_dml_forecaster_basic(self):
-        """Test basic functionality of DMLForecaster."""
+        """Test basic functionality of DoubleMLForecaster."""
         # Load test data
         y, X = load_longley()
 
-        # Create basic DML forecaster
-        forecaster = DMLForecaster(
+        # Create basic DoubleMLForecaster
+        forecaster = DoubleMLForecaster(
             forecaster_y=NaiveForecaster(strategy="mean"),
             forecaster_ex=NaiveForecaster(strategy="mean"),
             exposure_vars=["GNP"],
@@ -41,10 +41,10 @@ class TestDMLForecaster:
         assert y_pred.index.equals(y.index[-3:] + 1)
 
     def test_dml_forecaster_with_make_reduction(self):
-        """Test DMLForecaster with make_reduction forecasters."""
+        """Test DoubleMLForecaster with make_reduction forecasters."""
         y, X = load_longley()
 
-        forecaster = DMLForecaster(
+        forecaster = DoubleMLForecaster(
             forecaster_y=make_reduction(
                 RandomForestRegressor(n_estimators=5, random_state=42)
             ),
@@ -58,10 +58,10 @@ class TestDMLForecaster:
         assert len(y_pred) == 2
 
     def test_dml_forecaster_error_handling(self):
-        """Test error handling in DMLForecaster."""
+        """Test error handling in DoubleMLForecaster."""
         # Test missing exposure vars
         with pytest.raises(ValueError, match="exposure_vars must be specified"):
-            DMLForecaster(
+            DoubleMLForecaster(
                 forecaster_y=NaiveForecaster(),
                 forecaster_ex=NaiveForecaster(),
                 exposure_vars=[],
@@ -69,7 +69,7 @@ class TestDMLForecaster:
 
         # Test missing exposure vars in X
         y, X = load_longley()
-        forecaster = DMLForecaster(
+        forecaster = DoubleMLForecaster(
             forecaster_y=NaiveForecaster(),
             forecaster_ex=NaiveForecaster(),
             exposure_vars=["NONEXISTENT"],
@@ -82,7 +82,7 @@ class TestDMLForecaster:
         """Test prediction intervals functionality."""
         y, X = load_longley()
 
-        forecaster = DMLForecaster(
+        forecaster = DoubleMLForecaster(
             forecaster_y=NaiveForecaster(strategy="mean"),
             forecaster_ex=NaiveForecaster(strategy="mean"),
             exposure_vars=["GNP"],
@@ -97,7 +97,7 @@ class TestDMLForecaster:
         """Test prediction quantiles functionality."""
         y, X = load_longley()
 
-        forecaster = DMLForecaster(
+        forecaster = DoubleMLForecaster(
             forecaster_y=NaiveForecaster(strategy="mean"),
             forecaster_ex=NaiveForecaster(strategy="mean"),
             exposure_vars=["GNP"],
@@ -114,7 +114,7 @@ class TestDMLForecaster:
         """Test prediction variance functionality."""
         y, X = load_longley()
 
-        forecaster = DMLForecaster(
+        forecaster = DoubleMLForecaster(
             forecaster_y=NaiveForecaster(strategy="mean"),
             forecaster_ex=NaiveForecaster(strategy="mean"),
             exposure_vars=["GNP"],
@@ -126,10 +126,10 @@ class TestDMLForecaster:
         assert pred_var.shape == (2, 1)  # 2 time points, 1 variance column
 
     def test_dml_forecaster_multiple_exposure_vars(self):
-        """Test DMLForecaster with multiple exposure variables."""
+        """Test DoubleMLForecaster with multiple exposure variables."""
         y, X = load_longley()
 
-        forecaster = DMLForecaster(
+        forecaster = DoubleMLForecaster(
             forecaster_y=NaiveForecaster(strategy="mean"),
             forecaster_ex=NaiveForecaster(strategy="mean"),
             exposure_vars=["GNP", "GNPDEFL"],  # Multiple exposure vars
@@ -141,13 +141,13 @@ class TestDMLForecaster:
         assert len(y_pred) == 2
 
     def test_dml_forecaster_no_confounders(self):
-        """Test DMLForecaster when all variables are exposures (no confounders)."""
+        """Test DoubleMLForecaster when all variables are exposures (no confounders)."""
         y, X = load_longley()
 
         # Use all X columns as exposure variables
         exposure_vars = list(X.columns)
 
-        forecaster = DMLForecaster(
+        forecaster = DoubleMLForecaster(
             forecaster_y=NaiveForecaster(strategy="mean"),
             forecaster_ex=NaiveForecaster(strategy="mean"),
             exposure_vars=exposure_vars,
@@ -162,7 +162,7 @@ class TestDMLForecaster:
         """Test the get_fitted_params method."""
         y, X = load_longley()
 
-        forecaster = DMLForecaster(
+        forecaster = DoubleMLForecaster(
             forecaster_y=NaiveForecaster(strategy="mean"),
             forecaster_ex=NaiveForecaster(strategy="mean"),
             forecaster_res=make_reduction(LinearRegression()),
@@ -179,23 +179,23 @@ class TestDMLForecaster:
 
     def test_check_estimator(self):
         """Test compatibility with sktime's check_estimator."""
-        check_estimator(DMLForecaster, verbose=False)
+        check_estimator(DoubleMLForecaster, verbose=False)
 
 
 @pytest.mark.parametrize("parameter_set", ["default", "complex"])
 def test_dml_forecaster_parameter_sets(parameter_set):
     """Test different parameter combinations."""
-    params = DMLForecaster.get_test_params(parameter_set)
+    params = DoubleMLForecaster.get_test_params(parameter_set)
 
     if isinstance(params, list):
         for param_dict in params:
-            forecaster = DMLForecaster(**param_dict)
+            forecaster = DoubleMLForecaster(**param_dict)
             # Basic smoke test
             assert forecaster is not None
             assert hasattr(forecaster, "exposure_vars")
             assert len(forecaster.exposure_vars) > 0
     else:
-        forecaster = DMLForecaster(**params)
+        forecaster = DoubleMLForecaster(**params)
         assert forecaster is not None
         assert hasattr(forecaster, "exposure_vars")
         assert len(forecaster.exposure_vars) > 0
@@ -203,8 +203,8 @@ def test_dml_forecaster_parameter_sets(parameter_set):
 
 def test_dml_forecaster_get_test_params():
     """Test that get_test_params returns valid parameters."""
-    params_default = DMLForecaster.get_test_params("default")
-    params_complex = DMLForecaster.get_test_params("complex")
+    params_default = DoubleMLForecaster.get_test_params("default")
+    params_complex = DoubleMLForecaster.get_test_params("complex")
 
     # Should return a list of parameter dictionaries
     assert isinstance(params_default, list)
@@ -222,20 +222,20 @@ def test_dml_forecaster_get_test_params():
 
 
 def test_dml_forecaster_tag_inheritance():
-    """Test that DMLForecaster properly inherits tags from component forecasters."""
+    """Tests that DoubleMLForecaster properly inherits tags from components."""
     # Create forecasters with different capabilities
     forecaster_with_intervals = NaiveForecaster(strategy="mean")
     forecaster_without_intervals = make_reduction(LinearRegression())
 
     # Test tag inheritance for prediction intervals
-    dml_with_intervals = DMLForecaster(
+    dml_with_intervals = DoubleMLForecaster(
         forecaster_y=forecaster_with_intervals,
         forecaster_ex=forecaster_with_intervals,
         forecaster_res=forecaster_with_intervals,
         exposure_vars=["var_0"],
     )
 
-    dml_without_intervals = DMLForecaster(
+    dml_without_intervals = DoubleMLForecaster(
         forecaster_y=forecaster_without_intervals,
         forecaster_ex=forecaster_without_intervals,
         forecaster_res=forecaster_without_intervals,

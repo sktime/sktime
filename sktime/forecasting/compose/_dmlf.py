@@ -3,10 +3,11 @@
 """
 Double Machine Learning forecaster for time series.
 
-Implements DML methodology to de-confound exposure effects in forecasting.
+Implements Double Machine Learning methodology to de-confound exposure
+effects in forecasting.
 """
 
-__all__ = ["DMLForecaster"]
+__all__ = ["DoubleMLForecaster"]
 __author__ = ["geetu040", "XAheli"]
 
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -16,10 +17,10 @@ from sklearn.linear_model import LinearRegression
 from sktime.forecasting.base import BaseForecaster
 
 
-class DMLForecaster(BaseForecaster):
-    """Double Machine Learning forecaster for causal effect estimation.
+class DoubleMLForecaster(BaseForecaster):
+    """Double Machine Learning Forecaster for causal effect estimation.
 
-    DML forecaster implements the Double Machine Learning methodology for
+    DoubleMLForecaster implements the Double Machine Learning methodology for
     causal forecasting with confounder adjustment. It addresses scenarios where
     exogenous variables (exposures) are confounded, leading to biased estimates
     of their true causal impact on the target variable.
@@ -56,7 +57,7 @@ class DMLForecaster(BaseForecaster):
     Examples
     --------
     >>> from sktime.datasets import load_longley
-    >>> from sktime.forecasting.dml import DMLForecaster
+    >>> from sktime.forecasting.dml import DoubleMLForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import make_reduction
     >>> from sklearn.ensemble import RandomForestRegressor
@@ -69,8 +70,8 @@ class DMLForecaster(BaseForecaster):
     >>> forecaster_y = make_reduction(RandomForestRegressor(n_estimators=10))
     >>> forecaster_ex = make_reduction(RandomForestRegressor(n_estimators=10))
     >>>
-    >>> # Create DML forecaster
-    >>> dml_forecaster = DMLForecaster(
+    >>> # Create DoubleMLForecaster
+    >>> dml_forecaster = DoubleMLForecaster(
     ...     forecaster_y=forecaster_y,
     ...     forecaster_ex=forecaster_ex,
     ...     exposure_vars=exposure_vars
@@ -232,9 +233,9 @@ class DMLForecaster(BaseForecaster):
         return X_ex, X_conf
 
     def _fit(self, y, X=None, fh=None):
-        """Fit the DML forecaster.
+        """Fit the DoubleMLForecaster.
 
-        Implements the DML fitting procedure:
+        Implements the DoubleMLForecaster fitting procedure:
         1. Split X into exposure (X_ex) and confounder (X_conf) variables
         2. Fit forecaster_y on y and X_conf to get outcome residuals
         3. Fit forecaster_ex on X_ex and X_conf to get exposure residuals
@@ -265,7 +266,7 @@ class DMLForecaster(BaseForecaster):
             self.forecaster_ex_.fit(y=X_ex, X=X_conf, fh=fh)
 
     def _predict(self, fh=None, X=None):
-        """Generate DML forecasts.
+        """Generate DoubleMLForecasts.
 
         Prediction logic:
         1. Split X_new into exposure and confounder variables
@@ -287,7 +288,7 @@ class DMLForecaster(BaseForecaster):
         return pred_base + pred_res
 
     def _predict_interval(self, fh, X=None, coverage=0.9):
-        """Generate prediction intervals for DML forecasts."""
+        """Generate prediction intervals for DoubleMLForecaster."""
         X_ex, X_conf = self._split_exogenous_data(X)
 
         if X_ex is None:
@@ -305,7 +306,7 @@ class DMLForecaster(BaseForecaster):
         return pred_int_base + pred_int_res
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
-        """Generate quantile forecasts for DML."""
+        """Generate quantile forecasts for DoubleMLForecaster."""
         X_ex, X_conf = self._split_exogenous_data(X)
 
         if X_ex is None:
@@ -323,7 +324,7 @@ class DMLForecaster(BaseForecaster):
         return pred_quantiles_base + pred_quantiles_res
 
     def _predict_var(self, fh, X=None, cov=False):
-        """Generate predictive variances for DML forecasts."""
+        """Generate predictive variances for DoubleMLForecaster."""
         X_ex, X_conf = self._split_exogenous_data(X)
 
         if X_ex is None:
@@ -337,12 +338,12 @@ class DMLForecaster(BaseForecaster):
         return pred_var_base + pred_var_res
 
     def _predict_proba(self, fh, X=None, marginal=True):
-        """Combine full distribution forecasts from base & residual models."""
+        """Combine full distribution forecasts from component models."""
         if not _check_soft_dependencies("skpro", severity="none"):
             from sktime.utils.warnings import warn
 
             warn(
-                "ResidualBoostingForecaster.predict_proba: optional "
+                "DoubleMLForecaster.predict_proba: optional "
                 "dependency 'skpro' not found. "
                 "Falling back to the default normal approximation via BaseForecaster. "
                 "Install 'skpro' to enable exact shifted-distribution composition.",
