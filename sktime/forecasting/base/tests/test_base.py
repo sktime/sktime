@@ -14,6 +14,7 @@ from pandas.testing import assert_series_equal
 
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
+from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.compose import YfromX
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
@@ -556,3 +557,47 @@ def _get_exog_proba_fcst():
     reg_proba = ResidualDouble(lin_reg, lin_reg)
 
     return YfromX(reg_proba)
+
+
+class _ForecasterExogTester(BaseForecaster):
+    """Minimal forecaster for testing passing of exogenous X."""
+
+    _tags = {
+        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": "pd.DataFrame",
+        "scitype:y": "univariate",
+        "capability:exogenous": True,
+        "requires-fh-in-fit": False,
+    }
+
+    def __init__(self):
+        super().__init__()
+
+    def _fit(self, y, X=None, fh=None):
+        assert y is not None
+        assert isinstance(y, pd.Series)
+        assert X is not None
+        assert isinstance(X, pd.DataFrame)
+        return self
+
+    def _predict(self, fh, X=None):
+        index = pd.RangeIndex(start=1, stop=len(fh) + 1, step=1)
+        return pd.Series(index=index, data=0.0)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
+def test_panel_with_inner_freq():
+    """Test that panel data with inner frequency set returns the correct predictions."""
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    X = y
+    y_train = y.iloc[:-12]
+
+    fh = np.arange(1, 13)
+
+    f = _ForecasterExogTester()
+    f.fit(y_train, X=X.iloc[:-12], fh=fh)
