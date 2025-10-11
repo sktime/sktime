@@ -96,26 +96,6 @@ EXCLUDED_TESTS = {
     ],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
-    # pickling problem with local method see #2490
-    "ProximityStump": [
-        "test_persistence_via_pickle",
-        "test_fit_does_not_overwrite_hyper_params",
-        "test_save_estimators_to_file",
-    ],
-    "ProximityTree": [
-        "test_persistence_via_pickle",
-        "test_fit_does_not_overwrite_hyper_params",
-        "test_save_estimators_to_file",
-        "test_multiprocessing_idempotent",  # see 5658
-        "test_fit_idempotent",  # see 6637
-    ],
-    "ProximityForest": [
-        "test_persistence_via_pickle",
-        "test_fit_does_not_overwrite_hyper_params",
-        "test_save_estimators_to_file",
-        "test_fit_idempotent",  # see 6201
-        "test_multiprocessing_idempotent",  # see 6637
-    ],
     "TapNetRegressor": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
