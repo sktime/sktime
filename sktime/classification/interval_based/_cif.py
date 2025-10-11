@@ -24,17 +24,18 @@ from sktime.transformations.panel.catch22 import Catch22
 class CanonicalIntervalForest(BaseClassifier):
     """Canonical Interval Forest Classifier (CIF).
 
-    Implementation of the nterval based forest making use of the catch22 feature set
+    Implementation of the interval based forest making use of the catch22 feature set
     on randomly selected intervals described in Middlehurst et al. (2020). [1]_
 
     Overview: Input "n" series with "d" dimensions of length "m".
-    For each tree
-        - Sample n_intervals intervals of random position and length
-        - Subsample att_subsample_size catch22 or summary statistic attributes randomly
-        - Randomly select dimension for each interval
-        - Calculate attributes for each interval, concatenate to form new
-          data set
-        - Build decision tree on new data set
+    For each tree:
+
+    - Sample n_intervals intervals of random position and length
+    - Subsample att_subsample_size catch22 or summary statistic attributes randomly
+    - Randomly select dimension for each interval
+    - Calculate attributes for each interval, concatenate to form new data set
+    - Build decision tree on new data set
+
     ensemble the trees with averaged probability estimates
 
     Parameters
@@ -43,20 +44,22 @@ class CanonicalIntervalForest(BaseClassifier):
         Number of estimators to build for the ensemble.
     n_intervals : int or None, default=None
         Number of intervals to extract per tree, if None extracts
-        (sqrt(series_length) * sqrt(n_dims)) intervals.
+        ``(sqrt(series_length) * sqrt(n_dims))`` intervals.
     att_subsample_size : int, default=8
         Number of catch22 or summary statistic attributes to subsample per tree.
     min_interval : int, default=3
         Minimum length of an interval.
     max_interval : int or None, default=None
-        Maximum length of an interval, if None set to (series_length / 2).
-    base_estimator : BaseEstimator or str, default="CIT"
+        Maximum length of an interval, if ``None`` set to ``(series_length / 2)``.
+    base_estimator : sklearn classifier or str, default="CIT".
         Base estimator for the ensemble, can be supplied a sklearn BaseEstimator or a
-        string for suggested options.
-        "CIT" uses the sktime ContinuousIntervalTree, an implementation of the original
-        tree used with embedded attribute processing for faster predictions.
-        "DTC" uses the sklearn DecisionTreeClassifier using entropy as a splitting
-        measure.
+        string for predefined classifiers. Possible strings:
+
+        * ``"CIT"``, uses the sktime ``ContinuousIntervalTree``,
+          an implementation of the original
+          tree used with embedded attribute processing for faster predictions.
+        * ``"DTC"`` uses the sklearn ``DecisionTreeClassifier(criterion="entropy")``.
+
     n_jobs : int, default=1
         The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
@@ -409,8 +412,11 @@ class CanonicalIntervalForest(BaseClassifier):
         """
         if parameter_set == "results_comparison":
             return {"n_estimators": 10, "n_intervals": 2, "att_subsample_size": 4}
-        else:
-            param1 = {"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2}
-            param2 = {**param1, "base_estimator": "CIT"}
 
-            return [param1, param2]
+        from sklearn.dummy import DummyClassifier
+
+        param0 = {"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2}
+        param1 = {**param0, "base_estimator": "DTC"}
+        param2 = {**param0, "base_estimator": DummyClassifier()}
+
+        return [param0, param1, param2]
