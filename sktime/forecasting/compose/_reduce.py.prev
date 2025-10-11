@@ -28,16 +28,10 @@ __all__ = [
     "YfromX",
 ]
 
-import warnings
-
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sklearn.dummy import DummyRegressor
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LinearRegression
 from sklearn.multioutput import MultiOutputRegressor
-from sklearn.pipeline import make_pipeline
 
 from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
@@ -45,15 +39,11 @@ from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
-from sktime.transformations.panel.reduce import Tabularizer
-from sktime.transformations.series.impute import Imputer
-from sktime.transformations.series.lag import Lag, ReducerTransform
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.estimators.dispatch import construct_dispatch
+from sktime.utils.multiindex import apply_method_per_series
 from sktime.utils.sklearn import is_sklearn_estimator, prep_skl_df, sklearn_scitype
-from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 from sktime.utils.validation import check_window_length
 from sktime.utils.warnings import warn
 
@@ -68,42 +58,11 @@ def _concat_y_X(y, X):
     return z
 
 
-# def _check_fh(fh):
-#     """Check fh prior to sliding-window transform."""
-#     assert fh.is_relative
-#     assert fh.is_all_out_of_sample()
-#     return fh.to_indexer().to_numpy()
-
-
-def _ensure_relative_oos_int_fh(fh, cutoff=None):
-    """Coerce fh to a 1-D NumPy array of positive *relative* integer steps.
-
-    - If fh is a ForecastingHorizon:
-        * If relative: require strictly out-of-sample, then convert to indexer.
-        * If absolute: require `cutoff` to convert to relative; then validate.
-    - If fh is array-like: treat as relative steps and validate.
-
-    Returns
-    -------
-    np.ndarray[int], shape (n,), strictly positive (>=1).
-    """
-    if isinstance(fh, ForecastingHorizon):
-        if fh.is_relative:
-            if not fh.is_all_out_of_sample():
-                raise ValueError("fh must be strictly out-of-sample (all steps >= 1).")
-            arr = np.asarray(fh.to_indexer(), dtype=int).reshape(-1)
-        else:
-            if cutoff is None:
-                raise ValueError("Absolute fh provided but no `cutoff` to convert.")
-            arr = np.asarray(fh.to_relative(cutoff), dtype=int).reshape(-1)
-            if (arr < 1).any():
-                raise ValueError("Converted relative steps must be >= 1.")
-    else:
-        # array-like -> assume relative
-        arr = np.asarray(fh, dtype=int).reshape(-1)
-        if (arr < 1).any():
-            raise ValueError("Relative steps must be >= 1.")
-    return arr
+def _check_fh(fh):
+    """Check fh prior to sliding-window transform."""
+    assert fh.is_relative
+    assert fh.is_all_out_of_sample()
+    return fh.to_indexer().to_numpy()
 
 
 def _sliding_window_transform(
@@ -195,9 +154,8 @@ def _sliding_window_transform_local(y, window_length, fh, X, windows_identical):
     z = _concat_y_X(y, X)
     n_timepoints, n_variables = z.shape
 
-    # fh = _check_fh(fh)
-    fh = _ensure_relative_oos_int_fh(fh)
-    fh_max = int(np.max(fh)) if len(fh) else 0
+    fh = _check_fh(fh)
+    fh_max = fh[-1]
 
     if window_length + fh_max >= n_timepoints:
         raise ValueError(
@@ -258,238 +216,7 @@ def _sliding_window_transform_global(y, window_length, X, transformers):
     return yt, Xt
 
 
-class MissingExogenousDataError(RuntimeError):
-    """Future X not provided but are expected.
-
-    Raised when a forecast that requires exogenous variables is requested
-    but future X rows for the forecast horizon are not provided.
-    """
-
-    pass
-
-
-class _ReducerMixin:
-    """Common utilities for reducers."""
-
-    # def _get_expected_pred_idx(self, fh):
-    #     """Construct DataFrame Index expected in y_pred, return of _predict.
-
-    #     Parameters
-    #     ----------
-    #     fh : ForecastingHorizon, fh of self; or, iterable coercible to pd.Index
-
-    #     Returns
-    #     -------
-    #     fh_idx : pd.Index, expected index of y_pred returned by _predict
-    #         CAVEAT: sorted by index level -1, since reduction is applied by fh
-    #     """
-    #     if isinstance(fh, ForecastingHorizon):
-    #         fh_idx = pd.Index(fh.to_absolute_index(self.cutoff))
-    #     else:
-    #         fh_idx = pd.Index(fh)
-    #     y_index = self._y.index
-
-    #     if isinstance(y_index, pd.MultiIndex):
-    #         y_inst_idx = y_index.droplevel(-1).unique()
-    #         if isinstance(y_inst_idx, pd.MultiIndex):
-    #             tuples = [x + (y,) for x in y_inst_idx for y in fh_idx]
-    #         else:
-    #             tuples = [(x, y) for x in y_inst_idx for y in fh_idx]
-    #         fh_idx = pd.MultiIndex.from_tuples(tuples)
-
-    #     if hasattr(y_index, "names") and y_index.names is not None:
-    #         fh_idx.names = y_index.names
-
-    #     return fh_idx
-
-    def _cutoff_scalar(self):
-        c = self.cutoff
-        # unwrap 1-elem Index to a scalar
-        if isinstance(c, (pd.Index, pd.PeriodIndex, pd.DatetimeIndex)):
-            c = c[-1]
-        # if it's a Period without freq, attach one from training index (or infer)
-        if isinstance(c, pd.Period) and getattr(c, "freq", None) is None:
-            y_idx = getattr(self, "_y", None)
-            freq = None
-            if y_idx is not None:
-                y_idx = y_idx.index
-                if isinstance(y_idx, (pd.PeriodIndex, pd.DatetimeIndex)):
-                    freq = getattr(y_idx, "freq", None)
-                    if freq is None:
-                        try:
-                            freq = pd.infer_freq(y_idx)
-                        except Exception:
-                            freq = None
-            if freq is not None:
-                try:
-                    # rebuild Period with explicit freq
-                    c = pd.Period(str(c), freq=freq)
-                except Exception:
-                    # fallback via timestamp if needed
-                    c = pd.Period(c.to_timestamp(), freq=freq)
-        return c
-
-    def _cutoff_as_1elem_index_with_freq(self):
-        """Return a 1-element Index at the cutoff that carries/inherits a usable freq.
-
-        This avoids `to_offset(None)` issues when converting relative FH to absolute.
-        """
-        c = self._cutoff_scalar()
-
-        if isinstance(c, pd.Period):
-            return pd.PeriodIndex([c], freq=c.freq)
-
-        if isinstance(c, pd.Timestamp):
-            # Try to inherit or infer a real freq for the 1-elem cutoff index.
-            freq = None
-            y_idx = getattr(self, "_y", None)
-            y_idx = getattr(y_idx, "index", None)
-
-            if isinstance(y_idx, pd.MultiIndex):
-                # infer from one series (avoid duplicate times in pooled level)
-                try:
-                    keys = y_idx.droplevel(-1).unique()
-                    ser_idx = self._y.loc[keys[0]].index
-                    freq = getattr(ser_idx, "freq", None) or pd.infer_freq(ser_idx)
-                except Exception:
-                    freq = None
-            else:
-                # single-series case: infer directly
-                if y_idx is not None:
-                    freq = getattr(y_idx, "freq", None)
-                    if freq is None:
-                        try:
-                            freq = pd.infer_freq(y_idx)
-                        except Exception:
-                            freq = None
-
-            return (
-                pd.date_range(start=c, periods=1, freq=freq, tz=c.tz)
-                if freq is not None
-                else pd.DatetimeIndex([c], tz=c.tz)
-            )
-
-        if isinstance(c, (pd.PeriodIndex, pd.DatetimeIndex, pd.Index)):
-            return c[:1]
-
-        # last resort: plain Index
-        return pd.Index([c])
-
-    def _get_expected_pred_idx(self, fh):
-        """Construct DataFrame Index expected in y_pred, return of _predict.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon, or iterable coercible to pd.Index
-
-        Returns
-        -------
-        fh_idx : pd.Index
-            Expected index of y_pred returned by _predict.
-            CAVEAT: sorted by index level -1, since reduction is applied by fh.
-        """
-        # normalize fh to a pandas Index of absolute time points
-        # If fh not provided at predict-time, use the one remembered from fit
-        if fh is None:
-            fh = self.fh
-
-        if isinstance(fh, ForecastingHorizon):
-            fh_abs = pd.Index(fh.to_absolute_index(self._cutoff_scalar()))
-        else:
-            fh_abs = pd.Index(fh)
-
-        y_index = self._y.index
-
-        # MultiIndex case: replicate all outer levels and append absolute horizon
-        if isinstance(y_index, pd.MultiIndex):
-            left = y_index.droplevel(-1).unique()
-            names = y_index.names
-
-            if isinstance(left, pd.MultiIndex):
-                # left elements are tuples of the outer levels
-                tuples = [(*lvl, t) for lvl in left for t in fh_abs]
-                fh_idx = pd.MultiIndex.from_tuples(tuples, names=names)
-            else:
-                # Use from_product so single string level not split into chars
-                fh_idx = pd.MultiIndex.from_product([left, fh_abs], names=names)
-            return fh_idx
-
-        # Single-level time index: preserve dtype/name where reasonable
-        fh_idx = fh_abs
-        if isinstance(y_index, pd.PeriodIndex):
-            try:
-                fh_idx = pd.PeriodIndex(fh_abs, freq=y_index.freq)
-            except Exception:
-                fh_idx = pd.Index(fh_abs)
-        elif isinstance(y_index, pd.DatetimeIndex):
-            try:
-                fh_idx = pd.DatetimeIndex(fh_abs, tz=y_index.tz)
-            except Exception:
-                fh_idx = pd.Index(fh_abs)
-
-        # carry over the name of the original time index if present
-        if getattr(y_index, "name", None) is not None:
-            try:
-                fh_idx.name = y_index.name
-            except Exception:
-                fh_idx.name = "y_index.name"
-
-        return fh_idx
-
-    def _assert_future_X_coverage(self, X_pool, fh):
-        """Ensure future X rows exist for all forecast indices if exo data was used."""
-        # Was this forecaster fit with exogenous data?
-        uses_exog = getattr(self, "_uses_exog", None)
-        if uses_exog is None:
-            # set during fit; be tolerant if older pickles do not have it
-            uses_exog = self._X is not None
-
-        if not uses_exog:
-            return  # no exog requirement
-
-        if X_pool is None:
-            raise MissingExogenousDataError(
-                "Forecaster was fitted with exog X, but no X was supplied to predict."
-            )
-
-        # Compute the *requested* absolute times (gappy allowed)
-        fh = (
-            ForecastingHorizon(fh, is_relative=True)
-            if not isinstance(fh, ForecastingHorizon)
-            else fh
-        )
-        abs_times = fh.to_absolute(self._cutoff_scalar()).to_pandas()
-
-        # Build the required index we need to see in X
-        if isinstance(self._y.index, pd.MultiIndex):
-            # everything except the last level is the series key (1+ levels)
-            left = self._y.index.droplevel(-1).unique()
-            mi_names = self._y.index.names  # e.g. ['gender','grade','time']
-
-            if isinstance(left, pd.MultiIndex):
-                # 3+ levels total: make tuples (series_key..., t)
-                tuples = [(*lvl, t) for lvl in left for t in abs_times]
-                required_idx = pd.MultiIndex.from_tuples(tuples, names=mi_names)
-            else:
-                # classic 2 levels: (series_key, time)
-                required_idx = pd.MultiIndex.from_product(
-                    [left, abs_times], names=mi_names
-                )
-        else:
-            required_idx = abs_times
-
-        # Check presence
-        missing = required_idx.difference(X_pool.index)
-        if len(missing) > 0:
-            # show up to a couple missing stamps for clarity
-            sample = list(missing[:3])
-            raise MissingExogenousDataError(
-                f"Missing future X rows for forecast horizon. "
-                f"Examples: {sample} (total missing: {len(missing)})."
-            )
-
-
-class _Reducer(_BaseWindowForecaster, _ReducerMixin):
+class _Reducer(_BaseWindowForecaster):
     """Base class for reducing forecasting to regression."""
 
     _tags = {
@@ -503,7 +230,7 @@ class _Reducer(_BaseWindowForecaster, _ReducerMixin):
             "fkiraly",
             "benheid",
         ],
-        "capability:exogenous": True,  # reduction uses X in non-trivial way
+        "ignores-exogeneous-X": False,  # reduction uses X in non-trivial way
         "capability:missing_values": True,
         "capability:insample": False,
         "capability:pred_int": True,
@@ -602,6 +329,12 @@ class _Reducer(_BaseWindowForecaster, _ReducerMixin):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sklearn.linear_model import LinearRegression
+        from sklearn.pipeline import make_pipeline
+
+        from sktime.transformations.panel.reduce import Tabularizer
+        from sktime.utils.dependencies import _check_soft_dependencies
+
         # naming convention is as follows:
         #   reducers with Tabular take an sklearn estimator, e.g., LinearRegressor
         #   reducers with TimeSeries take an sktime supervised estimator
@@ -617,7 +350,6 @@ class _Reducer(_BaseWindowForecaster, _ReducerMixin):
         self_supports_proba = cls.__name__ in PROBA_IMPLEMENTED
 
         if _check_soft_dependencies("skpro", severity="none") and self_supports_proba:
-            # local import to keep skpro optional at import time
             from skpro.regression.residual import ResidualDouble
 
             params_proba_local = {
@@ -630,8 +362,8 @@ class _Reducer(_BaseWindowForecaster, _ReducerMixin):
                 "pooling": "global",
                 "window_length": 4,
             }
-
             params = params + [params_proba_local, params_proba_global]
+
         return params
 
     def _get_shifted_window(self, shift=0, y_update=None, X_update=None):
@@ -688,293 +420,62 @@ class _Reducer(_BaseWindowForecaster, _ReducerMixin):
         y, X: A pandas dataframe or series
             contains the y and X data prepared for the respective windows, see above.
         """
-        # Panel-aware windowing: build window per series key for global/panel pooling
-        if isinstance(self._y.index, pd.MultiIndex):
-            names = self._y.index.names
-            series_keys = self._y.index.droplevel(-1).unique()
-            time_idx = self._y.index.get_level_values(-1)
-            base_time = time_idx.max()
-            # try to carry/derive a frequency for the 1-elem cutoff index
-            freq = getattr(time_idx, "freq", None)
-            if freq is None:
-                try:
-                    freq = pd.infer_freq(time_idx)
-                except Exception:
-                    freq = None
-            tz = getattr(time_idx, "tz", None)
-
-            # period-aware construction of the 1-element "cutoff" index
-            if isinstance(base_time, pd.Period):
-                cutoff0 = pd.PeriodIndex([base_time], freq=base_time.freq)
-            elif isinstance(time_idx, pd.PeriodIndex):
-                # base_time may be a scalar period pulled from a PeriodIndex
-                cutoff0 = pd.PeriodIndex([base_time], freq=time_idx.freq)
-            elif freq is not None:
-                cutoff0 = pd.date_range(start=base_time, periods=1, freq=freq, tz=tz)
+        if hasattr(self._timepoints, "freq"):
+            if self._timepoints.freq is None:
+                freq_inferred = pd.infer_freq(self._timepoints)
+                cutoff_with_freq = self._cutoff
+                cutoff_with_freq.freq = freq_inferred
             else:
-                cutoff0 = pd.DatetimeIndex([base_time], tz=tz)
-
-            if isinstance(cutoff0, pd.DatetimeIndex) and cutoff0.freq is None:
-                # try the panel's time-level frequency we computed above
-                freq1 = freq
-
-                # if still unknown, infer from any series (robust to panel concat)
-                if freq1 is None:
-                    try:
-                        first_key = (
-                            series_keys[0]
-                            if not isinstance(series_keys, pd.MultiIndex)
-                            else series_keys[0]
-                        )
-                        ser_idx = self._y.loc[first_key].index
-                        # prefer explicit freq on the single-series index, else infer
-                        freq1 = getattr(ser_idx, "freq", None) or pd.infer_freq(ser_idx)
-                    except Exception:
-                        freq1 = None
-
-                if freq1 is not None:
-                    # rebuild 1-element index with an actual freq so _shift can work
-                    cutoff0 = pd.date_range(
-                        start=cutoff0[0], periods=1, freq=freq1, tz=cutoff0.tz
-                    )
-                else:
-                    # last resort: make an index with a fixed delta from single series
-                    try:
-                        ser_idx = self._y.loc[first_key].index  # re-use if available
-                        if len(ser_idx) >= 2:
-                            delta = ser_idx[1] - ser_idx[0]
-                            # normalize numeric (eg from RangeIndex) to Timedelta
-                            if not isinstance(
-                                delta, (pd.Timedelta, pd.DateOffset, np.timedelta64)
-                            ):
-                                delta = pd.Timedelta(int(delta), unit="D")
-                        else:
-                            delta = pd.Timedelta(days=1)
-                        # ----------------------------------------------------------
-                    except Exception:
-                        delta = pd.Timedelta(days=1)
-                    start = cutoff0[0]
-                    # # create a fake 2-step range to give _shift something to work with
-                    # # cutoff0=pd.DatetimeIndex([start,start+delta],tz=start.tz)[:1]
-                    # build 1-step range with explicit freq so shift logic has a freq
-                    cutoff0 = pd.date_range(
-                        start=start, periods=1, freq=delta, tz=start.tz
-                    )
-
-            # shift the one-element cutoff index; if it has no freq, recover one
-            try:
-                cutoff = _shift(cutoff0, by=shift, return_index=True)
-            except Exception:
-                # (a) try the panel time-level freq you already computed
-                freq1 = freq
-                ser_idx = None
-
-                # (b) if still unknown, infer from any one series (no duplicate times)
-                if freq1 is None:
-                    try:
-                        first_key = (
-                            series_keys[0]
-                            if not isinstance(series_keys, pd.MultiIndex)
-                            else series_keys[0]
-                        )
-                        ser_idx = self._y.loc[first_key].index
-                        freq1 = getattr(ser_idx, "freq", None) or pd.infer_freq(ser_idx)
-                    except Exception:
-                        freq1 = None
-
-                if freq1 is not None:
-                    # rebuild a 1-elem DatetimeIndex with a real freq, then shift
-                    cutoff0 = pd.date_range(
-                        start=base_time, periods=1, freq=freq1, tz=tz
-                    )
-                    cutoff = _shift(cutoff0, by=shift, return_index=True)
-                else:
-                    # (c) last resort: manual shift by a constant step delta
-                    try:
-                        if len(ser_idx) >= 2:
-                            delta = ser_idx[1] - ser_idx[0]
-                            # normalize deltas (e.g., from RangeIndex) to a Timedelta
-                            if not isinstance(
-                                delta, (pd.Timedelta, pd.DateOffset, np.timedelta64)
-                            ):
-                                delta = pd.Timedelta(int(delta), unit="D")
-                        else:
-                            delta = pd.Timedelta(days=1)
-                    except Exception:
-                        delta = pd.Timedelta(days=1)
-                    # produce the shifted single timestamp directly
-                    cutoff = pd.DatetimeIndex([base_time + shift * delta], tz=tz)
-
-            relative_int = pd.Index(range(-self.window_length_ + 1, 2))
-
-            if isinstance(cutoff, pd.DatetimeIndex) and cutoff.freq is None:
-                # try the panel time-level freq you computed above
-                freq1 = freq
-
-                # if still unknown, infer from any single series (no duplicates)
-                if freq1 is None:
-                    try:
-                        first_key = (
-                            series_keys[0]
-                            if not isinstance(series_keys, pd.MultiIndex)
-                            else series_keys[0]
-                        )
-                        ser_idx = self._y.loc[first_key].index
-                        freq1 = getattr(ser_idx, "freq", None) or pd.infer_freq(ser_idx)
-                    except Exception:
-                        freq1 = None
-
-                if freq1 is not None:
-                    # rebuild 1-elem cutoff with a real freq, then use _index_range
-                    cutoff = pd.date_range(
-                        start=cutoff[0], periods=1, freq=freq1, tz=cutoff.tz
-                    )
-                    times = _index_range(relative_int, cutoff)
-                else:
-                    # last-resort: constant step from one series (works when regular)
-                    try:
-                        if len(ser_idx) >= 2:
-                            delta = ser_idx[1] - ser_idx[0]
-                            # normalize deltas (e.g., from RangeIndex) to a Timedelta
-                            if not isinstance(
-                                delta, (pd.Timedelta, pd.DateOffset, np.timedelta64)
-                            ):
-                                delta = pd.Timedelta(int(delta), unit="D")
-                        else:
-                            delta = pd.Timedelta(days=1)
-                    except NameError:
-                        # ser_idx may not exist if earlier try failed
-                        delta = pd.Timedelta(days=1)
-                    base = cutoff[0]
-                    times = pd.DatetimeIndex(
-                        [base + i * delta for i in relative_int], tz=base.tz
-                    )
-            else:
-                # PeriodIndex cutoff (or DatetimeIndex with freq) → normal path
-                times = _index_range(relative_int, cutoff)
-
-            # Build forecast frame via _create_fcst_df expand left-levels by times.
-            # NB: pass only time index (times), not a pre-built product MultiIndex.
-            y_raw = _create_fcst_df(times, self._y)
-            y_raw.update(self._y)
-            if y_update is not None:
-                y_raw.update(y_update)
+                cutoff_with_freq = self._cutoff
         else:
-            # --- single-series path (as before) ---
-            c = self._cutoff
-            if isinstance(c, pd.Period):
-                cutoff_idx = pd.PeriodIndex([c], freq=c.freq)
-            elif isinstance(c, pd.Timestamp):
-                # Ensure the 1-length DatetimeIndex has a frequency so .shift() works
-                base_freq = getattr(getattr(self, "_y", None), "index", None)
-                base_freq = getattr(base_freq, "freq", None)
-                if (
-                    base_freq is None
-                    and getattr(getattr(self, "_y", None), "index", None) is not None
-                ):
-                    try:
-                        base_freq = pd.infer_freq(self._y.index)
-                    except Exception:
-                        base_freq = None
-                if base_freq is not None:
-                    cutoff_idx = pd.date_range(
-                        start=c, periods=1, freq=base_freq, tz=c.tz
-                    )
-                else:
-                    # fallback: single-element index with no freq
-                    # (we will avoid shifting elsewhere)
-                    cutoff_idx = pd.DatetimeIndex([c], tz=c.tz)
-            elif isinstance(c, (pd.PeriodIndex, pd.DatetimeIndex, pd.Index)):
-                cutoff_idx = c[:1]
-            else:
-                cutoff_idx = pd.Index([c])
+            cutoff_with_freq = self._cutoff
+        cutoff = _shift(cutoff_with_freq, by=shift, return_index=True)
 
-            # shift to the target step; if no freq, compute by index math
-            try:
-                cutoff = _shift(cutoff_idx, by=shift, return_index=True)
-            except Exception:
-                # No frequency available — emulate shift by walking a dense range
-                # using the frequency of the base index if possible
-                if isinstance(cutoff_idx, pd.DatetimeIndex) and len(cutoff_idx) == 1:
-                    freq = getattr(self._y.index, "freq", None) or pd.infer_freq(
-                        self._y.index
-                    )
-                    if freq is not None:
-                        cutoff = pd.date_range(
-                            start=cutoff_idx[0], periods=1, freq=freq
-                        )
-                        if shift != 0:
-                            cutoff = pd.date_range(
-                                start=cutoff[0], periods=1 + abs(shift), freq=freq
-                            )[shift]
-                            cutoff = pd.DatetimeIndex([cutoff])
-                    else:
-                        # Last resort: keep same timestamp (no real shift possible)
-                        cutoff = cutoff_idx
-                else:
-                    cutoff = cutoff_idx
+        relative_int = pd.Index(list(map(int, range(-self.window_length_ + 1, 2))))
+        # relative _int will give the integer indices of the window. Also contains the
+        # first observation after the window (this is what the window is summarized to).
 
-            relative_int = pd.Index(range(-self.window_length_ + 1, 2))
-            times = _index_range(relative_int, cutoff)
-            if isinstance(cutoff, pd.DatetimeIndex) and cutoff.tz is not None:
-                times = times.tz_localize(cutoff.tz)
-            y_raw = _create_fcst_df(times, self._y)
-            y_raw.update(self._y)
-            if y_update is not None:
-                y_raw.update(y_update)
+        index_range = _index_range(relative_int, cutoff)
+        if isinstance(cutoff, pd.DatetimeIndex):
+            if cutoff.tzinfo is not None:
+                index_range = index_range.tz_localize(cutoff.tzinfo)
+        # index_range will convert the indices to the date format of cutoff
 
-        # X features at the summary point only (the last time in the window)
-        last_time = times[-1]
+        y_raw = _create_fcst_df(index_range, self._y)
+        # y_raw is a dataframe window_length forecasting steps into the past in order to
+        # calculate the new X from y features based on the transformer provided
+
+        y_raw.update(self._y)
+        # Historical values are passed here for all time steps of y_raw that lie in
+        # the past .
+
+        if y_update is not None:
+            y_raw.update(y_update)
+        # The y_raw dataframe will is updated with recursively forecast values.
+
+        if len(self.transformers_) == 1:
+            X_from_y = self.transformers_[0].fit_transform(y_raw)
+        else:
+            ref = self.transformers_
+            feat = [("trafo_" + str(index), i) for index, i in enumerate(ref)]
+            X_from_y = FeatureUnion(feat).fit_transform(y_raw)
+        # After filling the empty y_raw frame with historic / forecast values
+        # X from y features can be calculated based on the passed transformer.
+
+        X_from_y_cut = _cut_df(X_from_y)
+        # We are only interested in the last observation, since only that one
+        # contains the value the window is summarized to.
 
         if self._X is not None:
-            # build the single-row index for X at last_time
-            if isinstance(self._y.index, pd.MultiIndex):
-                # panel/global case: index is (series_key, last_time)
-                if isinstance(series_keys, pd.MultiIndex):
-                    X_idx = pd.MultiIndex.from_tuples(
-                        [(*k, last_time) for k in series_keys], names=names
-                    )
-                else:
-                    X_idx = pd.MultiIndex.from_product(
-                        [series_keys, pd.Index([last_time])], names=names
-                    )
-            else:
-                # single series, preserve index type if possible
-                if isinstance(last_time, pd.Period):
-                    X_idx = pd.PeriodIndex([last_time], freq=last_time.freq)
-                elif isinstance(last_time, pd.Timestamp):
-                    X_idx = pd.DatetimeIndex([last_time], tz=last_time.tz)
-                else:
-                    X_idx = pd.Index([last_time])
-
-            # create the X frame at last_time and update with known/future rows
-            X = _create_fcst_df(X_idx, self._X)
+            X = _create_fcst_df([index_range[-1]], self._X)
             X.update(self._X)
             if X_update is not None:
                 X.update(X_update)
             X_cut = _cut_df(X)
-
-            # features derived from y_raw at last_time
-            if len(self.transformers_) == 1:
-                X_from_y_cut = _cut_df(self.transformers_[0].fit_transform(y_raw))
-            else:
-                X_from_y_cut = _cut_df(
-                    FeatureUnion(
-                        [
-                            ("trafo_" + str(i), t)
-                            for i, t in enumerate(self.transformers_)
-                        ]
-                    ).fit_transform(y_raw)
-                )
             X = pd.concat([X_from_y_cut, X_cut], axis=1)
+            # X_from_y_cut is added to X dataframe (no features need to be calculated).
         else:
-            # no exog: only features derived from y_raw at last_time
-            if len(self.transformers_) == 1:
-                X = _cut_df(self.transformers_[0].fit_transform(y_raw))
-            else:
-                ref = self.transformers_
-                feat = [("trafo_" + str(i), t) for i, t in enumerate(ref)]
-                X = _cut_df(FeatureUnion(feat).fit_transform(y_raw))
+            X = X_from_y_cut
 
         y = _cut_df(y_raw)
         return y, X
@@ -1003,7 +504,7 @@ class _DirectReducer(_Reducer):
         )
 
     def _transform(self, y, X=None):
-        fh = self.fh.to_relative(self._cutoff_scalar())
+        fh = self.fh.to_relative(self.cutoff)
         return _sliding_window_transform(
             y,
             window_length=self.window_length_,
@@ -1106,11 +607,11 @@ class _DirectReducer(_Reducer):
         # Iterate over forecasting horizon, fitting a separate estimator for each step.
         self.estimators_ = []
         for i in range(len(self.fh)):
-            fh_rel = fh.to_relative(self._cutoff_scalar())
+            fh_rel = fh.to_relative(self.cutoff)
             estimator = clone(self.estimator)
 
             if self.transformers_ is not None:
-                fh_rel = fh.to_relative(self._cutoff_scalar())
+                fh_rel = fh.to_relative(self.cutoff)
                 Xt_cut = _cut_df(Xt, n_timepoints - fh_rel[i] + 1, type="head")
                 yt_cut = _cut_df(yt, n_timepoints - fh_rel[i] + 1)
             elif self.windows_identical is True or (fh_rel[i] - 1) == 0:
@@ -1200,52 +701,19 @@ class _DirectReducer(_Reducer):
                 return y_pred
 
         if self.pooling == "global":
-            fh_abs = fh.to_absolute_index(self._cutoff_scalar())
+            fh_abs = fh.to_absolute_index(self.cutoff)
             y_preds = []
+
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_last, **kwargs)
-
-                # --- normalize and slice to the current horizon i (panel/global) ---
-                y_arr = _coerce_to_numpy(y_pred_est)  # 1D or 2D -> numpy
-                if y_arr.ndim == 1:
-                    y_arr = y_arr.reshape(-1, 1)
-
-                # number of series in the panel (last level is time)
-                n_series = (
-                    len(self._y.index.droplevel(-1).unique())
-                    if isinstance(self._y.index, pd.MultiIndex)
-                    else 1
-                )
-
-                # some estimators may return (#series * #fh, n_targets)
-                # even in direct mode; # in that case, slice out the
-                # block for the current horizon i
-                if y_arr.shape[0] == n_series * len(self.estimators_):
-                    y_arr = y_arr[i * n_series : (i + 1) * n_series]
-
-                # build columns for quantiles output: (var_name, alpha) per column
-                alphas = kwargs.get("alpha", [])
-                # infer var names from “last window” y (single-step frame)
-                varnames = list(
-                    getattr(y_last, "columns", getattr(self._y, "columns", ["var_0"]))
-                )
-
-                if alphas:
-                    # MultiIndex with (variable, alpha)
-                    # matches width len(varnames) * len(alphas)
-                    qcols = pd.MultiIndex.from_product([varnames, alphas])
-                else:
-                    # fallback: just use variable names (e.g., predict, not quantiles)
-                    qcols = varnames
-
-                # --- build the one-step frame for fh_abs[i] ---
-                # y_pred_i = _create_fcst_df([fh_abs[i]], self._y, fill=y_arr)
-                y_pred_i = _create_fcst_df(
-                    [fh_abs[i]], self._y, fill=y_arr, columns=qcols
-                )
-
+                if est_type == "regressor":
+                    y_pred_i = _create_fcst_df([fh_abs[i]], self._y, fill=y_pred_est)
+                else:  # est_type == "regressor_proba"
+                    y_pred_v = _coerce_to_numpy(y_pred_est)
+                    y_pred_i = _create_fcst_df([fh_abs[i]], y_pred_est, fill=y_pred_v)
                 y_preds.append(y_pred_i)
             y_pred = pool_preds(y_preds)
+
         else:
             # Pre-allocate arrays.
             if self._X is None:
@@ -1288,8 +756,7 @@ class _DirectReducer(_Reducer):
                 y_pred = pool_preds(y_preds)
 
         # coerce index and columns to expected
-        # index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
-        index = self._get_expected_pred_idx(fh)
+        index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
         columns = self._get_columns(method=method, **kwargs)
         if isinstance(y_pred, pd.DataFrame):
             y_pred.index = index
@@ -1307,7 +774,7 @@ class _MultioutputReducer(_Reducer):
     }
 
     def _transform(self, y, X=None):
-        fh = self.fh.to_relative(self._cutoff_scalar())
+        fh = self.fh.to_relative(self.cutoff)
         return _sliding_window_transform(
             y,
             window_length=self.window_length,
@@ -1546,12 +1013,12 @@ class _RecursiveReducer(_Reducer):
                 return self._predict_nan(fh)
 
         if self.pooling == "global":
-            fh_max = fh.to_relative(self._cutoff_scalar())[-1]
+            fh_max = fh.to_relative(self.cutoff)[-1]
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
-
-            # Build a 1-element cutoff index that carries/inherits freq, if possible
-            cutoff_idx = self._cutoff_as_1elem_index_with_freq()
-            index_range = _index_range(relative, cutoff_idx)
+            index_range = _index_range(relative, self.cutoff)
+            if isinstance(self.cutoff, pd.DatetimeIndex):
+                if self.cutoff.tzinfo is not None:
+                    index_range = index_range.tz_localize(self.cutoff.tzinfo)
 
             y_pred = _create_fcst_df(index_range, self._y)
 
@@ -1575,7 +1042,7 @@ class _RecursiveReducer(_Reducer):
             else:
                 n_columns = X.shape[1] + 1
             window_length = self.window_length_
-            fh_max = fh.to_relative(self._cutoff_scalar())[-1]
+            fh_max = fh.to_relative(self.cutoff)[-1]
 
             y_pred = np.zeros(fh_max)
 
@@ -1638,13 +1105,13 @@ class _DirRecReducer(_Reducer):
     strategy = "dirrec"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        "capability:exogenous": False,
+        "ignores-exogeneous-X": True,
     }
 
     def _transform(self, y, X=None):
         # Note that the transform for dirrec is the same as in the direct
         # strategy.
-        fh = self.fh.to_relative(self._cutoff_scalar())
+        fh = self.fh.to_relative(self.cutoff)
         return _sliding_window_transform(
             y,
             window_length=self.window_length,
@@ -1758,29 +1225,6 @@ class _DirRecReducer(_Reducer):
         return y_pred
 
 
-def _asfreq_per_series_safe(y, freq, how="start"):
-    """Like apply_method_per_series(..., 'asfreq', ...), but robust to string keys."""
-    if not isinstance(y.index, pd.MultiIndex):
-        return y.asfreq(freq, how=how)
-
-    parts = []
-    names = y.index.names
-    outer = y.index.droplevel(-1).unique()
-
-    for key in outer:
-        ys = y.loc[key].asfreq(freq, how=how)
-        # Reattach outer level(s) without exploding strings like "s1" -> ('s','1')
-        if isinstance(key, tuple):
-            idx = pd.MultiIndex.from_tuples([(*key, t) for t in ys.index], names=names)
-        else:
-            idx = pd.MultiIndex.from_product([[key], ys.index], names=names)
-        ys = ys.copy()
-        ys.index = idx
-        parts.append(ys)
-
-    return pd.concat(parts).sort_index()
-
-
 class DirectTabularRegressionForecaster(_DirectReducer):
     """Direct reduction from forecasting to tabular regression.
 
@@ -1792,15 +1236,9 @@ class DirectTabularRegressionForecaster(_DirectReducer):
     estimator : Estimator
         A tabular regression estimator as provided by scikit-learn.
     window_length : int, optional (default=10)
-        The length of the sliding window used to transform the series
-        into a tabular matrix.
+        The length of the sliding window used to transform the series into
+        a tabular matrix.
     """
-
-    _tags = {
-        **_DirectReducer._tags,  # inherit parent tags if it defines any
-        "capability:exogenous": True,
-        "capability:pred_int": True,
-    }
 
     def __init__(
         self,
@@ -1810,7 +1248,7 @@ class DirectTabularRegressionForecaster(_DirectReducer):
         pooling="local",
         windows_identical=True,
     ):
-        super().__init__(
+        super(_DirectReducer, self).__init__(
             estimator=estimator, window_length=window_length, transformers=transformers
         )
         self.pooling = pooling
@@ -2286,243 +1724,52 @@ def _cut_df(X, n_obs=1, type="tail"):
     return X
 
 
-# def _create_fcst_df(target_date, origin_df, fill=None):
-#     """Create an empty multiindex dataframe from origin dataframe.
+def _create_fcst_df(target_date, origin_df, fill=None):
+    """Create an empty multiindex dataframe from origin dataframe.
 
-#     In recursive forecasting, a new dataframe needs to be created that collects all
-#     forecasting steps (even for forecasting horizons other than those of interests).
-#     For example for fh =[1,2,12] we need the whole forecasting horizons from 1 to 12.
-
-#     Parameters
-#     ----------
-#     target_date : a list of dates
-#         this will be correspond to the new timepoints index to be created in the
-#         forecasting dataframe
-#     origin_df : a pandas Series or Dataframe
-#         the origin_df corresponds to the dataframe with the historic data. Useful
-#         information inferred from that df is the index of the historic df
-#         as well as the names of the original columns and the type of the object
-#         (dataframe or series)
-#     fill : a numpy.ndarray (optional)
-#         Corresponds to a numpy array of values that is used to fill up the dataframe.
-#         Useful when forecasts are returned from a forecasting models that discards
-#         the hierarchical structure of the input pandas dataframe
-
-#     Returns
-#     -------
-#     A pandas dataframe or series
-#     """
-#     if not isinstance(target_date, ForecastingHorizon):
-#         ix = pd.Index(target_date)
-#         fh = ForecastingHorizon(ix, is_relative=False)
-#     else:
-#         fh = target_date.to_absolute()
-
-#     index = fh.get_expected_pred_idx(origin_df)
-
-#     if isinstance(origin_df, pd.Series):
-#         columns = [origin_df.name]
-#     else:
-#         columns = origin_df.columns.to_list()
-
-#     if fill is None:
-#         values = 0
-#     else:
-#         values = fill
-
-#     res = pd.DataFrame(values, index=index, columns=columns, dtype="float64")
-
-#     if isinstance(origin_df, pd.Series) and not isinstance(index, pd.MultiIndex):
-#         res = res.iloc[:, 0]
-#         res.name = origin_df.name
-
-#     return res
-
-
-# def _create_fcst_df(target_date, origin_df, fill=None, columns=None):
-#     """Create an empty forecasting frame aligned to origin_df's index structure.
-
-#     Parameters
-#     ----------
-#     target_date : iterable of dates or ForecastingHorizon (abs or already resolvable)
-#         New timepoints for the forecast frame (last level of the index).
-#     origin_df : pd.Series or pd.DataFrame
-#         Provides the original index structure (including outer levels & names)
-#         and the column names (for DataFrame) or name (for Series).
-#     fill : scalar or array-like, optional
-#         If provided, pre-fill the frame with this value; otherwise zeros.
-
-#     Returns
-#     -------
-#     pd.Series or pd.DataFrame
-#         With the same outer index levels and column structure as origin_df, and
-#         the last level replaced by target_date.
-#     """
-#     # Normalize target_date to a pandas Index
-#     if isinstance(target_date, ForecastingHorizon):
-#         # Try to treat it as already absolute; fall back to a plain Index if needed
-#         try:
-#             td = target_date.to_absolute()
-#             tgt = td.to_pandas() if hasattr(td, "to_pandas") else pd.Index(td)
-#         except TypeError:
-#             tgt = pd.Index(target_date)
-#     else:
-#         tgt = pd.Index(target_date)
-
-#     idx0 = origin_df.index
-#     # Build the forecast index to mirror origin_df's structure
-#     if isinstance(idx0, pd.MultiIndex):
-#         left = idx0.droplevel(-1).unique()
-#         names = idx0.names
-
-#         if isinstance(left, pd.MultiIndex):
-#             tuples = [(*lvl, t) for lvl in left for t in tgt]
-#             index = pd.MultiIndex.from_tuples(tuples, names=names)
-#         else:
-#             index = pd.MultiIndex.from_product([left, tgt], names=names)
-#     else:
-#         # Single-level time index: preserve dtype where possible
-#         if isinstance(idx0, pd.PeriodIndex):
-#             try:
-#                 tgt = pd.PeriodIndex(tgt, freq=idx0.freq)
-#             except Exception:
-#                 tgt = pd.Index(tgt)
-#         elif isinstance(idx0, pd.DatetimeIndex):
-#             try:
-#                 tgt = pd.DatetimeIndex(tgt, tz=idx0.tz)
-#             except Exception:
-#                 tgt = pd.Index(tgt)
-#         index = tgt
-#         # carry over name if present
-#         if getattr(idx0, "name", None) is not None:
-#             index.name = idx0.name
-
-#     # Columns / values
-#     if columns is None:
-#         columns = (
-#             [origin_df.name]
-#             if isinstance(origin_df, pd.Series)
-#             else list(origin_df.columns)
-#         )
-#     values = 0 if fill is None else fill
-
-#     res = pd.DataFrame(values, index=index, columns=columns, dtype="float64")
-
-#     # If the origin was a Series and the result isn't hierarchical, return a Series
-#     if isinstance(origin_df, pd.Series) and not isinstance(index, pd.MultiIndex):
-#         res = res.iloc[:, 0]
-#         res.name = origin_df.name
-
-#     return res
-
-
-def _create_fcst_df(target_date, origin_df, fill=None, columns=None):
-    """Create an empty forecasting frame aligned to origin_df's index structure.
+    In recursive forecasting, a new dataframe needs to be created that collects
+    all forecasting steps (even for forecasting horizons other than those of interests).
+    For example for fh =[1,2,12] we need the whole forecasting horizons from 1 to 12.
 
     Parameters
     ----------
-    target_date : iterable of dates, MultiIndex, or ForecastingHorizon
-        New timepoints for the forecast frame. Can be:
-        * time-only index (usual case), or
-        * a full MultiIndex matching origin_df.index (e.g., (series, time)), or
-        * a ForecastingHorizon that can be resolved to absolute times.
-    origin_df : pd.Series or pd.DataFrame
-        Provides the original index structure (including outer levels & names)
-        and the column names (for DataFrame) or name (for Series).
-    fill : scalar or array-like, optional
-        If provided, pre-fill the frame with this value; otherwise zeros.
-    columns : sequence, optional
-        Column names to use instead of origin_df's.
+    target_date : a list of dates
+        this will be correspond to the new timepoints index to be created in the
+        forecasting dataframe
+    origin_df : a pandas Series or Dataframe
+        the origin_df corresponds to the dataframe with the historic data. Useful
+        information inferred from that dataframe is the index of the historic dataframe
+        as well as the names of the original columns and the type of the object
+        (dataframe or series)
+    fill : a numpy.ndarray (optional)
+        Corresponds to a numpy array of values that is used to fill up the dataframe.
+        Useful when forecasts are returned from a forecasting models that discards
+        the hierarchical structure of the input pandas dataframe
 
     Returns
     -------
-    pd.Series or pd.DataFrame
-        With the same outer index levels and column structure as origin_df, and
-        the last level replaced by target_date (if time-only was given) or
-        exactly `target_date` (if a full MultiIndex was given).
+    A pandas dataframe or series
     """
-    # --- normalize target_date to a pandas Index / MultiIndex ---
-    if isinstance(target_date, ForecastingHorizon):
-        try:
-            td_abs = target_date.to_absolute()
-            tgt = (
-                td_abs.to_pandas() if hasattr(td_abs, "to_pandas") else pd.Index(td_abs)
-            )
-        except TypeError:
-            tgt = pd.Index(target_date)
+    if not isinstance(target_date, ForecastingHorizon):
+        ix = pd.Index(target_date)
+        fh = ForecastingHorizon(ix, is_relative=False)
     else:
-        # If it's already a (Multi)Index, use as-is; otherwise wrap in Index
-        if isinstance(target_date, (pd.Index, pd.MultiIndex)):
-            tgt = target_date
-        else:
-            tgt = pd.Index(target_date)
+        fh = target_date.to_absolute()
 
-    idx0 = origin_df.index
+    index = fh.get_expected_pred_idx(origin_df)
 
-    # Helper: detect "Index of tuples" with tuple length == nlevels
-    def _is_full_tuple_index(ix, nlevels):
-        if not isinstance(ix, pd.Index) or isinstance(ix, pd.MultiIndex):
-            return False
-        if ix.dtype != object:
-            return False
-        vals = ix.tolist()
-        return len(vals) > 0 and all(
-            isinstance(v, tuple) and len(v) == nlevels for v in vals
-        )
-
-    # --- build the forecast index to mirror origin_df's structure ---
-    if isinstance(idx0, pd.MultiIndex):
-        names = idx0.names
-        nlevels = idx0.nlevels
-
-        if isinstance(tgt, pd.MultiIndex):
-            # If caller supplied a full MultiIndex, trust it (but set names)
-            index = tgt
-            if index.names != names:
-                index = index.set_names(names)
-        elif _is_full_tuple_index(tgt, nlevels):
-            # Caller passed an Index of tuples matching full shape -> make MultiIndex
-            index = pd.MultiIndex.from_tuples(list(tgt), names=names)
-        else:
-            # Usual case: caller passed time-only; replicate across outer levels
-            left = idx0.droplevel(-1).unique()
-            if isinstance(left, pd.MultiIndex):
-                tuples = [(*lvl, t) for lvl in left for t in tgt]
-                index = pd.MultiIndex.from_tuples(tuples, names=names)
-            else:
-                index = pd.MultiIndex.from_product([left, tgt], names=names)
+    if isinstance(origin_df, pd.Series):
+        columns = [origin_df.name]
     else:
-        # Single-level time index: preserve dtype where possible
-        if isinstance(idx0, pd.PeriodIndex):
-            try:
-                tgt = pd.PeriodIndex(tgt, freq=idx0.freq)
-            except Exception:
-                tgt = pd.Index(tgt)
-        elif isinstance(idx0, pd.DatetimeIndex):
-            try:
-                tgt = pd.DatetimeIndex(tgt, tz=idx0.tz)
-            except Exception:
-                tgt = pd.Index(tgt)
-        index = tgt
-        # carry over name if present
-        if getattr(idx0, "name", None) is not None:
-            try:
-                index = index.set_names(idx0.name)
-            except Exception:
-                index.name = idx0.name
+        columns = origin_df.columns.to_list()
 
-    # Columns / values
-    if columns is None:
-        columns = (
-            [origin_df.name]
-            if isinstance(origin_df, pd.Series)
-            else list(origin_df.columns)
-        )
-    values = 0 if fill is None else fill
+    if fill is None:
+        values = 0
+    else:
+        values = fill
 
     res = pd.DataFrame(values, index=index, columns=columns, dtype="float64")
 
-    # If the origin was a Series and the result isn't hierarchical, return a Series
     if isinstance(origin_df, pd.Series) and not isinstance(index, pd.MultiIndex):
         res = res.iloc[:, 0]
         res.name = origin_df.name
@@ -2530,126 +1777,76 @@ def _create_fcst_df(target_date, origin_df, fill=None, columns=None):
     return res
 
 
-# def slice_at_ix(df, ix):
-#     """Slice pd.DataFrame at one index value, valid for simple Index and MultiIndex.
-
-#     Parameters
-#     ----------
-#     df : pd.DataFrame
-#     ix : pandas compatible index value, or iterable of index values (incl pd.Index)
-
-#     Returns
-#     -------
-#     pd.DataFrame, row(s) of df, sliced at last (-1 st) level of df being equal to ix
-#         all index levels are retained in the return, none are dropped
-#         CAVEAT: index is sorted by last (-1 st) level if ix is iterable
-#     """
-#     if isinstance(ix, (list, pd.Index, ForecastingHorizon)):
-#         return pd.concat([slice_at_ix(df, x) for x in ix])
-#     if isinstance(df.index, pd.MultiIndex):
-#         return df.xs(ix, level=-1, axis=0, drop_level=False)
-#     else:
-#         return df.loc[[ix]]
-
-
 def slice_at_ix(df, ix):
-    """Return the row(s) at ix; if ix missing, return the floor (earlier) row.
+    """Slice pd.DataFrame at one index value, valid for simple Index and MultiIndex.
 
-    - Simple Index: choose the greatest label <= ix (if none, choose earliest).
-    - MultiIndex: apply the rule on the last level and return all rows at that time.
+    Parameters
+    ----------
+    df : pd.DataFrame
+    ix : pandas compatible index value, or iterable of index values (incl pd.Index)
+
+    Returns
+    -------
+    pd.DataFrame, row(s) of df, sliced at last (-1 st) level of df being equal to ix
+        all index levels are retained in the return, none are dropped
+        CAVEAT: index is sorted by last (-1 st) level if ix is iterable
     """
-    # Normalize ForecastingHorizon to a pandas Index (absolute if already resolvable)
-    try:
-        _FH = ForecastingHorizon
-    except Exception:  # very defensive: avoid import-time issues
-        _FH = ()  # tuple so isinstance(..., _FH) is always False if import fails
+    if isinstance(ix, (list, pd.Index, ForecastingHorizon)):
+        return pd.concat([slice_at_ix(df, x) for x in ix])
 
-    if isinstance(ix, _FH):
-        # slice_at_ix doesn't know a cutoff; it must be given an **absolute** FH.
-        if getattr(ix, "is_relative", False):
-            raise TypeError(
-                "slice_at_ix expects an absolute ForecastingHorizon; "
-                "pass fh.to_absolute(cutoff) (or a pandas Index) instead."
-            )
-        # absolute FH to plain pandas Index, no cutoff required
-        ix = ix.to_pandas() if hasattr(ix, "to_pandas") else pd.Index(ix)
+    # fast path if label present
+    if (not isinstance(df.index, pd.MultiIndex) and ix in df.index) or (
+        isinstance(df.index, pd.MultiIndex)
+        and ix in df.index.get_level_values(-1)
+    ):
+        if isinstance(df.index, pd.MultiIndex):
+            return df.xs(ix, level=-1, axis=0, drop_level=False)
+        else:
+            return df.loc[[ix]]
 
-    if isinstance(ix, (list, np.ndarray, pd.Index)):
-        # concatenate results for each element
-        parts = [slice_at_ix(df, x) for x in ix]
-        return pd.concat([p for p in parts if p is not None and not p.empty])
+    # label missing: create a safe surrogate slice to avoid KeyError
+    # strategy: use closest earlier index value (floor). If none, earliest later (ceiling).
+    # if still none (empty df), return empty frame with original columns.
+    if len(df) == 0:
+        return df.iloc[0:0]
 
     if isinstance(df.index, pd.MultiIndex):
-        # floor on last level
-        last = df.index.get_level_values(-1)
-        unique_times = pd.Index(np.unique(last))
-        # use pad (floor); if below earliest, fall back to earliest
-        pos = unique_times.get_indexer([ix], method="pad")
-        if pos[0] == -1:
-            t = unique_times[0]
-        else:
-            t = unique_times[pos[0]]
-        return df.xs(t, level=-1, axis=0, drop_level=False)
+        # obtain last level values for search
+        last_level = df.index.get_level_values(-1)
+        # find candidate positions
+        try:
+            # numeric/time-like ordering works via sort
+            order = np.argsort(last_level)
+            sorted_vals = last_level[order]
+            # boolean mask for <= ix
+            le_mask = sorted_vals <= ix
+            if le_mask.any():
+                use_val = sorted_vals[le_mask][-1]
+            else:
+                ge_mask = sorted_vals >= ix
+                if ge_mask.any():
+                    use_val = sorted_vals[ge_mask][0]
+                else:
+                    # fallback: first value
+                    use_val = sorted_vals[0]
+            return df.xs(use_val, level=-1, axis=0, drop_level=False)
+        except Exception:
+            # on any unexpected failure, return last row as conservative fallback
+            return df.tail(1)
     else:
-        # simple index: floor or earliest
-        idxer = df.index.get_indexer([ix], method="pad")
-        if idxer[0] == -1:
-            idxer = [0]
-        return df.iloc[[idxer[0]]]
-
-
-def _combine_exog_frames(
-    X_new: pd.DataFrame | None,
-    X_old: pd.DataFrame | None,
-    y_index: pd.Index | None = None,
-) -> pd.DataFrame | None:
-    """Safely combine exogenous frames.
-
-    If X_old has a MultiIndex (panel) and X_new is single-level (time),
-    broadcast X_new across the series levels so .combine_first can align.
-    """
-    # print(f"_combine_exog_frames: entered:   \nX_old = {X_old} \n\n")
-    # print(f"X_new = {X_new} \n\n y_index = {y_index}")
-
-    if X_old is None:
-        return X_new
-    if X_new is None:
-        return X_old
-
-    if isinstance(X_old.index, pd.MultiIndex) and not isinstance(
-        X_new.index, pd.MultiIndex
-    ):
-        mi_names = X_old.index.names
-        left = X_old.index.droplevel(-1).unique()
-        times = X_new.index
-
-        if isinstance(left, pd.MultiIndex):
-            tuples = [(*lvl, t) for lvl in left for t in times]
-            target_mi = pd.MultiIndex.from_tuples(tuples, names=mi_names)
-            # build broadcast frame by per-key concat
-            parts = []
-            for lvl in left:
-                Xi = X_new.copy()
-                Xi.index = pd.MultiIndex.from_tuples(
-                    [(*lvl, t) for t in times],
-                    names=mi_names,
-                )
-                parts.append(Xi)
-            X_rep = pd.concat(parts).sort_index()
+        # simple Index path
+        index_vals = df.index.to_numpy()
+        # ensure sorted copy without mutating original ordering reference
+        order = np.argsort(index_vals)
+        sorted_vals = index_vals[order]
+        # positions where <= ix
+        le_pos = sorted_vals[sorted_vals <= ix]
+        if len(le_pos) > 0:
+            surrogate = le_pos[-1]
         else:
-            # single left level
-            target_mi = pd.MultiIndex.from_product([left, times], names=mi_names)
-            X_rep = pd.concat([X_new] * len(left), keys=left)
-            X_rep.index.set_names(mi_names, inplace=True)
-
-        X_rep = X_rep.reindex(target_mi)
-        combo = X_rep.combine_first(X_old)
-        # print(f"_combine_exog_frames: \n combo = {combo}")
-        return combo
-
-    # Otherwise, both are single-level or already compatible
-    # print(f"_combine_exog_frames: here 1:   \nX_old = {X_old} \n\n X_new = {X_new}")
-    return X_new.combine_first(X_old)
+            ge_pos = sorted_vals[sorted_vals >= ix]
+            surrogate = ge_pos[0] if len(ge_pos) > 0 else sorted_vals[0]
+        return df.loc[[surrogate]]
 
 
 def _get_notna_idx(df):
@@ -2668,6 +1865,40 @@ def _get_notna_idx(df):
     df_notna_bool = df.notnull().all(axis=1)
     df_notna_idx = df.index[df_notna_bool]
     return df_notna_idx
+
+
+class _ReducerMixin:
+    """Common utilities for reducers."""
+
+    def _get_expected_pred_idx(self, fh):
+        """Construct DataFrame Index expected in y_pred, return of _predict.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon, fh of self; or, iterable coercible to pd.Index
+
+        Returns
+        -------
+        fh_idx : pd.Index, expected index of y_pred returned by _predict
+            CAVEAT: sorted by index level -1, since reduction is applied by fh
+        """
+        if isinstance(fh, ForecastingHorizon):
+            fh_idx = pd.Index(fh.to_absolute_index(self.cutoff))
+        else:
+            fh_idx = pd.Index(fh)
+        y_index = self._y.index
+
+        if isinstance(y_index, pd.MultiIndex):
+            y_inst_idx = y_index.droplevel(-1).unique()
+            if isinstance(y_inst_idx, pd.MultiIndex):
+                fh_idx = pd.Index([x + (y,) for x in y_inst_idx for y in fh_idx])
+            else:
+                fh_idx = pd.Index([(x, y) for x in y_inst_idx for y in fh_idx])
+
+        if hasattr(y_index, "names") and y_index.names is not None:
+            fh_idx.names = y_index.names
+
+        return fh_idx
 
 
 class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
@@ -2769,15 +2000,12 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "authors": "fkiraly",
         "maintainers": "hliebert",
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        "capability:exogenous": True,
-        "capability:multivariate": True,
-        "capability:insample": True,
+        "ignores-exogeneous-X": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:libs": ["sktime.transformations.series.lag"],
     }
 
     def __init__(
@@ -2846,6 +2074,9 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
+        from sktime.transformations.series.lag import Lag, ReducerTransform
+        from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
+
         impute_method = self.impute_method
         lags = self._lags
         trafos = self.transformers
@@ -2857,7 +2088,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.lagger_y_to_X_ = lagger_y_to_X
 
         # lagger_y_to_y_ will lag y to obtain the sklearn y
-        fh_rel = fh.to_relative(self._cutoff_scalar())
+        fh_rel = fh.to_relative(self.cutoff)
         y_lags = list(fh_rel)
         y_lags = [-x for x in y_lags]
         lagger_y_to_y = Lag(lags=y_lags, index_out="original", keep_column_names=True)
@@ -2923,6 +2154,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _fit_multiple(self, y, X=None, fh=None):
         """Fit to training data."""
+        from sktime.transformations.series.lag import Lag, ReducerTransform
+
         impute_method = self.impute_method
         X_treatment = self.X_treatment
         windows_identical = self.windows_identical
@@ -2931,67 +2164,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         lags = self._lags
 
         # lagger_y_to_y_ will lag y to obtain the sklearn y
-
-        # convert FH to relative; if no freq, fall back to step counts
-        cutoff_scalar = self._cutoff_scalar()
-        try:
-            fh_rel = fh.to_relative(cutoff_scalar)
-        except Exception:
-            # Fallback path for absolute datetime FH when no freq is set/inferable.
-            # Compute int steps rel to cutoff, using index positions when possible.
-            y_idx = getattr(y, "index", None)
-
-            # if panel, extract the time level for freq inference/position lookups
-            if isinstance(y_idx, pd.MultiIndex) and ("time" in (y_idx.names or [])):
-                base_idx = y_idx.get_level_values("time")
-            else:
-                base_idx = y_idx
-
-            # try to get a usable freq for date_range fallback (may remain None)
-            freq = getattr(base_idx, "freq", None)
-            if freq is None:
-                try:
-                    freq = pd.infer_freq(base_idx)
-                except Exception:
-                    freq = None
-
-            # normalize cutoff to a scalar Timestamp
-            if isinstance(cutoff_scalar, pd.Index):
-                if len(cutoff_scalar) == 0:
-                    raise
-                cutoff_scalar = cutoff_scalar[-1]
-            cutoff_scalar = pd.Timestamp(cutoff_scalar)
-
-            def _steps(c, t):
-                t = pd.Timestamp(t)
-                # 1) prefer positional difference if both are in base_idx
-                if isinstance(base_idx, pd.DatetimeIndex):
-                    try:
-                        cpos = base_idx.get_loc(c)
-                        tpos = base_idx.get_loc(t)
-                        if isinstance(cpos, (np.ndarray, list)) or isinstance(
-                            tpos, (np.ndarray, list)
-                        ):
-                            # pathological; fall back to date_range counting
-                            raise KeyError
-                        return int(tpos - cpos)
-                    except KeyError:
-                        pass
-                # 2) otherwise, count periods in the correct direction
-                if freq is None:
-                    if t >= c:
-                        return len(pd.date_range(start=c, end=t, freq="D")) - 1
-                    else:
-                        return -(len(pd.date_range(start=t, end=c, freq="D")) - 1)
-                else:
-                    if t >= c:
-                        return len(pd.date_range(start=c, end=t, freq=freq)) - 1
-                    else:
-                        return -(len(pd.date_range(start=t, end=c, freq=freq)) - 1)
-
-            rel = [_steps(cutoff_scalar, t) for t in list(fh)]
-            fh_rel = ForecastingHorizon(rel, is_relative=True)
-
+        fh_rel = fh.to_relative(self.cutoff)
         y_lags = list(fh_rel)
         y_lags = [-x for x in y_lags]
 
@@ -3060,6 +2233,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict_multiple(self, X=None, fh=None):
         """Fit to training data."""
+        from sktime.transformations.series.lag import Lag
+
         if X is not None and self._X is not None:
             X_pool = X.combine_first(self._X)
         elif X is None and self._X is not None:
@@ -3072,58 +2247,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         lagger_y_to_X = self.lagger_y_to_X_
 
-        try:
-            fh_rel = fh.to_relative(self._cutoff_scalar())
-            fh_abs = fh.to_absolute(self._cutoff_scalar())
-        except Exception:
-            # Fallback when fh is absolute with freq=None
-            # (e.g., imputer creates sparse/irregular datetimes)
-            # Recompute relative steps from cutoff
-            # using base index positions or date-range counting.
-            base_idx = (
-                self._y.index.get_level_values("time")
-                if isinstance(self._y.index, pd.MultiIndex)
-                else self._y.index
-            )
-            cutoff = self._cutoff_scalar()
-            freq = getattr(fh, "_freq", None)
-
-            def _steps(c, t):
-                t = pd.Timestamp(t)
-                # 1) prefer positional difference if both are in base_idx
-                if isinstance(base_idx, pd.DatetimeIndex):
-                    try:
-                        cpos = base_idx.get_loc(c)
-                        tpos = base_idx.get_loc(t)
-                        if isinstance(cpos, (np.ndarray, list)) or isinstance(
-                            tpos, (np.ndarray, list)
-                        ):
-                            # pathological; fall back to date_range counting
-                            raise KeyError
-                        return int(tpos - cpos)
-                    except KeyError:
-                        pass
-                # 2) otherwise, count periods in the correct direction
-                if freq is None:
-                    if t >= c:
-                        return len(pd.date_range(start=c, end=t)) - 1
-                    else:
-                        return -(len(pd.date_range(start=t, end=c)) - 1)
-                else:
-                    return int(pd.Period(t, freq=freq) - pd.Period(c, freq=freq))
-
-            # absolute target times = the "time" level of fh_idx
-            fh_abs = (
-                fh_idx.get_level_values("time")
-                if isinstance(fh_idx, pd.MultiIndex)
-                else fh_idx
-            )
-            if not isinstance(fh_abs, pd.DatetimeIndex):
-                fh_abs = pd.DatetimeIndex(fh_abs)
-
-            # now make fh_rel as integer steps from cutoff
-            fh_rel = pd.Index([_steps(cutoff, t) for t in fh_abs])
-
+        fh_rel = fh.to_relative(self.cutoff)
+        fh_abs = fh.to_absolute(self.cutoff)
         y_lags = list(fh_rel)
         y_abs = list(fh_abs)
 
@@ -3131,16 +2256,12 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         for i, lag in enumerate(y_lags):
             predict_idx = y_abs[i]
+
+            lag_plus = Lag(lag, index_out="extend", keep_column_names=True)
+
             Xt = lagger_y_to_X[-lag].transform(X=self._y, y=X_pool)
-
-            if self.X_treatment == "shifted":
-                # features taken at cutoff for all horizons
-                base_ix = self.cutoff
-            else:
-                # concurrent features at the absolute target time
-                base_ix = predict_idx
-
-            Xtt_predrow = slice_at_ix(Xt, base_ix)  # robust “floor” selection
+            Xtt = lag_plus.fit_transform(Xt)
+            Xtt_predrow = slice_at_ix(Xtt, predict_idx)
             Xtt_predrow = prep_skl_df(Xtt_predrow)
 
             estimator = self.estimators_[i]
@@ -3182,6 +2303,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sklearn.linear_model import LinearRegression
+
         est = LinearRegression()
         params1 = {
             "estimator": est,
@@ -3229,7 +2352,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         return params
 
 
-class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
+class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     """Recursive reduction forecaster, incl exogeneous Rec.
 
     Implements recursive reduction, of forecasting to tabular regression.
@@ -3294,12 +2417,9 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     _tags = {
         "authors": "fkiraly",
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "capability:exogenous": True,
+        "ignores-exogeneous-X": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        # CI and test flags
-        # -----------------
-        "tests:libs": ["sktime.transformations.series.lag"],
     }
 
     def __init__(
@@ -3315,7 +2435,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self.lagger_y_to_X_ = None
-        self._lags = list(range(1, window_length + 1))
+        self._lags = list(range(window_length))
         self.X_treatment = X_treatment
         super().__init__()
 
@@ -3341,6 +2461,8 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.set_tags(**{"y_inner_mtype": mtypes})
 
         if isinstance(impute_method, str):
+            from sktime.transformations.series.impute import Imputer
+
             self._impute_method = Imputer(method=impute_method)
         elif impute_method is None:
             self._impute_method = None
@@ -3371,6 +2493,8 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             A transformed dataset where lagged features are shifted to align
             with the next target value `y(t+1)`.
         """
+        from sktime.transformations.series.lag import Lag
+
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
 
@@ -3380,11 +2504,9 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         X_time = lagger_y_to_X.fit_transform(y)
 
-        # lag_shifter = Lag(lags=1, index_out="extend")
-        # X_time_aligned = lag_shifter.fit_transform(X_time)
-        # return X_time_aligned
-
-        return X_time
+        lag_shifter = Lag(lags=1, index_out="extend")
+        X_time_aligned = lag_shifter.fit_transform(X_time)
+        return X_time_aligned
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -3409,6 +2531,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self : reference to self
         """
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
+        from sktime.transformations.series.lag import Lag
 
         # impute_method = self._impute_method
         X_treatment = self.X_treatment
@@ -3425,11 +2548,8 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         # lag is 1, since we want to do recursive forecasting with 1 step ahead
         # column names will be kept for consistency
-
-        # define lag_plus for *exog* alignment (furhter below)
         lag_plus = Lag(lags=1, index_out="extend", keep_column_names=True)
-        # Xtt = lag_plus.fit_transform(Xt)
-        Xtt = Xt
+        Xtt = lag_plus.fit_transform(Xt)
         Xtt_notna_idx = _get_notna_idx(Xtt)
         notna_idx = Xtt_notna_idx.intersection(y.index)
 
@@ -3446,7 +2566,6 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 Xtt = pd.concat([X_inner.loc[notna_idx], Xtt], axis=1)
 
             Xtt = prep_skl_df(Xtt)
-            self._feature_cols_ = list(Xtt.columns)
             yt = prep_skl_df(yt)
 
             # store feature column names (if any) to preserve during predict
@@ -3480,29 +2599,15 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred : pd.DataFrame, same type as y in _fit
             Point predictions
         """
-        # print("OriginalRecursiveReductionForecaster.predict() - entered")
         if X is not None and self._X is not None:
-            # X_pool = X.combine_first(self._X)
-            X_pool = _combine_exog_frames(
-                X,
-                self._X,
-                getattr(self, "_y", None).index if hasattr(self, "_y") else None,
-            )
-            # print("OriginalRecursiveReductionForecaster.predict() - here 1")
+            X_pool = X.combine_first(self._X)
         elif X is None and self._X is not None:
             X_pool = self._X
-            # print("OriginalRecursiveReductionForecaster.predict() - here 2")
         else:
             X_pool = X
-            # print("OriginalRecursiveReductionForecaster.predict() - here 3")
 
-        # print("OriginalRecursiveReductionForecaster.predict()")
-        # print(f" - here 4   X_pool={X_pool}")
-
-        ##        fh_oos = fh.to_out_of_sample(self.cutoff)
-        ##        fh_ins = fh.to_in_sample(self.cutoff)
-        fh_oos = fh.to_out_of_sample(self._cutoff_scalar())
-        fh_ins = fh.to_in_sample(self._cutoff_scalar())
+        fh_oos = fh.to_out_of_sample(self.cutoff)
+        fh_ins = fh.to_in_sample(self.cutoff)
 
         if len(fh_oos) == 0:
             y_pred = self._predict_in_sample(X_pool, fh_ins)
@@ -3518,317 +2623,77 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_pred
 
-    # def _get_window_local(self, cutoff, window_length, y_orig):
-    #     start = _shift(cutoff, by=-window_length + 1)
-    #     cutoff = cutoff[0]
-    #     y = y_orig.loc[start:cutoff]
-
-    #     # check for missing values
-    #     if len(y) < window_length:
-    #         idx = pd.period_range(
-    #             start=y.index.min(), end=y.index.max(), freq=y.index.freq
-    #         )
-    #         y = y.reindex(idx)
-    #         if self._impute_method:
-    #             y = self._impute_method.fit_transform(y)
-
-    #     y = y.to_numpy()
-    #     X = (
-    #         self._X.loc[cutoff].to_frame().T if self._X is not None else None
-    #     )  # exoxenous
-
-    #     return y, X
-
     def _get_window_local(self, cutoff, window_length, y_orig):
-        # Normalize cutoff to a scalar label
-        if isinstance(cutoff, (pd.Index, pd.DatetimeIndex, pd.PeriodIndex)):
-            cutoff_scalar = cutoff[0]
+        # Robust window extraction that works even if index has lost freq
+        cutoff_val = cutoff[0]
+        idx = y_orig.index
+        has_freq = hasattr(idx, "freq") and idx.freq is not None
+        if has_freq:
+            start = _shift(cutoff, by=-window_length + 1)
+            y = y_orig.loc[start:cutoff_val]
         else:
-            cutoff_scalar = cutoff
+            # fall back to last observed window_length points up to cutoff
+            y = y_orig.loc[:cutoff_val].tail(window_length)
 
-        # --- pick the single series (local path) and get its time index ---
-        if isinstance(y_orig.index, pd.MultiIndex):
-            # choose the series that actually contains the cutoff
-            inst_key = None
-            for k in y_orig.index.droplevel(-1).unique():
-                if cutoff_scalar in y_orig.xs(k, level=0).index:
-                    inst_key = k
-                    break
-            if inst_key is None:
-                # fallback: take the last series present
-                inst_key = y_orig.index.get_level_values(0)[-1]
-            y_s = y_orig.xs(inst_key, level=0)
-        else:
-            y_s = y_orig
-            inst_key = None  # not used
+        # if we have a known freq and insufficient rows, reindex to full span
+        if has_freq and len(y) < window_length:
+            full_idx = pd.period_range(start=y.index.min(), end=y.index.max(), freq=idx.freq)
+            y = y.reindex(full_idx)
+            if self._impute_method:
+                y = self._impute_method.fit_transform(y)
 
-        # --- find positional window [start_pos : cutoff_pos], no freq needed ---
-        try:
-            pos = y_s.index.get_loc(cutoff_scalar)
-            if not isinstance(pos, (int, np.integer)):
-                if isinstance(pos, slice):
-                    pos = pos.stop - 1
-                else:  # e.g. boolean mask / array of positions
-                    pos = np.asarray(pos).max()
-        except KeyError:
-            # cutoff not in index: take the rightmost label <= cutoff
-            pos = y_s.index.searchsorted(cutoff_scalar, side="right") - 1
+        y = y.to_numpy()
+        X = (
+            self._X.loc[cutoff].to_frame().T if self._X is not None else None
+        )  # exoxenous
 
-        start_pos = max(0, pos - (window_length - 1))
-        idx_segment = y_s.index[start_pos : pos + 1]
-        y_win = y_s.loc[idx_segment]
-
-        # coerce to 1D if we got a single-column DataFrame
-        if isinstance(y_win, pd.DataFrame):
-            y_win = y_win.iloc[:, 0]
-
-        # left-pad if shorter than window_length; optional imputation
-        if len(y_win) < window_length:
-            pad = np.full(window_length - len(y_win), np.nan, dtype=float)
-            y_vals = np.concatenate([pad, y_win.to_numpy(dtype=float, copy=False)])
-            if getattr(self, "_impute_method", None) is not None:
-                y_imp = self._impute_method.fit_transform(pd.Series(y_vals))
-                y_vals = np.asarray(y_imp).reshape(-1)
-        else:
-            y_vals = y_win.to_numpy(dtype=float, copy=False)
-
-        # best-effort X alignment at cutoff (not required in v2-local, but safe)
-        X = None
-        if getattr(self, "_X", None) is not None:
-            try:
-                if isinstance(self._X.index, pd.MultiIndex) and (inst_key is not None):
-                    X = self._X.xs(inst_key, level=0).loc[[cutoff_scalar]]
-                else:
-                    X = self._X.loc[[cutoff_scalar]]
-            except Exception as ex:
-                warnings.warn(
-                    "_get_window_local: could not align X at cutoff "
-                    f"{cutoff_scalar!r}: {ex}"
-                )
-                X = None
-
-        return y_vals, X
+        return y, X
 
     def _get_window_global(self, cutoff, window_length, y_orig):
-        """Return last window_length values per series up to `cutoff` (inclusive).
-
-        Handle case of global pooling. Robust to missing freq, scalar cutoffs,
-        and tupled time levels.
-        """
-        # ---------- ensure MultiIndex on y_orig ----------
-        idx = y_orig.index
-        if not isinstance(idx, pd.MultiIndex):
-            # case A: it's already an Index of tuples -> rewrap as a proper MultiIndex
-            if isinstance(idx, pd.Index) and all(isinstance(i, tuple) for i in idx):
-                names = None
-                if hasattr(self, "_y") and isinstance(self._y.index, pd.MultiIndex):
-                    names = self._y.index.names
-                y_orig = y_orig.copy()
-                y_orig.index = pd.MultiIndex.from_tuples(idx, names=names)
+        cutoff_val = cutoff[0]
+        lvl = y_orig.index.get_level_values(-1)
+        has_freq = hasattr(lvl, "freq") and lvl.freq is not None
+        if has_freq:
+            start = _shift(cutoff, by=-window_length + 1)
+            date_mask = (lvl >= start) & (lvl <= cutoff_val)
+            y = y_orig.loc[date_mask]
+        else:
+            # slice up to cutoff then take last window_length per series id (all but last level)
+            y_pre = y_orig.loc[lvl <= cutoff_val]
+            if isinstance(y_pre.index, pd.MultiIndex):
+                grp_levels = list(range(0, y_pre.index.nlevels - 1))
+                y = (
+                    y_pre.groupby(level=grp_levels, group_keys=False)
+                    .tail(window_length)
+                    .sort_index()
+                )
             else:
-                # case B: a single time index
-                time_name = y_orig.index.name or getattr(self, "_time_name", "time")
-                series_name = getattr(self, "_series_name", "series")
+                y = y_pre.tail(window_length)
 
-                if isinstance(y_orig, pd.DataFrame) and y_orig.shape[1] > 1:
-                    # WIDE -> LONG: stack columns into a single 'y' column
-                    y_long = y_orig.stack().to_frame("y")  # index: (time, series)
-                    y_long.index.names = [time_name, series_name]
-                    y_orig = y_long.swaplevel(
-                        0, 1
-                    ).sort_index()  # index: (series, time)
-                else:
-                    # univariate -> synthesize a single series level
-                    if isinstance(y_orig, pd.Series):
-                        y_orig = y_orig.to_frame("y")
-                    y_orig.index = pd.MultiIndex.from_product(
-                        [[series_name], y_orig.index], names=[series_name, time_name]
-                    )
-
-        if y_orig.index.has_duplicates:
-            # print("\n[get_window_global] ----- DEBUG START -----")
-            # print(
-            #     f"[get_window_global] cutoff={repr(cutoff)}, \
-            #        window_length={window_length}"
-            # )
-            # print(
-            #     f"[get_window_global] y_orig.index.names={y_orig.index.names}, \
-            #        is_multi={isinstance(y_orig.index, pd.MultiIndex)}"
-            # )
-
-            dup_idx = y_orig.index[y_orig.index.duplicated(keep=False)]
-            # count unique duplicate keys (series,time)
-            # dup_keys = list(map(tuple, dup_idx))
-            # n_keys = len(set(dup_keys))
-            # print(
-            #     f"[get_window_global] DUPLICATE (series,time) rows: \
-            #            total_rows={len(dup_idx)}, unique_keys={n_keys}"
-            # )
-            try:
-                print(
-                    "[get_window_global] First duplicate rows:\n",
-                    y_orig.loc[dup_idx].sort_index().head(20),
+        # Fill time based features
+        all_time_series_idx = y.index.droplevel(level=-1).unique()
+        cohort_count = len(all_time_series_idx)
+        y_time_features = np.zeros((cohort_count, window_length))
+        for i, idx in enumerate(all_time_series_idx):
+            y_cur = y.loc[idx]
+            if has_freq and len(y_cur) < window_length:
+                idx_full = pd.period_range(
+                    start=y_cur.index.min(),
+                    end=y_cur.index.max(),
+                    freq=y_cur.index.freq,
+                    name=y_cur.index.name,
                 )
-            except Exception as e:
-                print(f"[get_window_global] printing duplicate rows failed: {e}")
+                y_cur = y_cur.reindex(idx_full)
+                if self._impute_method:
+                    y_cur = self._impute_method.fit_transform(y_cur)
+                # align updated values back (only where NA previously)
+                y.update(y_cur)
 
-        # ---------- helpers ----------
-        def _as_1len_index(x):
-            """Normalize cutoff to a 1-length Index matching its dtype."""
-            if isinstance(x, pd.Index):
-                return x[:1]
-            if isinstance(x, pd.Period):
-                return pd.PeriodIndex([x], freq=x.freq)
-            if isinstance(x, pd.Timestamp):
-                return pd.DatetimeIndex([x], tz=x.tz)
-            return pd.Index([x])
+            y_time_features[i] = y_cur.to_numpy().reshape(1, -1)[
+                :, ::-1
+            ]  # reverse order of columns to match lag order
 
-        def _coerce_time_index(idx_like):
-            """Ensure scalar entries; if entries are tuples, take their last element."""
-            if isinstance(idx_like, pd.MultiIndex):
-                idx_like = idx_like.get_level_values(-1)
-            if isinstance(idx_like, pd.Index) and idx_like.dtype == object:
-                vals = list(idx_like)
-                if any(isinstance(v, tuple) for v in vals):
-                    vals = [v[-1] if isinstance(v, tuple) else v for v in vals]
-                    return pd.Index(vals)
-            return pd.Index(idx_like)
-
-        # ---------- normalize cutoff & extract/clean time axis ----------
-        cutoff_idx = _as_1len_index(cutoff)
-        cutoff_val = cutoff_idx[0]
-
-        time_level_raw = y_orig.index.get_level_values(-1)
-        time_level = _coerce_time_index(time_level_raw)
-
-        # Unique times; if sorting fails (mixed types), sort by string as last resort
-        try:
-            unique_times = time_level.unique().sort_values()
-        except TypeError:
-            unique_times = pd.Index(time_level.unique()).sort_values(
-                key=lambda x: x.astype(str)
-            )
-
-        # ---------- locate cutoff position on the global time axis ----------
-        pos = unique_times.get_indexer([cutoff_val])[0]
-        if pos == -1:
-            pos = unique_times.searchsorted(cutoff_val)
-            pos = max(0, min(pos, len(unique_times) - 1))
-
-        start_pos = max(0, pos - (window_length - 1))
-        observed_window = unique_times[
-            start_pos : pos + 1
-        ]  # may be < window_length near start
-
-        # If a reliable freq is known, build a regular target window ending at cutoff;
-        # otherwise, use observed_window and pad per-series later.
-        full_idx = observed_window
-        if isinstance(time_level, pd.PeriodIndex):
-            end = (
-                cutoff_val if isinstance(cutoff_val, pd.Period) else observed_window[-1]
-            )
-            full_idx = pd.period_range(
-                end - (window_length - 1),
-                end,
-                freq=time_level.freq,
-                name=time_level.name,
-            )
-        elif isinstance(time_level, pd.DatetimeIndex):
-            freq = time_level.freq or pd.infer_freq(time_level)
-            if freq is not None:
-                end = (
-                    cutoff_val
-                    if isinstance(cutoff_val, pd.Timestamp)
-                    else observed_window[-1]
-                )
-                full_idx = pd.date_range(
-                    end=end,
-                    periods=window_length,
-                    freq=freq,
-                    tz=time_level.tz,
-                    name=time_level.name,
-                )
-
-        # ---------- build feature matrix (rows=series, cols=lags reversed) ----------
-        all_series = y_orig.index.droplevel(-1).unique()
-        y_time_features = np.zeros((len(all_series), window_length), dtype=float)
-
-        for i, s in enumerate(all_series):
-            # print(f"top of loop: i / s = {i} / {s}")
-            y_s = y_orig.loc[s]
-
-            # ensure y_s is a 1D Series of target values
-            if isinstance(y_s, pd.DataFrame):
-                if y_s.shape[1] == 1:
-                    y_s = y_s.iloc[:, 0]
-                else:
-                    col = "y" if "y" in y_s.columns else y_s.columns[0]
-                    y_s = y_s[col]
-
-            # clean per-series time index (in case of tuples/objects)
-            idx_s = _coerce_time_index(y_s.index)
-            y_s = pd.Series(y_s.to_numpy(copy=False), index=idx_s)
-
-            # print(f"y_s = {y_s}")
-            # print(f"type(y_s) = {type(y_s)}")
-            # print(f"y_s.shape = {y_s.shape}")
-
-            idx_target = full_idx if len(full_idx) == window_length else observed_window
-
-            # ---- pre-check: duplicates in y_s or idx_target ----
-            if not y_s.index.is_unique:
-                dups = y_s.index[y_s.index.duplicated(keep=False)]
-                # print("\n[get_window_global] --- DEBUG (per-series duplicates) ---")
-                # print(f"[get_window_global] series={s!r}")
-                # print(
-                #     f"[get_window_global] \
-                #        y_s.index.is_unique={y_s.index.is_unique} (n={len(y_s.index)})"
-                # )
-                try:
-                    vc = pd.Series(dups).value_counts().head(10)
-                    print(
-                        "[get_window_global] duplicated time -> counts (top 10):\n", vc
-                    )
-                    print(
-                        "[get_window_global] first rows for duplicated times:\n",
-                        y_s.loc[dups].sort_index().head(10),
-                    )
-                except Exception as ex:
-                    print("[get_window_global] failed to print dup rows:", ex)
-
-            # if not pd.Index(idx_target).is_unique:
-            #     tgt_dup = pd.Index(idx_target)[
-            #         pd.Index(idx_target).duplicated(keep=False)
-            #     ]
-            # print("\n[get_window_global] --- DEBUG (idx_target duplicates) ---")
-            # print(
-            #     f"[get_window_global] series={s!r}, \
-            #         duplicate labels in idx_target \
-            #         (first 20): {list(tgt_dup[:20])}"
-            # )
-
-            # align; if dtype mismatches, intersect then reindex
-            try:
-                y_win = y_s.reindex(idx_target)
-            except Exception:
-                y_win = y_s[y_s.index.isin(idx_target)].reindex(idx_target)
-
-            # left-pad if shorter than window_length
-            if len(y_win) < window_length:
-                pad = np.full(window_length - len(y_win), np.nan, dtype=float)
-                y_vals = np.concatenate([pad, y_win.to_numpy(dtype=float, copy=False)])
-            else:
-                y_vals = y_win.to_numpy(dtype=float, copy=False)
-
-            # optional imputation
-            if getattr(self, "_impute_method", None):
-                y_imp = self._impute_method.fit_transform(pd.Series(y_vals))
-                y_vals = np.asarray(y_imp).reshape(-1)
-
-            # reverse for lag order
-            y_time_features[i] = y_vals[::-1]
-
-        X = None  # exogenous features are not assembled here (v2 no-X path)
+        X = None  # TODO: should we give X_pool here?
         return y_time_features, X
 
     def _get_window(self, cutoff=None, window_length=None, y_orig=None):
@@ -3860,24 +2725,15 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             and np.sum(np.isinf(last_window)) == 0
         )
 
-    # def _create_nan_df(self, fh):
-    #     """Return nan predictions for horizon fh."""
-    #     index = fh.to_absolute(self.cutoff).to_pandas()
-    #     y_pred = pd.DataFrame(index=index, columns=self._y.columns)
-    #     return y_pred
-
-    def _create_fallback_df(self, fh):
-        """Return fallback predictions (constant mean if available else NaN)."""
-        # index = fh.to_absolute(self.cutoff).to_pandas()
-        index = fh.to_absolute(self._cutoff_scalar()).to_pandas()
+    def _create_nan_df(self, fh):
+        """Return nan predictions for horizon fh."""
+        index = fh.to_absolute(self.cutoff).to_pandas()
         y_pred = pd.DataFrame(index=index, columns=self._y.columns)
-        est = getattr(self, "estimator_", None)
-        if isinstance(est, pd.Series):
-            for col in y_pred.columns:
-                y_pred[col] = est[col] if col in est.index else np.nan
         return y_pred
 
-    def _predict_out_of_sample_v2_global(self, X_pool, fh):
+    def _predict_out_of_sample_v2_global(
+        self, X_pool, fh
+    ):  # TODO: why are exogenous features not used?
         """Recursive reducer: predict out of sample (ahead of cutoff).
 
         Copied and hacked from _RecursiveReducer._predict_last_window.
@@ -3904,35 +2760,28 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # the legacy v1 path which already supports X for correctness.
         # This maintains performance benefit of v2 for the no-X case while
         # enabling functionality with X.
-        if (self._X is not None) or (X_pool is not None):
+        # Also fall back if estimator_ is a Series (no effective training rows),
+        # since v1 path already contains the constant-mean prediction logic.
+        if (self._X is not None) or (X_pool is not None) or isinstance(
+            getattr(self, "estimator_", None), pd.Series
+        ):
             return self._predict_out_of_sample_v1(X_pool, fh)
 
         # Get last window of available data.
         # If we cannot generate a prediction from the available data, return nan.
         y_last, X_last = self._get_window()
         ys = np.array(y_last)
-        if np.isnan(ys).any() or np.isinf(ys).any():
-            return self._create_fallback_df(fh)
+        if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
+            return self._create_nan_df(fh)
 
-        cutoff_idx = self._cutoff_as_1elem_index_with_freq()
-        fh_max = fh.to_relative(cutoff_idx)[-1]
+        fh_max = fh.to_relative(self.cutoff)[-1]
         relative = pd.Index(list(map(int, range(1, fh_max + 1))))
-        index_range = _index_range(relative, cutoff_idx)
-
-        if isinstance(self.cutoff, pd.Timestamp) and self.cutoff.tz is not None:
-            index_range = index_range.tz_localize(self.cutoff.tz)
+        index_range = _index_range(relative, self.cutoff)
+        if isinstance(self.cutoff, pd.DatetimeIndex):
+            if self.cutoff.tzinfo is not None:
+                index_range = index_range.tz_localize(self.cutoff.tzinfo)
 
         y_pred = _create_fcst_df(index_range, self._y)
-
-        orig_idx = self._y.index
-        if isinstance(orig_idx, pd.MultiIndex) and not isinstance(
-            y_pred.index, pd.MultiIndex
-        ):
-            # _create_fcst_df may return Index of tuples; rewrap as MultiIndex
-            if all(isinstance(ix, tuple) for ix in y_pred.index):
-                y_pred.index = pd.MultiIndex.from_tuples(
-                    y_pred.index, names=orig_idx.names
-                )
 
         y_last_df = self._y.copy()
         for i in range(fh_max):
@@ -3940,482 +2789,126 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             if getattr(self, "_feature_cols_", None) is not None and y_last.shape[
                 1
             ] == len(self._feature_cols_):
-                X_last_df = pd.DataFrame(
-                    y_last, columns=self._feature_cols_
-                )  # <- new local name
-                y_pred_vector = self.estimator_.predict(X_last_df)
+                y_last_df = pd.DataFrame(y_last, columns=self._feature_cols_)
+                y_pred_vector = self.estimator_.predict(y_last_df)
             else:
                 y_pred_vector = self.estimator_.predict(y_last)
             y_pred_curr = _create_fcst_df([index_range[i]], self._y, fill=y_pred_vector)
-
-            if isinstance(orig_idx, pd.MultiIndex) and not isinstance(
-                y_pred_curr.index, pd.MultiIndex
-            ):
-                if all(isinstance(ix, tuple) for ix in y_pred_curr.index):
-                    y_pred_curr.index = pd.MultiIndex.from_tuples(
-                        y_pred_curr.index, names=orig_idx.names
-                    )
-
             y_pred.update(y_pred_curr)
 
             # # Update last window with previous prediction.
             if i + 1 != fh_max:
                 # Append preds to previous df
                 # merge on index except from last
-                tmp = pd.concat([y_last_df, y_pred_curr])
-                if not isinstance(tmp.index, pd.MultiIndex):
-                    # handle rare mixed-object index; coerce if we can
-                    if all(isinstance(ix, tuple) for ix in tmp.index):
-                        tmp.index = pd.MultiIndex.from_tuples(
-                            tmp.index, names=orig_idx.names
-                        )
-                if isinstance(tmp.index, pd.MultiIndex):
-                    tmp = tmp.sort_index()
-                y_last_df = tmp
-
+                y_last_df = pd.concat([y_last_df, y_pred_curr]).sort_index()
                 y_last, X_last = self._get_window(
-                    cutoff=index_range[i : i + 1], y_orig=y_last_df
+                    cutoff=self.cutoff + i + 1,
+                    y_orig=y_last_df,
                 )
+
         return y_pred
 
-    def _predict_out_of_sample_v2_local(
-        self, X_pool, fh
-    ):  # TODO: why are exogenous features not used?
-        """Recursive reducer: predict out of sample (ahead of cutoff).
+    def _predict_out_of_sample_v2_local(self, X_pool, fh):
+        """Optimized local recursive path (single-index, no exogenous)."""
+        # Safety guard: if any condition not satisfied, delegate
+        if (
+            isinstance(self._y.index, pd.MultiIndex)
+            or X_pool is not None
+            or isinstance(getattr(self, "estimator_", None), pd.Series)
+        ):
+            return self._predict_out_of_sample_v1(X_pool, fh)
 
-        Copied and hacked from _RecursiveReducer._predict_last_window.
-
-        In recursive reduction, iteration must be done over the
-        entire forecasting horizon. Specifically, when transformers are
-        applied to y that generate features in X, forecasting must be done step by
-        step to integrate the latest prediction for the new set of features in
-        X derived from that y.
-
-        Parameters
-        ----------
-        X_pool : pd.DataFrame
-            Exogenous & time based features for the forecast
-
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon
-
-        Returns
-        -------
-        y_return = pd.Series or pd.DataFrame
-        """
-        # if self._X is not None:
-        #    raise ValueError(
-        #        "Do not call this function if model uses exogenous variables X."
-        #    )
-
-        # Get last window of available data.
-        # If we cannot generate a prediction from the available data, return nan.
-        # y_last, X_last = self._get_window(self._cutoff, self.window_length, self._y)
-
-        # Force local window extraction even if pooling=='global' (vectorized wide case)
-        cutoff_idx = (
-            self._cutoff
-            if isinstance(self._cutoff, (pd.Index, pd.DatetimeIndex, pd.PeriodIndex))
-            else pd.Index([self._cutoff])
-        )
-        y_last, X_last = self._get_window_local(
-            cutoff=cutoff_idx, window_length=self.window_length, y_orig=self._y
-        )
+        y_last, _ = self._get_window(self._cutoff, self.window_length, self._y)
         if not self._is_predictable(y_last, self.window_length):
-            return self._create_fallback_df(fh)
+            return self._create_nan_df(fh)
 
-        # Pre-allocate arrays.
-        n_columns = 1
         window_length = self.window_length
-        fh_max = fh.to_relative(self._cutoff_scalar())[-1]
-
+        fh_max = fh.to_relative(self.cutoff)[-1]
         y_pred = np.zeros(fh_max)
-
-        # Array with input data for prediction.
-        last = np.zeros((1, n_columns, window_length + fh_max))
-
-        # Fill pre-allocated arrays with available time based features.
+        last = np.zeros((1, 1, window_length + fh_max))
         last[:, 0, :window_length] = y_last.T
 
-        if X_pool is not None:
-            # fh_absolute = fh.to_absolute(self.cutoff)
-            # Drive selection by absolute labels instead of positions
-            # first_label = fh_absolute[0]
-            # Pre-compute a dense absolute index from cutoff+1..cutoff+max(fh)
-            dense_abs_fh, _ = self._generate_fh_no_gaps(fh)
-            try:
-                dense_abs_idx = dense_abs_fh.to_pandas()
-            except Exception:
-                dense_abs_idx = pd.Index(dense_abs_fh)
-
-        # Recursively generate predictions by iterating over forecasting horizon.
         for i in range(fh_max):
-            # Slice prediction window.
-            X_pred = last[:, :, i : window_length + i]
-
-            # Reshape data into tabular array.
-            # if self._estimator_scitype == "tabular-regressor":
-            X_pred = X_pred.reshape(1, -1)[
-                :, ::-1
-            ]  # reverse order of columns to match lag order
-
-            if X_pool is not None:
-                # label sequence for absolute future times (already computed above)
-                label_i = dense_abs_idx[i]
-
-                # ---- helpers to make labels scalar & fetch the row safely ----
-                def _as_scalar_label(lbl):
-                    # If we ever get a 1-length Index, turn it into a scalar
-                    if isinstance(lbl, (pd.Index, pd.DatetimeIndex, pd.PeriodIndex)):
-                        return lbl[0] if len(lbl) == 1 else lbl
-                    return lbl
-
-                def _row_from(label):
-                    lab = _as_scalar_label(label)
-                    if X_pool is not None and lab in X_pool.index:
-                        return X_pool.loc[lab].to_numpy().reshape(1, -1)
-                    if getattr(self, "_X", None) is not None and lab in self._X.index:
-                        return self._X.loc[lab].to_numpy().reshape(1, -1)
-                    raise MissingExogenousDataError(
-                        f"Missing exogenous data for timestamp {lab!r} "
-                        f"(checked future X passed to predict and training X)."
-                    )
-
-                # ---- alignment semantics you specified ----
-                # step i forecasts t+i+1 from time t+i
-                if getattr(self, "X_treatment", "concurrent") == "shifted":
-                    # shifted uses exog(t+i):
-                    # first step needs exog at cutoff (t) from training X
-                    label_for_X = self.cutoff if i == 0 else dense_abs_idx[i - 1]
-                else:
-                    # concurrent uses exog(t+i+1): take the forecast label itself
-                    label_for_X = label_i
-
-                row = _row_from(label_for_X)
-                X_pred = np.concatenate((row, X_pred), axis=1)
-
-            # Generate predictions (ensure robust scalar extraction) with names
-            if getattr(self, "_feature_cols_", None) is not None and X_pred.shape[
-                1
-            ] == len(self._feature_cols_):
+            X_pred = last[:, :, i : window_length + i].reshape(1, -1)[:, ::-1]
+            if getattr(self, "_feature_cols_", None) is not None and X_pred.shape[1] == len(
+                self._feature_cols_
+            ):
                 X_pred_df = pd.DataFrame(X_pred, columns=self._feature_cols_)
                 _raw_pred = self.estimator_.predict(X_pred_df)
             else:
                 _raw_pred = self.estimator_.predict(X_pred)
-            # handle outputs like list/Series/ndarray; ravel then take first element
-            _scalar = np.asarray(_raw_pred).ravel()[0]
-            y_pred[i] = float(_scalar)
-
-            # Update last window with previous prediction.
+            y_pred[i] = float(np.asarray(_raw_pred).ravel()[0])
             last[:, 0, window_length + i] = y_pred[i]
 
         return y_pred
 
     def _filter_and_adjust_predictions(self, fh, y_pred):
-        """Filter predictions to requested fh and fix freq when needed."""
+        """Filter predictions based on forecasting horizon and adjusts frequency.
+
+        While the recursive strategy requires to generate predictions for all steps
+        until the furthest step in the forecasting horizon, we only return the
+        requested ones.
+        """
         fh_idx = fh.to_indexer(self.cutoff)
-
-        # If train index was multi-level, *may* need to group by non-time levels.
         if isinstance(self._y.index, pd.MultiIndex):
-            yi_grp = [n for n in self._y.index.names[:-1] if n is not None]
-
-            # See where those keys live in y_pred (index levels? columns? nowhere?)
-            idx_names = list(getattr(getattr(y_pred, "index", None), "names", []))
-            cols = (
-                list(getattr(y_pred, "columns", []))
-                if isinstance(y_pred, pd.DataFrame)
-                else []
-            )
-
-            if yi_grp and all(k in idx_names for k in yi_grp):
-                # Standard long/panel case: group by series-like levels on the index.
-                y_return = y_pred.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
-
-            elif (
-                yi_grp
-                and isinstance(y_pred, pd.DataFrame)
-                and all(k in cols for k in yi_grp)
-            ):
-                # Keys are in the columns (rare); group after reset_index.
-                tmp = y_pred.reset_index()
-                y_return = tmp.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
-                # if we still have a time column, restore it as index
-                time_col = self._y.index.names[-1]
-                if time_col in y_return.columns:
-                    y_return = y_return.set_index(time_col)
-
-            else:
-                # Degenerate single-series case (wide vectorization):
-                #     no grouping; select rows.
-                if isinstance(y_pred, (pd.Series, pd.DataFrame)):
-                    y_return = y_pred.iloc[fh_idx]
-                else:
-                    y_return = y_pred[fh_idx]
-
-                # …and inject a series level so the vectorizer can reassemble A/B/C
-                if isinstance(y_return, (pd.Series, pd.DataFrame)) and not isinstance(
-                    y_return.index, pd.MultiIndex
-                ):
-                    ser_level_name = self._y.index.names[-2] or "series"
-                    # use the sole training column as the series label
-                    ser_label = (
-                        self._y.columns[0]
-                        if hasattr(self._y, "columns") and len(self._y.columns) == 1
-                        else "series"
-                    )
-                    y_return = y_return.copy()
-                    # make sure we have a DataFrame
-                    if not isinstance(y_return, pd.DataFrame):
-                        y_return = y_return.to_frame(
-                            self._y.columns[0] if hasattr(self._y, "columns") else "y"
-                        )
-                    y_return[ser_level_name] = ser_label
-                    y_return = y_return.set_index(ser_level_name, append=True)
-                    # reorder to (series, time)
-                    y_return.index = y_return.index.swaplevel(-1, -2)
-                    y_return = y_return.sort_index()
-
+            yi_grp = self._y.index.names[0:-1]
+            y_return = y_pred.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
+        elif isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
+            y_return = y_pred.iloc[fh_idx]
+            if hasattr(y_return.index, "freq"):
+                if y_return.index.freq != y_pred.index.freq:
+                    y_return.index.freq = None
         else:
-            # Univariate / no-multiindex: just select rows.
-            if isinstance(y_pred, (pd.Series, pd.DataFrame)):
-                y_return = y_pred.iloc[fh_idx]
-                # keep pandas from complaining about freq mismatches
-                if hasattr(y_return.index, "freq") and hasattr(y_pred.index, "freq"):
-                    if y_return.index.freq != y_pred.index.freq:
-                        y_return.index.freq = None
-            else:
-                y_return = y_pred[fh_idx]
-
+            y_return = y_pred[fh_idx]
         return y_return
 
-    # def _generate_fh_no_gaps(self, fh):
-    #     """Create a forecasting horizon with no gaps for continuous indexing."""
-    #     fh_rel = fh.to_relative(self.cutoff)
-    #     y_lags = list(fh_rel)
-
-    #     # Ensure all positive forecast horizons are covered
-    #     y_lags_no_gaps = range(1, y_lags[-1] + 1)
-    #     y_abs_no_gaps = ForecastingHorizon(
-    #         list(y_lags_no_gaps), is_relative=True, freq=self._cutoff
-    #     ).to_absolute_index(self._cutoff)
-
-    #     return y_abs_no_gaps, y_lags_no_gaps
-
-    # def _generate_fh_no_gaps(self, fh):
-    #     """Return a dense (no-gaps) absolute index.
-
-    #     From cutoff through max fh, plus its relative lags.
-
-    #     Parameters
-    #     ----------
-    #     fh : ForecastingHorizon or array-like
-
-    #     Returns
-    #     -------
-    #     y_abs_no_gaps : pd.Index
-    #         Absolute (time) index from cutoff+1 through cutoff+max(fh) without gaps.
-    #     y_lags_no_gaps : range
-    #         1..max(fh) as integer relative lags.
-    #     """
-    #     fh_arr = _ensure_relative_oos_int_fh(fh, cutoff=self.cutoff)
-    #     fh_max = int(np.max(fh_arr)) if len(fh_arr) else 0
-
-    #     # Dense relative lags 1..fh_max
-    #     y_lags_no_gaps = range(1, fh_max + 1)
-
-    #     # Turn dense lags into absolute time index from the current cutoff
-    #     dense_fh = ForecastingHorizon(list(y_lags_no_gaps), is_relative=True)
-    #     y_abs_no_gaps = dense_fh.to_absolute_index(self.cutoff)
-
-    #     return y_abs_no_gaps, y_lags_no_gaps
-
-    # def _generate_fh_no_gaps(self, fh):
-    #     """Return a gapless absolute FH and the dense relative steps [1..fh_max]."""
-    #     # normalize to relative ints ahead of cutoff
-    #     fh_rel = _ensure_relative_oos_int_fh(fh, cutoff=self.cutoff)
-    #     fh_max = int(np.max(fh_rel)) if len(fh_rel) else 0
-    #     y_lags_no_gaps = range(1, fh_max + 1)
-
-    #     # keep time type/freq consistent with training index
-    #     dense_fh_rel = ForecastingHorizon(
-    #         list(y_lags_no_gaps), is_relative=True, freq=self.cutoff
-    #     )
-    #     dense_fh_abs = dense_fh_rel.to_absolute(self.cutoff)  # <-- FH (not Index)
-
-    #     return dense_fh_abs, y_lags_no_gaps
-
-    # def _generate_fh_no_gaps(self, fh):
-
-    #     # ensure cutoff is a scalar label, not a 1-element Index
-    #     cutoff_scalar = self.cutoff
-    #     if isinstance(cutoff_scalar, (pd.Index, pd.PeriodIndex, pd.DatetimeIndex)):
-    #         cutoff_scalar = cutoff_scalar[0]
-
-    #     fh_rel = _ensure_relative_oos_int_fh(fh, cutoff=cutoff_scalar)
-    #     fh_max = int(np.max(fh_rel)) if len(fh_rel) else 0
-    #     y_lags_no_gaps = range(1, fh_max + 1)
-
-    #     # --- derive a proper frequency for the relative FH ---
-    #     freq = None
-    #     idx = getattr(self, "_y", None)
-    #     if idx is not None:
-    #         idx = self._y.index
-    #         if isinstance(idx, (pd.DatetimeIndex, pd.PeriodIndex)):
-    #             freq = idx.freq
-    #             if freq is None:
-    #                 try:
-    #                     freq = pd.infer_freq(idx)
-    #                 except Exception:
-    #                     freq = None
-    #     if freq is None:
-    #         # fall back to freq of cutoff when available
-    #         #     (works for Period; Timestamp has no freq)
-    #         if isinstance(cutoff_scalar, pd.Period):
-    #             freq = cutoff_scalar.freq
-    #         # for plain Timestamp without index freq, leave freq=None (no safe guess)
-
-    #     # build a relative FH and carry the freq so
-    #     #     .to_absolute(...) can offset correctly
-    #     dense_fh_rel = ForecastingHorizon(list(y_lags_no_gaps), is_relative=True,
-    #                                       freq=freq)
-
-    #     # convert to absolute using the scalar cutoff
-    #     dense_fh_abs = dense_fh_rel.to_absolute(cutoff_scalar)
-    #     return dense_fh_abs, y_lags_no_gaps
-
     def _generate_fh_no_gaps(self, fh):
-        """Return a gapless absolute FH and the dense relative steps [1..fh_max]."""
-        # 1) scalar cutoff
-        cutoff_scalar = self.cutoff
-        if isinstance(cutoff_scalar, (pd.Index, pd.PeriodIndex, pd.DatetimeIndex)):
-            cutoff_scalar = cutoff_scalar[0]
+        """Create a forecasting horizon with no gaps for continuous indexing."""
+        fh_rel = fh.to_relative(self.cutoff)
+        y_lags = list(fh_rel)
 
-        # 2) requested FH in absolute labels (pd.Index/PeriodIndex/DatetimeIndex/int)
-        if isinstance(fh, ForecastingHorizon):
-            abs_fh = fh.to_absolute(cutoff_scalar).to_pandas()
-        else:
-            # treat as relative steps
-            rel = _ensure_relative_oos_int_fh(fh, cutoff=cutoff_scalar)
-            fh_rel = ForecastingHorizon(list(rel), is_relative=True)
-            abs_fh = fh_rel.to_absolute(cutoff_scalar).to_pandas()
+        # Ensure all positive forecast horizons are covered
+        y_lags_no_gaps = range(1, y_lags[-1] + 1)
+        y_abs_no_gaps = ForecastingHorizon(
+            list(y_lags_no_gaps), is_relative=True, freq=self._cutoff
+        ).to_absolute_index(self._cutoff)
 
-        if len(abs_fh) == 0:
-            # nothing requested -> empty absolute index and empty dense lags
-            return pd.Index([], dtype=getattr(self._y.index, "dtype", None)), range(
-                1, 1
-            )
-
-        # 3) compute inclusive [cutoff+1 ... max(abs_fh)]
-        last_abs = abs_fh.max()
-
-        def _step_forward(label, n=1):
-            # advance one step according to index type
-            if isinstance(label, pd.Period):
-                return label + n
-
-            if isinstance(label, pd.Timestamp):
-                # prefer stored freq; else infer from y.index
-                idx = getattr(getattr(self, "_y", None), "index", None)
-                if isinstance(idx, pd.MultiIndex):
-                    # use the time level for frequency inference
-                    idx = idx.get_level_values(-1)
-
-                freq = getattr(idx, "freq", None)
-                if freq is None and idx is not None:
-                    try:
-                        freq = pd.infer_freq(idx)
-                    except Exception:
-                        freq = None
-
-                if freq is None:
-                    # default to daily step if nothing is available
-                    return label + pd.Timedelta(days=n)
-
-                return pd.date_range(
-                    start=label, periods=n + 1, freq=freq, tz=label.tz
-                )[-1]
-
-            # integer-like
-            return label + n
-
-        first_abs = _step_forward(cutoff_scalar, 1)
-
-        # 4) build gapless absolute index
-        if isinstance(last_abs, pd.Period):
-            gapless_abs = pd.period_range(
-                start=first_abs, end=last_abs, freq=last_abs.freq
-            )
-        elif isinstance(last_abs, pd.Timestamp):
-            # same tz and inferred/original frequency
-            # Get a 1D time index to infer frequency from (handles MultiIndex panels)
-            _idx = getattr(getattr(self, "_y", None), "index", None)
-            if isinstance(_idx, pd.MultiIndex):
-                _time_idx = _idx.get_level_values(-1)
-            else:
-                _time_idx = _idx
-
-            # Try explicit .freq first, then infer; if unavailable, leave as None
-            freq = getattr(_time_idx, "freq", None)
-            if freq is None and _time_idx is not None:
-                try:
-                    freq = pd.infer_freq(_time_idx)
-                except Exception:
-                    freq = None
-
-            if freq is None:
-                # fallback: day
-                gapless_abs = pd.date_range(
-                    start=first_abs, end=last_abs, tz=last_abs.tz
-                )
-            else:
-                gapless_abs = pd.date_range(
-                    start=first_abs, end=last_abs, freq=freq, tz=last_abs.tz
-                )
-        else:
-            # integers
-            gapless_abs = pd.Index(range(int(first_abs), int(last_abs) + 1))
-
-        # 5) steps has the same length as the gapless absolute index
-        steps_no_gaps = range(1, len(gapless_abs) + 1)
-
-        # return as absolute FH (callers use .to_pandas())
-        dense_fh_abs = ForecastingHorizon(gapless_abs, is_relative=False)
-        return dense_fh_abs, steps_no_gaps
+        return y_abs_no_gaps, y_lags_no_gaps
 
     def _predict_out_of_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff)."""
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
-        # Strategy selection:
-        #   global  -> optimized v2 global path (fallback to v1 inside if exogenous X)
-        #   local   -> optimized v2 local path
-        #   panel   -> fallback to legacy v1 path for correctness (gappy fh indexing)
-        #             TODO: implement optimized v2 panel path (#panel-optimization)
-
-        if isinstance(getattr(self, "estimator_", None), pd.Series):
-            # Produce a DataFrame of repeated means on the absolute fh index
-            return self._create_fallback_df(fh)
-
+        # Strategy selection (conservative enablement of optimized paths):
+        #   constant-mean (estimator_ is Series) -> construct constant preds directly
+        #   local, single-index, no exogenous X -> optimized v2 local path
+        #   all other scenarios (global, panel, exogenous, multiindex) -> legacy v1
         already_filtered = False
-        if self.pooling == "panel":
-            # v1 path already returns only the requested fh rows
+        if isinstance(getattr(self, "estimator_", None), pd.Series):
+            # constant mean fallback created in fit when no full lag rows available
+            fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+            means = self.estimator_
+            data = {col: np.repeat(val, len(fh_abs)) for col, val in means.items()}
+            y_pred = pd.DataFrame(data, index=fh_abs)
+            already_filtered = True  # exactly matches requested absolute fh
+        elif self.pooling == "panel":
             y_pred = self._predict_out_of_sample_v1(X_pool, fh)
-            already_filtered = True
-        elif self.pooling == "global" and isinstance(self._y.index, pd.MultiIndex):
-            # print(
-            #     "OriginalRecursiveReductionForecaster._predict_out_of_sample() - here"
-            # )
-            y_pred = self._predict_out_of_sample_v2_global(X_pool, fh)
-            # v2_global falls back to v1 when X is present; v1 already returns only the
-            # requested fh rows, so skip the second filtering step.
-            if (self._X is not None) or (X_pool is not None):
-                already_filtered = True
-        elif self.pooling == "local" or not isinstance(self._y.index, pd.MultiIndex):
-            y_pred = self._predict_out_of_sample_v2_local(X_pool, fh)
+            already_filtered = True  # v1 returns only requested fh rows
         else:
-            raise ValueError(
-                "Unsupported pooling setting for RecursiveReductionForecaster: "
-                f"{self.pooling}"
+            use_v2_local = (
+                self.pooling == "local"
+                and X_pool is None
+                and not isinstance(self._y.index, pd.MultiIndex)
             )
+            if use_v2_local:
+                y_pred = self._predict_out_of_sample_v2_local(X_pool, fh)
+            else:
+                # Try fast tail optimization (avoids recomputing full lag features)
+                y_pred_fast = self._predict_out_of_sample_v1_fasttail(X_pool, fh)
+                if y_pred_fast is not None:
+                    y_pred = y_pred_fast
+                else:
+                    y_pred = self._predict_out_of_sample_v1(X_pool, fh)
+                already_filtered = True
 
         # Filter to requested fh only unless already filtered in path
         if already_filtered:
@@ -4444,120 +2937,174 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_return
 
-    def _predict_out_of_sample_v1(self, X_pool, _fh):
-        """Recursive reducer: predict out of sample (ahead of cutoff) — v1 semantics.
+    def _predict_out_of_sample_v1(self, X_pool, fh):
+        """Recursive reducer: predict out of sample (ahead of cutoff).
 
-        Use strict index typing & accumulator behaviour to match v2 outputs.
+        Prior state before PR 7380 - left for comparison and potential refactor.
         """
-        # this routine has a bug for relative fh
-        # instead of tracking it down, just use absolute fh
-        fh = _fh.to_absolute(self._cutoff_as_1elem_index_with_freq())
+        from sktime.transformations.series.lag import Lag
 
-        # final, possibly gappy index we must return (typed like v2)
-        fh_idx = self._get_expected_pred_idx(fh=fh)
-        self._assert_future_X_coverage(X_pool, fh)
-
-        # dense horizon driver (just for loop count)
-        _, steps_no_gaps = self._generate_fh_no_gaps(fh)
-
-        # recursive state starts at the observed y
-        y_plus_preds = self._y
-
-        # use the *fitted* lagger from training, not a new one
-        lagger_y_to_X = self.lagger_y_to_X_
-
-        # extend-by-one helper; include impute if configured (like original v1)
-        lag_plus = Lag(lags=1, index_out="extend", keep_column_names=True)
-        if self._impute_method is not None:
-            lag_plus = lag_plus * self._impute_method.clone()
-
-        # exogenous pool we may extend in lock-step
-
-        X_ext = X_pool
-
-        if X_ext is not None and self.X_treatment == "shifted":
-            # print(f"X_ext pre = {X_ext}")
-            X_ext = X_ext.shift(1)
-            # print(f"X_ext post = {X_ext}")
-
-        # pre-allocate an accumulator exactly on requested horizons (typed)
-        y_pred_full = _create_fcst_df(fh_idx, self._y)
-
-        # print("OriginalRecursiveReductionForecaster._predict_out_of_sample_v1()")
-        # print(f"- steps_no_gaps = {steps_no_gaps}")
-
-        for _ in steps_no_gaps:
-            # keep frequency consistent if fh carries a freq
-            if getattr(self.fh, "freq", None) is not None:
-                y_plus_preds = _asfreq_per_series_safe(
-                    y_plus_preds, self.fh.freq, how="start"
-                )
-
-            # expose the next prediction timestamp
-            y_plus_one = lag_plus.fit_transform(y_plus_preds)
-            next_time_raw = (
-                y_plus_one.index.get_level_values(-1)[-1]
-                if isinstance(y_plus_one.index, pd.MultiIndex)
-                else y_plus_one.index[-1]
-            )
-
-            # print("OriginalRecursiveReductionForecaster._predict_out_of_sample_v1()")
-            # print(f" - next_time_raw = {next_time_raw}")
-
-            # recursive design from y-lags, extended by one to include next_time_raw
-            Xt = lagger_y_to_X.transform(y_plus_preds)
-            Xtt = Xt.copy()
-            # Xtt = lag_plus.fit_transform(Xt)
-
-            # pick the single design row for the next timestamp
-            if isinstance(Xtt.index, pd.MultiIndex):
-                Xtt_row = Xtt.xs(next_time_raw, level=-1, drop_level=False)
-            else:
-                Xtt_row = Xtt.loc[[next_time_raw]]
-
-            # if exog is present: extend/slice it in lock-step and concat to design
-            if X_ext is not None:
-                if isinstance(X_ext.index, pd.MultiIndex):
-                    X_ex_row = X_ext.xs(next_time_raw, level=-1, drop_level=False)
-                else:
-                    X_ex_row = X_ext.loc[[next_time_raw]]
-                # print(
-                #     "OriginalRecursiveReductionForecaster._predict_out_of_sample_v1()"
-                # )
-                # print(f" - X_ex_row = {X_ex_row}")
-                Xtt_row = pd.concat([X_ex_row, Xtt_row], axis=1)
-
-            Xtt_row = prep_skl_df(Xtt_row)
-
-            # build the *typed* index for this step so it matches v2 exactly
-            step_idx = self._get_expected_pred_idx(fh=[next_time_raw])
-            n_rows = len(step_idx)
-
-            # 1-step prediction for all series present at this timestamp
-            est = self.estimator_
-            if isinstance(est, pd.Series):
-                # constant-mean fallback: repeat row-wise
-                vals = np.tile(est.values, (n_rows, 1))
-                y_step = pd.DataFrame(vals, index=step_idx, columns=self._y.columns)
-            else:
-                y_hat = est.predict(Xtt_row)
-                y_step = pd.DataFrame(y_hat, index=step_idx, columns=self._y.columns)
-
-            # write into accumulator (last value wins) and into recursive state
-            y_pred_full.update(y_step)
-            y_plus_preds = y_plus_preds.combine_first(y_step)
-
-        # return exactly the requested horizons, already typed
-        return y_pred_full.loc[fh_idx]
-
-    def _predict_in_sample(self, X_pool, fh):
-        """Recursive reducer: predict out of sample (in past of of cutoff)."""
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
 
         lagger_y_to_X = self.lagger_y_to_X_
 
-        fh_abs = fh.to_absolute(self._cutoff_scalar())
+        y_abs_no_gaps, y_lags_no_gaps = self._generate_fh_no_gaps(fh)
+
+        # legacy behaviour: recompute transforms each recursive step (slow but baseline-correct)
+        y_plus_preds = self._y
+        y_pred_list = []
+
+        for _ in y_lags_no_gaps:
+            if hasattr(self.fh, "freq") and self.fh.freq is not None:
+                y_plus_preds = apply_method_per_series(
+                    y_plus_preds,
+                    "asfreq",
+                    self.fh.freq,
+                    how="start",
+                )
+            Xt = lagger_y_to_X.transform(y_plus_preds)
+
+            lag_plus = Lag(lags=1, index_out="extend", keep_column_names=True)
+            if self._impute_method is not None:
+                lag_plus = lag_plus * self._impute_method.clone()
+
+            Xtt = lag_plus.fit_transform(Xt)
+            y_plus_one = lag_plus.fit_transform(y_plus_preds)
+            predict_idx = y_plus_one.iloc[[-1]].index.get_level_values(-1)[0]
+            Xtt_predrow = slice_at_ix(Xtt, predict_idx)
+            if X_pool is not None:
+                X_pool_local = lag_plus.fit_transform(X_pool)
+                Xtt_predrow = pd.concat(
+                    [slice_at_ix(X_pool_local, predict_idx), Xtt_predrow], axis=1
+                )
+
+            Xtt_predrow = prep_skl_df(Xtt_predrow)
+
+            estimator = self.estimator_
+            if isinstance(estimator, pd.Series):
+                y_pred_i = pd.DataFrame(index=[0], columns=y_cols)
+                y_pred_i.iloc[0] = estimator
+            else:
+                y_pred_i = estimator.predict(Xtt_predrow)
+
+            y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
+            y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
+
+            y_pred_list.append(y_pred_new)
+            y_plus_preds = y_plus_preds.combine_first(y_pred_new)
+
+        y_pred = pd.concat(y_pred_list).sort_index()
+        y_pred = y_pred.loc[fh_idx]
+        return y_pred
+
+    def _predict_out_of_sample_v1_fasttail(self, X_pool, fh):
+        """Optimized variant of v1 using only tail window for lag transforms.
+
+        Safe conditions only: single-index (not MultiIndex), window_length>0.
+        Falls back (returns None) if any condition not met, so caller can
+        delegate to legacy v1.
+
+        This reduces per-step transformation cost from O(n_total) to O(window).
+        """
+        from sktime.transformations.series.lag import Lag
+
+        # Guard conditions: only single-index local/global single series
+        # Additional restrictions for correctness parity:
+        #  - no exogenous X provided in fit or predict (X_pool/self._X)
+        #  - only local pooling (global/panel use specialized logic)
+        #  - no custom imputation transformer (could depend on earlier history)
+        if isinstance(self._y.index, pd.MultiIndex):
+            return None
+        if self._X is not None or X_pool is not None:
+            return None
+        if self.pooling != "local":
+            return None
+        if self._impute_method is not None:
+            return None
+        if self.window_length <= 0:
+            return None
+        if getattr(self, "lagger_y_to_X_", None) is None:
+            return None
+
+        lagger_y_to_X = self.lagger_y_to_X_
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_cols = self._y.columns
+
+        # derive gapless relative horizon sequence
+        y_abs_no_gaps, y_lags_no_gaps = self._generate_fh_no_gaps(fh)
+        window_len = self.window_length
+
+        y_plus_preds = self._y
+        y_pred_list = []
+
+        # pre-instantiate lag_plus (small transformer) to avoid re-creation
+        base_lag_plus = Lag(lags=1, index_out="extend", keep_column_names=True)
+
+        for _ in y_lags_no_gaps:
+            # ensure frequency alignment if fh has freq
+            if hasattr(self.fh, "freq") and self.fh.freq is not None:
+                y_plus_preds = apply_method_per_series(
+                    y_plus_preds, "asfreq", self.fh.freq, how="start"
+                )
+
+            # take only tail window needed for lag construction (+1 for shift)
+            tail_needed = window_len + 1
+            y_tail = y_plus_preds.tail(tail_needed)
+
+            # build lagged features on tail only
+            Xt_tail = lagger_y_to_X.transform(y_tail)
+            lag_plus = base_lag_plus
+            if self._impute_method is not None:
+                # clone each loop since transformers can be stateful after fit
+                lag_plus = base_lag_plus * self._impute_method.clone()
+
+            Xtt_tail = lag_plus.fit_transform(Xt_tail)
+            y_plus_one_tail = lag_plus.fit_transform(y_tail)
+            predict_idx = y_plus_one_tail.iloc[[-1]].index.get_level_values(-1)[0]
+            Xtt_predrow = slice_at_ix(Xtt_tail, predict_idx)
+
+            if X_pool is not None:
+                # only take matching row(s) for predict index from provided X_pool
+                try:
+                    X_pool_pred = slice_at_ix(X_pool, predict_idx)
+                except KeyError:
+                    X_pool_pred = None
+                if X_pool_pred is not None and not X_pool_pred.empty:
+                    Xtt_predrow = pd.concat([X_pool_pred, Xtt_predrow], axis=1)
+
+            Xtt_predrow = prep_skl_df(Xtt_predrow)
+
+            estimator = self.estimator_
+            if isinstance(estimator, pd.Series):
+                # Fallback to legacy behaviour if constant mean (unlikely here)
+                return None
+            else:
+                y_pred_i = estimator.predict(Xtt_predrow)
+
+            y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
+            y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
+
+            y_pred_list.append(y_pred_new)
+            # append prediction to growing series for subsequent lagging
+            y_plus_preds = y_plus_preds.combine_first(y_pred_new)
+
+        if not y_pred_list:
+            return None
+        y_pred = pd.concat(y_pred_list).sort_index()
+        y_pred = y_pred.loc[fh_idx]
+        return y_pred
+
+    def _predict_in_sample(self, X_pool, fh):
+        """Recursive reducer: predict out of sample (in past of of cutoff)."""
+        from sktime.transformations.series.lag import Lag
+
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_cols = self._y.columns
+
+        lagger_y_to_X = self.lagger_y_to_X_
+
+        fh_abs = fh.to_absolute(self.cutoff)
         y = self._y
 
         Xt = lagger_y_to_X.transform(y)
@@ -4610,6 +3157,11 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sklearn.linear_model import LinearRegression
+
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.transformations.series.impute import Imputer
+
         est = LinearRegression()
         forecaster_imputer = Imputer(
             method="forecaster", forecaster=DirectReductionForecaster(estimator=est)
@@ -4654,208 +3206,6 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         }
 
         return [params1, params2, params3, params4, params5, params6]
-
-
-class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
-    """Public class with wide/long auto-handling for pooling='global'.
-
-    CASE 1 (WIDE):
-        time index (one level) + multiple cols -> as multiple series.
-            Convert to LONG for _fit; remember flags; _predict then return WIDE.
-    CASE 2 (LONG): MultiIndex (series, time) -> classic global training on LONG.
-                   Normalize to single target col 'y'; _predict then return WIDE.
-
-    For pooling!='global' or univariate inputs, defer to the original _fit/_predict.
-    """
-
-    # Tell BaseForecaster we can handle multivariate & hierarchical without vectorizing
-    _tags = dict(OriginalRecursiveReductionForecaster._tags)
-    _tags.update(
-        {
-            "capability:multivariate": True,  # do not split DataFrame columns
-            # keep inner mtypes broad so our _fit/_predict see the full object
-            "capability:exogenous": True,
-            "capability:insample": True,
-            "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.DataFrame"],
-            "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-            "tests:core": True,
-        }
-    )
-
-    # flags remembered after _fit
-    _was_wide_input: bool = False
-    _was_long_input: bool = False
-    _orig_columns = None
-    _time_name: str = "time"
-    _series_name: str = "series"
-
-    def _broadcast_X_to_panel(self, X: pd.DataFrame, y_index: pd.Index) -> pd.DataFrame:
-        """Handle y when MultiIndex (..., time) and X is single-level (time).
-
-        Broadcast X across the leading levels so X and y share the same index.
-        Works for any number of leading levels.
-        """
-        # nothing to do if: no X, y is not MultiIndex, or X already MultiIndex
-        if (
-            X is None
-            or not isinstance(y_index, pd.MultiIndex)
-            or isinstance(X.index, pd.MultiIndex)
-        ):
-            return X
-
-        # all leading levels form the "instance" key; last level is time
-        # e.g. names ["gender","grade","time"] -> keys are tuples (gender, grade)
-        leading_names = list(y_index.names[:-1])
-        full_names = list(y_index.names)
-        if not leading_names:
-            # edge case: y has only one level (shouldn't come here), just return X
-            return X
-
-        # unique keys in the same order as they appear in y
-        leading_keys = y_index.droplevel(
-            -1
-        ).unique()  # MultiIndex of tuples (or Index if 1 level)
-
-        # Broadcast: a dict with tuple keys is expanded into multiple outer index levels
-        X_broadcast = pd.concat(dict.fromkeys(leading_keys, X), names=full_names)
-        return X_broadcast
-
-    def fit(self, y, X=None, fh=None):
-        # remember original index/columns for roundtripping
-        # (you already set these in _to_long_from_wide; keep that behavior)
-        # dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
-        # dump_obj("RecursiveReductionForecaster.fit()", "X", X)
-        if getattr(self, "pooling", None) == "global" and self._is_wide(y):
-            y = self._to_long_from_wide(y)
-            self._was_wide_input = True
-            self._was_long_input = False
-        else:
-            # keep state consistent
-            self._was_wide_input = False
-            self._was_long_input = isinstance(getattr(y, "index", None), pd.MultiIndex)
-
-        X = self._broadcast_X_to_panel(X, y.index)
-
-        # IMPORTANT:
-        # call base public fit (not _fit), so BaseForecaster stores y_metadata, etc
-        return super().fit(y=y, X=X, fh=fh)
-
-    # 3) Override PUBLIC predict to roundtrip back to WIDE if we trained from WIDE.
-    def predict(self, fh=None, X=None):
-        # dump_obj("RecursiveReductionForecaster.predict() - entered", "X", X)
-        y_pred = super().predict(
-            fh=fh, X=X
-        )  # will return LONG mtype because we trained on LONG
-        if getattr(self, "_was_wide_input", False):
-            # convert pooled LONG back to WIDE columns in original order
-            y_pred = self._to_wide_from_long(y_pred)
-        # dump_obj("RecursiveReductionForecaster.predict() - exiting", "y_pred", y_pred)
-        return y_pred
-
-    # -------- helpers --------
-    def _is_wide(self, y):
-        return (
-            isinstance(y, pd.DataFrame)
-            and not isinstance(y.index, pd.MultiIndex)
-            and y.shape[1] >= 2
-        )
-
-    def _is_long_multi(self, y):
-        return isinstance(y.index, pd.MultiIndex) and y.index.nlevels >= 2
-
-    def _to_long_from_wide(self, y_wide: pd.DataFrame) -> pd.DataFrame:
-        self._time_name = y_wide.index.name or self._time_name
-        self._orig_columns = list(y_wide.columns)
-        y_long = y_wide.stack().to_frame("y")  # (time, series)
-        y_long.index = y_long.index.set_names([self._time_name, self._series_name])
-        y_long = y_long.swaplevel(0, 1).sort_index()  # (series, time)
-        return y_long
-
-    def _to_wide_from_long(self, y_long):
-        # Accept Series or DataFrame; expect index=(series, time)
-        if isinstance(y_long, pd.Series):
-            y_long = y_long.to_frame("y")
-        if not isinstance(y_long.index, pd.MultiIndex) or y_long.index.nlevels < 2:
-            return y_long
-
-        df = y_long.copy()
-        df.index = df.index.set_names([self._series_name, self._time_name])
-        wide = df.unstack(level=0)  # columns -> (val_col, series)
-        if isinstance(
-            wide.columns, pd.MultiIndex
-        ) and "y" in wide.columns.get_level_values(0):
-            wide = wide["y"]
-
-        # restore original column order if available
-        if self._orig_columns is not None:
-            existing = [c for c in self._orig_columns if c in wide.columns]
-            missing = [c for c in wide.columns if c not in existing]
-            wide = wide[existing + missing]
-
-        return wide
-
-    # -------- core overrides --------
-    def _fit(self, y, X=None, fh=None):
-        # If not global pooling, retain legacy behavior
-        if getattr(self, "pooling", None) != "global":
-            self._was_wide_input = False
-            self._was_long_input = False
-            return OriginalRecursiveReductionForecaster._fit(self, y, X=X, fh=fh)
-
-        self._uses_exog = X is not None
-
-        # CASE 1: WIDE (time index + multiple columns)
-        if self._is_wide(y):
-            if X is not None:
-                raise ValueError("Wide data plus exogenous not supported")
-            y_long = self._to_long_from_wide(y)
-            self._was_wide_input = True
-            self._was_long_input = False
-            # NOTE: if you later pass X with concurrent treatment,
-            #           mirror the transform for X here.
-            ret = OriginalRecursiveReductionForecaster._fit(
-                self, y=y_long, X=None, fh=fh
-            )
-            return ret
-
-        # CASE 2: LONG (MultiIndex >=2 levels; last level should be time per spec)
-        if self._is_long_multi(y):
-            # normalize to a single target column named 'y'
-            if isinstance(y, pd.Series):
-                y_long = y.to_frame("y")
-            elif isinstance(y, pd.DataFrame):
-                if y.shape[1] == 1:
-                    y_long = (
-                        y.rename(columns={y.columns[0]: "y"})
-                        if y.columns[0] != "y"
-                        else y
-                    )
-                else:
-                    col = "y" if "y" in y.columns else y.columns[0]
-                    y_long = y[[col]].rename(columns={col: "y"})
-            else:
-                y_long = pd.DataFrame(y, columns=["y"])
-
-            # remember level names, if present
-            if isinstance(y_long.index, pd.MultiIndex):
-                names = list(y_long.index.names)
-                if names and len(names) >= 2:
-                    self._series_name = names[-2] or self._series_name
-                    self._time_name = names[-1] or self._time_name
-
-            ## self._was_wide_input = False - this is set correctly in fit() override
-            self._was_long_input = True
-            return OriginalRecursiveReductionForecaster._fit(self, y=y_long, X=X, fh=fh)
-
-        # Otherwise (univariate or other shapes): delegate to legacy
-        self._was_wide_input = False
-        self._was_long_input = False
-        return OriginalRecursiveReductionForecaster._fit(self, y=y, X=X, fh=fh)
-
-
-#    def _predict(self, fh=None, X=None):
-#        y_pred = OriginalRecursiveReductionForecaster._predict(self, fh=fh, X=X)
-#        return y_pred
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
@@ -4929,7 +3279,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "capability:exogenous": True,
+        "ignores-exogeneous-X": False,
         "capability:missing_values": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
@@ -4999,19 +3349,16 @@ class YfromX(BaseForecaster, _ReducerMixin):
         _est_type = self._est_type
 
         if X is None:
+            from sklearn.dummy import DummyRegressor
+
             if _est_type == "regressor":
                 estimator = DummyRegressor()
             else:  # "proba_regressor"
-                if not _check_soft_dependencies("skpro", severity="none"):
-                    raise ModuleNotFoundError(
-                        "Probability forecasting with reduction requires optional "
-                        "dependency 'skpro'. Please `pip install skpro` to use this "
-                        "mode."
-                    )
                 from skpro.regression.residual import ResidualDouble
 
                 dummy = DummyRegressor()
                 estimator = ResidualDouble(dummy)
+
             X = prep_skl_df(y, copy_df=True)
         else:
             X = prep_skl_df(X, copy_df=True)
@@ -5247,6 +3594,11 @@ class YfromX(BaseForecaster, _ReducerMixin):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.linear_model import LinearRegression
+
+        from sktime.utils.dependencies import _check_soft_dependencies
+
         params1 = {
             "estimator": LinearRegression(),
             "pooling": "local",
@@ -5266,7 +3618,6 @@ class YfromX(BaseForecaster, _ReducerMixin):
                 "estimator": ResidualDouble.create_test_instance(),
                 "pooling": "global",
             }
-
             params = params + [params3]
 
         return params

@@ -68,8 +68,8 @@ EXCLUDE_ESTIMATORS = [
     "PytorchForecastingDeepAR",
     # STDBSCAN is not API compliant, see #7994
     "STDBSCAN",
-    # Temporarily remove RRF from tests, while #7380 is not merged
-    "RecursiveReductionForecaster",
+    # DistanceFeatures does not work for hierarchical data, see #8077
+    "DistanceFeatures",
     # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
     "TimeSeriesKvisibility",
     # fails due to #8151 or #8059
@@ -312,7 +312,7 @@ EXCLUDED_TESTS_BY_TEST = {
         # too after adding test parameters to them
         "BaggingForecaster",
         "ClustererPipeline",
-        "DirectTabularRegressionForecaster",
+        # "DirectTabularRegressionForecaster",
         "EnbPIForecaster",
         "FittedParamExtractor",
         "ForecastingOptunaSearchCV",
@@ -358,7 +358,7 @@ EXCLUDED_TESTS_BY_TEST = {
 EXCLUDE_SOFT_DEPS = [
     "BaggingForecaster",
     "ClustererPipeline",
-    "DirectTabularRegressionForecaster",
+    # "DirectTabularRegressionForecaster",
     "EnbPIForecaster",
     "FittedParamExtractor",
     "ForecastingOptunaSearchCV",
