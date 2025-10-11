@@ -757,7 +757,7 @@ class ProximityStump(BaseClassifier):
     def _distance_to_exemplars_inst_wrapper(
         self, exemplars, instance, distance_measure_seed, X_for_measure
     ):
-        """Wrapper to compute distance that recreates distance measure.
+        """Compute distance that recreates distance measure.
 
         Parameters
         ----------
