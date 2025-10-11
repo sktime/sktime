@@ -7,7 +7,7 @@ Implements DML methodology to de-confound exposure effects in forecasting.
 """
 
 __all__ = ["DMLForecaster"]
-__author__ = ["XAheli"]
+__author__ = ["geetu040", "XAheli"]
 
 import pandas as pd
 from sklearn.base import clone
@@ -99,19 +99,18 @@ class DMLForecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["XAheli"],
-        "maintainers": ["XAheli"],
+        "authors": ["geetu040", "XAheli"],
+        "maintainers": ["geetu040", "XAheli"],
         "scitype:y": "univariate",
-        "requires-fh-in-fit": False,
-        "capability:missing_values": False,
-        "ignores-exogeneous-X": False,  # Requires X for causal inference
-        "capability:pred_int": True,
-        "capability:pred_var": True,
-        "capability:pred_quantiles": True,
+        "capability:exogenous": True,
         "capability:insample": True,
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "fit_is_empty": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        "capability:missing_values": True,
+        "capability:categorical_in_X": True,
+        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": "pd.DataFrame",
+        "requires-fh-in-fit": False,
     }
 
     def __init__(self, forecaster_y, forecaster_ex, exposure_vars, forecaster_res=None):
@@ -141,26 +140,52 @@ class DMLForecaster(BaseForecaster):
 
     def _update_tags_from_components(self):
         """Update forecaster tags based on component capabilities."""
-        # Missing values capability - all components must support it
-        miss_y = self.forecaster_y.get_tag("capability:missing_values", False)
-        miss_ex = self.forecaster_ex.get_tag("capability:missing_values", False)
-        miss_res = self.forecaster_res.get_tag("capability:missing_values", False)
+        exog = (
+            self.forecaster_y.get_tag("capability:exogenous")
+            or self.forecaster_ex.get_tag("capability:exogenous")
+            or self.forecaster_res.get_tag("capability:exogenous")
+        )
 
-        # Prediction interval capability - all components must support it
-        pred_int_y = self.forecaster_y.get_tag("capability:pred_int", False)
-        pred_int_ex = self.forecaster_ex.get_tag("capability:pred_int", False)
-        pred_int_res = self.forecaster_res.get_tag("capability:pred_int", False)
+        assert self.forecaster_y.get_tag("capability:insample"), (
+            "these have to do insample in all case"
+        )
+        assert self.forecaster_ex.get_tag("capability:insample"), (
+            "these have to do insample in all case"
+        )
+        in_sample = self.forecaster_res.get_tag("capability:insample")
 
-        # In-sample prediction capability
-        insample_y = self.forecaster_y.get_tag("capability:insample", False)
-        insample_ex = self.forecaster_ex.get_tag("capability:insample", False)
-        insample_res = self.forecaster_res.get_tag("capability:insample", False)
+        pred_int = (
+            self.forecaster_y.get_tag("capability:pred_int")
+            # and self.forecaster_ex.get_tag("capability:pred_int")
+            and self.forecaster_res.get_tag("capability:pred_int")
+        )
+
+        pred_int_insample = (
+            self.forecaster_y.get_tag("capability:pred_int:insample")
+            # and self.forecaster_ex.get_tag("capability:pred_int:insample")
+            and self.forecaster_res.get_tag("capability:pred_int:insample")
+        )
+
+        miss = (
+            self.forecaster_y.get_tag("capability:missing_values")
+            and self.forecaster_ex.get_tag("capability:missing_values")
+            and self.forecaster_res.get_tag("capability:missing_values")
+        )
+
+        cat = (
+            self.forecaster_y.get_tag("capability:categorical_in_X")
+            and self.forecaster_ex.get_tag("capability:categorical_in_X")
+            and self.forecaster_res.get_tag("capability:categorical_in_X")
+        )
 
         self.set_tags(
             **{
-                "capability:missing_values": miss_y and miss_ex and miss_res,
-                "capability:pred_int": pred_int_y and pred_int_ex and pred_int_res,
-                "capability:insample": insample_y or insample_ex or insample_res,
+                "capability:exogenous": exog,
+                "capability:insample": in_sample,
+                "capability:pred_int": pred_int,
+                "capability:pred_int:insample": pred_int_insample,
+                "capability:missing_values": miss,
+                "capability:categorical_in_X": cat,
             }
         )
 
