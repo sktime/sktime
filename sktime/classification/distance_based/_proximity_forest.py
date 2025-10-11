@@ -772,9 +772,7 @@ class ProximityStump(BaseClassifier):
         """
         # Recreate distance measure from seed to avoid pickling closure
         distance_measure = self.pick_distance_measure(distance_measure_seed)
-        return self._distance_to_exemplars_inst(
-            exemplars, instance, distance_measure
-        )
+        return self._distance_to_exemplars_inst(exemplars, instance, distance_measure)
 
     @staticmethod
     def _distance_to_exemplars_inst(exemplars, instance, distance_measure):
