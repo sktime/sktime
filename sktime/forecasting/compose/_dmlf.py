@@ -9,11 +9,11 @@ Implements DML methodology to de-confound exposure effects in forecasting.
 __all__ = ["DMLForecaster"]
 __author__ = ["geetu040", "XAheli"]
 
-import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import BaseForecaster
 
 
 class DMLForecaster(BaseForecaster):
@@ -241,45 +241,28 @@ class DMLForecaster(BaseForecaster):
         4. Fit forecaster_res on the residual relationship
         5. Fit final versions for prediction
         """
-        # Split exogenous data
         X_ex, X_conf = self._split_exogenous_data(X)
 
-        # Step 1: Fit outcome model for residuals (clone A)
-        self.forecaster_y_insample_ = clone(self.forecaster_y)
-        self.forecaster_y_insample_.fit(y, X=X_conf, fh=fh)
+        forecaster_y_insample = clone(self.forecaster_y)
+        forecaster_y_insample.fit(y=y, X=X_conf, fh=y.index)
+        y_res = forecaster_y_insample.predict_residuals()
 
-        # Get in-sample outcome residuals
-        if isinstance(y.index, pd.MultiIndex):
-            time_idx = y.index.get_level_values(-1).unique()
+        if X_ex is None:
+            X_ex_res = None
         else:
-            time_idx = y.index
+            forecaster_ex_insample = clone(self.forecaster_ex)
+            forecaster_ex_insample.fit(y=X_ex, X=X_conf, fh=y.index)
+            X_ex_res = forecaster_ex_insample.predict_residuals()
 
-        insample_fh = ForecastingHorizon(time_idx, is_relative=False)
-        y_pred_insample = self.forecaster_y_insample_.predict(fh=insample_fh, X=X_conf)
-        self.y_residuals_ = y - y_pred_insample
-
-        # Step 2: Fit exposure model for residuals
-        self.forecaster_ex_insample_ = clone(self.forecaster_ex)
-        self.forecaster_ex_insample_.fit(X_ex, X=X_conf, fh=fh)
-
-        # Get in-sample exposure residuals
-        X_ex_pred_insample = self.forecaster_ex_insample_.predict(
-            fh=insample_fh, X=X_conf
-        )
-        self.X_ex_residuals_ = X_ex - X_ex_pred_insample
-
-        # Step 3: Fit residual relationship
         self.forecaster_res_ = clone(self.forecaster_res)
-        self.forecaster_res_.fit(self.y_residuals_, X=self.X_ex_residuals_, fh=fh)
+        self.forecaster_res_.fit(y=y_res, X=X_ex_res, fh=fh)
 
-        # Step 4: Fit final versions for prediction
-        self.forecaster_y_final_ = clone(self.forecaster_y)
-        self.forecaster_y_final_.fit(y, X=X_conf, fh=fh)
+        self.forecaster_y_ = clone(self.forecaster_y)
+        self.forecaster_y_.fit(y=y, X=X_conf, fh=fh)
 
-        self.forecaster_ex_final_ = clone(self.forecaster_ex)
-        self.forecaster_ex_final_.fit(X_ex, X=X_conf, fh=fh)
-
-        return self
+        if X_ex is not None:
+            self.forecaster_ex_ = clone(self.forecaster_ex)
+            self.forecaster_ex_.fit(y=X_ex, X=X_conf, fh=fh)
 
     def _predict(self, fh=None, X=None):
         """Generate DML forecasts.
@@ -291,83 +274,104 @@ class DMLForecaster(BaseForecaster):
         4. Get causal forecast component: y_pred_causal
         5. Return combined forecast: y_pred_conf + y_pred_causal
         """
-        # Split exogenous data
-        X_ex_new, X_conf_new = self._split_exogenous_data(X)
+        X_ex, X_conf = self._split_exogenous_data(X)
 
-        # Base forecast from confounders
-        y_pred_conf = self.forecaster_y_final_.predict(fh=fh, X=X_conf_new)
+        if X_ex is None:
+            X_ex_res = None
+        else:
+            X_ex_res = self.forecaster_ex_.predict_residuals(y=X_ex, X=X_conf)
 
-        # De-confounded exposure
-        X_ex_pred = self.forecaster_ex_final_.predict(fh=fh, X=X_conf_new)
-        X_ex_deconf = X_ex_new - X_ex_pred
+        pred_base = self.forecaster_y_.predict(fh=fh, X=X_conf)
+        pred_res = self.forecaster_res_.predict(fh=fh, X=X_ex_res)
 
-        # Causal forecast component
-        y_pred_causal = self.forecaster_res_.predict(fh=fh, X=X_ex_deconf)
-
-        # Combined forecast
-        return y_pred_conf + y_pred_causal
+        return pred_base + pred_res
 
     def _predict_interval(self, fh, X=None, coverage=0.9):
         """Generate prediction intervals for DML forecasts."""
-        # Split exogenous data
-        X_ex_new, X_conf_new = self._split_exogenous_data(X)
+        X_ex, X_conf = self._split_exogenous_data(X)
 
-        # Base prediction intervals
-        pred_int_conf = self.forecaster_y_final_.predict_interval(
-            fh=fh, X=X_conf_new, coverage=coverage
+        if X_ex is None:
+            X_ex_res = None
+        else:
+            X_ex_res = self.forecaster_ex_.predict_residuals(y=X_ex, X=X_conf)
+
+        pred_int_base = self.forecaster_y_.predict_interval(
+            fh=fh, X=X_conf, coverage=coverage
+        )
+        pred_int_res = self.forecaster_res_.predict_interval(
+            fh=fh, X=X_ex_res, coverage=coverage
         )
 
-        # De-confounded exposure
-        X_ex_pred = self.forecaster_ex_final_.predict(fh=fh, X=X_conf_new)
-        X_ex_deconf = X_ex_new - X_ex_pred
-
-        # Causal prediction intervals
-        pred_int_causal = self.forecaster_res_.predict_interval(
-            fh=fh, X=X_ex_deconf, coverage=coverage
-        )
-
-        # Combine intervals (assumes independence)
-        return pred_int_conf + pred_int_causal
+        return pred_int_base + pred_int_res
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Generate quantile forecasts for DML."""
-        # Split exogenous data
-        X_ex_new, X_conf_new = self._split_exogenous_data(X)
+        X_ex, X_conf = self._split_exogenous_data(X)
 
-        # Base quantiles
-        q_conf = self.forecaster_y_final_.predict_quantiles(
-            fh=fh, X=X_conf_new, alpha=alpha
+        if X_ex is None:
+            X_ex_res = None
+        else:
+            X_ex_res = self.forecaster_ex_.predict_residuals(y=X_ex, X=X_conf)
+
+        pred_quantiles_base = self.forecaster_y_.predict_quantiles(
+            fh=fh, X=X_conf, alpha=alpha
+        )
+        pred_quantiles_res = self.forecaster_res_.predict_quantiles(
+            fh=fh, X=X_ex_res, alpha=alpha
         )
 
-        # De-confounded exposure
-        X_ex_pred = self.forecaster_ex_final_.predict(fh=fh, X=X_conf_new)
-        X_ex_deconf = X_ex_new - X_ex_pred
-
-        # Causal quantiles
-        q_causal = self.forecaster_res_.predict_quantiles(
-            fh=fh, X=X_ex_deconf, alpha=alpha
-        )
-
-        # Combine quantiles
-        return q_conf + q_causal
+        return pred_quantiles_base + pred_quantiles_res
 
     def _predict_var(self, fh, X=None, cov=False):
         """Generate predictive variances for DML forecasts."""
-        # Split exogenous data
-        X_ex_new, X_conf_new = self._split_exogenous_data(X)
+        X_ex, X_conf = self._split_exogenous_data(X)
 
-        # Base variance
-        var_conf = self.forecaster_y_final_.predict_var(fh=fh, X=X_conf_new, cov=cov)
+        if X_ex is None:
+            X_ex_res = None
+        else:
+            X_ex_res = self.forecaster_ex_.predict_residuals(y=X_ex, X=X_conf)
 
-        # De-confounded exposure
-        X_ex_pred = self.forecaster_ex_final_.predict(fh=fh, X=X_conf_new)
-        X_ex_deconf = X_ex_new - X_ex_pred
+        pred_var_base = self.forecaster_y_.predict_var(fh=fh, X=X_conf, cov=cov)
+        pred_var_res = self.forecaster_res_.predict_var(fh=fh, X=X_ex_res, cov=cov)
 
-        # Causal variance
-        var_causal = self.forecaster_res_.predict_var(fh=fh, X=X_ex_deconf, cov=cov)
+        return pred_var_base + pred_var_res
 
-        # Combine variances (assumes independence)
-        return var_conf + var_causal
+    def _predict_proba(self, fh, X=None, marginal=True):
+        """Combine full distribution forecasts from base & residual models."""
+        if not _check_soft_dependencies("skpro", severity="none"):
+            from sktime.utils.warnings import warn
+
+            warn(
+                "ResidualBoostingForecaster.predict_proba: optional "
+                "dependency 'skpro' not found. "
+                "Falling back to the default normal approximation via BaseForecaster. "
+                "Install 'skpro' to enable exact shifted-distribution composition.",
+                category=UserWarning,
+                obj=self,
+            )
+            return super()._predict_proba(fh=fh, X=X, marginal=marginal)
+
+        from skpro.distributions import MeanScale
+
+        X_ex, X_conf = self._split_exogenous_data(X)
+
+        if X_ex is None:
+            X_ex_res = None
+        else:
+            X_ex_res = self.forecaster_ex_.predict_residuals(y=X_ex, X=X_conf)
+
+        pred_base = self.forecaster_y_.predict(fh=fh, X=X_conf)
+        pred_proba_res = self.forecaster_res_.predict_proba(
+            fh=fh, X=X_ex_res, marginal=marginal
+        )
+
+        return MeanScale(
+            d=pred_proba_res,
+            mu=pred_base,
+            sigma=1,
+            index=pred_proba_res.index,
+            columns=pred_proba_res.columns,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
