@@ -356,7 +356,7 @@ class BaseDeepClassifier(BaseClassifier):
         if in_memory_model is None:
             cls.model_ = None
         else:
-            with tempfile.NamedTemporaryFile() as tmpfile:
+            with tempfile.NamedTemporaryFile(suffix=".h5") as tmpfile:
                 with open(tmpfile.name, "wb") as store_:
                     store_.write(in_memory_model)
                     cls.model_ = load_model(tmpfile.name)
