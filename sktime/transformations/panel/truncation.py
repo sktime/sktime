@@ -13,6 +13,8 @@ class TruncationTransformer(BaseTransformer):
     """
     Truncates unequal length panels between lower/upper length ranges.
 
+    Used to transform hierarchical data.
+
     Parameters
     ----------
     lower : int, optional (default=None) minimum length, inclusive
@@ -24,6 +26,16 @@ class TruncationTransformer(BaseTransformer):
 
     Examples
     --------
+    Truncate only unequal length panels in data:
+    >>> from sktime.transformations.panel.truncation import TruncationTransformer
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> X = _make_hierarchical(same_cutoff=False)
+    >>> tt = TruncationTransformer()
+    >>> tt.fit(X)
+    TruncationTransformer(...)
+    >>> X_transformed = tt.transform(X)
+
+    Truncate each panel to first 5 elements:
     >>> from sktime.transformations.panel.truncation import TruncationTransformer
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical(same_cutoff=False)
