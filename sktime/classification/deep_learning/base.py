@@ -356,10 +356,12 @@ class BaseDeepClassifier(BaseClassifier):
         if in_memory_model is None:
             cls.model_ = None
         else:
-            with tempfile.NamedTemporaryFile(suffix=".h5", delete_on_close=False) as tmpfile:
+            with tempfile.NamedTemporaryFile(
+                delete_on_close=False,  # to allow loading after closing
+                suffix=".h5",
+            ) as tmpfile:
                 tmpfile.write(in_memory_model)
                 tmpfile.close()
-                
                 cls.model_ = load_model(tmpfile.name)
 
         cls.history = pickle.loads(in_memory_history)
