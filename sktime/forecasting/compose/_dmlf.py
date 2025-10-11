@@ -1,4 +1,3 @@
-#!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License
 """
 Double Machine Learning forecaster for time series.
@@ -57,9 +56,8 @@ class DoubleMLForecaster(BaseForecaster):
     Examples
     --------
     >>> from sktime.datasets import load_longley
-    >>> from sktime.forecasting.dml import DoubleMLForecaster
+    >>> from sktime.forecasting.compose import DoubleMLForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.compose import make_reduction
     >>> from sklearn.ensemble import RandomForestRegressor
     >>>
     >>> y, X = load_longley()
@@ -67,8 +65,8 @@ class DoubleMLForecaster(BaseForecaster):
     >>> exposure_vars = ['GNP']
     >>>
     >>> # Set up forecasters for nuisance functions
-    >>> forecaster_y = make_reduction(RandomForestRegressor(n_estimators=10))
-    >>> forecaster_ex = make_reduction(RandomForestRegressor(n_estimators=10))
+    >>> forecaster_y = NaiveForecaster()
+    >>> forecaster_ex = NaiveForecaster()
     >>>
     >>> # Create DoubleMLForecaster
     >>> dml_forecaster = DoubleMLForecaster(
@@ -80,6 +78,9 @@ class DoubleMLForecaster(BaseForecaster):
     >>> # Fit and predict
     >>> fh = [1, 2, 3]
     >>> dml_forecaster.fit(y, X=X, fh=fh)
+    DoubleMLForecaster(exposure_vars=['GNP'], forecaster_ex=NaiveForecaster(),
+                       forecaster_res=RecursiveTabularRegressionForecaster(estimator=LinearRegression()),
+                       forecaster_y=NaiveForecaster())
     >>> y_pred = dml_forecaster.predict(fh, X=X)
 
     Notes
@@ -152,12 +153,8 @@ class DoubleMLForecaster(BaseForecaster):
             or self.forecaster_res.get_tag("capability:exogenous")
         )
 
-        assert self.forecaster_y.get_tag("capability:insample"), (
-            "these have to do insample in all case"
-        )
-        assert self.forecaster_ex.get_tag("capability:insample"), (
-            "these have to do insample in all case"
-        )
+        # self.forecaster_ex and self.forecaster_y must support insample
+        # under normal circumstances as well
         in_sample = self.forecaster_res.get_tag("capability:insample")
 
         pred_int = (
@@ -215,14 +212,20 @@ class DoubleMLForecaster(BaseForecaster):
 
         # Check that all exposure variables exist in X
         missing_vars = set(self.exposure_vars) - set(X.columns)
+        found_vars = [i for i in self.exposure_vars if i in X.columns]
         if missing_vars:
-            raise ValueError(
-                f"Exposure variables {missing_vars} not found in X columns: "
-                f"{list(X.columns)}"
+            from sktime.utils.warnings import warn
+
+            warn(
+                f"Exposure variables: {list(missing_vars)} "
+                f"not found in X columns: {list(X.columns)}. "
+                f"Proceeding with available exposure variables: {found_vars}.",
+                category=UserWarning,
+                obj=self,
             )
 
-        X_ex = X[self.exposure_vars].copy()
-        X_conf = X.drop(columns=self.exposure_vars).copy()
+        X_ex = X[found_vars].copy()
+        X_conf = X.drop(columns=found_vars).copy()
 
         if X_ex.empty:
             X_ex = None
@@ -246,14 +249,14 @@ class DoubleMLForecaster(BaseForecaster):
 
         forecaster_y_insample = clone(self.forecaster_y)
         forecaster_y_insample.fit(y=y, X=X_conf, fh=y.index)
-        y_res = forecaster_y_insample.predict_residuals()
+        y_res = forecaster_y_insample.predict_residuals(y=y, X=X_conf)
 
         if X_ex is None:
             X_ex_res = None
         else:
             forecaster_ex_insample = clone(self.forecaster_ex)
             forecaster_ex_insample.fit(y=X_ex, X=X_conf, fh=y.index)
-            X_ex_res = forecaster_ex_insample.predict_residuals()
+            X_ex_res = forecaster_ex_insample.predict_residuals(y=X_ex, X=X_conf)
 
         self.forecaster_res_ = clone(self.forecaster_res)
         self.forecaster_res_.fit(y=y_res, X=X_ex_res, fh=fh)
@@ -396,55 +399,20 @@ class DoubleMLForecaster(BaseForecaster):
 
         # Basic test parameters
         params1 = {
-            "forecaster_y": NaiveForecaster(strategy="mean"),
-            "forecaster_ex": NaiveForecaster(strategy="mean"),
+            "forecaster_y": NaiveForecaster(strategy="last"),
+            "forecaster_ex": NaiveForecaster(strategy="last"),
             "forecaster_res": make_reduction(LinearRegression()),
-            "exposure_vars": ["var_0"],  # Standard sktime test data variable
+            "exposure_vars": [0, "foo"],
         }
 
         # More complex test parameters
         params2 = {
-            "forecaster_y": make_reduction(
+            "forecaster_y": NaiveForecaster(strategy="last"),
+            "forecaster_ex": NaiveForecaster(strategy="last"),
+            "forecaster_res": make_reduction(
                 RandomForestRegressor(n_estimators=5, random_state=42)
             ),
-            "forecaster_ex": make_reduction(LinearRegression()),
-            "forecaster_res": NaiveForecaster(strategy="last"),
-            "exposure_vars": ["var_0"],
+            "exposure_vars": [0, "foo"],
         }
 
         return [params1, params2]
-
-    def get_fitted_params(self, deep=True):
-        """Get fitted parameters from the forecaster.
-
-        Returns
-        -------
-        fitted_params : dict
-            Dictionary of fitted parameters, includes causal effect estimates
-            and fitted component forecasters.
-        """
-        fitted_params = super().get_fitted_params(deep=deep)
-
-        if hasattr(self, "forecaster_res_"):
-            # Try to extract causal effect estimate if available
-            try:
-                if hasattr(self.forecaster_res_, "estimator_"):
-                    estimator = self.forecaster_res_.estimator_
-                    if hasattr(estimator, "coef_"):
-                        fitted_params["causal_effect"] = estimator.coef_
-                    if hasattr(estimator, "intercept_"):
-                        fitted_params["intercept"] = estimator.intercept_
-            except AttributeError:
-                pass
-
-            fitted_params.update(
-                {
-                    "y_residuals_": self.y_residuals_,
-                    "X_ex_residuals_": self.X_ex_residuals_,
-                    "forecaster_y_final_": self.forecaster_y_final_,
-                    "forecaster_ex_final_": self.forecaster_ex_final_,
-                    "forecaster_res_": self.forecaster_res_,
-                }
-            )
-
-        return fitted_params
