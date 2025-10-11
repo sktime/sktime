@@ -133,6 +133,22 @@ class FABBA(BaseTransformer):
     .. [4] S. Elsworth and S. Güttel.
     ABBA: adaptive Brownian bridge-based symbolic aggregation of time serie.
     https://arxiv.org/abs/2003.12469
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.fabba import FABBA
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = FABBA(
+    ...     n_jobs=1,
+    ...     random_state=42,
+    ...     return_start_values=True,
+    ...     method="agg",
+    ...     tolerance=0.001,
+    ...     alpha=0.05,
+    ... )
+    >>> y_transformed = transformer.fit_transform(y)
+    >>> y_reconstructed = transformer.inverse_transform(y_transformed)
     """
 
     _tags = {
