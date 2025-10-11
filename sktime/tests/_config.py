@@ -235,7 +235,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "IndividualBOSS",
         "IndividualTDE",
         "InformationGainSegmentation",
-        "LogTransformer",
         "M5Dataset",
         "MCDCNNClassifier",
         "MCDCNNNetwork",
