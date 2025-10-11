@@ -180,11 +180,12 @@ class CanonicalIntervalForest(BaseClassifier):
 
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
-        if self.base_estimator.lower() == "dtc":
+        est = self.base_estimator
+        if isinstance(est, str) and est.lower() == "dtc":
             self._base_estimator = DecisionTreeClassifier(criterion="entropy")
-        elif self.base_estimator.lower() == "cit":
+        elif isinstance(est, str) and est.lower() == "cit":
             self._base_estimator = ContinuousIntervalTree()
-        elif isinstance(self.base_estimator, BaseEstimator):
+        elif isinstance(est, BaseEstimator):
             self._base_estimator = self.base_estimator
         else:
             raise ValueError("DrCIF invalid base estimator given.")
