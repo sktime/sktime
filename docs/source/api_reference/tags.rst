@@ -155,6 +155,8 @@ transform a single time series object (``"transformer"`` type).
     requires_y
     capability__missing_values
     capability__unequal_length
+    capability__unequal_length__adds
+    capability__unequal_length__removes
     capability__random_state
     capability__inverse_transform
     capability__inverse_transform__exact

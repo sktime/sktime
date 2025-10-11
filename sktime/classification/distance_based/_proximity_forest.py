@@ -693,6 +693,14 @@ class ProximityStump(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "X_inner_mtype": "nested_univ",  # input in nested dataframe
+        # pickling problem with local method see #2490
+        "tests:skip_by_name": [
+            "test_persistence_via_pickle",
+            "test_fit_does_not_overwrite_hyper_params",
+            "test_save_estimators_to_file",
+            "test_multioutput",  # see 8946
+            "test_classifier_on_unit_test_data",  # see 8946
+        ],
     }
 
     def __init__(
@@ -1047,6 +1055,17 @@ class ProximityTree(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "X_inner_mtype": "nested_univ",
+        # testing configuration
+        # ---------------------
+        "tests:skip_by_name": [
+            "test_persistence_via_pickle",
+            "test_fit_does_not_overwrite_hyper_params",
+            "test_save_estimators_to_file",
+            "test_multiprocessing_idempotent",  # see 5658
+            "test_fit_idempotent",  # see 6637
+            "test_multioutput",  # see 8946
+            "test_classifier_on_unit_test_data",  # see 8946
+        ],
     }
 
     def __init__(
@@ -1354,6 +1373,17 @@ class ProximityForest(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "classifier_type": "distance",
+        # testing configuration
+        # ---------------------
+        "tests:skip_by_name": [
+            "test_persistence_via_pickle",
+            "test_fit_does_not_overwrite_hyper_params",
+            "test_save_estimators_to_file",
+            "test_fit_idempotent",  # see 6201
+            "test_multiprocessing_idempotent",  # see 6637
+            "test_multioutput",  # see 8946
+            "test_classifier_on_unit_test_data",  # see 8946
+        ],
     }
 
     def __init__(
