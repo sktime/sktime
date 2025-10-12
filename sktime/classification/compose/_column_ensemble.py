@@ -29,10 +29,10 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, estimators, verbose=False):
+    def __init__(self, estimators, remainder="drop", verbose=False):
         self.verbose = verbose
         self.estimators = estimators
-        self.remainder = "drop"
+        self.remainder = remainder
         super().__init__()
         self._anytagis_then_set(
             "capability:unequal_length", False, True, self._estimators
@@ -255,7 +255,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
     def __init__(self, estimators, remainder="drop", verbose=False):
         self.remainder = remainder
-        super().__init__(estimators, verbose=verbose)
+        super().__init__(estimators, remainder=remainder, verbose=verbose)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
