@@ -52,7 +52,7 @@ def test_statsforecast_mstl(mock_autoets):
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
-    "fh", [[1, 2, 3], 5, None], ids=["valid fh", "scalar", "None fh"]
+    "fh", [[1, 2, 3], 0, 5, None], ids=["valid fh", "scalar", "scalar_0", "None fh"]
 )
 def test_statsforecast_mstl_with_fh(fh):
     """

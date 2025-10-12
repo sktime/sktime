@@ -156,9 +156,9 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
 
             in_sample_horizon, out_of_sample_horizon = self._split_horizon(fh)
 
-            if in_sample_horizon:
-                fh = y.index
-            else:
+            if in_sample_horizon and not out_of_sample_horizon:
+                fh = self._check_fh(y.index)
+            elif out_of_sample_horizon and not in_sample_horizon:
                 fh = out_of_sample_horizon
             # pass the fh to _trend_forecaster in case it needs it
             self._trend_forecaster.set_fh(fh)
