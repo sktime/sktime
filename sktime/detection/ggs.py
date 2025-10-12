@@ -556,5 +556,11 @@ class GreedyGaussianSegmentation(BaseDetector):
         -------
         params : dict or list of dict
         """
-        params = {"k_max": 10, "lamb": 1.0}
+        params = [
+            {"k_max": 10, "lamb": 1.0},
+            {"k_max": 2, "lamb": 1.0},
+            {"k_max": 2, "lamb": 10.0},
+            {"k_max": 10, "lamb": 10.0, "max_shuffles": 10},
+            {"k_max": 10, "lamb": 10.0, "max_shuffles": 500},
+        ]
         return params
