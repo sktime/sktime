@@ -234,7 +234,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "InceptionTimeNetwork",
         "IndividualBOSS",
         "IndividualTDE",
-        "InformationGainSegmentation",
         "M5Dataset",
         "MCDCNNClassifier",
         "MCDCNNNetwork",
