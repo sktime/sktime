@@ -149,19 +149,20 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             and self._get_statsforecast_class() is MSTL
             and hasattr(self, "_trend_forecaster")
         ):
-            fh = self._check_fh(fh)
+            _fh = self._check_fh(fh)
 
             # Convert fh to relative if it is absolute before setting it
-            fh = fh.to_relative(self.cutoff)
+            _fh = _fh.to_relative(self.cutoff)
 
             in_sample_horizon, out_of_sample_horizon = self._split_horizon(fh)
 
             if in_sample_horizon and not out_of_sample_horizon:
-                fh = self._check_fh(y.index)
+                _fh = self._check_fh(y.index)
+                _fh = _fh.to_relative(self.cutoff)
             elif out_of_sample_horizon and not in_sample_horizon:
-                fh = out_of_sample_horizon
+                _fh = out_of_sample_horizon
             # pass the fh to _trend_forecaster in case it needs it
-            self._trend_forecaster.set_fh(fh)
+            self._trend_forecaster.set_fh(_fh)
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -533,8 +534,11 @@ class StatsForecastBackAdapter:
         fh = getattr(self, "_fh", None)
 
         if fh is not None:
-            maximum_forecast_horizon = fh[-1]
-            return range(1, maximum_forecast_horizon + 1)
+            if fh.is_all_in_sample():
+                return fh
+            else:
+                maximum_forecast_horizon = fh[-1]
+                return range(1, maximum_forecast_horizon + 1)
         else:
             return None
 

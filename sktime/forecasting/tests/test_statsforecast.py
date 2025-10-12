@@ -52,7 +52,7 @@ def test_statsforecast_mstl(mock_autoets):
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
-    "fh", [[1, 2, 3], 0, 5, None], ids=["valid fh", "scalar", "scalar_0", "None fh"]
+    "fh", [[1, 2, 3], 0, 5, None], ids=["valid fh", "scalar_0", "scalar", "None fh"]
 )
 def test_statsforecast_mstl_with_fh(fh):
     """
@@ -88,6 +88,15 @@ def test_statsforecast_mstl_with_fh(fh):
         ), (
             "Unexpected exception raised - should have failed with ValueError, "
             "The forecasting horizon `fh` must be passed to `fit` of ..."
+        )
+    except NotImplementedError as e:
+        assert (
+            "DirectTabularRegressionForecaster can not perform "
+            "in-sample prediction. Found fh with in sample index:"
+        ) in repr(e), (
+            "Unexpected exception raised - should have failed with "
+            "NotImplementedError, DirectTabularRegressionForecaster "
+            "can not perform in-sample prediction ..."
         )
 
 
