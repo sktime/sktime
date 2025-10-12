@@ -305,7 +305,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
         "TruncationTransformer",
-        "UnobservedComponents",
         "WEASEL",
         "WhiteNoiseAugmenter",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
