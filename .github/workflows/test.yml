@@ -108,9 +108,7 @@ jobs:
           python-version: 3.11
 
       - name: Install dependencies
-        run: |
-          uv pip install --upgrade pip
-          uv pip install .[notebooks,binder,dev]
+        run: uv pip install .[notebooks,binder,dev]
         env:
           UV_SYSTEM_PYTHON: 1
 
@@ -139,9 +137,7 @@ jobs:
           python-version: 3.11
 
       - name: Install dependencies
-        run: |
-          uv pip install --upgrade pip
-          uv pip install .[notebooks,binder]
+        run: pip install .[notebooks,binder]
         env:
           UV_SYSTEM_PYTHON: 1
 
@@ -178,9 +174,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install sktime with dev dependencies
-        run: |
-          uv pip install --upgrade pip
-          uv pip install .[dev]
+        run: pip install .[dev]
         env:
           UV_SYSTEM_PYTHON: 1
 
@@ -235,9 +229,7 @@ jobs:
         run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
 
       - name: Install sktime with dev dependencies
-        run: |
-          uv pip install --upgrade pip
-          uv pip install .[dev]
+        run: uv pip install .[dev]
         env:
           UV_SYSTEM_PYTHON: 1
 
@@ -303,8 +295,7 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: |
-          uv pip install .
+        run: pip install .
         env:
           UV_SYSTEM_PYTHON: 1
 
@@ -333,8 +324,7 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: |
-          uv pip install .[dev]
+        run: pip install .[dev]
         env:
           UV_SYSTEM_PYTHON: 1
 
@@ -368,8 +358,7 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: |
-          uv pip install .[dev]
+        run: pip install .[dev]
         env:
           UV_SYSTEM_PYTHON: 1
 
@@ -442,8 +431,7 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: |
-          uv pip install .[dev,dependencies_lower]
+        run: pip install .[dev,dependencies_lower]
         env:
           UV_SYSTEM_PYTHON: 1
 
@@ -581,8 +569,7 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: |
-          uv pip install .[all_extras,dev,pandas1,numpy1] --no-cache-dir
+        run: pip install .[all_extras,dev,pandas1,numpy1] --no-cache-dir
         env:
           UV_SYSTEM_PYTHON: 1
 
