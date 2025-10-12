@@ -14,7 +14,7 @@ runs:
   using: composite
   steps:
     - name: repository checkout step
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: update tracking reference step
       run: git remote set-branches origin main
