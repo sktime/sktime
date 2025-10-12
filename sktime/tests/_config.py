@@ -29,8 +29,6 @@ ONLY_CHANGED_MODULES = False
 # DO NOT ADD ESTIMATORS HERE ANYMORE
 # ADD TEST SKIPS TO TAG tag tests:skip_all INSTEAD
 EXCLUDE_ESTIMATORS = [
-    # PlateauFinder seems to be broken, see #2259
-    "PlateauFinder",
     # below are removed due to mac failures we don't fully understand, see #3103
     "HIVECOTEV1",
     "HIVECOTEV2",
@@ -96,26 +94,6 @@ EXCLUDED_TESTS = {
     ],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
-    # pickling problem with local method see #2490
-    "ProximityStump": [
-        "test_persistence_via_pickle",
-        "test_fit_does_not_overwrite_hyper_params",
-        "test_save_estimators_to_file",
-    ],
-    "ProximityTree": [
-        "test_persistence_via_pickle",
-        "test_fit_does_not_overwrite_hyper_params",
-        "test_save_estimators_to_file",
-        "test_multiprocessing_idempotent",  # see 5658
-        "test_fit_idempotent",  # see 6637
-    ],
-    "ProximityForest": [
-        "test_persistence_via_pickle",
-        "test_fit_does_not_overwrite_hyper_params",
-        "test_save_estimators_to_file",
-        "test_fit_idempotent",  # see 6201
-        "test_multiprocessing_idempotent",  # see 6637
-    ],
     "TapNetRegressor": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
@@ -225,7 +203,6 @@ EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "CAPA",
         "CNTCNetwork",
-        "CanonicalIntervalForest",
         "CircularBinarySegmentation",
         "ClaSPTransformer",
         "ClearSky",
@@ -255,7 +232,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "IndividualBOSS",
         "IndividualTDE",
         "InformationGainSegmentation",
-        "LogTransformer",
         "M5Dataset",
         "MCDCNNClassifier",
         "MCDCNNNetwork",
@@ -340,9 +316,9 @@ EXCLUDED_TESTS_BY_TEST = {
         "MedianSquaredPercentageError",
         "MedianAbsoluteScaledError",
         "MedianSquaredError",
+        "MeanAbsoluteError",
         "MeanAbsolutePercentageError",
         "MeanAbsoluteScaledError",
-        "MeanAbsoluteError",
         "MedianAbsoluteError",
         "MeanSquaredPercentageError",
         "MedianAbsolutePercentageError",
