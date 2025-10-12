@@ -295,7 +295,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "EnbPIForecaster",
         "FittedParamExtractor",
         "ForecastingOptunaSearchCV",
-        "HFTransformersForecaster",
         "HolidayFeatures",
         "ParamFitterPipeline",
         "PluginParamsForecaster",
