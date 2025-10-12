@@ -1939,6 +1939,83 @@ class capability__bootstrap_index(_BaseTag):
     }
 
 
+class capability__unequal_length__removes(_BaseTag):
+    """Capability: the transformer produces equal length series on unequal length input.
+
+    - String name: ``"capability:unequal_length:removes"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag is only meaningful for transformers that return time series as output,
+    i.e., the tag ``scitype:transform-output`` is ``"Series"`` or ``"Panel"``.
+
+    The tag specifies whether the transformer returns equal length time series,
+    when given unequal length time series as input.
+    This is the case for example for truncation or padding transformers,
+    that is, transformations that are specifically designed to remove
+    unequal length.
+    However, the tag may also be ``True`` for other transformers,
+    that are not specifically designed for this purpose.
+
+    If the tag is ``True``, the transformer will return equal length time series,
+    when given unequal length time series as input.
+
+    If the tag is ``False``, the transformer may return unequal length time series,
+    when given unequal length time series as input.
+
+    Also see the tag ``capability:unequal_length:adds``.
+    The typical transformer with series output will have both tags being ``False``.
+    """
+
+    _tags = {
+        "tag_name": "capability:unequal_length:removes",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer output have equal length time series?",
+        "user_facing": True,
+    }
+
+
+class capability__unequal_length__adds(_BaseTag):
+    """Capability: transformer may produce unequal length series on equal length input.
+
+    - String name: ``"capability:unequal_length:adds"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag is only meaningful for transformers that return time series as output,
+    i.e., the tag ``scitype:transform-output`` is ``"Series"`` or ``"Panel"``.
+
+    The tag specifies whether the transformer can return unequal length time series
+    on equal length time series as input.
+
+    If the tag is ``True``, the transformer may return unequal length time series,
+    when given equal length time series as input.
+
+    If the tag is ``False``, the transformer will
+    always return equal length time series,
+    when given equal length time series as input.
+
+    Note that even if the tag is ``False``, the transformer may still return
+    unequal length time series, when given unequal length time series as input.
+
+    Also see the tag ``capability:unequal_length:removes``.
+    The typical transformer with series output will have both tags being ``False``.
+    """
+
+    _tags = {
+        "tag_name": "capability:unequal_length:adds",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "can outputs be unequal length even if inputs are equal length?",
+        "user_facing": True,
+    }
+
+
 # Detector tags
 # --------------
 
@@ -3016,12 +3093,6 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         "bool",
         "does the transformer transform instances independently?",
-    ),
-    (
-        "capability:unequal_length:removes",
-        "transformer",
-        "bool",
-        "is the transformer result guaranteed to be equal length series (and series)?",
     ),
     (
         "capability:missing_values:removes",
