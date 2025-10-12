@@ -13,6 +13,17 @@ class TruncationTransformer(BaseTransformer):
     """
     Truncates unequal length panels between lower/upper length ranges.
 
+    If ``lower`` and ``upper`` are None the transformer will truncate
+    each series to ``iloc`` indices from range [0, min_series_length)
+    where ``min_series_length`` is the length of the shortest series in the panel
+    calculated automatically.
+
+    If ``lower`` is set and ``upper`` is None the transformer will truncate
+    each series to ``iloc`` indices from range [0, lower).
+
+    If both ``lower`` and ``upper`` are set the transformer will truncate
+    each series to ``iloc`` indices from range [lower, upper).
+
     Parameters
     ----------
     lower : int, optional (default=None) minimum length, inclusive
