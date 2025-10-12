@@ -1,8 +1,4 @@
-"""Truncation transformer - truncate unequal length panels to lower/upper bounds.
-
-This estimator can truncate unequal length panels to the shortest series
-in hierarchical data or just truncate to a user defined length.
-"""
+"""Truncation transformer - truncate unequal length panels to lower/upper bounds."""
 
 import numpy as np
 import pandas as pd
@@ -16,12 +12,6 @@ __author__ = ["abostrom"]
 class TruncationTransformer(BaseTransformer):
     """
     Truncates unequal length panels between lower/upper length ranges.
-
-    Used to transform hierarchical data. By default it will truncate
-    data to match the shortest series in the panel.
-
-    There is also possibility to set a user defined range by specifying
-    lower/upper bounds. In this case data will be truncated to given range.
 
     Parameters
     ----------
