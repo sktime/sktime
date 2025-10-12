@@ -301,7 +301,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
                     ("tsf2", TSFC(n_estimators=2), 0),
                 ]
             }
-            param2 = {**param1, "remainder": "passthrough"}
+            param2 = {**param1, "remainder": TSFC(n_estimators=2)}
 
             return [param1, param2]
 
