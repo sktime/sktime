@@ -471,6 +471,20 @@ class ChronosForecaster(BaseForecaster):
                     use_source_package=self.use_source_package,
                 ).load_from_checkpoint()
 
+    def _load_pipeline(self):
+        """Load the model pipeline using the multiton pattern.
+
+        Returns
+        -------
+        pipeline : ChronosPipeline or ChronosBoltPipeline
+            The loaded model pipeline ready for predictions.
+        """
+        return self.model_strategy.create_pipeline(
+            key=self._get_unique_chronos_key(),
+            kwargs=self._get_chronos_kwargs(),
+            use_source_package=self.use_source_package,
+        ).load_from_checkpoint()
+
     def predict(self, fh=None, X=None, y=None):
         """Forecast time series at future horizon.
 
