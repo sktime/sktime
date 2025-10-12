@@ -446,30 +446,6 @@ class GreedyGaussianSegmentation(BaseDetector):
 
         super().__init__()
 
-        self._adaptee = GGS(
-            k_max=k_max,
-            lamb=lamb,
-            max_shuffles=max_shuffles,
-            verbose=verbose,
-            random_state=random_state,
-        )
-
-    @property
-    def _intermediate_change_points(self) -> list[list[int]]:
-        """Intermediate values of change points for each value of k = 1...k_max.
-
-        Default value is an empty list.
-        """
-        return self._adaptee._intermediate_change_points
-
-    @property
-    def _intermediate_ll(self) -> list[float]:
-        """Intermediate values for log-likelihood for each value of k = 1...k_max.
-
-        Default value is an empty list.
-        """
-        return self._adaptee._intermediate_ll
-
     def _fit(self, X, y=None):
         """Fit method for compatibility with sklearn-type estimator interface.
 
@@ -515,14 +491,19 @@ class GreedyGaussianSegmentation(BaseDetector):
             raise ValueError("X must not have more than two dimensions.")
 
         # Initialize and find change points
-        self._adaptee.initialize_intermediates()
-        self.change_points_ = self._adaptee.find_change_points(X)
+        adaptee = GGS(
+            k_max=self.k_max,
+            lamb=self.lamb,
+            max_shuffles=self.max_shuffles,
+            verbose=self.verbose,
+            random_state=self.random_state,
+        )
+        adaptee.initialize_intermediates()
+        change_points_ = adaptee.find_change_points(X)
 
         # Assign labels based on detected change points
         labels = np.zeros(X.shape[0], dtype=np.int32)
-        for i, (start, stop) in enumerate(
-            zip(self.change_points_[:-1], self.change_points_[1:])
-        ):
+        for i, (start, stop) in enumerate(zip(change_points_[:-1], change_points_[1:])):
             labels[start:stop] = i
         return labels
 
