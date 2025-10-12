@@ -9,11 +9,12 @@ effects in forecasting.
 __all__ = ["DoubleMLForecaster"]
 __author__ = ["geetu040", "XAheli"]
 
+import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 
 class DoubleMLForecaster(BaseForecaster):
@@ -58,9 +59,11 @@ class DoubleMLForecaster(BaseForecaster):
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.compose import DoubleMLForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sklearn.ensemble import RandomForestRegressor
+    >>> from sktime.split import temporal_train_test_split
     >>>
     >>> y, X = load_longley()
+    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
+    >>>
     >>> # Assume 'GNP' is our exposure variable of interest
     >>> exposure_vars = ['GNP']
     >>>
@@ -77,11 +80,11 @@ class DoubleMLForecaster(BaseForecaster):
     >>>
     >>> # Fit and predict
     >>> fh = [1, 2, 3]
-    >>> dml_forecaster.fit(y, X=X, fh=fh)
+    >>> dml_forecaster.fit(y_train, X=X_train, fh=fh)
     DoubleMLForecaster(exposure_vars=['GNP'], forecaster_ex=NaiveForecaster(),
                        forecaster_res=RecursiveTabularRegressionForecaster(estimator=LinearRegression()),
                        forecaster_y=NaiveForecaster())
-    >>> y_pred = dml_forecaster.predict(fh, X=X)
+    >>> y_pred = dml_forecaster.predict(X=X_test)
 
     Notes
     -----
@@ -110,8 +113,8 @@ class DoubleMLForecaster(BaseForecaster):
         "capability:pred_int:insample": True,
         "capability:missing_values": True,
         "capability:categorical_in_X": True,
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "requires-fh-in-fit": False,
     }
 
@@ -247,16 +250,25 @@ class DoubleMLForecaster(BaseForecaster):
         """
         X_ex, X_conf = self._split_exogenous_data(X)
 
+        # Forecast insample
+        if isinstance(y.index, pd.MultiIndex):
+            time_idx = y.index.get_level_values(-1).unique()
+        else:
+            time_idx = y.index
+        insample_fh = ForecastingHorizon(time_idx, is_relative=False)
+
         forecaster_y_insample = clone(self.forecaster_y)
-        forecaster_y_insample.fit(y=y, X=X_conf, fh=y.index)
-        y_res = forecaster_y_insample.predict_residuals(y=y, X=X_conf)
+        forecaster_y_insample.fit(y=y, X=X_conf, fh=insample_fh)
+        y_pred = forecaster_y_insample.predict(X=X_conf)
+        y_res = y - y_pred
 
         if X_ex is None:
             X_ex_res = None
         else:
             forecaster_ex_insample = clone(self.forecaster_ex)
-            forecaster_ex_insample.fit(y=X_ex, X=X_conf, fh=y.index)
-            X_ex_res = forecaster_ex_insample.predict_residuals(y=X_ex, X=X_conf)
+            forecaster_ex_insample.fit(y=X_ex, X=X_conf, fh=insample_fh)
+            X_ex_pred = forecaster_ex_insample.predict(X=X_conf)
+            X_ex_res = X_ex - X_ex_pred
 
         self.forecaster_res_ = clone(self.forecaster_res)
         self.forecaster_res_.fit(y=y_res, X=X_ex_res, fh=fh)
@@ -283,12 +295,22 @@ class DoubleMLForecaster(BaseForecaster):
         if X_ex is None:
             X_ex_res = None
         else:
-            X_ex_res = self.forecaster_ex_.predict_residuals(y=X_ex, X=X_conf)
+            X_ex_pred = self.forecaster_ex_.predict(fh=fh, X=X_conf)
+            X_ex_aligned = X_ex.loc[X_ex_pred.index]
+            X_ex_res = X_ex_aligned - X_ex_pred
 
         pred_base = self.forecaster_y_.predict(fh=fh, X=X_conf)
         pred_res = self.forecaster_res_.predict(fh=fh, X=X_ex_res)
 
         return pred_base + pred_res
+
+    def _add_det_to_proba(self, y_proba, y_pred):
+        """Add multiindex columns to probabilistic forecasts."""
+        y_proba = y_proba.copy()
+        for col in y_proba.columns:
+            var = col[0]
+            y_proba[col] = y_proba[col] + y_pred[var]
+        return y_proba
 
     def _predict_interval(self, fh, X=None, coverage=0.9):
         """Generate prediction intervals for DoubleMLForecaster."""
@@ -297,16 +319,16 @@ class DoubleMLForecaster(BaseForecaster):
         if X_ex is None:
             X_ex_res = None
         else:
-            X_ex_res = self.forecaster_ex_.predict_residuals(y=X_ex, X=X_conf)
+            X_ex_pred = self.forecaster_ex_.predict(fh=fh, X=X_conf)
+            X_ex_aligned = X_ex.loc[X_ex_pred.index]
+            X_ex_res = X_ex_aligned - X_ex_pred
 
-        pred_int_base = self.forecaster_y_.predict_interval(
-            fh=fh, X=X_conf, coverage=coverage
-        )
+        pred_base = self.forecaster_y_.predict(fh=fh, X=X_conf)
         pred_int_res = self.forecaster_res_.predict_interval(
             fh=fh, X=X_ex_res, coverage=coverage
         )
 
-        return pred_int_base + pred_int_res
+        return self._add_det_to_proba(pred_int_res, pred_base)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Generate quantile forecasts for DoubleMLForecaster."""
@@ -315,16 +337,16 @@ class DoubleMLForecaster(BaseForecaster):
         if X_ex is None:
             X_ex_res = None
         else:
-            X_ex_res = self.forecaster_ex_.predict_residuals(y=X_ex, X=X_conf)
+            X_ex_pred = self.forecaster_ex_.predict(fh=fh, X=X_conf)
+            X_ex_aligned = X_ex.loc[X_ex_pred.index]
+            X_ex_res = X_ex_aligned - X_ex_pred
 
-        pred_quantiles_base = self.forecaster_y_.predict_quantiles(
-            fh=fh, X=X_conf, alpha=alpha
-        )
+        pred_base = self.forecaster_y_.predict(fh=fh, X=X_conf)
         pred_quantiles_res = self.forecaster_res_.predict_quantiles(
             fh=fh, X=X_ex_res, alpha=alpha
         )
 
-        return pred_quantiles_base + pred_quantiles_res
+        return self._add_det_to_proba(pred_quantiles_res, pred_base)
 
     def _predict_var(self, fh, X=None, cov=False):
         """Generate predictive variances for DoubleMLForecaster."""
@@ -333,12 +355,13 @@ class DoubleMLForecaster(BaseForecaster):
         if X_ex is None:
             X_ex_res = None
         else:
-            X_ex_res = self.forecaster_ex_.predict_residuals(y=X_ex, X=X_conf)
+            X_ex_pred = self.forecaster_ex_.predict(fh=fh, X=X_conf)
+            X_ex_aligned = X_ex.loc[X_ex_pred.index]
+            X_ex_res = X_ex_aligned - X_ex_pred
 
-        pred_var_base = self.forecaster_y_.predict_var(fh=fh, X=X_conf, cov=cov)
         pred_var_res = self.forecaster_res_.predict_var(fh=fh, X=X_ex_res, cov=cov)
 
-        return pred_var_base + pred_var_res
+        return pred_var_res
 
     def _predict_proba(self, fh, X=None, marginal=True):
         """Combine full distribution forecasts from component models."""
@@ -362,7 +385,9 @@ class DoubleMLForecaster(BaseForecaster):
         if X_ex is None:
             X_ex_res = None
         else:
-            X_ex_res = self.forecaster_ex_.predict_residuals(y=X_ex, X=X_conf)
+            X_ex_pred = self.forecaster_ex_.predict(fh=fh, X=X_conf)
+            X_ex_aligned = X_ex.loc[X_ex_pred.index]
+            X_ex_res = X_ex_aligned - X_ex_pred
 
         pred_base = self.forecaster_y_.predict(fh=fh, X=X_conf)
         pred_proba_res = self.forecaster_res_.predict_proba(
@@ -401,7 +426,7 @@ class DoubleMLForecaster(BaseForecaster):
         params1 = {
             "forecaster_y": NaiveForecaster(strategy="last"),
             "forecaster_ex": NaiveForecaster(strategy="last"),
-            "forecaster_res": make_reduction(LinearRegression()),
+            "forecaster_res": make_reduction(LinearRegression(), window_length=3),
             "exposure_vars": [0, "foo"],
         }
 
@@ -410,7 +435,8 @@ class DoubleMLForecaster(BaseForecaster):
             "forecaster_y": NaiveForecaster(strategy="last"),
             "forecaster_ex": NaiveForecaster(strategy="last"),
             "forecaster_res": make_reduction(
-                RandomForestRegressor(n_estimators=5, random_state=42)
+                RandomForestRegressor(n_estimators=5, random_state=42),
+                window_length=3,
             ),
             "exposure_vars": [0, "foo"],
         }
