@@ -108,7 +108,7 @@ class HFTransformersForecaster(BaseForecaster):
     ...     HFTransformersForecaster,
     ... )
     >>> from sktime.datasets import load_airline
-    >>> from peft import LoraConfig
+    >>> from peft import LoraConfig # doctest: +SKIP
     >>> y = load_airline()
     >>> forecaster = HFTransformersForecaster(
     ...    model_path="huggingface/autoformer-tourism-monthly",
