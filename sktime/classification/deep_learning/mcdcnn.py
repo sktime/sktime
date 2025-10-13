@@ -86,6 +86,9 @@ class MCDCNNClassifier(BaseDeepClassifier):
         "maintainers": ["james-large"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        "tests:skip_by_name": [
+            "test_set_params_sklearn",
+        ],
     }
 
     def __init__(

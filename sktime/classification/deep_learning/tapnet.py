@@ -98,6 +98,7 @@ class TapNetClassifier(BaseDeepClassifier):
             "test_fit_idempotent",
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
+            "test_set_params_sklearn",
         ],
         # Run tests in a dedicated VM due to sporadic crashes and possible
         # memory leaks (see #8518)

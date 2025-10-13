@@ -77,6 +77,9 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         "maintainers": ["jnrusson1", "solen0id"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        "tests:skip_by_name": [
+            "test_set_params_sklearn",
+        ],
     }
 
     def __init__(

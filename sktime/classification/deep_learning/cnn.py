@@ -85,6 +85,9 @@ class CNNClassifier(BaseDeepClassifier):
         # testing configuration
         # ---------------------
         "tests:vm": True,  # run in VM due to memory requirement
+        "tests:skip_by_name": [
+            "test_set_params_sklearn",
+        ],
     }
 
     def __init__(

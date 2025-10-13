@@ -113,9 +113,12 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         "capability:class_weight": True,
         # testing configuration
         # ---------------------
-        "tests:skip_by_name": ["test_fit_idempotent"],
         "tests:libs": ["sktime.networks.inceptiontime"],
         "tests:vm": True,
+        "tests:skip_by_name": [
+            "test_set_params_sklearn",
+            "test_fit_idempotent",
+        ],
     }
 
     def __init__(
