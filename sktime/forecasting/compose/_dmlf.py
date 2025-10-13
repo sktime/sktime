@@ -36,16 +36,16 @@ class DoubleMLForecaster(BaseForecaster):
 
     Parameters
     ----------
-    forecaster_y : sktime forecaster
-        Forecaster to model the outcome (y) from confounder variables (X_conf).
+    outcome_forecaster : sktime forecaster
+        Forecaster to model the outcome (y) from confounder variables (X_confounder).
         Used to control for confounding effects on the target variable.
 
-    forecaster_ex : sktime forecaster
-        Forecaster to model exposure variables (X_ex) from confounder
-        variables (X_conf). Used to control for confounding effects on
+    treatment_forecaster : sktime forecaster
+        Forecaster to model exposure variables (X_exposure) from confounder
+        variables (X_confounder). Used to control for confounding effects on
         the treatment variables.
 
-    forecaster_res : sktime forecaster, default=None
+    residual_forecaster : sktime forecaster, default=None
         Forecaster to model the final causal relationship between residuals.
         If None, uses LinearRegression wrapped in make_reduction.
         Should typically be a simple linear model for interpretability.
@@ -68,22 +68,22 @@ class DoubleMLForecaster(BaseForecaster):
     >>> exposure_vars = ['GNP']
     >>>
     >>> # Set up forecasters for nuisance functions
-    >>> forecaster_y = NaiveForecaster()
-    >>> forecaster_ex = NaiveForecaster()
+    >>> outcome_forecaster = NaiveForecaster()
+    >>> treatment_forecaster = NaiveForecaster()
     >>>
     >>> # Create DoubleMLForecaster
     >>> dml_forecaster = DoubleMLForecaster(
-    ...     forecaster_y=forecaster_y,
-    ...     forecaster_ex=forecaster_ex,
+    ...     outcome_forecaster=outcome_forecaster,
+    ...     treatment_forecaster=treatment_forecaster,
     ...     exposure_vars=exposure_vars
     ... )
     >>>
     >>> # Fit and predict
     >>> fh = [1, 2, 3]
     >>> dml_forecaster.fit(y_train, X=X_train, fh=fh)
-    DoubleMLForecaster(exposure_vars=['GNP'], forecaster_ex=NaiveForecaster(),
-                       forecaster_res=RecursiveTabularRegressionForecaster(estimator=LinearRegression()),
-                       forecaster_y=NaiveForecaster())
+    DoubleMLForecaster(exposure_vars=['GNP'], outcome_forecaster=NaiveForecaster(),
+                       residual_forecaster=RecursiveTabularRegressionForecaster(estimator=LinearRegression()),
+                       treatment_forecaster=NaiveForecaster())
     >>> y_pred = dml_forecaster.predict(X=X_test)
 
     Notes
@@ -119,25 +119,29 @@ class DoubleMLForecaster(BaseForecaster):
     }
 
     def __init__(
-        self, forecaster_y, forecaster_ex, forecaster_res=None, exposure_vars=None
+        self,
+        outcome_forecaster,
+        treatment_forecaster,
+        residual_forecaster=None,
+        exposure_vars=None,
     ):
-        self.forecaster_y = forecaster_y
-        self.forecaster_ex = forecaster_ex
-        self.forecaster_res = forecaster_res
+        self.outcome_forecaster = outcome_forecaster
+        self.treatment_forecaster = treatment_forecaster
+        self.residual_forecaster = residual_forecaster
         self.exposure_vars = exposure_vars
 
         # fitted copies of user passed forecasters
-        self.forecaster_y_ = None
-        self.forecaster_ex_ = None
-        self.forecaster_res_ = None
+        self.outcome_forecaster_ = None
+        self.treatment_forecaster_ = None
+        self.residual_forecaster_ = None
 
         super().__init__()
 
-        # Handle null forecaster_res
-        if self.forecaster_res is None:
+        # Handle null residual_forecaster
+        if self.residual_forecaster is None:
             from sktime.forecasting.compose import make_reduction
 
-            self.forecaster_res = make_reduction(
+            self.residual_forecaster = make_reduction(
                 LinearRegression(), strategy="recursive"
             )
 
@@ -151,37 +155,37 @@ class DoubleMLForecaster(BaseForecaster):
     def _update_tags_from_components(self):
         """Update forecaster tags based on component capabilities."""
         exog = (
-            self.forecaster_y.get_tag("capability:exogenous")
-            or self.forecaster_ex.get_tag("capability:exogenous")
-            or self.forecaster_res.get_tag("capability:exogenous")
+            self.outcome_forecaster.get_tag("capability:exogenous")
+            or self.treatment_forecaster.get_tag("capability:exogenous")
+            or self.residual_forecaster.get_tag("capability:exogenous")
         )
 
-        # self.forecaster_ex and self.forecaster_y must support insample
+        # self.treatment_forecaster and self.outcome_forecaster must support insample
         # under normal circumstances as well
-        in_sample = self.forecaster_res.get_tag("capability:insample")
+        in_sample = self.residual_forecaster.get_tag("capability:insample")
 
         pred_int = (
-            self.forecaster_y.get_tag("capability:pred_int")
-            # and self.forecaster_ex.get_tag("capability:pred_int")
-            and self.forecaster_res.get_tag("capability:pred_int")
+            self.outcome_forecaster.get_tag("capability:pred_int")
+            # and self.treatment_forecaster.get_tag("capability:pred_int")
+            and self.residual_forecaster.get_tag("capability:pred_int")
         )
 
         pred_int_insample = (
-            self.forecaster_y.get_tag("capability:pred_int:insample")
-            # and self.forecaster_ex.get_tag("capability:pred_int:insample")
-            and self.forecaster_res.get_tag("capability:pred_int:insample")
+            self.outcome_forecaster.get_tag("capability:pred_int:insample")
+            # and self.treatment_forecaster.get_tag("capability:pred_int:insample")
+            and self.residual_forecaster.get_tag("capability:pred_int:insample")
         )
 
         miss = (
-            self.forecaster_y.get_tag("capability:missing_values")
-            and self.forecaster_ex.get_tag("capability:missing_values")
-            and self.forecaster_res.get_tag("capability:missing_values")
+            self.outcome_forecaster.get_tag("capability:missing_values")
+            and self.treatment_forecaster.get_tag("capability:missing_values")
+            and self.residual_forecaster.get_tag("capability:missing_values")
         )
 
         cat = (
-            self.forecaster_y.get_tag("capability:categorical_in_X")
-            and self.forecaster_ex.get_tag("capability:categorical_in_X")
-            and self.forecaster_res.get_tag("capability:categorical_in_X")
+            self.outcome_forecaster.get_tag("capability:categorical_in_X")
+            and self.treatment_forecaster.get_tag("capability:categorical_in_X")
+            and self.residual_forecaster.get_tag("capability:categorical_in_X")
         )
 
         self.set_tags(
@@ -205,9 +209,9 @@ class DoubleMLForecaster(BaseForecaster):
 
         Returns
         -------
-        X_ex : pd.DataFrame
+        X_exposure : pd.DataFrame
             Exposure variables
-        X_conf : pd.DataFrame
+        X_confounder : pd.DataFrame
             Confounder variables
         """
         if X is None:
@@ -227,28 +231,29 @@ class DoubleMLForecaster(BaseForecaster):
                 obj=self,
             )
 
-        X_ex = X[found_vars].copy()
-        X_conf = X.drop(columns=found_vars).copy()
+        X_exposure = X[found_vars].copy()
+        X_confounder = X.drop(columns=found_vars).copy()
 
-        if X_ex.empty:
-            X_ex = None
+        if X_exposure.empty:
+            X_exposure = None
 
-        if X_conf.empty:
-            X_conf = None
+        if X_confounder.empty:
+            X_confounder = None
 
-        return X_ex, X_conf
+        return X_exposure, X_confounder
 
     def _fit(self, y, X=None, fh=None):
         """Fit the DoubleMLForecaster.
 
         Implements the DoubleMLForecaster fitting procedure:
-        1. Split X into exposure (X_ex) and confounder (X_conf) variables
-        2. Fit forecaster_y on y and X_conf to get outcome residuals
-        3. Fit forecaster_ex on X_ex and X_conf to get exposure residuals
-        4. Fit forecaster_res on the residual relationship
+        1. Split X into exposure (X_exposure) and confounder (X_confounder) variables
+        2. Fit outcome_forecaster on y and X_confounder to get outcome residuals
+        3. Fit treatment_forecaster on X_exposure and X_confounder
+           to get exposure residuals
+        4. Fit residual_forecaster on the residual relationship
         5. Fit final versions for prediction
         """
-        X_ex, X_conf = self._split_exogenous_data(X)
+        X_exposure, X_confounder = self._split_exogenous_data(X)
 
         # Forecast insample
         if isinstance(y.index, pd.MultiIndex):
@@ -257,28 +262,40 @@ class DoubleMLForecaster(BaseForecaster):
             time_idx = y.index
         insample_fh = ForecastingHorizon(time_idx, is_relative=False)
 
-        forecaster_y_insample = clone(self.forecaster_y)
-        forecaster_y_insample.fit(y=y, X=X_conf, fh=insample_fh)
-        y_pred = forecaster_y_insample.predict(X=X_conf)
+        outcome_forecaster_insample = clone(self.outcome_forecaster)
+        outcome_forecaster_insample.fit(y=y, X=X_confounder, fh=insample_fh)
+        y_pred = outcome_forecaster_insample.predict(X=X_confounder)
         y_res = y - y_pred
 
-        if X_ex is None:
-            X_ex_res = None
+        if X_exposure is None:
+            X_exposure_res = None
         else:
-            forecaster_ex_insample = clone(self.forecaster_ex)
-            forecaster_ex_insample.fit(y=X_ex, X=X_conf, fh=insample_fh)
-            X_ex_pred = forecaster_ex_insample.predict(X=X_conf)
-            X_ex_res = X_ex - X_ex_pred
+            treatment_forecaster_insample = clone(self.treatment_forecaster)
+            treatment_forecaster_insample.fit(
+                y=X_exposure, X=X_confounder, fh=insample_fh
+            )
+            X_exposure_pred = treatment_forecaster_insample.predict(X=X_confounder)
+            X_exposure_res = X_exposure - X_exposure_pred
 
-        self.forecaster_res_ = clone(self.forecaster_res)
-        self.forecaster_res_.fit(y=y_res, X=X_ex_res, fh=fh)
+        self.residual_forecaster_ = clone(self.residual_forecaster)
+        self.residual_forecaster_.fit(y=y_res, X=X_exposure_res, fh=fh)
 
-        self.forecaster_y_ = clone(self.forecaster_y)
-        self.forecaster_y_.fit(y=y, X=X_conf, fh=fh)
+        self.outcome_forecaster_ = clone(self.outcome_forecaster)
+        self.outcome_forecaster_.fit(y=y, X=X_confounder, fh=fh)
 
-        if X_ex is not None:
-            self.forecaster_ex_ = clone(self.forecaster_ex)
-            self.forecaster_ex_.fit(y=X_ex, X=X_conf, fh=fh)
+        if X_exposure is not None:
+            self.treatment_forecaster_ = clone(self.treatment_forecaster)
+            self.treatment_forecaster_.fit(y=X_exposure, X=X_confounder, fh=fh)
+
+    def _compute_X_exposure_res(self, X_exposure=None, X_confounder=None, fh=None):
+        if X_exposure is None:
+            return None
+
+        X_exposure_pred = self.treatment_forecaster_.predict(fh=fh, X=X_confounder)
+        X_exposure_aligned = X_exposure.loc[X_exposure_pred.index]
+        X_exposure_res = X_exposure_aligned - X_exposure_pred
+
+        return X_exposure_res
 
     def _predict(self, fh=None, X=None):
         """Generate DoubleMLForecasts.
@@ -286,21 +303,18 @@ class DoubleMLForecaster(BaseForecaster):
         Prediction logic:
         1. Split X_new into exposure and confounder variables
         2. Get base forecast from confounders: y_pred_conf
-        3. Get de-confounded exposure: X_ex_deconf
+        3. Get de-confounded exposure: X_exposure_deconf
         4. Get causal forecast component: y_pred_causal
         5. Return combined forecast: y_pred_conf + y_pred_causal
         """
-        X_ex, X_conf = self._split_exogenous_data(X)
+        X_exposure, X_confounder = self._split_exogenous_data(X)
 
-        if X_ex is None:
-            X_ex_res = None
-        else:
-            X_ex_pred = self.forecaster_ex_.predict(fh=fh, X=X_conf)
-            X_ex_aligned = X_ex.loc[X_ex_pred.index]
-            X_ex_res = X_ex_aligned - X_ex_pred
+        X_exposure_res = self._compute_X_exposure_res(
+            X_exposure=X_exposure, X_confounder=X_confounder, fh=fh
+        )
 
-        pred_base = self.forecaster_y_.predict(fh=fh, X=X_conf)
-        pred_res = self.forecaster_res_.predict(fh=fh, X=X_ex_res)
+        pred_base = self.outcome_forecaster_.predict(fh=fh, X=X_confounder)
+        pred_res = self.residual_forecaster_.predict(fh=fh, X=X_exposure_res)
 
         return pred_base + pred_res
 
@@ -314,52 +328,45 @@ class DoubleMLForecaster(BaseForecaster):
 
     def _predict_interval(self, fh, X=None, coverage=0.9):
         """Generate prediction intervals for DoubleMLForecaster."""
-        X_ex, X_conf = self._split_exogenous_data(X)
+        X_exposure, X_confounder = self._split_exogenous_data(X)
 
-        if X_ex is None:
-            X_ex_res = None
-        else:
-            X_ex_pred = self.forecaster_ex_.predict(fh=fh, X=X_conf)
-            X_ex_aligned = X_ex.loc[X_ex_pred.index]
-            X_ex_res = X_ex_aligned - X_ex_pred
+        X_exposure_res = self._compute_X_exposure_res(
+            X_exposure=X_exposure, X_confounder=X_confounder, fh=fh
+        )
 
-        pred_base = self.forecaster_y_.predict(fh=fh, X=X_conf)
-        pred_int_res = self.forecaster_res_.predict_interval(
-            fh=fh, X=X_ex_res, coverage=coverage
+        pred_base = self.outcome_forecaster_.predict(fh=fh, X=X_confounder)
+        pred_int_res = self.residual_forecaster_.predict_interval(
+            fh=fh, X=X_exposure_res, coverage=coverage
         )
 
         return self._add_det_to_proba(pred_int_res, pred_base)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Generate quantile forecasts for DoubleMLForecaster."""
-        X_ex, X_conf = self._split_exogenous_data(X)
+        X_exposure, X_confounder = self._split_exogenous_data(X)
 
-        if X_ex is None:
-            X_ex_res = None
-        else:
-            X_ex_pred = self.forecaster_ex_.predict(fh=fh, X=X_conf)
-            X_ex_aligned = X_ex.loc[X_ex_pred.index]
-            X_ex_res = X_ex_aligned - X_ex_pred
+        X_exposure_res = self._compute_X_exposure_res(
+            X_exposure=X_exposure, X_confounder=X_confounder, fh=fh
+        )
 
-        pred_base = self.forecaster_y_.predict(fh=fh, X=X_conf)
-        pred_quantiles_res = self.forecaster_res_.predict_quantiles(
-            fh=fh, X=X_ex_res, alpha=alpha
+        pred_base = self.outcome_forecaster_.predict(fh=fh, X=X_confounder)
+        pred_quantiles_res = self.residual_forecaster_.predict_quantiles(
+            fh=fh, X=X_exposure_res, alpha=alpha
         )
 
         return self._add_det_to_proba(pred_quantiles_res, pred_base)
 
     def _predict_var(self, fh, X=None, cov=False):
         """Generate predictive variances for DoubleMLForecaster."""
-        X_ex, X_conf = self._split_exogenous_data(X)
+        X_exposure, X_confounder = self._split_exogenous_data(X)
 
-        if X_ex is None:
-            X_ex_res = None
-        else:
-            X_ex_pred = self.forecaster_ex_.predict(fh=fh, X=X_conf)
-            X_ex_aligned = X_ex.loc[X_ex_pred.index]
-            X_ex_res = X_ex_aligned - X_ex_pred
+        X_exposure_res = self._compute_X_exposure_res(
+            X_exposure=X_exposure, X_confounder=X_confounder, fh=fh
+        )
 
-        pred_var_res = self.forecaster_res_.predict_var(fh=fh, X=X_ex_res, cov=cov)
+        pred_var_res = self.residual_forecaster_.predict_var(
+            fh=fh, X=X_exposure_res, cov=cov
+        )
 
         return pred_var_res
 
@@ -380,18 +387,15 @@ class DoubleMLForecaster(BaseForecaster):
 
         from skpro.distributions import MeanScale
 
-        X_ex, X_conf = self._split_exogenous_data(X)
+        X_exposure, X_confounder = self._split_exogenous_data(X)
 
-        if X_ex is None:
-            X_ex_res = None
-        else:
-            X_ex_pred = self.forecaster_ex_.predict(fh=fh, X=X_conf)
-            X_ex_aligned = X_ex.loc[X_ex_pred.index]
-            X_ex_res = X_ex_aligned - X_ex_pred
+        X_exposure_res = self._compute_X_exposure_res(
+            X_exposure=X_exposure, X_confounder=X_confounder, fh=fh
+        )
 
-        pred_base = self.forecaster_y_.predict(fh=fh, X=X_conf)
-        pred_proba_res = self.forecaster_res_.predict_proba(
-            fh=fh, X=X_ex_res, marginal=marginal
+        pred_base = self.outcome_forecaster_.predict(fh=fh, X=X_confounder)
+        pred_proba_res = self.residual_forecaster_.predict_proba(
+            fh=fh, X=X_exposure_res, marginal=marginal
         )
 
         return MeanScale(
@@ -424,17 +428,17 @@ class DoubleMLForecaster(BaseForecaster):
 
         # Basic test parameters
         params1 = {
-            "forecaster_y": NaiveForecaster(strategy="last"),
-            "forecaster_ex": NaiveForecaster(strategy="last"),
-            "forecaster_res": make_reduction(LinearRegression(), window_length=3),
+            "outcome_forecaster": NaiveForecaster(strategy="last"),
+            "treatment_forecaster": NaiveForecaster(strategy="last"),
+            "residual_forecaster": make_reduction(LinearRegression(), window_length=3),
             "exposure_vars": [0, "foo"],
         }
 
         # More complex test parameters
         params2 = {
-            "forecaster_y": NaiveForecaster(strategy="last"),
-            "forecaster_ex": NaiveForecaster(strategy="last"),
-            "forecaster_res": make_reduction(
+            "outcome_forecaster": NaiveForecaster(strategy="last"),
+            "treatment_forecaster": NaiveForecaster(strategy="last"),
+            "residual_forecaster": make_reduction(
                 RandomForestRegressor(n_estimators=5, random_state=42),
                 window_length=3,
             ),
