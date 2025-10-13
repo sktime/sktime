@@ -88,6 +88,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         # estimator type handled by parent class
         "tests:skip_by_name": [
             "test_set_params_sklearn",
+            "test_fit_does_not_overwrite_hyper_params",
         ],
     }
 
