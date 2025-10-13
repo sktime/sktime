@@ -4,7 +4,6 @@ The reason for this class between BaseClassifier and deep_learning classifiers i
 because we can generalise tags, _predict and _predict_proba
 """
 
-__author__ = ["James-Large", "ABostrom", "TonyBagnall", "aurunmpegasus", "achieveordie"]
 __all__ = ["BaseDeepClassifier"]
 
 import os
@@ -42,6 +41,14 @@ class BaseDeepClassifier(BaseClassifier):
         "python_dependencies": "tensorflow",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        "authors": [
+            "James-Large",
+            "ABostrom",
+            "TonyBagnall",
+            "aurunmpegasus",
+            "achieveordie",
+            "noxthot",
+        ],
     }
 
     @abstractmethod
