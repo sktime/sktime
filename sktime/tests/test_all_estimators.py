@@ -1201,8 +1201,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             if param_filter(p)
         ]
 
-        params = estimator.get_params()
-
         test_params = estimator_class.get_test_params()
         if isinstance(test_params, list):
             test_params = test_params[0]
@@ -1234,19 +1232,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                 assert param.default in [np.float64, np.int64]
             else:
                 assert type(param.default) in allowed_param_types
-
-    #            reserved_params = estimator_class.get_class_tag("reserved_params", [])
-    #              if param.name not in reserved_params:
-    #                 param_value = params[param.name]
-    #                 if isinstance(param_value, np.ndarray):
-    #                     np.testing.assert_array_equal(param_value, param.default)
-    #                 elif bool(
-    #                     isinstance(param_value, numbers.Real) and np.isnan(param_value)
-    #                 ):
-    #                     # Allows to set default parameters to np.nan
-    #                     assert param_value is param.default, param.name
-    #                 else:
-    #                     assert param_value == param.default, param.name
 
     def test_valid_estimator_class_tags(self, estimator_class):
         """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
