@@ -266,6 +266,7 @@ class BaseDeepRegressor(BaseRegressor):
         Deserialized self resulting in output ``serial``, of ``cls.save(None)``
         """
         import pickle
+        import tempfile
 
         from tensorflow.keras.models import load_model
 
@@ -286,12 +287,20 @@ class BaseDeepRegressor(BaseRegressor):
         if in_memory_model is None:
             cls.model_ = None
         else:
-            with open("diskless.h5", "wb") as store_:
-                store_.write(in_memory_model)
+            # Python 3.12 introduces `delete_on_close` which we could use here
+            # to avoid having to delete the file ourselves.
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".h5") as tmpfile:
+                tmpfilepath = tmpfile.name
+
+                tmpfile.write(in_memory_model)
+                tmpfile.close()
+
                 cls.model_ = load_model(
-                    "diskless.h5",
+                    tmpfilepath,
                     custom_objects=cls.get_custom_objects(),
                 )
+
+                os.remove(tmpfilepath)
 
         cls.history = pickle.loads(in_memory_history)
         return pickle.loads(serial)
