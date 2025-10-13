@@ -185,6 +185,7 @@ class BaseDeepRegressor(BaseRegressor):
         """
         import pickle
         import shutil
+        import tempfile
         from pathlib import Path
         from zipfile import ZipFile
 
@@ -194,9 +195,16 @@ class BaseDeepRegressor(BaseRegressor):
 
             in_memory_model = None
             if self.model_ is not None:
-                self.model_.save("disk_less.h5")
-                with h5py.File("disk_less.h5", "r") as h5file:
-                    in_memory_model = h5file.id.get_file_image()
+                # We only use tempfile to get a unique filename.
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".h5") as tmpfile:
+                    tmpfilepath = tmpfile.name
+                    tmpfile.close()
+                    self.model_.save(tmpfilepath)
+
+                    with h5py.File(tmpfilepath, "r") as h5file:
+                        in_memory_model = h5file.id.get_file_image()
+
+                    os.remove(tmpfilepath)
 
             in_memory_history = pickle.dumps(self.history.history)
 

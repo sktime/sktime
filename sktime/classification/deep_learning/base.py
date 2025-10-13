@@ -278,6 +278,7 @@ class BaseDeepClassifier(BaseClassifier):
     def _serialize_using_dump_func(self, path, dump, dumps):
         """Serialize & return DL Estimator using ``dump`` and ``dumps`` functions."""
         import shutil
+        import tempfile
         from zipfile import ZipFile
 
         history = self.history.history if self.history is not None else None
@@ -287,9 +288,16 @@ class BaseDeepClassifier(BaseClassifier):
 
             in_memory_model = None
             if self.model_ is not None:
-                self.model_.save("disk_less.h5")
-                with h5py.File("disk_less.h5", "r") as h5file:
-                    in_memory_model = h5file.id.get_file_image()
+                # We only use tempfile to get a unique filename.
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".h5") as tmpfile:
+                    tmpfilepath = tmpfile.name
+                    tmpfile.close()
+                    self.model_.save(tmpfilepath)
+
+                    with h5py.File(tmpfilepath, "r") as h5file:
+                        in_memory_model = h5file.id.get_file_image()
+
+                    os.remove(tmpfilepath)
 
             in_memory_history = dumps(history)
             return (
