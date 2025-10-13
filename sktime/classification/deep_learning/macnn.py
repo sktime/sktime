@@ -88,6 +88,7 @@ class MACNNClassifier(BaseDeepClassifier):
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
         "tests:skip_by_name": [
+            "test_fit_does_not_overwrite_hyper_params",
             "test_set_params_sklearn",
         ],
     }

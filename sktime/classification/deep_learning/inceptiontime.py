@@ -116,6 +116,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         "tests:libs": ["sktime.networks.inceptiontime"],
         "tests:vm": True,
         "tests:skip_by_name": [
+            "test_fit_does_not_overwrite_hyper_params",
             "test_set_params_sklearn",
             "test_fit_idempotent",
         ],

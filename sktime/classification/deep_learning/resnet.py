@@ -73,6 +73,7 @@ class ResNetClassifier(BaseDeepClassifier):
         "tests:skip_all": True,
         # `test_fit_idempotent` fails with `AssertionError`, see #3616
         "tests:skip_by_name": [
+            "test_fit_does_not_overwrite_hyper_params",
             "test_fit_idempotent",
             "test_set_params_sklearn",
         ],

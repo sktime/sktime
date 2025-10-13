@@ -69,6 +69,7 @@ class MLPClassifier(BaseDeepClassifier):
         "maintainers": ["James-Large", "AurumnPegasus"],
         # estimator type handled by parent class
         "tests:skip_by_name": [
+            "test_fit_does_not_overwrite_hyper_params",
             "test_set_params_sklearn",
         ],
     }

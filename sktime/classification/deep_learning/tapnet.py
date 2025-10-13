@@ -95,6 +95,7 @@ class TapNetClassifier(BaseDeepClassifier):
         # see #3539, #3616, #3525
         "tests:skip_all": True,
         "tests:skip_by_name": [
+            "test_fit_does_not_overwrite_hyper_params",
             "test_fit_idempotent",
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",

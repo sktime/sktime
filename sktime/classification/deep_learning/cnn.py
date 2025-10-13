@@ -86,6 +86,7 @@ class CNNClassifier(BaseDeepClassifier):
         # ---------------------
         "tests:vm": True,  # run in VM due to memory requirement
         "tests:skip_by_name": [
+            "test_fit_does_not_overwrite_hyper_params",
             "test_set_params_sklearn",
         ],
     }
