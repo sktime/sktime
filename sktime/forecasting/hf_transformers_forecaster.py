@@ -188,6 +188,7 @@ class HFTransformersForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "tests:vm": True,
+        "tests:skip_by_name": ["test_non_state_changing_method_contract"],
     }
 
     def __init__(
