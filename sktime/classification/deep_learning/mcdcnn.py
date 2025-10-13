@@ -128,6 +128,15 @@ class MCDCNNClassifier(BaseDeepClassifier):
         self.verbose = verbose
         self.random_state = random_state
 
+        if self.loss == "categorical_crossentropy" and self.activation in [
+            "sigmoid",
+            "softmax",
+        ]:
+            from tensorflow import keras
+
+            self.activation = "linear"
+            self.loss = keras.losses.CategoricalCrossentropy(from_logits=True)
+
         super().__init__()
 
         self.history = None

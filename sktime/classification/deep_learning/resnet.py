@@ -107,6 +107,15 @@ class ResNetClassifier(BaseDeepClassifier):
 
         super().__init__()
 
+        if self.loss == "categorical_crossentropy" and self.activation in [
+            "sigmoid",
+            "softmax",
+        ]:
+            from tensorflow import keras
+
+            self.activation = "linear"
+            self.loss = keras.losses.CategoricalCrossentropy(from_logits=True)
+
         self.history = None
         self._network = ResNetNetwork(
             activation=activation_hidden,

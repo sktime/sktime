@@ -159,6 +159,15 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         self.verbose = verbose
         self.class_weight = class_weight
 
+        if self.loss == "categorical_crossentropy" and self.activation in [
+            "sigmoid",
+            "softmax",
+        ]:
+            from tensorflow import keras
+
+            self.activation = "linear"
+            self.loss = keras.losses.CategoricalCrossentropy(from_logits=True)
+
         super().__init__()
 
         network_params = {
