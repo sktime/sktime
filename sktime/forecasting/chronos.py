@@ -423,11 +423,7 @@ class ChronosForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        self.model_pipeline = self.model_strategy.create_pipeline(
-            key=self._get_unique_chronos_key(),
-            kwargs=self._get_chronos_kwargs(),
-            use_source_package=self.use_source_package,
-        ).load_from_checkpoint()
+        self.model_pipeline = self._load_pipeline()
         return self
 
     def _get_chronos_kwargs(self):
@@ -465,11 +461,7 @@ class ChronosForecaster(BaseForecaster):
         """Ensure model pipeline is loaded, recreating if needed after unpickling."""
         if not hasattr(self, "model_pipeline") or self.model_pipeline is None:
             if hasattr(self, "_is_fitted") and self._is_fitted:
-                self.model_pipeline = self.model_strategy.create_pipeline(
-                    key=self._get_unique_chronos_key(),
-                    kwargs=self._get_chronos_kwargs(),
-                    use_source_package=self.use_source_package,
-                ).load_from_checkpoint()
+                self.model_pipeline = self._load_pipeline()
 
     def _load_pipeline(self):
         """Load the model pipeline using the multiton pattern.
