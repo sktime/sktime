@@ -1,10 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License
-"""
-Double Machine Learning forecaster for time series.
-
-Implements Double Machine Learning methodology to de-confound exposure
-effects in forecasting.
-"""
+"""Implementation of Double Machine Learning methodology for forecasting."""
 
 __all__ = ["DoubleMLForecaster"]
 __author__ = ["geetu040", "XAheli"]
@@ -18,41 +13,58 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 
 class DoubleMLForecaster(BaseForecaster):
-    """Double Machine Learning Forecaster for causal effect estimation.
+    """Double Machine Learning forecaster for causal time-series forecasting.
 
-    DoubleMLForecaster implements the Double Machine Learning methodology for
-    causal forecasting with confounder adjustment. It addresses scenarios where
-    exogenous variables (exposures) are confounded, leading to biased estimates
-    of their true causal impact on the target variable.
+    Implements the Double Machine Learning (DML) framework [1]_ for time-series,
+    enabling deconfounded estimation of causal effects from observational data.
 
-    The forecaster follows a three-step process:
-    1. Model the outcome from confounders to get outcome residuals
-    2. Model the exposure from confounders to get exposure residuals
-    3. Model the final causal relationship between the residuals
+    The forecaster uses a three-step residualization process to separate
+    causal effects from confounding influences:
 
-    This approach enables unbiased estimation of causal effects by removing
-    confounding influences through residualization before estimating the
-    treatment effect.
+    1. Fit the *outcome forecaster* to predict the target (``y``) from
+       confounders (``X_confounder``), and compute outcome residuals
+       ``y_res = y - y_pred``.
+
+    2. Fit the *treatment forecaster* to predict exposures (``X_exposure``)
+       from confounders, and compute treatment residuals
+       ``X_exposure_res = X_exposure - X_exposure_pred``.
+
+    3. Fit the *residual forecaster* on these residuals to estimate the causal
+       effect of the exposure on the outcome.
+
+    The residual forecaster is typically a simple linear model, ensuring
+    interpretability of the estimated causal effects.
 
     Parameters
     ----------
     outcome_forecaster : sktime forecaster
-        Forecaster to model the outcome (y) from confounder variables (X_confounder).
-        Used to control for confounding effects on the target variable.
+        Base forecaster modeling the outcome variable conditional on
+        confounders.
 
     treatment_forecaster : sktime forecaster
-        Forecaster to model exposure variables (X_exposure) from confounder
-        variables (X_confounder). Used to control for confounding effects on
-        the treatment variables.
+        Forecaster modeling the exposure variables conditional on confounders.
 
-    residual_forecaster : sktime forecaster, default=None
-        Forecaster to model the final causal relationship between residuals.
-        If None, uses LinearRegression wrapped in make_reduction.
-        Should typically be a simple linear model for interpretability.
+    residual_forecaster : sktime forecaster, optional (default=None)
+        Forecaster modeling the residual (deconfounded) relationship between
+        outcome and treatment. If None, defaults to a recursive reduction
+        forecaster wrapping a linear regression model.
 
-    exposure_vars : list of str
-        Column names in X that should be treated as exposure/treatment variables.
-        These are the variables whose causal effects we want to estimate.
+    exposure_vars : list of str, optional (default=None)
+        List of column names in ``X`` corresponding to exposure (treatment)
+        variables. All remaining columns in ``X`` are automatically treated as
+        confounders. If None, no exposures are assumed and the model reduces to
+        a residual-based forecaster without explicit causal interpretation.
+
+    Attributes
+    ----------
+    outcome_forecaster_ : sktime forecaster
+        Fitted clone of the outcome forecaster.
+
+    treatment_forecaster_ : sktime forecaster
+        Fitted clone of the treatment forecaster.
+
+    residual_forecaster_ : sktime forecaster
+        Fitted clone of the residual forecaster.
 
     Examples
     --------
@@ -88,19 +100,27 @@ class DoubleMLForecaster(BaseForecaster):
 
     Notes
     -----
-    The current implementation uses in-sample residuals during fitting,
-    similar to ResidualBoostingForecaster. Future versions may incorporate
-    cross-fitting for enhanced statistical robustness.
+    * All provided component forecasters (outcome, treatment, residual) make
+      proper use of exogenous data (``X``). In particular, the outcome and
+      treatment forecasters must condition on both confounder and exposure
+      variables. If a forecaster ignores exogenous inputs, the model reduces to
+      a standard residual-based forecaster and loses its causal interpretation.
 
-    The methodology is based on the Double Machine Learning framework,
-    which provides theoretical guarantees for unbiased causal estimation
-    even when nuisance functions are estimated with flexible ML models.
+    * The outcome and treatment forecasters must support in-sample prediction,
+      as residuals are computed from fitted values on the training data. If a
+      forecaster does not natively support in-sample prediction, it can be
+      wrapped using a utility such as ``OosResidualsWrapper`` to enable this
+      functionality.
+
+    * The residual forecaster should ideally be a simple interpretable model,
+      such as a linear regression or reduced-form model, to preserve
+      transparency of causal effect estimates.
 
     References
     ----------
     .. [1] Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E.,
-           Hansen, C., Newey, W., & Robins, J. (2018). Double/debiased
-           machine learning for treatment and structural parameters.
+           Hansen, C., Newey, W., & Robins, J. (2018). Double/debiased machine
+           learning for treatment and structural parameters.
     """
 
     _tags = {
@@ -154,40 +174,37 @@ class DoubleMLForecaster(BaseForecaster):
 
     def _update_tags_from_components(self):
         """Update forecaster tags based on component capabilities."""
+        # True if any component supports exogenous data
         exog = (
             self.outcome_forecaster.get_tag("capability:exogenous")
             or self.treatment_forecaster.get_tag("capability:exogenous")
             or self.residual_forecaster.get_tag("capability:exogenous")
         )
 
-        # self.treatment_forecaster and self.outcome_forecaster must support insample
-        # under normal circumstances as well
+        # The treatment_forecaster and outcome_forecaster must always support
+        # in-sample predictions, thus forecaster's in-sample capability
+        # depends only on residual_forecaster's in-sample capability
         in_sample = self.residual_forecaster.get_tag("capability:insample")
 
-        pred_int = (
-            self.outcome_forecaster.get_tag("capability:pred_int")
-            # and self.treatment_forecaster.get_tag("capability:pred_int")
-            and self.residual_forecaster.get_tag("capability:pred_int")
+        # Use residual_forecaster to determine predictive capabilities
+        pred_int = self.residual_forecaster.get_tag("capability:pred_int")
+        pred_int_insample = self.residual_forecaster.get_tag(
+            "capability:pred_int:insample"
         )
 
-        pred_int_insample = (
-            self.outcome_forecaster.get_tag("capability:pred_int:insample")
-            # and self.treatment_forecaster.get_tag("capability:pred_int:insample")
-            and self.residual_forecaster.get_tag("capability:pred_int:insample")
-        )
-
+        # All components must handle missing and categorical data
         miss = (
             self.outcome_forecaster.get_tag("capability:missing_values")
             and self.treatment_forecaster.get_tag("capability:missing_values")
             and self.residual_forecaster.get_tag("capability:missing_values")
         )
-
         cat = (
             self.outcome_forecaster.get_tag("capability:categorical_in_X")
             and self.treatment_forecaster.get_tag("capability:categorical_in_X")
             and self.residual_forecaster.get_tag("capability:categorical_in_X")
         )
 
+        # Combine and set final capability tags
         self.set_tags(
             **{
                 "capability:exogenous": exog,
@@ -243,30 +260,34 @@ class DoubleMLForecaster(BaseForecaster):
         return X_exposure, X_confounder
 
     def _fit(self, y, X=None, fh=None):
-        """Fit the DoubleMLForecaster.
+        """Fit DoubleMLForecaster on training data.
 
-        Implements the DoubleMLForecaster fitting procedure:
-        1. Split X into exposure (X_exposure) and confounder (X_confounder) variables
-        2. Fit outcome_forecaster on y and X_confounder to get outcome residuals
-        3. Fit treatment_forecaster on X_exposure and X_confounder
-           to get exposure residuals
-        4. Fit residual_forecaster on the residual relationship
-        5. Fit final versions for prediction
+        1. Split X into X_exposure and X_confounder parts.
+        2. Fit outcome forecaster on (y | confounders),
+           and compute residuals y_res.
+        3. Fit treatment forecaster on (exposures | confounders),
+           and compute residuals X_exposure_res.
+        4. Fit residual forecaster on (y_res | X_exposure_res)
+           to estimate causal effect.
+        5. Refit nuisance (outcome/treatment) forecasters with given `fh`.
         """
+        # 1. Split X into exposure and confounder parts
         X_exposure, X_confounder = self._split_exogenous_data(X)
 
-        # Forecast insample
+        # get in-sample forecasting horizon for residual computation
         if isinstance(y.index, pd.MultiIndex):
             time_idx = y.index.get_level_values(-1).unique()
         else:
             time_idx = y.index
         insample_fh = ForecastingHorizon(time_idx, is_relative=False)
 
+        # 2. Fit outcome forecaster on confounders and compute residuals
         outcome_forecaster_insample = clone(self.outcome_forecaster)
         outcome_forecaster_insample.fit(y=y, X=X_confounder, fh=insample_fh)
         y_pred = outcome_forecaster_insample.predict(X=X_confounder)
         y_res = y - y_pred
 
+        # 3. Fit treatment forecaster on confounders and compute exposure residuals
         if X_exposure is None:
             X_exposure_res = None
         else:
@@ -277,9 +298,11 @@ class DoubleMLForecaster(BaseForecaster):
             X_exposure_pred = treatment_forecaster_insample.predict(X=X_confounder)
             X_exposure_res = X_exposure - X_exposure_pred
 
+        # 4. Fit residual forecaster on residualized outcome and exposure
         self.residual_forecaster_ = clone(self.residual_forecaster)
         self.residual_forecaster_.fit(y=y_res, X=X_exposure_res, fh=fh)
 
+        # 5. Refit nuisance models for forecasting
         self.outcome_forecaster_ = clone(self.outcome_forecaster)
         self.outcome_forecaster_.fit(y=y, X=X_confounder, fh=fh)
 
@@ -298,14 +321,13 @@ class DoubleMLForecaster(BaseForecaster):
         return X_exposure_res
 
     def _predict(self, fh=None, X=None):
-        """Generate DoubleMLForecasts.
+        """Generate forecasts using fitted DoubleMLForecaster.
 
-        Prediction logic:
-        1. Split X_new into exposure and confounder variables
-        2. Get base forecast from confounders: y_pred_conf
-        3. Get de-confounded exposure: X_exposure_deconf
-        4. Get causal forecast component: y_pred_causal
-        5. Return combined forecast: y_pred_conf + y_pred_causal
+        1. Split X into X_exposure and X_confounder parts.
+        2. Compute residualized exposures using the treatment forecaster.
+        3. Obtain base (confounder-driven) predictions from outcome forecaster.
+        4. Obtain residual (causal) predictions from the residual forecaster.
+        5. Combine both parts: final prediction = base + residual component.
         """
         X_exposure, X_confounder = self._split_exogenous_data(X)
 
@@ -431,7 +453,7 @@ class DoubleMLForecaster(BaseForecaster):
             "outcome_forecaster": NaiveForecaster(strategy="last"),
             "treatment_forecaster": NaiveForecaster(strategy="last"),
             "residual_forecaster": make_reduction(LinearRegression(), window_length=3),
-            "exposure_vars": [0, "foo"],
+            "exposure_vars": [0, "foo"],  # expected column names in test-suites
         }
 
         # More complex test parameters
@@ -442,7 +464,7 @@ class DoubleMLForecaster(BaseForecaster):
                 RandomForestRegressor(n_estimators=5, random_state=42),
                 window_length=3,
             ),
-            "exposure_vars": [0, "foo"],
+            "exposure_vars": [0, "foo"],  # expected column names in test-suites
         }
 
         return [params1, params2]
