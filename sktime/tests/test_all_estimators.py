@@ -1463,7 +1463,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # fixed the random_state params recursively to be integer seeds.
             msg = (
                 "Estimator %s should not change or mutate "
-                " the parameter %s from %s to %s during fit."
+                "the parameter %s from %s to %s during fit."
                 % (estimator.__class__.__name__, param_name, original_value, new_value)
             )
             # joblib.hash has problems with pandas objects, so we use deep_equals then
