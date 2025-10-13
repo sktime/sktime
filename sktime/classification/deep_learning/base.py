@@ -288,10 +288,12 @@ class BaseDeepClassifier(BaseClassifier):
 
             in_memory_model = None
             if self.model_ is not None:
-                # We only use tempfile to get a unique filename.
+                # Python 3.12 introduces `delete_on_close` which we could use here
+                # to avoid having to delete the file ourselves.
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".h5") as tmpfile:
                     tmpfilepath = tmpfile.name
                     tmpfile.close()
+
                     self.model_.save(tmpfilepath)
 
                     with h5py.File(tmpfilepath, "r") as h5file:
@@ -367,11 +369,13 @@ class BaseDeepClassifier(BaseClassifier):
             # Python 3.12 introduces `delete_on_close` which we could use here
             # to avoid having to delete the file ourselves.
             with tempfile.NamedTemporaryFile(delete=False, suffix=".h5") as tmpfile:
-                tmpfile.write(in_memory_model)
                 tmpfilepath = tmpfile.name
 
-            cls.model_ = load_model(tmpfilepath)
-            os.remove(tmpfilepath)
+                tmpfile.write(in_memory_model)
+                tmpfile.close()
+
+                cls.model_ = load_model(tmpfilepath)
+                os.remove(tmpfilepath)
 
         cls.history = pickle.loads(in_memory_history)
         return pickle.loads(serial)

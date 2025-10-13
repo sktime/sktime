@@ -195,10 +195,12 @@ class BaseDeepRegressor(BaseRegressor):
 
             in_memory_model = None
             if self.model_ is not None:
-                # We only use tempfile to get a unique filename.
+                # Python 3.12 introduces `delete_on_close` which we could use here
+                # to avoid having to delete the file ourselves.
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".h5") as tmpfile:
                     tmpfilepath = tmpfile.name
                     tmpfile.close()
+
                     self.model_.save(tmpfilepath)
 
                     with h5py.File(tmpfilepath, "r") as h5file:
