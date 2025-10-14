@@ -187,8 +187,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     "activation in the output layer."
                     "Refer https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html"
                 )
-            self.validated_criterion = "crossentropyloss"
-            self.validated_activation = None
+            self._validated_criterion = "crossentropyloss"
+            self._validated_activation = None
             return
 
         # import the base class for all loss functions in PyTorch
@@ -286,11 +286,11 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             # nn.CrossEntropyLoss with no activation,
             # and using nn.CrossEntropyLoss is the preferred way
             # because of numerical stability
-            self.validated_criterion = "crossentropyloss"
-            self.validated_activation = None
+            self._validated_criterion = "crossentropyloss"
+            self._validated_activation = None
         else:
-            self.validated_criterion = self.criterion
-            self.validated_activation = self.activation
+            self._validated_criterion = self.criterion
+            self._validated_activation = self.activation
 
     def _instantiate_optimizer(self):
         if self._all_optimizers is None:
@@ -374,27 +374,27 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             }
 
         # if no criterion is passed, use CrossEntropyLoss as default
-        if not self.validated_criterion:
+        if not self._validated_criterion:
             return self._all_criterions["crossentropyloss"]()
         # import the base class for all loss functions in PyTorch
         torchLossFunction = _safe_import("torch.nn.modules.loss._Loss")
         # if criterion is a string, look it up in the available criterions
-        if isinstance(self.validated_criterion, str):
-            if self.validated_criterion.lower() in self._all_criterions:
+        if isinstance(self._validated_criterion, str):
+            if self._validated_criterion.lower() in self._all_criterions:
                 if self.criterion_kwargs:
-                    return self._all_criterions[self.validated_criterion.lower()](
+                    return self._all_criterions[self._validated_criterion.lower()](
                         **self.criterion_kwargs
                     )
                 else:
-                    return self._all_criterions[self.validated_criterion.lower()]()
+                    return self._all_criterions[self._validated_criterion.lower()]()
             else:
                 raise ValueError(
-                    f"Unknown criterion: {self.validated_criterion}. Please pass one "
+                    f"Unknown criterion: {self._validated_criterion}. Please pass one "
                     f"of {', '.join(self._all_criterions)} for `criterion`."
                 )
         # if criterion is already an instance of torch.nn.modules.loss._Loss, use it
-        elif isinstance(self.validated_criterion, torchLossFunction):
-            return self.validated_criterion
+        elif isinstance(self._validated_criterion, torchLossFunction):
+            return self._validated_criterion
         else:
             # if criterion is neither a string nor an instance of
             # a valid PyTorch loss function, raise an error
@@ -402,7 +402,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                 "`criterion` can either be None, a str or an instance of "
                 "loss functions defined in "
                 "https://pytorch.org/docs/stable/nn.html#loss-functions "
-                f"But got {type(self.validated_criterion)} instead."
+                f"But got {type(self._validated_criterion)} instead."
             )
 
     @abc.abstractmethod
