@@ -479,7 +479,11 @@ class ForecastingHorizon:
             Relative representation of forecasting horizon.
         """
         cutoff = self._coerce_cutoff_to_index(cutoff)
-        return _to_relative(fh=self, cutoff=_HashIndex(cutoff))
+
+        # return _to_relative(fh=self, cutoff=_HashIndex(cutoff))
+
+        out_self = _to_relative(fh=self, cutoff=_HashIndex(cutoff))
+        return out_self
 
     def to_absolute(self, cutoff):
         """Return absolute version of forecasting horizon values.
@@ -866,15 +870,17 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         # older pandas: explicit element-wise subtraction
         relative_delta = pd.Index([date - scalar_cutoff for date in absolute])
 
+    # handle plain integer / numeric absolute indices directly
+    if isinstance(absolute, pd.Index) and absolute.dtype.kind in ("i", "u", "f"):
+        return fh._new(relative_delta, is_relative=True, freq=fh.freq)
+
     # ---- convert deltas to integer steps when we have a frequency ----
     if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)) and fh.freq is not None:
         relative = _coerce_duration_to_int(relative_delta, freq=fh.freq)
         return fh._new(relative, is_relative=True, freq=fh.freq)
 
-    # ---- last-resort fallback: no freq derivable -> use step counts 1..n ----
-    # This preserves the semantics needed for in/out-of-sample logic.
-    relative = pd.Index(range(1, len(absolute) + 1))
-    return fh._new(relative, is_relative=True, freq=None)
+    # As a conservative fallback for exotic cases, still prefer true deltas:
+    return fh._new(relative_delta, is_relative=True, freq=fh.freq)
 
 
 # This function needs to be outside ForecastingHorizon
