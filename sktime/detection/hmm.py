@@ -392,26 +392,24 @@ class HMM(BaseDetector):
             Array of predicted class labels, same size as input.
         """
         X = X.values.flatten()
-        self.num_states = len(self.emission_funcs)
-        self.states = list(range(self.num_states))
-        self.num_obs = len(X)
+        num_states = len(self.emission_funcs)
+        states = list(range(num_states))
+        num_obs = len(X)
         emi_probs = self._make_emission_probs(self.emission_funcs, X)
         init_probs = self.initial_probs
         if self.initial_probs is None:
-            init_probs = 1.0 / self.num_states * np.ones(self.num_states)
+            init_probs = 1.0 / num_states * np.ones(num_states)
         trans_prob, trans_id = self._calculate_trans_mats(
             init_probs,
             emi_probs,
             self.transition_prob_mat,
-            self.num_obs,
-            self.num_states,
+            num_obs,
+            num_states,
         )
 
-        self.trans_prob = trans_prob
-        self.trans_id = trans_id
-        labels = self._hmm_viterbi_label(
-            self.num_obs, self.states, self.trans_prob, self.trans_id
-        )
+        trans_prob = trans_prob
+        trans_id = trans_id
+        labels = self._hmm_viterbi_label(num_obs, states, trans_prob, trans_id)
         y_seg = arr_to_seg(labels)
         return y_seg
 
