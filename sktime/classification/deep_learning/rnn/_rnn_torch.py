@@ -9,9 +9,6 @@ import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.rnn import RNNNetworkTorch
-from sktime.utils.dependencies._safe_import import _safe_import
-
-nnCrossEntropyLoss = _safe_import("torch.nn.CrossEntropyLoss")
 
 
 class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
@@ -21,54 +18,56 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
     ----------
     hidden_dim : int, default = 6
         Number of features in the hidden state.
-    n_layers : int
+    n_layers : int, default = 1
         Number of recurrent layers.
-        E.g., setting n_layers=2 would mean stacking two RNNs together to form
+        Setting n_layers=2 would mean stacking two RNNs together to form
         a stacked RNN, with the second RNN taking in outputs of the first RNN
         and computing the final results.
-    activation : str, default = "relu"
-        The activation function to use. Can be either 'tanh' or 'relu'.
+    activation : str or None or an instance of activation functions defined in
+        torch.nn, default = None
+        Activation function used in the fully connected output layer.
+    activation_hidden : str, default = "relu"
+        The activation function applied inside the RNN. Can be either 'tanh' or 'relu'.
+        Because currently PyTorch only supports these two activations inside the RNN.
+        https://docs.pytorch.org/docs/stable/generated/torch.nn.RNN.html#torch.nn.RNN
     batch_first : bool, default = False
         If True, then the input and output tensors are provided
-        as (batch, seq, feature).
+        as (batch, seq, feature) instead of (seq, batch, feature).
     bias : bool, default = True
         If False, then the layer does not use bias weights.
     init_weights : bool, default = True
         If True, then the weights are initialized.
     dropout : float, default = 0.0
-        If non-zero, introduces a Dropout layer on the outputs of each RNN layer
-        except the last layer, with dropout probability equal to dropout.
+        If non-zero, introduces a Dropout layer on the outputs of each RNN layer except
+        the fully connected output layer, with dropout probability equal to dropout.
     fc_dropout : float, default = 0.0
-        If non-zero, introduces a Dropout layer on the outputs of the
-        fully connected layer, with dropout probability equal to fc_dropout.
+        If non-zero, introduces a Dropout layer on the outputs of the fully connected
+        output layer, with dropout probability equal to fc_dropout.
     bidirectional : bool, default = False
         If True, then the RNN is bidirectional.
-    num_epochs : int, optional (default=100)
+    num_epochs : int, default = 100
         The number of epochs to train the model.
-    optimizer : case insensitive str or an instance of optimizers
-        defined in torch.optim, optional (default = "RMSprop").
-        The optimizer to use for training the model.
-        List of available optimizers:
+    optimizer : case insensitive str or None or an instance of optimizers
+        defined in torch.optim, default = "RMSprop"
+        The optimizer to use for training the model. List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
-    batch_size : int, optional (default=1)
+    optimizer_kwargs : dict or None, default = None
+        Additional keyword arguments to pass to the optimizer.
+    batch_size : int, default = 1
         The size of each mini-batch during training.
-    criterion : case insensitive str, or an instance of a loss function
-        defined in PyTorch, optional (default="CrossEntropyLoss").
+    criterion : case insensitive str or None or an instance of a loss function
+        defined in PyTorch, default = "CrossEntropyLoss"
         The loss function to be used in training the neural network.
         List of available loss functions:
         https://pytorch.org/docs/stable/nn.html#loss-functions
-    criterion_kwargs : dict, optional (default=None)
+    criterion_kwargs : dict or None, default = None
         Additional keyword arguments to pass to the loss function.
-    optimizer_kwargs : dict, optional (default=None)
-        Additional keyword arguments to pass to the optimizer.
-    lr : float, optional (default=0.001)
+    lr : float, default = 0.001
         The learning rate to use for the optimizer.
-    verbose : bool, optional (default=False)
+    verbose : bool, default = False
         Whether to print progress information during training.
-    random_state : int, optional (default=0)
+    random_state : int, default = 0
         Seed to ensure reproducibility.
-    metrics : list of str, default = ["accuracy"]
-        List of metrics to be used for evaluation.
 
     Examples
     --------
@@ -88,6 +87,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         "maintainers": ["RecreationalMath"],
         "python_version": ">=3.9",
         "python_dependencies": "torch",
+        "property:randomness": "stochastic",
         "capability:random_state": True,
     }
 
@@ -96,7 +96,8 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         # model specific
         hidden_dim: int = 6,
         n_layers: int = 1,
-        activation: str = "relu",
+        activation: str | None | Callable = None,
+        activation_hidden: str = "relu",
         batch_first: bool = False,
         bias: bool = True,
         init_weights: bool = True,
@@ -106,8 +107,8 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         # base classifier specific
         num_epochs: int = 100,
         batch_size: int = 1,
-        optimizer: str | Callable = "RMSprop",
-        criterion: str | Callable = "CrossEntropyLoss",
+        optimizer: str | None | Callable = "RMSprop",
+        criterion: str | None | Callable = "CrossEntropyLoss",
         criterion_kwargs: dict = None,
         optimizer_kwargs: dict = None,
         lr: float = 0.001,
@@ -117,6 +118,10 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
         self.activation = activation
+        # Note: we do not validate activation_hidden here.
+        # if activation_hidden is invalid, i.e. not in ['tanh', 'relu']
+        # PyTorch will raise an error
+        self.activation_hidden = activation_hidden
         self.batch_first = batch_first
         self.bias = bias
         self.init_weights = init_weights
@@ -125,6 +130,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         self.bidirectional = bidirectional
         self.num_epochs = num_epochs
         self.batch_size = batch_size
+        self.activation = activation
         self.criterion = criterion
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
@@ -133,16 +139,18 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         self.verbose = verbose
         self.random_state = random_state
 
-        # infer from the data
+        # input_size and num_classes to be inferred from the data
+        # and will be set in _build_network
         self.input_size = None
         self.num_classes = None
 
         super().__init__(
             num_epochs=self.num_epochs,
-            optimizer=self.optimizer,
-            criterion=self.criterion,
             batch_size=self.batch_size,
+            activation=self.activation,
+            criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
+            optimizer=self.optimizer,
             optimizer_kwargs=self.optimizer_kwargs,
             lr=self.lr,
             verbose=self.verbose,
@@ -177,7 +185,8 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
             n_layers=self.n_layers,
-            activation=self.activation,
+            activation=self.validated_activation,  # use self.validated_activation
+            activation_hidden=self.activation_hidden,
             bias=self.bias,
             batch_first=self.batch_first,
             num_classes=self.num_classes,
@@ -214,7 +223,8 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         params2 = {
             "hidden_dim": 5,
             "n_layers": 1,
-            "activation": "relu",
+            "activation": None,
+            "activation_hidden": "relu",
             "batch_first": False,
             "bias": False,
             "init_weights": True,
@@ -224,12 +234,74 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "num_epochs": 50,
             "batch_size": 2,
             "optimizer": "RMSprop",
-            "criterion": None,
+            "criterion": "CrossEntropyLoss",
             "criterion_kwargs": None,
             "optimizer_kwargs": None,
             "lr": 0.001,
             "verbose": False,
             "random_state": 0,
         }
-
-        return [params1, params2]
+        params3 = {
+            "hidden_dim": 5,
+            "n_layers": 1,
+            "activation": "sigmoid",
+            "activation_hidden": "relu",
+            "batch_first": False,
+            "bias": False,
+            "init_weights": True,
+            "dropout": 0.0,
+            "fc_dropout": 0.0,
+            "bidirectional": False,
+            "num_epochs": 50,
+            "batch_size": 2,
+            "optimizer": "RMSprop",
+            "criterion": "BCELoss",
+            "criterion_kwargs": None,
+            "optimizer_kwargs": None,
+            "lr": 0.001,
+            "verbose": False,
+            "random_state": 0,
+        }  # functionally equivalent to params2 for binary classification
+        params4 = {
+            "hidden_dim": 5,
+            "n_layers": 1,
+            "activation": None,
+            "activation_hidden": "relu",
+            "batch_first": False,
+            "bias": False,
+            "init_weights": True,
+            "dropout": 0.0,
+            "fc_dropout": 0.0,
+            "bidirectional": False,
+            "num_epochs": 50,
+            "batch_size": 2,
+            "optimizer": "RMSprop",
+            "criterion": "BCEWithLogitsLoss",
+            "criterion_kwargs": None,
+            "optimizer_kwargs": None,
+            "lr": 0.001,
+            "verbose": False,
+            "random_state": 0,
+        }  # functionally equivalent to params2 for binary classification
+        params5 = {
+            "hidden_dim": 5,
+            "n_layers": 1,
+            "activation": "logsoftmax",
+            "activation_hidden": "relu",
+            "batch_first": False,
+            "bias": False,
+            "init_weights": True,
+            "dropout": 0.0,
+            "fc_dropout": 0.0,
+            "bidirectional": False,
+            "num_epochs": 50,
+            "batch_size": 2,
+            "optimizer": "RMSprop",
+            "criterion": "NLLLoss",
+            "criterion_kwargs": None,
+            "optimizer_kwargs": None,
+            "lr": 0.001,
+            "verbose": False,
+            "random_state": 0,
+        }  # functionally equivalent to params2 for multi-class classification
+        return [params1, params2, params3, params4, params5]

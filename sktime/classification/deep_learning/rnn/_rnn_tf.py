@@ -64,6 +64,8 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         # packaging info
         # --------------
         "authors": ["mloning"],
+        "property:randomness": "stochastic",
+        "capability:random_state": True,
         # estimator type handled by parent class
     }
 

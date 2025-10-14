@@ -5,6 +5,7 @@ __authors__ = ["geetu040", "RecreationalMath"]
 __all__ = ["BaseDeepClassifierPytorch"]
 
 import abc
+from collections.abc import Callable
 
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
@@ -14,7 +15,39 @@ from sktime.utils.dependencies import _safe_import
 
 
 class BaseDeepClassifierPytorch(BaseClassifier):
-    """Abstract base class for the Pytorch neural network classifiers."""
+    """Abstract base class for the Pytorch neural network classifiers.
+
+    Parameters
+    ----------
+    num_epochs : int, default = 100
+        The number of epochs to train the model
+    batch_size : int, default = 8
+        The size of each mini-batch during training
+    activation : str or None or an instance of activation functions defined in
+        torch.nn, default = None
+        Activation function used in the fully connected output layer.
+    criterion : case insensitive str or an instance of a loss function
+        defined in PyTorch, default = None
+        The loss function to be used in training the neural network.
+        If None, CrossEntropyLoss is used.
+        If a string/Callable is passed, it must be one of the loss functions defined in
+        https://pytorch.org/docs/stable/nn.html#loss-functions
+    criterion_kwargs : dict, default = None
+        The keyword arguments to be passed to the loss function.
+    optimizer : case insensitive str or an instance of an optimizer
+        defined in PyTorch, default = None
+        The optimizer to use for training the model. If None, Adam optimizer is used.
+        If a string/Callable is passed, it must be one of the optimizers defined in
+        https://pytorch.org/docs/stable/optim.html#algorithms
+    optimizer_kwargs : dict, default = None
+        The keyword arguments to be passed to the optimizer.
+    lr : float, default = 0.001
+        The learning rate to be used in the optimizer.
+    verbose : bool, default = True
+        Whether to output extra information.
+    random_state : int or None, default = None
+        Seed to ensure reproducibility.
+    """
 
     _tags = {
         "authors": ["geetu040", "RecreationalMath"],
@@ -24,22 +57,26 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         "y_inner_mtype": "numpy1D",
         "capability:multivariate": True,
         "capability:multioutput": False,
+        "capability:random_state": True,
+        "property:randomness": "stochastic",
     }
 
     def __init__(
-        self,
-        num_epochs=16,
-        batch_size=8,
-        criterion=None,
-        criterion_kwargs=None,
-        optimizer=None,
-        optimizer_kwargs=None,
-        lr=0.001,
-        verbose=True,
-        random_state=None,
+        self: "BaseDeepClassifierPytorch",
+        num_epochs: int = 16,
+        batch_size: int = 8,
+        activation: str | None | Callable = None,
+        criterion: str | None | Callable = None,
+        criterion_kwargs: dict = None,
+        optimizer: str | Callable | None = None,
+        optimizer_kwargs: dict = None,
+        lr: float = 0.001,
+        verbose: bool = True,
+        random_state: int | None = None,
     ):
         self.num_epochs = num_epochs
         self.batch_size = batch_size
+        self.activation = activation
         self.criterion = criterion
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
@@ -56,6 +93,12 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         if self.random_state is not None:
             torchManual_seed = _safe_import("torch.manual_seed")
             torchManual_seed(self.random_state)
+
+        # validate activation function w.r.t. criterion specified
+        self._validate_activation_criterion()
+        # post this function call,
+        # self.validated_criterion and self.validated_activation are used
+        # and self.criterion and self.activation are ignored
 
         # optimizers and criterions will be instantiated in
         # _instantiate_optimizer & _instantiate_criterion methods respectively
@@ -88,6 +131,166 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             losses.append(loss.item())
         if self.verbose:
             print(f"Epoch {epoch + 1}: Loss: {np.average(losses)}")
+
+    def _validate_activation_criterion(self):
+        """Validate activation function in the output layer w.r.t. criterion specified.
+
+        Certain PyTorch criterions expect the output layer to have no activation
+        function. Such as, CrossEntropyLoss, BCEWithLogitsLoss, etc.
+        While certain combinations of criterion and activation function
+        are functionally equivalent to using CrossEntropyLoss with no activation,
+        but using CrossEntropyLoss is preferred due to numerical stability.
+
+        This method checks for both these cases, and either raises an error or
+        chooses CrossEntropyLoss with no activation if a functionally equivalent
+        combination is detected.
+
+        Examples of such functionally equivalent combinations:
+        for binary classification:
+        - CrossEntropyLoss with no activation with 2 neurons in output layer
+        - BCEWithLogitsLoss with no activation with 1 neuron in output layer
+        - BCELoss with sigmoid activation with 1 neuron in output layer
+        - NLLLoss with logsoftmax activation with 2 neurons in output layer
+
+        for multi-class classification:
+        - CrossEntropyLoss with no activation with N neurons in output layer
+        - NLLLoss with logsoftmax activation with N neurons in output layer
+
+        Sets
+        ------
+        self.validated_criterion : str or Callable
+            The validated criterion to be used in training the neural network.
+            This will either be the same as self.criterion, or "crossentropyloss"
+            if a functionally equivalent combination of criterion and activation
+            function is detected.
+        self.validated_activation : str or Callable or None
+            The validated activation function to be used in the output layer.
+            This will either be the same as self.activation, or None if a
+            functionally equivalent combination is detected.
+
+        Raises
+        ------
+        ValueError
+            If the activation function is incompatible with the chosen loss function.
+        """
+        if not self.criterion:
+            # if no criterion is passed, use CrossEntropyLoss as default
+            # and no activation in the output layer
+            if self.activation is not None:
+                raise ValueError(
+                    "When no criterion is passed, CrossEntropyLoss is used as the "
+                    "default loss function. In this case, the activation function "
+                    "in the output layer must be None. "
+                    f"But got activation = {self.activation}. "
+                    "This is because CrossEntropyLoss in PyTorch combines LogSoftmax "
+                    "and NLLLoss in one single class. Therefore, no need to apply "
+                    "activation in the output layer."
+                    "Refer https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html"
+                )
+            self.validated_criterion = "crossentropyloss"
+            self.validated_activation = None
+            return
+
+        # import the base class for all loss functions in PyTorch
+        torchLossFunction = _safe_import("torch.nn.modules.loss._Loss")
+
+        if isinstance(self.criterion, str):
+            criterion_passed = self.criterion.lower()
+        elif isinstance(self.criterion, torchLossFunction):
+            # import the specific loss functions to check for functionally equivalent
+            # combinations of criterion and activation function
+            CrossEntropyLoss = _safe_import("torch.nn.CrossEntropyLoss")
+            BCEWithLogitsLoss = _safe_import("torch.nn.BCEWithLogitsLoss")
+            BCELoss = _safe_import("torch.nn.BCELoss")
+            NLLLoss = _safe_import("torch.nn.NLLLoss")
+            if isinstance(self.criterion, CrossEntropyLoss):
+                criterion_passed = "crossentropyloss"
+            elif isinstance(self.criterion, BCEWithLogitsLoss):
+                criterion_passed = "bcewithlogitsloss"
+            elif isinstance(self.criterion, BCELoss):
+                criterion_passed = "bceloss"
+            elif isinstance(self.criterion, NLLLoss):
+                criterion_passed = "nllloss"
+            else:
+                criterion_passed = "other"
+        else:
+            # if criterion is neither None, nor a string nor an instance of
+            # a valid PyTorch loss function, raise an error
+            raise TypeError(
+                "`criterion` can either be None, a str or an instance of "
+                "PyTorch loss functions defined in "
+                "https://pytorch.org/docs/stable/nn.html#loss-functions "
+                f"But got {type(self.criterion)} instead."
+            )
+
+        # import the base class for all activation functions in PyTorch
+        NNModule = _safe_import("torch.nn.modules.module.Module")
+
+        if self.activation is None:
+            activation_passed = None
+        elif isinstance(self.activation, str):
+            activation_passed = self.activation.lower()
+        elif isinstance(self.activation, NNModule):
+            # import the specific activation functions to check for
+            # functionally equivalent combinations of criterion and activation function
+            Sigmoid = _safe_import("torch.nn.Sigmoid")
+            Softmax = _safe_import("torch.nn.Softmax")
+            LogSoftmax = _safe_import("torch.nn.LogSoftmax")
+            if isinstance(self.activation, Sigmoid):
+                activation_passed = "sigmoid"
+            elif isinstance(self.activation, Softmax):
+                activation_passed = "softmax"
+            elif isinstance(self.activation, LogSoftmax):
+                activation_passed = "logsoftmax"
+            else:
+                activation_passed = "other"
+        else:
+            # if activation is neither None, nor a string, nor an instance of
+            # a valid PyTorch activation function, raise an error
+            raise TypeError(
+                "`activation` can either be None, a str or an instance of a valid "
+                "PyTorch activation function."
+                f"But got {type(self.activation)} instead."
+            )
+
+        # now check for incompatible combinations of criterion and activation function
+        # and also check for functionally equivalent combinations
+        # of criterion and activation function
+        # that are equivalent to using CrossEntropyLoss with no activation
+        if criterion_passed == "crossentropyloss" and activation_passed is not None:
+            raise ValueError(
+                f"When using {self.criterion} as the loss function, "
+                "the activation function in the output layer must be None. "
+                f"But got activation = {self.activation}. "
+                "This is because CrossEntropyLoss in PyTorch combines LogSoftmax "
+                "and NLLLoss in one single class. Therefore, no need to apply "
+                "activation in the output layer."
+                "Refer https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html"
+            )
+        elif criterion_passed == "bcewithlogitsloss" and activation_passed is not None:
+            raise ValueError(
+                f"When using {self.criterion} as the loss function, "
+                "the activation function in the output layer must be None. "
+                f"But got activation = {self.activation}. "
+                "This is because BCEWithLogitsLoss in PyTorch combines a Sigmoid layer "
+                "and the BCELoss in one single class. Therefore, no need to apply "
+                "activation in the output layer."
+                "Refer https://pytorch.org/docs/stable/generated/torch.nn.BCEWithLogitsLoss.html"
+            )
+        elif (
+            (criterion_passed == "bceloss" and activation_passed == "sigmoid")
+            or (criterion_passed == "nllloss" and activation_passed == "logsoftmax")
+            or (criterion_passed == "bcewithlogitsloss" and activation_passed is None)
+        ):
+            # all of these are functionally equivalent to using
+            # nn.CrossEntropyLoss with no activation,
+            # and using nn.CrossEntropyLoss is the preferred way
+            # because of numerical stability
+            self.validated_criterion = "crossentropyloss"
+            self.validated_activation = None
+        else:
+            self.validated_criterion = self.criterion
+            self.validated_activation = self.activation
 
     def _instantiate_optimizer(self):
         if self._all_optimizers is None:
@@ -171,27 +374,27 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             }
 
         # if no criterion is passed, use CrossEntropyLoss as default
-        if not self.criterion:
+        if not self.validated_criterion:
             return self._all_criterions["crossentropyloss"]()
         # import the base class for all loss functions in PyTorch
         torchLossFunction = _safe_import("torch.nn.modules.loss._Loss")
         # if criterion is a string, look it up in the available criterions
-        if isinstance(self.criterion, str):
-            if self.criterion.lower() in self._all_criterions:
+        if isinstance(self.validated_criterion, str):
+            if self.validated_criterion.lower() in self._all_criterions:
                 if self.criterion_kwargs:
-                    return self._all_criterions[self.criterion.lower()](
+                    return self._all_criterions[self.validated_criterion.lower()](
                         **self.criterion_kwargs
                     )
                 else:
-                    return self._all_criterions[self.criterion.lower()]()
+                    return self._all_criterions[self.validated_criterion.lower()]()
             else:
                 raise ValueError(
-                    f"Unknown criterion: {self.criterion}. Please pass one of "
-                    f"{', '.join(self._all_criterions)} for `criterion`."
+                    f"Unknown criterion: {self.validated_criterion}. Please pass one "
+                    f"of {', '.join(self._all_criterions)} for `criterion`."
                 )
         # if criterion is already an instance of torch.nn.modules.loss._Loss, use it
-        elif isinstance(self.criterion, torchLossFunction):
-            return self.criterion
+        elif isinstance(self.validated_criterion, torchLossFunction):
+            return self.validated_criterion
         else:
             # if criterion is neither a string nor an instance of
             # a valid PyTorch loss function, raise an error
@@ -199,7 +402,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                 "`criterion` can either be None, a str or an instance of "
                 "loss functions defined in "
                 "https://pytorch.org/docs/stable/nn.html#loss-functions "
-                f"But got {type(self.criterion)} instead."
+                f"But got {type(self.validated_criterion)} instead."
             )
 
     @abc.abstractmethod
