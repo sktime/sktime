@@ -137,7 +137,7 @@ class HMM(BaseDetector):
         # estimator type
         # --------------
         "capability:multivariate": False,
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "task": "segmentation",
         "learning_type": "unsupervised",
         # CI and test flags
@@ -155,6 +155,11 @@ class HMM(BaseDetector):
         self.initial_probs = initial_probs
         self.emission_funcs = emission_funcs
         self.transition_prob_mat = transition_prob_mat
+        self.num_states = len(emission_funcs)
+        self.states = list(range(self.num_states))
+        if self.initial_probs is None:
+            self.initial_probs = 1.0 / self.num_states * np.ones(self.num_states)
+
         super().__init__()
         self._validate_init()
 
@@ -376,6 +381,16 @@ class HMM(BaseDetector):
         self :
             Reference to self.
         """
+        X = X.values.flatten()
+        self.num_obs = len(X)
+        emi_probs = self._make_emission_probs(self.emission_funcs, X)
+        self.trans_prob, self.trans_id = self._calculate_trans_mats(
+            self.initial_probs,
+            emi_probs,
+            self.transition_prob_mat,
+            self.num_obs,
+            self.num_states,
+        )
         return self
 
     def _predict(self, X):
@@ -391,25 +406,9 @@ class HMM(BaseDetector):
         annotated_x : array-like, shape = [num_observations]
             Array of predicted class labels, same size as input.
         """
-        X = X.values.flatten()
-        num_states = len(self.emission_funcs)
-        states = list(range(num_states))
-        num_obs = len(X)
-        emi_probs = self._make_emission_probs(self.emission_funcs, X)
-        init_probs = self.initial_probs
-        if self.initial_probs is None:
-            init_probs = 1.0 / num_states * np.ones(num_states)
-        trans_prob, trans_id = self._calculate_trans_mats(
-            init_probs,
-            emi_probs,
-            self.transition_prob_mat,
-            num_obs,
-            num_states,
+        labels = self._hmm_viterbi_label(
+            self.num_obs, self.states, self.trans_prob, self.trans_id
         )
-
-        trans_prob = trans_prob
-        trans_id = trans_id
-        labels = self._hmm_viterbi_label(num_obs, states, trans_prob, trans_id)
         y_seg = arr_to_seg(labels)
         return y_seg
 
