@@ -71,6 +71,7 @@ Deep learning
     mlp.MLPRegressor
     resnet.ResNetRegressor
     rnn.SimpleRNNRegressor
+    rnn.SimpleRNNRegressorTorch
     tapnet.TapNetRegressor
 
 Distance-based
