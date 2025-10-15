@@ -369,9 +369,9 @@ class BaseDeepRegressorTorch(BaseRegressor):
                 ),  # noqa: E501
             }
 
-        # if no criterion is passed, use CrossEntropyLoss as default
+        # if no criterion is passed, use MeanSquaredError as default
         if not self._validated_criterion:
-            return self._all_criterions["crossentropyloss"]()
+            return self._all_criterions["mseloss"]()
         # import the base class for all loss functions in PyTorch
         torchLossFunction = _safe_import("torch.nn.modules.loss._Loss")
         # if criterion is a string, look it up in the available criterions
