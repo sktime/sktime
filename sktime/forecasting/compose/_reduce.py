@@ -11,6 +11,7 @@ __author__ = [
     "Lovkush-A",
     "fkiraly",
     "benheid",
+    "ericjb",
 ]
 
 __all__ = [
@@ -28,6 +29,7 @@ __all__ = [
     "YfromX",
 ]
 
+import os
 import warnings
 
 import numpy as np
@@ -43,6 +45,7 @@ from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
+from sktime.forecasting.compose.dump_utils import dump_obj
 from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.reduce import Tabularizer
@@ -56,6 +59,111 @@ from sktime.utils.sklearn import is_sklearn_estimator, prep_skl_df, sklearn_scit
 from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 from sktime.utils.validation import check_window_length
 from sktime.utils.warnings import warn
+
+try:
+    from sktime.datatypes._vectorize import VectorizedDF
+except Exception:
+    VectorizedDF = ()
+
+
+def _unwrap_vdf(obj):
+    """Return the underlying pandas object if obj is a VectorizedDF; else obj."""
+    if obj is None:
+        return None
+    if isinstance(obj, VectorizedDF):
+        # Prefer the internal dataframe if present; else try a safe converter.
+        if hasattr(obj, "_df"):
+            return obj._df
+        if hasattr(obj, "to_pandas"):
+            try:
+                return obj.to_pandas()
+            except Exception:
+                # If conversion fails for any reason, just fall through
+                return obj
+    return obj
+
+
+def _rrlog(msg):
+    # cheap, dependency-free conditional logger so we can see what's happening
+    if os.environ.get("SKTIME_DEBUG_RR", "1") == "1":
+        print(f"[RR.unwrap] {msg}")
+
+
+# alias used throughout helpers
+def _d(msg):
+    _rrlog(msg)
+
+
+def _unwrap_vectorized_df(obj):
+    if obj is None:
+        return None
+    try:
+        from sktime.datatypes._vectorize import VectorizedDF
+    except Exception:
+        VectorizedDF = type("VectorizedDF", (), {})
+
+    if isinstance(obj, VectorizedDF):
+        # 1) If the wrapper already carries a MultiIndex DataFrame, just use it.
+        cand = getattr(obj, "y_multiindex", None)
+        if isinstance(cand, pd.DataFrame):
+            _d(f"[RR.unwrap] using y_multiindex directly: shape={cand.shape}")
+            return cand
+        cand = getattr(obj, "X_multiindex", None)
+        if isinstance(cand, pd.DataFrame):
+            _d(f"[RR.unwrap] using X_multiindex directly: shape={cand.shape}")
+            return cand
+
+        # 2) Reconstruct from stored pieces (values + multiindex + columns)
+        vals = getattr(obj, "Y", getattr(obj, "X", None))
+        mi_idx = getattr(obj, "y_mi_index", getattr(obj, "X_mi_index", None))
+        mi_cols = getattr(obj, "y_mi_columns", getattr(obj, "X_mi_columns", None))
+        if (vals is not None) and (mi_idx is not None) and (mi_cols is not None):
+            try:
+                arr = np.asarray(vals)
+                if arr.ndim == 3:
+                    n_inst, n_time, n_feat = arr.shape
+                    arr = arr.reshape(n_inst * n_time, n_feat)
+                elif arr.ndim > 2:
+                    arr = arr.reshape(arr.shape[0] * arr.shape[1], -1)
+                df = pd.DataFrame(arr, index=mi_idx, columns=mi_cols)
+                _d(
+                    f"[RR.unwrap] reconstructed MI DataFrame: shape={df.shape}, "
+                    f"index={type(df.index)}"
+                )
+                return df
+            except Exception as e:
+                _d(f"[RR.unwrap] reconstruction failed: {e!r}")
+
+        # 3) Known converters across sktime versions
+        try:
+            from sktime.datatypes import convert_to
+
+            for target, scitype in (
+                ("pd_multiindex_hier", "Hierarchical"),
+                ("pd-multiindex", "Panel"),
+            ):
+                try:
+                    df = convert_to(obj, target, as_scitype=scitype)
+                    _d(f"[RR.unwrap] convert_to(...,'{target}')->OK: type={type(df)}")
+                    return df
+                except Exception as e:
+                    _d(f"[RR.unwrap] convert_to(..., '{target}') failed: {e!r}")
+        except Exception as e:
+            _d(f"[RR.unwrap] import convert_to failed: {e!r}")
+
+        # 4) Very last-gasp
+        try:
+            df = pd.DataFrame(obj)
+            _d("[RR.unwrap] pd.DataFrame(obj) -> OK")
+            return df
+        except Exception as e:
+            _d(f"[RR.unwrap] pd.DataFrame(obj) failed: {e!r}")
+
+        _d("[RR.unwrap] FAILED to unwrap; returning original VectorizedDF")
+        return obj
+
+    # Not a VectorizedDF: return as-is
+    return obj
 
 
 def _concat_y_X(y, X):
@@ -2245,10 +2353,10 @@ def _get_forecaster(scitype, strategy):
             "dirrec": DirRecTabularRegressionForecaster,
         },
         "time-series-regressor": {
-            "direct": DirectTimeSeriesRegressionForecaster,
-            "recursive": RecursiveTimeSeriesRegressionForecaster,
-            "multioutput": MultioutputTimeSeriesRegressionForecaster,
-            "dirrec": DirRecTimeSeriesRegressionForecaster,
+            "direct": DirectReductionForecaster,
+            "recursive": RecursiveReductionForecaster,
+            "multioutput": RecursiveReductionForecaster,
+            "dirrec": DirectReductionForecaster,
         },
         "regressor_proba": {"direct": DirectTabularRegressionForecaster},
     }
@@ -3518,6 +3626,116 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_pred
 
+    # ===== Debug helpers =====
+    DEBUG = os.environ.get("SKTIME_DEBUG", "0") not in ("0", "", "false", "False")
+
+    def _is_vdf(self, obj):
+        try:
+            c = type(obj)
+            return (
+                c.__name__ == "VectorizedDF"
+                and "sktime.datatypes._vectorize" in c.__module__
+            )
+        except Exception:
+            return False
+
+    def _peek(self, obj, name="obj"):
+        if not self.DEBUG:
+            return
+        if obj is None:
+            print(f"[RR] {name}=None")
+            return
+        t = f"{type(obj).__module__}.{type(obj).__name__}"
+        print(f"[RR] {name}: type={t}")
+        if self._is_vdf(obj):
+            present = [
+                a for a in ("data", "_obj", "obj", "_X", "_y") if hasattr(obj, a)
+            ]
+            print(f"[RR] {name} is VectorizedDF; present attrs: {present}")
+        elif isinstance(obj, (pd.Series, pd.DataFrame)):
+            print(f"[RR] {name}: pandas shape={getattr(obj, 'shape', None)}")
+            print(f"[RR] {name}: index={type(getattr(obj, 'index', None))}")
+
+    def _dbg(self, msg):
+        if self.DEBUG:
+            print(f"[RR] {msg}")
+
+    # ===== Unwrap + logging =====
+    # def _unwrap_vectorized(self, obj):
+    #     if not self.DEBUG and not self._is_vdf(obj):
+    #         return obj
+    #     self. _dbg(f"_unwrap_vectorized on {type(obj)}")
+    #     if not self._is_vdf(obj):
+    #         return obj
+
+    #     # Try attributes that commonly hold the underlying pandas object
+    #     for attr in ("data", "_obj", "obj", "_X", "_y"):
+    #         if hasattr(obj, attr):
+    #             candidate = getattr(obj, attr)
+    #             self._dbg(f"  trying attr .{attr}: {type(candidate)}")
+    #             if isinstance(candidate, (pd.Series, pd.DataFrame)):
+    #                 self._dbg(f"  SUCCESS via .{attr} -> {type(candidate)}")
+    #                 return candidate
+
+    #     # Try known conversion methods (if present)
+    #     for meth in ("to_pandas", "to_multiindex", "to_df"):
+    #         fn = getattr(obj, meth, None)
+    #         if callable(fn):
+    #             try:
+    #                 out = fn()
+    #                 self._dbg(f"  {meth}() returned {type(out)}")
+    #                 if isinstance(out, (pd.Series, pd.DataFrame)):
+    #                     self._dbg(f"  SUCCESS via .{meth}()")
+    #                     return out
+    #             except Exception as e:
+    #                 self._dbg(f"  {meth}() raised {type(e).__name__}: {e}")
+
+    #     self._dbg("  FAILED to unwrap; returning original object")
+    #     return obj
+
+    # ===== Overrides with trace =====
+    def update(self, y=None, X=None, update_params=True):
+        self._dbg("update: entered")
+        self._peek(y, "y_in")
+        self._peek(X, "X_in")
+        y2 = _unwrap_vectorized_df(y)
+        X2 = _unwrap_vectorized_df(X)
+        if self.DEBUG and (y2 is not y):
+            self._dbg(f"y unwrapped -> {type(y2)}")
+        if self.DEBUG and (X2 is not X):
+            self._dbg(f"X unwrapped -> {type(X2)}")
+        try:
+            out = super().update(y=y2, X=X2, update_params=update_params)
+            self._dbg("update: leaving (super().update succeeded)")
+            return out
+        except Exception as e:
+            self._dbg(f"update: super().update raised {type(e).__name__}: {e}")
+            raise
+
+    def _check_X_y(self, X=None, y=None):
+        self._dbg("_check_X_y: entered")
+        self._peek(y, "y_before")
+        self._peek(X, "X_before")
+        # Option A: log-only (to see what reaches the base)
+        # return super()._check_X_y(X=X, y=y)
+
+        # Option B: unwrap here too (uncomment to also guard this path)
+        y2 = _unwrap_vectorized_df(y)
+        X2 = _unwrap_vectorized_df(X)
+        if self.DEBUG and (y2 is not y):
+            self._dbg(f"_check_X_y: y unwrapped -> {type(y2)}")
+        if self.DEBUG and (X2 is not X):
+            self._dbg(f"_check_X_y: X unwrapped -> {type(X2)}")
+        try:
+            return super()._check_X_y(X=X2, y=y2)
+        except TypeError as e:
+            # If only issue is a leftover VectorizedDF, try one more unwrap-and-retry
+            if ("VectorizedDF" in str(e)) and (y2 is y or X2 is X):
+                y3 = _unwrap_vectorized_df(y2)
+                X3 = _unwrap_vectorized_df(X2)
+                return super()._check_X_y(X=X3, y=y3)
+            raise
+
     # def _get_window_local(self, cutoff, window_length, y_orig):
     #     start = _shift(cutoff, by=-window_length + 1)
     #     cutoff = cutoff[0]
@@ -4672,8 +4890,8 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
     _tags = dict(OriginalRecursiveReductionForecaster._tags)
     _tags.update(
         {
-            "capability:multivariate": True,  # do not split DataFrame columns
-            # keep inner mtypes broad so our _fit/_predict see the full object
+            "capability:multivariate": True,  # handle wide DataFrames natively
+            "capability:hierarchical": True,  # handle MultiIndex/panels natively
             "capability:exogenous": True,
             "capability:insample": True,
             "y_inner_mtype": ["pd-multiindex", "pd_multiindex_hier", "pd.DataFrame"],
@@ -4721,36 +4939,84 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
         return X_broadcast
 
     def fit(self, y, X=None, fh=None):
+        y = _unwrap_vdf(y)
+        X = _unwrap_vdf(X)
+
         # remember original index/columns for roundtripping
         # (you already set these in _to_long_from_wide; keep that behavior)
-        # dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
-        # dump_obj("RecursiveReductionForecaster.fit()", "X", X)
+        dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
+        dump_obj("RecursiveReductionForecaster.fit()", "X", X)
+        print(f"self.pooling = {self.pooling}")
+        print(f"self._is_wide(y) = {self._is_wide(y)}")
+
         if getattr(self, "pooling", None) == "global" and self._is_wide(y):
-            y = self._to_long_from_wide(y)
+            y_long = self._to_long_from_wide(y)
             self._was_wide_input = True
             self._was_long_input = False
         else:
             # keep state consistent
             self._was_wide_input = False
             self._was_long_input = isinstance(getattr(y, "index", None), pd.MultiIndex)
+            y_long = y  # n.b. y_long may be a single series
 
-        X = self._broadcast_X_to_panel(X, y.index)
+        X = self._broadcast_X_to_panel(X, y_long.index)
 
         # IMPORTANT:
         # call base public fit (not _fit), so BaseForecaster stores y_metadata, etc
-        return super().fit(y=y, X=X, fh=fh)
+        super().fit(y=y_long, X=X, fh=fh)
+        if getattr(self, "_was_wide_input", False):
+            self._y_orig = y.copy()  # to make it availabe in predict
+            self._y_long = y_long  # save so it can be recalled in predict
+            self._y = y  # needed to pass CI tests (which is a pain)
+        return
 
     # 3) Override PUBLIC predict to roundtrip back to WIDE if we trained from WIDE.
     def predict(self, fh=None, X=None):
-        # dump_obj("RecursiveReductionForecaster.predict() - entered", "X", X)
-        y_pred = super().predict(
-            fh=fh, X=X
-        )  # will return LONG mtype because we trained on LONG
-        if getattr(self, "_was_wide_input", False):
-            # convert pooled LONG back to WIDE columns in original order
+        # If we trained from WIDE, temporarily put _y back to the LONG form we fitted on
+        was_wide = getattr(self, "_was_wide_input", False)
+        if was_wide:
+            self._y = self._y_long
+
+        # Ensure fh is validated and stored (mirrors BaseForecaster behavior lightly)
+        if fh is not None:
+            self._check_fh(fh)  # sets self.fh internally
+
+        # Call the parent ALGO directly to avoid BaseForecaster's output coercion
+        y_pred = OriginalRecursiveReductionForecaster._predict(self, fh=self.fh, X=X)
+
+        # If started WIDE and we're not in the moving-cutoff update path, return WIDE
+        in_update = getattr(self, "_predict_for_update", False)
+        if was_wide and not in_update:
             y_pred = self._to_wide_from_long(y_pred)
-        # dump_obj("RecursiveReductionForecaster.predict() - exiting", "y_pred", y_pred)
+
+        # Restore caller-facing _y to the original format
+        if was_wide:
+            self._y = self._y_orig
+
         return y_pred
+
+    # 4) Override PUBLIC update
+    def update(self, y=None, X=None, update_params=True):
+        # Intercept to normalize inputs before any parent/base validation.
+        y = _unwrap_vdf(y)
+        X = _unwrap_vdf(X)
+
+        # keep internal representation consistent with fit()
+        if (
+            getattr(self, "_was_wide_input", False)
+            and y is not None
+            and self._is_wide(y)
+        ):
+            y = self._to_long_from_wide(y)
+
+        return super().update(y=y, X=X, update_params=update_params)
+
+    # 5) Override internal
+    def _check_X_y(self, X=None, y=None):
+        # Last line of defense: ensure pandas hits the validator.
+        X = _unwrap_vdf(X)
+        y = _unwrap_vdf(y)
+        return super()._check_X_y(X=X, y=y)
 
     # -------- helpers --------
     def _is_wide(self, y):
