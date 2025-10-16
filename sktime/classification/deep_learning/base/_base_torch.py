@@ -13,6 +13,8 @@ from sklearn.preprocessing import LabelEncoder
 from sktime.classification.base import BaseClassifier
 from sktime.utils.dependencies import _safe_import
 
+ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
+
 
 class BaseDeepClassifierPytorch(BaseClassifier):
     """Abstract base class for the Pytorch neural network classifiers.
@@ -41,6 +43,18 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         https://pytorch.org/docs/stable/optim.html#algorithms
     optimizer_kwargs : dict, default = None
         The keyword arguments to be passed to the optimizer.
+    callbacks : None or str or a tuple of str, default = None
+        Currently only learning rate schedulers are supported as callbacks.
+        If more than one scheduler is passed, they are applied sequentially in the
+        order they are passed. If None, then no learning rate scheduler is used.
+        Note: Since PyTorch learning rate schedulers need to be initialized with
+        the optimizer object, we only accept the class name (str) of the scheduler here
+        and do not accept an instance of the scheduler. As that can lead to errors
+        and unexpected behavior.
+        List of available learning rate schedulers:
+        https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+    callback_kwargs : dict or None, default = None
+        The keyword arguments to be passed to the callbacks.
     lr : float, default = 0.001
         The learning rate to be used in the optimizer.
     verbose : bool, default = True
@@ -70,6 +84,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         criterion_kwargs: dict = None,
         optimizer: str | Callable | None = None,
         optimizer_kwargs: dict = None,
+        callbacks: None | Callable | tuple[Callable, ...] = None,
+        callback_kwargs: dict | None = None,
         lr: float = 0.001,
         verbose: bool = True,
         random_state: int | None = None,
@@ -81,6 +97,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
+        self.callbacks = callbacks
+        self.callback_kwargs = callback_kwargs
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -100,10 +118,12 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         # self.validated_criterion and self.validated_activation are used
         # and self.criterion and self.activation are ignored
 
-        # optimizers and criterions will be instantiated in
-        # _instantiate_optimizer & _instantiate_criterion methods respectively
+        # optimizers, criterions, callbacks will be instantiated in
+        # _instantiate_optimizer, _instantiate_criterion & _instantiate_callbacks
+        # methods respectively
         self._all_optimizers = None
         self._all_criterions = None
+        self._all_callbacks = None
 
     def _fit(self, X, y):
         y = self._encode_y(y)
@@ -113,7 +133,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         # instantiate loss function and optimizer
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
-
+        # instantiate callbacks (learning rate schedulers)
+        self._schedulers = self._instantiate_schedulers()
+        # build dataloader
         dataloader = self._build_dataloader(X, y)
 
         self.network.train()
@@ -129,8 +151,20 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             loss.backward()
             self._optimizer.step()
             losses.append(loss.item())
+        epoch_loss = np.average(losses)
+        # step the schedulers, if any
+        if self._schedulers:
+            for scheduler in self._schedulers:
+                if isinstance(scheduler, ReduceLROnPlateau):
+                    # if ReduceLROnPlateau is used,
+                    # a metric value need to be passed here.
+                    # We pass the loss value of the last epoch.
+                    scheduler.step(epoch_loss)
+                else:
+                    scheduler.step()
+        # print loss for the epoch
         if self.verbose:
-            print(f"Epoch {epoch + 1}: Loss: {np.average(losses)}")
+            print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
 
     def _validate_activation_criterion(self):
         """Validate activation function in the output layer w.r.t. criterion specified.
@@ -291,6 +325,81 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         else:
             self._validated_criterion = self.criterion
             self._validated_activation = self.activation
+
+    def _instantiate_schedulers(self):
+        """Instantiate the schedulers to be used during training.
+
+        Currently, only learning rate schedulers are supported as callbacks.
+        If more than one scheduler is passed, they are applied sequentially
+        in the order they are passed.
+
+        Note: Since PyTorch learning rate schedulers need to be initialized with
+        the optimizer object, we only accept the class name (str) of the scheduler here
+        and do not accept an instance of the scheduler. As that can lead to errors
+        and unexpected behavior.
+
+        Sets
+        ------
+        self._schedulers : None or str or a tuple of str, each string
+            representing the name of a valid learning rate scheduler
+            implemented in PyTorch. For list of supported learning rate schedulers
+            see: https://docs.pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+            The list of instantiated schedulers to be used during training.
+        """
+        if self.callbacks is None:
+            return None
+
+        if not isinstance(self.callbacks, tuple):
+            self._callbacks = (self.callbacks,)
+        else:
+            self._callbacks = self.callbacks
+
+        if self._all_callbacks is None:
+            self._all_callbacks = {
+                "lambdalr": "LambdaLR",
+                "multiplicativelr": "MultiplicativeLR",
+                "steplr": "StepLR",
+                "multisteplr": "MultiStepLR",
+                "constantlr": "ConstantLR",
+                "linearlr": "LinearLR",
+                "exponentiallr": "ExponentialLR",
+                "polynomiallr": "PolynomialLR",
+                "cosineannealinglr": "CosineAnnealingLR",
+                "chainedscheduler": "ChainedScheduler",
+                "sequentiallr": "SequentialLR",
+                "reducelronplateau": "ReduceLROnPlateau",
+                "cycliclr": "CyclicLR",
+                "onecyclelr": "OneCycleLR",
+                "cosineannealingwarmrestarts": "CosineAnnealingWarmRestarts",
+            }
+        schedulers = []
+        for scheduler in self._callbacks:
+            if isinstance(scheduler, str):
+                if scheduler.lower() in self._all_callbacks:
+                    scheduler_class = _safe_import(
+                        f"torch.optim.lr_scheduler.{self._all_callbacks[scheduler.lower()]}"  # noqa: E501
+                    )
+                    if self.callback_kwargs:
+                        schedulers.append(
+                            scheduler_class(self._optimizer, **self.callback_kwargs)
+                        )
+                    else:
+                        schedulers.append(scheduler_class(self._optimizer))
+                else:
+                    raise ValueError(
+                        f"Unknown learning rate scheduler: {scheduler}. "
+                        f"Please pass one/many of {', '.join(self._all_callbacks)} "
+                        "as a callback. Currently only learning rate schedulers are "
+                        "supported as callbacks."
+                    )
+            else:
+                raise TypeError(
+                    "Callbacks can either be None, a str or a tuple of str representing"
+                    " a learning rate scheduler defined in PyTorch. "
+                    "As currently only learning rate schedulers are "
+                    f"supported as callbacks. But got {type(scheduler)} instead."
+                )
+        return schedulers
 
     def _instantiate_optimizer(self):
         if self._all_optimizers is None:

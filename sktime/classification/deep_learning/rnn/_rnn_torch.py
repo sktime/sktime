@@ -62,6 +62,18 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         https://pytorch.org/docs/stable/nn.html#loss-functions
     criterion_kwargs : dict or None, default = None
         Additional keyword arguments to pass to the loss function.
+    callbacks : None or str or a tuple of str, default = "ReduceLROnPlateau"
+        Currently only learning rate schedulers are supported as callbacks.
+        If more than one scheduler is passed, they are applied sequentially in the
+        order they are passed. If None, then no learning rate scheduler is used.
+        Note: Since PyTorch learning rate schedulers need to be initialized with
+        the optimizer object, we only accept the class name (str) of the scheduler here
+        and do not accept an instance of the scheduler. As that can lead to errors
+        and unexpected behavior.
+        List of available learning rate schedulers:
+        https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+    callback_kwargs : dict or None, default = None
+        The keyword arguments to be passed to the callbacks.
     lr : float, default = 0.001
         The learning rate to use for the optimizer.
     verbose : bool, default = False
@@ -109,8 +121,10 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         batch_size: int = 1,
         optimizer: str | None | Callable = "RMSprop",
         criterion: str | None | Callable = "CrossEntropyLoss",
-        criterion_kwargs: dict = None,
-        optimizer_kwargs: dict = None,
+        callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
+        optimizer_kwargs: dict | None = None,
+        criterion_kwargs: dict | None = None,
+        callback_kwargs: dict | None = None,
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int = 0,
@@ -135,6 +149,8 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
+        self.callbacks = callbacks
+        self.callback_kwargs = callback_kwargs
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -152,6 +168,8 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             criterion_kwargs=self.criterion_kwargs,
             optimizer=self.optimizer,
             optimizer_kwargs=self.optimizer_kwargs,
+            callbacks=self.callbacks,
+            callback_kwargs=self.callback_kwargs,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
@@ -235,8 +253,10 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "batch_size": 2,
             "optimizer": "RMSprop",
             "criterion": "CrossEntropyLoss",
+            "callbacks": None,
             "criterion_kwargs": None,
             "optimizer_kwargs": None,
+            "callback_kwargs": None,
             "lr": 0.001,
             "verbose": False,
             "random_state": 0,
@@ -256,8 +276,10 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "batch_size": 2,
             "optimizer": "RMSprop",
             "criterion": "BCELoss",
+            "callbacks": None,
             "criterion_kwargs": None,
             "optimizer_kwargs": None,
+            "callback_kwargs": None,
             "lr": 0.001,
             "verbose": False,
             "random_state": 0,
@@ -277,8 +299,10 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "batch_size": 2,
             "optimizer": "RMSprop",
             "criterion": "BCEWithLogitsLoss",
+            "callbacks": None,
             "criterion_kwargs": None,
             "optimizer_kwargs": None,
+            "callback_kwargs": None,
             "lr": 0.001,
             "verbose": False,
             "random_state": 0,
@@ -298,8 +322,10 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "batch_size": 2,
             "optimizer": "RMSprop",
             "criterion": "NLLLoss",
+            "callbacks": None,
             "criterion_kwargs": None,
             "optimizer_kwargs": None,
+            "callback_kwargs": None,
             "lr": 0.001,
             "verbose": False,
             "random_state": 0,

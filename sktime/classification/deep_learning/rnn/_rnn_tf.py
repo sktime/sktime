@@ -26,7 +26,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         the number of samples per gradient update.
     units : int, default = 6
         number of units in the network
-    callbacks : list of tf.keras.callbacks.Callback objects, default = None
+    callbacks : tuple of tf.keras.callbacks.Callback objects, default = None
     add_default_callback : bool, default = True
         whether to add default callback
     random_state : int or None, default=0
