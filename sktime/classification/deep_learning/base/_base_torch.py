@@ -484,8 +484,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.network.eval()
         dataloader = self._build_dataloader(X)
         y_pred = []
-        for inputs in dataloader:
-            y_pred.append(self.network(**inputs).detach())
+        torchNo_grad = _safe_import("torch.no_grad")
+        with torchNo_grad():
+            for inputs in dataloader:
+                y_pred.append(self.network(**inputs).detach())
         y_pred = cat(y_pred, dim=0)
         # (batch_size, num_outputs)
         y_pred = Fsoftmax(y_pred, dim=-1)
