@@ -154,10 +154,8 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             # Convert fh to relative if it is absolute before setting it
             _fh = _fh.to_relative(self.cutoff)
 
-            in_sample_horizon, out_of_sample_horizon = self._split_horizon(fh)
-
             if _fh.is_all_in_sample():
-                _fh = self._check_fh(y.index)
+                _fh = ForecastingHorizon(y.index, is_relative=False)
                 _fh = _fh.to_relative(self.cutoff)
             # pass the fh to _trend_forecaster in case it needs it
             self._trend_forecaster.set_fh(_fh)
@@ -525,11 +523,11 @@ class StatsForecastBackAdapter:
         -------
         self : returns reference to self
         """
-        self._fh = fh
+        self.inner_fh = fh
 
     def _get_fh(self):
         """Get forecasting horizon."""
-        fh = getattr(self, "_fh", None)
+        fh = getattr(self, "inner_fh", None)
 
         if fh is not None:
             if fh.is_all_in_sample():
@@ -576,7 +574,7 @@ class StatsForecastBackAdapter:
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
-        fh = self._get_fh()
+        fh = self._get_fh() or range(1, h + 1)
         mean = self.estimator.predict(fh=fh, X=X)[:, 0]
         if level is None:
             return {"mean": mean}
