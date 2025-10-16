@@ -45,7 +45,6 @@ from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.forecasting.compose.dump_utils import dump_obj
 from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.reduce import Tabularizer
@@ -90,8 +89,8 @@ def _rrlog(msg):
 
 
 # alias used throughout helpers
-def _d(msg):
-    _rrlog(msg)
+# def _d(msg):
+#     _rrlog(msg)
 
 
 def _unwrap_vectorized_df(obj):
@@ -106,11 +105,11 @@ def _unwrap_vectorized_df(obj):
         # 1) If the wrapper already carries a MultiIndex DataFrame, just use it.
         cand = getattr(obj, "y_multiindex", None)
         if isinstance(cand, pd.DataFrame):
-            _d(f"[RR.unwrap] using y_multiindex directly: shape={cand.shape}")
+            # _d(f"[RR.unwrap] using y_multiindex directly: shape={cand.shape}")
             return cand
         cand = getattr(obj, "X_multiindex", None)
         if isinstance(cand, pd.DataFrame):
-            _d(f"[RR.unwrap] using X_multiindex directly: shape={cand.shape}")
+            # _d(f"[RR.unwrap] using X_multiindex directly: shape={cand.shape}")
             return cand
 
         # 2) Reconstruct from stored pieces (values + multiindex + columns)
@@ -126,13 +125,14 @@ def _unwrap_vectorized_df(obj):
                 elif arr.ndim > 2:
                     arr = arr.reshape(arr.shape[0] * arr.shape[1], -1)
                 df = pd.DataFrame(arr, index=mi_idx, columns=mi_cols)
-                _d(
-                    f"[RR.unwrap] reconstructed MI DataFrame: shape={df.shape}, "
-                    f"index={type(df.index)}"
-                )
+                # _d(
+                #     f"[RR.unwrap] reconstructed MI DataFrame: shape={df.shape}, "
+                #     f"index={type(df.index)}"
+                # )
                 return df
             except Exception as e:
-                _d(f"[RR.unwrap] reconstruction failed: {e!r}")
+                print(f"[RR.unwrap] reconstruction failed: {e!r}")
+                # _d(f"[RR.unwrap] reconstruction failed: {e!r}")
 
         # 3) Known converters across sktime versions
         try:
@@ -144,22 +144,25 @@ def _unwrap_vectorized_df(obj):
             ):
                 try:
                     df = convert_to(obj, target, as_scitype=scitype)
-                    _d(f"[RR.unwrap] convert_to(...,'{target}')->OK: type={type(df)}")
+                    # _d(f"[RR.unwrap] convert_to(...,'{target}')->OK: type={type(df)}")
                     return df
                 except Exception as e:
-                    _d(f"[RR.unwrap] convert_to(..., '{target}') failed: {e!r}")
+                    # _d(f"[RR.unwrap] convert_to(..., '{target}') failed: {e!r}")
+                    print(f"[RR.unwrap] convert_to(..., '{target}') failed: {e!r}")
         except Exception as e:
-            _d(f"[RR.unwrap] import convert_to failed: {e!r}")
+            print(f"[RR.unwrap] import convert_to failed: {e!r}")
+            # _d(f"[RR.unwrap] import convert_to failed: {e!r}")
 
         # 4) Very last-gasp
         try:
             df = pd.DataFrame(obj)
-            _d("[RR.unwrap] pd.DataFrame(obj) -> OK")
+            # _d("[RR.unwrap] pd.DataFrame(obj) -> OK")
             return df
         except Exception as e:
-            _d(f"[RR.unwrap] pd.DataFrame(obj) failed: {e!r}")
+            # _d(f"[RR.unwrap] pd.DataFrame(obj) failed: {e!r}")
+            print(f"[RR.unwrap] pd.DataFrame(obj) failed: {e!r}")
 
-        _d("[RR.unwrap] FAILED to unwrap; returning original VectorizedDF")
+        # _d("[RR.unwrap] FAILED to unwrap; returning original VectorizedDF")
         return obj
 
     # Not a VectorizedDF: return as-is
@@ -3695,37 +3698,37 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
     # ===== Overrides with trace =====
     def update(self, y=None, X=None, update_params=True):
-        self._dbg("update: entered")
-        self._peek(y, "y_in")
-        self._peek(X, "X_in")
+        # self._dbg("update: entered")
+        # self._peek(y, "y_in")
+        # self._peek(X, "X_in")
         y2 = _unwrap_vectorized_df(y)
         X2 = _unwrap_vectorized_df(X)
-        if self.DEBUG and (y2 is not y):
-            self._dbg(f"y unwrapped -> {type(y2)}")
-        if self.DEBUG and (X2 is not X):
-            self._dbg(f"X unwrapped -> {type(X2)}")
+        # if self.DEBUG and (y2 is not y):
+        #     self._dbg(f"y unwrapped -> {type(y2)}")
+        # if self.DEBUG and (X2 is not X):
+        #     self._dbg(f"X unwrapped -> {type(X2)}")
         try:
             out = super().update(y=y2, X=X2, update_params=update_params)
-            self._dbg("update: leaving (super().update succeeded)")
+            # self._dbg("update: leaving (super().update succeeded)")
             return out
-        except Exception as e:
-            self._dbg(f"update: super().update raised {type(e).__name__}: {e}")
+        except Exception:
+            # self._dbg(f"update: super().update raised {type(e).__name__}: {e}")
             raise
 
     def _check_X_y(self, X=None, y=None):
-        self._dbg("_check_X_y: entered")
-        self._peek(y, "y_before")
-        self._peek(X, "X_before")
+        # self._dbg("_check_X_y: entered")
+        # self._peek(y, "y_before")
+        # self._peek(X, "X_before")
         # Option A: log-only (to see what reaches the base)
         # return super()._check_X_y(X=X, y=y)
 
         # Option B: unwrap here too (uncomment to also guard this path)
         y2 = _unwrap_vectorized_df(y)
         X2 = _unwrap_vectorized_df(X)
-        if self.DEBUG and (y2 is not y):
-            self._dbg(f"_check_X_y: y unwrapped -> {type(y2)}")
-        if self.DEBUG and (X2 is not X):
-            self._dbg(f"_check_X_y: X unwrapped -> {type(X2)}")
+        # if self.DEBUG and (y2 is not y):
+        #     self._dbg(f"_check_X_y: y unwrapped -> {type(y2)}")
+        # if self.DEBUG and (X2 is not X):
+        #     self._dbg(f"_check_X_y: X unwrapped -> {type(X2)}")
         try:
             return super()._check_X_y(X=X2, y=y2)
         except TypeError as e:
@@ -4944,10 +4947,10 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
 
         # remember original index/columns for roundtripping
         # (you already set these in _to_long_from_wide; keep that behavior)
-        dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
-        dump_obj("RecursiveReductionForecaster.fit()", "X", X)
-        print(f"self.pooling = {self.pooling}")
-        print(f"self._is_wide(y) = {self._is_wide(y)}")
+        # dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
+        # dump_obj("RecursiveReductionForecaster.fit()", "X", X)
+        # print(f"self.pooling = {self.pooling}")
+        # print(f"self._is_wide(y) = {self._is_wide(y)}")
 
         if getattr(self, "pooling", None) == "global" and self._is_wide(y):
             y_long = self._to_long_from_wide(y)
