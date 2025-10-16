@@ -402,38 +402,42 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         return schedulers
 
     def _instantiate_optimizer(self):
-        if self._all_optimizers is None:
-            self._all_optimizers = {
-                "adadelta": _safe_import("torch.optim.Adadelta"),
-                "adagrad": _safe_import("torch.optim.Adagrad"),
-                "adam": _safe_import("torch.optim.Adam"),
-                "adamw": _safe_import("torch.optim.AdamW"),
-                "sparseadam": _safe_import("torch.optim.SparseAdam"),
-                "adamax": _safe_import("torch.optim.Adamax"),
-                "asgd": _safe_import("torch.optim.ASGD"),
-                "lbfgs": _safe_import("torch.optim.LBFGS"),
-                "nadam": _safe_import("torch.optim.NAdam"),
-                "radam": _safe_import("torch.optim.RAdam"),
-                "rmsprop": _safe_import("torch.optim.RMSprop"),
-                "rprop": _safe_import("torch.optim.Rprop"),
-                "sgd": _safe_import("torch.optim.SGD"),
-            }
         # if no optimizer is passed, use Adam as default
         if not self.optimizer:
-            return self._all_optimizers["adam"](self.network.parameters(), lr=self.lr)
+            opt = _safe_import("torch.optim.Adam")(
+                self.network.parameters(), lr=self.lr
+            )
+            return opt
+        if self._all_optimizers is None:
+            self._all_optimizers = {
+                "adadelta": "Adadelta",
+                "adagrad": "Adagrad",
+                "adam": "Adam",
+                "adamw": "AdamW",
+                "sparseadam": "SparseAdam",
+                "adamax": "Adamax",
+                "asgd": "ASGD",
+                "lbfgs": "LBFGS",
+                "nadam": "NAdam",
+                "radam": "RAdam",
+                "rmsprop": "RMSprop",
+                "rprop": "Rprop",
+                "sgd": "SGD",
+            }
         # import the base class for all optimizers in PyTorch
         torchOptimizer = _safe_import("torch.optim.Optimizer")
         # if optimizer is a string, look it up in the available optimizers
         if isinstance(self.optimizer, str):
             if self.optimizer.lower() in self._all_optimizers:
-                if self.optimizer_kwargs:
-                    return self._all_optimizers[self.optimizer.lower()](
+                optimizer_class = _safe_import(
+                    f"torch.optim.{self._all_optimizers[self.optimizer.lower()]}"
+                )
+                if self.callback_kwargs:
+                    return optimizer_class(
                         self.network.parameters(), lr=self.lr, **self.optimizer_kwargs
                     )
                 else:
-                    return self._all_optimizers[self.optimizer.lower()](
-                        self.network.parameters(), lr=self.lr
-                    )
+                    return optimizer_class(self.network.parameters(), lr=self.lr)
             else:
                 raise ValueError(
                     f"Unknown optimizer: {self.optimizer}. Please pass one of "
@@ -453,49 +457,46 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             )
 
     def _instantiate_criterion(self):
-        if self._all_criterions is None:
-            self._all_criterions = {
-                "l1loss": _safe_import("torch.nn.L1Loss"),
-                "mseloss": _safe_import("torch.nn.MSELoss"),
-                "crossentropyloss": _safe_import("torch.nn.CrossEntropyLoss"),
-                "ctcloss": _safe_import("torch.nn.CTCLoss"),
-                "nllloss": _safe_import("torch.nn.NLLLoss"),
-                "poissonnllloss": _safe_import("torch.nn.PoissonNLLLoss"),
-                "gaussiannllloss": _safe_import("torch.nn.GaussianNLLLoss"),
-                "kldivloss": _safe_import("torch.nn.KLDivLoss"),
-                "bceloss": _safe_import("torch.nn.BCELoss"),
-                "bcewithlogitsloss": _safe_import("torch.nn.BCEWithLogitsLoss"),
-                "marginrankingloss": _safe_import("torch.nn.MarginRankingLoss"),
-                "hingeembeddingloss": _safe_import("torch.nn.HingeEmbeddingLoss"),
-                "multilabelmarginloss": _safe_import("torch.nn.MultiLabelMarginLoss"),
-                "huberloss": _safe_import("torch.nn.HuberLoss"),
-                "smoothl1loss": _safe_import("torch.nn.SmoothL1Loss"),
-                "softmarginloss": _safe_import("torch.nn.SoftMarginLoss"),
-                "multilabelsoftmarginloss": _safe_import(
-                    "torch.nn.MultiLabelSoftMarginLoss"
-                ),  # noqa: E501
-                "cosineembeddingloss": _safe_import("torch.nn.CosineEmbeddingLoss"),
-                "multimarginloss": _safe_import("torch.nn.MultiMarginLoss"),
-                "tripletmarginloss": _safe_import("torch.nn.TripletMarginLoss"),
-                "tripletmarginwithdistanceloss": _safe_import(
-                    "torch.nn.TripletMarginWithDistanceLoss"
-                ),  # noqa: E501
-            }
-
         # if no criterion is passed, use CrossEntropyLoss as default
         if not self._validated_criterion:
-            return self._all_criterions["crossentropyloss"]()
+            loss = _safe_import("torch.nn.CrossEntropyLoss")()
+            return loss
+        if self._all_criterions is None:
+            self._all_criterions = {
+                "l1loss": "L1Loss",
+                "mseloss": "MSELoss",
+                "crossentropyloss": "CrossEntropyLoss",
+                "ctcloss": "CTCLoss",
+                "nllloss": "NLLLoss",
+                "poissonnllloss": "PoissonNLLLoss",
+                "gaussiannllloss": "GaussianNLLLoss",
+                "kldivloss": "KLDivLoss",
+                "bceloss": "BCELoss",
+                "bcewithlogitsloss": "BCEWithLogitsLoss",
+                "marginrankingloss": "MarginRankingLoss",
+                "hingeembeddingloss": "HingeEmbeddingLoss",
+                "multilabelmarginloss": "MultiLabelMarginLoss",
+                "huberloss": "HuberLoss",
+                "smoothl1loss": "SmoothL1Loss",
+                "softmarginloss": "SoftMarginLoss",
+                "multilabelsoftmarginloss": "MultiLabelSoftMarginLoss",
+                "cosineembeddingloss": "CosineEmbeddingLoss",
+                "multimarginloss": "MultiMarginLoss",
+                "tripletmarginloss": "TripletMarginLoss",
+                "tripletmarginwithdistanceloss": "TripletMarginWithDistanceLoss",
+            }
         # import the base class for all loss functions in PyTorch
         torchLossFunction = _safe_import("torch.nn.modules.loss._Loss")
         # if criterion is a string, look it up in the available criterions
         if isinstance(self._validated_criterion, str):
             if self._validated_criterion.lower() in self._all_criterions:
+                criterion_class = _safe_import(
+                    f"torch.nn.{self._all_criterions[self._validated_criterion.lower()]}"
+                )
                 if self.criterion_kwargs:
-                    return self._all_criterions[self._validated_criterion.lower()](
-                        **self.criterion_kwargs
-                    )
+                    return criterion_class(**self.criterion_kwargs)
                 else:
-                    return self._all_criterions[self._validated_criterion.lower()]()
+                    return criterion_class()
             else:
                 raise ValueError(
                     f"Unknown criterion: {self._validated_criterion}. Please pass one "
