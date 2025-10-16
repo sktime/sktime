@@ -108,7 +108,7 @@ class HFTransformersForecaster(BaseForecaster):
     ...     HFTransformersForecaster,
     ... )
     >>> from sktime.datasets import load_airline
-    >>> from peft import LoraConfig
+    >>> from peft import LoraConfig # doctest: +SKIP
     >>> y = load_airline()
     >>> forecaster = HFTransformersForecaster(
     ...    model_path="huggingface/autoformer-tourism-monthly",
@@ -187,6 +187,8 @@ class HFTransformersForecaster(BaseForecaster):
         "y_inner_mtype": "pd.Series",
         "capability:insample": False,
         "capability:pred_int:insample": False,
+        "tests:vm": True,
+        "tests:skip_by_name": ["test_non_state_changing_method_contract"],
     }
 
     def __init__(
@@ -453,7 +455,21 @@ class HFTransformersForecaster(BaseForecaster):
                 "training_args": base_training_args,
                 "config": base_config,
                 "deterministic": True,
-            }
+            },
+            {
+                "model_path": "huggingface/autoformer-tourism-monthly",
+                "fit_strategy": "minimal",
+                "training_args": base_training_args,
+                "config": base_config,
+                "deterministic": True,
+            },
+            {
+                "model_path": "huggingface/informer-tourism-monthly",
+                "fit_strategy": "minimal",
+                "training_args": base_training_args,
+                "config": base_config,
+                "deterministic": True,
+            },
         ]
 
         # Add PEFT-specific test case if PEFT is available
