@@ -21,19 +21,39 @@ class DoubleMLForecaster(BaseForecaster):
     The forecaster uses a three-step residualization process to separate
     causal effects from confounding influences:
 
-    1. Fit the *outcome forecaster* to predict the target (``y``) from
-       confounders (``X_confounder``), and compute outcome residuals
+    **Fit procedure**
+
+    1. Split exogenous data ``X`` into exposure variables ``X_exposure`` and
+       confounder variables ``X_confounder``.
+
+    2. Fit the outcome forecaster on ``(y | X_confounder)`` to obtain residuals
        ``y_res = y - y_pred``.
 
-    2. Fit the *treatment forecaster* to predict exposures (``X_exposure``)
-       from confounders, and compute treatment residuals
+    3. Fit the treatment forecaster on ``(X_exposure | X_confounder)`` to
+       obtain residuals ``X_exposure_res = X_exposure - X_exposure_pred``.
+
+    4. Fit the residual forecaster on ``(y_res | X_exposure_res)`` to learn the
+       deconfounded causal relationship.
+
+    5. Refit the outcome and treatment forecasters on the full training data
+       for use during prediction.
+
+    **Predict procedure**
+
+    1. Split new exogenous data ``X`` into ``X_exposure`` and ``X_confounder``.
+
+    2. Compute the base (confounder-driven) forecast:
+       ``y_pred_base = outcome_forecaster.predict(X_confounder)``.
+
+    3. Compute the residualized exposures:
+       ``X_exposure_pred = treatment_forecaster.predict(X_confounder)``.
        ``X_exposure_res = X_exposure - X_exposure_pred``.
 
-    3. Fit the *residual forecaster* on these residuals to estimate the causal
-       effect of the exposure on the outcome.
+    4. Compute the causal (residual) forecast:
+       ``y_pred_res = residual_forecaster.predict(X=X_exposure_res)``.
 
-    The residual forecaster is typically a simple linear model, ensuring
-    interpretability of the estimated causal effects.
+    5. Combine both components to obtain the final prediction:
+       ``y_pred = y_pred_base + y_pred_res``.
 
     Parameters
     ----------
@@ -46,14 +66,18 @@ class DoubleMLForecaster(BaseForecaster):
 
     residual_forecaster : sktime forecaster, optional (default=None)
         Forecaster modeling the residual (deconfounded) relationship between
-        outcome and treatment. If None, defaults to a recursive reduction
-        forecaster wrapping a linear regression model.
+        outcome and treatment. If not provided, a default forecaster is created
+        using ``make_reduction(LinearRegression(), strategy="recursive")``,
+        a recursive reduction forecaster built from a linear regression model,
+        providing a simple and interpretable baseline.
 
     exposure_vars : list of str, optional (default=None)
-        List of column names in ``X`` corresponding to exposure (treatment)
-        variables. All remaining columns in ``X`` are automatically treated as
-        confounders. If None, no exposures are assumed and the model reduces to
-        a residual-based forecaster without explicit causal interpretation.
+        Names of columns in ``X`` representing exposure (treatment) variables.
+        The remaining columns are treated as confounders. If None, the model
+        assumes there are no explicit exposure variables, using all features as
+        confounders and focusing purely on predictive residual correction
+        rather than causal effect estimation. In this case, the model behaves
+        equivalently to a ``ResidualBoostingForecaster``.
 
     Attributes
     ----------
