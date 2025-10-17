@@ -117,7 +117,9 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             ]
 
         # add transformer tuple for remainder
-        if self._remainder[2] is not None and not self._remainder[1].is_fitted:
+        if self._remainder[2] is not None and (
+            self._remainder != "drop" or not self._remainder[1].is_fitted
+        ):
             estimators = chain(estimators, [self._remainder])
 
         for name, estimator, column in estimators:
