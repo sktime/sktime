@@ -87,11 +87,16 @@ class _BenchmarkingResults:
 
     def __post_init__(self):
         """Load existing results from the path."""
-        self.storage_backend = get_storage_backend(self.path)
-        self.results = self.storage_backend(self.path).load()
+        if self.path is not None:
+            self.storage_backend = get_storage_backend(self.path)
+            self.results = self.storage_backend(self.path).load()
+        else:
+            self.results = []
 
     def save(self):
         """Save the results to a file."""
+        if self.path is None:
+            return
         self.storage_backend(self.path).save(self.results)
 
     def contains(self, task_id: str, model_id: str):
@@ -329,7 +334,8 @@ class BaseBenchmark:
                     )
                 )
 
-        results.save()
+        if results_path is not None:
+            results.save()
         return results.to_dataframe()
 
     def run(self, output_file: str, force_rerun: str | list[str] = "none"):
@@ -338,8 +344,9 @@ class BaseBenchmark:
 
         Parameters
         ----------
-        output_file : str
+        output_file : str or None.
             Path to save the results to.
+            If None, results will not be saved.
         force_rerun : Union[str, list[str]], optional (default="none")
             If "none", will skip validation if results already exist.
             If "all", will run validation for all tasks and models.

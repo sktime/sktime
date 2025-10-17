@@ -183,11 +183,9 @@ class ForecastingBenchmark(BaseBenchmark):
     def _run_validation(self, task: TaskObject, estimator: BaseForecaster):
         cv_splitter = task.cv_splitter
         scorers = task.scorers
-        y, X = task.get_y_X()
+        xy_dict = task.get_y_X("forecasting")
         scores_df = evaluate(
             forecaster=estimator,
-            y=y,
-            X=X,
             cv=cv_splitter,
             scoring=scorers,
             backend=self.backend,
@@ -199,6 +197,7 @@ class ForecastingBenchmark(BaseBenchmark):
             strategy=task.strategy,
             return_model=False,
             cv_global_temporal=task.cv_global_temporal,
+            **xy_dict,
         )
 
         folds = {}
