@@ -46,8 +46,8 @@ def _coerce_data_for_evaluate(dataset_loader, task_type=None):
         if isclass(dataset_loader):
             dataset_loader = dataset_loader()
 
-        X = dataset_loader().load("X")
-        y = dataset_loader().load("y")
+        X = dataset_loader.load("X")
+        y = dataset_loader.load("y")
 
         return {"X": X, "y": y}
 
