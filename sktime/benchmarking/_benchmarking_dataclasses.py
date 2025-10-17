@@ -55,20 +55,20 @@ def _coerce_data_for_evaluate(dataset_loader, task_type=None):
         # Case 3: Data tuple or single data container
         data = dataset_loader
 
-        if isinstance(data, tuple) and len(data) == 2:
-            data0 = data[0]
-            data1 = data[1]
-        elif isinstance(data, tuple) and len(data) == 1:
-            data0 = data[0]
-            data1 = None
-        else:
-            data0 = data
-            data1 = None
+    if isinstance(data, tuple) and len(data) == 2:
+        data0 = data[0]
+        data1 = data[1]
+    elif isinstance(data, tuple) and len(data) == 1:
+        data0 = data[0]
+        data1 = None
+    else:
+        data0 = data
+        data1 = None
 
-        if task_type == "forecasting":
-            return {"y": data0, "X": data1}
-        else:  # classification, regression, clustering
-            return {"X": data0, "y": data1}
+    if task_type == "forecasting":
+        return {"y": data0, "X": data1}
+    else:  # classification, regression, clustering
+        return {"X": data0, "y": data1}
 
 
 @dataclass
