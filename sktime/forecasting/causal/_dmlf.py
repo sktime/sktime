@@ -364,14 +364,6 @@ class DoubleMLForecaster(BaseForecaster):
 
         return pred_base + pred_res
 
-    def _add_det_to_proba(self, y_proba, y_pred):
-        """Add multiindex columns to probabilistic forecasts."""
-        y_proba = y_proba.copy()
-        for col in y_proba.columns:
-            var = col[0]
-            y_proba[col] = y_proba[col] + y_pred[var]
-        return y_proba
-
     def _predict_interval(self, fh, X=None, coverage=0.9):
         """Generate prediction intervals for DoubleMLForecaster."""
         X_exposure, X_confounder = self._split_exogenous_data(X)
