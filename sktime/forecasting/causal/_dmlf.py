@@ -216,7 +216,7 @@ class DoubleMLForecaster(BaseForecaster):
             "capability:pred_int:insample"
         )
 
-        # All components must handle missing and categorical data
+        # All components must handle missing/categorical data and fh
         miss = (
             self.outcome_forecaster.get_tag("capability:missing_values")
             and self.treatment_forecaster.get_tag("capability:missing_values")
@@ -226,6 +226,11 @@ class DoubleMLForecaster(BaseForecaster):
             self.outcome_forecaster.get_tag("capability:categorical_in_X")
             and self.treatment_forecaster.get_tag("capability:categorical_in_X")
             and self.residual_forecaster.get_tag("capability:categorical_in_X")
+        )
+        req_fh = (
+            self.outcome_forecaster.get_tag("requires-fh-in-fit")
+            and self.treatment_forecaster.get_tag("requires-fh-in-fit")
+            and self.residual_forecaster.get_tag("requires-fh-in-fit")
         )
 
         # Combine and set final capability tags
@@ -237,6 +242,7 @@ class DoubleMLForecaster(BaseForecaster):
                 "capability:pred_int:insample": pred_int_insample,
                 "capability:missing_values": miss,
                 "capability:categorical_in_X": cat,
+                "requires-fh-in-fit": req_fh,
             }
         )
 
