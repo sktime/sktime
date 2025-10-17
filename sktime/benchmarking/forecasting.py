@@ -146,22 +146,27 @@ class ForecastingBenchmark(BaseBenchmark):
         A dictionary of benchmark results for that forecaster
         """
         if task_id is None:
-            if hasattr(dataset_loader, "__name__"):
-                task_id = (
-                    f"[dataset={dataset_loader.__name__}]"
-                    + f"_[cv_splitter={cv_splitter.__class__.__name__}]"
-                    + (
-                        f"_[cv_global={cv_global.__class__.__name__}]"
-                        if cv_global is not None
-                        else ""
-                    )
-                )
+            if callable(dataset_loader) and hasattr(dataset_loader, "__name__"):
+                # case 1: function
+                dataset_name = dataset_loader.__name__
+            elif isinstance(dataset_loader, type):
+                # case 2: class
+                dataset_name = dataset_loader().get_tags().get("name")
+            elif hasattr(dataset_loader, "get_tags"):
+                # case 3: instance
+                dataset_name = dataset_loader.get_tags().get("name")
             else:
-                task_id = f"_[cv_splitter={cv_splitter.__class__.__name__}]" + (
+                dataset_name = "_"
+
+            task_id = (
+                f"[dataset={dataset_name}]"
+                + f"_[cv_splitter={cv_splitter.__class__.__name__}]"
+                + (
                     f"_[cv_global={cv_global.__class__.__name__}]"
                     if cv_global is not None
                     else ""
                 )
+            )
         task_kwargs = {
             "data": dataset_loader,
             "cv_splitter": cv_splitter,
@@ -178,11 +183,9 @@ class ForecastingBenchmark(BaseBenchmark):
     def _run_validation(self, task: TaskObject, estimator: BaseForecaster):
         cv_splitter = task.cv_splitter
         scorers = task.scorers
-        y, X = task.get_y_X()
+        xy_dict = task.get_y_X("forecasting")
         scores_df = evaluate(
             forecaster=estimator,
-            y=y,
-            X=X,
             cv=cv_splitter,
             scoring=scorers,
             backend=self.backend,
@@ -194,6 +197,7 @@ class ForecastingBenchmark(BaseBenchmark):
             strategy=task.strategy,
             return_model=False,
             cv_global_temporal=task.cv_global_temporal,
+            **xy_dict,
         )
 
         folds = {}
