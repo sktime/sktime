@@ -93,7 +93,7 @@ class DoubleMLForecaster(BaseForecaster):
     Examples
     --------
     >>> from sktime.datasets import load_longley
-    >>> from sktime.forecasting.compose import DoubleMLForecaster
+    >>> from sktime.forecasting.causal import DoubleMLForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.split import temporal_train_test_split
     >>>

@@ -33,12 +33,10 @@ __all__ = [
     "YfromX",
     "SkforecastAutoreg",
     "IgnoreX",
-    "DoubleMLForecaster",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
 from sktime.forecasting.compose._column_ensemble import ColumnEnsembleForecaster
-from sktime.forecasting.compose._dmlf import DoubleMLForecaster
 from sktime.forecasting.compose._ensemble import (
     AutoEnsembleForecaster,
     EnsembleForecaster,

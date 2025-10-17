@@ -695,6 +695,17 @@ Ensembles and stacking
 
     MAPAForecaster
 
+Causal Forecasting
+------------------
+
+.. currentmodule:: sktime.forecasting.causal
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DoubleMLForecaster
+
 Hierarchical reconciliation
 ---------------------------
 
