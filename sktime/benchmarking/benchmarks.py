@@ -87,16 +87,11 @@ class _BenchmarkingResults:
 
     def __post_init__(self):
         """Load existing results from the path."""
-        if self.path is not None:
-            self.storage_backend = get_storage_backend(self.path)
-            self.results = self.storage_backend(self.path).load()
-        else:
-            self.results = []
+        self.storage_backend = get_storage_backend(self.path)
+        self.results = self.storage_backend(self.path).load()
 
     def save(self):
         """Save the results to a file."""
-        if self.path is None:
-            return
         self.storage_backend(self.path).save(self.results)
 
     def contains(self, task_id: str, model_id: str):
@@ -144,9 +139,11 @@ class _SktimeRegistry:
             A unique entity ID.
         entry_point: Callable or str
             The python entrypoint of the entity class. Should be one of:
+
             - the string path to the python object (e.g.module.name:factory_func, or
                 module.name:Class)
             - the python object (class or factory) itself
+
         deprecated: Bool, optional (default=False)
             Flag to denote whether this entity should be skipped in validation runs
             and considered deprecated and replaced by a more recent/better model
