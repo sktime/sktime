@@ -33,6 +33,7 @@ __all__ = [
     "YfromX",
     "SkforecastAutoreg",
     "IgnoreX",
+    "OosResidualsWrapper",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
@@ -50,6 +51,7 @@ from sktime.forecasting.compose._grouped import (
 from sktime.forecasting.compose._hierarchy_ensemble import HierarchyEnsembleForecaster
 from sktime.forecasting.compose._ignore_x import IgnoreX
 from sktime.forecasting.compose._multiplexer import MultiplexForecaster
+from sktime.forecasting.compose._oos_residual import OosResidualsWrapper
 from sktime.forecasting.compose._pipeline import (
     ForecastingPipeline,
     ForecastX,
