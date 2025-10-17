@@ -493,6 +493,14 @@ Deep learning based forecasters
 
     SCINetForecaster
 
+.. currentmodule:: sktime.forecasting.convtimenet
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ConvTimeNetForecaster
+
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
 .. autosummary::
