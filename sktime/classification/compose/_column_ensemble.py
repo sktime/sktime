@@ -117,11 +117,7 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             ]
 
         # add transformer tuple for remainder
-        if (
-            self._remainder[2] is not None
-            and self.remainder != "drop"
-            and not self.remainder[1].is_fitted
-        ):
+        if self._remainder[2] is not None and not self._remainder[1].is_fitted:
             estimators = chain(estimators, [self._remainder])
 
         for name, estimator, column in estimators:
@@ -171,6 +167,14 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             estimators_.append((name, estimator, column))
 
         self.estimators_ = estimators_
+
+        is_estimator_remainder = hasattr(estimators_[-1], "fit") or hasattr(
+            self.remainder, "predict_proba"
+        )
+
+        if is_estimator_remainder:
+            self._remainder = self.estimators_[-1]
+
         return self
 
     def _collect_probas(self, X):
