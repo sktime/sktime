@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.benchmarking.base import BaseMetric
-from sktime.registry import is_scitype
 from sktime.split.base._base_splitter import BaseSplitter
 from sktime.split.singlewindow import SingleWindowSplitter
 
