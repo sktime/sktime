@@ -222,7 +222,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ElasticEnsemble",
         "FeatureSelection",
         "FreshPRINCE",
-        "GreedyGaussianSegmentation",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
         "HIVECOTEV2",
