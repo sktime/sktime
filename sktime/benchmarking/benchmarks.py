@@ -320,10 +320,7 @@ class BaseBenchmark:
         for task_id, estimator_id, task, estimator in self._generate_experiments():
             if results.contains(task_id, estimator_id) and (
                 force_rerun == "none"
-                or (
-                    isinstance(force_rerun, list)
-                    and estimator_id not in force_rerun
-                )
+                or (isinstance(force_rerun, list) and estimator_id not in force_rerun)
             ):
                 logging.info(
                     f"Skipping validation - model: "
