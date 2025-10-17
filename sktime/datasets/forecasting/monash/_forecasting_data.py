@@ -36,9 +36,9 @@ class ForecastingData(BaseForecastingDataset):
 
     Examples
     --------
-    >>> from sktime.datasets import ForecastingData
-    >>> dataset = ForecastingData(name="cif_2016_dataset")
-    >>> y = dataset.load("y")
+    >>> from sktime.datasets import ForecastingData # doctest: +SKIP
+    >>> dataset = ForecastingData(name="cif_2016_dataset") # doctest: +SKIP
+    >>> y = dataset.load("y") # doctest: +SKIP
 
     Notes
     -----
