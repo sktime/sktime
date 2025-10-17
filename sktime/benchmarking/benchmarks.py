@@ -199,17 +199,17 @@ class BaseBenchmark:
 
         - "None": no additional parameters, ``backend_params`` is ignored
         - "loky", "multiprocessing" and "threading": default ``joblib`` backends
-        any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-        with the exception of ``backend`` which is directly controlled by
-        ``backend``. If ``n_jobs`` is not passed, it will default to ``-1``, other
-        parameters will default to ``joblib`` defaults.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by
+          ``backend``. If ``n_jobs`` is not passed, it will default to ``-1``, other
+          parameters will default to ``joblib`` defaults.
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
-        any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-        ``backend`` must be passed as a key of ``backend_params`` in this case.
-        If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
-        will default to ``joblib`` defaults.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
-        e.g., ``scheduler``
+          e.g., ``scheduler``
 
         - "ray": The following keys can be passed:
 
