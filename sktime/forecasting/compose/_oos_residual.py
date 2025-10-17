@@ -13,30 +13,44 @@ class OosResidualsWrapper(BaseForecaster):
     """Out-of-sample residuals wrapper for forecasters."""
 
     _tags = {
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
-        "scitype:y": "univariate",
-        "capability:exogenous": False,
-        "requires-fh-in-fit": False,
-        "capability:missing_values": False,
-        "capability:insample": True,
-        "capability:pred_int": False,
-        "capability:pred_int:insample": False,
         "authors": ["geetu040"],
         "maintainers": ["geetu040"],
-        "python_version": None,
+        "scitype:y": "univariate",
+        "capability:exogenous": True,
+        "capability:insample": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        "capability:missing_values": True,
+        "capability:categorical_in_X": True,
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "requires-fh-in-fit": False,
+        "fit_is_empty": True,
     }
 
-    def __init__(self, forecaster):
+    def __init__(self, forecaster, cv=None):
         self.forecaster = forecaster
-        self.forecaster_ = None
+        self.cv = cv
+        self._in_sample_forecaster = None
+        self._out_of_sample_forecaster = None
 
         super().__init__()
 
-        # self.set_tags(**{})
+        self.set_tags(
+            **{
+                "capability:exogenous": self.forecaster.get_tag("capability:exogenous"),
+                "capability:pred_int": self.forecaster.get_tag("capability:pred_int"),
+                "capability:missing_values": self.forecaster.get_tag(
+                    "capability:missing_values"
+                ),
+                "capability:categorical_in_X": self.forecaster.get_tag(
+                    "capability:categorical_in_X"
+                ),
+            }
+        )
 
     def _fit(self, y, X, fh):
-        self.forecaster_ = clone(self.forecaster).fit(y, X, fh)
+        pass
 
     def _predict(self, fh, X):
         """Predicts using the OosResidualsWrapper.
@@ -47,64 +61,43 @@ class OosResidualsWrapper(BaseForecaster):
         4. Combine the in-sample and out-of-sample predictions
         """
         _y = self._y
+        _X = self._X
 
-        # Step 1
-        fh = self._check_fh(fh)
-        fh = fh.to_relative(self.cutoff)
+        # Split fh into in-sample and out-of-sample
+        out_of_sample_fh = fh.to_out_of_sample()
+        in_sample_fh = fh.to_in_sample()
 
-        fh_in_sample_mask = fh._is_in_sample()
-        fh_out_of_sample_mask = fh._is_out_of_sample()
+        # Prepare CV
+        cv = self.cv
+        if cv is None:
+            from sktime.split import CutoffFhSplitter
 
-        fh_in_sample = fh[fh_in_sample_mask]
-        fh_out_of_sample = fh[fh_out_of_sample_mask]
+            cv = CutoffFhSplitter(
+                cutoff=(in_sample_fh.to_absolute(self.cutoff) - 1), fh=1
+            )
 
-        # Step 2
-        preds_out_of_sample = self.forecaster_.predict(fh=fh_out_of_sample, X=X)
+        # Prepare forecasters
+        self._in_sample_forecaster = clone(self.forecaster)
+        self._out_of_sample_forecaster = clone(self.forecaster)
 
-        # Step 3
-        from sktime.split import CutoffSplitter
+        # Out-of-sample predictions
+        self._out_of_sample_forecaster.fit(y=_y, X=_X, fh=out_of_sample_fh)
+        out_of_sample_preds = self._out_of_sample_forecaster.predict(X=X)
 
-        fh_in_sample = _y.shape[0] + fh_in_sample - 1
-        cv = CutoffSplitter(fh_in_sample)
+        # In-sample predictions using cross-validation
 
-        preds_in_sample = self.forecaster_.update_predict(
-            _y, cv, X, update_params=False, reset_forecaster=True
+        # fit on the first training windows
+        new_y, _ = next(cv.split(_y))
+        self._in_sample_forecaster.fit(y=_y.iloc[new_y], X=_X, fh=cv.get_fh())
+        # update on all training windows
+        in_sample_preds = self._in_sample_forecaster.update_predict(
+            _y, cv, X, update_params=True, reset_forecaster=False
         )
+        # fix pd.Series output
+        if isinstance(in_sample_preds, pd.Series):
+            in_sample_preds = in_sample_preds.to_frame(name=_y.columns[0])
 
-        # Step 4
-        preds = pd.concat([preds_in_sample, preds_out_of_sample]).sort_index()
+        # Combine the predictions
+        preds = pd.concat([in_sample_preds, out_of_sample_preds])
 
         return preds
-
-
-if __name__ == "__main__":
-    from sklearn.ensemble import RandomForestRegressor
-
-    from sktime.datasets import load_longley
-    from sktime.forecasting.compose import make_reduction
-    from sktime.split import temporal_train_test_split
-
-    y, X = load_longley()
-    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
-
-    # forecaster = NaiveForecaster(strategy="last")
-    forecaster = make_reduction(
-        estimator=RandomForestRegressor(),
-        # estimator=LinearRegression(),
-        strategy="recursive",
-        window_length=3,
-    )
-
-    forecaster = OosResidualsWrapper(forecaster=forecaster)
-
-    forecaster.fit(y_train)
-
-    # preds = forecaster.predict(fh=[-3, -2, -1, 0, 1, 2, 3])
-    # print(preds)
-    # plot_series(y_train, y_test, preds)
-    # plt.show()
-
-    residuals = forecaster.predict_residuals(y_test)
-    print(residuals)
-
-    print("\n\n\n..... Reached the End .....")
