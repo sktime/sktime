@@ -5,7 +5,6 @@ __author__ = ["KimMeen", "jgyasu"]
 # KimMeen for [ICLR 2024] Official implementation of Time-LLM
 
 from types import SimpleNamespace
-from typing import Optional
 
 import pandas as pd
 
@@ -71,7 +70,7 @@ class TimeLLMForecaster(BaseForecaster):
     ...     llm_model='GPT2'
     ... )
     >>> forecaster.fit(y, fh=[1])
-    TimeLLMForecaster(pred_len=1)
+    TimeLLMForecaster(pred_len=36)
     >>> y_pred = forecaster.predict(fh=[1])
     """
 
@@ -83,8 +82,12 @@ class TimeLLMForecaster(BaseForecaster):
         "python_dependencies": ["torch", "transformers"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.libs.time_llm"],
     }
 
     def __init__(
@@ -101,7 +104,7 @@ class TimeLLMForecaster(BaseForecaster):
         d_ff=128,
         n_heads=4,
         dropout=0.1,
-        device: Optional[str] = None,
+        device: str | None = None,
         prompt_domain=False,
     ):
         self.task_name = task_name

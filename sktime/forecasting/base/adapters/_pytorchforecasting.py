@@ -6,10 +6,9 @@ import functools
 import inspect
 import os
 import time
-import typing
 from copy import deepcopy
 from random import randint
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -85,12 +84,12 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
 
     def __init__(
         self: "_PytorchForecastingAdapter",
-        model_params: Optional[dict[str, Any]] = None,
-        dataset_params: Optional[dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
-        trainer_params: Optional[dict[str, Any]] = None,
-        model_path: Optional[str] = None,
+        model_params: dict[str, Any] | None = None,
+        dataset_params: dict[str, Any] | None = None,
+        train_to_dataloader_params: dict[str, Any] | None = None,
+        validation_to_dataloader_params: dict[str, Any] | None = None,
+        trainer_params: dict[str, Any] | None = None,
+        model_path: str | None = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
@@ -177,7 +176,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
     def _fit(
         self: "_PytorchForecastingAdapter",
         y: pd.DataFrame,
-        X: typing.Optional[pd.DataFrame],
+        X: pd.DataFrame | None,
         fh: ForecastingHorizon,
     ) -> "_PytorchForecastingAdapter":
         """Fit forecaster to training data.
@@ -248,9 +247,9 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
 
     def _predict(
         self: "_PytorchForecastingAdapter",
-        fh: typing.Optional[ForecastingHorizon],
-        X: typing.Optional[pd.DataFrame],
-        y: typing.Optional[pd.DataFrame],
+        fh: ForecastingHorizon | None,
+        X: pd.DataFrame | None,
+        y: pd.DataFrame | None,
     ) -> pd.Series:
         """Forecast time series at future horizon.
 
@@ -387,10 +386,10 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         ]
         if "to_quantiles" not in methods_list:
             raise NotImplementedError(
-                "To perform probabilistic forcast, QuantileLoss or other loss"
+                "To perform probabilistic forecast, QuantileLoss or other loss"
                 "metrics that support to_quantiles function has to be used in fit."
                 f"With {self.best_model.loss}, it doesn't support probabilistic"
-                "forcast. Details can be found:"
+                "forecast. Details can be found:"
                 "https://pytorch-forecasting.readthedocs.io/en/stable/metrics.html"
             )
 
@@ -506,7 +505,8 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             time_varying_known_reals = []
             data = deepcopy(y)
         # if fh is not continuous, there will be NaN after extend_y in prediect
-        data["_target_column"].fillna(0, inplace=True)
+        data = data.copy()
+        data["_target_column"] = data["_target_column"].fillna(0)
         # add integer time_idx column as pytorch-forecasting requires
         if self._index_len > 1:
             time_idx = (

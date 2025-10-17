@@ -13,15 +13,18 @@ from scipy.stats import gmean
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
-from sklearn.metrics._regression import _check_reg_targets
-from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
 from sktime.performance_metrics.forecasting._coerce import (
     _coerce_to_1d_numpy,
     _coerce_to_scalar,
 )
-from sktime.utils.stats import _weighted_geometric_mean
+from sktime.performance_metrics.forecasting._common import (
+    _percentage_error,
+    _relative_error,
+)
+from sktime.utils.sklearn import _check_reg_targets
+from sktime.utils.stats import _weighted_geometric_mean, _weighted_percentile
 
 if sklearn.__version__ >= "1.4.0":
     from sklearn.metrics import root_mean_squared_error as _root_mean_squared_error
@@ -1495,21 +1498,30 @@ def mean_absolute_percentage_error(
     horizon_weight=None,
     multioutput="uniform_average",
     symmetric=False,
+    relative_to="y_true",
     **kwargs,
 ):
-    """Mean absolute percentage error (MAPE) or symmetric version.
+    """Mean absolute percentage error (MAPE) or symmetric MAPE (sMAPE).
 
-    If ``symmetric`` is False then calculates MAPE and if ``symmetric`` is True
-    then calculates symmetric mean absolute percentage error (sMAPE). Both
-    MAPE and sMAPE output is non-negative floating point. The best value is 0.0.
+    - If ``symmetric`` is False, calculates MAPE (mean absolute percentage error).
+      By default, this is relative to the true values.
+      If ``relative_to="y_pred"``, then MAPE is relative to the predicted values.
+    - If ``symmetric`` is True, calculates sMAPE
+      (symmetric mean absolute percentage error).
+
+    All variants output a non-negative floating point value. The best value is 0.0.
+
+    - MAPE is measured in percentage error relative to the true values.
+    - sMAPE is measured in symmetric percentage error relative to the sum of
+      absolute true and predicted values.
 
     sMAPE is measured in percentage error relative to the test data. Because it
     takes the absolute value rather than square the percentage forecast
     error, it penalizes large errors less than MSPE, RMSPE, MdSPE or RMdSPE.
 
-    There is no limit on how large the error can be, particulalrly when ``y_true``
-    values are close to zero. In such cases the function returns a large value
-    instead of ``inf``.
+    There is no limit on how large the error can be, particularly when
+    denominator values are close to zero. In such cases the function returns
+    a large value instead of ``inf``.
 
     Parameters
     ----------
@@ -1524,8 +1536,8 @@ def mean_absolute_percentage_error(
     horizon_weight : array-like of shape (fh,), default=None
         Forecast horizon weights.
 
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape (n_outputs,),\
+                  default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
@@ -1534,14 +1546,21 @@ def mean_absolute_percentage_error(
     symmetric : bool, default=False
         Calculates symmetric version of metric if True.
 
+    relative_to : {'y_true', 'y_pred'}, default='y_true'
+        Determines the denominator of the percentage error.
+
+        * If 'y_true', the denominator is the true values,
+        * If 'y_pred', the denominator is the predicted values.
+
     Returns
     -------
     loss : float
         MAPE or sMAPE loss.
-        If multioutput is 'raw_values', then MAPE or sMAPE is returned for each
-        output separately.
-        If multioutput is 'uniform_average' or an ndarray of weights, then the
-        weighted average MAPE or sMAPE of all output errors is returned.
+
+        * If multioutput is 'raw_values', then MAPE or sMAPE is returned for each
+          output separately.
+        * If multioutput is 'uniform_average' or an ndarray of weights, then the
+          weighted average MAPE or sMAPE of all output errors is returned.
 
     See Also
     --------
@@ -1559,40 +1578,43 @@ def mean_absolute_percentage_error(
     >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
     mean_absolute_percentage_error
+    >>> # Univariate MAPE
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)  # doctest: +SKIP
     np.float64(0.33690476190476193)
+    >>> # Univariate sMAPE
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)  # doctest: +SKIP
     np.float64(0.5553379953379953)
+    >>> # Multivariate MAPE
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)  # doctest: +SKIP
     np.float64(0.5515873015873016)
+    >>> # Multivariate sMAPE
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)  # doctest: +SKIP
     np.float64(0.6080808080808081)
-    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
-        symmetric=False)  # doctest: +SKIP
+    >>> # Raw output per dimension
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', symmetric=False)
     array([0.38095238, 0.72222222])
-    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
-        symmetric=True)  # doctest: +SKIP
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', symmetric=True)
     array([0.71111111, 0.50505051])
-    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
-    symmetric=False)  # doctest: +SKIP
+    >>> # Weighted multioutput
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], symmetric=False)  # doctest: +SKIP
     np.float64(0.6198412698412699)
-    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
-    symmetric=True)  # doctest: +SKIP
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], symmetric=True)  # doctest: +SKIP
     np.float64(0.5668686868686869)
+    >>> # Univariate MAPE relative to predicted values
+    >>> mean_absolute_percentage_error(y_true, y_pred, relative_to='y_pred')  # doctest: +SKIP
     """  # noqa: E501
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
 
-    output_errors = np.average(
-        np.abs(_percentage_error(y_true, y_pred, symmetric=symmetric)),
-        weights=horizon_weight,
-        axis=0,
+    perc_err = _percentage_error(
+        y_true, y_pred, symmetric=symmetric, relative_to=relative_to
     )
+    output_errors = np.average(np.abs(perc_err), weights=horizon_weight, axis=0)
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -1611,6 +1633,7 @@ def median_absolute_percentage_error(
     horizon_weight=None,
     multioutput="uniform_average",
     symmetric=False,
+    relative_to="y_true",
     **kwargs,
 ):
     """Median absolute percentage error (MdAPE) or symmetric version.
@@ -1627,7 +1650,7 @@ def median_absolute_percentage_error(
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when ``y_true``
+    There is no limit on how large the error can be, particularly when ``y_true``
     values are close to zero. In such cases the function returns a large value
     instead of ``inf``.
 
@@ -1653,6 +1676,12 @@ def median_absolute_percentage_error(
 
     symmetric : bool, default=False
         Calculates symmetric version of metric if True.
+
+    relative_to : {'y_true', 'y_pred'}, default='y_true'
+        Determines the denominator of the percentage error.
+
+        * If 'y_true', the denominator is the true values,
+        * If 'y_pred', the denominator is the predicted values.
 
     Returns
     -------
@@ -1707,12 +1736,21 @@ def median_absolute_percentage_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is None:
         output_errors = np.median(
-            np.abs(_percentage_error(y_true, y_pred, symmetric=symmetric)), axis=0
+            np.abs(
+                _percentage_error(
+                    y_true, y_pred, symmetric=symmetric, relative_to=relative_to
+                )
+            ),
+            axis=0,
         )
     else:
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_percentile(
-            np.abs(_percentage_error(y_pred, y_true, symmetric=symmetric)),
+            np.abs(
+                _percentage_error(
+                    y_pred, y_true, symmetric=symmetric, relative_to=relative_to
+                )
+            ),
             sample_weight=horizon_weight,
         )
 
@@ -1734,6 +1772,7 @@ def mean_squared_percentage_error(
     multioutput="uniform_average",
     square_root=False,
     symmetric=False,
+    relative_to="y_true",
     **kwargs,
 ):
     """Mean squared percentage error (MSPE) or square root version.
@@ -1749,7 +1788,7 @@ def mean_squared_percentage_error(
     the percentage forecast error, large errors are penalized more than
     MAPE, sMAPE, MdAPE or sMdAPE.
 
-    There is no limit on how large the error can be, particulalrly when ``y_true``
+    There is no limit on how large the error can be, particularly when ``y_true``
     values are close to zero. In such cases the function returns a large value
     instead of ``inf``.
 
@@ -1780,6 +1819,12 @@ def mean_squared_percentage_error(
 
     symmetric : bool, default=False
         Calculates symmetric version of metric if True.
+
+    relative_to : {'y_true', 'y_pred'}, default='y_true'
+        Determines the denominator of the percentage error.
+
+        * If 'y_true', the denominator is the true values,
+        * If 'y_pred', the denominator is the predicted values.
 
     Returns
     -------
@@ -1837,7 +1882,11 @@ def mean_squared_percentage_error(
         check_consistent_length(y_true, horizon_weight)
 
     output_errors = np.average(
-        np.square(_percentage_error(y_true, y_pred, symmetric=symmetric)),
+        np.square(
+            _percentage_error(
+                y_true, y_pred, symmetric=symmetric, relative_to=relative_to
+            )
+        ),
         weights=horizon_weight,
         axis=0,
     )
@@ -1863,6 +1912,7 @@ def median_squared_percentage_error(
     multioutput="uniform_average",
     square_root=False,
     symmetric=False,
+    relative_to="y_true",
     **kwargs,
 ):
     """Median squared percentage error (MdSPE)  or square root version.
@@ -1882,7 +1932,7 @@ def median_squared_percentage_error(
     makes this metric more robust to error outliers since the median tends
     to be a more robust measure of central tendency in the presence of outliers.
 
-    There is no limit on how large the error can be, particulalrly when ``y_true``
+    There is no limit on how large the error can be, particularly when ``y_true``
     values are close to zero. In such cases the function returns a large value
     instead of ``inf``.
 
@@ -1913,6 +1963,12 @@ def median_squared_percentage_error(
 
     symmetric : bool, default=False
         Calculates symmetric version of metric if True.
+
+    relative_to : {'y_true', 'y_pred'}, default='y_true'
+        Determines the denominator of the percentage error.
+
+        * If 'y_true', the denominator is the true values,
+        * If 'y_pred', the denominator is the predicted values.
 
     Returns
     -------
@@ -1967,7 +2023,9 @@ def median_squared_percentage_error(
     np.float64(0.7428571428571428)
     """  # noqa: E501
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
-    perc_err = _percentage_error(y_true, y_pred, symmetric=symmetric)
+    perc_err = _percentage_error(
+        y_true, y_pred, symmetric=symmetric, relative_to=relative_to
+    )
     if horizon_weight is None:
         output_errors = np.median(np.square(perc_err), axis=0)
     else:
@@ -2701,76 +2759,3 @@ def _linex_error(y_true, y_pred, a=1.0, b=1.0):
     a_error = a * error
     linex_error = b * (np.exp(a_error) - a_error - 1)
     return linex_error
-
-
-def _relative_error(y_true, y_pred, y_pred_benchmark):
-    """Relative error for observations to benchmark method.
-
-    Parameters
-    ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Ground truth (correct) target values.
-
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Forecasted values.
-
-    y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-             (fh, n_outputs) where fh is the forecasting horizon, default=None
-        Forecasted values from benchmark method.
-
-    Returns
-    -------
-    relative_error : float
-        relative error
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of \
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
-    """
-    denominator = np.where(
-        y_true - y_pred_benchmark >= 0,
-        np.maximum((y_true - y_pred_benchmark), EPS),
-        np.minimum((y_true - y_pred_benchmark), -EPS),
-    )
-    return (y_true - y_pred) / denominator
-
-
-def _percentage_error(y_true, y_pred, symmetric=False):
-    """Percentage error.
-
-    Parameters
-    ----------
-    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
-             where fh is the forecasting horizon
-        Ground truth (correct) target values.
-
-    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
-             where fh is the forecasting horizon
-        Forecasted values.
-
-    symmetric : bool, default = False
-        Whether to calculate symmetric percentage error.
-
-    Returns
-    -------
-    percentage_error : float
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of \
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
-    """
-    if symmetric:
-        # Alternatively could use np.abs(y_true + y_pred) in denom
-        # Results will be different if y_true and y_pred have different signs
-        percentage_error = (
-            2
-            * np.abs(y_true - y_pred)
-            / np.maximum(np.abs(y_true) + np.abs(y_pred), EPS)
-        )
-    else:
-        percentage_error = (y_true - y_pred) / np.maximum(np.abs(y_true), EPS)
-    return percentage_error

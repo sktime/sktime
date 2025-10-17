@@ -92,8 +92,11 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     _tags = {
         "authors": ["miraep8", "fkiraly"],
         "fit_is_empty": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # attribute for _DelegatedTransformer, which then delegates

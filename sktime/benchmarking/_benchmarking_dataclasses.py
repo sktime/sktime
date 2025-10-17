@@ -3,7 +3,6 @@
 import copy
 from collections.abc import Callable
 from dataclasses import dataclass, field, fields
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -41,7 +40,7 @@ class TaskObject:
     data: Union[Callable, tuple]
         Can be
         - a function which returns a dataset, like from `sktime.datasets`.
-        - a tuple contianing two data container that are sktime comptaible.
+        - a tuple containing two data container that are sktime comptaible.
         - single data container that is sktime compatible (only endogenous data).
     cv_splitter: BaseSplitter object
         Splitter used for generating validation folds.
@@ -64,14 +63,14 @@ class TaskObject:
         cv_global and cv_global_temporal.
     """
 
-    data: Union[Callable, tuple]
+    data: Callable | tuple
     cv_splitter: BaseSplitter
     scorers: list[BaseMetric]
     strategy: str = "refit"
     cv_X = None
-    cv_global: Optional[BaseSplitter] = None
+    cv_global: BaseSplitter | None = None
     error_score: str = "raise"
-    cv_global_temporal: Optional[SingleWindowSplitter] = None
+    cv_global_temporal: SingleWindowSplitter | None = None
 
     def get_y_X(self):
         """Get the endogenous and exogenous data."""
@@ -95,10 +94,10 @@ class FoldResults:
         The training data for this fold.
     """
 
-    scores: list[dict[str, Union[float, pd.DataFrame]]]
-    ground_truth: Optional[pd.DataFrame] = None
-    predictions: Optional[pd.DataFrame] = None
-    train_data: Optional[pd.DataFrame] = None
+    scores: list[dict[str, float | pd.DataFrame]]
+    ground_truth: pd.DataFrame | None = None
+    predictions: pd.DataFrame | None = None
+    train_data: pd.DataFrame | None = None
 
     def __post_init__(self):
         """Check that scores are in the correct format."""

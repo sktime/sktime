@@ -8,7 +8,6 @@ __all__ = [
     "SlidingGreedySplitter",
 ]
 
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -68,16 +67,17 @@ class SlidingGreedySplitter(BaseSplitter):
 
     def __init__(
         self,
-        train_size: Union[int, float],
-        test_size: Union[int, float],
+        train_size: int | float,
+        test_size: int | float,
         folds: int = 5,
-        step_length: Optional[int] = None,
+        step_length: int | None = None,
     ):
         super().__init__()
         self.train_size = train_size
         self.test_size = test_size
         self.folds = folds
         self.step_length = step_length
+        self.fh = np.arange(test_size) + 1 if isinstance(test_size, int) else None
 
         if isinstance(train_size, float) or isinstance(test_size, float):
             self.set_tags(**{"split_hierarchical": False})
@@ -93,6 +93,7 @@ class SlidingGreedySplitter(BaseSplitter):
 
         if isinstance(test_size, float):
             _test_size = int(np.ceil(len(y) * test_size))
+            self.fh = np.arange(_test_size) + 1
         else:
             _test_size = test_size
 

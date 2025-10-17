@@ -28,7 +28,14 @@ def _check_soft_dependencies(
         Each str must be a PEP 440 compatible specifier string, for a single package.
         For instance, the PEP 440 compatible package name such as ``"pandas"``;
         or a package requirement specifier string such as ``"pandas>1.2.3"``.
-        arg can be str, kwargs tuple, or tuple/list of str, following calls are valid:
+
+        Note that the PEP 440 specifier is what one writes while installing a package,
+        e.g., ``scikit-learn``, ``huggingface-hub``, ``scikit-base`` etc. and not what
+        one writes when importing a package. e.g., ``sklearn`, `huggingface_hub`,
+        `skbase` etc.
+
+        The argument ``packages`` can be str, kwargs tuple, or tuple/list of str,
+        following calls are valid:
 
         * ``_check_soft_dependencies("package1")``
         * ``_check_soft_dependencies("package1", "package2")``
@@ -145,6 +152,8 @@ def _check_soft_dependencies(
         -------
         package_version_req: SpecifierSet
             version requirement object from package string
+        package_name: str
+            name of package, PEP 440 compatible specifier string, e.g., "scikit-learn"
         pkg_env_version: Version
             version object of package in python environment
         """
@@ -168,7 +177,7 @@ def _check_soft_dependencies(
         if normalize_reqs:
             pkg_env_version = _normalize_version(pkg_env_version)
 
-        return package_version_req, pkg_env_version
+        return package_version_req, package_name, pkg_env_version
 
     # each element of the list "package" must be satisfied
     for package_req in packages:
@@ -192,13 +201,15 @@ def _check_soft_dependencies(
 
         pkg_version_reqs = []
         pkg_env_versions = []
+        pkg_names = []
         nontrivital_bound = []
         req_sat = []
 
         for package in package_req:
-            pkg_version_req, pkg_env_version = _get_pkg_version_and_req(package)
+            pkg_version_req, pkg_nm, pkg_env_version = _get_pkg_version_and_req(package)
             pkg_version_reqs.append(pkg_version_req)
             pkg_env_versions.append(pkg_env_version)
+            pkg_names.append(pkg_nm)
             nontrivital_bound.append(pkg_version_req != SpecifierSet(""))
             req_sat.append(_is_version_req_satisfied(pkg_env_version, pkg_version_req))
 
@@ -240,10 +251,9 @@ def _check_soft_dependencies(
 
         # now we check compatibility with the version specifier if non-empty
         if not any(req_sat):
-            reqs_not_satisfied = [
-                x for x in zip(package_req, pkg_env_versions, req_sat) if x[2] is False
-            ]
-            actual_vers = [f"{x[0]} {x[1]}" for x in reqs_not_satisfied]
+            zp = zip(package_req, pkg_names, pkg_env_versions, req_sat)
+            reqs_not_satisfied = [x for x in zp if x[3] is False]
+            actual_vers = [f"{x[1]} {x[2]}" for x in reqs_not_satisfied]
             pkg_env_version_str = ", ".join(actual_vers)
 
             msg = (

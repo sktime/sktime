@@ -37,6 +37,8 @@ class BaseDeepRegressor(BaseRegressor):
         "X_inner_mtype": "numpy3D",
         "capability:multivariate": True,
         "python_dependencies": "tensorflow",
+        "property:randomness": "stochastic",
+        "capability:random_state": True,
     }
 
     @abstractmethod

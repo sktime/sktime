@@ -197,11 +197,20 @@ class PeakTimeFeature(BaseTransformer):
         ],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": True,
         "transform-returns-same-time-index": True,
         "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
         "skip-inverse-transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        # the test_categorical_X_passes test uses RangeIndex,
+        # but this transformation requires DatetimeIndex
+        "tests:skip_by_name": [
+            "test_categorical_X_passes",
+            "test_categorical_y_raises_error",
+        ],
     }
 
     def __init__(

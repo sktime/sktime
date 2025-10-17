@@ -397,7 +397,11 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             - `support_pred_int`: True if prediction intervals are supported
               in `predict`, False otherwise.
         """
-        statsforecast_class = self._get_statsforecast_class()
+        try:  # try/except to avoid import errors at construction
+            statsforecast_class = self._get_statsforecast_class()
+        except Exception:
+            return {"int_in_sample": False, "int": False}
+
         if (
             "level"
             not in signature(statsforecast_class.predict_in_sample).parameters.keys()

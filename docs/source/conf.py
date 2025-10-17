@@ -5,6 +5,9 @@ import datetime
 import os
 import sys
 import warnings
+from pathlib import Path
+
+from bs4 import BeautifulSoup
 
 import sktime
 
@@ -221,6 +224,8 @@ html_theme_options = {
     "navbar_start": ["navbar-logo"],
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["theme-switcher", "navbar-icon-links"],
+    "show_toc_level": 2,
+    "secondary_sidebar_items": ["page-toc", "sourcelink"],
 }
 html_logo = "images/sktime-logo-text-horizontal.png"
 html_context = {
@@ -357,7 +362,7 @@ def _make_estimator_overview(app):
             "capability:pred_int",
             "capability:pred_int:insample",
             "capability:missing_values",
-            "ignores-exogeneous-X",
+            "capability:exogenous",
             "scitype:y",
             "requires-fh-in-fit",
             "X-y-must-have-same-index",
@@ -369,6 +374,7 @@ def _make_estimator_overview(app):
             "scitype:transform-input",
             "scitype:transform-output",
             "scitype:transform-labels",
+            "capability:multivariate",
             "capability:inverse_transform",
             "capability:missing_values",
             "capability:missing_values:removes",
@@ -420,6 +426,7 @@ def _make_estimator_overview(app):
         ],
         "classifier": [
             "capability:multivariate",
+            "capability:predict_proba",
             "capability:multioutput",
             "capability:unequal_length",
             "capability:missing_values",
@@ -457,7 +464,7 @@ def _make_estimator_overview(app):
             "lower_is_better",
             "requires-y-train",
             "requires-y-pred-benchmark",
-            "univariate-only",
+            "capability:multivariate",
             "scitype:y_pred",
             "python_dependencies",
             "authors",
@@ -565,6 +572,32 @@ def _make_estimator_overview(app):
     # pass
 
 
+# Removes class name from method names in right sidebar, aka, page-toc.
+# For example, on the page for a forecaster, the methods are listed with
+# forecasterclass.method_name on the right sidebar. This function removes
+# forecasterclass and keeps method_name only.
+def _process_in_page_toc(app, exception):
+    if app.builder.format != "html":
+        return
+
+    for pagename in app.env.found_docs:
+        if not isinstance(pagename, str):
+            continue
+
+        with (Path(app.outdir) / f"{pagename}.html").open("r") as f:
+            # Parse HTML using BeautifulSoup html parser
+            soup = BeautifulSoup(f.read(), "html.parser")
+
+            for li in soup.find_all("li", class_="toc-h3 nav-item toc-entry"):
+                if span := li.find("span"):
+                    # Modify the toc-nav span element here
+                    span.string = span.string.split(".")[-1]
+
+        with (Path(app.outdir) / f"{pagename}.html").open("w") as f:
+            # Write back HTML
+            f.write(str(soup))
+
+
 def setup(app):
     """Set up sphinx builder.
 
@@ -580,6 +613,7 @@ def setup(app):
     adds("fields.css")  # for parameters, etc.
 
     app.connect("builder-inited", _make_estimator_overview)
+    app.connect("build-finished", _process_in_page_toc)
 
 
 # -- Extension configuration -------------------------------------------------

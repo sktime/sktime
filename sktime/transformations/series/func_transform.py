@@ -86,6 +86,11 @@ class FunctionTransformer(BaseTransformer):
         "fit_is_empty": True,
         "capability:missing_values": True,
         "capability:inverse_transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_categorical_X_passes"],
+        # this test uses RangeIndex data which is not supported
     }
 
     def __init__(

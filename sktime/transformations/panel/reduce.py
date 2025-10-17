@@ -28,7 +28,7 @@ class Tabularizer(BaseTransformer):
     _tags = {
         "authors": ["mloning", "fkiraly", "kcc-lion"],
         "fit_is_empty": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -101,7 +101,7 @@ class TimeBinner(BaseTransformer):
         "authors": ["kcc-lion", "fkiraly"],
         "maintainers": ["kcc-lion"],
         "fit_is_empty": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -182,5 +182,8 @@ class TimeBinner(BaseTransformer):
         import pandas as pd
 
         idx = pd.interval_range(start=0, end=100, freq=10, closed="left")
-        params = {"idx": idx}
-        return params
+        return [
+            {"idx": idx},
+            {"idx": idx, "aggfunc": np.median},
+            {"idx": idx, "aggfunc": np.sum},
+        ]

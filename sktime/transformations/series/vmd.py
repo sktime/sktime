@@ -119,7 +119,7 @@ class VmdTransformer(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
-        "univariate-only": False,
+        "capability:multivariate": True,
         "requires_y": False,
         "remember_data": False,
         "fit_is_empty": False,
@@ -133,6 +133,11 @@ class VmdTransformer(BaseTransformer):
         "capability:unequal_length:removes": False,
         "capability:missing_values": False,
         "capability:missing_values:removes": False,
+        "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:libs": ["sktime.libs.vmdpy"],
     }
 
     def __init__(

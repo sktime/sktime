@@ -79,6 +79,7 @@ class BaseDetector(BaseEstimator):
         "capability:multivariate": False,
         "capability:missing_values": False,
         "capability:update": False,
+        "capability:variable_identification": False,
         #
         # todo: distribution_type does not seem to be used - refactor or remove
         "distribution_type": "None",
@@ -147,7 +148,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -172,6 +173,7 @@ class BaseDetector(BaseEstimator):
         Creates fitted model that updates attributes ending in "_". Sets
         _is_fitted flag to True.
         """
+        # input checks and conversions for X
         X_inner = self._check_X(X)
 
         # skip inner _fit if fit is empty
@@ -184,10 +186,8 @@ class BaseDetector(BaseEstimator):
         self._X = X
         self._y = y
 
-        # fkiraly: insert checks/conversions here, after PR #1012 I suggest
-
         if _method_has_arg(self._fit, "y"):
-            self._fit(X=X, y=y)
+            self._fit(X=X_inner, y=y)  # X_inner is the converted X
         else:
             self._fit(X=X_inner)
 
@@ -222,7 +222,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -240,8 +240,6 @@ class BaseDetector(BaseEstimator):
         self.check_is_fitted()
 
         X_inner = self._check_X(X)
-
-        # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
         y = self._predict(X=X_inner)
 
@@ -374,7 +372,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -399,7 +397,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation, or segment clustering.
 
@@ -440,7 +438,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -465,7 +463,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -516,7 +514,17 @@ class BaseDetector(BaseEstimator):
               segments. Possible labels are integers starting from 0.
         """
         y_sparse = self.fit_predict(X, y=y)
-        y_dense = self.sparse_to_dense(y_sparse, index=X.index)
+
+        # Handle both pandas and numpy inputs
+        if hasattr(X, "index"):
+            # X is pandas DataFrame or Series
+            index = X.index
+        else:
+            # X is numpy array or other array-like without index
+            # Create a default integer index
+            index = pd.RangeIndex(len(X))
+
+        y_dense = self.sparse_to_dense(y_sparse, index=index)
         y_dense = self._coerce_to_df(y_dense, columns=["labels"])
         return y_dense
 

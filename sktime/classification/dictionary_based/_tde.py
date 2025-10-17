@@ -34,12 +34,14 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     regressor, evaluating each with a LOOCV. It then retains "s"
     ensemble members.
     There are six primary parameters for individual classifiers:
-            - alpha: alphabet size
-            - w: window length
-            - l: word length
-            - p: normalise/no normalise
-            - h: levels
-            - b: MCB/IGB
+
+    - alpha: alphabet size
+    - w: window length
+    - l: word length
+    - p: normalise/no normalise
+    - h: levels
+    - b: MCB/IGB
+
     For any combination, an individual TDE classifier slides a window of
     length w along the series. The w length window is shortened to
     an l length word through taking a Fourier transform and keeping the
@@ -157,6 +159,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "dictionary",
     }
 
@@ -213,6 +217,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self._min_window = min_window
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Fit an ensemble on cases (X,y), where y is the target variable.
@@ -689,6 +697,8 @@ class IndividualTDE(BaseClassifier):
         # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -736,6 +746,10 @@ class IndividualTDE(BaseClassifier):
         self._train_predictions = []
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     # todo remove along with BOSS and SFA workarounds when Dict becomes serialisable.
     def __getstate__(self):

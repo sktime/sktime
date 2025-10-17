@@ -3,7 +3,6 @@
 
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 
-import typing
 
 import pandas as pd
 
@@ -88,24 +87,24 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         # validate names
         self._check_names(names)
 
-        ALLOWED_SCITYPES = ["forecaster", "transformer"]
+        ALLOWED_SCITYPES = ["forecaster", "transformer", "reconciler"]
         COERCIBLE_SCITYPES = all_coercible_to("transformer")
         COERCIBLE_SCITYPES = set(COERCIBLE_SCITYPES) - set(ALLOWED_SCITYPES)
         ACCEPTED_SCITYPES = ALLOWED_SCITYPES + list(COERCIBLE_SCITYPES)
 
-        est_scitypes = [scitype(x) for x in estimators]
-
-        if not all([x in ACCEPTED_SCITYPES for x in est_scitypes]):
+        if not all([is_scitype(x, ACCEPTED_SCITYPES) for x in estimators]):
             raise TypeError(
                 f"estimators passed to {self_name} "
                 f"must be either transformer or forecaster"
             )
-        forecaster_indicator = [x == "forecaster" for x in est_scitypes]
+        forecaster_indicator = [is_scitype(x, "forecaster") for x in estimators]
         if sum(forecaster_indicator) != 1:
             raise TypeError(
                 f"exactly one forecaster must be contained in the chain, "
                 f"but found {forecaster_indicator.count('forecaster')}"
             )
+
+        est_scitypes = [scitype(x) for x in estimators]
 
         forecaster_ind = forecaster_indicator.index(True)
         self._forecaster_index = forecaster_ind
@@ -185,7 +184,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.38.0 - check why this cannot be easily removed
+                        # todo 0.40.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -421,12 +420,15 @@ class ForecastingPipeline(_Pipeline):
         "scitype:y": "both",
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
         "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, steps):
@@ -434,7 +436,7 @@ class ForecastingPipeline(_Pipeline):
         self.steps_ = self._check_steps(steps, allow_postproc=False)
         super().__init__()
         tags_to_clone = [
-            "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
+            "capability:exogenous",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "capability:pred_int:insample",  # ... for in-sample horizons?
             "capability:insample",  # can the estimator make in-sample predictions?
@@ -520,9 +522,9 @@ class ForecastingPipeline(_Pipeline):
         cond1 = len(self.steps_) > 1 and first_trafo.get_tag("requires_X")
         cond1 = cond1 and X is None
 
-        # condition 2 for ignoring X: tag "ignores-exogeneous-X" is True
+        # condition 2 for ignoring X: tag "capability:exogenous" is False
         # in this case the forecaster at the end ignores what comes out of the trafos
-        cond2 = self.get_tag("ignores-exogeneous-X")
+        cond2 = not self.get_tag("capability:exogenous")
 
         # X ignored = condition 1 or condition 2
         skip_trafos = cond1 or cond2
@@ -870,11 +872,14 @@ class TransformedTargetForecaster(_Pipeline):
         "scitype:y": "both",
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, steps):
@@ -884,7 +889,7 @@ class TransformedTargetForecaster(_Pipeline):
 
         # set the tags based on forecaster
         tags_to_clone = [
-            "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
+            "capability:exogenous",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "capability:pred_int:insample",  # ... for in-sample horizons?
             "capability:insample",  # can the estimator make in-sample predictions?
@@ -909,7 +914,7 @@ class TransformedTargetForecaster(_Pipeline):
         any_t_use_y = any(pre_use_y) or any(post_use_y)
 
         if any_t_use_y:
-            self.set_tags(**{"ignores-exogeneous-X": False})
+            self.set_tags(**{"capability:exogenous": True})
 
     @property
     def forecaster_(self):
@@ -1369,7 +1374,7 @@ class ForecastX(BaseForecaster):
         "scitype:y": "both",
         "X-y-must-have-same-index": False,
         "fit_is_empty": False,
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:missing_values": True,
@@ -1426,7 +1431,7 @@ class ForecastX(BaseForecaster):
             "capability:pred_int",
             "capability:pred_int:insample",
             "capability:insample",
-            "ignores-exogeneous-X",
+            "capability:exogenous",
         ]
 
         self.clone_tags(forecaster_y, tags_to_clone_from_forecaster_y)
@@ -1511,9 +1516,7 @@ class ForecastX(BaseForecaster):
         else:
             return X
 
-    def _check_unknown_exog(
-        self: "ForecastX", X: typing.Optional[pd.DataFrame]
-    ) -> bool:
+    def _check_unknown_exog(self: "ForecastX", X: pd.DataFrame | None) -> bool:
         """Check if all future-unknown exogenous columns are present.
 
         Parameters
@@ -1818,10 +1821,8 @@ class ForecastX(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.forecasting.arima import ARIMA
         from sktime.forecasting.compose import YfromX
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.utils.dependencies import _check_soft_dependencies
 
         fs, _ = YfromX.create_test_instances_and_names()
         fx = fs[0]
@@ -1829,12 +1830,7 @@ class ForecastX(BaseForecaster):
 
         params1 = {"forecaster_X": fx, "forecaster_y": fy}
 
-        # example with probabilistic capability
-        # todo 0.38.0: check if numpy<2 is still needed
-        if _check_soft_dependencies(["pmdarima", "numpy<2"], severity="none"):
-            fy_proba = ARIMA()
-        else:
-            fy_proba = NaiveForecaster()
+        fy_proba = NaiveForecaster()
         fx = NaiveForecaster()
 
         params2 = {"forecaster_X": fx, "forecaster_y": fy_proba, "behaviour": "refit"}
@@ -1926,7 +1922,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         "scitype:y": "both",
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:pred_int": True,

@@ -23,6 +23,7 @@ from sktime.forecasting.compose import (
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
@@ -535,16 +536,16 @@ def test_exogenousx_ignore_tag_set():
     pipe9 = trafo_does_not_ignore_x * fcst_ignores_x * trafo_ignores_x
     pipe10 = trafo_ignores_x * fcst_ignores_x * trafo_ignores_x
 
-    assert not pipe1.get_tag("ignores-exogeneous-X")
-    assert pipe2.get_tag("ignores-exogeneous-X")
-    assert not pipe3.get_tag("ignores-exogeneous-X")
-    assert not pipe4.get_tag("ignores-exogeneous-X")
-    assert not pipe5.get_tag("ignores-exogeneous-X")
-    assert not pipe6.get_tag("ignores-exogeneous-X")
-    assert not pipe7.get_tag("ignores-exogeneous-X")
-    assert not pipe8.get_tag("ignores-exogeneous-X")
-    assert not pipe9.get_tag("ignores-exogeneous-X")
-    assert pipe10.get_tag("ignores-exogeneous-X")
+    assert pipe1.get_tag("capability:exogenous")
+    assert not pipe2.get_tag("capability:exogenous")
+    assert pipe3.get_tag("capability:exogenous")
+    assert pipe4.get_tag("capability:exogenous")
+    assert pipe5.get_tag("capability:exogenous")
+    assert pipe6.get_tag("capability:exogenous")
+    assert pipe7.get_tag("capability:exogenous")
+    assert pipe8.get_tag("capability:exogenous")
+    assert pipe9.get_tag("capability:exogenous")
+    assert not pipe10.get_tag("capability:exogenous")
 
 
 @pytest.mark.skipif(
@@ -622,3 +623,18 @@ def test_pipeline_display():
 
     f = ForecastingPipeline([Detrender(), YfromX.create_test_instance()])
     f._sk_visual_block_()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([TransformedTargetForecaster, PytorchForecastingNBeats]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_pipeline_with_gf_tag():
+    """Test that pipeline with gf tag works."""
+
+    from sklearn.preprocessing import MinMaxScaler
+
+    model = PytorchForecastingNBeats()
+
+    pipe = MinMaxScaler() * model
+    assert isinstance(pipe, TransformedTargetForecaster)

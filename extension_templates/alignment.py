@@ -19,11 +19,11 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting                 - _fit(self, X, Z)
     get alignment           - _get_alignment(self)
 
-Optional implements:
+Optional methods to implement:
     data conversion and capabilities tags - _tags
     get overall distance (scalar)         - _get_distance(self)
     get alignment distance matrix         - _get_distance_matrix(self)
@@ -133,7 +133,7 @@ class MyAligner(BaseAligner):
         # if est.foo == 42:
         #   self.set_tags(handles-missing-data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
 
     # todo: implement this, mandatory
     def _fit(self, X, Z=None):

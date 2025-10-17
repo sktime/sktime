@@ -4,7 +4,9 @@ from sktime.detection.base import BaseDetector
 from sktime.utils.dependencies import _placeholder_record
 
 
-@_placeholder_record("skchange.change_detectors.seeded_binseg")
+@_placeholder_record(
+    ["skchange.change_detectors", "skchange.change_detectors.seeded_binseg"]
+)
 class SeededBinarySegmentation(BaseDetector):
     """Seeded binary segmentation algorithm for changepoint detection, from skchange.
 

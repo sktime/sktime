@@ -83,11 +83,15 @@ class Catch22Wrapper(BaseTransformer):
         # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:instancewise": True,
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
+        "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

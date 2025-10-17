@@ -96,6 +96,10 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     _required_parameters = ["regressor"]
@@ -112,8 +116,8 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
         # can handle multivariate iff: both regressor and all transformers can
         multivariate = regressor.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both regressor and all transformers can,
         #   *or* transformer chain removes missing data
@@ -397,6 +401,7 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:categorical_in_X": True,
     }
 
     _required_parameters = ["regressor"]
@@ -415,7 +420,7 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate
-        multivariate = not self.transformers_.get_tag("univariate-only", True)
+        multivariate = self.transformers_.get_tag("capability:multivariate", False)
         # can handle missing values iff transformer chain removes missing data
         # sklearn regressors might be able to handle missing data (but no tag there)
         # so better set the tag liberally
