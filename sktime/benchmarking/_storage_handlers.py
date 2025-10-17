@@ -238,7 +238,37 @@ class CSVStorageHandler(BaseStorageHandler):
         return path.suffix == ".csv"
 
 
+class NullStorageHandler(BaseStorageHandler):
+    """Storage handler for no file access."""
+
+    def save(self, results: list[ResultObject]):
+        """Save the results - dummy method without any effect.
+
+        Parameters
+        ----------
+        results : ResultObject
+            The results to save.
+        """
+        return
+
+    def _load(self) -> list[ResultObject]:
+        """Load the results from a null file. Returns empty list.
+
+        Returns
+        -------
+        list[ResultObject]
+            The loaded results.
+        """
+        results = []
+        return results
+
+    @staticmethod
+    def is_applicable(path):
+        return path is None
+
+
 STORAGE_HANDLERS = [
+    NullStorageHandler,
     JSONStorageHandler,
     ParquetStorageHandler,
     CSVStorageHandler,
