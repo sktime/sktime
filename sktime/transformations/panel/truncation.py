@@ -24,7 +24,7 @@ class TruncationTransformer(BaseTransformer):
     calculated automatically.
 
     If ``upper`` is set and ``lower`` is None the transformer will truncate
-    each series to ``iloc`` indices from range [0, lower).
+    each series to ``iloc`` indices from range [0, upper).
 
     If both ``lower`` and ``upper`` are set the transformer will truncate
     each series to ``iloc`` indices from range [lower, upper).
