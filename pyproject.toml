@@ -338,13 +338,15 @@ Homepage = "https://www.sktime.net"
 Repository = "https://github.com/sktime/sktime"
 
 [build-system]
-build-backend = "setuptools.build_meta"
+build-backend = "uv_build"
 requires = [
-  "setuptools>=78.1.1",
+  "uv-build>=0.9.3",
 ]
 
-[tool.setuptools.package-data]
-sktime = [
+[tool.uv.build-backend]
+module-name = "sktime"
+module-root = ""
+source-include = [
   "utils/_estimator_html_repr.css",
   "*.csv",
   "*.csv.gz",
@@ -354,9 +356,7 @@ sktime = [
   "*.ts",
   "*.tsv",
 ]
-
-[tool.setuptools.packages.find]
-exclude = ["tests", "tests.*"]
+source-exclude = ["tests", "tests.*"]
 
 [tool.ruff]
 line-length = 88
