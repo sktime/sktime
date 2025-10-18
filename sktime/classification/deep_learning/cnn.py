@@ -105,6 +105,7 @@ class CNNClassifier(BaseDeepClassifier):
         optimizer=None,
         filter_sizes=None,
         padding="auto",
+        **kwargs,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -127,7 +128,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.filter_sizes = filter_sizes
         self.padding = padding
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         self._network = CNNNetwork(
             kernel_size=self.kernel_size,
@@ -184,6 +185,7 @@ class CNNClassifier(BaseDeepClassifier):
             loss=self.loss,
             optimizer=self.optimizer_,
             metrics=metrics,
+            **self.training_kwargs.get("compile", {}),
         )
         return model
 
@@ -217,6 +219,7 @@ class CNNClassifier(BaseDeepClassifier):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=deepcopy(self.callbacks) if self.callbacks else [],
+            **self.training_kwargs.get("fit", {}),
         )
         return self
 

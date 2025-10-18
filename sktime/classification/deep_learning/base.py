@@ -8,6 +8,7 @@ __author__ = ["James-Large", "ABostrom", "TonyBagnall", "aurunmpegasus", "achiev
 __all__ = ["BaseDeepClassifier"]
 
 import os
+import warnings
 from abc import abstractmethod
 
 import numpy as np
@@ -37,12 +38,30 @@ class BaseDeepClassifier(BaseClassifier):
     """
 
     _tags = {
+        "authors": [
+            "James-Large",
+            "ABostrom",
+            "TonyBagnall",
+            "aurunmpegasus",
+            "achieveordie",
+        ],
+        "maintainers": ["achieveordie"],
         "X_inner_mtype": "numpy3D",
         "capability:multivariate": True,
         "python_dependencies": "tensorflow",
         "property:randomness": "stochastic",
         "capability:random_state": True,
     }
+
+    def __init__(self, **kwargs):
+        # Loaded with params provided in keras' training APIs:
+        # https://keras.io/api/models/model_training_apis/
+        # some parameters (like batch_size) are already present in the signature of the
+        # models, those should directly be passed and should not be present in kwargs
+        self.training_kwargs: dict = {}
+        self._load_kwargs(**kwargs)
+
+        super().__init__()
 
     @abstractmethod
     def build_model(self, input_shape, n_classes, **kwargs):
@@ -72,8 +91,8 @@ class BaseDeepClassifier(BaseClassifier):
         """
         return self.history.history if self.history is not None else None
 
-    def _predict(self, X, **kwargs):
-        probs = self._predict_proba(X, **kwargs)
+    def _predict(self, X):
+        probs = self._predict_proba(X)
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -82,7 +101,7 @@ class BaseDeepClassifier(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X, **kwargs):
+    def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -97,7 +116,9 @@ class BaseDeepClassifier(BaseClassifier):
         """
         # Transpose to work correctly with keras
         X = X.transpose((0, 2, 1))
-        probs = self.model_.predict(X, self.batch_size, **kwargs)
+        probs = self.model_.predict(
+            X, self.batch_size, **self.training_kwargs.get("predict", {})
+        )
 
         # check if binary classification
         if probs.shape[1] == 1:
@@ -403,3 +424,40 @@ class BaseDeepClassifier(BaseClassifier):
         with ZipFile(serial, mode="r") as file:
             cls.history.set_params(pickle.loads(file.open("history").read()))
             return pickle.loads(file.open("_obj").read())
+
+    def _load_kwargs(self, **kwargs) -> None:
+        """TODO: complete docstring."""
+        all_configs = [
+            "kwargs_fit",
+            "kwargs_predict",
+            "kwargs_compile",
+            "kwargs_evaluate",
+        ]
+
+        # these parameters should be set directly rather than through kwargs
+        # if set, raises a warning and is deleted
+        excluded_params = ["batch_size", "epochs", "verbose", "callbacks"]
+
+        for config in all_configs:
+            config_value = kwargs.get(config, None)
+
+            if config_value is None and hasattr(self, config):
+                config_value = getattr(self, config)
+
+            setattr(self, config, config_value)
+            if config_value is None:
+                continue
+
+            name = config.split("_")[-1]
+            for param in excluded_params:
+                if param in config_value:
+                    warnings.warn(
+                        message=f"Parameter '{param}' in {config} should be set : "
+                        f"directly  in constructor, not via {config}."
+                        "Ignoring.",
+                        category=UserWarning,
+                        stacklevel=2,
+                    )
+                    config_value.pop(param)
+
+            self.training_kwargs[name] = config_value
