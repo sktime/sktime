@@ -4,7 +4,6 @@ The reason for this class between BaseClassifier and deep_learning classifiers i
 because we can generalise tags and _predict
 """
 
-__author__ = ["AurumnPegasus", "achieveordie"]
 __all__ = ["BaseDeepRegressor"]
 
 import os
@@ -34,6 +33,7 @@ class BaseDeepRegressor(BaseRegressor):
     """
 
     _tags = {
+        "authors": ["AurumnPegasus", "achieveordie", "noxthot"],
         "X_inner_mtype": "numpy3D",
         "capability:multivariate": True,
         "python_dependencies": "tensorflow",
@@ -185,6 +185,7 @@ class BaseDeepRegressor(BaseRegressor):
         """
         import pickle
         import shutil
+        import tempfile
         from pathlib import Path
         from zipfile import ZipFile
 
@@ -194,9 +195,18 @@ class BaseDeepRegressor(BaseRegressor):
 
             in_memory_model = None
             if self.model_ is not None:
-                self.model_.save("disk_less.h5")
-                with h5py.File("disk_less.h5", "r") as h5file:
-                    in_memory_model = h5file.id.get_file_image()
+                # Python 3.12 introduces `delete_on_close` which we could use here
+                # to avoid having to delete the file ourselves.
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".h5") as tmpfile:
+                    tmpfilepath = tmpfile.name
+                    tmpfile.close()
+
+                    self.model_.save(tmpfilepath)
+
+                    with h5py.File(tmpfilepath, "r") as h5file:
+                        in_memory_model = h5file.id.get_file_image()
+
+                    os.remove(tmpfilepath)
 
             in_memory_history = pickle.dumps(self.history.history)
 
@@ -233,6 +243,14 @@ class BaseDeepRegressor(BaseRegressor):
         shutil.rmtree(path)
         return ZipFile(path.with_name(f"{path.stem}.zip"))
 
+    @staticmethod
+    def get_custom_objects():
+        """Return the custom objects needed for loading the model.
+
+        Will be overridden in child classes if necessary.
+        """
+        return None
+
     @classmethod
     def load_from_serial(cls, serial):
         """Load object from serialized memory container.
@@ -250,6 +268,7 @@ class BaseDeepRegressor(BaseRegressor):
         Deserialized self resulting in output ``serial``, of ``cls.save(None)``
         """
         import pickle
+        import tempfile
 
         from tensorflow.keras.models import load_model
 
@@ -270,9 +289,20 @@ class BaseDeepRegressor(BaseRegressor):
         if in_memory_model is None:
             cls.model_ = None
         else:
-            with open("diskless.h5", "wb") as store_:
-                store_.write(in_memory_model)
-                cls.model_ = load_model("diskless.h5")
+            # Python 3.12 introduces `delete_on_close` which we could use here
+            # to avoid having to delete the file ourselves.
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".h5") as tmpfile:
+                tmpfilepath = tmpfile.name
+
+                tmpfile.write(in_memory_model)
+                tmpfile.close()
+
+                cls.model_ = load_model(
+                    tmpfilepath,
+                    custom_objects=cls.get_custom_objects(),
+                )
+
+                os.remove(tmpfilepath)
 
         cls.history = pickle.loads(in_memory_history)
         return pickle.loads(serial)

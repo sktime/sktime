@@ -1,7 +1,5 @@
 """Multi Layer Perceptron (MLP) (minus the final output layer)."""
 
-__author__ = ["James-Large", "Withington", "AurumnPegasus"]
-
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -16,8 +14,12 @@ class MLPNetwork(BaseDeepNetwork):
 
     Parameters
     ----------
-    random_state    : int, default = 0
+    random_state : int, default = 0
         seed to any needed random actions
+    activation : string, default = "relu"
+        activation function used for hidden layers;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
 
     References
     ----------
@@ -30,15 +32,17 @@ class MLPNetwork(BaseDeepNetwork):
     """
 
     _tags = {
-        "authors": ["hfawaz", "James-Large", "Withington", "AurumnPegasus"],
+        "authors": ["hfawaz", "James-Large", "Withington", "AurumnPegasus", "noxthot"],
         "python_dependencies": "tensorflow",
     }
 
     def __init__(
         self,
         random_state=0,
+        activation="relu",
     ):
         _check_dl_dependencies(severity="error")
+        self.activation = activation
         self.random_state = random_state
         super().__init__()
 
@@ -62,13 +66,13 @@ class MLPNetwork(BaseDeepNetwork):
         input_layer_flattened = keras.layers.Flatten()(input_layer)
 
         layer_1 = keras.layers.Dropout(0.1)(input_layer_flattened)
-        layer_1 = keras.layers.Dense(500, activation="relu")(layer_1)
+        layer_1 = keras.layers.Dense(500, activation=self.activation)(layer_1)
 
         layer_2 = keras.layers.Dropout(0.2)(layer_1)
-        layer_2 = keras.layers.Dense(500, activation="relu")(layer_2)
+        layer_2 = keras.layers.Dense(500, activation=self.activation)(layer_2)
 
         layer_3 = keras.layers.Dropout(0.2)(layer_2)
-        layer_3 = keras.layers.Dense(500, activation="relu")(layer_3)
+        layer_3 = keras.layers.Dense(500, activation=self.activation)(layer_3)
 
         output_layer = keras.layers.Dropout(0.3)(layer_3)
 

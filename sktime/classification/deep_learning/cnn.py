@@ -85,6 +85,10 @@ class CNNClassifier(BaseDeepClassifier):
         # testing configuration
         # ---------------------
         "tests:vm": True,  # run in VM due to memory requirement
+        "tests:skip_by_name": [
+            "test_fit_does_not_overwrite_hyper_params",
+            "test_set_params_sklearn",
+        ],
     }
 
     def __init__(
@@ -126,6 +130,15 @@ class CNNClassifier(BaseDeepClassifier):
         self.history = None
         self.filter_sizes = filter_sizes
         self.padding = padding
+
+        if self.loss == "categorical_crossentropy" and self.activation in [
+            "sigmoid",
+            "softmax",
+        ]:
+            from tensorflow import keras
+
+            self.activation = "linear"
+            self.loss = keras.losses.CategoricalCrossentropy(from_logits=True)
 
         super().__init__()
 

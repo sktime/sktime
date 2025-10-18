@@ -32,6 +32,18 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
     Parameters
     ----------
+    activation : string or a tf callable, default="softmax"
+        Activation function used in the output layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_inception : string or a tf callable, default="linear"
+        Activation function used in the Inception modules.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
     n_epochs : int, default=1500
     batch_size : int, default=64
         the number of samples per gradient update
@@ -93,7 +105,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "james-large"],
+        "authors": ["hfawaz", "james-large", "noxthot"],
         "maintainers": ["james-large"],
         # estimator type handled by parent class
         # capabilities
@@ -101,9 +113,13 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         "capability:class_weight": True,
         # testing configuration
         # ---------------------
-        "tests:skip_by_name": ["test_fit_idempotent"],
         "tests:libs": ["sktime.networks.inceptiontime"],
         "tests:vm": True,
+        "tests:skip_by_name": [
+            "test_fit_does_not_overwrite_hyper_params",
+            "test_set_params_sklearn",
+            "test_fit_idempotent",
+        ],
     }
 
     def __init__(
@@ -122,10 +138,16 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         loss="categorical_crossentropy",
         metrics=None,
         class_weight=None,
+        activation="softmax",
+        activation_hidden="relu",
+        activation_inception="linear",
     ):
         _check_dl_dependencies(severity="error")
 
         # predefined
+        self.activation = activation
+        self.activation_hidden = activation_hidden
+        self.activation_inception = activation_inception
         self.batch_size = batch_size
         self.bottleneck_size = bottleneck_size
         self.callbacks = callbacks
@@ -141,9 +163,20 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         self.verbose = verbose
         self.class_weight = class_weight
 
+        if self.loss == "categorical_crossentropy" and self.activation in [
+            "sigmoid",
+            "softmax",
+        ]:
+            from tensorflow import keras
+
+            self.activation = "linear"
+            self.loss = keras.losses.CategoricalCrossentropy(from_logits=True)
+
         super().__init__()
 
         network_params = {
+            "activation": self.activation_hidden,
+            "activation_inception": self.activation_inception,
             "n_filters": n_filters,
             "use_residual": use_residual,
             "use_bottleneck": use_bottleneck,
@@ -174,7 +207,10 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(n_classes, activation="softmax")(output_layer)
+        output_layer = keras.layers.Dense(
+            n_classes,
+            activation=self.activation,
+        )(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
 

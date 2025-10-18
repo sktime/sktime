@@ -1,7 +1,5 @@
 """Multi-scale Attention Convolutional Neural Classifier."""
 
-__author__ = ["jnrusson1"]
-
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
@@ -55,6 +53,14 @@ class MACNNRegressor(BaseDeepRegressor):
     verbose : bool, optional (default=False)
         Verbosity during model training, making it `True` will
         print model summary, training information etc.
+    activation : string or a tf callable, default="linear"
+        Activation function used in the output layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
 
     References
     ----------
@@ -67,7 +73,7 @@ class MACNNRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jnrusson1"],
+        "authors": ["jnrusson1", "noxthot"],
         "maintainers": ["jnrusson1", "nilesh05apr"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
@@ -91,9 +97,13 @@ class MACNNRegressor(BaseDeepRegressor):
         callbacks=None,
         random_state=0,
         verbose=False,
+        activation="linear",
+        activation_hidden="relu",
     ):
         _check_dl_dependencies(severity="error")
 
+        self.activation = activation
+        self.activation_hidden = activation_hidden
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.padding = padding
@@ -115,6 +125,7 @@ class MACNNRegressor(BaseDeepRegressor):
 
         self.history = None
         self._network = MACNNNetwork(
+            activation=self.activation_hidden,
             padding=self.padding,
             pool_size=self.pool_size,
             strides=self.strides,
@@ -151,7 +162,11 @@ class MACNNRegressor(BaseDeepRegressor):
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(units=1, use_bias=self.use_bias)(output_layer)
+        output_layer = keras.layers.Dense(
+            activation=self.activation,
+            units=1,
+            use_bias=self.use_bias,
+        )(output_layer)
 
         self.optimizer_ = (
             keras.optimizers.Adam(learning_rate=0.0001)
