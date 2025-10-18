@@ -53,7 +53,7 @@ class TruncationTransformer(BaseTransformer):
     >>> from sktime.transformations.panel.truncation import TruncationTransformer
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical(same_cutoff=False)
-    >>> tt = TruncationTransformer(lower=5)
+    >>> tt = TruncationTransformer(upper=5)
     >>> tt.fit(X)
     TruncationTransformer(...)
     >>> X_transformed = tt.transform(X)
