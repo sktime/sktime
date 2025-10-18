@@ -343,6 +343,38 @@ requires = [
   "uv-build>=0.9.3",
 ]
 
+[tool.uv]
+conflicts = [
+  [
+    { extra = "dependencies_lowest" },
+    { extra = "dependencies_lower" },
+  ],
+  [
+    { extra = "dependencies_lowest" },
+    { extra = "all_extras" },
+  ],
+  [
+    { extra = "dependencies_lowest" },
+    { extra = "all_extras_pandas2" },
+  ],
+  [
+    { extra = "dl" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "forecasting" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "notebooks" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "pandas1" },
+    { extra = "dependencies_lower" },
+  ],
+]
+
 [tool.uv.build-backend]
 module-name = "sktime"
 module-root = ""
