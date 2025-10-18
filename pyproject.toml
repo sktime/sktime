@@ -343,6 +343,12 @@ requires = [
   "uv-build>=0.9.3",
 ]
 
+[dependency-groups]
+dev = [
+  "pip>=25.2",
+  "pre-commit>=4.3.0",
+]
+
 [tool.uv]
 conflicts = [
   [
@@ -373,6 +379,9 @@ conflicts = [
     { extra = "pandas1" },
     { extra = "dependencies_lower" },
   ],
+]
+default-groups = [
+  "dev",
 ]
 
 [tool.uv.build-backend]
