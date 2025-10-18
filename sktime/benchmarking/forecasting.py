@@ -93,16 +93,21 @@ class ForecastingBenchmark(BaseBenchmark):
         ----------
         data : Union[Callable, tuple]
             Can be
+
             - a function which returns a dataset, like from `sktime.datasets`.
             - a tuple containing two data container that are sktime comptaible.
             - single data container that is sktime compatible (only endogenous data).
+
         cv_splitter : BaseSplitter object
             Splitter used for generating validation folds.
+
         scorers : a list of BaseMetric objects
             Each BaseMetric output will be included in the results.
+
         task_id : str, optional (default=None)
             Identifier for the benchmark task. If none given then uses dataset loader
             name combined with cv_splitter class name.
+
         cv_global:  sklearn splitter, or sktime instance splitter, default=None
             If ``cv_global`` is passed, then global benchmarking is applied, as follows:
 
@@ -121,18 +126,21 @@ class ForecastingBenchmark(BaseBenchmark):
                 forecaster.fit(y=y_train, fh=cv.fh)
                 y_pred = forecaster.predict(y=y_past)
                 metric(y_true, y_pred)
+
         error_score : "raise" or numeric, default=np.nan
             Value to assign to the score if an exception occurs in estimator fitting.
             If set to "raise", the exception is raised. If a numeric value is given,
             FitFailedWarning is raised.
+
         strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-            defines the ingestion mode when the forecaster sees new data when window
-            expands
-            "refit" = forecaster is refitted to each training window
-            "update" = forecaster is updated with training window data,
-            in sequence provided
-            "no-update_params" = fit to first training window, re-used without
-            fit or update
+            defines the ingestion mode when the forecaster is updated with new data
+
+            * "refit" = forecaster is refitted to each training window
+            * "update" = forecaster is updated with training window data,
+              in sequence provided
+            * "no-update_params" = fit to first training window,
+              re-used without fit or update
+
         cv_global_temporal:  SingleWindowSplitter, default=None
             ignored if cv_global is None. If passed, it splits the Panel temporally
             before the instance split from cv_global is applied. This avoids
@@ -169,6 +177,7 @@ class ForecastingBenchmark(BaseBenchmark):
             "cv_global": cv_global,
             "error_score": error_score,
             "cv_global_temporal": cv_global_temporal,
+            "strategy": strategy,
         }
         self._add_task(
             task_id,
