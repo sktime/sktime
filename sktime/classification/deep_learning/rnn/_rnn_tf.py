@@ -16,6 +16,8 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class SimpleRNNClassifier(BaseDeepClassifier):
     """Simple recurrent neural network.
 
+    For a drop-in replacement based on PyTorch, see `SimpleRNNClassifierTorch`.
+
     Parameters
     ----------
     n_epochs : int, default = 100
@@ -24,7 +26,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         the number of samples per gradient update.
     units : int, default = 6
         number of units in the network
-    callbacks : list of tf.keras.callbacks.Callback objects, default = None
+    callbacks : tuple of tf.keras.callbacks.Callback objects, default = None
     add_default_callback : bool, default = True
         whether to add default callback
     random_state : int or None, default=0
@@ -62,6 +64,8 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         # packaging info
         # --------------
         "authors": ["mloning"],
+        "property:randomness": "stochastic",
+        "capability:random_state": True,
         # estimator type handled by parent class
     }
 
