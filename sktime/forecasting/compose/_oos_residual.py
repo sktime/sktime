@@ -7,6 +7,7 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.validation.forecasting import check_cv
 
 
 class OosResidualsWrapper(BaseForecaster):
@@ -75,29 +76,43 @@ class OosResidualsWrapper(BaseForecaster):
             cv = CutoffFhSplitter(
                 cutoff=(in_sample_fh.to_absolute(self.cutoff) - 1), fh=1
             )
+        cv = check_cv(cv)
 
         # Prepare forecasters
         self._in_sample_forecaster = clone(self.forecaster)
         self._out_of_sample_forecaster = clone(self.forecaster)
 
+        # Prepare placeholder for predictions
+        index = fh.to_absolute_index(self.cutoff)
+        if isinstance(_y.index, pd.MultiIndex):
+            index = pd.MultiIndex.from_product(
+                _y.index.levels[:-1] + [index], names=_y.index.names
+            )
+        preds = pd.DataFrame(pd.NA, index=index, columns=_y.columns)
+
         # Out-of-sample predictions
         self._out_of_sample_forecaster.fit(y=_y, X=_X, fh=out_of_sample_fh)
         out_of_sample_preds = self._out_of_sample_forecaster.predict(X=X)
+        preds.loc[out_of_sample_preds.index] = out_of_sample_preds.values
 
         # In-sample predictions using cross-validation
 
-        # fit on the first training windows
-        new_y, _ = next(cv.split(_y))
-        self._in_sample_forecaster.fit(y=_y.iloc[new_y], X=_X, fh=cv.get_fh())
-        # update on all training windows
-        in_sample_preds = self._in_sample_forecaster.update_predict(
-            _y, cv, X, update_params=True, reset_forecaster=False
-        )
-        # fix pd.Series output
-        if isinstance(in_sample_preds, pd.Series):
-            in_sample_preds = in_sample_preds.to_frame(name=_y.columns[0])
+        # fit on the first training window
+        window, horizon = next(cv.split(_y))
+        new_y = _y.iloc[window]
+        new_X = _X.iloc[window] if _X is not None else None
+        self._in_sample_forecaster.fit(y=new_y, X=new_X, fh=cv.get_fh())
 
-        # Combine the predictions
-        preds = pd.concat([in_sample_preds, out_of_sample_preds])
+        # update on all training windows
+        for window, horizon in cv.split(_y):
+            new_y = _y.iloc[window]
+            new_X = _X.iloc[window] if _X is not None else None
+            new__X = _X.iloc[horizon] if _X is not None else None
+
+            self._in_sample_forecaster.update(y=new_y, X=new_X, update_params=False)
+            new_pred = self._in_sample_forecaster.predict(X=new__X)
+
+            common_idx = new_pred.index.intersection(preds.index)
+            preds.loc[common_idx] = new_pred.loc[common_idx].values
 
         return preds
