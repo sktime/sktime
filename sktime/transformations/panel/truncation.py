@@ -19,6 +19,11 @@ class TruncationTransformer(BaseTransformer):
     calculated automatically.
 
     If ``lower`` is set and ``upper`` is None the transformer will truncate
+    each series to ``iloc`` indices from range [lower, min_series_length)
+    where ``min_series_length`` is the length of the shortest series in the panel
+    calculated automatically.
+
+    If ``upper`` is set and ``lower`` is None the transformer will truncate
     each series to ``iloc`` indices from range [0, lower).
 
     If both ``lower`` and ``upper`` are set the transformer will truncate
@@ -27,11 +32,11 @@ class TruncationTransformer(BaseTransformer):
     Parameters
     ----------
     lower : int, optional (default=None) minimum length, inclusive
-        Cannot be less than the length of the shortest series in the panel.
         If None, will find the length of the shortest series and use instead.
     upper : int, optional (default=None) maximum length, exclusive
+        Cannot be less than the length of the shortest series in the panel.
         This is used to calculate the range between.
-        If None, will truncate to the lower bound.
+        If None, will find the length of the shortest series and use instead.
 
     Examples
     --------
@@ -78,10 +83,17 @@ class TruncationTransformer(BaseTransformer):
         # is transform result always guaranteed to be equal length (and series)?
     }
 
+    error_messages = {
+        "lower_gt_0": "lower must be greater than or equal to 0",
+        "upper_gt_lower": "upper must be greater than lower",
+        "upper_le_min_length": "upper must be less than \
+            or equal to the length of the shortest series in the panel.",
+    }
+
     def __init__(self, lower=None, upper=None):
         self.lower = lower
         self.upper = upper
-        self.min_length = lower
+        self._validate_parameters()
         super().__init__()
 
     @staticmethod
@@ -90,6 +102,17 @@ class TruncationTransformer(BaseTransformer):
             return min(map(lambda series: len(series), input))
 
         return min(map(get_length, X))
+
+    def _validate_parameters(self):
+        if self.lower is not None:
+            if self.lower < 0:
+                raise ValueError(self.error_messages["lower_gt_0"])
+            if self.upper is not None and self.upper <= self.lower:
+                raise ValueError(self.error_messages["upper_gt_lower"])
+
+    def _data_to_series_list(self, X):
+        n_instances, _ = X.shape
+        return [X.iloc[i, :].values for i in range(n_instances)]
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -108,14 +131,27 @@ class TruncationTransformer(BaseTransformer):
         -------
         self : reference to self
         """
-        if self.lower is None:
-            n_instances, _ = X.shape
-            arr = [X.iloc[i, :].values for i in range(n_instances)]
-            self.lower_ = self._get_min_length(arr)
-        else:
-            self.lower_ = self.lower
+        self.series_list = self._data_to_series_list(X)
+        self._min_length = self._get_min_length(self.series_list)
+        self._validate_upper_with_data()
 
         return self
+
+    def _validate_upper_with_data(self):
+        if self.upper is not None and self.upper > self._min_length:
+            raise ValueError(self.error_messages["upper_le_min_length"])
+
+    def _get_truncation_indices(self):
+        """Get the truncation indices based on lower and upper bounds."""
+        if self.lower is None and self.upper is None:
+            idxs = np.arange(self._min_length)
+        elif self.upper is not None and self.lower is None:
+            idxs = np.arange(self.upper)
+        elif self.upper is None and self.lower is not None:
+            idxs = np.arange(self.lower, self._min_length)
+        else:
+            idxs = np.arange(self.lower, self.upper)
+        return idxs
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -135,31 +171,14 @@ class TruncationTransformer(BaseTransformer):
             each cell of Xt contains pandas.Series
             transformed version of X
         """
-        n_instances, _ = X.shape
-
-        arr = [X.iloc[i, :].values for i in range(n_instances)]
-
-        min_length = self._get_min_length(arr)
-
-        if min_length < self.lower_:
-            raise ValueError(
-                "Error: min_length of series \
-                    is less than the one found when fit or set."
-            )
-
-        # depending on inputs either find the shortest truncation.
-        # or use the bounds.
-        if self.upper is None:
-            idxs = np.arange(self.lower_)
-        else:
-            idxs = np.arange(self.lower_, self.upper)
-
-        truncate = [pd.Series([series.iloc[idxs] for series in out]) for out in arr]
+        idxs = self._get_truncation_indices()
+        truncate = [
+            pd.Series([series.iloc[idxs] for series in out]) for out in self.series_list
+        ]
 
         Xt = pd.DataFrame(truncate)
         Xt.columns = X.columns
         Xt.index = X.index
-
         return Xt
 
     @classmethod
