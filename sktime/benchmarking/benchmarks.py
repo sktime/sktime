@@ -93,10 +93,15 @@ class _BenchmarkingResults:
         else:
             self.results = []
 
+    def update(self, new_result):
+        """Update the results with a new result."""
+        self.results.append(new_result)
+        # todo: this should also update the storage backend!
+
     def save(self):
         """Save the results to a file."""
         if self.path is None:
-            return
+            return  # if no path is given, do not save
         self.storage_backend(self.path).save(self.results)
 
     def contains(self, task_id: str, model_id: str):
@@ -277,6 +282,7 @@ class BaseBenchmark:
             and values are estimators.
             If List, each element is an estimator. estimator_ids are generated
             automatically using the estimator's class name.
+
         estimator_id : str, optional (default=None)
             Identifier for estimator. If none given then uses estimator's class name.
         """
@@ -301,42 +307,59 @@ class BaseBenchmark:
         ----------
         results_path : str
             Path to save the results to.
+            If None, will not save the results.
+
         force_rerun : Union[str, list[str]], optional (default="none")
-            If "none", will skip validation if results already exist.
-            If "all", will run validation for all tasks and models.
-            If list of str, will run validation for tasks and models in list.
+
+            * If "none", will skip validation if results already exist.
+            * If "all", will run validation for all tasks and models.
+            * If list of str, will run validation for tasks and models in list.
         """
         results = _BenchmarkingResults(path=results_path)
 
-        for task_id, task in self.tasks.entities.items():
-            for estimator_id, estimator in self.estimators.entities.items():
-                if results.contains(task_id, estimator_id) and (
-                    force_rerun == "none"
-                    or (
-                        isinstance(force_rerun, list)
-                        and estimator_id not in force_rerun
-                    )
-                ):
-                    logging.info(
-                        f"Skipping validation - model: "
-                        f"{task_id} - {estimator_id}"
-                        ", as found prior result in results."
-                    )
-                    continue
-
-                logging.info(f"Running validation - model: {task_id} - {estimator_id}")
-                folds = self._run_validation(task, estimator)
-                results.results.append(
-                    ResultObject(
-                        task_id=task_id,
-                        model_id=estimator_id,
-                        folds=folds,
-                    )
+        for task_id, estimator_id, task, estimator in self._generate_experiments():
+            if results.contains(task_id, estimator_id) and (
+                force_rerun == "none"
+                or (isinstance(force_rerun, list) and estimator_id not in force_rerun)
+            ):
+                logging.info(
+                    f"Skipping validation - model: "
+                    f"{task_id} - {estimator_id}"
+                    ", as found prior result in results."
                 )
+                continue
+
+            logging.info(f"Running validation - model: {task_id} - {estimator_id}")
+            folds = self._run_validation(task, estimator)
+            results.update(
+                ResultObject(
+                    task_id=task_id,
+                    model_id=estimator_id,
+                    folds=folds,
+                )
+            )
 
         if results_path is not None:
             results.save()
         return results.to_dataframe()
+
+    def _generate_experiments(self):
+        """Generate experiments for the benchmark.
+
+        Returns a list of tuples with:
+
+        * task_id: str
+        * estimator_id: str
+        * task: TaskObject
+        * estimator: estimator object
+        """
+        tasks = self.tasks.entities
+        estimators = self.estimators.entities
+        exps = []
+        for task_id, task in tasks.items():
+            for estimator_id, estimator in estimators.items():
+                exps.append((task_id, estimator_id, task, estimator))
+        return exps
 
     def run(self, output_file: str, force_rerun: str | list[str] = "none"):
         """
@@ -347,10 +370,12 @@ class BaseBenchmark:
         output_file : str or None.
             Path to save the results to.
             If None, results will not be saved.
+
         force_rerun : Union[str, list[str]], optional (default="none")
-            If "none", will skip validation if results already exist.
-            If "all", will run validation for all tasks and models.
-            If list of str, will run validation for tasks and models in list.
+
+            * If "none", will skip validation if results already exist.
+            * If "all", will run validation for all tasks and models.
+            * If list of str, will run validation for tasks and models in list.
         """
         return self._run(output_file, force_rerun)
 
