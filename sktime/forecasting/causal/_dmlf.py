@@ -43,28 +43,28 @@ class DoubleMLForecaster(BaseForecaster):
     1. Split new exogenous data ``X`` into ``X_exposure`` and ``X_confounder``.
 
     2. Compute the base (confounder-driven) forecast:
-       ``y_pred_base = outcome_forecaster.predict(X_confounder)``.
+       ``y_pred_base = outcome_fcst.predict(X_confounder)``.
 
     3. Compute the residualized exposures:
-       ``X_exposure_pred = treatment_forecaster.predict(X_confounder)``.
+       ``X_exposure_pred = treatment_fcst.predict(X_confounder)``.
        ``X_exposure_res = X_exposure - X_exposure_pred``.
 
     4. Compute the causal (residual) forecast:
-       ``y_pred_res = residual_forecaster.predict(X=X_exposure_res)``.
+       ``y_pred_res = residual_fcst.predict(X=X_exposure_res)``.
 
     5. Combine both components to obtain the final prediction:
        ``y_pred = y_pred_base + y_pred_res``.
 
     Parameters
     ----------
-    outcome_forecaster : sktime forecaster
+    outcome_fcst : sktime forecaster
         Base forecaster modeling the outcome variable conditional on
         confounders.
 
-    treatment_forecaster : sktime forecaster
+    treatment_fcst : sktime forecaster
         Forecaster modeling the exposure variables conditional on confounders.
 
-    residual_forecaster : sktime forecaster, optional (default=None)
+    residual_fcst : sktime forecaster, optional (default=None)
         Forecaster modeling the residual (deconfounded) relationship between
         outcome and treatment. If not provided, a default forecaster is created
         using ``make_reduction(LinearRegression(), strategy="recursive")``,
@@ -81,13 +81,13 @@ class DoubleMLForecaster(BaseForecaster):
 
     Attributes
     ----------
-    outcome_forecaster_ : sktime forecaster
+    outcome_fcst_ : sktime forecaster
         Fitted clone of the outcome forecaster.
 
-    treatment_forecaster_ : sktime forecaster
+    treatment_fcst_ : sktime forecaster
         Fitted clone of the treatment forecaster.
 
-    residual_forecaster_ : sktime forecaster
+    residual_fcst_ : sktime forecaster
         Fitted clone of the residual forecaster.
 
     Examples
@@ -104,22 +104,22 @@ class DoubleMLForecaster(BaseForecaster):
     >>> exposure_vars = ['GNP']
     >>>
     >>> # Set up forecasters for nuisance functions
-    >>> outcome_forecaster = NaiveForecaster()
-    >>> treatment_forecaster = NaiveForecaster()
+    >>> outcome_fcst = NaiveForecaster()
+    >>> treatment_fcst = NaiveForecaster()
     >>>
     >>> # Create DoubleMLForecaster
     >>> dml_forecaster = DoubleMLForecaster(
-    ...     outcome_forecaster=outcome_forecaster,
-    ...     treatment_forecaster=treatment_forecaster,
+    ...     outcome_fcst=outcome_fcst,
+    ...     treatment_fcst=treatment_fcst,
     ...     exposure_vars=exposure_vars
     ... )
     >>>
     >>> # Fit and predict
     >>> fh = [1, 2, 3]
     >>> dml_forecaster.fit(y_train, X=X_train, fh=fh)
-    DoubleMLForecaster(exposure_vars=['GNP'], outcome_forecaster=NaiveForecaster(),
-                       residual_forecaster=RecursiveTabularRegressionForecaster(estimator=LinearRegression()),
-                       treatment_forecaster=NaiveForecaster())
+    DoubleMLForecaster(exposure_vars=['GNP'], outcome_fcst=NaiveForecaster(),
+                       residual_fcst=RecursiveTabularRegressionForecaster(estimator=LinearRegression()),
+                       treatment_fcst=NaiveForecaster())
     >>> y_pred = dml_forecaster.predict(X=X_test)
 
     Notes
@@ -164,28 +164,28 @@ class DoubleMLForecaster(BaseForecaster):
 
     def __init__(
         self,
-        outcome_forecaster,
-        treatment_forecaster,
-        residual_forecaster=None,
+        outcome_fcst,
+        treatment_fcst,
+        residual_fcst=None,
         exposure_vars=None,
     ):
-        self.outcome_forecaster = outcome_forecaster
-        self.treatment_forecaster = treatment_forecaster
-        self.residual_forecaster = residual_forecaster
+        self.outcome_fcst = outcome_fcst
+        self.treatment_fcst = treatment_fcst
+        self.residual_fcst = residual_fcst
         self.exposure_vars = exposure_vars
 
         # fitted copies of user passed forecasters
-        self.outcome_forecaster_ = None
-        self.treatment_forecaster_ = None
-        self.residual_forecaster_ = None
+        self.outcome_fcst_ = None
+        self.treatment_fcst_ = None
+        self.residual_fcst_ = None
 
         super().__init__()
 
-        # Handle null residual_forecaster
-        if self.residual_forecaster is None:
+        # Handle null residual_fcst
+        if self.residual_fcst is None:
             from sktime.forecasting.compose import make_reduction
 
-            self.residual_forecaster = make_reduction(
+            self.residual_fcst = make_reduction(
                 LinearRegression(), strategy="recursive"
             )
 
@@ -200,37 +200,35 @@ class DoubleMLForecaster(BaseForecaster):
         """Update forecaster tags based on component capabilities."""
         # True if any component supports exogenous data
         exog = (
-            self.outcome_forecaster.get_tag("capability:exogenous")
-            or self.treatment_forecaster.get_tag("capability:exogenous")
-            or self.residual_forecaster.get_tag("capability:exogenous")
+            self.outcome_fcst.get_tag("capability:exogenous")
+            or self.treatment_fcst.get_tag("capability:exogenous")
+            or self.residual_fcst.get_tag("capability:exogenous")
         )
 
-        # The treatment_forecaster and outcome_forecaster must always support
+        # The treatment_fcst and outcome_fcst must always support
         # in-sample predictions, thus forecaster's in-sample capability
-        # depends only on residual_forecaster's in-sample capability
-        in_sample = self.residual_forecaster.get_tag("capability:insample")
+        # depends only on residual_fcst's in-sample capability
+        in_sample = self.residual_fcst.get_tag("capability:insample")
 
-        # Use residual_forecaster to determine predictive capabilities
-        pred_int = self.residual_forecaster.get_tag("capability:pred_int")
-        pred_int_insample = self.residual_forecaster.get_tag(
-            "capability:pred_int:insample"
-        )
+        # Use residual_fcst to determine predictive capabilities
+        pred_int = self.residual_fcst.get_tag("capability:pred_int")
+        pred_int_insample = self.residual_fcst.get_tag("capability:pred_int:insample")
 
         # All components must handle missing/categorical data and fh
         miss = (
-            self.outcome_forecaster.get_tag("capability:missing_values")
-            and self.treatment_forecaster.get_tag("capability:missing_values")
-            and self.residual_forecaster.get_tag("capability:missing_values")
+            self.outcome_fcst.get_tag("capability:missing_values")
+            and self.treatment_fcst.get_tag("capability:missing_values")
+            and self.residual_fcst.get_tag("capability:missing_values")
         )
         cat = (
-            self.outcome_forecaster.get_tag("capability:categorical_in_X")
-            and self.treatment_forecaster.get_tag("capability:categorical_in_X")
-            and self.residual_forecaster.get_tag("capability:categorical_in_X")
+            self.outcome_fcst.get_tag("capability:categorical_in_X")
+            and self.treatment_fcst.get_tag("capability:categorical_in_X")
+            and self.residual_fcst.get_tag("capability:categorical_in_X")
         )
         req_fh = (
-            self.outcome_forecaster.get_tag("requires-fh-in-fit")
-            and self.treatment_forecaster.get_tag("requires-fh-in-fit")
-            and self.residual_forecaster.get_tag("requires-fh-in-fit")
+            self.outcome_fcst.get_tag("requires-fh-in-fit")
+            and self.treatment_fcst.get_tag("requires-fh-in-fit")
+            and self.residual_fcst.get_tag("requires-fh-in-fit")
         )
 
         # Combine and set final capability tags
@@ -312,39 +310,37 @@ class DoubleMLForecaster(BaseForecaster):
         insample_fh = ForecastingHorizon(time_idx, is_relative=False)
 
         # 2. Fit outcome forecaster on confounders and compute residuals
-        outcome_forecaster_insample = clone(self.outcome_forecaster)
-        outcome_forecaster_insample.fit(y=y, X=X_confounder, fh=insample_fh)
-        y_pred = outcome_forecaster_insample.predict(X=X_confounder)
+        outcome_fcst_insample = clone(self.outcome_fcst)
+        outcome_fcst_insample.fit(y=y, X=X_confounder, fh=insample_fh)
+        y_pred = outcome_fcst_insample.predict(X=X_confounder)
         y_res = y - y_pred
 
         # 3. Fit treatment forecaster on confounders and compute exposure residuals
         if X_exposure is None:
             X_exposure_res = None
         else:
-            treatment_forecaster_insample = clone(self.treatment_forecaster)
-            treatment_forecaster_insample.fit(
-                y=X_exposure, X=X_confounder, fh=insample_fh
-            )
-            X_exposure_pred = treatment_forecaster_insample.predict(X=X_confounder)
+            treatment_fcst_insample = clone(self.treatment_fcst)
+            treatment_fcst_insample.fit(y=X_exposure, X=X_confounder, fh=insample_fh)
+            X_exposure_pred = treatment_fcst_insample.predict(X=X_confounder)
             X_exposure_res = X_exposure - X_exposure_pred
 
         # 4. Fit residual forecaster on residualized outcome and exposure
-        self.residual_forecaster_ = clone(self.residual_forecaster)
-        self.residual_forecaster_.fit(y=y_res, X=X_exposure_res, fh=fh)
+        self.residual_fcst_ = clone(self.residual_fcst)
+        self.residual_fcst_.fit(y=y_res, X=X_exposure_res, fh=fh)
 
         # 5. Refit nuisance models for forecasting
-        self.outcome_forecaster_ = clone(self.outcome_forecaster)
-        self.outcome_forecaster_.fit(y=y, X=X_confounder, fh=fh)
+        self.outcome_fcst_ = clone(self.outcome_fcst)
+        self.outcome_fcst_.fit(y=y, X=X_confounder, fh=fh)
 
         if X_exposure is not None:
-            self.treatment_forecaster_ = clone(self.treatment_forecaster)
-            self.treatment_forecaster_.fit(y=X_exposure, X=X_confounder, fh=fh)
+            self.treatment_fcst_ = clone(self.treatment_fcst)
+            self.treatment_fcst_.fit(y=X_exposure, X=X_confounder, fh=fh)
 
     def _compute_X_exposure_res(self, X_exposure=None, X_confounder=None, fh=None):
         if X_exposure is None:
             return None
 
-        X_exposure_pred = self.treatment_forecaster_.predict(fh=fh, X=X_confounder)
+        X_exposure_pred = self.treatment_fcst_.predict(fh=fh, X=X_confounder)
         X_exposure_aligned = X_exposure.loc[X_exposure_pred.index]
         X_exposure_res = X_exposure_aligned - X_exposure_pred
 
@@ -365,8 +361,8 @@ class DoubleMLForecaster(BaseForecaster):
             X_exposure=X_exposure, X_confounder=X_confounder, fh=fh
         )
 
-        pred_base = self.outcome_forecaster_.predict(fh=fh, X=X_confounder)
-        pred_res = self.residual_forecaster_.predict(fh=fh, X=X_exposure_res)
+        pred_base = self.outcome_fcst_.predict(fh=fh, X=X_confounder)
+        pred_res = self.residual_fcst_.predict(fh=fh, X=X_exposure_res)
 
         return pred_base + pred_res
 
@@ -378,8 +374,8 @@ class DoubleMLForecaster(BaseForecaster):
             X_exposure=X_exposure, X_confounder=X_confounder, fh=fh
         )
 
-        pred_base = self.outcome_forecaster_.predict(fh=fh, X=X_confounder)
-        pred_int_res = self.residual_forecaster_.predict_interval(
+        pred_base = self.outcome_fcst_.predict(fh=fh, X=X_confounder)
+        pred_int_res = self.residual_fcst_.predict_interval(
             fh=fh, X=X_exposure_res, coverage=coverage
         )
 
@@ -393,8 +389,8 @@ class DoubleMLForecaster(BaseForecaster):
             X_exposure=X_exposure, X_confounder=X_confounder, fh=fh
         )
 
-        pred_base = self.outcome_forecaster_.predict(fh=fh, X=X_confounder)
-        pred_quantiles_res = self.residual_forecaster_.predict_quantiles(
+        pred_base = self.outcome_fcst_.predict(fh=fh, X=X_confounder)
+        pred_quantiles_res = self.residual_fcst_.predict_quantiles(
             fh=fh, X=X_exposure_res, alpha=alpha
         )
 
@@ -408,9 +404,7 @@ class DoubleMLForecaster(BaseForecaster):
             X_exposure=X_exposure, X_confounder=X_confounder, fh=fh
         )
 
-        pred_var_res = self.residual_forecaster_.predict_var(
-            fh=fh, X=X_exposure_res, cov=cov
-        )
+        pred_var_res = self.residual_fcst_.predict_var(fh=fh, X=X_exposure_res, cov=cov)
 
         return pred_var_res
 
@@ -437,8 +431,8 @@ class DoubleMLForecaster(BaseForecaster):
             X_exposure=X_exposure, X_confounder=X_confounder, fh=fh
         )
 
-        pred_base = self.outcome_forecaster_.predict(fh=fh, X=X_confounder)
-        pred_proba_res = self.residual_forecaster_.predict_proba(
+        pred_base = self.outcome_fcst_.predict(fh=fh, X=X_confounder)
+        pred_proba_res = self.residual_fcst_.predict_proba(
             fh=fh, X=X_exposure_res, marginal=marginal
         )
 
@@ -472,17 +466,17 @@ class DoubleMLForecaster(BaseForecaster):
 
         # Basic test parameters
         params1 = {
-            "outcome_forecaster": NaiveForecaster(strategy="last"),
-            "treatment_forecaster": NaiveForecaster(strategy="last"),
-            "residual_forecaster": make_reduction(LinearRegression(), window_length=3),
+            "outcome_fcst": NaiveForecaster(strategy="last"),
+            "treatment_fcst": NaiveForecaster(strategy="last"),
+            "residual_fcst": make_reduction(LinearRegression(), window_length=3),
             "exposure_vars": [0, "foo"],  # expected column names in test-suites
         }
 
         # More complex test parameters
         params2 = {
-            "outcome_forecaster": NaiveForecaster(strategy="last"),
-            "treatment_forecaster": NaiveForecaster(strategy="last"),
-            "residual_forecaster": make_reduction(
+            "outcome_fcst": NaiveForecaster(strategy="last"),
+            "treatment_fcst": NaiveForecaster(strategy="last"),
+            "residual_fcst": make_reduction(
                 RandomForestRegressor(n_estimators=5, random_state=42),
                 window_length=3,
             ),
