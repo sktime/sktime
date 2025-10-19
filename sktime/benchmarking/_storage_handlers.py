@@ -288,8 +288,10 @@ def get_storage_backend(path: str | Path) -> BaseStorageHandler:
     BaseStorageHandler
         The storage backend
     """
+    if isinstance(path, str):
+        path = Path(path)
     for handler in STORAGE_HANDLERS:
-        if handler.is_applicable(Path(path)):
+        if handler.is_applicable(path):
             return handler
     raise ValueError(f"No storage handler found for {path}")
 
