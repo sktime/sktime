@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implementation of OosResidualsWrapper."""
+"""Implementation of OosForecaster."""
 
 __author__ = ["geetu040"]
 
@@ -10,7 +10,7 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.utils.validation.forecasting import check_cv
 
 
-class OosResidualsWrapper(BaseForecaster):
+class OosForecaster(BaseForecaster):
     """Out-of-sample residuals wrapper for forecasters."""
 
     _tags = {
@@ -73,7 +73,7 @@ class OosResidualsWrapper(BaseForecaster):
         self._oos_forecaster.fit(y=y, X=X, fh=oos_fh)
 
     def _custom_predict(self, fh, X, method_name, **method_kwargs):
-        """Predicts using the OosResidualsWrapper."""
+        """Predicts using the OosForecaster."""
         _y = self._y
         _X = self._X
         in_fh, oos_fh = self._split_fh(fh)
@@ -86,7 +86,7 @@ class OosResidualsWrapper(BaseForecaster):
 
             warn(
                 "No cross-validation splitter (`cv`) was provided to "
-                "`OosResidualsWrapper`. A default "
+                "`OosForecaster`. A default "
                 "`ExpandingWindowSplitter(initial_window=2)` has been "
                 "initialized. Ensure that the wrapped forecaster is "
                 "compatible with this splitter, or pass a suitable `cv` "

@@ -701,7 +701,7 @@ Ensembles and stacking
     :toctree: auto_generated/
     :template: class.rst
 
-    OosResidualsWrapper
+    OosForecaster
 
 Hierarchical reconciliation
 ---------------------------
