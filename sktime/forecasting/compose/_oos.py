@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implementation of OosForecaster."""
+"""Implementation of Out-of-sample Forecaster."""
 
 __author__ = ["geetu040"]
 
@@ -11,7 +11,106 @@ from sktime.utils.validation.forecasting import check_cv
 
 
 class OosForecaster(BaseForecaster):
-    """Out-of-sample residuals wrapper for forecasters."""
+    """Out-of-sample Forecaster for generating in-sample predictions via refitting.
+
+    The ``OosForecaster`` is a wrapper-forecaster that enables *out-of-sample-style*
+    predictions for in-sample time points. It ensures that predictions for points
+    within the training data are computed without information leakage, by refitting
+    the wrapped forecaster on progressively expanding or rolling contexts.
+
+    In standard forecasters, in-sample predictions are typically obtained directly
+    from fitted values, which reuse information from the target observation itself.
+    In contrast, this wrapper enforces a strictly causal prediction regime by
+    repeatedly refitting the forecaster over cross-validation folds and computing
+    predictions only for unseen points in each fold. This produces *true*
+    out-of-sample predictions even for in-sample horizons.
+
+    This behavior is useful in scenarios that require in-sample residuals or
+    forecasts computed without lookahead bias, such as:
+
+    * Causal or deconfounded forecasting frameworks (e.g., DoubleMLForecaster)
+    * Residual-based ensembles or boosting forecasters
+    * Adding in-sample forecast capability to a forecaster that does not have it.
+    * Evaluating model performance under strict out-of-sample conditions
+
+    **Algorithm**
+
+    1. Split the forecasting horizon ``fh`` into:
+       - **In-sample fh**: time points within the training period.
+       - **Out-of-sample fh**: time points beyond the training cutoff.
+
+    2. For out-of-sample forecasts, simply revert to wrapped forecaster:
+       - Clone the wrapped forecaster.
+       - Fit it once on the full training data.
+       - Predict on the out-of-sample horizon.
+
+    3. For in-sample forecasts:
+       - Use a cross-validation splitter ``cv`` (e.g., ``ExpandingWindowSplitter``).
+       - For each split, fit or update the forecaster on the current training window.
+       - Predict for the corresponding test window, ensuring no future information
+         is used.
+       - Aggregate predictions across all splits to form the complete
+         in-sample forecast.
+
+    4. Any in-sample points not covered by a ``cv`` split are filled with zeros
+       to preserve index alignment.
+
+    This procedure guarantees that all predictions, both in-sample and out-of-sample,
+    are generated under out-of-sample conditions, preserving temporal causality
+    and enabling unbiased residual analysis.
+
+    Parameters
+    ----------
+    forecaster : sktime forecaster
+        The base forecaster to be wrapped. This forecaster is used to perform both
+        out-of-sample forecasts and the iterative in-sample forecasting procedure
+        over cross-validation folds. Any compatible sktime forecaster can be used.
+
+    cv : sktime splitter, optional (default=None)
+        Cross-validation splitter defining how to generate rolling or expanding
+        training/test windows for in-sample residual computation. If not provided,
+        defaults to ``ExpandingWindowSplitter(initial_window=2)``, which performs
+        expanding window updates starting from the first 2 observation.
+
+    Attributes
+    ----------
+    _in_forecaster : sktime forecaster
+        Internal clone of the wrapped forecaster used for generating
+        out-of-sample-style in-sample forecasts through rolling refits.
+
+    _oos_forecaster : sktime forecaster
+        Internal clone of the wrapped forecaster fitted once on the full training
+        data for standard out-of-sample forecasting.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.split import temporal_train_test_split, ExpandingWindowSplitter
+    >>> from sktime.forecasting.compose import OosForecaster
+    >>> from sktime.forecasting.compose import make_reduction
+    >>> from sklearn.linear_model import LinearRegression
+    >>>
+    >>> y, X = load_longley()
+    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(
+    ...     y, X, test_size=0.2
+    ... )
+    >>>
+    >>> wrapper = OosForecaster(
+    ...     forecaster=make_reduction(
+    ...             estimator=LinearRegression(),
+    ...             strategy="recursive",
+    ...             window_length=4,
+    ...     ),
+    ...     cv=ExpandingWindowSplitter(initial_window=7),
+    ... )
+    >>>
+    >>> fh = [-3, -1, 0, 1, 2, 3, 4]
+    >>> wrapper.fit(y_train, X=X_train, fh=fh)
+    OosForecaster(cv=ExpandingWindowSplitter(initial_window=7),
+                  forecaster=RecursiveTabularRegressionForecaster(estimator=LinearRegression(),
+                                                                  window_length=4))
+    >>> y_pred = wrapper.predict(X=X_test)
+    """
 
     _tags = {
         "authors": ["geetu040"],
@@ -73,7 +172,6 @@ class OosForecaster(BaseForecaster):
         self._oos_forecaster.fit(y=y, X=X, fh=oos_fh)
 
     def _custom_predict(self, fh, X, method_name, **method_kwargs):
-        """Predicts using the OosForecaster."""
         _y = self._y
         _X = self._X
         in_fh, oos_fh = self._split_fh(fh)
