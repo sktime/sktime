@@ -93,6 +93,9 @@ jobs:
         run: python3 -m pip install .[tests,datasets]
         shell: bash
 
+      - name: Show dependencies
+        run: python -m pip list
+
       - name: unit test step
         run: python3 -m pytest -m "datadownload" sktime/datasets
         shell: bash
