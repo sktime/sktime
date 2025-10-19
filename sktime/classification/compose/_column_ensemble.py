@@ -29,10 +29,10 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, estimators, verbose=False):
+    def __init__(self, estimators, remainder="drop", verbose=False):
         self.verbose = verbose
         self.estimators = estimators
-        self.remainder = "drop"
+        self.remainder = remainder
         super().__init__()
         self._anytagis_then_set(
             "capability:unequal_length", False, True, self._estimators
@@ -117,7 +117,9 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             ]
 
         # add transformer tuple for remainder
-        if self._remainder[2] is not None:
+        if self._remainder[2] is not None and (
+            self._remainder != "drop" or not self._remainder[1].is_fitted
+        ):
             estimators = chain(estimators, [self._remainder])
 
         for name, estimator, column in estimators:
@@ -167,6 +169,14 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             estimators_.append((name, estimator, column))
 
         self.estimators_ = estimators_
+
+        is_estimator_remainder = hasattr(estimators_[-1], "fit") or hasattr(
+            self.remainder, "predict_proba"
+        )
+
+        if is_estimator_remainder:
+            self._remainder = self.estimators_[-1]
+
         return self
 
     def _collect_probas(self, X):
@@ -255,7 +265,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
     def __init__(self, estimators, remainder="drop", verbose=False):
         self.remainder = remainder
-        super().__init__(estimators, verbose=verbose)
+        super().__init__(estimators, remainder=remainder, verbose=verbose)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -295,12 +305,15 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             )
             return {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
         else:
-            return {
+            param1 = {
                 "estimators": [
                     ("tsf1", TSFC(n_estimators=2), 0),
                     ("tsf2", TSFC(n_estimators=4), 0),
                 ]
             }
+            param2 = {**param1, "remainder": TSFC(n_estimators=2)}
+
+            return [param1, param2]
 
 
 def _get_column(X, key):
