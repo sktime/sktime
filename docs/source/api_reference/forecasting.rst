@@ -695,6 +695,14 @@ Ensembles and stacking
 
     MAPAForecaster
 
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    OosResidualsWrapper
+
 Hierarchical reconciliation
 ---------------------------
 
