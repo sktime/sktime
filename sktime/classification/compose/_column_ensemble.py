@@ -298,7 +298,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             return {
                 "estimators": [
                     ("tsf1", TSFC(n_estimators=2), 0),
-                    ("tsf2", TSFC(n_estimators=2), 0),
+                    ("tsf2", TSFC(n_estimators=4), 0),
                 ]
             }
 
