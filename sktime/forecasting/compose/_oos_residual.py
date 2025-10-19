@@ -31,8 +31,8 @@ class OosResidualsWrapper(BaseForecaster):
     def __init__(self, forecaster, cv=None):
         self.forecaster = forecaster
         self.cv = cv
-        self._in_sample_forecaster = None
-        self._out_of_sample_forecaster = None
+        self._in_forecaster = None
+        self._oos_forecaster = None
 
         super().__init__()
 
@@ -53,34 +53,34 @@ class OosResidualsWrapper(BaseForecaster):
         if fh is None:
             return None, None
 
-        in_sample_fh = (
+        in_fh = (
             fh.to_in_sample(self.cutoff)
             if not fh.is_all_out_of_sample(self.cutoff)
             else None
         )
-        out_of_sample_fh = (
+        oos_fh = (
             fh.to_out_of_sample(self.cutoff)
             if not fh.is_all_in_sample(self.cutoff)
             else None
         )
 
-        return in_sample_fh, out_of_sample_fh
+        return in_fh, oos_fh
 
     def _fit(self, y, X, fh):
-        _, out_of_sample_fh = self._split_fh(fh)
+        _, oos_fh = self._split_fh(fh)
 
-        self._out_of_sample_forecaster = clone(self.forecaster)
-        self._out_of_sample_forecaster.fit(y=y, X=X, fh=out_of_sample_fh)
+        self._oos_forecaster = clone(self.forecaster)
+        self._oos_forecaster.fit(y=y, X=X, fh=oos_fh)
 
     def _custom_predict(self, fh, X, method_name, **method_kwargs):
         """Predicts using the OosResidualsWrapper."""
         _y = self._y
         _X = self._X
-        in_sample_fh, out_of_sample_fh = self._split_fh(fh)
+        in_fh, oos_fh = self._split_fh(fh)
 
         # Prepare CV
         cv = self.cv
-        if cv is None and in_sample_fh is not None:
+        if cv is None and in_fh is not None:
             from sktime.split import ExpandingWindowSplitter
             from sktime.utils.warnings import warn
 
@@ -109,21 +109,21 @@ class OosResidualsWrapper(BaseForecaster):
         preds = pd.DataFrame(0.0, index=index, columns=columns)
 
         # Out-of-sample predictions
-        if out_of_sample_fh is not None:
-            method = getattr(self._out_of_sample_forecaster, method_name)
-            pred = method(X=X, fh=out_of_sample_fh, **method_kwargs)
+        if oos_fh is not None:
+            method = getattr(self._oos_forecaster, method_name)
+            pred = method(X=X, fh=oos_fh, **method_kwargs)
             preds.loc[pred.index] = pred.values
 
         # In-sample predictions using cross-validation
-        if in_sample_fh is not None:
-            self._in_sample_forecaster = clone(self.forecaster)
-            method = getattr(self._in_sample_forecaster, method_name)
+        if in_fh is not None:
+            self._in_forecaster = clone(self.forecaster)
+            method = getattr(self._in_forecaster, method_name)
 
             # fit on the first training window
             window, horizon = next(cv.split(_y))
             new_y = _y.iloc[window]
             new_X = _X.iloc[window] if _X is not None else None
-            self._in_sample_forecaster.fit(y=new_y, X=new_X, fh=cv.get_fh())
+            self._in_forecaster.fit(y=new_y, X=new_X, fh=cv.get_fh())
 
             # update on all training windows
             for window, horizon in cv.split(_y):
@@ -131,7 +131,7 @@ class OosResidualsWrapper(BaseForecaster):
                 new_X = _X.iloc[window] if _X is not None else None
                 new__X = _X.iloc[horizon] if _X is not None else None
 
-                self._in_sample_forecaster.update(y=new_y, X=new_X, update_params=True)
+                self._in_forecaster.update(y=new_y, X=new_X, update_params=True)
                 pred = method(X=new__X, **method_kwargs)
 
                 common_idx = pred.index.intersection(preds.index)
