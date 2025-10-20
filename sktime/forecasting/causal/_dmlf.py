@@ -133,7 +133,7 @@ class DoubleMLForecaster(BaseForecaster):
     * The outcome and treatment forecasters must support in-sample prediction,
       as residuals are computed from fitted values on the training data. If a
       forecaster does not natively support in-sample prediction, it can be
-      wrapped using a utility such as ``OosResidualsWrapper`` to enable this
+      wrapped using a utility such as ``OosForecaster`` to enable this
       functionality.
 
     * The residual forecaster should ideally be a simple interpretable model,
