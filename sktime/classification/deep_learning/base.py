@@ -8,8 +8,9 @@ __author__ = ["James-Large", "ABostrom", "TonyBagnall", "aurunmpegasus", "achiev
 __all__ = ["BaseDeepClassifier"]
 
 import os
-import warnings
 from abc import abstractmethod
+from dataclasses import asdict, dataclass
+from typing import Any
 
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
@@ -18,6 +19,57 @@ from sklearn.utils import check_random_state
 from sktime.base._base import SERIALIZATION_FORMATS
 from sktime.classification.base import BaseClassifier
 from sktime.utils.dependencies import _check_soft_dependencies
+
+
+@dataclass
+class KerasCompileKwargs:
+    """TODO: complete docstring."""
+
+    loss_weights: list[float] | dict[str, float] | None = None
+    weighted_metrics: list[str] | None = None
+    run_eagerly: bool = False
+    steps_per_execution: int = 1
+    jit_compile: str | bool = "auto"
+    auto_scale_loss: bool = True
+
+    def as_dict(self) -> dict[Any, Any]:
+        return asdict(self)
+
+
+@dataclass
+class KerasFitKwargs:
+    """TODO: complete docstring."""
+
+    validation_split: float = 0.0
+    validation_data: Any | None = None
+    shuffle: bool = True
+    class_weight: dict[int, float] | None = None
+    sample_weight: Any | None = None
+    initial_epoch: int = 0
+    steps_per_epoch: int | None = None
+    validation_steps: int | None = None
+    validation_batch_size: int | None = None
+    validation_freq: int = 1
+
+    def __post_init__(self) -> None:
+        from keras.utils import PyDataset
+        from tensorflow.python.data import Dataset
+
+        if not (0.0 <= self.validation_split <= 1.0):
+            raise ValueError(
+                "`validation_split` can only be between [0.0, 1.0]. "
+                f"But `{self.validation_split}` was provided."
+            )
+
+        if not isinstance(self.validation_data, (tuple, Dataset, PyDataset)):
+            raise ValueError(
+                "`validation_data` must either be a 2-length tuple, "
+                "a `keras.utils.PyDataset` or `tf.data.DataSet` instance. "
+                f"Found type: {type(self.validation_data)} instead."
+            )
+
+    def as_dict(self) -> dict[Any, Any]:
+        return asdict(self)
 
 
 class BaseDeepClassifier(BaseClassifier):
@@ -53,14 +105,9 @@ class BaseDeepClassifier(BaseClassifier):
         "capability:random_state": True,
     }
 
-    def __init__(self, **kwargs):
-        # Loaded with params provided in keras' training APIs:
-        # https://keras.io/api/models/model_training_apis/
-        # some parameters (like batch_size) are already present in the signature of the
-        # models, those should directly be passed and should not be present in kwargs
-        self.training_kwargs: dict = {}
-        self._load_kwargs(**kwargs)
-
+    def __init__(self, compile_kwargs: KerasCompileKwargs, fit_kwargs: KerasFitKwargs):
+        self.compile_kwargs = compile_kwargs
+        self.fit_kwargs = fit_kwargs
         super().__init__()
 
     @abstractmethod
@@ -117,7 +164,8 @@ class BaseDeepClassifier(BaseClassifier):
         # Transpose to work correctly with keras
         X = X.transpose((0, 2, 1))
         probs = self.model_.predict(
-            X, self.batch_size, **self.training_kwargs.get("predict", {})
+            X,
+            self.batch_size,  # **self.training_kwargs.get("predict", {})
         )
 
         # check if binary classification
@@ -424,40 +472,3 @@ class BaseDeepClassifier(BaseClassifier):
         with ZipFile(serial, mode="r") as file:
             cls.history.set_params(pickle.loads(file.open("history").read()))
             return pickle.loads(file.open("_obj").read())
-
-    def _load_kwargs(self, **kwargs) -> None:
-        """TODO: complete docstring."""
-        all_configs = [
-            "kwargs_fit",
-            "kwargs_predict",
-            "kwargs_compile",
-            "kwargs_evaluate",
-        ]
-
-        # these parameters should be set directly rather than through kwargs
-        # if set, raises a warning and is deleted
-        excluded_params = ["batch_size", "epochs", "verbose", "callbacks"]
-
-        for config in all_configs:
-            config_value = kwargs.get(config, None)
-
-            if config_value is None and hasattr(self, config):
-                config_value = getattr(self, config)
-
-            setattr(self, config, config_value)
-            if config_value is None:
-                continue
-
-            name = config.split("_")[-1]
-            for param in excluded_params:
-                if param in config_value:
-                    warnings.warn(
-                        message=f"Parameter '{param}' in {config} should be set : "
-                        f"directly  in constructor, not via {config}."
-                        "Ignoring.",
-                        category=UserWarning,
-                        stacklevel=2,
-                    )
-                    config_value.pop(param)
-
-            self.training_kwargs[name] = config_value

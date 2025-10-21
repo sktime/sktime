@@ -6,7 +6,11 @@ from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
-from sktime.classification.deep_learning.base import BaseDeepClassifier
+from sktime.classification.deep_learning.base import (
+    BaseDeepClassifier,
+    KerasCompileKwargs,
+    KerasFitKwargs,
+)
 from sktime.networks.cnn import CNNNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -105,7 +109,8 @@ class CNNClassifier(BaseDeepClassifier):
         optimizer=None,
         filter_sizes=None,
         padding="auto",
-        **kwargs,
+        compile_kwargs: KerasCompileKwargs = KerasCompileKwargs(),
+        fit_kwargs: KerasFitKwargs = KerasFitKwargs(),
     ):
         _check_dl_dependencies(severity="error")
 
@@ -128,7 +133,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.filter_sizes = filter_sizes
         self.padding = padding
 
-        super().__init__(**kwargs)
+        super().__init__(compile_kwargs=compile_kwargs, fit_kwargs=fit_kwargs)
 
         self._network = CNNNetwork(
             kernel_size=self.kernel_size,
@@ -185,7 +190,7 @@ class CNNClassifier(BaseDeepClassifier):
             loss=self.loss,
             optimizer=self.optimizer_,
             metrics=metrics,
-            **self.training_kwargs.get("compile", {}),
+            **self.compile_kwargs.as_dict(),
         )
         return model
 
@@ -219,7 +224,7 @@ class CNNClassifier(BaseDeepClassifier):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=deepcopy(self.callbacks) if self.callbacks else [],
-            **self.training_kwargs.get("fit", {}),
+            **self.fit_kwargs.as_dict(),
         )
         return self
 
