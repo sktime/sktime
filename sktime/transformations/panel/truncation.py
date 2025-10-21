@@ -93,8 +93,8 @@ class TruncationTransformer(BaseTransformer):
     def __init__(self, lower=None, upper=None):
         self.lower = lower
         self.upper = upper
-        self._validate_parameters()
         super().__init__()
+        self._validate_parameters()
 
     @staticmethod
     def _get_min_length(X):
