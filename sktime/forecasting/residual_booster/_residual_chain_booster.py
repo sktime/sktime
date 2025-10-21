@@ -222,31 +222,66 @@ class ResidualBoostingChainForecaster(_HeterogenousMetaEstimator, BaseForecaster
         return y_hat
 
     def _predict_interval(self, fh, X=None, coverage=0.9):
-        """Combine prediction intervals from base and residual models."""
-        I = self.base_future_.predict_interval(fh=fh, X=X, coverage=coverage)
-        idx = I.index
-        for _, f in getattr(self, "_resid_futures_", []):
-            J = f.predict_interval(fh=fh, X=X, coverage=coverage)
-            I = I.add(J.reindex(idx), fill_value=0)
-        return I
+        """Intervals from the last residual stage, shifted by earlier components."""
+        resid_stages = getattr(self, "_resid_futures_", [])
+
+        if not resid_stages:
+            return self.base_future_.predict_interval(fh=fh, X=X, coverage=coverage)
+
+        y_shift = self.base_future_.predict(fh=fh, X=X)
+        if len(resid_stages) > 1:
+            for _, f in resid_stages[:-1]:
+                y_add = f.predict(fh=fh, X=X)
+                if hasattr(y_add, "reindex"):
+                    y_add = y_add.reindex(y_shift.index)
+                y_add = y_add.fillna(0)
+                y_shift = y_shift + y_add
+
+        _, f_last = resid_stages[-1]
+        I_last = f_last.predict_interval(fh=fh, X=X, coverage=coverage)
+
+        y_shift_aligned = y_shift
+        if hasattr(I_last, "index") and hasattr(y_shift, "reindex"):
+            if not I_last.index.equals(y_shift.index):
+                y_shift_aligned = y_shift.reindex(I_last.index)
+
+        return I_last.add(y_shift_aligned, axis=1, level=0)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
-        """Combine arbitrary quantile forecasts."""
-        Q = self.base_future_.predict_quantiles(fh=fh, X=X, alpha=alpha)
-        idx = Q.index
-        for _, f in getattr(self, "_resid_futures_", []):
-            R = f.predict_quantiles(fh=fh, X=X, alpha=alpha)
-            Q = Q.add(R.reindex(idx), fill_value=0)
-        return Q
+        """Quantiles from the last residual stage, shifted by earlier components."""
+        resid_stages = getattr(self, "_resid_futures_", [])
+
+        if not resid_stages:
+            return self.base_future_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+
+        y_shift = self.base_future_.predict(fh=fh, X=X)
+        if len(resid_stages) > 1:
+            for _, f in resid_stages[:-1]:
+                y_add = f.predict(fh=fh, X=X)
+                if hasattr(y_add, "reindex"):
+                    y_add = y_add.reindex(y_shift.index)
+                y_add = y_add.fillna(0)
+                y_shift = y_shift + y_add
+
+        _, f_last = resid_stages[-1]
+        Q_last = f_last.predict_quantiles(fh=fh, X=X, alpha=alpha)
+
+        y_shift_aligned = y_shift
+        if hasattr(Q_last, "index") and hasattr(y_shift, "reindex"):
+            if not Q_last.index.equals(y_shift.index):
+                y_shift_aligned = y_shift.reindex(Q_last.index)
+
+        return Q_last.add(y_shift_aligned, axis=1, level=0)
 
     def _predict_var(self, fh, X=None, cov=False):
-        """Combine predictive variances (or full covariances)."""
-        V = self.base_future_.predict_var(fh=fh, X=X, cov=cov)
-        idx = V.index
-        for _, f in getattr(self, "_resid_futures_", []):
-            W = f.predict_var(fh=fh, X=X, cov=cov)
-            V = V.add(W.reindex(idx), fill_value=0)
-        return V
+        """Variance/covariance from the last residual stage."""
+        resid_stages = getattr(self, "_resid_futures_", [])
+        if not resid_stages:
+            return self.base_future_.predict_var(fh=fh, X=X, cov=cov)
+
+        _, f_last = resid_stages[-1]
+        V_last = f_last.predict_var(fh=fh, X=X, cov=cov)
+        return V_last
 
     def _predict_proba(self, fh, X=None, marginal=True):
         """Combine full distribution forecasts from base & residual models."""
@@ -333,3 +368,9 @@ class ResidualBoostingChainForecaster(_HeterogenousMetaEstimator, BaseForecaster
         }
 
         return [params1, params2, params3]
+
+
+if __name__ == "__main__":
+    from sktime.utils.estimator_checks import check_estimator
+
+    check_estimator(ResidualBoostingChainForecaster, raise_exceptions=True)
