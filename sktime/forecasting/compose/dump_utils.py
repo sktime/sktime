@@ -31,13 +31,13 @@ def dump_obj(msg, objname, obj):
                     eprint(f"dtypes: {obj.dtypes.to_dict()}")
                 except Exception:
                     raise ValueError("dump_utils.dump_obj failed to dump trace")
-            eprint("head:\n", obj.head())
+            eprint("\n", obj)
         else:
             # numpy or other
             import numpy as np
 
             arr = np.asarray(obj)
             eprint(f"asarray shape: {arr.shape}  dtype: {arr.dtype}")
-            eprint(f"head({objname}): {arr[:5]}")
+            eprint(f"{objname}: {arr}")
     except Exception as ex:
         eprint(f"(dump error: {ex})")
