@@ -45,7 +45,8 @@ from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.forecasting.compose.dump_utils import dump_obj
+
+# from sktime.forecasting.compose.dump_utils import dump_obj
 from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.reduce import Tabularizer
@@ -85,13 +86,15 @@ def _unwrap_vdf(obj):
 
 def _rrlog(msg):
     # cheap, dependency-free conditional logger so we can see what's happening
-    if os.environ.get("SKTIME_DEBUG_RR", "1") == "1":
-        print(f"[RR.unwrap] {msg}")
+    # if os.environ.get("SKTIME_DEBUG_RR", "1") == "1":
+    # print(f"[RR.unwrap] {msg}")
+    pass  # remove when uncommenting
 
 
 # alias used throughout helpers
 def _d(msg):
-    _rrlog(msg)
+    # _rrlog(msg)
+    pass  # remove when uncommenting
 
 
 def _unwrap_vectorized_df(obj):
@@ -478,27 +481,27 @@ class _ReducerMixin:
         y_index = self._y.index
 
         # ---- DEBUG (safe) ----------------------------------------------------
-        if getattr(self, "verbose", False):
-            try:
-                print(
-                    "[_get_expected_pred_idx] ENTER",
-                    f"type(fh)={type(fh).__name__}",
-                    f"is_FH={isinstance(fh, ForecastingHorizon)}",
-                )
-                print(
-                    "[_get_expected_pred_idx] y_index:",
-                    type(y_index).__name__,
-                    "names="
-                    + (
-                        ",".join(y_index.names)
-                        if hasattr(y_index, "names")
-                        else str(getattr(y_index, "name", None))
-                    ),
-                )
-                # peek a few absolute horizon stamps
-                print("[_get_expected_pred_idx] fh_abs sample:", list(fh_abs[:5]))
-            except Exception as e:
-                print("[_get_expected_pred_idx] DEBUG ERROR:", repr(e))
+        # if getattr(self, "verbose", False):
+        #     try:
+        #         print(
+        #             "[_get_expected_pred_idx] ENTER",
+        #             f"type(fh)={type(fh).__name__}",
+        #             f"is_FH={isinstance(fh, ForecastingHorizon)}",
+        #         )
+        #         print(
+        #             "[_get_expected_pred_idx] y_index:",
+        #             type(y_index).__name__,
+        #             "names="
+        #             + (
+        #                 ",".join(y_index.names)
+        #                 if hasattr(y_index, "names")
+        #                 else str(getattr(y_index, "name", None))
+        #             ),
+        #         )
+        #         # peek a few absolute horizon stamps
+        #         print("[_get_expected_pred_idx] fh_abs sample:", list(fh_abs[:5]))
+        #     except Exception as e:
+        #         print("[_get_expected_pred_idx] DEBUG ERROR:", repr(e))
         # ---------------------------------------------------------------------
 
         # MultiIndex case: replicate all outer levels and append absolute horizon
@@ -515,29 +518,29 @@ class _ReducerMixin:
                 fh_idx = pd.MultiIndex.from_product([left, fh_abs], names=names)
 
             # ---- DEBUG (safe) ------------------------------------------------
-            if getattr(self, "verbose", False):
-                try:
-                    print(
-                        "[_get_expected_pred_idx] MI: len(left)=",
-                        len(left),
-                        "len(fh_abs)=",
-                        len(fh_abs),
-                        "len(fh_idx)=",
-                        len(fh_idx),
-                    )
-                    # show a few left values and a few final tuples
-                    left_sample = (
-                        list(left[:3]) if hasattr(left, "__getitem__") else list(left)
-                    )
-                    print("[_get_expected_pred_idx] left sample:", left_sample)
-                    print("[_get_expected_pred_idx] fh_idx head:", list(fh_idx[:5]))
-                    # show the first few values of the time level
-                    print(
-                        "[_get_expected_pred_idx] time level sample:",
-                        list(fh_idx.levels[-1][:5]),
-                    )
-                except Exception as e:
-                    print("[_get_expected_pred_idx] DEBUG ERROR (MI):", repr(e))
+            # if getattr(self, "verbose", False):
+            #     try:
+            #         print(
+            #             "[_get_expected_pred_idx] MI: len(left)=",
+            #             len(left),
+            #             "len(fh_abs)=",
+            #             len(fh_abs),
+            #             "len(fh_idx)=",
+            #             len(fh_idx),
+            #         )
+            #         # show a few left values and a few final tuples
+            #         left_sample = (
+            #             list(left[:3]) if hasattr(left, "__getitem__") else list(left)
+            #         )
+            #         print("[_get_expected_pred_idx] left sample:", left_sample)
+            #         print("[_get_expected_pred_idx] fh_idx head:", list(fh_idx[:5]))
+            #         # show the first few values of the time level
+            #         print(
+            #             "[_get_expected_pred_idx] time level sample:",
+            #             list(fh_idx.levels[-1][:5]),
+            #         )
+            #     except Exception as e:
+            #         print("[_get_expected_pred_idx] DEBUG ERROR (MI):", repr(e))
             # ------------------------------------------------------------------
             return fh_idx
 
@@ -562,17 +565,17 @@ class _ReducerMixin:
                 fh_idx.name = "y_index.name"
 
         # ---- DEBUG (safe) ----------------------------------------------------
-        if getattr(self, "verbose", False):
-            try:
-                print(
-                    "[_get_expected_pred_idx] 1D idx type:",
-                    type(fh_idx).__name__,
-                    "len=",
-                    len(fh_idx),
-                )
-                print("[_get_expected_pred_idx] 1D idx sample:", list(fh_idx[:5]))
-            except Exception as e:
-                print("[_get_expected_pred_idx] DEBUG ERROR (1D):", repr(e))
+        # if getattr(self, "verbose", False):
+        #     try:
+        #         print(
+        #             "[_get_expected_pred_idx] 1D idx type:",
+        #             type(fh_idx).__name__,
+        #             "len=",
+        #             len(fh_idx),
+        #         )
+        #         print("[_get_expected_pred_idx] 1D idx sample:", list(fh_idx[:5]))
+        #     except Exception as e:
+        #         print("[_get_expected_pred_idx] DEBUG ERROR (1D):", repr(e))
         # ---------------------------------------------------------------------
         return fh_idx
 
@@ -3587,37 +3590,37 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
     # ===== Overrides with trace =====
     def update(self, y=None, X=None, update_params=True):
-        self._dbg("update: entered")
-        self._peek(y, "y_in")
-        self._peek(X, "X_in")
+        # self._dbg("update: entered")
+        # self._peek(y, "y_in")
+        # self._peek(X, "X_in")
         y2 = _unwrap_vectorized_df(y)
         X2 = _unwrap_vectorized_df(X)
-        if self.DEBUG and (y2 is not y):
-            self._dbg(f"y unwrapped -> {type(y2)}")
-        if self.DEBUG and (X2 is not X):
-            self._dbg(f"X unwrapped -> {type(X2)}")
+        # if self.DEBUG and (y2 is not y):
+        #     self._dbg(f"y unwrapped -> {type(y2)}")
+        # if self.DEBUG and (X2 is not X):
+        #     self._dbg(f"X unwrapped -> {type(X2)}")
         try:
             out = super().update(y=y2, X=X2, update_params=update_params)
-            self._dbg("update: leaving (super().update succeeded)")
+            #    self._dbg("update: leaving (super().update succeeded)")
             return out
         except Exception as e:
             self._dbg(f"update: super().update raised {type(e).__name__}: {e}")
             raise
 
     def _check_X_y(self, X=None, y=None):
-        self._dbg("_check_X_y: entered")
-        self._peek(y, "y_before")
-        self._peek(X, "X_before")
+        # self._dbg("_check_X_y: entered")
+        # self._peek(y, "y_before")
+        # self._peek(X, "X_before")
         # Option A: log-only (to see what reaches the base)
         # return super()._check_X_y(X=X, y=y)
 
         # Option B: unwrap here too (uncomment to also guard this path)
         y2 = _unwrap_vectorized_df(y)
         X2 = _unwrap_vectorized_df(X)
-        if self.DEBUG and (y2 is not y):
-            self._dbg(f"_check_X_y: y unwrapped -> {type(y2)}")
-        if self.DEBUG and (X2 is not X):
-            self._dbg(f"_check_X_y: X unwrapped -> {type(X2)}")
+        # if self.DEBUG and (y2 is not y):
+        #     self._dbg(f"_check_X_y: y unwrapped -> {type(y2)}")
+        # if self.DEBUG and (X2 is not X):
+        #     self._dbg(f"_check_X_y: X unwrapped -> {type(X2)}")
         try:
             return super()._check_X_y(X=X2, y=y2)
         except TypeError as e:
@@ -3983,38 +3986,38 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         -------
         y_return = pd.Series or pd.DataFrame
         """
-        print(
-            "[_predict_multiple] _predict_out_of_sample_v2_global: ENTER",
-            f"X_pool is None? {X_pool is None}",
-            f"fh type={type(fh)}",
-            f"fh.is_relative={getattr(fh, 'is_relative', None)}",
-            f"fh.freq={getattr(fh, 'freq', None)}",
-        )
+        # print(
+        #     "[_predict_multiple] _predict_out_of_sample_v2_global: ENTER",
+        #     f"X_pool is None? {X_pool is None}",
+        #     f"fh type={type(fh)}",
+        #     f"fh.is_relative={getattr(fh, 'is_relative', None)}",
+        #     f"fh.freq={getattr(fh, 'freq', None)}",
+        # )
 
-        try:
-            fh_abs_local = fh.to_absolute(self._cutoff_as_1elem_index_with_freq())
-            tgt_idx = (
-                fh_abs_local.to_pandas()
-                if hasattr(fh_abs_local, "to_pandas")
-                else pd.Index(fh_abs_local)
-            )
-            print(
-                "_predict_out_of_sample_v2_global: tgt_idx sample:",
-                list(tgt_idx[:5]),
-            )
-        except Exception as e:
-            print(
-                "_predict_out_of_sample_v2_global: fh.to_absolute ERROR:",
-                repr(e),
-            )
-            tgt_idx = None
+        # try:
+        #     fh_abs_local = fh.to_absolute(self._cutoff_as_1elem_index_with_freq())
+        #     tgt_idx = (
+        #         fh_abs_local.to_pandas()
+        #         if hasattr(fh_abs_local, "to_pandas")
+        #         else pd.Index(fh_abs_local)
+        #     )
+        #     # print(
+        #     #     "_predict_out_of_sample_v2_global: tgt_idx sample:",
+        #     #     list(tgt_idx[:5]),
+        #     # )
+        # except Exception as e:
+        #     print(
+        #         "_predict_out_of_sample_v2_global: fh.to_absolute ERROR:",
+        #         repr(e),
+        #     )
+        #     tgt_idx = None
 
         # If exogenous data are present (in-fit or provided now), fall back to
         # the legacy v1 path which already supports X for correctness.
         # This maintains performance benefit of v2 for the no-X case while
         # enabling functionality with X.
         if (self._X is not None) or (X_pool is not None):
-            print("_predict_out_of_sample_v2_global (no exog?): path=OOS_WITH_EXOG")
+            # print("_predict_out_of_sample_v2_global (no exog?): path=OOS_WITH_EXOG")
             return self._predict_out_of_sample_v1(X_pool, fh)
 
         # Get last window of available data.
@@ -4022,8 +4025,8 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_last, X_last = self._get_window()
         ys = np.array(y_last)
         if np.isnan(ys).any() or np.isinf(ys).any():
-            print("_predict_out_of_sample_v2_global (found NaN/inf):")
-            print("calling _create_fallback: path=OOS_WITH_EXOG")
+            # print("_predict_out_of_sample_v2_global (found NaN/inf):")
+            # print("calling _create_fallback: path=OOS_WITH_EXOG")
             return self._create_fallback_df(fh)
 
         cutoff_idx = self._cutoff_as_1elem_index_with_freq()
@@ -4088,7 +4091,7 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 y_last, X_last = self._get_window(
                     cutoff=index_range[i : i + 1], y_orig=y_last_df
                 )
-        print("[RRF.predict] _predict_out_of_sample_v2_global: path=OOS_WITH_EXOG")
+        # print("[RRF.predict] _predict_out_of_sample_v2_global: path=OOS_WITH_EXOG")
         return y_pred
 
     def _predict_out_of_sample_v2_local(self, X_pool, fh):
@@ -4631,18 +4634,18 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         #   panel   -> fallback to legacy v1 path for correctness (gappy fh indexing)
         #             TODO: implement optimized v2 panel path (#panel-optimization)
 
-        exog_present = self._X is not None or X_pool is not None
+        # exog_present = self._X is not None or X_pool is not None
 
-        print(f"[RRF.predict] exog_present={exog_present}")
-        print(f"[RRF.predict] fh_in={fh}")  # raw object
-        try:
-            fh_abs_idx = fh.to_absolute_index(self._cutoff_scalar())
-            print(
-                f"[RRF.predict] \
-                fh_abs={list(getattr(fh_abs_idx, 'to_pandas', lambda: fh_abs_idx)())}"
-            )
-        except Exception as e:
-            print(f"[RRF.predict] fh_abs=ERROR: {e}")
+        # print(f"[RRF.predict] exog_present={exog_present}")
+        # print(f"[RRF.predict] fh_in={fh}")  # raw object
+        # try:
+        #     fh_abs_idx = fh.to_absolute_index(self._cutoff_scalar())
+        #     # print(
+        #     #  f"[RRF.predict] \
+        #     #  fh_abs={list(getattr(fh_abs_idx, 'to_pandas', lambda: fh_abs_idx)())}"
+        #     # )
+        # except Exception as e:
+        #     print(f"[RRF.predict] fh_abs=ERROR: {e}")
 
         if isinstance(getattr(self, "estimator_", None), pd.Series):
             # Produce a DataFrame of repeated means on the absolute fh index
@@ -4700,13 +4703,13 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict_out_of_sample_v1(self, X_pool, _fh):
         """Recursive reducer: predict out of sample (ahead of cutoff) — v1 semantics."""
-        print(
-            "[_predict_multiple] _predict_out_of_sample_v1: ENTER",
-            f"X_pool is None? {X_pool is None}",
-            f"fh type={type(_fh)}",
-            f"fh.is_relative={getattr(_fh, 'is_relative', None)}",
-            f"fh.freq={getattr(_fh, 'freq', None)}",
-        )
+        # print(
+        #     "[_predict_multiple] _predict_out_of_sample_v1: ENTER",
+        #     f"X_pool is None? {X_pool is None}",
+        #     f"fh type={type(_fh)}",
+        #     f"fh.is_relative={getattr(_fh, 'is_relative', None)}",
+        #     f"fh.freq={getattr(_fh, 'freq', None)}",
+        # )
 
         # absolute horizon & pandas index of targets
         fh_abs_local = _fh.to_absolute(self._cutoff_as_1elem_index_with_freq())
@@ -4715,10 +4718,10 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             if hasattr(fh_abs_local, "to_pandas")
             else pd.Index(fh_abs_local)
         )
-        print(
-            "[_predict_multiple] _predict_out_of_sample_v1: tgt_idx sample:",
-            list(tgt_idx[:5]),
-        )
+        # print(
+        #     "[_predict_multiple] _predict_out_of_sample_v1: tgt_idx sample:",
+        #     list(tgt_idx[:5]),
+        # )
 
         fh = fh_abs_local  # keep absolute FH
         fh_idx = self._get_expected_pred_idx(fh=fh)
@@ -4841,18 +4844,18 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 vals = np.tile(est.values, (n_rows, 1))
                 y_step = pd.DataFrame(vals, index=step_idx, columns=self._y.columns)
             else:
-                print(
-                    "[OOSv1] ITER: model=",
-                    type(est).__name__,
-                    " rows=",
-                    Xtt_row.shape[0],
-                    " time head=",
-                    (
-                        list(Xtt_row.index.get_level_values(-1)[:1])
-                        if isinstance(Xtt_row.index, pd.MultiIndex)
-                        else list(Xtt_row.index[:1])
-                    ),
-                )
+                # print(
+                #     "[OOSv1] ITER: model=",
+                #     type(est).__name__,
+                #     " rows=",
+                #     Xtt_row.shape[0],
+                #     " time head=",
+                #     (
+                #         list(Xtt_row.index.get_level_values(-1)[:1])
+                #         if isinstance(Xtt_row.index, pd.MultiIndex)
+                #         else list(Xtt_row.index[:1])
+                #     ),
+                # )
                 y_hat = est.predict(Xtt_row)
                 y_step = pd.DataFrame(y_hat, index=step_idx, columns=self._y.columns)
 
@@ -4862,22 +4865,22 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 y_step
             )  # enables recursion for next t
 
-        print("[RRF.predict] _predict_out_of_sample_v1: path=OOS_WITH_EXOG")
+        # print("[RRF.predict] _predict_out_of_sample_v1: path=OOS_WITH_EXOG")
         # visualize and return exactly requested horizons
-        try:
-            print(
-                "[OOSv1] DONE: fh_idx time:",
-                list(fh_idx.levels[-1])
-                if isinstance(fh_idx, pd.MultiIndex)
-                else list(fh_idx),
-            )
-            print("[OOSv1] DONE: y_pred_full head:\n", y_pred_full.head(10))
-            print(
-                "[OOSv1] DONE: y_pred_full missing:",
-                int(y_pred_full.isna().sum().sum()),
-            )
-        except Exception:
-            print("")
+        # try:
+        #     print(
+        #         "[OOSv1] DONE: fh_idx time:",
+        #         list(fh_idx.levels[-1])
+        #         if isinstance(fh_idx, pd.MultiIndex)
+        #         else list(fh_idx),
+        #     )
+        #     print("[OOSv1] DONE: y_pred_full head:\n", y_pred_full.head(10))
+        #     print(
+        #         "[OOSv1] DONE: y_pred_full missing:",
+        #         int(y_pred_full.isna().sum().sum()),
+        #     )
+        # except Exception:
+        #     print("")
         return y_pred_full.loc[fh_idx]
 
     def _predict_in_sample(self, X_pool, fh):
@@ -5059,10 +5062,10 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
 
         # remember original index/columns for roundtripping
         # (you already set these in _to_long_from_wide; keep that behavior)
-        dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
-        dump_obj("RecursiveReductionForecaster.fit()", "X", X)
-        print(f"self.pooling = {self.pooling}")
-        print(f"self._is_wide(y) = {self._is_wide(y)}")
+        # dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
+        # dump_obj("RecursiveReductionForecaster.fit()", "X", X)
+        # print(f"self.pooling = {self.pooling}")
+        # print(f"self._is_wide(y) = {self._is_wide(y)}")
 
         if self._is_wide(y):
             y_long = self._to_long_from_wide(y)
@@ -5138,33 +5141,34 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
         if fh is None:
             fh = self.fh
 
-        print(
-            "[RRF.predict] ENTER",
-            f"is_fh_FH={hasattr(fh, 'is_relative')}",
-            f"is_relative={getattr(fh, 'is_relative', None)}",
-            f"fh.freq={getattr(fh, 'freq', None)}",
-        )
+        # print(
+        #     "[RRF.predict] ENTER",
+        #     f"is_fh_FH={hasattr(fh, 'is_relative')}",
+        #     f"is_relative={getattr(fh, 'is_relative', None)}",
+        #     f"fh.freq={getattr(fh, 'freq', None)}",
+        # )
 
-        cutoff_ix = self._cutoff_as_1elem_index_with_freq()
-        print(
-            "[RRF.predict] cutoff_ix:",
-            type(cutoff_ix),
-            getattr(cutoff_ix, "freq", None),
-            getattr(cutoff_ix, "tz", None),
-            list(cutoff_ix[:1]),
-        )
+        # cutoff_ix = self._cutoff_as_1elem_index_with_freq()
+        # print(
+        #     "[RRF.predict] cutoff_ix:",
+        #     type(cutoff_ix),
+        #     getattr(cutoff_ix, "freq", None),
+        #     getattr(cutoff_ix, "tz", None),
+        #     list(cutoff_ix[:1]),
+        # )
 
-        try:
-            fh_abs_dbg = fh.to_absolute(cutoff_ix) if hasattr(fh, "to_absolute") else fh
-            # Make a tiny peek (at most 5)
-            fh_abs_dbg_idx = (
-                fh_abs_dbg.to_pandas()
-                if hasattr(fh_abs_dbg, "to_pandas")
-                else pd.Index(fh_abs_dbg)
-            )
-            print("[RRF.predict] fh_abs peek:", list(fh_abs_dbg_idx[:5]))
-        except Exception as e:
-            print("[RRF.predict] fh_abs=ERROR:", repr(e))
+        # try:
+        #     fh_abs_dbg = fh.to_absolute(cutoff_ix) \
+        #         if hasattr(fh, "to_absolute") else fh
+        #     # Make a tiny peek (at most 5)
+        #     fh_abs_dbg_idx = (
+        #         fh_abs_dbg.to_pandas()
+        #         if hasattr(fh_abs_dbg, "to_pandas")
+        #         else pd.Index(fh_abs_dbg)
+        #     )
+        #     # print("[RRF.predict] fh_abs peek:", list(fh_abs_dbg_idx[:5]))
+        # except Exception as e:
+        #     print("[RRF.predict] fh_abs=ERROR:", repr(e))
 
         # If we trained from WIDE, temporarily put _y back to the LONG form we fitted on
         was_wide = getattr(self, "_was_wide_input", False)
