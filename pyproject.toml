@@ -51,7 +51,7 @@ classifiers = [
 # this set should be kept minimal!
 dependencies = [
   "joblib>=1.2.0,<1.6",  # required for parallel processing
-  "numpy>=1.21,<2.2",  # required for framework layer and base class logic (related to #8986)
+  "numpy>=1.21,<2.4",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.4.0,>=1.1",  # pandas is the main in-memory data container
   "scikit-base>=0.6.1,<0.13.0",  # base module for sklearn compatible base API
@@ -103,7 +103,7 @@ all_extras = [
   "skpro>=2,<2.10.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels>=0.12.1; python_version < "3.13"',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'xarray; python_version < "3.13"',
@@ -137,7 +137,7 @@ all_extras_pandas2 = [
   'skpro>=2,<2.10.0',
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels>=0.12.1; python_version < "3.13"',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'xarray; python_version < "3.13"',
@@ -164,7 +164,7 @@ annotation = [
 ]
 classification = [
   'numba<0.63,>=0.53',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 clustering = [
@@ -189,7 +189,7 @@ forecasting = [
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
 ]
 networks = [
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
 ]
 param_est = [
   'seasonal<0.4,>=0.3.1; python_version < "3.13"',
@@ -197,7 +197,7 @@ param_est = [
 ]
 regression = [
   'numba<0.63,>=0.53',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
 ]
 transformations = [
   'holidays>=0.29,<0.59; python_version < "3.13"',
@@ -264,7 +264,7 @@ dl = [
   'FrEIA; python_version < "3.12"',
   'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
   'peft>=0.10.0,<0.14.0; python_version < "3.12"',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
   "torch; (sys_platform != 'darwin' or python_version != '3.13')",
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan>=0.2.1,<0.2.9; python_version > "3.9.7"',
