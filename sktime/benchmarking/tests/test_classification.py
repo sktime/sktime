@@ -202,9 +202,8 @@ def test_multiple_dataset_format(tmp_path):
     pd.testing.assert_series_equal(
         pd.Series(
             [
-                "[dataset=load_arrow_head]_[cv_splitter=KFold]",
                 "[dataset=ArrowHead]_[cv_splitter=KFold]",
-                "[dataset=Beef]_[cv_splitter=KFold]",
+                "_[cv_splitter=KFold]",
             ],
             name="validation_id",
         ),

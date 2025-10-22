@@ -258,6 +258,8 @@ def get_storage_backend(path: str | Path) -> BaseStorageHandler:
     BaseStorageHandler
         The storage backend
     """
+    if path is None:
+        return None
     for handler in STORAGE_HANDLERS:
         if handler.is_applicable(Path(path)):
             return handler
