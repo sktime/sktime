@@ -1,7 +1,6 @@
 """Collections of estimators, datasets, and metrics."""
 
-from sktime.catalogues.classification import TSCBakeOff2017
+from sktime.catalogues.classification import DummyClassificationCatalogue
+from sktime.catalogues.forecasting import DummyForecastingCatalogue
 
-__all__ = [
-    TSCBakeOff2017,
-]
+__all__ = [DummyClassificationCatalogue, DummyForecastingCatalogue]

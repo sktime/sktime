@@ -29,7 +29,7 @@ classifiers = [
     "DummyClassifier()",
 ]
 
-metrics = [accuracy_score()]
+metrics = [accuracy_score]
 
 cv_splitters = [KFold(n_splits=3)]
 

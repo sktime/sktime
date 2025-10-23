@@ -1,7 +1,5 @@
 """Concrete catalogue classes for classification experiments."""
 
-from sktime.catalogues.classification.bakeoff_2017 import TSCBakeOff2017
+from sktime.catalogues.classification.dummy import DummyClassificationCatalogue
 
-__all__ = [
-    TSCBakeOff2017,
-]
+__all__ = [DummyClassificationCatalogue]

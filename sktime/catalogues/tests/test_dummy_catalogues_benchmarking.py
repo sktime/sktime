@@ -5,7 +5,7 @@ import pytest
 
 from sktime.benchmarking.classification import ClassificationBenchmark
 from sktime.benchmarking.forecasting import ForecastingBenchmark
-from sktime.catalogues.dummy import (
+from sktime.catalogues import (
     DummyClassificationCatalogue,
     DummyForecastingCatalogue,
 )
@@ -56,7 +56,7 @@ def test_benchmarking_dummy_classification_catalogue(tmp_path):
         pd.Series(
             [
                 "_[cv_splitter=KFold]",
-                "_[cv_splitter=Kfold]_2",
+                "_[cv_splitter=KFold]_2",
             ],
             name="validation_id",
         ),

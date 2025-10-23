@@ -14,11 +14,7 @@ from sktime.benchmarking._benchmarking_dataclasses import (
 from sktime.benchmarking._storage_handlers import get_storage_backend
 from sktime.benchmarking._utils import _check_id_format
 from sktime.catalogues.base import BaseCatalogue
-from sktime.classification.base import BaseClassifier
-from sktime.datasets.base import BaseDataset
-from sktime.forecasting.base import BaseForecaster
-from sktime.performance_metrics.base import BaseMetric
-from sktime.split.base import BaseSplitter
+from sktime.registry import scitype
 from sktime.utils.unique_str import _make_strings_unique
 
 
@@ -321,13 +317,17 @@ class BaseBenchmark:
         cv_splitters = []
 
         for obj in objects:
-            if isinstance(obj, (BaseForecaster, BaseClassifier)):
+            if scitype(obj) in ["classifier", "forecaster"]:
                 self.add_estimator(obj)
-            elif isinstance(obj, BaseDataset):
+            elif scitype(obj) in ["dataset_classification", "dataset_forecasting"]:
                 dataset_loaders.append(obj)
-            elif isinstance(obj, BaseMetric):
+            elif scitype(obj) in [
+                "metric_forecasting",
+                "metric_tabular",
+                "metric_proba_tabular",
+            ]:
                 metrics.append(obj)
-            elif isinstance(obj, BaseSplitter):
+            elif scitype(obj) in ["splitter", "splitter_tabular"]:
                 cv_splitters.append(obj)
 
         for dataset_loader in dataset_loaders:
