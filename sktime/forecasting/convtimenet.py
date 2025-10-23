@@ -36,8 +36,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
     ----------
     context_window : int
         Length of the input sequence (context window).
-    target_window : int
-        Length of the output sequence to forecast (target window).
     patch_ks : int
         Kernel size for patch creation. Determines the size of each patch extracted
         from the input sequence for patch embedding.
@@ -104,7 +102,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
     >>> # Create and fit the forecaster
     >>> forecaster = ConvTimeNetForecaster(
     ...     context_window=48,
-    ...     target_window=12,
     ...     patch_ks=8,
     ...     patch_sd=1,
     ...     dw_ks=(13,7),
@@ -169,7 +166,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
     def __init__(
         self,
         context_window,
-        target_window,
         patch_ks,
         patch_sd,
         dw_ks=(9, 3),
@@ -198,7 +194,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         random_state=None,
     ):
         self.context_window = context_window
-        self.target_window = target_window
         self.patch_ks = patch_ks
         self.patch_sd = patch_sd
         self.dw_ks = dw_ks
@@ -239,6 +234,54 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
     def _build_network(self, fh):
         from sktime.networks.convtimenet.forecaster._convtimenet import Model
 
+        # Check if context_window needs adjustment
+        # Formula: len(y) - context_window - fh + 1 must be > 0 for training samples
+        dataset_len = len(self._y) - self.context_window - fh + 1
+
+        if dataset_len <= 0:
+            original_context_window = self.context_window
+            adjusted_context_window = max(1, len(self._y) - fh)
+
+            warnings.warn(
+                f"The context_window ({original_context_window}) is too large "
+                f"for the given time series (length={len(self._y)}) and forecast "
+                f"horizon (fh={fh}). Adjusting context_window from "
+                f"{original_context_window} to {adjusted_context_window} to ensure "
+                f"at least one training sample.\nConsider using a longer time series "
+                f"or reducing context_window or forecast horizon.\n",
+                UserWarning,
+            )
+            self.context_window = adjusted_context_window
+
+        # Check if patch_ks needs adjustment based on context_window
+        # patch_num = (context_window - patch_ks) / patch_sd + 1 must be > 0
+        # => context_window - patch_ks >= 0
+        # => patch_ks <= context_window
+        if self.patch_ks > self.context_window:
+            original_patch_ks = self.patch_ks
+            adjusted_patch_ks = self.context_window
+
+            warnings.warn(
+                f"The patch_ks ({original_patch_ks}) is too large for the "
+                f"context_window ({self.context_window}). Adjusting patch_ks "
+                f"from {original_patch_ks} to {adjusted_patch_ks} to ensure valid "
+                f"patch_ks.\n",
+                UserWarning,
+            )
+            self.patch_ks = adjusted_patch_ks
+
+        dataset_len = len(self._y) - self.context_window - fh + 1
+
+        if self.norm == "batch" and dataset_len == 1:
+            self.norm = "layer"
+            warnings.warn(
+                "Normalization automatically switched from 'batch' to 'layer' "
+                "because the effective training sample size is 1 "
+                "(computed as input_length - context_window - fh + 1 == 1). "
+                "\nTo avoid this automatic change, increase your input length "
+                "or reduce the context/fh values.\n",
+                UserWarning,
+            )
         self.n_layers = len(self.dw_ks)
         configs = {
             "enc_in": self._y.shape[-1],
@@ -317,70 +360,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
             dataset, batch_size, shuffle=True, drop_last=drop_last, generator=gen
         )
 
-    def _fit(self, y, fh, X=None):
-        """Fit the network and adjust context_window, norm and patch_ks parameter."""
-        fh_rel = fh.to_relative(self.cutoff)
-        fh_max = list(fh_rel)[-1]
-
-        # Check if context_window needs adjustment
-        # Formula: len(y) - context_window - fh + 1 must be > 0 for training samples
-        dataset_len = len(y) - self.context_window - fh_max + 1
-        if self.target_window != fh_max:
-            warnings.warn(
-                f"The target_window ({self.target_window}) is adjusted to match "
-                f"the maximum forecast horizon ({fh_max}).\n",
-                UserWarning,
-            )
-            self.target_window = fh_max
-
-        if dataset_len <= 0:
-            original_context_window = self.context_window
-            adjusted_context_window = max(1, len(y) - fh_max)
-
-            warnings.warn(
-                f"The context_window ({original_context_window}) is too large "
-                f"for the given time series (length={len(y)}) and forecast "
-                f"horizon (fh={fh_max}). Adjusting context_window from "
-                f"{original_context_window} to {adjusted_context_window} to ensure "
-                f"at least one training sample.\nConsider using a longer time series "
-                f"or reducing context_window or forecast horizon.\n",
-                UserWarning,
-            )
-            self.context_window = adjusted_context_window
-
-        # Check if patch_ks needs adjustment based on context_window
-        # patch_num = (context_window - patch_ks) / patch_sd + 1 must be > 0
-        # => context_window - patch_ks >= 0
-        # => patch_ks <= context_window
-        if self.patch_ks > self.context_window:
-            original_patch_ks = self.patch_ks
-            adjusted_patch_ks = self.context_window
-
-            warnings.warn(
-                f"The patch_ks ({original_patch_ks}) is too large for the "
-                f"context_window ({self.context_window}). Adjusting patch_ks "
-                f"from {original_patch_ks} to {adjusted_patch_ks} to ensure valid "
-                f"patch_ks.\n",
-                UserWarning,
-            )
-            self.patch_ks = adjusted_patch_ks
-
-        dataset_len = len(y) - self.context_window - fh_max + 1
-
-        if self.norm == "batch" and dataset_len == 1:
-            self.norm = "layer"
-            warnings.warn(
-                "Normalization automatically switched from 'batch' to 'layer' "
-                "because the effective training sample size is 1 "
-                "(computed as input_length - context_window - fh + 1 == 1). "
-                "\nTo avoid this automatic change, increase your input length "
-                "or reduce the context/fh values.\n",
-                UserWarning,
-            )
-
-        # Call parent _fit method
-        super()._fit(y, fh, X)
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -401,7 +380,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         """
         params1 = {
             "context_window": 10,
-            "target_window": 12,
             "patch_ks": 6,
             "patch_sd": 3,
             "num_epochs": 1,
@@ -409,7 +387,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
 
         params2 = {
             "context_window": 8,
-            "target_window": 24,
             "patch_ks": 8,
             "patch_sd": 4,
             "d_model": 128,
@@ -419,7 +396,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         }
         params3 = {
             "context_window": 16,
-            "target_window": 8,
             "patch_ks": 4,
             "patch_sd": 2,
             "dw_ks": (7, 3),
