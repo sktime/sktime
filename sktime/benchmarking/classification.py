@@ -132,17 +132,16 @@ class ClassificationBenchmark(BaseBenchmark):
     def _run_validation(self, task: TaskObject, estimator: BaseClassifier):
         cv_splitter = task.cv_splitter
         scorers = task.scorers
-        X, y = task.get_y_X()
+        xy_dict = task.get_y_X("classification")
         scores_df = evaluate(
             classifier=estimator,
-            y=y,
-            X=X,
             cv=cv_splitter,
             scoring=scorers,
             backend=self.backend,
             backend_params=self.backend_params,
             error_score=task.error_score,
             return_data=self.return_data,
+            **xy_dict,
         )
 
         folds = {}
