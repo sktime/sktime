@@ -13,21 +13,51 @@ class TruncationTransformer(BaseTransformer):
     """
     Truncates unequal length panels between lower/upper length ranges.
 
+    If ``lower`` and ``upper`` are None the transformer will truncate
+    each series to ``iloc`` indices from range [0, min_series_length)
+    where ``min_series_length`` is the length of the shortest series in the panel
+    calculated automatically.
+
+    If ``lower`` is set and ``upper`` is None the transformer will truncate
+    each series to ``iloc`` indices from range [0, lower).
+
+    If both ``lower`` and ``upper`` are set the transformer will truncate
+    each series to ``iloc`` indices from range [lower, upper).
+
     Parameters
     ----------
     lower : int, optional (default=None) minimum length, inclusive
-                Cannot be less than the length of the shortest series in the panel.
-                If None, will find the length of the shortest series and use instead.
+        Cannot be less than the length of the shortest series in the panel.
+        If None, will find the length of the shortest series and use instead.
     upper : int, optional (default=None) maximum length, exclusive
-                This is used to calculate the range between.
-                If None, will truncate to the lower bound.
+        This is used to calculate the range between.
+        If None, will truncate to the lower bound.
 
     Examples
     --------
+    Truncate only unequal length panels in data:
     >>> from sktime.transformations.panel.truncation import TruncationTransformer
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical(same_cutoff=False)
     >>> tt = TruncationTransformer()
+    >>> tt.fit(X)
+    TruncationTransformer(...)
+    >>> X_transformed = tt.transform(X)
+
+    Truncate each panel to first 5 elements:
+    >>> from sktime.transformations.panel.truncation import TruncationTransformer
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> X = _make_hierarchical(same_cutoff=False)
+    >>> tt = TruncationTransformer(lower=5)
+    >>> tt.fit(X)
+    TruncationTransformer(...)
+    >>> X_transformed = tt.transform(X)
+
+    Pick range from index 1 (inclusively) to 3 (exclusively):
+    >>> from sktime.transformations.panel.truncation import TruncationTransformer
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> X = _make_hierarchical(same_cutoff=False)
+    >>> tt = TruncationTransformer(lower=1, upper=3)
     >>> tt.fit(X)
     TruncationTransformer(...)
     >>> X_transformed = tt.transform(X)
@@ -152,5 +182,9 @@ class TruncationTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = {"lower": 5}
+        params = [
+            {"lower": None, "upper": None},
+            {"lower": 5},
+            {"lower": 1, "upper": 2},
+        ]
         return params

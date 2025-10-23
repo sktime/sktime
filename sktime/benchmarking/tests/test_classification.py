@@ -10,7 +10,11 @@ from sklearn.model_selection import KFold
 from sktime.benchmarking.classification import ClassificationBenchmark
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.dummy import DummyClassifier
-from sktime.datasets import ArrowHead, UCRUEADataset, load_unit_test
+from sktime.datasets import (
+    ArrowHead,
+    UCRUEADataset,
+    load_unit_test,
+)
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.panel import make_classification_problem
 
@@ -19,7 +23,8 @@ from sktime.utils._testing.panel import make_classification_problem
     not run_test_module_changed("sktime.benchmarking"),
     reason="run test only if benchmarking module has changed",
 )
-def test_classification_benchmark(tmp_path):
+@pytest.mark.parametrize("write_file", [True, False])
+def test_classification_benchmark(tmp_path, write_file):
     """Test classification benchmark with single estimator and task."""
     benchmark = ClassificationBenchmark()
     benchmark.add_estimator(DummyClassifier())
@@ -28,7 +33,10 @@ def test_classification_benchmark(tmp_path):
     cv_splitter = KFold(n_splits=3)
     benchmark.add_task(make_classification_problem, cv_splitter, scorers)
 
-    results_file = tmp_path / "results.csv"
+    if write_file:
+        results_file = tmp_path / "results.csv"
+    else:
+        results_file = None
     results_df = benchmark.run(results_file)
 
     expected_benchmark_labels = [
@@ -172,6 +180,7 @@ def test_add_multiple_task(tmp_path):
     not run_test_module_changed("sktime.benchmarking"),
     reason="run test only if benchmarking module has changed",
 )
+@pytest.mark.datadownload
 def test_multiple_dataset_format(tmp_path):
     benchmark = ClassificationBenchmark()
     benchmark.add_estimator(DummyClassifier())

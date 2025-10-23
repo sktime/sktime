@@ -2833,7 +2833,7 @@
       "login": "ssabarwal",
       "name": "Shlok Sabarwal",
       "avatar_url": "https://gravatar.com/avatar/cbdbaac712ae282d730cd3028e862d45?s=400&d=robohash&r=x",
-      "prifle": "https://www.github.com/shlok191/",
+      "profile": "https://www.github.com/shlok191/",
       "contributions": [
         "code"
       ]
@@ -3671,7 +3671,8 @@
       "profile": "https://github.com/JATAYU000",
       "contributions": [
         "code",
-        "bug"
+        "bug",
+        "maintenance"
       ]
     },
     {
@@ -3681,6 +3682,49 @@
       "profile": "https://github.com/Astrael1",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "Navya-1817",
+      "name": "Navya-1817",
+      "avatar_url": "https://avatars.githubusercontent.com/u/Navya-1817?v=4",
+      "profile": "https://github.com/Navya-1817",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "noxthot",
+      "name": "Gregor Ehrensperger",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11518904?v=4",
+      "profile": "https://github.com/noxthot",
+      "contributions": [
+        "bug",
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "poopsiclepooding",
+      "name": "poopsicle",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89380897?v=4",
+      "profile": "https://github.com/poopsiclepooding",
+      "contributions": [
+        "code",
+        "doc",
+        "maintenance"
+      ]
+    },
+        {
+      "login": "mabuimo",
+      "name": "Manuel Buitrago",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20048041?v=4",
+      "profile": "https://github.com/mabuimo",
+      "contributions": [
+        "bug",
+        "code",
+        "ideas",
+        "question"
       ]
     }
   ]

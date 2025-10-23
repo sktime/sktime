@@ -492,4 +492,10 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         -------
         params : dict or list of dict
         """
-        return {"k_max": 2, "step": 1}
+        return [
+            {"k_max": 1, "step": 1},
+            {"k_max": 2, "step": 1},
+            {"k_max": 2, "step": 10},
+            {"k_max": 10, "step": 5},
+            {"k_max": 10, "step": 10},
+        ]
