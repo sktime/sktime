@@ -266,6 +266,66 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
 
         return model
 
+    def _fit(self, y, fh, X=None):
+        """Fit the network and adjust context_window, norm and patch_ks parameter."""
+        import warnings
+
+        fh_rel = fh.to_relative(self.cutoff)
+        fh_max = list(fh_rel)[-1]
+
+        # Check if context_window needs adjustment
+        # Formula: len(y) - context_window - fh + 1 must be > 0 for training samples
+        dataset_len = len(y) - self.context_window - fh_max + 1
+
+        if dataset_len <= 0:
+            original_context_window = self.context_window
+            adjusted_context_window = max(1, len(y) - fh_max)
+
+            warnings.warn(
+                f"The context_window ({original_context_window}) is too large "
+                f"for the given time series (length={len(y)}) and forecast "
+                f"horizon (fh={fh_max}). Adjusting context_window from "
+                f"{original_context_window} to {adjusted_context_window} to ensure "
+                f"at least one training sample.\nConsider using a longer time series "
+                f"or reducing context_window or forecast horizon.\n",
+                UserWarning,
+            )
+            self.context_window = adjusted_context_window
+
+        # Check if patch_ks needs adjustment based on context_window
+        # patch_num = (context_window - patch_ks) / patch_sd + 1 must be > 0
+        # => context_window - patch_ks >= 0
+        # => patch_ks <= context_window
+        if self.patch_ks > self.context_window:
+            original_patch_ks = self.patch_ks
+            adjusted_patch_ks = max(1, self.context_window - self.patch_sd)
+
+            warnings.warn(
+                f"The patch_ks ({original_patch_ks}) is too large for the "
+                f"context_window ({self.context_window}). Adjusting patch_ks "
+                f"from {original_patch_ks} to {adjusted_patch_ks} to ensure valid "
+                f"patch generation.\n Consider using a longer time series or reducing "
+                f"patch_ks.\n",
+                UserWarning,
+            )
+            self.patch_ks = adjusted_patch_ks
+
+        dataset_len = len(y) - self.context_window - fh_max + 1
+
+        if self.norm == "batch" and dataset_len == 1:
+            self.norm = "layer"
+            warnings.warn(
+                "Normalization automatically switched from 'batch' to 'layer' "
+                "because the effective training sample size is 1 "
+                "(computed as input_length - context_window - fh + 1 == 1). "
+                "\nTo avoid this automatic change, increase your input length "
+                "or reduce the context/fh values.\n",
+                UserWarning,
+            )
+
+        # Call parent _fit method
+        super()._fit(y, fh, X)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
