@@ -92,7 +92,7 @@ class ConvTimeNet_backbone(nn.Module):
             enable_res_param=enable_res_param,
             re_param=re_param,
             re_param_kernel=re_param_kernel,
-            device="cuda:0",
+            device=device,
         )
 
         # Head

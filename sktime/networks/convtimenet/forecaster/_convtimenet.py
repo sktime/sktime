@@ -38,6 +38,7 @@ class Model(nn.Module):
         d_ff = configs["d_ff"]
         dropout = configs["dropout"]
         head_dropout = configs["head_dropout"]
+        deformable = configs["deformable"]
 
         patch_len = configs["patch_ks"]
         stride = configs["patch_sd"]
@@ -75,7 +76,7 @@ class Model(nn.Module):
             head_type=head_type,
             revin=revin,
             affine=affine,
-            deformable=True,
+            deformable=deformable,
             subtract_last=subtract_last,
             enable_res_param=enable_res_param,
             re_param=re_param,

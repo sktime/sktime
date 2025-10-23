@@ -45,7 +45,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
     d_ff : int, optional (default=256)
         Dimension of the feedforward network.
     norm : str, optional (default="batch")
-        Type of normalization to use ("batch", "layer", or "instance").
+        Type of normalization to use ("batch" or "layer").
     dropout : float, optional (default=0.0)
         Dropout rate to apply to layers.
     act : str, optional (default="gelu")
@@ -54,8 +54,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         Dropout rate for the head layer.
     padding_patch : int or None, optional (default=None)
         Padding size for patch embedding. If None, no padding is applied.
-    head_type : str, optional (default="flatten")
-        Type of head layer ("flatten", "mlp", etc.).
     revin : bool, optional (default=True)
         Whether to use RevIN normalization.
     affine : bool, optional (default=True)
@@ -108,7 +106,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
     ...     act="gelu",
     ...     head_dropout=0.01,
     ...     padding_patch=None,
-    ...     head_type="flatten",
     ...     revin=True,
     ...     affine=True,
     ...     subtract_last=False,
@@ -174,7 +171,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         act="gelu",
         head_dropout=0,
         padding_patch=None,
-        head_type="flatten",
         revin=True,
         affine=True,
         subtract_last=False,
@@ -204,7 +200,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         self.act = act
         self.head_dropout = head_dropout
         self.padding_patch = padding_patch
-        self.head_type = head_type
         self.revin = revin
         self.affine = affine
         self.subtract_last = subtract_last
@@ -236,7 +231,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         from sktime.networks.convtimenet.forecaster._convtimenet import Model
 
         self.n_layers = len(self.dw_ks)
-
         configs = {
             "enc_in": self._y.shape[-1],
             "seq_len": self.context_window,
@@ -263,7 +257,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
             configs,
             norm=self.norm,
             act=self.act,
-            head_type=self.head_type,
             random_state=self.random_state,
         )
 
