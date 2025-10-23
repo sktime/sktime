@@ -12,7 +12,13 @@ class DummyClassificationCatalogue(BaseCatalogue):
     _tags = {
         "authors": "jgyasu",
         "maintainers": "jgyasu",
+        "object_type": "classification_catalogue",
         "catalogue_type": "mixed",
+        "n_items": 5,
+        "n_datasets": 2,
+        "n_classifiers": 1,
+        "n_metrics": 1,
+        "n_cv_splitters": 1,
     }
 
     def _get(self):

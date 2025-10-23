@@ -19,6 +19,7 @@ class BaseCatalogue(BaseObject):
         "maintainers": ["sktime developers"],
         "object_type": "catalogue",
         "catalogue_type": None,
+        "n_items": None,
         "info:name": "",
         "info:description": "",
         "info:source": "",  # DOI

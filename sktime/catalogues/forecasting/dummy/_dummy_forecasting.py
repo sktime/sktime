@@ -9,7 +9,13 @@ class DummyForecastingCatalogue(BaseCatalogue):
     _tags = {
         "authors": "jgyasu",
         "maintainers": "jgyasu",
+        "object_type": "forecasting_catalogue",
         "catalogue_type": "mixed",
+        "n_items": 6,
+        "n_datasets": 2,
+        "n_forecasters": 1,
+        "n_metrics": 2,
+        "n_cv_splitters": 1,
     }
 
     def _get(self):
