@@ -3,7 +3,13 @@
 __author__ = ["Tanuj-Taneja1"]
 __all__ = ["ConvTimeNetForecaster"]
 
+import warnings
+
+from skbase.utils.dependencies import _safe_import
+
 from sktime.forecasting.base.adapters import _pytorch
+
+torch = _safe_import("torch")
 
 
 class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
@@ -24,7 +30,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
     within a single model, addressing common challenges in time series analysis
     such as adaptive perception of local patterns and multi-scale dependency capture.
 
-    This forecaster has been wrapped around implementations from [1]_, [2]_ and [3]_.
+    This forecaster has been wrapped around implementations from [1]_ and [2]_.
 
     Parameters
     ----------
@@ -38,7 +44,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
     patch_sd : int
         Stride length for patch creation. Determines the step size for moving the
         patch window across the input sequence.
-    dw_ks : tuple, optional (default=(9))
+    dw_ks : tuple, optional (default=(9, 3))
         Kernel sizes for depthwise convolution layers.
     d_model : int, optional (default=64)
         Dimension of the model (number of features in the hidden state).
@@ -84,6 +90,9 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         The learning rate to use for the optimizer.
     device : str, optional (default="cpu")
         Device to use for computation ("cpu" or "cuda").
+    random_state : int, RandomState instance or None, optional (default=None)
+        Random state for reproducibility. If int, it's the seed for the random
+        number generator. If None, the random number generator uses a random seed.
 
     Examples
     --------
@@ -266,16 +275,63 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
 
         return model
 
+    def build_pytorch_train_dataloader(self, y):
+        """Build PyTorch DataLoader for training with custom batch handling.
+
+        This method handles the case where the last batch has only 1 sample,
+        which causes issues with BatchNorm. When using batch normalization and
+        the dataset would result in a last batch of size 1, drop_last is set
+        to True to discard that single sample.
+        """
+        from torch.utils.data import DataLoader
+
+        # Use parent's dataset creation logic
+        dataset = _pytorch.PyTorchTrainDataset(
+            y=y,
+            seq_len=self.network.seq_len,
+            fh=self._fh.to_relative(self.cutoff)._values[-1],
+        )
+
+        # Check if we need to drop the last batch to avoid single sample
+        dataset_len = len(dataset)
+        batch_size = self.batch_size
+
+        drop_last = (
+            self.norm == "batch"
+            and dataset_len > self.batch_size
+            and dataset_len % self.batch_size == 1
+        )
+        gen = torch.Generator()
+        if self.random_state:
+            gen.manual_seed(self.random_state)
+        if drop_last:
+            warnings.warn(
+                "The last batch has only 1 sample which may cause issues with "
+                "BatchNorm. Dropping the last batch.\n"
+                "To avoid this, consider changing hyperparameters such that the "
+                "number of training samples (len(y) - context_window - max(fh) + 1) "
+                "is not equal to (batch_size * n + 1) for any integer n.\n",
+                UserWarning,
+            )
+        return DataLoader(
+            dataset, batch_size, shuffle=True, drop_last=drop_last, generator=gen
+        )
+
     def _fit(self, y, fh, X=None):
         """Fit the network and adjust context_window, norm and patch_ks parameter."""
-        import warnings
-
         fh_rel = fh.to_relative(self.cutoff)
         fh_max = list(fh_rel)[-1]
 
         # Check if context_window needs adjustment
         # Formula: len(y) - context_window - fh + 1 must be > 0 for training samples
         dataset_len = len(y) - self.context_window - fh_max + 1
+        if self.target_window != fh_max:
+            warnings.warn(
+                f"The target_window ({self.target_window}) is adjusted to match "
+                f"the maximum forecast horizon ({fh_max}).\n",
+                UserWarning,
+            )
+            self.target_window = fh_max
 
         if dataset_len <= 0:
             original_context_window = self.context_window
@@ -298,13 +354,12 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         # => patch_ks <= context_window
         if self.patch_ks > self.context_window:
             original_patch_ks = self.patch_ks
-            adjusted_patch_ks = max(1, self.context_window - self.patch_sd)
+            adjusted_patch_ks = self.context_window
 
             warnings.warn(
                 f"The patch_ks ({original_patch_ks}) is too large for the "
                 f"context_window ({self.context_window}). Adjusting patch_ks "
                 f"from {original_patch_ks} to {adjusted_patch_ks} to ensure valid "
-                f"patch generation.\n Consider using a longer time series or reducing "
                 f"patch_ks.\n",
                 UserWarning,
             )
