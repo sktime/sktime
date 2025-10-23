@@ -12,7 +12,7 @@ class DummyClassificationCatalogue(BaseCatalogue):
     _tags = {
         "authors": "jgyasu",
         "maintainers": "jgyasu",
-        "object_type": "classification_catalogue",
+        "object_type": "catalogue",
         "catalogue_type": "mixed",
         "n_items": 5,
         "n_datasets": 2,

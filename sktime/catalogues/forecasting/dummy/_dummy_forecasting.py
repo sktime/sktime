@@ -9,7 +9,7 @@ class DummyForecastingCatalogue(BaseCatalogue):
     _tags = {
         "authors": "jgyasu",
         "maintainers": "jgyasu",
-        "object_type": "forecasting_catalogue",
+        "object_type": "catalogue",
         "catalogue_type": "mixed",
         "n_items": 6,
         "n_datasets": 2,
