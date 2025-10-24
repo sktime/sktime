@@ -161,6 +161,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
             "sktime.networks.convtimenet.forecaster._patch_layers",
             "sktime.networks.convtimenet.forecaster._revin",
         ],
+        "tests:vm": True,
     }
 
     def __init__(
