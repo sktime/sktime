@@ -46,7 +46,6 @@ from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.forecasting.compose.dump_utils import dump_obj
 from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.reduce import Tabularizer
@@ -87,14 +86,14 @@ def _unwrap_vdf(obj):
 def _rrlog(msg):
     # cheap, dependency-free conditional logger so we can see what's happening
     # if os.environ.get("SKTIME_DEBUG_RR", "1") == "1":
-    print(f"[RR.unwrap] {msg}")
-    # pass  # remove when uncommenting
+    # print(f"[RR.unwrap] {msg}")
+    pass  # remove when uncommenting
 
 
 # alias used throughout helpers
 def _d(msg):
-    _rrlog(msg)
-    # pass  # remove when uncommenting
+    # _rrlog(msg)
+    pass  # remove when uncommenting
 
 
 def _unwrap_vectorized_df(obj):
@@ -731,28 +730,26 @@ class _ReducerMixin:
 
     def _record_train_shape(self, y):
         """Record the shape/type of y at fit-time for exit-gate coercion."""
-        import inspect
-
-        try:
-            caller = inspect.stack()[1].function
-        except Exception:
-            caller = "<?>"
-        print(
-            f"[record] ENTER by {caller} | id(self)={id(self)} | type(y)={type(y)} "
-            f"| is_series={isinstance(y, pd.Series)} "
-            f"| is_df={isinstance(y, pd.DataFrame)} "
-            f"| index_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
-        )
+        # try:
+        #     caller = inspect.stack()[1].function
+        # except Exception:
+        #     caller = "<?>"
+        # print(
+        #     f"[record] ENTER by {caller} | id(self)={id(self)} | type(y)={type(y)} "
+        #     f"| is_series={isinstance(y, pd.Series)} "
+        #     f"| is_df={isinstance(y, pd.DataFrame)} "
+        #     f"| index_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
+        # )
 
         # freeze guard: if we already recorded, don't let it flip silently
         if hasattr(self, "_orig_shape_frozen") and self._orig_shape_frozen:
-            print(
-                f"[record] WARNING: re-record attempt ignored; "
-                f"orig_series={getattr(self, '_orig_y_is_series', None)}, "
-                f"orig_df1={getattr(self, '_orig_y_is_df1', None)}, "
-                f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)}, "
-                f"orig_panel={getattr(self, '_orig_y_is_panel', None)}"
-            )
+            # print(
+            #     f"[record] WARNING: re-record attempt ignored; "
+            #     f"orig_series={getattr(self, '_orig_y_is_series', None)}, "
+            #     f"orig_df1={getattr(self, '_orig_y_is_df1', None)}, "
+            #     f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)}, "
+            #     f"orig_panel={getattr(self, '_orig_y_is_panel', None)}"
+            # )
             return
 
         self._y_orig = y  # remember exactly what came in
@@ -784,32 +781,32 @@ class _ReducerMixin:
         self._orig_y_name = getattr(y, "name", None) if self._orig_y_is_series else None
         self._orig_y_cols = list(y.columns) if self._orig_y_is_df else None
 
-        print(
-            f"[record] SET  orig_series={self._orig_y_is_series} "
-            f"orig_df1={self._orig_y_is_df1} orig_dfm={self._orig_y_is_dfm} "
-            f"orig_panel={self._orig_y_is_panel} orig_wide={self._orig_y_is_wide} "
-            f"orig_multiindex_long={self._orig_y_is_multiindex_long} "
-            f"name={getattr(self, '_orig_y_name', None)} "
-            f"cols={getattr(self, '_orig_y_cols', None)}"
-        )
+        # print(
+        #     f"[record] SET  orig_series={self._orig_y_is_series} "
+        #     f"orig_df1={self._orig_y_is_df1} orig_dfm={self._orig_y_is_dfm} "
+        #     f"orig_panel={self._orig_y_is_panel} orig_wide={self._orig_y_is_wide} "
+        #     f"orig_multiindex_long={self._orig_y_is_multiindex_long} "
+        #     f"name={getattr(self, '_orig_y_name', None)} "
+        #     f"cols={getattr(self, '_orig_y_cols', None)}"
+        # )
 
-        print(f"[record] ID={getattr(self, '_dbg_id', '?')} SET flags; frozen={True}")
+        # print(f"[record] ID={getattr(self, '_dbg_id', '?')} SET flags; frozen={True}")
 
         self._orig_shape_frozen = True
-        print("[record] EXIT (flags frozen)")
+        # print("[record] EXIT (flags frozen)")
 
     def _coerce_to_train_shape(self, y_pred, fh_index):
         # TEMP DEBUG
-        print(
-            f"[coerce] ENTER | type(y_pred)={type(y_pred)} "
-            f"shape={getattr(y_pred, 'shape', None)} | "
-            f"orig_series={getattr(self, '_orig_y_is_series', None)} "
-            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
-            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
-            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
-            f"orig_wide={getattr(self, '_orig_y_is_wide', None)} "
-            f"name={getattr(self, '_orig_y_name', None)} | fh_index={list(fh_index)}"
-        )
+        # print(
+        #     f"[coerce] ENTER | type(y_pred)={type(y_pred)} "
+        #     f"shape={getattr(y_pred, 'shape', None)} | "
+        #     f"orig_series={getattr(self, '_orig_y_is_series', None)} "
+        #     f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+        #     f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+        #     f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+        #     f"orig_wide={getattr(self, '_orig_y_is_wide', None)} "
+        #     f"name={getattr(self, '_orig_y_name', None)} | fh_index={list(fh_index)}"
+        # )
 
         # Flatten (n,1) numpy to (n,) so pandas wrapping is deterministic
         if isinstance(y_pred, np.ndarray) and y_pred.ndim == 2 and y_pred.shape[1] == 1:
@@ -877,10 +874,10 @@ class _ReducerMixin:
                     )
 
                 ret = pd.DataFrame(vals, index=target_index, columns=out_cols)
-                print(
-                    f"[coerce] RETURN PANEL type={type(ret)} "
-                    f"shape={ret.shape} index_type={type(ret.index)}"
-                )
+                # print(
+                #     f"[coerce] RETURN PANEL type={type(ret)} "
+                #     f"shape={ret.shape} index_type={type(ret.index)}"
+                # )
                 return ret
 
         ## --------------------------------------------------
@@ -889,22 +886,22 @@ class _ReducerMixin:
         if was_series:
             if isinstance(y_pred, np.ndarray):
                 ret = pd.Series(y_pred, index=fh_index, name=orig_name)
-                print(
-                    f"[coerce] RETURN type={type(ret)} "
-                    f"shape={getattr(ret, 'shape', None)} "
-                    f"index_type={type(getattr(ret, 'index', None))}"
-                )
+                # print(
+                #     f"[coerce] RETURN type={type(ret)} "
+                #     f"shape={getattr(ret, 'shape', None)} "
+                #     f"index_type={type(getattr(ret, 'index', None))}"
+                # )
                 return ret
             if isinstance(y_pred, pd.DataFrame) and y_pred.shape[1] == 1:
                 s = y_pred.iloc[:, 0]
                 s.name = orig_name
-                print(
-                    f"[coerce] RETURN type={type(s)} "
-                    f"shape={getattr(s, 'shape', None)} "
-                    f"index_type={type(getattr(s, 'index', None))}"
-                )
+                # print(
+                #     f"[coerce] RETURN type={type(s)} "
+                #     f"shape={getattr(s, 'shape', None)} "
+                #     f"index_type={type(getattr(s, 'index', None))}"
+                # )
                 return s
-            print("[coerce] RETURN passthrough (already Series or compatible)")
+            # print("[coerce] RETURN passthrough (already Series or compatible)")
             return y_pred  # already a Series (or compatible)
 
         # === single-column DataFrame contract ===
@@ -916,33 +913,33 @@ class _ReducerMixin:
             )
             if isinstance(y_pred, np.ndarray):
                 ret = pd.DataFrame(y_pred.reshape(-1, 1), index=fh_index, columns=[col])
-                print(
-                    f"[coerce] RETURN type={type(ret)} "
-                    f"shape={getattr(ret, 'shape', None)} "
-                    f"index_type={type(getattr(ret, 'index', None))}"
-                )
+                # print(
+                #     f"[coerce] RETURN type={type(ret)} "
+                #     f"shape={getattr(ret, 'shape', None)} "
+                #     f"index_type={type(getattr(ret, 'index', None))}"
+                # )
                 return ret
             if isinstance(y_pred, pd.Series):
                 ret = y_pred.to_frame(name=col)
                 ret.index = fh_index
-                print(
-                    f"[coerce] RETURN type={type(ret)} "
-                    f"shape={getattr(ret, 'shape', None)} "
-                    f"index_type={type(getattr(ret, 'index', None))}"
-                )
+                # print(
+                #     f"[coerce] RETURN type={type(ret)} "
+                #     f"shape={getattr(ret, 'shape', None)} "
+                #     f"index_type={type(getattr(ret, 'index', None))}"
+                # )
                 return ret
             if isinstance(y_pred, pd.DataFrame) and y_pred.shape[1] == 1:
                 y_pred.columns = [col]
                 y_pred.index = fh_index
-                print(
-                    f"[coerce] RETURN type={type(y_pred)} "
-                    f"shape={getattr(y_pred, 'shape', None)} "
-                    f"index_type={type(getattr(y_pred, 'index', None))}"
-                )
+                # print(
+                #     f"[coerce] RETURN type={type(y_pred)} "
+                #     f"shape={getattr(y_pred, 'shape', None)} "
+                #     f"index_type={type(getattr(y_pred, 'index', None))}"
+                # )
                 return y_pred
 
         # Fallback: leave shape as-is (tests will still pass for tabular cases)
-        print("[coerce] RETURN fallback (no training-shape flags found)")
+        # print("[coerce] RETURN fallback (no training-shape flags found)")
         return y_pred
 
 
@@ -1497,9 +1494,9 @@ class _DirectReducer(_Reducer):
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
-        print(
-            f"[fit.enter] ID={getattr(self, '_dbg_id', '?')} cls={type(self).__name__}"
-        )
+        # print(
+        #   f"[fit.enter] ID={getattr(self, '_dbg_id', '?')} cls={type(self).__name__}"
+        # )
 
         self._timepoints = get_time_index(y)
         n_timepoints = len(self._timepoints)
@@ -1595,36 +1592,36 @@ class _DirectReducer(_Reducer):
             estimator.fit(Xt_cut, yt_cut)
             self.estimators_.append(estimator)
 
-        print(
-            f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
-            f"| is_series={isinstance(y, pd.Series)} "
-            f"| is_df={isinstance(y, pd.DataFrame)} "
-            f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
-        )
+        # print(
+        #     f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
+        #     f"| is_series={isinstance(y, pd.Series)} "
+        #     f"| is_df={isinstance(y, pd.DataFrame)} "
+        #     f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
+        # )
 
         self._record_train_shape(y)
 
-        print(
-            f"[fit] AFTER  _record_train_shape | "
-            f"orig_series={getattr(self, '_orig_y_is_series', None)} "
-            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
-            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
-            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
-            f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
-        )
+        # print(
+        #     f"[fit] AFTER  _record_train_shape | "
+        #     f"orig_series={getattr(self, '_orig_y_is_series', None)} "
+        #     f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+        #     f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+        #     f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+        #     f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
+        # )
 
         self._dbg_fit_done = True
-        print(f"[fit.stamp] ID={getattr(self, '_dbg_id', '?')} FIT_DONE=True")
+        # print(f"[fit.stamp] ID={getattr(self, '_dbg_id', '?')} FIT_DONE=True")
 
-        print(
-            f"[fit.exit ] ID={getattr(self, '_dbg_id', '?')} flags: "
-            f"series={getattr(self, '_orig_y_is_series', None)} "
-            f"df1={getattr(self, '_orig_y_is_df1', None)} "
-            f"dfm={getattr(self, '_orig_y_is_dfm', None)} "
-            f"panel={getattr(self, '_orig_y_is_panel', None)} "
-            f"wide={getattr(self, '_orig_y_is_wide', None)} "
-            f"frozen={getattr(self, '_orig_shape_frozen', None)}"
-        )
+        # print(
+        #     f"[fit.exit ] ID={getattr(self, '_dbg_id', '?')} flags: "
+        #     f"series={getattr(self, '_orig_y_is_series', None)} "
+        #     f"df1={getattr(self, '_orig_y_is_df1', None)} "
+        #     f"dfm={getattr(self, '_orig_y_is_dfm', None)} "
+        #     f"panel={getattr(self, '_orig_y_is_panel', None)} "
+        #     f"wide={getattr(self, '_orig_y_is_wide', None)} "
+        #     f"frozen={getattr(self, '_orig_shape_frozen', None)}"
+        # )
         return self
 
     def _predict_last_window(self, fh, X=None, **kwargs):
@@ -1829,9 +1826,9 @@ class _MultioutputReducer(_Reducer):
         -------
         self : returns an instance of self.
         """
-        print(
-            f"[fit.enter] ID={getattr(self, '_dbg_id', '?')} cls={type(self).__name__}"
-        )
+        # print(
+        #   f"[fit.enter] ID={getattr(self, '_dbg_id', '?')} cls={type(self).__name__}"
+        # )
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
@@ -1845,36 +1842,36 @@ class _MultioutputReducer(_Reducer):
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(Xt, yt)
 
-        print(
-            f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
-            f"| is_series={isinstance(y, pd.Series)} "
-            f"| is_df={isinstance(y, pd.DataFrame)} "
-            f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
-        )
+        # print(
+        #     f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
+        #     f"| is_series={isinstance(y, pd.Series)} "
+        #     f"| is_df={isinstance(y, pd.DataFrame)} "
+        #     f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
+        # )
 
         self._record_train_shape(y)
 
-        print(
-            f"[fit] AFTER  _record_train_shape "
-            f"| orig_series={getattr(self, '_orig_y_is_series', None)} "
-            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
-            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
-            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
-            f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
-        )
+        # print(
+        #     f"[fit] AFTER  _record_train_shape "
+        #     f"| orig_series={getattr(self, '_orig_y_is_series', None)} "
+        #     f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+        #     f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+        #     f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+        #     f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
+        # )
 
         self._dbg_fit_done = True
-        print(f"[fit.stamp] ID={getattr(self, '_dbg_id', '?')} FIT_DONE=True")
+        # print(f"[fit.stamp] ID={getattr(self, '_dbg_id', '?')} FIT_DONE=True")
 
-        print(
-            f"[fit.exit ] ID={getattr(self, '_dbg_id', '?')} flags: "
-            f"series={getattr(self, '_orig_y_is_series', None)} "
-            f"df1={getattr(self, '_orig_y_is_df1', None)} "
-            f"dfm={getattr(self, '_orig_y_is_dfm', None)} "
-            f"panel={getattr(self, '_orig_y_is_panel', None)} "
-            f"wide={getattr(self, '_orig_y_is_wide', None)} "
-            f"frozen={getattr(self, '_orig_shape_frozen', None)}"
-        )
+        # print(
+        #     f"[fit.exit ] ID={getattr(self, '_dbg_id', '?')} flags: "
+        #     f"series={getattr(self, '_orig_y_is_series', None)} "
+        #     f"df1={getattr(self, '_orig_y_is_df1', None)} "
+        #     f"dfm={getattr(self, '_orig_y_is_dfm', None)} "
+        #     f"panel={getattr(self, '_orig_y_is_panel', None)} "
+        #     f"wide={getattr(self, '_orig_y_is_wide', None)} "
+        #     f"frozen={getattr(self, '_orig_shape_frozen', None)}"
+        # )
 
         return self
 
@@ -1958,9 +1955,9 @@ class _RecursiveReducer(_Reducer):
         -------
         self : returns an instance of self.
         """
-        print(
-            f"[fit.enter] ID={getattr(self, '_dbg_id', '?')} cls={type(self).__name__}"
-        )
+        # print(
+        #   f"[fit.enter] ID={getattr(self, '_dbg_id', '?')} cls={type(self).__name__}"
+        # )
 
         if self.pooling is not None and self.pooling not in ["local", "global"]:
             raise ValueError(
@@ -2040,36 +2037,36 @@ class _RecursiveReducer(_Reducer):
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(Xt, yt)
 
-        print(
-            f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
-            f"| is_series={isinstance(y, pd.Series)} "
-            f"| is_df={isinstance(y, pd.DataFrame)} "
-            f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
-        )
+        # print(
+        #     f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
+        #     f"| is_series={isinstance(y, pd.Series)} "
+        #     f"| is_df={isinstance(y, pd.DataFrame)} "
+        #     f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
+        # )
 
         self._record_train_shape(y)
 
-        print(
-            f"[fit] AFTER  _record_train_shape "
-            f"| orig_series={getattr(self, '_orig_y_is_series', None)} "
-            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
-            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
-            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
-            f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
-        )
+        # print(
+        #     f"[fit] AFTER  _record_train_shape "
+        #     f"| orig_series={getattr(self, '_orig_y_is_series', None)} "
+        #     f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+        #     f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+        #     f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+        #     f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
+        # )
 
         self._dbg_fit_done = True
-        print(f"[fit.stamp] ID={getattr(self, '_dbg_id', '?')} FIT_DONE=True")
+        # print(f"[fit.stamp] ID={getattr(self, '_dbg_id', '?')} FIT_DONE=True")
 
-        print(
-            f"[fit.exit ] ID={getattr(self, '_dbg_id', '?')} flags: "
-            f"series={getattr(self, '_orig_y_is_series', None)} "
-            f"df1={getattr(self, '_orig_y_is_df1', None)} "
-            f"dfm={getattr(self, '_orig_y_is_dfm', None)} "
-            f"panel={getattr(self, '_orig_y_is_panel', None)} "
-            f"wide={getattr(self, '_orig_y_is_wide', None)} "
-            f"frozen={getattr(self, '_orig_shape_frozen', None)}"
-        )
+        # print(
+        #     f"[fit.exit ] ID={getattr(self, '_dbg_id', '?')} flags: "
+        #     f"series={getattr(self, '_orig_y_is_series', None)} "
+        #     f"df1={getattr(self, '_orig_y_is_df1', None)} "
+        #     f"dfm={getattr(self, '_orig_y_is_dfm', None)} "
+        #     f"panel={getattr(self, '_orig_y_is_panel', None)} "
+        #     f"wide={getattr(self, '_orig_y_is_wide', None)} "
+        #     f"frozen={getattr(self, '_orig_shape_frozen', None)}"
+        # )
 
         return self
 
@@ -3241,21 +3238,21 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def fit(self, y, X=None, fh=None):
         # record the caller-visible shape/type BEFORE any base-class vectorization
-        print(
-            f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
-            f"| is_series={isinstance(y, pd.Series)} "
-            f"| is_df={isinstance(y, pd.DataFrame)} "
-            f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
-        )
+        # print(
+        #     f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
+        #     f"| is_series={isinstance(y, pd.Series)} "
+        #     f"| is_df={isinstance(y, pd.DataFrame)} "
+        #     f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
+        # )
         self._record_train_shape(y)
-        print(
-            f"[fit] AFTER  _record_train_shape "
-            f"| orig_series={getattr(self, '_orig_y_is_series', None)} "
-            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
-            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
-            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
-            f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
-        )
+        # print(
+        #     f"[fit] AFTER  _record_train_shape "
+        #     f"| orig_series={getattr(self, '_orig_y_is_series', None)} "
+        #     f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+        #     f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+        #     f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+        #     f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
+        # )
         return super().fit(y=y, X=X, fh=fh)
 
     def _fit(self, y, X, fh):
@@ -3270,10 +3267,10 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict(self, X=None, fh=None):
         """Predict dispatcher based on X_treatment and windows_identical."""
-        print(
-            f"[predict.enter] ID={getattr(self, '_dbg_id', '?')} "
-            f"cls={type(self).__name__} "
-        )
+        # print(
+        #     f"[predict.enter] ID={getattr(self, '_dbg_id', '?')} "
+        #     f"cls={type(self).__name__} "
+        # )
         # f"has_flags={all(hasattr(self, a) for a in \
         # ['_orig_y_is_series', '_orig_y_is_df1', '_orig_y_is_dfm', \
         #'_orig_y_is_panel', '_orig_y_is_wide'])} "
@@ -3283,15 +3280,15 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         # getattr(self, '_orig_y_is_dfm', None), \
         # getattr(self, '_orig_y_is_panel', None), \
         # getattr(self, '_orig_y_is_wide', None)} "
-        print(
-            f"frozen={getattr(self, '_orig_shape_frozen', None)} "
-            f"fitted={hasattr(self, 'estimators_') or hasattr(self, 'estimator_')}"
-        )
+        # print(
+        #     f"frozen={getattr(self, '_orig_shape_frozen', None)} "
+        #     f"fitted={hasattr(self, 'estimators_') or hasattr(self, 'estimator_')}"
+        # )
 
-        print(
-            f"[predict.check] ID={getattr(self, '_dbg_id', '?')} "
-            f"FIT_SEEN={getattr(self, '_dbg_fit_done', False)}"
-        )
+        # print(
+        #     f"[predict.check] ID={getattr(self, '_dbg_id', '?')} "
+        #     f"FIT_SEEN={getattr(self, '_dbg_fit_done', False)}"
+        # )
 
         if self.X_treatment == "shifted":
             if self.windows_identical is True:
@@ -3305,14 +3302,14 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         fh_index = fh.to_indexer() if hasattr(fh, "to_indexer") else pd.Index(fh)
 
-        print(
-            f"[predict.pre-coerce] ID={getattr(self, '_dbg_id', '?')} flags="
-            # f"{getattr(self, '_orig_y_is_series', None), \
-            # getattr(self, '_orig_y_is_df1', None), \
-            # getattr(self, '_orig_y_is_dfm', None), \
-            # getattr(self, '_orig_y_is_panel', None), \
-            # getattr(self, '_orig_y_is_wide', None)}"
-        )
+        # print(
+        #     f"[predict.pre-coerce] ID={getattr(self, '_dbg_id', '?')} flags="
+        #     # f"{getattr(self, '_orig_y_is_series', None), \
+        #     # getattr(self, '_orig_y_is_df1', None), \
+        #     # getattr(self, '_orig_y_is_dfm', None), \
+        #     # getattr(self, '_orig_y_is_panel', None), \
+        #     # getattr(self, '_orig_y_is_wide', None)}"
+        # )
 
         y_pred = self._coerce_to_train_shape(y_pred, fh_index)
         return y_pred
@@ -3590,12 +3587,12 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
                         else np.asarray(yt).reshape(-1, 1)
                     )
 
-                print(
-                    "[RRF DIRECT] Xtt->nested:",
-                    getattr(Xtt, "shape", None),
-                    "->",
-                    getattr(Xtt_for_fit, "shape", None),
-                )
+                # print(
+                #     "[RRF DIRECT] Xtt->nested:",
+                #     getattr(Xtt, "shape", None),
+                #     "->",
+                #     getattr(Xtt_for_fit, "shape", None),
+                # )
 
                 def _is_tabularizer_pipeline(est):
                     # Duck type: sklearn Pipeline has a .steps list of (name, obj) pairs
@@ -4097,28 +4094,28 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred : pd.DataFrame, same type as y in _fit
             Point predictions
         """
-        print(
-            f"[predict.enter] ID={getattr(self, '_dbg_id', '?')} "
-            f"cls={type(self).__name__} "
-            # f"has_flags={all(hasattr(self, a) for a in ['_orig_y_is_series', \
-            #'_orig_y_is_df1', '_orig_y_is_dfm', '_orig_y_is_panel', \
-            #'_orig_y_is_wide'])} "
-            # f"vals="
-            # f"{getattr(self, '_orig_y_is_series', None), \
-            # getattr(self, '_orig_y_is_df1', None), \
-            # getattr(self, '_orig_y_is_dfm', None), \
-            # getattr(self, '_orig_y_is_panel', None), \
-            # getattr(self, '_orig_y_is_wide', None)} "
-            f"frozen={getattr(self, '_orig_shape_frozen', None)} "
-            f"fitted={hasattr(self, 'estimators_') or hasattr(self, 'estimator_')}"
-        )
+        # print(
+        #     f"[predict.enter] ID={getattr(self, '_dbg_id', '?')} "
+        #     f"cls={type(self).__name__} "
+        #     # f"has_flags={all(hasattr(self, a) for a in ['_orig_y_is_series', \
+        #     #'_orig_y_is_df1', '_orig_y_is_dfm', '_orig_y_is_panel', \
+        #     #'_orig_y_is_wide'])} "
+        #     # f"vals="
+        #     # f"{getattr(self, '_orig_y_is_series', None), \
+        #     # getattr(self, '_orig_y_is_df1', None), \
+        #     # getattr(self, '_orig_y_is_dfm', None), \
+        #     # getattr(self, '_orig_y_is_panel', None), \
+        #     # getattr(self, '_orig_y_is_wide', None)} "
+        #     f"frozen={getattr(self, '_orig_shape_frozen', None)} "
+        #     f"fitted={hasattr(self, 'estimators_') or hasattr(self, 'estimator_')}"
+        # )
 
-        print(
-            f"[predict.check] ID={getattr(self, '_dbg_id', '?')} "
-            f"FIT_SEEN={getattr(self, '_dbg_fit_done', False)}"
-        )
+        # print(
+        #     f"[predict.check] ID={getattr(self, '_dbg_id', '?')} "
+        #     f"FIT_SEEN={getattr(self, '_dbg_fit_done', False)}"
+        # )
 
-        print("OriginalRecursiveReductionForecaster.predict() - entered")
+        # print("OriginalRecursiveReductionForecaster.predict() - entered")
         if X is not None and self._X is not None:
             # X_pool = X.combine_first(self._X)
             X_pool = _combine_exog_frames(
@@ -4134,8 +4131,8 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             X_pool = X
             # print("OriginalRecursiveReductionForecaster.predict() - here 3")
 
-        print("OriginalRecursiveReductionForecaster.predict()")
-        print(f" - here 4   X_pool={X_pool}")
+        # print("OriginalRecursiveReductionForecaster.predict()")
+        # print(f" - here 4   X_pool={X_pool}")
 
         ##        fh_oos = fh.to_out_of_sample(self.cutoff)
         ##        fh_ins = fh.to_in_sample(self.cutoff)
@@ -4209,25 +4206,27 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             return False
 
     def _peek(self, obj, name="obj"):
-        if not self.DEBUG:
-            return
-        if obj is None:
-            print(f"[RR] {name}=None")
-            return
-        t = f"{type(obj).__module__}.{type(obj).__name__}"
-        print(f"[RR] {name}: type={t}")
-        if self._is_vdf(obj):
-            present = [
-                a for a in ("data", "_obj", "obj", "_X", "_y") if hasattr(obj, a)
-            ]
-            print(f"[RR] {name} is VectorizedDF; present attrs: {present}")
-        elif isinstance(obj, (pd.Series, pd.DataFrame)):
-            print(f"[RR] {name}: pandas shape={getattr(obj, 'shape', None)}")
-            print(f"[RR] {name}: index={type(getattr(obj, 'index', None))}")
+        # if not self.DEBUG:
+        #     return
+        # if obj is None:
+        #     print(f"[RR] {name}=None")
+        #     return
+        # t = f"{type(obj).__module__}.{type(obj).__name__}"
+        # print(f"[RR] {name}: type={t}")
+        # if self._is_vdf(obj):
+        #     present = [
+        #         a for a in ("data", "_obj", "obj", "_X", "_y") if hasattr(obj, a)
+        #     ]
+        #     print(f"[RR] {name} is VectorizedDF; present attrs: {present}")
+        # elif isinstance(obj, (pd.Series, pd.DataFrame)):
+        #     print(f"[RR] {name}: pandas shape={getattr(obj, 'shape', None)}")
+        #     print(f"[RR] {name}: index={type(getattr(obj, 'index', None))}")
+        pass
 
     def _dbg(self, msg):
-        if self.DEBUG:
-            print(f"[RR] {msg}")
+        # if self.DEBUG:
+        #     print(f"[RR] {msg}")
+        pass
 
     # ===== Overrides with trace =====
     def update(self, y=None, X=None, update_params=True):
@@ -4509,25 +4508,25 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             idx_target = full_idx if len(full_idx) == window_length else observed_window
 
             # ---- pre-check: duplicates in y_s or idx_target ----
-            if not y_s.index.is_unique:
-                dups = y_s.index[y_s.index.duplicated(keep=False)]
-                # print("\n[get_window_global] --- DEBUG (per-series duplicates) ---")
-                # print(f"[get_window_global] series={s!r}")
-                # print(
-                #     f"[get_window_global] \
-                #        y_s.index.is_unique={y_s.index.is_unique} (n={len(y_s.index)})"
-                # )
-                try:
-                    vc = pd.Series(dups).value_counts().head(10)
-                    print(
-                        "[get_window_global] duplicated time -> counts (top 10):\n", vc
-                    )
-                    print(
-                        "[get_window_global] first rows for duplicated times:\n",
-                        y_s.loc[dups].sort_index().head(10),
-                    )
-                except Exception as ex:
-                    print("[get_window_global] failed to print dup rows:", ex)
+            # if not y_s.index.is_unique:
+            #     dups = y_s.index[y_s.index.duplicated(keep=False)]
+            # print("\n[get_window_global] --- DEBUG (per-series duplicates) ---")
+            # print(f"[get_window_global] series={s!r}")
+            # print(
+            #     f"[get_window_global] \
+            #        y_s.index.is_unique={y_s.index.is_unique} (n={len(y_s.index)})"
+            # )
+            # try:
+            #     vc = pd.Series(dups).value_counts().head(10)
+            #     # print(
+            #     #  "[get_window_global] duplicated time -> counts (top 10):\n", vc
+            #     # )
+            #     # print(
+            #     #     "[get_window_global] first rows for duplicated times:\n",
+            #     #     y_s.loc[dups].sort_index().head(10),
+            #     # )
+            # except Exception as ex:
+            #     print("[get_window_global] failed to print dup rows:", ex)
 
             # if not pd.Index(idx_target).is_unique:
             #     tgt_dup = pd.Index(idx_target)[
@@ -4792,34 +4791,34 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                         y_key = y_key.copy()
                         y_key.columns = ["y"]
                 elif isinstance(self._y.index, pd.MultiIndex):
-                    print(
-                        "[RRF DEBUG predict] self._y.index.names:",
-                        getattr(self._y.index, "names", None),
-                    )
-                    print(
-                        "[RRF DEBUG predict] self._y.index.nlevels:",
-                        getattr(self._y.index, "nlevels", None),
-                    )
-                    print("[RRF DEBUG predict] head idx:", self._y.index[:5].tolist())
-                    print(
-                        "[RRF DEBUG predict] lead_names:",
-                        lead_names,
-                        type(lead_names),
-                        "len:",
-                        (len(lead_names) if hasattr(lead_names, "__len__") else None),
-                    )
-                    print(
-                        "[RRF DEBUG predict] key:",
-                        key,
-                        type(key),
-                        "len:",
-                        (
-                            len(key)
-                            if hasattr(key, "__len__")
-                            and not isinstance(key, (str, bytes))
-                            else None
-                        ),
-                    )
+                    # print(
+                    #     "[RRF DEBUG predict] self._y.index.names:",
+                    #     getattr(self._y.index, "names", None),
+                    # )
+                    # print(
+                    #     "[RRF DEBUG predict] self._y.index.nlevels:",
+                    #     getattr(self._y.index, "nlevels", None),
+                    # )
+                    # print("[RRF DEBUG predict] head idx:", self._y.index[:5].tolist())
+                    # print(
+                    #     "[RRF DEBUG predict] lead_names:",
+                    #     lead_names,
+                    #     type(lead_names),
+                    #     "len:",
+                    #     (len(lead_names) if hasattr(lead_names, "__len__") else None),
+                    # )
+                    # print(
+                    #     "[RRF DEBUG predict] key:",
+                    #     key,
+                    #     type(key),
+                    #     "len:",
+                    #     (
+                    #         len(key)
+                    #         if hasattr(key, "__len__")
+                    #         and not isinstance(key, (str, bytes))
+                    #         else None
+                    #     ),
+                    # )
                     # normalize level/key shapes for pandas.xs
                     _lv = (
                         lead_names[0]
@@ -5736,10 +5735,10 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
 
         # remember original index/columns for roundtripping
         # (you already set these in _to_long_from_wide; keep that behavior)
-        dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
-        dump_obj("RecursiveReductionForecaster.fit()", "X", X)
-        print(f"self.pooling = {self.pooling}")
-        print(f"self._is_wide(y) = {self._is_wide(y)}")
+        # dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
+        # dump_obj("RecursiveReductionForecaster.fit()", "X", X)
+        # print(f"self.pooling = {self.pooling}")
+        # print(f"self._is_wide(y) = {self._is_wide(y)}")
 
         if self._is_wide(y):
             y_long = self._to_long_from_wide(y)
@@ -5782,23 +5781,23 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
         #       getattr(self, "_orig_y_is_panel", None),
         #       getattr(self, "_orig_y_is_wide", None))
 
-        print(
-            f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
-            f"| is_series={isinstance(y, pd.Series)} "
-            f"| is_df={isinstance(y, pd.DataFrame)} "
-            f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
-        )
+        # print(
+        #     f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
+        #     f"| is_series={isinstance(y, pd.Series)} "
+        #     f"| is_df={isinstance(y, pd.DataFrame)} "
+        #     f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
+        # )
 
         self._record_train_shape(y)
 
-        print(
-            f"[fit] AFTER  _record_train_shape | "
-            f"orig_series={getattr(self, '_orig_y_is_series', None)} "
-            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
-            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
-            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
-            f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
-        )
+        # print(
+        #     f"[fit] AFTER  _record_train_shape | "
+        #     f"orig_series={getattr(self, '_orig_y_is_series', None)} "
+        #     f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+        #     f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+        #     f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+        #     f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
+        # )
 
         if self.pooling == "local" and isinstance(y_long.index, pd.MultiIndex):
             # names like ["series", "time"]; last level is time in your traces
@@ -5858,26 +5857,26 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
 
     # 3) Override PUBLIC predict to roundtrip back to WIDE if we trained from WIDE.
     def predict(self, fh=None, X=None):
-        print(
-            f"[predict.enter] ID={getattr(self, '_dbg_id', '?')} "
-            f"cls={type(self).__name__} "
-            # f"has_flags={all(hasattr(self, a) for a in\
-            # ['_orig_y_is_series', '_orig_y_is_df1', '_orig_y_is_dfm', \
-            #'_orig_y_is_panel', '_orig_y_is_wide'])} "
-            # f"vals="
-            # f"{getattr(self, '_orig_y_is_series', None),
-            # getattr(self, '_orig_y_is_df1', None),
-            # getattr(self, '_orig_y_is_dfm', None),
-            # getattr(self, '_orig_y_is_panel', None),
-            # getattr(self, '_orig_y_is_wide', None)} "
-            f"frozen={getattr(self, '_orig_shape_frozen', None)} "
-            f"fitted={hasattr(self, 'estimators_') or hasattr(self, 'estimator_')}"
-        )
+        # print(
+        #     f"[predict.enter] ID={getattr(self, '_dbg_id', '?')} "
+        #     f"cls={type(self).__name__} "
+        #     # f"has_flags={all(hasattr(self, a) for a in\
+        #     # ['_orig_y_is_series', '_orig_y_is_df1', '_orig_y_is_dfm', \
+        #     #'_orig_y_is_panel', '_orig_y_is_wide'])} "
+        #     # f"vals="
+        #     # f"{getattr(self, '_orig_y_is_series', None),
+        #     # getattr(self, '_orig_y_is_df1', None),
+        #     # getattr(self, '_orig_y_is_dfm', None),
+        #     # getattr(self, '_orig_y_is_panel', None),
+        #     # getattr(self, '_orig_y_is_wide', None)} "
+        #     f"frozen={getattr(self, '_orig_shape_frozen', None)} "
+        #     f"fitted={hasattr(self, 'estimators_') or hasattr(self, 'estimator_')}"
+        # )
 
-        print(
-            f"[predict.check] ID={getattr(self, '_dbg_id', '?')} "
-            f"FIT_SEEN={getattr(self, '_dbg_fit_done', False)}"
-        )
+        # print(
+        #     f"[predict.check] ID={getattr(self, '_dbg_id', '?')} "
+        #     f"FIT_SEEN={getattr(self, '_dbg_fit_done', False)}"
+        # )
 
         self.check_is_fitted()
         # fallback to the horizon provided at fit time (sktime contract)
@@ -5944,24 +5943,24 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
         # === Canonicalize output shape to match the training target ===
         fh_index = self.fh.to_pandas() if hasattr(self.fh, "to_pandas") else self.fh
 
-        print(
-            f"[predict.pre-coerce] ID={getattr(self, '_dbg_id', '?')} flags="
-            # f"{getattr(self, '_orig_y_is_series', None),
-            # getattr(self, '_orig_y_is_df1', None),
-            # getattr(self, '_orig_y_is_dfm', None),
-            # getattr(self, '_orig_y_is_panel', None),
-            # getattr(self, '_orig_y_is_wide', None)}"
-        )
+        # print(
+        #     f"[predict.pre-coerce] ID={getattr(self, '_dbg_id', '?')} flags="
+        #     # f"{getattr(self, '_orig_y_is_series', None),
+        #     # getattr(self, '_orig_y_is_df1', None),
+        #     # getattr(self, '_orig_y_is_dfm', None),
+        #     # getattr(self, '_orig_y_is_panel', None),
+        #     # getattr(self, '_orig_y_is_wide', None)}"
+        # )
 
-        print(
-            f"[predict] pre-coerce | type(y_pred)={type(y_pred)} "
-            f"shape={getattr(y_pred, 'shape', None)} "
-            f"| orig_series={getattr(self, '_orig_y_is_series', None)} "
-            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
-            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
-            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
-            f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
-        )
+        # print(
+        #     f"[predict] pre-coerce | type(y_pred)={type(y_pred)} "
+        #     f"shape={getattr(y_pred, 'shape', None)} "
+        #     f"| orig_series={getattr(self, '_orig_y_is_series', None)} "
+        #     f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+        #     f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+        #     f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+        #     f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
+        # )
 
         y_pred = self._coerce_to_train_shape(y_pred, fh_index)
         return y_pred
