@@ -29,8 +29,8 @@ def test_benchmarking_dummy_forecasting_catalogue(tmp_path):
     pd.testing.assert_series_equal(
         pd.Series(
             [
-                "_[cv_splitter=ExpandingWindowSplitter]",
-                "_[cv_splitter=ExpandingWindowSplitter]_2",
+                "[dataset=cif_2016_dataset]_[cv_splitter=ExpandingWindowSplitter]",
+                "[dataset=hospital_dataset]_[cv_splitter=ExpandingWindowSplitter]_2",
             ],
             name="validation_id",
         ),
@@ -55,8 +55,8 @@ def test_benchmarking_dummy_classification_catalogue(tmp_path):
     pd.testing.assert_series_equal(
         pd.Series(
             [
-                "_[cv_splitter=KFold]",
-                "_[cv_splitter=KFold]_2",
+                "[dataset=Beef]_[cv_splitter=KFold]",
+                "[dataset=ArrowHead]_[cv_splitter=KFold]_2",
             ],
             name="validation_id",
         ),
