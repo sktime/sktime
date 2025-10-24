@@ -59,12 +59,18 @@ def is_module_changed(module_str):
 
     If a child module has changed, the parent module is considered changed as well.
 
+    If the module cannot be found, it is considered changed.
+
     Parameters
     ----------
     module_str : str
         module string, e.g., sktime.forecasting.naive
     """
-    module_file_path = get_path_from_module(module_str)
+    try:
+        module_file_path = get_path_from_module(module_str)
+    except ImportError:
+        # if the file cannot be found, we consider it changed
+        return True
     cmd = f"git diff remotes/origin/main -- {module_file_path}"
     try:
         output = subprocess.check_output(cmd, shell=True, text=True, encoding="utf-8")
