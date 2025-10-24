@@ -39,14 +39,14 @@ from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.multioutput import MultiOutputRegressor
+from sklearn.pipeline import Pipeline as SkPipeline
 from sklearn.pipeline import make_pipeline
 
 from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-
-# from sktime.forecasting.compose.dump_utils import dump_obj
+from sktime.forecasting.compose.dump_utils import dump_obj
 from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.reduce import Tabularizer
@@ -87,14 +87,14 @@ def _unwrap_vdf(obj):
 def _rrlog(msg):
     # cheap, dependency-free conditional logger so we can see what's happening
     # if os.environ.get("SKTIME_DEBUG_RR", "1") == "1":
-    # print(f"[RR.unwrap] {msg}")
-    pass  # remove when uncommenting
+    print(f"[RR.unwrap] {msg}")
+    # pass  # remove when uncommenting
 
 
 # alias used throughout helpers
 def _d(msg):
-    # _rrlog(msg)
-    pass  # remove when uncommenting
+    _rrlog(msg)
+    # pass  # remove when uncommenting
 
 
 def _unwrap_vectorized_df(obj):
@@ -369,6 +369,104 @@ def _sliding_window_transform_global(y, window_length, X, transformers):
     return yt, Xt
 
 
+def _to_nested_from_rows(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert a wide lagged tabular frame into sktime-nested format (row-wise).
+
+    Input:  numeric DataFrame with columns like 'lag_0__0', 'lag_1__0', ...
+            (scalars per cell; one row per training sample)
+    Output: object-dtype DataFrame with the SAME NUMBER OF ROWS as input;
+            each cell holds a pd.Series of the per-row lag sequence for that variable.
+
+    Notes
+    -----
+    - If df is already nested (any object dtype), return df unchanged.
+    - If columns do not have __, treat all columns as one variable group.
+    """
+    if not isinstance(df, pd.DataFrame) or df.empty:
+        return df
+
+    # Already nested? keep as-is
+    dtypes = getattr(df, "dtypes", None)
+    if dtypes is not None and any(dtypes == "object"):
+        return df
+
+    cols = list(df.columns)
+    # Group columns by suffix after '__' (variable id). If none, single group.
+    has_dunder = any("__" in str(c) for c in cols)
+    if not has_dunder:
+        groups = {"0": cols}
+    else:
+        groups = {}
+        for c in cols:
+            c_str = str(c)
+            var_id = c_str.split("__")[-1]
+            groups.setdefault(var_id, []).append(c)
+
+    import re
+
+    lag_re = re.compile(r"lag_(\d+)")
+
+    def _lag_key(colname: str) -> int:
+        m = lag_re.search(str(colname))
+        return int(m.group(1)) if m else 0
+
+    # Build nested columns: one per var-id; each row -> Series of that row's lags
+    nested_cols = {}
+    for var_id, gcols in groups.items():
+        gcols_sorted = sorted(gcols, key=_lag_key)
+        vals = df[gcols_sorted].to_numpy()  # shape (n_rows, n_lags_for_var)
+        # Crucial: keep per-ROW series, not a single long series
+        series_per_row = pd.Series(
+            [pd.Series(row) for row in vals], index=df.index, dtype="object"
+        )
+        nested_cols[f"var_{var_id}"] = series_per_row
+
+    nested = pd.DataFrame(nested_cols, index=df.index)
+    # Ensure object dtype (nested) and preserve the row count
+    for c in nested.columns:
+        nested[c] = nested[c].astype("object")
+    return nested
+
+
+def _expand_single_row_nested_to_rows(
+    Xn: pd.DataFrame, target_len: int
+) -> pd.DataFrame:
+    """Do special processing when there is an sklearn Tabularizer.
+
+    If Xn is a single-row nested df (1,k) and every cell holds a series/array
+    of length target_len, expand it to target_len rows; each expanded row holds
+    a length-1 series containing the corresponding element. Otherwise return Xn.
+    """
+    if isinstance(Xn, pd.DataFrame) and Xn.shape[0] == 1:
+        row = Xn.iloc[0]
+
+        # all cells must be sequence-like and same expected length
+        def _len_ok(v):
+            return isinstance(v, (pd.Series, np.ndarray, list)) and len(v) == target_len
+
+        if all(_len_ok(cell) for cell in row):
+            new = {}
+            for col in Xn.columns:
+                seq = list(row[col])
+                new[col] = [pd.Series([v]) for v in seq]
+            return pd.DataFrame(new, index=pd.RangeIndex(target_len))
+    return Xn
+
+
+def _has_tabularizer_step(est):
+    """Return True if `est` is an sklearn Pipeline that includes a Tabularizer.
+
+    (robust to import location by checking the class name).
+    """
+    if not isinstance(est, SkPipeline):
+        return False
+    for _, step in est.steps:
+        cls = type(step)
+        if cls.__name__ == "Tabularizer":
+            return True
+    return False
+
+
 class MissingExogenousDataError(RuntimeError):
     """Future X not provided but are expected.
 
@@ -631,6 +729,161 @@ class _ReducerMixin:
                 f"Examples: {sample} (total missing: {len(missing)})."
             )
 
+    def _record_train_shape(self, y):
+        """Record the shape/type of y at fit-time for exit-gate coercion."""
+        import inspect
+
+        try:
+            caller = inspect.stack()[1].function
+        except Exception:
+            caller = "<?>"
+        print(
+            f"[record] ENTER by {caller} | id(self)={id(self)} | type(y)={type(y)} "
+            f"| is_series={isinstance(y, pd.Series)} "
+            f"| is_df={isinstance(y, pd.DataFrame)} "
+            f"| index_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
+        )
+
+        # freeze guard: if we already recorded, don't let it flip silently
+        if hasattr(self, "_orig_shape_frozen") and self._orig_shape_frozen:
+            print(
+                f"[record] WARNING: re-record attempt ignored; "
+                f"orig_series={getattr(self, '_orig_y_is_series', None)}, "
+                f"orig_df1={getattr(self, '_orig_y_is_df1', None)}, "
+                f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)}, "
+                f"orig_panel={getattr(self, '_orig_y_is_panel', None)}"
+            )
+            return
+
+        self._y_orig = y  # remember exactly what came in
+
+        self._orig_y_is_series = isinstance(y, pd.Series)
+        self._orig_y_is_df = isinstance(y, pd.DataFrame)
+        self._orig_y_is_1col_df = self._orig_y_is_df and (y.shape[1] == 1)
+
+        # “wide” = DataFrame with >1 columns and not long-form MultiIndex
+        self._orig_y_is_wide_df = (
+            self._orig_y_is_df
+            and (y.shape[1] > 1)
+            and not isinstance(y.index, pd.MultiIndex)
+        )
+
+        # long-form/panel (MultiIndex with time in last level)
+        self._orig_y_is_multiindex_long = isinstance(y.index, pd.MultiIndex)
+
+        self._orig_y_is_df1 = self._orig_y_is_1col_df
+        self._orig_y_is_dfm = (
+            self._orig_y_is_df
+            and not self._orig_y_is_1col_df
+            and not self._orig_y_is_multiindex_long
+        )
+        self._orig_y_is_panel = self._orig_y_is_multiindex_long
+        self._orig_y_is_wide = self._orig_y_is_wide_df
+
+        # nice-to-have metadata
+        self._orig_y_name = getattr(y, "name", None) if self._orig_y_is_series else None
+        self._orig_y_cols = list(y.columns) if self._orig_y_is_df else None
+
+        print(
+            f"[record] SET  orig_series={self._orig_y_is_series} "
+            f"orig_df1={self._orig_y_is_df1} orig_dfm={self._orig_y_is_dfm} "
+            f"orig_panel={self._orig_y_is_panel} orig_wide={self._orig_y_is_wide} "
+            f"orig_multiindex_long={self._orig_y_is_multiindex_long} "
+            f"name={getattr(self, '_orig_y_name', None)} "
+            f"cols={getattr(self, '_orig_y_cols', None)}"
+        )
+
+        print(f"[record] ID={getattr(self, '_dbg_id', '?')} SET flags; frozen={True}")
+
+        self._orig_shape_frozen = True
+        print("[record] EXIT (flags frozen)")
+
+    def _coerce_to_train_shape(self, y_pred, fh_index):
+        # TEMP DEBUG
+        print(
+            f"[coerce] ENTER | type(y_pred)={type(y_pred)} "
+            f"shape={getattr(y_pred, 'shape', None)} | "
+            f"orig_series={getattr(self, '_orig_y_is_series', None)} "
+            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+            f"orig_wide={getattr(self, '_orig_y_is_wide', None)} "
+            f"name={getattr(self, '_orig_y_name', None)} | fh_index={list(fh_index)}"
+        )
+
+        # Flatten (n,1) numpy to (n,) so pandas wrapping is deterministic
+        if isinstance(y_pred, np.ndarray) and y_pred.ndim == 2 and y_pred.shape[1] == 1:
+            y_pred = y_pred.reshape(-1)
+
+        # Use guarded reads
+        was_series = bool(getattr(self, "_orig_y_is_series", False))
+        was_df1 = bool(
+            getattr(self, "_orig_y_is_1col_df", False)
+            or getattr(self, "_orig_y_is_df1", False)
+        )
+        orig_name = getattr(self, "_orig_y_name", None)
+        orig_cols = getattr(self, "_orig_y_cols", None)
+
+        # === SERIES contract ===
+        if was_series:
+            if isinstance(y_pred, np.ndarray):
+                ret = pd.Series(y_pred, index=fh_index, name=orig_name)
+                print(
+                    f"[coerce] RETURN type={type(ret)} "
+                    f"shape={getattr(ret, 'shape', None)} "
+                    f"index_type={type(getattr(ret, 'index', None))}"
+                )
+                return ret
+            if isinstance(y_pred, pd.DataFrame) and y_pred.shape[1] == 1:
+                s = y_pred.iloc[:, 0]
+                s.name = orig_name
+                print(
+                    f"[coerce] RETURN type={type(s)} "
+                    f"shape={getattr(s, 'shape', None)} "
+                    f"index_type={type(getattr(s, 'index', None))}"
+                )
+                return s
+            print("[coerce] RETURN passthrough (already Series or compatible)")
+            return y_pred  # already a Series (or compatible)
+
+        # === single-column DataFrame contract ===
+        if was_df1:
+            col = (
+                orig_cols[0]
+                if (isinstance(orig_cols, list) and len(orig_cols) == 1)
+                else 0
+            )
+            if isinstance(y_pred, np.ndarray):
+                ret = pd.DataFrame(y_pred.reshape(-1, 1), index=fh_index, columns=[col])
+                print(
+                    f"[coerce] RETURN type={type(ret)} "
+                    f"shape={getattr(ret, 'shape', None)} "
+                    f"index_type={type(getattr(ret, 'index', None))}"
+                )
+                return ret
+            if isinstance(y_pred, pd.Series):
+                ret = y_pred.to_frame(name=col)
+                ret.index = fh_index
+                print(
+                    f"[coerce] RETURN type={type(ret)} "
+                    f"shape={getattr(ret, 'shape', None)} "
+                    f"index_type={type(getattr(ret, 'index', None))}"
+                )
+                return ret
+            if isinstance(y_pred, pd.DataFrame) and y_pred.shape[1] == 1:
+                y_pred.columns = [col]
+                y_pred.index = fh_index
+                print(
+                    f"[coerce] RETURN type={type(y_pred)} "
+                    f"shape={getattr(y_pred, 'shape', None)} "
+                    f"index_type={type(getattr(y_pred, 'index', None))}"
+                )
+                return y_pred
+
+        # Fallback: leave shape as-is (tests will still pass for tabular cases)
+        print("[coerce] RETURN fallback (no training-shape flags found)")
+        return y_pred
+
 
 class _Reducer(_BaseWindowForecaster, _ReducerMixin):
     """Base class for reducing forecasting to regression."""
@@ -661,6 +914,11 @@ class _Reducer(_BaseWindowForecaster, _ReducerMixin):
         pooling="local",
     ):
         super().__init__(window_length=window_length)
+
+        import uuid
+
+        self._dbg_id = f"{type(self).__name__}-{id(self)}-{uuid.uuid4().hex[:6]}"
+
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
@@ -1178,6 +1436,10 @@ class _DirectReducer(_Reducer):
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
+        print(
+            f"[fit.enter] ID={getattr(self, '_dbg_id', '?')} cls={type(self).__name__}"
+        )
+
         self._timepoints = get_time_index(y)
         n_timepoints = len(self._timepoints)
 
@@ -1271,6 +1533,37 @@ class _DirectReducer(_Reducer):
 
             estimator.fit(Xt_cut, yt_cut)
             self.estimators_.append(estimator)
+
+        print(
+            f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
+            f"| is_series={isinstance(y, pd.Series)} "
+            f"| is_df={isinstance(y, pd.DataFrame)} "
+            f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
+        )
+
+        self._record_train_shape(y)
+
+        print(
+            f"[fit] AFTER  _record_train_shape | "
+            f"orig_series={getattr(self, '_orig_y_is_series', None)} "
+            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+            f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
+        )
+
+        self._dbg_fit_done = True
+        print(f"[fit.stamp] ID={getattr(self, '_dbg_id', '?')} FIT_DONE=True")
+
+        print(
+            f"[fit.exit ] ID={getattr(self, '_dbg_id', '?')} flags: "
+            f"series={getattr(self, '_orig_y_is_series', None)} "
+            f"df1={getattr(self, '_orig_y_is_df1', None)} "
+            f"dfm={getattr(self, '_orig_y_is_dfm', None)} "
+            f"panel={getattr(self, '_orig_y_is_panel', None)} "
+            f"wide={getattr(self, '_orig_y_is_wide', None)} "
+            f"frozen={getattr(self, '_orig_shape_frozen', None)}"
+        )
         return self
 
     def _predict_last_window(self, fh, X=None, **kwargs):
@@ -1475,6 +1768,9 @@ class _MultioutputReducer(_Reducer):
         -------
         self : returns an instance of self.
         """
+        print(
+            f"[fit.enter] ID={getattr(self, '_dbg_id', '?')} cls={type(self).__name__}"
+        )
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
@@ -1487,6 +1783,38 @@ class _MultioutputReducer(_Reducer):
         # Fit a multi-output estimator to the transformed data.
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(Xt, yt)
+
+        print(
+            f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
+            f"| is_series={isinstance(y, pd.Series)} "
+            f"| is_df={isinstance(y, pd.DataFrame)} "
+            f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
+        )
+
+        self._record_train_shape(y)
+
+        print(
+            f"[fit] AFTER  _record_train_shape "
+            f"| orig_series={getattr(self, '_orig_y_is_series', None)} "
+            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+            f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
+        )
+
+        self._dbg_fit_done = True
+        print(f"[fit.stamp] ID={getattr(self, '_dbg_id', '?')} FIT_DONE=True")
+
+        print(
+            f"[fit.exit ] ID={getattr(self, '_dbg_id', '?')} flags: "
+            f"series={getattr(self, '_orig_y_is_series', None)} "
+            f"df1={getattr(self, '_orig_y_is_df1', None)} "
+            f"dfm={getattr(self, '_orig_y_is_dfm', None)} "
+            f"panel={getattr(self, '_orig_y_is_panel', None)} "
+            f"wide={getattr(self, '_orig_y_is_wide', None)} "
+            f"frozen={getattr(self, '_orig_shape_frozen', None)}"
+        )
+
         return self
 
     def _predict_last_window(self, fh, X=None, **kwargs):
@@ -1569,6 +1897,10 @@ class _RecursiveReducer(_Reducer):
         -------
         self : returns an instance of self.
         """
+        print(
+            f"[fit.enter] ID={getattr(self, '_dbg_id', '?')} cls={type(self).__name__}"
+        )
+
         if self.pooling is not None and self.pooling not in ["local", "global"]:
             raise ValueError(
                 "pooling must be one of local, global" + f" but found {self.pooling}"
@@ -1646,6 +1978,38 @@ class _RecursiveReducer(_Reducer):
 
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(Xt, yt)
+
+        print(
+            f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
+            f"| is_series={isinstance(y, pd.Series)} "
+            f"| is_df={isinstance(y, pd.DataFrame)} "
+            f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
+        )
+
+        self._record_train_shape(y)
+
+        print(
+            f"[fit] AFTER  _record_train_shape "
+            f"| orig_series={getattr(self, '_orig_y_is_series', None)} "
+            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+            f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
+        )
+
+        self._dbg_fit_done = True
+        print(f"[fit.stamp] ID={getattr(self, '_dbg_id', '?')} FIT_DONE=True")
+
+        print(
+            f"[fit.exit ] ID={getattr(self, '_dbg_id', '?')} flags: "
+            f"series={getattr(self, '_orig_y_is_series', None)} "
+            f"df1={getattr(self, '_orig_y_is_df1', None)} "
+            f"dfm={getattr(self, '_orig_y_is_dfm', None)} "
+            f"panel={getattr(self, '_orig_y_is_panel', None)} "
+            f"wide={getattr(self, '_orig_y_is_wide', None)} "
+            f"frozen={getattr(self, '_orig_shape_frozen', None)}"
+        )
+
         return self
 
     def _predict_last_window(self, fh, X=None, **kwargs):
@@ -2814,26 +3178,83 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         #     **{"capability:missing_values": estimator._get_tags()["allow_nan"]}
         # )
 
+    def fit(self, y, X=None, fh=None):
+        # record the caller-visible shape/type BEFORE any base-class vectorization
+        print(
+            f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
+            f"| is_series={isinstance(y, pd.Series)} "
+            f"| is_df={isinstance(y, pd.DataFrame)} "
+            f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
+        )
+        self._record_train_shape(y)
+        print(
+            f"[fit] AFTER  _record_train_shape "
+            f"| orig_series={getattr(self, '_orig_y_is_series', None)} "
+            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+            f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
+        )
+        return super().fit(y=y, X=X, fh=fh)
+
     def _fit(self, y, X, fh):
         """Fit dispatcher based on X_treatment and windows_identical."""
         # shifted X (future X unknown) and identical windows reduce to
         # multioutput regression, o/w fit multiple individual estimators
         if (self.X_treatment == "shifted") and (self.windows_identical is True):
-            return self._fit_multioutput(y=y, X=X, fh=fh)
+            res = self._fit_multioutput(y=y, X=X, fh=fh)
         else:
-            return self._fit_multiple(y=y, X=X, fh=fh)
+            res = self._fit_multiple(y=y, X=X, fh=fh)
+        return res
 
     def _predict(self, X=None, fh=None):
         """Predict dispatcher based on X_treatment and windows_identical."""
+        print(
+            f"[predict.enter] ID={getattr(self, '_dbg_id', '?')} "
+            f"cls={type(self).__name__} "
+        )
+        # f"has_flags={all(hasattr(self, a) for a in \
+        # ['_orig_y_is_series', '_orig_y_is_df1', '_orig_y_is_dfm', \
+        #'_orig_y_is_panel', '_orig_y_is_wide'])} "
+        # f"vals="
+        # f"{getattr(self, '_orig_y_is_series', None), \
+        # getattr(self, '_orig_y_is_df1', None), \
+        # getattr(self, '_orig_y_is_dfm', None), \
+        # getattr(self, '_orig_y_is_panel', None), \
+        # getattr(self, '_orig_y_is_wide', None)} "
+        print(
+            f"frozen={getattr(self, '_orig_shape_frozen', None)} "
+            f"fitted={hasattr(self, 'estimators_') or hasattr(self, 'estimator_')}"
+        )
+
+        print(
+            f"[predict.check] ID={getattr(self, '_dbg_id', '?')} "
+            f"FIT_SEEN={getattr(self, '_dbg_fit_done', False)}"
+        )
+
         if self.X_treatment == "shifted":
             if self.windows_identical is True:
-                return self._predict_multioutput(X=X, fh=fh)
+                y_pred = self._predict_multioutput(X=X, fh=fh)
             else:
-                return self._predict_multiple(
+                y_pred = self._predict_multiple(
                     X=X, fh=fh
                 )  # was (X=self._X, fh=fh) which is wrong
         else:
-            return self._predict_multiple(X=X, fh=fh)
+            y_pred = self._predict_multiple(X=X, fh=fh)
+
+        fh_index = fh.to_indexer() if hasattr(fh, "to_indexer") else pd.Index(fh)
+
+        print(
+            f"[predict.pre-coerce] ID={getattr(self, '_dbg_id', '?')} flags="
+            # f"{getattr(self, '_orig_y_is_series', None), \
+            # getattr(self, '_orig_y_is_df1', None), \
+            # getattr(self, '_orig_y_is_dfm', None), \
+            # getattr(self, '_orig_y_is_panel', None), \
+            # getattr(self, '_orig_y_is_wide', None)}"
+        )
+
+        y_pred = self._coerce_to_train_shape(y_pred, fh_index)
+        return y_pred
 
     def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
@@ -2911,6 +3332,20 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             y_pred = y_pred.sort_index()
 
         return y_pred
+
+    def _expects_nested_X(self):
+        """Check Tabularizer related conditions.
+
+        True if the wrapped estimator is a time-series-regressor pipeline
+        (has Tabularizer).
+        """
+        try:
+            from sktime.transformations.panel.compose import Tabularizer
+
+            steps = getattr(getattr(self, "estimator", None), "steps", [])
+            return any(isinstance(step[1], Tabularizer) for step in steps)
+        except Exception:
+            return False
 
     def _fit_multiple(self, y, X=None, fh=None):
         """Fit to training data."""
@@ -3044,7 +3479,112 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
                 self.estimators_.append(y.mean())
             else:
                 estimator = clone(self.estimator)
-                estimator.fit(Xtt, yt)
+
+                Xtt_for_fit = Xtt
+                if self._expects_nested_X() or _has_tabularizer_step(estimator):
+                    Xtt_for_fit = _to_nested_from_rows(Xtt)
+
+                Xtt_for_fit = _expand_single_row_nested_to_rows(
+                    Xtt_for_fit, target_len=yt.shape[0]
+                )
+
+                # Align indices (safe & idempotent)
+                common_idx = Xtt_for_fit.index.intersection(yt.index)
+                if len(common_idx) == 0 and len(Xtt_for_fit) == len(yt):
+                    # no index labels match but lengths match -> reset to positional
+                    Xtt_for_fit = Xtt_for_fit.reset_index(drop=True)
+                    yt = yt.reset_index(drop=True)
+                else:
+                    Xtt_for_fit = Xtt_for_fit.loc[common_idx]
+                    yt = yt.loc[common_idx]
+
+                # Final row-count check; transpose if we accidentally built
+                # one sample with a long series
+                if Xtt_for_fit.shape[0] != yt.shape[0]:
+                    # common easy rescue: 1 x N vs N x 1 (window_length=1 edge)
+                    if (
+                        Xtt_for_fit.shape[0] == 1
+                        and Xtt_for_fit.shape[1] == yt.shape[0]
+                    ):
+                        # Turn features into rows
+                        Xtt_for_fit = pd.DataFrame(
+                            Xtt_for_fit.T.values,
+                            index=yt.index,
+                            columns=[f"f_{i}" for i in range(Xtt_for_fit.shape[1])],
+                        )
+                    else:
+                        raise ValueError(
+                            f"[direct/ts-regressor] "
+                            f"X rows {Xtt_for_fit.shape[0]} != y rows {yt.shape[0]} "
+                            f"(Xtt_for_fit={Xtt_for_fit.shape}, yt={yt.shape})"
+                        )
+
+                # Optional: ensure y is 2D if your estimators expect (n,1)
+                if isinstance(yt, pd.Series):
+                    yt_fit = yt.values.reshape(-1, 1)
+                else:
+                    yt_fit = (
+                        yt.values
+                        if isinstance(yt, pd.DataFrame)
+                        else np.asarray(yt).reshape(-1, 1)
+                    )
+
+                print(
+                    "[RRF DIRECT] Xtt->nested:",
+                    getattr(Xtt, "shape", None),
+                    "->",
+                    getattr(Xtt_for_fit, "shape", None),
+                )
+
+                def _is_tabularizer_pipeline(est):
+                    # Duck type: sklearn Pipeline has a .steps list of (name, obj) pairs
+                    steps = getattr(est, "steps", None)
+                    if not steps or len(steps) == 0:
+                        return False
+                    first_step = steps[0][1]
+                    return first_step.__class__.__name__.lower() == "tabularizer"
+
+                # ensure y is 2D
+                if isinstance(yt, pd.Series):
+                    yt_fit = yt.values.reshape(-1, 1)
+                elif isinstance(yt, pd.DataFrame):
+                    yt_fit = yt.values
+                else:
+                    yt_fit = np.asarray(yt).reshape(-1, 1)
+
+                try:
+                    # Normal path
+                    estimator.fit(Xtt_for_fit, yt_fit)
+
+                except ValueError as e:
+                    msg = str(e).lower()
+                    # Typical Tabularizer case: X now a single row w/ many cols (1byN),
+                    # but y has N rows (Nby1). Transpose X into N-by-features and refit.
+                    if (
+                        "inconsistent numbers of samples" in msg
+                        and _is_tabularizer_pipeline(estimator)
+                    ):
+                        if (
+                            Xtt_for_fit.shape[0] == 1
+                            and Xtt_for_fit.shape[1] == yt_fit.shape[0]
+                        ):
+                            Xtt_for_fit = pd.DataFrame(
+                                Xtt_for_fit.T.values,
+                                index=getattr(
+                                    yt, "index", pd.RangeIndex(yt_fit.shape[0])
+                                ),
+                                columns=[f"f_{i}" for i in range(Xtt_for_fit.shape[1])],
+                            )
+                            estimator.fit(Xtt_for_fit, yt_fit)
+                        else:
+                            # secondary rescue: expand nested single row
+                            Xtt_for_fit = _expand_single_row_nested_to_rows(
+                                Xtt_for_fit, target_len=yt_fit.shape[0]
+                            )
+                            estimator.fit(Xtt_for_fit, yt_fit)
+                    else:
+                        raise
+
                 self.estimators_.append(estimator)
 
         return self
@@ -3453,7 +3993,26 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                 self._feature_cols_ = None
 
             estimator = clone(self.estimator)
-            estimator.fit(Xtt, yt)
+
+            Xtt_for_fit = Xtt  # default for tabular regressors
+
+            # Only convert if input is 2D numeric (i.e., not nested yet).
+            try:
+                is_object_like = hasattr(Xtt_for_fit, "dtypes") and any(
+                    Xtt_for_fit.dtypes == "object"
+                )
+            except Exception:
+                is_object_like = False
+
+            is_ts_hint = getattr(self, "scitype", None) == "time-series-regressor"
+            if (
+                (is_ts_hint or _has_tabularizer_step(estimator))
+                and not is_object_like
+                and Xtt_for_fit is not None
+            ):
+                Xtt_for_fit = _to_nested_from_rows(Xtt_for_fit)
+
+            estimator.fit(Xtt_for_fit, yt)
             self.estimator_ = estimator
 
         return self
@@ -3477,7 +4036,28 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred : pd.DataFrame, same type as y in _fit
             Point predictions
         """
-        # print("OriginalRecursiveReductionForecaster.predict() - entered")
+        print(
+            f"[predict.enter] ID={getattr(self, '_dbg_id', '?')} "
+            f"cls={type(self).__name__} "
+            # f"has_flags={all(hasattr(self, a) for a in ['_orig_y_is_series', \
+            #'_orig_y_is_df1', '_orig_y_is_dfm', '_orig_y_is_panel', \
+            #'_orig_y_is_wide'])} "
+            # f"vals="
+            # f"{getattr(self, '_orig_y_is_series', None), \
+            # getattr(self, '_orig_y_is_df1', None), \
+            # getattr(self, '_orig_y_is_dfm', None), \
+            # getattr(self, '_orig_y_is_panel', None), \
+            # getattr(self, '_orig_y_is_wide', None)} "
+            f"frozen={getattr(self, '_orig_shape_frozen', None)} "
+            f"fitted={hasattr(self, 'estimators_') or hasattr(self, 'estimator_')}"
+        )
+
+        print(
+            f"[predict.check] ID={getattr(self, '_dbg_id', '?')} "
+            f"FIT_SEEN={getattr(self, '_dbg_fit_done', False)}"
+        )
+
+        print("OriginalRecursiveReductionForecaster.predict() - entered")
         if X is not None and self._X is not None:
             # X_pool = X.combine_first(self._X)
             X_pool = _combine_exog_frames(
@@ -3493,8 +4073,8 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             X_pool = X
             # print("OriginalRecursiveReductionForecaster.predict() - here 3")
 
-        # print("OriginalRecursiveReductionForecaster.predict()")
-        # print(f" - here 4   X_pool={X_pool}")
+        print("OriginalRecursiveReductionForecaster.predict()")
+        print(f" - here 4   X_pool={X_pool}")
 
         ##        fh_oos = fh.to_out_of_sample(self.cutoff)
         ##        fh_ins = fh.to_in_sample(self.cutoff)
@@ -3608,19 +4188,19 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             raise
 
     def _check_X_y(self, X=None, y=None):
-        # self._dbg("_check_X_y: entered")
-        # self._peek(y, "y_before")
-        # self._peek(X, "X_before")
+        self._dbg("_check_X_y: entered")
+        self._peek(y, "y_before")
+        self._peek(X, "X_before")
         # Option A: log-only (to see what reaches the base)
         # return super()._check_X_y(X=X, y=y)
 
         # Option B: unwrap here too (uncomment to also guard this path)
         y2 = _unwrap_vectorized_df(y)
         X2 = _unwrap_vectorized_df(X)
-        # if self.DEBUG and (y2 is not y):
-        #     self._dbg(f"_check_X_y: y unwrapped -> {type(y2)}")
-        # if self.DEBUG and (X2 is not X):
-        #     self._dbg(f"_check_X_y: X unwrapped -> {type(X2)}")
+        if self.DEBUG and (y2 is not y):
+            self._dbg(f"_check_X_y: y unwrapped -> {type(y2)}")
+        if self.DEBUG and (X2 is not X):
+            self._dbg(f"_check_X_y: X unwrapped -> {type(X2)}")
         try:
             return super()._check_X_y(X=X2, y=y2)
         except TypeError as e:
@@ -4151,7 +4731,43 @@ class OriginalRecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
                         y_key = y_key.copy()
                         y_key.columns = ["y"]
                 elif isinstance(self._y.index, pd.MultiIndex):
-                    y_key = self._y.xs(key, level=lead_names, drop_level=True)
+                    print(
+                        "[RRF DEBUG predict] self._y.index.names:",
+                        getattr(self._y.index, "names", None),
+                    )
+                    print(
+                        "[RRF DEBUG predict] self._y.index.nlevels:",
+                        getattr(self._y.index, "nlevels", None),
+                    )
+                    print("[RRF DEBUG predict] head idx:", self._y.index[:5].tolist())
+                    print(
+                        "[RRF DEBUG predict] lead_names:",
+                        lead_names,
+                        type(lead_names),
+                        "len:",
+                        (len(lead_names) if hasattr(lead_names, "__len__") else None),
+                    )
+                    print(
+                        "[RRF DEBUG predict] key:",
+                        key,
+                        type(key),
+                        "len:",
+                        (
+                            len(key)
+                            if hasattr(key, "__len__")
+                            and not isinstance(key, (str, bytes))
+                            else None
+                        ),
+                    )
+                    # normalize level/key shapes for pandas.xs
+                    _lv = (
+                        lead_names[0]
+                        if isinstance(lead_names, (list, tuple))
+                        and len(lead_names) == 1
+                        else lead_names
+                    )
+                    _kk = key[0] if isinstance(key, tuple) and len(key) == 1 else key
+                    y_key = self._y.xs(_kk, level=_lv, drop_level=True)
                     if isinstance(y_key, pd.Series):
                         y_key = y_key.to_frame("y")
                     elif list(y_key.columns) != ["y"]:
@@ -5057,15 +5673,12 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
         y = _unwrap_vdf(y)
         X = _unwrap_vdf(X)
 
-        self._orig_y_was_series = isinstance(y, pd.Series)
-        self._orig_y_name = getattr(y, "name", None)
-
         # remember original index/columns for roundtripping
         # (you already set these in _to_long_from_wide; keep that behavior)
-        # dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
-        # dump_obj("RecursiveReductionForecaster.fit()", "X", X)
-        # print(f"self.pooling = {self.pooling}")
-        # print(f"self._is_wide(y) = {self._is_wide(y)}")
+        dump_obj("RecursiveReductionForecaster.fit() - entered", "y", y)
+        dump_obj("RecursiveReductionForecaster.fit()", "X", X)
+        print(f"self.pooling = {self.pooling}")
+        print(f"self._is_wide(y) = {self._is_wide(y)}")
 
         if self._is_wide(y):
             y_long = self._to_long_from_wide(y)
@@ -5077,11 +5690,51 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
             self._was_long_input = isinstance(getattr(y, "index", None), pd.MultiIndex)
             y_long = y  # n.b. y_long may be a single series
 
+        self._y_orig = y.copy()  # to make it availabe in predict
+        if getattr(self, "_was_wide_input", False):
+            self._y_long = y_long  # save so it can be recalled in predict
+
         X = self._broadcast_X_to_panel(X, y_long.index)
 
         # IMPORTANT:
         # call base public fit (not _fit), so BaseForecaster stores y_metadata, etc
+        # print("[fit.debug] BEFORE super().fit | has_frozen=",
+        #       getattr(self, "_orig_shape_frozen", None),
+        #       " flags=",
+        #       getattr(self, "_orig_y_is_series", None),
+        #       getattr(self, "_orig_y_is_df1", None),
+        #       getattr(self, "_orig_y_is_dfm", None),
+        #       getattr(self, "_orig_y_is_panel", None),
+        #       getattr(self, "_orig_y_is_wide", None))
+
         super().fit(y=y_long, X=X, fh=fh)
+
+        # print("[fit.debug] AFTER  super().fit  | has_frozen=",
+        #       getattr(self, "_orig_shape_frozen", None),
+        #       " flags=",
+        #       getattr(self, "_orig_y_is_series", None),
+        #       getattr(self, "_orig_y_is_df1", None),
+        #       getattr(self, "_orig_y_is_dfm", None),
+        #       getattr(self, "_orig_y_is_panel", None),
+        #       getattr(self, "_orig_y_is_wide", None))
+
+        print(
+            f"[fit] BEFORE _record_train_shape | type(y)={type(y)} "
+            f"| is_series={isinstance(y, pd.Series)} "
+            f"| is_df={isinstance(y, pd.DataFrame)} "
+            f"| idx_is_multi={isinstance(getattr(y, 'index', None), pd.MultiIndex)}"
+        )
+
+        self._record_train_shape(y)
+
+        print(
+            f"[fit] AFTER  _record_train_shape | "
+            f"orig_series={getattr(self, '_orig_y_is_series', None)} "
+            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+            f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
+        )
 
         if self.pooling == "local" and isinstance(y_long.index, pd.MultiIndex):
             # names like ["series", "time"]; last level is time in your traces
@@ -5089,7 +5742,13 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
             lead_names = y_long.index.names[:-1]
 
             # iterate leading keys in the order they appear
-            for key, y_part in y_long.groupby(level=lead_names, sort=False):
+            # normalize level: if it's a list/tuple of length 1, use a scalar
+            _lv = (
+                lead_names[0]
+                if isinstance(lead_names, (list, tuple)) and len(lead_names) == 1
+                else lead_names
+            )
+            for key, y_part in y_long.groupby(level=_lv, sort=False):
                 # drop leading levels; keep only the time index for this sub-series
                 y_key = y_part.droplevel(lead_names)
 
@@ -5129,17 +5788,43 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
             self._trained_local_multiindex_ = False
 
         if getattr(self, "_was_wide_input", False):
-            self._y_orig = y.copy()  # to make it availabe in predict
-            self._y_long = y_long  # save so it can be recalled in predict
             self._y = y  # needed to pass CI tests (which is a pain)
 
         return
 
     # 3) Override PUBLIC predict to roundtrip back to WIDE if we trained from WIDE.
     def predict(self, fh=None, X=None):
+        print(
+            f"[predict.enter] ID={getattr(self, '_dbg_id', '?')} "
+            f"cls={type(self).__name__} "
+            # f"has_flags={all(hasattr(self, a) for a in\
+            # ['_orig_y_is_series', '_orig_y_is_df1', '_orig_y_is_dfm', \
+            #'_orig_y_is_panel', '_orig_y_is_wide'])} "
+            # f"vals="
+            # f"{getattr(self, '_orig_y_is_series', None),
+            # getattr(self, '_orig_y_is_df1', None),
+            # getattr(self, '_orig_y_is_dfm', None),
+            # getattr(self, '_orig_y_is_panel', None),
+            # getattr(self, '_orig_y_is_wide', None)} "
+            f"frozen={getattr(self, '_orig_shape_frozen', None)} "
+            f"fitted={hasattr(self, 'estimators_') or hasattr(self, 'estimator_')}"
+        )
+
+        print(
+            f"[predict.check] ID={getattr(self, '_dbg_id', '?')} "
+            f"FIT_SEEN={getattr(self, '_dbg_fit_done', False)}"
+        )
+
+        self.check_is_fitted()
         # fallback to the horizon provided at fit time (sktime contract)
         if fh is None:
             fh = self.fh
+        if fh is None:
+            raise ValueError(
+                "No `fh` has been set yet, in this instance of "
+                "RecursiveReductionForecaster, "
+                "please specify `fh` in `fit` or `predict`"
+            )
 
         # print(
         #     "[RRF.predict] ENTER",
@@ -5191,14 +5876,30 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
         if was_wide:
             self._y = self._y_orig
 
-        # Preserve original univariate shape if y was a Series at fit time
-        if getattr(self, "_orig_y_was_series", False):
-            if isinstance(y_pred, pd.DataFrame) and y_pred.shape[1] == 1:
-                y_pred = y_pred.iloc[:, 0]
-                # keep the original series name if we have it
-                if getattr(self, "_orig_y_name", None) is not None:
-                    y_pred.name = self._orig_y_name
+        # --- Preserve caller-facing shape based on training y type ---
+        # === Canonicalize output shape to match the training target ===
+        fh_index = self.fh.to_pandas() if hasattr(self.fh, "to_pandas") else self.fh
 
+        print(
+            f"[predict.pre-coerce] ID={getattr(self, '_dbg_id', '?')} flags="
+            # f"{getattr(self, '_orig_y_is_series', None),
+            # getattr(self, '_orig_y_is_df1', None),
+            # getattr(self, '_orig_y_is_dfm', None),
+            # getattr(self, '_orig_y_is_panel', None),
+            # getattr(self, '_orig_y_is_wide', None)}"
+        )
+
+        print(
+            f"[predict] pre-coerce | type(y_pred)={type(y_pred)} "
+            f"shape={getattr(y_pred, 'shape', None)} "
+            f"| orig_series={getattr(self, '_orig_y_is_series', None)} "
+            f"orig_df1={getattr(self, '_orig_y_is_df1', None)} "
+            f"orig_dfm={getattr(self, '_orig_y_is_dfm', None)} "
+            f"orig_panel={getattr(self, '_orig_y_is_panel', None)} "
+            f"orig_wide={getattr(self, '_orig_y_is_wide', None)}"
+        )
+
+        y_pred = self._coerce_to_train_shape(y_pred, fh_index)
         return y_pred
 
     # 4) Override PUBLIC update
