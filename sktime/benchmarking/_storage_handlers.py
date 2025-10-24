@@ -47,7 +47,7 @@ class BaseStorageHandler(abc.ABC):
         list[ResultObject]
             The loaded results. Returns empty list if file doesn't exist.
         """
-        if not Path(self.path).exists():
+        if self.path is not None and not Path(self.path).exists():
             return []
         return self._load()
 
