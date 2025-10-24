@@ -380,7 +380,8 @@ class BaggingForecaster(BaseForecaster):
         y_bootstraps = self.bootstrap_transformer_.fit_transform(X=_y)
 
         # generate replicates of exogenous data for bootstrap
-        X_inner = self._gen_X_bootstraps(X)
+        _X = update_data(self._X, X)
+        X_inner = self._gen_X_bootstraps(_X)
 
         self.forecaster_.update(y=y_bootstraps, X=X_inner, update_params=update_params)
         return self
