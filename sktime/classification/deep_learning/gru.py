@@ -5,9 +5,6 @@ import numpy as np
 from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
 from sktime.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("torch", severity="none"):
-    from sktime.networks.gru import GRU, GRUFCNN
-
 
 class GRUClassifier(BaseDeepClassifierPytorch):
     """Gated Recurrent Unit (GRU) for time series classification.
@@ -72,6 +69,7 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         "maintainers": ["fnhirwa"],
         "python_version": ">=3.9",
         "python_dependencies": "torch",
+        "tests:libs": ["sktime.networks.gru"],
     }
 
     def __init__(
@@ -133,6 +131,8 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         self.criterions = {}
 
     def _build_network(self, X, y):
+        from sktime.networks.gru import GRU
+
         # n_instances, n_dims, n_timesteps = X.shape
         self.numclasses = len(np.unique(y))
         _, self.input_size, _ = X.shape
@@ -274,6 +274,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         "maintainers": ["fnhirwa"],
         "python_version": ">=3.9",
         "python_dependencies": "torch",
+        "tests:libs": ["sktime.networks.gru"],
     }
 
     def __init__(
@@ -339,6 +340,8 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         self.criterions = {}
 
     def _build_network(self, X, y):
+        from sktime.networks.gru import GRUFCNN
+
         # n_instances, n_dims, n_timesteps = X.shape
         self.numclasses = len(np.unique(y))
         _, self.input_size, _ = X.shape
