@@ -47,7 +47,7 @@ class BaseStorageHandler(abc.ABC):
         list[ResultObject]
             The loaded results. Returns empty list if file doesn't exist.
         """
-        if not Path(self.path).exists():
+        if self.path is not None and not Path(self.path).exists():
             return []
         return self._load()
 
@@ -238,7 +238,37 @@ class CSVStorageHandler(BaseStorageHandler):
         return path.suffix == ".csv"
 
 
+class NullStorageHandler(BaseStorageHandler):
+    """Storage handler for no file access."""
+
+    def save(self, results: list[ResultObject]):
+        """Save the results - dummy method without any effect.
+
+        Parameters
+        ----------
+        results : ResultObject
+            The results to save.
+        """
+        return
+
+    def _load(self) -> list[ResultObject]:
+        """Load the results from a null file. Returns empty list.
+
+        Returns
+        -------
+        list[ResultObject]
+            The loaded results.
+        """
+        results = []
+        return results
+
+    @staticmethod
+    def is_applicable(path):
+        return path is None
+
+
 STORAGE_HANDLERS = [
+    NullStorageHandler,
     JSONStorageHandler,
     ParquetStorageHandler,
     CSVStorageHandler,
@@ -258,10 +288,10 @@ def get_storage_backend(path: str | Path) -> BaseStorageHandler:
     BaseStorageHandler
         The storage backend
     """
-    if path is None:
-        return None
+    if isinstance(path, str):
+        path = Path(path)
     for handler in STORAGE_HANDLERS:
-        if handler.is_applicable(Path(path)):
+        if handler.is_applicable(path):
             return handler
     raise ValueError(f"No storage handler found for {path}")
 

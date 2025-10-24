@@ -87,11 +87,8 @@ class _BenchmarkingResults:
 
     def __post_init__(self):
         """Load existing results from the path."""
-        if self.path is not None:
-            self.storage_backend = get_storage_backend(self.path)
-            self.results = self.storage_backend(self.path).load()
-        else:
-            self.results = []
+        self.storage_backend = get_storage_backend(self.path)
+        self.results = self.storage_backend(self.path).load()
 
     def update(self, new_result):
         """Update the results with a new result."""
@@ -100,8 +97,6 @@ class _BenchmarkingResults:
 
     def save(self):
         """Save the results to a file."""
-        if self.path is None:
-            return  # if no path is given, do not save
         self.storage_backend(self.path).save(self.results)
 
     def contains(self, task_id: str, model_id: str):
@@ -149,9 +144,11 @@ class _SktimeRegistry:
             A unique entity ID.
         entry_point: Callable or str
             The python entrypoint of the entity class. Should be one of:
+
             - the string path to the python object (e.g.module.name:factory_func, or
                 module.name:Class)
             - the python object (class or factory) itself
+
         deprecated: Bool, optional (default=False)
             Flag to denote whether this entity should be skipped in validation runs
             and considered deprecated and replaced by a more recent/better model
@@ -207,17 +204,17 @@ class BaseBenchmark:
 
         - "None": no additional parameters, ``backend_params`` is ignored
         - "loky", "multiprocessing" and "threading": default ``joblib`` backends
-        any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-        with the exception of ``backend`` which is directly controlled by
-        ``backend``. If ``n_jobs`` is not passed, it will default to ``-1``, other
-        parameters will default to ``joblib`` defaults.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by
+          ``backend``. If ``n_jobs`` is not passed, it will default to ``-1``, other
+          parameters will default to ``joblib`` defaults.
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
-        any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-        ``backend`` must be passed as a key of ``backend_params`` in this case.
-        If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
-        will default to ``joblib`` defaults.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
-        e.g., ``scheduler``
+          e.g., ``scheduler``
 
         - "ray": The following keys can be passed:
 
@@ -254,12 +251,16 @@ class BaseBenchmark:
 
         Parameters
         ----------
-        estimator : Dict, List or BaseEstimator object
+        estimator : dict, list or BaseEstimator object
             Estimator to add to the benchmark.
-            If Dict, keys are estimator_ids used to customise identifier ID
-            and values are estimators.
-            If List, each element is an estimator. estimator_ids are generated
-            automatically using the estimator's class name.
+
+            * if ``BaseEstimator``, single estimator. ``estimator_id`` is generated
+              as the estimator's class name if not provided.
+            * If ``dict``, keys are ``estimator_id``s used to customise identifier ID
+              and values are estimators.
+            * If ``list``, each element is an estimator. ``estimator_id``s are generated
+              automatically using the estimator's class name.
+
         estimator_id : str, optional (default=None)
             Identifier for estimator. If none given then uses estimator's class name.
         """
