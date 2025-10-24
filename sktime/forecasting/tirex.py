@@ -14,20 +14,12 @@ TiRex provides fast and proper forecasting for short and long horizons.
 It does not require any training or data input.
 """
 
-# todo: write an informative docstring for the file or module, remove the above
-# todo: add an appropriate copyright notice for your estimator
-#       estimators contributed to sktime should have the copyright notice at the top
-#       estimators of your own do not need to have permissive or BSD-3 copyright
-
-# todo: uncomment the following line, enter authors' GitHub IDs
 __author__ = ["sinemkilicdere", "martinloretzzz"]
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.singleton import _multiton
-
-# todo: add any necessary imports here
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -108,79 +100,26 @@ class TiRexForecaster(BaseForecaster):
     >>> y_pred = f.predict(fh) # doctest: +SKIP
     """
 
-    # todo: fill out estimator tags here
-    # tags are inherited from parent class if they are not set
-    # todo: define the forecaster scitype by setting the tags
-    # the "forecaster scitype" is determined by the tags
-    # scitype:y - the expected input scitype of y - univariate or multivariate or both
-    # tag values are "safe defaults" which can usually be left as-is
     _tags = {
-        # tags and full specifications are available in the tag API reference
-        # https://www.sktime.net/en/stable/api_reference/tags.html
-        # to list all valid tags with description, use sktime.registry.all_tags
-        #   all_tags(estimator_types="forecaster", as_dataframe=True)
-        #
-        # behavioural tags: internal type
-        # -------------------------------
-        #
-        # y_inner_mtype, X_inner_mtype control which format X/y appears in
-        # in the inner functions _fit, _predict, etc
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
-        # valid values: str and list of str
-        # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER
-        #   of scitype Series, Panel (panel data) or Hierarchical (hierarchical series)
-        #   in that case, all inputs are converted to that one type
-        # if list of str, must be a list of valid str specifiers
-        #   in that case, X/y are passed through without conversion if on the list
-        #   if not on the list, converted to the first entry of the same scitype
-        #
-        # scitype:y controls whether internal y can be univariate/multivariate
-        # if multivariate is not valid, applies vectorization over variables
-        "scitype:y": "univariate",
-        # valid values: "univariate", "multivariate", "both"
-        #   "univariate": inner _fit, _predict, etc, receive only univariate series
-        #   "multivariate": inner methods receive only series with 2 or more variables
-        #   "both": inner methods can see series with any number of variables
-        #
-        # capability tags: properties of the estimator
-        # --------------------------------------------
-        #
-        # ignores-exogeneous-X = does estimator ignore the exogeneous X?
-        "capability:exogenous": False,
-        # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
-        # CAVEAT: if tag is set to True, inner methods always see X=None
-        #
-        # requires-fh-in-fit = is forecasting horizon always required in fit?
-        "requires-fh-in-fit": False,
-        # valid values: boolean True (yes), False (no)
-        # if True, raises exception in fit if fh has not been passed
-        #
-        # ownership and contribution tags
-        # -------------------------------
-        #
-        # author = author(s) of th estimator
-        # an author is anyone with significant contribution to the code at some point
+        # packaging tags
+        # --------------
+        "maintainers": ["sinemkilicdere", "martinloretzzz"],
         "authors": [
             "martinloretzzz",
             "apointa",
             "superbock",
             "sinemkilicdere",
         ],
-        # valid values: str or list of str, should be GitHub handles
-        # this should follow best scientific contribution practices
-        # scope is the code, not the methodology (method is per paper citation)
-        # if interfacing a 3rd party estimator, ensure to give credit to the
-        # authors of the interfaced estimator
-        #
-        # maintainer = current maintainer(s) of the estimator
-        # per algorithm maintainer role, see governance document
-        # this is an "owner" type role, with rights and maintenance duties
-        # for 3rd party interfaces, the scope is the sktime class only
-        "maintainers": ["sinemkilicdere"],
-        # valid values: str or list of str, should be GitHub handles
-        # remove tag if maintained by sktime core team
         "python_dependencies": ["torch", "tirex-ts"],
+        # estimator type
+        # --------------
+        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": "pd.DataFrame",
+        "scitype:y": "univariate",
+        "capability:exogenous": False,
+        "requires-fh-in-fit": False,
+        # CI and test flags
+        # -----------------
         "tests:vm": True,
     }
 
@@ -220,7 +159,6 @@ class TiRexForecaster(BaseForecaster):
         license_text = dist.read_text("licenses/LICENSE")
         print(license_text)
 
-    # todo: implement this, mandatory
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -254,7 +192,6 @@ class TiRexForecaster(BaseForecaster):
         ).load()
         return self
 
-    # todo: implement this, mandatory
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
