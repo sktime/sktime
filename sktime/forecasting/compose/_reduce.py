@@ -824,6 +824,67 @@ class _ReducerMixin:
         orig_name = getattr(self, "_orig_y_name", None)
         orig_cols = getattr(self, "_orig_y_cols", None)
 
+        ## --------------------------------------------------
+        # panel (long-form MultiIndex) must be handled before df1/wide coercions
+        was_panel = bool(getattr(self, "_orig_y_is_panel", False))
+        if was_panel:
+            # self._y_orig was saved in _record_train_shape at fit-time
+            y_train = getattr(self, "_y_orig", None)
+            if y_train is None or not isinstance(
+                getattr(y_train, "index", None), pd.MultiIndex
+            ):
+                # defensive fallback: should not happen in your test C
+                pass
+            else:
+                # split the MultiIndex into series-key level(s) and time level
+                mi_names = list(y_train.index.names)
+                # lead_names = mi_names[:-1]  # unused variable
+                left = y_train.index.droplevel(-1).unique()
+
+                # target time stamps = fh_index we were given
+                abs_times = pd.Index(fh_index)
+
+                # build the multiindex for (#series by #fh) rows
+                if isinstance(left, pd.MultiIndex):
+                    tuples = [(*lvl, t) for lvl in left for t in abs_times]
+                    target_index = pd.MultiIndex.from_tuples(tuples, names=mi_names)
+                else:
+                    target_index = pd.MultiIndex.from_product(
+                        [left, abs_times], names=mi_names
+                    )
+
+                # choose output cols (keep the original single col name if present)
+                if isinstance(orig_cols, list) and len(orig_cols) > 0:
+                    out_cols = orig_cols
+                else:
+                    out_cols = ["y"]
+
+                # get values in 2D (n_rows, n_cols)
+                if isinstance(y_pred, pd.DataFrame):
+                    vals = y_pred.values
+                elif isinstance(y_pred, pd.Series):
+                    vals = y_pred.values.reshape(-1, 1)
+                else:
+                    arr = np.asarray(y_pred)
+                    vals = arr.reshape(-1, len(out_cols))
+
+                # sanity check: avoid silent misalignment
+                n_required = len(target_index)
+                if vals.shape[0] != n_required:
+                    raise ValueError(
+                        f"Panel coercion: row count mismatch: {vals.shape[0]} rows, "
+                        f"need {n_required} (= #series by |fh|)."
+                    )
+
+                ret = pd.DataFrame(vals, index=target_index, columns=out_cols)
+                print(
+                    f"[coerce] RETURN PANEL type={type(ret)} "
+                    f"shape={ret.shape} index_type={type(ret.index)}"
+                )
+                return ret
+
+        ## --------------------------------------------------
+
         # === SERIES contract ===
         if was_series:
             if isinstance(y_pred, np.ndarray):
@@ -847,7 +908,7 @@ class _ReducerMixin:
             return y_pred  # already a Series (or compatible)
 
         # === single-column DataFrame contract ===
-        if was_df1:
+        if was_df1 and not was_panel:
             col = (
                 orig_cols[0]
                 if (isinstance(orig_cols, list) and len(orig_cols) == 1)
@@ -5682,17 +5743,8 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
 
         if self._is_wide(y):
             y_long = self._to_long_from_wide(y)
-            self._was_wide_input = True
-            self._was_long_input = False
         else:
-            # keep state consistent
-            self._was_wide_input = False
-            self._was_long_input = isinstance(getattr(y, "index", None), pd.MultiIndex)
             y_long = y  # n.b. y_long may be a single series
-
-        self._y_orig = y.copy()  # to make it availabe in predict
-        if getattr(self, "_was_wide_input", False):
-            self._y_long = y_long  # save so it can be recalled in predict
 
         X = self._broadcast_X_to_panel(X, y_long.index)
 
@@ -5708,6 +5760,18 @@ class RecursiveReductionForecaster(OriginalRecursiveReductionForecaster):
         #       getattr(self, "_orig_y_is_wide", None))
 
         super().fit(y=y_long, X=X, fh=fh)
+
+        if self._is_wide(y):
+            self._was_wide_input = True
+            self._was_long_input = False
+        else:
+            # keep state consistent
+            self._was_wide_input = False
+            self._was_long_input = isinstance(getattr(y, "index", None), pd.MultiIndex)
+
+        self._y_orig = y.copy()  # to make it availabe in predict
+        if getattr(self, "_was_wide_input", False):
+            self._y_long = y_long  # save so it can be recalled in predict
 
         # print("[fit.debug] AFTER  super().fit  | has_frozen=",
         #       getattr(self, "_orig_shape_frozen", None),
