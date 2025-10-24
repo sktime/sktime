@@ -578,22 +578,6 @@ class dataset_regression(_BaseScitypeOfObject):
         return BaseRegressionDataset
 
 
-class catalogue(_BaseScitypeOfObject):
-    """Catalogue object."""
-
-    _tags = {
-        "scitype_name": "catalogue",
-        "short_descr": "catalogue object",
-        "parent_scitype": "object",
-    }
-
-    @classmethod
-    def get_base_class(cls):
-        from sktime.catalogues.base import BaseCatalogue
-
-        return BaseCatalogue
-
-
 class reconciler(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "reconciler",
