@@ -24,7 +24,6 @@ DataLoader = _safe_import("torch.utils.data.DataLoader")
 Dataset = _safe_import("torch.utils.data.Dataset")
 
 
-
 def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
     """Calculate a special sine for the cINN."""
     sbase = np.sin(x * (1 / 365 / 24 * np.pi * 4) + phase) * amplitude + offset
