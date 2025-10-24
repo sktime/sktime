@@ -29,6 +29,8 @@ class RNNNetwork(BaseDeepNetwork):
             "noxthot",
         ],
         "python_dependencies": ["tensorflow"],
+        "capability:random_state": True,
+        "property:randomness": "stochastic",
     }
 
     def __init__(
