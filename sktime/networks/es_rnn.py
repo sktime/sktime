@@ -17,7 +17,7 @@ else:
         """Dummy class if torch is unavailable."""
 
 
-class PinballLoss(nn.Module):
+class PinballLoss(NNModule):
     """
     Default Pinball/Quantile Loss.
 
