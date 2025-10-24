@@ -14,7 +14,6 @@ from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
 from sktime.utils.warnings import warn
 
-
 torch = _safe_import("torch")
 Dataset = _safe_import("torch.utils.data.Dataset")
 
