@@ -209,7 +209,6 @@ class TiRexForecaster(BaseForecaster):
                 "to confirm that you have read and accepted the license terms. "
                 "To print and view the license for TiRex, "
                 "call `TiRexForecaster.print_license()`"
-                "or go to https://github.com/NX-AI/tirex/blob/main/LICENSE."
             )
 
     @classmethod
