@@ -1,7 +1,5 @@
 """Multi-scale Attention Convolutional Neural Network (MACNN)."""
 
-__author__ = ["jnrusson1"]
-
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -28,11 +26,18 @@ class MACNNNetwork(BaseDeepNetwork):
         The output size of Conv1D layers within each MACNN Block.
     reduction : int, optional (default=16)
         The factor by which the first dense layer of a MACNN Block will be divided by.
-    random_state: int, optional (default=0)
+    random_state : int, optional (default=0)
         The seed to any random action.
+    activation : string, optional (default="relu")
+        Activation function used for hidden layers;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        "authors": ["jnrusson1", "noxthot"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,
@@ -44,10 +49,12 @@ class MACNNNetwork(BaseDeepNetwork):
         kernel_size=(3, 6, 12),
         reduction=16,
         random_state=0,
+        activation="relu",
     ):
         _check_dl_dependencies(severity="error")
         super().__init__()
 
+        self.activation = activation
         self.padding = padding
         self.pool_size = pool_size
         self.strides = strides
@@ -89,14 +96,14 @@ class MACNNNetwork(BaseDeepNetwork):
 
         x1 = keras.layers.Concatenate(axis=2)(conv_layers)
         x1 = keras.layers.BatchNormalization()(x1)
-        x1 = keras.layers.Activation("relu")(x1)
+        x1 = keras.layers.Activation(self.activation)(x1)
 
         x2 = keras.layers.GlobalAveragePooling1D()(x1)
         x2 = keras.layers.Dense(
-            units=int(kernels * 3 / reduce), use_bias=False, activation="relu"
+            units=int(kernels * 3 / reduce), use_bias=False, activation=self.activation
         )(x2)
         x2 = keras.layers.Dense(
-            units=int(kernels * 3), use_bias=False, activation="relu"
+            units=int(kernels * 3), use_bias=False, activation=self.activation
         )(x2)
         x2 = keras.layers.RepeatVector(x1.shape[1])(x2)
 

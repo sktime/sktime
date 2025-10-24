@@ -111,13 +111,22 @@ class ClassificationBenchmark(BaseBenchmark):
         A dictionary of benchmark results for that classifier
         """
         if task_id is None:
-            if hasattr(dataset_loader, "__name__"):
-                task_id = (
-                    f"[dataset={dataset_loader.__name__}]"
-                    + f"_[cv_splitter={cv_splitter.__class__.__name__}]"
-                )
+            if callable(dataset_loader) and hasattr(dataset_loader, "__name__"):
+                # case 1: function
+                dataset_name = dataset_loader.__name__
+            elif isinstance(dataset_loader, type):
+                # case 2: class
+                dataset_name = dataset_loader().get_tags().get("name")
+            elif hasattr(dataset_loader, "get_tags"):
+                # case 3: instance
+                dataset_name = dataset_loader.get_tags().get("name")
             else:
-                task_id = f"_[cv_splitter={cv_splitter.__class__.__name__}]"
+                dataset_name = "_"
+
+            task_id = (
+                f"[dataset={dataset_name}]"
+                f"_[cv_splitter={cv_splitter.__class__.__name__}]"
+            )
         task_kwargs = {
             "data": dataset_loader,
             "cv_splitter": cv_splitter,
@@ -132,17 +141,16 @@ class ClassificationBenchmark(BaseBenchmark):
     def _run_validation(self, task: TaskObject, estimator: BaseClassifier):
         cv_splitter = task.cv_splitter
         scorers = task.scorers
-        X, y = task.get_y_X()
+        xy_dict = task.get_y_X("classification")
         scores_df = evaluate(
             classifier=estimator,
-            y=y,
-            X=X,
             cv=cv_splitter,
             scoring=scorers,
             backend=self.backend,
             backend_params=self.backend_params,
             error_score=task.error_score,
             return_data=self.return_data,
+            **xy_dict,
         )
 
         folds = {}
