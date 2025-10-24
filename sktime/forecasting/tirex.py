@@ -209,6 +209,7 @@ class TiRexForecaster(BaseForecaster):
                 "to confirm that you have read and accepted the license terms. "
                 "To print and view the license for TiRex, "
                 "call `TiRexForecaster.print_license()`"
+                "or go to https://github.com/NX-AI/tirex/blob/main/LICENSE."
             )
 
     @classmethod
@@ -286,8 +287,6 @@ class TiRexForecaster(BaseForecaster):
         y = self._y
         context_values = y.to_numpy()[None, :]
 
-        _check_soft_dependencies("torch", severity="error")
-        _check_soft_dependencies("tirex-ts", severity="error")
         context_tensor = torch.as_tensor(context_values, dtype=torch.float32)
 
         predict_len = len(fh)
