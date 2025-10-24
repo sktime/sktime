@@ -30,7 +30,7 @@ def test_benchmarking_dummy_forecasting_catalogue(tmp_path):
         pd.Series(
             [
                 "[dataset=cif_2016_dataset]_[cv_splitter=ExpandingWindowSplitter]",
-                "[dataset=hospital_dataset]_[cv_splitter=ExpandingWindowSplitter]_2",
+                "[dataset=hospital_dataset]_[cv_splitter=ExpandingWindowSplitter]",
             ],
             name="validation_id",
         ),
@@ -56,7 +56,7 @@ def test_benchmarking_dummy_classification_catalogue(tmp_path):
         pd.Series(
             [
                 "[dataset=Beef]_[cv_splitter=KFold]",
-                "[dataset=ArrowHead]_[cv_splitter=KFold]_2",
+                "[dataset=ArrowHead]_[cv_splitter=KFold]",
             ],
             name="validation_id",
         ),
