@@ -8,23 +8,11 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.split import temporal_train_test_split
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    from torch.cuda import empty_cache
-    from torch.utils.data import Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
-
-        pass
-
-
-if _check_soft_dependencies("accelerate", severity="none"):
-    pass
-
-if _check_soft_dependencies("transformers", severity="none"):
-    from sktime.libs.momentfm import MOMENTPipeline
+torch = _safe_import("torch")
+empty_cache = _safe_import("torch.cuda.empty_cache")
+Dataset = _safe_import("torch.utils.data.Dataset")
 
 
 class MomentFMForecaster(_BaseGlobalForecaster):
@@ -234,6 +222,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         from torch.optim import Adam
         from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
+
+        from sktime.libs.momentfm import MOMENTPipeline
 
         # keep a copy of y in case y is None in predict
         self._y = y
