@@ -52,7 +52,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
 
     References
     ----------
-
     .. [1] Cho, Kyunghyun, et al. "Learning phrase representations
         using RNN encoder-decoder for statistical machine translation."
         arXiv preprint arXiv:1406.1078 (2014).
@@ -60,7 +59,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling.
         arXiv preprint arXiv:1412.3555 (2014).
     .. [3] https://pytorch.org/docs/stable/generated/torch.nn.GRU.html
-
     """
 
     _tags = {
@@ -280,7 +278,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["fnhirwa"],
+        "authors": ["NellyElsayed", "fnhirwa"],
         "maintainers": ["fnhirwa"],
         "python_version": ">=3.9",
         "python_dependencies": "torch",
