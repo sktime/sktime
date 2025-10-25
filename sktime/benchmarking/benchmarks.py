@@ -87,16 +87,16 @@ class _BenchmarkingResults:
 
     def __post_init__(self):
         """Load existing results from the path."""
-        if self.path is not None:
-            self.storage_backend = get_storage_backend(self.path)
-            self.results = self.storage_backend(self.path).load()
-        else:
-            self.results = []
+        self.storage_backend = get_storage_backend(self.path)
+        self.results = self.storage_backend(self.path).load()
+
+    def update(self, new_result):
+        """Update the results with a new result."""
+        self.results.append(new_result)
+        # todo: this should also update the storage backend!
 
     def save(self):
         """Save the results to a file."""
-        if self.path is None:
-            return
         self.storage_backend(self.path).save(self.results)
 
     def contains(self, task_id: str, model_id: str):
@@ -144,9 +144,11 @@ class _SktimeRegistry:
             A unique entity ID.
         entry_point: Callable or str
             The python entrypoint of the entity class. Should be one of:
+
             - the string path to the python object (e.g.module.name:factory_func, or
                 module.name:Class)
             - the python object (class or factory) itself
+
         deprecated: Bool, optional (default=False)
             Flag to denote whether this entity should be skipped in validation runs
             and considered deprecated and replaced by a more recent/better model
@@ -202,17 +204,17 @@ class BaseBenchmark:
 
         - "None": no additional parameters, ``backend_params`` is ignored
         - "loky", "multiprocessing" and "threading": default ``joblib`` backends
-        any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-        with the exception of ``backend`` which is directly controlled by
-        ``backend``. If ``n_jobs`` is not passed, it will default to ``-1``, other
-        parameters will default to ``joblib`` defaults.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by
+          ``backend``. If ``n_jobs`` is not passed, it will default to ``-1``, other
+          parameters will default to ``joblib`` defaults.
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
-        any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
-        ``backend`` must be passed as a key of ``backend_params`` in this case.
-        If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
-        will default to ``joblib`` defaults.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
         - "dask": any valid keys for ``dask.compute`` can be passed,
-        e.g., ``scheduler``
+          e.g., ``scheduler``
 
         - "ray": The following keys can be passed:
 
@@ -249,12 +251,16 @@ class BaseBenchmark:
 
         Parameters
         ----------
-        estimator : Dict, List or BaseEstimator object
+        estimator : dict, list or BaseEstimator object
             Estimator to add to the benchmark.
-            If Dict, keys are estimator_ids used to customise identifier ID
-            and values are estimators.
-            If List, each element is an estimator. estimator_ids are generated
-            automatically using the estimator's class name.
+
+            * if ``BaseEstimator``, single estimator. ``estimator_id`` is generated
+              as the estimator's class name if not provided.
+            * If ``dict``, keys are ``estimator_id``s used to customise identifier ID
+              and values are estimators.
+            * If ``list``, each element is an estimator. ``estimator_id``s are generated
+              automatically using the estimator's class name.
+
         estimator_id : str, optional (default=None)
             Identifier for estimator. If none given then uses estimator's class name.
         """
@@ -277,6 +283,7 @@ class BaseBenchmark:
             and values are estimators.
             If List, each element is an estimator. estimator_ids are generated
             automatically using the estimator's class name.
+
         estimator_id : str, optional (default=None)
             Identifier for estimator. If none given then uses estimator's class name.
         """
@@ -301,42 +308,59 @@ class BaseBenchmark:
         ----------
         results_path : str
             Path to save the results to.
+            If None, will not save the results.
+
         force_rerun : Union[str, list[str]], optional (default="none")
-            If "none", will skip validation if results already exist.
-            If "all", will run validation for all tasks and models.
-            If list of str, will run validation for tasks and models in list.
+
+            * If "none", will skip validation if results already exist.
+            * If "all", will run validation for all tasks and models.
+            * If list of str, will run validation for tasks and models in list.
         """
         results = _BenchmarkingResults(path=results_path)
 
-        for task_id, task in self.tasks.entities.items():
-            for estimator_id, estimator in self.estimators.entities.items():
-                if results.contains(task_id, estimator_id) and (
-                    force_rerun == "none"
-                    or (
-                        isinstance(force_rerun, list)
-                        and estimator_id not in force_rerun
-                    )
-                ):
-                    logging.info(
-                        f"Skipping validation - model: "
-                        f"{task_id} - {estimator_id}"
-                        ", as found prior result in results."
-                    )
-                    continue
-
-                logging.info(f"Running validation - model: {task_id} - {estimator_id}")
-                folds = self._run_validation(task, estimator)
-                results.results.append(
-                    ResultObject(
-                        task_id=task_id,
-                        model_id=estimator_id,
-                        folds=folds,
-                    )
+        for task_id, estimator_id, task, estimator in self._generate_experiments():
+            if results.contains(task_id, estimator_id) and (
+                force_rerun == "none"
+                or (isinstance(force_rerun, list) and estimator_id not in force_rerun)
+            ):
+                logging.info(
+                    f"Skipping validation - model: "
+                    f"{task_id} - {estimator_id}"
+                    ", as found prior result in results."
                 )
+                continue
+
+            logging.info(f"Running validation - model: {task_id} - {estimator_id}")
+            folds = self._run_validation(task, estimator)
+            results.update(
+                ResultObject(
+                    task_id=task_id,
+                    model_id=estimator_id,
+                    folds=folds,
+                )
+            )
 
         if results_path is not None:
             results.save()
         return results.to_dataframe()
+
+    def _generate_experiments(self):
+        """Generate experiments for the benchmark.
+
+        Returns a list of tuples with:
+
+        * task_id: str
+        * estimator_id: str
+        * task: TaskObject
+        * estimator: estimator object
+        """
+        tasks = self.tasks.entities
+        estimators = self.estimators.entities
+        exps = []
+        for task_id, task in tasks.items():
+            for estimator_id, estimator in estimators.items():
+                exps.append((task_id, estimator_id, task, estimator))
+        return exps
 
     def run(self, output_file: str, force_rerun: str | list[str] = "none"):
         """
@@ -347,10 +371,12 @@ class BaseBenchmark:
         output_file : str or None.
             Path to save the results to.
             If None, results will not be saved.
+
         force_rerun : Union[str, list[str]], optional (default="none")
-            If "none", will skip validation if results already exist.
-            If "all", will run validation for all tasks and models.
-            If list of str, will run validation for tasks and models in list.
+
+            * If "none", will skip validation if results already exist.
+            * If "all", will run validation for all tasks and models.
+            * If list of str, will run validation for tasks and models in list.
         """
         return self._run(output_file, force_rerun)
 

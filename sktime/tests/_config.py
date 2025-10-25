@@ -75,7 +75,6 @@ EXCLUDE_ESTIMATORS = [
     # multiple timeouts and sporadic failures reported related to VARMAX
     # 2997, 3176, 7985
     "VARMAX",
-    "SARIMAX",
     "SCINetForecaster",  # known bug #7871
     "MAPAForecaster",  # known bug #8039
 ]
@@ -206,7 +205,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "CircularBinarySegmentation",
         "ClaSPTransformer",
         "ClearSky",
-        "ColumnEnsembleClassifier",
         "ColumnwiseTransformer",
         "ContractableBOSS",
         "DOBIN",
@@ -222,7 +220,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ElasticEnsemble",
         "FeatureSelection",
         "FreshPRINCE",
-        "GreedyGaussianSegmentation",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
         "HIVECOTEV2",
@@ -231,7 +228,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "InceptionTimeNetwork",
         "IndividualBOSS",
         "IndividualTDE",
-        "InformationGainSegmentation",
         "M5Dataset",
         "MCDCNNClassifier",
         "MCDCNNNetwork",
@@ -280,8 +276,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TemporalDictionaryEnsemble",
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
-        "TruncationTransformer",
-        "UnobservedComponents",
         "WEASEL",
         "WhiteNoiseAugmenter",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS

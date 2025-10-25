@@ -3705,6 +3705,18 @@
       ]
     },
     {
+      "login": "RecreationalMath",
+      "name": "Nirbhai Singh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6928297?v=4",
+      "profile": "https://github.com/RecreationalMath",
+      "contributions": [
+        "code",
+        "doc",
+        "design",
+        "bug"
+      ]
+    },
+    {
       "login": "poopsiclepooding",
       "name": "poopsicle",
       "avatar_url": "https://avatars.githubusercontent.com/u/89380897?v=4",
@@ -3713,6 +3725,18 @@
         "code",
         "doc",
         "maintenance"
+      ]
+    },
+        {
+      "login": "mabuimo",
+      "name": "Manuel Buitrago",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20048041?v=4",
+      "profile": "https://github.com/mabuimo",
+      "contributions": [
+        "bug",
+        "code",
+        "ideas",
+        "question"
       ]
     }
   ]
