@@ -137,34 +137,23 @@ class TruncationTransformer(BaseTransformer):
         """
         array_list = [x.values for x in X]
 
-        if self.upper is None:
-            self._min_length = self._get_min_length(array_list)
-
         self._validate_upper_with_data()
+
+        if self.upper is None:
+            self._upper = self._get_min_length(array_list)
+        else:
+            self._upper = self.upper
+
+        if self.lower is None:
+            self._lower = 0
+        else:
+            self._lower = self.lower
 
         return self
 
     def _validate_upper_with_data(self):
         if self.upper is not None and self.upper > self._min_length:
             raise ValueError(self.error_messages["upper_le_min_length"])
-
-    def _get_truncation_indices(self):
-        """Get the truncation indices based on lower and upper bounds.
-
-        Returns
-        -------
-        idxs : 1D np.ndarray
-            Indices to truncate each series to.
-        """
-        if self.lower is None and self.upper is None:
-            idxs = slice(0, self._min_length)
-        elif self.upper is not None and self.lower is None:
-            idxs = slice(0, self.upper)
-        elif self.upper is None and self.lower is not None:
-            idxs = slice(self.lower, self._min_length)
-        else:
-            idxs = slice(self.lower, self.upper)
-        return idxs
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -184,7 +173,7 @@ class TruncationTransformer(BaseTransformer):
             each cell of Xt contains pandas.Series
             transformed version of X
         """
-        idx = self._get_truncation_indices()
+        idx = slice(self._lower, self._upper)
         Xt = [x.iloc[idx] for x in X]
         return Xt
 
