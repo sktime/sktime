@@ -115,6 +115,8 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     # valid rocket strings for input validity checking

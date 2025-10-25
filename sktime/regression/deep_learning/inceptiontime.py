@@ -1,6 +1,5 @@
 """InceptionTime for Regression."""
 
-__author__ = "james-large"
 __all__ = ["InceptionTimeRegressor"]
 
 from copy import deepcopy
@@ -31,12 +30,24 @@ class InceptionTimeRegressor(BaseDeepRegressor):
     bottleneck_size : int, default=32
     depth : int, default=6
     callbacks : list of tf.keras.callbacks.Callback objects
-    random_state: int, optional, default=None
+    random_state : int, optional, default=None
         random seed for internal random number generator
-    verbose: boolean, default=False
+    verbose : boolean, default=False
         whether to print runtime information
-    loss: str, default="mean_squared_error"
-    metrics: optional
+    loss : str, default="mean_squared_error"
+    metrics : optional
+    activation : string or a tf callable, default="linear"
+        Activation function used in the output layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_inception : string or a tf callable, default="linear"
+        Activation function used in the inception layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
 
     Notes
     -----
@@ -47,7 +58,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "james-large"],
+        "authors": ["hfawaz", "james-large", "noxthot"],
         "maintainers": ["james-large", "niles05apr"],
         # estimator type handled by parent class
     }
@@ -67,12 +78,18 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         verbose=False,
         loss="mean_squared_error",
         metrics=None,
+        activation="linear",
+        activation_hidden="relu",
+        activation_inception="linear",
     ):
         _check_dl_dependencies(severity="error")
 
         self.verbose = verbose
 
         # predefined
+        self.activation = activation
+        self.activation_hidden = activation_hidden
+        self.activation_inception = activation_inception
         self.batch_size = batch_size
         self.bottleneck_size = bottleneck_size
         self.callbacks = callbacks
@@ -97,6 +114,8 @@ class InceptionTimeRegressor(BaseDeepRegressor):
             "depth": depth,
             "kernel_size": kernel_size,
             "random_state": random_state,
+            "activation": activation_hidden,
+            "activation_inception": activation_inception,
         }
 
         self._network = InceptionTimeNetwork(**network_params)
@@ -117,7 +136,10 @@ class InceptionTimeRegressor(BaseDeepRegressor):
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(1)(output_layer)
+        output_layer = keras.layers.Dense(
+            activation=self.activation,
+            units=1,
+        )(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
 

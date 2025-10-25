@@ -57,6 +57,8 @@ __authors__ = [
 from .standard import KalmanFilter
 from .unscented import AdditiveUnscentedKalmanFilter, UnscentedKalmanFilter
 
+# todo 0.42.0: point exports to pykalman package
+# todo 1.0.0: remove this module
 __all__ = [
     "KalmanFilter",
     "AdditiveUnscentedKalmanFilter",
@@ -64,3 +66,16 @@ __all__ = [
     "datasets",
     "sqrt",
 ]
+
+from sktime.utils.warnings import warn
+
+warn(
+    "sktime.libs.pykalman will point to pykalman from version 0.42.0, "
+    "and will be removed in version 1.0.0. Users should "
+    "replace their imports from sktime.libs.pykalman with imports from pykalman, "
+    "and ensure the package is installed in their environment. "
+    "The sktime fork was a maintenance fork due to temporarly lapse in maintenance "
+    "of pykalman. This has since been resolved, with pykalman under maintenance "
+    "by the sktime team.",
+    FutureWarning,
+)

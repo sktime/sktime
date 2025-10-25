@@ -91,7 +91,7 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     _tags = {
         "requires-y-train": False,
         "requires-y-pred-benchmark": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
     }
 
     func = mean_relative_absolute_error

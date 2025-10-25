@@ -26,7 +26,7 @@ class _StatsModelsAdapter(BaseForecaster):
         "python_dependencies": "statsmodels",
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
     }

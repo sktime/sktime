@@ -105,6 +105,7 @@ class TimeSeriesSVRTslearn(_TslearnAdapter, BaseRegressor):
         # --------------
         "capability:multivariate": True,
         "capability:unequal_length": False,
+        "property:randomness": "stochastic",
     }
 
     # defines the name of the attribute containing the tslearn estimator

@@ -56,7 +56,7 @@ class PAA(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "np.ndarray",
         "y_inner_mtype": "None",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "requires_y": False,
         "fit_is_empty": True,
         "capability:inverse_transform": False,

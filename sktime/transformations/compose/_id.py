@@ -19,7 +19,7 @@ class Id(BaseTransformer):
     _tags = {
         "authors": "fkiraly",
         "capability:inverse_transform": True,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": CORE_MTYPES,  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?

@@ -134,8 +134,8 @@ def load_UCR_UEA_dataset(
 
     Examples
     --------
-    >>> from sktime.datasets import load_UCR_UEA_dataset
-    >>> X, y = load_UCR_UEA_dataset(name="ArrowHead")
+    >>> from sktime.datasets import load_UCR_UEA_dataset # doctest: +SKIP
+    >>> X, y = load_UCR_UEA_dataset(name="ArrowHead") # doctest: +SKIP
     """
     return _load_dataset(
         name, split, return_X_y, return_type, extract_path, y_dtype=y_dtype

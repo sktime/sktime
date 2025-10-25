@@ -96,7 +96,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         "scitype:y_pred": "pred",  # point forecasts
         "requires-y-train": False,
         "requires-y-pred-benchmark": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "lower_is_better": True,
         # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
         "inner_implements_multilevel": False,
@@ -973,7 +973,7 @@ class _ScaledMetricTags:
     _tags = {
         "requires-y-train": True,
         "requires-y-pred-benchmark": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
     }
 
 

@@ -18,7 +18,7 @@ class _StatsForecastAdapter(BaseForecaster):
         "authors": ["AzulGarza"],
         "maintainers": ["AzulGarza"],
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?

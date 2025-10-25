@@ -8,7 +8,6 @@ __all__ = [
     "SameLocSplitter",
 ]
 
-from typing import Optional
 
 import pandas as pd
 
@@ -112,7 +111,7 @@ class SameLocSplitter(BaseSplitter):
 
         yield from cv.split_loc(y_template)
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
 
         This will always be equal to the number of splits

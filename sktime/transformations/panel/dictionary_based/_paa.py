@@ -38,6 +38,7 @@ class PAAlegacy(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self, num_intervals=8):

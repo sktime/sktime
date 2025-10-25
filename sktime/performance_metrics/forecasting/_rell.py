@@ -109,7 +109,7 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     _tags = {
         "requires-y-train": False,
         "requires-y-pred-benchmark": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
     }
 
     func = relative_loss

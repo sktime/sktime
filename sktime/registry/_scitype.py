@@ -94,8 +94,11 @@ def scitype(
         * an ``sklearn`` scitype string used in ``sktime``, this can be:
 
             * ``"classifier_tabular"`` - ``sklearn`` classifier
-            * ``"regressor_tabular"`` - ``sklearn`` regressor
             * ``"clusterer_tabular"`` - ``sklearn`` clusterer
+            * ``"metric_tabular"`` - ``sklearn`` metric function (non-probabilistic)
+            * ``"metric_proba_tabular"`` - ``sklearn`` proba classification metric
+            * ``"regressor_tabular"`` - ``sklearn`` regressor
+            * ``"splitter_tabular"`` - ``sklearn`` splitter (cross-validation generator)
             * ``"transformer_tabular"`` - ``sklearn`` transformation
 
         The return type is:
@@ -140,9 +143,9 @@ def scitype(
     # 2nd pass
     # check if object is sklearn estimator
     # if it is, return sklearn scitype
-    from sktime.utils.sklearn import is_sklearn_estimator, sklearn_scitype
+    from sktime.utils.sklearn import is_sklearn_object, sklearn_scitype
 
-    if is_sklearn_estimator(obj):
+    if is_sklearn_object(obj):
         detected_scitype = f"{sklearn_scitype(obj)}_tabular"
         return handle_output_format(detected_scitype)
 

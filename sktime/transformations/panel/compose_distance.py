@@ -53,7 +53,7 @@ class DistanceFeatures(BaseTransformer):
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,
         "capability:inverse_transform": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "requires_y": False,
         "enforce_index_type": None,
         "fit_is_empty": False,

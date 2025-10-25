@@ -52,7 +52,7 @@ class Lynx(_ForecastingDatasetFromLoader):
         "is_empty": False,
         "has_nans": False,
         "has_exogenous": False,
-        "n_instances": 114,
+        "n_instances": 1,
         "n_timepoints": 114,
         "n_timepoints_train": None,
         "n_timepoints_test": None,

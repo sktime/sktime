@@ -127,8 +127,19 @@ Pipeline building - Logging
 
     Logger
 
-Sklearn and pandas adapters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Pipeline building - Output combination
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CombineTransformers
+
+Sklearn, pandas, numpy adapters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.panel.reduce
 
@@ -147,6 +158,7 @@ Sklearn and pandas adapters
 
     TabularToSeriesAdaptor
     PandasTransformAdaptor
+
 
 Series-to-features transformers
 -------------------------------
@@ -257,6 +269,7 @@ Dictionary-based features
     SFAFast
     PAAlegacy
     SAXlegacy
+    fABBA
 
 Auto-correlation-based features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -385,6 +398,14 @@ Depending on the transformer, the transformation parameters can be fitted.
     :template: class.rst
 
     ScaledAsinhTransformer
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CombineTransformers
 
 Detrending and Decomposition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -575,6 +596,14 @@ Binning, sampling and segmentation
     :template: class.rst
 
     SAX
+
+.. currentmodule:: sktime.transformations.series.fabba
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    fABBA
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~

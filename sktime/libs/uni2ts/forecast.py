@@ -16,7 +16,7 @@
 import math
 from contextlib import contextmanager
 from copy import deepcopy
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -96,7 +96,7 @@ class MoiraiForecast(L.LightningModule):
         feat_dynamic_real_dim: int,
         past_feat_dynamic_real_dim: int,
         context_length: int,
-        module_kwargs: Optional[dict[str, Any]] = None,
+        module_kwargs: dict[str, Any] | None = None,
         module=None,
         patch_size="auto",
         num_samples: int = 100,
@@ -112,13 +112,13 @@ class MoiraiForecast(L.LightningModule):
     @contextmanager
     def hparams_context(
         self,
-        prediction_length: Optional[int] = None,
-        target_dim: Optional[int] = None,
-        feat_dynamic_real_dim: Optional[int] = None,
-        past_feat_dynamic_real_dim: Optional[int] = None,
-        context_length: Optional[int] = None,
+        prediction_length: int | None = None,
+        target_dim: int | None = None,
+        feat_dynamic_real_dim: int | None = None,
+        past_feat_dynamic_real_dim: int | None = None,
+        context_length: int | None = None,
         patch_size=None,
-        num_samples: Optional[int] = None,
+        num_samples: int | None = None,
     ):
         kwargs = {
             "prediction_length": prediction_length,
@@ -263,7 +263,7 @@ class MoiraiForecast(L.LightningModule):
         observed_feat_dynamic_real=None,
         past_feat_dynamic_real=None,
         past_observed_feat_dynamic_real=None,
-        num_samples: Optional[int] = None,
+        num_samples: int | None = None,
     ):
         if self.hparams.patch_size == "auto":
             val_loss = []
@@ -462,7 +462,7 @@ class MoiraiForecast(L.LightningModule):
         x,
         dim: int,
         left: bool = True,
-        value: Optional[float] = None,
+        value: float | None = None,
     ):
         if dim >= 0:
             dim = -x.ndim + dim

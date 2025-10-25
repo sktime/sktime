@@ -12,13 +12,16 @@ __all__ = [
     "MVTSTransformerClassifier",
     "ResNetClassifier",
     "SimpleRNNClassifier",
+    "SimpleRNNClassifierTorch",
     "TapNetClassifier",
     "GRUClassifier",
     "GRUFCNNClassifier",
+    "ConvTimeNetClassifier",
 ]
 
 from sktime.classification.deep_learning.cnn import CNNClassifier
 from sktime.classification.deep_learning.cntc import CNTCClassifier
+from sktime.classification.deep_learning.convtimenet import ConvTimeNetClassifier
 from sktime.classification.deep_learning.fcn import FCNClassifier
 from sktime.classification.deep_learning.gru import (
     GRUClassifier,
@@ -33,5 +36,8 @@ from sktime.classification.deep_learning.mvts_transformer import (
     MVTSTransformerClassifier,
 )
 from sktime.classification.deep_learning.resnet import ResNetClassifier
-from sktime.classification.deep_learning.rnn import SimpleRNNClassifier
+from sktime.classification.deep_learning.rnn import (
+    SimpleRNNClassifier,
+    SimpleRNNClassifierTorch,
+)
 from sktime.classification.deep_learning.tapnet import TapNetClassifier

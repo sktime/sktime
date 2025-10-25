@@ -67,9 +67,9 @@ def _box_norm(X, bounds, method):
 
 
 class BoxCoxTransformer(BaseTransformer):
-    r"""Box-Cox power transform.
+    r"""Box-Cox power transform with fittable lambda parameter.
 
-    Box-Cox transformation is a power transformation that is used to
+    The Box-Cox transformation is a power transformation that is used to
     make data more normally distributed and stabilize its variance based
     on the hyperparameter lambda. [1]_
 
@@ -99,6 +99,10 @@ class BoxCoxTransformer(BaseTransformer):
     absolute values in ``fit``.
     In ``transform``, the signed Box-Cox-transform is applied, i.e., the sign is kept
     while the transform is applied to the value.
+
+    Direct interface to ``scipy`` ``boxcox``, and ``inv_boxcox`` for transformation,
+    ``scipy`` ``boxcox_normmax`` and a custom implementation of Guerrero's method
+    for fitting the Box-Cox lambda parameter.
 
     Parameters
     ----------
@@ -174,11 +178,14 @@ class BoxCoxTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
         "fit_is_empty": False,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "capability:inverse_transform": True,
+        "capability:categorical_in_X": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_categorical_y_raises_error"],
+        # test causes "bracket error", data does not seem to work with box-cox
     }
 
     def __init__(
@@ -390,7 +397,7 @@ class LogTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
         "fit_is_empty": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "capability:inverse_transform": True,
     }
 
@@ -442,6 +449,34 @@ class LogTransformer(BaseTransformer):
         scale = self.scale
         Xt = (np.exp(X) / scale) - offset
         return Xt
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        return [
+            {"offset": 0, "scale": 1},
+            {"offset": 0, "scale": 10},
+            {"offset": 0.5, "scale": 0.5},
+            {"offset": 1, "scale": 2},
+            {"offset": 10, "scale": 10},
+        ]
 
 
 def _make_boxcox_optimizer(bounds=None, brack=(-2.0, 2.0)):

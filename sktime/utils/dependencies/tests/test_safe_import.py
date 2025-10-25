@@ -82,3 +82,13 @@ def test_soft_dependency_chains():
     """
     result = _safe_import("gluonts.torch.PyTorchPredictor")
     assert result is not None
+
+
+def test_safe_import_pkg_with_different_name():
+    """Test that importing a package with a different name works."""
+    result = _safe_import("sklearn", pkg_name="scikit-learn")
+    assert result is not None
+
+    import sklearn
+
+    assert result is sklearn

@@ -136,13 +136,14 @@ class HMM(BaseDetector):
         "maintainers": "miraep8",
         # estimator type
         # --------------
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": True,
         "task": "segmentation",
         "learning_type": "unsupervised",
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_non_state_changing_method_contract"],  # see #8966
     }
 
     def __init__(

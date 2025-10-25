@@ -72,6 +72,8 @@ class SummaryClassifier(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "deterministic",
         "classifier_type": "feature",
     }
 

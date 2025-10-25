@@ -43,6 +43,7 @@ class DateTimeFeatures(BaseTransformer):
     Parameters
     ----------
     ts_freq : str, optional (default="day")
+        Frequency of the time series.
         Restricts selection of items to those with a frequency lower than
         the frequency of the time series given by ts_freq.
         E.g. if monthly data is provided and ts_freq = ("M"), it does not make
@@ -55,6 +56,7 @@ class DateTimeFeatures(BaseTransformer):
         for the calculation of manually specified features, but when provided will
         raise a warning if manual features have a frequency higher than ts_freq.
         Only supports the following frequencies:
+
         * Y - year
         * Q - quarter
         * M - month
@@ -64,19 +66,23 @@ class DateTimeFeatures(BaseTransformer):
         * T - minute
         * S - second
         * L - millisecond
+
     feature_scope: str, optional (default="minimal")
         Specify how many calendar features you want to be returned.
         E.g., rarely used features like week of quarter will only be returned
         with feature_scope =  "comprehensive".
+
         * "minimal"
         * "efficient"
         * "comprehensive"
+
     manual_selection: str, optional (default=None)
         Manual selection of dummys. Notation is child of parent for precise notation.
         Will ignore specified feature_scope, but will still check with warning against
         a specified ts_freq. All columns returned are integer based. Dates are presented
         in DD-MM-YYYY format below.
         Supported values:
+
         * None
         * quarter_of_year
             1-based index
@@ -134,6 +140,7 @@ class DateTimeFeatures(BaseTransformer):
         * is_weekend
             1 indicates weekend, 0 indicates it is not a weekend
         * year (special case with no lower frequency).
+
     keep_original_columns :  boolean, optional, default=False
         Keep original columns in X passed to ``.transform()``.
 
@@ -190,7 +197,7 @@ class DateTimeFeatures(BaseTransformer):
         ],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": True,
         "transform-returns-same-time-index": True,
         "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
@@ -198,6 +205,10 @@ class DateTimeFeatures(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": [
+            "test_categorical_X_passes",
+            "test_categorical_y_raises_error",
+        ],  # these tests use RangeIndex data which is not supported
     }
 
     def __init__(

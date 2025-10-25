@@ -24,7 +24,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "scitype:y": "both",
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
     }
 
     def __init__(

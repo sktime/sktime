@@ -143,6 +143,10 @@ def test_load_fpp3_private():
         _ = _load_fpp3(dataset_name, temp_folder=None, robust=True)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("rdata", severity="none"),
+    reason="run test only if the soft dependency rdata is installed",
+)
 @pytest.mark.datadownload
 def test_load_fpp3_public():
     """Test loading downloaded dataset from ."""

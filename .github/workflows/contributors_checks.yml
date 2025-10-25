@@ -1,0 +1,29 @@
+name: all Contributors Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - main
+    paths:
+      - '.all-contributorsrc'
+
+jobs:
+  json-integrity-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install -g ajv-cli
+
+      - name: Validate .all-contributorsrc
+        run: |
+         cat ./.all-contributorsrc > .temp.json
+         ajv validate -s ./.github/schema/schema_contributorsrc.json -d .temp.json
+         rm .temp.json

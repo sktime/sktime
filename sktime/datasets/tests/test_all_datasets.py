@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets.base._base import InvalidSetError
+from sktime.datatypes._check import check_is_mtype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
 
@@ -63,7 +64,14 @@ class TestAllDatasets(DatasetFixtureGenerator, QuickTester):
         """Check the number of instances."""
         n_instances = estimator_instance.get_tag("n_instances")
         y = estimator_instance.load("y")
-        assert len(y) == n_instances
+        if check_is_mtype(y, "pd-multiindex"):
+            assert len(y.index.levels[0]) == n_instances
+        elif check_is_mtype(y, "pd.Series") or check_is_mtype(y, "pd.DataFrame"):
+            assert 1 == n_instances
+        elif check_is_mtype(y, "pd_multiindex_hier"):
+            assert y.index.droplevel(-1).nunique() == n_instances
+        else:
+            assert len(y) == n_instances
 
     def test_tag_n_instances_train(self, estimator_instance):
         """Check the number of instances in the training set.
@@ -77,7 +85,16 @@ class TestAllDatasets(DatasetFixtureGenerator, QuickTester):
         )
         with contextwrapper:
             y_train = estimator_instance.load("y_train")
-            assert len(y_train) == n_instances_train
+            if check_is_mtype(y_train, "pd-multiindex"):
+                assert len(y_train.index.levels[0]) == n_instances_train
+            elif check_is_mtype(y_train, "pd.Series") or check_is_mtype(
+                y_train, "pd.DataFrame"
+            ):
+                assert 1 == n_instances_train
+            elif check_is_mtype(y_train, "pd_multiindex_hier"):
+                assert y_train.index.droplevel(-1).nunique() == n_instances_train
+            else:
+                assert len(y_train) == n_instances_train
 
     def test_tag_n_instances_test(self, estimator_instance):
         """Check the number of instances in the test set.
@@ -92,7 +109,16 @@ class TestAllDatasets(DatasetFixtureGenerator, QuickTester):
         )
         with contextwrapper:
             y_test = estimator_instance.load("y_test")
-            assert len(y_test) == n_instances_test
+            if check_is_mtype(y_test, "pd-multiindex"):
+                assert len(y_test.index.levels[0]) == n_instances_test
+            elif check_is_mtype(y_test, "pd.Series") or check_is_mtype(
+                y_test, "pd.DataFrame"
+            ):
+                assert 1 == n_instances_test
+            elif check_is_mtype(y_test, "pd_multiindex_hier"):
+                assert y_test.index.droplevel(-1).nunique() == n_instances_test
+            else:
+                assert len(y_test) == n_instances_test
 
     def test_tag_n_splits(self, estimator_instance):
         """Check the number of splits."""

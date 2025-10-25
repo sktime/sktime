@@ -96,6 +96,8 @@ class ElasticEnsemble(BaseClassifier):
         # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "distance",
     }
 

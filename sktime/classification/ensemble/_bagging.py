@@ -86,6 +86,8 @@ class BaggingClassifier(BaseClassifier):
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "X_inner_mtype": ["pd-multiindex", "nested_univ"],
     }
 

@@ -493,6 +493,14 @@ Deep learning based forecasters
 
     SCINetForecaster
 
+.. currentmodule:: sktime.forecasting.convtimenet
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ConvTimeNetForecaster
+
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
 .. autosummary::
@@ -623,6 +631,14 @@ Pre-trained and foundation models
 
     TinyTimeMixerForecaster
 
+.. currentmodule:: sktime.forecasting.toto
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TotoForecaster
+
 Intermittent time series forecasters
 ------------------------------------
 
@@ -641,6 +657,14 @@ Intermittent time series forecasters
     :template: class.rst
 
     StatsForecastADIDA
+
+.. currentmodule:: sktime.forecasting.tsb
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSB
 
 Ensembles and stacking
 ----------------------
@@ -737,6 +761,7 @@ Model selection and tuning
 
     ForecastingGridSearchCV
     ForecastingRandomizedSearchCV
+    ForecastingOptCV
     ForecastingSkoptSearchCV
     ForecastingOptunaSearchCV
 

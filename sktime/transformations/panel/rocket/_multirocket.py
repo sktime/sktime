@@ -95,7 +95,7 @@ class MultiRocket(BaseTransformer):
         "python_dependencies": "numba",
         # estimator type
         # --------------
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -104,6 +104,8 @@ class MultiRocket(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(

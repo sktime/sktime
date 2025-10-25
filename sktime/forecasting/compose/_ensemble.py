@@ -107,10 +107,12 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     _tags = {
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "scitype:y": "univariate",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -320,7 +322,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     _tags = {
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],

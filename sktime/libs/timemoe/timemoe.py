@@ -15,7 +15,6 @@
 
 import math
 import warnings
-from typing import Optional
 
 from sktime.utils.dependencies import _safe_import
 
@@ -560,7 +559,7 @@ class TimeMoeAttention(nn.Module):
     and "Generating Long Sequences with Sparse Transformers".
     """
 
-    def __init__(self, config: TimeMoeConfig, layer_idx: Optional[int] = None):
+    def __init__(self, config: TimeMoeConfig, layer_idx: int | None = None):
         super().__init__()
         self.config = config
         self.layer_idx = layer_idx
@@ -773,8 +772,8 @@ class TimeMoeDecoderLayer(nn.Module):
         attention_mask=None,
         position_ids=None,
         past_key_value=None,
-        output_attentions: Optional[bool] = False,
-        use_cache: Optional[bool] = False,
+        output_attentions: bool | None = False,
+        use_cache: bool | None = False,
         **kwargs,
     ):
         """
@@ -922,10 +921,10 @@ class TimeMoeModel(TimeMoePreTrainedModel):
         position_ids=None,
         past_key_values=None,
         inputs_embeds=None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
+        use_cache: bool | None = None,
+        output_attentions: bool | None = None,
+        output_hidden_states: bool | None = None,
+        return_dict: bool | None = None,
     ):
         """
         Perform a forward pass of the model.
@@ -1243,11 +1242,11 @@ class TimeMoeForPrediction(TimeMoePreTrainedModel, TSGenerationMixin):
         inputs_embeds=None,
         labels=None,
         loss_masks=None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
-        max_horizon_length: Optional[int] = None,
+        use_cache: bool | None = None,
+        output_attentions: bool | None = None,
+        output_hidden_states: bool | None = None,
+        return_dict: bool | None = None,
+        max_horizon_length: int | None = None,
     ):
         """
         Perform a forward pass through the model.

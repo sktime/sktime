@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Optional
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -38,8 +37,8 @@ class FeedForward(nn.Module):
     def __init__(
         self,
         in_dim: int,
-        hidden_dim: Optional[int] = None,
-        out_dim: Optional[int] = None,
+        hidden_dim: int | None = None,
+        out_dim: int | None = None,
         activation=F.gelu,
         bias: bool = True,
         ffn_dropout_p: float = 0.0,
@@ -72,8 +71,8 @@ class GatedLinearUnitFeedForward(FeedForward):
     def __init__(
         self,
         in_dim: int,
-        hidden_dim: Optional[int] = None,
-        out_dim: Optional[int] = None,
+        hidden_dim: int | None = None,
+        out_dim: int | None = None,
         activation=F.silu,
         bias: bool = True,
         ffn_dropout_p: float = 0.0,
