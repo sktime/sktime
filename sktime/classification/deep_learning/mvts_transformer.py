@@ -82,6 +82,8 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         "authors": ["gzerveas", "geetu040"],
         # gzerveas for original code in research repository
         "maintainers": ["geetu040"],
+        "property:randomness": "stochastic",
+        "capability:random_state": True,
     }
 
     def __init__(
