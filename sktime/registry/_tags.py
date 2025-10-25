@@ -2182,6 +2182,162 @@ class capability__variable_identification(_BaseTag):
     }
 
 
+# Time series aligner tags
+# ------------------------
+
+
+class capability__multiple_alignment(_BaseTag):
+    """Capability: aligner can align multiple series.
+
+    - String name: ``"capability:multiple-alignment"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to time series aligners.
+
+    If the tag is ``True``, the aligner can align multiple time series
+    in a single alignment operation.
+    If the tag is ``False``, the aligner can only align two time series
+    in a single alignment operation.
+
+    If the tag is ``True``, the aligner's ``fit`` method can take as input
+    a collection of more than two time series.
+
+    Otherwise, the aligner's ``fit`` method can only take as input two time series.
+    """
+
+    _tags = {
+        "tag_name": "capability:multiple-alignment",
+        "parent_type": "aligner",
+        "tag_type": "bool",
+        "short_descr": "is aligner capable of aligning multiple series (True) or only two (False)?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__distance(_BaseTag):
+    """Capability: aligner can return overall distance between aligned series.
+
+    - String name: ``"capability:distance"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to time series aligners.
+
+    If the tag is ``True``, the aligner is capable of returning an overall distance
+    between the aligned time series via the ``get_distance`` method.
+
+    If the tag is ``False``, the aligner cannot return an overall distance
+    between the aligned time series, and calling ``get_distance`` will raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:distance",
+        "parent_type": "aligner",
+        "tag_type": "bool",
+        "short_descr": "can aligner return overall distance between aligned series?",
+        "user_facing": True,
+    }
+
+
+class capability__distance_matrix(_BaseTag):
+    """Capability: aligner can return a distance matrix between aligned series.
+
+    - String name: ``"capability:distance-matrix"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to time series aligners.
+
+    If the tag is ``True``, the aligner is capable of returning a pairwise
+    distance matrix
+    between the aligned time series via the ``get_distance_matrix`` method.
+
+    If the tag is ``False``, the aligner cannot return a pairwise distance matrix
+    between the aligned time series,
+    and calling ``get_distance_matrix`` will raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:distance-matrix",
+        "parent_type": "aligner",
+        "tag_type": "bool",
+        "short_descr": "can aligner return pairwise distance matrix between aligned series?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class property__alignment_type(_BaseTag):
+    """Property: type of alignment produced by the aligner.
+
+    - String name: ``"alignment_type"``
+    - Public property tag
+    - Values: string, one of ``"full"``, ``"partial"``
+    - Example: ``"full"``
+    - Default: ``"full"``
+
+    This tag applies to time series aligners.
+
+    The tag specifies whether the aligner produces a full alignment,
+    where the entire time series are aligned,
+    or a partial alignment, where only subsequences of the time series are aligned.
+
+    The possible values are:
+
+    * ``"full"``: the aligner produces a full alignment of the time series.
+      In this case, ``get_alignment`` will return alignments where indices
+      cover the entire length of the input time series.
+    * ``"partial"``: the aligner produces a partial alignment of the time series.
+      In this case, ``get_alignment`` returned alignments do not necessarily
+      cover the entire length of the input time series.
+    """
+
+    _tags = {
+        "tag_name": "alignment_type",
+        "parent_type": "aligner",
+        "tag_type": ("str", ["full", "partial"]),
+        "short_descr": "does aligner produce a full or partial alignment?",
+        "user_facing": True,
+    }
+
+
+# Parameter estimator tags
+# ------------------------
+
+
+class capability__pairwise_parameter_estimation(_BaseTag):
+    """Capability: parameter estimator supports pairwise parameter estimation.
+
+    - String name: ``"capability:pairwise"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to parameter estimators.
+
+    If the tag is ``True``, the estimator supports pairwise parameter estimation,
+    i.e., estimating parameters for a pair of time series.
+
+    If the tag is ``False``, the estimator does not support
+    pairwise parameter estimation.
+    """
+
+    _tags = {
+        "tag_name": "capability:pairwise",
+        "parent_type": "param_est",
+        "tag_type": "bool",
+        "short_descr": "does the estimator support pairwise parameter estimation?",
+        "user_facing": True,
+    }
+
+
 # Metrics tags
 # ------------
 
@@ -3123,36 +3279,6 @@ ESTIMATOR_TAG_REGISTER = [
         ),
         "which type the classifier falls under in the taxonomy of time series "
         "classification algorithms.",
-    ),
-    (
-        "capability:multiple-alignment",
-        "aligner",
-        "bool",
-        "is aligner capable of aligning multiple series (True) or only two (False)?",
-    ),
-    (
-        "capability:pairwise",
-        "param_est",
-        "bool",
-        "Indicates whether the estimator supports pairwise parameter estimation.",
-    ),
-    (
-        "capability:distance",
-        "aligner",
-        "bool",
-        "does aligner return overall distance between aligned series?",
-    ),
-    (
-        "capability:distance-matrix",
-        "aligner",
-        "bool",
-        "does aligner return pairwise distance matrix between aligned series?",
-    ),
-    (
-        "alignment_type",
-        "aligner",
-        ("str", ["full", "partial"]),
-        "does aligner produce a full or partial alignment",
     ),
     (
         "remember_data",
