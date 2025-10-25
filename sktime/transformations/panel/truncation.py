@@ -6,24 +6,15 @@ __all__ = ["TruncationTransformer"]
 
 
 class TruncationTransformer(BaseTransformer):
-    """
-    Truncates unequal length panels between lower/upper length ranges.
+    """Truncates unequal length panels between lower/upper length ranges.
 
-    If ``lower`` and ``upper`` are None the transformer will truncate
-    each series to ``iloc`` indices from range [0, min_series_length)
-    where ``min_series_length`` is the length of the shortest series in the panel
-    calculated automatically.
+    Truncates each series in ``transform`` to ``iloc`` between integers
+    ``lower`` (inclusive) and ``upper`` (exclusive).
 
-    If ``lower`` is set and ``upper`` is None the transformer will truncate
-    each series to ``iloc`` indices from range [lower, min_series_length)
-    where ``min_series_length`` is the length of the shortest series in the panel
-    calculated automatically.
+    If ``lower`` is ``None``, it is set to ``0``.
 
-    If ``upper`` is set and ``lower`` is None the transformer will truncate
-    each series to ``iloc`` indices from range [0, upper).
-
-    If both ``lower`` and ``upper`` are set the transformer will truncate
-    each series to ``iloc`` indices from range [lower, upper).
+    If ``upper`` is ``None``, it is set to the length of the shortest series
+    in the panel passed to ``fit``.
 
     Parameters
     ----------
@@ -133,8 +124,6 @@ class TruncationTransformer(BaseTransformer):
         """
         array_list = [x.values for x in X]
 
-        self._validate_upper_with_data()
-
         if self.upper is None:
             self._upper = self._get_min_length(array_list)
         else:
@@ -145,10 +134,12 @@ class TruncationTransformer(BaseTransformer):
         else:
             self._lower = self.lower
 
+        self._validate_upper_with_data()
+
         return self
 
     def _validate_upper_with_data(self):
-        if self.upper is not None and self.upper > self._min_length:
+        if self.upper is not None and self.upper > self._upper:
             raise ValueError(self.error_messages["upper_le_min_length"])
 
     def _transform(self, X, y=None):
