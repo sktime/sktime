@@ -64,10 +64,19 @@ class GRUClassifier(BaseDeepClassifierPytorch):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["fnhirwa"],
         "maintainers": ["fnhirwa"],
         "python_version": ">=3.9",
         "python_dependencies": "torch",
+        # estimator type
+        # --------------
+        # remaining tags handled by BaseDeepClassifierPytorch
+        "property:randomness": "stochastic",
+        "capability:random_state": True,
+        # testing configuration
+        # ---------------------
         "tests:libs": ["sktime.networks.gru"],
     }
 
