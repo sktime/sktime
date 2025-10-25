@@ -1,4 +1,11 @@
+"""Chronos2 Forecaster module.
+
+This module provides the Chronos2Forecaster class for time-series forecasting
+using Amazon's Chronos-2 model with the sktime API.
+"""
+
 from sktime.forecasting.base import BaseForecaster
+
 
 class Chronos2Forecaster(BaseForecaster):
     """Prototype Chronos 2 Forecaster."""
