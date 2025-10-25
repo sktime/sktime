@@ -268,7 +268,7 @@ dl = [
   "torch; (sys_platform != 'darwin' or python_version != '3.13')",
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan>=0.2.1,<0.2.9; python_version > "3.9.7"',
-  "pytorch-forecasting>=1.0.0,<1.5.0; (sys_platform != 'darwin' or python_version != '3.13')",
+  "pytorch-forecasting>=1.0.0,<1.6.0; (sys_platform != 'darwin' or python_version != '3.13')",
   'lightning>=2.0; python_version < "3.12"',
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
@@ -449,7 +449,6 @@ allowed-confusables=["σ"]
   "D104", # Missing docstring in public package
   "D106", # Missing docstring in public nested class
 ]
-"sktime/libs/tirex/**/*.py" = ["ALL"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
