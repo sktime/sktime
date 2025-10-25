@@ -69,14 +69,14 @@ class TruncationTransformer(BaseTransformer):
     """
 
     _tags = {
-        "authors": ["abostrom"],
-        "maintainers": ["abostrom"],
+        "authors": ["abostrom", "Astrael1", "fkiraly"],
+        "maintainers": ["Astrael1"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "df-list",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "capability:unequal_length:removes": True,
@@ -98,10 +98,19 @@ class TruncationTransformer(BaseTransformer):
 
     @staticmethod
     def _get_min_length(X):
-        def get_length(input):
-            return min(map(lambda series: len(series), input))
+        """Get the minimum length of series in a list of np.ndarrays.
 
-        return min(map(get_length, X))
+        Parameters
+        ----------
+        X : list of np.ndarrays
+            List of arrays to get the minimum length from.
+
+        Returns
+        -------
+        min_length : int
+            Minimum length of series in X.
+        """
+        return min(x.shape[0] for x in X)
 
     def _validate_parameters(self):
         if self.lower is not None:
@@ -110,10 +119,6 @@ class TruncationTransformer(BaseTransformer):
             if self.upper is not None and self.upper <= self.lower:
                 raise ValueError(self.error_messages["upper_gt_lower"])
 
-    def _data_to_series_list(self, X):
-        n_instances, _ = X.shape
-        return [X.iloc[i, :].values for i in range(n_instances)]
-
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -121,8 +126,7 @@ class TruncationTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, n_features]
-            each cell of X must contain pandas.Series
+        X : list of pd.DataFrame
             Data to fit transform to
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
@@ -131,8 +135,11 @@ class TruncationTransformer(BaseTransformer):
         -------
         self : reference to self
         """
-        self.series_list = self._data_to_series_list(X)
-        self._min_length = self._get_min_length(self.series_list)
+        array_list = [x.values for x in X]
+
+        if self.upper is None:
+            self._min_length = self._get_min_length(array_list)
+
         self._validate_upper_with_data()
 
         return self
@@ -142,15 +149,21 @@ class TruncationTransformer(BaseTransformer):
             raise ValueError(self.error_messages["upper_le_min_length"])
 
     def _get_truncation_indices(self):
-        """Get the truncation indices based on lower and upper bounds."""
+        """Get the truncation indices based on lower and upper bounds.
+
+        Returns
+        -------
+        idxs : 1D np.ndarray
+            Indices to truncate each series to.
+        """
         if self.lower is None and self.upper is None:
-            idxs = np.arange(self._min_length)
+            idxs = slice(0, self._min_length)
         elif self.upper is not None and self.lower is None:
-            idxs = np.arange(self.upper)
+            idxs = slice(0, self.upper)
         elif self.upper is None and self.lower is not None:
-            idxs = np.arange(self.lower, self._min_length)
+            idxs = slice(self.lower, self._min_length)
         else:
-            idxs = np.arange(self.lower, self.upper)
+            idxs = slice(self.lower, self.upper)
         return idxs
 
     def _transform(self, X, y=None):
@@ -171,14 +184,8 @@ class TruncationTransformer(BaseTransformer):
             each cell of Xt contains pandas.Series
             transformed version of X
         """
-        idxs = self._get_truncation_indices()
-        truncate = [
-            pd.Series([series.iloc[idxs] for series in out]) for out in self.series_list
-        ]
-
-        Xt = pd.DataFrame(truncate)
-        Xt.columns = X.columns
-        Xt.index = X.index
+        idx = self._get_truncation_indices()
+        Xt = [x.iloc[idx] for x in X]
         return Xt
 
     @classmethod
