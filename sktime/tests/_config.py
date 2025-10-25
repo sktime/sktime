@@ -277,7 +277,7 @@ EXCLUDED_TESTS_BY_TEST = {
         # too after adding test parameters to them
         "BaggingForecaster",
         "ClustererPipeline",
-        "DirectTabularRegressionForecaster",
+        # "DirectTabularRegressionForecaster",
         "EnbPIForecaster",
         "FittedParamExtractor",
         "ForecastingOptunaSearchCV",
@@ -323,7 +323,7 @@ EXCLUDED_TESTS_BY_TEST = {
 EXCLUDE_SOFT_DEPS = [
     "BaggingForecaster",
     "ClustererPipeline",
-    "DirectTabularRegressionForecaster",
+    # "DirectTabularRegressionForecaster",
     "EnbPIForecaster",
     "FittedParamExtractor",
     "ForecastingOptunaSearchCV",

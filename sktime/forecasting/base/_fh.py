@@ -348,7 +348,7 @@ class ForecastingHorizon:
         if is_relative is None:
             is_relative = self._is_relative
         if freq is None:
-            freq = self._freq
+            freq = getattr(self, "_freq", None)  # self._freq may not have been set
         return type(self)(values=values, is_relative=is_relative, freq=freq)
 
     @property
@@ -446,10 +446,24 @@ class ForecastingHorizon:
         return self.to_pandas().to_numpy(**kwargs)
 
     def _coerce_cutoff_to_index(self, cutoff):
-        """Coerces cutoff to pandas index, and updates self.freq with cutoff."""
-        self.freq = cutoff
+        """Coerces cutoff to pandas index.
+
+        If missing, updates self._freq from cutoff.
+        """
         if not isinstance(cutoff, pd.Index):
             cutoff = pd.Index([cutoff])
+
+        # Only set freq if FH doesn't already have one
+        if getattr(self, "_freq", None) is None:
+            cfreq = getattr(cutoff, "freq", None)
+            if cfreq is None and isinstance(cutoff, pd.DatetimeIndex):
+                try:
+                    cfreq = pd.infer_freq(cutoff)
+                except Exception:
+                    cfreq = None
+            if cfreq is not None:
+                self.freq = cfreq  # use the property/setter; expects an offset string
+
         return cutoff
 
     def to_relative(self, cutoff=None):
@@ -468,7 +482,11 @@ class ForecastingHorizon:
             Relative representation of forecasting horizon.
         """
         cutoff = self._coerce_cutoff_to_index(cutoff)
-        return _to_relative(fh=self, cutoff=_HashIndex(cutoff))
+
+        # return _to_relative(fh=self, cutoff=_HashIndex(cutoff))
+
+        out_self = _to_relative(fh=self, cutoff=_HashIndex(cutoff))
+        return out_self
 
     def to_absolute(self, cutoff):
         """Return absolute version of forecasting horizon values.
@@ -795,31 +813,77 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
     fh : ForecastingHorizon
         Relative representation of forecasting horizon.
     """
+    # already relative -> return shallow copy with same freq
     if fh.is_relative:
         return fh._new()
 
+    # unwrap _HashIndex to the underlying pandas Index
+    cutoff = cutoff.index
+    absolute = fh.to_pandas()
+    _check_cutoff(cutoff, absolute)
+
+    # ---- ensure we have/derive a usable frequency on the FH ----
+    # try (in order): existing fh._freq -> absolute.freq -> cutoff.freq
+    # -> infer_freq(absolute) -> single-delta inference from absolute
+    freq_candidate = getattr(fh, "_freq", None)
+
+    if freq_candidate is None:
+        freq_candidate = getattr(absolute, "freq", None)
+
+    if freq_candidate is None and isinstance(cutoff, pd.DatetimeIndex):
+        freq_candidate = getattr(cutoff, "freq", None)
+
+    if freq_candidate is None and isinstance(absolute, pd.DatetimeIndex):
+        # pandas infer_freq may need >= 3 points; try anyway
+        try:
+            freq_candidate = pd.infer_freq(absolute)
+        except Exception:
+            freq_candidate = None
+
+    if freq_candidate is None and isinstance(absolute, pd.DatetimeIndex):
+        # robust 2-point fallback: infer from single delta
+        if len(absolute) >= 2:
+            try:
+                from pandas.tseries.frequencies import to_offset
+
+                delta = absolute[1] - absolute[0]
+                off = to_offset(delta)
+                # prefer canonical name (e.g., "D", "H")
+                freq_candidate = getattr(off, "name", None) or str(off)
+            except Exception:
+                freq_candidate = None
+
+    if freq_candidate is not None:
+        # set via constructor to keep internal invariants
+        fh = fh._new(is_relative=fh.is_relative, freq=freq_candidate)
+
+    # ---- coerce to Period when we know the freq (safer arithmetic) ----
+    if isinstance(absolute, pd.DatetimeIndex) and fh._freq is not None:
+        absolute = _coerce_to_period(absolute, freq=fh._freq)
+        cutoff = _coerce_to_period(cutoff, freq=fh._freq)
+
+    # ---- always subtract a SCALAR cutoff to avoid length-mismatch ----
+    scalar_cutoff = cutoff[0]
+
+    pandas_fix = _is_pandas_arithmetic_bug_fixed()
+    if pandas_fix:
+        # works for PeriodIndex and DatetimeIndex; scalar broadcast is fine
+        relative_delta = absolute - scalar_cutoff
     else:
-        cutoff = cutoff.index  # unwrap cutoff from _HashIndex
-        absolute = fh.to_pandas()
-        _check_cutoff(cutoff, absolute)
+        # older pandas: explicit element-wise subtraction
+        relative_delta = pd.Index([date - scalar_cutoff for date in absolute])
 
-        if isinstance(absolute, pd.DatetimeIndex):
-            # coerce to pd.Period for reliable arithmetic and computations of
-            # time deltas
-            absolute = _coerce_to_period(absolute, freq=fh._freq)
-            cutoff = _coerce_to_period(cutoff, freq=fh._freq)
+    # handle plain integer / numeric absolute indices directly
+    if isinstance(absolute, pd.Index) and absolute.dtype.kind in ("i", "u", "f"):
+        return fh._new(relative_delta, is_relative=True, freq=fh.freq)
 
-        pandas_version_with_bugfix = _is_pandas_arithmetic_bug_fixed()
-        if pandas_version_with_bugfix:
-            relative = absolute - cutoff
-        else:
-            relative = pd.Index([date - cutoff[0] for date in absolute])
-
-        # Coerce durations (time deltas) into integer values for given frequency
-        if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
-            relative = _coerce_duration_to_int(relative, freq=fh.freq)
-
+    # ---- convert deltas to integer steps when we have a frequency ----
+    if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)) and fh.freq is not None:
+        relative = _coerce_duration_to_int(relative_delta, freq=fh.freq)
         return fh._new(relative, is_relative=True, freq=fh.freq)
+
+    # As a conservative fallback for exotic cases, still prefer true deltas:
+    return fh._new(relative_delta, is_relative=True, freq=fh.freq)
 
 
 # This function needs to be outside ForecastingHorizon
@@ -949,22 +1013,48 @@ def _coerce_to_period(x, freq=None):
 def _index_range(relative, cutoff):
     """Return Index Range relative to cutoff."""
     _check_cutoff(cutoff, relative)
-    is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
 
-    if is_timestamp:
-        # coerce to pd.Period for reliable arithmetic operations and
-        # computations of time deltas
-        cutoff = cutoff.to_period(cutoff.freqstr)
+    # Fast path: cutoff is PeriodIndex OR DatetimeIndex WITH a real freq
+    if isinstance(cutoff, pd.PeriodIndex):
+        if isinstance(cutoff, pd.Index):
+            cutoff = cutoff[[0] * len(relative)]
+        return cutoff + relative
 
+    if isinstance(cutoff, pd.DatetimeIndex) and cutoff.freq is not None:
+        # Use Period arithmetic (reliable) and convert back
+        pcut = cutoff.to_period(cutoff.freqstr)
+        if isinstance(pcut, pd.Index):
+            pcut = pcut[[0] * len(relative)]
+        absolute = pcut + relative
+        return absolute.to_timestamp(cutoff.freqstr)
+
+    # --- Robust fallback: DatetimeIndex with NO freq (or any other Index type) ---
+    # We avoid to_period(...) and do scalar-based addition.
+    # Broadcast cutoff to its first element to ensure shapes align.
     if isinstance(cutoff, pd.Index):
-        cutoff = cutoff[[0] * len(relative)]
+        base = cutoff[0]
+    else:
+        # Scalar cutoff (Timestamp/Period/int) : _check_cutoff already validated
+        base = cutoff
 
-    absolute = cutoff + relative
+    if isinstance(base, pd.Period):
+        # Period scalar with no explicit freq on Index : use Period arithmetic
+        absolute = pd.PeriodIndex([base] * len(relative), freq=base.freq) + relative
+        return absolute
 
-    if is_timestamp:
-        # coerce back to DatetimeIndex after operation
-        absolute = absolute.to_timestamp(cutoff.freqstr)
-    return absolute
+    if isinstance(base, pd.Timestamp):
+        # Datetime scalar : build timestamps by adding integer steps as timedeltas
+        # Default one "tick" = 1 day (safe for daily data; adjust if needed)
+        # If you want to try to be clever, you could attempt to infer a delta from
+        # elsewhere; here we keep it deterministic.
+        delta = pd.Timedelta(days=1)
+        return pd.DatetimeIndex([base + int(h) * delta for h in relative], tz=base.tz)
+
+    # Fallback for integer/Range-like bases: just return base + relative
+    # (lets pandas handle numeric indices)
+    if isinstance(relative, pd.Index):
+        return pd.Index(base + relative)
+    return base + relative
 
 
 def _is_pandas_arithmetic_bug_fixed():
