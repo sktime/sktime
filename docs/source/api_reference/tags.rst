@@ -215,7 +215,25 @@ This section lists tags applying to time series metrics (``"metric"`` type).
     inner_implements_multilevel
 
 
+Tags for time series aligners
+-----------------------------
+
+This section lists tags applying to time series metrics (``"aligner"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
 .. _dev_common_tags:
+
+    capability__multiple_alignment
+    capability__distance
+    capability__distance_matrix
+    property__alignment_type
+
 
 Common developer tags
 ---------------------
