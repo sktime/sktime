@@ -13,6 +13,8 @@ from sktime.benchmarking._benchmarking_dataclasses import (
 )
 from sktime.benchmarking._storage_handlers import get_storage_backend
 from sktime.benchmarking._utils import _check_id_format
+from sktime.catalogues.base import BaseCatalogue
+from sktime.registry import scitype
 from sktime.utils.unique_str import _make_strings_unique
 
 
@@ -299,6 +301,43 @@ class BaseBenchmark:
     def add_task(self, *args, **kwargs):
         """Register a task to the benchmark."""
         raise NotImplementedError("This method must be implemented by a subclass.")
+
+    def add_catalogue(self, catalogue: BaseCatalogue):
+        """Add all items from a catalogue to the benchmark.
+
+        Parameters
+        ----------
+        catalogue : BaseCatalogue
+            A catalogue containing estimators, datasets, metrics, or CV splitters.
+        """
+        catalogue = catalogue.clone()
+        objects = catalogue.get("all", as_object=True)
+
+        dataset_loaders = []
+        metrics = []
+        cv_splitters = []
+
+        for obj in objects:
+            if scitype(obj) in ["classifier", "forecaster"]:
+                self.add_estimator(obj)
+            elif scitype(obj) in ["dataset_classification", "dataset_forecasting"]:
+                dataset_loaders.append(obj)
+            elif scitype(obj) in [
+                "metric_forecasting",
+                "metric_tabular",
+                "metric_proba_tabular",
+            ]:
+                metrics.append(obj)
+            elif scitype(obj) in ["splitter", "splitter_tabular"]:
+                cv_splitters.append(obj)
+
+        for dataset_loader in dataset_loaders:
+            for cv_splitter in cv_splitters:
+                self.add_task(
+                    dataset_loader=dataset_loader,
+                    scorers=metrics,
+                    cv_splitter=cv_splitter,
+                )
 
     def _run(self, results_path: str, force_rerun: str | list[str] = "none"):
         """
