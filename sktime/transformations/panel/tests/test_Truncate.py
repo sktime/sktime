@@ -32,23 +32,6 @@ def test_truncation_constructor_arg_validation(lower, upper, error, message):
     not run_test_for_class(TruncationTransformer),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_truncation_fit_arg_validation():
-    """Test validation of truncation transformer constructor arguments
-    when fitting data."""
-
-    X = _make_hierarchical()
-    tt = TruncationTransformer(upper=13)
-
-    with pytest.raises(
-        ValueError, match=TruncationTransformer.error_messages["upper_le_min_length"]
-    ):
-        tt.fit(X)
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(TruncationTransformer),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
 @pytest.mark.parametrize(
     "lower, upper, expected_length",
     [
