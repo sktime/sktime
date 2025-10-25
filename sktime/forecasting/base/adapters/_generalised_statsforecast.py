@@ -7,6 +7,7 @@ from warnings import warn
 import pandas
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._base import ForecastingHorizon
 from sktime.utils.adapters.forward import _clone_fitted_params
 
 __all__ = ["_GeneralisedStatsForecastAdapter", "StatsForecastBackAdapter"]
@@ -32,6 +33,9 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
         # "enforce_index_type": None,  # TODO: need to check (how?)
         "capability:missing_values": False,
+        # CI and test flags
+        # -----------------
+        "tests:libs": ["sktime.forecasting.base.adapters._generalised_statsforecast"],
     }
 
     def __init__(self):
@@ -128,6 +132,34 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         params = self._get_validated_statsforecast_params()
         return cls(**params)
 
+    def _set_fh_to_trend_forecaster(self, fh, y):
+        """Set forecasting horizon to trend forecaster if it exists.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon or None
+            The forecasting horizon with the steps ahead to to predict.
+        y : pd.Series
+            The time series data used for fitting.
+        """
+        from statsforecast.models import MSTL
+
+        if (
+            fh is not None
+            and self._get_statsforecast_class() is MSTL
+            and hasattr(self, "_trend_forecaster")
+        ):
+            _fh = self._check_fh(fh)
+
+            # Convert fh to relative if it is absolute before setting it
+            _fh = _fh.to_relative(self.cutoff)
+
+            if _fh.is_all_in_sample():
+                _fh = ForecastingHorizon(y.index, is_relative=False)
+                _fh = _fh.to_relative(self.cutoff)
+            # pass the fh to _trend_forecaster in case it needs it
+            self._trend_forecaster.set_fh(_fh)
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -158,9 +190,8 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         -------
         self : reference to self
         """
-        del fh  # avoid being detected as unused by ``vulture`` like tools
-
         self._forecaster = self._instantiate_model()
+        self._set_fh_to_trend_forecaster(fh, y)
 
         y_fit_input = y.to_numpy(copy=False)
 
@@ -480,6 +511,33 @@ class StatsForecastBackAdapter:
         _self.__dict__.update(self.__dict__)
         return _self
 
+    def set_fh(self, fh: ForecastingHorizon | None):
+        """Set forecasting horizon.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon, optional
+            Forecasting horizon to set.
+
+        Returns
+        -------
+        self : returns reference to self
+        """
+        self.inner_fh = fh
+
+    def _get_fh(self):
+        """Get forecasting horizon."""
+        fh = getattr(self, "inner_fh", None)
+
+        if fh is not None:
+            if fh.is_all_in_sample():
+                return fh
+            else:
+                maximum_forecast_horizon = fh[-1]
+                return range(1, maximum_forecast_horizon + 1)
+        else:
+            return None
+
     def fit(self, y, X=None):
         """Fit to training data.
 
@@ -493,7 +551,8 @@ class StatsForecastBackAdapter:
         -------
         self : returns an instance of self.
         """
-        self.estimator = self.estimator.fit(y=y, X=X)
+        fh = self._get_fh()
+        self.estimator = self.estimator.fit(y=y, X=X, fh=fh)
 
         return self
 
@@ -515,7 +574,8 @@ class StatsForecastBackAdapter:
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
-        mean = self.estimator.predict(fh=range(1, h + 1), X=X)[:, 0]
+        fh = self._get_fh() or range(1, h + 1)
+        mean = self.estimator.predict(fh=fh, X=X)[:, 0]
         if level is None:
             return {"mean": mean}
         # if a level is passed, and if prediction_intervals has not been instantiated
@@ -528,9 +588,7 @@ class StatsForecastBackAdapter:
         level = sorted(level)
         coverage = [round(_l / 100, 2) for _l in level]
 
-        pred_int = self.estimator.predict_interval(
-            fh=range(1, h + 1), X=X, coverage=coverage
-        )
+        pred_int = self.estimator.predict_interval(fh=fh, X=X, coverage=coverage)
 
         return self.format_pred_int("mean", mean, pred_int, coverage, level)
 
