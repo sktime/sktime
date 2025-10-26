@@ -97,7 +97,7 @@ def _d(msg):
 
 
 def dbgprint(*args, **kwargs):
-    if False:
+    if True:
         print(*args, **kwargs)
 
 

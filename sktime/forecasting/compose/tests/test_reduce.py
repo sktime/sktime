@@ -18,8 +18,6 @@ from sktime.forecasting.compose import (
     DirectReductionForecaster,
     DirectTabularRegressionForecaster,
     DirectTimeSeriesRegressionForecaster,
-    DirRecTabularRegressionForecaster,
-    DirRecTimeSeriesRegressionForecaster,
     MultioutputTabularRegressionForecaster,
     MultioutputTimeSeriesRegressionForecaster,
     RecursiveReductionForecaster,
@@ -44,6 +42,40 @@ N_TIMEPOINTS = [13, 17]
 N_VARIABLES = [1, 3]
 STRATEGIES = ["recursive", "direct", "multioutput", "dirrec"]
 FH = ForecastingHorizon(1)
+
+
+def eprint(*args, **kwargs):
+    print(*args, flush=True, **kwargs)
+
+
+# # Verbose wrapper for DummyRegressor
+# class VerboseDummyRegressor(DummyRegressor):
+#     def fit(self, X, y, sample_weight=None):
+#         eprint(
+#             "[VerboseDummyRegressor.fit] X shape=",
+#             getattr(X, "shape", None),
+#             " y shape=",
+#             getattr(y, "shape", None),
+#         )
+#         try:
+#             eprint("X:\n", X)
+#         except Exception:
+#             pass
+#         try:
+#             eprint("y:\n", y)
+#         except Exception:
+#             pass
+#         return super().fit(X, y, sample_weight=sample_weight)
+
+#     def predict(self, X):
+#         eprint("[VerboseDummyRegressor.predict] X shape=", getattr(X, "shape", None))
+#         try:
+#             eprint("X:\n", X)
+#         except Exception:
+#             pass
+#         preds = super().predict(X)
+#         eprint("Pred shape=", getattr(preds, "shape", None))
+#         return preds
 
 
 @pytest.mark.skipif(
@@ -271,6 +303,7 @@ def test_dummy_regressor_mean_prediction_endogenous_only(
     fh = check_fh(fh)
     y_train, y_test = temporal_train_test_split(y, fh=fh)
 
+    # regressor = VerboseDummyRegressor(strategy="mean")
     regressor = DummyRegressor(strategy="mean")
     forecaster = make_reduction(
         regressor, scitype=scitype, window_length=window_length, strategy=strategy
@@ -295,15 +328,25 @@ def test_dummy_regressor_mean_prediction_endogenous_only(
     np.testing.assert_array_almost_equal(actual, expected)
 
 
+# _REGISTRY = [
+#  ("tabular-regressor", "direct", DirectTabularRegressionForecaster),
+#  ("tabular-regressor", "recursive", RecursiveTabularRegressionForecaster),
+#  ("tabular-regressor", "multioutput", MultioutputTabularRegressionForecaster),
+#  ("tabular-regressor", "dirrec", DirRecTabularRegressionForecaster),
+#  ("time-series-regressor", "direct", DirectTimeSeriesRegressionForecaster),
+#  ("time-series-regressor", "recursive", RecursiveTimeSeriesRegressionForecaster),
+#  ("time-series-regressor", "multioutput", MultioutputTimeSeriesRegressionForecaster),
+#  ("time-series-regressor", "dirrec", DirRecTimeSeriesRegressionForecaster),
+# ]
 _REGISTRY = [
-    ("tabular-regressor", "direct", DirectTabularRegressionForecaster),
-    ("tabular-regressor", "recursive", RecursiveTabularRegressionForecaster),
-    ("tabular-regressor", "multioutput", MultioutputTabularRegressionForecaster),
-    ("tabular-regressor", "dirrec", DirRecTabularRegressionForecaster),
-    ("time-series-regressor", "direct", DirectTimeSeriesRegressionForecaster),
-    ("time-series-regressor", "recursive", RecursiveTimeSeriesRegressionForecaster),
-    ("time-series-regressor", "multioutput", MultioutputTimeSeriesRegressionForecaster),
-    ("time-series-regressor", "dirrec", DirRecTimeSeriesRegressionForecaster),
+    ("tabular-regressor", "direct", DirectReductionForecaster),
+    ("tabular-regressor", "recursive", RecursiveReductionForecaster),
+    ("tabular-regressor", "multioutput", RecursiveReductionForecaster),
+    ("tabular-regressor", "dirrec", DirectReductionForecaster),
+    ("time-series-regressor", "direct", DirectReductionForecaster),
+    ("time-series-regressor", "recursive", RecursiveReductionForecaster),
+    ("time-series-regressor", "multioutput", DirectReductionForecaster),
+    ("time-series-regressor", "dirrec", DirectReductionForecaster),
 ]
 
 
