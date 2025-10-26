@@ -78,6 +78,16 @@ def test_statsforecast_mstl_with_fh(fh):
     try:
         # fit with fh passed to model
         model.fit(y, fh=fh)
+    except NotImplementedError as e:
+        assert (
+            "DirectTabularRegressionForecaster can not perform "
+            "in-sample prediction. Found fh with in sample index:"
+        ) in repr(e), (
+            "Unexpected exception raised - should have failed with "
+            "NotImplementedError, DirectTabularRegressionForecaster "
+            "can not perform in-sample prediction ..."
+        )
+        return
     except ValueError as e:
         assert repr(e) == (
             "ValueError('The forecasting horizon `fh` "
@@ -88,17 +98,8 @@ def test_statsforecast_mstl_with_fh(fh):
             "Unexpected exception raised - should have failed with ValueError, "
             "The forecasting horizon `fh` must be passed to `fit` of ..."
         )
-    try:
-        model.predict(fh=fh)
-    except NotImplementedError as e:
-        assert (
-            "DirectTabularRegressionForecaster can not perform "
-            "in-sample prediction. Found fh with in sample index:"
-        ) in repr(e), (
-            "Unexpected exception raised - should have failed with "
-            "NotImplementedError, DirectTabularRegressionForecaster "
-            "can not perform in-sample prediction ..."
-        )
+        return
+    model.predict(fh=fh)
 
 
 @pytest.mark.skipif(
