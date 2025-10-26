@@ -6,8 +6,7 @@ from warnings import warn
 
 import pandas
 
-from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.adapters.forward import _clone_fitted_params
 
 __all__ = ["_GeneralisedStatsForecastAdapter", "StatsForecastBackAdapter"]
