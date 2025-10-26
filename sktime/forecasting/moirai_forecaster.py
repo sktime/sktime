@@ -118,8 +118,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         context_length=200,
         patch_size=32,
         num_samples=100,
-        num_feat_dynamic_real=0,
-        num_past_feat_dynamic_real=0,
+        num_feat_dynamic_real=None,
+        num_past_feat_dynamic_real=None,
         map_location=None,
         target_dim=2,
         broadcasting=False,
@@ -178,8 +178,13 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         else:
             prediction_length = 1
 
-        if self.num_feat_dynamic_real is None and X is not None:
-            self.num_feat_dynamic_real = X.shape[1]
+        # Set feature dimensions based on X if not already set
+        if self.num_feat_dynamic_real is None:
+            if X is not None:
+                self.num_feat_dynamic_real = X.shape[1]
+            else:
+                self.num_feat_dynamic_real = 0
+        
         if self.num_past_feat_dynamic_real is None:
             self.num_past_feat_dynamic_real = 0
 
