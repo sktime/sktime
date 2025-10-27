@@ -8,6 +8,8 @@ __all__ = ["BaseDeepClassifier"]
 
 import os
 from abc import abstractmethod
+from dataclasses import asdict, dataclass
+from typing import Any
 
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
@@ -16,6 +18,57 @@ from sklearn.utils import check_random_state
 from sktime.base._base import SERIALIZATION_FORMATS
 from sktime.classification.base import BaseClassifier
 from sktime.utils.dependencies import _check_soft_dependencies
+
+
+@dataclass
+class KerasCompileKwargs:
+    """TODO: complete docstring."""
+
+    loss_weights: list[float] | dict[str, float] | None = None
+    weighted_metrics: list[str] | None = None
+    run_eagerly: bool = False
+    steps_per_execution: int = 1
+    jit_compile: str | bool = "auto"
+    auto_scale_loss: bool = True
+
+    def as_dict(self) -> dict[Any, Any]:
+        return asdict(self)
+
+
+@dataclass
+class KerasFitKwargs:
+    """TODO: complete docstring."""
+
+    validation_split: float = 0.0
+    validation_data: Any | None = None
+    shuffle: bool = True
+    class_weight: dict[int, float] | None = None
+    sample_weight: Any | None = None
+    initial_epoch: int = 0
+    steps_per_epoch: int | None = None
+    validation_steps: int | None = None
+    validation_batch_size: int | None = None
+    validation_freq: int = 1
+
+    def __post_init__(self) -> None:
+        from keras.utils import PyDataset
+        from tensorflow.python.data import Dataset
+
+        if not (0.0 <= self.validation_split <= 1.0):
+            raise ValueError(
+                "`validation_split` can only be between [0.0, 1.0]. "
+                f"But `{self.validation_split}` was provided."
+            )
+
+        if not isinstance(self.validation_data, (tuple, Dataset, PyDataset)):
+            raise ValueError(
+                "`validation_data` must either be a 2-length tuple, "
+                "a `keras.utils.PyDataset` or `tf.data.DataSet` instance. "
+                f"Found type: {type(self.validation_data)} instead."
+            )
+
+    def as_dict(self) -> dict[Any, Any]:
+        return asdict(self)
 
 
 class BaseDeepClassifier(BaseClassifier):
@@ -36,6 +89,14 @@ class BaseDeepClassifier(BaseClassifier):
     """
 
     _tags = {
+        "authors": [
+            "James-Large",
+            "ABostrom",
+            "TonyBagnall",
+            "aurunmpegasus",
+            "achieveordie",
+        ],
+        "maintainers": ["achieveordie"],
         "X_inner_mtype": "numpy3D",
         "capability:multivariate": True,
         "python_dependencies": "tensorflow",
@@ -50,6 +111,11 @@ class BaseDeepClassifier(BaseClassifier):
             "noxthot",
         ],
     }
+
+    def __init__(self, compile_kwargs: KerasCompileKwargs, fit_kwargs: KerasFitKwargs):
+        self.compile_kwargs = compile_kwargs
+        self.fit_kwargs = fit_kwargs
+        super().__init__()
 
     @abstractmethod
     def build_model(self, input_shape, n_classes, **kwargs):
@@ -79,8 +145,8 @@ class BaseDeepClassifier(BaseClassifier):
         """
         return self.history.history if self.history is not None else None
 
-    def _predict(self, X, **kwargs):
-        probs = self._predict_proba(X, **kwargs)
+    def _predict(self, X):
+        probs = self._predict_proba(X)
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -89,7 +155,7 @@ class BaseDeepClassifier(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X, **kwargs):
+    def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -104,7 +170,10 @@ class BaseDeepClassifier(BaseClassifier):
         """
         # Transpose to work correctly with keras
         X = X.transpose((0, 2, 1))
-        probs = self.model_.predict(X, self.batch_size, **kwargs)
+        probs = self.model_.predict(
+            X,
+            self.batch_size,  # **self.training_kwargs.get("predict", {})
+        )
 
         # check if binary classification
         if probs.shape[1] == 1:
