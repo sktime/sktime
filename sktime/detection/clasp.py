@@ -252,7 +252,7 @@ class ClaSPSegmentation(BaseDetector):
         """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
         self.profiles_ = self.profiles
-        
+
     def _predict(self, X):
         """Detect on test/deployment data.
 
