@@ -243,8 +243,8 @@ class ClaSPSegmentation(BaseDetector):
         ----------
         X : pd.DataFrame
             Training data to fit model to (time series).
-        Y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+        y : pd.Series, optional
+            Ignored, present for API consistency by convention.
 
         Returns
         -------
@@ -264,7 +264,7 @@ class ClaSPSegmentation(BaseDetector):
 
         Returns
         -------
-        Y : pd.Series or an IntervalSeries
+        y : pd.Series or an IntervalSeries
             Change points in sequence X.
         """
         return pd.Series(self.found_cps)
@@ -279,7 +279,7 @@ class ClaSPSegmentation(BaseDetector):
 
         Returns
         -------
-        Y : pd.Series
+        y : pd.Series
             Sparse scores for found change points in sequence X.
         """
         return pd.Series(self.scores)
@@ -294,7 +294,7 @@ class ClaSPSegmentation(BaseDetector):
 
         Returns
         -------
-        Y : pd.Series
+        y : pd.Series
             Dense scores for found change points in sequence X.
         """
         # ClaSP creates multiple profiles. Hard to map. Thus, we return the main
