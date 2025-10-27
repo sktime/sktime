@@ -224,7 +224,7 @@ class ClaSPSegmentation(BaseDetector):
         "task": "change_point_detection",
         "learning_type": "unsupervised",
         "capability:multivariate": False,
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "python_dependencies": "numba",
         "X_inner_mtype": "pd.Series",
     }
@@ -252,6 +252,7 @@ class ClaSPSegmentation(BaseDetector):
         """
         self.found_cps, self.profiles, self.scores = self._run_clasp(X)
         self.profiles_ = self.profiles
+        return self
 
     def _predict(self, X):
         """Detect on test/deployment data.
