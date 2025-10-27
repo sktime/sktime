@@ -15,32 +15,42 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 class DoubleMLForecaster(BaseForecaster):
     """Double Machine Learning forecaster for causal time-series forecasting.
 
-    Implements the Double Machine Learning (DML) framework [1]_ for time-series,
-    enabling deconfounded estimation of causal effects from observational data.
+    Implements an adaptation of Double Machine Learning (DML) framework [1]_
+    for time-series, enabling deconfounded estimation of causal effects.
 
     The forecaster uses a three-step residualization process to separate
     causal effects from confounding influences:
 
     **Fit procedure**
 
-    1. Split exogenous data ``X`` into exposure variables ``X_exposure`` and
+    1. Split ``X`` into exposure variables ``X_exposure`` and
        confounder variables ``X_confounder``.
+       ``X_exposure = X[exposure_vars]``,
+       ``X_confounder = X.drop(columns=exposure_vars)``.
 
-    2. Fit the outcome forecaster on ``(y | X_confounder)`` to obtain residuals
+    2. Fit the outcome forecaster to obtain residuals
+       ``outcome_fcst.fit(y=y, X=X_confounder, fh=y.index)``,
+       ``y_pred = outcome_fcst.predict(X=X_confounder)``,
        ``y_res = y - y_pred``.
 
-    3. Fit the treatment forecaster on ``(X_exposure | X_confounder)`` to
-       obtain residuals ``X_exposure_res = X_exposure - X_exposure_pred``.
+    3. Fit the treatment forecaster to obtain exposure residuals
+       ``treatment_fcst.fit(y=X_exposure, X=X_confounder, fh=y.index)``,
+       ``X_exposure_pred = treatment_fcst.predict(X=X_confounder)``,
+       ``X_exposure_res = X_exposure - X_exposure_pred``.
 
-    4. Fit the residual forecaster on ``(y_res | X_exposure_res)`` to learn the
-       deconfounded causal relationship.
+    4. Fit the residual forecaster to learn deconfounded causal relationship.
+       ``residual_fcst.fit(y=y_res, X=X_exposure_res, fh=fh)``.
 
-    5. Refit the outcome and treatment forecasters on the full training data
-       for use during prediction.
+    5. Refit the outcome and treatment forecasters for use during prediction.
+       ``outcome_fcst.fit(y=y, X=X_confounder, fh=fh)``,
+       ``treatment_fcst.fit(y=X_exposure, X=X_confounder, fh=fh)``.
 
     **Predict procedure**
 
-    1. Split new exogenous data ``X`` into ``X_exposure`` and ``X_confounder``.
+    1. Split new ``X`` into exposure variables ``X_exposure`` and
+       confounder variables ``X_confounder``.
+       ``X_exposure = X[exposure_vars]``,
+       ``X_confounder = X.drop(columns=exposure_vars)``.
 
     2. Compute the base (confounder-driven) forecast:
        ``y_pred_base = outcome_fcst.predict(X_confounder)``.
@@ -73,11 +83,11 @@ class DoubleMLForecaster(BaseForecaster):
 
     exposure_vars : list of str, optional (default=None)
         Names of columns in ``X`` representing exposure (treatment) variables.
-        The remaining columns are treated as confounders. If None, the model
-        assumes there are no explicit exposure variables, using all features as
-        confounders and focusing purely on predictive residual correction
-        rather than causal effect estimation. In this case, the model behaves
-        equivalently to a ``ResidualBoostingForecaster``.
+        The remaining columns are treated as confounders. If ``None``, all
+        features in ``X`` are treated as confounders and used only with the
+        outcome forecaster. In this case, the treatment forecaster is not used,
+        and ``None`` exposure residuals are passed to the residual forecaster,
+        which therefore operates only on ``y``.
 
     Attributes
     ----------
