@@ -1,7 +1,5 @@
 """Time Convolutional Neural Network (CNN) (minus the final output layer)."""
 
-__author__ = ["James-Large", "Withington", "TonyBagnall"]
-
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -20,8 +18,10 @@ class CNNNetwork(BaseDeepNetwork):
     n_conv_layers : int, default = 2
         the number of convolutional plus average pooling layers
     filter_sizes : array of int, shape = (n_conv_layers)
-    activation : string, default = sigmoid
-        keras activation function
+    activation : string, default = "sigmoid"
+        activation function used for hidden layers;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
     padding : string, default = "auto"
         Controls padding logic for the convolutional layers,
         i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
@@ -40,7 +40,7 @@ class CNNNetwork(BaseDeepNetwork):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz"],
+        "authors": ["hfawaz", "James-Large", "Withington", "TonyBagnall", "noxthot"],
         "python_dependencies": "tensorflow",
     }
 

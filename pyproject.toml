@@ -99,11 +99,11 @@ all_extras = [
   'scikit_posthocs>=0.6.5; python_version < "3.13"',
   'seaborn>=0.11; python_version < "3.13"',
   'simdkalman',
-  'skforecast<0.15,>=0.12.1; python_version < "3.13"',
+  'skforecast<0.19,>=0.15',
   "skpro>=2,<2.10.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels>=0.12.1; python_version < "3.13"',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'xarray; python_version < "3.13"',
@@ -133,11 +133,11 @@ all_extras_pandas2 = [
   'scikit_posthocs>=0.6.5; python_version < "3.13"',
   'seaborn>=0.11; python_version < "3.13"',
   'simdkalman',
-  'skforecast<0.15,>=0.12.1; python_version < "3.13"',
+  'skforecast<0.19,>=0.15',
   'skpro>=2,<2.10.0',
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels>=0.12.1; python_version < "3.13"',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'xarray; python_version < "3.13"',
@@ -164,7 +164,7 @@ annotation = [
 ]
 classification = [
   'numba<0.63,>=0.53',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 clustering = [
@@ -183,13 +183,13 @@ forecasting = [
   'autots<0.7,>=0.6.1; python_version < "3.13"',
   'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
   'prophet<1.2,>=1.1; python_version < "3.13"',
-  'skforecast<0.15,>=0.12.1; python_version < "3.13"',
+  'skforecast<0.19,>=0.15',
   "skpro>=2,<2.10.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
 ]
 networks = [
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
 ]
 param_est = [
   'seasonal<0.4,>=0.3.1; python_version < "3.13"',
@@ -197,7 +197,7 @@ param_est = [
 ]
 regression = [
   'numba<0.63,>=0.53',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
 ]
 transformations = [
   'holidays>=0.29,<0.59; python_version < "3.13"',
@@ -264,11 +264,11 @@ dl = [
   'FrEIA; python_version < "3.12"',
   'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
   'peft>=0.10.0,<0.14.0; python_version < "3.12"',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
   "torch; (sys_platform != 'darwin' or python_version != '3.13')",
   'transformers[torch]<4.41.0; python_version < "3.12"',
   'pykan>=0.2.1,<0.2.9; python_version > "3.9.7"',
-  "pytorch-forecasting>=1.0.0,<1.5.0; (sys_platform != 'darwin' or python_version != '3.13')",
+  "pytorch-forecasting>=1.0.0,<1.6.0; (sys_platform != 'darwin' or python_version != '3.13')",
   'lightning>=2.0; python_version < "3.12"',
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
@@ -293,6 +293,7 @@ notebooks = [
   # needed for the blog post notebooks
   "matplotlib",
   "numpy<2",
+  "scipy<1.16",
   "pmdarima",
   "seaborn",
   "tbats",
@@ -448,7 +449,6 @@ allowed-confusables=["σ"]
   "D104", # Missing docstring in public package
   "D106", # Missing docstring in public nested class
 ]
-"sktime/libs/tirex/**/*.py" = ["ALL"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
