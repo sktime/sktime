@@ -237,8 +237,8 @@ class DoubleMLForecaster(BaseForecaster):
         )
         req_fh = (
             self.outcome_fcst.get_tag("requires-fh-in-fit")
-            and self.treatment_fcst.get_tag("requires-fh-in-fit")
-            and self.residual_fcst.get_tag("requires-fh-in-fit")
+            or self.treatment_fcst.get_tag("requires-fh-in-fit")
+            or self.residual_fcst.get_tag("requires-fh-in-fit")
         )
 
         # Combine and set final capability tags
