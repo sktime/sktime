@@ -5,14 +5,12 @@ __all__ = ["SimpleRNNRegressorTorch"]
 
 from collections.abc import Callable
 
-import numpy as np
-
-from sktime.classification.deep_learning.base import BaseDeepClassifierTorch
 from sktime.networks.rnn import RNNNetworkTorch
+from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
 
 
-class SimpleRNNRegressorTorch(BaseDeepClassifierTorch):
-    """Simple recurrent neural network in PyTorch for time series classification.
+class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
+    """Simple recurrent neural network in PyTorch for time series regression.
 
     Parameters
     ----------
@@ -56,12 +54,24 @@ class SimpleRNNRegressorTorch(BaseDeepClassifierTorch):
     batch_size : int, default = 1
         The size of each mini-batch during training.
     criterion : case insensitive str or None or an instance of a loss function
-        defined in PyTorch, default = "CrossEntropyLoss"
+        defined in PyTorch, default = "MSELoss"
         The loss function to be used in training the neural network.
         List of available loss functions:
         https://pytorch.org/docs/stable/nn.html#loss-functions
     criterion_kwargs : dict or None, default = None
         Additional keyword arguments to pass to the loss function.
+    callbacks : None or str or a tuple of str, default = "ReduceLROnPlateau"
+        Currently only learning rate schedulers are supported as callbacks.
+        If more than one scheduler is passed, they are applied sequentially in the
+        order they are passed. If None, then no learning rate scheduler is used.
+        Note: Since PyTorch learning rate schedulers need to be initialized with
+        the optimizer object, we only accept the class name (str) of the scheduler here
+        and do not accept an instance of the scheduler. As that can lead to errors
+        and unexpected behavior.
+        List of available learning rate schedulers:
+        https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+    callback_kwargs : dict or None, default = None
+        The keyword arguments to be passed to the callbacks.
     lr : float, default = 0.001
         The learning rate to use for the optimizer.
     verbose : bool, default = False
@@ -96,7 +106,7 @@ class SimpleRNNRegressorTorch(BaseDeepClassifierTorch):
         # model specific
         hidden_dim: int = 6,
         n_layers: int = 1,
-        activation: str | None | Callable = "linear",  # to be checked
+        activation: str | None | Callable = None,
         activation_hidden: str = "relu",
         batch_first: bool = False,
         bias: bool = True,
@@ -107,10 +117,12 @@ class SimpleRNNRegressorTorch(BaseDeepClassifierTorch):
         # base classifier specific
         num_epochs: int = 100,
         batch_size: int = 1,
-        optimizer: str | None | Callable = "RMSprop",  # to be checked
-        criterion: str | None | Callable = "mean_squared_error",  # to be checked
+        optimizer: str | None | Callable = "RMSprop",
+        criterion: str | None | Callable = "MSELoss",
+        callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
         criterion_kwargs: dict = None,
         optimizer_kwargs: dict = None,
+        callback_kwargs: dict | None = None,  # to be checked
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int = 0,
@@ -135,37 +147,38 @@ class SimpleRNNRegressorTorch(BaseDeepClassifierTorch):
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
+        self.callbacks = callbacks
+        self.callback_kwargs = callback_kwargs
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
 
-        # input_size and num_classes to be inferred from the data
+        # input_size to be inferred from the data
         # and will be set in _build_network
         self.input_size = None
-        self.num_classes = None
+        self.num_classes = 1  # because regression
 
         super().__init__(
             num_epochs=self.num_epochs,
             batch_size=self.batch_size,
-            activation=self.activation,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
             optimizer=self.optimizer,
             optimizer_kwargs=self.optimizer_kwargs,
+            callbacks=self.callbacks,
+            callback_kwargs=self.callback_kwargs,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
         )
 
-    def _build_network(self, X, y):
+    def _build_network(self, X):
         """Build the RNN network.
 
         Parameters
         ----------
         X : numpy.ndarray
             Input data containing the time series data.
-        y : numpy.ndarray
-            Target labels for the classification task.
 
         Returns
         -------
@@ -179,13 +192,12 @@ class SimpleRNNRegressorTorch(BaseDeepClassifierTorch):
                 "properly formatted."
             )
         # n_instances, n_dims, n_timesteps = X.shape
-        self.num_classes = len(np.unique(y))
         _, self.input_size, _ = X.shape
         return RNNNetworkTorch(
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
             n_layers=self.n_layers,
-            activation=self._validated_activation,  # use self._validated_activation
+            activation=self.activation,
             activation_hidden=self.activation_hidden,
             bias=self.bias,
             batch_first=self.batch_first,
@@ -234,9 +246,11 @@ class SimpleRNNRegressorTorch(BaseDeepClassifierTorch):
             "num_epochs": 50,
             "batch_size": 2,
             "optimizer": "RMSprop",
-            "criterion": "CrossEntropyLoss",
+            "criterion": "MSELoss",
+            "callbacks": None,
             "criterion_kwargs": None,
             "optimizer_kwargs": None,
+            "callback_kwargs": None,
             "lr": 0.001,
             "verbose": False,
             "random_state": 0,
