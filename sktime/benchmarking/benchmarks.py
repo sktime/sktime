@@ -302,42 +302,82 @@ class BaseBenchmark:
         """Register a task to the benchmark."""
         raise NotImplementedError("This method must be implemented by a subclass.")
 
-    def add_catalogue(self, catalogue: BaseCatalogue):
-        """Add all items from a catalogue to the benchmark.
+    def add(self, *args, **kwargs):
+        """Add estimators, tasks, datasets, metrics, CV splitters, or catalogues.
 
-        Parameters
-        ----------
-        catalogue : BaseCatalogue
-            A catalogue containing estimators, datasets, metrics, or CV splitters.
+        Supports:
+            - Single estimator or list/dict of estimators
+            - Task components (datasets, metrics, CV splitters)
+            - Full task tuples (dataset, metric, CV splitter)
+            - BaseCatalogue or subclass
         """
-        catalogue = catalogue.clone()
-        objects = catalogue.get("all", as_object=True)
+        datasets, metrics, cv_splitters = [], [], []
 
-        dataset_loaders = []
-        metrics = []
-        cv_splitters = []
+        for obj in args:
+            # catalogue
+            if isinstance(obj, BaseCatalogue):
+                for category in obj.available_categories():
+                    for item in obj.get(category, as_object=True):
+                        self.add(item)
+                continue
 
-        for obj in objects:
-            if scitype(obj) in ["classifier", "forecaster"]:
+            # tuple of (dataset, metric, splitter)
+            if isinstance(obj, tuple) and len(obj) == 3:
+                dataset, metric, splitter = obj
+                datasets.append(dataset)
+                metrics.append(metric)
+                cv_splitters.append(splitter)
+                continue
+
+            # single object type (estimators or one of the tasks)
+            sctype = scitype(obj)
+            if sctype in ["classifier", "forecaster"]:
                 self.add_estimator(obj)
-            elif scitype(obj) in ["dataset_classification", "dataset_forecasting"]:
-                dataset_loaders.append(obj)
-            elif scitype(obj) in [
+            elif sctype in ["dataset_classification", "dataset_forecasting"]:
+                datasets.append(obj)
+            elif sctype in [
                 "metric_forecasting",
                 "metric_tabular",
                 "metric_proba_tabular",
             ]:
                 metrics.append(obj)
-            elif scitype(obj) in ["splitter", "splitter_tabular"]:
+            elif sctype in ["splitter", "splitter_tabular"]:
                 cv_splitters.append(obj)
-
-        for dataset_loader in dataset_loaders:
-            for cv_splitter in cv_splitters:
-                self.add_task(
-                    dataset_loader=dataset_loader,
-                    scorers=metrics,
-                    cv_splitter=cv_splitter,
+            elif sctype == "catalogue":
+                self.add(obj)
+            else:
+                raise TypeError(
+                    f"Unrecognized object type: {type(obj)} (scitype: {sctype})"
                 )
+
+        # Build tasks if all three components present
+        if datasets and metrics and cv_splitters:
+            for ds in datasets:
+                # get dataset name like in add_task
+                if callable(ds) and hasattr(ds, "__name__"):
+                    dataset_name = ds.__name__
+                elif isinstance(ds, type):
+                    dataset_name = ds().get_tags().get("name")
+                elif hasattr(ds, "get_tags"):
+                    dataset_name = ds.get_tags().get("name")
+                else:
+                    dataset_name = "_"
+
+                for met in metrics:
+                    for splitter in cv_splitters:
+                        # construct task_id consistent with add_task()
+                        task_id = (
+                            f"[dataset={dataset_name}]"
+                            f"_[cv_splitter={splitter.__class__.__name__}]"
+                        )
+
+                        # Build the TaskObject as in specialized functions
+                        task = TaskObject(
+                            dataset=ds,
+                            metric=met,
+                            cv_splitter=splitter,
+                        )
+                        self._add_task(task_id=task_id, task=task)
 
     def _run(self, results_path: str, force_rerun: str | list[str] = "none"):
         """

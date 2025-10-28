@@ -44,8 +44,8 @@ class MyCatalogue(BaseCatalogue):
 
     Example return value from `_get`:
         {
-            "estimator": ["sktime.classification.rocket.RocketClassifier"],
-            "dataset": ["sktime.datasets._arff.load_italy_power_demand"]
+            "estimator": ["RocketClassifier"],
+            "dataset": ["ArrowHead"]
         }
 
     Notes
