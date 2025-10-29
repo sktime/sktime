@@ -73,8 +73,6 @@ class TruncationTransformer(BaseTransformer):
     error_messages = {
         "lower_gt_0": "lower must be greater than or equal to 0",
         "upper_gt_lower": "upper must be greater than lower",
-        "upper_le_min_length": "upper must be less than \
-            or equal to the length of the shortest series in the panel.",
     }
 
     def __init__(self, lower=None, upper=None):
