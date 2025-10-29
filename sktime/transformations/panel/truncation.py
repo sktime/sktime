@@ -134,13 +134,7 @@ class TruncationTransformer(BaseTransformer):
         else:
             self._lower = self.lower
 
-        self._validate_upper_with_data()
-
         return self
-
-    def _validate_upper_with_data(self):
-        if self.upper is not None and self.upper > self._upper:
-            raise ValueError(self.error_messages["upper_le_min_length"])
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
