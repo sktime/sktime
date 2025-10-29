@@ -3,6 +3,7 @@
 
 __author__ = ["geetu040"]
 
+import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
@@ -52,7 +53,7 @@ class OosForecaster(BaseForecaster):
        - Aggregate predictions across all splits to form the complete
          in-sample forecast.
 
-    4. Any in-sample points not covered by a ``cv`` split are filled with zeros
+    4. Any in-sample points not covered by a ``cv`` split are filled with ``np.nan``
        to preserve index alignment.
 
     This procedure guarantees that all predictions, both in-sample and out-of-sample,
@@ -204,7 +205,7 @@ class OosForecaster(BaseForecaster):
             index = pd.MultiIndex.from_product(
                 _y.index.levels[:-1] + [index], names=_y.index.names
             )
-        preds = pd.DataFrame(0.0, index=index, columns=columns)
+        preds = pd.DataFrame(np.nan, index=index, columns=columns)
 
         # Out-of-sample predictions
         if oos_fh is not None:
