@@ -17,6 +17,10 @@ from sktime.catalogues.base import BaseCatalogue
 from sktime.registry import scitype
 from sktime.utils.unique_str import _make_strings_unique
 
+DATASETS = []
+METRICS = []
+CV_SPLITTERS = []
+
 
 def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
     """Check if estimator is initialised BaseEstimator object."""
@@ -309,10 +313,8 @@ class BaseBenchmark:
             - Single estimator or list/dict of estimators
             - Task components (datasets, metrics, CV splitters)
             - Full task tuples (dataset, metric, CV splitter)
-            - BaseCatalogue or subclass
+            - Catalogues
         """
-        datasets, metrics, cv_splitters = [], [], []
-
         for obj in args:
             # catalogue
             if isinstance(obj, BaseCatalogue):
@@ -324,9 +326,9 @@ class BaseBenchmark:
             # tuple of (dataset, metric, splitter)
             if isinstance(obj, tuple) and len(obj) == 3:
                 dataset, metric, splitter = obj
-                datasets.append(dataset)
-                metrics.append(metric)
-                cv_splitters.append(splitter)
+                DATASETS.append(dataset)
+                METRICS.append(metric)
+                CV_SPLITTERS.append(splitter)
                 continue
 
             # single object type (estimators or one of the tasks)
@@ -334,15 +336,15 @@ class BaseBenchmark:
             if sctype in ["classifier", "forecaster"]:
                 self.add_estimator(obj)
             elif sctype in ["dataset_classification", "dataset_forecasting"]:
-                datasets.append(obj)
+                DATASETS.append(obj)
             elif sctype in [
                 "metric_forecasting",
                 "metric_tabular",
                 "metric_proba_tabular",
             ]:
-                metrics.append(obj)
+                METRICS.append(obj)
             elif sctype in ["splitter", "splitter_tabular"]:
-                cv_splitters.append(obj)
+                CV_SPLITTERS.append(obj)
             elif sctype == "catalogue":
                 self.add(obj)
             else:
@@ -350,34 +352,34 @@ class BaseBenchmark:
                     f"Unrecognized object type: {type(obj)} (scitype: {sctype})"
                 )
 
-        # Build tasks if all three components present
-        if datasets and metrics and cv_splitters:
-            for ds in datasets:
-                # get dataset name like in add_task
-                if callable(ds) and hasattr(ds, "__name__"):
-                    dataset_name = ds.__name__
-                elif isinstance(ds, type):
-                    dataset_name = ds().get_tags().get("name")
-                elif hasattr(ds, "get_tags"):
-                    dataset_name = ds.get_tags().get("name")
+    def register_stored_tasks(self):
+        """Register stored tasks from global DATASETS, METRICS, CV_SPLITTERS."""
+        if DATASETS and METRICS and CV_SPLITTERS:
+            for dataset_loader in DATASETS:
+                if callable(dataset_loader) and hasattr(dataset_loader, "__name__"):
+                    dataset_name = dataset_loader.__name__
+                elif isinstance(dataset_loader, type):
+                    dataset_name = dataset_loader().get_tags().get("name")
+                elif hasattr(dataset_loader, "get_tags"):
+                    dataset_name = dataset_loader.get_tags().get("name")
                 else:
                     dataset_name = "_"
 
-                for met in metrics:
-                    for splitter in cv_splitters:
-                        # construct task_id consistent with add_task()
-                        task_id = (
-                            f"[dataset={dataset_name}]"
-                            f"_[cv_splitter={splitter.__class__.__name__}]"
-                        )
+                for splitter in CV_SPLITTERS:
+                    task_id = (
+                        f"[dataset={dataset_name}]"
+                        f"_[cv_splitter={splitter.__class__.__name__}]"
+                    )
 
-                        # Build the TaskObject as in specialized functions
-                        task = TaskObject(
-                            dataset=ds,
-                            metric=met,
-                            cv_splitter=splitter,
-                        )
-                        self._add_task(task_id=task_id, task=task)
+                    task_kwargs = {
+                        "data": dataset_loader,
+                        "cv_splitter": splitter,
+                        "scorers": METRICS,
+                    }
+                    self._add_task(
+                        task_id,
+                        TaskObject(**task_kwargs),
+                    )
 
     def _run(self, results_path: str, force_rerun: str | list[str] = "none"):
         """
@@ -395,6 +397,8 @@ class BaseBenchmark:
             * If "all", will run validation for all tasks and models.
             * If list of str, will run validation for tasks and models in list.
         """
+        self.register_stored_tasks()
+
         results = _BenchmarkingResults(path=results_path)
 
         for task_id, estimator_id, task, estimator in self._generate_experiments():

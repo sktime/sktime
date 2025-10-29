@@ -21,7 +21,7 @@ def test_benchmarking_dummy_forecasting_catalogue(tmp_path):
     benchmark = ForecastingBenchmark()
     catalogue = DummyForecastingCatalogue()
 
-    benchmark.add_catalogue(catalogue)
+    benchmark.add(catalogue)
 
     results_file = tmp_path / "results.csv"
     results_df = benchmark.run(results_file)
@@ -47,7 +47,7 @@ def test_benchmarking_dummy_classification_catalogue(tmp_path):
     benchmark = ClassificationBenchmark()
     catalogue = DummyClassificationCatalogue()
 
-    benchmark.add_catalogue(catalogue)
+    benchmark.add(catalogue)
 
     results_file = tmp_path / "results.csv"
     results_df = benchmark.run(results_file)
