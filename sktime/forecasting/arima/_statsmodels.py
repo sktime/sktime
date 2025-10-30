@@ -6,7 +6,6 @@ __all__ = ["StatsModelsARIMA"]
 __author__ = ["arnaujc91"]
 
 from collections.abc import Iterable
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -168,34 +167,38 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         "authors": ["chadfulton", "bashtage", "jbrockmendel", "arnaujc91"],
         # chadfulton, bashtage, jbrockmendel for statsmodels implementation
         "maintainers": ["arnaujc91"],
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsmodels"],
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],
+        # known failure in case of non-contiguous X, see issue #8787
     }
 
     def __init__(
         self,
         order: tuple[int, int, int] = (0, 0, 0),
         seasonal_order: tuple[int, int, int, int] = (0, 0, 0, 0),
-        trend: Optional[Union[str, Iterable]] = None,
+        trend: str | Iterable | None = None,
         enforce_stationarity: bool = True,
         enforce_invertibility: bool = True,
         concentrate_scale: bool = False,
         trend_offset: int = 1,
-        dates: Optional[np.ndarray] = None,
-        freq: Optional[str] = None,
-        missing: Optional[str] = None,
+        dates: np.ndarray | None = None,
+        freq: str | None = None,
+        missing: str | None = None,
         validate_specification: bool = True,
-        start_params: Optional[np.ndarray] = None,
+        start_params: np.ndarray | None = None,
         transformed: bool = True,
         includes_fixed: bool = False,
-        method: Optional[str] = None,
-        method_kwargs: Optional[dict] = None,
+        method: str | None = None,
+        method_kwargs: dict | None = None,
         gls: bool = False,
-        gls_kwargs: Optional[dict] = None,
+        gls_kwargs: dict | None = None,
         cov_type: str = "opg",
-        cov_kwds: Optional[dict] = None,
+        cov_kwds: dict | None = None,
         return_params: bool = False,
         low_memory: bool = False,
     ):

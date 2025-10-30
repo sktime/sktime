@@ -127,7 +127,7 @@ class Lag(BaseTransformer):
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
@@ -455,7 +455,7 @@ class ReducerTransform(BaseTransformer):
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
@@ -645,4 +645,6 @@ class ReducerTransform(BaseTransformer):
         """
         params1 = {"lags": 2}
 
-        return [params1]
+        params2 = {"lags": [1, 3, 5, 7], "impute_method": "ffill"}
+
+        return [params1, params2]

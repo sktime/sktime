@@ -6,7 +6,6 @@ __author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -31,7 +30,7 @@ from sktime.utils.validation.series import (
 )
 from sktime.utils.warnings import _suppress_pd22_warning
 
-VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
+VALID_FORECASTING_HORIZON_TYPES = int | list | np.ndarray | pd.Index
 
 DELEGATED_METHODS = (
     "__sub__",
@@ -178,7 +177,7 @@ def _check_freq(obj):
         return None
 
 
-def _extract_freq_from_cutoff(x) -> Optional[str]:
+def _extract_freq_from_cutoff(x) -> str | None:
     """Extract frequency string from cutoff.
 
     Parameters
@@ -202,14 +201,17 @@ class ForecastingHorizon:
     ----------
     values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
         Values of forecasting horizon
+
     is_relative : bool, optional (default=None)
+
         - If True, a relative ForecastingHorizon is created:
-                values are relative to end of training series.
+          values are relative to end of training series.
         - If False, an absolute ForecastingHorizon is created:
-                values are absolute.
+          values are absolute.
         - if None, the flag is determined automatically:
-            relative, if values are of supported relative index type
-            absolute, if not relative and values of supported absolute index type
+          relative, if values are of supported relative index type
+          absolute, if not relative and values of supported absolute index type
+
     freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
         object carrying frequency information on values
         ignored unless values is without inferable freq
@@ -967,7 +969,7 @@ def _index_range(relative, cutoff):
 
 def _is_pandas_arithmetic_bug_fixed():
     """Check if pandas supports correct arithmetic without a workaround."""
-    # TODO: 0.39.0:
+    # TODO: 0.40.0:
     # Check at every minor release whether lower pandas bound >=1.5.0
     # if yes, can remove the workaround in the "else" condition and the check
     #

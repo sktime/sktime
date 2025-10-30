@@ -20,13 +20,20 @@ jobs:
       - name: repository checkout step
         uses: actions/checkout@v5
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: python environment step
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
       - name: install pre-commit
-        run: python3 -m pip install pre-commit
+        run: uv pip install pre-commit
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Checkout code
         uses: actions/checkout@v5
@@ -90,18 +97,23 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: 3.11
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[notebooks,binder,dev]
+        run: uv pip install .[notebooks,binder,dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run example notebooks
         run: build_tools/run_examples.sh
@@ -114,18 +126,23 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: 3.11
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[notebooks,binder]
+        run: pip install .[notebooks,binder]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run example notebooks
         run: build_tools/run_blogposts.sh
@@ -146,15 +163,20 @@ jobs:
 
       - run: git fetch --depth 1
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
       - name: Install sktime with dev dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[dev]
+        run: pip install .[dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Get list of names of changed classes
         id: get-change-list
@@ -163,8 +185,8 @@ jobs:
           OBJ_LIST_LENGTH=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; obj_list = _get_all_changed_classes(vm=True); print(len(obj_list))')
           echo "OBJ_LIST=$OBJ_LIST" >> $GITHUB_ENV
           echo "OBJ_LIST_LENGTH=$OBJ_LIST_LENGTH" >> $GITHUB_ENV
-          echo "::set-output name=obj_list::$OBJ_LIST"
-          echo "::set-output name=obj_list_length::$OBJ_LIST_LENGTH"
+          echo "obj_list=$OBJ_LIST" >> $GITHUB_OUTPUT
+          echo "obj_list_length=$OBJ_LIST_LENGTH" >> $GITHUB_OUTPUT
 
       - name: Print changed classes
         run: |
@@ -179,7 +201,7 @@ jobs:
       fail-fast: false
       matrix:
         flag: ${{ fromJson(needs.detect-changed-classes.outputs.obj_list) }}
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.10', '3.11', '3.12', '3.13']
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
@@ -187,6 +209,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -196,10 +223,15 @@ jobs:
       - name: Install OSX packages
         run: ./.github/scripts/install_osx_dependencies.sh
 
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
+
       - name: Install sktime with dev dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[dev]
+        run: uv pip install .[dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Install dependencies for ${{ matrix.flag }}
         run: |
@@ -208,7 +240,7 @@ jobs:
         continue-on-error: true
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run tests with ${{ matrix.flag }}
         env:
@@ -248,16 +280,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: 3.11
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: |
-          python -m pip install .
+        run: pip install .
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Run pytest-free tests
         run: |
@@ -269,19 +309,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: 3.11
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[dev]
+        run: pip install .[dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run tests
         run: make test_softdeps
@@ -296,20 +344,26 @@ jobs:
 
       - run: git fetch --depth 1
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: 3.11
 
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[dev]
+        run: pip install .[dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run tests
         run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
@@ -324,23 +378,31 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: 3.11
+
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
         run: |
           if [[ "${{ matrix.mlflow-version }}" == "2.9.2'" ]]; then
-            python -m pip install .[all_extras,dev,mlflow_tests,mlflow2] --no-cache-dir
+            uv pip install .[all_extras,dev,mlflow_tests,mlflow2] --no-cache-dir
           else
-            python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
+            uv pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
           fi
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run tests
         run: make test_mlflow
@@ -355,6 +417,11 @@ jobs:
 
       - run: git fetch --depth 1
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -364,11 +431,12 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[dev,dependencies_lower]
+        run: pip install .[dev,dependencies_lower]
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Run tests
         run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
@@ -384,6 +452,7 @@ jobs:
       pyproject: ${{ steps.filter.outputs.pyproject }}
     steps:
       - uses: actions/checkout@v5
+
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -425,7 +494,7 @@ jobs:
     strategy:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
         os: [ubuntu-latest, macos-latest, windows-latest, ubuntu-22.04-arm]
     runs-on: ${{ matrix.os }}
 
@@ -435,6 +504,11 @@ jobs:
       - run: git remote set-branches origin 'main'
 
       - run: git fetch --depth 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -447,12 +521,19 @@ jobs:
       - name: Install OSX packages
         run: ./.github/scripts/install_osx_dependencies.sh
 
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
+
       - name: Install sktime and dependencies
         shell: bash
-        run: python -m pip install .[all_extras_pandas2,dev,dl,compatibility_tests] --no-cache-dir
+        run: uv pip install .[all_extras_pandas2,dev,dl,compatibility_tests] --no-cache-dir
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Show available branches
         run: git branch -a
@@ -465,7 +546,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -473,6 +554,11 @@ jobs:
       - run: git remote set-branches origin 'main'
 
       - run: git fetch --depth 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -483,11 +569,12 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[all_extras,dev,pandas1,numpy1] --no-cache-dir
+        run: pip install .[all_extras,dev,pandas1,numpy1] --no-cache-dir
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Show dependencies
-        run: python -m pip list
+        run: uv pip list
 
       - name: Show available branches
         run: git branch -a

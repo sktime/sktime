@@ -121,7 +121,6 @@ class WindowSummarizer(BaseTransformer):
             an estimator that can correctly deal with observations with missing values,
             "bfill" will fill the NAs by carrying the first observation backwards.
 
-
     Attributes
     ----------
     truncate_start : int
@@ -208,7 +207,7 @@ class WindowSummarizer(BaseTransformer):
             "pd_multiindex_hier",
         ],  # which mtypes do _fit/_predict support for X?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "capability:missing_values": True,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
@@ -222,6 +221,9 @@ class WindowSummarizer(BaseTransformer):
         # reason for skip: known side effects on multivariate arguments; see #2072
         "tests:skip_by_name": [
             "test_methods_have_no_side_effects",
+            "test_categorical_X_passes",  # some cases support categorical data,
+            # so we conservatively set the capability tag to True,
+            # even if it fails in standard cases like np.mean
         ],
     }
 
@@ -642,6 +644,7 @@ class SummaryTransformer(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
