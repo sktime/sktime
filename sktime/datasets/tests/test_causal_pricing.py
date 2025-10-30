@@ -9,6 +9,9 @@ import pytest
 
 from sktime.datasets import make_causal_pricing
 from sktime.datatypes import check_is_scitype
+from sktime.utils.dependencies import _check_soft_dependencies
+
+PGMPY_AVAILABLE = _check_soft_dependencies("pgmpy", severity="none")
 
 
 class TestMakeCausalPricing:
@@ -17,19 +20,21 @@ class TestMakeCausalPricing:
     def test_output_shape(self):
         """Test output shape with custom dimensions."""
         n_series, n_timepoints = 10, 50
-        X, y, gt = make_causal_pricing(
-            n_series=n_series, n_timepoints=n_timepoints, random_state=42
+        X, y = make_causal_pricing(
+            n_series=n_series,
+            n_timepoints=n_timepoints,
+            return_ground_truth=False,
+            random_state=42,
         )
 
         assert X.shape == (n_series * n_timepoints, 7), "X shape incorrect"
         assert y.shape == (n_series * n_timepoints, 1), "y shape incorrect"
-        assert len(gt["treatment_effects"]) == n_series, (
-            "Treatment effects length incorrect"
-        )
 
     def test_output_scitype(self):
         """Test output is Panel scitype."""
-        X, y, _ = make_causal_pricing(n_series=10, n_timepoints=20, random_state=42)
+        X, y = make_causal_pricing(
+            n_series=10, n_timepoints=20, return_ground_truth=False, random_state=42
+        )
 
         assert check_is_scitype(X, "Panel"), "X is not Panel scitype"
         assert check_is_scitype(y, "Panel"), "y is not Panel scitype"
@@ -37,8 +42,11 @@ class TestMakeCausalPricing:
     def test_multiindex_structure(self):
         """Test MultiIndex structure."""
         n_series, n_timepoints = 5, 10
-        X, y, _ = make_causal_pricing(
-            n_series=n_series, n_timepoints=n_timepoints, random_state=42
+        X, y = make_causal_pricing(
+            n_series=n_series,
+            n_timepoints=n_timepoints,
+            return_ground_truth=False,
+            random_state=42,
         )
 
         assert isinstance(X.index, pd.MultiIndex), "X index is not MultiIndex"
@@ -51,7 +59,7 @@ class TestMakeCausalPricing:
 
     def test_column_names(self):
         """Test that X and y have correct columns."""
-        X, y, _ = make_causal_pricing(n_series=5, n_timepoints=10, random_state=42)
+        X, y = make_causal_pricing(n_series=5, n_timepoints=10, random_state=42, return_ground_truth=False)
 
         expected_X_cols = [
             "discount",
@@ -88,29 +96,30 @@ class TestMakeCausalPricing:
 
     def test_physical_constraints_demand(self):
         """Test that demand is non-negative."""
-        X, y, _ = make_causal_pricing(n_series=50, n_timepoints=100, random_state=123)
+        X, y = make_causal_pricing(n_series=50, n_timepoints=100, random_state=123, return_ground_truth=False)
 
         assert (y["demand"] >= 0).all(), "Found negative demand values"
 
     def test_physical_constraints_stock(self):
         """Test that stock is non-negative."""
-        X, y, _ = make_causal_pricing(n_series=50, n_timepoints=100, random_state=123)
+        X, y = make_causal_pricing(n_series=50, n_timepoints=100, random_state=123, return_ground_truth=False)
 
         assert (X["stock"] >= 0).all(), "Found negative stock values"
 
     def test_physical_constraints_discount(self):
         """Test that discounts are in valid range [0, 0.5]."""
-        X, y, _ = make_causal_pricing(n_series=50, n_timepoints=100, random_state=123)
+        X, y = make_causal_pricing(n_series=50, n_timepoints=100, random_state=123, return_ground_truth=False)
 
         assert (X["discount"] >= 0).all(), "Found negative discount values"
         assert (X["discount"] <= 0.5).all(), "Found discount values > 0.5"
 
     def test_physical_constraints_price(self):
         """Test that initial prices are positive."""
-        X, y, _ = make_causal_pricing(n_series=50, n_timepoints=100, random_state=123)
+        X, y = make_causal_pricing(n_series=50, n_timepoints=100, random_state=123, return_ground_truth=False)
 
         assert (X["p0"] > 0).all(), "Found non-positive initial prices"
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_treatment_effects_negative(self):
         """Test that treatment effects are negative (normal goods)."""
         _, _, gt = make_causal_pricing(n_series=100, n_timepoints=50, random_state=456)
@@ -119,6 +128,7 @@ class TestMakeCausalPricing:
             "Treatment effects should be negative"
         )
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_demand_price_relationship(self):
         """Test that higher price leads to lower demand on average."""
         X, y, gt = make_causal_pricing(n_series=100, n_timepoints=50, random_state=456)
@@ -150,6 +160,7 @@ class TestMakeCausalPricing:
         assert isinstance(X, pd.DataFrame)
         assert isinstance(y, pd.DataFrame)
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_return_ground_truth_true(self):
         """Test that return_ground_truth=True returns X, y, and ground_truth."""
         result = make_causal_pricing(
@@ -166,6 +177,7 @@ class TestMakeCausalPricing:
         assert "causal_dag" in gt
         assert "metadata" in gt
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_ground_truth_structure(self):
         """Test ground truth dictionary structure."""
         _, _, gt = make_causal_pricing(n_series=10, n_timepoints=20, random_state=42)
@@ -182,6 +194,7 @@ class TestMakeCausalPricing:
         assert "metadata" in gt
         assert isinstance(gt["metadata"], dict)
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_causal_dag_structure(self):
         """Test that causal DAG is properly structured."""
 
@@ -249,6 +262,7 @@ class TestMakeCausalPricing:
         assert "price" in demand_parents, "price should be parent of demand"
         assert "base_demand" in demand_parents, "base_demand should be parent of demand"
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_metadata_content(self):
         """Test metadata contains expected information."""
         n_series, n_timepoints = 10, 20
@@ -271,6 +285,7 @@ class TestMakeCausalPricing:
         assert metadata["random_state"] == random_state
         assert "reference" in metadata
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_seasonal_pattern_exists(self):
         """Test that seasonality is present in the data."""
         _, _, gt = make_causal_pricing(n_series=10, n_timepoints=100, random_state=789)
@@ -295,6 +310,7 @@ class TestMakeCausalPricing:
             f"Expected seasonality period ~30, got {peak_period}"
         )
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_stock_depletes_over_time(self):
         """Test that stock generally decreases over time."""
         X, _, _ = make_causal_pricing(n_series=50, n_timepoints=100, random_state=321)
@@ -316,6 +332,7 @@ class TestMakeCausalPricing:
             f"Expected final stock < 20% of initial, got {final_relative * 100:.1f}%"
         )
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_discount_levels(self):
         """Test that discounts take discrete levels."""
         X, _, _ = make_causal_pricing(n_series=50, n_timepoints=100, random_state=123)
@@ -373,6 +390,7 @@ class TestMakeCausalPricing:
             f"Expected mean discount between 8% and 30%, got {mean_discount * 100:.1f}%"
         )
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_base_demand_positive(self):
         """Test that base demand is positive."""
         _, _, gt = make_causal_pricing(n_series=50, n_timepoints=50, random_state=123)
@@ -380,6 +398,7 @@ class TestMakeCausalPricing:
         base_demand = gt["base_demand"]["base_demand"]
         assert (base_demand > 0).all(), "Base demand should be positive"
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_treatment_effect_heterogeneity(self):
         """Test that treatment effects show heterogeneity across articles."""
         _, _, gt = make_causal_pricing(n_series=100, n_timepoints=50, random_state=789)
@@ -406,6 +425,7 @@ class TestMakeCausalPricing:
         assert X["d"].max() < n_categories_d, "Category d exceeds n_categories_d"
         assert X["k"].max() < n_categories_k, "Category k exceeds n_categories_k"
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_small_dataset(self):
         """Test generation with minimal dataset size."""
         X, y, gt = make_causal_pricing(n_series=2, n_timepoints=10, random_state=42)
@@ -413,6 +433,7 @@ class TestMakeCausalPricing:
         assert X.shape[0] == 20, "Small dataset shape incorrect"
         assert len(gt["treatment_effects"]) == 2
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_large_dataset(self):
         """Test generation with larger dataset (default paper size)."""
         X, y, gt = make_causal_pricing(n_series=100, n_timepoints=100, random_state=42)
@@ -421,6 +442,7 @@ class TestMakeCausalPricing:
         assert y.shape[0] == 10000
         assert len(gt["treatment_effects"]) == 100
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     @pytest.mark.parametrize("random_state", [0, 42, 123, 999])
     def test_various_random_states(self, random_state):
         """Test that various random states work correctly."""
@@ -448,7 +470,7 @@ class TestMakeCausalPricing:
 
     def test_no_missing_values(self):
         """Test that there are no missing values."""
-        X, y, _ = make_causal_pricing(n_series=50, n_timepoints=50, random_state=42)
+        X, y = make_causal_pricing(n_series=50, n_timepoints=50, random_state=42, return_ground_truth=False)
 
         assert not X.isnull().any().any(), "Found missing values in X"
         assert not y.isnull().any().any(), "Found missing values in y"
