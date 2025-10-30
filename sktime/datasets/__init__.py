@@ -35,6 +35,7 @@ __all__ = [
     "load_covid_3month",
     "load_forecastingdata",
     "load_m5",
+    "make_causal_pricing",
     "write_panel_to_tsfile",
     "write_dataframe_to_tsfile",
     "write_ndarray_to_tsfile",
@@ -66,6 +67,7 @@ __all__ = [
     "UCRUEADataset",
 ]
 
+from sktime.datasets._causal_pricing import make_causal_pricing
 from sktime.datasets._data_io import (
     generate_example_long_table,
     make_multi_index_dataframe,
