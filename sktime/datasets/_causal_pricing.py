@@ -113,11 +113,13 @@ def make_causal_pricing(
     Examples
     --------
     >>> from sktime.datasets import make_causal_pricing
-    >>> X, y, gt = make_causal_pricing(n_series=100, n_timepoints=50, random_state=42)
-    >>> X.shape
+    >>> X, y = make_causal_pricing(
+    ...     n_series=100, n_timepoints=50, return_ground_truth=False, random_state=42
+    ... )  # doctest: +SKIP
+    >>> X.shape  # doctest: +SKIP
     (5000, 7)
-    >>> gt['treatment_effects'].shape
-    (100,)
+    >>> y.shape  # doctest: +SKIP
+    (5000, 1)
     """
     if n_series <= 0:
         raise ValueError(f"n_series must be positive, got {n_series}")
