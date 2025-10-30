@@ -978,7 +978,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
                 "If you want to change the forecasting "
                 "horizon, please re-fit the forecaster. " + msg
             )
-        return super()._check_fh(fh)
+        super()._check_fh(fh)
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecaster to training data and forward fh to trend forecaster.
