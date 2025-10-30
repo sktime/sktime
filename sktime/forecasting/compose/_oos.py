@@ -370,9 +370,12 @@ class OosForecaster(BaseForecaster):
         columns = self._get_columns(method=method_name, **method_kwargs)
         index = fh.to_absolute_index(self.cutoff)
         if isinstance(_y.index, pd.MultiIndex):
-            index = pd.MultiIndex.from_product(
-                [_y.index.droplevel(-1).unique(), index], names=_y.index.names
-            )
+            y_inst_idx = _y.index.droplevel(-1).unique()
+            if isinstance(y_inst_idx, pd.MultiIndex):
+                index = pd.Index([x + (y,) for x in y_inst_idx for y in index])
+            else:
+                index = pd.Index([(x, y) for x in y_inst_idx for y in index])
+        index.names = _y.index.names
         preds = pd.DataFrame(np.nan, index=index, columns=columns)
 
         # Out-of-sample predictions
