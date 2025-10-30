@@ -1,7 +1,8 @@
 __all__ = ["Model"]
 
 import numpy as np
-from skbase.utils.dependencies import _safe_import
+
+from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
 nn = _safe_import("torch.nn")
