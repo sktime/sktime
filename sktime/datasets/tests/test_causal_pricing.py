@@ -59,7 +59,9 @@ class TestMakeCausalPricing:
 
     def test_column_names(self):
         """Test that X and y have correct columns."""
-        X, y = make_causal_pricing(n_series=5, n_timepoints=10, random_state=42, return_ground_truth=False)
+        X, y = make_causal_pricing(
+            n_series=5, n_timepoints=10, random_state=42, return_ground_truth=False
+        )
 
         expected_X_cols = [
             "discount",
@@ -74,6 +76,7 @@ class TestMakeCausalPricing:
 
         assert list(y.columns) == ["demand"], f"y columns incorrect: {y.columns}"
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_reproducibility(self):
         """Test random_state produces reproducible results."""
         X1, y1, gt1 = make_causal_pricing(n_series=10, n_timepoints=20, random_state=42)
@@ -85,6 +88,7 @@ class TestMakeCausalPricing:
             gt1["treatment_effects"], gt2["treatment_effects"]
         )
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_different_random_states(self):
         """Test different random states produce different results."""
         X1, _, _ = make_causal_pricing(n_series=10, n_timepoints=20, random_state=42)
@@ -96,26 +100,34 @@ class TestMakeCausalPricing:
 
     def test_physical_constraints_demand(self):
         """Test that demand is non-negative."""
-        X, y = make_causal_pricing(n_series=50, n_timepoints=100, random_state=123, return_ground_truth=False)
+        X, y = make_causal_pricing(
+            n_series=50, n_timepoints=100, random_state=123, return_ground_truth=False
+        )
 
         assert (y["demand"] >= 0).all(), "Found negative demand values"
 
     def test_physical_constraints_stock(self):
         """Test that stock is non-negative."""
-        X, y = make_causal_pricing(n_series=50, n_timepoints=100, random_state=123, return_ground_truth=False)
+        X, y = make_causal_pricing(
+            n_series=50, n_timepoints=100, random_state=123, return_ground_truth=False
+        )
 
         assert (X["stock"] >= 0).all(), "Found negative stock values"
 
     def test_physical_constraints_discount(self):
         """Test that discounts are in valid range [0, 0.5]."""
-        X, y = make_causal_pricing(n_series=50, n_timepoints=100, random_state=123, return_ground_truth=False)
+        X, y = make_causal_pricing(
+            n_series=50, n_timepoints=100, random_state=123, return_ground_truth=False
+        )
 
         assert (X["discount"] >= 0).all(), "Found negative discount values"
         assert (X["discount"] <= 0.5).all(), "Found discount values > 0.5"
 
     def test_physical_constraints_price(self):
         """Test that initial prices are positive."""
-        X, y = make_causal_pricing(n_series=50, n_timepoints=100, random_state=123, return_ground_truth=False)
+        X, y = make_causal_pricing(
+            n_series=50, n_timepoints=100, random_state=123, return_ground_truth=False
+        )
 
         assert (X["p0"] > 0).all(), "Found non-positive initial prices"
 
@@ -320,6 +332,7 @@ class TestMakeCausalPricing:
 
         assert final_stock < initial_stock, "Stock should decrease over time on average"
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_stock_clearing_behavior(self):
         """Test that stock approximately clears by end of season."""
         X, _, _ = make_causal_pricing(n_series=50, n_timepoints=100, random_state=321)
@@ -345,6 +358,7 @@ class TestMakeCausalPricing:
                 np.isclose(discount, level, atol=1e-10) for level in expected_levels
             ), f"Unexpected discount level: {discount}"
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_category_assignments(self):
         """Test that category assignments are within valid ranges."""
         X, _, _ = make_causal_pricing(
@@ -358,6 +372,7 @@ class TestMakeCausalPricing:
         assert (X["d"] >= 0).all() and (X["d"] < 45).all(), "Category d out of range"
         assert (X["k"] >= 0).all() and (X["k"] < 15).all(), "Category k out of range"
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_promotion_binary(self):
         """Test that promotion is binary."""
         X, _, _ = make_causal_pricing(n_series=50, n_timepoints=20, random_state=42)
@@ -367,6 +382,7 @@ class TestMakeCausalPricing:
             "Promotion should be binary (0 or 1)"
         )
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_week_number_sequential(self):
         """Test that week_number is sequential."""
         X, _, _ = make_causal_pricing(n_series=5, n_timepoints=20, random_state=42)
@@ -376,6 +392,7 @@ class TestMakeCausalPricing:
             expected_weeks = np.arange(20)
             np.testing.assert_array_equal(weeks, expected_weeks)
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_average_discount_near_target(self):
         """Test that average discount is reasonable (not zero, not maxed out).
 
@@ -411,6 +428,7 @@ class TestMakeCausalPricing:
             "Treatment effects should be diverse"
         )
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_custom_categories(self):
         """Test with custom number of categories."""
         n_categories_d, n_categories_k = 10, 5
@@ -454,6 +472,7 @@ class TestMakeCausalPricing:
         assert (y["demand"] >= 0).all()
         assert (gt["treatment_effects"] < 0).all()
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_data_types(self):
         """Test that data types are appropriate."""
         X, y, gt = make_causal_pricing(n_series=10, n_timepoints=20, random_state=42)
@@ -470,11 +489,14 @@ class TestMakeCausalPricing:
 
     def test_no_missing_values(self):
         """Test that there are no missing values."""
-        X, y = make_causal_pricing(n_series=50, n_timepoints=50, random_state=42, return_ground_truth=False)
+        X, y = make_causal_pricing(
+            n_series=50, n_timepoints=50, random_state=42, return_ground_truth=False
+        )
 
         assert not X.isnull().any().any(), "Found missing values in X"
         assert not y.isnull().any().any(), "Found missing values in y"
 
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_initial_price_stability(self):
         """Test that initial price (p0) is constant for each article."""
         X, _, _ = make_causal_pricing(n_series=10, n_timepoints=20, random_state=42)
