@@ -8,6 +8,7 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_cv
 
 
@@ -73,6 +74,59 @@ class OosForecaster(BaseForecaster):
         defaults to ``ExpandingWindowSplitter(initial_window=2)``, which performs
         expanding window updates starting from the first 2 observation.
 
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        defines the ingestion mode when the forecaster sees new data when window expands
+
+        * "refit" = forecaster is refitted to each training window
+        * "update" = forecaster is updated with training window data,
+          in sequence provided
+        * "no-update_params" = fit to first training window,
+          re-used without fit or update
+
+    backend : string, by default "None".
+        Parallelization backend to use for runs.
+        Runs parallel prediction if specified and ``strategy="refit"``.
+
+        - "None": executes loop sequentially, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+        - "ray": uses ``ray``, requires ``ray`` package in environment
+
+        Recommendation: Use "dask" or "loky" for parallel prediction.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+          e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
     Attributes
     ----------
     _in_forecaster : sktime forecaster
@@ -128,9 +182,19 @@ class OosForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
     }
 
-    def __init__(self, forecaster, cv=None):
+    def __init__(
+        self,
+        forecaster,
+        cv=None,
+        strategy="refit",
+        backend=None,
+        backend_params=None,
+    ):
         self.forecaster = forecaster
         self.cv = cv
+        self.strategy = strategy
+        self.backend = backend
+        self.backend_params = backend_params
         self._in_forecaster = None
         self._oos_forecaster = None
 
@@ -171,6 +235,27 @@ class OosForecaster(BaseForecaster):
 
         self._oos_forecaster = clone(self.forecaster)
         self._oos_forecaster.fit(y=y, X=X, fh=oos_fh)
+
+    def _custom_predict_window(self, x, meta):
+        y = meta["y"]
+        X = meta["X"]
+        fh = meta["fh"]
+        method_name = meta["method_name"]
+        method_kwargs = meta["method_kwargs"]
+        method = getattr(self._in_forecaster, method_name)
+        update_params = self.strategy == "update"
+
+        window, horizon = x
+        new_y = y.iloc[window]
+        new_X = X.iloc[window] if X is not None else None
+        new__X = X.iloc[horizon] if X is not None else None
+
+        if self.strategy == "refit":
+            self._in_forecaster.fit(y=new_y, X=new_X, fh=fh)
+        else:
+            self._in_forecaster.update(y=new_y, X=new_X, update_params=update_params)
+
+        return method(X=new__X, **method_kwargs)
 
     def _custom_predict(self, fh, X, method_name, **method_kwargs):
         _y = self._y
@@ -215,24 +300,34 @@ class OosForecaster(BaseForecaster):
 
         # In-sample predictions using cross-validation
         if in_fh is not None:
+            parallel = self.strategy not in ["update", "no-update_params"]
+            meta = dict(
+                y=_y,
+                X=_X,
+                fh=cv.get_fh(),
+                method_name=method_name,
+                method_kwargs=method_kwargs,
+            )
+            backend = self.backend if parallel else None
+            backend_params = self.backend_params if parallel else None
             self._in_forecaster = clone(self.forecaster)
-            method = getattr(self._in_forecaster, method_name)
 
-            # fit on the first training window
-            window, horizon = next(cv.split(_y))
-            new_y = _y.iloc[window]
-            new_X = _X.iloc[window] if _X is not None else None
-            self._in_forecaster.fit(y=new_y, X=new_X, fh=cv.get_fh())
-
-            # update on all training windows
-            for window, horizon in cv.split(_y):
+            # fit on the first training window if updating
+            if not parallel:
+                window, horizon = next(cv.split(_y))
                 new_y = _y.iloc[window]
                 new_X = _X.iloc[window] if _X is not None else None
-                new__X = _X.iloc[horizon] if _X is not None else None
+                self._in_forecaster.fit(y=new_y, X=new_X, fh=cv.get_fh())
 
-                self._in_forecaster.update(y=new_y, X=new_X, update_params=True)
-                pred = method(X=new__X, **method_kwargs)
-
+            # fit on all training windows
+            in_preds = parallelize(
+                fun=self._custom_predict_window,
+                iter=cv.split(_y),
+                meta=meta,
+                backend=backend,
+                backend_params=backend_params,
+            )
+            for pred in in_preds:
                 common_idx = pred.index.intersection(preds.index)
                 preds.loc[common_idx] = pred.loc[common_idx].values
 
@@ -279,6 +374,8 @@ class OosForecaster(BaseForecaster):
                 window_length=2,
             ),
             "cv": ExpandingWindowSplitter(initial_window=4, step_length=1, fh=1),
+            "strategy": "update",
+            "backend": "multiprocessing",
         }
 
         return [params1, params2]
