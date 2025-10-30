@@ -218,7 +218,7 @@ This section lists tags applying to time series metrics (``"metric"`` type).
 Tags for time series aligners
 -----------------------------
 
-This section lists tags applying to time series metrics (``"aligner"`` type).
+This section lists tags applying to time series aligners (``"aligner"`` type).
 
 .. currentmodule:: sktime.registry._tags
 
