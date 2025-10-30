@@ -52,9 +52,11 @@ def test_statsforecast_mstl(mock_autoets):
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
-    "fh", [[1, 2, 3], 0, 5, None], ids=["valid fh", "scalar_0", "scalar", "None fh"]
+    "fh",
+    [[1, 2, 3], [1], 0, 5, None],
+    ids=["valid fh", "different fh predict", "scalar_0", "scalar", "None fh"],
 )
-def test_statsforecast_mstl_with_fh(fh):
+def test_statsforecast_mstl_with_fh(request, fh):
     """
     Check that StatsForecast MSTL adapter calls trend forecaster with
     the correct arguments.
@@ -99,7 +101,23 @@ def test_statsforecast_mstl_with_fh(fh):
             "The forecasting horizon `fh` must be passed to `fit` of ..."
         )
         return
-    model.predict(fh=fh)
+    if "different fh predict" in request.node.name:
+        # predict with different fh
+        fh.append(2)
+        expect_error = True
+    try:
+        model.predict(fh=fh)
+    except ValueError as e:
+        if expect_error:
+            assert (
+                "A different forecasting horizon `fh` has been provided from "
+            ) in repr(e), (
+                "Unexpected exception raised - should have failed with ValueError, "
+                "A different forecasting horizon `fh` has been "
+                "provided from "
+            )
+        else:
+            raise e
 
 
 @pytest.mark.skipif(

@@ -131,34 +131,6 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         params = self._get_validated_statsforecast_params()
         return cls(**params)
 
-    def _set_fh_to_trend_forecaster(self, fh, y):
-        """Set forecasting horizon to trend forecaster if it exists.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon or None
-            The forecasting horizon with the steps ahead to to predict.
-        y : pd.Series
-            The time series data used for fitting.
-        """
-        from statsforecast.models import MSTL
-
-        if (
-            fh is not None
-            and self._get_statsforecast_class() is MSTL
-            and hasattr(self, "_trend_forecaster")
-        ):
-            _fh = self._check_fh(fh)
-
-            # Convert fh to relative if it is absolute before setting it
-            _fh = _fh.to_relative(self.cutoff)
-
-            if _fh.is_all_in_sample():
-                _fh = ForecastingHorizon(y.index, is_relative=False)
-                _fh = _fh.to_relative(self.cutoff)
-            # pass the fh to _trend_forecaster in case it needs it
-            self._trend_forecaster.set_fh(_fh)
-
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -190,7 +162,6 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         self : reference to self
         """
         self._forecaster = self._instantiate_model()
-        self._set_fh_to_trend_forecaster(fh, y)
 
         y_fit_input = y.to_numpy(copy=False)
 
@@ -522,11 +493,16 @@ class StatsForecastBackAdapter:
         -------
         self : returns reference to self
         """
-        self.inner_fh = fh
+        self._inner_fh = fh
 
-    def _get_fh(self):
-        """Get forecasting horizon."""
-        fh = getattr(self, "inner_fh", None)
+    def _get_MSTL_fh(self):
+        """
+        Get forecasting horizon.
+
+        Using the specifics of MSTL inherited from
+        `_predict_in_or_out_of_sample` method of `_GeneralisedStatsForecastAdapter`.
+        """
+        fh = getattr(self, "_inner_fh", None)
 
         if fh is not None:
             if fh.is_all_in_sample():
@@ -550,7 +526,7 @@ class StatsForecastBackAdapter:
         -------
         self : returns an instance of self.
         """
-        fh = self._get_fh()
+        fh = self._get_MSTL_fh()
         self.estimator = self.estimator.fit(y=y, X=X, fh=fh)
 
         return self
@@ -573,7 +549,7 @@ class StatsForecastBackAdapter:
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
-        fh = self._get_fh() or range(1, h + 1)
+        fh = self._get_MSTL_fh() or range(1, h + 1)
         mean = self.estimator.predict(fh=fh, X=X)[:, 0]
         if level is None:
             return {"mean": mean}
