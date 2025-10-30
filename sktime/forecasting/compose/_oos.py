@@ -22,10 +22,10 @@ class OosForecaster(BaseForecaster):
 
     In standard forecasters, in-sample predictions are typically obtained directly
     from fitted values, which reuse information from the target observation itself.
-    In contrast, this wrapper enforces a strictly causal prediction regime by
-    repeatedly refitting the forecaster over cross-validation folds and computing
-    predictions only for unseen points in each fold. This produces *true*
-    out-of-sample predictions even for in-sample horizons.
+    In contrast, this wrapper provides in-sample predictions as if they were
+    out-of-sample, that is, each point is predicted using only past data unseen by
+    the forecaster. This ensures that in-sample forecasts are computed under
+    realistic, out-of-sample-like conditions.
 
     This behavior is useful in scenarios that require in-sample residuals or
     forecasts computed without lookahead bias, such as:
@@ -241,6 +241,45 @@ class OosForecaster(BaseForecaster):
         self._oos_forecaster.fit(y=y, X=X, fh=oos_fh)
 
     def _custom_predict_window(self, x, meta):
+        """Generate predictions for a single cross-validation window.
+
+        This helper function executes one iteration of the cross-validation-based
+        in-sample forecasting procedure. It refits or updates the wrapped
+        forecaster on the current training window and computes predictions for the
+        corresponding test (horizon) window.
+
+        The function is typically executed inside a parallel loop (via
+        ``parallelize``), allowing multiple window computations to run
+        concurrently when ``strategy="refit"``.
+
+        Parameters
+        ----------
+        x : tuple (int, int)
+            A tuple containing two index arrays produced by a ``cv`` splitter:
+            - ``window`` : indices for the current training window.
+            - ``horizon`` : indices for the forecast horizon (test window)
+              to be predicted using the model trained on ``window``.
+
+        meta : dict
+            Auxiliary context required for the prediction run, containing:
+            - ``y`` : pandas Series or DataFrame
+                The full target time series from the outer fit.
+            - ``X`` : pandas DataFrame or None
+                The full exogenous data (if any).
+            - ``fh`` : sktime ForecastingHorizon
+                Forecasting horizon relative to the cutoff within each split.
+            - ``method_name`` : str
+                Name of the prediction method to call on the forecaster,
+                typically "predict" or "predict_interval".
+            - ``method_kwargs`` : dict
+                Keyword arguments to pass to the prediction method.
+
+        Returns
+        -------
+        preds : pandas.DataFrame
+            Forecasts (or prediction intervals) for the current test window.
+            Indexed by the test (horizon) indices of the cross-validation split.
+        """
         y = meta["y"]
         X = meta["X"]
         fh = meta["fh"]
@@ -262,6 +301,46 @@ class OosForecaster(BaseForecaster):
         return method(X=new__X, **method_kwargs)
 
     def _custom_predict(self, fh, X, method_name, **method_kwargs):
+        """Unified prediction routine handling in-sample and out-of-sample forecasts.
+
+        This method orchestrates both in-sample and out-of-sample forecasting,
+        ensuring that all predictions are computed under out-of-sample-like conditions.
+        It performs the following steps:
+
+        1. Splits the forecasting horizon ``fh`` into in-sample and out-of-sample parts.
+        2. For the out-of-sample horizon:
+           - Uses the already fitted ``_oos_forecaster`` to generate predictions.
+        3. For the in-sample horizon:
+           - Iterates over cross-validation folds defined by ``cv``.
+           - For each fold, fits or updates the forecaster according to ``strategy``.
+           - Collects fold-wise predictions, filling NaNs for points uncovered.
+        4. Combines all predictions into a single aligned DataFrame.
+
+        Parameters
+        ----------
+        fh : sktime ForecastingHorizon
+            Forecasting horizon relative to the last observed training point (cutoff).
+            Can include both in-sample (negative) and out-of-sample (positive) steps.
+
+        X : pandas.DataFrame or None
+            Exogenous variables aligned with ``fh``, if required by the forecaster.
+
+        method_name : str
+            Name of the prediction method to invoke on the forecaster, here
+            "predict" or "predict_interval".
+
+        **method_kwargs : dict
+            Additional keyword arguments passed to the prediction method (e.g.,
+            ``coverage`` for interval forecasts).
+
+        Returns
+        -------
+        preds : pandas.DataFrame
+            DataFrame containing predictions (or intervals), indexed by absolute
+            time points of the forecasting horizon. Any points not covered by
+            cross-validation splits (for in-sample) are filled with ``np.nan`` to
+            preserve temporal alignment.
+        """
         _y = self._y
         _X = self._X
         in_fh, oos_fh = self._split_fh(fh)
