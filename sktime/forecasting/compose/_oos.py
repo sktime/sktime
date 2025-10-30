@@ -231,7 +231,11 @@ class OosForecaster(BaseForecaster):
         return in_fh, oos_fh
 
     def _fit(self, y, X, fh):
-        _, oos_fh = self._split_fh(fh)
+        in_fh, oos_fh = self._split_fh(fh)
+
+        # ignore oos-forecaster when making only in-sample predictions
+        if in_fh is not None and oos_fh is None:
+            return
 
         self._oos_forecaster = clone(self.forecaster)
         self._oos_forecaster.fit(y=y, X=X, fh=oos_fh)
@@ -288,7 +292,7 @@ class OosForecaster(BaseForecaster):
         index = fh.to_absolute_index(self.cutoff)
         if isinstance(_y.index, pd.MultiIndex):
             index = pd.MultiIndex.from_product(
-                _y.index.levels[:-1] + [index], names=_y.index.names
+                [_y.index.droplevel(-1).unique(), index], names=_y.index.names
             )
         preds = pd.DataFrame(np.nan, index=index, columns=columns)
 
