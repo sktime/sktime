@@ -936,6 +936,31 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             "trend_forecaster": self._trend_forecaster,
         }
 
+    def _calculate_fh_for_MSTL(self, fh, y):
+        """Calculate the fh to be used for MSTL model.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon or None
+            The forecasting horizon with the steps ahead to to predict.
+        y : pd.Series
+            The time series data used for fitting.
+
+        Returns
+        -------
+        fh : ForecastingHorizon
+            The forecasting horizon to be used for MSTL model.
+        """
+        _fh = self._check_fh(fh)
+
+        # Convert fh to relative if it is absolute before setting it
+        _fh = _fh.to_relative(self.cutoff)
+
+        if _fh.is_all_in_sample():
+            _fh = ForecastingHorizon(y.index, is_relative=False)
+            _fh = _fh.to_relative(self.cutoff)
+        return _fh
+
     def _set_fh_to_trend_forecaster(self, fh, y):
         """Set forecasting horizon to trend forecaster if it exists.
 
@@ -947,20 +972,14 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             The time series data used for fitting.
         """
         if fh is not None:
-            _fh = self._check_fh(fh)
-
-            # Convert fh to relative if it is absolute before setting it
-            _fh = _fh.to_relative(self.cutoff)
-
-            if _fh.is_all_in_sample():
-                _fh = ForecastingHorizon(y.index, is_relative=False)
-                _fh = _fh.to_relative(self.cutoff)
+            _fh = self._calculate_fh_for_MSTL(fh, y)
             # pass the fh to _trend_forecaster in case it needs it
             self._trend_forecaster.set_fh(_fh)
 
     def check_fh(self, fh):
         """Check the fh to ensure consistency with `inner_fh` of trend forecaster."""
-        inner_fh = self._trend_forecaster._inner_fh
+        inner_fh = getattr(self._trend_forecaster, "_inner_fh", None)
+        _fh_for_MSTL = self._calculate_fh_for_MSTL(fh, self._y)
 
         msg = (
             f"This is because fitting of the "
@@ -968,7 +987,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             f"depends on `fh`. "
         )
 
-        if inner_fh and not np.array_equal(fh, inner_fh):
+        if inner_fh and not np.array_equal(_fh_for_MSTL, inner_fh):
             # raise error if existing fh and new one don't match
             raise ValueError(
                 "A different forecasting horizon `fh` has been "
