@@ -144,7 +144,6 @@ class KNeighborsTimeSeriesRegressor(_BaseKnnTimeSeriesEstimator, BaseRegressor):
         # packaging info
         # --------------
         "authors": ["fkiraly"],
-        "python_dependencies": "numba",
         # estimator type
         # --------------
         "capability:multivariate": True,
