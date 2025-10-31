@@ -609,6 +609,7 @@ class CausalPricing(_ForecastingDatasetFromLoader):
 
     _tags = {
         "name": "causal_pricing",
+        "python_dependencies": "pgmpy",
         "capability:random_state": True,
         "n_splits": 0,
         "is_univariate": True,  # y (demand) is univariate
@@ -716,7 +717,6 @@ class CausalPricing(_ForecastingDatasetFromLoader):
         params : dict or list of dict
             Parameters to create testing instances of the class
         """
-        # Minimal parameters with ground truth
         params1 = {
             "n_series": 5,
             "n_timepoints": 10,
