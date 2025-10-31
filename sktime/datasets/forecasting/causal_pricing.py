@@ -656,7 +656,12 @@ class CausalPricing(_ForecastingDatasetFromLoader):
         return_ground_truth : bool, default=True
             If True, return (X, y, ground_truth) tuple
             If False, return (X, y) tuple
+
+        Notes
+        -----
+        When return_ground_truth=True, requires pgmpy.
         """
+        # Store instance parameters
         self.n_series = n_series
         self.n_timepoints = n_timepoints
         self.n_categories_d = n_categories_d
@@ -664,16 +669,31 @@ class CausalPricing(_ForecastingDatasetFromLoader):
         self.random_state = random_state
         self.return_ground_truth = return_ground_truth
 
-        # Update dynamic tags based on parameters
-        self._tags["n_instances"] = n_series
-        self._tags["n_timepoints"] = n_timepoints
-        self._tags["n_panels"] = n_series
+        # Prepare kwargs for loader function
+        self.loader_kwargs = {
+            "n_series": n_series,
+            "n_timepoints": n_timepoints,
+            "n_categories_d": n_categories_d,
+            "n_categories_k": n_categories_k,
+            "random_state": random_state,
+            "return_ground_truth": return_ground_truth,
+        }
 
+        # Call parent __init__ first (checks dependencies based on current tags)
         super().__init__()
 
-        # Set dynamic tag AFTER super().__init__() for conditional dependency
+        # Set dynamic tags AFTER super().__init__()
+        tags_to_set = {
+            "n_instances": n_series,
+            "n_timepoints": n_timepoints,
+            "n_panels": n_series,
+        }
+
+        # Add pgmpy dependency conditionally
         if return_ground_truth:
-            self.set_tags(**{"python_dependencies": "pgmpy"})
+            tags_to_set["python_dependencies"] = "pgmpy"
+
+        self.set_tags(**tags_to_set)
 
     def _split_into_y_and_X(self, loader_output):
         """Split the output of the loader into X and y.
