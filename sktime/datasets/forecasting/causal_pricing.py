@@ -609,7 +609,6 @@ class CausalPricing(_ForecastingDatasetFromLoader):
 
     _tags = {
         "name": "causal_pricing",
-        "python_dependencies": "pgmpy",
         "capability:random_state": True,
         "n_splits": 0,
         "is_univariate": True,  # y (demand) is univariate
@@ -670,14 +669,11 @@ class CausalPricing(_ForecastingDatasetFromLoader):
         self._tags["n_timepoints"] = n_timepoints
         self._tags["n_panels"] = n_series
 
-        if return_ground_truth:
-            from sktime.utils.dependencies import _check_soft_dependencies
-
-            _check_soft_dependencies(
-                "pgmpy", severity="error", obj=self.__class__.__name__
-            )
-
         super().__init__()
+
+        # Set dynamic tag AFTER super().__init__() for conditional dependency
+        if return_ground_truth:
+            self.set_tags(**{"python_dependencies": "pgmpy"})
 
     def _split_into_y_and_X(self, loader_output):
         """Split the output of the loader into X and y.
