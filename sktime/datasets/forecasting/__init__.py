@@ -1,6 +1,10 @@
 """Forecasting datasets."""
 
 from sktime.datasets.forecasting.airline import Airline
+from sktime.datasets.forecasting.causal_pricing import (
+    CausalPricing,
+    make_causal_pricing,
+)
 from sktime.datasets.forecasting.hierarchical_sales_toydata import (
     HierarchicalSalesToydata,
 )
@@ -16,6 +20,7 @@ from sktime.datasets.forecasting.uschange import USChange
 
 __all__ = [
     "Airline",
+    "CausalPricing",
     "ForecastingData",
     "HierarchicalSalesToydata",
     "Longley",
@@ -26,4 +31,5 @@ __all__ = [
     "Solar",
     "USChange",
     "M5Dataset",
+    "make_causal_pricing",
 ]

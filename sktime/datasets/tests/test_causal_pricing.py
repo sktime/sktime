@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import make_causal_pricing
+from sktime.datasets import CausalPricing, make_causal_pricing
 from sktime.datatypes import check_is_scitype
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -140,10 +140,11 @@ class TestMakeCausalPricing:
             "Treatment effects should be negative"
         )
 
-    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
     def test_demand_price_relationship(self):
         """Test that higher price leads to lower demand on average."""
-        X, y, gt = make_causal_pricing(n_series=100, n_timepoints=50, random_state=456)
+        X, y = make_causal_pricing(
+            n_series=100, n_timepoints=50, random_state=456, return_ground_truth=False
+        )
 
         X["price"] = X["p0"] * (1 - X["discount"])
         merged = X.join(y)
@@ -506,3 +507,111 @@ class TestMakeCausalPricing:
             assert np.all(article_p0 == article_p0[0]), (
                 f"p0 should be constant for article {article_id}"
             )
+
+
+class TestCausalPricingClass:
+    """Tests for CausalPricing class-based dataset."""
+
+    def test_class_instantiation(self):
+        """Test that CausalPricing class can be instantiated without pgmpy."""
+        dataset = CausalPricing(
+            n_series=10, n_timepoints=20, random_state=42, return_ground_truth=False
+        )
+        assert dataset is not None
+        assert dataset.n_series == 10
+        assert dataset.n_timepoints == 20
+        assert dataset.return_ground_truth is False
+
+    def test_class_load_xy(self):
+        """Test loading X and y using class API without ground truth."""
+        dataset = CausalPricing(
+            n_series=10, n_timepoints=20, random_state=42, return_ground_truth=False
+        )
+        X, y = dataset.load("X", "y")
+
+        assert X.shape == (200, 7), "X shape incorrect"
+        assert y.shape == (200, 1), "y shape incorrect"
+        assert check_is_scitype(X, "Panel"), "X is not Panel scitype"
+        assert check_is_scitype(y, "Panel"), "y is not Panel scitype"
+
+    def test_class_parameter_variations(self):
+        """Test class with different parameter values without ground truth."""
+        params_list = [
+            {"n_series": 5, "n_timepoints": 10, "return_ground_truth": False},
+            {
+                "n_series": 20,
+                "n_timepoints": 30,
+                "n_categories_d": 10,
+                "n_categories_k": 5,
+                "return_ground_truth": False,
+            },
+            {
+                "n_series": 3,
+                "n_timepoints": 15,
+                "random_state": 999,
+                "return_ground_truth": False,
+            },
+        ]
+
+        for params in params_list:
+            dataset = CausalPricing(**params)
+            X, y = dataset.load("X", "y")
+
+            expected_shape = (params["n_series"] * params["n_timepoints"], 7)
+            assert X.shape == expected_shape, f"X shape incorrect for params {params}"
+
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
+    def test_class_with_ground_truth(self):
+        """Test class with return_ground_truth=True (default behavior)."""
+        dataset = CausalPricing(
+            n_series=5, n_timepoints=10, random_state=42, return_ground_truth=True
+        )
+        X, y = dataset.load("X", "y")
+
+        assert X.shape == (50, 7), "X shape incorrect"
+        assert y.shape == (50, 1), "y shape incorrect"
+        assert hasattr(dataset, "ground_truth_"), "ground_truth_ should be set"
+        assert "treatment_effects" in dataset.ground_truth_
+        assert "base_demand" in dataset.ground_truth_
+        assert "causal_dag" in dataset.ground_truth_
+
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
+    def test_class_default_behavior(self):
+        """Test class default behavior (return_ground_truth=True by default)."""
+        dataset = CausalPricing(n_series=5, n_timepoints=10, random_state=42)
+        X, y = dataset.load("X", "y")
+
+        assert X.shape == (50, 7), "X shape incorrect"
+        assert y.shape == (50, 1), "y shape incorrect"
+        assert hasattr(dataset, "ground_truth_"), (
+            "ground_truth_ should be set by default"
+        )
+
+    def test_class_tags(self):
+        """Test that class tags are properly set."""
+        dataset = CausalPricing(
+            n_series=100, n_timepoints=50, random_state=42, return_ground_truth=False
+        )
+
+        assert dataset.get_tag("name") == "causal_pricing"
+        assert dataset.get_tag("is_univariate") is True
+        assert dataset.get_tag("is_one_series") is False
+        assert dataset.get_tag("is_one_panel") is True
+        assert dataset.get_tag("is_equally_spaced") is True
+        assert dataset.get_tag("has_exogenous") is True
+        assert dataset.get_tag("frequency") == "W"
+        assert dataset.get_tag("n_instances") == 100
+        assert dataset.get_tag("n_timepoints") == 50
+
+    @pytest.mark.skipif(not PGMPY_AVAILABLE, reason="Requires pgmpy")
+    def test_class_get_test_params(self):
+        """Test that get_test_params returns valid parameter sets."""
+        params_list = CausalPricing.get_test_params()
+
+        assert isinstance(params_list, list)
+        assert len(params_list) >= 1
+
+        for params in params_list:
+            dataset = CausalPricing(**params)
+            X, y = dataset.load("X", "y")
+            assert X.shape[0] == params["n_series"] * params["n_timepoints"]

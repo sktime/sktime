@@ -47,6 +47,7 @@ __all__ = [
     "DATASET_NAMES_FPP3",
     "BaseDataset",
     "Airline",
+    "CausalPricing",
     "Longley",
     "Lynx",
     "Macroeconomic",
@@ -67,7 +68,6 @@ __all__ = [
     "UCRUEADataset",
 ]
 
-from sktime.datasets._causal_pricing import make_causal_pricing
 from sktime.datasets._data_io import (
     generate_example_long_table,
     make_multi_index_dataframe,
@@ -131,6 +131,7 @@ from sktime.datasets.classification import (
 from sktime.datasets.forecasting import (
     PBS,
     Airline,
+    CausalPricing,
     ForecastingData,
     Longley,
     Lynx,
@@ -139,4 +140,5 @@ from sktime.datasets.forecasting import (
     ShampooSales,
     Solar,
     USChange,
+    make_causal_pricing,
 )
