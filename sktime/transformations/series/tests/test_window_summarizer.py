@@ -346,3 +346,86 @@ def test_windowsummarizer_with_output(
 
     # Checking for duplicate index names
     assert len(set(Xt.index.names)) == len(X.index.names)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_bfill_multiindex_out_of_sample():
+    """Test that bfill works on out-of-sample multiindex data without NaN."""
+    # Create hierarchical data: 2 series, 30 timestamps each
+    idx = pd.MultiIndex.from_product([["series_1", "series_2"], range(30)])
+    y = pd.Series(np.random.randn(60), index=idx)
+
+    # Configure with bfill
+    summarizer = WindowSummarizer(
+        lag_feature={"lag": [10], "mean": [[1, 2]]},
+        truncate="bfill",
+    )
+
+    # Fit on first 40 rows (20 per series)
+    y_train = y.iloc[:40]
+    summarizer.fit(y_train)
+
+    # Transform on out-of-sample (remaining 20 rows)
+    y_test = y.iloc[40:]
+    result = summarizer.transform(y_test)
+
+    # Critical assertion: After bfill, first row of each series should NOT have NaN
+    # This will fail with current buggy code
+    assert not result.loc["series_1"].iloc[:, :].isna().any().any(), (
+        "series_1 has NaN after bfill - fix not working"
+    )
+    assert not result.loc["series_2"].iloc[:, :].isna().any().any(), (
+        "series_2 has NaN after bfill - fix not working"
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_no_cross_series_contamination():
+    """Ensure bfill doesn't leak values across series boundaries."""
+    # Create distinct series (s1: [1,2,3], s2: [100,101,102])
+    s1 = pd.Series(
+        [1.0, 2.0, 3.0],
+        index=pd.MultiIndex.from_tuples([("s1", 0), ("s1", 1), ("s1", 2)]),
+    )
+    s2 = pd.Series(
+        [100.0, 101.0, 102.0],
+        index=pd.MultiIndex.from_tuples([("s2", 0), ("s2", 1), ("s2", 2)]),
+    )
+    y = pd.concat([s1, s2])
+
+    summarizer = WindowSummarizer(
+        lag_feature={"lag": [5]},  # Creates NaN
+        truncate="bfill",
+    )
+    summarizer.fit(y)
+    result = summarizer.transform(y)
+
+    # After bfill, s1's first value should stay near s1's range (not contaminated with s2=100+)
+    s1_result = result.loc["s1"].iloc[:, 0]
+    assert (s1_result < 50).all(), (
+        f"s1 contaminated with s2 value: {s1_result.values} should be < 50"
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_bfill_single_index_unchanged():
+    """Ensure the fix doesn't break existing single-index functionality."""
+    y = pd.Series(np.random.randn(30))
+    summarizer = WindowSummarizer(
+        lag_feature={"lag": [2], "mean": [[1, 2]]},
+        truncate="bfill",
+    )
+    summarizer.fit(y.iloc[:20])
+    result = summarizer.transform(y.iloc[20:])
+
+    # Should work exactly as before
+    assert not result.iloc[:, :].isna().any().any()

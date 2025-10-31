@@ -483,7 +483,16 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
 
     # Handle backfill
     if bfill is True:
-        feat = feat.bfill()
+        # For multiindex data, apply bfill per instance to prevent cross-series contamination
+        if isinstance(feat.index, pd.MultiIndex) and feat.index.nlevels > 1:
+            # Apply bfill separately per instance (typically level 0)
+            instance_level = 0
+            feat = feat.groupby(level=instance_level, group_keys=False).apply(
+                lambda group: group.bfill()
+            )
+        else:
+            # Single index: use existing logic
+            feat = feat.bfill()
 
     if callable(summarizer):
         name = summarizer.__name__
