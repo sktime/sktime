@@ -684,9 +684,8 @@ class CausalPricing(_ForecastingDatasetFromLoader):
 
         # Set dynamic tags AFTER super().__init__()
         tags_to_set = {
-            "n_instances": n_series,
-            "n_timepoints": n_timepoints,
-            "n_panels": n_series,
+            "n_instances": n_series,  # Number of series (articles) in the panel
+            "n_timepoints": n_timepoints,  # Length of each series
         }
 
         # Add pgmpy dependency conditionally
