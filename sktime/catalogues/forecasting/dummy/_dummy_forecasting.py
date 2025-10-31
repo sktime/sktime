@@ -20,25 +20,25 @@ class DummyForecastingCatalogue(BaseCatalogue):
 
     def _get(self):
         """Return a dict of items (datasets, forecasters, metrics)."""
+        datasets = [
+            "cif_2016_dataset",
+            "hospital_dataset",
+        ]
+
+        forecasters = [
+            "NaiveForecaster()",
+        ]
+
+        metrics = ["MeanAbsoluteError()", "MeanAbsolutePercentageError()"]
+
+        cv_splitters = [
+            "ExpandingWindowSplitter(initial_window=12, step_length=6, fh=6)"
+        ]
+
+        all_objects = {
+            "dataset": [f"ForecastingData('{dataset}')" for dataset in datasets],
+            "forecaster": forecasters,
+            "metric": metrics,
+            "cv_splitter": cv_splitters,
+        }
         return all_objects
-
-
-datasets = [
-    "cif_2016_dataset",
-    "hospital_dataset",
-]
-
-forecasters = [
-    "NaiveForecaster()",
-]
-
-metrics = ["MeanAbsoluteError()", "MeanAbsolutePercentageError()"]
-
-cv_splitters = ["ExpandingWindowSplitter(initial_window=12, step_length=6, fh=6)"]
-
-all_objects = {
-    "dataset": [f"ForecastingData('{dataset}')" for dataset in datasets],
-    "forecaster": forecasters,
-    "metric": metrics,
-    "cv_splitter": cv_splitters,
-}

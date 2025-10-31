@@ -23,25 +23,24 @@ class DummyClassificationCatalogue(BaseCatalogue):
 
     def _get(self):
         """Return a dict of items (datasets, forecasters, metrics)."""
+        datasets = [
+            "Beef",
+            "ArrowHead",
+        ]
+
+        classifiers = [
+            "DummyClassifier()",
+        ]
+
+        metrics = [accuracy_score]
+
+        cv_splitters = [KFold(n_splits=3)]
+
+        all_objects = {
+            "dataset": [f"UCRUEADataset('{dataset}')" for dataset in datasets],
+            "classifier": classifiers,
+            "metric": metrics,
+            "cv_splitter": cv_splitters,
+        }
+
         return all_objects
-
-
-datasets = [
-    "Beef",
-    "ArrowHead",
-]
-
-classifiers = [
-    "DummyClassifier()",
-]
-
-metrics = [accuracy_score]
-
-cv_splitters = [KFold(n_splits=3)]
-
-all_objects = {
-    "dataset": [f"UCRUEADataset('{dataset}')" for dataset in datasets],
-    "classifier": classifiers,
-    "metric": metrics,
-    "cv_splitter": cv_splitters,
-}
