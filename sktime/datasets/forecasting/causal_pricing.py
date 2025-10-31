@@ -732,22 +732,28 @@ class CausalPricing(_ForecastingDatasetFromLoader):
         -------
         params : dict or list of dict
             Parameters to create testing instances of the class
+
+        Notes
+        -----
+        These test params use return_ground_truth=False to avoid requiring
+        pgmpy for general dataset tests. Ground truth functionality is tested
+        separately in test_causal_pricing.py with proper skipif decorators.
         """
         params1 = {
             "n_series": 5,
             "n_timepoints": 10,
             "random_state": 42,
-            "return_ground_truth": True,
+            "return_ground_truth": False,
         }
 
-        # Custom categories with ground truth
+        # Custom categories
         params2 = {
             "n_series": 10,
             "n_timepoints": 20,
             "n_categories_d": 5,
             "n_categories_k": 3,
             "random_state": 123,
-            "return_ground_truth": True,
+            "return_ground_truth": False,
         }
 
         params3 = {
@@ -756,7 +762,7 @@ class CausalPricing(_ForecastingDatasetFromLoader):
             "n_categories_d": 10,
             "n_categories_k": 5,
             "random_state": 999,
-            "return_ground_truth": True,
+            "return_ground_truth": False,
         }
 
         return [params1, params2, params3]
