@@ -4,6 +4,8 @@
 __all__ = ["DoubleMLForecaster"]
 __author__ = ["geetu040", "XAheli"]
 
+import math
+
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import clone
@@ -89,6 +91,12 @@ class DoubleMLForecaster(BaseForecaster):
         and ``None`` exposure residuals are passed to the residual forecaster,
         which therefore operates only on ``y``.
 
+    starting_window : float, int or None, optional (default=0.1)
+        If float, must be between 0.0 and 1.0, and is interpreted as the proportion
+        of the starting dataset to ignore when doing in-sample predictions.
+        Proportions are rounded to the next higher integer count of samples (ceil).
+        If int, is interpreted as total number of samples to ignore.
+
     Attributes
     ----------
     outcome_fcst_ : sktime forecaster
@@ -128,7 +136,8 @@ class DoubleMLForecaster(BaseForecaster):
     >>> fh = [1, 2, 3]
     >>> dml_forecaster.fit(y_train, X=X_train, fh=fh)
     DoubleMLForecaster(exposure_vars=['GNP'], outcome_fcst=NaiveForecaster(),
-                       residual_fcst=RecursiveTabularRegressionForecaster(estimator=LinearRegression()),
+                       residual_fcst=RecursiveTabularRegressionForecaster(estimator=LinearRegression(),
+                                                                          window_length=3),
                        treatment_fcst=NaiveForecaster())
     >>> y_pred = dml_forecaster.predict(X=X_test)
 
@@ -178,11 +187,13 @@ class DoubleMLForecaster(BaseForecaster):
         treatment_fcst,
         residual_fcst=None,
         exposure_vars=None,
+        starting_window=0.1,
     ):
         self.outcome_fcst = outcome_fcst
         self.treatment_fcst = treatment_fcst
         self.residual_fcst = residual_fcst
         self.exposure_vars = exposure_vars
+        self.starting_window = starting_window
 
         # fitted copies of user passed forecasters
         self.outcome_fcst_ = None
@@ -196,7 +207,9 @@ class DoubleMLForecaster(BaseForecaster):
             from sktime.forecasting.compose import make_reduction
 
             self.residual_fcst = make_reduction(
-                LinearRegression(), strategy="recursive"
+                LinearRegression(),
+                strategy="recursive",
+                window_length=3,
             )
 
         # Handle null exposure_vars
@@ -317,13 +330,20 @@ class DoubleMLForecaster(BaseForecaster):
             time_idx = y.index.get_level_values(-1).unique()
         else:
             time_idx = y.index
+
+        starting_window = self.starting_window
+        if isinstance(starting_window, float):
+            starting_window = math.ceil(self.starting_window * len(time_idx))
+
+        time_idx = time_idx[starting_window:]
+        time_idx_filter = y.index.get_level_values(-1).isin(time_idx)
         insample_fh = ForecastingHorizon(time_idx, is_relative=False)
 
         # 2. Fit outcome forecaster on confounders and compute residuals
         outcome_fcst_insample = clone(self.outcome_fcst)
         outcome_fcst_insample.fit(y=y, X=X_confounder, fh=insample_fh)
         y_pred = outcome_fcst_insample.predict(X=X_confounder)
-        y_res = y - y_pred
+        y_res = y[time_idx_filter] - y_pred
 
         # 3. Fit treatment forecaster on confounders and compute exposure residuals
         if X_exposure is None:
@@ -332,7 +352,7 @@ class DoubleMLForecaster(BaseForecaster):
             treatment_fcst_insample = clone(self.treatment_fcst)
             treatment_fcst_insample.fit(y=X_exposure, X=X_confounder, fh=insample_fh)
             X_exposure_pred = treatment_fcst_insample.predict(X=X_confounder)
-            X_exposure_res = X_exposure - X_exposure_pred
+            X_exposure_res = X_exposure[time_idx_filter] - X_exposure_pred
 
         # 4. Fit residual forecaster on residualized outcome and exposure
         self.residual_fcst_ = clone(self.residual_fcst)
