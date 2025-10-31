@@ -609,9 +609,7 @@ class CausalPricing(_ForecastingDatasetFromLoader):
 
     _tags = {
         "name": "causal_pricing",
-        "python_dependencies": [
-            "pgmpy"
-        ],  # Required for return_ground_truth=True (default)
+        "capability:random_state": True,
         "n_splits": 0,
         "is_univariate": True,  # y (demand) is univariate
         "is_one_series": False,  # Multiple series (panel of articles)
