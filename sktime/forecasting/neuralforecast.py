@@ -354,10 +354,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",
@@ -739,10 +738,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         """
         del parameter_set
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",
@@ -1134,10 +1132,9 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",
@@ -1538,10 +1535,9 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",
@@ -1937,10 +1933,9 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",

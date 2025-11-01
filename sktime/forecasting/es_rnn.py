@@ -4,15 +4,10 @@ import numpy as np
 
 from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 from sktime.networks.es_rnn import ESRNN
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    from torch.utils.data import Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
+torch = _safe_import("torch")
+Dataset = _safe_import("torch.utils.data.Dataset")
 
 
 class ESRNNTrainDataset(Dataset):
@@ -139,6 +134,9 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         # packaging info
         # --------------
         "authors": ["Ankit-1204"],
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(

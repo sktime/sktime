@@ -19,17 +19,8 @@ from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-
-    Dataset = _safe_import("torch.utils.data.Dataset")
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
-
-        pass
-
+torch = _safe_import("torch")
+Dataset = _safe_import("torch.utils.data.Dataset")
 
 PatchTSTConfig = _safe_import("transformers.PatchTSTConfig")
 PatchTSTForPrediction = _safe_import("transformers.PatchTSTForPrediction")
