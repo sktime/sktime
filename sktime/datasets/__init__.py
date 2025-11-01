@@ -35,6 +35,7 @@ __all__ = [
     "load_covid_3month",
     "load_forecastingdata",
     "load_m5",
+    "make_causal_pricing",
     "write_panel_to_tsfile",
     "write_dataframe_to_tsfile",
     "write_ndarray_to_tsfile",
@@ -46,6 +47,7 @@ __all__ = [
     "DATASET_NAMES_FPP3",
     "BaseDataset",
     "Airline",
+    "CausalPricing",
     "Longley",
     "Lynx",
     "Macroeconomic",
@@ -129,6 +131,7 @@ from sktime.datasets.classification import (
 from sktime.datasets.forecasting import (
     PBS,
     Airline,
+    CausalPricing,
     ForecastingData,
     Longley,
     Lynx,
@@ -137,4 +140,5 @@ from sktime.datasets.forecasting import (
     ShampooSales,
     Solar,
     USChange,
+    make_causal_pricing,
 )
