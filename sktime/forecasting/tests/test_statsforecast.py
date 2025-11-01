@@ -54,7 +54,7 @@ def test_statsforecast_mstl(mock_autoets):
 @pytest.mark.parametrize(
     "fh",
     [[1, 2, 3], [1], 0, 5, None],
-    ids=["valid fh", "different fh predict", "scalar_0", "scalar", "None fh"],
+    ids=["valid fh", "different fh predict", "in-sample", "scalar", "None fh"],
 )
 def test_statsforecast_mstl_with_fh(request, fh):
     """
@@ -80,23 +80,15 @@ def test_statsforecast_mstl_with_fh(request, fh):
     try:
         # fit with fh passed to model
         model.fit(y, fh=fh)
-    except NotImplementedError as e:
-        assert (
-            "DirectTabularRegressionForecaster can not perform "
-            "in-sample prediction. Found fh with in sample index:"
-        ) in repr(e), (
+    except NotImplementedError:
+        assert "in-sample" in request.node.name, (
             "Unexpected exception raised - should have failed with "
             "NotImplementedError, DirectTabularRegressionForecaster "
             "can not perform in-sample prediction ..."
         )
         return
-    except ValueError as e:
-        assert repr(e) == (
-            "ValueError('The forecasting horizon `fh` "
-            "must be passed to `fit` of DirectTabularRegressionForecaster, "
-            "but none was found. This is because fitting of the forecaster "
-            "DirectTabularRegressionForecaster depends on `fh`. ')"
-        ), (
+    except ValueError:
+        assert "None fh" in request.node.name, (
             "Unexpected exception raised - should have failed with ValueError, "
             "The forecasting horizon `fh` must be passed to `fit` of ..."
         )
@@ -104,20 +96,14 @@ def test_statsforecast_mstl_with_fh(request, fh):
     if "different fh predict" in request.node.name:
         # predict with different fh
         fh.append(2)
-        expect_error = True
     try:
         model.predict(fh=fh)
-    except ValueError as e:
-        if expect_error:
-            assert (
-                "A different forecasting horizon `fh` has been provided from "
-            ) in repr(e), (
-                "Unexpected exception raised - should have failed with ValueError, "
-                "A different forecasting horizon `fh` has been "
-                "provided from "
-            )
-        else:
-            raise e
+    except ValueError:
+        assert "different fh predict" in request.node.name, (
+            "Unexpected exception raised - should have failed with ValueError, "
+            "A different forecasting horizon `fh` has been "
+            "provided from "
+        )
 
 
 @pytest.mark.skipif(

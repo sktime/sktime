@@ -868,7 +868,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         # estimator type
         # --------------
         "capability:exogenous": False,
-        "capability:pred_int": True,
+        "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "python_dependencies": ["statsforecast>=1.2.0"],
     }

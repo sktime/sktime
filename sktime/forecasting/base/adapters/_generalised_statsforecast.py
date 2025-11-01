@@ -161,6 +161,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         -------
         self : reference to self
         """
+        del fh  # avoid being detected as unused by ``vulture`` like tools
         self._forecaster = self._instantiate_model()
 
         y_fit_input = y.to_numpy(copy=False)
@@ -470,6 +471,7 @@ class StatsForecastBackAdapter:
 
         self.estimator = estimator
         self.prediction_intervals = None
+        self._inner_fh = None
 
     def __repr__(self):
         """Representation dunder."""
@@ -502,16 +504,12 @@ class StatsForecastBackAdapter:
         Using the specifics of MSTL inherited from
         `_predict_in_or_out_of_sample` method of `_GeneralisedStatsForecastAdapter`.
         """
-        fh = getattr(self, "_inner_fh", None)
-
-        if fh is not None:
-            if fh.is_all_in_sample():
-                return fh
-            else:
-                maximum_forecast_horizon = fh[-1]
-                return range(1, maximum_forecast_horizon + 1)
+        if self._inner_fh is not None and not self._inner_fh.is_all_in_sample():
+            # Case on which we neeed to calcualte the maximum horizon passing it to MSTL
+            maximum_forecast_horizon = self._inner_fh[-1]
+            return range(1, maximum_forecast_horizon + 1)
         else:
-            return None
+            return self._inner_fh
 
     def fit(self, y, X=None):
         """Fit to training data.
