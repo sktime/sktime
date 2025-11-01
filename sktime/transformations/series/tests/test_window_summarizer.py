@@ -406,7 +406,8 @@ def test_no_cross_series_contamination():
     summarizer.fit(y)
     result = summarizer.transform(y)
 
-    # After bfill, s1's first value should stay near s1's range (not contaminated with s2=100+)
+    # After bfill, s1's first value should stay near s1's range
+    # (not contaminated with s2=100+)
     s1_result = result.loc["s1"].iloc[:, 0]
     assert (s1_result < 50).all(), (
         f"s1 contaminated with s2 value: {s1_result.values} should be < 50"

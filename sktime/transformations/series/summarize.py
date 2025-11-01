@@ -483,7 +483,8 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
 
     # Handle backfill
     if bfill is True:
-        # For multiindex data, apply bfill per instance to prevent cross-series contamination
+        # For multiindex data,
+        # apply bfill per instance to prevent cross-series contamination
         if isinstance(feat.index, pd.MultiIndex) and feat.index.nlevels > 1:
             # Apply bfill separately per instance (typically level 0)
             instance_level = 0
