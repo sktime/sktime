@@ -52,21 +52,6 @@ class DWTTransformer(BaseTransformer):
         self.num_levels = num_levels
         super().__init__()
 
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Provides two parameter sets so the estimator is covered by the
-        `test_get_test_params_coverage` test (issue #3429).
-        """
-        # default / simple parameter sets
-        params1 = {"num_levels": 3}
-        params2 = {"num_levels": 100}
-        # alternate parameter set: edge case with zero levels
-        params3 = {"num_levels": 0}
-        
-        return [params1, params2, params3]
-
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -181,3 +166,18 @@ class DWTTransformer(BaseTransformer):
         for x in range(math.floor(len(arr) / 2)):
             new.append((arr[2 * x] - arr[2 * x + 1]) / math.sqrt(2))
         return new
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Provides two parameter sets so the estimator is covered by the
+        `test_get_test_params_coverage` test (issue #3429).
+        """
+        # default / simple parameter sets
+        params1 = {"num_levels": 3}
+        params2 = {"num_levels": 100}
+        # alternate parameter set: edge case with zero levels
+        params3 = {"num_levels": 0}
+
+        return [params1, params2, params3]
