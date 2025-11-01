@@ -48,6 +48,79 @@ def test_statsforecast_mstl(mock_autoets):
 
 
 @pytest.mark.skipif(
+    not run_test_for_class(StatsForecastMSTL),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "fh",
+    [[1, 2, 3], [1], 0, 5, None],
+    ids=["valid fh", "different fh predict", "scalar_0", "scalar", "None fh"],
+)
+def test_statsforecast_mstl_with_fh(request, fh):
+    """
+    Check that StatsForecast MSTL adapter calls trend forecaster with
+    the correct arguments.
+    """
+    from sklearn.ensemble import GradientBoostingRegressor
+
+    from sktime.datasets import load_airline
+    from sktime.forecasting.compose import make_reduction
+
+    y = load_airline()
+
+    regressor = GradientBoostingRegressor()
+    reduction_forecaster = make_reduction(
+        regressor, window_length=15, strategy="direct"
+    )
+
+    model = StatsForecastMSTL(
+        season_length=[3, 12], trend_forecaster=reduction_forecaster
+    )
+
+    try:
+        # fit with fh passed to model
+        model.fit(y, fh=fh)
+    except NotImplementedError as e:
+        assert (
+            "DirectTabularRegressionForecaster can not perform "
+            "in-sample prediction. Found fh with in sample index:"
+        ) in repr(e), (
+            "Unexpected exception raised - should have failed with "
+            "NotImplementedError, DirectTabularRegressionForecaster "
+            "can not perform in-sample prediction ..."
+        )
+        return
+    except ValueError as e:
+        assert repr(e) == (
+            "ValueError('The forecasting horizon `fh` "
+            "must be passed to `fit` of DirectTabularRegressionForecaster, "
+            "but none was found. This is because fitting of the forecaster "
+            "DirectTabularRegressionForecaster depends on `fh`. ')"
+        ), (
+            "Unexpected exception raised - should have failed with ValueError, "
+            "The forecasting horizon `fh` must be passed to `fit` of ..."
+        )
+        return
+    if "different fh predict" in request.node.name:
+        # predict with different fh
+        fh.append(2)
+        expect_error = True
+    try:
+        model.predict(fh=fh)
+    except ValueError as e:
+        if expect_error:
+            assert (
+                "A different forecasting horizon `fh` has been provided from "
+            ) in repr(e), (
+                "Unexpected exception raised - should have failed with ValueError, "
+                "A different forecasting horizon `fh` has been "
+                "provided from "
+            )
+        else:
+            raise e
+
+
+@pytest.mark.skipif(
     not run_test_for_class(StatsForecastAutoCES),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
