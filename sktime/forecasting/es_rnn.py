@@ -134,6 +134,9 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         # packaging info
         # --------------
         "authors": ["Ankit-1204"],
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
