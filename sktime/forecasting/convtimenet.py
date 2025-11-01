@@ -5,9 +5,8 @@ __all__ = ["ConvTimeNetForecaster"]
 
 import warnings
 
-from skbase.utils.dependencies import _safe_import
-
 from sktime.forecasting.base.adapters import _pytorch
+from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
 
