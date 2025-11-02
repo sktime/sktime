@@ -409,7 +409,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         assert y is not None, "y cannot be None, but found None"
 
         # if fit is called, estimator is reset, including fitted state
-        self.reset()
+        if not self._state == "pretrained":
+            self.reset()
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
