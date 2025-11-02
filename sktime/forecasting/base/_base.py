@@ -991,6 +991,75 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         return pred_dist
 
+    def pretrain(self, y, X=None, fh=None):
+        """Pre-train forecaster on data.
+
+        State change:
+            Changes state to "pretrained".
+
+        Writes to self:
+
+            * Sets pretrained model attributes ending in "_", fitted attributes are
+              inspectable via ``get_pretrained_params``.
+            * Sets ``self.state`` flag to ``"pretrained"``.
+            * Sets ``self._pretrained_attrs`` to list of pretrained attributes.
+        """
+        # Convert fh to ForecastingHorizon if needed
+        _fh = fh
+        if fh is not None and not isinstance(fh, ForecastingHorizon):
+            _fh = ForecastingHorizon(fh)
+
+        if self._state == "new":
+            self._pretrain(y=y, X=X, fh=_fh)
+        else:
+            self._pretrain_update(y=y, X=X, fh=_fh)
+
+        if not hasattr(self, "_pretrained_attrs"):
+            self._pretrained_attrs = []
+
+        # Track new pretrained attributes (extend, not append, to avoid nested lists)
+        new_attrs = [
+            a for a in dir(self)
+            if a.endswith("_") and not a.startswith("_")
+            and a not in self._pretrained_attrs
+        ]
+        self._pretrained_attrs.extend(new_attrs)
+
+        self._state = "pretrained"
+        return self
+
+    def get_pretrained_params(self):
+        """Get pretrained parameters of this estimator.
+
+        State required:
+            Requires state to be "pretrained" or "fitted" (after pretraining).
+
+        Returns
+        -------
+        params : dict
+            Dictionary of pretrained parameter names mapped to their values.
+            Keys are attribute names ending in "_" that were set during pretraining.
+            Returns empty dict if estimator has not been pretrained.
+
+        Examples
+        --------
+        >>> from sktime.forecasting import DummyGlobalForecaster
+        >>> forecaster = DummyGlobalForecaster()
+        >>> # After pretraining on panel data
+        >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
+        >>> params = forecaster.get_pretrained_params()  # doctest: +SKIP
+        >>> # params might contain: {"global_mean_": 42.0, "n_pretrain_instances_": 5}
+        """
+        if not hasattr(self, "_pretrained_attrs"):
+            return {}
+
+        params = {}
+        for attr in self._pretrained_attrs:
+            if hasattr(self, attr):
+                params[attr] = getattr(self, attr)
+
+        return params
+
     def update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
 
