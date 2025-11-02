@@ -2174,6 +2174,26 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain forecaster on training data, first pretraining batch.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # the default simply discards the data, i.e., no pretraining happens
+        return self
+
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Pretrain forecaster on training data, if already pretrained.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # the default calls _pretrain
+        return self._pretrain(y=y, X=X, fh=fh)
+
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
 
