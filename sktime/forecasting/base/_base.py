@@ -435,6 +435,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         # this should happen last
         self._is_fitted = True
+        self._state = "fitted"
 
         return self
 
