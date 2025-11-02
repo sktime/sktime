@@ -150,6 +150,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         super().__init__()
         _check_estimator_deps(self)
+        self._state = "new"
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformedTargetForecaster.
