@@ -83,12 +83,11 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
-        "capability:exogenous": True,
-        "requires-fh-in-fit": False,
-        "X-y-must-have-same-index": True,
-        "enforce_index_type": None,
-        "capability:missing_values": False,
-        "capability:pred_int": False,
+        # packaging info
+        # --------------
+        "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
+        # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
+        "maintainers": ["pranavvp16"],
         "python_dependencies": [
             "gluonts",
             "torch",
@@ -98,6 +97,14 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             "lightning",
             "hydra-core",
         ],
+        # estimator type
+        # --------------
+        "capability:exogenous": True,
+        "requires-fh-in-fit": False,
+        "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
+        "capability:missing_values": False,
+        "capability:pred_int": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": [
             "pd.Series",
@@ -108,9 +115,9 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
-        "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
-        # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
-        "maintainers": ["pranavvp16"],
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
