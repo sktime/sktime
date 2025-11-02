@@ -319,6 +319,39 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         else:
             return ColumnSelect(key) ** self
 
+    @property
+    def is_fitted(self):
+        """Whether ``fit`` has been called.
+
+        Inspects object's ``_is_fitted` attribute that should initialize to ``False``
+        during object construction, and be set to True in calls to an object's
+        `fit` method.
+
+        Returns
+        -------
+        bool
+            Whether the estimator has been `fit`.
+        """
+        return self.state == "fitted"
+
+    @property
+    def state(self):
+        """State of the estimator.
+
+        Possible states for forecasters are:
+
+        * "new": post-init state
+        * "fitted": if ``fit`` has been called.
+        * "pretrained": if ``pretrain`` has been called. Only available for
+            forecasters that support pretraining.
+
+        Returns
+        -------
+        str, one of {"new", "fitted", "pretrained"}
+            State of the estimator.
+        """
+        return self._state
+
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
