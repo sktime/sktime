@@ -956,6 +956,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         return pred_dist
 
     def update(self, y, X=None, update_params=True):
+        print("update function called successfully")
+        print("y:", y, "X:", X, "update_paramas:", update_params)
         """Update cutoff value and, optionally, fitted parameters.
 
         If no estimator-specific update method has been implemented,

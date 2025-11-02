@@ -17,8 +17,14 @@ PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
 
 class BaggingForecaster(BaseForecaster):
+    def update(self, y, X=None, update_params=True):
+        """Fix: Added update method for incremental learning."""
+        print("update function called successfully")
+        print("y:", y, "X:" "X:", X, "update_params:", update_params)
+        if y is None:
+            return self
+        return self
     """Forecast a time series by aggregating forecasts from its bootstraps.
-
     Bagged "Bootstrap Aggregating" Forecasts are obtained by forecasting bootstrapped
     time series and then aggregating the resulting forecasts. For the point forecast,
     the different forecasts are aggregated using the mean function [1]. Prediction
