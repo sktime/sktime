@@ -1,6 +1,6 @@
 __all__ = ["RevIN"]
 
-from skbase.utils.dependencies import _safe_import
+from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
 nn = _safe_import("torch.nn")
