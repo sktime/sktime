@@ -184,7 +184,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 self.num_feat_dynamic_real = X.shape[1]
             else:
                 self.num_feat_dynamic_real = 0
-        
+
         if self.num_past_feat_dynamic_real is None:
             self.num_past_feat_dynamic_real = 0
 
