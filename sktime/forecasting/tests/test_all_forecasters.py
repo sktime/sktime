@@ -974,6 +974,34 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_train)
 
+    def test_pretrain_capability_tag(self, estimator_instance):
+        """Test that capability:pretrain tag matches implementation.
+
+        Forecasters that override _pretrain should have tag set to True.
+        Forecasters with default _pretrain should have tag set to False or not set.
+        """
+        from sktime.forecasting.base import BaseForecaster
+
+        # Check if forecaster has overridden _pretrain
+        has_custom_pretrain = (
+            estimator_instance.__class__._pretrain != BaseForecaster._pretrain
+        )
+
+        tag_value = estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        )
+
+        if has_custom_pretrain:
+            assert tag_value is True, (
+                f"{estimator_instance.__class__.__name__} implements _pretrain "
+                f"but does not set capability:pretrain=True in _tags"
+            )
+        # If tag is True, must have custom implementation
+        if tag_value is True:
+            assert has_custom_pretrain, (
+                f"{estimator_instance.__class__.__name__} sets "
+                f"capability:pretrain=True but does not override _pretrain method"
+            )
 
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
     """Module level tests for all global forecasters."""
