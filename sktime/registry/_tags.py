@@ -1002,6 +1002,42 @@ class capability__pred_int__insample(_BaseTag):
     }
 
 
+class capability__pretrain(_BaseTag):
+    """Capability: the forecaster can use pretraining for global learning.
+
+    - String name: ``"capability:pretrain"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    The ``capability:pretrain`` tag indicates whether a forecaster supports
+    pretraining on global/panel data before being fit to specific time series.
+
+    If the tag is ``True``, the forecaster implements the ``pretrain`` method
+    and can be used in the following workflow:
+
+    1. ``forecaster.pretrain(y_panel)`` - learn from panel/global data
+    2. ``forecaster.fit(y_series)`` - set context or fine-tune on specific series
+    3. ``forecaster.predict(fh)`` - make predictions
+
+    The ``pretrain`` method sets the forecaster state to ``"pretrained"``,
+    and subsequent calls to ``fit`` will preserve the pretrained weights
+    (enabling fine-tuning) rather than resetting the estimator.
+
+    If the tag is ``False``, the forecaster does not support pretraining,
+    and calling ``pretrain`` will have no effect.
+    """
+
+    _tags = {
+        "tag_name": "capability:pretrain",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can use pretrain for global learning",
+        "user_facing": True,
+    }
+
+
 class requires_fh_in_fit(_BaseTag):
     """Behaviour flag: forecaster requires forecasting horizon in fit.
 
