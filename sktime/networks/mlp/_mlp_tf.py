@@ -65,6 +65,7 @@ class MLPNetwork(BaseDeepNetwork):
         input_layer = keras.layers.Input(input_shape)
         input_layer_flattened = keras.layers.Flatten()(input_layer)
 
+
         layer_1 = keras.layers.Dropout(0.1)(input_layer_flattened)
         layer_1 = keras.layers.Dense(500, activation=self.activation)(layer_1)
 
