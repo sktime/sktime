@@ -82,14 +82,21 @@ class JohansenCointegration(BaseParamFitter):
         super().__init__()
 
     def _fit(self, X):
-        """As long as a trace statistic is bigger as a critical value 
+        """Fit estimator and estimate parameters from cointegration method.
+
+        As long as a trace statistic is bigger as a critical value
         (dep. on 90, 95 or 99 sig-level), there exists a cointegration up to this level.
-        
-        Reading Example for 0-2 cointegration ranks.: 
-        self.lr1 = [400, 300, 50] 
+
+        Reading Example for 0-2 cointegration ranks.:
+        self.lr1 = [400, 300, 50]
         self.cvt = [[300, 100, 80], [200, 50, 70], [100, 40, 60]]
-        Then we have cointegration rank 2 up to the 95 % sig level, because 60 > 50, where
-        crit val is bigger than trace statistic.
+        Then we have cointegration rank 2 up to the 95 % sig level,
+        because 60 > 50, where trace statistic is no longer bigger
+        than crit val.
+
+        Returns
+        -------
+        self : reference to self
         """
         from statsmodels.tsa.vector_ar.vecm import coint_johansen
 
@@ -108,7 +115,7 @@ class JohansenCointegration(BaseParamFitter):
 
         # Eigenvectors of VECM coefficient matrix
         self.evec = cojo_res.evec
-        
+
         # Order of eigenvalues
         self.ind = cojo_res.ind
 
