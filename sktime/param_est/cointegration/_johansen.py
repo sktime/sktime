@@ -82,14 +82,64 @@ class JohansenCointegration(BaseParamFitter):
         super().__init__()
 
     def _fit(self, X):
+        """As long as a trace statistic is bigger as a critical value 
+        (dep. on 90, 95 or 99 sig-level), there exists a cointegration up to this level.
+        
+        Reading Example for 0-2 cointegration ranks.: 
+        self.lr1 = [400, 300, 50] 
+        self.cvt = [[300, 100, 80], [200, 50, 70], [100, 40, 60]]
+        Then we have cointegration rank 2 up to the 95 % sig level, because 60 > 50, where
+        crit val is bigger than trace statistic.
+        """
         from statsmodels.tsa.vector_ar.vecm import coint_johansen
 
         cojo_res = coint_johansen(
             endog=X, det_order=self.det_order, k_ar_diff=self.k_ar_diff
         )
 
+        # Critical values (90%, 95%, 99%) of maximum eigenvalue statistic.
+        self.cvm = cojo_res.cvm
+
+        # Critical values (90%, 95%, 99%) of trace statistic
+        self.cvt = cojo_res.cvt
+
+        # Eigenvalues of VECM coefficient matrix
+        self.eig = cojo_res.eig
+
+        # Eigenvectors of VECM coefficient matrix
+        self.evec = cojo_res.evec
+        
+        # Order of eigenvalues
+        self.ind = cojo_res.ind
+
+        # Trace statistic
+        self.lr1 = cojo_res.lr1
+
+        # Maximum eigenvalue statistic
+        self.lr2 = cojo_res.lr2
+
+        # Maximum eigenvalue statistic / correct?
+        self.max_eig_stat = cojo_res.max_eig_stat
+
+        # Critical values (90%, 95%, 99%) of maximum eigenvalue statistic.
+        self.max_eig_stat_crit_vals = cojo_res.max_eig_stat_crit_vals
+
+        # Test method
+        self.meth = cojo_res.meth
+
+        # Residuals for delta Y
+        self.r0t = cojo_res.r0t
+
+        # Residuals for delta Y-1
+        self.rkt = cojo_res.rkt
+
+        # Trace statistic
         self.trace_stat = cojo_res.trace_stat
+
+        # Critical values (90%, 95%, 99%) of trace statistic
         self.trace_stat_crit_vals = cojo_res.trace_stat_crit_vals
+
+        # need to check for redundancies in results
 
         return self
 
