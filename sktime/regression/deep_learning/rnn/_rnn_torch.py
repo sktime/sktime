@@ -95,7 +95,6 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
         # --------------
         "authors": ["RecreationalMath"],
         "maintainers": ["RecreationalMath"],
-        "python_version": ">=3.9",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
