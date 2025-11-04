@@ -71,7 +71,7 @@ class ResidualBoostingChainForecaster(_HeterogenousMetaEstimator, BaseForecaster
     ...     strategy="recursive",
     ...     window_length=3,
     ... )
-    >>> booster = ResidualBoostingChainForecaster(base, resid).fit(y, X=X, fh=fh)
+    >>> booster = ResidualBoostingChainForecaster([base, resid]).fit(y, X=X, fh=fh)
     >>> y_pred = booster.predict(fh, X=X)
     """
 
@@ -87,32 +87,45 @@ class ResidualBoostingChainForecaster(_HeterogenousMetaEstimator, BaseForecaster
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
 
-    def __init__(self, base_forecaster, residual_forecaster):
-        self.base_forecaster = base_forecaster
-        self.residual_forecaster = residual_forecaster
+    def __init__(self, forecasters):
+        self.forecasters = forecasters
         super().__init__()
 
-        base_tuple = ("base", base_forecaster)
+        if not isinstance(forecasters, (list, tuple)) or len(forecasters) < 2:
+            raise ValueError(
+                "forecasters must be a list/tuple of length >= 2: "
+                "[base, resid1, resid2, ...] or a list of (name, estimator) tuples."
+            )
 
-        if isinstance(residual_forecaster, list):
-            res_list = residual_forecaster
+        # allow either [est, est, ...] or [(name, est), ...]
+        if all(isinstance(x, tuple) and len(x) == 2 for x in forecasters):
+            user_names, ests = zip(*forecasters)
+            user_names = list(user_names)
+            ests = list(ests)
         else:
-            res_list = [residual_forecaster]
+            user_names = [None] * len(forecasters)
+            ests = list(forecasters)
 
-        resid_tuples = self._check_estimators(
-            res_list,
-            attr_name="residual_forecasters",
+        checked = self._check_estimators(
+            ests,
+            attr_name="forecasters",
             cls_type=BaseForecaster,
             allow_mix=True,
             allow_empty=False,
             clone_ests=False,
         )
 
-        steps = [base_tuple] + resid_tuples
+        auto_names = [nm for nm, _ in checked]
+        ests = [est for _, est in checked]
 
-        names = self._get_estimator_names(steps, make_unique=True)
+        # prefer user-provided names if present, else auto names
+        names = [
+            n if isinstance(n, str) and n else auto_names[i]
+            for i, n in enumerate(user_names)
+        ]
+        names = self._get_estimator_names(list(zip(names, ests)), make_unique=True)
         self._check_names(names)
-        ests = [est for _, est in steps]
+
         self._steps = list(zip(names, ests))
 
         children = [est for _, est in self._steps]
@@ -347,30 +360,28 @@ class ResidualBoostingChainForecaster(_HeterogenousMetaEstimator, BaseForecaster
         from sktime.forecasting.naive import NaiveForecaster
 
         params1 = {
-            "base_forecaster": NaiveForecaster(strategy="last"),
-            "residual_forecaster": NaiveForecaster(strategy="mean"),
+            "forecasters": [
+                NaiveForecaster(strategy="last"),
+                NaiveForecaster(strategy="mean"),
+            ]
         }
 
         params2 = {
-            "base_forecaster": YfromX(
-                estimator=LinearRegression(),
-                pooling="local",
-            ),
-            "residual_forecaster": NaiveForecaster(strategy="mean"),
+            "forecasters": [
+                YfromX(
+                    estimator=LinearRegression(),
+                    pooling="local",
+                ),
+                NaiveForecaster(strategy="mean"),
+            ]
         }
 
         params3 = {
-            "base_forecaster": NaiveForecaster(strategy="last"),
-            "residual_forecaster": [
+            "forecasters": [
+                NaiveForecaster(strategy="last"),
                 NaiveForecaster(strategy="last", sp=7),
                 NaiveForecaster(strategy="last", sp=12),
             ],
         }
 
         return [params1, params2, params3]
-
-
-if __name__ == "__main__":
-    from sktime.utils.estimator_checks import check_estimator
-
-    check_estimator(ResidualBoostingChainForecaster, raise_exceptions=True)
