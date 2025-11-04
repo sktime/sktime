@@ -20,9 +20,9 @@ class MLPNetworkTorch(NNModule):
         Number of expected features in the input
     num_classes : int
         Number of classes to predict
-    hidden_dim : int, default = 6
+    hidden_dim : int, default = 500
         Number of features in the hidden state
-    n_layers : int, default = 1
+    n_layers : int, default = 3
         Number of recurrent layers.
         E.g., setting n_layers=2 would mean stacking two RNNs together to form
         a stacked RNN, with the second RNN taking in outputs of the first RNN
@@ -55,7 +55,7 @@ class MLPNetworkTorch(NNModule):
     random_state   : int, default = 0
         Seed to ensure reproducibility.
     """
-    
+
     _tags = {
         "authors": ["RecreationalMath"],
         "maintainers": ["RecreationalMath"],
@@ -94,21 +94,21 @@ class MLPNetworkTorch(NNModule):
         super().__init__()
 
         # Checking input dimensions
-        if isinstance(input_size, int):
-            in_features = input_size
-        elif isinstance(input_size, tuple):
-            if len(input_size) == 3:
-                in_features = input_size[1]
+        if isinstance(self.input_size, int):
+            in_features = self.input_size
+        elif isinstance(self.input_size, tuple):
+            if len(self.input_size) == 3:
+                in_features = self.input_size[1]
             else:
                 raise ValueError(
                     "If `input_size` is a tuple, it must either be of length 3 and in "
                     "format (n_instances, n_dims, series_length). "
-                    f"Found length of {len(input_size)}"
+                    f"Found length of {len(self.input_size)}"
                 )
         else:
             raise TypeError(
                 "`input_size` should either be of type int or tuple. "
-                f"But found the type to be: {type(input_size)}"
+                f"But found the type to be: {type(self.input_size)}"
             )
 
         # defining the model architecture
@@ -119,7 +119,7 @@ class MLPNetworkTorch(NNModule):
         input_layer = nnFlatten()
         layers.append(input_layer)
 
-        prev_dim = self.input_size
+        prev_dim = in_features
 
         # defining the hidden layers
         nnLinear = _safe_import("torch.nn.Linear")
@@ -132,7 +132,8 @@ class MLPNetworkTorch(NNModule):
                     bias=self.bias,
                 )
             )
-            layers.append(self._get_activation(self.activation_hidden))
+            if self.activation_hidden:
+                layers.append(self._instantiate_activation())
             if self.dropout > 0.0:
                 layers.append(nnDropout(self.dropout))
             prev_dim = self.hidden_dim
@@ -151,10 +152,6 @@ class MLPNetworkTorch(NNModule):
             in_features=self.hidden_dim * (2 if self.bidirectional else 1),
             out_features=self.num_classes,
         )
-        # currently the above linear layer is only implemented for
-        # SimpleRNNClassifierTorch, once RNNRegressorTorch is implemented,
-        # changes will be made here
-        # to handle the case when num_classes = 1 for regression
         if self.activation:
             self._activation = self._instantiate_activation()
         if self.init_weights:
