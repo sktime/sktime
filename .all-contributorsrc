@@ -3681,7 +3681,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/33071364?v=4",
       "profile": "https://github.com/Astrael1",
       "contributions": [
-        "doc"
+        "doc",
+        "code",
+        "bug"
       ]
     },
     {
