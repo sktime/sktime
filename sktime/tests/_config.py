@@ -183,10 +183,6 @@ EXCLUDED_TESTS = {
     "ARLagOrderSelector": [
         "test_doctest_examples",  # doctest fails, see #8129
     ],
-    "ESRNNForecaster": [  # pickling problem, see #8135
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-    ],
 }
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
@@ -202,7 +198,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ColumnwiseTransformer",
         "ContractableBOSS",
         "DOBIN",
-        "DWTTransformer",
         "DilationMappingTransformer",
         "DirRecTabularRegressionForecaster",
         "DirRecTimeSeriesRegressionForecaster",
