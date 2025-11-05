@@ -286,7 +286,7 @@ class CSVStorageHandler(BaseStorageHandler):
         where each key is a fold ID and the value
         is a dictionary of scores and dataframes.
 
-    The following columns are included for each fold:   
+    The following columns are included for each fold:
 
     - ``folds.{fold_id}.scores.{score_name}``: The score value for the given fold and
         score name.
