@@ -18,13 +18,13 @@ from sktime.tests.test_switch import run_test_module_changed
 )
 def test_benchmarking_dummy_forecasting_catalogue(tmp_path):
     "Test benchmarking with a dummy forecasting catalogue."
-    benchmark = ForecastingBenchmark()
+    forecasting_benchmark = ForecastingBenchmark()
     catalogue = DummyForecastingCatalogue()
 
-    benchmark.add(catalogue)
+    forecasting_benchmark.add(catalogue)
 
     results_file = tmp_path / "results.csv"
-    results_df = benchmark.run(results_file)
+    results_df = forecasting_benchmark.run(results_file)
 
     pd.testing.assert_series_equal(
         pd.Series(
@@ -44,13 +44,13 @@ def test_benchmarking_dummy_forecasting_catalogue(tmp_path):
 )
 def test_benchmarking_dummy_classification_catalogue(tmp_path):
     "Test benchmarking with a dummy classification catalogue."
-    benchmark = ClassificationBenchmark()
+    classification_benchmark = ClassificationBenchmark()
     catalogue = DummyClassificationCatalogue()
 
-    benchmark.add(catalogue)
+    classification_benchmark.add(catalogue)
 
     results_file = tmp_path / "results.csv"
-    results_df = benchmark.run(results_file)
+    results_df = classification_benchmark.run(results_file)
 
     pd.testing.assert_series_equal(
         pd.Series(
