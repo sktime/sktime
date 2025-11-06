@@ -1,0 +1,467 @@
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implementation of Out-of-sample Forecaster."""
+
+__author__ = ["geetu040"]
+
+import numpy as np
+import pandas as pd
+from sklearn.base import clone
+
+from sktime.forecasting.base import BaseForecaster
+from sktime.utils.parallel import parallelize
+from sktime.utils.validation.forecasting import check_cv
+
+
+class OosForecaster(BaseForecaster):
+    """Out-of-sample Forecaster for generating in-sample predictions via refitting.
+
+    The ``OosForecaster`` is a wrapper-forecaster that enables *out-of-sample-style*
+    predictions for in-sample time points. It ensures that predictions for points
+    within the training data are computed without information leakage, by refitting
+    the wrapped forecaster on progressively expanding or rolling contexts.
+
+    In standard forecasters, in-sample predictions are typically obtained directly
+    from fitted values, which reuse information from the target observation itself.
+    In contrast, this wrapper provides in-sample predictions as if they were
+    out-of-sample, that is, each point is predicted using only past data unseen by
+    the forecaster. This ensures that in-sample forecasts are computed under
+    realistic, out-of-sample-like conditions.
+
+    This behavior is useful in scenarios that require in-sample residuals or
+    forecasts computed without lookahead bias, such as:
+
+    * Causal or deconfounded forecasting frameworks (e.g., DoubleMLForecaster)
+    * Residual-based ensembles or boosting forecasters
+    * Adding in-sample forecast capability to a forecaster that does not have it.
+    * Evaluating model performance under strict out-of-sample conditions
+
+    **Algorithm**
+
+    1. Split the forecasting horizon ``fh`` into:
+       - **In-sample fh**: time points within the training period.
+       - **Out-of-sample fh**: time points beyond the training cutoff.
+
+    2. For out-of-sample forecasts, simply revert to wrapped forecaster:
+       - Clone the wrapped forecaster.
+       - Fit it once on the full training data.
+       - Predict on the out-of-sample horizon.
+
+    3. For in-sample forecasts:
+       - Use a cross-validation splitter ``cv`` (e.g., ``ExpandingWindowSplitter``).
+       - For each split, fit or update the forecaster on the current training window.
+       - Predict for the corresponding test window, ensuring no future information
+         is used.
+       - Aggregate predictions across all splits to form the complete
+         in-sample forecast.
+
+    4. Any in-sample points not covered by a ``cv`` split are filled with ``np.nan``
+       to preserve index alignment.
+
+    This procedure guarantees that all predictions, both in-sample and out-of-sample,
+    are generated under out-of-sample conditions, preserving temporal causality
+    and enabling unbiased residual analysis.
+
+    Parameters
+    ----------
+    forecaster : sktime forecaster
+        The base forecaster to be wrapped. This forecaster is used to perform both
+        out-of-sample forecasts and the iterative in-sample forecasting procedure
+        over cross-validation folds. Any compatible sktime forecaster can be used.
+
+    cv : sktime splitter, optional (default=None)
+        Cross-validation splitter defining how to generate rolling or expanding
+        training/test windows for in-sample residual computation. If not provided,
+        defaults to ``ExpandingWindowSplitter(initial_window=2)``, which performs
+        expanding window updates starting from the first 2 observation.
+
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        defines the ingestion mode when the forecaster sees new data when window expands
+
+        * "refit" = forecaster is refitted to each training window
+        * "update" = forecaster is updated with training window data,
+          in sequence provided
+        * "no-update_params" = fit to first training window,
+          re-used without fit or update
+
+    backend : string, by default "None".
+        Parallelization backend to use for runs.
+        Runs parallel prediction if specified and ``strategy="refit"``.
+
+        - "None": executes loop sequentially, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but changes the return to (lazy) ``dask.dataframe.DataFrame``.
+        - "ray": uses ``ray``, requires ``ray`` package in environment
+
+        Recommendation: Use "dask" or "loky" for parallel prediction.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
+        than the standard ``pickle`` library used in "multiprocessing".
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
+
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed,
+          e.g., ``scheduler``
+
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dictionary of valid keys for ``ray.init``
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+                down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
+
+    Attributes
+    ----------
+    _in_forecaster : sktime forecaster
+        Internal clone of the wrapped forecaster used for generating
+        out-of-sample-style in-sample forecasts through rolling refits.
+
+    _oos_forecaster : sktime forecaster
+        Internal clone of the wrapped forecaster fitted once on the full training
+        data for standard out-of-sample forecasting.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.split import temporal_train_test_split, ExpandingWindowSplitter
+    >>> from sktime.forecasting.compose import OosForecaster
+    >>> from sktime.forecasting.compose import make_reduction
+    >>> from sklearn.linear_model import LinearRegression
+    >>>
+    >>> y, X = load_longley()
+    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(
+    ...     y, X, test_size=0.2
+    ... )
+    >>>
+    >>> wrapper = OosForecaster(
+    ...     forecaster=make_reduction(
+    ...             estimator=LinearRegression(),
+    ...             strategy="recursive",
+    ...             window_length=4,
+    ...     ),
+    ...     cv=ExpandingWindowSplitter(initial_window=7),
+    ... )
+    >>>
+    >>> fh = [-3, -1, 0, 1, 2, 3, 4]
+    >>> wrapper.fit(y_train, X=X_train, fh=fh)
+    OosForecaster(cv=ExpandingWindowSplitter(initial_window=7),
+                  forecaster=RecursiveTabularRegressionForecaster(estimator=LinearRegression(),
+                                                                  window_length=4))
+    >>> y_pred = wrapper.predict(X=X_test)
+    """
+
+    _tags = {
+        "authors": ["geetu040"],
+        "maintainers": ["geetu040"],
+        "scitype:y": "univariate",
+        "capability:exogenous": True,
+        "capability:insample": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        "capability:missing_values": True,
+        "capability:categorical_in_X": True,
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "requires-fh-in-fit": False,
+    }
+
+    def __init__(
+        self,
+        forecaster,
+        cv=None,
+        strategy="refit",
+        backend=None,
+        backend_params=None,
+    ):
+        self.forecaster = forecaster
+        self.cv = cv
+        self.strategy = strategy
+        self.backend = backend
+        self.backend_params = backend_params
+        self._in_forecaster = None
+        self._oos_forecaster = None
+
+        super().__init__()
+
+        self.set_tags(
+            **{
+                "capability:exogenous": self.forecaster.get_tag("capability:exogenous"),
+                "capability:pred_int": self.forecaster.get_tag("capability:pred_int"),
+                "capability:missing_values": self.forecaster.get_tag(
+                    "capability:missing_values"
+                ),
+                "capability:categorical_in_X": self.forecaster.get_tag(
+                    "capability:categorical_in_X"
+                ),
+            }
+        )
+
+    def _split_fh(self, fh=None):
+        if fh is None:
+            return None, None
+
+        in_fh = (
+            fh.to_in_sample(self.cutoff)
+            if not fh.is_all_out_of_sample(self.cutoff)
+            else None
+        )
+        oos_fh = (
+            fh.to_out_of_sample(self.cutoff)
+            if not fh.is_all_in_sample(self.cutoff)
+            else None
+        )
+
+        return in_fh, oos_fh
+
+    def _fit(self, y, X, fh):
+        in_fh, oos_fh = self._split_fh(fh)
+
+        # ignore oos-forecaster when making only in-sample predictions
+        if in_fh is not None and oos_fh is None:
+            return
+
+        self._oos_forecaster = clone(self.forecaster)
+        self._oos_forecaster.fit(y=y, X=X, fh=oos_fh)
+
+    def _custom_predict_window(self, x, meta):
+        """Generate predictions for a single cross-validation window.
+
+        This helper function executes one iteration of the cross-validation-based
+        in-sample forecasting procedure. It refits or updates the wrapped
+        forecaster on the current training window and computes predictions for the
+        corresponding test (horizon) window.
+
+        The function is typically executed inside a parallel loop (via
+        ``parallelize``), allowing multiple window computations to run
+        concurrently when ``strategy="refit"``.
+
+        Parameters
+        ----------
+        x : tuple (int, int)
+            A tuple containing two index arrays produced by a ``cv`` splitter:
+            - ``window`` : indices for the current training window.
+            - ``horizon`` : indices for the forecast horizon (test window)
+              to be predicted using the model trained on ``window``.
+
+        meta : dict
+            Auxiliary context required for the prediction run, containing:
+            - ``y`` : pandas Series or DataFrame
+                The full target time series from the outer fit.
+            - ``X`` : pandas DataFrame or None
+                The full exogenous data (if any).
+            - ``fh`` : sktime ForecastingHorizon
+                Forecasting horizon relative to the cutoff within each split.
+            - ``method_name`` : str
+                Name of the prediction method to call on the forecaster,
+                typically "predict" or "predict_interval".
+            - ``method_kwargs`` : dict
+                Keyword arguments to pass to the prediction method.
+
+        Returns
+        -------
+        preds : pandas.DataFrame
+            Forecasts (or prediction intervals) for the current test window.
+            Indexed by the test (horizon) indices of the cross-validation split.
+        """
+        y = meta["y"]
+        X = meta["X"]
+        fh = meta["fh"]
+        method_name = meta["method_name"]
+        method_kwargs = meta["method_kwargs"]
+        method = getattr(self._in_forecaster, method_name)
+        update_params = self.strategy == "update"
+
+        window, horizon = x
+        new_y = y.iloc[window]
+        new_X = X.iloc[window] if X is not None else None
+        new__X = X.iloc[horizon] if X is not None else None
+
+        if self.strategy == "refit":
+            self._in_forecaster.fit(y=new_y, X=new_X, fh=fh)
+        else:
+            self._in_forecaster.update(y=new_y, X=new_X, update_params=update_params)
+
+        return method(X=new__X, **method_kwargs)
+
+    def _custom_predict(self, fh, X, method_name, **method_kwargs):
+        """Unified prediction routine handling in-sample and out-of-sample forecasts.
+
+        This method orchestrates both in-sample and out-of-sample forecasting,
+        ensuring that all predictions are computed under out-of-sample-like conditions.
+        It performs the following steps:
+
+        1. Splits the forecasting horizon ``fh`` into in-sample and out-of-sample parts.
+        2. For the out-of-sample horizon:
+           - Uses the already fitted ``_oos_forecaster`` to generate predictions.
+        3. For the in-sample horizon:
+           - Iterates over cross-validation folds defined by ``cv``.
+           - For each fold, fits or updates the forecaster according to ``strategy``.
+           - Collects fold-wise predictions, filling NaNs for points uncovered.
+        4. Combines all predictions into a single aligned DataFrame.
+
+        Parameters
+        ----------
+        fh : sktime ForecastingHorizon
+            Forecasting horizon relative to the last observed training point (cutoff).
+            Can include both in-sample (negative) and out-of-sample (positive) steps.
+
+        X : pandas.DataFrame or None
+            Exogenous variables aligned with ``fh``, if required by the forecaster.
+
+        method_name : str
+            Name of the prediction method to invoke on the forecaster, here
+            "predict" or "predict_interval".
+
+        **method_kwargs : dict
+            Additional keyword arguments passed to the prediction method (e.g.,
+            ``coverage`` for interval forecasts).
+
+        Returns
+        -------
+        preds : pandas.DataFrame
+            DataFrame containing predictions (or intervals), indexed by absolute
+            time points of the forecasting horizon. Any points not covered by
+            cross-validation splits (for in-sample) are filled with ``np.nan`` to
+            preserve temporal alignment.
+        """
+        _y = self._y
+        _X = self._X
+        in_fh, oos_fh = self._split_fh(fh)
+
+        # Prepare CV
+        cv = self.cv
+        if cv is None and in_fh is not None:
+            from sktime.split import ExpandingWindowSplitter
+            from sktime.utils.warnings import warn
+
+            warn(
+                "No cross-validation splitter (`cv`) was provided to "
+                "`OosForecaster`. A default "
+                "`ExpandingWindowSplitter(initial_window=2)` has been "
+                "initialized. Ensure that the wrapped forecaster is "
+                "compatible with this splitter, or pass a suitable `cv` "
+                "object when constructing the wrapper.",
+                category=UserWarning,
+                obj=self,
+            )
+
+            cv = ExpandingWindowSplitter(initial_window=2)
+        elif cv is not None:
+            cv = check_cv(cv)
+
+        # Prepare placeholder for predictions
+        columns = self._get_columns(method=method_name, **method_kwargs)
+        index = fh.to_absolute_index(self.cutoff)
+        if isinstance(_y.index, pd.MultiIndex):
+            y_inst_idx = _y.index.droplevel(-1).unique()
+            if isinstance(y_inst_idx, pd.MultiIndex):
+                index = pd.Index([x + (y,) for x in y_inst_idx for y in index])
+            else:
+                index = pd.Index([(x, y) for x in y_inst_idx for y in index])
+        index.names = _y.index.names
+        preds = pd.DataFrame(np.nan, index=index, columns=columns)
+
+        # Out-of-sample predictions
+        if oos_fh is not None:
+            method = getattr(self._oos_forecaster, method_name)
+            pred = method(X=X, fh=oos_fh, **method_kwargs)
+            preds.loc[pred.index] = pred.values
+
+        # In-sample predictions using cross-validation
+        if in_fh is not None:
+            parallel = self.strategy not in ["update", "no-update_params"]
+            meta = dict(
+                y=_y,
+                X=_X,
+                fh=cv.get_fh(),
+                method_name=method_name,
+                method_kwargs=method_kwargs,
+            )
+            backend = self.backend if parallel else None
+            backend_params = self.backend_params if parallel else None
+            self._in_forecaster = clone(self.forecaster)
+
+            # fit on the first training window if updating
+            if not parallel:
+                window, horizon = next(cv.split(_y))
+                new_y = _y.iloc[window]
+                new_X = _X.iloc[window] if _X is not None else None
+                self._in_forecaster.fit(y=new_y, X=new_X, fh=cv.get_fh())
+
+            # fit on all training windows
+            in_preds = parallelize(
+                fun=self._custom_predict_window,
+                iter=cv.split(_y),
+                meta=meta,
+                backend=backend,
+                backend_params=backend_params,
+            )
+            for pred in in_preds:
+                common_idx = pred.index.intersection(preds.index)
+                preds.loc[common_idx] = pred.loc[common_idx].values
+
+        return preds
+
+    def _predict(self, fh, X):
+        return self._custom_predict(fh=fh, X=X, method_name="predict")
+
+    def _predict_interval(self, fh, X=None, coverage=0.9):
+        return self._custom_predict(
+            fh=fh, X=X, method_name="predict_interval", coverage=coverage
+        )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return.
+
+        Returns
+        -------
+        params : dict or list of dict
+            Parameters to create test instances of the estimator.
+        """
+        from sklearn.linear_model import LinearRegression
+
+        from sktime.forecasting.compose import make_reduction
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.split import ExpandingWindowSplitter
+
+        # Basic test parameters
+        params1 = {
+            "forecaster": NaiveForecaster(strategy="drift"),
+        }
+
+        # More complex test parameters
+        params2 = {
+            "forecaster": make_reduction(
+                estimator=LinearRegression(),
+                strategy="recursive",
+                window_length=2,
+            ),
+            "cv": ExpandingWindowSplitter(initial_window=4, step_length=1, fh=1),
+            "strategy": "update",
+            "backend": "multiprocessing",
+        }
+
+        return [params1, params2]
