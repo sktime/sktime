@@ -8,11 +8,14 @@ __all__ = ["MLPNetworkTorch"]
 
 
 from collections.abc import Callable
+
 import numpy as np
+
 from sktime.utils.dependencies import _safe_import
 
 # handling soft dependencies for Torch modules
 NNModule = _safe_import("torch.nn.Module")
+
 
 class MLPNetworkTorch(NNModule):
     """Establish the network structure for an MLP in PyTorch.
@@ -34,8 +37,8 @@ class MLPNetworkTorch(NNModule):
         If None, then no activation function is applied.
     activation_hidden : str or None or an instance of activation functions defined in
         torch.nn, default = "relu"
-        The activation function applied inside the hidden layers of the MLP. 
-        Can be any of "relu", "leakyrelu", "elu", "prelu", "gelu", "selu", 
+        The activation function applied inside the hidden layers of the MLP.
+        Can be any of "relu", "leakyrelu", "elu", "prelu", "gelu", "selu",
         "rrelu", "celu", "tanh", "hardtanh".
     bias : bool, default = True
         If False, then the layer does not use bias weights.
@@ -90,7 +93,7 @@ class MLPNetworkTorch(NNModule):
         # Checking input dimensions
         if isinstance(self.input_shape, tuple):
             if len(self.input_shape) == 3:
-                in_features = self.input_shape[1]*self.input_shape[2]
+                in_features = self.input_shape[1] * self.input_shape[2]
             else:
                 raise ValueError(
                     "If `input_shape` is a tuple, it must be of length 3 and in "
@@ -109,12 +112,6 @@ class MLPNetworkTorch(NNModule):
         # defining the input layer
         nnFlatten = _safe_import("torch.nn.Flatten")
         layers.append(nnFlatten())
-        #input_layer = nnLinear(
-        #    in_features=in_features,
-        #    out_features=self.hidden_dim,
-        #    bias=self.bias,
-        #)
-        #layers.append(input_layer)
 
         prev_dim = in_features
         # defining the hidden layers

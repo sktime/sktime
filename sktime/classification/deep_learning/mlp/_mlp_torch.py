@@ -10,6 +10,7 @@ import numpy as np
 from sktime.classification.deep_learning.base import BaseDeepClassifierTorch
 from sktime.networks.mlp import MLPNetworkTorch
 
+
 class MLPClassifierTorch(BaseDeepClassifierTorch):
     """Multi Layer Perceptron classifier in PyTorch for time series classification.
 
@@ -26,8 +27,8 @@ class MLPClassifierTorch(BaseDeepClassifierTorch):
         If None, then no activation function is applied.
     activation_hidden : str or None or an instance of activation functions defined in
         torch.nn, default = "relu"
-        The activation function applied inside the hidden layers of the MLP. 
-        Can be any of "relu", "leakyrelu", "elu", "prelu", "gelu", "selu", 
+        The activation function applied inside the hidden layers of the MLP.
+        Can be any of "relu", "leakyrelu", "elu", "prelu", "gelu", "selu",
         "rrelu", "celu", "tanh", "hardtanh".
     batch_first : bool, default = False
         If True, then the input and output tensors are provided
@@ -183,6 +184,7 @@ class MLPClassifierTorch(BaseDeepClassifierTorch):
                 f"but got shape {X.shape}. Please ensure your input data is "
                 "properly formatted."
             )
+
         # n_instances, n_dims, n_timesteps = X.shape
         self.num_classes = len(np.unique(y))
         self.input_shape = X.shape
