@@ -280,7 +280,7 @@ mlflow = [
   "mlflow<4.0",
 ]
 mlflow2 = [
-  "mlflow<3.0",
+  "mlflow<4.0",
 ]
 mlflow_tests = [
   "boto3",
