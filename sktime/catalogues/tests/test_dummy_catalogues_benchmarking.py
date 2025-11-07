@@ -23,7 +23,7 @@ def test_benchmarking_dummy_forecasting_catalogue(tmp_path):
 
     forecasting_benchmark.add(catalogue)
 
-    results_file = tmp_path / "results.csv"
+    results_file = tmp_path / "forecasting_results.csv"
     results_df = forecasting_benchmark.run(results_file)
 
     pd.testing.assert_series_equal(
@@ -49,7 +49,7 @@ def test_benchmarking_dummy_classification_catalogue(tmp_path):
 
     classification_benchmark.add(catalogue)
 
-    results_file = tmp_path / "results.csv"
+    results_file = tmp_path / "classification_results.csv"
     results_df = classification_benchmark.run(results_file)
 
     pd.testing.assert_series_equal(

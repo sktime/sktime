@@ -27,6 +27,7 @@ class BaseCatalogue(BaseObject):
 
     def __init__(self):
         super().__init__()
+        self._cached_objects = None
 
     @abstractmethod
     def _get(self):
@@ -76,15 +77,20 @@ class BaseCatalogue(BaseObject):
         if not as_object:
             return [type(item).__name__ if callable(item) else item for item in items]
 
-        # as_object=True
-        processed = []
-        for item in items:
-            if isinstance(item, str):
-                processed.append(craft(item))
-            else:
-                processed.append(item)
+        # as_object=True path
+        if self._cached_objects is None:
+            self._cached_objects = {}
 
-        return processed
+        if object_type not in self._cached_objects:
+            processed = []
+            for item in items:
+                if isinstance(item, str):
+                    processed.append(craft(item))
+                else:
+                    processed.append(item)
+            self._cached_objects[object_type] = processed
+
+        return self._cached_objects[object_type]
 
     def available_categories(self):
         """Return the available item categories in the catalogue.
