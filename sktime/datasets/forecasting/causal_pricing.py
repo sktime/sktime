@@ -177,15 +177,11 @@ def make_causal_pricing(
 
         n_generate = int(n_generate * 1.5)
     else:
-        import warnings
-
-        warnings.warn(
+        raise ValueError(
             f"Could not generate {n_series} valid articles after "
-            f"{max_attempts} attempts. Returning {len(valid_articles)} articles. "
-            f"Try: reducing n_categories_d/k, increasing n_timepoints, "
-            f"or different random_state.",
-            UserWarning,
-            stacklevel=2,
+            f"{max_attempts} attempts. Only generated {len(valid_articles)}. "
+            f"Try reducing n_categories_d/k, increasing n_timepoints, "
+            f"or using a different random_state."
         )
 
     category_assignments = {
