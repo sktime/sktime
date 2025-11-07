@@ -17,10 +17,6 @@ from sktime.catalogues.base import BaseCatalogue
 from sktime.registry import scitype
 from sktime.utils.unique_str import _make_strings_unique
 
-DATASETS = []
-METRICS = []
-CV_SPLITTERS = []
-
 
 def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
     """Check if estimator is initialised BaseEstimator object."""
@@ -248,6 +244,10 @@ class BaseBenchmark:
         self.estimators = _SktimeRegistry(id_format)
         self.tasks = _SktimeRegistry(id_format)
 
+        self._datasets = []
+        self._cv_splitters = []
+        self._metrics = []
+
     def add_estimator(
         self,
         estimator: BaseEstimator,
@@ -326,9 +326,9 @@ class BaseBenchmark:
             # tuple of (dataset, metric, splitter)
             if isinstance(obj, tuple) and len(obj) == 3:
                 dataset, metric, splitter = obj
-                DATASETS.append(dataset)
-                METRICS.append(metric)
-                CV_SPLITTERS.append(splitter)
+                self._datasets.append(dataset)
+                self._metrics.append(metric)
+                self._cv_splitters.append(splitter)
                 continue
 
             # single object type (estimators or one of the tasks)
@@ -336,15 +336,15 @@ class BaseBenchmark:
             if sctype in ["classifier", "forecaster"]:
                 self.add_estimator(obj)
             elif sctype in ["dataset_classification", "dataset_forecasting"]:
-                DATASETS.append(obj)
+                self._datasets.append(obj)
             elif sctype in [
                 "metric_forecasting",
                 "metric_tabular",
                 "metric_proba_tabular",
             ]:
-                METRICS.append(obj)
+                self._metrics.append(obj)
             elif sctype in ["splitter", "splitter_tabular"]:
-                CV_SPLITTERS.append(obj)
+                self._cv_splitters.append(obj)
             elif sctype == "catalogue":
                 self.add(obj)
             else:
@@ -354,8 +354,8 @@ class BaseBenchmark:
 
     def register_stored_tasks(self):
         """Register stored tasks from global DATASETS, METRICS, CV_SPLITTERS."""
-        if DATASETS and METRICS and CV_SPLITTERS:
-            for dataset_loader in DATASETS:
+        if self._datasets and self._metrics and self._cv_splitters:
+            for dataset_loader in self._datasets:
                 if callable(dataset_loader) and hasattr(dataset_loader, "__name__"):
                     dataset_name = dataset_loader.__name__
                 elif isinstance(dataset_loader, type):
@@ -365,7 +365,7 @@ class BaseBenchmark:
                 else:
                     dataset_name = "_"
 
-                for splitter in CV_SPLITTERS:
+                for splitter in self._cv_splitters:
                     task_id = (
                         f"[dataset={dataset_name}]"
                         f"_[cv_splitter={splitter.__class__.__name__}]"
@@ -374,7 +374,7 @@ class BaseBenchmark:
                     task_kwargs = {
                         "data": dataset_loader,
                         "cv_splitter": splitter,
-                        "scorers": METRICS,
+                        "scorers": self._metrics,
                     }
                     self._add_task(
                         task_id,
