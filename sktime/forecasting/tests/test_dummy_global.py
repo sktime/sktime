@@ -65,3 +65,23 @@ class TestDummyGlobalForecaster:
         np.testing.assert_array_almost_equal(
             y_pred.values, np.repeat(expected_value, 3)
         )
+
+    def test_without_pretraining(self):
+        """Test that forecaster works without pretraining (uses series mean)."""
+        forecaster = DummyGlobalForecaster(strategy="mean")
+
+        # Fit without pretraining
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+
+        # Check that global_mean_ was computed from the training series
+        assert hasattr(forecaster, "global_mean_")
+        expected_mean = y_train.mean()
+        np.testing.assert_almost_equal(forecaster.global_mean_, expected_mean)
+
+        y_pred = forecaster.predict()
+
+        assert len(y_pred) == 3
+        np.testing.assert_array_almost_equal(
+            y_pred.values, np.repeat(forecaster.global_mean_, 3)
+        )
