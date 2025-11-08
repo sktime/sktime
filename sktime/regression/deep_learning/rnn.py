@@ -37,7 +37,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
     activation : string or a tf callable, default="linear"
         Activation function used in the output layer.
         List of available activation functions: https://keras.io/api/layers/activations/
-    activation_hidden : string or a tf callable, default="linear"
+    activation_hidden : string or a tf callable, default="tanh"
         Activation function used in the hidden layers.
         List of available activation functions: https://keras.io/api/layers/activations/
     use_bias : boolean, default = True
@@ -85,7 +85,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         loss="mean_squared_error",
         metrics=None,
         activation="linear",
-        activation_hidden="linear",
+        activation_hidden="tanh",
         use_bias=True,
         optimizer=None,
     ):
