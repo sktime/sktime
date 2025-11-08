@@ -13,7 +13,7 @@ from sktime.utils.validation.forecasting import check_cv
 
 
 class InsampleForecaster(BaseForecaster):
-    """Meta-forecaster to generate in-sample predictions via refitting.
+    """Make temporally consistent in-sample predictions, e.g., for causal forecasting.
 
     The ``InsampleForecaster`` is a wrapper-forecaster that enables
     out-of-sample-type predictions for in-sample time points.

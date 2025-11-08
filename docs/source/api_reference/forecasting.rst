@@ -727,6 +727,15 @@ Causal Forecasting
 
     DoubleMLForecaster
 
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    InsampleForecaster
+
+
 Hierarchical reconciliation
 ---------------------------
 
