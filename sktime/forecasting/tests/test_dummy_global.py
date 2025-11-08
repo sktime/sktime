@@ -1,0 +1,48 @@
+"""Tests for DummyGlobalForecaster."""
+
+__author__ = ["fkiraly"]
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from sktime.forecasting.dummy_global import DummyGlobalForecaster
+from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils._testing.series import _make_series
+
+
+class TestDummyGlobalForecaster:
+    """Unit tests for DummyGlobalForecaster."""
+
+    def test_pretrain_fit_predict_mean_strategy(self):
+        """Test basic pretrain-fit-predict workflow with mean strategy."""
+        # Create panel data for pretraining
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        # Initialize forecaster
+        forecaster = DummyGlobalForecaster(strategy="mean")
+
+        # Pretrain
+        forecaster.pretrain(y_panel)
+
+        # Check that global mean was computed
+        assert hasattr(forecaster, "global_mean_")
+        assert hasattr(forecaster, "n_pretrain_instances_")
+        assert forecaster.n_pretrain_instances_ == 3
+
+        # Fit on a single series
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+
+        # Predict
+        y_pred = forecaster.predict()
+
+        # Check predictions
+        assert len(y_pred) == 3
+        assert isinstance(y_pred, pd.Series)
+        # All predictions should be the global mean
+        np.testing.assert_array_almost_equal(
+            y_pred.values, np.repeat(forecaster.global_mean_, 3)
+        )
