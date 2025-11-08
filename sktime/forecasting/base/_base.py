@@ -606,6 +606,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
 
         self._is_fitted = True
+        self._state = "fitted"
         # call the public predict to avoid duplicating output conversions
         #  input conversions are skipped since we are using X_inner
         return self.predict(fh=fh, X=X_inner)
