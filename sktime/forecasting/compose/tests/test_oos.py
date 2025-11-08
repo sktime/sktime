@@ -1,20 +1,20 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Tests for OosForecaster."""
+"""Tests for InsampleForecaster."""
 
 import pandas as pd
 import pytest
 from sklearn.linear_model import LinearRegression
 
 from sktime.datasets import load_airline, load_longley
-from sktime.forecasting.compose import OosForecaster, make_reduction
+from sktime.forecasting.compose import InsampleForecaster, make_reduction
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(OosForecaster),
+    not run_test_for_class(InsampleForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_oos_forecaster_all_in_sample():
@@ -29,7 +29,7 @@ def test_oos_forecaster_all_in_sample():
         window_length=initial_window - 1,
     )
     cv = ExpandingWindowSplitter(initial_window=initial_window)
-    wrapper = OosForecaster(
+    wrapper = InsampleForecaster(
         forecaster=forecaster,
         cv=cv,
         strategy="refit",
@@ -47,7 +47,7 @@ def test_oos_forecaster_all_in_sample():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(OosForecaster),
+    not run_test_for_class(InsampleForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_oos_forecaster_all_out_of_sample():
@@ -61,7 +61,7 @@ def test_oos_forecaster_all_out_of_sample():
         strategy="recursive",
         window_length=12,
     )
-    wrapper = OosForecaster(forecaster=forecaster)
+    wrapper = InsampleForecaster(forecaster=forecaster)
 
     forecaster.fit(y, fh=fh)
     forecaster_preds = forecaster.predict()
@@ -77,7 +77,7 @@ def test_oos_forecaster_all_out_of_sample():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(OosForecaster),
+    not run_test_for_class(InsampleForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
@@ -106,7 +106,7 @@ def test_oos_forecaster_mixed_config(forecaster, strategy, fh):
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
 
     cv = ExpandingWindowSplitter(initial_window=3)
-    wrapper = OosForecaster(
+    wrapper = InsampleForecaster(
         forecaster=forecaster,
         cv=cv,
         strategy=strategy,
