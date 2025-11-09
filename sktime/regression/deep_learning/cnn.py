@@ -41,7 +41,7 @@ class CNNRegressor(BaseDeepRegressor):
         Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
-    activation_hidden : string or a tf callable, default="sigmoid"
+    activation_hidden : string or a tf callable, default="relu"
         Activation function used in the hidden layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
@@ -107,7 +107,7 @@ class CNNRegressor(BaseDeepRegressor):
         metrics=None,
         random_state=0,
         activation="linear",
-        activation_hidden="sigmoid",
+        activation_hidden="relu",
         use_bias=True,
         optimizer=None,
         filter_sizes=None,

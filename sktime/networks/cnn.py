@@ -18,7 +18,7 @@ class CNNNetwork(BaseDeepNetwork):
     n_conv_layers : int, default = 2
         the number of convolutional plus average pooling layers
     filter_sizes : array of int, shape = (n_conv_layers)
-    activation : string, default = "sigmoid"
+    activation : string, default = "relu"
         activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
@@ -50,7 +50,7 @@ class CNNNetwork(BaseDeepNetwork):
         avg_pool_size=3,
         n_conv_layers=2,
         filter_sizes=None,
-        activation="sigmoid",
+        activation="relu",
         padding="auto",
         random_state=0,
     ):
