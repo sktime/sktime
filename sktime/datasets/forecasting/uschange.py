@@ -16,7 +16,6 @@ class USChange(_ForecastingDatasetFromLoader):
     y_name : str, optional (default="Consumption")
         Name of the target variable (y).
 
-
     Examples
     --------
     >>> from sktime.datasets.forecasting import USChange
@@ -61,10 +60,8 @@ class USChange(_ForecastingDatasetFromLoader):
         "n_hierarchy_levels": 0,
     }
 
-    loader_func = functools.partial(
-        load_uschange,
-        y_name=["Consumption", "Income", "Production", "Savings", "Unemployment"],
-    )
+    loader_func = load_uschange
 
-    def __init__(self):
+    def __init__(self, y_name="Consumption"):
+        self.y_name = y_name
         super().__init__()
