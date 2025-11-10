@@ -9,8 +9,14 @@ from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
 
+# TODO (release 0.41.0)
+# change the default of 'activation_hidden' to relu
+# update the docstring for activation_hidden from 'sigmoid' to 'relu'
+# and remove the usage of self._activation_hidden throughout the class
+# and replace it with self.activation_hidden
 class CNNClassifier(BaseDeepClassifier):
     """Time Convolutional Neural Network (CNN), as described in [1]_.
 
@@ -41,10 +47,12 @@ class CNNClassifier(BaseDeepClassifier):
         Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
-    activation_hidden : string or a tf callable, default="relu"
+    activation_hidden : string or a tf callable, default="sigmoid"
         Activation function used in the hidden layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
+        Default value of activation_hidden will change to "relu"
+        in version '0.41.0'.
     use_bias : boolean, default = True
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
@@ -121,6 +129,23 @@ class CNNClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self.activation = activation
         self.activation_hidden = activation_hidden
+        # TODO (release 0.41.0)
+        # change the default of 'activation_hidden' to "relu"
+        # remove the following 'if-else' check
+        # and remove the usage of self._activation_hidden throughout the class
+        # and replace it with self.activation_hidden
+        if activation_hidden == "relu":
+            warn(
+                "in `CNNClassifier`, the default value of parameter 'activation_hidden'"
+                " will change to 'relu' in version '0.41.0'. "
+                "To keep current behaviour and to silence this warning, "
+                "set 'activation_hidden' to 'sigmoid' explicitly.",
+                category=DeprecationWarning,
+                obj=self,
+            )
+            self._activation_hidden = "sigmoid"
+        else:
+            self._activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
@@ -129,12 +154,16 @@ class CNNClassifier(BaseDeepClassifier):
 
         super().__init__()
 
+        # TODO (release 0.41.0)
+        # change the default of 'activation_hidden' to "relu"
+        # and remove the usage of self._activation_hidden in the following lines
+        # and replace it with self.activation_hidden
         self._network = CNNNetwork(
             kernel_size=self.kernel_size,
             avg_pool_size=self.avg_pool_size,
             n_conv_layers=self.n_conv_layers,
             filter_sizes=self.filter_sizes,
-            activation=self.activation_hidden,
+            activation=self._activation_hidden,
             padding=self.padding,
             random_state=self.random_state,
         )
