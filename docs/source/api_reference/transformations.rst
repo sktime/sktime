@@ -269,6 +269,7 @@ Dictionary-based features
     SFAFast
     PAAlegacy
     SAXlegacy
+    fABBA
 
 Auto-correlation-based features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -595,6 +596,14 @@ Binning, sampling and segmentation
     :template: class.rst
 
     SAX
+
+.. currentmodule:: sktime.transformations.series.fabba
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    fABBA
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~

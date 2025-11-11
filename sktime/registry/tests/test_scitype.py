@@ -109,6 +109,8 @@ def test_is_scitype():
 def test_sklearn_scitypes():
     """Test that scitype correctly identifies sklearn scitypes."""
     from sklearn.linear_model import LinearRegression
+    from sklearn.metrics import accuracy_score, brier_score_loss, mean_squared_error
+    from sklearn.model_selection import KFold
     from sklearn.preprocessing import StandardScaler
     from sklearn.svm import SVC
 
@@ -118,6 +120,11 @@ def test_sklearn_scitypes():
     assert scitype(StandardScaler()) == "transformer_tabular"
     assert scitype(SVC) == "classifier_tabular"
     assert scitype(SVC()) == "classifier_tabular"
+    assert scitype(accuracy_score) == "metric_tabular"
+    assert scitype(brier_score_loss) == "metric_proba_tabular"
+    assert scitype(mean_squared_error) == "metric_tabular"
+    assert scitype(KFold) == "splitter_tabular"
+    assert scitype(KFold()) == "splitter_tabular"
 
     assert is_scitype(LinearRegression, "regressor_tabular")
     assert is_scitype(LinearRegression(), "regressor_tabular")
@@ -125,6 +132,11 @@ def test_sklearn_scitypes():
     assert is_scitype(StandardScaler(), "transformer_tabular")
     assert is_scitype(SVC, "classifier_tabular")
     assert is_scitype(SVC(), "classifier_tabular")
+    assert is_scitype(accuracy_score, "metric_tabular")
+    assert is_scitype(brier_score_loss, "metric_proba_tabular")
+    assert is_scitype(mean_squared_error, "metric_tabular")
+    assert is_scitype(KFold, "splitter_tabular")
+    assert is_scitype(KFold(), "splitter_tabular")
 
     from sklearn.pipeline import Pipeline
 
@@ -145,3 +157,12 @@ def test_sklearn_scitypes():
     )
     assert scitype(reg_pipe) == "regressor_tabular"
     assert is_scitype(reg_pipe, "regressor_tabular")
+
+    from sklearn.model_selection import GridSearchCV
+
+    reg_gscv = GridSearchCV(
+        reg_pipe,
+        param_grid={"regressor__fit_intercept": [True, False]},
+    )
+    assert scitype(reg_gscv) == "regressor_tabular"
+    assert is_scitype(reg_gscv, "regressor_tabular")

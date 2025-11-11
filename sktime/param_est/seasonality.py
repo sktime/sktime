@@ -471,6 +471,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
         # CI and test flags
         # -----------------
         "tests:vm": True,  # tested on separate VM due to seasonal dependency
+        "tests:core": False,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, min_period=4, max_period=None, thresh=0.10):
