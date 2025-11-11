@@ -192,10 +192,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         The model automatically samples the most recent data points to maintain
         temporal continuity.
 
-    few_shot_random_state : int, optional, default=42
-        Random seed for reproducible few-shot sampling.
-        Only used when few_shot_ratio is not None and not 1.0.
-
     References
     ----------
     .. [1] https://github.com/ibm-granite/granite-tsfm/tree/main/tsfm_public/models/tinytimemixer
@@ -386,7 +382,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         use_source_package=False,
         fit_strategy="minimal",
         few_shot_ratio=None,
-        few_shot_random_state=42,
     ):
         super().__init__()
         self.model_path = model_path
@@ -402,7 +397,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self.use_source_package = use_source_package
         self.fit_strategy = fit_strategy
         self.few_shot_ratio = few_shot_ratio
-        self.few_shot_random_state = few_shot_random_state
 
         # Validate few-shot learning parameters
         if self.few_shot_ratio is not None:
@@ -596,7 +590,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 y_train,
                 X_train,
                 self.few_shot_ratio,
-                self.few_shot_random_state,
                 config,
             )
 
@@ -809,7 +802,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         test_params.extend(params_broadcasting)
         return test_params
 
-    def _apply_few_shot_sampling(self, y_train, X_train, ratio, random_state, config):
+    def _apply_few_shot_sampling(self, y_train, X_train, ratio, config):
         """
         Apply few-shot sampling to training data while maintaining temporal order.
 
@@ -821,8 +814,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             Training exogenous data
         ratio : float
             Fraction of data to sample (0 < ratio <= 1)
-        random_state : int
-            Random seed for reproducibility
         config : TinyTimeMixerConfig
             Model configuration containing context_length and prediction_length
 
