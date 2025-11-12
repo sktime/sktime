@@ -21,7 +21,7 @@ class RNNNetwork(BaseDeepNetwork):
         the number of recurring units
     random_state : int, default = 0
         seed to any needed random actions
-    activation : str, default = "tanh"
+    activation : str, default = "linear"
         activation function to use in the RNN layer;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/

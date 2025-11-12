@@ -43,7 +43,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
     activation : string or a tf callable, default="linear"
         Activation function used in the output layer.
         List of available activation functions: https://keras.io/api/layers/activations/
-    activation_hidden : string or a tf callable, default="tanh"
+    activation_hidden : string or a tf callable, default="linear"
         Activation function used in the hidden layers.
         List of available activation functions: https://keras.io/api/layers/activations/
         Default value of activation_hidden will change to "tanh"
