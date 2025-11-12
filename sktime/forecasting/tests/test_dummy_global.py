@@ -85,3 +85,21 @@ class TestDummyGlobalForecaster:
         np.testing.assert_array_almost_equal(
             y_pred.values, np.repeat(forecaster.global_mean_, 3)
         )
+
+    def test_pretrain_updates_state(self):
+        """Test that pretrain() updates forecaster state correctly."""
+        forecaster = DummyGlobalForecaster()
+
+        assert forecaster.state == "new"
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(2,), min_timepoints=10, max_timepoints=10
+        )
+        forecaster.pretrain(y_panel)
+
+        assert forecaster.state == "pretrained"
+
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+
+        assert forecaster.state == "fitted"
