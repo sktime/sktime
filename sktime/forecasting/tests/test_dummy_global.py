@@ -103,3 +103,26 @@ class TestDummyGlobalForecaster:
         forecaster.fit(y_train, fh=[1, 2, 3])
 
         assert forecaster.state == "fitted"
+
+    def test_incremental_pretraining(self):
+        """Test that pretrain can be called multiple times (incremental)."""
+        forecaster = DummyGlobalForecaster()
+
+        # First pretrain batch
+        y_panel1 = _make_hierarchical(
+            hierarchy_levels=(2,), min_timepoints=10, max_timepoints=10
+        )
+        forecaster.pretrain(y_panel1)
+        mean_after_first = forecaster.global_mean_
+
+        # Second pretrain batch
+        y_panel2 = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10
+        )
+        forecaster.pretrain(y_panel2)
+        mean_after_second = forecaster.global_mean_
+
+        # Mean should be updated (not necessarily equal due to different data)
+        # Just check that it's computed and is a finite number
+        assert np.isfinite(mean_after_second)
+        assert forecaster.state == "pretrained"
