@@ -1,0 +1,74 @@
+{
+    "version": "v1.0.0",
+    "entity": {
+        "type": "group",
+        "role": "owner",
+        "name": "sktime",
+        "email": "info@sktime.net",
+        "description": "sktime is a unified framework for machine learning with time series. It has a unified API for ML/AI with time series, for model building, fitting, application, and validation. It has support for a variety of learning tasks including forecasting, time series classification, regression, clustering. It also supports composite model building, including pipelines with transformations, ensembles, tuning, reduction, and has interactive user experience with scikit-learn like interface conventions.",
+        "webpageUrl": {
+            "url": "https://www.sktime.net"
+        }
+    },
+    "projects": [{
+     "guid": "sktime",
+     "name": "sktime",
+     "description": "sktime is a unified framework for machine learning with time series. It has a unified API for ML/AI with time series, for model building, fitting, application, and validation. It has support for a variety of learning tasks including forecasting, time series classification, regression, clustering. It also supports composite model building, including pipelines with transformations, ensembles, tuning, reduction, and has interactive user experience with scikit-learn like interface conventions.",
+     "webpageUrl": {
+         "url": "https://www.sktime.net"
+     },
+     "repositoryUrl": {
+         "url": "https://github.com/sktime/sktime"
+     },
+     "licenses": ["spdx:BSD-3-Clause"],
+     "tags": [
+            "data-science",
+            "machine-learning",
+            "time-series",
+            "forecasting",
+            "time-series-classification",
+            "time-series-analysis",
+            "sktime",
+            "ai",
+            "benchmarking",
+            "time-series-regression",
+            "data-mining",
+            "time-series-segmentation",
+            "scikit-learn",
+            "changepoint-detection"
+        ]
+    }],
+
+    // Required.
+    "funding": {
+        // Required. This describes one or more channels via which the entity can receive funds.
+        "channels": [{
+            "guid": "",                 // Required. A short unique ID for the channel. Lowercase-alphanumeric-dashes only. eg: mybank, my-paypal. Max len 32.
+            "type": "",                 // Required. [bank, payment-provider, cheque, cash, other].
+            "address": "",              // Optional. A short unstructured textual representation of the payment address for the channel. eg: "Account: 12345 (branch: ABCX)", "mypaypal@domain.com", "https://payment-url.com", or a physical address for cheques. Max len 250.
+            "description": ""           // Optional. Any additional description or instructions for the payment channel. Max len 500.
+        }],
+
+        // Required. One or more funding and payment plans.
+        "plans": [{
+            "guid": "",                 // Required. A short unique ID for the plan. Lowercase-alphanumeric-dashes only. eg: mybank, paypal. Max len 32.
+            "status": "",               // Required. [active, inactive]. Indicates whether this plan is currently active or inactive.
+            "name": "",                 // Required. Name of the funding plan. eg: "Starter support plan", "Infra hosting", "Monthly funding plan".
+            "description": "",          // Optional. Any additional description or instructions for the funding plan.
+            "amount": 0,                // Required. The solicited amount for this plan. 0 is a wildcard that indicates "any amount".
+            "currency": "",             // Required. Three letter ISO 4217 currency code. eg: USD
+            "frequency": "",            // Required. [one-time, weekly, fortnightly, monthly, yearly, other]
+            "channels": []              // Required. One or more channel IDs defined in channels[] via which this plan can accept payments.
+        }],
+
+        // Optional. A simple summary of funding history. Only include if at least one, either income or expenses, have to be communicated.
+        "history": [{
+            "year": 2024,               // Required. Year (fiscal, preferably).
+            "income": 0,                // Optional.
+            "expenses": 0,              // Optional.
+            "taxes": 0,                 // Optional.
+            "currency": "",             // Required. Three letter ISO 4217 currency code. eg: USD
+            "description": ""           // Optional. Any additional description. Max length 500.
+        }]
+    }
+}
