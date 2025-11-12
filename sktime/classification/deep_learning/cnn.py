@@ -13,9 +13,10 @@ from sktime.utils.warnings import warn
 
 
 # TODO (release 0.41.0)
-# change the default of 'activation_hidden' to relu
-# update the docstring for activation_hidden from 'sigmoid' to 'relu'
-# and remove the usage of self._activation_hidden throughout the class
+# change the default value of 'activation_hidden' to "relu"
+# update the docstring for activation_hidden from "sigmoid" to "relu"
+# and remove the note about the change from the docstring.
+# Remove the usage of self._activation_hidden throughout the class
 # and replace it with self.activation_hidden
 class CNNClassifier(BaseDeepClassifier):
     """Time Convolutional Neural Network (CNN), as described in [1]_.
@@ -95,6 +96,8 @@ class CNNClassifier(BaseDeepClassifier):
         "tests:vm": True,  # run in VM due to memory requirement
     }
 
+    # TODO (release 0.41.0)
+    # Change the default value of 'activation_hidden' to "relu"
     def __init__(
         self,
         n_epochs=2000,
@@ -108,7 +111,7 @@ class CNNClassifier(BaseDeepClassifier):
         metrics=None,
         random_state=None,
         activation="softmax",
-        activation_hidden="relu",
+        activation_hidden="changing_from_sigmoid_to_relu_in_0.41.0",
         use_bias=True,
         optimizer=None,
         filter_sizes=None,
@@ -130,11 +133,12 @@ class CNNClassifier(BaseDeepClassifier):
         self.activation = activation
         self.activation_hidden = activation_hidden
         # TODO (release 0.41.0)
-        # change the default of 'activation_hidden' to "relu"
-        # remove the following 'if-else' check
-        # and remove the usage of self._activation_hidden throughout the class
+        # After changing the default value of 'activation_hidden' to "relu"
+        # in the __init__ method signature,
+        # remove the following 'if-else' check.
+        # Remove the usage of self._activation_hidden throughout the class
         # and replace it with self.activation_hidden
-        if activation_hidden == "relu":
+        if activation_hidden == "changing_from_sigmoid_to_relu_in_0.41.0":
             warn(
                 "in `CNNClassifier`, the default value of parameter 'activation_hidden'"
                 " will change to 'relu' in version '0.41.0'. "
@@ -155,8 +159,9 @@ class CNNClassifier(BaseDeepClassifier):
         super().__init__()
 
         # TODO (release 0.41.0)
-        # change the default of 'activation_hidden' to "relu"
-        # and remove the usage of self._activation_hidden in the following lines
+        # After changing the default value of 'activation_hidden' to "relu"
+        # in the __init__ method signature,
+        # Remove the usage of self._activation_hidden in the following lines
         # and replace it with self.activation_hidden
         self._network = CNNNetwork(
             kernel_size=self.kernel_size,

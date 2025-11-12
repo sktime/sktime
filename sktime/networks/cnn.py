@@ -6,9 +6,10 @@ from sktime.utils.warnings import warn
 
 
 # TODO (release 0.41.0)
-# change the default of 'activation' to relu
-# update the docstring for activation from 'sigmoid' to 'relu'
-# and remove the usage of self._activation throughout the class
+# change the default value of 'activation' to "relu"
+# update the docstring for activation from "sigmoid" to "relu"
+# and remove the note about the change from the docstring.
+# Remove the usage of self._activation throughout the class
 # and replace it with self.activation
 class CNNNetwork(BaseDeepNetwork):
     """Establish the network structure for a CNN.
@@ -52,13 +53,15 @@ class CNNNetwork(BaseDeepNetwork):
         "python_dependencies": "tensorflow",
     }
 
+    # TODO (release 0.41.0)
+    # Change the default value of 'activation' to "relu"
     def __init__(
         self,
         kernel_size=7,
         avg_pool_size=3,
         n_conv_layers=2,
         filter_sizes=None,
-        activation="relu",
+        activation="changing_from_sigmoid_to_relu_in_0.41.0",
         padding="auto",
         random_state=0,
     ):
@@ -75,11 +78,12 @@ class CNNNetwork(BaseDeepNetwork):
             self._filter_sizes = filter_sizes
         self.activation = activation
         # TODO (release 0.41.0)
-        # change the default of 'activation' to "relu"
-        # remove the following 'if-else' check
-        # and remove the usage of self._activation throughout the class
+        # After changing the default value of 'activation' to "relu"
+        # in the __init__ method signature,
+        # Remove the following 'if-else' check
+        # Remove the usage of self._activation throughout the class
         # and replace it with self.activation
-        if activation == "relu":
+        if activation == "changing_from_sigmoid_to_relu_in_0.41.0":
             warn(
                 "in `CNNNetwork`, the default value of parameter 'activation'"
                 " will change to 'relu' in version '0.41.0'. "
@@ -126,8 +130,9 @@ class CNNNetwork(BaseDeepNetwork):
         input_layer = keras.layers.Input(input_shape)
 
         # TODO (release 0.41.0)
-        # change the default of 'activation' to "relu"
-        # and remove the usage of self._activation in the following lines
+        # After changing the default value of 'activation' to "relu"
+        # in the __init__ method signature,
+        # remove the usage of self._activation in the following lines
         # and replace it with self.activation
         conv = keras.layers.Conv1D(
             filters=filter_sizes[0],
@@ -139,8 +144,9 @@ class CNNNetwork(BaseDeepNetwork):
 
         for i in range(1, self.n_conv_layers):
             # TODO (release 0.41.0)
-            # change the default of 'activation' to "relu"
-            # and remove the usage of self._activation in the following lines
+            # After changing the default value of 'activation' to "relu"
+            # in the __init__ method signature,
+            # remove the usage of self._activation in the following lines
             # and replace it with self.activation
             conv = keras.layers.Conv1D(
                 filters=filter_sizes[i],

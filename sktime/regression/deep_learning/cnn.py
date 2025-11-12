@@ -13,8 +13,8 @@ from sktime.utils.warnings import warn
 
 
 # TODO (release 0.41.0)
-# change the default of 'activation_hidden' to relu
-# update the docstring for activation_hidden from 'sigmoid' to 'relu'
+# change the default value of 'activation_hidden' to "relu"
+# update the docstring for activation_hidden from "sigmoid" to "relu"
 # and remove the usage of self._activation_hidden throughout the class
 # and replace it with self.activation_hidden
 class CNNRegressor(BaseDeepRegressor):
@@ -102,6 +102,8 @@ class CNNRegressor(BaseDeepRegressor):
         "tests:vm": True,  # run in VM due to memory requirement
     }
 
+    # TODO (release 0.41.0)
+    # Change the default value of 'activation_hidden' to "relu"
     def __init__(
         self,
         n_epochs=2000,
@@ -136,7 +138,8 @@ class CNNRegressor(BaseDeepRegressor):
         self.activation = activation
         self.activation_hidden = activation_hidden
         # TODO (release 0.41.0)
-        # change the default of 'activation_hidden' to "relu"
+        # After changing the default value of 'activation_hidden' to "relu"
+        # in the __init__ method signature,
         # remove the following 'if-else' check
         # and remove the usage of self._activation_hidden throughout the class
         # and replace it with self.activation_hidden
@@ -159,8 +162,9 @@ class CNNRegressor(BaseDeepRegressor):
         self.padding = padding
 
         # TODO (release 0.41.0)
-        # change the default of 'activation_hidden' to "relu"
-        # and remove the usage of self._activation_hidden in the following lines
+        # After changing the default value of 'activation_hidden' to "relu"
+        # in the __init__ method signature,
+        # remove the usage of self._activation_hidden in the following lines
         # and replace it with self.activation_hidden
         self._network = CNNNetwork(
             kernel_size=self.kernel_size,
