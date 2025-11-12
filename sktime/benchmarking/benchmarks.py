@@ -445,13 +445,20 @@ class BaseBenchmark:
                 exps.append((task_id, estimator_id, task, estimator))
         return exps
 
-    def run(self, output_file: str, force_rerun: str | list[str] = "none"):
+    def run(self, output_file: str = None, force_rerun: str | list[str] = "none"):
         """
         Run the benchmarking for all tasks and estimators.
 
+        If ``output_file`` is provided, results will be saved to a file or location,
+        in a format inferred from the file extension.
+
+        The exact format is determined by the storage backend used, see
+        documentation on storage handlers in
+        ``sktime.benchmarking._storage_handlers.get_storage_backend``.
+
         Parameters
         ----------
-        output_file : str or None.
+        output_file : str or None (default)
             Path to save the results to.
             If None, results will not be saved.
 
