@@ -18,10 +18,11 @@ from scipy.stats import norm, boxcox, jarque_bera, shapiro
 from scipy.special import inv_boxcox
 import warnings
 import pandas as pd
+import math
 
 from sktime.forecasting.base import BaseForecaster
+from statsmodels.tsa.seasonal import seasonal_decompose
 
-# Type mappings
 ERROR_TYPES = {"N": 0, "A": 1, "M": 2}
 TREND_TYPES = {"N": 0, "A": 1, "M": 2}
 SEASON_TYPES = {"N": 0, "A": 1, "M": 2}
@@ -32,93 +33,110 @@ def is_constant(y: NDArray[np.float64]) -> bool:
     return np.all(y == y[0])
 
 
+@njit(cache=True, fastmath=True)
+def _admissible_jit(alpha: float, beta: float, gamma: float, phi: float, m: int) -> bool:
+    TOL = 1e-8
+    if phi < 0.0 or phi > 1.0 + TOL:
+        return False
+
+    if np.isnan(gamma):
+        if np.isnan(alpha):
+            return True
+
+        if alpha < 1.0 - 1.0/phi or alpha > 1.0 + 1.0/phi:
+            return False
+
+        if not np.isnan(beta):
+            if beta < alpha * (phi - 1.0) or beta > (1.0 + phi) * (2.0 - alpha):
+                return False
+
+    elif m > 1:
+        if np.isnan(alpha):
+            return False
+        beta_val = 0.0 if np.isnan(beta) else beta
+        lower_gamma = max(1.0 - 1.0/phi - alpha, 0.0)
+        upper_gamma = 1.0 + 1.0/phi - alpha
+        if gamma < lower_gamma or gamma > upper_gamma:
+            return False
+
+        alpha_lower = 1.0 - 1.0/phi - gamma * (1.0 - m + phi + phi * m) / (2.0 * phi * m)
+        if alpha < alpha_lower:
+            return False
+
+        if beta_val < -(1.0 - phi) * (gamma / m + alpha):
+            return False
+
+        a = phi * (1.0 - alpha - gamma)
+        b = alpha + beta_val - alpha * phi + gamma - 1.0
+        c_coef = alpha + beta_val - alpha * phi
+        d = alpha + beta_val - phi
+
+        n_coef = m + 1
+        P = np.zeros(n_coef, dtype=np.float64)
+        P[0] = a
+        P[1] = b
+        for i in range(2, m - 1):
+            P[i] = c_coef
+        P[m - 1] = d
+        P[m] = 1.0
+
+        if m <= 24:
+            C = np.zeros((n_coef - 1, n_coef - 1), dtype=np.float64)
+            for j in range(n_coef - 1):
+                C[0, j] = -P[j + 1] / P[0]
+            for i in range(1, n_coef - 1):
+                C[i, i - 1] = 1.0
+            try:
+                eigvals = np.linalg.eigvals(C)
+                max_abs_root = np.max(np.abs(eigvals))
+                if max_abs_root > 1.0 + 1e-10:
+                    return False
+            except:
+                return False
+        else:
+            pass
+
+    return True
+
+
 def admissible(alpha: Optional[float],
                beta: Optional[float],
                gamma: Optional[float],
                phi: Optional[float],
                m: int) -> bool:
-    """
-    Check if ETS parameters satisfy admissibility conditions
+    alpha_val = np.nan if alpha is None else alpha
+    beta_val = np.nan if beta is None else beta
+    gamma_val = np.nan if gamma is None else gamma
+    phi_val = 1.0 if phi is None else phi
 
-    Implements constraints from Hyndman et al. (2008) to ensure finite forecast variance.
-    Uses polynomial root checking for seasonal models.
+    return _admissible_jit(alpha_val, beta_val, gamma_val, phi_val, m)
 
-    Parameters
-    ----------
-    alpha, beta, gamma, phi : float or None
-        ETS smoothing parameters
-    m : int
-        Seasonal period
 
-    Returns
-    -------
-    bool
-        True if parameters are admissible
-    """
-    # Handle None and convert to float
-    if phi is None:
-        phi = 1.0
-
-    if phi < 0 or phi > 1 + 1e-8:
-        return False
-
-    # Non-seasonal model (gamma is None)
-    if gamma is None:
-        if alpha is None:
-            return True
-
-        # Check alpha bounds
-        if alpha < 1 - 1/phi or alpha > 1 + 1/phi:
-            return False
-
-        # Check beta if present
-        if beta is not None:
-            if beta < alpha * (phi - 1) or beta > (1 + phi) * (2 - alpha):
+@njit(cache=True, fastmath=True)
+def _check_param_jit(alpha: float, beta: float, gamma: float, phi: float,
+                     lower: NDArray[np.float64], upper: NDArray[np.float64],
+                     check_usual: bool, check_admissible: bool, m: int) -> bool:
+    if check_usual:
+        if not np.isnan(alpha):
+            if alpha < lower[0] or alpha > upper[0]:
                 return False
 
-    # Seasonal model (gamma is not None and m > 1)
-    elif m > 1:
-        # Alpha must be present for seasonal models
-        if alpha is None:
-            return False
-
-        # Default beta to 0 if None
-        if beta is None:
-            beta = 0.0
-
-        # Check gamma bounds
-        if gamma < max(1 - 1/phi - alpha, 0.0) or gamma > 1 + 1/phi - alpha:
-            return False
-
-        # Check alpha lower bound
-        if alpha < 1 - 1/phi - gamma * (1 - m + phi + phi * m) / (2 * phi * m):
-            return False
-
-        # Check beta lower bound
-        if beta < -(1 - phi) * (gamma / m + alpha):
-            return False
-
-        # Polynomial root check for seasonal models
-        # Construct characteristic polynomial
-        a = phi * (1 - alpha - gamma)
-        b = alpha + beta - alpha * phi + gamma - 1
-        c_coef = alpha + beta - alpha * phi
-        d = alpha + beta - phi
-
-        # Build polynomial coefficients: [a, b, c, c, ..., c, d, 1]
-        # where c appears (m-2) times
-        P = np.array([a, b] + [c_coef] * max(0, m - 2) + [d, 1.0])
-
-        # Find roots and check maximum absolute value
-        try:
-            poly_roots = np.roots(P)
-            if np.max(np.abs(poly_roots)) > 1 + 1e-10:
+        if not np.isnan(beta):
+            if beta < lower[1] or beta > alpha or beta > upper[1]:
                 return False
-        except:
-            # If polynomial root finding fails, reject
+
+        if not np.isnan(phi):
+            if phi < lower[3] or phi > upper[3]:
+                return False
+
+        if not np.isnan(gamma):
+            if gamma < lower[2] or gamma > 1.0 - alpha or gamma > upper[2]:
+                return False
+
+    if check_admissible:
+        if not _admissible_jit(alpha, beta, gamma, phi, m):
             return False
 
-    # Passed all tests
     return True
 
 
@@ -130,59 +148,25 @@ def check_param(alpha: Optional[float],
                 upper: NDArray[np.float64],
                 bounds: str,
                 m: int) -> bool:
-    """
-    Check if parameters satisfy both usual bounds and admissibility conditions
+    alpha_val = np.nan if alpha is None else alpha
+    beta_val = np.nan if beta is None else beta
+    gamma_val = np.nan if gamma is None else gamma
+    phi_val = np.nan if phi is None else phi
 
-    Parameters
-    ----------
-    alpha, beta, gamma, phi : float or None
-        Smoothing parameters
-    lower, upper : array
-        Parameter bounds [alpha, beta, gamma, phi]
-    bounds : str
-        Type of bounds: "usual", "admissible", or "both"
-    m : int
-        Seasonal period
+    check_usual = bounds != "admissible"
+    check_admissible = bounds != "usual"
 
-    Returns
-    -------
-    bool
-        True if parameters pass all checks
-    """
-    # Check usual bounds
-    if bounds != "admissible":
-        if alpha is not None and not np.isnan(alpha):
-            if alpha < lower[0] or alpha > upper[0]:
-                return False
-
-        if beta is not None and not np.isnan(beta):
-            if beta < lower[1] or beta > alpha or beta > upper[1]:
-                return False
-
-        if phi is not None and not np.isnan(phi):
-            if phi < lower[3] or phi > upper[3]:
-                return False
-
-        if gamma is not None and not np.isnan(gamma):
-            if gamma < lower[2] or gamma > 1 - alpha or gamma > upper[2]:
-                return False
-
-    # Check admissibility conditions
-    if bounds != "usual":
-        if not admissible(alpha, beta, gamma, phi, m):
-            return False
-
-    return True
+    return _check_param_jit(alpha_val, beta_val, gamma_val, phi_val,
+                            lower, upper, check_usual, check_admissible, m)
 
 
 @dataclass
 class ETSConfig:
-    """Configuration for ETS model"""
     error: Literal["A", "M"] = "A"
     trend: Literal["N", "A", "M"] = "N"
     season: Literal["N", "A", "M"] = "N"
     damped: bool = False
-    m: int = 1  # seasonal period
+    m: int = 1
 
     @property
     def error_code(self) -> int:
@@ -198,18 +182,16 @@ class ETSConfig:
 
     @property
     def n_states(self) -> int:
-        """Number of state variables"""
-        n = 1  # level
+        n = 1
         if self.trend != "N":
-            n += 1  # trend
+            n += 1
         if self.season != "N":
-            n += self.m  # seasonal states
+            n += self.m - 1
         return n
 
 
 @dataclass
 class ETSParams:
-    """ETS smoothing parameters"""
     alpha: float = 0.1
     beta: float = 0.01
     gamma: float = 0.01
@@ -217,7 +199,6 @@ class ETSParams:
     init_states: NDArray[np.float64] = field(default_factory=lambda: np.array([]))
 
     def to_vector(self, config: ETSConfig) -> NDArray[np.float64]:
-        """Convert parameters to optimization vector"""
         params = [self.alpha]
         if config.trend != "N":
             params.append(self.beta)
@@ -229,7 +210,6 @@ class ETSParams:
 
     @staticmethod
     def from_vector(x: NDArray[np.float64], config: ETSConfig) -> 'ETSParams':
-        """Create parameters from optimization vector"""
         idx = 0
         alpha = x[idx]; idx += 1
         beta = x[idx] if config.trend != "N" else 0.0
@@ -257,19 +237,17 @@ class ETSModel:
     aic: float
     bic: float
     sigma2: float
-    y_original: Optional[NDArray[np.float64]] = None  # Original data before transformation
-    transform: Optional['BoxCoxTransform'] = None  # Transformation applied
+    y_original: Optional[NDArray[np.float64]] = None
+    transform: Optional['BoxCoxTransform'] = None
 
 
 @dataclass
 class BoxCoxTransform:
-    """Box-Cox transformation for variance stabilization"""
     lambda_param: float
-    shift: float = 0.0  # Shift to make data positive
+    shift: float = 0.0
 
     @staticmethod
     def find_lambda(y: NDArray[np.float64], lambda_range: Tuple[float, float] = (-1, 2)) -> float:
-        """Find optimal Box-Cox lambda using maximum likelihood"""
         if np.any(y <= 0):
             shift = np.abs(np.min(y)) + 1.0
             y_shifted = y + shift
@@ -288,7 +266,6 @@ class BoxCoxTransform:
         return result.x
 
     def transform(self, y: NDArray[np.float64]) -> NDArray[np.float64]:
-        """Apply Box-Cox transformation"""
         y_shifted = y + self.shift
         if abs(self.lambda_param) < 1e-10:
             return np.log(y_shifted)
@@ -298,108 +275,84 @@ class BoxCoxTransform:
     def inverse_transform(self, y_trans: NDArray[np.float64],
                          bias_adjust: bool = False,
                          variance: Optional[float] = None) -> NDArray[np.float64]:
-        """Inverse Box-Cox transformation with optional bias adjustment"""
         if abs(self.lambda_param) < 1e-10:
             y_back = np.exp(y_trans)
             if bias_adjust and variance is not None:
-                # Bias adjustment for log transformation
                 y_back *= np.exp(variance / 2)
         else:
             y_back = (self.lambda_param * y_trans + 1) ** (1 / self.lambda_param)
             if bias_adjust and variance is not None:
-                # Taylor series bias adjustment for power transformations
                 correction = (1 - self.lambda_param) * variance / (2 * y_back ** (2 * self.lambda_param))
                 y_back += correction
 
         return y_back - self.shift
 
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def _ets_step(l: float, b: float, s: NDArray[np.float64], y: float,
               m: int, error: int, trend: int, season: int,
               alpha: float, beta: float, gamma: float, phi: float) -> Tuple:
-    """Single ETS update step (JIT compiled)
-
-    Follows Hyndman et al. framework as implemented in Durbyn.jl
-    """
     TOL = 1e-10
 
-    # STEP 1: Compute one-step-ahead forecast component q (trend-adjusted level)
-    if trend == 0:  # No trend
+    if trend == 0:
         q = l
         phib = 0.0
-    elif trend == 1:  # Additive trend
+    elif trend == 1:
         phib = phi * b
         q = l + phib
-    else:  # Multiplicative trend (trend == 2)
-        phib = b ** phi if b > 0 else 1.0
-        q = l * phib if l > 0 else TOL
-
-    # STEP 2: Compute one-step-ahead forecast yhat (add/multiply seasonality)
-    # Use s[m-1] which is the oldest seasonal (m periods ago)
-    if season == 0:  # No seasonality
+    else:
+        if b <= 0 or l <= 0:
+            return l, b, s, -99999.0, 0.0
+        phib = b ** phi
+        q = l * phib
+    if season == 0:
         yhat = q
-    elif season == 1:  # Additive seasonality
+    elif season == 1:
         yhat = q + s[m-1]
-    else:  # Multiplicative seasonality
+    else:
         yhat = q * s[m-1]
 
     if abs(yhat) < TOL:
         yhat = TOL
 
-    # STEP 3: Compute error
-    if error == 1:  # Additive error
+    if error == 1:
         e = y - yhat
-    else:  # Multiplicative error
+    else:
         e = (y - yhat) / yhat
-
-    # STEP 4: Deseasonalize observation to get p
-    # Use s[m-1] which is the oldest seasonal (m periods ago)
-    if season == 0:  # No seasonality
+    if season == 0:
         p = y
-    elif season == 1:  # Additive seasonality
+    elif season == 1:
         p = y - s[m-1]
-    else:  # Multiplicative seasonality
+    else:
         p = y / max(s[m-1], TOL)
-
-    # STEP 5: Update level
     l_new = q + alpha * (p - q)
-
-    # STEP 6: Update trend
     b_new = b
-    if trend == 1:  # Additive trend
+    if trend == 1:
         r = l_new - l
         b_new = phib + (beta / alpha) * (r - phib)
-    elif trend == 2:  # Multiplicative trend
+    elif trend == 2:
         r = l_new / max(l, TOL)
         b_new = phib + (beta / alpha) * (r - phib)
-
-    # STEP 7: Update seasonal
-    # Compute new seasonal based on s[m-1] (oldest), then rotate
     s_new = s.copy()
     if season > 0:
-        if season == 1:  # Additive seasonality
+        if season == 1:
             t = y - q
-        else:  # Multiplicative seasonality
+        else:
             t = y / max(q, TOL)
-        # New seasonal value based on oldest seasonal
         new_seasonal = s[m-1] + gamma * (t - s[m-1])
-        # Rotate: new_seasonal goes to front, others shift right
         s_new[0] = new_seasonal
         s_new[1:m] = s[0:m-1]
 
     return l_new, b_new, s_new, yhat, e
 
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def _ets_likelihood(y: NDArray[np.float64], init_states: NDArray[np.float64],
                     m: int, error: int, trend: int, season: int,
                     alpha: float, beta: float, gamma: float, phi: float) -> Tuple:
-    """Compute ETS likelihood (JIT compiled)"""
     n = len(y)
     n_states = len(init_states)
 
-    # Initialize states
     l = init_states[0]
     b = init_states[1] if trend > 0 else 0.0
     if season > 0:
@@ -407,35 +360,27 @@ def _ets_likelihood(y: NDArray[np.float64], init_states: NDArray[np.float64],
     else:
         s = np.zeros(max(m, 1))
 
-    # Storage
     residuals = np.zeros(n)
     fitted = np.zeros(n)
     sum_e2 = 0.0
     sum_log_yhat = 0.0
 
-    # Iterate through observations
     for i in range(n):
         l, b, s, yhat, e = _ets_step(l, b, s, y[i], m, error, trend, season,
                                       alpha, beta, gamma, phi)
 
-        if yhat < -99998:  # Invalid forecast
+        if yhat < -99998:
             return np.inf, residuals, fitted, init_states
 
         fitted[i] = yhat
         residuals[i] = e
-
-        # Accumulate components for log-likelihood
         sum_e2 += e * e
-        if error == 2:  # Multiplicative error
+        if error == 2:
             sum_log_yhat += np.log(max(abs(yhat), 1e-10))
-
-    # Final log-likelihood
-    if error == 1:  # Additive error
+    if error == 1:
         loglik = n * np.log(sum_e2 / n)
-    else:  # Multiplicative error
+    else:
         loglik = n * np.log(sum_e2 / n) + 2 * sum_log_yhat
-
-    # Build final state vector
     final_state = np.zeros(n_states)
     final_state[0] = l
     if trend > 0:
@@ -447,69 +392,136 @@ def _ets_likelihood(y: NDArray[np.float64], init_states: NDArray[np.float64],
     return loglik, residuals, fitted, final_state
 
 
+@njit(cache=True, fastmath=True)
+def _fourier_jit(n: int, period: int, K: int, h: int) -> NDArray[np.float64]:
+    if h == 0:
+        n_times = n
+        times = np.arange(1.0, n + 1.0)
+    else:
+        n_times = h
+        times = np.arange(float(n + 1), float(n + h + 1))
+    X = np.zeros((n_times, 2 * K), dtype=np.float64)
+
+    TOL = 1e-10
+    col_idx = 0
+
+    for k in range(1, K + 1):
+        p = float(k) / float(period)
+        include_sine = np.abs(2.0 * p - np.round(2.0 * p)) > TOL
+
+        if include_sine:
+            for i in range(n_times):
+                X[i, col_idx] = np.sin(2.0 * np.pi * p * times[i])
+            col_idx += 1
+
+        for i in range(n_times):
+            X[i, col_idx] = np.cos(2.0 * np.pi * p * times[i])
+        col_idx += 1
+
+    return X[:, :col_idx].copy()
+
+
+def fourier(x: NDArray[np.float64], period: int, K: int, h: Optional[int] = None) -> NDArray[np.float64]:
+    h_val = 0 if h is None else h
+    return _fourier_jit(len(x), period, K, h_val)
+
+
 def init_states(y: NDArray[np.float64], config: ETSConfig) -> NDArray[np.float64]:
-    """Initialize ETS states using simple heuristics"""
     n = len(y)
     m = config.m
+    trendtype = config.trend
+    seasontype = config.season
 
-    states = []
+    if seasontype != "N":
+        if n < 4:
+            raise ValueError("Not enough data for seasonal model (need at least 4 observations)")
 
-    # Initialize level
-    if config.season == "N":
-        l0 = np.mean(y[:min(10, n)])
+        if n < 3 * m:
+            fouriery = fourier(y, period=m, K=1)
+            X_fourier = np.column_stack([
+                np.ones(n),
+                np.arange(1, n + 1),
+                fouriery
+            ])
+            coefs, *_ = np.linalg.lstsq(X_fourier, y, rcond=None)
+            if seasontype == "A":
+                seasonal = y - (coefs[0] + coefs[1] * np.arange(1, n + 1))
+            else:
+                if np.min(y) <= 0:
+                    raise ValueError(
+                        "Multiplicative seasonality not appropriate for zero/negative values"
+                    )
+                seasonal = y / (coefs[0] + coefs[1] * np.arange(1, n + 1))
+        else:
+            decomp = seasonal_decompose(
+                y,
+                period=m,
+                model="additive" if seasontype == "A" else "multiplicative",
+                extrapolate_trend='freq'
+            )
+            seasonal = decomp.seasonal
+        init_seas = seasonal[1:m][::-1]
+        if seasontype == "A":
+            y_sa = y - seasonal
+        else:
+            init_seas = np.clip(init_seas, a_min=1e-2, a_max=None)
+            if init_seas.sum() > m:
+                init_seas = init_seas / np.sum(init_seas + 1e-2)
+            y_sa = y / np.clip(seasonal, a_min=1e-2, a_max=None)
     else:
-        l0 = np.mean(y[:min(2*m, n)])
-    states.append(l0)
+        m = 1
+        init_seas = np.array([])
+        y_sa = y
+    maxn = min(max(10, 2 * m), len(y_sa))
 
-    # Initialize trend
-    if config.trend != "N":
-        if n >= 2:
-            if config.trend == "A":
-                b0 = (y[min(m, n-1)] - y[0]) / min(m, n-1)
-            else:  # Multiplicative
-                b0 = (y[min(m, n-1)] / max(y[0], 1e-10)) ** (1 / min(m, n-1))
-        else:
-            b0 = 1.0 if config.trend == "M" else 0.0
-        states.append(b0)
+    if trendtype == "N":
+        l0 = np.mean(y_sa[:maxn])
+        return np.concatenate([[l0], init_seas])
+    X = np.column_stack([
+        np.ones(maxn),
+        np.arange(1, maxn + 1)
+    ])
+    (l, b), *_ = np.linalg.lstsq(X, y_sa[:maxn], rcond=None)
 
-    # Initialize seasonal
-    if config.season != "N":
-        if n >= 2 * m:
-            # Simple seasonal averages
-            seasonal = np.zeros(m)
-            for i in range(m):
-                seasonal[i] = np.mean(y[i::m][:2])
+    if trendtype == "A":
+        l0 = l
+        b0 = b
+        if abs(l0 + b0) < 1e-8:
+            l0 = l0 * (1 + 1e-3)
+            b0 = b0 * (1 - 1e-3)
+    else:
+        l0 = l + b
+        if abs(l0) < 1e-8:
+            l0 = 1e-7
 
-            if config.season == "A":
-                seasonal -= np.mean(seasonal)
-            else:  # Multiplicative
-                seasonal /= np.mean(seasonal)
-        else:
-            seasonal = np.zeros(m) if config.season == "A" else np.ones(m)
+        b0 = (l + 2 * b) / l0
+        div = b0 if not math.isclose(b0, 0.0, abs_tol=1e-8) else 1e-8
+        l0 = l0 / div
+        if abs(b0) > 1e10:
+            b0 = np.sign(b0) * 1e10
+        if l0 < 1e-8 or b0 < 1e-8:
+            l0 = max(y_sa[0], 1e-3)
+            div = y_sa[0] if not math.isclose(y_sa[0], 0.0, abs_tol=1e-8) else 1e-8
+            b0 = max(y_sa[1] / div, 1e-3)
 
-        states.extend(seasonal)
-
-    return np.array(states)
+    return np.concatenate([[l0, b0], init_seas])
 
 
 def get_bounds(config: ETSConfig) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
-    """Get parameter bounds for optimization"""
-    lower = [1e-4]  # alpha
+    lower = [1e-4]
     upper = [0.9999]
 
     if config.trend != "N":
-        lower.append(1e-4)  # beta
+        lower.append(1e-4)
         upper.append(0.9999)
 
     if config.season != "N":
-        lower.append(1e-4)  # gamma
+        lower.append(1e-4)
         upper.append(0.9999)
 
     if config.damped:
-        lower.append(0.8)  # phi
+        lower.append(0.8)
         upper.append(0.98)
-
-    # Add bounds for initial states (quite loose)
     n_states = config.n_states
     lower.extend([-1e6] * n_states)
     upper.extend([1e6] * n_states)
@@ -565,18 +577,16 @@ def ets(y: NDArray[np.float64],
     y_original = y.copy()
     n = len(y)
 
-    # Handle constant series (matches Julia behavior)
-    if is_constant(y):
+    if model == "ZZZ" and is_constant(y):
         warnings.warn("Series is constant. Fitting simple exponential smoothing with alpha=0.99999")
-        # Return simple ETS(A,N,N) with high alpha (essentially returns constant forecast)
         config = ETSConfig(error="A", trend="N", season="N", damped=False, m=1)
         alpha_const = 0.99999
         l0 = y[0]
 
-        # Simple fitted values (all equal to the constant)
         fitted = np.full(n, y[0])
         residuals = np.zeros(n)
 
+        k_const = 3
         return ETSModel(
             config=config,
             params=ETSParams(alpha=alpha_const, beta=0.0, gamma=0.0, phi=1.0,
@@ -584,25 +594,36 @@ def ets(y: NDArray[np.float64],
             fitted=fitted,
             residuals=residuals,
             states=np.array([l0]),
-            loglik=0.0,  # Perfect fit
-            aic=2.0,  # Minimal AIC
-            bic=2.0,
+            loglik=0.0,
+            aic=2 * k_const,
+            bic=k_const * np.log(n),
             sigma2=0.0,
             y_original=y_original,
             transform=None
         )
 
-    # Basic validation only (Julia/R handle even 1 observation)
     if n < 1:
         raise ValueError(f"Need at least 1 observation to fit ETS model, got {n}")
 
-    # Parse model specification
     if len(model) != 3:
         raise ValueError(f"Model must be 3 characters (e.g., 'AAN', 'MAM'), got '{model}'")
 
-    # Check for seasonal models with insufficient data (matches R behavior)
-    # R silently drops seasonality when n < m, we should at least warn/error
     season_type = model[2]
+    if season_type != "N" and m > 24:
+        if season_type == "Z":
+            warnings.warn(
+                f"Frequency too high (m={m} > 24). Seasonality will be ignored. "
+                f"Try stlf() if you need seasonal forecasts."
+            )
+            model = model[:2] + "N"
+            season_type = "N"
+            m = 1
+        else:
+            raise ValueError(
+                f"Frequency too high (m={m} > 24). "
+                f"Seasonal models are not supported for m>24."
+            )
+
     if season_type != "N" and m > 1 and n < m:
         raise ValueError(
             f"Cannot fit seasonal model: need at least m={m} observations for seasonal period, but got n={n}. "
@@ -610,7 +631,6 @@ def ets(y: NDArray[np.float64],
             f"Either provide more data or use a non-seasonal model."
         )
 
-    # Apply Box-Cox transformation if requested
     transform = None
     if lambda_auto:
         shift = np.abs(np.min(y)) + 1.0 if np.any(y <= 0) else 0.0
@@ -622,7 +642,6 @@ def ets(y: NDArray[np.float64],
         transform = BoxCoxTransform(lambda_param, shift)
         y = transform.transform(y)
 
-    # Parse model specification
     if len(model) != 3:
         raise ValueError("Model must be 3 characters (e.g., 'ANN', 'AAA')")
 
@@ -634,7 +653,66 @@ def ets(y: NDArray[np.float64],
         m=m
     )
 
-    # Initialize parameters
+    npars = 2
+    if config.trend != "N":
+        npars += 2
+    if config.season != "N":
+        npars += m
+    if damped:
+        npars += 1
+
+    if n <= npars + 4:
+        if damped:
+            warnings.warn(
+                f"Not enough data ({n} obs) for {npars} parameters with damping. "
+                f"Disabling damping."
+            )
+            damped = False
+            config = ETSConfig(
+                error=config.error,
+                trend=config.trend,
+                season=config.season,
+                damped=False,
+                m=m
+            )
+            npars -= 1
+
+        if n <= npars + 4 and config.season != "N":
+            warnings.warn(
+                f"Not enough data ({n} obs) for {npars} parameters. "
+                f"Trying simpler model without seasonality."
+            )
+            config = ETSConfig(
+                error=config.error,
+                trend=config.trend,
+                season="N",
+                damped=False,
+                m=1
+            )
+            npars = 2
+            if config.trend != "N":
+                npars += 2
+
+        if n <= npars + 4 and config.trend != "N":
+            warnings.warn(
+                f"Not enough data ({n} obs) for {npars} parameters. "
+                f"Trying simple exponential smoothing (ANN)."
+            )
+            config = ETSConfig(
+                error="A",
+                trend="N",
+                season="N",
+                damped=False,
+                m=1
+            )
+            npars = 2
+
+        if n <= npars + 4:
+            raise ValueError(
+                f"Not enough data: {n} observations for {npars} parameters. "
+                f"Need at least {npars + 5} observations."
+            )
+
     init_state_vec = init_states(y, config)
     init_params = ETSParams(
         alpha=alpha if alpha is not None else 0.1,
@@ -644,43 +722,97 @@ def ets(y: NDArray[np.float64],
         init_states=init_state_vec
     )
 
-    # Get bounds
     lower, upper = get_bounds(config)
 
-    # Objective function with bounds enforcement and admissibility checking
-    def objective(x):
-        # Check bounds - return high penalty if violated
-        if np.any(x < lower) or np.any(x > upper):
-            return 1e10
+    @njit(cache=True, fastmath=True)
+    def _objective_jit(x, y, lower, upper, m, error_code, trend_code, season_code,
+                       has_trend, has_season, is_damped, is_mult_season,
+                       check_usual, check_admissible, n_params, n_states):
+        """JIT-compiled objective function (internal)"""
+        PENALTY = 1e10
 
-        params = ETSParams.from_vector(x, config)
+        for i in range(len(x)):
+            if x[i] < lower[i] or x[i] > upper[i]:
+                return PENALTY
 
-        # Extract smoothing parameters for checking
-        alpha_check = params.alpha
-        beta_check = params.beta if config.trend != "N" else None
-        gamma_check = params.gamma if config.season != "N" else None
-        phi_check = params.phi if damped else None
+        idx = 0
+        alpha = x[idx]
+        idx += 1
 
-        # Check parameter admissibility
-        if not check_param(alpha_check, beta_check, gamma_check, phi_check,
-                          lower, upper, bounds, config.m):
-            return 1e10
+        if has_trend:
+            beta = x[idx]
+            idx += 1
+        else:
+            beta = 0.0
+
+        if has_season:
+            gamma = x[idx]
+            idx += 1
+        else:
+            gamma = np.nan
+
+        if is_damped:
+            phi = x[idx]
+            idx += 1
+        else:
+            phi = 1.0
+
+        init_states = x[idx:].copy()
+
+        beta_check = beta if has_trend else np.nan
+        phi_check = phi if is_damped else np.nan
+
+        if not _check_param_jit(alpha, beta_check, gamma, phi_check,
+                                lower, upper, check_usual, check_admissible, m):
+            return PENALTY
+
+        if has_season:
+            trend_slots = 1 if has_trend else 0
+            seasonal_start = 1 + trend_slots
+            seasonal_sum = 0.0
+            for i in range(seasonal_start, len(init_states)):
+                seasonal_sum += init_states[i]
+
+            if is_mult_season:
+                extra = float(m) - seasonal_sum
+            else:
+                extra = -seasonal_sum
+
+            init_states_full = np.zeros(len(init_states) + 1, dtype=np.float64)
+            init_states_full[:len(init_states)] = init_states
+            init_states_full[len(init_states)] = extra
+
+            if is_mult_season:
+                for i in range(seasonal_start, len(init_states_full)):
+                    if init_states_full[i] < 0.0:
+                        return PENALTY
+        else:
+            init_states_full = init_states
 
         loglik, _, _, _ = _ets_likelihood(
-            y, params.init_states,
-            config.m, config.error_code, config.trend_code, config.season_code,
-            params.alpha, params.beta, params.gamma, params.phi
+            y, init_states_full, m, error_code, trend_code, season_code,
+            alpha, beta, gamma, phi
         )
 
-        # Return high penalty for invalid likelihood
         if np.isnan(loglik) or np.isinf(loglik):
-            return 1e10
+            return PENALTY
 
         return loglik
 
-    # Optimize using Nelder-Mead (matches Julia/R implementation)
+    check_usual = (bounds != "admissible")
+    check_admissible = (bounds != "usual")
+
+    def objective(x):
+        return _objective_jit(
+            x, y, lower, upper, config.m,
+            config.error_code, config.trend_code, config.season_code,
+            config.trend != "N", config.season != "N", damped,
+            config.season == "M",
+            check_usual, check_admissible,
+            len(x) - config.n_states, config.n_states
+        )
+
     x0 = init_params.to_vector(config)
-    bounds = list(zip(lower, upper))
 
     result = minimize(
         objective, x0,
@@ -693,23 +825,31 @@ def ets(y: NDArray[np.float64],
         }
     )
 
-    # Extract fitted parameters
     fitted_params = ETSParams.from_vector(result.x, config)
 
-    # Compute final likelihood, residuals, and final states
+    init_states_final = fitted_params.init_states.copy()
+    if config.season != "N":
+        trend_slots = 1 if config.trend != "N" else 0
+        seasonal_start = 1 + trend_slots
+        seasonal_sum = np.sum(init_states_final[seasonal_start:])
+        if config.season == "M":
+            extra = config.m - seasonal_sum
+        else:
+            extra = -seasonal_sum
+        init_states_final = np.append(init_states_final, extra)
+
     loglik, residuals, fitted_vals, final_states = _ets_likelihood(
-        y, fitted_params.init_states,
+        y, init_states_final,
         config.m, config.error_code, config.trend_code, config.season_code,
         fitted_params.alpha, fitted_params.beta, fitted_params.gamma, fitted_params.phi
     )
 
-    # Compute information criteria
     n_params = len(result.x)
-    aic = 2 * loglik + 2 * n_params
-    bic = 2 * loglik + n_params * np.log(n)
+    k = n_params + 1
+    aic = loglik + 2 * k
+    bic = loglik + k * np.log(n)
     sigma2 = np.sum(residuals ** 2) / (n - n_params)
 
-    # Back-transform fitted values if transformation was applied
     fitted_original = fitted_vals
     if transform is not None:
         fitted_original = transform.inverse_transform(fitted_vals, bias_adjust, sigma2)
@@ -719,7 +859,7 @@ def ets(y: NDArray[np.float64],
         params=fitted_params,
         fitted=fitted_original,
         residuals=y_original - fitted_original,
-        states=final_states,  # Use FINAL states, not initial!
+        states=final_states,
         loglik=-0.5 * loglik,
         aic=aic,
         bic=bic,
@@ -729,7 +869,7 @@ def ets(y: NDArray[np.float64],
     )
 
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def _forecast_ets(l: float, b: float, s: NDArray[np.float64],
                   h: int, m: int, trend: int, season: int, phi: float) -> NDArray[np.float64]:
     """Generate h-step ahead forecasts"""
@@ -737,26 +877,24 @@ def _forecast_ets(l: float, b: float, s: NDArray[np.float64],
     phi_sum = phi
 
     for i in range(h):
-        # Base forecast
-        if trend == 0:  # No trend
+        if trend == 0:
             fc = l
-        elif trend == 1:  # Additive
+        elif trend == 1:
             fc = l + phi_sum * b
-        else:  # Multiplicative
-            fc = l * (b ** phi_sum) if b > 0 else 0.0
+        else:
+            if b <= 0 or l <= 0:
+                fc = -99999.0
+            else:
+                fc = l * (b ** phi_sum)
 
-        # Add seasonal - use reverse order to match Julia
-        # Seasonal array: s[0]=newest, s[1]=1 period ago, ..., s[m-1]=oldest
-        # For forecast i steps ahead, we need seasonal from (m-1-i) periods ago
         s_idx = (m - 1 - i) % m if m > 0 else 0
-        if season == 1:  # Additive
+        if season == 1:
             fc += s[s_idx]
-        elif season == 2:  # Multiplicative
+        elif season == 2:
             fc *= s[s_idx]
 
         forecasts[i] = fc
 
-        # Update phi sum for damping
         if i < h - 1:
             phi_sum += phi ** (i + 2)
 
@@ -784,19 +922,15 @@ def _compute_prediction_variance(model: ETSModel, h: int) -> NDArray[np.float64]
 
     steps = np.arange(1, h + 1)
 
-    # Class 1: Additive error models
     if error == "A":
         if trend == "N" and season == "N":
-            # ANN
             var = sigma * (1 + alpha**2 * (steps - 1))
 
         elif trend == "A" and season == "N" and not damped:
-            # AAN
             var = sigma * (1 + (steps - 1) * (alpha**2 + alpha * beta * steps +
                           (1/6) * beta**2 * steps * (2 * steps - 1)))
 
         elif trend == "A" and season == "N" and damped:
-            # AAdN
             exp1 = (beta * phi * steps) / (1 - phi)**2
             exp2 = 2 * alpha * (1 - phi) + beta * phi
             exp3 = (beta * phi * (1 - phi**steps)) / ((1 - phi)**2 * (1 - phi**2))
@@ -804,23 +938,19 @@ def _compute_prediction_variance(model: ETSModel, h: int) -> NDArray[np.float64]
             var = sigma * (1 + alpha**2 * (steps - 1) + exp1 * exp2 - exp3 * exp4)
 
         elif trend == "N" and season == "A":
-            # ANA
             hm = np.floor((steps - 1) / m)
             var = sigma * (1 + alpha**2 * (steps - 1) + gamma * hm * (2 * alpha + gamma))
 
         elif trend == "A" and season == "A" and not damped:
-            # AAA
             hm = np.floor((steps - 1) / m)
             exp1 = alpha**2 + alpha * beta * steps + (1/6) * beta**2 * steps * (2 * steps - 1)
             exp2 = 2 * alpha + gamma + beta * m * (hm + 1)
             var = sigma * (1 + (steps - 1) * exp1 + gamma * hm * exp2)
 
         else:
-            # Fallback to simulation for other additive models
             var = None
 
     else:
-        # Class 2/3: Multiplicative error - use simulation
         var = None
 
     return var
@@ -851,7 +981,6 @@ def forecast_ets(model: ETSModel, h: int = 10, bias_adjust: bool = True,
         - 'lower_XX': Lower bounds for XX% intervals (if level provided)
         - 'upper_XX': Upper bounds for XX% intervals (if level provided)
     """
-    # Extract final states
     l = model.states[0]
     b = model.states[1] if model.config.trend != "N" else 0.0
 
@@ -869,15 +998,12 @@ def forecast_ets(model: ETSModel, h: int = 10, bias_adjust: bool = True,
         model.params.phi
     )
 
-    # Back-transform if needed
     if model.transform is not None:
         forecasts = model.transform.inverse_transform(forecasts, bias_adjust, model.sigma2)
 
     result = {'mean': forecasts}
 
-    # Compute prediction intervals if requested
     if level is not None:
-        # Check if sigma2 is valid for prediction intervals
         if model.sigma2 <= 0:
             import warnings
             warnings.warn(
@@ -886,28 +1012,23 @@ def forecast_ets(model: ETSModel, h: int = 10, bias_adjust: bool = True,
                 f"there is insufficient data. Returning point forecasts only.",
                 UserWarning
             )
-            # Return only point forecasts, skip prediction intervals
             return result
 
-        # Try analytical variance first
         var = _compute_prediction_variance(model, h)
 
         if var is not None:
-            # Use analytical formulas
             for lv in level:
                 z = norm.ppf(0.5 + lv / 200)
                 std = np.sqrt(var)
                 result[f'lower_{int(lv)}'] = forecasts - z * std
                 result[f'upper_{int(lv)}'] = forecasts + z * std
         else:
-            # Fall back to simulation for complex models
             try:
                 simulations = simulate_ets(model, h=h, n_sim=1000)
                 for lv in level:
                     result[f'lower_{int(lv)}'] = np.percentile(simulations, 50 - lv/2, axis=0)
                     result[f'upper_{int(lv)}'] = np.percentile(simulations, 50 + lv/2, axis=0)
             except ValueError as e:
-                # If simulation fails, warn and return point forecasts only
                 import warnings
                 warnings.warn(
                     f"Cannot compute prediction intervals via simulation: {str(e)}. "
@@ -920,7 +1041,6 @@ def forecast_ets(model: ETSModel, h: int = 10, bias_adjust: bool = True,
 
 def simulate_ets(model: ETSModel, h: int = 10, n_sim: int = 1000) -> NDArray[np.float64]:
     """Simulate future paths from ETS model"""
-    # Validate sigma2
     if model.sigma2 <= 0:
         raise ValueError(
             f"Cannot simulate: model has invalid residual variance (sigma2={model.sigma2:.2e}). "
@@ -930,13 +1050,11 @@ def simulate_ets(model: ETSModel, h: int = 10, n_sim: int = 1000) -> NDArray[np.
     simulations = np.zeros((n_sim, h))
 
     for i in range(n_sim):
-        # Generate random errors
         if model.config.error == "A":
             errors = norm.rvs(loc=0, scale=np.sqrt(model.sigma2), size=h)
-        else:  # Multiplicative
+        else:
             errors = norm.rvs(loc=0, scale=np.sqrt(model.sigma2), size=h)
 
-        # Simulate forward
         l = model.states[0]
         b = model.states[1] if model.config.trend != "N" else 0.0
 
@@ -947,12 +1065,10 @@ def simulate_ets(model: ETSModel, h: int = 10, n_sim: int = 1000) -> NDArray[np.
             s = np.zeros(max(model.config.m, 1))
 
         for t in range(h):
-            # Forecast
             fc = _forecast_ets(l, b, s, 1, model.config.m,
                               model.config.trend_code, model.config.season_code,
                               model.params.phi)[0]
 
-            # Add error
             if model.config.error == "A":
                 y_new = fc + errors[t]
             else:
@@ -960,7 +1076,6 @@ def simulate_ets(model: ETSModel, h: int = 10, n_sim: int = 1000) -> NDArray[np.
 
             simulations[i, t] = y_new
 
-            # Update states
             l, b, s, _, _ = _ets_step(
                 l, b, s, y_new,
                 model.config.m,
@@ -1021,67 +1136,48 @@ def auto_ets(y: NDArray[np.float64],
     ETSModel
         Best model according to information criterion
     """
-    # Basic validation only (Julia/R handle even very small datasets)
     n = len(y)
     if n < 1:
         raise ValueError(f"Need at least 1 observation, got {n}")
 
-    # Detect trend if auto-detection requested
     has_trend = False
     if trend is None:
-        # Simple trend test: compare first half vs second half means
-        # If data is trending, second half should be significantly different
         mid = len(y) // 2
         first_half_mean = np.mean(y[:mid])
         second_half_mean = np.mean(y[mid:])
-        # Use a threshold of 10% change
         pct_change = abs(second_half_mean - first_half_mean) / first_half_mean
         has_trend = pct_change > 0.10
         if verbose and has_trend:
             print(f"Trend detected: {pct_change:.1%} change from first to second half")
 
-    # Generate candidate models
     error_types = ["A", "M"] if allow_multiplicative else ["A"]
 
-    # Trend component logic
     if trend is None:
         if has_trend:
-            # Trend detected - prefer models with trend
             trend_types = ["A"]
             if allow_multiplicative_trend:
                 trend_types.append("M")
-            # Also try non-trending to be safe
             trend_types.append("N")
         else:
-            # No trend detected - try both but prefer simpler
             trend_types = ["N", "A"]
             if allow_multiplicative_trend:
                 trend_types.append("M")
     elif trend:
-        # User wants trend
         trend_types = ["A"]
         if allow_multiplicative_trend:
             trend_types.append("M")
     else:
-        # User explicitly doesn't want trend (trend=False)
         trend_types = ["N"]
 
-    # Seasonal component logic
     if m == 1:
-        # Non-seasonal data - force no seasonality
         season_types = ["N"]
     elif not seasonal:
-        # User explicitly doesn't want seasonal models
         season_types = ["N"]
     elif n < m:
-        # Insufficient data for seasonal model (matches R behavior)
-        # R drops seasonality when n < m to avoid overfitting
         season_types = ["N"]
         if verbose:
             print(f"Insufficient data for seasonality (n={n} < m={m}), trying non-seasonal models only")
     else:
-        # Seasonal data (m > 1) and seasonal=True
-        # Only try seasonal models - don't include non-seasonal
         if allow_multiplicative:
             season_types = ["A", "M"]
         else:
@@ -1089,49 +1185,37 @@ def auto_ets(y: NDArray[np.float64],
 
     damped_opts = [True, False] if damped is None else [damped]
 
-    # Build model list
     models_to_try = []
     for e in error_types:
         for t in trend_types:
             for s in season_types:
                 for d in damped_opts:
-                    # Skip invalid combinations
-                    if t == "N" and d:  # Can't have damped with no trend
+                    if t == "N" and d:
                         continue
 
-                    # Restrict unstable combinations (matches Julia/R behavior)
-                    # 1. Additive error with multiplicative components is unstable
                     if e == "A" and (t == "M" or s == "M"):
                         continue
-                    # 2. MMA is unstable (multiplicative error + trend with additive season)
                     if e == "M" and t == "M" and s == "A":
                         continue
 
                     models_to_try.append((f"{e}{t}{s}", d))
 
-    # Limit number of models if requested
     if max_models is not None and len(models_to_try) > max_models:
-        # Prioritize seasonal models when m > 1, otherwise simpler models
         if m > 1:
-            # Prioritize: seasonal models > non-seasonal, then by complexity
             models_to_try = sorted(models_to_try, key=lambda x: (x[0][2] == 'N', x[1], x[0].count('M')))
         else:
-            # Prioritize simpler models for non-seasonal data
             models_to_try = sorted(models_to_try, key=lambda x: (x[1], x[0].count('M')))
         models_to_try = models_to_try[:max_models]
 
     if verbose:
         print(f"Trying {len(models_to_try)} models...")
 
-    # Helper function to format model name properly
     def format_model_name(model_spec: str, damped: bool) -> str:
         """Format model name with proper ETS notation (e.g., MAdM instead of MAMd)"""
-        if damped and model_spec[1] != "N":  # Damped only applies to trend
-            # Insert 'd' after trend component: MAM + damped → MAdM
+        if damped and model_spec[1] != "N":
             return f"{model_spec[0]}{model_spec[1]}d{model_spec[2]}"
         return model_spec
 
-    # Fit all models and track best
     best_model = None
     best_ic_value = np.inf
     best_ic_original = np.inf
@@ -1141,25 +1225,20 @@ def auto_ets(y: NDArray[np.float64],
         try:
             model = ets(y, m=m, model=model_spec, damped=damped_flag, lambda_auto=lambda_auto, bounds="both")
 
-            # Get IC value
             if ic == "aic":
                 ic_value = model.aic
             elif ic == "aicc":
-                # Compute AICc
                 n = len(y)
                 k = (1 + (model.config.trend != "N") + (model.config.season != "N") +
                      damped_flag + model.config.n_states)
                 ic_value = model.aic + (2 * k * (k + 1)) / (n - k - 1)
-            else:  # bic
+            else:
                 ic_value = model.bic
 
-            # Apply penalty to non-trending models when trend is detected
             ic_value_adj = ic_value
             model_name = format_model_name(model_spec, damped_flag)
 
             if has_trend and model.config.trend == "N":
-                # Penalize non-trending models when trend is detected
-                # Use a modest penalty that can be overcome if fit is much better
                 ic_value_adj = ic_value + 5.0
                 if verbose:
                     print(f"  {model_name:5s}: {ic.upper()}={ic_value:.2f} (penalized: {ic_value_adj:.2f})")
@@ -1215,11 +1294,9 @@ def residual_diagnostics(model: ETSModel) -> Dict[str, any]:
     residuals = model.residuals
     n = len(residuals)
 
-    # Basic statistics
     mean_resid = np.mean(residuals)
     std_resid = np.std(residuals, ddof=1)
 
-    # Normality tests
     try:
         jb_stat, jb_p = jarque_bera(residuals)
     except:
@@ -1233,7 +1310,6 @@ def residual_diagnostics(model: ETSModel) -> Dict[str, any]:
     except:
         shapiro_stat, shapiro_p = np.nan, np.nan
 
-    # Autocorrelation function (simple implementation)
     max_lag = min(10, n // 4)
     acf = np.zeros(max_lag + 1)
     acf[0] = 1.0
@@ -1245,7 +1321,6 @@ def residual_diagnostics(model: ETSModel) -> Dict[str, any]:
         c_lag = np.sum(residuals_centered[:-lag] * residuals_centered[lag:]) / n
         acf[lag] = c_lag / c0
 
-    # Ljung-Box test (approximate)
     lb_stat = n * (n + 2) * np.sum(acf[1:max_lag+1] ** 2 / (n - np.arange(1, max_lag+1)))
     from scipy.stats import chi2
     lb_p = 1 - chi2.cdf(lb_stat, max_lag)
@@ -1266,9 +1341,6 @@ def residual_diagnostics(model: ETSModel) -> Dict[str, any]:
     }
 
 
-# ============================================================================
-# ETSForecaster class (sktime interface)
-# ============================================================================
 
 
 class ETSForecaster(BaseForecaster):
@@ -1346,10 +1418,8 @@ class ETSForecaster(BaseForecaster):
     """
 
     _tags = {
-        # packaging info
         "authors": ["resul.akay@taf-society.org"],
         "maintainers": ["resul.akay@taf-society.org"],
-        # estimator type
         "y_inner_mtype": "pd.Series",
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
@@ -1403,12 +1473,9 @@ class ETSForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        # Convert to numpy array for fitting
         y_np = y.values
 
-        # Determine if we need automatic model selection
         if self.model == "ZZZ" or "Z" in self.model:
-            # Automatic model selection
             self.model_ = auto_ets(
                 y_np,
                 m=self.m,
@@ -1421,7 +1488,6 @@ class ETSForecaster(BaseForecaster):
                 verbose=False,
             )
         else:
-            # Fit specified model
             self.model_ = ets(
                 y_np,
                 m=self.m,
@@ -1454,25 +1520,19 @@ class ETSForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions for the forecast horizon.
         """
-        # Get the forecast horizon as integer steps
         fh_int = fh.to_relative(self.cutoff)
         h = int(fh_int.max())
 
-        # Generate forecasts
         forecast_dict = forecast_ets(
             self.model_, h=h, bias_adjust=self.bias_adjust, level=None
         )
 
-        # Extract mean predictions for the requested horizon
-        # Convert fh_int to numpy array for indexing (0-indexed)
         fh_idx = np.asarray(fh_int) - 1
         y_pred_values = forecast_dict["mean"][fh_idx]
 
-        # Create index for predictions
         fh_abs = fh.to_absolute(self.cutoff)
         index = fh_abs.to_pandas()
 
-        # Return as pandas Series
         return pd.Series(y_pred_values, index=index, name=self._y.name)
 
     def _predict_interval(self, fh, X=None, coverage=0.90):
@@ -1492,28 +1552,21 @@ class ETSForecaster(BaseForecaster):
         pred_int : pd.DataFrame
             Prediction intervals with columns for each coverage level.
         """
-        # Convert coverage to level (percentage)
         if not isinstance(coverage, list):
             coverage = [coverage]
 
-        # Convert to percentage
         level = [c * 100 for c in coverage]
 
-        # Get the forecast horizon as integer steps
         fh_int = fh.to_relative(self.cutoff)
         h = int(fh_int.max())
 
-        # Generate forecasts with intervals
         forecast_dict = forecast_ets(
             self.model_, h=h, bias_adjust=self.bias_adjust, level=level
         )
 
-        # Create index for predictions
         fh_abs = fh.to_absolute(self.cutoff)
         index = fh_abs.to_pandas()
 
-        # Extract intervals for the requested horizon
-        # Convert fh_int to numpy array for indexing (0-indexed)
         fh_idx = np.asarray(fh_int) - 1
 
         pred_int_dict = {}
@@ -1522,7 +1575,6 @@ class ETSForecaster(BaseForecaster):
             lower_key = f"lower_{lv}"
             upper_key = f"upper_{lv}"
 
-            # Check if intervals were computed
             if lower_key in forecast_dict and upper_key in forecast_dict:
                 lower_values = forecast_dict[lower_key][fh_idx]
                 upper_values = forecast_dict[upper_key][fh_idx]
@@ -1534,13 +1586,11 @@ class ETSForecaster(BaseForecaster):
                     upper_values, index=index, name=self._y.name
                 )
 
-        # Create MultiIndex DataFrame
         if pred_int_dict:
             pred_int = pd.DataFrame(pred_int_dict)
             pred_int.columns.names = ["Coverage", "Interval"]
             return pred_int
         else:
-            # Return empty DataFrame if intervals couldn't be computed
             warnings.warn(
                 "Prediction intervals could not be computed. "
                 "This may be due to insufficient data or model issues.",
@@ -1569,7 +1619,6 @@ class ETSForecaster(BaseForecaster):
         if alpha is None:
             alpha = [0.05, 0.95]
 
-        # Convert alpha to coverage levels
         coverage_dict = {}
         for a in alpha:
             if a < 0.5:
@@ -1579,13 +1628,10 @@ class ETSForecaster(BaseForecaster):
                 coverage = 2 * (a - 0.5)
                 coverage_dict[a] = (coverage, "upper")
 
-        # Get unique coverage levels
         unique_coverage = list(set([v[0] for v in coverage_dict.values()]))
 
-        # Get prediction intervals
         pred_int = self._predict_interval(fh, X=X, coverage=unique_coverage)
 
-        # If intervals couldn't be computed, return empty DataFrame
         if pred_int.empty:
             fh_abs = fh.to_absolute(self.cutoff)
             index = fh_abs.to_pandas()
@@ -1597,23 +1643,19 @@ class ETSForecaster(BaseForecaster):
                 ),
             )
 
-        # Extract quantiles from intervals
         quantile_dict = {}
         for a in alpha:
             coverage, bound = coverage_dict[a]
             if (coverage, bound) in pred_int.columns:
                 quantile_dict[a] = pred_int[(coverage, bound)]
             else:
-                # If this specific interval wasn't computed, fill with NaN
                 quantile_dict[a] = pd.Series(
                     np.nan, index=pred_int.index, name=self._y.name
                 )
 
-        # Create DataFrame with variable name as first level
         quantiles = pd.DataFrame(quantile_dict)
         quantiles.columns.name = "alpha"
 
-        # Add variable name as first level
         var_name = self._y.name if self._y.name is not None else 0
         quantiles.columns = pd.MultiIndex.from_product(
             [[var_name], quantiles.columns], names=["variable", "alpha"]
@@ -1635,7 +1677,7 @@ class ETSForecaster(BaseForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
-        params1 = {}  # Default simple exponential smoothing
-        params2 = {"m": 12, "model": "AAN"}  # Holt's linear method
-        params3 = {"m": 12, "model": "AAA"}  # Additive Holt-Winters
+        params1 = {}
+        params2 = {"m": 12, "model": "AAN"}
+        params3 = {"m": 12, "model": "AAA"}
         return [params1, params2, params3]
