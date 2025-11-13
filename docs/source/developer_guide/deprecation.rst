@@ -317,8 +317,14 @@ Examples to illustrate recipes
 ==============================
 
 Below are example templates for some of the cases above.
-The examples are carried out for a class with ``fit`` / ``predict`` methods,,
+The examples are carried out for a class with ``fit`` / ``predict`` methods,
 but the same principles apply to functions, or classes with other APIs.
+
+**Note**: The examples below use placeholder strings such as ``<MAJOR>.<MINOR>.0``,
+``<new_value>``, ``"old_default""``, ``"new_default""`` and ``"default"``.
+These should be replaced by actual version numbers and values
+when implementing the deprecation. Whereas ``"changing_value"`` and ``"deprecated"``
+are intended as string literals, and should be used as such in the code.
 
 Changing the default value of a parameter
 -----------------------------------------
