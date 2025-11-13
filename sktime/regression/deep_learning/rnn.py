@@ -112,6 +112,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         self.metrics = metrics
         self.activation = activation
         self.activation_hidden = activation_hidden
+
         # TODO (release 0.41.0)
         # After changing the default value of 'activation_hidden' to "tanh"
         # remove the following 'if-else' check
