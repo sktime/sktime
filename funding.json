@@ -53,7 +53,7 @@
                 "amount": 25000,
                 "currency": "EUR",
                 "frequency": "yearly",
-                "channels": ["github", "bank"]
+                "channels": ["bank"]
             },
             {
                 "guid": "dev-full",
@@ -63,7 +63,7 @@
                 "amount": 80000,
                 "currency": "EUR",
                 "frequency": "yearly",
-                "channels": ["github", "bank"]
+                "channels": ["bank"]
             }
         ]
     }
