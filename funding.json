@@ -1,0 +1,70 @@
+{
+    "version": "v1.0.0",
+    "entity": {
+        "type": "group",
+        "role": "owner",
+        "name": "German Center for Open Source AI",
+        "email": "info@gcos.ai",
+        "description": "GC.OS is a European umbrella organisation supporting a range of open source projects. GC.OS acts as a fiscal host and legal umbrella in the EU for supported projects.",
+        "webpageUrl": {
+            "url": "https://www.gcos.ai"
+        }
+    },
+    "projects": [{
+        "guid": "sktime",
+        "name": "sktime",
+        "description": "sktime is the unified AI framework for time series. The unified API supports model building, fitting, application, and validation. It has support for a variety of learning tasks including forecasting, time series classification, regression, clustering. It also supports composite model building, including pipelines with transformations, ensembles, tuning, reduction, and has interactive user experience with scikit-learn like interface conventions.",
+        "webpageUrl": {
+            "url": "https://www.sktime.net"
+     },
+     "repositoryUrl": {
+         "url": "https://github.com/sktime/sktime"
+     },
+     "licenses": ["spdx:BSD-3-Clause"],
+     "tags": [
+            "ai",
+            "data-science",
+            "machine-learning",
+            "time-series",
+            "forecasting",
+            "time-series-classification",
+            "sktime",
+            "benchmarking",
+            "scikit-learn",
+            "changepoint-detection"
+        ]
+    }],
+
+    "funding": {
+        "channels": [
+            {
+                "guid": "bank",
+                "type": "bank",
+                "address": "IBAN: DE 0863 0910 1006 0167 4006 (Address: Talstraße 14, 89584 Ehingen, Germany)",
+                "description": "BIC: GENODES1EHI. Please include \"sktime\" in the purpose."
+            }
+        ],
+        "plans": [
+            {
+                "guid": "dev-part",
+                "status": "active",
+                "name": "Part-time Developers",
+                "description": "Support towards covering the cost of maintainers working part-time on the project.",
+                "amount": 25000,
+                "currency": "EUR",
+                "frequency": "yearly",
+                "channels": ["github", "bank"]
+            },
+            {
+                "guid": "dev-full",
+                "status": "active",
+                "name": "Full-time Senior Developer (Maintainer) and Community Manager",
+                "description": "Support towards covering a single full-time maintainer and community manager position.",
+                "amount": 80000,
+                "currency": "EUR",
+                "frequency": "yearly",
+                "channels": ["github", "bank"]
+            }
+        ]
+    }
+}
