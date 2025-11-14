@@ -22,18 +22,14 @@
      },
      "licenses": ["spdx:BSD-3-Clause"],
      "tags": [
+            "ai",
             "data-science",
             "machine-learning",
             "time-series",
             "forecasting",
             "time-series-classification",
-            "time-series-analysis",
             "sktime",
-            "ai",
             "benchmarking",
-            "time-series-regression",
-            "data-mining",
-            "time-series-segmentation",
             "scikit-learn",
             "changepoint-detection"
         ]
