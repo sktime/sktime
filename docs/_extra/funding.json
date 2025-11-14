@@ -3,11 +3,11 @@
     "entity": {
         "type": "group",
         "role": "owner",
-        "name": "sktime",
-        "email": "info@sktime.net",
-        "description": "sktime is the unified AI framework for time series. The unified API supports model building, fitting, application, and validation. It has support for a variety of learning tasks including forecasting, time series classification, regression, clustering. It also supports composite model building, including pipelines with transformations, ensembles, tuning, reduction, and has interactive user experience with scikit-learn like interface conventions.",
+        "name": "German Center for Open Source AI",
+        "email": "info@gcos.ai",
+        "description": "GC.OS is a European umbrella organisation supporting a range of open source projects. GC.OS acts as a fiscal host and legal umbrella in the EU for supported projects.",
         "webpageUrl": {
-            "url": "https://www.sktime.net"
+            "url": "https://www.gcos.ai"
         }
     },
     "projects": [{
