@@ -1,7 +1,5 @@
 """USChange dataset for forecasting growth rates of consumption and income."""
 
-import functools
-
 from sktime.datasets._single_problem_loaders import load_uschange
 from sktime.datasets.forecasting._base import _ForecastingDatasetFromLoader
 
