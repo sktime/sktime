@@ -5,9 +5,14 @@ import pandas as pd
 import pytest
 from sklearn.model_selection import KFold
 
-from sktime.benchmarking.benchmarks import coerce_estimator_and_id
+from sktime.benchmarking.benchmarks import _coerce_estimator_and_id
 from sktime.benchmarking.forecasting import ForecastingBenchmark
-from sktime.datasets import load_airline, load_longley
+from sktime.datasets import (
+    ForecastingData,
+    Longley,
+    load_airline,
+    load_longley,
+)
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import TrendForecaster
 from sktime.performance_metrics.forecasting import (
@@ -195,7 +200,7 @@ def test_forecastingbenchmark_global_mode(
     expected_results_df,
     scorers,
 ):
-    """Test benchmarking a forecaster estimator in gloabl mode."""
+    """Test benchmarking a forecaster estimator in global mode."""
     from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
 
     benchmark = ForecastingBenchmark()
@@ -203,7 +208,7 @@ def test_forecastingbenchmark_global_mode(
     params = {
         "trainer_params": {
             # the training process is not deterministic
-            # train 10 epoches to make sure loss is low enough
+            # train 10 epochs to make sure loss is low enough
             "max_epochs": 1,
         },
         "model_params": {
@@ -258,7 +263,7 @@ def test_forecastingbenchmark_global_mode(
 @pytest.mark.parametrize("estimator, estimator_id, expected_output", COER_CASES)
 def test_coerce_estimator_and_id(estimator, estimator_id, expected_output):
     """Test coerce_estimator_and_id return expected output."""
-    assert coerce_estimator_and_id(estimator, estimator_id) == expected_output, (
+    assert _coerce_estimator_and_id(estimator, estimator_id) == expected_output, (
         "coerce_estimator_and_id does not return the expected output."
     )
 
@@ -368,3 +373,42 @@ def test_raise_id_restraint():
         benchmark.add_estimator(NaiveForecaster(), "test_id")
     assert exc_info.type is ValueError, "Must raise a ValueError"
     assert error_msg in exc_info.value.args[0], "Error msg is not raised"
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
+@pytest.mark.datadownload
+def test_dataset_classes(tmp_path):
+    benchmark = ForecastingBenchmark()
+    benchmark.add_estimator(NaiveForecaster())
+
+    dataset_loaders = [Longley, ForecastingData("cif_2016_dataset")]
+    cv_splitter = ExpandingWindowSplitter(
+        initial_window=1,
+        step_length=1,
+        fh=1,
+    )
+    scorers = [MeanAbsoluteError()]
+
+    for dataset_loader in dataset_loaders:
+        benchmark.add_task(
+            dataset_loader,
+            cv_splitter,
+            scorers,
+        )
+
+    results_file = tmp_path / "results.csv"
+    results_df = benchmark.run(results_file)
+
+    pd.testing.assert_series_equal(
+        pd.Series(
+            [
+                "[dataset=Longley]_[cv_splitter=ExpandingWindowSplitter]",
+                "[dataset=cif_2016_dataset]_[cv_splitter=ExpandingWindowSplitter]",
+            ],
+            name="validation_id",
+        ),
+        results_df["validation_id"],
+    )

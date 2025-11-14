@@ -1,9 +1,5 @@
 """Time Convolutional Neural Network (CNN) (minus the final output layer)."""
 
-__author__ = [
-    "jnrusson1",
-]
-
 import math
 
 import numpy as np
@@ -19,28 +15,32 @@ class TapNetNetwork(BaseDeepNetwork):
 
     Parameters
     ----------
-    kernel_size     : array of int, default = (8, 5, 3)
+    activation : str, default = 'leaky_relu'
+        activation function to use in the hidden layers;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
+    kernel_size : array of int, default = (8, 5, 3)
         specifying the length of the 1D convolution window
-    layers          : array of int, default = (500, 300)
+    layers : array of int, default = (500, 300)
         size of dense layers
-    filter_sizes    : array of int, shape = (nb_conv_layers), default = (256, 256, 128)
-    random_state    : int, default = 1
+    filter_sizes : array of int, shape = (nb_conv_layers), default = (256, 256, 128)
+    random_state : int, default = 1
         seed to any needed random actions
-    rp_params       : array of int, default = (-1, 3)
+    rp_params : array of int, default = (-1, 3)
         parameters for random permutation
-    dropout         : float, default = 0.5
+    dropout : float, default = 0.5
         dropout rate, in the range [0, 1)
-    dilation        : int, default = 1
+    dilation : int, default = 1
         dilation value
-    padding         : str, default = 'same'
+    padding : str, default = 'same'
         type of padding for convolution layers
-    use_rp          : bool, default = True
+    use_rp  : bool, default = True
         whether to use random projections
-    use_att         : bool, default = True
+    use_att : bool, default = True
         whether to use self attention
-    use_lstm        : bool, default = True
+    use_lstm : bool, default = True
         whether to use an LSTM layer
-    use_cnn         : bool, default = True
+    use_cnn : bool, default = True
         whether to use a CNN layer
 
     References
@@ -51,7 +51,10 @@ class TapNetNetwork(BaseDeepNetwork):
     34(4), 6845-6852, 2020
     """
 
-    _tags = {"python_dependencies": ["tensorflow"]}
+    _tags = {
+        "authors": ["jnrusson1", "noxthot"],
+        "python_dependencies": ["tensorflow"],
+    }
 
     def __init__(
         self,
@@ -67,11 +70,13 @@ class TapNetNetwork(BaseDeepNetwork):
         use_cnn=True,
         random_state=1,
         padding="same",
+        activation="leaky_relu",
     ):
         _check_dl_dependencies(severity="error")
 
         super().__init__()
 
+        self.activation = activation
         self.random_state = random_state
         self.kernel_size = kernel_size
         self.layers = layers
@@ -201,7 +206,7 @@ class TapNetNetwork(BaseDeepNetwork):
                     )(channel)  # N * C * L
 
                     x_conv = keras.layers.BatchNormalization()(x_conv)
-                    x_conv = keras.layers.LeakyReLU()(x_conv)
+                    x_conv = keras.layers.Activation(self.activation)(x_conv)
 
                     x_conv = keras.layers.Conv1D(
                         self.filter_sizes[1],
@@ -211,7 +216,7 @@ class TapNetNetwork(BaseDeepNetwork):
                         padding=self.padding,
                     )(x_conv)
                     x_conv = keras.layers.BatchNormalization()(x_conv)
-                    x_conv = keras.layers.LeakyReLU()(x_conv)
+                    x_conv = keras.layers.Activation(self.activation)(x_conv)
 
                     x_conv = keras.layers.Conv1D(
                         self.filter_sizes[2],
@@ -221,7 +226,7 @@ class TapNetNetwork(BaseDeepNetwork):
                         padding=self.padding,
                     )(x_conv)
                     x_conv = keras.layers.BatchNormalization()(x_conv)
-                    x_conv = keras.layers.LeakyReLU()(x_conv)
+                    x_conv = keras.layers.Activation(self.activation)(x_conv)
                     if self.use_att:
                         x_conv = SeqSelfAttention(128, attention_type="multiplicative")(
                             x_conv
@@ -247,7 +252,7 @@ class TapNetNetwork(BaseDeepNetwork):
                 )(input_layer)  # N * C * L
 
                 x_conv = keras.layers.BatchNormalization()(x_conv)
-                x_conv = keras.layers.LeakyReLU()(x_conv)
+                x_conv = keras.layers.Activation(self.activation)(x_conv)
 
                 x_conv = keras.layers.Conv1D(
                     self.filter_sizes[1],
@@ -257,7 +262,7 @@ class TapNetNetwork(BaseDeepNetwork):
                     padding=self.padding,
                 )(x_conv)
                 x_conv = keras.layers.BatchNormalization()(x_conv)
-                x_conv = keras.layers.LeakyReLU()(x_conv)
+                x_conv = keras.layers.Activation(self.activation)(x_conv)
 
                 x_conv = keras.layers.Conv1D(
                     self.filter_sizes[2],
@@ -267,7 +272,7 @@ class TapNetNetwork(BaseDeepNetwork):
                     padding=self.padding,
                 )(x_conv)
                 x_conv = keras.layers.BatchNormalization()(x_conv)
-                x_conv = keras.layers.LeakyReLU()(x_conv)
+                x_conv = keras.layers.Activation(self.activation)(x_conv)
                 if self.use_att:
                     x_conv = SeqSelfAttention(128)(x_conv)
                     # pass
@@ -283,7 +288,7 @@ class TapNetNetwork(BaseDeepNetwork):
 
         # Mapping section
         x = keras.layers.Dense(self.layers[0], name="fc_")(x)
-        x = keras.layers.LeakyReLU(name="relu_")(x)
+        x = keras.layers.Activation(self.activation)(x)
         x = keras.layers.BatchNormalization(name="bn_")(x)
 
         x = keras.layers.Dense(self.layers[1], name="fc_2")(x)

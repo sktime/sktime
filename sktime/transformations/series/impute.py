@@ -59,7 +59,7 @@ class Imputer(BaseTransformer):
         Value to consider as `np.nan`` and impute, passed to ``DataFrame.replace``
         If str, int, float, all entries equal to ``missing_values`` will be imputed,
         in addition to ``np.nan.``
-        If regex, all entrie matching regex will be imputed, in addition to ``np.nan.``
+        If regex, all entries matching regex will be imputed, in addition to ``np.nan.``
         If list, must be list of str, int, float, or regex.
         Values matching any list element by above rules will be imputed,
         in addition to ``np.nan``.
@@ -108,10 +108,16 @@ class Imputer(BaseTransformer):
         "capability:missing_values": True,
         "skip-inverse-transform": True,
         "capability:inverse_transform": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "capability:missing_values:removes": True,
         # is transform result always guaranteed to contain no missing values?
         "remember_data": False,  # remember all data seen as _X
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_categorical_X_passes"],
     }
 
     def __init__(

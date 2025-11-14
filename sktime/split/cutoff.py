@@ -9,7 +9,6 @@ __all__ = [
     "CutoffFhSplitter",
 ]
 
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -182,7 +181,7 @@ class CutoffSplitter(BaseSplitter):
                 test_window = y.get_indexer(test_window[test_window >= y.min()])
             yield training_window, test_window
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
 
         For this splitter the number is trivially equal to
@@ -200,7 +199,7 @@ class CutoffSplitter(BaseSplitter):
         """
         return len(self.cutoffs)
 
-    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
+    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         This method trivially returns the cutoffs given during instance initialization,

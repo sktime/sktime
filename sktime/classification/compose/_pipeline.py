@@ -107,6 +107,9 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:multithreading": False,
         "capability:predict_proba": True,
         "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # no default tag values - these are set dynamically below
@@ -121,8 +124,8 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = classifier.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both classifier and all transformers can,
         #   *or* transformer chain removes missing data
@@ -172,7 +175,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
     @property
     def steps_(self):
-        return self._transformers + [self._coerce_estimator_tuple(self.classifer_)]
+        return self._transformers + [self._coerce_estimator_tuple(self.classifier_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
@@ -442,6 +445,9 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:multithreading": False,
         "capability:predict_proba": True,
         "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # no default tag values - these are set dynamically below
@@ -495,7 +501,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
     @property
     def steps_(self):
-        return self._transformers + [self._coerce_estimator_tuple(self.classifer_)]
+        return self._transformers + [self._coerce_estimator_tuple(self.classifier_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.

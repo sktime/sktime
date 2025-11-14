@@ -26,12 +26,19 @@ Handling soft dependencies
 This section explains how to handle existing soft dependencies.
 For adding a new soft dependency, see the section "adding a new soft dependency".
 
+**Best practice:**
+
+(a) Soft dependencies should be restricted to estimators whenever possible, see the section "Isolating soft dependencies to estimators".
+
+(b) If restricting to estimators is not possible, follow the section "Isolating soft dependencies at module level".
+
+Isolating soft dependencies to estimators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Soft dependencies in ``sktime`` should usually be isolated to estimators.
 
-Informative warnings or error messages for missing soft dependencies should be raised, in a situation where a user would need them.
-This is handled through our ``_check_soft_dependencies`` utility
-`here <https://github.com/sktime/sktime/blob/main/sktime/utils/dependencies/_dependencies.py>`__.
-There are specific conventions to add such warnings in estimators, as below.
+This means, importing only in methods of the estimator, such as ``_fit``, ``_predict``, or ``__init__``, and not at the module level.
+This ensures that the soft dependency is only loaded when the estimator is used, and does not affect ``sktime`` as a whole.
 
 Estimators with a soft dependency need to ensure the following:
 
@@ -57,6 +64,53 @@ Estimators with a soft dependency need to ensure the following:
    See the tests in ``forecasting.tests.test_pmdarima`` for a concrete example of
    ``run_test_for_class`` usage to decorate a test. See ``utils.tests.test_plotting``
    for an example of ``_check_soft_dependencies`` usage.
+
+Informative warnings or error messages for missing soft dependencies should be raised, in a situation where a user would need them.
+Usually, such warnings are automatically raised in ``__init__`` of the respective estimator by the base framework, via ``BaseObject``,
+and do not need to be added manually.
+
+In case a step-out is needed, the ``_check_soft_dependencies`` utility
+`here <https://github.com/sktime/sktime/blob/main/sktime/utils/dependencies/_dependencies.py>`__ can be used.
+
+Isolating soft dependencies at module level
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In certain scenarios, it is hard to avoid soft dependency import at the module level, for example:
+
+* class inheritance, where the base class is defined in a different package, e.g., ``torch.nn.Module`` in ``sktime`` deep learning estimators;
+* module-level decorators, where the decorator is defined in a different package, e.g., ``numba.jit`` in ``sktime`` estimators that use JIT compilation;
+
+Where such scenarios can be avoided, they should be avoided, and soft dependencies should be isolated to estimators as described above.
+
+However, if a soft dependency must be imported at the module level,
+the ``_safe_import`` utility can be used.
+
+``_safe_import`` is a utility that attempts to import a module and returns a mock object if the import is not present.
+
+The pattern for using ``_safe_import`` is ``object_name = _safe_import("module.module2.object_name")``,
+with an optional argument ``package_name`` if the package name is different from the top-level module name.
+
+``object_name`` is a mock, i.e., any method or attribute call will return a mock object, instead of failing.
+This will ensure that the module can be imported without exception, even if the soft dependency is not installed.
+Of course, attempts at using the module will result in runtime failures or unexpected behaviour.
+
+**Example using ``_safe_import``:**
+
+.. code-block:: python
+
+    from sktime.utils.dependencies import _safe_import
+
+    nn = _safe_import("torch.nn")
+
+
+    class ChronosModel(nn.Module):
+
+WARNING: ``_safe_import`` returns are incompatible with ``dataclass`` decorators and should not be used as parent of a dataclass.
+
+Concluding by repeating the important note at the top:
+
+use of ``_safe_import`` should be avoided whenever possible,
+in favour of isolating soft dependencies to estimators.
 
 Adding and maintaining soft dependencies
 ----------------------------------------

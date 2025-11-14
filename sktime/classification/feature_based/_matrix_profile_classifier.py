@@ -75,6 +75,8 @@ class MatrixProfileClassifier(BaseClassifier):
         # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "distance",
     }
 
@@ -95,6 +97,10 @@ class MatrixProfileClassifier(BaseClassifier):
         self._estimator = None
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.

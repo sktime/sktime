@@ -95,7 +95,7 @@ class MultiRocket(BaseTransformer):
         "python_dependencies": "numba",
         # estimator type
         # --------------
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -104,6 +104,8 @@ class MultiRocket(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -232,3 +234,42 @@ class MultiRocket(BaseTransformer):
         )
 
         return dilations, num_features_per_dilation, biases
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter sets for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+        Name of the set of test parameters to return, for use in tests. If no
+        special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+        Parameters to create testing instances of the class.
+        Each dict are parameters to construct an "interesting" test instance, i.e.,
+        `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+        `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params1 = [
+            {
+                "num_kernels": 42,
+                "max_dilations_per_kernel": 32,
+                "n_features_per_kernel": 4,
+                "normalise": False,
+                "n_jobs": 1,
+                "random_state": None,
+            },
+            {
+                "num_kernels": 84,
+                "max_dilations_per_kernel": 16,
+                "n_features_per_kernel": 4,
+                "normalise": True,
+                "n_jobs": 1,
+                "random_state": None,
+            },
+        ]
+
+        return params1

@@ -4,15 +4,10 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    from torch.utils.data import Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
+torch = _safe_import("torch")
+Dataset = _safe_import("torch.utils.data.Dataset")
 
 
 class BaseDeepNetworkPyTorch(BaseForecaster):
@@ -24,7 +19,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "scitype:y": "both",
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
     }
 
     def __init__(

@@ -58,7 +58,7 @@ class DropNA(BaseTransformer):
     _tags = {
         "authors": ["hliebert"],
         "maintainers": ["hliebert"],
-        "univariate-only": False,
+        "capability:multivariate": True,
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
@@ -68,6 +68,9 @@ class DropNA(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     VALID_AXIS_VALUES = [0, "index", 1, "columns"]
@@ -160,9 +163,9 @@ class DropNA(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns
@@ -197,9 +200,9 @@ class DropNA(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns

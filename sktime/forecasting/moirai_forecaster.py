@@ -69,6 +69,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     >>> y = pd.DataFrame(y, index=index)
     >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)
     >>> morai_forecaster.fit(y, X=X)
+    MOIRAIForecaster(checkpoint_path='sktime/moirai-1.0-R-small')
     >>> X_test = pd.DataFrame(np.random.normal(0, 1, (10, 2)),
     ...                      columns=["x1", "x2"],
     ...                      index=pd.date_range("2020-01-31", periods=10, freq="D"),
@@ -82,20 +83,28 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
-        "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": False,
-        "X-y-must-have-same-index": True,
-        "enforce_index_type": None,
-        "capability:missing_values": False,
-        "capability:pred_int": False,
+        # packaging info
+        # --------------
+        "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
+        # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
+        "maintainers": ["pranavvp16"],
         "python_dependencies": [
             "gluonts",
             "torch",
             "einops",
             "huggingface-hub",
+            "hf_xet",
             "lightning",
             "hydra-core",
         ],
+        # estimator type
+        # --------------
+        "capability:exogenous": True,
+        "requires-fh-in-fit": False,
+        "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
+        "capability:missing_values": False,
+        "capability:pred_int": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": [
             "pd.Series",
@@ -106,9 +115,9 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
-        "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
-        # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
-        "maintainers": ["pranavvp16"],
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
@@ -117,8 +126,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         context_length=200,
         patch_size=32,
         num_samples=100,
-        num_feat_dynamic_real=0,
-        num_past_feat_dynamic_real=0,
+        num_feat_dynamic_real=None,
+        num_past_feat_dynamic_real=None,
         map_location=None,
         target_dim=2,
         broadcasting=False,
@@ -177,8 +186,13 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         else:
             prediction_length = 1
 
-        if self.num_feat_dynamic_real is None and X is not None:
-            self.num_feat_dynamic_real = X.shape[1]
+        # Set feature dimensions based on X if not already set
+        if self.num_feat_dynamic_real is None:
+            if X is not None:
+                self.num_feat_dynamic_real = X.shape[1]
+            else:
+                self.num_feat_dynamic_real = 0
+
         if self.num_past_feat_dynamic_real is None:
             self.num_past_feat_dynamic_real = 0
 

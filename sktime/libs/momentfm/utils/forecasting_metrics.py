@@ -2,7 +2,6 @@
 
 import warnings
 from dataclasses import dataclass
-from typing import Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -30,7 +29,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             return F.l1_loss(input, torch.zeros_like(input), reduction="none")
 
         def _divide_no_nan(self, a: float, b: float) -> float:
-            """Auxiliary funtion to handle divide by 0."""
+            """Auxiliary function to handle divide by 0."""
             div = a / b
             div[div != div] = 0.0
             div[div == float("inf")] = 0.0
@@ -46,7 +45,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             return error
 
     def _divide_no_nan(a: float, b: float) -> float:
-        """Auxiliary funtion to handle divide by 0."""
+        """Auxiliary function to handle divide by 0."""
         div = a / b
         div[div != div] = 0.0
         div[div == float("inf")] = 0.0
@@ -56,18 +55,18 @@ if _check_soft_dependencies(["torch"], severity="none"):
     class ForecastingMetrics:
         """Forecasting Metrics."""
 
-        mae: Union[float, np.ndarray] = None
-        mse: Union[float, np.ndarray] = None
-        mape: Union[float, np.ndarray] = None
-        smape: Union[float, np.ndarray] = None
-        rmse: Union[float, np.ndarray] = None
+        mae: float | np.ndarray = None
+        mse: float | np.ndarray = None
+        mape: float | np.ndarray = None
+        smape: float | np.ndarray = None
+        rmse: float | np.ndarray = None
 
     def mae(
         y: np.ndarray,
         y_hat: np.ndarray,
         reduction: str = "mean",
-        axis: Optional[int] = None,
-    ) -> Union[float, np.ndarray]:
+        axis: int | None = None,
+    ) -> float | np.ndarray:
         r"""Calculate MAE.
 
         Calculates Mean Absolute Error (MAE) between
@@ -110,8 +109,8 @@ if _check_soft_dependencies(["torch"], severity="none"):
         y: np.ndarray,
         y_hat: np.ndarray,
         reduction: str = "mean",
-        axis: Optional[int] = None,
-    ) -> Union[float, np.ndarray]:
+        axis: int | None = None,
+    ) -> float | np.ndarray:
         r"""Calculate MSE.
 
         Calculates Mean Squared Error (MSE) between
@@ -155,8 +154,8 @@ if _check_soft_dependencies(["torch"], severity="none"):
         y: np.ndarray,
         y_hat: np.ndarray,
         reduction: str = "mean",
-        axis: Optional[int] = None,
-    ) -> Union[float, np.ndarray]:
+        axis: int | None = None,
+    ) -> float | np.ndarray:
         r"""Calculate Rmse.
 
         Calculates Root Mean Squared Error (RMSE) between
@@ -202,8 +201,8 @@ if _check_soft_dependencies(["torch"], severity="none"):
         y: np.ndarray,
         y_hat: np.ndarray,
         reduction: str = "mean",
-        axis: Optional[int] = None,
-    ) -> Union[float, np.ndarray]:
+        axis: int | None = None,
+    ) -> float | np.ndarray:
         r"""Calculate mape.
 
         Calculates Mean Absolute Percentage Error (MAPE) between
@@ -251,8 +250,8 @@ if _check_soft_dependencies(["torch"], severity="none"):
         y: np.ndarray,
         y_hat: np.ndarray,
         reduction: str = "mean",
-        axis: Optional[int] = None,
-    ) -> Union[float, np.ndarray]:
+        axis: int | None = None,
+    ) -> float | np.ndarray:
         r"""Calculate smape.
 
         Calculates Symmetric Mean Absolute Percentage Error (SMAPE) between
@@ -317,8 +316,8 @@ if _check_soft_dependencies(["torch"], severity="none"):
         y: npt.NDArray,
         y_hat: npt.NDArray,
         reduction: str = "mean",
-        axis: Optional[int] = None,
-    ) -> Union[float, np.ndarray]:
+        axis: int | None = None,
+    ) -> float | np.ndarray:
         """Get Forecasting Metrics."""
         return ForecastingMetrics(
             mae=mae(y=y, y_hat=y_hat, axis=axis, reduction=reduction),

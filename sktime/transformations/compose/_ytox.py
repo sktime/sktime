@@ -121,13 +121,16 @@ class YtoX(BaseTransformer):
         "authors": ["fkiraly"],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "scitype:y": "both",
         "fit_is_empty": True,
         "requires_X": False,
         "requires_y": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, subset_index=False):

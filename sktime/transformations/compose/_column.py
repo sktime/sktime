@@ -129,6 +129,9 @@ class ColumnEnsembleTransformer(
         "capability:unequal_length": True,
         "capability:missing_values": True,
         "visual_block_kind": "parallel",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
@@ -429,7 +432,7 @@ class ColumnwiseTransformer(BaseTransformer):
         "X_inner_mtype": "pd.DataFrame",
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
     }
 

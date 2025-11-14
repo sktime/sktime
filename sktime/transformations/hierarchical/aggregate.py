@@ -71,10 +71,11 @@ class Aggregator(BaseTransformer):
             "pd_multiindex_hier",
         ],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "capability:inverse_transform": False,  # does transformer have inverse
+        "capability:inverse_transform": True,  # does transformer have inverse
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "capability:missing_values": False,  # can estimator handle missing data?
+        "capability:categorical_in_X": False,  # can the estimator handle categoricals?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
@@ -199,6 +200,7 @@ class Aggregator(BaseTransformer):
             )
         else:
             for i in range(X.index.nlevels - 1):
+                # Ignoring since there can be totals in some levels, but not all
                 X = X.drop(index="__total", level=i, errors="ignore")
         return X
 
