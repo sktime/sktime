@@ -598,7 +598,7 @@ class ARARForecaster(BaseForecaster):
                 coverage_dict[a] = (coverage, "upper")
 
         # Get unique coverage levels
-        unique_coverage = list(set([v[0] for v in coverage_dict.values()]))
+        unique_coverage = list({v[0] for v in coverage_dict.values()})
 
         # Get prediction intervals
         pred_int = self._predict_interval(fh, X=X, coverage=unique_coverage)
