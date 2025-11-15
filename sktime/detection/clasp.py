@@ -227,18 +227,15 @@ class ClaSPSegmentation(BaseDetector):
         "fit_is_empty": True,
         "python_dependencies": "numba",
         "X_inner_mtype": "pd.Series",
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": [
-            "test_non_state_changing_method_contract",
-            "test_raises_not_fitted_error",
-        ],
     }
 
     def __init__(self, period_length=10, n_cps=1, exclusion_radius=0.05):
         self.period_length = int(period_length)
         self.n_cps = n_cps
         self.exclusion_radius = exclusion_radius
+        # Initialize as empty dict to avoid changing dict structure during predict/transform
+        # Contents will be updated in fit_predict for backward compatibility
+        self._last_results = {}
 
         super().__init__()
 
@@ -256,6 +253,8 @@ class ClaSPSegmentation(BaseDetector):
         -------
         self : True
         """
+        # Reset cache
+        self._last_results = {}
         return True
 
     def _predict(self, X):
@@ -271,8 +270,10 @@ class ClaSPSegmentation(BaseDetector):
         Y : pd.Series or an IntervalSeries
             Change points in sequence X.
         """
-        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
-        return pd.Series(self.found_cps)
+        found_cps, profiles, scores = self._run_clasp(X)
+        # Do NOT store results here to avoid violating non-state-changing contract
+        # Results are stored via fit_predict override for backward compatibility
+        return pd.Series(found_cps)
 
     def _predict_scores(self, X):
         """Return scores in ClaSP's profile for each annotation.
@@ -287,11 +288,11 @@ class ClaSPSegmentation(BaseDetector):
         Y : pd.Series
             Sparse scores for found change points in sequence X.
         """
-        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
-
+        found_cps, profiles, scores = self._run_clasp(X)
+        # Do NOT store results here to avoid violating non-state-changing contract
         # Scores of the Change Points
-        scores = pd.Series(self.scores)
-        return scores
+        scores_series = pd.Series(scores)
+        return scores_series
 
     def _transform_scores(self, X):
         """Return scores in ClaSP's profile for each annotation.
@@ -306,11 +307,11 @@ class ClaSPSegmentation(BaseDetector):
         Y : pd.Series
             Dense scores for found change points in sequence X.
         """
-        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
-
+        found_cps, profiles, scores = self._run_clasp(X)
+        # Do NOT store results here to avoid violating non-state-changing contract
         # ClaSP creates multiple profiles. Hard to map. Thus, we return the main
         # (first) one
-        profile = pd.Series(self.profiles[0])
+        profile = pd.Series(profiles[0])
         return profile
 
     def get_fitted_params(self):
@@ -320,7 +321,23 @@ class ClaSPSegmentation(BaseDetector):
         -------
         fitted_params : dict
         """
+        self.check_is_fitted()
         return {"profiles": self.profiles, "scores": self.scores}
+
+    @property
+    def profiles(self):
+        """Access profiles from last fit_predict call."""
+        return self._last_results.get("profiles")
+
+    @property
+    def scores(self):
+        """Access scores from last fit_predict call."""
+        return self._last_results.get("scores")
+
+    @property
+    def found_cps(self):
+        """Access found change points from last fit_predict call."""
+        return self._last_results.get("found_cps")
 
     def _run_clasp(self, X):
         X = check_series(X, enforce_univariate=True, allow_numpy=True)
@@ -328,18 +345,52 @@ class ClaSPSegmentation(BaseDetector):
         if isinstance(X, pd.Series):
             X = X.to_numpy()
 
+        # Validate that data is long enough for the period_length
+        # Adjust period_length if data is too short to prevent negative dimensions
+        effective_period_length = min(self.period_length, max(1, len(X) // 3))
         clasp_transformer = ClaSPTransformer(
-            window_length=self.period_length, exclusion_radius=self.exclusion_radius
+            window_length=effective_period_length,
+            exclusion_radius=self.exclusion_radius,
         ).fit(X)
 
-        self.found_cps, self.profiles, self.scores = _segmentation(
+        found_cps, profiles, scores = _segmentation(
             X,
             clasp_transformer,
             n_change_points=self.n_cps,
             exclusion_radius=self.exclusion_radius,
         )
 
-        return self.found_cps, self.profiles, self.scores
+        return found_cps, profiles, scores
+
+    def fit_predict(self, X, y=None):
+        """Fit to data, then predict it, storing results for backward compatibility.
+
+        Overrides base class to store profiles and scores after prediction.
+
+        Parameters
+        ----------
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Data to be transformed
+        y : pd.DataFrame with RangeIndex, optional
+            Known events for training, in ``X``, if detector is supervised.
+
+        Returns
+        -------
+        y : pd.DataFrame with RangeIndex
+            Detected or predicted events.
+        """
+        # Call parent fit_predict which calls fit().predict()
+        result = super().fit_predict(X, y=y)
+        # Recompute and store results after prediction for backward compatibility
+        # This is allowed since fit_predict is a state-changing method (combines fit + predict)
+        X_inner = self._check_X(X)
+        found_cps, profiles, scores = self._run_clasp(X_inner)
+        self._last_results = {
+            "found_cps": found_cps,
+            "profiles": profiles,
+            "scores": scores,
+        }
+        return result
 
     def _get_interval_series(self, X, found_cps):
         """Get the segmentation results based on the found change points.
