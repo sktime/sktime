@@ -63,3 +63,10 @@ class USChange(_ForecastingDatasetFromLoader):
     def __init__(self, y_name="Consumption"):
         self.y_name = y_name
         super().__init__()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameters."""
+        param0 = {}
+        param1 = {"y_name": "Income"}
+        return [param0, param1]
