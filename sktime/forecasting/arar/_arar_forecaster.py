@@ -334,7 +334,7 @@ def _forecast_arar(model_tuple, h, level=(80, 95)):
 
 
 class ARARForecaster(BaseForecaster):
-    """ARAR (AutoRegressive-AutoRegressive) forecaster.
+    r"""ARAR (AutoRegressive-AutoRegressive) forecaster.
 
     ARAR is a forecasting method that combines memory-shortening with
     subset autoregression. The method first applies a memory-shortening
@@ -347,6 +347,41 @@ class ARARForecaster(BaseForecaster):
        long-memory effects in the time series
     2. Subset AR: Selects an optimal subset of 3 lags from the shortened
        series using a grid search over possible lag combinations
+
+    The ARAR model is a forecasting method designed for time series that may
+    exhibit long-memory or persistent dependence. It works by automatically
+    shortening the memory in the data and then fitting a small subset
+    autoregressive (AR) model to the transformed series.
+
+    Mathematical details follow about the two main stages of the ARAR algorithm:
+
+    Stage 1: Memory Shortening (Adaptive AR Filter)
+
+    The algorithm tests for long‐memory structure by examining delayed
+    correlations.
+
+    * If long memory is detected, it applies a simple AR filter at the best delay.
+    * This step may repeat up to three times, composing a filter
+
+        :math:`\Psi(B) = 1 + \Psi_1 B + \cdots + \Psi_k B^k`
+
+        until the transformed series behaves like a short‐memory process.
+
+    Stage 2: Subset AR Modeling
+
+    After memory shortening, ARAR fits a **4-term subset AR model** using
+    Yule–Walker equations. It searches over candidate lag sets and selects the
+    model with the smallest estimated noise variance. The resulting AR polynomial
+
+    :math:`\phi(B) = 1 - \phi_1 B - \phi_{l_1} B^{l_1} - \phi_{l_2} B^{l_2} - \phi_{l_3} B^{l_3}`  # noqa: E501
+
+    combines with the memory-shortening filter to produce the full ARAR kernel
+
+    :math:`\xi(B) = \Psi(B)\,\phi(B)`.
+
+    This approach allows ARAR to automatically adapt to persistent dynamics while
+    remaining computationally efficient. It often performs well on seasonal or
+    slowly decaying series where pure ARMA or exponential-smoothing models struggle.
 
     Parameters
     ----------
@@ -425,7 +460,7 @@ class ARARForecaster(BaseForecaster):
     ----------
     .. [1] Brockwell, Peter J, and Richard A. Davis.
     Introduction to Time Series and Forecasting (2016), Chapter 10.
-    """
+    """  # noqa: E501
 
     _tags = {
         # packaging info
