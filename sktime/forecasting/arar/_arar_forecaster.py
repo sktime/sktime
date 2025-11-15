@@ -357,7 +357,7 @@ class ARARForecaster(BaseForecaster):
 
     Stage 1: Memory Shortening (Adaptive AR Filter)
 
-    The algorithm tests for long‐memory structure by examining delayed
+    The algorithm tests for long-memory structure by examining delayed
     correlations.
 
     * If long memory is detected, it applies a simple AR filter at the best delay.
@@ -365,12 +365,12 @@ class ARARForecaster(BaseForecaster):
 
         :math:`\Psi(B) = 1 + \Psi_1 B + \cdots + \Psi_k B^k`
 
-        until the transformed series behaves like a short‐memory process.
+        until the transformed series behaves like a short-memory process.
 
     Stage 2: Subset AR Modeling
 
     After memory shortening, ARAR fits a **4-term subset AR model** using
-    Yule–Walker equations. It searches over candidate lag sets and selects the
+    Yule-Walker equations. It searches over candidate lag sets and selects the
     model with the smallest estimated noise variance. The resulting AR polynomial
 
     :math:`\phi(B) = 1 - \phi_1 B - \phi_{l_1} B^{l_1} - \phi_{l_2} B^{l_2} - \phi_{l_3} B^{l_3}`  # noqa: E501
