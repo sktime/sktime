@@ -53,7 +53,7 @@ class USChange(_ForecastingDatasetFromLoader):
         "n_instances": 1,
         "n_timepoints": 187,
         "frequency": "Q",
-        "n_dimensions": 5,  # 5 explanatory variables
+        "n_dimensions": 1,  # 1 endogenous and 4 exogenous variables
         "n_panels": 1,
         "n_hierarchy_levels": 0,
     }
