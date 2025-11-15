@@ -2,7 +2,7 @@
 """ARAR forecasting model."""
 
 __all__ = ["ARARForecaster"]
-__author__ = ["resul.akay@taf-society.org"]
+__author__ = ["Akai01"]
 
 import math
 import warnings
@@ -342,6 +342,7 @@ class ARARForecaster(BaseForecaster):
     fits a parsimonious autoregressive model using a subset of lags.
 
     The algorithm proceeds in two stages:
+
     1. Memory-shortening: Applies up to 3 rounds of filtering to reduce
        long-memory effects in the time series
     2. Subset AR: Selects an optimal subset of 3 lags from the shortened
@@ -352,6 +353,7 @@ class ARARForecaster(BaseForecaster):
     max_ar_depth : int or None, default=None
         Maximum AR lag to consider in subset selection.
         If None, defaults to:
+
         - 26 if n > 40
         - 13 if 13 <= n <= 40
         - max(4, ceil(n/3)) if n < 13
@@ -359,18 +361,21 @@ class ARARForecaster(BaseForecaster):
     max_lag : int or None, default=None
         Maximum lag for computing autocovariances.
         If None, defaults to:
+
         - 40 if n > 40
         - 13 if 13 <= n <= 40
         - max(4, ceil(n/2)) if n < 13
 
     safe : bool, default=True
-        If True, returns a simple mean-based fallback model when
-        fitting fails. If False, raises an exception on failure.
+        Whether to use safe fitting mode.
+        * If True, returns a simple mean-based fallback model when fitting fails.
+        * If False, raises an exception on failure.
 
     Attributes
     ----------
     model_ : tuple
         Fitted ARAR model containing:
+
         - Y: original series
         - best_phi: AR coefficients for selected lags
         - best_lag: tuple of selected AR lags (1, i, j, k)
@@ -390,6 +395,32 @@ class ARARForecaster(BaseForecaster):
     ARARForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])
 
+    Prediction intervals and coefficients:
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sktime.utils.plotting import plot_series
+    >>>
+    >>> # Load and split data
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=12)
+    >>>
+    >>> # Fit and predict
+    >>> forecaster = ARARForecaster()
+    >>> forecaster.fit(y_train)
+    >>> y_pred = forecaster.predict(fh=list(range(1, 13)))
+    >>> pred_int = forecaster.predict_interval(fh=list(range(1, 13)))
+    >>>
+    >>> # Plot results
+    >>> plot_series(
+    ...     y_train, y_test, y_pred, labels=["Train", "Test", "Forecast"],
+    ...     title= "Forecast from Arar",
+    ...     pred_int=pred_int
+    )
+    >>>
+    >>> # Print model information
+    >>> print(f"Selected AR lags: {forecaster.model_[2]}")  # doctest: +SKIP
+    >>> print(f"AR coefficients: {forecaster.model_[1]}")  # doctest: +SKIP
+    >>> print(f"Innovation variance: {forecaster.model_[3]:.4f}")  # doctest: +SKIP
+
     References
     ----------
     .. [1] Brockwell, Peter J, and Richard A. Davis.
@@ -398,8 +429,8 @@ class ARARForecaster(BaseForecaster):
 
     _tags = {
         # packaging info
-        "authors": ["resul.akay@taf-society.org"],
-        "maintainers": ["resul.akay@taf-society.org"],
+        "authors": ["Akai01"],
+        "maintainers": ["Akai01"],
         # estimator type
         "y_inner_mtype": "pd.Series",
         "scitype:y": "univariate",
