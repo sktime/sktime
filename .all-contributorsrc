@@ -3331,7 +3331,11 @@
         "code",
         "bug",
         "test",
-        "doc"
+        "doc",
+        "fundingFinding",
+        "ideas",
+        "maintenance",
+        "talk"
       ]
     },
     {
