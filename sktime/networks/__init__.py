@@ -4,6 +4,8 @@ Used for both classification and regression tasks.
 """
 
 __all__ = [
+    "FCNNetwork",
+    "FCNNetworkTorch",
     "RNNNetwork",
     "RNNNetworkTorch",
 ]
@@ -11,4 +13,9 @@ __all__ = [
 from sktime.networks.rnn import (
     RNNNetwork,
     RNNNetworkTorch,
+)
+
+from sktime.networks.fcn import (
+    FCNNetwork,
+    FCNNetworkTorch,
 )
