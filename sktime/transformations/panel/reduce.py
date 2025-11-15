@@ -182,5 +182,8 @@ class TimeBinner(BaseTransformer):
         import pandas as pd
 
         idx = pd.interval_range(start=0, end=100, freq=10, closed="left")
-        params = {"idx": idx}
-        return params
+        return [
+            {"idx": idx},
+            {"idx": idx, "aggfunc": np.median},
+            {"idx": idx, "aggfunc": np.sum},
+        ]

@@ -155,6 +155,8 @@ transform a single time series object (``"transformer"`` type).
     requires_y
     capability__missing_values
     capability__unequal_length
+    capability__unequal_length__adds
+    capability__unequal_length__removes
     capability__random_state
     capability__inverse_transform
     capability__inverse_transform__exact
@@ -213,7 +215,25 @@ This section lists tags applying to time series metrics (``"metric"`` type).
     inner_implements_multilevel
 
 
+Tags for time series aligners
+-----------------------------
+
+This section lists tags applying to time series aligners (``"aligner"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
 .. _dev_common_tags:
+
+    capability__multiple_alignment
+    capability__distance
+    capability__distance_matrix
+    property__alignment_type
+
 
 Common developer tags
 ---------------------
