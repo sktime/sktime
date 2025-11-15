@@ -18,7 +18,7 @@ repos:
         args: ['--fix=lf']
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.13.1
+    rev: v0.14.5
     hooks:
       - id: ruff-format
       - id: ruff-check
@@ -29,11 +29,3 @@ repos:
     hooks:
       - id: check-manifest
         stages: [manual]
-
-  # We use the Python version instead of the original version which seems to require Docker
-  # https://github.com/koalaman/shellcheck-precommit
-  - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
-    hooks:
-      - id: shellcheck
-        name: shellcheck
