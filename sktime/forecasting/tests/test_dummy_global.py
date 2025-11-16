@@ -126,6 +126,55 @@ class TestDummyGlobalForecaster:
         # Just check that it's computed and is a finite number
         assert np.isfinite(mean_after_second)
         assert forecaster.state == "pretrained"
+
+    def test_multivariate_forecasting(self):
+        """Test DummyGlobalForecaster with multivariate data."""
+        # Create multivariate panel data
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=2
+        )
+        forecaster = DummyGlobalForecaster(strategy="mean")
+        forecaster.pretrain(y_panel)
+
+        # Fit on multivariate series
+        y_train = _make_series(n_columns=2, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+        y_pred = forecaster.predict()
+
+        assert len(y_pred) == 3
+        assert isinstance(y_pred, pd.DataFrame)
+        assert y_pred.shape == (3, 2)  # 3 time points, 2 columns
+
+    def test_get_pretrained_params(self):
+        """Test get_pretrained_params method."""
+        forecaster = DummyGlobalForecaster()
+
+        # Before pretraining, should return empty dict
+        params = forecaster.get_pretrained_params()
+        assert params == {}
+
+        # After pretraining
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(2,), min_timepoints=10, max_timepoints=10
+        )
+        forecaster.pretrain(y_panel)
+        params = forecaster.get_pretrained_params()
+
+        # Should have pretrained attributes
+        assert "global_mean_" in params
+        assert "global_std_" in params
+        assert "n_pretrain_instances_" in params
+        assert "n_pretrain_timepoints_" in params
+
+        # After fit, pretrained params should still be available
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+
+        params_after_fit = forecaster.get_pretrained_params()
+        # All pretrained params should still exist
+        assert "global_mean_" in params_after_fit
+        assert "global_std_" in params_after_fit
+
     def test_capability_tag(self):
         """Test that DummyGlobalForecaster has correct capability tag."""
         forecaster = DummyGlobalForecaster()
