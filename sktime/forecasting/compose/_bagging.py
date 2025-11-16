@@ -97,9 +97,6 @@ class BaggingForecaster(BaseForecaster):
         "capability:pred_int:insample": True,  # ... for in-sample horizons?
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_update_with_exogenous_variables"],  # bug 8832
     }
 
     def __init__(
