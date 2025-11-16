@@ -590,10 +590,10 @@ def _check_ts_freq(x_df, datetime_freq, ts_freq):
     ------
     ValueError
         Raise an error if:
-        * ts_freq is not in the supported set;
-        * the frequency cannot be inferred from ``x_df['date_sequence']``;
-        * the inferred frequency cannot be interpreted or mapped to a base code;
-        * the inferred frequency is not compatible with ts_freq.
+        1- ts_freq is not in the supported set.
+        2- the frequency cannot be inferred from ``x_df['date_sequence']``.
+        3- the inferred frequency cannot be interpreted or mapped to a base code.
+        4- the inferred frequency is not compatible with ts_freq.
     """
     # Check 1: Determine whether input ts_freq is valid or not
     freq_list = datetime_freq["frequency"].tolist()
