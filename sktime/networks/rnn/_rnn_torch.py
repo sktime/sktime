@@ -136,9 +136,6 @@ class RNNNetworkTorch(NNModule):
             in_features=self.hidden_dim * (2 if self.bidirectional else 1),
             out_features=self.num_classes,
         )
-        # currently the above linear layer is only implemented for
-        # SimpleRNNClassifierTorch, once RNNRegressorTorch is implemented,
-        # changes will be made here
         # to handle the case when num_classes = 1 for regression
         if self.activation:
             self._activation = self._instantiate_activation()
@@ -150,12 +147,14 @@ class RNNNetworkTorch(NNModule):
 
         Parameters
         ----------
-        X : torch.Tensor of shape (seq_length, batch_size input_size)
+        X : torch.Tensor of shape (seq_length, batch_size input_size) or
+            (batch_size, seq_length, input_size) if batch_first=True
             Input tensor containing the time series data.
 
         Returns
         -------
-        out : torch.Tensor of shape (seq_length, batch_size, hidden_size)
+        out : torch.Tensor of shape (seq_length, batch_size, hidden_size) or
+            (batch_size, seq_length, hidden_size) if batch_first=True
             Output tensor containing the hidden states for each time step.
         """
         if isinstance(X, np.ndarray):
@@ -164,8 +163,20 @@ class RNNNetworkTorch(NNModule):
             # X = X.permute(1, 0, 2)
             # X = X.unsqueeze(0)
 
-        out, _ = self.rnn(X)
-        out = out[:, -1, :]
+        out, h_n = self.rnn(X)
+        # out shape: (batch_size, seq_length, hidden_size) if batch_first=True
+        # or (seq_length, batch_size, hidden_size) if batch_first=False.
+        # h_n shape: (num_layers * num_directions, batch_size, hidden_size)
+        # irrespective of batch_first parameter.
+        # The self.fc layer expects one vector per sequence,
+        # not a whole sequence of hidden states.
+        # Hence, we extract the final hidden state for each sequence.
+        # We use h_n for this purpose, instead of out, because
+        # 1. padding may have been used, and in that case
+        #    out[-1] may not correspond to the final time step of the sequence
+        # 2. to have a consistent behavior regardless of batch_first value.
+        out = self.get_sequence_vector_from_hidden(h_n)
+        # out = out[:, -1, :]
         if self.fc_dropout:
             out = self.out_dropout(out)
         out = self.fc(out)
@@ -227,3 +238,69 @@ class RNNNetworkTorch(NNModule):
                 "`activation` should either be of type str or torch.nn.Module. "
                 f"But found the type to be: {type(self.activation)}"
             )
+
+    def get_sequence_vector_from_hidden_debug(self, h_n):
+        print(f"[DEBUG] Input h_n shape: {h_n.shape}")
+
+        num_directions_h_n = 2 if self.bidirectional else 1
+        batch_size_h_n = h_n.size(1)
+        hidden_size_h_n = h_n.size(2)
+        num_layers_h_n = self.n_layers
+
+        print(f"[DEBUG] n_layers={num_layers_h_n}, num_directions={num_directions_h_n}")
+        print(f"[DEBUG] batch_size={batch_size_h_n}, hidden_size={hidden_size_h_n}")
+
+        h_n = h_n.view(
+            num_layers_h_n, num_directions_h_n, batch_size_h_n, hidden_size_h_n
+        )
+        print(f"[DEBUG] After view: {h_n.shape}")
+
+        last_layer = h_n[-1]
+        print(f"[DEBUG] Last layer shape: {last_layer.shape}")
+
+        sequence_vector = (
+            last_layer.permute(1, 0, 2)
+            .contiguous()
+            .view(batch_size_h_n, num_directions_h_n * hidden_size_h_n)
+        )
+        print(f"[DEBUG] Final sequence_vector shape: {sequence_vector.shape}")
+
+        return sequence_vector
+
+    def get_sequence_vector_from_hidden(self, h_n):
+        """
+        Extract a single vector per sequence from RNN/GRU/LSTM final hidden state.
+
+        This function is BATCH_FIRST-AGNOSTIC because h_n shape does not depend
+        on the batch_first parameter. h_n always has shape:
+            (num_layers * num_directions, batch, hidden_size)
+        regardless of whether batch_first=True or False in the RNN call.
+
+        Parameters
+        ----------
+            h_n: Final hidden state from RNN/GRU/LSTM.
+                Shape: (num_layers * num_directions, batch, hidden_size)
+                Note: This shape is INDEPENDENT of batch_first parameter.
+
+        Returns
+        -------
+            sequence_vector: Tensor of shape (batch, num_directions * hidden_size).
+            For bidirectional, concatenates forward and backward final states.
+
+        Note: Eventually, this method should be moved to a common utility module
+        since it can be used by RNN, GRU, and LSTM networks.
+        """
+        num_directions_h_n = 2 if self.bidirectional else 1
+        batch_size_h_n = h_n.size(1)
+        hidden_size_h_n = h_n.size(2)
+
+        # Take the last layer (last num_directions entries)
+        last_layer_h = h_n[-num_directions_h_n:]  # (num_directions, batch, hidden)
+        # Reshape to (batch, num_directions * hidden)
+        sequence_vector = (
+            last_layer_h.permute(1, 0, 2)
+            .contiguous()
+            .view(batch_size_h_n, num_directions_h_n * hidden_size_h_n)
+        )
+
+        return sequence_vector
