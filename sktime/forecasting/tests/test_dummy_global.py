@@ -126,3 +126,9 @@ class TestDummyGlobalForecaster:
         # Just check that it's computed and is a finite number
         assert np.isfinite(mean_after_second)
         assert forecaster.state == "pretrained"
+    def test_capability_tag(self):
+        """Test that DummyGlobalForecaster has correct capability tag."""
+        forecaster = DummyGlobalForecaster()
+
+        # Should have capability:pretrain tag set to True
+        assert forecaster.get_tag("capability:pretrain") is True
