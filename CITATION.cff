@@ -1,0 +1,54 @@
+cff-version: "1.2.0"
+message: "If you use sktime, please cite it using these metadata."
+abstract : "A unified framework for machine learning with time series."
+type: software
+authors:
+  - family-names: "Löning"
+    given-names: "Markus"
+  - family-names: "Bagnall"
+    given-names: "Anthony"
+  - family-names: "Ganesh"
+    given-names: "Sajaysurya"
+  - family-names: "Kazakov"
+    given-names: "Viktor"
+  - family-names: "Lines"
+    given-names: "Jason"
+  - family-names: "Király"
+    given-names: "Franz J."
+title: "sktime"
+identifiers:
+  -
+    type: doi
+    value: 10.48550/arXiv.1909.07872
+    description: >-
+      "sktime: A unified interface for machine learning with time series."
+      arXiv preprint arXiv:1909.07872 (2019).
+
+  -
+    type: doi
+    value: 10.5281/zenodo.3749000
+    description: >-
+      "This DOI represents all versions, and will
+      always resolve to the latest one.""
+
+
+repository-code: "https://github.com/sktime/sktime"
+url: "https://www.sktime.net"
+date-released: "2019-09-17"
+keywords:
+  - "data-science"
+  - "machine-learning"
+  - "time-series"
+  - "forecasting"
+  - "time-series-classification"
+  - "time-series-analysis"
+  - "sktime"
+  - "ai"
+  - "benchmarking"
+  - "time-series-regression"
+  - "data-mining"
+  - "time-series-segmentation"
+  - "scikit-learn"
+  - "changepoint-detection"
+license: BSD-3-Clause
+doi: 10.5281/zenodo.3749000
