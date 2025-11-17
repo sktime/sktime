@@ -1,5 +1,5 @@
 """Model evaluation utilities for detection tasks."""
 
-from ._functions import evaluate
+from sktime.detection.model_evaluation._functions import evaluate
 
 __all__ = ["evaluate"]
