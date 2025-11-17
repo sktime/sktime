@@ -722,12 +722,14 @@ def evaluate(
     To evaluate scores at each time point (per-index) instead of averaged scores,
     pass a metric with ``by_index=True``:
 
+    >>> import pandas as pd
     >>> metric_by_index = MeanAbsoluteError(by_index=True)
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=metric_by_index)
     >>> # Now results["test_MeanAbsoluteError"] contains pd.Series for each fold
     >>> # instead of scalar values
     >>> per_index_scores = results.iloc[0]["test_MeanAbsoluteError"]
-    >>> print(type(per_index_scores))  # <class 'pandas.core.series.Series'>
+    >>> isinstance(per_index_scores, pd.Series)
+    True
     """
     if backend in ["dask", "dask_lazy"]:
         if not _check_soft_dependencies("dask", severity="none"):
