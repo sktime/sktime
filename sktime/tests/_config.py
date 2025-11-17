@@ -198,7 +198,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ColumnwiseTransformer",
         "ContractableBOSS",
         "DOBIN",
-        "DWTTransformer",
         "DilationMappingTransformer",
         "DirRecTabularRegressionForecaster",
         "DirRecTimeSeriesRegressionForecaster",
@@ -267,7 +266,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
         "WEASEL",
-        "WhiteNoiseAugmenter",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
         # too after adding test parameters to them
         "BaggingForecaster",
