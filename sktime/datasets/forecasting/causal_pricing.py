@@ -120,15 +120,23 @@ def make_causal_pricing(
     (5000, 1)
     """
     if n_series <= 0:
-        raise ValueError(f"n_series must be positive, got {n_series}")
+        raise ValueError(
+            f"n_series must be positive (number of articles), got {n_series}"
+        )
     if n_timepoints < 5:
         raise ValueError(
             f"n_timepoints must be >= 5 for pricing policy to work, got {n_timepoints}"
         )
     if n_categories_d <= 0:
-        raise ValueError(f"n_categories_d must be positive, got {n_categories_d}")
+        raise ValueError(
+            f"n_categories_d must be positive (number of brand categories), "
+            f"got {n_categories_d}"
+        )
     if n_categories_k <= 0:
-        raise ValueError(f"n_categories_k must be positive, got {n_categories_k}")
+        raise ValueError(
+            f"n_categories_k must be positive (number of product group categories), "
+            f"got {n_categories_k}"
+        )
 
     rng = check_random_state(random_state)
 

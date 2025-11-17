@@ -3771,8 +3771,9 @@
       "contributions": [
         "code",
         "design",
+        "ideas",
         "maintenance",
-        "doc"
+        "bug"
       ]
     }
   ]
