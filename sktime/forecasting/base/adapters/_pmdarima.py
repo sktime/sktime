@@ -93,30 +93,31 @@ class _PmdArimaAdapter(BaseForecaster):
             Returns series of predicted values.
         """
         fh_abs = fh.to_absolute(self.cutoff).to_pandas()
-        fh_abs_int = fh.to_absolute_int(fh_abs[0], self.cutoff).to_pandas()
-        end_int = fh_abs_int[-1] + 2
-        # +2 because + 1 for "end" (python index), +1 for starting to count at 1 in fh
-
-        if X is not None:
-            X = get_slice(X, start=self.cutoff[0], start_inclusive=False)
-            X = X.iloc[:end_int]
 
         # distinguish between in-sample and out-of-sample prediction
         fh_oos = fh.to_out_of_sample(self.cutoff)
         fh_ins = fh.to_in_sample(self.cutoff)
 
+        # prepare exogenous data for out-of-sample predictions only
+        # here we assume that X provided by the caller (or test) contains
+        # only future exogenous rows when forecasting out-of-sample
+        X_oos = None
+        if X is not None and not fh.is_all_in_sample(self.cutoff):
+            X_oos = X
+
         # all values are out-of-sample
         if fh.is_all_out_of_sample(self.cutoff):
-            y_pred = self._predict_fixed_cutoff(fh_oos, X=X)
+            y_pred = self._predict_fixed_cutoff(fh_oos, X=X_oos)
 
         # all values are in-sample
         elif fh.is_all_in_sample(self.cutoff):
+            # in-sample predictions can use the full X passed by the user
             y_pred = self._predict_in_sample(fh_ins, X=X)
 
         # both in-sample and out-of-sample values
         else:
             y_ins = self._predict_in_sample(fh_ins, X=X)
-            y_oos = self._predict_fixed_cutoff(fh_oos, X=X)
+            y_oos = self._predict_fixed_cutoff(fh_oos, X=X_oos)
             y_pred = pd.concat([y_ins, y_oos])
 
         # ensure that name is not added nor removed
@@ -216,10 +217,25 @@ class _PmdArimaAdapter(BaseForecaster):
         y_pred : pandas.Series
         Returns series of predicted values.
         """
-        n_periods = int(fh.to_relative(self.cutoff)[-1])
+        # maximum relative horizon determines how many periods pmdarima must predict
+        fh_rel = fh.to_relative(self.cutoff)
+        n_periods = int(max(fh_rel))
+
+        if X is not None:
+            if len(X) < n_periods:
+                raise ValueError(
+                    "ARIMA with exogenous variables requires X to have at least "
+                    f"{n_periods} rows for steps 1..{n_periods} after cutoff, "
+                    f"but got len(X)={len(X)}. Provide exogenous values for all "
+                    "steps up to max(fh)."
+                )
+            X_full = X.iloc[:n_periods]
+        else:
+            X_full = None
+
         result = self._forecaster.predict(
             n_periods=n_periods,
-            X=X,
+            X=X_full,
             return_conf_int=False,
             alpha=DEFAULT_ALPHA,
         )
@@ -231,7 +247,7 @@ class _PmdArimaAdapter(BaseForecaster):
             for a in alpha:
                 result = self._forecaster.predict(
                     n_periods=n_periods,
-                    X=X,
+                    X=X_full,
                     return_conf_int=True,
                     alpha=a,
                 )
