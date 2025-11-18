@@ -213,12 +213,13 @@ def _run_test_for_class(
 
         If multiple reasons are present, the first one in the above list is returned.
     """
-    from sktime.utils.dependencies import _check_estimator_deps
-    from sktime.utils.git_diff import (
+    from skbase.utils.git_diff import (
         get_packages_with_changed_specs,
         is_class_changed,
         is_module_changed,
     )
+
+    from sktime.utils.dependencies import _check_estimator_deps
 
     PACKAGE_REQ_CHANGED = get_packages_with_changed_specs()
 
@@ -413,7 +414,7 @@ def run_test_module_changed(module, only_changed_modules=None):
     if not only_changed_modules:
         return True
 
-    from sktime.utils.git_diff import is_module_changed
+    from skbase.utils.git_diff import is_module_changed
 
     if not isinstance(module, (list, tuple)):
         module = [module]
