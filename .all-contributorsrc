@@ -3331,7 +3331,11 @@
         "code",
         "bug",
         "test",
-        "doc"
+        "doc",
+        "fundingFinding",
+        "ideas",
+        "maintenance",
+        "talk"
       ]
     },
     {
@@ -3558,6 +3562,15 @@
       ]
     },
     {
+      "login": "Faakhir30",
+      "name": "Faakhir Zahid",
+      "avatar_url": "https://avatars.githubusercontent.com/Faakhir30",
+      "profile": "https://github.com/Faakhir30",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
       "login": "Rajdeep-naha",
       "name": "Rajdeep Naha",
       "avatar_url": "https://avatars.githubusercontent.com/u/161390547?v=4",
@@ -3681,7 +3694,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/33071364?v=4",
       "profile": "https://github.com/Astrael1",
       "contributions": [
-        "doc"
+        "doc",
+        "code",
+        "bug"
       ]
     },
     {

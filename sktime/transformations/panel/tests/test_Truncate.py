@@ -7,6 +7,50 @@ from sktime.datatypes import get_examples
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.truncation import TruncationTransformer
+from sktime.utils._testing.hierarchical import _make_hierarchical
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TruncationTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "lower, upper, error, message",
+    [
+        (-1, None, ValueError, TruncationTransformer.error_messages["lower_gt_0"]),
+        (-1, 2, ValueError, TruncationTransformer.error_messages["lower_gt_0"]),
+        (7, 2, ValueError, TruncationTransformer.error_messages["upper_gt_lower"]),
+    ],
+)
+def test_truncation_constructor_arg_validation(lower, upper, error, message):
+    """Test validation of truncation transformer constructor arguments."""
+    with pytest.raises(error, match=message):
+        tt = TruncationTransformer(lower=lower, upper=upper)  # noqa: F841
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TruncationTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "lower, upper, expected_length",
+    [
+        (None, None, 60),  # truncate to shortest length
+        (5, None, 20),  # truncate to [lower, min_length]
+        (None, 7, 56),  # truncate to [0, upper)
+        (2, 7, 40),  # truncate to range
+    ],
+)
+def test_truncation_transformer_multi_index(lower, upper, expected_length):
+    """Test truncation to the shortest series length in hierarchical data."""
+    X = _make_hierarchical(
+        same_cutoff=False, max_timepoints=12, min_timepoints=6, random_state=123
+    )
+    tt = TruncationTransformer(lower=lower, upper=upper)
+    Xt = tt.fit_transform(X)
+
+    assert X.shape == (70, 1)
+    assert Xt.shape[0] == expected_length
 
 
 @pytest.mark.skipif(
@@ -18,7 +62,7 @@ def test_truncation_transformer():
     # load data
     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
 
-    truncated_transformer = TruncationTransformer(5)
+    truncated_transformer = TruncationTransformer(upper=5)
     Xt = truncated_transformer.fit_transform(X_train)
 
     # when we tabularize the data it has 6 dimensions
