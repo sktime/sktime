@@ -11,9 +11,10 @@ import pandas as pd
 import pytest
 
 from sktime.datatypes import check_is_mtype
-from sktime.datatypes._utilities import get_cutoff
+from sktime.datatypes._utilities import get_cutoff, get_slice
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.tests._config import (
     TEST_ALPHAS,
@@ -420,6 +421,29 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         fh = _make_fh(cutoff, fh_int_oos, fh_type, is_relative)
 
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
+
+        # pmdarima-based ARIMA requires exogenous variables for all steps
+        # from 1 to max(fh) after the cutoff when exog is used. The generic
+        # temporal_train_test_split only provides len(fh) future rows in X_test,
+        # which is insufficient when fh is non-consecutive (e.g., [2, 5]).
+        #
+        # For ARIMA we therefore:
+        # - if there are future exogenous rows, construct a dense future
+        #   exogenous frame of length max(fh) and use it as X_test;
+        # - if there are no future exogenous rows, treat this test instance
+        #   as if ARIMA is used without exogenous variables, by setting
+        #   X_train and X_test to None. This avoids pmdarima's requirement
+        #   that X must be passed at predict time whenever it was used at fit.
+        if isinstance(estimator_instance, ARIMA):
+            X_future = get_slice(X, start=cutoff[0], start_inclusive=False)
+            if X_future is None or len(X_future) == 0:
+                X_train = None
+                X_test = None
+            else:
+                fh_rel = fh.to_relative(cutoff)
+                n_periods = int(max(fh_rel))
+                X_future = X_future.iloc[:n_periods]
+                X_test = X_future
 
         estimator_instance.fit(y_train, X_train, fh=fh)
         y_pred = estimator_instance.predict(X=X_test)
