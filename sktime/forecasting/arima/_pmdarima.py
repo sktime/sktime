@@ -695,6 +695,9 @@ class ARIMA(_PmdArimaAdapter):
         ],
         "maintainers": ["hyang1996"],
         "capability:missing_values": True,
+        # CI and test flags
+        # -----------------
+        "test:skip_by_name": ["test_predict_time_index_with_X"],  # bug report #9081
     }
 
     SARIMAX_KWARGS_KEYS = [
