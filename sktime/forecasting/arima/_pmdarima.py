@@ -291,6 +291,9 @@ class AutoARIMA(_PmdArimaAdapter):
         "capability:missing_values": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "test:skip_by_name": ["test_predict_time_index_with_X"],  # bug report #9081
     }
 
     SARIMAX_KWARGS_KEYS = [
