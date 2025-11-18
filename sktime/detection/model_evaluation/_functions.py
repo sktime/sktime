@@ -36,6 +36,44 @@ from sktime.utils.parallel import parallelize
 __all__ = ["evaluate"]
 
 
+def _get_column_order_and_datatype(metric_names: list, return_data: bool = False, return_model: bool = False) -> dict:
+    """
+    Get ordered column names and simple datatypes for results metadata.
+
+    Parameters
+    ----------
+    metric_names : list
+        List of metric names (strings) as prepared in evaluate.
+    return_data : bool, optional
+        Whether y_train/y_test/y_pred columns will be returned.
+    return_model : bool, optional
+        Whether fitted_detector column will be returned.
+
+    Returns
+    -------
+    dict
+        Ordered mapping column_name -> dtype string for use as meta in dask.
+    """
+    fit_metadata = {
+        "fit_time": "float",
+        "pred_time": "float",
+        "len_train_window": "int",
+        "cutoff": "object",
+    }
+    metrics_metadata = {}
+    for mn in metric_names:
+        metrics_metadata[f"test_{mn}"] = "float"
+
+    if return_data:
+        fit_metadata.update({"y_train": "object", "y_test": "object", "y_pred": "object"})
+    if return_model:
+        fit_metadata.update({"fitted_detector": "object"})
+
+    # final ordering: metric columns first, then fit metadata
+    metrics_metadata.update(fit_metadata)
+    return metrics_metadata.copy()
+
+
 def _coerce_y_split(y, train_idx, test_idx, X=None):
     """
     Split `y` into (y_train, y_test) according to iloc-based train/test idx.
@@ -308,6 +346,7 @@ def evaluate(
 
     # iterate over folds / dispatch by backend
     results = []
+    res = None
     if not_parallel:
         fitted_det = None
         for x in enumerate(cv.split_series(X)):
@@ -316,11 +355,14 @@ def evaluate(
             if fitted_det is not None:
                 _evaluate_window_kwargs["fitted_detector"] = fitted_det
 
-            # for the first fold, or when strategy is refit, we still call helper
             row_res = _evaluate_window(x, _evaluate_window_kwargs)
-            # helper returns (row, fitted_det)
-            row, fitted_det = row_res
+            if isinstance(row_res, tuple):
+                row, fitted_det = row_res
+            else:
+                row = row_res
+                fitted_det = None
             results.append(row)
+        # results is a list of pd.DataFrame
     else:
         # parallel / refit mode
         backend_in = "dask_lazy" if backend == "dask" else backend
@@ -331,11 +373,38 @@ def evaluate(
             backend=backend_in,
             backend_params=backend_params,
         )
-        # res is list of (row, fitted_det) tuples; extract rows
-        results = [r for r, _ in res]
+        # res is either a list of pd.DataFrame (sequential joblib) or a list of
+        # dask delayed objects (when backend_in == 'dask_lazy'). We'll handle
+        # dask specially below.
+        # if backend_in is not dask_lazy, parallelize returned concrete results
+        # which we should collect into `results` for later concatenation.
+        if backend_in != "dask_lazy":
+            results = res
 
-    result = pd.DataFrame(results)
-    return result
+    # final formatting / aggregation
+    if backend in ["dask", "dask_lazy"] and not not_parallel:
+        # import dask lazily to avoid hard dependency at module import time
+        try:
+            import importlib
+
+            dd = importlib.import_module("dask.dataframe")
+        except Exception:
+            raise RuntimeError(
+                "running evaluate with backend='dask' requires the dask package "
+                "installed, but dask is not present in the python environment"
+            )
+
+        metadata = _get_column_order_and_datatype(metric_names, return_data, return_model=return_model)
+
+        results = dd.from_delayed(res, meta=metadata)
+        if backend == "dask":
+            results = results.compute()
+    else:
+        # results is a list of pd.DataFrame collected above (sequential or joblib)
+        results = pd.concat(results)
+
+    results = results.reset_index(drop=True)
+    return results
 
 
 def _evaluate_window(x, meta):
@@ -379,12 +448,30 @@ def _evaluate_window(x, meta):
 
     try:
         start_fit = time.perf_counter()
-        # always clone detector here; sequential update logic is handled in evaluate
-        fitted_det = detector.clone()
-        if _method_has_arg(fitted_det._fit, "y"):
-            fitted_det.fit(X=X.iloc[train_idx], y=y_train if y is not None else None)
+        provided_fitted = meta.get("fitted_detector", None)
+        if provided_fitted is not None and strategy != "refit":
+            fitted_det = provided_fitted
+            update_params = True if strategy == "update" else False
+            if _method_has_arg(fitted_det.update, "update_params"):
+                if _method_has_arg(fitted_det.update, "y"):
+                    fitted_det.update(
+                        X=X.iloc[train_idx],
+                        y=y_train if y is not None else None,
+                        update_params=update_params,
+                    )
+                else:
+                    fitted_det.update(X=X.iloc[train_idx], update_params=update_params)
+            else:
+                if _method_has_arg(fitted_det.update, "y"):
+                    fitted_det.update(X=X.iloc[train_idx], y=y_train if y is not None else None)
+                else:
+                    fitted_det.update(X=X.iloc[train_idx])
         else:
-            fitted_det.fit(X=X.iloc[train_idx])
+            fitted_det = detector.clone()
+            if _method_has_arg(fitted_det._fit, "y"):
+                fitted_det.fit(X=X.iloc[train_idx], y=y_train if y is not None else None)
+            else:
+                fitted_det.fit(X=X.iloc[train_idx])
         fit_time = time.perf_counter() - start_fit
 
         # predict
@@ -438,26 +525,32 @@ def _evaluate_window(x, meta):
                 FitFailedWarning,
             )
 
-    row = {
-        "fit_time": fit_time,
-        "pred_time": pred_time,
-        "len_train_window": int(len(train_idx)),
-        "cutoff": cutoff,
-    }
+    temp_result = {}
+    # store metric values and timing as single-element lists to create DataFrame
+    temp_result["fit_time"] = [fit_time]
+    temp_result["pred_time"] = [pred_time]
+    temp_result["len_train_window"] = [int(len(train_idx))]
+    temp_result["cutoff"] = [cutoff]
 
     for mn in metric_names:
-        row[f"test_{mn}"] = scores.get(mn, error_score)
+        temp_result[f"test_{mn}"] = [scores.get(mn, error_score)]
 
     if return_data:
-        row["y_train"] = y_train
-        row["y_test"] = y_test
-        row["y_pred"] = y_pred
+        temp_result["y_train"] = [y_train]
+        temp_result["y_test"] = [y_test]
+        temp_result["y_pred"] = [y_pred]
     if return_model:
         try:
-            row["fitted_detector"] = deepcopy(fitted_det)
+            temp_result["fitted_detector"] = [deepcopy(fitted_det)]
         except Exception:
-            row["fitted_detector"] = fitted_det
+            temp_result["fitted_detector"] = [fitted_det]
 
-    # In parallel/refit mode we return only the row. For sequential update logic,
-    # evaluate will call this and may use fitted_det.
-    return row if strategy == "refit" else (row, fitted_det)
+    result = pd.DataFrame(temp_result)
+    # reorder columns according to metadata helper
+    col_meta = _get_column_order_and_datatype(metric_names, return_data=return_data, return_model=return_model)
+    # ensure result has all columns in the order of col_meta (missing keys will be left out)
+    cols = [c for c in col_meta.keys() if c in result.columns]
+    result = result.reindex(columns=cols)
+
+    # return DataFrame in refit/parallel mode, return (DataFrame, fitted_det) for sequential update
+    return result if strategy == "refit" else (result, fitted_det)
