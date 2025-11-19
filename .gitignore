@@ -173,8 +173,3 @@ examples/local/
 profile.svg
 test_output/*
 mlruns/*
-
-# Ignore local miniconda installations and any file/folder with 'miniconda' in the name
-miniconda/
-*miniconda*
-Miniconda3-*
