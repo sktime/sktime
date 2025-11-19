@@ -22,7 +22,7 @@ def test_basic_functionality():
     """Test basic functionality with default parameters."""
     X = _make_series(n_timepoints=50, n_columns=1)
 
-    transformer = TSFELTransformer(features_domain=None, verbose=0)
+    transformer = TSFELTransformer(features=None, verbose=0)
     X_transformed = transformer.fit_transform(X)
 
     assert isinstance(X_transformed, pd.DataFrame)
@@ -38,7 +38,7 @@ def test_statistical_domain():
     """Test with statistical domain features."""
     X = _make_series(n_timepoints=50, n_columns=1)
 
-    transformer = TSFELTransformer(features_domain="statistical", verbose=0)
+    transformer = TSFELTransformer(features="statistical", verbose=0)
     X_transformed = transformer.fit_transform(X)
 
     assert isinstance(X_transformed, pd.DataFrame)
@@ -53,7 +53,7 @@ def test_temporal_domain():
     """Test with temporal domain features."""
     X = _make_series(n_timepoints=50, n_columns=1)
 
-    transformer = TSFELTransformer(features_domain="temporal", verbose=0)
+    transformer = TSFELTransformer(features="temporal", verbose=0)
     X_transformed = transformer.fit_transform(X)
 
     assert isinstance(X_transformed, pd.DataFrame)
@@ -68,7 +68,7 @@ def test_spectral_domain():
     """Test with spectral domain features."""
     X = _make_series(n_timepoints=50, n_columns=1)
 
-    transformer = TSFELTransformer(features_domain="spectral", verbose=0)
+    transformer = TSFELTransformer(features="spectral", verbose=0)
     X_transformed = transformer.fit_transform(X)
 
     assert isinstance(X_transformed, pd.DataFrame)
@@ -83,7 +83,56 @@ def test_fractal_domain():
     """Test with fractal domain features."""
     X = _make_series(n_timepoints=50, n_columns=1)
 
-    transformer = TSFELTransformer(features_domain="fractal", verbose=0)
+    transformer = TSFELTransformer(features="fractal", verbose=0)
+    X_transformed = transformer.fit_transform(X)
+
+    assert isinstance(X_transformed, pd.DataFrame)
+    assert X_transformed.shape[1] > 0
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TSFELTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_specific_features_list():
+    """Test with specific feature names list."""
+    X = _make_series(n_timepoints=50, n_columns=1)
+
+    transformer = TSFELTransformer(features=["abs_energy", "auc", "autocorr"], verbose=0)
+    X_transformed = transformer.fit_transform(X)
+
+    assert isinstance(X_transformed, pd.DataFrame)
+    assert X_transformed.shape[1] > 0
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TSFELTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_mixed_domains_and_features():
+    """Test with mixed domain strings and individual feature names."""
+    X = _make_series(n_timepoints=50, n_columns=1)
+
+    transformer = TSFELTransformer(features=["statistical", "abs_energy"], verbose=0)
+    X_transformed = transformer.fit_transform(X)
+
+    assert isinstance(X_transformed, pd.DataFrame)
+    assert X_transformed.shape[1] > 0
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TSFELTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_feature_with_custom_parameters():
+    """Test individual feature with custom parameters."""
+    X = _make_series(n_timepoints=50, n_columns=1)
+
+    transformer = TSFELTransformer(
+        features=["ecdf_percentile_count"],
+        percentile=[0.6, 0.9, 1.0],
+        verbose=0,
+    )
     X_transformed = transformer.fit_transform(X)
 
     assert isinstance(X_transformed, pd.DataFrame)
@@ -98,7 +147,7 @@ def test_multivariate_data():
     """Test with multivariate time series."""
     X = _make_series(n_timepoints=50, n_columns=3)
 
-    transformer = TSFELTransformer(features_domain="statistical", verbose=0)
+    transformer = TSFELTransformer(features="statistical", verbose=0)
     X_transformed = transformer.fit_transform(X)
 
     assert isinstance(X_transformed, pd.DataFrame)
@@ -114,7 +163,7 @@ def test_with_window_size():
     X = _make_series(n_timepoints=50, n_columns=1)
 
     transformer = TSFELTransformer(
-        features_domain="statistical",
+        features="statistical",
         window_size=10,
         overlap=0.5,
         verbose=0,
