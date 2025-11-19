@@ -1003,6 +1003,54 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 f"capability:pretrain=True but does not override _pretrain method"
             )
 
+    def test_pretrain_state_transitions(self, estimator_instance, n_columns):
+        """Test that pretrain() correctly transitions state.
+
+        Checks:
+        - State changes from new to pretrained
+        - pretrain() can be called on pretrained estimator
+        - fit() after pretrain() results in fitted state
+        """
+        if not estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None  # Skip for non-pretrain forecasters
+
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        # Initial state should be "new"
+        assert estimator_instance.state == "new", (
+            f"Initial state should be 'new', got {estimator_instance.state}"
+        )
+
+        # Generate panel data for pretraining
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=n_columns
+        )
+
+        # Pretrain should change state to "pretrained"
+        estimator_instance.pretrain(y_panel)
+        assert estimator_instance.state == "pretrained", (
+            f"State after pretrain should be 'pretrained', "
+            f"got {estimator_instance.state}"
+        )
+
+        # Should be able to pretrain again (incremental)
+        y_panel2 = _make_hierarchical(
+            hierarchy_levels=(2,), min_timepoints=10, max_timepoints=10, n_columns=n_columns
+        )
+        estimator_instance.pretrain(y_panel2)
+        assert estimator_instance.state == "pretrained", (
+            f"State after second pretrain should still be 'pretrained', "
+            f"got {estimator_instance.state}"
+        )
+
+        # Fit after pretrain should result in fitted state
+        y_series = _make_series(n_columns=n_columns)
+        estimator_instance.fit(y_series, fh=[1, 2, 3])
+        assert estimator_instance.state == "fitted", (
+            f"State after fit should be 'fitted', got {estimator_instance.state}"
+        )
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
     """Module level tests for all global forecasters."""
 
