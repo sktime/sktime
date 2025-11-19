@@ -192,3 +192,22 @@ class TestDummyGlobalForecaster:
         # Predict should raise ValueError for invalid strategy
         with pytest.raises(ValueError, match="Unknown strategy"):
             forecaster.predict()
+
+    def test_preserves_fitted_params_after_fit(self):
+        """Test that fit() after pretrain() preserves pretrained parameters."""
+        forecaster = DummyGlobalForecaster()
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10
+        )
+        forecaster.pretrain(y_panel)
+        pretrained_mean = forecaster.global_mean_
+        pretrained_std = forecaster.global_std_
+
+        # Fit on different series
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+
+        # Pretrained params should be preserved
+        np.testing.assert_almost_equal(forecaster.global_mean_, pretrained_mean)
+        np.testing.assert_almost_equal(forecaster.global_std_, pretrained_std)
