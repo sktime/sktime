@@ -1,4 +1,5 @@
 """Tests for BaseForecaster API points."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning", "kejsitake", "fkiraly"]
@@ -1019,13 +1020,16 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         # Initial state should be "new"
-        assert estimator_instance.state == "new", (
-            f"Initial state should be 'new', got {estimator_instance.state}"
-        )
+        assert (
+            estimator_instance.state == "new"
+        ), f"Initial state should be 'new', got {estimator_instance.state}"
 
         # Generate panel data for pretraining
         y_panel = _make_hierarchical(
-            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=n_columns
+            hierarchy_levels=(3,),
+            min_timepoints=10,
+            max_timepoints=10,
+            n_columns=n_columns,
         )
 
         # Pretrain should change state to "pretrained"
@@ -1037,7 +1041,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # Should be able to pretrain again (incremental)
         y_panel2 = _make_hierarchical(
-            hierarchy_levels=(2,), min_timepoints=10, max_timepoints=10, n_columns=n_columns
+            hierarchy_levels=(2,),
+            min_timepoints=10,
+            max_timepoints=10,
+            n_columns=n_columns,
         )
         estimator_instance.pretrain(y_panel2)
         assert estimator_instance.state == "pretrained", (
@@ -1048,9 +1055,85 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # Fit after pretrain should result in fitted state
         y_series = _make_series(n_columns=n_columns)
         estimator_instance.fit(y_series, fh=[1, 2, 3])
-        assert estimator_instance.state == "fitted", (
-            f"State after fit should be 'fitted', got {estimator_instance.state}"
+        assert (
+            estimator_instance.state == "fitted"
+        ), f"State after fit should be 'fitted', got {estimator_instance.state}"
+
+    def test_pretrain_fit_predict_workflow(self, estimator_instance, n_columns):
+        """Test full pretrain → fit → predict workflow.
+
+        Checks that forecaster can:
+        1. Be pretrained on panel data
+        2. Be fit on a single series
+        3. Make predictions
+        """
+        if not estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(5,),
+            min_timepoints=15,
+            max_timepoints=15,
+            n_columns=n_columns,
         )
+        estimator_instance.pretrain(y_panel)
+
+        y_train = _make_series(n_columns=n_columns, n_timepoints=20)
+        fh = ForecastingHorizon([1, 2, 3])
+        estimator_instance.fit(y_train, fh=fh)
+
+        y_pred = estimator_instance.predict()
+        assert len(y_pred) == 3, f"Expected 3 predictions, got {len(y_pred)}"
+
+        cutoff = get_cutoff(y_train, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        _assert_correct_columns(y_pred, y_train)
+
+    def test_pretrain_not_reset_by_fit(self, estimator_instance, n_columns):
+        """Test that fit() doesn't reset pretrained estimator.
+
+        This is critical for fine-tuning workflows.
+        Pretrained attributes should still exist after fit().
+        """
+        if not estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        # Pretrain
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(5,),
+            min_timepoints=15,
+            max_timepoints=15,
+            n_columns=n_columns,
+        )
+        estimator_instance.pretrain(y_panel)
+
+        pretrained_params_before = estimator_instance.get_pretrained_params()
+        pretrained_attrs_before = list(pretrained_params_before.keys())
+
+        y_series = _make_series(n_columns=n_columns)
+        estimator_instance.fit(y_series, fh=[1, 2, 3])
+
+        pretrained_params_after = estimator_instance.get_pretrained_params()
+        pretrained_attrs_after = list(pretrained_params_after.keys())
+
+        # All pretrained attributes should still exist
+        # (fit may add more, but shouldn't remove pretrained ones)
+        for attr in pretrained_attrs_before:
+            assert attr in pretrained_attrs_after, (
+                f"Pretrained attribute {attr} was removed by fit(). "
+                f"Attributes before fit: {pretrained_attrs_before}, "
+                f"after fit: {pretrained_attrs_after}"
+            )
+
+
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
     """Module level tests for all global forecasters."""
 
