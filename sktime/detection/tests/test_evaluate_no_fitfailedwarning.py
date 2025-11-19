@@ -1,12 +1,12 @@
 import warnings
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from sktime.detection.base import BaseDetector
-from sktime.split import SlidingWindowSplitter
 from sktime.detection.model_evaluation import evaluate
 from sktime.exceptions import FitFailedWarning
+from sktime.split import SlidingWindowSplitter
 
 
 class DummyFitEmptyDetector(BaseDetector):

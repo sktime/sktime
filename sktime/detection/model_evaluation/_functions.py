@@ -18,25 +18,28 @@ Notes / assumptions:
   set if it overlaps the test iloc interval.
 """
 
-from copy import deepcopy
+import collections.abc
+import logging
 import time
 import warnings
-import collections.abc
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
 
 from sktime.detection.base import BaseDetector
 from sktime.exceptions import FitFailedWarning
-from sktime.utils.adapters._safe_call import _method_has_arg
 from sktime.performance_metrics.detection import WindowedF1Score
+from sktime.utils.adapters._safe_call import _method_has_arg
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import parallelize
 
 __all__ = ["evaluate"]
 
 
-def _get_column_order_and_datatype(metric_names: list, return_data: bool = False, return_model: bool = False) -> dict:
+def _get_column_order_and_datatype(
+    metric_names: list, return_data: bool = False, return_model: bool = False
+) -> dict:
     """
     Get ordered column names and simple datatypes for results metadata.
 
@@ -65,7 +68,9 @@ def _get_column_order_and_datatype(metric_names: list, return_data: bool = False
         metrics_metadata[f"test_{mn}"] = "float"
 
     if return_data:
-        fit_metadata.update({"y_train": "object", "y_test": "object", "y_pred": "object"})
+        fit_metadata.update(
+            {"y_train": "object", "y_test": "object", "y_pred": "object"}
+        )
     if return_model:
         fit_metadata.update({"fitted_detector": "object"})
 
@@ -182,7 +187,9 @@ def _coerce_y_split(y, train_idx, test_idx, X=None):
                 if not (e < test_min or s > test_max):
                     mask_test[i] = True
 
-    return y.loc[mask_train].reset_index(drop=True), y.loc[mask_test].reset_index(drop=True)
+    return y.loc[mask_train].reset_index(drop=True), y.loc[mask_test].reset_index(
+        drop=True
+    )
 
 
 def evaluate(
@@ -283,7 +290,6 @@ def evaluate(
         DataFrame will contain a ``fitted_detector`` column with the fitted
         detector per fold (deepcopied when possible).
     """
-
     if not isinstance(detector, BaseDetector):
         raise TypeError("`detector` must inherit from BaseDetector")
 
@@ -300,10 +306,13 @@ def evaluate(
         if mname is None:
             cls = getattr(metric, "__class__", None)
             mname = cls.__name__ if isinstance(cls, type) else str(cls)
-            try:
-                setattr(metric, "name", mname)
-            except Exception:
-                pass
+            if hasattr(metric, "__dict__"):
+                try:
+                    setattr(metric, "name", mname)
+                except Exception:
+                    logging.getLogger(__name__).debug(
+                        "failed to set metric.name", exc_info=True
+                    )
         metric_names.append(str(mname))
 
     # helper to validate strategy value
@@ -326,7 +335,7 @@ def evaluate(
         "return_model": return_model,
         "error_score": error_score,
     }
-    
+
     # backend soft-dependency checks
     if backend in ["dask", "dask_lazy"]:
         if not _check_soft_dependencies("dask", severity="none"):
@@ -350,7 +359,6 @@ def evaluate(
     if not_parallel:
         fitted_det = None
         for x in enumerate(cv.split_series(X)):
-            i = x[0]
             # pass along current fitted detector when applicable
             if fitted_det is not None:
                 _evaluate_window_kwargs["fitted_detector"] = fitted_det
@@ -394,7 +402,9 @@ def evaluate(
                 "installed, but dask is not present in the python environment"
             )
 
-        metadata = _get_column_order_and_datatype(metric_names, return_data, return_model=return_model)
+        metadata = _get_column_order_and_datatype(
+            metric_names, return_data, return_model=return_model
+        )
 
         results = dd.from_delayed(res, meta=metadata)
         if backend == "dask":
@@ -413,7 +423,8 @@ def _evaluate_window(x, meta):
     Parameters
     ----------
     x : tuple
-        Element from ``enumerate(cv.split_series(X))``, i.e., ``(i, (train_idx, test_idx))``
+        Element from ``enumerate(cv.split_series(X))``; shape ``(i, (train_idx,
+        test_idx))``.
     meta : dict
         Dictionary with keys: detector, X, y, scoring, metric_names, strategy,
         return_data, return_model, error_score
@@ -438,7 +449,7 @@ def _evaluate_window(x, meta):
 
     fit_time = np.nan
     pred_time = np.nan
-    scores = {mn: error_score for mn in metric_names}
+    scores = dict.fromkeys(metric_names, error_score)
     y_pred = pd.DataFrame()
     y_train, y_test = _coerce_y_split(y, train_idx, test_idx, X=X)
 
@@ -463,13 +474,17 @@ def _evaluate_window(x, meta):
                     fitted_det.update(X=X.iloc[train_idx], update_params=update_params)
             else:
                 if _method_has_arg(fitted_det.update, "y"):
-                    fitted_det.update(X=X.iloc[train_idx], y=y_train if y is not None else None)
+                    fitted_det.update(
+                        X=X.iloc[train_idx], y=y_train if y is not None else None
+                    )
                 else:
                     fitted_det.update(X=X.iloc[train_idx])
         else:
             fitted_det = detector.clone()
             if _method_has_arg(fitted_det._fit, "y"):
-                fitted_det.fit(X=X.iloc[train_idx], y=y_train if y is not None else None)
+                fitted_det.fit(
+                    X=X.iloc[train_idx], y=y_train if y is not None else None
+                )
             else:
                 fitted_det.fit(X=X.iloc[train_idx])
         fit_time = time.perf_counter() - start_fit
@@ -489,7 +504,9 @@ def _evaluate_window(x, meta):
                     requires_y = True
 
             if requires_y:
-                scores[mn] = metric(y_test, y_pred, X.iloc[test_idx] if hasattr(X, "iloc") else X)
+                scores[mn] = metric(
+                    y_test, y_pred, X.iloc[test_idx] if hasattr(X, "iloc") else X
+                )
             else:
                 try:
                     scores[mn] = metric(y_pred, X.iloc[test_idx])
@@ -510,7 +527,7 @@ def _evaluate_window(x, meta):
             if hasattr(detector, "get_tag") and detector.get_tag("fit_is_empty", False):
                 suppress_warn = True
             elif (
-                'fitted_det' in locals()
+                "fitted_det" in locals()
                 and fitted_det is not None
                 and hasattr(fitted_det, "get_tag")
                 and fitted_det.get_tag("fit_is_empty", False)
@@ -520,10 +537,11 @@ def _evaluate_window(x, meta):
             suppress_warn = False
 
         if not suppress_warn:
-            warnings.warn(
-                f"In evaluate, fitting/predict of detector {type(detector).__name__} failed: {e}",
-                FitFailedWarning,
+            msg = (
+                "In evaluate, fitting/predict of detector "
+                f"{type(detector).__name__} failed: {e}"
             )
+            warnings.warn(msg, FitFailedWarning)
 
     temp_result = {}
     # store metric values and timing as single-element lists to create DataFrame
@@ -547,10 +565,13 @@ def _evaluate_window(x, meta):
 
     result = pd.DataFrame(temp_result)
     # reorder columns according to metadata helper
-    col_meta = _get_column_order_and_datatype(metric_names, return_data=return_data, return_model=return_model)
-    # ensure result has all columns in the order of col_meta (missing keys will be left out)
+    col_meta = _get_column_order_and_datatype(
+        metric_names, return_data=return_data, return_model=return_model
+    )
+    # ensure result has all columns in the order of col_meta
     cols = [c for c in col_meta.keys() if c in result.columns]
     result = result.reindex(columns=cols)
 
-    # return DataFrame in refit/parallel mode, return (DataFrame, fitted_det) for sequential update
+    # return DataFrame in refit/parallel mode; sequential update returns
+    # (DataFrame, fitted_det)
     return result if strategy == "refit" else (result, fitted_det)

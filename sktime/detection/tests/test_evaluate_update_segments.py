@@ -1,9 +1,9 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from sktime.detection.base import BaseDetector
-from sktime.split import SlidingWindowSplitter
 from sktime.detection.model_evaluation import evaluate
+from sktime.split import SlidingWindowSplitter
 
 
 class DummyDetectorWithUpdateParams(BaseDetector):
@@ -74,7 +74,9 @@ def test_evaluate_update_strategy_for_segments():
     fitted = res.loc[1, "fitted_detector"]
     assert isinstance(fitted, DummyDetectorWithUpdateParams)
     # update should have been called at least once with True
-    assert any(fitted.update_calls), "expected at least one update call with update_params=True"
+    assert any(fitted.update_calls), (
+        "expected at least one update call with update_params=True"
+    )
 
 
 def test_evaluate_no_update_params_strategy_for_segments():
@@ -84,11 +86,15 @@ def test_evaluate_no_update_params_strategy_for_segments():
 
     det = DummyDetectorWithUpdateParams()
 
-    res = evaluate(det, splitter, X, y=y, strategy="no-update_params", return_model=True)
+    res = evaluate(
+        det, splitter, X, y=y, strategy="no-update_params", return_model=True
+    )
 
     fitted = res.loc[1, "fitted_detector"]
     # update_calls should have at least one False entry
-    assert any(call is False for call in fitted.update_calls), "expected update_params=False in at least one update call"
+    assert any(call is False for call in fitted.update_calls), (
+        "expected update_params=False in at least one update call"
+    )
 
 
 def test_evaluate_fallback_update_without_update_params_arg():
@@ -98,7 +104,9 @@ def test_evaluate_fallback_update_without_update_params_arg():
 
     det = DummyDetectorNoUpdateParams()
 
-    res = evaluate(det, splitter, X, y=y, strategy="no-update_params", return_model=True)
+    res = evaluate(
+        det, splitter, X, y=y, strategy="no-update_params", return_model=True
+    )
 
     fitted = res.loc[1, "fitted_detector"]
     # since detector does not accept update_params, update_calls increments
