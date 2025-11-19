@@ -181,3 +181,14 @@ class TestDummyGlobalForecaster:
 
         # Should have capability:pretrain tag set to True
         assert forecaster.get_tag("capability:pretrain") is True
+
+    def test_invalid_strategy(self):
+        """Test that invalid strategy raises error."""
+        forecaster = DummyGlobalForecaster(strategy="invalid")
+
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+
+        # Predict should raise ValueError for invalid strategy
+        with pytest.raises(ValueError, match="Unknown strategy"):
+            forecaster.predict()
