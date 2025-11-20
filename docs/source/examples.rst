@@ -40,6 +40,7 @@ Forecasting
     examples/01a_forecasting_sklearn.ipynb
     examples/01b_forecasting_proba.ipynb
     examples/01c_forecasting_hierarchical_global.ipynb
+    examples/forecasting/ltsf_linear_pretraining.ipynb
 
 Time Series Classification, Regression, Clustering
 ==================================================

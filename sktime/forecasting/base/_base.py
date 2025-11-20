@@ -150,6 +150,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         super().__init__()
         _check_estimator_deps(self)
+        self._state = "new"
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformedTargetForecaster.
@@ -318,6 +319,39 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         else:
             return ColumnSelect(key) ** self
 
+    @property
+    def is_fitted(self):
+        """Whether ``fit`` has been called.
+
+        Inspects object's ``_is_fitted` attribute that should initialize to ``False``
+        during object construction, and be set to True in calls to an object's
+        `fit` method.
+
+        Returns
+        -------
+        bool
+            Whether the estimator has been `fit`.
+        """
+        return self.state == "fitted"
+
+    @property
+    def state(self):
+        """State of the estimator.
+
+        Possible states for forecasters are:
+
+        * "new": post-init state
+        * "fitted": if ``fit`` has been called.
+        * "pretrained": if ``pretrain`` has been called. Only available for
+            forecasters that support pretraining.
+
+        Returns
+        -------
+        str, one of {"new", "fitted", "pretrained"}
+            State of the estimator.
+        """
+        return self._state
+
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -375,7 +409,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         assert y is not None, "y cannot be None, but found None"
 
         # if fit is called, estimator is reset, including fitted state
-        self.reset()
+        if not self._state == "pretrained":
+            self.reset()
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -400,6 +435,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         # this should happen last
         self._is_fitted = True
+        self._state = "fitted"
 
         return self
 
@@ -570,6 +606,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
 
         self._is_fitted = True
+        self._state = "fitted"
         # call the public predict to avoid duplicating output conversions
         #  input conversions are skipped since we are using X_inner
         return self.predict(fh=fh, X=X_inner)
@@ -954,6 +991,75 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 raise e
 
         return pred_dist
+
+    def pretrain(self, y, X=None, fh=None):
+        """Pre-train forecaster on data.
+
+        State change:
+            Changes state to "pretrained".
+
+        Writes to self:
+
+            * Sets pretrained model attributes ending in "_", fitted attributes are
+              inspectable via ``get_pretrained_params``.
+            * Sets ``self.state`` flag to ``"pretrained"``.
+            * Sets ``self._pretrained_attrs`` to list of pretrained attributes.
+        """
+        # Convert fh to ForecastingHorizon if needed
+        _fh = fh
+        if fh is not None and not isinstance(fh, ForecastingHorizon):
+            _fh = ForecastingHorizon(fh)
+
+        if self._state == "new":
+            self._pretrain(y=y, X=X, fh=_fh)
+        else:
+            self._pretrain_update(y=y, X=X, fh=_fh)
+
+        if not hasattr(self, "_pretrained_attrs"):
+            self._pretrained_attrs = []
+
+        # Track new pretrained attributes (extend, not append, to avoid nested lists)
+        new_attrs = [
+            a for a in dir(self)
+            if a.endswith("_") and not a.startswith("_")
+            and a not in self._pretrained_attrs
+        ]
+        self._pretrained_attrs.extend(new_attrs)
+
+        self._state = "pretrained"
+        return self
+
+    def get_pretrained_params(self):
+        """Get pretrained parameters of this estimator.
+
+        State required:
+            Requires state to be "pretrained" or "fitted" (after pretraining).
+
+        Returns
+        -------
+        params : dict
+            Dictionary of pretrained parameter names mapped to their values.
+            Keys are attribute names ending in "_" that were set during pretraining.
+            Returns empty dict if estimator has not been pretrained.
+
+        Examples
+        --------
+        >>> from sktime.forecasting import DummyGlobalForecaster
+        >>> forecaster = DummyGlobalForecaster()
+        >>> # After pretraining on panel data
+        >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
+        >>> params = forecaster.get_pretrained_params()  # doctest: +SKIP
+        >>> # params might contain: {"global_mean_": 42.0, "n_pretrain_instances_": 5}
+        """
+        if not hasattr(self, "_pretrained_attrs"):
+            return {}
+
+        params = {}
+        for attr in self._pretrained_attrs:
+            if hasattr(self, attr):
+                params[attr] = getattr(self, attr)
+
+        return params
 
     def update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
@@ -2137,6 +2243,26 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             Point predictions
         """
         raise NotImplementedError("abstract method")
+
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain forecaster on training data, first pretraining batch.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # the default simply discards the data, i.e., no pretraining happens
+        return self
+
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Pretrain forecaster on training data, if already pretrained.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # the default calls _pretrain
+        return self._pretrain(y=y, X=X, fh=fh)
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
