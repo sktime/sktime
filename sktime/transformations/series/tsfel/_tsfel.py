@@ -4,8 +4,9 @@
 __author__ = ["Faakhir30"]
 
 
-from sktime.transformations.base import BaseTransformer
 import pandas as pd
+
+from sktime.transformations.base import BaseTransformer
 
 
 class _TSFELDataFrame(pd.DataFrame):
@@ -23,7 +24,7 @@ class TSFELTransformer(BaseTransformer):
     """TSFEL transformer to extract features by domain or specific feature names.
 
     This transformer can extract features in two ways:
-    1. By domain: Pass a domain string ('statistical', 'temporal', 'spectral', 'fractal')
+    1. By domain: Pass a domain ('statistical', 'temporal', 'spectral', 'fractal')
     2. By feature names: Pass feature function names (e.g., 'abs_energy', 'auc')
     3. Mixed: Pass a list containing both domain strings and feature names
 
@@ -51,7 +52,6 @@ class TSFELTransformer(BaseTransformer):
 
     Examples
     --------
-
     >>> from sktime.transformations.series.tsfel import TSFELTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -135,19 +135,21 @@ class TSFELTransformer(BaseTransformer):
             If a feature doesn't exist in tsfel.feature_extraction.features or
             if a feature requires a parameter that wasn't provided in kwargs.
         """
-        import tsfel.feature_extraction.features as tsfel_features
         import inspect
         from inspect import Parameter
+
+        import tsfel.feature_extraction.features as tsfel_features
 
         for feature in self.features:
             # Skip domain strings and None
             if feature is None or feature in self.domain_strings:
                 continue
 
-            # Check if feature exists by checking if the attribute exists in the tsfel_features module
+            # Check if feature exists
             if not hasattr(tsfel_features, feature):
                 raise ValueError(
-                    f"Feature '{feature}' not found in tsfel.feature_extraction.features. "
+                    f"Feature '{feature}' not found in "
+                    "tsfel.feature_extraction.features. "
                     "Please check the feature name."
                 )
 
@@ -165,14 +167,16 @@ class TSFELTransformer(BaseTransformer):
                     raise ValueError(
                         f"Feature '{feature}' requires parameter '{param_name}' "
                         f"(positional or keyword) but it was not provided. "
-                        f"Please provide it in the transformer kwargs, e.g., {param_name}=value."
+                        f"Please provide it in the transformer kwargs, "
+                        f"e.g., {param_name}=value."
                     )
 
     def _extract_individual_feature(self, X, feature_name):
         """Extract a single feature by calling individual feature functions directly.
 
-        Returns the raw result from TSFEL feature function, preserving its natural format
-        (scalar, Series, DataFrame, array, etc.). No format conversion is performed.
+        Returns the raw result from TSFEL feature function, preserving its
+        natural format (scalar, Series, DataFrame, array, etc.). No format
+        conversion is performed.
 
         Parameters
         ----------
@@ -187,9 +191,10 @@ class TSFELTransformer(BaseTransformer):
             Raw result from TSFEL feature function in its natural format.
             Can be scalar, Series, DataFrame, array, etc.
         """
-        import tsfel.feature_extraction.features as tsfel_features
         import inspect
         from inspect import Parameter
+
+        import tsfel.feature_extraction.features as tsfel_features
 
         feature_func = getattr(tsfel_features, feature_name)
 
@@ -227,13 +232,15 @@ class TSFELTransformer(BaseTransformer):
         Returns
         -------
         X_transformed : _TSFELDataFrame
-            _TSFELDataFrame containing extracted features. To access raw TSFEL output
-            for a feature, use `transformer['feature_name']` or `transformer[domain_name]`
-            if no feature name or domain name is provided, use `transformer['all']` to get all features.
+            _TSFELDataFrame containing extracted features. To access raw TSFEL
+            output for a feature, use `transformer['feature_name']` or
+            `transformer[domain_name]` if no feature name or domain name is
+            provided, use `transformer['all']` to get all features.
         """
         import tsfel
-        import pandas as pd
-        import numpy as np
+        from tsfel.feature_extraction.calc_features import (
+            time_series_features_extractor,
+        )
 
         # Store raw results in a dictionary for dict-like access
         feature_results = {}
@@ -242,7 +249,7 @@ class TSFELTransformer(BaseTransformer):
             if feature is None or feature in self.domain_strings:
                 # Domain-based features return DataFrame
                 cfg_file = tsfel.get_features_by_domain(feature)
-                domain_df = tsfel.feature_extraction.calc_features.time_series_features_extractor(
+                domain_df = time_series_features_extractor(
                     cfg_file,
                     X,
                     **self.kwargs,
@@ -253,5 +260,6 @@ class TSFELTransformer(BaseTransformer):
                 # Individual features
                 feature_results[feature] = self._extract_individual_feature(X, feature)
 
-        # Return a single-row DataFrame to preserve original TSFEL output formats of individual features
+        # Return a single-row DataFrame to preserve original TSFEL output
+        # formats of individual features
         return _TSFELDataFrame([feature_results], index=[0])

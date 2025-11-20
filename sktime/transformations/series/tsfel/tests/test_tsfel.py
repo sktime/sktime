@@ -7,7 +7,6 @@ __author__ = ["Faakhir30"]
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.tsfel import TSFELTransformer
@@ -197,7 +196,7 @@ def test_required_parameter_provided():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_nonexistent_feature_error():
-    """Test that error is raised when non-existent feature name is provided during init."""
+    """Test that error is raised when non-existent feature name is provided."""
     with pytest.raises(
         ValueError, match="not found in tsfel.feature_extraction.features"
     ):
@@ -209,7 +208,7 @@ def test_nonexistent_feature_error():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_existing_feature_missing_required_parameter():
-    """Test that error is raised when existing feature requires parameter not in kwargs."""
+    """Test error when existing feature requires parameter not in kwargs."""
     # Use a feature that requires a parameter without default
     # auc requires fs parameter - don't provide it
     with pytest.raises(ValueError, match="requires parameter 'fs'"):
