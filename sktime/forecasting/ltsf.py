@@ -76,6 +76,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "capability:pretrain": True,
     }
 
     def __init__(
@@ -448,6 +449,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "capability:pretrain": True,
     }
 
     def __init__(
