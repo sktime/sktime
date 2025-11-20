@@ -15,8 +15,8 @@ class _TSFELDataFrame(pd.DataFrame):
         super().__init__(*args, **kwargs)
 
     def __getitem__(self, key):
-        """Get the raw result for a feature."""
-        return super().__getitem__(key)[0]
+        """Get the result of a feature in TSFEL output format."""
+        return super().__getitem__(key).iloc[0]
 
 
 class TSFELTransformer(BaseTransformer):
@@ -51,12 +51,14 @@ class TSFELTransformer(BaseTransformer):
 
     Examples
     --------
+
     >>> from sktime.transformations.series.tsfel import TSFELTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> # Extract all statistical domain features
     >>> transformer = TSFELTransformer(features="statistical")
     >>> features = transformer.fit_transform(y)
+    >>> features['statistical']
     >>> # Extract specific features
     >>> transformer = TSFELTransformer(
     ...     features=["abs_energy", "auc", "autocorr"],
@@ -65,6 +67,7 @@ class TSFELTransformer(BaseTransformer):
     ...     verbose=0
     ... )
     >>> features = transformer.fit_transform(y)
+    >>> features['abs_energy']
     >>> # Extract feature with custom parameters
     >>> transformer = TSFELTransformer(
     ...     features=["ecdf_percentile_count"],
@@ -101,7 +104,7 @@ class TSFELTransformer(BaseTransformer):
         "capability:missing_values": False,
         # testing configuration
         # ---------------------
-        "tests:vm": True,
+        # "tests:vm": True,
     }
 
     def __init__(
@@ -109,12 +112,61 @@ class TSFELTransformer(BaseTransformer):
         features=None,
         **kwargs,
     ):
-        self.features = features
-        if isinstance(self.features, str) or self.features is None:
-            self.features = [self.features]
+
+        self.domain_strings = ["statistical", "temporal", "spectral", "fractal"]
+        if isinstance(features, str) or features is None:
+            self.features = [features]
+        else:
+            self.features = features
+
         self.kwargs = dict(kwargs)
 
+        # Validate features before initialization
+        self._validate_features()
+
         super().__init__()
+
+    def _validate_features(self):
+        """Validate that all features exist and required parameters are provided.
+
+        Raises
+        ------
+        ValueError
+            If a feature doesn't exist in tsfel.feature_extraction.features or
+            if a feature requires a parameter that wasn't provided in kwargs.
+        """
+        import tsfel.feature_extraction.features as tsfel_features
+        import inspect
+        from inspect import Parameter
+
+        for feature in self.features:
+            # Skip domain strings and None
+            if feature is None or feature in self.domain_strings:
+                continue
+
+            # Check if feature exists by checking if the attribute exists in the tsfel_features module
+            if not hasattr(tsfel_features, feature):
+                raise ValueError(
+                    f"Feature '{feature}' not found in tsfel.feature_extraction.features. "
+                    "Please check the feature name."
+                )
+
+            # Check if feature requires parameters that aren't provided
+            feature_func = getattr(tsfel_features, feature)
+            sig = inspect.signature(feature_func)
+            sig_params = sig.parameters
+
+            for param_name, param in sig_params.items():
+                if param_name == "signal":
+                    continue
+
+                # If parameter is not in kwargs and has no default, it's required
+                if param_name not in self.kwargs and param.default == Parameter.empty:
+                    raise ValueError(
+                        f"Feature '{feature}' requires parameter '{param_name}' "
+                        f"(positional or keyword) but it was not provided. "
+                        f"Please provide it in the transformer kwargs, e.g., {param_name}=value."
+                    )
 
     def _extract_individual_feature(self, X, feature_name):
         """Extract a single feature by calling individual feature functions directly.
@@ -138,22 +190,13 @@ class TSFELTransformer(BaseTransformer):
         import tsfel.feature_extraction.features as tsfel_features
         import inspect
         from inspect import Parameter
-        import pandas as pd
-        import numpy as np
-
-        # Check if feature exists in tsfel.feature_extraction.features
-        if not hasattr(tsfel_features, feature_name):
-            raise ValueError(
-                f"Feature '{feature_name}' not found in tsfel.feature_extraction.features. "
-                "Please check the feature name."
-            )
 
         feature_func = getattr(tsfel_features, feature_name)
 
         # Analyze function signature
         sig = inspect.signature(feature_func)
         sig_params = sig.parameters
-        # Build kwargs for non-signal parameters
+        # Build kwargs for parameters other than signal
         feature_kwargs = {}
         for param_name, param in sig_params.items():
             if param_name == "signal":
@@ -163,12 +206,6 @@ class TSFELTransformer(BaseTransformer):
                 feature_kwargs[param_name] = self.kwargs[param_name]
             elif param.default != Parameter.empty:
                 feature_kwargs[param_name] = param.default
-            else:
-                raise ValueError(
-                    f"Feature '{feature_name}' requires parameter '{param_name}' "
-                    f"(positional or keyword) but it was not provided. "
-                    f"Please provide it in the transformer kwargs, e.g., {param_name}=value."
-                )
 
         # Call feature function: signal as first positional, others as kwargs
         result = feature_func(X, **feature_kwargs)
@@ -178,9 +215,6 @@ class TSFELTransformer(BaseTransformer):
 
     def fit_transform(self, X, y=None):
         """Transform X and return a transformed version.
-
-        Stores raw TSFEL results internally. Access raw results via the transformer's
-        `get_feature_result()` method to get each feature's natural output format.
 
         Parameters
         ----------
@@ -192,21 +226,20 @@ class TSFELTransformer(BaseTransformer):
 
         Returns
         -------
-        X_transformed : pd.DataFrame
-            DataFrame containing extracted features. To access raw TSFEL output
-            for a feature, use `transformer.get_feature_result('feature_name')`.
+        X_transformed : _TSFELDataFrame
+            _TSFELDataFrame containing extracted features. To access raw TSFEL output
+            for a feature, use `transformer['feature_name']` or `transformer[domain_name]`
+            if no feature name or domain name is provided, use `transformer['all']` to get all features.
         """
         import tsfel
         import pandas as pd
         import numpy as np
 
-        domain_strings = ["statistical", "temporal", "spectral", "fractal"]
-
         # Store raw results in a dictionary for dict-like access
         feature_results = {}
 
         for feature in self.features:
-            if feature is None or feature in domain_strings:
+            if feature is None or feature in self.domain_strings:
                 # Domain-based features return DataFrame
                 cfg_file = tsfel.get_features_by_domain(feature)
                 domain_df = tsfel.feature_extraction.calc_features.time_series_features_extractor(
@@ -214,11 +247,11 @@ class TSFELTransformer(BaseTransformer):
                     X,
                     **self.kwargs,
                 )
-                # Store domain result - use domain name as key
                 feature_key = feature if feature is not None else "all"
                 feature_results[feature_key] = domain_df
             else:
-                # Individual features - store raw result
+                # Individual features
                 feature_results[feature] = self._extract_individual_feature(X, feature)
 
+        # Return a single-row DataFrame to preserve original TSFEL output formats of individual features
         return _TSFELDataFrame([feature_results], index=[0])

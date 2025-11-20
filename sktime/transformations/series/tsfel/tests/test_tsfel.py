@@ -25,9 +25,9 @@ def test_basic_functionality():
     transformer = TSFELTransformer(features=None, verbose=0)
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed, pd.DataFrame)
-    assert X_transformed.shape[0] > 0
-    assert X_transformed.shape[1] > 0  # should have some features
+    assert isinstance(X_transformed["all"], pd.DataFrame)
+    assert X_transformed["all"].shape[0] > 0
+    assert X_transformed["all"].shape[1] > 0  # should have some features
 
 
 @pytest.mark.skipif(
@@ -41,8 +41,8 @@ def test_statistical_domain():
     transformer = TSFELTransformer(features="statistical", verbose=0)
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed, pd.DataFrame)
-    assert X_transformed.shape[1] > 0
+    assert isinstance(X_transformed["statistical"], pd.DataFrame)
+    assert X_transformed["statistical"].shape[1] > 0
 
 
 @pytest.mark.skipif(
@@ -56,8 +56,8 @@ def test_temporal_domain():
     transformer = TSFELTransformer(features="temporal", verbose=0)
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed, pd.DataFrame)
-    assert X_transformed.shape[1] > 0
+    assert isinstance(X_transformed["temporal"], pd.DataFrame)
+    assert X_transformed["temporal"].shape[1] > 0
 
 
 @pytest.mark.skipif(
@@ -71,8 +71,8 @@ def test_spectral_domain():
     transformer = TSFELTransformer(features="spectral", verbose=0)
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed, pd.DataFrame)
-    assert X_transformed.shape[1] > 0
+    assert isinstance(X_transformed["spectral"], pd.DataFrame)
+    assert X_transformed["spectral"].shape[1] > 0
 
 
 @pytest.mark.skipif(
@@ -86,8 +86,8 @@ def test_fractal_domain():
     transformer = TSFELTransformer(features="fractal", verbose=0)
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed, pd.DataFrame)
-    assert X_transformed.shape[1] > 0
+    assert isinstance(X_transformed["fractal"], pd.DataFrame)
+    assert X_transformed["fractal"].shape[1] > 0
 
 
 @pytest.mark.skipif(
@@ -105,8 +105,7 @@ def test_specific_features_list():
     )
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed, pd.DataFrame)
-    assert X_transformed.shape[1] > 0
+    assert isinstance(X_transformed["abs_energy"], np.float64)
 
 
 @pytest.mark.skipif(
@@ -120,8 +119,8 @@ def test_mixed_domains_and_features():
     transformer = TSFELTransformer(features=["statistical", "abs_energy"], verbose=0)
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed, pd.DataFrame)
-    assert X_transformed.shape[1] > 0
+    assert isinstance(X_transformed["statistical"], pd.DataFrame)
+    assert X_transformed["statistical"].shape[1] > 0
 
 
 @pytest.mark.skipif(
@@ -139,8 +138,8 @@ def test_feature_with_custom_parameters():
     )
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed, pd.DataFrame)
-    assert X_transformed.shape[1] > 0
+    assert isinstance(X_transformed["ecdf_percentile_count"], tuple)
+    assert len(X_transformed["ecdf_percentile_count"]) == 3
 
 
 @pytest.mark.skipif(
@@ -154,8 +153,8 @@ def test_multivariate_data():
     transformer = TSFELTransformer(features="statistical", verbose=0)
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed, pd.DataFrame)
-    assert X_transformed.shape[1] > 0
+    assert isinstance(X_transformed["statistical"], pd.DataFrame)
+    assert X_transformed["statistical"].shape[1] > 0
 
 
 @pytest.mark.skipif(
@@ -174,22 +173,8 @@ def test_with_window_size():
     )
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed, pd.DataFrame)
-    assert X_transformed.shape[0] > 1  # Should have multiple windows
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(TSFELTransformer),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-def test_required_parameter_error():
-    """Test that error is raised when required parameter is missing."""
-    X = _make_series(n_timepoints=50, n_columns=1)
-
-    # auc requires fs parameter
-    transformer = TSFELTransformer(features=["auc"], verbose=0)
-    with pytest.raises(ValueError, match="requires parameter 'fs'"):
-        transformer.fit_transform(X)
+    assert isinstance(X_transformed["statistical"], pd.DataFrame)
+    assert X_transformed["statistical"].shape[0] > 1  # Should have multiple windows
 
 
 @pytest.mark.skipif(
@@ -204,5 +189,28 @@ def test_required_parameter_provided():
     transformer = TSFELTransformer(features=["auc"], fs=100, verbose=0)
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed, pd.DataFrame)
-    assert X_transformed.shape[1] > 0
+    assert isinstance(X_transformed["auc"], np.float64)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TSFELTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_nonexistent_feature_error():
+    """Test that error is raised when non-existent feature name is provided during init."""
+    with pytest.raises(
+        ValueError, match="not found in tsfel.feature_extraction.features"
+    ):
+        TSFELTransformer(features=["nonexistent_feature_xyz"], verbose=0)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TSFELTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_existing_feature_missing_required_parameter():
+    """Test that error is raised when existing feature requires parameter not in kwargs."""
+    # Use a feature that requires a parameter without default
+    # auc requires fs parameter - don't provide it
+    with pytest.raises(ValueError, match="requires parameter 'fs'"):
+        TSFELTransformer(features=["auc"], verbose=0)
