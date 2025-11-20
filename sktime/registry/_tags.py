@@ -1001,6 +1001,51 @@ class capability__pred_int__insample(_BaseTag):
         "user_facing": True,
     }
 
+class capability__non_contiguous_X(_BaseTag):  
+    """Capability: the forecaster can handle non-contiguous exogenous data.  
+  
+    - String name: ``"capability:non_contiguous_X"``  
+    - Public capability tag  
+    - Values: boolean, ``True`` / ``False``  
+    - Example: ``True``  
+    - Default: ``True``  
+  
+    Exogenous data are additional time series that can be used to improve  
+    forecasting accuracy. When making predictions with a forecasting horizon  
+    ``fh``, the forecaster may receive exogenous data ``X`` that corresponds  
+    only to the specific time points in ``fh``.  
+  
+    If the forecasting horizon is non-contiguous (e.g., ``fh=[2, 5]``),  
+    the exogenous data ``X`` passed to ``predict`` will only contain rows  
+    for those specific time points, not for all intermediate points.  
+  
+    If the ``capability:non_contiguous_X`` tag is ``True``, the forecaster  
+    can handle non-contiguous exogenous data and will make predictions  
+    correctly even when ``X`` contains only the requested time points.  
+  
+    If the tag is ``False``, the forecaster requires contiguous exogenous data  
+    covering all time points from the first to the last element of ``fh``.  
+    For example, if ``fh=[2, 5]``, the forecaster requires ``X`` to contain  
+    data for time points 1, 2, 3, 4, and 5, not just 2 and 5.  
+  
+    Forecasters with ``capability:non_contiguous_X=False`` include those that:  
+  
+    * Use underlying libraries (e.g., statsmodels, statsforecast) that  
+      internally generate predictions for all intermediate time steps  
+    * Require contiguous data for their recursive prediction algorithms  
+  
+    If a forecaster has this tag set to ``False`` and receives non-contiguous  
+    exogenous data, it will raise an error during prediction.  
+    """  
+  
+    _tags = {  
+        "tag_name": "capability:non_contiguous_X",  
+        "parent_type": "forecaster",  
+        "tag_type": "bool",  
+        "short_descr": "can the forecaster handle non-contiguous exogenous data?",  
+        "user_facing": True,  
+    }
+
 
 class requires_fh_in_fit(_BaseTag):
     """Behaviour flag: forecaster requires forecasting horizon in fit.
