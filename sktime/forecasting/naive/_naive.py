@@ -34,90 +34,87 @@ from sktime.utils.warnings import warn
 class NaiveForecaster(_BaseWindowForecaster):
     """Forecast based on naive assumptions about past trends continuing.
 
-        NaiveForecaster is a forecaster that makes forecasts using simple
-        strategies. Two out of three strategies are robust against NaNs. The
-        NaiveForecaster can also be used for multivariate data and it then
-        applies internally the ColumnEnsembleForecaster, so each column
-        is forecasted with the same strategy.
+    NaiveForecaster is a forecaster that makes forecasts using simple
+    strategies. Two out of three strategies are robust against NaNs. The
+    NaiveForecaster can also be used for multivariate data and it then
+    applies internally the ColumnEnsembleForecaster, so each column
+    is forecasted with the same strategy.
 
-        Internally, this forecaster does the following:
+    Internally, this forecaster does the following:
 
-        - obtains the so-called "last window", a 1D array that denotes the
-          most recent time window that the forecaster is allowed to use
-        - reshapes the last window into a 2D array according to the given
-          seasonal periodicity (prepended with NaN values to make it fit);
-        - make a prediction for each column, using the given strategy:
+    - obtains the so-called "last window", a 1D array that denotes the
+      most recent time window that the forecaster is allowed to use
+    - reshapes the last window into a 2D array according to the given
+      seasonal periodicity (prepended with NaN values to make it fit);
+    - make a prediction for each column, using the given strategy:
 
-          - "last": last non-NaN row
-          - "mean": np.nanmean over rows
+      - "last": last non-NaN row
+      - "mean": np.nanmean over rows
 
-        - tile the predictions using the seasonal periodicity
+    - tile the predictions using the seasonal periodicity
 
-        To compute prediction quantiles, we first estimate the standard error
-        of prediction residuals under the assumption of uncorrelated residuals.
-        The forecast variance is then computed by multiplying the residual
-        variance by a constant. This constant is a small-sample bias adjustment
-        and each method (mean, last, drift) have different formulas for computing
-        the constant. These formulas can be found in the Forecasting:
-        Principles and Practice textbook (Table 5.2) [1]_.
-        Lastly, under the assumption that
-        residuals follow a normal distribution, we use the forecast variance and
-        z-scores of a normal distribution to estimate the prediction quantiles.
+    To compute prediction quantiles, we first estimate the standard error
+    of prediction residuals under the assumption of uncorrelated residuals.
+    The forecast variance is then computed by multiplying the residual
+    variance by a constant. This constant is a small-sample bias adjustment
+    and each method (mean, last, drift) have different formulas for computing
+    the constant. These formulas can be found in the Forecasting:
+    Principles and Practice textbook (Table 5.2) [1]_. Lastly, under the assumption that
+    residuals follow a normal distribution, we use the forecast variance and
+    z-scores of a normal distribution to estimate the prediction quantiles.
 
     Parameters
     ----------
-        strategy : {"last", "mean", "drift"}, default="last"
-            Strategy used to make forecasts:
+    strategy : {"last", "mean", "drift"}, default="last"
+        Strategy used to make forecasts:
 
-            * "last":   (robust against NaN values)
-                        forecast the last value in the
-                        training series when sp is 1.
-                        When sp is not 1,
-                        last value of each season
-                        in the last window will be
-                        forecasted for each season.
-            * "mean":   (robust against NaN values)
-                        forecast the mean of last window
-                        of training series when sp is 1.
-                        When sp is not 1, mean of all values
-                        in a season from last window will be
-                        forecasted for each season.
-            * "drift":  (not robust against NaN values)
-                        forecast by fitting a line between the
-                        first and last point of the window and
-                        extrapolating it into the future.
+        * "last":   (robust against NaN values)
+                    forecast the last value in the
+                    training series when sp is 1.
+                    When sp is not 1,
+                    last value of each season
+                    in the last window will be
+                    forecasted for each season.
+        * "mean":   (robust against NaN values)
+                    forecast the mean of last window
+                    of training series when sp is 1.
+                    When sp is not 1, mean of all values
+                    in a season from last window will be
+                    forecasted for each season.
+        * "drift":  (not robust against NaN values)
+                    forecast by fitting a line between the
+                    first and last point of the window and
+                    extrapolating it into the future.
 
-        sp : int, or None, default=1
-            Seasonal periodicity to use in the seasonal forecasting. None=1.
+    sp : int, or None, default=1
+        Seasonal periodicity to use in the seasonal forecasting. None=1.
 
-        window_length : int or None, default=None
-            Window length to use in the ``mean`` strategy. If None, entire training
-                series will be used.
+    window_length : int or None, default=None
+        Window length to use in the ``mean`` strategy. If None, entire training
+            series will be used.
 
     References
     ----------
-        .. [1] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting:
-            principles and practice, 3rd edition, OTexts: Melbourne, Australia.
-            OTexts.com/fpp3. Accessed on 22 September 2022.
+    .. [1] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting:
+        principles and practice, 3rd edition, OTexts: Melbourne, Australia.
+        OTexts.com/fpp3. Accessed on 22 September 2022.
 
     Examples
     --------
-        >>> from sktime.datasets import load_airline
-        >>> from sktime.forecasting.naive import NaiveForecaster
-        >>> y = load_airline()
-        >>>
-        >>> # Example 1: Drift strategy (trend extrapolation)
-        >>> forecaster = NaiveForecaster(strategy="drift")
-        >>> forecaster.fit(y)
-        NaiveForecaster(strategy='drift')
-        >>> y_pred = forecaster.predict(fh=[1, 2, 3])
-        >>>
-        >>> # Example 2: Seasonal Naive strategy
-        >>> # The airline data is monthly, so we use sp=12 (12 months per year)
-        >>> forecaster = NaiveForecaster(strategy="last", sp=12)
-        >>> forecaster.fit(y)
-        NaiveForecaster(sp=12)
-        >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_airline()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> forecaster.fit(y)
+    NaiveForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>>
+    >>> # Example 2: Seasonal Naive strategy
+    >>> # The airline data is monthly, so we use sp=12 (12 months per year)
+    >>> forecaster = NaiveForecaster(strategy="last", sp=12)
+    >>> forecaster.fit(y)
+    NaiveForecaster(sp=12)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
     _tags = {
