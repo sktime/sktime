@@ -436,9 +436,8 @@ class _Reducer(_BaseWindowForecaster):
         # first observation after the window (this is what the window is summarized to).
 
         index_range = _index_range(relative_int, cutoff)
-        if isinstance(cutoff, pd.DatetimeIndex):
-            if cutoff.tzinfo is not None:
-                index_range = index_range.tz_localize(cutoff.tzinfo)
+        if isinstance(cutoff, pd.DatetimeIndex) and cutoff.tzinfo is not None:
+            index_range = index_range.tz_localize(cutoff.tzinfo)
         # index_range will convert the indices to the date format of cutoff
 
         y_raw = _create_fcst_df(index_range, self._y)
@@ -555,7 +554,7 @@ class _DirectReducer(_Reducer):
                 "Transformers currently cannot be provided"
                 + "for models that run locally"
             )
-        pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
+        pd_format = isinstance(y, (pd.Series, pd.DataFrame))
         if self.pooling == "local":
             if pd_format is True and isinstance(y, pd.MultiIndex):
                 warn(
@@ -668,7 +667,7 @@ class _DirectReducer(_Reducer):
         if self.pooling == "global":
             y_last, X_last = self._get_shifted_window(X_update=X)
             ys = np.array(y_last)
-            if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
+            if np.sum(np.isnan(ys)) != 0 and np.sum(np.isinf(ys)) == 0:
                 return self._predict_nan(fh, method=method, **kwargs)
         else:
             y_last, X_last = self._get_last_window()
