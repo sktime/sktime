@@ -185,6 +185,39 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             self.n_pretrain_instances_ = 1
 
         return self
+
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Update pretrained network with additional panel data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex or pd.Series
+            Additional panel data to train on
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        fh : ForecastingHorizon, optional
+            Forecasting horizon (currently not used)
+
+        Returns
+        -------
+        self : reference to self
+        """
+        dataloader = self._build_panel_dataloader(y)
+
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+        # Update pretrain instance count
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            n_new = len(y.index.get_level_values(0).unique())
+            if hasattr(self, "n_pretrain_instances_"):
+                self.n_pretrain_instances_ += n_new
+            else:
+                self.n_pretrain_instances_ = n_new
+
+        return self
+
     def _build_panel_dataloader(self, y):
         """Build PyTorch DataLoader for panel data pretraining.
 
@@ -201,7 +234,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         from torch.utils.data import DataLoader
 
         # Convert panel data to format suitable for training
-        if hasattr(y, 'index') and isinstance(y.index, pd.MultiIndex):
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
             # Extract individual series from panel
             from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
 
@@ -228,6 +261,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
 
             # Combine datasets
             from torch.utils.data import ConcatDataset
+
             combined_dataset = ConcatDataset(datasets)
         else:
             # Single series - use standard dataset
@@ -651,6 +685,39 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             self.n_pretrain_instances_ = 1
 
         return self
+
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Update pretrained network with additional panel data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex or pd.Series
+            Additional panel data to train on
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        fh : ForecastingHorizon, optional
+            Forecasting horizon (currently not used)
+
+        Returns
+        -------
+        self : reference to self
+        """
+        dataloader = self._build_panel_dataloader(y)
+
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+        # Update pretrain instance count
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            n_new = len(y.index.get_level_values(0).unique())
+            if hasattr(self, "n_pretrain_instances_"):
+                self.n_pretrain_instances_ += n_new
+            else:
+                self.n_pretrain_instances_ = n_new
+
+        return self
+
     def _build_panel_dataloader(self, y):
         """Build PyTorch DataLoader for panel data pretraining.
 
@@ -694,6 +761,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
 
             # Combine datasets
             from torch.utils.data import ConcatDataset
+
             combined_dataset = ConcatDataset(datasets)
         else:
             # Single series - use standard dataset
