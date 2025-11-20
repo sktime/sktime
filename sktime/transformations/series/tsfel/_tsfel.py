@@ -104,7 +104,7 @@ class TSFELTransformer(BaseTransformer):
         "capability:missing_values": False,
         # testing configuration
         # ---------------------
-        # "tests:vm": True,
+        "tests:vm": True,
     }
 
     def __init__(
