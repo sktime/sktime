@@ -555,7 +555,7 @@ class _DirectReducer(_Reducer):
                 "Transformers currently cannot be provided"
                 + "for models that run locally"
             )
-        pd_format = isinstance(y, (pd.Series, pd.DataFrame))
+        pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
         if self.pooling == "local":
             if pd_format is True and isinstance(y, pd.MultiIndex):
                 warn(
@@ -1695,7 +1695,7 @@ def _get_forecaster(scitype, strategy):
         raise ValueError(
             "Error in make_reduction, no reduction strategies defined for "
             f"specified or inferred scitype of estimator: {scitype}. "
-            f"Valid scitypes are: {list(registry)}."
+            f"Valid scitypes are: {list(registry.keys())}."
         )
     if strategy not in registry[scitype]:
         raise ValueError(
