@@ -233,12 +233,9 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         """
         from torch.utils.data import DataLoader
 
-        # Convert panel data to format suitable for training
         if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
-            # Extract individual series from panel
             from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
 
-            # Get unique instances
             instances = y.index.get_level_values(0).unique()
 
             # Collect all series data
@@ -259,12 +256,10 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
                 for series in all_series
             ]
 
-            # Combine datasets
             from torch.utils.data import ConcatDataset
 
             combined_dataset = ConcatDataset(datasets)
         else:
-            # Single series - use standard dataset
             from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
 
             if not isinstance(y, pd.DataFrame):
@@ -733,12 +728,9 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         """
         from torch.utils.data import DataLoader
 
-        # Convert panel data to format suitable for training
         if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
-            # Extract individual series from panel
             from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
 
-            # Get unique instances
             instances = y.index.get_level_values(0).unique()
 
             # Collect all series data
@@ -759,12 +751,10 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
                 for series in all_series
             ]
 
-            # Combine datasets
             from torch.utils.data import ConcatDataset
 
             combined_dataset = ConcatDataset(datasets)
         else:
-            # Single series - use standard dataset
             from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
 
             if not isinstance(y, pd.DataFrame):
