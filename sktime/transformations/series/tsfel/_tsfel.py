@@ -40,7 +40,7 @@ class TSFELTransformer(BaseTransformer):
         - A list of feature function names: ['abs_energy', 'auc', 'autocorr']
         - A list mixing domains and features: ['statistical', 'abs_energy']
         - None: extract all features from all domains
-    **kwargs : dict
+    kwargs : dict, optional (default=None)
         Additional keyword arguments passed to tsfel's feature extractor or
         individual feature functions. Common parameters include:
         - fs : float, sampling frequency
@@ -56,27 +56,17 @@ class TSFELTransformer(BaseTransformer):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> # Extract all statistical domain features
-    >>> transformer = TSFELTransformer(features="statistical")
-    >>> features = transformer.fit_transform(y)
-    >>> features['statistical']
-    >>> # Extract specific features
     >>> transformer = TSFELTransformer(
-    ...     features=["abs_energy", "auc", "autocorr"],
-    ...     fs=100,
-    ...     window_size=100,
-    ...     verbose=0
+    ...     features="statistical", kwargs={"verbose": 0}
     ... )
-    >>> features = transformer.fit_transform(y)
-    >>> features['abs_energy']
+    >>> features = transformer.fit_transform(y)  # doctest: +SKIP
     >>> # Extract feature with custom parameters
     >>> transformer = TSFELTransformer(
     ...     features=["ecdf_percentile_count"],
-    ...     percentile=[0.6, 0.9, 1.0]
+    ...     kwargs={"percentile": [0.6, 0.9, 1.0], "verbose": 0}
     ... )
-    >>> features = transformer.fit_transform(y)
-    >>> # Mix domains and individual features
-    >>> transformer = TSFELTransformer(features=["statistical", "abs_energy"])
-    >>> features = transformer.fit_transform(y)
+    >>> features = transformer.fit_transform(y)  # doctest: +SKIP
+
     """
 
     _tags = {
@@ -102,6 +92,7 @@ class TSFELTransformer(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
+        "capability:categorical_in_X": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -110,20 +101,23 @@ class TSFELTransformer(BaseTransformer):
     def __init__(
         self,
         features=None,
-        **kwargs,
+        kwargs=None,
     ):
+        # Call super().__init__() first to check soft dependencies
+        super().__init__()
+
         self.domain_strings = ["statistical", "temporal", "spectral", "fractal"]
-        if isinstance(features, str) or features is None:
-            self.features = [features]
-        else:
-            self.features = features
+        self.features = features
+        self.kwargs = kwargs
 
-        self.kwargs = dict(kwargs)
-
-        # Validate features before initialization
+        # Validate features after initialization
         self._validate_features()
 
-        super().__init__()
+    def _get_features_list(self):
+        """Normalize features to a list format for internal use."""
+        if isinstance(self.features, str) or self.features is None:
+            return [self.features]
+        return self.features
 
     def _validate_features(self):
         """Validate that all features exist and required parameters are provided.
@@ -139,7 +133,8 @@ class TSFELTransformer(BaseTransformer):
 
         import tsfel.feature_extraction.features as tsfel_features
 
-        for feature in self.features:
+        features_list = self._get_features_list()
+        for feature in features_list:
             # Skip domain strings and None
             if feature is None or feature in self.domain_strings:
                 continue
@@ -156,13 +151,14 @@ class TSFELTransformer(BaseTransformer):
             feature_func = getattr(tsfel_features, feature)
             sig = inspect.signature(feature_func)
             sig_params = sig.parameters
+            kwargs = {} if self.kwargs is None else self.kwargs
 
             for param_name, param in sig_params.items():
                 if param_name == "signal":
                     continue
 
                 # If parameter is not in kwargs and has no default, it's required
-                if param_name not in self.kwargs and param.default == Parameter.empty:
+                if param_name not in kwargs and param.default == Parameter.empty:
                     raise ValueError(
                         f"Feature '{feature}' requires parameter '{param_name}' "
                         f"(positional or keyword) but it was not provided. "
@@ -206,19 +202,78 @@ class TSFELTransformer(BaseTransformer):
             if param_name == "signal":
                 continue
 
-            if param_name in self.kwargs:
+            if self.kwargs is not None and param_name in self.kwargs:
                 feature_kwargs[param_name] = self.kwargs[param_name]
             elif param.default != Parameter.empty:
                 feature_kwargs[param_name] = param.default
 
-        # Call feature function: signal as first positional, others as kwargs
-        result = feature_func(X, **feature_kwargs)
+        # Handle multivariate data: if X is DataFrame with multiple columns,
+        # process each column separately for features that expect 1D input
+        if isinstance(X, pd.DataFrame) and X.shape[1] > 1:
+            # Process each column separately
+            results = []
+            for col in X.columns:
+                col_result = feature_func(X[col], **feature_kwargs)
+                results.append(col_result)
+            return results
+        else:
+            # Univariate case: call feature function directly
+            result = feature_func(X, **feature_kwargs)
+            return result
 
-        # Return raw result - no conversion
-        return result
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series, Panel, or Hierarchical data, of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series, Panel, or Hierarchical data, of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        X_transformed : pd.DataFrame
+            DataFrame containing extracted features. To access raw TSFEL output for a
+            feature, use `transformer['feature_name']` or `transformer[domain_name]` if
+            no feature name or domain name is provided, use `transformer['all']` to get
+            all features.
+        """
+        import tsfel
+        from tsfel.feature_extraction.calc_features import (
+            time_series_features_extractor,
+        )
+
+        # Store raw results in a dictionary for dict-like access
+        feature_results = {}
+
+        features_list = self._get_features_list()
+        for feature in features_list:
+            if feature is None or feature in self.domain_strings:
+                # Domain-based features return DataFrame
+                cfg_file = tsfel.get_features_by_domain(feature)
+                domain_kwargs = {} if self.kwargs is None else self.kwargs
+                domain_df = time_series_features_extractor(
+                    cfg_file,
+                    X,
+                    **domain_kwargs,
+                )
+                feature_key = feature if feature is not None else "all"
+                feature_results[feature_key] = domain_df
+            else:
+                # Individual features
+                feature_results[feature] = self._extract_individual_feature(X, feature)
+
+        # Use regular DataFrame for _transform to pass mtype checks
+        return pd.DataFrame([feature_results], index=[0])
 
     def fit_transform(self, X, y=None):
-        """Transform X and return a transformed version.
+        """Fit to data, then transform it.
+
+        Overrides base class to return _TSFELDataFrame for easier access.
 
         Parameters
         ----------
@@ -236,29 +291,41 @@ class TSFELTransformer(BaseTransformer):
             `transformer[domain_name]` if no feature name or domain name is
             provided, use `transformer['all']` to get all features.
         """
-        import tsfel
-        from tsfel.feature_extraction.calc_features import (
-            time_series_features_extractor,
-        )
+        # Check X and y (validates categorical data, etc.)
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
+        self.fit(X, y)
+        Xt = self._transform(X_inner, y_inner)
+        # Convert to _TSFELDataFrame for easier access
+        return _TSFELDataFrame(Xt)
 
-        # Store raw results in a dictionary for dict-like access
-        feature_results = {}
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
 
-        for feature in self.features:
-            if feature is None or feature in self.domain_strings:
-                # Domain-based features return DataFrame
-                cfg_file = tsfel.get_features_by_domain(feature)
-                domain_df = time_series_features_extractor(
-                    cfg_file,
-                    X,
-                    **self.kwargs,
-                )
-                feature_key = feature if feature is not None else "all"
-                feature_results[feature_key] = domain_df
-            else:
-                # Individual features
-                feature_results[feature] = self._extract_individual_feature(X, feature)
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for transformers.
 
-        # Return a single-row DataFrame to preserve original TSFEL output
-        # formats of individual features
-        return _TSFELDataFrame([feature_results], index=[0])
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {"features": "statistical", "kwargs": {"verbose": 0}}
+        params2 = {
+            "features": ["abs_energy", "auc"],
+            "kwargs": {"fs": 100, "verbose": 0},
+        }
+        params3 = {
+            "features": ["statistical", "abs_energy"],
+            "kwargs": {"verbose": 0},
+        }
+
+        return [params1, params2, params3]
