@@ -6,7 +6,6 @@ __all__ = ["PeakTimeFeature"]
 
 
 import pandas as pd
-from pandas.tseries.frequencies import to_offset
 
 from sktime.transformations.base import BaseTransformer
 
@@ -196,13 +195,8 @@ class PeakTimeFeature(BaseTransformer):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        # which mtypes do _fit/_predict support for y?
-        "y_inner_mtype": [
-            "pd.Series",
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:multivariate": True,
         "fit_is_empty": True,
         "transform-returns-same-time-index": True,
@@ -579,84 +573,32 @@ def _check_ts_freq(x_df, datetime_freq, ts_freq):
     Parameters
     ----------
     x_df : DataFrame
-        DataFrame with a 'date_sequence' datetime column.
-    datetime_freq : DataFrame
-        Frequency rank table as returned by _datetime_frequency_rank().
-    ts_freq : str or None
+        Dataframe with time index
+    datetime_freq : str
+        Frequency of main dataframe (x_df)
+    ts_freq : str
         selected frequency by user, can be one of the following:
-        {"H", "D", "W", "M", "Q", "Y"}, or None to skip the compatibility check.
+        {"H", "D", "W", "M", "Q", "Y"}
 
     Raises
     ------
     ValueError
         Raise an error if:
-        1- ts_freq is not in the supported set.
-        2- the frequency cannot be inferred from ``x_df['date_sequence']``.
-        3- the inferred frequency cannot be interpreted or mapped to a base code.
-        4- the inferred frequency is not compatible with ts_freq.
+        1- input ts_freq is invalid and not in the specified dict i.e.,
+        {"H", "D", "W", "M", "Q", "Y"}
+        2- Level of base dataframe ts_frequency  is lower than selected ts_freq
     """
     # Check 1: Determine whether input ts_freq is valid or not
     freq_list = datetime_freq["frequency"].tolist()
     if (ts_freq is not None) & (ts_freq not in freq_list):
         raise ValueError(f"Invalid ts_freq specified, must be in: {freq_list}")
 
-    # Check 2: Infer the frequency of the time series from date_sequence
-    # and compare it with ts_freq using the ranking in datetime_freq.
-    inferred = pd.infer_freq(x_df["date_sequence"])
-    if inferred is None:
-        raise ValueError(
-            "Could not infer frequency from index. "
-            "Ensure the time index is regular and has enough points, "
-            "or set ts_freq=None to disable frequency checks."
-        )
-
-    try:
-        offset = to_offset(inferred)
-    except ValueError as exc:
-        raise ValueError(
-            f"Could not interpret inferred frequency '{inferred}'."
-        ) from exc
-    rule_code = getattr(offset, "rule_code", None) or getattr(offset, "name", None)
-    if rule_code is None:
-        raise ValueError(
-            f"Unsupported inferred frequency '{inferred}' of type '{type(offset)}'."
-        )
-
-    base_code = "".join(c for c in rule_code if c.isalpha()).upper()
-
-    if base_code in {
-        "W",
-        "W-SUN",
-        "W-MON",
-        "W-TUE",
-        "W-WED",
-        "W-THU",
-        "W-FRI",
-        "W-SAT",
-    }:
-        base_code = "W"
-    elif base_code.startswith("Q"):
-        base_code = "Q"
-    elif base_code.startswith("A") or base_code.startswith("Y"):
-        base_code = "Y"
-    elif base_code in {"M", "MS"}:
-        base_code = "M"
-
-    if base_code not in freq_list:
-        raise ValueError(
-            f"Inferred time series frequency '{inferred}' is not supported. "
-            f"Supported frequencies are: {freq_list}"
-        )
-
-    main_df_datetime_freq = base_code
+    # Check 2: Compare the frequency of main dataframe with 'ts_freq'
+    # 2-1: Determine frequency of main DataFrame, find in ranking
+    main_df_datetime_freq = pd.infer_freq(x_df["date_sequence"])[0]
     rank_main_df = datetime_freq.loc[
         datetime_freq["frequency"] == main_df_datetime_freq, "rank"
     ].max()
-
-    # if ts_freq is None, nothing to compare
-    if ts_freq is None:
-        return
-
     rank_ts_freq = datetime_freq.loc[
         datetime_freq["frequency"] == ts_freq, "rank"
     ].max()
