@@ -183,9 +183,7 @@ def test_required_parameter_provided():
     X = _make_series(n_timepoints=50, n_columns=1)
 
     # auc requires fs parameter - provide it
-    transformer = TSFELTransformer(
-        features=["auc"], kwargs={"fs": 100, "verbose": 0}
-    )
+    transformer = TSFELTransformer(features=["auc"], kwargs={"fs": 100, "verbose": 0})
     X_transformed = transformer.fit_transform(X)
 
     assert isinstance(X_transformed["auc"], np.float64)
@@ -200,9 +198,7 @@ def test_nonexistent_feature_error():
     with pytest.raises(
         ValueError, match="not found in tsfel.feature_extraction.features"
     ):
-        TSFELTransformer(
-            features=["nonexistent_feature_xyz"], kwargs={"verbose": 0}
-        )
+        TSFELTransformer(features=["nonexistent_feature_xyz"], kwargs={"verbose": 0})
 
 
 @pytest.mark.skipif(
