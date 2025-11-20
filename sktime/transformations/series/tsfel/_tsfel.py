@@ -112,7 +112,6 @@ class TSFELTransformer(BaseTransformer):
         features=None,
         **kwargs,
     ):
-
         self.domain_strings = ["statistical", "temporal", "spectral", "fractal"]
         if isinstance(features, str) or features is None:
             self.features = [features]
