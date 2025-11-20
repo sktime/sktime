@@ -151,6 +151,40 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             self.individual,
         )._build()
 
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain the neural network on panel data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex or pd.Series
+            Panel data to pretrain on. If MultiIndex DataFrame,
+            should have (instance, time) hierarchy.
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        fh : ForecastingHorizon, optional
+            Forecasting horizon (currently not used)
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self.network = self._build_network(self.pred_len)
+        dataloader = self._build_panel_dataloader(y)
+
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
+
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+        # Store number of pretrain instances for inspection
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            self.n_pretrain_instances_ = len(y.index.get_level_values(0).unique())
+        else:
+            self.n_pretrain_instances_ = 1
+
+        return self
     def _build_panel_dataloader(self, y):
         """Build PyTorch DataLoader for panel data pretraining.
 
@@ -583,6 +617,40 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             self.individual,
         )._build()
 
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain the neural network on panel data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex or pd.Series
+            Panel data to pretrain on. If MultiIndex DataFrame,
+            should have (instance, time) hierarchy.
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        fh : ForecastingHorizon, optional
+            Forecasting horizon (currently not used)
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self.network = self._build_network(self.pred_len)
+        dataloader = self._build_panel_dataloader(y)
+
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
+
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+        # Store number of pretrain instances for inspection
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            self.n_pretrain_instances_ = len(y.index.get_level_values(0).unique())
+        else:
+            self.n_pretrain_instances_ = 1
+
+        return self
     def _build_panel_dataloader(self, y):
         """Build PyTorch DataLoader for panel data pretraining.
 
@@ -599,7 +667,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         from torch.utils.data import DataLoader
 
         # Convert panel data to format suitable for training
-        if hasattr(y, 'index') and isinstance(y.index, pd.MultiIndex):
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
             # Extract individual series from panel
             from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
 
