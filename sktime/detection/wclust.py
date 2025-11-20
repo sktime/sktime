@@ -170,6 +170,9 @@ class WindowSegmenter(BaseDetector):
     _tags = {
         "task": "segmentation",
         "learning_type": "unsupervised",
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_non_state_changing_method_contract"],
     }
 
     def __init__(

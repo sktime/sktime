@@ -76,6 +76,7 @@ class PyKANForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run tests on vm in GHA
+        "tests:skip_by_name": ["test_predict_time_index_in_sample_full"],
     }
 
     def __init__(

@@ -493,6 +493,14 @@ Deep learning based forecasters
 
     SCINetForecaster
 
+.. currentmodule:: sktime.forecasting.convtimenet
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ConvTimeNetForecaster
+
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
 .. autosummary::
@@ -694,6 +702,17 @@ Ensembles and stacking
     :template: class.rst
 
     MAPAForecaster
+
+Causal Forecasting
+------------------
+
+.. currentmodule:: sktime.forecasting.causal
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DoubleMLForecaster
 
 Hierarchical reconciliation
 ---------------------------
