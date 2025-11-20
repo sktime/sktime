@@ -98,7 +98,11 @@ def test_specific_features_list():
     """Test with specific feature names list."""
     X = _make_series(n_timepoints=50, n_columns=1)
 
-    transformer = TSFELTransformer(features=["abs_energy", "auc", "autocorr"], verbose=0)
+    transformer = TSFELTransformer(
+        features=["abs_energy", "auc", "autocorr"],
+        fs=100,  # auc requires fs parameter
+        verbose=0,
+    )
     X_transformed = transformer.fit_transform(X)
 
     assert isinstance(X_transformed, pd.DataFrame)
@@ -172,3 +176,33 @@ def test_with_window_size():
 
     assert isinstance(X_transformed, pd.DataFrame)
     assert X_transformed.shape[0] > 1  # Should have multiple windows
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TSFELTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_required_parameter_error():
+    """Test that error is raised when required parameter is missing."""
+    X = _make_series(n_timepoints=50, n_columns=1)
+
+    # auc requires fs parameter
+    transformer = TSFELTransformer(features=["auc"], verbose=0)
+    with pytest.raises(ValueError, match="requires parameter 'fs'"):
+        transformer.fit_transform(X)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TSFELTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_required_parameter_provided():
+    """Test that feature works when required parameter is provided."""
+    X = _make_series(n_timepoints=50, n_columns=1)
+
+    # auc requires fs parameter - provide it
+    transformer = TSFELTransformer(features=["auc"], fs=100, verbose=0)
+    X_transformed = transformer.fit_transform(X)
+
+    assert isinstance(X_transformed, pd.DataFrame)
+    assert X_transformed.shape[1] > 0
