@@ -151,6 +151,65 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             self.individual,
         )._build()
 
+    def _build_panel_dataloader(self, y):
+        """Build PyTorch DataLoader for panel data pretraining.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex or pd.Series
+            Panel data
+
+        Returns
+        -------
+        dataloader : torch.utils.data.DataLoader
+            DataLoader for panel data
+        """
+        from torch.utils.data import DataLoader
+
+        # Convert panel data to format suitable for training
+        if hasattr(y, 'index') and isinstance(y.index, pd.MultiIndex):
+            # Extract individual series from panel
+            from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
+
+            # Get unique instances
+            instances = y.index.get_level_values(0).unique()
+
+            # Collect all series data
+            all_series = []
+            for instance in instances:
+                series_data = y.loc[instance]
+                if not isinstance(series_data, pd.DataFrame):
+                    series_data = pd.DataFrame(series_data)
+                all_series.append(series_data)
+
+            # Create combined dataset from all series
+            datasets = [
+                PyTorchTrainDataset(
+                    y=series,
+                    seq_len=self.seq_len,
+                    fh=self.pred_len,
+                )
+                for series in all_series
+            ]
+
+            # Combine datasets
+            from torch.utils.data import ConcatDataset
+            combined_dataset = ConcatDataset(datasets)
+        else:
+            # Single series - use standard dataset
+            from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
+
+            if not isinstance(y, pd.DataFrame):
+                y = pd.DataFrame(y)
+
+            combined_dataset = PyTorchTrainDataset(
+                y=y,
+                seq_len=self.seq_len,
+                fh=self.pred_len,
+            )
+
+        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -523,6 +582,65 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             self.in_channels,
             self.individual,
         )._build()
+
+    def _build_panel_dataloader(self, y):
+        """Build PyTorch DataLoader for panel data pretraining.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex or pd.Series
+            Panel data
+
+        Returns
+        -------
+        dataloader : torch.utils.data.DataLoader
+            DataLoader for panel data
+        """
+        from torch.utils.data import DataLoader
+
+        # Convert panel data to format suitable for training
+        if hasattr(y, 'index') and isinstance(y.index, pd.MultiIndex):
+            # Extract individual series from panel
+            from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
+
+            # Get unique instances
+            instances = y.index.get_level_values(0).unique()
+
+            # Collect all series data
+            all_series = []
+            for instance in instances:
+                series_data = y.loc[instance]
+                if not isinstance(series_data, pd.DataFrame):
+                    series_data = pd.DataFrame(series_data)
+                all_series.append(series_data)
+
+            # Create combined dataset from all series
+            datasets = [
+                PyTorchTrainDataset(
+                    y=series,
+                    seq_len=self.seq_len,
+                    fh=self.pred_len,
+                )
+                for series in all_series
+            ]
+
+            # Combine datasets
+            from torch.utils.data import ConcatDataset
+            combined_dataset = ConcatDataset(datasets)
+        else:
+            # Single series - use standard dataset
+            from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
+
+            if not isinstance(y, pd.DataFrame):
+                y = pd.DataFrame(y)
+
+            combined_dataset = PyTorchTrainDataset(
+                y=y,
+                seq_len=self.seq_len,
+                fh=self.pred_len,
+            )
+
+        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
