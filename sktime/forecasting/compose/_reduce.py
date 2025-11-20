@@ -436,8 +436,9 @@ class _Reducer(_BaseWindowForecaster):
         # first observation after the window (this is what the window is summarized to).
 
         index_range = _index_range(relative_int, cutoff)
-        if isinstance(cutoff, pd.DatetimeIndex) and cutoff.tzinfo is not None:
-            index_range = index_range.tz_localize(cutoff.tzinfo)
+        if isinstance(cutoff, pd.DatetimeIndex):
+            if cutoff.tzinfo is not None:
+                index_range = index_range.tz_localize(cutoff.tzinfo)
         # index_range will convert the indices to the date format of cutoff
 
         y_raw = _create_fcst_df(index_range, self._y)
