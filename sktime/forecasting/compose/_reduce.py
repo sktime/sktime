@@ -1695,7 +1695,7 @@ def _get_forecaster(scitype, strategy):
         raise ValueError(
             "Error in make_reduction, no reduction strategies defined for "
             f"specified or inferred scitype of estimator: {scitype}. "
-            f"Valid scitypes are: {list(registry.keys())}."
+            f"Valid scitypes are: {list(registry)}."
         )
     if strategy not in registry[scitype]:
         raise ValueError(
