@@ -359,6 +359,20 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         self._forecaster = self._instantiate_model(maximum_forecast_horizon)
         self._forecaster.fit(df=train_dataset, verbose=self.verbose_fit)
 
+        # Store the number of trainable and total parameters in the underlying torch models
+        if hasattr(self._forecaster.models, "__iter__"):
+            torch_models = self._forecaster.models
+            self.n_trainable_params_ = sum(
+                sum(p.numel() for p in model.parameters() if p.requires_grad)
+                for model in torch_models
+            )
+            self.n_total_params_ = sum(
+                sum(p.numel() for p in model.parameters()) for model in torch_models
+            )
+        else:
+            self.n_trainable_params_ = None
+            self.n_total_params_ = None
+
         return self
 
     def _get_id_idx(self, indices: pandas.Index):
