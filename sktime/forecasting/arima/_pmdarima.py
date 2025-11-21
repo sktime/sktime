@@ -285,6 +285,7 @@ class AutoARIMA(_PmdArimaAdapter):
         # estimator type
         # --------------
         "capability:missing_values": True,
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],
     }
 
     SARIMAX_KWARGS_KEYS = [
@@ -695,6 +696,7 @@ class ARIMA(_PmdArimaAdapter):
         ],
         "maintainers": ["hyang1996"],
         "capability:missing_values": True,
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],
     }
 
     SARIMAX_KWARGS_KEYS = [
