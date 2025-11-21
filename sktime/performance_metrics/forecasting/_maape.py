@@ -56,7 +56,11 @@ def mean_arctangent_absolute_percentage_error(
     maape_values = np.arctan(ape)
 
     # Average across time (axis 0)
-    output_errors = np.mean(maape_values, axis=0)
+    # If horizon_weight is provided, use it for weighted average across time
+    if horizon_weight is not None:
+        output_errors = np.average(maape_values, axis=0, weights=horizon_weight)
+    else:
+        output_errors = np.mean(maape_values, axis=0)
 
     # Safe Check: Handle string vs array
     if isinstance(multioutput, str):
