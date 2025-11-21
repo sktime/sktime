@@ -146,6 +146,24 @@ class ForecastingOptCV(_DelegatedForecaster):
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
 
+    tune_by_instance : bool, optional (default=False)
+        Whether to tune parameter by each time series instance separately,
+        in case of Panel or Hierarchical data passed to the tuning estimator.
+        Only applies if time series passed are Panel or Hierarchical.
+        If True, clones of the forecaster will be fit to each instance separately,
+        and are available in fields of the ``forecasters_`` attribute.
+        Has the same effect as applying ForecastByLevel wrapper to self.
+        If False, the same best parameter is selected for all instances.
+
+    tune_by_variable : bool, optional (default=False)
+        Whether to tune parameter by each time series variable separately,
+        in case of multivariate data passed to the tuning estimator.
+        Only applies if time series passed are strictly multivariate.
+        If True, clones of the forecaster will be fit to each variable separately,
+        and are available in fields of the ``forecasters_`` attribute.
+        Has the same effect as applying ColumnEnsembleForecaster wrapper to self.
+        If False, the same best parameter is selected for all variables.
+
     Example
     -------
     Any available tuning engine from hyperactive can be used, for example:
@@ -208,6 +226,8 @@ class ForecastingOptCV(_DelegatedForecaster):
         cv_X=None,
         backend=None,
         backend_params=None,
+        tune_by_instance=False,
+        tune_by_variable=False,
     ):
         self.forecaster = forecaster
         self.optimizer = optimizer
@@ -220,6 +240,8 @@ class ForecastingOptCV(_DelegatedForecaster):
         self.cv_X = cv_X
         self.backend = backend
         self.backend_params = backend_params
+        self.tune_by_instance = tune_by_instance
+        self.tune_by_variable = tune_by_variable
         super().__init__()
 
     @classmethod
