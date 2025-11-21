@@ -44,30 +44,30 @@ def mean_arctangent_absolute_percentage_error(
         The computed metric value.
     """
     # Use _percentage_error from common utils to get the element-wise APE
-    # This handles the epsilon and relative_to logic for us
     ape = _percentage_error(
         y_true=y_true,
         y_pred=y_pred,
-        symmetric=False,  # MAAPE is defined on standard APE
+        symmetric=False,
         relative_to=relative_to,
         eps=eps,
     )
 
     # MAAPE Logic: arctan(APE)
-    # arctan handles infinity gracefully (returns pi/2), solving the zero-division issue
     maape_values = np.arctan(ape)
 
     # Average across time (axis 0)
     output_errors = np.mean(maape_values, axis=0)
 
-    if multioutput == "raw_values":
-        return output_errors
+    # Safe Check: Handle string vs array
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return output_errors
+        if multioutput == "uniform_average":
+            # Pass None to np.average to trigger uniform weighting
+            return np.average(output_errors, weights=None)
 
-    # FIX: np.average cannot take a string as weights.
-    # If multioutput is "uniform_average", we set weights to None.
-    weights = None if multioutput == "uniform_average" else multioutput
-
-    return np.average(output_errors, weights=weights)
+    # If it's not a string, it must be an array of weights
+    return np.average(output_errors, weights=multioutput)
 
 
 class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
@@ -103,8 +103,6 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
     ):
         self.relative_to = relative_to
         self.eps = eps
-
-        # CRITICAL FIX: We must pass by_index to super() and store it
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
@@ -113,10 +111,6 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
 
     def evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the metric."""
-        # We don't need to handle multioutput/multilevel here manually
-        # The BaseForecastingErrorMetric handles that logic and calls 'func'
-        # We just need to ensure we pass the specific kwargs our func needs
-
         return mean_arctangent_absolute_percentage_error(
             y_true=y_true,
             y_pred=y_pred,
@@ -129,5 +123,6 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
         params1 = {}
+        # raw_values avoids weight averaging logic in tests
         params2 = {"relative_to": "y_pred", "multioutput": "raw_values"}
         return [params1, params2]
