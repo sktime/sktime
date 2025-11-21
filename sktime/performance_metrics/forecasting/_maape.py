@@ -76,10 +76,19 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
     MAAPE is a modification of MAPE that handles division by zero by applying arctan.
     It is bounded between 0 and pi/2.
 
-    References
+    Parameters
     ----------
-    Kim, S., & Kim, H. (2016). "A new metric of absolute percentage error
-    for intermittent demand forecasts". International Journal of Systems Science.
+    multioutput : {'raw_values', 'uniform_average'}, default='uniform_average'
+        Defines aggregating of multiple output values.
+    multilevel : {'raw_values', 'uniform_average'}, default='uniform_average'
+        Defines aggregating of multiple hierarchical levels.
+    relative_to : {"y_true", "y_pred"}, default="y_true"
+        Determines the denominator of the percentage error.
+    eps : float, default=None
+        Numerical epsilon used in denominator to avoid division by zero.
+    by_index : bool, default=False
+        If True, return the metric value at each time point.
+        If False, return the aggregate metric value.
     """
 
     func = mean_arctangent_absolute_percentage_error
@@ -90,16 +99,24 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
         multilevel="uniform_average",
         relative_to="y_true",
         eps=None,
+        by_index=False,
     ):
         self.relative_to = relative_to
         self.eps = eps
+
+        # CRITICAL FIX: We must pass by_index to super() and store it
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
+            by_index=by_index,
         )
 
     def evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the metric."""
+        # We don't need to handle multioutput/multilevel here manually
+        # The BaseForecastingErrorMetric handles that logic and calls 'func'
+        # We just need to ensure we pass the specific kwargs our func needs
+
         return mean_arctangent_absolute_percentage_error(
             y_true=y_true,
             y_pred=y_pred,
@@ -112,5 +129,5 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
         params1 = {}
-        params2 = {"relative_to": "y_pred"}
+        params2 = {"relative_to": "y_pred", "multioutput": "raw_values"}
         return [params1, params2]
