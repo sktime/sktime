@@ -337,13 +337,14 @@ class DoubleMLForecaster(BaseForecaster):
 
         time_idx = time_idx[starting_window:]
         time_idx_filter = y.index.get_level_values(-1).isin(time_idx)
+        residual_idx = y.index[time_idx_filter]
         insample_fh = ForecastingHorizon(time_idx, is_relative=False)
 
         # 2. Fit outcome forecaster on confounders and compute residuals
         outcome_fcst_insample = clone(self.outcome_fcst)
         outcome_fcst_insample.fit(y=y, X=X_confounder, fh=insample_fh)
         y_pred = outcome_fcst_insample.predict(X=X_confounder)
-        y_res = y[time_idx_filter] - y_pred
+        y_res = y.loc[residual_idx] - y_pred.loc[residual_idx]
 
         # 3. Fit treatment forecaster on confounders and compute exposure residuals
         if X_exposure is None:
@@ -352,7 +353,9 @@ class DoubleMLForecaster(BaseForecaster):
             treatment_fcst_insample = clone(self.treatment_fcst)
             treatment_fcst_insample.fit(y=X_exposure, X=X_confounder, fh=insample_fh)
             X_exposure_pred = treatment_fcst_insample.predict(X=X_confounder)
-            X_exposure_res = X_exposure[time_idx_filter] - X_exposure_pred
+            X_exposure_res = (
+                X_exposure.loc[residual_idx] - X_exposure_pred.loc[residual_idx]
+            )
 
         # 4. Fit residual forecaster on residualized outcome and exposure
         self.residual_fcst_ = clone(self.residual_fcst)
@@ -371,8 +374,10 @@ class DoubleMLForecaster(BaseForecaster):
             return None
 
         X_exposure_pred = self.treatment_fcst_.predict(fh=fh, X=X_confounder)
-        X_exposure_aligned = X_exposure.loc[X_exposure_pred.index]
-        X_exposure_res = X_exposure_aligned - X_exposure_pred
+        common_index = X_exposure.index.intersection(X_exposure_pred.index)
+        X_exposure_res = (
+            X_exposure.loc[common_index] - X_exposure_pred.loc[common_index]
+        )
 
         return X_exposure_res
 
