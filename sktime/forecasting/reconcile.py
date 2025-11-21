@@ -214,7 +214,12 @@ class ReconcilerForecaster(BaseForecaster):
         fh_resid = ForecastingHorizon(
             y.index.get_level_values(-1).unique(), is_relative=False
         )
-        self.residuals_ = y - self.forecaster_.predict(fh=fh_resid, X=X)
+
+        if np.array_equal(self._fh, fh_resid):
+            self.residuals_ = y - self.forecaster_.predict(fh=fh_resid, X=X)
+        else:
+            forecaster_resid = self.forecaster_.clone().fit(y=y, X=X, fh=fh_resid)
+            self.residuals_ = y - forecaster_resid.predict(fh=fh_resid, X=X)
 
         # now define recon matrix
         if self.method == "mint_cov":
@@ -310,7 +315,13 @@ class ReconcilerForecaster(BaseForecaster):
         fh_resid = ForecastingHorizon(
             y.index.get_level_values(-1).unique(), is_relative=False
         )
-        update_residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
+
+        if np.array_equal(self._fh, fh_resid):
+            update_residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
+        else:
+            forecaster_resid = self.forecaster_.clone().fit(y=y, X=X, fh=fh_resid)
+            update_residuals = y - forecaster_resid.predict(fh=fh_resid, X=X)
+
         self.residuals_ = pd.concat([self.residuals_, update_residuals], axis=0)
         self.residuals_ = self.residuals_.sort_index()
 
