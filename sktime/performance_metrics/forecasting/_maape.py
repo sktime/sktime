@@ -53,7 +53,8 @@ def mean_arctangent_absolute_percentage_error(
     )
 
     # MAAPE Logic: arctan(APE)
-    maape_values = np.arctan(ape)
+    # Ensure we take the absolute value first, as _percentage_error can be signed
+    maape_values = np.arctan(np.abs(ape))
 
     # Average across time (axis 0)
     # If horizon_weight is provided, use it for weighted average across time
@@ -121,6 +122,7 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
             multioutput=self.multioutput,
             relative_to=self.relative_to,
             eps=self.eps,
+            **kwargs,
         )
 
     @classmethod
