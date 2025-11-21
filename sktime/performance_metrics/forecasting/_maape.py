@@ -16,6 +16,7 @@ def mean_arctangent_absolute_percentage_error(
     multioutput="uniform_average",
     relative_to="y_true",
     eps=None,
+    sample_weight=None,
     **kwargs,
 ):
     """Mean Arctangent Absolute Percentage Error (MAAPE).
@@ -37,6 +38,8 @@ def mean_arctangent_absolute_percentage_error(
         Determines the denominator of the percentage error.
     eps : float, default=None
         Numerical epsilon used in denominator to avoid division by zero.
+    sample_weight : array-like of shape (fh,), default=None
+        Synonym for horizon_weight, used for compatibility with sklearn interface.
 
     Returns
     -------
@@ -52,21 +55,24 @@ def mean_arctangent_absolute_percentage_error(
         eps=eps,
     )
 
-    # MAAPE Logic: arctan(APE)
-    # Ensure we take the absolute value first, as _percentage_error can be signed
+    # MAAPE Logic: arctan(abs(APE))
+    # arctan handles infinity gracefully (returns pi/2)
     maape_values = np.arctan(np.abs(ape))
 
+    # Handle Weights: Prefer horizon_weight, fallback to sample_weight
+    weights = horizon_weight if horizon_weight is not None else sample_weight
+
     # Average across time (axis 0)
-    # If horizon_weight is provided, use it for weighted average across time
-    if horizon_weight is not None:
-        output_errors = np.average(maape_values, axis=0, weights=horizon_weight)
+    if weights is not None:
+        output_errors = np.average(maape_values, axis=0, weights=weights)
     else:
         output_errors = np.mean(maape_values, axis=0)
 
-    # Safe Check: Handle string vs array
+    # Safe Check: Handle string vs array for multioutput
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
-            return output_errors
+            # FIX: Must return at least 1d array for raw_values tests
+            return np.atleast_1d(output_errors)
         if multioutput == "uniform_average":
             # Pass None to np.average to trigger uniform weighting
             return np.average(output_errors, weights=None)
@@ -129,6 +135,5 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
         params1 = {}
-        # raw_values avoids weight averaging logic in tests
         params2 = {"relative_to": "y_pred", "multioutput": "raw_values"}
         return [params1, params2]
