@@ -205,6 +205,113 @@ class UnobservedComponents(_StatsModelsAdapter):
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
+    def _coerce_X_to_contiguous_future(self, X, fh, max_h):
+        """Return an exog DataFrame with index 1..max_h (relative steps)."""
+        if X is None:
+            return None
+        if not hasattr(X, "columns"):
+            X = pd.DataFrame(X)
+
+        target_idx = pd.RangeIndex(start=1, stop=max_h + 1)
+
+        try:
+            try:
+                fh_abs_vals = fh.to_absolute_index(self.cutoff)
+            except Exception:
+                fh_abs_vals = list(fh.to_absolute(self.cutoff))
+            try:
+                rel_steps = fh.to_relative(self.cutoff).to_numpy()
+            except Exception:
+                rel_steps = list(fh.to_relative(self.cutoff))
+            abs_to_rel = dict(zip(fh_abs_vals, rel_steps))
+        except Exception:
+            abs_to_rel = None
+
+        if getattr(X, "index", None) is not None and abs_to_rel:
+            mapped = [abs_to_rel.get(ix, None) for ix in X.index]
+            X_mapped = X.copy()
+            X_mapped.index = mapped
+            X_mapped = X_mapped.loc[[i for i in X_mapped.index if i is not None]]
+            X_full = X_mapped.reindex(target_idx).fillna(0.0)
+            return X_full
+
+        # case B: no mapping possible:
+        try:
+            rel_steps = list(fh.to_relative(self.cutoff))
+        except Exception:
+            rel_steps = list(range(1, len(X) + 1))
+
+        X_naive = X.copy()
+        rel_for_rows = rel_steps[: len(X_naive)]
+        X_naive.index = rel_for_rows
+        X_full = X_naive.reindex(target_idx).fillna(0.0)
+        return X_full
+
+    def _predict(self, fh=None, X=None):
+        """Predict with possibly non-contiguous fh and sparse future X."""
+        fh_used = fh if fh is not None else self.fh
+
+        try:
+            rel = fh_used.to_relative(self.cutoff)
+            try:
+                rel_arr = rel.to_numpy()
+            except Exception:
+                rel_arr = list(rel)
+            max_h = int(max(rel_arr))
+        except Exception:
+            fh_abs_any = list(fh_used.to_absolute(self.cutoff))
+            max_h = int(len(fh_abs_any)) if fh_abs_any else 0
+            if max_h == 0:
+                raise ValueError("Empty forecasting horizon passed to _predict")
+
+        X_full = self._coerce_X_to_contiguous_future(X, fh_used, max_h)
+
+        res = self._fitted_forecaster
+        y_full = res.forecast(steps=max_h, exog=X_full)
+
+        try:
+            fh_abs_idx = fh_used.to_absolute_index(self.cutoff)
+        except Exception:
+            fh_abs_idx = list(fh_used.to_absolute(self.cutoff))
+
+        try:
+            rel_list = list(rel_arr)
+        except Exception:
+            rel_list = list(fh_used.to_relative(self.cutoff))
+
+        import pandas as pd
+
+        vals = [y_full.iloc[k - 1] for k in rel_list]
+        y_pred = pd.Series(
+            vals,
+            index=fh_abs_idx,
+            name=getattr(getattr(self, "_y", None), "name", None),
+        )
+        return y_pred
+
+    def _predict_interval(self, fh=None, X=None, coverage=0.9):
+        """Predict intervals; ensure exog has contiguous rows 1..max_h."""
+        fh_used = fh if fh is not None else self.fh
+
+        try:
+            rel = fh_used.to_relative(self.cutoff)
+            try:
+                rel_arr = rel.to_numpy()
+            except Exception:
+                rel_arr = list(rel)
+            max_h = int(max(rel_arr))
+        except Exception:
+            fh_abs_any = list(fh_used.to_absolute(self.cutoff))
+            max_h = int(len(fh_abs_any)) if fh_abs_any else 0
+            if max_h == 0:
+                raise ValueError(
+                    "Empty forecasting horizon passed to _predict_interval"
+                )
+
+        X_full = self._coerce_X_to_contiguous_future(X, fh_used, max_h)
+
+        return super()._predict_interval(fh=fh_used, X=X_full, coverage=coverage)
+
     _tags = {
         # packaging info
         # --------------
@@ -222,8 +329,6 @@ class UnobservedComponents(_StatsModelsAdapter):
         "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_predict_time_index_with_X"],
-        # known failure in case of non-contiguous X, see issue #8787
     }
 
     def __init__(
