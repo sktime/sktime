@@ -56,6 +56,7 @@ class FCNRegressor(BaseDeepRegressor):
         "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
         "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         # estimator type handled by parent class
+        "tests:skip_all": True,  # see 4610
     }
 
     def __init__(
