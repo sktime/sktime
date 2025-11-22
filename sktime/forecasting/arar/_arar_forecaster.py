@@ -260,6 +260,7 @@ def _forecast_arar(model_tuple, h, level=(80, 95)):
     -------
     forecast_dict : dict
         Dictionary with keys: mean, upper, lower, level
+
         - mean: (h,) forecasts
         - upper: (h, len(level)) upper bounds
         - lower: (h, len(level)) lower bounds
@@ -594,8 +595,11 @@ class ARARForecaster(BaseForecaster):
             )
 
         # Create MultiIndex DataFrame
+        cols = self._get_columns(method="predict_interval")
+        index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
         pred_int = pd.DataFrame(pred_int_dict)
-        pred_int.columns.names = ["Coverage", "Interval"]
+        pred_int.columns = cols
+        pred_int.index=index
 
         return pred_int
 
