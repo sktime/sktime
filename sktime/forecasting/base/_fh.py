@@ -193,7 +193,52 @@ def _extract_freq_from_cutoff(x) -> str | None:
     else:
         return None
 
-
+def _is_contiguous_fh(fh):  
+    """Check if a forecasting horizon is contiguous.  
+      
+    Parameters  
+    ----------  
+    fh : ForecastingHorizon  
+        Forecasting horizon to check  
+          
+    Returns  
+    -------  
+    bool  
+        True if fh values form a contiguous sequence, False otherwise  
+    """  
+    if not isinstance(fh, ForecastingHorizon):  
+        fh = ForecastingHorizon(fh)  
+      
+    try:  
+        values = fh.to_pandas()  
+          
+        # For relative integer horizons  
+        if fh.is_relative:  
+            try:  
+                int_values = [int(v) for v in values]  
+                sorted_vals = sorted(int_values)  
+                expected = list(range(sorted_vals[0], sorted_vals[-1] + 1))  
+                return sorted_vals == expected  
+            except (TypeError, ValueError):  
+                return False  
+          
+        # For absolute horizons with freq  
+        if hasattr(values, 'freq') and values.freq is not None:  
+            # For PeriodIndex, use integer arithmetic  
+            if isinstance(values, pd.PeriodIndex):  
+                # Convert periods to integers for arithmetic  
+                int_values = values.astype('int64')  
+                expected_len = int_values[-1] - int_values[0] + 1  
+                return len(values) == expected_len  
+            else:  
+                # For DatetimeIndex, use date_range  
+                expected_len = len(pd.date_range(start=values[0], end=values[-1], freq=values.freq))  
+                return len(values) == expected_len  
+          
+        return False  
+    except Exception:  
+        # If anything fails, assume non-contiguous
+        return False
 class ForecastingHorizon:
     """Forecasting horizon.
 

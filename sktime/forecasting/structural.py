@@ -222,8 +222,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_predict_time_index_with_X"],
-        # known failure in case of non-contiguous X, see issue #8787
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(
