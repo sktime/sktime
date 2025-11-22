@@ -23,7 +23,7 @@ class _TSFELDataFrame(pd.DataFrame):
 class TSFELTransformer(BaseTransformer):
     """TSFEL transformer to extract features by domain or specific feature names.
 
-    This transformer uses `features` parameter to extract features in the following ways:
+    This transformer uses `features` parameter to extract features in following ways:
 
     1. By domain: Pass a domain ('statistical', 'temporal', 'spectral', 'fractal')
     2. By feature names: Pass feature function names (e.g., 'abs_energy', 'auc')
