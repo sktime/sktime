@@ -56,7 +56,6 @@ def mean_arctangent_absolute_percentage_error(
     )
 
     # MAAPE Logic: arctan(abs(APE))
-    # arctan handles infinity gracefully (returns pi/2)
     maape_values = np.arctan(np.abs(ape))
 
     # Handle Weights: Prefer horizon_weight, fallback to sample_weight
@@ -71,13 +70,10 @@ def mean_arctangent_absolute_percentage_error(
     # Safe Check: Handle string vs array for multioutput
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
-            # FIX: Must return at least 1d array for raw_values tests
             return np.atleast_1d(output_errors)
         if multioutput == "uniform_average":
-            # Pass None to np.average to trigger uniform weighting
             return np.average(output_errors, weights=None)
 
-    # If it's not a string, it must be an array of weights
     return np.average(output_errors, weights=multioutput)
 
 
@@ -102,7 +98,6 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
     ----------
     multioutput : {'raw_values', 'uniform_average'}, default='uniform_average'
         Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
     multilevel : {'raw_values', 'uniform_average'}, default='uniform_average'
         Defines aggregating of multiple hierarchical levels.
     relative_to : {"y_true", "y_pred"}, default="y_true"
@@ -137,16 +132,25 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
             by_index=by_index,
         )
 
-    def evaluate(self, y_true, y_pred, **kwargs):
-        """Evaluate the metric."""
-        return mean_arctangent_absolute_percentage_error(
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point."""
+        # 1. Calculate element-wise APE using standard sktime util
+        ape = _percentage_error(
             y_true=y_true,
             y_pred=y_pred,
-            multioutput=self.multioutput,
+            symmetric=False,
             relative_to=self.relative_to,
             eps=self.eps,
-            **kwargs,
         )
+
+        # 2. Apply MAAPE logic: arctan(|APE|)
+        maape_values = np.arctan(np.abs(ape))
+
+        # 3. Handle weighting (Base class helper)
+        maape_values = self._get_weighted_df(maape_values, **kwargs)
+
+        # 4. Handle multioutput formatting (Base class helper)
+        return self._handle_multioutput(maape_values, self.multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
