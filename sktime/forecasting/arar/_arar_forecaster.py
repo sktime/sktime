@@ -442,6 +442,7 @@ class ARARForecaster(BaseForecaster):
     >>> # Fit and predict
     >>> forecaster = ARARForecaster()
     >>> forecaster.fit(y_train)
+    ARARForecaster(...)
     >>> y_pred = forecaster.predict(fh=list(range(1, 13)))
     >>> pred_int = forecaster.predict_interval(fh=list(range(1, 13)))
     >>>
@@ -450,7 +451,7 @@ class ARARForecaster(BaseForecaster):
     ...     y_train, y_test, y_pred, labels=["Train", "Test", "Forecast"],
     ...     title= "Forecast from Arar",
     ...     pred_int=pred_int
-    )
+    ... )  # doctest: +SKIP
     >>>
     >>> # Print model information
     >>> print(f"Selected AR lags: {forecaster.model_[2]}")  # doctest: +SKIP
@@ -544,7 +545,7 @@ class ARARForecaster(BaseForecaster):
         # Return as pandas Series
         return pd.Series(y_pred_values, index=index, name=self._y.name)
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X, coverage):
         """Compute prediction intervals.
 
         Parameters
@@ -561,10 +562,6 @@ class ARARForecaster(BaseForecaster):
         pred_int : pd.DataFrame
             Prediction intervals with columns for each coverage level.
         """
-        # Convert coverage to level (percentage)
-        if not isinstance(coverage, list):
-            coverage = [coverage]
-
         # Convert to percentage
         level = [c * 100 for c in coverage]
 
@@ -595,70 +592,13 @@ class ARARForecaster(BaseForecaster):
             )
 
         # Create MultiIndex DataFrame
-        cols = self._get_columns(method="predict_interval")
+        cols = self._get_columns(method="predict_interval", coverage=coverage)
         index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
         pred_int = pd.DataFrame(pred_int_dict)
         pred_int.columns = cols
-        pred_int.index=index
+        pred_int.index = index
 
         return pred_int
-
-    def _predict_quantiles(self, fh, X=None, alpha=None):
-        """Compute quantile forecasts.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-            The forecasting horizon with the steps ahead to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series (ignored, not supported by ARAR).
-        alpha : list of float, optional (default=[0.05, 0.95])
-            A list of probabilities at which quantile forecasts are computed.
-
-        Returns
-        -------
-        quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-            second level being the values of alpha passed to the function.
-        """
-        if alpha is None:
-            alpha = [0.05, 0.95]
-
-        # Convert alpha to coverage levels
-        # alpha represents tail probabilities, so we need to convert
-        # For example, alpha=0.05 and 0.95 correspond to 90% coverage
-        coverage_dict = {}
-        for a in alpha:
-            if a < 0.5:
-                coverage = 1 - 2 * a
-                coverage_dict[a] = (coverage, "lower")
-            else:
-                coverage = 2 * (a - 0.5)
-                coverage_dict[a] = (coverage, "upper")
-
-        # Get unique coverage levels
-        unique_coverage = list({v[0] for v in coverage_dict.values()})
-
-        # Get prediction intervals
-        pred_int = self._predict_interval(fh, X=X, coverage=unique_coverage)
-
-        # Extract quantiles from intervals
-        quantile_dict = {}
-        for a in alpha:
-            coverage, bound = coverage_dict[a]
-            quantile_dict[a] = pred_int[(coverage, bound)]
-
-        # Create DataFrame with variable name as first level
-        quantiles = pd.DataFrame(quantile_dict)
-        quantiles.columns.name = "alpha"
-
-        # Add variable name as first level
-        var_name = self._y.name if self._y.name is not None else 0
-        quantiles.columns = pd.MultiIndex.from_product(
-            [[var_name], quantiles.columns], names=["variable", "alpha"]
-        )
-
-        return quantiles
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
