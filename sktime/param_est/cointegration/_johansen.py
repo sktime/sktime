@@ -15,7 +15,7 @@ class JohansenCointegration(BaseParamFitter):
     Determines the coint parameter value to be used in VECM time-series module vecm.py:
     `coint_rank`. Uses trace statistics or eigenvalue.
 
-    
+
     Parameters
     ----------
     det_order : int, default=1
@@ -25,41 +25,46 @@ class JohansenCointegration(BaseParamFitter):
     k_ar_diff : int, nonnegative, default=1
         Number of lagged differences in the model. Needs multivariate version of
         ARLagOrderSelector, See also: statsmodels.tsa.vector_ar.vecm.select_order
-    
+
     Attributes
     ----------
-    cvm_ :  Critical values (90%, 95%, 99%) of maximum eigenvalue statistic.
+    cvm_ :  np.ndarray of float containing critical values
+        (90%, 95%, 99%) of maximum eigenvalue statistic
 
-    cvt_ :  Critical values (90%, 95%, 99%) of trace statistic
-          
-    eig_ :  Eigenvalues of VECM coefficient matrix
+    cvt_ :  np.ndarray of float containing critical values
+        (90%, 95%, 99%) of trace statistic
 
-    evec_ : Eigenvectors of VECM coefficient matrix
+    eig_ :  np.ndarray of float containing eigenvalues of VECM coefficient matrix
 
-    ind_ : Order of eigenvalues
-    
-    lr1_ : Trace statistic
-    
-    lr2_ : Maximum eigenvalue statistic
+    evec_ : np.ndarray of float containing eigenvectors of VECM coefficient matrix
 
-    max_eig_stat_ : Maximum eigenvalue statistic / correct?
+    ind_ : np.ndarray of int containing Order of eigenvalues
 
-    max_eig_stat_crit_vals_ : Critical values (90%, 95%, 99%) of maximum eigenvalue statistic.
+    lr1_ : np.ndarray of float containing trace statistic
 
-    meth_ : Test method
+    lr2_ : np.ndarray of float containing maximum eigenvalue statistic
 
-    r0t_ : Residuals for delta Y
+    max_eig_stat_ : np.ndarray of float containing maximum eigenvalue statistic
+        (Needs to be tested, because it seems to be a duplicate in statsmodels)
 
-    rkt_ : Residuals for delta Y-1
+    max_eig_stat_crit_vals_ : np.ndarray of float containing critical values
+        (90%, 95%, 99%) of maximum eigenvalue statistic
 
-    trace_stat_ : Trace statistic
+    meth_ : str containing the name of the test method
 
-    trace_stat_crit_vals_ : Critical values (90%, 95%, 99%) of trace statistic
+    r0t_ : np.ndarray of float containing residuals for delta Y
+
+    rkt_ : np.ndarray of float containing residuals for delta Y-1
+
+    trace_stat_ : np.ndarray of float containing trace statistics
+
+    trace_stat_crit_vals_ : np.ndarray of float containing critical values
+        (90%, 95%, 99%) of trace statistic
 
     Examples
     --------
-    to be filled    
-    
+    to be filled
+
     Notes
     -----
     The underlying test is a wrapper for the statsmodels cointegration test.
@@ -69,7 +74,7 @@ class JohansenCointegration(BaseParamFitter):
     Same goes for k_ar_diff and max lag determined.
 
     Examples
-    ---------------
+    --------
     to be taken later from test_cointegration.py
 
     See Also
@@ -120,7 +125,7 @@ class JohansenCointegration(BaseParamFitter):
         ----------
         X : array_like, e.g. pd.Series
         Contains the full set of time-series to be investigated, all X AND y.
-        In VECM typically X and y do not exist. All X and y are considered endogenous (here as X).
+        In VECM typically X and y do not exist. All X and y are considered endogenous.
 
         Returns
         -------
