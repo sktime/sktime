@@ -15,7 +15,7 @@ class JohansenCointegration(BaseParamFitter):
     Determines the coint parameter value to be used in VECM time-series module vecm.py:
     `coint_rank`. Uses trace statistics or eigenvalue.
 
-
+    
     Parameters
     ----------
     det_order : int, default=1
@@ -25,27 +25,52 @@ class JohansenCointegration(BaseParamFitter):
     k_ar_diff : int, nonnegative, default=1
         Number of lagged differences in the model. Needs multivariate version of
         ARLagOrderSelector, See also: statsmodels.tsa.vector_ar.vecm.select_order
+    
+    Attributes
+    ----------
+    cvm_ :  Critical values (90%, 95%, 99%) of maximum eigenvalue statistic.
 
-    Returns
-    -------
-    result : JohansenTestResult
-        An object containing the test's results. The most important attributes
-        of the result class are:
+    cvt_ :  Critical values (90%, 95%, 99%) of trace statistic
+          
+    eig_ :  Eigenvalues of VECM coefficient matrix
 
-        * trace_stat and trace_stat_crit_vals
-        * max_eig_stat and max_eig_stat_crit_vals
+    evec_ : Eigenvectors of VECM coefficient matrix
 
+    ind_ : Order of eigenvalues
+    
+    lr1_ : Trace statistic
+    
+    lr2_ : Maximum eigenvalue statistic
+
+    max_eig_stat_ : Maximum eigenvalue statistic / correct?
+
+    max_eig_stat_crit_vals_ : Critical values (90%, 95%, 99%) of maximum eigenvalue statistic.
+
+    meth_ : Test method
+
+    r0t_ : Residuals for delta Y
+
+    rkt_ : Residuals for delta Y-1
+
+    trace_stat_ : Trace statistic
+
+    trace_stat_crit_vals_ : Critical values (90%, 95%, 99%) of trace statistic
+
+    Examples
+    --------
+    to be filled    
+    
     Notes
     -----
     The underlying test is a wrapper for the statsmodels cointegration test.
     The max rank (depending on preferred sig-level) needs to be derived from
-    the param estimates and be used as coint<-rank.  for the other parameters,
+    the param estimates and be used as coint-rank.  for the other parameters,
     it is advised to choose the same det_order as in the main model.
     Same goes for k_ar_diff and max lag determined.
 
-    Reading Example
+    Examples
     ---------------
-    tbd
+    to be taken later from test_cointegration.py
 
     See Also
     --------
@@ -78,7 +103,7 @@ class JohansenCointegration(BaseParamFitter):
 
         super().__init__()
 
-    def _fit(self, endog):
+    def _fit(self, X):
         """Fit estimator and estimate parameters from cointegration method.
 
         As long as a trace statistic is bigger as a critical value
@@ -93,9 +118,9 @@ class JohansenCointegration(BaseParamFitter):
 
         Parameters
         ----------
-        endog : array_like, e.g. pd.Series
-        Contains the full set of time-series to be investigated, all X and y.
-        In VECM typically X and y do not exist. All X and y are considered endogenous.
+        X : array_like, e.g. pd.Series
+        Contains the full set of time-series to be investigated, all X AND y.
+        In VECM typically X and y do not exist. All X and y are considered endogenous (here as X).
 
         Returns
         -------
@@ -104,50 +129,50 @@ class JohansenCointegration(BaseParamFitter):
         from statsmodels.tsa.vector_ar.vecm import coint_johansen
 
         cojo_res = coint_johansen(
-            endog=endog, det_order=self.det_order, k_ar_diff=self.k_ar_diff
+            endog=X, det_order=self.det_order, k_ar_diff=self.k_ar_diff
         )
 
         # Critical values (90%, 95%, 99%) of maximum eigenvalue statistic.
-        self.cvm = cojo_res.cvm
+        self.cvm_ = cojo_res.cvm
 
         # Critical values (90%, 95%, 99%) of trace statistic
-        self.cvt = cojo_res.cvt
+        self.cvt_ = cojo_res.cvt
 
         # Eigenvalues of VECM coefficient matrix
-        self.eig = cojo_res.eig
+        self.eig_ = cojo_res.eig
 
         # Eigenvectors of VECM coefficient matrix
-        self.evec = cojo_res.evec
+        self.evec_ = cojo_res.evec
 
         # Order of eigenvalues
-        self.ind = cojo_res.ind
+        self.ind_ = cojo_res.ind
 
         # Trace statistic
-        self.lr1 = cojo_res.lr1
+        self.lr1_ = cojo_res.lr1
 
         # Maximum eigenvalue statistic
-        self.lr2 = cojo_res.lr2
+        self.lr2_ = cojo_res.lr2
 
         # Maximum eigenvalue statistic / correct?
-        self.max_eig_stat = cojo_res.max_eig_stat
+        self.max_eig_stat_ = cojo_res.max_eig_stat
 
         # Critical values (90%, 95%, 99%) of maximum eigenvalue statistic.
-        self.max_eig_stat_crit_vals = cojo_res.max_eig_stat_crit_vals
+        self.max_eig_stat_crit_vals_ = cojo_res.max_eig_stat_crit_vals
 
         # Test method
-        self.meth = cojo_res.meth
+        self.meth_ = cojo_res.meth
 
         # Residuals for delta Y
-        self.r0t = cojo_res.r0t
+        self.r0t_ = cojo_res.r0t
 
         # Residuals for delta Y-1
-        self.rkt = cojo_res.rkt
+        self.rkt_ = cojo_res.rkt
 
         # Trace statistic
-        self.trace_stat = cojo_res.trace_stat
+        self.trace_stat_ = cojo_res.trace_stat
 
         # Critical values (90%, 95%, 99%) of trace statistic
-        self.trace_stat_crit_vals = cojo_res.trace_stat_crit_vals
+        self.trace_stat_crit_vals_ = cojo_res.trace_stat_crit_vals
 
         # need to check for redundancies in results
 
