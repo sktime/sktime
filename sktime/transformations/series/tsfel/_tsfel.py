@@ -330,13 +330,15 @@ class TSFELTransformer(BaseTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"features": "statistical", "kwargs": {"verbose": 0}}
-        params2 = {
+        params2 = {"features": "abs_energy"}
+        params3 = {
             "features": ["abs_energy", "auc"],
             "kwargs": {"fs": 100, "verbose": 0},
         }
-        params3 = {
+        # mixed features and domains
+        params4 = {
             "features": ["statistical", "abs_energy"],
             "kwargs": {"verbose": 0},
         }
 
-        return [params1, params2, params3]
+        return [params1, params2, params3, params4]
