@@ -7,7 +7,6 @@ __all__ = ["_PmdArimaAdapter"]
 
 import pandas as pd
 
-from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 
