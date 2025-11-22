@@ -555,7 +555,7 @@ class _DirectReducer(_Reducer):
                 "Transformers currently cannot be provided"
                 + "for models that run locally"
             )
-        pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
+        pd_format = isinstance(y, (pd.Series, pd.DataFrame))
         if self.pooling == "local":
             if pd_format is True and isinstance(y, pd.MultiIndex):
                 warn(
@@ -668,7 +668,7 @@ class _DirectReducer(_Reducer):
         if self.pooling == "global":
             y_last, X_last = self._get_shifted_window(X_update=X)
             ys = np.array(y_last)
-            if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
+            if np.sum(np.isnan(ys)) != 0 and np.sum(np.isinf(ys)) == 0:
                 return self._predict_nan(fh, method=method, **kwargs)
         else:
             y_last, X_last = self._get_last_window()
@@ -1695,7 +1695,7 @@ def _get_forecaster(scitype, strategy):
         raise ValueError(
             "Error in make_reduction, no reduction strategies defined for "
             f"specified or inferred scitype of estimator: {scitype}. "
-            f"Valid scitypes are: {list(registry.keys())}."
+            f"Valid scitypes are: {list(registry)}."
         )
     if strategy not in registry[scitype]:
         raise ValueError(
