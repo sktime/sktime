@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for ARAR forecaster."""
 
-__author__ = ["resul.akay@taf-society.org"]
+__author__ = ["Akai01"]
 
 import numpy as np
 import pandas as pd
@@ -82,7 +82,7 @@ def test_arar_forecaster_prediction_intervals():
 
     # Check that lower bounds are less than upper bounds
     for cov in coverage:
-        assert all(pred_int[(cov, "lower")] <= pred_int[(cov, "upper")])
+        assert all(pred_int[(0, cov, "lower")] <= pred_int[(0, cov, "upper")])
 
 
 @pytest.mark.skipif(
