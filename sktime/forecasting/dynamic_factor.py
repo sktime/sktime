@@ -141,8 +141,6 @@ class DynamicFactor(_StatsModelsAdapter):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        # CI and test flags
-        # -----------------
         "capability:non_contiguous_X": False,
     }
 

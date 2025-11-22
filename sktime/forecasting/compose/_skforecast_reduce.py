@@ -596,8 +596,6 @@ class SkforecastRecursive(BaseForecaster):
         "capability:categorical_in_X": True,
         "python_version": ">=3.9",
         "python_dependencies": ["skforecast>=0.14"],
-        # CI and test flags
-        # -----------------
         "capability:non_contiguous_X": False,
     }
 

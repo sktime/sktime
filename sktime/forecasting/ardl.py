@@ -214,8 +214,6 @@ class ARDL(_StatsModelsAdapter):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
-        # CI and test flags
-        # -----------------
         "capability:non_contiguous_X": False,
     }
 

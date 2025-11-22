@@ -171,8 +171,6 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsmodels"],
-        # CI and test flags
-        # -----------------
         "capability:non_contiguous_X": False,
     }
 

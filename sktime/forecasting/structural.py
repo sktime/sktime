@@ -220,8 +220,6 @@ class UnobservedComponents(_StatsModelsAdapter):
         "capability:exogenous": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        # CI and test flags
-        # -----------------
         "capability:non_contiguous_X": False,
     }
 
