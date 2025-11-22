@@ -202,6 +202,14 @@ These transformers extract simple summary features.
 
     ADICVTransformer
 
+.. currentmodule:: sktime.transformations.series.tsfel
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSFELTransformer
+
 Shapelets, wavelets, and convolution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
