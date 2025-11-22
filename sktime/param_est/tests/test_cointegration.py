@@ -11,6 +11,7 @@ from sktime.datasets import load_airline
 from sktime.param_est.cointegration import JohansenCointegration
 from sktime.utils.dependencies import _check_estimator_deps
 
+
 @pytest.mark.skipif(
     not _check_estimator_deps(JohansenCointegration, severity="none"),
     reason="skip test if required soft dependencies not available",
@@ -19,7 +20,7 @@ def test_cointegration():
     """Test Cointegration on airline data."""
     X = load_airline()
     X2 = X.shift(1).bfill()
-    df = pd.DataFrame({"X":X, "X2": X2})
+    df = pd.DataFrame({"X": X, "X2": X2})
     coint_est = JohansenCointegration()
     coint_est.fit(df)
 
