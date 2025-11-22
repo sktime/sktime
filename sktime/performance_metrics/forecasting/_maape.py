@@ -82,15 +82,27 @@ def mean_arctangent_absolute_percentage_error(
 
 
 class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
-    """Mean Arctangent Absolute Percentage Error (MAAPE).
+    r"""Mean Arctangent Absolute Percentage Error (MAAPE).
 
-    MAAPE is a modification of MAPE that handles division by zero by applying arctan.
-    It is bounded between 0 and pi/2.
+    MAAPE is a variation of the Mean Absolute Percentage Error (MAPE) that is robust
+    to zero values in the ground truth series. While MAPE is undefined when y_true=0,
+    MAAPE uses the arctangent function to bound the error.
+
+    The formula is defined as:
+
+    .. math::
+        \text{MAAPE} = \frac{1}{n} \sum_{t=1}^{n} \arctan \left(
+        \left| \frac{y_t - \hat{y}_t}{y_t} \right| \right)
+
+    where :math:`y_t` is the actual value and :math:`\hat{y}_t` is the forecast value.
+
+    The result is bounded between 0 and :math:`\pi/2` (approx 1.57).
 
     Parameters
     ----------
     multioutput : {'raw_values', 'uniform_average'}, default='uniform_average'
         Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
     multilevel : {'raw_values', 'uniform_average'}, default='uniform_average'
         Defines aggregating of multiple hierarchical levels.
     relative_to : {"y_true", "y_pred"}, default="y_true"
@@ -100,6 +112,11 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
     by_index : bool, default=False
         If True, return the metric value at each time point.
         If False, return the aggregate metric value.
+
+    References
+    ----------
+    Kim, S., & Kim, H. (2016). "A new metric of absolute percentage error
+    for intermittent demand forecasts". International Journal of Systems Science.
     """
 
     func = mean_arctangent_absolute_percentage_error
