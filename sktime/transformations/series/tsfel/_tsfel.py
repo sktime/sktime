@@ -23,32 +23,41 @@ class _TSFELDataFrame(pd.DataFrame):
 class TSFELTransformer(BaseTransformer):
     """TSFEL transformer to extract features by domain or specific feature names.
 
-    This transformer can extract features in two ways:
+    This transformer uses `features` parameter to extract features in the following ways:
+
     1. By domain: Pass a domain ('statistical', 'temporal', 'spectral', 'fractal')
     2. By feature names: Pass feature function names (e.g., 'abs_energy', 'auc')
     3. Mixed: Pass a list containing both domain strings and feature names
+
 
     For domain-based extraction, uses TSFEL's `time_series_features_extractor`.
     For individual features, calls the feature functions directly from
     `tsfel.feature_extraction.features`.
 
+    See tsfel documentation for available options for features and parameters.
+    https://tsfel.readthedocs.io/en/latest/descriptions/feature_list.html
+
     Parameters
     ----------
     features : str, list of str, or None, optional (default=None)
         Features to extract. Can be:
+
         - A domain string: 'statistical', 'temporal', 'spectral', 'fractal'
         - A list of feature function names: ['abs_energy', 'auc', 'autocorr']
         - A list mixing domains and features: ['statistical', 'abs_energy']
         - None: extract all features from all domains
+
+
     kwargs : dict, optional (default=None)
         Additional keyword arguments passed to tsfel's feature extractor or
         individual feature functions. Common parameters include:
+
         - fs : float, sampling frequency
         - window_size : int, size of windows for feature extraction
         - overlap : float, overlap between windows (0-1)
         - verbose : int, verbosity level (0 or 1)
         - Any feature-specific parameters (e.g., percentile for ecdf_percentile_count)
-        See tsfel documentation for available options.
+
 
     Examples
     --------
