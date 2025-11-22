@@ -293,7 +293,7 @@ class AutoARIMA(_PmdArimaAdapter):
         "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
-        "test:skip_by_name": ["test_predict_time_index_with_X"],  # bug report #9081
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],  # bug report #9081
     }
 
     SARIMAX_KWARGS_KEYS = [
@@ -710,7 +710,7 @@ class ARIMA(_PmdArimaAdapter):
         "capability:missing_values": True,
         # CI and test flags
         # -----------------
-        "test:skip_by_name": ["test_predict_time_index_with_X"],  # bug report #9081
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],  # bug report #9081
     }
 
     SARIMAX_KWARGS_KEYS = [
