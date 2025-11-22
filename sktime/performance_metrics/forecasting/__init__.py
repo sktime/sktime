@@ -28,6 +28,8 @@ __all__ = [
     "MeanSquaredScaledError",
     "MedianAbsoluteError",
     "MedianAbsolutePercentageError",
+    "MeanArctangentAbsolutePercentageError",
+    "mean_arctangent_absolute_percentage_error",
     "MedianAbsoluteScaledError",
     "MedianRelativeAbsoluteError",
     "MedianSquaredError",
@@ -89,6 +91,10 @@ from sktime.performance_metrics.forecasting._gmrelse import (
     GeometricMeanRelativeSquaredError,
 )
 from sktime.performance_metrics.forecasting._gmse import GeometricMeanSquaredError
+from sktime.performance_metrics.forecasting._maape import (
+    MeanArctangentAbsolutePercentageError,
+    mean_arctangent_absolute_percentage_error,
+)
 from sktime.performance_metrics.forecasting._mae import MeanAbsoluteError
 from sktime.performance_metrics.forecasting._mape import MeanAbsolutePercentageError
 from sktime.performance_metrics.forecasting._mase import MeanAbsoluteScaledError
