@@ -48,11 +48,11 @@ Percentage errors
     :template: class_with_call.rst
 
     MeanAbsolutePercentageError
-    MeanArctangentAbsolutePercentageError
     MedianAbsolutePercentageError
     MeanSquaredPercentageError
     MedianSquaredPercentageError
     MeanSquaredErrorPercentage
+    MeanArctangentAbsolutePercentageError
 
 Scaled errors
 ^^^^^^^^^^^^^
