@@ -18,9 +18,6 @@ class JohansenCointegration(BaseParamFitter):
 
     Parameters
     ----------
-    endog : array_like, e.g. pd.Series
-        Contains the full set of time-series to be investigated, all X and y.
-        In VECM typically X and y do not exist. All X and y are considered endogenous.
     det_order : int, default=1
         * -1 - no deterministic terms
         *  0 - constant term
@@ -81,7 +78,7 @@ class JohansenCointegration(BaseParamFitter):
 
         super().__init__()
 
-    def _fit(self, X):
+    def _fit(self, endog):
         """Fit estimator and estimate parameters from cointegration method.
 
         As long as a trace statistic is bigger as a critical value
@@ -94,6 +91,12 @@ class JohansenCointegration(BaseParamFitter):
         because 60 > 50, where trace statistic is no longer bigger
         than crit val.
 
+        Parameters
+        ----------
+        endog : array_like, e.g. pd.Series
+        Contains the full set of time-series to be investigated, all X and y.
+        In VECM typically X and y do not exist. All X and y are considered endogenous.
+
         Returns
         -------
         self : reference to self
@@ -101,7 +104,7 @@ class JohansenCointegration(BaseParamFitter):
         from statsmodels.tsa.vector_ar.vecm import coint_johansen
 
         cojo_res = coint_johansen(
-            endog=X, det_order=self.det_order, k_ar_diff=self.k_ar_diff
+            endog=endog, det_order=self.det_order, k_ar_diff=self.k_ar_diff
         )
 
         # Critical values (90%, 95%, 99%) of maximum eigenvalue statistic.
