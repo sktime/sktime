@@ -14,6 +14,9 @@ from sktime.utils.warnings import warn
 class CNNNetwork(BaseDeepNetwork):
     """Establish the network structure for a CNN.
 
+    Zhao et al. 2017 uses sigmoid activation in the hidden layers.
+    To obtain same behaviour as Zhao et al. 2017, set activation to "sigmoid".
+
     Adapted from the implementation used in [1]_.
 
     Parameters
