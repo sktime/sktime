@@ -253,8 +253,10 @@ class TSFELTransformer(BaseTransformer):
         features_list = self._get_features_list()
         for feature in features_list:
             if feature is None or feature in self.domain_strings:
-                # Domain-based features return DataFrame
-                cfg_file = tsfel.get_features_by_domain(feature)
+                if feature:
+                    cfg_file = tsfel.get_features_by_domain(feature)
+                else:
+                    cfg_file = tsfel.get_features_by_domain()
                 domain_kwargs = {} if self.kwargs is None else self.kwargs
                 domain_df = time_series_features_extractor(
                     cfg_file,
