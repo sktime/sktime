@@ -23,10 +23,10 @@ def test_basic_functionality():
 
     transformer = TSFELTransformer(features=None, kwargs={"verbose": 0})
     X_transformed = transformer.fit_transform(X)
-
-    assert isinstance(X_transformed["all"], pd.DataFrame)
-    assert X_transformed["all"].shape[0] > 0
-    assert X_transformed["all"].shape[1] > 0  # should have some features
+    all_features = X_transformed["all"].iloc[0]
+    assert isinstance(all_features, pd.DataFrame)
+    assert all_features.shape[0] > 0
+    assert all_features.shape[1] > 0  # should have some features
 
 
 @pytest.mark.skipif(
@@ -40,8 +40,9 @@ def test_statistical_domain():
     transformer = TSFELTransformer(features="statistical", kwargs={"verbose": 0})
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed["statistical"], pd.DataFrame)
-    assert X_transformed["statistical"].shape[1] > 0
+    statistical_features = X_transformed["statistical"].iloc[0]
+    assert isinstance(statistical_features, pd.DataFrame)
+    assert statistical_features.shape[1] > 0
 
 
 @pytest.mark.skipif(
@@ -54,9 +55,9 @@ def test_temporal_domain():
 
     transformer = TSFELTransformer(features="temporal", kwargs={"verbose": 0})
     X_transformed = transformer.fit_transform(X)
-
-    assert isinstance(X_transformed["temporal"], pd.DataFrame)
-    assert X_transformed["temporal"].shape[1] > 0
+    temporal_features = X_transformed["temporal"].iloc[0]
+    assert isinstance(temporal_features, pd.DataFrame)
+    assert temporal_features.shape[1] > 0
 
 
 @pytest.mark.skipif(
@@ -70,8 +71,9 @@ def test_spectral_domain():
     transformer = TSFELTransformer(features="spectral", kwargs={"verbose": 0})
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed["spectral"], pd.DataFrame)
-    assert X_transformed["spectral"].shape[1] > 0
+    spectral_features = X_transformed["spectral"].iloc[0]
+    assert isinstance(spectral_features, pd.DataFrame)
+    assert spectral_features.shape[1] > 0
 
 
 @pytest.mark.skipif(
@@ -85,8 +87,9 @@ def test_fractal_domain():
     transformer = TSFELTransformer(features="fractal", kwargs={"verbose": 0})
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed["fractal"], pd.DataFrame)
-    assert X_transformed["fractal"].shape[1] > 0
+    fractal_features = X_transformed["fractal"].iloc[0]
+    assert isinstance(fractal_features, pd.DataFrame)
+    assert fractal_features.shape[1] > 0
 
 
 @pytest.mark.skipif(
@@ -103,7 +106,8 @@ def test_specific_features_list():
     )
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed["abs_energy"], np.float64)
+    abs_energy = X_transformed["abs_energy"].iloc[0]
+    assert isinstance(abs_energy, np.float64)
 
 
 @pytest.mark.skipif(
@@ -119,8 +123,9 @@ def test_mixed_domains_and_features():
     )
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed["statistical"], pd.DataFrame)
-    assert X_transformed["statistical"].shape[1] > 0
+    statistical_features = X_transformed["statistical"].iloc[0]
+    assert isinstance(statistical_features, pd.DataFrame)
+    assert statistical_features.shape[1] > 0
 
 
 @pytest.mark.skipif(
@@ -137,8 +142,9 @@ def test_feature_with_custom_parameters():
     )
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed["ecdf_percentile_count"], tuple)
-    assert len(X_transformed["ecdf_percentile_count"]) == 3
+    ecdf_percentile_count = X_transformed["ecdf_percentile_count"].iloc[0]
+    assert isinstance(ecdf_percentile_count, tuple)
+    assert len(ecdf_percentile_count) == 3
 
 
 @pytest.mark.skipif(
@@ -152,8 +158,9 @@ def test_multivariate_data():
     transformer = TSFELTransformer(features="statistical", kwargs={"verbose": 0})
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed["statistical"], pd.DataFrame)
-    assert X_transformed["statistical"].shape[1] > 0
+    statistical_features = X_transformed["statistical"].iloc[0]
+    assert isinstance(statistical_features, pd.DataFrame)
+    assert statistical_features.shape[1] > 0
 
 
 @pytest.mark.skipif(
@@ -170,8 +177,9 @@ def test_with_window_size():
     )
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed["statistical"], pd.DataFrame)
-    assert X_transformed["statistical"].shape[0] > 1  # Should have multiple windows
+    statistical_features = X_transformed["statistical"].iloc[0]
+    assert isinstance(statistical_features, pd.DataFrame)
+    assert statistical_features.shape[0] > 1  # Should have multiple windows
 
 
 @pytest.mark.skipif(
@@ -186,7 +194,8 @@ def test_required_parameter_provided():
     transformer = TSFELTransformer(features=["auc"], kwargs={"fs": 100, "verbose": 0})
     X_transformed = transformer.fit_transform(X)
 
-    assert isinstance(X_transformed["auc"], np.float64)
+    auc = X_transformed["auc"].iloc[0]
+    assert isinstance(auc, np.float64)
 
 
 @pytest.mark.skipif(

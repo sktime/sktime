@@ -9,17 +9,6 @@ import pandas as pd
 from sktime.transformations.base import BaseTransformer
 
 
-class _TSFELDataFrame(pd.DataFrame):
-    """DataFrame to store TSFEL feature results."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def __getitem__(self, key):
-        """Get the result of a feature in TSFEL output format."""
-        return super().__getitem__(key).iloc[0]
-
-
 class TSFELTransformer(BaseTransformer):
     """TSFEL transformer to extract features by domain or specific feature names.
 
@@ -28,7 +17,6 @@ class TSFELTransformer(BaseTransformer):
     1. By domain: Pass a domain ('statistical', 'temporal', 'spectral', 'fractal')
     2. By feature names: Pass feature function names (e.g., 'abs_energy', 'auc')
     3. Mixed: Pass a list containing both domain strings and feature names
-
 
     For domain-based extraction, uses TSFEL's `time_series_features_extractor`.
     For individual features, calls the feature functions directly from
@@ -47,7 +35,6 @@ class TSFELTransformer(BaseTransformer):
         - A list mixing domains and features: ['statistical', 'abs_energy']
         - None: extract all features from all domains
 
-
     kwargs : dict, optional (default=None)
         Additional keyword arguments passed to tsfel's feature extractor or
         individual feature functions. Common parameters include:
@@ -57,7 +44,6 @@ class TSFELTransformer(BaseTransformer):
         - overlap : float, overlap between windows (0-1)
         - verbose : int, verbosity level (0 or 1)
         - Any feature-specific parameters (e.g., percentile for ecdf_percentile_count)
-
 
     Examples
     --------
@@ -69,13 +55,15 @@ class TSFELTransformer(BaseTransformer):
     ...     features="statistical", kwargs={"verbose": 0}
     ... )
     >>> features = transformer.fit_transform(y)  # doctest: +SKIP
+    >>> # Access TSFEL output for feature
+    >>> transformer['statistical'].iloc[0]  # doctest: +SKIP
     >>> # Extract feature with custom parameters
     >>> transformer = TSFELTransformer(
     ...     features=["ecdf_percentile_count"],
     ...     kwargs={"percentile": [0.6, 0.9, 1.0], "verbose": 0}
     ... )
     >>> features = transformer.fit_transform(y)  # doctest: +SKIP
-
+    >>> transformer['ecdf_percentile_count'].iloc[0]  # doctest: +SKIP
     """
 
     _tags = {
@@ -216,19 +204,22 @@ class TSFELTransformer(BaseTransformer):
             elif param.default != Parameter.empty:
                 feature_kwargs[param_name] = param.default
 
-        # Handle multivariate data: if X is DataFrame with multiple columns,
-        # process each column separately for features that expect 1D input
-        if isinstance(X, pd.DataFrame) and X.shape[1] > 1:
-            # Process each column separately
-            results = []
-            for col in X.columns:
-                col_result = feature_func(X[col], **feature_kwargs)
-                results.append(col_result)
-            return results
-        else:
-            # Univariate case: call feature function directly
-            result = feature_func(X, **feature_kwargs)
-            return result
+        # Handle multivariate data
+        if isinstance(X, pd.DataFrame):
+            if X.shape[1] > 1:
+                # Process each column separately
+                results = []
+                for col in X.columns:
+                    col_result = feature_func(X[col], **feature_kwargs)
+                    results.append(col_result)
+                return results
+            else:
+                # Single column DataFrame: make Series
+                X = X.iloc[:, 0]
+        
+        # Univariate case
+        result = feature_func(X, **feature_kwargs)
+        return result
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -246,10 +237,10 @@ class TSFELTransformer(BaseTransformer):
         Returns
         -------
         X_transformed : pd.DataFrame
-            DataFrame containing extracted features. To access raw TSFEL output for a
-            feature, use `transformer['feature_name']` or `transformer[domain_name]` if
-            no feature name or domain name is provided, use `transformer['all']` to get
-            all features.
+            DataFrame containing extracted features. To access raw TSFEL output
+            for a feature, use `transformer['feature_name'].iloc[0]` or
+            `transformer[domain_name].iloc[0]` if no feature name or domain name
+            is provided, use `transformer['all'].iloc[0]` to get all features.
         """
         import tsfel
         from tsfel.feature_extraction.calc_features import (
@@ -280,34 +271,6 @@ class TSFELTransformer(BaseTransformer):
 
         # Use regular DataFrame for _transform to pass mtype checks
         return pd.DataFrame([feature_results], index=[0])
-
-    def fit_transform(self, X, y=None):
-        """Fit to data, then transform it.
-
-        Overrides base class to return _TSFELDataFrame for easier access.
-
-        Parameters
-        ----------
-        X : Series, Panel, or Hierarchical data, of mtype X_inner_mtype
-            if X_inner_mtype is list, _transform must support all types in it
-            Data to be transformed
-        y : Series, Panel, or Hierarchical data, of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        X_transformed : _TSFELDataFrame
-            _TSFELDataFrame containing extracted features. To access raw TSFEL
-            output for a feature, use `transformer['feature_name']` or
-            `transformer[domain_name]` if no feature name or domain name is
-            provided, use `transformer['all']` to get all features.
-        """
-        # Check X and y (validates categorical data, etc.)
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
-        self.fit(X, y)
-        Xt = self._transform(X_inner, y_inner)
-        # Convert to _TSFELDataFrame for easier access
-        return _TSFELDataFrame(Xt)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
