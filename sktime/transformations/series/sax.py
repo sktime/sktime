@@ -66,11 +66,11 @@ class SAX(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "np.ndarray",
         "y_inner_mtype": "None",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "requires_y": False,
         "fit_is_empty": True,
         "capability:inverse_transform": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, word_size=8, alphabet_size=5, frame_size=0):
@@ -128,7 +128,10 @@ class SAX(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = {"word_size": 4, "alphabet_size": 5}
+        params = [
+            {"word_size": 4, "alphabet_size": 5},
+            {"word_size": 8, "alphabet_size": 6, "frame_size": 2},
+        ]
         return params
 
     def _check_params(self):

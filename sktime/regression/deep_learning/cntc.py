@@ -1,7 +1,7 @@
 """Contextual Time-series Neural Regressor for TSC."""
 
-__author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNTCRegressor"]
+import numpy as np
 from sklearn.utils import check_random_state
 
 from sktime.networks.cntc import CNTCNetwork
@@ -17,29 +17,38 @@ class CNTCRegressor(BaseDeepRegressor):
 
     Parameters
     ----------
-    n_epochs       : int, default = 2000
+    n_epochs : int, default = 2000
         the number of epochs to train the model
-    batch_size      : int, default = 16
+    batch_size : int, default = 16
         the number of samples per gradient update.
-    filter_sizes    : tuple of shape (2), default = (16, 8)
+    filter_sizes : tuple of shape (2), default = (16, 8)
         filter sizes for CNNs in CCNN arm.
-    kernel_sizes     : two-tuple, default = (1, 1)
+    kernel_sizes : two-tuple, default = (1, 1)
         the length of the 1D convolution window for
         CNNs in CCNN arm.
-    rnn_size        : int, default = 64
+    rnn_size : int, default = 64
         number of rnn units in the CCNN arm.
-    lstm_size       : int, default = 8
+    lstm_size : int, default = 8
         number of lstm units in the CLSTM arm.
-    dense_size      : int, default = 64
+    dense_size : int, default = 64
         dimension of dense layer in CNTC.
-    random_state    : int or None, default=None
+    random_state : int or None, default=None
         Seed for random number generation.
-    verbose         : boolean, default = False
+    verbose : boolean, default = False
         whether to output extra information
-    loss            : string, default="mean_squared_error"
+    loss : string, default="mean_squared_error"
         fit parameter for the keras model
-    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
-    metrics         : list of strings, default=["accuracy"],
+    optimizer : keras.optimizer, default=keras.optimizers.Adam(),
+    metrics : list of strings, default=["accuracy"],
+    activation : string, default="linear",
+        activation function for the output layer
+        List of available activation functions: https://keras.io/api/layers/activations/
+    activation_hidden : string, default="relu",
+        activation function for the hidden layers
+        List of available activation functions: https://keras.io/api/layers/activations/
+    activation_attention : string, default="sigmoid",
+        activation function for the attention layer
+        List of available activation functions: https://keras.io/api/layers/activations/
 
     References
     ----------
@@ -66,9 +75,17 @@ class CNTCRegressor(BaseDeepRegressor):
             "James-Large",
             "Withington",
             "AurumnPegasus",
+            "TonyBagnall",
+            "noxthot",
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
-        "python_dependencies": ["tensorflow", "keras-self-attention"],
+        "python_dependencies": ["tensorflow"],
+        "tests:skip_by_name": [
+            "test_fit_idempotent",  # fails with `AssertionError`, see #3616
+            "test_persistence_via_pickle",  # fails with `AssertionError`, see #8059
+            "test_save_estimators_to_file",
+        ],
+        "tests:vm": True,  # isolated due to suspected memory leaks, see #8518
     }
 
     def __init__(
@@ -85,9 +102,15 @@ class CNTCRegressor(BaseDeepRegressor):
         loss="mean_squared_error",
         metrics=None,
         random_state=0,
+        activation="linear",
+        activation_hidden="relu",
+        activation_attention="sigmoid",
     ):
         _check_dl_dependencies(severity="error")
 
+        self.activation = activation
+        self.activation_hidden = activation_hidden
+        self.activation_attention = activation_attention
         self.kernel_sizes = kernel_sizes  # used plural
         self.filter_sizes = filter_sizes  # used plural
         self.rnn_size = rnn_size
@@ -103,7 +126,11 @@ class CNTCRegressor(BaseDeepRegressor):
 
         super().__init__()
 
-        self._network = CNTCNetwork()
+        self._network = CNTCNetwork(
+            activation=self.activation_hidden,
+            activation_attention=self.activation_attention,
+            random_state=self.random_state,
+        )
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -125,7 +152,10 @@ class CNTCRegressor(BaseDeepRegressor):
         metrics = ["accuracy"] if self.metrics is None else self.metrics
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(units=1)(output_layer)
+        output_layer = keras.layers.Dense(
+            activation=self.activation,
+            units=1,
+        )(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
         model.compile(
@@ -247,4 +277,55 @@ class CNTCRegressor(BaseDeepRegressor):
         """
         X2 = self.prepare_input(X)
         preds = self.model_.predict([X2, X, X], self.batch_size, **kwargs)
+        preds = np.squeeze(preds, axis=-1)
         return preds
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
+        """
+        param1 = {
+            "n_epochs": 10,
+            "random_state": 0,
+        }
+
+        param2 = {
+            "n_epochs": 12,
+            "batch_size": 6,
+            "kernel_sizes": (2, 2),
+            "random_state": 42,
+        }
+        test_params = [param1, param2]
+
+        return test_params
+
+    @staticmethod
+    def get_custom_objects():
+        """Return the custom objects needed for loading the model.
+
+        Returns
+        -------
+        dict of str to type, mapping names to classes
+        """
+        from sktime.libs._keras_self_attention import SeqSelfAttention
+
+        return SeqSelfAttention.get_custom_objects()

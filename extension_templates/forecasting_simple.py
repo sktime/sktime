@@ -25,7 +25,7 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting         - _fit(self, y, X=None, fh=None)
     forecasting     - _predict(self, fh=None, X=None)
 
@@ -56,7 +56,7 @@ class MyForecaster(BaseForecaster):
         descriptive explanation of parama
     paramb : string, optional (default='default')
         descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
+    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
     and so on
     """
@@ -68,6 +68,8 @@ class MyForecaster(BaseForecaster):
     #   scitype:y - the expected input scitype of y - univariate or multivariate or both
     # tag values are "safe defaults" which can usually be left as-is
     _tags = {
+        # tags and full specifications are available in the tag API reference
+        # https://www.sktime.net/en/stable/api_reference/tags.html
         # to list all valid tags with description, use sktime.registry.all_tags
         #   all_tags(estimator_types="forecaster", as_dataframe=True)
         #
@@ -97,10 +99,10 @@ class MyForecaster(BaseForecaster):
         # capability tags: properties of the estimator
         # --------------------------------------------
         #
-        # ignores-exogeneous-X = does estimator ignore the exogeneous X?
-        "ignores-exogeneous-X": False,
-        # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
-        # CAVEAT: if tag is set to True, inner methods always see X=None
+        # capability:exogenous = does estimator use exogeneous X nontrivially?
+        "capability:exogenous": True,
+        # valid values: boolean False (ignores X), True (uses X in non-trivial manner)
+        # CAVEAT: if tag is set to False, inner methods always see X=None
         #
         # requires-fh-in-fit = is forecasting horizon always required in fit?
         "requires-fh-in-fit": True,

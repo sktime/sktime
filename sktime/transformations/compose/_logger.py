@@ -65,6 +65,7 @@ class Logger(BaseTransformer):
     >>> # create a pipeline that logs after detrending and before forecasting
     >>> pipe = Detrender() * logger * NaiveForecaster(sp=12)
     >>> pipe.fit(load_airline(), fh=[1, 2, 3])
+    TransformedTargetForecaster(...)
     >>> # get the log
     >>> log = DataLog("foo").get_log()
     """
@@ -72,14 +73,17 @@ class Logger(BaseTransformer):
     _tags = {
         "authors": "fkiraly",
         "capability:inverse_transform": True,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": CORE_MTYPES,  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": CORE_MTYPES,  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,
         # does transform return have the same time index as input X
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -145,9 +149,9 @@ class Logger(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns

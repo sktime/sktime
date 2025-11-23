@@ -48,26 +48,31 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         min_samples_split samples.
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
+
         - If int, then consider ``min_samples_split`` as the minimum number.
         - If float, then ``min_samples_split`` is a fraction and
           ``ceil(min_samples_split * n_samples)`` are the minimum
           number of samples for each split.
+
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
         least ``min_samples_leaf`` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
+
         - If int, then consider ``min_samples_leaf`` as the minimum number.
         - If float, then ``min_samples_leaf`` is a fraction and
           ``ceil(min_samples_leaf * n_samples)`` are the minimum
           number of samples for each node.
+
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
+
         - If int, then consider ``max_features`` features at each split.
         - If float, then ``max_features`` is a fraction and
           ``int(max_features * n_features)`` features are considered at each
@@ -76,6 +81,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         - If "sqrt", then ``max_features=sqrt(n_features)`` (same as "auto").
         - If "log2", then ``max_features=log2(n_features)``.
         - If None, then ``max_features=n_features``.
+
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
@@ -137,6 +143,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
+
         - If None (default), then draw ``X.shape[0]`` samples.
         - If int, then draw ``max_samples`` samples.
         - If float, then draw ``max_samples * X.shape[0]`` samples. Thus,
@@ -166,6 +173,11 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
         ``oob_decision_function_`` might contain NaN.
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
+        The function to measure the quality of a split. Supported criteria are
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
+        Note: This parameter is tree-specific.
 
     References
     ----------
@@ -200,6 +212,8 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         # capabilities
         # --------------
         "capability:feature_importance": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -221,6 +235,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         warm_start=False,
         class_weight=None,
         max_samples=None,
+        criterion="gini",
     ):
         self.estimator = estimator
 
@@ -234,6 +249,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.max_samples = max_samples
+        self.criterion = criterion
 
         # Pass on params.
         super().__init__(
@@ -271,6 +287,19 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     def predict_proba(self, X, **kwargs) -> np.ndarray:
         """Wrap predict_proba to call BaseClassifier.predict_proba."""
         return BaseClassifier.predict_proba(self, X=X, **kwargs)
+
+    def _repr_html_inner(self):
+        """Return HTML representation of class.
+
+        This function is returned by the @property `_repr_html_` to make
+        `hasattr(BaseObject, "_repr_html_") return `True` or `False` depending
+        on `self.get_config()["display"]`.
+        """
+        return BaseClassifier._repr_html_inner(self)
+
+    def _repr_mimebundle_(self, **kwargs):
+        """Mime bundle used by jupyter kernels to display instances of BaseObject."""
+        return BaseClassifier._repr_mimebundle_(self, **kwargs)
 
     def _fit(self, X, y):
         BaseTimeSeriesForest._fit(self, X=X, y=y)
@@ -316,6 +345,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
         # Set parameters according to naming in pipeline
         estimator_params = {
+            "criterion": self.criterion,
             "max_depth": self.max_depth,
             "min_samples_split": self.min_samples_split,
             "min_samples_leaf": self.min_samples_leaf,

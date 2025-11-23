@@ -2,7 +2,6 @@
 """Implements back-adapters for skforecast reduction models."""
 
 from collections.abc import Callable
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -126,7 +125,7 @@ class SkforecastAutoreg(BaseForecaster):
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
@@ -138,13 +137,13 @@ class SkforecastAutoreg(BaseForecaster):
     def __init__(
         self: "SkforecastAutoreg",
         regressor: object,
-        lags: Union[int, np.ndarray, list],
-        transformer_y: Optional[object] = None,
-        transformer_exog: Optional[object] = None,
-        weight_func: Optional[Callable] = None,
-        differentiation: Optional[int] = None,
-        fit_kwargs: Optional[dict] = None,
-        binner_kwargs: Optional[dict] = None,
+        lags: int | np.ndarray | list,
+        transformer_y: object | None = None,
+        transformer_exog: object | None = None,
+        weight_func: Callable | None = None,
+        differentiation: int | None = None,
+        fit_kwargs: dict | None = None,
+        binner_kwargs: dict | None = None,
     ) -> None:
         self.regressor = regressor
         self.lags = lags
@@ -192,7 +191,7 @@ class SkforecastAutoreg(BaseForecaster):
         )
 
     @staticmethod
-    def _coerce_column_names(X: Optional[pd.DataFrame]):
+    def _coerce_column_names(X: pd.DataFrame | None):
         if X is None:
             return None
 
@@ -258,8 +257,8 @@ class SkforecastAutoreg(BaseForecaster):
     def _fit(
         self: "SkforecastAutoreg",
         y: pd.Series,
-        X: Optional[pd.DataFrame],
-        fh: Optional[ForecastingHorizon],
+        X: pd.DataFrame | None,
+        fh: ForecastingHorizon | None,
     ):
         """Fit forecaster to training data.
 
@@ -295,9 +294,7 @@ class SkforecastAutoreg(BaseForecaster):
 
         return self
 
-    def _get_horizon_details(
-        self: "SkforecastAutoreg", fh: Optional[ForecastingHorizon]
-    ):
+    def _get_horizon_details(self: "SkforecastAutoreg", fh: ForecastingHorizon | None):
         if not fh.is_all_out_of_sample(self.cutoff):
             raise NotImplementedError(
                 f"{self.__class__.__name__} does not support in-sample predictions."
@@ -313,8 +310,8 @@ class SkforecastAutoreg(BaseForecaster):
 
     def _predict(
         self: "SkforecastAutoreg",
-        fh: Optional[ForecastingHorizon],
-        X: Optional[pd.DataFrame],
+        fh: ForecastingHorizon | None,
+        X: pd.DataFrame | None,
     ):
         """Forecast time series at future horizon.
 
@@ -360,8 +357,8 @@ class SkforecastAutoreg(BaseForecaster):
 
     def _predict_quantiles(
         self: "SkforecastAutoreg",
-        fh: Optional[ForecastingHorizon],
-        X: Optional[pd.DataFrame],
+        fh: ForecastingHorizon | None,
+        X: pd.DataFrame | None,
         alpha: list[float],
     ):
         """Compute/return prediction quantiles for a forecast.
@@ -463,8 +460,6 @@ class SkforecastAutoreg(BaseForecaster):
         return [param1, param2]
 
 
-# TODO: SkforecastRecursive has significant duplication with SkforecastAutoreg
-# https://github.com/sktime/sktime/issues/7451
 class SkforecastRecursive(BaseForecaster):
     """Adapter for ``skforecast.recursive.ForecasterRecursive`` class [1]_.
 
@@ -520,8 +515,12 @@ class SkforecastRecursive(BaseForecaster):
         - ``subsample``
         - ``random_state``
         - ``dtype``
+    store_in_sample_residuals : bool, default ``False``
+        If ``True``, stores the in-sample residuals when fitting the forecaster. This is
+        required if you want to use predict_quantiles later. If ``False``, predict_quantiles
+        will raise an error unless you call set_in_sample_residuals() manually.
 
-        Argument ``method`` is passed internally to the fucntion ``numpy.percentile``.
+        Argument ``method`` is passed internally to the function ``numpy.percentile``.
 
     References
     ----------
@@ -590,26 +589,31 @@ class SkforecastRecursive(BaseForecaster):
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:categorical_in_X": True,
         "python_version": ">=3.9",
         "python_dependencies": ["skforecast>=0.14"],
+        # CI and testing
+        # --------------
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],
+        # skforecast requires contiguous X for prediction, see issue #8787
     }
 
     def __init__(
         self: "SkforecastRecursive",
         regressor: object,
-        lags: Optional[Union[int, list, np.ndarray, range]] = None,
-        window_features: Optional[Union[object, list]] = None,
-        transformer_y: Optional[object] = None,
-        transformer_X: Optional[object] = None,
-        weight_func: Optional[Callable] = None,
-        differentiation: Optional[int] = None,
-        fit_kwargs: Optional[dict] = None,
-        binner_kwargs: Optional[dict] = None,
+        lags: int | list | np.ndarray | range | None = None,
+        window_features: object | list | None = None,
+        transformer_y: object | None = None,
+        transformer_X: object | None = None,
+        weight_func: Callable | None = None,
+        differentiation: int | None = None,
+        fit_kwargs: dict | None = None,
+        binner_kwargs: dict | None = None,
+        store_in_sample_residuals: bool = False,
     ) -> None:
         self.regressor = regressor
         self.lags = lags
@@ -620,6 +624,7 @@ class SkforecastRecursive(BaseForecaster):
         self.differentiation = differentiation
         self.fit_kwargs = fit_kwargs
         self.binner_kwargs = binner_kwargs
+        self.store_in_sample_residuals = store_in_sample_residuals
 
         super().__init__()
 
@@ -629,6 +634,8 @@ class SkforecastRecursive(BaseForecaster):
         self._transformer_X = None
 
         self._clone_estimators()
+
+        self.set_tags(**{"capability:pred_int": self.store_in_sample_residuals})
 
     def _clone_estimators(self: "SkforecastRecursive"):
         """Clone the regressor and transformers."""
@@ -659,7 +666,7 @@ class SkforecastRecursive(BaseForecaster):
         )
 
     @staticmethod
-    def _coerce_column_names(X: Optional[pd.DataFrame]):
+    def _coerce_column_names(X: pd.DataFrame | None):
         if X is None:
             return None
 
@@ -725,8 +732,8 @@ class SkforecastRecursive(BaseForecaster):
     def _fit(
         self: "SkforecastRecursive",
         y: pd.Series,
-        X: Optional[pd.DataFrame],
-        fh: Optional[ForecastingHorizon],
+        X: pd.DataFrame | None,
+        fh: ForecastingHorizon | None,
     ):
         """Fit forecaster to training data.
 
@@ -758,12 +765,16 @@ class SkforecastRecursive(BaseForecaster):
         y_new = self._make_index_compatible(y, "y")
         X_new = self._make_index_compatible(X, "X")
 
-        self._forecaster.fit(y_new, exog=self._coerce_column_names(X_new))
+        self._forecaster.fit(
+            y_new,
+            exog=self._coerce_column_names(X_new),
+            store_in_sample_residuals=self.store_in_sample_residuals,
+        )
 
         return self
 
     def _get_horizon_details(
-        self: "SkforecastRecursive", fh: Optional[ForecastingHorizon]
+        self: "SkforecastRecursive", fh: ForecastingHorizon | None
     ):
         if not fh.is_all_out_of_sample(self.cutoff):
             raise NotImplementedError(
@@ -780,8 +791,8 @@ class SkforecastRecursive(BaseForecaster):
 
     def _predict(
         self: "SkforecastRecursive",
-        fh: Optional[ForecastingHorizon],
-        X: Optional[pd.DataFrame],
+        fh: ForecastingHorizon | None,
+        X: pd.DataFrame | None,
     ):
         """Forecast time series at future horizon.
 
@@ -827,8 +838,8 @@ class SkforecastRecursive(BaseForecaster):
 
     def _predict_quantiles(
         self: "SkforecastRecursive",
-        fh: Optional[ForecastingHorizon],
-        X: Optional[pd.DataFrame],
+        fh: ForecastingHorizon | None,
+        X: pd.DataFrame | None,
         alpha: list[float],
     ):
         """Compute/return prediction quantiles for a forecast.
@@ -926,8 +937,13 @@ class SkforecastRecursive(BaseForecaster):
             "lags": [1, 3],
             "differentiation": 2,
         }
+        param3 = {
+            "regressor": LinearRegression(),
+            "lags": 2,
+            "store_in_sample_residuals": True,
+        }
 
-        return [param1, param2]
+        return [param1, param2, param3]
 
 
 __all__ = ["SkforecastAutoreg", "SkforecastRecursive"]

@@ -18,23 +18,23 @@ class MrSQM(_DelegatedClassifier):
 
     Parameters
     ----------
-    strat               : str, one of 'R','S','SR', or 'RS', default="RS"
+    strat : str, one of 'R','S','SR', or 'RS', default="RS"
         feature selection strategy. By default set to 'RS'.
         R and S are single-stage filters while RS and SR are two-stage filters.
-    features_per_rep    : int, default=500
+    features_per_rep : int, default=500
         (maximum) number of features selected per representation.
-    selection_per_rep   : int, default=2000
+    selection_per_rep : int, default=2000
         (maximum) number of candidate features selected per representation.
         Only applied in two stages strategies (RS and SR), otherwise ignored.
-    nsax                : int, default=1
+    nsax : int, default=1
         number of representations produced by sax transformation.
-    nsfa                : int, default=0
+    nsfa : int, default=0
         number of representations produced by sfa transformation.
-    custom_config       : dict, default=None
+    custom_config : dict, default=None
         customized parameters for the symbolic transformation.
-    random_state        : int, default=None.
+    random_state : int, default=None.
         random seed for the classifier.
-    sfa_norm            : bool, default=True.
+    sfa_norm : bool, default=True.
         whether to apply time series normalisation (standardisation).
 
     References
@@ -52,11 +52,15 @@ class MrSQM(_DelegatedClassifier):
         # --------------
         "authors": ["lnthach", "heerme", "fkiraly"],
         "maintainers": ["lnthach", "heerme", "fkiraly"],
-        "python_dependencies": "mrsqm",
-        "requires_cython": True,
+        "python_dependencies": ["mrsqm", "numba"],
         # estimator type
         # --------------
         "X_inner_mtype": "nested_univ",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(

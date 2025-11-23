@@ -6,8 +6,8 @@ Benchmarking
 
 The :mod:`sktime.benchmarking` module contains functionality to perform benchmarking.
 
-Base
-----
+Benchmarking Framework v2
+-------------------------
 
 .. currentmodule:: sktime.benchmarking.benchmarks
 
@@ -16,7 +16,6 @@ Base
     :template: class.rst
 
     BaseBenchmark
-    ForecastingHorizon
 
 .. currentmodule:: sktime.benchmarking.forecasting
 
@@ -25,6 +24,32 @@ Base
     :template: class.rst
 
     ForecastingBenchmark
+
+.. currentmodule:: sktime.benchmarking.classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClassificationBenchmark
+
+
+Storage Backends
+----------------
+
+.. currentmodule:: sktime.benchmarking._storage_handlers
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    JSONStorageHandler
+    ParquetStorageHandler
+    CSVStorageHandler
+    NullStorageHandler
+
+
+Benchmarking Framework v1
+-------------------------
 
 .. currentmodule:: sktime.benchmarking.base
 
@@ -113,3 +138,11 @@ Base
 
     PairwiseMetric
     AggregateMetric
+
+
+Post-hoc tests and utilities
+----------------------------
+
+.. currentmodule:: sktime.benchmarking.critical_difference
+
+    plot_critical_difference

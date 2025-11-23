@@ -64,7 +64,7 @@ def check_X(
 
     if not isinstance(X, VALID_X_TYPES):
         raise ValueError(
-            f"X must be a pd.DataFrame or a np.array, " f"but found: {type(X)}"
+            f"X must be a pd.DataFrame or a np.array, but found: {type(X)}"
         )
 
     # check np.array
@@ -136,8 +136,7 @@ def check_y(y, enforce_min_instances=1, coerce_to_numpy=False):
     """
     if not isinstance(y, VALID_Y_TYPES):
         raise ValueError(
-            f"y must be either a pd.Series or a np.ndarray, "
-            f"but found type: {type(y)}"
+            f"y must be either a pd.Series or a np.ndarray, but found type: {type(y)}"
         )
 
     if enforce_min_instances > 0:

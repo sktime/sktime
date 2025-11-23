@@ -10,10 +10,12 @@ __all__ = [
     "StatsForecastAutoTBATS",
     "StatsForecastAutoTheta",
     "StatsForecastMSTL",
+    "StatsForecastADIDA",
 ]
-from typing import Optional, Union
 
-from sktime.forecasting.base import BaseForecaster
+import numpy as np
+
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
@@ -185,22 +187,27 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.0.0"],
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],
+        # known failure in case of non-contiguous X, see issue #8787
     }
 
     def __init__(
         self,
         start_p: int = 2,
-        d: Optional[int] = None,
+        d: int | None = None,
         start_q: int = 2,
         max_p: int = 5,
         max_d: int = 2,
         max_q: int = 5,
         start_P: int = 1,
-        D: Optional[int] = None,
+        D: int | None = None,
         start_Q: int = 1,
         max_P: int = 2,
         max_D: int = 1,
@@ -215,15 +222,15 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         stepwise: bool = True,
         n_jobs: int = 2,
         trend: bool = True,
-        method: Optional[str] = None,
-        offset_test_args: Optional[str] = None,
-        seasonal_test_args: Optional[dict] = None,
+        method: str | None = None,
+        offset_test_args: str | None = None,
+        seasonal_test_args: dict | None = None,
         trace: bool = False,
         n_fits: int = 94,
         with_intercept: bool = True,
-        approximation: Optional[bool] = None,
-        truncate: Optional[bool] = None,
-        blambda: Optional[float] = None,
+        approximation: bool | None = None,
+        truncate: bool | None = None,
+        blambda: float | None = None,
         biasadj: bool = False,
         parallel: bool = False,
     ):
@@ -350,12 +357,13 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     season_length : int, optional, default=1
         number of observations per unit of time (e.g. 24 for hourly data), by default 1
 
-    decomposition_type : str, optional, default="multipliciative"
+    decomposition_type : str, optional, default="multiplicative"
         possible values: "additive", "multiplicative"
         type of seasonal decomposition, by default "multiplicative"
 
     model : Optional[str], optional
         controlling Theta Model, by default searches the best model
+        possible values: "STM", "OTM", "DSTM", "DOTM"
 
     References
     ----------
@@ -382,7 +390,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.3.0"],
@@ -392,7 +400,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         self,
         season_length: int = 1,
         decomposition_type: str = "multiplicative",
-        model: Optional[str] = None,
+        model: str | None = None,
     ):
         self.season_length = season_length
         self.decomposition_type = decomposition_type
@@ -462,11 +470,11 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    season_length : int
+    season_length : int, optional (default=1)
         Number of observations per unit of time. Ex: 24 Hourly data.
-    model : str
+    model : str, optional (default="ZZZ")
         Controlling state-space-equations.
-    damped : bool
+    damped : bool, optional (default=None)
         A parameter that 'dampens' the trend.
     phi : float, optional (default=None)
         Smoothing parameter for trend damping. Only used when ``damped=True``.
@@ -492,23 +500,23 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
             "luca-miniati",
         ],
         # AzulGarza and jmoralez for statsforecast AutoETS
-        # "maintainers": ["yarnabrina"],
-        # "python_dependencies": "statsforecast"
+        "maintainers": ["yarnabrina"],
+        "python_dependencies": ["statsforecast>=1.3.2"],
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "python_dependencies": ["statsforecast>=1.3.2"],
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
     }
 
     def __init__(
         self,
         season_length: int = 1,
         model: str = "ZZZ",
-        damped: Optional[bool] = None,
-        phi: Optional[float] = None,
+        damped: bool | None = None,
+        phi: float | None = None,
     ):
         self.season_length = season_length
         self.model = model
@@ -578,9 +586,9 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    season_length : int
+    season_length : int, optional (default=1)
         Number of observations per unit of time. Ex: 24 Hourly data.
-    model : str
+    model : str, optional (default="Z")
         Controlling state-space-equations.
 
     References
@@ -605,7 +613,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.1.0"],
@@ -673,7 +681,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     Parameters
     ----------
-    seasonal_periods : int or list of int.
+    seasonal_periods : int or list of int. (default=1)
         Number of observations per unit of time. Ex: 24 Hourly data.
     use_boxcox : bool (default=None)
         Whether or not to use a Box-Cox transformation. By default tries both.
@@ -715,7 +723,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.7.2"],
@@ -723,10 +731,10 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        seasonal_periods: Union[int, list[int]],
-        use_boxcox: Optional[bool] = None,
-        use_trend: Optional[bool] = None,
-        use_damped_trend: Optional[bool] = None,
+        seasonal_periods: int | list[int] = 1,
+        use_boxcox: bool | None = None,
+        use_trend: bool | None = None,
+        use_damped_trend: bool | None = None,
         use_arma_errors: bool = True,
         bc_lower_bound: float = 0.0,
         bc_upper_bound: float = 1.0,
@@ -859,7 +867,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "python_dependencies": ["statsforecast>=1.2.0"],
@@ -867,10 +875,10 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        season_length: Union[int, list[int]],
+        season_length: int | list[int],
         trend_forecaster=None,
-        stl_kwargs: Optional[dict] = None,
-        pred_int_kwargs: Optional[dict] = None,
+        stl_kwargs: dict | None = None,
+        pred_int_kwargs: dict | None = None,
     ):
         self.season_length = season_length
         self.trend_forecaster = trend_forecaster
@@ -928,6 +936,109 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             "trend_forecaster": self._trend_forecaster,
         }
 
+    def _calculate_fh_for_MSTL(self, fh, y):
+        """Calculate the fh to be used for MSTL model.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon or None
+            The forecasting horizon with the steps ahead to to predict.
+        y : pd.Series
+            The time series data used for fitting.
+
+        Returns
+        -------
+        fh : ForecastingHorizon
+            The forecasting horizon to be used for MSTL model.
+        """
+        _fh = self._check_fh(fh)
+
+        # Convert fh to relative if it is absolute before setting it
+        _fh = _fh.to_relative(self.cutoff)
+
+        if _fh.is_all_in_sample():
+            _fh = ForecastingHorizon(y.index, is_relative=False)
+            _fh = _fh.to_relative(self.cutoff)
+        return _fh
+
+    def _set_fh_to_trend_forecaster(self, fh, y):
+        """Set forecasting horizon to trend forecaster if it exists.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon or None
+            The forecasting horizon with the steps ahead to to predict.
+        y : pd.Series
+            The time series data used for fitting.
+        """
+        if fh is not None:
+            _fh = self._calculate_fh_for_MSTL(fh, y)
+            # pass the fh to _trend_forecaster in case it needs it
+            self._trend_forecaster.set_fh(_fh)
+
+    def check_fh(self, fh):
+        """Check the fh to ensure consistency with `inner_fh` of trend forecaster."""
+        inner_fh = getattr(self._trend_forecaster, "_inner_fh", None)
+        _fh_for_MSTL = self._calculate_fh_for_MSTL(fh, self._y)
+
+        msg = (
+            f"This is because fitting of the "
+            f"forecaster {self.__class__.__name__} "
+            f"depends on `fh`. "
+        )
+
+        if inner_fh and not np.array_equal(_fh_for_MSTL, inner_fh):
+            # raise error if existing fh and new one don't match
+            raise ValueError(
+                "A different forecasting horizon `fh` has been "
+                "provided from "
+                "the one seen already in `fit`, in this instance of "
+                f"{self.__class__.__name__}. "
+                "If you want to change the forecasting "
+                "horizon, please re-fit the forecaster. " + msg
+            )
+        super()._check_fh(fh)
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit the forecaster to training data and forward fh to trend forecaster.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Univariate target series used for fitting.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables (ignored by this forecaster).
+        fh : ForecastingHorizon or array-like, optional
+            Forecasting horizon to be used for training.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator instance.
+        """
+        self._set_fh_to_trend_forecaster(fh, y)
+        return super()._fit(y=y, X=X, fh=fh)
+
+    def _predict(self, fh, X):
+        """Predict time series at future horizon.
+
+        Internal method for making forecasting predictions.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables.
+
+        Returns
+        -------
+        y_pred : pd.DataFrame
+            Predictions for the forecasting horizon.
+        """
+        self.check_fh(fh)
+        return super()._predict(fh, X)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -983,3 +1094,108 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             ]
 
         return params
+
+
+class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
+    """StatsForecast ADIDA (Aggregate-Disaggregate Intermittent Demand Approach) model.
+
+    Direct interface to ``statsforecast.models.ADIDA`` by Nixtla.
+
+    This estimator directly interfaces ``ADIDA``,
+    from ``statsforecast`` [1]_ by Nixtla.
+
+    Aggregate-Disagregate Intermittent Demand Approach: Uses temporal aggregation to
+    reduce the number of zero observations. Once the data has been aggregated, it uses
+    the optimized SES to generate the forecasts at the new level. It then breaks down
+    the forecast to the original level using equal weights.
+
+    ADIDA specializes on sparse or intermittent series are series with very few
+    non-zero observations.They are notoriously hard to forecast, and so, different
+    methods have been developed specifically for them.
+
+    Parameters
+    ----------
+    prediction_intervals : ConformalIntervals, optional
+        Information to compute conformal prediction intervals.
+
+    References
+    ----------
+    .. [1] https://nixtlaverse.nixtla.io/statsforecast/docs/models/adida.html#introduction
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastADIDA
+    >>> y = load_airline()
+    >>> model = StatsForecastADIDA()
+    >>> fitted_model = model.fit(y) # doctest: +SKIP
+    >>> y_pred = fitted_model.predict(fh=[1, 2, 3]) # doctest: +SKIP
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["AzulGarza", "yarnabrina", "vedantag17"],
+        "maintainers": ["vedantag17"],
+        # "python_dependencies": "statsforecast"
+        # inherited from _GeneralisedStatsForecastAdapter
+        # estimator type
+        # --------------
+        "capability:exogenous": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        "python_dependencies": ["statsforecast>=1.4.0"],
+    }
+
+    def __init__(
+        self,
+        prediction_intervals: object | None = None,
+    ):
+        self.prediction_intervals = prediction_intervals
+
+        super().__init__()
+
+        if prediction_intervals is None:
+            self.set_tags(**{"capability:pred_int": False})
+            self.set_tags(**{"capability:pred_int:insample": False})
+
+    def _get_statsforecast_class(self):
+        """Get the class of the statsforecast forecaster."""
+        from statsforecast.models import ADIDA
+
+        return ADIDA
+
+    def _get_statsforecast_params(self):
+        """Get the parameters for the statsforecast model."""
+        return {
+            "prediction_intervals": self.prediction_intervals,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+            Parameters to create testing instances of the class
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        if _check_soft_dependencies("statsforecast", severity="none"):
+            from statsforecast.utils import ConformalIntervals
+
+            params = [
+                {},
+                {"prediction_intervals": ConformalIntervals()},
+            ]
+
+            return params
+        else:
+            return [{}, {}]

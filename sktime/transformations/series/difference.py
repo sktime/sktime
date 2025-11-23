@@ -5,7 +5,6 @@
 __author__ = ["RNKuhns", "fkiraly", "benheid"]
 __all__ = ["Differencer"]
 
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -20,8 +19,7 @@ def _check_lags(lags):
     msg = " ".join(
         [
             "`lags` should be provided as a positive integer scaler, or ",
-            "a list, tuple or np.ndarray of positive integers,"
-            f"but found {type(lags)}.",
+            f"a list, tuple or np.ndarray of positive integers,but found {type(lags)}.",
         ]
     )
     non_positive_msg = "`lags` should be positive integers."
@@ -41,7 +39,7 @@ def _check_lags(lags):
     return lags
 
 
-def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
+def _diff_transform(X: pd.Series | pd.DataFrame, lags: np.array):
     """Perform differencing on Series or DataFrame.
 
     Parameters
@@ -69,7 +67,7 @@ def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
     return Xt
 
 
-def _diff_to_seq(X: Union[pd.Series, pd.DataFrame], lags: np.array):
+def _diff_to_seq(X: pd.Series | pd.DataFrame, lags: np.array):
     """Difference a series multiple times and return intermediate results.
 
     Parameters
@@ -249,8 +247,14 @@ class Differencer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,
         "transform-returns-same-time-index": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "capability:inverse_transform": True,
+        "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        # test fails in the Panel case for Differencer, see #2522
+        "tests:skip_by_name": ["test_transform_inverse_transform_equivalent"],
     }
 
     VALID_NA_HANDLING_STR = ["drop_na", "keep_na", "fill_zero"]

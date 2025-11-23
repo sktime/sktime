@@ -6,7 +6,6 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base.adapters._pytorch import (
@@ -18,14 +17,11 @@ from sktime.networks.cinn import CINNNetwork
 from sktime.transformations.merger import Merger
 from sktime.transformations.series.fourier import FourierFeatures
 from sktime.transformations.series.summarize import WindowSummarizer
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    from torch.utils.data import DataLoader, Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
+torch = _safe_import("torch")
+DataLoader = _safe_import("torch.utils.data.DataLoader")
+Dataset = _safe_import("torch.utils.data.Dataset")
 
 
 def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
@@ -108,7 +104,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     ... )
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> model = CINNForecaster() # doctest: +SKIP
+    >>> model = CINNForecaster(window_size=100) # doctest: +SKIP
     >>> model.fit(y) # doctest: +SKIP
     CINNForecaster(...)
     >>> y_pred = model.predict(fh=[1,2,3]) # doctest: +SKIP
@@ -124,12 +120,15 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": False,
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,  # run tests on vm in GHA
     }
 
     def __init__(
@@ -205,10 +204,24 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series to fit to.
 
+        Raises
+        ------
+        ValueError
+            If `self.window_size` is larger than the length of `y`.
+        RuntimeError
+            If curve fitting fails due to non-convergence.
+
         Returns
         -------
         self : reference to self
         """
+        if self.window_size > len(y):
+            raise ValueError(
+                f"Invalid window_size: {self.window_size}. "
+                "It must be less than or equal to the size of the training data "
+                f"({len(y)})."
+            )
+
         # Fit the rolling mean forecaster
         rolling_mean = WindowSummarizer(
             lag_feature={
@@ -222,7 +235,21 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             {"p0": self._init_param_f_statistic},
             normalise_index=True,
         )
-        self.function.fit(rolling_mean.dropna())
+
+        try:
+            # Attempt to fit the function with rolling mean data.
+            # This step can fail if the optimization process does not converge,
+            # often leading to a "RuntimeError: Optimal parameters not found".
+            self.function.fit(rolling_mean.dropna())
+        except Exception as e:
+            # Raise a detailed RuntimeError, preserving traceback.
+            raise RuntimeError(
+                "Curve fitting error. Please check the parameters and try again.\n"
+                f"Window size: {self.window_size}\n"
+                f"f_statistic: {self._f_statistic}\n"
+                f"init_param_f_statistic: {self._init_param_f_statistic}"
+            ) from e  # Preserve original traceback
+
         self.fourier_features = FourierFeatures(
             sp_list=self._sp_list, fourier_terms_list=self._fourier_terms_list
         )
@@ -308,7 +335,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                         print(epoch, i, nll.detach().numpy(), val_nll.detach().numpy())
         return True
 
-    def _predict(self, X=None, fh=None):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict

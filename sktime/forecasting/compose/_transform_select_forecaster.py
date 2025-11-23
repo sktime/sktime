@@ -29,9 +29,12 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         dict of forecasters with the key corresponding to categories generated
         by the given transformer and the value corresponding to a sktime forecaster.
 
-    transformer : sktime transformer, default = ADICVTransformer()
+    transformer : sktime transformer or clusterer, default = ADICVTransformer()
         A series-to-primitives sk-time transformer that generates a value
         which can be used to quantify a choice of forecaster for the time series.
+
+        If a clusterer is used, it must support cluster assignment,
+        i.e, have the ``capability:predict`` tag.
 
         Note: To ensure correct functionality, the transformer must store the
         generated category in the first column of the returned values when
@@ -42,6 +45,9 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         the transformer does not match any of the given forecasters.
 
     pooling : str, optional, default = "local", one of {"local", "global"}
+        The pooling strategy to use for the forecasters. If "local", the forecasters
+        are fit and predicted independently for each category. If "global", the
+        forecasters are fit and predicted on the entire dataset.
 
     Raises
     ------
@@ -73,15 +79,15 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     >>> group_forecaster = TransformSelectForecaster(
     ...     forecasters =
     ...         {"smooth": NaiveForecaster(),
-    ...         "erratic": Croston(),
-    ...         "intermittent": PolynomialTrendForecaster()},
+    ...         "erratic": PolynomialTrendForecaster(),
+    ...         "intermittent": Croston()},
     ...     transformer=ADICVTransformer(features=["class"]))
 
     >>> generated_data = _generate_erratic_series()
 
-    # The fit function firstly passes the data through the given transformer
-    # to generate a given category. This category can be seen by the variable
-    # self.category_.
+    The fit function firstly passes the data through the given transformer
+    to generate a given category. This category can be seen by the variable
+    ``self.category_``.
 
     >>> group_forecaster = group_forecaster.fit(generated_data, fh=50)
     >>> #print(f"The chosen category is: {group_forecaster.category}")
@@ -94,13 +100,16 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
         "authors": ["shlok191"],
         "maintainers": ["shlok191"],
         "python_version": None,
         "visual_block_kind": "parallel",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -135,10 +144,10 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         # Assigning all capabilities on the basis of the capabilities
         # of the passed forecasters
         true_if_all_tags = {
-            "ignores-exogeneous-X": True,
+            "capability:exogenous": False,
             "X-y-must-have-same-index": True,
             "enforce_index_type": True,
-            "handles-missing-data": True,
+            "capability:missing_values": True,
             "capability:insample": True,
             "capability:pred_int": True,
             "capability:pred_int:insample": True,
@@ -189,7 +198,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
         # Finally, dynamically adding implementation of probabilistic
         # functions depending on the tags set.
-        if self.get_tags()["capability:pred_int"]:
+        if self.get_tag("capability:pred_int"):
             self._predict_interval = _predict_interval
             self._predict_var = _predict_var
             self._predict_proba = _predict_proba

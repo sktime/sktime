@@ -28,7 +28,7 @@ class Tabularizer(BaseTransformer):
     _tags = {
         "authors": ["mloning", "fkiraly", "kcc-lion"],
         "fit_is_empty": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -101,7 +101,7 @@ class TimeBinner(BaseTransformer):
         "authors": ["kcc-lion", "fkiraly"],
         "maintainers": ["kcc-lion"],
         "fit_is_empty": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -110,12 +110,13 @@ class TimeBinner(BaseTransformer):
         "X_inner_mtype": ["nested_univ"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # and for y?
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self, idx, aggfunc=None):
-        assert isinstance(
-            idx, pd.IntervalIndex
-        ), "idx should be of type pd.IntervalIndex"
+        assert isinstance(idx, pd.IntervalIndex), (
+            "idx should be of type pd.IntervalIndex"
+        )
         self.aggfunc = aggfunc
         if self.aggfunc is None:
             self._aggfunc = np.mean
@@ -125,7 +126,7 @@ class TimeBinner(BaseTransformer):
             )
         else:
             assert callable(aggfunc), (
-                "aggfunc should be callable with" "signature 1D -> float"
+                "aggfunc should be callable withsignature 1D -> float"
             )
             if aggfunc.__name__ == "<lambda>":
                 warnings.warn(
@@ -182,5 +183,8 @@ class TimeBinner(BaseTransformer):
         import pandas as pd
 
         idx = pd.interval_range(start=0, end=100, freq=10, closed="left")
-        params = {"idx": idx}
-        return params
+        return [
+            {"idx": idx},
+            {"idx": idx, "aggfunc": np.median},
+            {"idx": idx, "aggfunc": np.sum},
+        ]

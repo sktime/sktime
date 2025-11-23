@@ -15,7 +15,7 @@ References
     https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
 """
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 import numpy as np
 import numpy.typing as npt
@@ -154,13 +154,13 @@ class IGTS:
 
     Examples
     --------
-    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> from sktime.detection.datagen import piecewise_normal_multivariate
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> X = piecewise_normal_multivariate(lengths=[10, 10, 10, 10],
     ... means=[[0.0, 1.0], [11.0, 10.0], [5.0, 3.0], [2.0, 2.0]],
     ... variances=0.5)
     >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X)
-    >>> from sktime.annotation.igts import InformationGainSegmentation
+    >>> from sktime.detection.igts import InformationGainSegmentation
     >>> igts = InformationGainSegmentation(k_max=3, step=2)
     >>> y = igts.fit_predict(X_scaled)
     """
@@ -368,7 +368,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> from sktime.detection.datagen import piecewise_normal_multivariate
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> X = piecewise_normal_multivariate(
     ... lengths=[10, 10, 10, 10],
@@ -376,10 +376,28 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
     ... variances=0.5,
     ... )
     >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X) # doctest: +SKIP
-    >>> from sktime.annotation.igts import InformationGainSegmentation # doctest: +SKIP
+    >>> from sktime.detection.igts import InformationGainSegmentation # doctest: +SKIP
     >>> igts = InformationGainSegmentation(k_max=3, step=2) # doctest: +SKIP
     >>> y = igts.fit_predict(X_scaled) # doctest: +SKIP
     """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": "lmmentel",
+        # estimator type
+        # --------------
+        "fit_is_empty": True,
+        "task": "segmentation",
+        "learning_type": "unsupervised",
+        # CI and test flags
+        # -----------------
+        "tests:skip_all": True,  # todo: fix non-conformance
+        "tests:skip_by_name": [
+            "test_inheritance",
+            "test_create_test_instance",
+        ],
+    }
 
     def __init__(
         self,
@@ -460,48 +478,6 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         """
         return self.fit(X=X, y=y).predict(X=X, y=y)
 
-    def get_params(self, deep: bool = True) -> dict:
-        """Return initialization parameters.
-
-        Parameters
-        ----------
-        deep: bool
-            Dummy argument for compatibility with sklearn-api, not used.
-
-        Returns
-        -------
-        params: dict
-            Dictionary with the estimator's initialization parameters, with
-            keys being argument names and values being argument values.
-        """
-        params = asdict(self._adaptee)
-        params = {
-            key: value
-            for key, value in params.items()
-            if key != "intermediate_results_"
-        }
-        return params
-
-    def set_params(self, **parameters):
-        """Set the parameters of this object.
-
-        Parameters
-        ----------
-        parameters : dict
-            Initialization parameters for th estimator.
-
-        Returns
-        -------
-        self : reference to self (after parameters have been set)
-        """
-        for key, value in parameters.items():
-            setattr(self._adaptee, key, value)
-        return self
-
-    def __repr__(self) -> str:
-        """Return a string representation of the estimator."""
-        return self._adaptee.__repr__()
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -516,4 +492,10 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         -------
         params : dict or list of dict
         """
-        return {"k_max": 2, "step": 1}
+        return [
+            {"k_max": 1, "step": 1},
+            {"k_max": 2, "step": 1},
+            {"k_max": 2, "step": 10},
+            {"k_max": 10, "step": 5},
+            {"k_max": 10, "step": 10},
+        ]

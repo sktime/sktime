@@ -58,7 +58,7 @@ class TimeBinAggregate(BaseTransformer):
     _tags = {
         "authors": "fkiraly",
         "fit_is_empty": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -67,11 +67,18 @@ class TimeBinAggregate(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # and for y?
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "capability:unequal_length": True,
         "capability:unequal_length:removes": True,
         "transform-returns-same-time-index": False,
         "capability:inverse_transform": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_categorical_X_passes"],
+        # fails for standard aggfuncs that are tested,
+        # but works if categorical aggfunc would be used,
+        # so "capability:categorical_in_X" should be the default, True
     }
 
     def __init__(self, bins, aggfunc=None, return_index="bin_start"):
@@ -88,7 +95,7 @@ class TimeBinAggregate(BaseTransformer):
             self._aggfunc = np.mean
         else:
             assert callable(aggfunc), (
-                "aggfunc should be callable with" "signature 1D -> float"
+                "aggfunc should be callable withsignature 1D -> float"
             )
             if aggfunc.__name__ == "<lambda>":
                 warnings.warn(

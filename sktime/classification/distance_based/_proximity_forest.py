@@ -524,9 +524,11 @@ def setup_wddtw_distance_measure_getter(transformer):
     """
 
     def getter(X):
+        # Create a new transformer instance to avoid pickling issues in parallel
+        local_transformer = _CachedTransformer(DerivativeSlopeTransformer())
         return {
             "distance_measure": [
-                _derivative_distance(numba_wrapper(wdtw_distance), transformer)
+                _derivative_distance(numba_wrapper(wdtw_distance), local_transformer)
             ],
             "g": stats.uniform(0, 1),
         }
@@ -549,9 +551,11 @@ def setup_ddtw_distance_measure_getter(transformer):
     """
 
     def getter(X):
+        # Create a new transformer instance to avoid pickling issues in parallel
+        local_transformer = _CachedTransformer(DerivativeSlopeTransformer())
         return {
             "distance_measure": [
-                _derivative_distance(numba_wrapper(dtw_distance), transformer)
+                _derivative_distance(numba_wrapper(dtw_distance), local_transformer)
             ],
             "w": stats.uniform(0, 0.25),
         }
@@ -686,6 +690,8 @@ class ProximityStump(BaseClassifier):
         # estimator type
         # --------------
         "capability:multithreading": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "X_inner_mtype": "nested_univ",  # input in nested dataframe
     }
 
@@ -711,32 +717,62 @@ class ProximityStump(BaseClassifier):
         self.y = None
         self.entropy = None
         self._random_object = None
+        self._distance_measure_random_seed = None
         super().__init__()
 
-    def pick_distance_measure(self):
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
+    def pick_distance_measure(self, random_state=None):
         """Pick a distance measure.
 
         Parameters
         ----------
         self : ProximityStump object.
+        random_state : int or RandomState, optional
+            Random state to use. If None, uses self._random_object
 
         Returns
         -------
         ret: distance measure
         """
-        random_state = check_random_state(self.random_state)
+        if random_state is None:
+            rng = self._random_object
+        else:
+            rng = check_random_state(random_state)
 
         if self.distance_measure is None:
-            distance_measure_getter = random_state.choice(
+            distance_measure_getter = rng.choice(
                 list(DISTANCE_MEASURE_GETTERS.values())
             )
         else:
             distance_measure_getter = DISTANCE_MEASURE_GETTERS[self.distance_measure]
 
         distance_measure_perm = distance_measure_getter(self.X)
-        param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, random_state)
+        param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, rng)
         distance_measure = param_perm.pop("distance_measure")
         return distance_predefined_params(distance_measure, **param_perm)
+
+    def _distance_to_exemplars_inst_wrapper(
+        self, exemplars, instance, distance_measure_seed, X_for_measure
+    ):
+        """Compute distance that recreates distance measure.
+
+        Parameters
+        ----------
+        exemplars: the exemplars to use
+        instance: the instance to compare to each exemplar
+        distance_measure_seed: random seed to recreate distance measure
+        X_for_measure: dataset needed for distance measure creation
+
+        Returns
+        -------
+        list of distances to each exemplar
+        """
+        # Recreate distance measure from seed to avoid pickling closure
+        distance_measure = self.pick_distance_measure(distance_measure_seed)
+        return self._distance_to_exemplars_inst(exemplars, instance, distance_measure)
 
     @staticmethod
     def _distance_to_exemplars_inst(exemplars, instance, distance_measure):
@@ -808,7 +844,11 @@ class ProximityStump(BaseClassifier):
         -------
         ret: distance measure
         """
-        return self.pick_distance_measure()
+        # Use the saved random seed to ensure consistent distance measure
+        if hasattr(self, "_distance_measure_random_seed"):
+            return self.pick_distance_measure(self._distance_measure_random_seed)
+        else:
+            return self.pick_distance_measure()
 
     def distance_to_exemplars(self, X):
         """Find distance to exemplars.
@@ -823,17 +863,23 @@ class ProximityStump(BaseClassifier):
             exemplar (instance by exemplar)
         """
         if self._threads_to_use > 1:
+            # Use wrapper to avoid pickling closure
             parallel = Parallel(self._threads_to_use)
             distances = parallel(
-                delayed(self._distance_to_exemplars_inst)(
-                    self.X_exemplar, X.iloc[index, :], self._distance_measure()
+                delayed(self._distance_to_exemplars_inst_wrapper)(
+                    self.X_exemplar,
+                    X.iloc[index, :],
+                    self._distance_measure_random_seed,
+                    self.X,
                 )
                 for index in range(X.shape[0])
             )
         else:
+            # Get the distance measure once to ensure consistency
+            distance_measure = self._distance_measure()
             distances = [
                 self._distance_to_exemplars_inst(
-                    self.X_exemplar, X.iloc[index, :], self._distance_measure()
+                    self.X_exemplar, X.iloc[index, :], distance_measure
                 )
                 for index in range(X.shape[0])
             ]
@@ -859,6 +905,10 @@ class ProximityStump(BaseClassifier):
         self._random_object = check_random_state(self.random_state)
         self.y = y
         self.X_exemplar, self.y_exemplar = self.get_exemplars()
+        # Store the random seed for distance measure to ensure consistency
+        self._distance_measure_random_seed = self._random_object.randint(
+            0, np.iinfo(np.int32).max
+        )
 
         return self
 
@@ -992,6 +1042,8 @@ class ProximityTree(BaseClassifier):
         # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "X_inner_mtype": "nested_univ",
     }
 
@@ -1024,6 +1076,10 @@ class ProximityTree(BaseClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def pick_distance_measure(self):
         """Pick a distance measure.
 
@@ -1035,17 +1091,17 @@ class ProximityTree(BaseClassifier):
         -------
         distance measure
         """
-        random_state = check_random_state(self.random_state)
-
         if self.distance_measure is None:
-            distance_measure_getter = random_state.choice(
+            distance_measure_getter = self._random_object.choice(
                 list(DISTANCE_MEASURE_GETTERS.values())
             )
         else:
             distance_measure_getter = DISTANCE_MEASURE_GETTERS[self.distance_measure]
 
         distance_measure_perm = distance_measure_getter(self.X)
-        param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, random_state)
+        param_perm = pick_rand_param_perm_from_dict(
+            distance_measure_perm, self._random_object
+        )
         distance_measure = param_perm.pop("distance_measure")
         return distance_predefined_params(distance_measure, **param_perm)
 
@@ -1293,6 +1349,8 @@ class ProximityForest(BaseClassifier):
         "X_inner_mtype": "nested_univ",
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "distance",
     }
 
@@ -1325,6 +1383,10 @@ class ProximityForest(BaseClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def pick_distance_measure(self):
         """Pick a distance measure.
 
@@ -1336,17 +1398,17 @@ class ProximityForest(BaseClassifier):
         -------
         ret: distance measure
         """
-        random_state = check_random_state(self.random_state)
-
         if self.distance_measure is None:
-            distance_measure_getter = random_state.choice(
+            distance_measure_getter = self._random_object.choice(
                 list(DISTANCE_MEASURE_GETTERS.values())
             )
         else:
             distance_measure_getter = DISTANCE_MEASURE_GETTERS[self.distance_measure]
 
         distance_measure_perm = distance_measure_getter(self.X)
-        param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, random_state)
+        param_perm = pick_rand_param_perm_from_dict(
+            distance_measure_perm, self._random_object
+        )
         distance_measure = param_perm.pop("distance_measure")
         return distance_predefined_params(distance_measure, **param_perm)
 
@@ -1400,19 +1462,22 @@ class ProximityForest(BaseClassifier):
         self._random_object = check_random_state(self.random_state)
         self.y = y
 
+        # Pre-generate random states for all trees to ensure reproducibility
+        # across serial and parallel execution
+        random_states = [
+            self._random_object.randint(0, np.iinfo(np.int32).max)
+            for _ in range(self.n_estimators)
+        ]
+
         if self._threads_to_use > 1:
             parallel = Parallel(self._threads_to_use)
             self.trees = parallel(
-                delayed(self._fit_tree)(
-                    X, y, index, self._random_object.randint(0, self.n_estimators)
-                )
+                delayed(self._fit_tree)(X, y, index, random_states[index])
                 for index in range(self.n_estimators)
             )
         else:
             self.trees = [
-                self._fit_tree(
-                    X, y, index, self._random_object.randint(0, self.n_estimators)
-                )
+                self._fit_tree(X, y, index, random_states[index])
                 for index in range(self.n_estimators)
             ]
 

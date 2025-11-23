@@ -56,7 +56,7 @@ def _assert_index_equal(a, b):
 @pytest.fixture(params=None)
 def good_absolute_input_arg(request):
     """Parametrized by integer values."""
-    pandas2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
+    pandas2 = _check_soft_dependencies("pandas>=2.1.0", severity="none")
     if pandas2:
         m_freq = "ME"
     else:
@@ -1064,3 +1064,10 @@ def test_pandas22_freq_roundtrip(ts):
     fh = ForecastingHorizon([0], is_relative=True)
     fh.to_absolute(f.cutoff)
     fh.to_absolute(f.cutoff).to_relative(f.cutoff)
+
+
+def test_timestamp_format_to_absolute():
+    cutoff = pd.Timestamp("2025-03-02 12:00:00")
+    fh = ForecastingHorizon([1, 2, 3], freq="D")
+    y_pred_idx = fh.to_absolute_index(cutoff)
+    assert "12:00:00" in str(y_pred_idx)

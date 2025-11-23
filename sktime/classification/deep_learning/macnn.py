@@ -1,7 +1,5 @@
 """Multi-scale Attention Convolutional Neural Classifier."""
 
-__author__ = ["jnrusson1"]
-
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
@@ -41,8 +39,13 @@ class MACNNClassifier(BaseDeepClassifier):
         The name of the loss function to be used during training,
         should be supported by keras.
     activation : str, optional (default="sigmoid")
-        The activation function to apply at the output. It should be
-        "software" if response variable has more than two types.
+        The activation function to apply at the output.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
     use_bias : bool, optional (default=True)
         Whether bias should be included in the output layer.
     metrics : None or string, optional (default=None)
@@ -80,7 +83,7 @@ class MACNNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jnrusson1"],
+        "authors": ["jnrusson1", "noxthot"],
         "maintainers": "jnrusson1",
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
@@ -99,6 +102,7 @@ class MACNNClassifier(BaseDeepClassifier):
         reduction=16,
         loss="categorical_crossentropy",
         activation="sigmoid",
+        activation_hidden="relu",
         use_bias=True,
         metrics=None,
         optimizer=None,
@@ -119,6 +123,7 @@ class MACNNClassifier(BaseDeepClassifier):
         self.reduction = reduction
         self.loss = loss
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.metrics = metrics
         self.optimizer = optimizer
@@ -130,6 +135,7 @@ class MACNNClassifier(BaseDeepClassifier):
 
         self.history = None
         self._network = MACNNNetwork(
+            activation=self.activation_hidden,
             padding=self.padding,
             pool_size=self.pool_size,
             strides=self.strides,

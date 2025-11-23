@@ -5,7 +5,7 @@ import abc
 import functools
 from copy import deepcopy
 from inspect import signature
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas
@@ -84,16 +84,16 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         "scitype:y": "univariate",
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": False,
         "capability:global_forecasting": True,
     }
 
     def __init__(
         self: "_NeuralForecastAdapter",
-        freq: Union[str, int] = "auto",
-        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
-        futr_exog_list: Optional[list[str]] = None,
+        freq: str | int = "auto",
+        local_scaler_type: _SUPPORTED_LOCAL_SCALAR_TYPES | None = None,
+        futr_exog_list: list[str] | None = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
         broadcasting: bool = False,
@@ -118,7 +118,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
         self.needs_X = self.algorithm_exogenous_support and bool(self.futr_exog_list)
 
-        self.set_tags(**{"ignores-exogeneous-X": not self.needs_X})
+        self.set_tags(**{"capability:exogenous": self.needs_X})
         if self.broadcasting:
             self.set_tags(
                 **{
@@ -159,7 +159,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
         - future exogenous columns (``futr_exog_list``) - used from ``__init__``
         - historical exogenous columns (``hist_exog_list``) - not supported
-        - statis exogenous columns (``stat_exog_list``) - not supported
+        - static exogenous columns (``stat_exog_list``) - not supported
         - custom model name (``alias``) - used from ``algorithm_name``
         """
 
@@ -260,7 +260,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
     def _fit(
         self: "_NeuralForecastAdapter",
         y: pandas.Series,
-        X: Optional[pandas.DataFrame],
+        X: pandas.DataFrame | None,
         fh: ForecastingHorizon,
     ) -> "_NeuralForecastAdapter":
         """Fit forecaster to training data.
@@ -402,9 +402,9 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
     def _predict(
         self: "_NeuralForecastAdapter",
-        fh: Optional[ForecastingHorizon],
-        X: Optional[pandas.DataFrame],
-        y: Optional[pandas.Series] = None,
+        fh: ForecastingHorizon | None,
+        X: pandas.DataFrame | None,
+        y: pandas.Series | None = None,
     ) -> pandas.Series:
         """Forecast time series at future horizon.
 

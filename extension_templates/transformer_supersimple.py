@@ -1,6 +1,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extension template for transformers, SIMPLE version.
 
+For series-to-series transformations, that transform a time series to another
+time series, e.g., smoothing, deseasonalization, exponentiation.
+
+For transformations that transform a time series to a feature vector,
+e.g., summary statistics, word counts, see transformer_supersimple_features.py
+
+For advanced cases, e.g., transforming panels, hierarchical data, inverse transform,
+see extension templates in transformer.py or transformer_simple.py
+
 Contains only bare minimum of implementation requirements for a functional transformer.
 Covers only the case of series-to-series transformation.
 Assumes pd.DataFrame used internally, and no hierarchical functionality.
@@ -27,7 +36,7 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting         - _fit(self, X, y=None)
     transformation  - _transform(self, X, y=None)
 
@@ -62,18 +71,18 @@ class MyTransformer(BaseTransformer):
         descriptive explanation of parama
     paramb : string, optional (default='default')
         descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
+    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
     and so on
     """
 
     # todo: fill in univariate-only tag
     _tags = {
-        # univariate-only controls whether internal X can be univariate/multivariate
-        # if True (only univariate), always applies vectorization over variables
-        "univariate-only": False,
-        #   True: inner _fit, _predict, receives only single-column DataFrame
-        #   False: inner _predict gets pd.DataFrame series with any number of columns
+        # capability:multivariate controls whether internal X can be multivariate
+        # if False (only univariate), always applies vectorization over variables
+        "capability:multivariate": True,
+        # valid values: False = inner _fit, _transform receive only univariate series
+        #   True = uni- and multivariate series are passed to inner methods
         #
         # specify one or multiple authors and maintainers, only for sktime contribution
         "authors": ["author1", "author2"],  # authors, GitHub handles
@@ -95,7 +104,7 @@ class MyTransformer(BaseTransformer):
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -123,9 +132,9 @@ class MyTransformer(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns
@@ -158,9 +167,9 @@ class MyTransformer(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns

@@ -6,7 +6,6 @@ A transformer for the Catch22 features.
 __author__ = ["MatthewMiddlehurst", "julnow"]
 __all__ = ["Catch22"]
 
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -285,16 +284,17 @@ class Catch22(BaseTransformer):
         # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:instancewise": True,
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
         self,
-        features: Union[int, str, list[Union[int, str]]] = "all",
+        features: int | str | list[int | str] = "all",
         catch24: bool = False,
         outlier_norm: bool = False,
         replace_nans: bool = False,
@@ -355,6 +355,7 @@ class Catch22(BaseTransformer):
             number of features requested, containing Catch22 features for X.
             column index is determined by self.col_names
         """
+        X = X.astype(float)
         Xt_np = self._transform_case(X, self.f_idx)
         cols = self._prepare_output_col_names(len(self.f_idx))
 
@@ -365,7 +366,7 @@ class Catch22(BaseTransformer):
 
     # todo: remove case_id
     def _transform_single_feature(
-        self, X: pd.Series, feature: Union[int, str], case_id="deprecated"
+        self, X: pd.Series, feature: int | str, case_id="deprecated"
     ):
         """
         Transform a single feature  into a Catch22 or Catch24 feature.
@@ -495,13 +496,13 @@ class Catch22(BaseTransformer):
             return self.METHODS_DICT.get(ALL_FEATURE_NAMES[feature])
         else:
             raise TypeError(
-                "Invalide type in Catch22.__get_feature_function_int. "
+                "Invalid type in Catch22.__get_feature_function_int. "
                 f"Expected int, got {type(feature)}."
             )
 
     def _prepare_output_col_names(
         self, n_features: int
-    ) -> Union[range, list[int], list[str]]:
+    ) -> range | list[int] | list[str]:
         """Prepare output column names.
 
         It selects the naming style according to self.col_names.

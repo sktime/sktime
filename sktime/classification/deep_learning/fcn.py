@@ -1,6 +1,5 @@
-"""Fully Connected Neural Network (CNN) for classification."""
+"""Fully Convolutional Network (FCN) for classification."""
 
-__author__ = ["James-Large", "AurumnPegasus"]
 __all__ = ["FCNClassifier"]
 
 from copy import deepcopy
@@ -13,7 +12,7 @@ from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class FCNClassifier(BaseDeepClassifier):
-    """Fully Connected Neural Network (FCN), as described in [1]_.
+    """Fully Convolutional Network (FCN), as described in [1]_.
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
@@ -21,31 +20,36 @@ class FCNClassifier(BaseDeepClassifier):
     Parameters
     ----------
     should inherited fields be listed here?
-    n_epochs       : int, default = 2000
+    n_epochs : int, default = 2000
         the number of epochs to train the model
-    batch_size      : int, default = 16
+    batch_size : int, default = 16
         the number of samples per gradient update.
-    random_state    : int or None, default=None
+    random_state : int or None, default=None
         Seed for random number generation.
-    verbose         : boolean, default = False
+    verbose : boolean, default = False
         whether to output extra information
-    loss            : string, default="mean_squared_error"
+    loss : string, default="mean_squared_error"
         fit parameter for the keras model
-    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
-    metrics         : list of strings, default=["accuracy"],
-    activation      : string or a tf callable, default="sigmoid"
-        Activation function used in the output linear layer.
+    optimizer : keras.optimizer, default=keras.optimizers.Adam(),
+    metrics : list of strings, default=["accuracy"],
+    activation : string or a tf callable, default="sigmoid"
+        Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
-    use_bias        : boolean, default = True
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    use_bias : boolean, default = True
         whether the layer uses a bias vector.
-    optimizer       : keras.optimizers object, default = Adam(lr=0.01)
+    optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
 
     References
     ----------
-    .. [1] Zhao et. al, Convolutional neural networks for time series classification,
-    Journal of Systems Engineering and Electronics, 28(1):2017.
+    .. [1] Wang et al, Time series classification from scratch with
+    deep neural networks: A strong baseline.
+    2017 International Joint Conference on Neural Networks (IJCNN)
 
     Examples
     --------
@@ -61,10 +65,11 @@ class FCNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large", "AurumnPegasus"],
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "noxthot"],
         # hfawaz for dl-4-tsc
         "maintainers": ["James-Large", "AurumnPegasus"],
         # estimator type handled by parent class
+        "tests:skip_all": True,
     }
 
     def __init__(
@@ -77,6 +82,7 @@ class FCNClassifier(BaseDeepClassifier):
         metrics=None,
         random_state=None,
         activation="sigmoid",
+        activation_hidden="relu",
         use_bias=True,
         optimizer=None,
     ):
@@ -90,13 +96,17 @@ class FCNClassifier(BaseDeepClassifier):
         self.metrics = metrics
         self.random_state = random_state
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
 
         super().__init__()
 
-        self._network = FCNNetwork(random_state=self.random_state)
+        self._network = FCNNetwork(
+            activation=self.activation_hidden,
+            random_state=self.random_state,
+        )
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

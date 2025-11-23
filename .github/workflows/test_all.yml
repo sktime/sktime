@@ -10,11 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
       - name: python environment step
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+
       - name: check missing __init__ files
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
@@ -26,19 +28,20 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
           - "3.13"
         operating-system:
-          - macos-13
+          - macos-latest
           - ubuntu-latest
+          - ubuntu-22.04-arm
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
       - name: run tests on python ${{ matrix.python-version }}
         uses: ./.github/actions/test-base
         with:
@@ -53,14 +56,14 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
           - "3.13"
         operating-system:
-          - macos-13
+          - macos-latest
           - ubuntu-latest
+          - ubuntu-22.04-arm
           - windows-latest
         sktime-component:
           - alignment
@@ -75,7 +78,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: run tests for component ${{ matrix.sktime-component }} on python ${{ matrix.python-version }}
         uses: ./.github/actions/test-component
         with:
@@ -91,32 +94,46 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
           - "3.13"
+          - "3.14"
         operating-system:
-          - macos-13
+          - macos-latest
           - ubuntu-latest
+          - ubuntu-22.04-arm
           - windows-latest
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
       - name: update local git tracking reference
         run: git remote set-branches origin main
+
       - name: update local shallow clone
         run: git fetch --depth 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: create python virtual environment
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install OSX packages
         shell: bash
         run: ./.github/scripts/install_osx_dependencies.sh
+
       - name: install core, test and all soft dependencies
-        run: python3 -m pip install .[all_extras_pandas2,tests]
+        run: uv pip install .[all_extras_pandas2,tests]
+        env:
+          UV_SYSTEM_PYTHON: 1
+
       - name: run unit tests
         run: >-
           python3

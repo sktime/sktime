@@ -29,7 +29,7 @@ class _AugmenterTags:
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "X-y-must-have-same-index": False,
@@ -79,7 +79,12 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         [3]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html
     """  # noqa: E501
 
-    _tags = {"python_dependencies": "scipy"}
+    _tags = {
+        "python_dependencies": "scipy",
+        "capability:categorical_in_X": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+    }
 
     _allowed_statistics = [np.std]
 
@@ -100,6 +105,32 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
                 "Type of parameter 'scale' must be a non-negative float value."
             )
         return X[0] + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        return [
+            {"scale": 0.5, "random_state": 42},
+            {"scale": 1.0, "random_state": 42},
+            {"scale": 10.0, "random_state": 42},
+        ]
 
 
 class ReverseAugmenter(_AugmenterTags, BaseTransformer):
@@ -179,25 +210,30 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
     Parameters
     ----------
     n: int or float, optional (default = 1.0)
-            To specify an exact number of samples to draw, set `n` to an int value.
-            Number of samples to draw.
-            To specify the returned samples as a proportion of the given times series
-            set `n` to a float value :math:`n \in [0, 1]`.
-            By default, the same number of samples is returned as given by the input
-            time series.
+        To specify an exact number of samples to draw, set `n` to an int value.
+        Number of samples to draw.
+        To specify the returned samples as a proportion of the given times series
+        set `n` to a float value :math:`n \in [0, 1]`.
+        By default, the same number of samples is returned as given by the input
+        time series.
     without_replacement: bool, optional (default = True)
-            Whether to draw without replacement. If True, every sample of the input
-            times series `X` will appear at most once in ``Xt``.
+        Whether to draw without replacement. If True, every sample of the input
+        times series `X` will appear at most once in ``Xt``.
     random_state: None or int or ``np.random.RandomState`` instance, optional
-            "If int or RandomState, use it for drawing the random variates.
-            If None, rely on ``self.random_state``.
-            Default is None." [1]
+        "If int or RandomState, use it for drawing the random variates.
+        If None, rely on ``self.random_state``.
+        Default is None." [1]
 
     References and Footnotes
     ----------
 
         [1]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html
     """  # noqa: E501
+
+    _tags = {
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+    }
 
     def __init__(
         self,

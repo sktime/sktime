@@ -88,9 +88,9 @@ class SplineTrendForecaster(_DelegatedForecaster):
     _tags = {
         "authors": ["jgyasu", "Dehelaan"],
         "maintainers": ["jgyasu"],
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:pred_int": False,
     }
 

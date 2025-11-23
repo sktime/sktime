@@ -44,12 +44,13 @@ class PaddingTransformer(BaseTransformer):
     >>>
     >>> # Fit the transformer to the data
     >>> padder.fit(X)
+    PaddingTransformer()
     >>>
     >>> # Transform the data
     >>> Xt = padder.transform(X)
     >>>
     >>> # Display the transformed data
-    >>> print(Xt)
+    >>> # print(Xt)
     """
 
     _tags = {
@@ -64,7 +65,11 @@ class PaddingTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": False,
         "capability:unequal_length:removes": True,
+        "capability:categorical_in_X": False,
         # is transform result always guaranteed to be equal length (and series)?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, pad_length=None, fill_value=0):

@@ -1,4 +1,4 @@
-"""Tests for scitype typipng function."""
+"""Tests for scitype typing function."""
 
 import pytest
 
@@ -54,10 +54,10 @@ def test_scitype_generic(force_single_scitype, coerce_to_list):
 
     if force_single_scitype and coerce_to_list:
         expected = ["foo"]
-    if not force_single_scitype and coerce_to_list:
-        expected = ["foo", "bar"]
-    if not coerce_to_list:
+    if force_single_scitype and not coerce_to_list:
         expected = "foo"
+    if not force_single_scitype:
+        expected = ["foo", "bar"]
 
     assert scitype_inferred == expected
 
@@ -104,3 +104,65 @@ def test_is_scitype():
     assert is_scitype(_DummyClass, "foo")
     assert is_scitype(_DummyClass, "bar")
     assert not is_scitype(_DummyClass, "baz")
+
+
+def test_sklearn_scitypes():
+    """Test that scitype correctly identifies sklearn scitypes."""
+    from sklearn.linear_model import LinearRegression
+    from sklearn.metrics import accuracy_score, brier_score_loss, mean_squared_error
+    from sklearn.model_selection import KFold
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.svm import SVC
+
+    assert scitype(LinearRegression) == "regressor_tabular"
+    assert scitype(LinearRegression()) == "regressor_tabular"
+    assert scitype(StandardScaler) == "transformer_tabular"
+    assert scitype(StandardScaler()) == "transformer_tabular"
+    assert scitype(SVC) == "classifier_tabular"
+    assert scitype(SVC()) == "classifier_tabular"
+    assert scitype(accuracy_score) == "metric_tabular"
+    assert scitype(brier_score_loss) == "metric_proba_tabular"
+    assert scitype(mean_squared_error) == "metric_tabular"
+    assert scitype(KFold) == "splitter_tabular"
+    assert scitype(KFold()) == "splitter_tabular"
+
+    assert is_scitype(LinearRegression, "regressor_tabular")
+    assert is_scitype(LinearRegression(), "regressor_tabular")
+    assert is_scitype(StandardScaler, "transformer_tabular")
+    assert is_scitype(StandardScaler(), "transformer_tabular")
+    assert is_scitype(SVC, "classifier_tabular")
+    assert is_scitype(SVC(), "classifier_tabular")
+    assert is_scitype(accuracy_score, "metric_tabular")
+    assert is_scitype(brier_score_loss, "metric_proba_tabular")
+    assert is_scitype(mean_squared_error, "metric_tabular")
+    assert is_scitype(KFold, "splitter_tabular")
+    assert is_scitype(KFold(), "splitter_tabular")
+
+    from sklearn.pipeline import Pipeline
+
+    class_pipe = Pipeline(
+        steps=[
+            ("scaler", StandardScaler()),
+            ("classifier", SVC()),
+        ]
+    )
+    assert scitype(class_pipe) == "classifier_tabular"
+    assert is_scitype(class_pipe, "classifier_tabular")
+
+    reg_pipe = Pipeline(
+        steps=[
+            ("scaler", StandardScaler()),
+            ("regressor", LinearRegression()),
+        ]
+    )
+    assert scitype(reg_pipe) == "regressor_tabular"
+    assert is_scitype(reg_pipe, "regressor_tabular")
+
+    from sklearn.model_selection import GridSearchCV
+
+    reg_gscv = GridSearchCV(
+        reg_pipe,
+        param_grid={"regressor__fit_intercept": [True, False]},
+    )
+    assert scitype(reg_gscv) == "regressor_tabular"
+    assert is_scitype(reg_gscv, "regressor_tabular")

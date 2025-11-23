@@ -1,8 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interfaces to estimators from darts by Unit8."""
 
-from typing import Optional
-
 from sktime.forecasting.base.adapters._darts import (
     FUTURE_LAGS_TYPE,
     LAGS_TYPE,
@@ -113,8 +111,11 @@ class DartsRegressionModel(_DartsRegressionAdapter):
         # estimator type
         # --------------
         "scitype:y": "univariate",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:insample": False,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(
@@ -122,14 +123,14 @@ class DartsRegressionModel(_DartsRegressionAdapter):
         lags: LAGS_TYPE = None,
         lags_past_covariates: PAST_LAGS_TYPE = None,
         lags_future_covariates: FUTURE_LAGS_TYPE = None,
-        output_chunk_length: Optional[int] = 1,
-        output_chunk_shift: Optional[int] = 0,
-        add_encoders: Optional[dict] = None,
+        output_chunk_length: int | None = 1,
+        output_chunk_shift: int | None = 0,
+        add_encoders: dict | None = None,
         model=None,
-        multi_models: Optional[bool] = True,
-        use_static_covariates: Optional[bool] = True,
-        past_covariates: Optional[list[str]] = None,
-        num_samples: Optional[int] = 1000,
+        multi_models: bool | None = True,
+        use_static_covariates: bool | None = True,
+        past_covariates: list[str] | None = None,
+        num_samples: int | None = 1000,
     ) -> None:
         self.lags = lags
         self.lags_past_covariates = lags_past_covariates
@@ -311,29 +312,35 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         # --------------
         "authors": ["yarnabrina", "fnhirwa"],
         "maintainers": ["yarnabrina", "fnhirwa"],
+        "python_dependencies": [["u8darts>=0.29", "darts>=0.29"], "xgboost"],
         # estimator type
         # --------------
         "scitype:y": "univariate",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:insample": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(
         self: "DartsXGBModel",
-        past_covariates: Optional[list[str]] = None,
-        num_samples: Optional[int] = 1000,
+        past_covariates: list[str] | None = None,
+        num_samples: int | None = 1000,
         lags: LAGS_TYPE = None,
         lags_past_covariates: PAST_LAGS_TYPE = None,
         lags_future_covariates: FUTURE_LAGS_TYPE = None,
-        output_chunk_length: Optional[int] = 1,
-        add_encoders: Optional[dict] = None,
-        likelihood: Optional[str] = None,
-        quantiles: Optional[list[float]] = None,
-        random_state: Optional[int] = None,
-        multi_models: Optional[bool] = True,
-        use_static_covariates: Optional[bool] = True,
-        kwargs: Optional[dict] = None,
+        output_chunk_length: int | None = 1,
+        add_encoders: dict | None = None,
+        likelihood: str | None = None,
+        quantiles: list[float] | None = None,
+        random_state: int | None = None,
+        multi_models: bool | None = True,
+        use_static_covariates: bool | None = True,
+        kwargs: dict | None = None,
     ) -> None:
         self.lags = lags
         self.lags_past_covariates = lags_past_covariates
@@ -540,26 +547,31 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         # estimator type
         # --------------
         "scitype:y": "univariate",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:insample": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(
         self: "DartsLinearRegressionModel",
-        past_covariates: Optional[list[str]] = None,
-        num_samples: Optional[int] = 1000,
+        past_covariates: list[str] | None = None,
+        num_samples: int | None = 1000,
         lags: LAGS_TYPE = None,
         lags_past_covariates: PAST_LAGS_TYPE = None,
         lags_future_covariates: FUTURE_LAGS_TYPE = None,
-        output_chunk_length: Optional[int] = 1,
-        add_encoders: Optional[dict] = None,
-        likelihood: Optional[str] = None,
-        quantiles: Optional[list[float]] = None,
-        random_state: Optional[int] = None,
-        multi_models: Optional[bool] = True,
-        use_static_covariates: Optional[bool] = True,
-        kwargs: Optional[dict] = None,
+        output_chunk_length: int | None = 1,
+        add_encoders: dict | None = None,
+        likelihood: str | None = None,
+        quantiles: list[float] | None = None,
+        random_state: int | None = None,
+        multi_models: bool | None = True,
+        use_static_covariates: bool | None = True,
+        kwargs: dict | None = None,
     ) -> None:
         self.lags = lags
         self.lags_past_covariates = lags_past_covariates
