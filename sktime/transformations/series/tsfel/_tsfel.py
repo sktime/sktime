@@ -216,7 +216,7 @@ class TSFELTransformer(BaseTransformer):
             else:
                 # Single column DataFrame: make Series
                 X = X.iloc[:, 0]
-        
+
         # Univariate case
         result = feature_func(X, **feature_kwargs)
         return result
