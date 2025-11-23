@@ -11,6 +11,7 @@ from sktime.datasets import load_airline, load_longley, load_PBS_dataset
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.date import DateTimeFeatures
+from sktime.transformations.series.peak import PeakTimeFeature
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
 
@@ -407,3 +408,26 @@ def test_manual_selection_hour_of_week(df_panel):
         index=y.index,
     )
     assert_frame_equal(yt, expected)
+
+
+def test_peaktimefeature_works_on_hierarchical_multiindex():
+    """PeakTimeFeature should work on hierarchical (pd.MultiIndex) inputs."""
+    y = _make_hierarchical(
+        hierarchy_levels=(2, 2),
+        n_columns=1,
+        min_timepoints=10,
+        max_timepoints=10,
+    )
+    assert isinstance(y.index, pd.MultiIndex)
+    time_level = y.index.get_level_values(-1)
+    assert isinstance(time_level, (pd.DatetimeIndex, pd.PeriodIndex))
+
+    pt = PeakTimeFeature(
+        ts_freq="D",
+        peak_day_start=[1],
+        peak_day_end=[3],
+        keep_original_columns=True,
+    )
+    Xt = pt.fit_transform(y)
+    assert Xt.index.equals(y.index)
+    assert "is_peak_day" in Xt.columns

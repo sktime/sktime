@@ -602,7 +602,12 @@ def _check_ts_freq(x_df, datetime_freq, ts_freq):
 
     # Check 2: Infer the frequency of the time series from date_sequence
     # and compare it with ts_freq using the ranking in datetime_freq.
-    inferred = pd.infer_freq(x_df["date_sequence"])
+    date_seq = x_df["date_sequence"]
+    if not date_seq.is_unique:
+        date_seq = pd.Index(date_seq.unique()).sort_values()
+
+    inferred = pd.infer_freq(date_seq)
+
     if inferred is None:
         raise ValueError(
             "Could not infer frequency from index. "
