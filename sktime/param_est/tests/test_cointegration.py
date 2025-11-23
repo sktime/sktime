@@ -29,6 +29,7 @@ def test_cointegration():
     expected = [0, 1]
     np.testing.assert_array_equal(actual, expected)
 
+
 def test_against_statsmodels():
     """Compare sktime's cointegrtion wrapper against statsmodels cointegration"""
     from statsmodels.tsa.vector_ar.vecm import coint_johansen
@@ -40,10 +41,6 @@ def test_against_statsmodels():
     coint_est.fit(df)
 
     sktime_coint = coint_est.get_fitted_params()["cvm"]
-    statsmodels_coint = (
-        coint_johansen(
-            endog=df, det_order=0, k_ar_diff=0
-        ).cvm 
-    )
+    statsmodels_coint = coint_johansen(endog=df, det_order=0, k_ar_diff=0).cvm
 
     np.testing.assert_array_equal(sktime_coint, statsmodels_coint)

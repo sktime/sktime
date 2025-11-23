@@ -68,7 +68,7 @@ class JohansenCointegration(BaseParamFitter):
     >>> X2 = X.shift(1).bfill()
     >>> df = pd.DataFrame({"X":X, "X2": X2})
     >>> coint_est = JohansenCointegration()
-    >>> coint_est.fit(df) 
+    >>> coint_est.fit(df)
     >>> print(coint_est.get_fitted_params()["cvm"])
     [[15.0006 17.1481 21.7465]
      [ 2.7055  3.8415  6.6349]]
@@ -79,7 +79,7 @@ class JohansenCointegration(BaseParamFitter):
     The max rank (depending on preferred sig-level) needs to be derived from
     the param estimates and be used as coint-rank.  for the other parameters,
     it is advised to choose the same det_order as in the main model.
-    Same goes for k_ar_diff and max lag determined. Further, keep in mind, 
+    Same goes for k_ar_diff and max lag determined. Further, keep in mind,
     X in this case needs to be a minimum of two times series, where X may equal x AND y.
     VECM do not have a classical X and a y series. Both are to be considered endogenous.
 
