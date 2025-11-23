@@ -110,6 +110,7 @@ class TimeBinner(BaseTransformer):
         "X_inner_mtype": ["nested_univ"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # and for y?
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self, idx, aggfunc=None):

@@ -335,7 +335,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                         print(epoch, i, nll.detach().numpy(), val_nll.detach().numpy())
         return True
 
-    def _predict(self, X=None, fh=None):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
