@@ -233,7 +233,7 @@ class ClaSPSegmentation(BaseDetector):
         self.period_length = int(period_length)
         self.n_cps = n_cps
         self.exclusion_radius = exclusion_radius
-        # Initialize as empty dict to avoid changing dict structure during predict/transform
+        # Initialize as empty dict to avoid changing during predict/transform
         # Contents will be updated in fit_predict for backward compatibility
         self._last_results = {}
 
@@ -382,7 +382,6 @@ class ClaSPSegmentation(BaseDetector):
         # Call parent fit_predict which calls fit().predict()
         result = super().fit_predict(X, y=y)
         # Recompute and store results after prediction for backward compatibility
-        # This is allowed since fit_predict is a state-changing method (combines fit + predict)
         X_inner = self._check_X(X)
         found_cps, profiles, scores = self._run_clasp(X_inner)
         self._last_results = {
