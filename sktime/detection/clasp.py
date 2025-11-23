@@ -273,7 +273,7 @@ class ClaSPSegmentation(BaseDetector):
         found_cps, profiles, scores = self._run_clasp(X)
         # Do NOT store results here to avoid violating non-state-changing contract
         # Results are stored via fit_predict override for backward compatibility
-        return pd.Series(found_cps)
+        return pd.Series(np.sort(found_cps))
 
     def _predict_scores(self, X):
         """Return scores in ClaSP's profile for each annotation.
@@ -290,8 +290,10 @@ class ClaSPSegmentation(BaseDetector):
         """
         found_cps, profiles, scores = self._run_clasp(X)
         # Do NOT store results here to avoid violating non-state-changing contract
-        # Scores of the Change Points
-        scores_series = pd.Series(scores)
+        # Sort scores to match the sorted change points order
+        sort_indices = np.argsort(found_cps)
+        scores_sorted = scores[sort_indices]
+        scores_series = pd.Series(scores_sorted)
         return scores_series
 
     def _transform_scores(self, X):
@@ -384,10 +386,15 @@ class ClaSPSegmentation(BaseDetector):
         # Recompute and store results after prediction for backward compatibility
         X_inner = self._check_X(X)
         found_cps, profiles, scores = self._run_clasp(X_inner)
+        # Sort change points and corresponding scores/profiles to maintain consistency
+        sort_indices = np.argsort(found_cps)
+        found_cps_sorted = found_cps[sort_indices]
+        profiles_sorted = profiles[sort_indices]
+        scores_sorted = scores[sort_indices]
         self._last_results = {
-            "found_cps": found_cps,
-            "profiles": profiles,
-            "scores": scores,
+            "found_cps": found_cps_sorted,
+            "profiles": profiles_sorted,
+            "scores": scores_sorted,
         }
         return result
 
