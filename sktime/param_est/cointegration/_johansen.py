@@ -11,10 +11,8 @@ class JohansenCointegration(BaseParamFitter):
     """Test for cointegration ranks/relationships for VECM Time-Series.
 
     Direct interface to ``statsmodels.tsa.vector_ar.vecm``.
-
     Determines the coint parameter value to be used in VECM time-series module vecm.py:
     `coint_rank`. Uses trace statistics or eigenvalue.
-
 
     Parameters
     ----------
@@ -63,7 +61,17 @@ class JohansenCointegration(BaseParamFitter):
 
     Examples
     --------
-    to be filled
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.param_est.cointegration import JohansenCointegration
+    >>> import pandas as pd
+    >>> X = load_airline()
+    >>> X2 = X.shift(1).bfill()
+    >>> df = pd.DataFrame({"X":X, "X2": X2})
+    >>> coint_est = JohansenCointegration()
+    >>> coint_est.fit(df) 
+    >>> print(coint_est.get_fitted_params()["cvm"])
+    [[15.0006 17.1481 21.7465]
+     [ 2.7055  3.8415  6.6349]]
 
     Notes
     -----
@@ -71,11 +79,9 @@ class JohansenCointegration(BaseParamFitter):
     The max rank (depending on preferred sig-level) needs to be derived from
     the param estimates and be used as coint-rank.  for the other parameters,
     it is advised to choose the same det_order as in the main model.
-    Same goes for k_ar_diff and max lag determined.
-
-    Examples
-    --------
-    to be taken later from test_cointegration.py
+    Same goes for k_ar_diff and max lag determined. Further, keep in mind, 
+    X in this case needs to be a minimum of two times series, where X may equal x AND y.
+    VECM do not have a classical X and a y series. Both are to be considered endogenous.
 
     See Also
     --------
@@ -125,7 +131,7 @@ class JohansenCointegration(BaseParamFitter):
         ----------
         X : array_like, e.g. pd.Series
         Contains the full set of time-series to be investigated, all X AND y.
-        In VECM typically X and y do not exist. All X and y are considered endogenous.
+        In VECM typically X and a y do not exist. All X and y are considered endogenous.
 
         Returns
         -------
