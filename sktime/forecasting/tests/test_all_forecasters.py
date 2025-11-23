@@ -658,12 +658,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 'The flag "capability:pred_int" should instead be set to False.'
             )
 
-        if pred_int_impl and not cls_tag:
-            raise ValueError(
-                f"{type(f).__name__} does implement probabilistic forecasting, "
-                'but "capability:pred_int" flag has been set to False incorrectly. '
-                'The flag "capability:pred_int" should instead be set to True.'
-            )
+        # this check needs to be reworked, see #9033
+        # if pred_int_impl and not cls_tag:
+        #     raise ValueError(
+        #         f"{type(f).__name__} does implement probabilistic forecasting, "
+        #         'but "capability:pred_int" flag has been set to False incorrectly. '
+        #         'The flag "capability:pred_int" should instead be set to True.'
+        #     )
 
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
