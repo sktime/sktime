@@ -14,11 +14,14 @@ from sktime.networks.mlp import MLPNetworkTorch
 class MLPClassifierTorch(BaseDeepClassifierTorch):
     """Multi Layer Perceptron classifier in PyTorch for time series classification.
 
+    A simple MLP classifier based on MLP network defined in [1]_.
+    Adapts the implementation from [2]_ and [3]_.
+
     Parameters
     ----------
     hidden_dim : int, default = 500
         Dimensionality of the hidden layers.
-    n_layers : int, default = 3
+    n_layers : int, default = 4
         Number of hidden layers.
     activation : str or None or an instance of activation functions defined in
         torch.nn, default = None
@@ -35,10 +38,12 @@ class MLPClassifierTorch(BaseDeepClassifierTorch):
         as (batch, seq, feature) instead of (seq, batch, feature).
     bias : bool, default = True
         If False, then the layer does not use bias weights.
-    dropout : float, default = 0.0
-        If non-zero, introduces a Dropout layer on the outputs of each hidden
-        layer except the fully connected output layer, with dropout probability
-        equal to dropout.
+    dropout : float or tuple of floats, default = (0.1, 0.2, 0.2, 0.3)
+        If dropout is a non-zero float, it introduces a Dropout layer on the outputs
+        of each hidden layer of the MLP, with dropout probability equal to dropout.
+        If dropout is a tuple of floats, it must have length equal to n_layers, and
+        each element specifies the dropout probability in the corresponding hidden
+        layer of the MLP.
     fc_dropout : float, default = 0.0
         If non-zero, introduces a Dropout layer on the outputs of the fully
         connected output layer, with dropout probability equal to fc_dropout.
@@ -78,6 +83,18 @@ class MLPClassifierTorch(BaseDeepClassifierTorch):
     random_state : int, default = 0
         Seed to ensure reproducibility.
 
+    References
+    ----------
+    .. [1]  Network originally defined in:
+    @inproceedings{wang2017time, title={Time series classification from
+    scratch with deep neural networks: A strong baseline}, author={Wang,
+    Zhiguang and Yan, Weizhong and Oates, Tim}, booktitle={2017
+    International joint conference on neural networks (IJCNN)}, pages={
+    1578--1585}, year={2017}, organization={IEEE} }
+    .. [2] Deep learning for time series classification: a review Fawaz et al. 2019
+    .. [3] source code for [2]
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mlp.py
+
     Examples
     --------
     >>> from sktime.classification.deep_learning.mlp import MLPClassifierTorch
@@ -103,12 +120,12 @@ class MLPClassifierTorch(BaseDeepClassifierTorch):
         self: "MLPClassifierTorch",
         # model architecture parameters
         hidden_dim: int = 500,
-        n_layers: int = 2,
+        n_layers: int = 4,
         activation: str | None | Callable = None,
         activation_hidden: str | None | Callable = "relu",
         batch_first: bool = False,
         bias: bool = True,
-        dropout: float = 0.0,
+        dropout: float | tuple[float, ...] = (0.1, 0.2, 0.2, 0.3),
         fc_dropout: float = 0.0,
         # base classifier parameters
         num_epochs: int = 100,

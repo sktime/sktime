@@ -20,6 +20,8 @@ NNModule = _safe_import("torch.nn.Module")
 class MLPNetworkTorch(NNModule):
     """Establish the network structure for an MLP in PyTorch.
 
+    Implements a simple MLP network, as in [1]_.
+
     Parameters
     ----------
     input_shape : tuple
@@ -28,7 +30,7 @@ class MLPNetworkTorch(NNModule):
         Number of classes to predict
     hidden_dim : int, default = 500
         Number of features in the hidden state
-    n_layers : int, default = 3
+    n_layers : int, default = 4
         Number of hidden layers.
     activation : str or None or an instance of activation functions defined in
         torch.nn, default = None
@@ -45,14 +47,29 @@ class MLPNetworkTorch(NNModule):
     batch_first : bool, default = False
         If True, then the input and output tensors are provided
         as (batch, seq, feature) instead of (seq, batch, feature).
-    dropout : float, default = 0.0
-        If non-zero, introduces a Dropout layer on the outputs of each hidden layer
-        of the MLP, with dropout probability equal to dropout.
+    dropout : float or tuple of floats, default = (0.1, 0.2, 0.2, 0.3)
+        If dropout is a non-zero float, it introduces a Dropout layer on the outputs
+        of each hidden layer of the MLP, with dropout probability equal to dropout.
+        If dropout is a tuple of floats, it must have length equal to n_layers, and
+        each element specifies the dropout probability in the corresponding hidden
+        layer of the MLP.
     fc_dropout : float, default = 0.0
         If non-zero, introduces a Dropout layer on the outputs of the fully
         connected output layer of the MLP, with dropout probability equal to fc_dropout.
     random_state   : int, default = 0
         Seed to ensure reproducibility.
+
+    References
+    ----------
+    .. [1]  Network originally defined in:
+    @inproceedings{wang2017time, title={Time series classification from
+    scratch with deep neural networks: A strong baseline}, author={Wang,
+    Zhiguang and Yan, Weizhong and Oates, Tim}, booktitle={2017
+    International joint conference on neural networks (IJCNN)}, pages={
+    1578--1585}, year={2017}, organization={IEEE} }
+    .. [2] Deep learning for time series classification: a review Fawaz et al. 2019
+    .. [3] source code for [2]
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mlp.py
     """
 
     _tags = {
@@ -68,12 +85,12 @@ class MLPNetworkTorch(NNModule):
         input_shape: tuple,
         num_classes: int,
         hidden_dim: int = 500,
-        n_layers: int = 3,
+        n_layers: int = 4,
         activation: str | None | Callable = None,
         activation_hidden: str | None | Callable = "relu",
         bias: bool = True,
         batch_first: bool = False,
-        dropout: float = 0.0,
+        dropout: float | tuple[float, ...] = (0.1, 0.2, 0.2, 0.3),
         fc_dropout: float = 0.0,
         random_state: int = 0,
     ):
@@ -86,6 +103,19 @@ class MLPNetworkTorch(NNModule):
         self.bias = bias
         self.batch_first = batch_first
         self.dropout = dropout
+        # dropout type checking
+        if isinstance(self.dropout, tuple):
+            if len(self.dropout) != self.n_layers:
+                raise ValueError(
+                    "If `dropout` is a tuple, then it must have length equal to "
+                    f"`n_layers`. Found length of `dropout` to be  {len(self.dropout)}"
+                    f" and `n_layers` to be {self.n_layers}."
+                )
+        elif not isinstance(self.dropout, float):
+            raise TypeError(
+                "`dropout` should either be of type float or tuple of floats. "
+                f"But found the type to be: {type(self.dropout)}"
+            )
         self.fc_dropout = fc_dropout
         self.random_state = random_state
         super().__init__()
@@ -117,8 +147,11 @@ class MLPNetworkTorch(NNModule):
         # defining the hidden layers
         nnLinear = _safe_import("torch.nn.Linear")
         nnDropout = _safe_import("torch.nn.Dropout")
-        for _ in range(self.n_layers):
-            if self.dropout > 0.0:
+        for i in range(self.n_layers):
+            if isinstance(self.dropout, tuple):
+                if self.dropout[i] > 0.0:
+                    layers.append(nnDropout(self.dropout[i]))
+            elif self.dropout > 0.0:
                 layers.append(nnDropout(self.dropout))
             layers.append(
                 nnLinear(
