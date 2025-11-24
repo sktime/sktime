@@ -43,9 +43,7 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
     >>> y_true = np.array([100, 110, 105, 120])
     >>> y_pred = np.array([102, 108, 107, 118])
     >>> y_train = np.array([90, 95, 100, 110, 105, 120])
-    >>> Naive2 = NaiveForecaster(strategy="last", sp=2)
-    >>> Naive2.fit(y_train)
-    >>> y_pred_benchmark = Naive2.predict(fh=np.arange(1, len(y_true) + 1))
+    >>> y_pred_benchmark = np.array([105, 100, 110, 105])
     >>> metric = OverallWeightedAverage(sp=2)
     >>> metric(y_true, y_pred, y_pred_benchmark=y_pred_benchmark, y_train=y_train)
     """
