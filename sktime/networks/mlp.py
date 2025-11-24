@@ -20,6 +20,10 @@ class MLPNetwork(BaseDeepNetwork):
         activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
+    dropout : float or tuple, default=(0.1, 0.2, 0.2, 0.3)
+        The dropout rate for the hidden layers.
+        If float, the same rate is used for all layers.
+        If tuple, must be of length 4, specifying the rate for each layer.
 
     References
     ----------
@@ -36,14 +40,11 @@ class MLPNetwork(BaseDeepNetwork):
         "python_dependencies": "tensorflow",
     }
 
-    def __init__(
-        self,
-        random_state=0,
-        activation="relu",
-    ):
+    def __init__(self, random_state=0, activation="relu", dropout=(0.1, 0.2, 0.2, 0.3)):
         _check_dl_dependencies(severity="error")
         self.activation = activation
         self.random_state = random_state
+        self.dropout = dropout
         super().__init__()
 
     def build_network(self, input_shape, **kwargs):
@@ -59,21 +60,37 @@ class MLPNetwork(BaseDeepNetwork):
         input_layer : a keras layer
         output_layer : a keras layer
         """
+        if isinstance(self.dropout, (float, int)):
+            dropout_rates = [float(self.dropout)] * 4
+        elif isinstance(self.dropout, tuple):
+            if len(self.dropout) != 4:
+                raise ValueError(
+                    "If `dropout` is a tuple, it must be of length 4"
+                    "for MLPNetwork. "
+                    f"Found length of {len(self.dropout)}"
+                )
+            dropout_rates = self.dropout
+        else:
+            raise TypeError(
+                "`dropout` should either be of type float or tuple. "
+                f"But found the type to be: {type(self.dropout)}"
+            )
+
         from tensorflow import keras
 
         # flattened because multivariate should be on same axis
         input_layer = keras.layers.Input(input_shape)
         input_layer_flattened = keras.layers.Flatten()(input_layer)
 
-        layer_1 = keras.layers.Dropout(0.1)(input_layer_flattened)
+        layer_1 = keras.layers.Dropout(dropout_rates[0])(input_layer_flattened)
         layer_1 = keras.layers.Dense(500, activation=self.activation)(layer_1)
 
-        layer_2 = keras.layers.Dropout(0.2)(layer_1)
+        layer_2 = keras.layers.Dropout(dropout_rates[1])(layer_1)
         layer_2 = keras.layers.Dense(500, activation=self.activation)(layer_2)
 
-        layer_3 = keras.layers.Dropout(0.2)(layer_2)
+        layer_3 = keras.layers.Dropout(dropout_rates[2])(layer_2)
         layer_3 = keras.layers.Dense(500, activation=self.activation)(layer_3)
 
-        output_layer = keras.layers.Dropout(0.3)(layer_3)
+        output_layer = keras.layers.Dropout(dropout_rates[3])(layer_3)
 
         return input_layer, output_layer
