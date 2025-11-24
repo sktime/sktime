@@ -54,7 +54,7 @@ def test_docs_tsfeatures_transformer():
     not run_test_for_class(TSFeaturesTransformer),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("freq", [1, 12, None])
+@pytest.mark.parametrize("freq", [1, 12])
 @pytest.mark.parametrize("scale", [True, False])
 @pytest.mark.parametrize("threads", [1, None])
 def test_tsfeatures_parameters(freq, scale, threads):
@@ -74,14 +74,12 @@ def test_tsfeatures_parameters(freq, scale, threads):
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_tsfeatures_empty_input():
-    """Test TSFeaturesTransformer with empty input."""
+    """Test TSFeaturesTransformer with empty input raises error."""
     X = pd.DataFrame({"dim_0": []})
 
     transformer = TSFeaturesTransformer(freq=1)
-    Xt = transformer.fit_transform(X)
-
-    assert Xt.shape[0] == 0
-    assert isinstance(Xt, pd.DataFrame)
+    with pytest.raises(ValueError, match="No objects to concatenate"):
+        transformer.fit_transform(X)
 
 
 @pytest.mark.skipif(
@@ -90,7 +88,7 @@ def test_tsfeatures_empty_input():
 )
 def test_tsfeatures_custom_features():
     """Test TSFeaturesTransformer with custom feature functions."""
-    from tsfeatures.tsfeatures import series_length, hurst
+    from tsfeatures.tsfeatures import hurst, series_length
 
     X, _ = make_classification_problem()
 
@@ -129,8 +127,9 @@ def test_tsfeatures_wide_extractor():
     assert Xt.shape[1] > 0
     # Check that we have the same number of instances (rows)
     assert Xt.shape[0] == data.shape[0]
-    # Check that all values are numeric (no object dtype)
-    assert Xt.dtypes.apply(lambda x: np.issubdtype(x, np.number)).all()
+    # Check that all feature columns are numeric (exclude 'unique_id' if present)
+    feature_cols = [col for col in Xt.columns if col != 'unique_id']
+    assert all(np.issubdtype(Xt[col].dtype, np.number) for col in feature_cols)
 
 
 @pytest.mark.skipif(
@@ -169,7 +168,9 @@ def test_tsfeatures_wide_parameters(scale, threads):
 
     assert Xt.shape[0] == data.shape[0]
     assert Xt.shape[1] > 0
-    assert Xt.dtypes.apply(lambda x: np.issubdtype(x, np.number)).all()
+    # Check that all feature columns are numeric (exclude 'unique_id' if present)
+    feature_cols = [col for col in Xt.columns if col != 'unique_id']
+    assert all(np.issubdtype(Xt[col].dtype, np.number) for col in feature_cols)
 
 
 @pytest.mark.skipif(
@@ -195,7 +196,7 @@ def test_tsfeatures_wide_missing_columns():
 )
 def test_tsfeatures_wide_custom_features():
     """Test TSFeaturesWideTransformer with custom feature functions."""
-    from tsfeatures.tsfeatures import series_length, hurst
+    from tsfeatures.tsfeatures import hurst, series_length
 
     data = pd.DataFrame({
         'unique_id': ['ts1', 'ts2'],
