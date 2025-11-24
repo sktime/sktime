@@ -30,9 +30,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         The activation function applied inside the RNN. Can be either 'tanh' or 'relu'.
         Because currently PyTorch only supports these two activations inside the RNN.
         https://docs.pytorch.org/docs/stable/generated/torch.nn.RNN.html#torch.nn.RNN
-    batch_first : bool, default = False
-        If True, then the input and output tensors are provided
-        as (batch, seq, feature) instead of (seq, batch, feature).
     bias : bool, default = True
         If False, then the layer does not use bias weights.
     init_weights : bool, default = True
@@ -110,7 +107,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         n_layers: int = 1,
         activation: str | None | Callable = None,
         activation_hidden: str = "relu",
-        batch_first: bool = False,
         bias: bool = True,
         init_weights: bool = True,
         dropout: float = 0.0,
@@ -136,7 +132,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         # if activation_hidden is invalid, i.e. not in ['tanh', 'relu']
         # PyTorch will raise an error
         self.activation_hidden = activation_hidden
-        self.batch_first = batch_first
         self.bias = bias
         self.init_weights = init_weights
         self.dropout = dropout
@@ -196,7 +191,9 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
                 f"but got shape {X.shape}. Please ensure your input data is "
                 "properly formatted."
             )
-        # n_instances, n_dims, n_timesteps = X.shape
+        # X.shape = [n_instances, n_dims, n_timesteps] (sktime format)
+        # PytorchDataset will transpose to [n_instances, n_timesteps, n_dims]
+        # So we extract n_dims (features) from axis 1
         self.num_classes = len(np.unique(y))
         _, self.input_size, _ = X.shape
         return RNNNetworkTorch(
@@ -206,7 +203,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             activation=self._validated_activation,  # use self._validated_activation
             activation_hidden=self.activation_hidden,
             bias=self.bias,
-            batch_first=self.batch_first,
+            batch_first=True,  # Always True to match PytorchDataset transpose
             num_classes=self.num_classes,
             init_weights=self.init_weights,
             dropout=self.dropout,
@@ -243,7 +240,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "n_layers": 1,
             "activation": None,
             "activation_hidden": "relu",
-            "batch_first": False,
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
@@ -266,7 +262,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "n_layers": 1,
             "activation": "sigmoid",
             "activation_hidden": "relu",
-            "batch_first": False,
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
@@ -289,7 +284,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "n_layers": 1,
             "activation": None,
             "activation_hidden": "relu",
-            "batch_first": False,
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,

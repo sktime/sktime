@@ -16,9 +16,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         Number of features in the hidden state.
     n_layers : int
         Number of recurrent layers.
-    batch_first : bool
-        If True, then the input and output tensors are provided
-        as (batch, seq, feature), default is False.
     bias : bool
         If False, then the layer does not use bias weights, default is True.
     init_weights : bool
@@ -83,7 +80,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         # model specific
         hidden_dim: int = 256,
         n_layers: int = 4,
-        batch_first: bool = False,
         bias: bool = True,
         init_weights: bool = True,
         dropout: float = 0.0,
@@ -102,7 +98,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
     ):
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
-        self.batch_first = batch_first
         self.bias = bias
         self.init_weights = init_weights
         self.dropout = dropout
@@ -139,14 +134,13 @@ class GRUClassifier(BaseDeepClassifierPytorch):
     def _build_network(self, X, y):
         from sktime.networks.gru import GRU
 
-        # n_instances, n_dims, n_timesteps = X.shape
         self.numclasses = len(np.unique(y))
         _, self.input_size, _ = X.shape
         return GRU(
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
             n_layers=self.n_layers,
-            batch_first=self.batch_first,
+            batch_first=True,  # Always True to match PytorchDataset transpose
             bias=self.bias,
             num_classes=self.numclasses,
             init_weights=self.init_weights,
@@ -181,7 +175,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
             {
                 "hidden_dim": 256,
                 "n_layers": 2,
-                "batch_first": False,
                 "bias": True,
                 "init_weights": True,
                 "dropout": 0.1,
@@ -196,7 +189,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
             {
                 "hidden_dim": 64,
                 "n_layers": 3,
-                "batch_first": False,
                 "bias": True,
                 "init_weights": False,
                 "dropout": 0.1,
@@ -225,9 +217,6 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         Number of features in the hidden state.
     gru_layers : int
         Number of recurrent layers.
-    batch_first : bool
-        If True, then the input and output tensors are provided
-        as (batch, seq, feature), default is False.
     bias : bool
         If False, then the layer does not use bias weights, default is True.
     init_weights : bool
@@ -297,7 +286,6 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         # model specific
         hidden_dim: int,
         gru_layers: int,
-        batch_first: bool = False,
         bias: bool = True,
         init_weights: bool = True,
         dropout: float = 0.0,
@@ -318,7 +306,6 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
     ):
         self.hidden_dim = hidden_dim
         self.gru_layers = gru_layers
-        self.batch_first = batch_first
         self.bias = bias
         self.init_weights = init_weights
         self.dropout = dropout
@@ -357,14 +344,16 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
     def _build_network(self, X, y):
         from sktime.networks.gru import GRUFCNN
 
-        # n_instances, n_dims, n_timesteps = X.shape
+        # X.shape = [n_instances, n_dims, n_timesteps] (sktime format)
+        # PytorchDataset will transpose to [n_instances, n_timesteps, n_dims]
+        # So we extract n_dims (features) from axis 1
         self.numclasses = len(np.unique(y))
         _, self.input_size, _ = X.shape
         return GRUFCNN(
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
             gru_layers=self.gru_layers,
-            batch_first=self.batch_first,
+            batch_first=True,  # Always True to match PytorchDataset transpose
             bias=self.bias,
             num_classes=self.numclasses,
             init_weights=self.init_weights,
@@ -401,7 +390,6 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
             {
                 "hidden_dim": 256,
                 "gru_layers": 2,
-                "batch_first": False,
                 "bias": True,
                 "init_weights": True,
                 "dropout": 0.1,
@@ -418,7 +406,6 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
             {
                 "hidden_dim": 64,
                 "gru_layers": 3,
-                "batch_first": False,
                 "bias": True,
                 "init_weights": False,
                 "dropout": 0.1,
