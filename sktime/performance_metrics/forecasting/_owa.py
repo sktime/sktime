@@ -1,5 +1,3 @@
-import numpy as np
-
 from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
     MeanAbsoluteScaledError,
@@ -73,7 +71,7 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
         y_train : pd.DataFrame or array
             Training data (required for MASE denominator)
         """
-        y_pred_benchmark = kwargs["y_benchmark"]
+        y_pred_benchmark = kwargs["y_pred_benchmark"]
         y_train = kwargs.get("y_train", None)
 
         mase = self._mase(y_true, y_pred, y_train=y_train)
@@ -83,7 +81,7 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
         smape_bench = self._smape(y_true, y_pred_benchmark)
 
         owa = 0.5 * ((mase / mase_bench) + (smape / smape_bench))
-        return np.float64(owa)
+        return owa
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
