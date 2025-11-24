@@ -200,15 +200,37 @@ class TSFeaturesTransformer(_TSFeaturesBase):
 
         features_to_use = self.features if self.features is not None else self._get_default_features()
 
-        # Call tsfeatures
+        # Convert nested_univ to long format ['unique_id', 'ds', 'y']
+        ts_long_list = []
+        instance_to_uid = {}
+        for instance_idx in X.index:
+            series = X.loc[instance_idx, X.columns[0]]
+            if isinstance(series, pd.Series):
+                unique_id = str(instance_idx)
+                instance_to_uid[instance_idx] = unique_id
+                ts_long_list.append(pd.DataFrame({
+                    'unique_id': unique_id,
+                    'ds': series.index.values,
+                    'y': series.values
+                }))
+        
+        ts_long = pd.concat(ts_long_list, ignore_index=True) if ts_long_list else pd.DataFrame(columns=['unique_id', 'ds', 'y'])
+
         Xt = tsfeatures_func(
-            ts=X,
+            ts=ts_long,
             freq=self.freq,
             features=features_to_use,
             dict_freqs=self.dict_freqs,
             scale=self.scale,
             threads=self.threads,
         )
+
+        # Map back to original indices
+        if 'unique_id' in Xt.columns:
+            uid_to_instance = {v: k for k, v in instance_to_uid.items()}
+            Xt = Xt.set_index('unique_id')
+            Xt.index = Xt.index.map(uid_to_instance)
+            Xt = Xt.reindex(X.index)
         
         return Xt
 
@@ -230,6 +252,7 @@ class TSFeaturesTransformer(_TSFeaturesBase):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from tsfeatures.tsfeatures import acf_features, arch_stat
         return [
             {
                 "freq": 1,
@@ -237,9 +260,13 @@ class TSFeaturesTransformer(_TSFeaturesBase):
                 "threads": 1,
             },
             {
-                "freq": None,
                 "scale": False,
                 "threads": None,
+            },
+            {
+                "features": [acf_features, arch_stat],
+                "scale": True,
+                "threads": 1,
             },
         ]
 
@@ -283,16 +310,6 @@ class TSFeaturesWideTransformer(_TSFeaturesBase):
     >>> Xt = transformer.fit_transform(data)
     """
 
-    def __init__(
-        self,
-        features=None,
-        scale=True,
-        threads=None,
-    ):
-        super().__init__(features=features, scale=scale, threads=threads)
-        # Override X_inner_mtype for wide format
-        self.set_tags(**{"X_inner_mtype": "pd.DataFrame"})
-
     def _transform(self, X, y=None):
         """Extracts time series features for each instance in X (wide format).
 
@@ -328,7 +345,6 @@ class TSFeaturesWideTransformer(_TSFeaturesBase):
             self.features if self.features is not None else self._get_default_features()
         )
 
-        # Call tsfeatures_wide
         Xt = tsfeatures_wide_func(
             ts=X,
             features=features_to_use,
@@ -356,13 +372,20 @@ class TSFeaturesWideTransformer(_TSFeaturesBase):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from tsfeatures.tsfeatures import acf_features, arch_stat
         return [
             {
                 "scale": True,
-                "threads": 1,
+                "threads": 4,
             },
             {
+                "features": [acf_features],
                 "scale": False,
                 "threads": None,
+            },
+            {
+                "features": [acf_features, arch_stat],
+                "scale": True,
+                "threads": 1,
             },
         ]
