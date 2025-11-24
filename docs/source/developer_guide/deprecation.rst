@@ -176,12 +176,12 @@ and ensure to use ``self._<param_name>`` in the rest of the code instead of
 with a non-default. This warning should always include the name of the estimator/function,
 the version of change, and a clear instruction on how to change the code to retain
 prior behaviour. E.g., ``"Parameter <param_name> of <estimator_name> will change
-default value from <old_value> to <new_value> in sktime version <version_number>.
-To retain prior behaviour, set <param_name> to <old_value> explicitly"``.
+default value from <old_default> to <new_default> in sktime version <version_number>.
+To retain prior behaviour, set <param_name> to <old_default> explicitly"``.
 
 3. add a TODO comment to the code, to remove the warning and change the default value,
 in the next MINOR version cycle. E.g., add the comment
-``# TODO <version_number>: change default of <param_name> to <new_value>,
+``# TODO <version_number>: change default of <param_name> to <new_default>,
 update docstring, and remove warning``,
 at the top of the function or class where the parameter is defined.
 
