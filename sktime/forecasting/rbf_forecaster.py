@@ -234,7 +234,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
 
         return self
 
-    def _predict(self, X=None, fh=None):
+    def _predict(self, fh=None, X=None):
         """Generate predictions for the specified forecasting horizon.
 
         Parameters
