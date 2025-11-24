@@ -108,15 +108,13 @@ def test_tsfeatures_custom_features():
 def test_tsfeatures_wide_extractor():
     """Test that TSFeaturesWideTransformer extracts features correctly."""
     # Create wide format data
-    data = pd.DataFrame({
-        'unique_id': ['ts1', 'ts2', 'ts3'],
-        'seasonality': [12, 4, 1],
-        'y': [
-            np.random.randn(100),
-            np.random.randn(50),
-            np.random.randn(75)
-        ]
-    })
+    data = pd.DataFrame(
+        {
+            "unique_id": ["ts1", "ts2", "ts3"],
+            "seasonality": [12, 4, 1],
+            "y": [np.random.randn(100), np.random.randn(50), np.random.randn(75)],
+        }
+    )
 
     transformer = TSFeaturesWideTransformer(scale=True, threads=1)
     Xt = transformer.fit_transform(data)
@@ -128,7 +126,7 @@ def test_tsfeatures_wide_extractor():
     # Check that we have the same number of instances (rows)
     assert Xt.shape[0] == data.shape[0]
     # Check that all feature columns are numeric (exclude 'unique_id' if present)
-    feature_cols = [col for col in Xt.columns if col != 'unique_id']
+    feature_cols = [col for col in Xt.columns if col != "unique_id"]
     assert all(np.issubdtype(Xt[col].dtype, np.number) for col in feature_cols)
 
 
@@ -138,11 +136,13 @@ def test_tsfeatures_wide_extractor():
 )
 def test_docs_tsfeatures_wide_transformer():
     """Test whether doc example runs through."""
-    data = pd.DataFrame({
-        'unique_id': ['ts1', 'ts2'],
-        'seasonality': [12, 4],
-        'y': [np.random.randn(100), np.random.randn(50)]
-    })
+    data = pd.DataFrame(
+        {
+            "unique_id": ["ts1", "ts2"],
+            "seasonality": [12, 4],
+            "y": [np.random.randn(100), np.random.randn(50)],
+        }
+    )
     transformer = TSFeaturesWideTransformer(scale=True)
     Xt = transformer.fit_transform(data)
     assert Xt.shape[0] == data.shape[0]
@@ -157,11 +157,13 @@ def test_docs_tsfeatures_wide_transformer():
 @pytest.mark.parametrize("threads", [1, None])
 def test_tsfeatures_wide_parameters(scale, threads):
     """Test TSFeaturesWideTransformer with different parameter combinations."""
-    data = pd.DataFrame({
-        'unique_id': ['ts1', 'ts2'],
-        'seasonality': [12, 4],
-        'y': [np.random.randn(100), np.random.randn(50)]
-    })
+    data = pd.DataFrame(
+        {
+            "unique_id": ["ts1", "ts2"],
+            "seasonality": [12, 4],
+            "y": [np.random.randn(100), np.random.randn(50)],
+        }
+    )
 
     transformer = TSFeaturesWideTransformer(scale=scale, threads=threads)
     Xt = transformer.fit_transform(data)
@@ -169,7 +171,7 @@ def test_tsfeatures_wide_parameters(scale, threads):
     assert Xt.shape[0] == data.shape[0]
     assert Xt.shape[1] > 0
     # Check that all feature columns are numeric (exclude 'unique_id' if present)
-    feature_cols = [col for col in Xt.columns if col != 'unique_id']
+    feature_cols = [col for col in Xt.columns if col != "unique_id"]
     assert all(np.issubdtype(Xt[col].dtype, np.number) for col in feature_cols)
 
 
@@ -180,10 +182,9 @@ def test_tsfeatures_wide_parameters(scale, threads):
 def test_tsfeatures_wide_missing_columns():
     """Test TSFeaturesWideTransformer raises error for missing columns."""
     # Missing 'seasonality' column
-    data = pd.DataFrame({
-        'unique_id': ['ts1', 'ts2'],
-        'y': [np.random.randn(100), np.random.randn(50)]
-    })
+    data = pd.DataFrame(
+        {"unique_id": ["ts1", "ts2"], "y": [np.random.randn(100), np.random.randn(50)]}
+    )
 
     transformer = TSFeaturesWideTransformer()
     with pytest.raises(ValueError, match="X must have columns"):
@@ -198,11 +199,13 @@ def test_tsfeatures_wide_custom_features():
     """Test TSFeaturesWideTransformer with custom feature functions."""
     from tsfeatures.tsfeatures import hurst, series_length
 
-    data = pd.DataFrame({
-        'unique_id': ['ts1', 'ts2'],
-        'seasonality': [12, 4],
-        'y': [np.random.randn(100), np.random.randn(50)]
-    })
+    data = pd.DataFrame(
+        {
+            "unique_id": ["ts1", "ts2"],
+            "seasonality": [12, 4],
+            "y": [np.random.randn(100), np.random.randn(50)],
+        }
+    )
 
     transformer = TSFeaturesWideTransformer(features=[series_length, hurst])
     Xt = transformer.fit_transform(data)

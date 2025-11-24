@@ -77,6 +77,7 @@ class _TSFeaturesBase(BaseTransformer):
             unitroot_kpss,
             unitroot_pp,
         )
+
         return [
             acf_features,
             arch_stat,
@@ -173,7 +174,6 @@ class TSFeaturesTransformer(_TSFeaturesBase):
         self.freq = freq
         self.dict_freqs = dict_freqs
 
-
     def _transform(self, X, y=None):
         """Extract time series features for each instance in X.
 
@@ -202,14 +202,13 @@ class TSFeaturesTransformer(_TSFeaturesBase):
         from tsfeatures import tsfeatures as tsfeatures_func
 
         features_to_use = (
-            self.features
-            if self.features is not None
-            else self._get_default_features()
+            self.features if self.features is not None else self._get_default_features()
         )
 
         dict_freqs_to_use = self.dict_freqs
         if dict_freqs_to_use is None:
             from tsfeatures.utils import FREQS
+
             dict_freqs_to_use = FREQS
 
         # Convert nested_univ to long format ['unique_id', 'ds', 'y']
@@ -220,16 +219,20 @@ class TSFeaturesTransformer(_TSFeaturesBase):
             if isinstance(series, pd.Series):
                 unique_id = str(instance_idx)
                 instance_to_uid[instance_idx] = unique_id
-                ts_long_list.append(pd.DataFrame({
-                    'unique_id': unique_id,
-                    'ds': series.index.values,
-                    'y': series.values
-                }))
+                ts_long_list.append(
+                    pd.DataFrame(
+                        {
+                            "unique_id": unique_id,
+                            "ds": series.index.values,
+                            "y": series.values,
+                        }
+                    )
+                )
 
         ts_long = (
             pd.concat(ts_long_list, ignore_index=True)
             if ts_long_list
-            else pd.DataFrame(columns=['unique_id', 'ds', 'y'])
+            else pd.DataFrame(columns=["unique_id", "ds", "y"])
         )
 
         Xt = tsfeatures_func(
@@ -242,9 +245,9 @@ class TSFeaturesTransformer(_TSFeaturesBase):
         )
 
         # Map back to original indices
-        if 'unique_id' in Xt.columns:
+        if "unique_id" in Xt.columns:
             uid_to_instance = {v: k for k, v in instance_to_uid.items()}
-            Xt = Xt.set_index('unique_id')
+            Xt = Xt.set_index("unique_id")
             Xt.index = Xt.index.map(uid_to_instance)
             Xt = Xt.reindex(X.index)
 
@@ -269,6 +272,7 @@ class TSFeaturesTransformer(_TSFeaturesBase):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from tsfeatures.tsfeatures import acf_features, arch_stat
+
         return [
             {
                 "freq": 1,
@@ -347,6 +351,7 @@ class TSFeaturesWideTransformer(_TSFeaturesBase):
                 ],
             }
         )
+
     def _transform(self, X, y=None):
         """Extract time series features for each instance in X (wide format).
 
@@ -371,11 +376,10 @@ class TSFeaturesWideTransformer(_TSFeaturesBase):
         """
         from tsfeatures import tsfeatures_wide as tsfeatures_wide_func
 
-        required_cols = ['unique_id', 'seasonality', 'y']
+        required_cols = ["unique_id", "seasonality", "y"]
         if not all(col in X.columns for col in required_cols):
             raise ValueError(
-                f"X must have columns {required_cols}. "
-                f"Found columns: {list(X.columns)}"
+                f"X must have columns {required_cols}. Found columns: {list(X.columns)}"
             )
 
         features_to_use = (
@@ -410,6 +414,7 @@ class TSFeaturesWideTransformer(_TSFeaturesBase):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from tsfeatures.tsfeatures import acf_features, arch_stat
+
         return [
             {
                 "scale": True,
