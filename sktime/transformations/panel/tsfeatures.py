@@ -50,6 +50,7 @@ class TSFeaturesTransformer(BaseTransformer):
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
+        "tests:vm": True,
     }
 
     def __init__(self, features=None, freq=1, scale=True):
