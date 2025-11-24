@@ -66,16 +66,16 @@ class _TSFeaturesBase(BaseTransformer):
             flat_spots,
             heterogeneity,
             holt_parameters,
+            hurst,
+            hw_parameters,
             lumpiness,
             nonlinearity,
             pacf_features,
-            stl_features,
+            series_length,
             stability,
-            hw_parameters,
+            stl_features,
             unitroot_kpss,
             unitroot_pp,
-            series_length,
-            hurst,
         )
         return [
             acf_features,
@@ -154,7 +154,6 @@ class TSFeaturesTransformer(_TSFeaturesBase):
 
     Examples
     --------
-
     >>> from sktime.datasets import load_arrow_head
     >>> from sktime.transformations.panel.tsfeatures import TSFeaturesTransformer
     >>> X, y = load_arrow_head(return_X_y=True)
@@ -176,31 +175,37 @@ class TSFeaturesTransformer(_TSFeaturesBase):
 
 
     def _transform(self, X, y=None):
-        """Extracts time series features for each instance in X.
+        """Extract time series features for each instance in X.
 
-        This private method performs the core logic to convert a nested DataFrame 
-        (where each cell contains a pd.Series representing a time series) into a 
-        DataFrame of extracted features using the `tsfeatures` library. It is 
+        This private method performs the core logic to convert a nested DataFrame
+        (where each cell contains a pd.Series representing a time series) into a
+        DataFrame of extracted features using the `tsfeatures` library. It is
         called indirectly via the public `transform` interface.
 
         Parameters
         ----------
         X : pd.DataFrame
-            A nested pandas DataFrame of shape [n_instances, n_features], 
-            where each cell contains a pd.Series representing a time series to extract features from.
+            A nested pandas DataFrame of shape [n_instances, n_features],
+            where each cell contains a pd.Series representing a time series to
+            extract features from.
         y : None
             Ignored. Present only for interface compatibility.
 
         Returns
         -------
         Xt : pd.DataFrame
-            A DataFrame containing extracted features for each instance 
-            (row). The number of columns corresponds to the total number of features extracted 
-            by `tsfeatures`. The DataFrame has one row per input instance.
+            A DataFrame containing extracted features for each instance
+            (row). The number of columns corresponds to the total number of
+            features extracted by `tsfeatures`. The DataFrame has one row per
+            input instance.
         """
         from tsfeatures import tsfeatures as tsfeatures_func
 
-        features_to_use = self.features if self.features is not None else self._get_default_features()
+        features_to_use = (
+            self.features
+            if self.features is not None
+            else self._get_default_features()
+        )
 
         dict_freqs_to_use = self.dict_freqs
         if dict_freqs_to_use is None:
@@ -220,9 +225,12 @@ class TSFeaturesTransformer(_TSFeaturesBase):
                     'ds': series.index.values,
                     'y': series.values
                 }))
-        
-        ts_long = pd.concat(ts_long_list, ignore_index=True) if ts_long_list else pd.DataFrame(columns=['unique_id', 'ds', 'y'])
 
+        ts_long = (
+            pd.concat(ts_long_list, ignore_index=True)
+            if ts_long_list
+            else pd.DataFrame(columns=['unique_id', 'ds', 'y'])
+        )
 
         Xt = tsfeatures_func(
             ts=ts_long,
@@ -239,7 +247,7 @@ class TSFeaturesTransformer(_TSFeaturesBase):
             Xt = Xt.set_index('unique_id')
             Xt.index = Xt.index.map(uid_to_instance)
             Xt = Xt.reindex(X.index)
-        
+
         return Xt
 
     @classmethod
@@ -308,7 +316,6 @@ class TSFeaturesWideTransformer(_TSFeaturesBase):
 
     Examples
     --------
-
     >>> import pandas as pd
     >>> import numpy as np
     >>> from sktime.transformations.panel.tsfeatures import TSFeaturesWideTransformer
@@ -321,22 +328,27 @@ class TSFeaturesWideTransformer(_TSFeaturesBase):
     >>> transformer = TSFeaturesWideTransformer(scale=True)
     >>> Xt = transformer.fit_transform(data)
     """
+
     def __init__(self, features=None, scale=True, threads=None):
         super().__init__(features=features, scale=scale, threads=threads)
-        self.set_tags(**{"X_inner_mtype": "pd.DataFrame", "capability:categorical_in_X": True, 
-            "tests:skip_by_name": [
-            "test_fit_idempotent",
-            "test_methods_have_no_side_effects",
-            "test_non_state_changing_method_contract",
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
-            "test_categorical_y_raises_error",
-            "test_categorical_X_passes"
-            "test_fit_transform_output",
-        ]
-        })
+        self.set_tags(
+            **{
+                "X_inner_mtype": "pd.DataFrame",
+                "capability:categorical_in_X": True,
+                "tests:skip_by_name": [
+                    "test_fit_idempotent",
+                    "test_methods_have_no_side_effects",
+                    "test_non_state_changing_method_contract",
+                    "test_persistence_via_pickle",
+                    "test_save_estimators_to_file",
+                    "test_categorical_y_raises_error",
+                    "test_categorical_X_passes",
+                    "test_fit_transform_output",
+                ],
+            }
+        )
     def _transform(self, X, y=None):
-        """Extracts time series features for each instance in X (wide format).
+        """Extract time series features for each instance in X (wide format).
 
         This private method performs the core logic to convert wide format data
         (with ['unique_id', 'seasonality', 'y'] columns) into a DataFrame of
