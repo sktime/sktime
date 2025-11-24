@@ -56,6 +56,7 @@ class TSFELTransformer(BaseTransformer):
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
+        "tests:vm": True,
     }
 
     def __init__(self, features="minimal", fs=100, verbose=0):
