@@ -320,14 +320,22 @@ Below are example templates for some of the cases above.
 The examples are carried out for a class with ``fit`` / ``predict`` methods,
 but the same principles apply to functions, or classes with other APIs.
 
-**Note**: The examples below use placeholder strings such as ``<MAJOR>.<MINOR>.0``,
-``<new_value>``, ``"old_default"``, ``"new_default"`` and ``"default"``.
+**Note**: The examples below use placeholders such as ``<MAJOR>.<MINOR>.0``,
+``<new_value>``, ``<old_default>``, ``<new_default>`` and ``<default>``.
 These should be replaced by actual version numbers and values
 when implementing the deprecation. Whereas ``"changing_value"`` and ``"deprecated"``
 are intended as string literals, and should be used as such in the code.
 
 Changing the default value of a parameter
 -----------------------------------------
+
+This section provides a detailed example of how to change the default value of a
+parameter following the deprecation process outlined above.
+
+Consider an estimator where we want to change the default value of a parameter
+named ``parameter`` from ``<old_default>`` to ``<new_default>`` in version
+``<MAJOR>.<MINOR>.0``. The example shows the code at three stages: before any change,
+during the deprecation period, and after the deprecation period.
 
 Code before any change
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -339,10 +347,10 @@ Code before any change
 
         Parameters
         ----------
-        parameter : str, default="old_default"
+        parameter : str, default=<old_default>
             The parameter description.
         """
-        def __init__(self, parameter="old_default"):
+        def __init__(self, parameter=<old_default>):
             self.parameter = parameter
 
         def fit(self, X, y):
@@ -369,34 +377,34 @@ that the release manager can merge.
     from sktime.utils.warnings import warn
 
     # TODO (release <MAJOR>.<MINOR>.0)
-    # change the default of 'parameter' to <new_value>
+    # change the default of 'parameter' to <new_default>
     # update the docstring for parameter
     class EstimatorName:
         """The old docstring with deprecation info.
 
         Parameters
         ----------
-        parameter : str, default="old_default"
+        parameter : str, default=<old_default>
             The parameter description.
-            Default value of parameter will change to <new_value>
+            Default value of parameter will change to <new_default>
             in version '<MAJOR>.<MINOR>.0'.
         """
         def __init__(self, parameter="changing_value"):
             self.parameter = parameter
             # TODO (release <MAJOR>.<MINOR>.0)
-            # change the default of 'parameter' to <new_value>
+            # change the default of 'parameter' to <new_default>
             # remove the following 'if' check
             # de-indent the following 'else' check
             if parameter == "changing_value":
                 warn(
                     "in `EstimatorName`, the default value of parameter 'parameter'"
-                    " will change to <new_value> in version '<MAJOR>.<MINOR>.0'. "
+                    " will change to <new_default> in version '<MAJOR>.<MINOR>.0'. "
                     "To keep current behaviour and to silence this warning, "
-                    "set 'parameter' to 'old' explicitly.",
+                    "set 'parameter' to <old_default> explicitly.",
                     category=DeprecationWarning,
                     obj=self,
                 )
-                self._parameter = "old_default"
+                self._parameter = <old_default>
             else:
                 self._parameter = parameter
 
@@ -425,10 +433,10 @@ or by carrying out the TODO action.
 
         Parameters
         ----------
-        parameter : str, default="new_default"
+        parameter : str, default=<new_default>
             The parameter description.
         """
-        def __init__(self, parameter="new_default"):
+        def __init__(self, parameter=<new_default>):
             self.parameter = parameter
             self._parameter = parameter
 
@@ -451,6 +459,14 @@ if it is not used elsewhere in the code.
 Renaming a parameter
 --------------------
 
+This section provides a detailed example of how to rename a parameter
+following the deprecation process outlined above.
+
+Consider an estimator where we want to rename a parameter from ``old_parameter``
+to ``new_parameter`` in version ``<MAJOR>.<MINOR>.0``. The example shows the code
+at three stages: before any change, during the deprecation period,
+and after the deprecation period.
+
 Code before any change
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -461,11 +477,11 @@ Code before any change
 
         Parameters
         ----------
-        old_parameter : str, default="default"
+        old_parameter : str, default=<default>
             The parameter description.
         """
 
-        def __init__(self, old_parameter="default"):
+        def __init__(self, old_parameter=<default>):
             self.old_parameter = old_parameter
 
         def fit(self, X, y):
@@ -499,10 +515,10 @@ that the release manager can merge.
 
         Parameters
         ----------
-        new_parameter : str, default="default"
+        new_parameter : str, default=<default>
             The parameter description.
         """
-        def __init__(self, old_parameter="deprecated", new_parameter="default"):
+        def __init__(self, old_parameter="deprecated", new_parameter=<default>):
             # IMPORTANT: both params need to be written to self during change period
             self.new_parameter = new_parameter
             self.old_parameter = old_parameter
@@ -547,14 +563,14 @@ or by carrying out the TODO action.
 .. code:: python
 
     class EstimatorName:
-        """Same as in step 2, no change necessary.
+        """Same as in step 1, no change necessary.
 
         Parameters
         ----------
-        new_parameter : str, default="default"
+        new_parameter : str, default=<default>
             The parameter description.
         """
-       def __init__(self, new_parameter="default"):
+       def __init__(self, new_parameter=<default>):
            self.new_parameter = new_parameter
            self._parameter = new_parameter
 
