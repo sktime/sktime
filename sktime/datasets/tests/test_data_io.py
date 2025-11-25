@@ -4,13 +4,18 @@ __author__ = ["SebasKoel", "Emiliathewolf", "TonyBagnall", "jasonlines", "achiev
 
 __all__ = []
 
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from sktime.datasets import load_basic_motions, load_UCR_UEA_dataset, load_uschange
-from sktime.datasets._data_io import _list_available_datasets, _load_provided_dataset
+from sktime.datasets._data_io import (
+    _cache_dataset,
+    _list_available_datasets,
+    _load_provided_dataset,
+)
 from sktime.datatypes import check_is_mtype, scitype_to_mtype
 
 # using this and not a direct import
@@ -71,6 +76,88 @@ def test_load_basic_motions(return_X_y, return_type):
         f"Error message returned by check_is_mtype: {check_msg}"
     )
     assert valid, msg
+
+
+def test_cache_dataset_download_entire_repo(monkeypatch, tmp_path):
+    """Ensure _cache_dataset forwards download_entire_repo to the downloader."""
+
+    captured = {}
+
+    class _DummyDownloader:
+        def __init__(self, hf_repo_name, folder_name, **kwargs):
+            captured["download_entire_repo"] = kwargs.get("download_entire_repo")
+            self.folder_name = folder_name
+
+        def download(self, download_path=None, force_download=False):
+            target = Path(download_path) / self.folder_name
+            target.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(
+        "sktime.datasets._data_io.DatasetDownloader", _DummyDownloader
+    )
+
+    _cache_dataset(
+        ["https://example.com"],
+        "DummyDataset",
+        extract_path=tmp_path,
+        download_entire_repo=True,
+    )
+
+    assert captured["download_entire_repo"] is True
+
+
+def test_load_ucr_entire_repo_flag(monkeypatch, tmp_path):
+    """load_UCR_UEA_dataset should request repo-wide download when asked."""
+
+    captured = {}
+
+    def _fake_list_available_datasets(extract_path, origin_repo=None):
+        # force the loader to attempt a download
+        return []
+
+    def _fake_cache_dataset(
+        url,
+        name,
+        extract_path=None,
+        repeats=1,
+        verbose=False,
+        download_entire_repo=False,
+    ):
+        captured["download_entire_repo"] = download_entire_repo
+        Path(extract_path, name).mkdir(parents=True, exist_ok=True)
+
+    def _fake_load_provided_dataset(
+        name,
+        split,
+        return_X_y,
+        return_type=None,
+        extract_path=None,
+        y_dtype="str",
+    ):
+        X = pd.DataFrame({"dim_0": [pd.Series([0, 1, 2])]})
+        y = np.array(["class"])
+        return (X, y)
+
+    monkeypatch.setattr(
+        "sktime.datasets._data_io._list_available_datasets",
+        _fake_list_available_datasets,
+    )
+    monkeypatch.setattr(
+        "sktime.datasets._data_io._cache_dataset",
+        _fake_cache_dataset,
+    )
+    monkeypatch.setattr(
+        "sktime.datasets._data_io._load_provided_dataset",
+        _fake_load_provided_dataset,
+    )
+
+    load_UCR_UEA_dataset(
+        name="Beef",
+        extract_path=str(tmp_path),
+        download_entire_repo=True,
+    )
+
+    assert captured["download_entire_repo"] is True
 
 
 def test_load_UCR_UEA_dataset():
