@@ -6,6 +6,7 @@ on:
 
 jobs:
   code_quality:
+    if: ${{ github.repository == 'sktime/sktime' }}
     name: code-quality
     runs-on: ubuntu-latest
     steps:
@@ -22,6 +23,7 @@ jobs:
         shell: bash
 
   test_base:
+    if: ${{ github.repository == 'sktime/sktime' }}
     needs: code_quality
     name: base
     strategy:
@@ -50,6 +52,7 @@ jobs:
           test-affected-estimators: "False"
 
   test_module:
+    if: ${{ github.repository == 'sktime/sktime' }}
     needs: code_quality
     name: module
     strategy:
@@ -88,6 +91,7 @@ jobs:
           test-affected-estimators: "False"
 
   test_other:
+    if: ${{ github.repository == 'sktime/sktime' }}
     needs: code_quality
     name: other
     strategy:
