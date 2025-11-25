@@ -153,3 +153,57 @@ jobs:
           --ignore sktime/transformations
           --matrixdesign False
           --only_changed_modules False
+
+  collect_vm_estimators:
+    needs: code_quality
+    name: collect-vm-estimators
+    runs-on: ubuntu-latest
+    outputs:
+      full_vm_estimators_list: ${{ steps.collect_vm_estimators.outputs.full_vm_estimators_list }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install sktime with developer dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[dev]
+
+      - name: Collect full vm estimators list
+        id: collect_vm_estimators
+        run: |
+          FULL_VM_LIST=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes(vm=True)))')
+          echo "full_vm_estimators_list=$FULL_VM_LIST" >> $GITHUB_OUTPUT
+
+  test_vm_estimators:
+    needs: collect_vm_estimators
+    name: vm-estimators
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        operating-system: [ubuntu-latest, macos-latest, windows-latest]
+        estimator-under-test: ${{ fromJson(needs.collect_vm_estimators.outputs.full_vm_estimators_list) }}
+    runs-on: ${{ matrix.operating-system }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install sktime with developer dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[dev]
+
+      - name: Run tests for vm estimator ${{ matrix.estimator-under-test }}
+        run: |
+          python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('${{ matrix.estimator-under-test }}')"
