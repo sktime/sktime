@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_arrow_head
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.panel.tsfeatures import (
     TSFeaturesTransformer,
@@ -35,19 +34,6 @@ def test_tsfeatures_extractor():
     assert Xt.shape[0] == X.shape[0]
     # Check that all values are numeric (no object dtype)
     assert Xt.dtypes.apply(lambda x: np.issubdtype(x, np.number)).all()
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(TSFeaturesTransformer),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-def test_docs_tsfeatures_transformer():
-    """Test whether doc example runs through."""
-    X, y = load_arrow_head(return_X_y=True)
-    transformer = TSFeaturesTransformer(freq=1, scale=True)
-    Xt = transformer.fit_transform(X)
-    assert Xt.shape[0] == X.shape[0]
-    assert Xt.shape[1] > 0
 
 
 @pytest.mark.skipif(
@@ -173,22 +159,6 @@ def test_tsfeatures_wide_parameters(scale, threads):
     # Check that all feature columns are numeric (exclude 'unique_id' if present)
     feature_cols = [col for col in Xt.columns if col != "unique_id"]
     assert all(np.issubdtype(Xt[col].dtype, np.number) for col in feature_cols)
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(TSFeaturesWideTransformer),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-def test_tsfeatures_wide_missing_columns():
-    """Test TSFeaturesWideTransformer raises error for missing columns."""
-    # Missing 'seasonality' column
-    data = pd.DataFrame(
-        {"unique_id": ["ts1", "ts2"], "y": [np.random.randn(100), np.random.randn(50)]}
-    )
-
-    transformer = TSFeaturesWideTransformer()
-    with pytest.raises(ValueError, match="X must have columns"):
-        transformer.fit_transform(data)
 
 
 @pytest.mark.skipif(

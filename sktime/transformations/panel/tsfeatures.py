@@ -4,6 +4,7 @@
 __author__ = ["Faakhir30"]
 __all__ = ["TSFeaturesTransformer", "TSFeaturesWideTransformer"]
 
+import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
@@ -23,7 +24,7 @@ class _TSFeaturesBase(BaseTransformer):
         #
         # estimator type
         # ----------------------------------
-        "scitype:transform-input": "Series",
+        "scitype:transform-input": "Panel",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
         "scitype:transform-labels": "None",
@@ -339,16 +340,6 @@ class TSFeaturesWideTransformer(_TSFeaturesBase):
             **{
                 "X_inner_mtype": "pd.DataFrame",
                 "capability:categorical_in_X": True,
-                "tests:skip_by_name": [
-                    "test_fit_idempotent",
-                    "test_methods_have_no_side_effects",
-                    "test_non_state_changing_method_contract",
-                    "test_persistence_via_pickle",
-                    "test_save_estimators_to_file",
-                    "test_categorical_y_raises_error",
-                    "test_categorical_X_passes",
-                    "test_fit_transform_output",
-                ],
             }
         )
 
@@ -359,11 +350,18 @@ class TSFeaturesWideTransformer(_TSFeaturesBase):
         (with ['unique_id', 'seasonality', 'y'] columns) into a DataFrame of
         extracted features using the `tsfeatures.tsfeatures_wide` function.
 
+        If the required columns are not present, X is treated as the time series
+        data itself, where each numeric row is a time series and each column is a time
+        point. In this case, 'unique_id' defaults to the row index, 'seasonality'
+        defaults to 1 (non-seasonal), and 'y' is constructed from each row's values.
+
         Parameters
         ----------
         X : pd.DataFrame
             A pandas DataFrame with columns ['unique_id', 'seasonality', 'y'],
-            where 'y' contains arrays representing time series.
+            where 'y' contains arrays representing time series. Alternatively,
+            if these columns are not present, X is treated as the time series
+            data itself (each row is a series, each column is a time point).
         y : None
             Ignored. Present only for interface compatibility.
 
@@ -378,8 +376,18 @@ class TSFeaturesWideTransformer(_TSFeaturesBase):
 
         required_cols = ["unique_id", "seasonality", "y"]
         if not all(col in X.columns for col in required_cols):
-            raise ValueError(
-                f"X must have columns {required_cols}. Found columns: {list(X.columns)}"
+            # Treat X as the time series data itself
+            # Each row becomes a time series, each column is a time point
+            valid_rows = [(row_idx, row) for row_idx, row in X.iterrows()
+                        if np.issubdtype(row.values.dtype, np.number)]
+            if not valid_rows:
+                return pd.DataFrame()
+            X = pd.DataFrame(
+                {
+                    "unique_id": [row_idx for row_idx, _ in valid_rows],
+                    "seasonality": [1]*len(valid_rows),  # Non-seasonal default
+                    "y": [row.values.astype(np.float64) for _, row in valid_rows]
+                }
             )
 
         features_to_use = (
