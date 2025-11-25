@@ -23,7 +23,9 @@ class MLPNetwork(BaseDeepNetwork):
     dropout : float or tuple, default=(0.1, 0.2, 0.2, 0.3)
         The dropout rate for the hidden layers.
         If float, the same rate is used for all layers.
-        If tuple, must be of length 4, specifying the rate for each layer.
+        If tuple, it must have length equal to number of hidden layers in the MLP,
+        each element specifying the dropout rate for the corresponding hidden layer.
+        Current implementation of the MLP has 4 hidden layers.
 
     References
     ----------

@@ -55,8 +55,8 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = RMSprop(lr=0.001)
         specify the optimizer and the learning rate to be used.
-        dropout : float, default=0.0
-    The dropout rate for the RNN layer.
+    dropout : float, default=0.0
+        The dropout rate for the RNN layer.
 
     References
     ----------

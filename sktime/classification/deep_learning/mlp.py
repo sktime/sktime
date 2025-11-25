@@ -45,8 +45,11 @@ class MLPClassifier(BaseDeepClassifier):
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
     dropout : float or tuple, default=(0.1, 0.2, 0.2, 0.3)
-        Dropout rates for hidden layers. If float, same rate for all layers.
-        If tuple, must have length 4 for each layer.
+        The dropout rate for the hidden layers.
+        If float, the same rate is used for all layers.
+        If tuple, it must have length equal to number of hidden layers in the MLP,
+        each element specifying the dropout rate for the corresponding hidden layer.
+        Current implementation of the MLP has 4 hidden layers.
 
     References
     ----------
