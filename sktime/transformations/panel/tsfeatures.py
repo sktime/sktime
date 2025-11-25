@@ -378,15 +378,18 @@ class TSFeaturesWideTransformer(_TSFeaturesBase):
         if not all(col in X.columns for col in required_cols):
             # Treat X as the time series data itself
             # Each row becomes a time series, each column is a time point
-            valid_rows = [(row_idx, row) for row_idx, row in X.iterrows()
-                        if np.issubdtype(row.values.dtype, np.number)]
+            valid_rows = [
+                (row_idx, row)
+                for row_idx, row in X.iterrows()
+                if np.issubdtype(row.values.dtype, np.number)
+            ]
             if not valid_rows:
                 return pd.DataFrame()
             X = pd.DataFrame(
                 {
                     "unique_id": [row_idx for row_idx, _ in valid_rows],
-                    "seasonality": [1]*len(valid_rows),  # Non-seasonal default
-                    "y": [row.values.astype(np.float64) for _, row in valid_rows]
+                    "seasonality": [1] * len(valid_rows),  # Non-seasonal default
+                    "y": [row.values.astype(np.float64) for _, row in valid_rows],
                 }
             )
 
