@@ -272,9 +272,9 @@ class TSFeaturesTransformer(_TSFeaturesBase):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from tsfeatures.tsfeatures import acf_features, arch_stat
+        from sktime.utils.dependencies import _check_soft_dependencies
 
-        return [
+        params = [
             {
                 "freq": 1,
                 "dict_freqs": None,
@@ -286,13 +286,21 @@ class TSFeaturesTransformer(_TSFeaturesBase):
                 "threads": None,
                 "freq": 1,
             },
-            {
-                "features": [acf_features, arch_stat],
-                "scale": True,
-                "threads": 1,
-                "freq": 2,
-            },
         ]
+
+        if _check_soft_dependencies("tsfeatures", severity="none"):
+            from tsfeatures.tsfeatures import acf_features, arch_stat
+
+            params.append(
+                {
+                    "features": [acf_features, arch_stat],
+                    "scale": True,
+                    "threads": 1,
+                    "freq": 2,
+                }
+            )
+
+        return params
 
 
 class TSFeaturesWideTransformer(_TSFeaturesBase):
@@ -424,21 +432,31 @@ class TSFeaturesWideTransformer(_TSFeaturesBase):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from tsfeatures.tsfeatures import acf_features, arch_stat
+        from sktime.utils.dependencies import _check_soft_dependencies
 
-        return [
+        params = [
             {
                 "scale": True,
                 "threads": 4,
             },
-            {
-                "features": [acf_features],
-                "scale": False,
-                "threads": None,
-            },
-            {
-                "features": [acf_features, arch_stat],
-                "scale": True,
-                "threads": 1,
-            },
         ]
+
+        if _check_soft_dependencies("tsfeatures", severity="none"):
+            from tsfeatures.tsfeatures import acf_features, arch_stat
+
+            params.extend(
+                [
+                    {
+                        "features": [acf_features],
+                        "scale": False,
+                        "threads": None,
+                    },
+                    {
+                        "features": [acf_features, arch_stat],
+                        "scale": True,
+                        "threads": 1,
+                    },
+                ]
+            )
+
+        return params
