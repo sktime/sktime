@@ -227,6 +227,7 @@ dev = [
 # they are stable and subject to deprecation policies
 # contributors should use the dev dependency set for contributing to sktime, see above
 docs = [
+  "beautifulsoup4",
   "jupyter",
   "myst-parser",
   "nbsphinx>=0.8.6",
