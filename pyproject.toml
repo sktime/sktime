@@ -109,6 +109,11 @@ all_extras = [
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'xarray; python_version < "3.13"',
+  # Note: scikit-mobility intentionally omitted due to pandas<2.0 requirement
+  # and Python 3.12 incompatibility. Users on Python < 3.12 can install manually.
+ 'movingpandas>=0.16; python_version < "3.13"',
+ 'geopandas>=0.14; python_version < "3.13"',
+ 'shapely>=2.0; python_version < "3.13"',
 ]
 
 # all soft dependencies compatible with pandas 2
@@ -208,6 +213,11 @@ transformations = [
   'simdkalman',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
+  # Trajectory analysis packages (optional, with compatibility constraints)
+  'scikit-mobility; python_version < "3.12"',  # Not compatible with Python 3.12+
+  'movingpandas; python_version < "3.13"',
+  'geopandas; python_version < "3.13"',
+  'shapely; python_version < "3.13"'
 ]
 
 # dev - the developer dependency set, for contributors to sktime
