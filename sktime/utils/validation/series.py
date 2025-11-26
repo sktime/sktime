@@ -16,7 +16,10 @@ import pandas as pd
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex)
-RELATIVE_INDEX_TYPES = (pd.RangeIndex, pd.TimedeltaIndex)
+# RangeIndex can represent absolute integer locations (e.g., default pandas index)
+# and should be treated as ABSOLUTE by default. TimedeltaIndex remains the only
+# index type considered relative by default.
+RELATIVE_INDEX_TYPES = (pd.TimedeltaIndex,)
 ABSOLUTE_INDEX_TYPES = (pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
 assert set(RELATIVE_INDEX_TYPES).issubset(VALID_INDEX_TYPES)
 assert set(ABSOLUTE_INDEX_TYPES).issubset(VALID_INDEX_TYPES)
@@ -33,11 +36,17 @@ def is_in_valid_index_types(x) -> bool:
 
 
 def is_in_valid_relative_index_types(x) -> bool:
-    return isinstance(x, RELATIVE_INDEX_TYPES) or is_integer_index(x)
+    # Integer pd.Index (from lists/arrays) are relative by default
+    # TimedeltaIndex is also relative
+    # RangeIndex is NOT relative (it's in ABSOLUTE_INDEX_TYPES)
+    return isinstance(x, RELATIVE_INDEX_TYPES) or (
+        is_integer_index(x) and not isinstance(x, pd.RangeIndex)
+    )
 
 
 def is_in_valid_absolute_index_types(x) -> bool:
-    return isinstance(x, ABSOLUTE_INDEX_TYPES) or is_integer_index(x)
+    # RangeIndex, DatetimeIndex, PeriodIndex are absolute
+    return isinstance(x, ABSOLUTE_INDEX_TYPES)
 
 
 def _check_is_univariate(y, var_name="input"):
