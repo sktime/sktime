@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 class MovingPandasFeatureExtractor(BaseTransformer):
@@ -101,9 +100,9 @@ class MovingPandasFeatureExtractor(BaseTransformer):
         """
         # lazy import to avoid hard dependency
         try:
+            import geopandas as gpd
             import movingpandas as mpd
             from movingpandas import Trajectory
-            import geopandas as gpd
             from shapely.geometry import Point
         except ImportError as e:
             raise ImportError(
@@ -115,24 +114,21 @@ class MovingPandasFeatureExtractor(BaseTransformer):
 
         # Convert to GeoDataFrame if not already
         if not isinstance(X_copy, gpd.GeoDataFrame):
-            # Check if geometry column exists
             if "geometry" not in X_copy.columns:
-                # Create geometry from lat/lon
+                # OPTIMIZED: Use points_from_xy
                 if "lat" in X_copy.columns and "lon" in X_copy.columns:
-                    X_copy["geometry"] = [
-                        Point(row["lon"], row["lat"])
-                        for _, row in X_copy.iterrows()
-                    ]
+                    X_copy["geometry"] = gpd.points_from_xy(
+                        X_copy["lon"], X_copy["lat"]
+                    )
                 elif "latitude" in X_copy.columns and "longitude" in X_copy.columns:
-                    X_copy["geometry"] = [
-                        Point(row["longitude"], row["latitude"])
-                        for _, row in X_copy.iterrows()
-                    ]
+                    X_copy["geometry"] = gpd.points_from_xy(
+                        X_copy["longitude"], X_copy["latitude"]
+                    )
                 else:
                     raise ValueError(
-                        "Input must have 'geometry' column or 'lat'/'lon' columns"
+                        "Input must have 'geometry', 'lat'/'lon', or 'latitude'/'longitude'"
                     )
-            
+
             # Ensure datetime column
             if "datetime" not in X_copy.columns and "t" not in X_copy.columns:
                 if isinstance(X_copy.index, pd.DatetimeIndex):
@@ -144,14 +140,14 @@ class MovingPandasFeatureExtractor(BaseTransformer):
                     )
             elif "t" in X_copy.columns:
                 X_copy["datetime"] = X_copy["t"]
-            
+
             # Ensure trajectory ID
             if "traj_id" not in X_copy.columns:
                 if isinstance(X_copy.index, pd.MultiIndex):
                     X_copy["traj_id"] = X_copy.index.get_level_values(0)
                 else:
                     X_copy["traj_id"] = 0
-            
+
             # Convert to GeoDataFrame
             gdf = gpd.GeoDataFrame(X_copy, geometry="geometry", crs="EPSG:4326")
         else:
@@ -198,25 +194,28 @@ class MovingPandasFeatureExtractor(BaseTransformer):
         # Combine features
         if feature_list:
             features_df = pd.concat(feature_list, axis=1)
-            
+
             # Remove duplicate columns
             features_df = features_df.loc[:, ~features_df.columns.duplicated()]
-            
+
             # Aggregate per trajectory if needed
             if "traj_id" in features_df.columns:
                 tid_col = "traj_id"
                 agg_dict = {
-                    col: "mean" 
-                    for col in features_df.columns 
-                    if col != tid_col and features_df[col].dtype in [np.float64, np.float32, np.int64]
-                }
-                agg_dict.update({
-                    col: "sum"
+                    col: "mean"
                     for col in features_df.columns
-                    if "total" in col.lower() or "count" in col.lower()
-                })
+                    if col != tid_col
+                    and features_df[col].dtype in [np.float64, np.float32, np.int64]
+                }
+                agg_dict.update(
+                    {
+                        col: "sum"
+                        for col in features_df.columns
+                        if "total" in col.lower() or "count" in col.lower()
+                    }
+                )
                 features_df = features_df.groupby(tid_col).agg(agg_dict).reset_index()
-            
+
             return features_df
         else:
             return pd.DataFrame()
@@ -225,26 +224,27 @@ class MovingPandasFeatureExtractor(BaseTransformer):
         """Extract speed features using MovingPandas."""
         try:
             from movingpandas import Trajectory
-            import geopandas as gpd
-            
+
             speed_features = pd.DataFrame()
-            
+
             for traj_id, traj_group in gdf.groupby("traj_id"):
                 if len(traj_group) < 2:
                     continue
-                
+
                 # Create Trajectory object
                 traj = Trajectory(
                     traj_group,
                     traj_id=traj_id,
-                    t="datetime" if "datetime" in traj_group.columns else "t"
+                    t="datetime" if "datetime" in traj_group.columns else "t",
                 )
-                
+
                 # Calculate speed
                 traj.add_speed(overwrite=True)
-                
-                speeds = traj.df[self.speed_col if self.speed_col in traj.df.columns else "speed"].dropna()
-                
+
+                speeds = traj.df[
+                    self.speed_col if self.speed_col in traj.df.columns else "speed"
+                ].dropna()
+
                 if len(speeds) > 0:
                     speed_dict = {
                         "traj_id": traj_id,
@@ -254,12 +254,15 @@ class MovingPandasFeatureExtractor(BaseTransformer):
                         "speed_min": speeds.min(),
                         "speed_median": speeds.median(),
                     }
-                    speed_features = pd.concat([
-                        speed_features,
-                        pd.DataFrame([speed_dict])
-                    ], ignore_index=True)
-            
-            return speed_features.set_index("traj_id") if "traj_id" in speed_features.columns else speed_features
+                    speed_features = pd.concat(
+                        [speed_features, pd.DataFrame([speed_dict])], ignore_index=True
+                    )
+
+            return (
+                speed_features.set_index("traj_id")
+                if "traj_id" in speed_features.columns
+                else speed_features
+            )
         except Exception as e:
             warnings.warn(f"Speed feature extraction failed: {e}")
             return pd.DataFrame()
@@ -267,128 +270,145 @@ class MovingPandasFeatureExtractor(BaseTransformer):
     def _extract_distance_features(self, gdf):
         """Extract distance features."""
         distance_features = pd.DataFrame()
-        
+
         for traj_id, traj_group in gdf.groupby("traj_id"):
             if len(traj_group) < 2:
                 continue
-            
+
             try:
                 from movingpandas import Trajectory
-                
+
                 traj = Trajectory(
                     traj_group,
                     traj_id=traj_id,
-                    t="datetime" if "datetime" in traj_group.columns else "t"
+                    t="datetime" if "datetime" in traj_group.columns else "t",
                 )
-                
+
                 # Get trajectory length
                 length_m = traj.get_length()
-                
+
                 # Displacement
                 start = traj.get_start_location()
                 end = traj.get_end_location()
                 displacement_m = start.distance(end) * 111000  # Approximate conversion
-                
+
                 distance_dict = {
                     "traj_id": traj_id,
                     "total_distance_m": length_m,
                     "displacement_m": displacement_m,
                     "distance_points_count": len(traj_group),
-                    "efficiency_ratio": displacement_m / length_m if length_m > 0 else 0,
+                    "efficiency_ratio": displacement_m / length_m
+                    if length_m > 0
+                    else 0,
                 }
-                distance_features = pd.concat([
-                    distance_features,
-                    pd.DataFrame([distance_dict])
-                ], ignore_index=True)
+                distance_features = pd.concat(
+                    [distance_features, pd.DataFrame([distance_dict])],
+                    ignore_index=True,
+                )
             except Exception:
                 pass
-        
-        return distance_features.set_index("traj_id") if "traj_id" in distance_features.columns else distance_features
+
+        return (
+            distance_features.set_index("traj_id")
+            if "traj_id" in distance_features.columns
+            else distance_features
+        )
 
     def _extract_direction_features(self, gdf):
         """Extract direction features."""
         try:
             from movingpandas import Trajectory
-            
+
             direction_features = pd.DataFrame()
-            
+
             for traj_id, traj_group in gdf.groupby("traj_id"):
                 if len(traj_group) < 2:
                     continue
-                
+
                 traj = Trajectory(
                     traj_group,
                     traj_id=traj_id,
-                    t="datetime" if "datetime" in traj_group.columns else "t"
+                    t="datetime" if "datetime" in traj_group.columns else "t",
                 )
-                
+
                 # Add direction
                 traj.add_direction(overwrite=True)
-                
+
                 directions = traj.df[
-                    self.direction_col if self.direction_col in traj.df.columns else "direction"
+                    self.direction_col
+                    if self.direction_col in traj.df.columns
+                    else "direction"
                 ].dropna()
-                
+
                 if len(directions) > 0:
                     direction_dict = {
                         "traj_id": traj_id,
                         "direction_mean": directions.mean(),
                         "direction_std": directions.std(),
                         "direction_change_total": sum(
-                            abs(directions.iloc[i] - directions.iloc[i-1])
+                            abs(directions.iloc[i] - directions.iloc[i - 1])
                             for i in range(1, len(directions))
                         ),
                     }
-                    direction_features = pd.concat([
-                        direction_features,
-                        pd.DataFrame([direction_dict])
-                    ], ignore_index=True)
-            
-            return direction_features.set_index("traj_id") if "traj_id" in direction_features.columns else direction_features
+                    direction_features = pd.concat(
+                        [direction_features, pd.DataFrame([direction_dict])],
+                        ignore_index=True,
+                    )
+
+            return (
+                direction_features.set_index("traj_id")
+                if "traj_id" in direction_features.columns
+                else direction_features
+            )
         except Exception:
             return pd.DataFrame()
 
     def _extract_time_features(self, gdf):
         """Extract temporal features."""
         time_features = pd.DataFrame()
-        
+
         for traj_id, traj_group in gdf.groupby("traj_id"):
             if len(traj_group) < 2:
                 continue
-            
+
             datetime_col = "datetime" if "datetime" in traj_group.columns else "t"
             datetimes = pd.to_datetime(traj_group[datetime_col])
-            
+
             time_dict = {
                 "traj_id": traj_id,
                 "duration_seconds": (datetimes.max() - datetimes.min()).total_seconds(),
                 "time_points_count": len(traj_group),
-                "time_interval_mean": datetimes.diff().dropna().mean().total_seconds() if len(datetimes) > 1 else 0,
+                "time_interval_mean": datetimes.diff().dropna().mean().total_seconds()
+                if len(datetimes) > 1
+                else 0,
             }
-            time_features = pd.concat([
-                time_features,
-                pd.DataFrame([time_dict])
-            ], ignore_index=True)
-        
-        return time_features.set_index("traj_id") if "traj_id" in time_features.columns else time_features
+            time_features = pd.concat(
+                [time_features, pd.DataFrame([time_dict])], ignore_index=True
+            )
+
+        return (
+            time_features.set_index("traj_id")
+            if "traj_id" in time_features.columns
+            else time_features
+        )
 
     def _extract_geometry_features(self, gdf):
         """Extract geometric features."""
         geometry_features = pd.DataFrame()
-        
+
         try:
             from shapely.geometry import LineString
-            
+
             for traj_id, traj_group in gdf.groupby("traj_id"):
                 if len(traj_group) < 2:
                     continue
-                
+
                 # Create line from trajectory
                 line = LineString(traj_group.geometry.tolist())
-                
+
                 # Calculate bounding box
                 bounds = line.bounds
-                
+
                 geometry_dict = {
                     "traj_id": traj_id,
                     "trajectory_length_deg": line.length,
@@ -396,18 +416,22 @@ class MovingPandasFeatureExtractor(BaseTransformer):
                     "bbox_height": bounds[3] - bounds[1],
                     "bbox_area": (bounds[2] - bounds[0]) * (bounds[3] - bounds[1]),
                 }
-                geometry_features = pd.concat([
-                    geometry_features,
-                    pd.DataFrame([geometry_dict])
-                ], ignore_index=True)
+                geometry_features = pd.concat(
+                    [geometry_features, pd.DataFrame([geometry_dict])],
+                    ignore_index=True,
+                )
         except Exception:
             pass
-        
-        return geometry_features.set_index("traj_id") if "traj_id" in geometry_features.columns else geometry_features
+
+        return (
+            geometry_features.set_index("traj_id")
+            if "traj_id" in geometry_features.columns
+            else geometry_features
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
         params1 = {"features": "speed"}
         params2 = {"features": ["speed", "distance"]}
-        return [params1, params2] 
+        return [params1, params2]
