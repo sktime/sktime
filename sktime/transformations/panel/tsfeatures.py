@@ -62,11 +62,14 @@ class TSFeaturesTransformer(BaseTransformer):
     def _transform(self, X, y=None):
         import tsfeatures
 
-        df = pd.DataFrame({
-            "unique_id": [1] * len(X),
-            "ds": pd.date_range(start="2020-01-01", periods=len(X)),
-            "y": X.values,
-        })
+        # Use actual index from input series, preserving temporal information
+        df = pd.DataFrame(
+            {
+                "unique_id": [1] * len(X),
+                "ds": X.index,
+                "y": X.values,
+            }
+        )
 
         kwargs = {"freq": self.freq, "scale": self.scale}
         if self.features is not None:
@@ -79,8 +82,19 @@ class TSFeaturesTransformer(BaseTransformer):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return.
+
+        Returns
+        -------
+        params : list of dict
+            Parameters to create testing instances of the class.
+        """
         return [
             {"features": None, "freq": 1, "scale": False},
             {"features": ["hurst", "stability"], "freq": 1, "scale": True},
         ]
-
