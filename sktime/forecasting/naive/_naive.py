@@ -68,23 +68,23 @@ class NaiveForecaster(_BaseWindowForecaster):
     strategy : {"last", "mean", "drift"}, default="last"
         Strategy used to make forecasts:
 
-        * "last":   (robust against NaN values)
-                    forecast the last value in the
-                    training series when sp is 1.
-                    When sp is not 1,
-                    last value of each season
-                    in the last window will be
-                    forecasted for each season.
-        * "mean":   (robust against NaN values)
-                    forecast the mean of last window
-                    of training series when sp is 1.
-                    When sp is not 1, mean of all values
-                    in a season from last window will be
-                    forecasted for each season.
-        * "drift":  (not robust against NaN values)
-                    forecast by fitting a line between the
-                    first and last point of the window and
-                    extrapolating it into the future.
+        * "last": forecast the last value in the
+            training series when sp is 1.
+            When sp is not 1,
+            last value of each season
+            in the last window will be
+            forecasted for each season.
+            Robust against NaN values.
+        * "mean" : forecast the mean of last window
+            of training series when sp is 1.
+            When sp is not 1, mean of all values
+            in a season from last window will be
+            forecasted for each season.
+            Robust against NaN values.
+        * "drift" : forecast by fitting a line between the
+            first and last point of the window and
+            extrapolating it into the future.
+            Not robust against NaN values.
 
     sp : int, or None, default=1
         Seasonal periodicity to use in the seasonal forecasting. None=1.
