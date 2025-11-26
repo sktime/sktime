@@ -3752,7 +3752,7 @@
         "maintenance"
       ]
     },
-        {
+    {
       "login": "mabuimo",
       "name": "Manuel Buitrago",
       "avatar_url": "https://avatars.githubusercontent.com/u/20048041?v=4",
@@ -3762,6 +3762,15 @@
         "code",
         "ideas",
         "question"
+      ]
+    },
+    {
+      "login": "pvprajwal",
+      "name": "Parasa V Prajwal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/74557086?v=4",
+      "profile": "https://github.com/pvprajwal",
+      "contributions": [
+        "code"
       ]
     }
   ]
