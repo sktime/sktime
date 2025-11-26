@@ -62,7 +62,7 @@ class MLPNetwork(BaseDeepNetwork):
         input_layer : a keras layer
         output_layer : a keras layer
         """
-        if isinstance(self.dropout, (float, int)):
+        if isinstance(self.dropout, (float)):
             dropout_rates = [float(self.dropout)] * 4
         elif isinstance(self.dropout, tuple):
             if len(self.dropout) != 4:
