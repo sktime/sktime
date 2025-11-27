@@ -7,6 +7,7 @@ __author__ = ["fkiraly", "mloning"]
 __all__ = ["ColumnEnsembleTransformer", "ColumnwiseTransformer"]
 
 import pandas as pd
+from sklearn.base import clone
 
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
@@ -418,8 +419,9 @@ class ColumnwiseTransformer(BaseTransformer):
     >>> from sktime.datasets import load_longley
     >>> from sktime.transformations.series.detrend import Detrender
     >>> from sktime.transformations.compose import ColumnwiseTransformer
+    >>> from sklearn.preprocessing import PowerTransformer
     >>> _, X = load_longley()
-    >>> transformer = ColumnwiseTransformer(Detrender())
+    >>> transformer = ColumnwiseTransformer(PowerTransformer())
     >>> Xt = transformer.fit_transform(X)
     """
 
@@ -441,16 +443,19 @@ class ColumnwiseTransformer(BaseTransformer):
         self.columns = columns
         super().__init__()
 
-        tags_to_clone = [
-            "y_inner_mtype",
-            "capability:inverse_transform",
-            "capability:missing_values",
-            "X-y-must-have-same-index",
-            "transform-returns-same-time-index",
-            "skip-inverse-transform",
-            "capability:categorical_in_X",
-        ]
-        self.clone_tags(transformer, tag_names=tags_to_clone)
+        # Only clone tags if transformer is a sktime transformer
+        # sklearn transformers don't have the sktime tag system
+        if hasattr(transformer, "get_tag"):
+            tags_to_clone = [
+                "y_inner_mtype",
+                "capability:inverse_transform",
+                "capability:missing_values",
+                "X-y-must-have-same-index",
+                "transform-returns-same-time-index",
+                "skip-inverse-transform",
+                "capability:categorical_in_X",
+            ]
+            self.clone_tags(transformer, tag_names=tags_to_clone)
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -487,7 +492,7 @@ class ColumnwiseTransformer(BaseTransformer):
         # fit by iterating over columns
         self.transformers_ = {}
         for colname in self.columns_:
-            transformer = self.transformer.clone()
+            transformer = clone(self.transformer)
             self.transformers_[colname] = transformer
             self.transformers_[colname].fit(X[colname], y)
         return self
@@ -613,3 +618,11 @@ def _check_columns(z, selected_columns):
     difference = z_wanted_keys.difference(z_new_keys)
     if len(difference) != 0:
         raise ValueError("Missing columns" + str(difference) + "in Z.")
+
+
+def _format_for_sklearn(series):
+    """Convert pandas Series to DataFrame for sklearn transformers."""
+    # sklearn transformers expect 2D data, convert Series to DataFrame
+    if isinstance(series, pd.Series):
+        return series.to_frame()
+    return series
