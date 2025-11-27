@@ -6,8 +6,7 @@ __all__ = ["BaseCatalogue"]
 
 from abc import abstractmethod
 
-from skbase.base import BaseObject
-
+from sktime.base import BaseObject
 from sktime.registry import craft
 
 
@@ -75,7 +74,12 @@ class BaseCatalogue(BaseObject):
         )
 
         if not as_object:
-            return [type(item).__name__ if callable(item) else item for item in items]
+            return [
+                item
+                if isinstance(item, str)
+                else (item.__name__ if callable(item) else type(item).__name__)
+                for item in items
+            ]
 
         # as_object=True path
         if self._cached_objects is None:

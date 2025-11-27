@@ -42,7 +42,6 @@ class TestAllCatalogues(CatalogueFixtureGenerator, QuickTester):
         for cat in cats:
             items = estimator_instance.get(cat)
             assert isinstance(items, list)
-            # All strings or names
             assert all(isinstance(i, str) for i in items)
 
     def test_get_invalid_category_raises(self, estimator_instance):
@@ -56,8 +55,7 @@ class TestAllCatalogues(CatalogueFixtureGenerator, QuickTester):
         for cat in cats:
             objs = estimator_instance.get(cat, as_object=True)
             assert isinstance(objs, list)
-            assert len(objs) > 0 or objs == []  # empty categories allowed
-            # objects can be any callable craft(...) resolves
+            assert len(objs) > 0 or objs == []
             for o in objs:
                 assert not isinstance(o, str)
 
@@ -67,7 +65,6 @@ class TestAllCatalogues(CatalogueFixtureGenerator, QuickTester):
         for cat in cats:
             first = estimator_instance.get(cat, as_object=True)
             second = estimator_instance.get(cat, as_object=True)
-            # Should be exactly the same list in memory
             assert first is second
 
     def test_len_matches_number_of_items(self, estimator_instance):

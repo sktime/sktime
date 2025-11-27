@@ -2,4 +2,4 @@
 
 from sktime.catalogues.forecasting.dummy import DummyForecastingCatalogue
 
-__all__ = [DummyForecastingCatalogue]
+__all__ = ["DummyForecastingCatalogue"]
