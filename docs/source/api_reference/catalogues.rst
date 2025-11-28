@@ -28,7 +28,7 @@ Forecasting Catalogues
     :toctree: auto_generated/
     :template: class.rst
 
-    dummy._dummy.DummyForecastingCatalogue
+    dummy._dummy_forecasting.DummyForecastingCatalogue
 
 Classification Catalogues
 -------------------------
@@ -40,4 +40,4 @@ Classification Catalogues
     :toctree: auto_generated/
     :template: class.rst
 
-    dummy._dummy.DummyClassificationCatalogue
+    dummy._dummy_classification.DummyClassificationCatalogue
