@@ -401,7 +401,8 @@ class HIVECOTEV2(BaseClassifier):
                 },
             }
         else:
-            return {
+            # Return both the original minimal set and the full fast param1 set
+            param1 = {
                 "stc_params": {
                     "estimator": RandomForestClassifier(n_estimators=1),
                     "n_shapelet_samples": 5,
@@ -420,3 +421,64 @@ class HIVECOTEV2(BaseClassifier):
                     "randomly_selected_params": 1,
                 },
             }
+
+            # Full fast test parameter set
+            param2 = {
+                "stc_params": {
+                    "estimator": RandomForestClassifier(n_estimators=1),
+                    "n_shapelet_samples": 5,
+                    "max_shapelets": 5,
+                    "batch_size": 5,
+                    "transform_limit_in_minutes": 1,
+                    "time_limit_in_minutes": 1,
+                    "contract_max_n_shapelet_samples": 10,
+                    "save_transformed_data": False,
+                    "n_jobs": 1,
+                    "random_state": 42,
+                },
+                "drcif_params": {
+                    "n_estimators": 1,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                    "min_interval": 2,
+                    "max_interval": 5,
+                    "base_estimator": "CIT",
+                    "time_limit_in_minutes": 1,
+                    "contract_max_n_estimators": 3,
+                    "save_transformed_data": False,
+                    "n_jobs": 1,
+                    "random_state": 42,
+                },
+                "arsenal_params": {
+                    "num_kernels": 5,
+                    "n_estimators": 1,
+                    "rocket_transform": "rocket",
+                    "max_dilations_per_kernel": 4,
+                    "n_features_per_kernel": 2,
+                    "time_limit_in_minutes": 1,
+                    "contract_max_n_estimators": 3,
+                    "save_transformed_data": False,
+                    "n_jobs": 1,
+                    "random_state": 42,
+                },
+                "tde_params": {
+                    "n_parameter_samples": 1,
+                    "max_ensemble_size": 1,
+                    "randomly_selected_params": 1,
+                    "max_win_len_prop": 0.5,
+                    "min_window": 2,
+                    "typed_dict": True,
+                    "time_limit_in_minutes": 1,
+                    "contract_max_n_parameter_samples": 2,
+                    "save_train_predictions": False,
+                    "n_jobs": 1,
+                    "random_state": 42,
+                },
+                "time_limit_in_minutes": 6,
+                "save_component_probas": False,
+                "verbose": 0,
+                "n_jobs": 1,
+                "random_state": 42
+            }
+
+            return [param1, param2]
