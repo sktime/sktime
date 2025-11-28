@@ -418,8 +418,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = get_cutoff(y.iloc[: len(y) // 2], return_index=True)
         fh = _make_fh(cutoff, fh_int_oos, fh_type, is_relative)
-        
-        if not fh._is_contiguous() and not estimator_instance.get_tag("capability:non_contiguous_X"):   
+
+        if not fh._is_contiguous() and not estimator_instance.get_tag(
+            "capability:non_contiguous_X"
+        ):
             return None
 
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
