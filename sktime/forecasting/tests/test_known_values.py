@@ -52,6 +52,7 @@ def test_multiindex(fh, y_known) -> None:
         check_index_type=False,
     )
 
+
 @pytest.mark.skipif(
     not run_test_for_class(ForecastKnownValues),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -73,7 +74,7 @@ def test_two_level_hierarchical(fh, levels, time_points) -> None:
         names=["Level1", "Date"],
     )
     data = range(len(index))
-    
+
     y_known = pd.DataFrame(data, index=index, columns=["Value"])
 
     f = ForecastKnownValues(y_known=y_known)
@@ -96,7 +97,8 @@ def test_two_level_hierarchical(fh, levels, time_points) -> None:
         check_dtype=False,
         check_index_type=False,
     )
-    
+
+
 @pytest.mark.skipif(
     not run_test_for_class(ForecastKnownValues),
     reason="run test only if softdeps are present and incrementally (if requested)",
