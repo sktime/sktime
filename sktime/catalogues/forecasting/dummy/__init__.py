@@ -5,5 +5,5 @@ from sktime.catalogues.forecasting.dummy._dummy_forecasting import (
 )
 
 __all__ = [
-    DummyForecastingCatalogue,
+    "DummyForecastingCatalogue",
 ]
