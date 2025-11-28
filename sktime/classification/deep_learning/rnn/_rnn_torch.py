@@ -9,6 +9,7 @@ import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.rnn import RNNNetworkTorch
+from sktime.utils.warnings import warn
 
 
 class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
@@ -77,6 +78,13 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         Whether to print progress information during training.
     random_state : int, default = 0
         Seed to ensure reproducibility.
+    batch_first : bool, default = "deprecated"
+        .. deprecated:: 0.40.0
+            The ``batch_first`` parameter is deprecated and will be removed in
+            version 0.41.0. The parameter is now always set to True internally
+            to match the data format from PytorchDataset. Prior behavior with
+            ``batch_first=False`` cannot be retained as it conflicts with
+            sktime's internal data format requirements.
 
     Examples
     --------
@@ -100,6 +108,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         "capability:random_state": True,
     }
 
+    # TODO 0.41.0: remove batch_first parameter
     def __init__(
         self: "SimpleRNNClassifierTorch",
         # model specific
@@ -124,6 +133,8 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int = 0,
+        # deprecated parameter - moved to end
+        batch_first: bool = "deprecated",
     ):
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
@@ -149,6 +160,20 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.batch_first = batch_first
+
+        # TODO 0.41.0: remove this deprecation warning block
+        if batch_first != "deprecated":
+            warn(
+                "In SimpleRNNClassifierTorch, the 'batch_first' parameter is "
+                "deprecated and will be removed in sktime version 0.41.0. "
+                "The parameter is now always True internally to match sktime's "
+                "data format. Prior behavior with batch_first=False cannot be "
+                "retained as it conflicts with sktime's internal data format. "
+                "To silence this warning, remove the 'batch_first' argument.",
+                category=DeprecationWarning,
+                obj=self,
+            )
 
         # input_size and num_classes to be inferred from the data
         # and will be set in _build_network
@@ -306,7 +331,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "n_layers": 1,
             "activation": "logsoftmax",
             "activation_hidden": "relu",
-            "batch_first": False,
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
