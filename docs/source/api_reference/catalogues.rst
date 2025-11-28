@@ -29,6 +29,7 @@ Forecasting Catalogues
     :template: class.rst
 
     dummy._dummy_forecasting.DummyForecastingCatalogue
+    bakeoff._bakeoff.BakeOffCatalogue
 
 Classification Catalogues
 -------------------------
