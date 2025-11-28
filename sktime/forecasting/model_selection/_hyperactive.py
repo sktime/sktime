@@ -36,10 +36,6 @@ class ForecastingOptCV(_DelegatedForecaster):
     * Optimal parameters are then obtained from ``optimizer.solve``, and set
       as ``best_params_`` and ``best_forecaster_`` attributes.
     *  If ``refit=True``, ``best_forecaster_`` is fitted to the entire ``y`` and ``X``.
-      The time spent refitting is stored in ``refit_time_``.
-    * Metadata such as the scoring object, the number of CV splits, the best index
-      reported by the optimizer, and the evaluation table for the winning parameters
-      are exposed via ``scorer_``, ``n_splits_``, ``best_index_``, and ``cv_results_``.
 
     In ``predict`` and ``predict``-like methods, calls the respective method
     of the ``best_forecaster_`` if ``refit=True``.
@@ -151,14 +147,13 @@ class ForecastingOptCV(_DelegatedForecaster):
             - "mute_warnings": bool, default=False; if True, suppresses warnings
 
     tune_by_instance : bool, optional (default=False)
-        Whether to tune parameters separately for each time series instance in
-        Panel or Hierarchical data. When True, sktime’s broadcasting logic is enabled
-        via tag manipulation so each instance receives its own optimizer clone.
-
+        Whether to tune parameters separately for each time series instance when
+        panel or hierarchical data is passed. Mirrors ``ForecastingGridSearchCV``
+        semantics by delegating broadcasting to sktime's vectorization logic.
     tune_by_variable : bool, optional (default=False)
-        Whether to tune parameters separately for each variable in multivariate
-        time series data. When True, only univariate targets are accepted and the
-        tuner relies on sktime’s column-wise broadcasting.
+        Whether to tune parameters per variable for strictly multivariate series.
+        When enabled, only univariate targets are accepted and internal
+        broadcasting is handled by sktime.
 
     Example
     -------
@@ -195,9 +190,9 @@ class ForecastingOptCV(_DelegatedForecaster):
     ForecastingOptCV(...)
     >>> y_pred = tuned_naive.predict()
 
-    3. obtaining best parameters and best estimator
+    3. obtaining best parameters and best forecaster
     >>> best_params = tuned_naive.best_params_
-    >>> best_estimator = tuned_naive.best_forecaster_
+    >>> best_forecaster = tuned_naive.best_forecaster_
 
     Attributes
     ----------
@@ -206,8 +201,8 @@ class ForecastingOptCV(_DelegatedForecaster):
     best_forecaster_ : estimator
         Fitted estimator with the best parameters.
     best_score_ : float
-        Score of the best model (according to ``scoring`` after hyperactive’s
-        “higher-is-better” normalization).
+        Score of the best model (according to ``scoring``, after hyperactive's
+        "higher-is-better" normalization).
     best_index_ : int or None
         Index of the best parameter combination if the optimizer exposes it.
     scorer_ : BaseMetric
