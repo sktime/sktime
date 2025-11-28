@@ -677,26 +677,26 @@ class ForecastingHorizon:
     def _is_contiguous(self) -> bool:
         """Check if a forecasting horizon is contiguous.
 
-        A contiguous forecasting horizon has no gaps - all time points 
+        A contiguous forecasting horizon has no gaps - all time points
         between the minimum and maximum are present.
-        
+
         The method handles four types of forecasting horizons:
-        
-        1. **Integer index** (relative or absolute): Checks if all integers 
+
+        1. **Integer index** (relative or absolute): Checks if all integers
         between min and max are present.
         2. **PeriodIndex** (absolute only): Converts periods to integer ordinals
         and checks contiguity. Always checkable due to built-in frequency.
         3. **DatetimeIndex** (absolute only): Requires frequency information
         to determine contiguity. Returns False if frequency is unavailable.
         4. **TimedeltaIndex** (relative only): Infers the step size from the
-        minimum difference between consecutive values and checks if all 
+        minimum difference between consecutive values and checks if all
         intermediate steps are present.
 
         Returns
         -------
         bool
             True if fh values form a contiguous sequence, False otherwise.
-            Returns False for DatetimeIndex when frequency information is 
+            Returns False for DatetimeIndex when frequency information is
             not available.
         """
         values = self.to_pandas()
@@ -722,7 +722,7 @@ class ForecastingHorizon:
 
         # Case 3: PeriodIndex (absolute only)
         if isinstance(values, pd.PeriodIndex):
-            int_values = values.astype('int64')
+            int_values = values.astype("int64")
             sorted_vals = np.sort(int_values)
             expected_len = sorted_vals[-1] - sorted_vals[0] + 1
             return len(values) == expected_len
@@ -731,24 +731,21 @@ class ForecastingHorizon:
         if isinstance(values, pd.DatetimeIndex):
             sorted_vals = values.sort_values()
             # Try to get freq from self first, then from values
-            freq = self._freq if hasattr(self, '_freq') else None
-            if freq is None and hasattr(values, 'freq'):
+            freq = self._freq if hasattr(self, "_freq") else None
+            if freq is None and hasattr(values, "freq"):
                 freq = values.freq
-            
+
             if freq is not None:
                 expected = pd.date_range(
-                    start=sorted_vals[0], 
-                    end=sorted_vals[-1], 
-                    freq=freq
+                    start=sorted_vals[0], end=sorted_vals[-1], freq=freq
                 )
                 return len(values) == len(expected)
             else:
-               # I have no idea how to determine, so let's make it non-contiguous for more safety
-               return False
+                # unknown how to determine, treat as non-contiguous for safety
+                return False
 
         return False
-       
-        
+
     def get_expected_pred_idx(self, y=None, cutoff=None, sort_by_time=False):
         """Construct DataFrame Index expected in y_pred, return of _predict.
 
