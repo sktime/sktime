@@ -9,6 +9,7 @@ import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.rnn import RNNNetworkTorch
+from sktime.utils.warnings import warn
 
 
 class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
@@ -30,9 +31,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         The activation function applied inside the RNN. Can be either 'tanh' or 'relu'.
         Because currently PyTorch only supports these two activations inside the RNN.
         https://docs.pytorch.org/docs/stable/generated/torch.nn.RNN.html#torch.nn.RNN
-    batch_first : bool, default = False
-        If True, then the input and output tensors are provided
-        as (batch, seq, feature) instead of (seq, batch, feature).
     bias : bool, default = True
         If False, then the layer does not use bias weights.
     init_weights : bool, default = True
@@ -80,6 +78,13 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         Whether to print progress information during training.
     random_state : int, default = 0
         Seed to ensure reproducibility.
+    batch_first : bool, default = "deprecated"
+        .. deprecated:: 0.40.0
+            The ``batch_first`` parameter is deprecated and will be removed in
+            version 0.41.0. The parameter is now always set to True internally
+            to match the data format from PytorchDataset. Prior behavior with
+            ``batch_first=False`` cannot be retained as it conflicts with
+            sktime's internal data format requirements.
 
     Examples
     --------
@@ -103,6 +108,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         "capability:random_state": True,
     }
 
+    # TODO 0.41.0: remove batch_first parameter
     def __init__(
         self: "SimpleRNNClassifierTorch",
         # model specific
@@ -110,7 +116,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         n_layers: int = 1,
         activation: str | None | Callable = None,
         activation_hidden: str = "relu",
-        batch_first: bool = False,
         bias: bool = True,
         init_weights: bool = True,
         dropout: float = 0.0,
@@ -128,6 +133,8 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int = 0,
+        # deprecated parameter - moved to end
+        batch_first: bool = "deprecated",
     ):
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
@@ -136,7 +143,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         # if activation_hidden is invalid, i.e. not in ['tanh', 'relu']
         # PyTorch will raise an error
         self.activation_hidden = activation_hidden
-        self.batch_first = batch_first
         self.bias = bias
         self.init_weights = init_weights
         self.dropout = dropout
@@ -154,6 +160,20 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.batch_first = batch_first
+
+        # TODO 0.41.0: remove this deprecation warning block
+        if batch_first != "deprecated":
+            warn(
+                "In SimpleRNNClassifierTorch, the 'batch_first' parameter is "
+                "deprecated and will be removed in sktime version 0.41.0. "
+                "The parameter is now always True internally to match sktime's "
+                "data format. Prior behavior with batch_first=False cannot be "
+                "retained as it conflicts with sktime's internal data format. "
+                "To silence this warning, remove the 'batch_first' argument.",
+                category=DeprecationWarning,
+                obj=self,
+            )
 
         # input_size and num_classes to be inferred from the data
         # and will be set in _build_network
@@ -196,7 +216,9 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
                 f"but got shape {X.shape}. Please ensure your input data is "
                 "properly formatted."
             )
-        # n_instances, n_dims, n_timesteps = X.shape
+        # X.shape = [n_instances, n_dims, n_timesteps] (sktime format)
+        # PytorchDataset will transpose to [n_instances, n_timesteps, n_dims]
+        # So we extract n_dims (features) from axis 1
         self.num_classes = len(np.unique(y))
         _, self.input_size, _ = X.shape
         return RNNNetworkTorch(
@@ -206,7 +228,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             activation=self._validated_activation,  # use self._validated_activation
             activation_hidden=self.activation_hidden,
             bias=self.bias,
-            batch_first=self.batch_first,
+            batch_first=True,  # Always True to match PytorchDataset transpose
             num_classes=self.num_classes,
             init_weights=self.init_weights,
             dropout=self.dropout,
@@ -243,7 +265,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "n_layers": 1,
             "activation": None,
             "activation_hidden": "relu",
-            "batch_first": False,
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
@@ -266,7 +287,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "n_layers": 1,
             "activation": "sigmoid",
             "activation_hidden": "relu",
-            "batch_first": False,
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
@@ -289,7 +309,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "n_layers": 1,
             "activation": None,
             "activation_hidden": "relu",
-            "batch_first": False,
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
@@ -312,7 +331,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "n_layers": 1,
             "activation": "logsoftmax",
             "activation_hidden": "relu",
-            "batch_first": False,
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
