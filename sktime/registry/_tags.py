@@ -1011,13 +1011,11 @@ class capability__non_contiguous_X(_BaseTag):
     - Default: ``True``  
   
     Exogenous data are additional time series that can be used to improve  
-    forecasting accuracy. When making predictions with a forecasting horizon  
-    ``fh``, the forecaster may receive exogenous data ``X`` that corresponds  
-    only to the specific time points in ``fh``.  
+    forecasting accuracy. When using `temporal_train_test_split` with a 
+    non-contiguous forecasting horizon `fh` (e.g., `fh=[2, 5]`), the resulting
+    `X_test` will only contain observations corresponding to the specific time 
+    points in `fh`, rather than a complete contiguous range.
   
-    If the forecasting horizon is non-contiguous (e.g., ``fh=[2, 5]``),  
-    the exogenous data ``X`` passed to ``predict`` will only contain rows  
-    for those specific time points, not for all intermediate points.  
   
     If the ``capability:non_contiguous_X`` tag is ``True``, the forecaster  
     can handle non-contiguous exogenous data and will make predictions  
@@ -1036,6 +1034,12 @@ class capability__non_contiguous_X(_BaseTag):
   
     If a forecaster has this tag set to ``False`` and receives non-contiguous  
     exogenous data, it will raise an error during prediction.  
+
+    The ``ForecastX`` compositor directly addresses the ``capability:non_contiguous_X``
+    tag by providing a solution for forecasters that cannot handle non-contiguous
+    exogenous data. Instead of requiring contiguous exogenous data covering all 
+    time points from the first to the last element of fh, ForecastX forecasts 
+    the missing exogenous values internally.
     """  
   
     _tags = {  
