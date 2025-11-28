@@ -289,6 +289,23 @@ def evaluate(
         ``y_test`` and ``y_pred`` columns. If ``return_model=True``, the
         DataFrame will contain a ``fitted_detector`` column with the fitted
         detector per fold (deepcopied when possible).
+
+    Examples
+    --------
+    A minimal example of usage::
+
+        >>> import pandas as pd
+        >>> from sktime.detection.dummy import ZeroAnomalies
+        >>> from sktime.split import SingleWindowSplitter
+        >>> from sktime.detection.model_evaluation import evaluate
+
+        >>> X = pd.Series(range(10))
+        >>> y = pd.DataFrame({"ilocs": [2, 6]})
+        >>> det = ZeroAnomalies()
+        >>> cv = SingleWindowSplitter(fh=1, window_length=5)
+        >>> res = evaluate(detector=det, cv=cv, X=X, y=y)
+        >>> print(res.head())
+
     """
     if not isinstance(detector, BaseDetector):
         raise TypeError("`detector` must inherit from BaseDetector")
