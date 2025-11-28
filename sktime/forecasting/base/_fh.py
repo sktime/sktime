@@ -674,45 +674,80 @@ class ForecastingHorizon:
             relative = self.to_relative(cutoff)
             return relative - relative.to_pandas()[0]
 
-    def _is_contiguous(self):  
-        """Check if a forecasting horizon is contiguous.  
+    def _is_contiguous(self) -> bool:
+        """Check if a forecasting horizon is contiguous.
+
+        A contiguous forecasting horizon has no gaps - all time points 
+        between the minimum and maximum are present.
         
-        Returns  
-        -------  
-        bool  
-            True if fh values form a contiguous sequence, False otherwise  
-        """  
+        The method handles four types of forecasting horizons:
         
-        try:  
-            values = self.to_pandas()  
+        1. **Integer index** (relative or absolute): Checks if all integers 
+        between min and max are present.
+        2. **PeriodIndex** (absolute only): Converts periods to integer ordinals
+        and checks contiguity. Always checkable due to built-in frequency.
+        3. **DatetimeIndex** (absolute only): Requires frequency information
+        to determine contiguity. Returns False if frequency is unavailable.
+        4. **TimedeltaIndex** (relative only): Infers the step size from the
+        minimum difference between consecutive values and checks if all 
+        intermediate steps are present.
+
+        Returns
+        -------
+        bool
+            True if fh values form a contiguous sequence, False otherwise.
+            Returns False for DatetimeIndex when frequency information is 
+            not available.
+        """
+        values = self.to_pandas()
+
+        # Edge case: empty or single element is always contiguous
+        if len(values) <= 1:
+            return True
+
+        # Case 1: Integer index (relative or absolute)
+        if is_integer_index(values):
+            sorted_vals = np.sort(values.to_numpy())
+            expected_len = sorted_vals[-1] - sorted_vals[0] + 1
+            return len(values) == expected_len
+
+        # Case 2: TimedeltaIndex (relative only)
+        if isinstance(values, pd.TimedeltaIndex):
+            sorted_vals = values.sort_values()
+            diffs = sorted_vals[1:] - sorted_vals[:-1]
+            min_diff = diffs.min()
+            # Check if all timedeltas are present with min_diff spacing
+            expected_steps = (sorted_vals[-1] - sorted_vals[0]) / min_diff
+            return len(values) == (expected_steps + 1)
+
+        # Case 3: PeriodIndex (absolute only)
+        if isinstance(values, pd.PeriodIndex):
+            int_values = values.astype('int64')
+            sorted_vals = np.sort(int_values)
+            expected_len = sorted_vals[-1] - sorted_vals[0] + 1
+            return len(values) == expected_len
+
+        # Case 4: DatetimeIndex (absolute only)
+        if isinstance(values, pd.DatetimeIndex):
+            sorted_vals = values.sort_values()
+            # Try to get freq from self first, then from values
+            freq = self._freq if hasattr(self, '_freq') else None
+            if freq is None and hasattr(values, 'freq'):
+                freq = values.freq
             
-            # For relative integer horizons  
-            if self.is_relative:  
-                try:  
-                    int_values = [int(v) for v in values]  
-                    sorted_vals = sorted(int_values)  
-                    expected = list(range(sorted_vals[0], sorted_vals[-1] + 1))  
-                    return sorted_vals == expected  
-                except (TypeError, ValueError):  
-                    return False  
-            
-            # For absolute horizons with freq  
-            if hasattr(values, 'freq') and values.freq is not None:  
-                # For PeriodIndex, use integer arithmetic  
-                if isinstance(values, pd.PeriodIndex):  
-                    # Convert periods to integers for arithmetic  
-                    int_values = values.astype('int64')  
-                    expected_len = int_values[-1] - int_values[0] + 1  
-                    return len(values) == expected_len  
-                else:  
-                    # For DatetimeIndex, use date_range  
-                    expected_len = len(pd.date_range(start=values[0], end=values[-1], freq=values.freq))  
-                    return len(values) == expected_len  
-            
-            return False  
-        except Exception:  
-            # If anything fails, assume non-contiguous
-            return False
+            if freq is not None:
+                expected = pd.date_range(
+                    start=sorted_vals[0], 
+                    end=sorted_vals[-1], 
+                    freq=freq
+                )
+                return len(values) == len(expected)
+            else:
+               # I have no idea how to determine, so let's make it non-contiguous for more safety
+               return False
+
+        return False
+       
         
     def get_expected_pred_idx(self, y=None, cutoff=None, sort_by_time=False):
         """Construct DataFrame Index expected in y_pred, return of _predict.
