@@ -2782,15 +2782,22 @@ def mean_squared_log_error(
     multioutput : {'raw_values', 'uniform_average'}, default='uniform_average'
         Defines aggregating of multiple output values.
     square_root : bool, default=False
-        Whether to take the square root of the metric.
-    """
-    from sktime.performance_metrics.forecasting._common import _check_errors
+        Whether to take the square root of the mean squared log error.
+        If True, returns Root Mean Squared Log Error (RMSLE).
 
-    # Input check
-    y_true, y_pred, multioutput = _check_errors(y_true, y_pred, multioutput)
+    Returns
+    -------
+    loss : float or ndarray of floats
+        The computed metric value.
+    """
+    import numpy as np
+    from sklearn.utils import check_consistent_length
+
+    # Basic validation: lengths must match
+    check_consistent_length(y_true, y_pred)
 
     # MSLE Logic: (log(1+y) - log(1+p))^2
-    # Standard behavior: clip negative values to 0 to avoid log domain errors
+    # Clip negative values to 0 to avoid log domain errors
     y_true = np.maximum(y_true, 0)
     y_pred = np.maximum(y_pred, 0)
 
@@ -2799,7 +2806,7 @@ def mean_squared_log_error(
 
     squared_log_error = np.square(y_true_log - y_pred_log)
 
-    # Handle Weights
+    # Average across time (axis 0)
     if horizon_weight is not None:
         msle = np.average(squared_log_error, axis=0, weights=horizon_weight)
     else:
