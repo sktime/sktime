@@ -108,6 +108,13 @@ class NaiveForecaster(_BaseWindowForecaster):
     >>> forecaster.fit(y)
     NaiveForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>>
+    >>> # Example 2: Seasonal Naive strategy
+    >>> # The airline data is monthly, so we use sp=12 (12 months per year)
+    >>> forecaster = NaiveForecaster(strategy="last", sp=12)
+    >>> forecaster.fit(y)
+    NaiveForecaster(sp=12)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
     _tags = {

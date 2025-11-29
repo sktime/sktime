@@ -44,7 +44,6 @@ EXCLUDE_ESTIMATORS = [
     "MLPClassifier",
     "MLPRegressor",
     "ResNetRegressor",
-    "FCNRegressor",
     "LSTMFCNRegressor",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework

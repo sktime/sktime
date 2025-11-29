@@ -381,6 +381,14 @@ Auto-ARIMA models
 
     StatsForecastAutoARIMA
 
+.. currentmodule:: sktime.forecasting.arar
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARARForecaster
+
 
 ARCH models
 -----------

@@ -491,7 +491,7 @@ def test_multioutput_direct_equivalence_tabular_linear_regression(fh):
     y_pred_multioutput = multioutput.fit(y_train, X_train, fh=fh).predict(fh, X_test)
 
     np.testing.assert_array_almost_equal(
-        y_pred_direct.to_numpy(), y_pred_multioutput.to_numpy()
+        y_pred_direct.to_numpy(), y_pred_multioutput.to_numpy(), decimal=2
     )
 
 

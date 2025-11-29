@@ -2011,7 +2011,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         else:
             return self._fit_multiple(y=y, X=X, fh=fh)
 
-    def _predict(self, X=None, fh=None):
+    def _predict(self, fh=None, X=None):
         """Predict dispatcher based on X_treatment and windows_identical."""
         if self.X_treatment == "shifted":
             if self.windows_identical is True:
@@ -2480,7 +2480,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return self
 
-    def _predict(self, X=None, fh=None):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -2870,7 +2870,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
 
         return self
 
-    def _predict(self, X=None, fh=None):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict

@@ -10,7 +10,7 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.utils.dependencies import _placeholder_record
 
 
-# TODO 0.40.0: update upper and/or lower bounds when Prophetverse 0.11.0 is released
+# TODO 0.41.0: update upper and/or lower bounds when Prophetverse 0.11.0 is released
 @_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.8.0,<0.11.0")
 class Prophetverse(_DelegatedForecaster):
     """Univariate prophetverse forecaster - prophet model implemented in numpyro.

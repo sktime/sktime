@@ -110,7 +110,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
             # default criterion
             return torch.nn.MSELoss()
 
-    def _predict(self, X=None, fh=None):
+    def _predict(self, fh=None, X=None):
         """Predict with fitted model."""
         from torch import cat
 

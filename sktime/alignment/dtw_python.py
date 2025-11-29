@@ -55,6 +55,7 @@ class AlignerDTW(BaseAligner):
     Examples
     --------
     Basic usage example:
+
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sktime.alignment.dtw_python import AlignerDTW
@@ -68,6 +69,7 @@ class AlignerDTW(BaseAligner):
     >>> alignment_df = aligner.get_alignment()
 
     Advanced usage example with open-ended alignment:
+
     >>> aligner_advanced = AlignerDTW(
     ...     dist_method='cityblock',
     ...     window_type='sakoechiba',
@@ -297,6 +299,7 @@ class AlignerDTWfromDist(BaseAligner):
     Examples
     --------
     Basic usage example:
+
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sktime.alignment.dtw_python import AlignerDTWfromDist

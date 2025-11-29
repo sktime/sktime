@@ -638,3 +638,58 @@ def test_pipeline_with_gf_tag():
 
     pipe = MinMaxScaler() * model
     assert isinstance(pipe, TransformedTargetForecaster)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([ForecastingPipeline, YtoX]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_forecasting_pipeline_with_hierarchical_data():
+    """Test ForecastingPipeline with hierarchical MultiIndex data.
+
+    This test addresses issue #8455, where ForecastingPipeline's _transform method
+    failed when combining transformers that require y (like YtoX and WindowSummarizer)
+    with hierarchical/panel data having MultiIndex.
+
+    The bug was that _transform created a simple index for the dummy y DataFrame
+    instead of respecting the MultiIndex structure, causing a
+    "ValueError: cannot join with no overlapping index names" error.
+    """
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.transformations.series.summarize import WindowSummarizer
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    y = _make_hierarchical(
+        hierarchy_levels=(2, 2), max_timepoints=20, min_timepoints=20
+    )
+    fh = list(range(1, 4))
+
+    # Create a pipeline with YtoX() and WindowSummarizer
+    # Both require y and WindowSummarizer specifically needs correct index structure
+    window_features = WindowSummarizer(
+        lag_feature={"lag": fh},
+        truncate=None,
+        n_jobs=1,
+    )
+
+    forecaster = NaiveForecaster(strategy="last")
+
+    pipe = ForecastingPipeline(
+        steps=[
+            ("ytox", YtoX()),
+            ("window_features", window_features),
+            ("forecaster", forecaster),
+        ]
+    )
+
+    # this should work without raising ValueError
+    y_pred = pipe.fit_predict(y=y, X=None, fh=fh)
+
+    # Checks correct MultiIndex structure for pred
+    assert isinstance(y_pred.index, pd.MultiIndex)
+    assert y_pred.index.nlevels == y.index.nlevels
+    assert y_pred.index.names == y.index.names
+
+    # Checks predictions for all hierarchy levels and all forecast horizons
+    expected_rows = len(y.index.droplevel(-1).unique()) * len(fh)
+    assert len(y_pred) == expected_rows

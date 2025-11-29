@@ -23,9 +23,7 @@ class _PmdArimaAdapter(BaseForecaster):
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
-        # TODO 0.40.0: check if numpy 2 incompatiblity can be removed
-        # todo 0.40.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["pmdarima", "numpy<2", "scipy<1.16"],
+        "python_dependencies": ["pmdarima"],
     }
 
     def __init__(self):
