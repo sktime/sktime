@@ -128,6 +128,9 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         Type of Hugging Face repo.
     token : str, optional
         Authentication token for private repositories.
+    download_entire_repo : bool, default=False
+        If True, download the full repository snapshot in one request instead of
+        fetching only ``folder_name`` via ``allow_patterns``.
 
     Examples
     --------
@@ -149,12 +152,20 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
         "python_dependencies": "huggingface-hub",
     }
 
-    def __init__(self, hf_repo_name, folder_name, repo_type="dataset", token=None):
+    def __init__(
+        self,
+        hf_repo_name,
+        folder_name,
+        repo_type="dataset",
+        token=None,
+        download_entire_repo=False,
+    ):
         super().__init__()
         self.hf_repo_name = hf_repo_name
         self.folder_name = folder_name
         self.repo_type = repo_type
         self.token = token
+        self.download_entire_repo = download_entire_repo
         self.available = _check_soft_dependencies("huggingface-hub", severity="none")
 
     def _get_dataset_folder_path(self, download_path):
@@ -193,14 +204,22 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
 
         from huggingface_hub import snapshot_download
 
-        snapshot_download(
-            repo_id=self.hf_repo_name,
-            repo_type=self.repo_type,
-            allow_patterns=f"{self.folder_name}/**",
-            local_dir=download_path,
-            force_download=force_download,
-            token=self.token,
-        )
+        if not self.download_entire_repo and not self.folder_name:
+            raise ValueError(
+                "folder_name must be provided when download_entire_repo is False."
+            )
+
+        snapshot_kwargs = {
+            "repo_id": self.hf_repo_name,
+            "repo_type": self.repo_type,
+            "local_dir": download_path,
+            "force_download": force_download,
+            "token": self.token,
+        }
+        if not self.download_entire_repo:
+            snapshot_kwargs["allow_patterns"] = f"{self.folder_name}/**"
+
+        snapshot_download(**snapshot_kwargs)
 
         local_dataset_path = download_path / self.folder_name
 
@@ -339,7 +358,8 @@ class DatasetDownloader(DatasetDownloadStrategy):
     Where It Looks
     --------------
     1. Attempts to download from Hugging Face repository (`hf_repo_name`)
-       by downloading only the subdirectory matching `folder_name`.
+       either by downloading only the subdirectory matching `folder_name`
+       (default) or the entire repository when `download_entire_repo=True`.
 
     2. Falls back to downloading zip files from `fallback_urls`.
 
@@ -356,6 +376,14 @@ class DatasetDownloader(DatasetDownloadStrategy):
         Backup URLs to try if Hugging Face download fails.
     retries : int, default=1
         Number of retries per strategy before failing.
+    download_entire_repo : bool, default=False
+        If True, pulls the entire Hugging Face repository in a single API call.
+        Subsequent dataset downloads served from the same local copy will no
+        longer require extra API calls.
+    repo_type : str, default="dataset"
+        Hugging Face repository type, forwarded to ``snapshot_download``.
+    token : str, optional
+        Authentication token used for private repositories.
 
     Examples
     --------
@@ -375,13 +403,37 @@ class DatasetDownloader(DatasetDownloadStrategy):
     """
 
     def __init__(
-        self, hf_repo_name=None, folder_name=None, fallback_urls=None, retries=1
+        self,
+        hf_repo_name=None,
+        folder_name=None,
+        fallback_urls=None,
+        retries=1,
+        download_entire_repo=False,
+        repo_type="dataset",
+        token=None,
     ):
         super().__init__()
-        self.strategies = [
-            HuggingFaceDownloader(hf_repo_name, folder_name),
-            URLDownloader(fallback_urls),
-        ]
+        self.strategies = []
+
+        if hf_repo_name is not None:
+            self.strategies.append(
+                HuggingFaceDownloader(
+                    hf_repo_name,
+                    folder_name,
+                    repo_type=repo_type,
+                    token=token,
+                    download_entire_repo=download_entire_repo,
+                )
+            )
+
+        if fallback_urls:
+            self.strategies.append(URLDownloader(fallback_urls))
+
+        if not self.strategies:
+            raise ValueError(
+                "DatasetDownloader requires at least one download strategy. "
+                "Provide hf_repo_name, fallback_urls, or both."
+            )
         self.retries = retries
 
     def _get_dataset_folder_path(self, download_path):
