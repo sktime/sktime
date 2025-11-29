@@ -65,7 +65,7 @@ class PresplitFilesCV(BaseSplitter):
             for train, test in self.cv.split(idx, y=y):
                 yield train, test
 
-    def get_n_splits(self):
+    def get_n_splits(self, data=None):
         """Return the number of splits.
 
         Returns
@@ -154,6 +154,6 @@ class SingleSplit(BaseSplitter):
         )
 
     @staticmethod
-    def get_n_splits():
+    def get_n_splits(data=None):
         """Return the number of splits (1)."""
         return 1
