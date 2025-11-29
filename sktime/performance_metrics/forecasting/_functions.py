@@ -2759,3 +2759,61 @@ def _linex_error(y_true, y_pred, a=1.0, b=1.0):
     a_error = a * error
     linex_error = b * (np.exp(a_error) - a_error - 1)
     return linex_error
+
+
+def mean_squared_log_error(
+    y_true,
+    y_pred,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    square_root=False,
+    **kwargs,
+):
+    """Mean Squared Logarithmic Error (MSLE).
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs)
+        Ground truth (correct) target values.
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs)
+        Estimated target values.
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+    multioutput : {'raw_values', 'uniform_average'}, default='uniform_average'
+        Defines aggregating of multiple output values.
+    square_root : bool, default=False
+        Whether to take the square root of the metric.
+    """
+    from sktime.performance_metrics.forecasting._common import _check_errors
+
+    # Input check
+    y_true, y_pred, multioutput = _check_errors(y_true, y_pred, multioutput)
+
+    # MSLE Logic: (log(1+y) - log(1+p))^2
+    # Standard behavior: clip negative values to 0 to avoid log domain errors
+    y_true = np.maximum(y_true, 0)
+    y_pred = np.maximum(y_pred, 0)
+
+    y_true_log = np.log1p(y_true)
+    y_pred_log = np.log1p(y_pred)
+
+    squared_log_error = np.square(y_true_log - y_pred_log)
+
+    # Handle Weights
+    if horizon_weight is not None:
+        msle = np.average(squared_log_error, axis=0, weights=horizon_weight)
+    else:
+        msle = np.mean(squared_log_error, axis=0)
+
+    # Square Root (RMSLE)
+    if square_root:
+        msle = np.sqrt(msle)
+
+    # Multioutput handling
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return np.atleast_1d(msle)
+        if multioutput == "uniform_average":
+            return np.average(msle, weights=None)
+
+    return np.average(msle, weights=multioutput)
