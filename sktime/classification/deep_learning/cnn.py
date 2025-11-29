@@ -56,7 +56,7 @@ class CNNClassifier(BaseDeepClassifier):
         List of available activation functions:
         https://keras.io/api/layers/activations/
         Default value of activation_hidden will change to "relu"
-        in version '0.41.0'.
+        in version '0.42.0'.
     use_bias : boolean, default = True
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
@@ -114,7 +114,7 @@ class CNNClassifier(BaseDeepClassifier):
         metrics=None,
         random_state=None,
         activation="softmax",
-        activation_hidden="changing_from_sigmoid_to_relu_in_0.41.0",
+        activation_hidden="changing_from_sigmoid_to_relu_in_0.42.0",
         use_bias=True,
         optimizer=None,
         filter_sizes=None,
@@ -141,10 +141,10 @@ class CNNClassifier(BaseDeepClassifier):
         # remove the following 'if-else' check.
         # Remove the usage of self._activation_hidden throughout the class
         # and replace it with self.activation_hidden
-        if activation_hidden == "changing_from_sigmoid_to_relu_in_0.41.0":
+        if activation_hidden == "changing_from_sigmoid_to_relu_in_0.42.0":
             warn(
                 "in `CNNClassifier`, the default value of parameter 'activation_hidden'"
-                " will change to 'relu' in version '0.41.0'. "
+                " will change to 'relu' in version '0.42.0'. "
                 "To keep current behaviour and to silence this warning, "
                 "set 'activation_hidden' to 'sigmoid' explicitly.",
                 category=DeprecationWarning,
