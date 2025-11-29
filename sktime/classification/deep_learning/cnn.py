@@ -12,7 +12,7 @@ from sktime.utils.dependencies import _check_dl_dependencies
 from sktime.utils.warnings import warn
 
 
-# TODO (release 0.41.0)
+# TODO (release 0.42.0)
 # change the default value of 'activation_hidden' to "relu"
 # update the docstring for activation_hidden from "sigmoid" to "relu"
 # and remove the note about the change from the docstring.
@@ -99,7 +99,7 @@ class CNNClassifier(BaseDeepClassifier):
         "tests:vm": True,  # run in VM due to memory requirement
     }
 
-    # TODO (release 0.41.0)
+    # TODO (release 0.42.0)
     # Change the default value of 'activation_hidden' to "relu"
     def __init__(
         self,
@@ -135,7 +135,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self.activation = activation
         self.activation_hidden = activation_hidden
-        # TODO (release 0.41.0)
+        # TODO (release 0.42.0)
         # After changing the default value of 'activation_hidden' to "relu"
         # in the __init__ method signature,
         # remove the following 'if-else' check.
@@ -161,7 +161,7 @@ class CNNClassifier(BaseDeepClassifier):
 
         super().__init__()
 
-        # TODO (release 0.41.0)
+        # TODO (release 0.42.0)
         # After changing the default value of 'activation_hidden' to "relu"
         # in the __init__ method signature,
         # Remove the usage of self._activation_hidden in the following lines
