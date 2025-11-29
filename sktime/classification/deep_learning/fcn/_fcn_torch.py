@@ -20,11 +20,22 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
 
     Parameters
     ----------
+    n_conv_layers : int, default = 3
+        Number of convolutional blocks in the network
+    filter_sizes : list of int or None, default = None
+        Number of filters for each convolutional layer. If None, defaults to
+        [128, 256, 128] for 3 layers as specified in the original paper
+    kernel_sizes : list of int or None, default = None
+        Kernel sizes for each convolutional layer. If None, defaults to [8, 5, 3]
+        for 3 layers as specified in the original paper
     activation : str or None or an instance of activation functions defined in
         torch.nn, default = None
         Activation function used in the fully connected output layer.
         List of supported activation functions: 'sigmoid', 'softmax',
         'logsoftmax', 'logsigmoid'. If None, no activation is applied.
+    activation_hidden : str, default = "relu"
+        Activation function used in the convolutional layers.
+        List of supported activation functions: 'relu', 'tanh', 'sigmoid', etc.
     num_epochs : int, default = 2000
         The number of epochs to train the model.
     batch_size : int, default = 16
@@ -91,8 +102,12 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
 
     def __init__(
         self: "FCNClassifierTorch",
-        # FCN-specific parameters
+        # FCN parameters
+        n_conv_layers: int = 3,
+        filter_sizes: list[int] | None = None,
+        kernel_sizes: list[int] | None = None,
         activation: str | None | Callable = None,
+        activation_hidden: str = "relu",
         # base classifier specific
         num_epochs: int = 2000,
         batch_size: int = 16,
@@ -106,8 +121,11 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
         verbose: bool = False,
         random_state: int = 0,
     ):
-
+        self.n_conv_layers = n_conv_layers
+        self.filter_sizes = filter_sizes
+        self.kernel_sizes = kernel_sizes
         self.activation = activation
+        self.activation_hidden = activation_hidden
 
         # store base classifier parameters
         self.num_epochs = num_epochs
@@ -172,7 +190,11 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
         return FCNNetworkTorch(
             input_size=self.input_size,
             num_classes=self.num_classes,
-            activation=self._validated_activation,  # use self._validated_activation
+            n_conv_layers=self.n_conv_layers,
+            filter_sizes=self.filter_sizes,
+            kernel_sizes=self.kernel_sizes,
+            activation=self._validated_activation,
+            activation_hidden=self.activation_hidden,
             random_state=self.random_state,
         )
 

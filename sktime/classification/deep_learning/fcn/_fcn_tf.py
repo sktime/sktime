@@ -17,7 +17,6 @@ class FCNClassifier(BaseDeepClassifier):
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
 
-
     Parameters
     ----------
     should inherited fields be listed here?
