@@ -6,6 +6,7 @@ on:
 
 jobs:
   code_quality:
+    if: ${{ github.repository == 'sktime/sktime' }}
     name: code-quality
     runs-on: ubuntu-latest
     steps:
