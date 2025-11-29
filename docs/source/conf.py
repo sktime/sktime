@@ -21,6 +21,9 @@ ON_READTHEDOCS = os.environ.get("READTHEDOCS") == "True"
 if not ON_READTHEDOCS:
     sys.path.insert(0, os.path.abspath("../.."))
 
+# Add the extensions directory to the Python path
+sys.path.insert(0, os.path.abspath("."))
+
 # -- Project information -----------------------------------------------------
 current_year = datetime.datetime.now().year
 project = "sktime"
@@ -56,6 +59,7 @@ extensions = [
     "sphinx_design",
     "sphinx_issues",
     "sphinx.ext.doctest",
+    "extension_template_include",  # Include extension templates in docs
 ]
 
 # Recommended by sphinx_design when using the MyST Parser
