@@ -11,6 +11,7 @@ class BakeOffCatalogue(BaseCatalogue):
     _tags = {
         "authors": "jgyasu",
         "maintainers": "jgyasu",
+        "python_dependencies": ["tslearn"],
         "object_type": "catalogue",
         "catalogue_type": "mixed",
         "n_items": 98,
