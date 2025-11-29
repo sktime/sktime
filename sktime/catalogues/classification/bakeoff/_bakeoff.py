@@ -13,9 +13,9 @@ class BakeOffCatalogue(BaseCatalogue):
         "maintainers": "jgyasu",
         "object_type": "catalogue",
         "catalogue_type": "mixed",
-        "n_items": 87,
+        "n_items": 98,
         "n_datasets": 85,
-        "n_classifiers": 1,
+        "n_classifiers": 12,
         "n_metrics": 1,
         "n_cv_splitters": 0,
         "info:name": "The great time series classification bake off",
@@ -101,7 +101,7 @@ class BakeOffCatalogue(BaseCatalogue):
             "Wafer",
             "Fish",
             "ElectricDevices",
-            "StarlightCurves",
+            "StarLightCurves",
             "InsectWingbeatSound",
             "FiftyWords",
             "BirdChicken",
@@ -113,7 +113,23 @@ class BakeOffCatalogue(BaseCatalogue):
         ]
 
         classifiers = [
+            # Dictionary based
+            "BOSSEnsemble()",
+            # Shapelet based
             "ShapeletLearningClassifierTslearn()",
+            # Interval based
+            "TimeSeriesForestClassifier()",
+            # KNN based
+            "KNeighborsTimeSeriesClassifier(distance='dtw')",
+            "KNeighborsTimeSeriesClassifier(distance='euclidean')",
+            "KNeighborsTimeSeriesClassifier(distance='wdtw')",
+            "KNeighborsTimeSeriesClassifier(distance='wddtw')",
+            "KNeighborsTimeSeriesClassifier(distance='lcss')",
+            "KNeighborsTimeSeriesClassifier(distance='erp')",
+            "KNeighborsTimeSeriesClassifier(distance='msm')",
+            # Feature based?
+            "ProximityForest()",
+            "ElasticEnsemble()",
         ]
 
         metrics = [accuracy_score]
