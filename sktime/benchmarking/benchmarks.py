@@ -13,8 +13,6 @@ from sktime.benchmarking._benchmarking_dataclasses import (
 )
 from sktime.benchmarking._storage_handlers import get_storage_backend
 from sktime.benchmarking._utils import _check_id_format
-from sktime.catalogues.base import BaseCatalogue
-from sktime.registry import scitype
 from sktime.utils.unique_str import _make_strings_unique
 
 
@@ -244,10 +242,6 @@ class BaseBenchmark:
         self.estimators = _SktimeRegistry(id_format)
         self.tasks = _SktimeRegistry(id_format)
 
-        self._datasets = []
-        self._cv_splitters = []
-        self._metrics = []
-
     def add_estimator(
         self,
         estimator: BaseEstimator,
@@ -306,81 +300,6 @@ class BaseBenchmark:
         """Register a task to the benchmark."""
         raise NotImplementedError("This method must be implemented by a subclass.")
 
-    def add(self, *args, **kwargs):
-        """Add estimators, tasks, datasets, metrics, CV splitters, or catalogues.
-
-        Supports:
-            - Single estimator or list/dict of estimators
-            - Task components (datasets, metrics, CV splitters)
-            - Full task tuples (dataset, metric, CV splitter)
-            - Catalogues
-        """
-        for obj in args:
-            # catalogue
-            if isinstance(obj, BaseCatalogue):
-                for category in obj.available_categories():
-                    for item in obj.get(category, as_object=True):
-                        self.add(item)
-                continue
-
-            # tuple of (dataset, metric, splitter)
-            if isinstance(obj, tuple) and len(obj) == 3:
-                dataset, metric, splitter = obj
-                self._datasets.append(dataset)
-                self._metrics.append(metric)
-                self._cv_splitters.append(splitter)
-                continue
-
-            # single object type (estimators or one of the tasks)
-            sctype = scitype(obj)
-            if sctype in ["classifier", "forecaster"]:
-                self.add_estimator(obj)
-            elif sctype in ["dataset_classification", "dataset_forecasting"]:
-                self._datasets.append(obj)
-            elif sctype in [
-                "metric_forecasting",
-                "metric_tabular",
-                "metric_proba_tabular",
-            ]:
-                self._metrics.append(obj)
-            elif sctype in ["splitter", "splitter_tabular"]:
-                self._cv_splitters.append(obj)
-            elif sctype == "catalogue":
-                self.add(obj)
-            else:
-                raise TypeError(
-                    f"Unrecognized object type: {type(obj)} (scitype: {sctype})"
-                )
-
-    def register_stored_tasks(self):
-        """Register stored tasks from global DATASETS, METRICS, CV_SPLITTERS."""
-        if self._datasets and self._metrics and self._cv_splitters:
-            for dataset_loader in self._datasets:
-                if callable(dataset_loader) and hasattr(dataset_loader, "__name__"):
-                    dataset_name = dataset_loader.__name__
-                elif isinstance(dataset_loader, type):
-                    dataset_name = dataset_loader().get_tags().get("name")
-                elif hasattr(dataset_loader, "get_tags"):
-                    dataset_name = dataset_loader.get_tags().get("name")
-                else:
-                    dataset_name = "_"
-
-                for splitter in self._cv_splitters:
-                    task_id = (
-                        f"[dataset={dataset_name}]"
-                        f"_[cv_splitter={splitter.__class__.__name__}]"
-                    )
-
-                    task_kwargs = {
-                        "data": dataset_loader,
-                        "cv_splitter": splitter,
-                        "scorers": self._metrics,
-                    }
-                    self._add_task(
-                        task_id,
-                        TaskObject(**task_kwargs),
-                    )
-
     def _run(self, results_path: str, force_rerun: str | list[str] = "none"):
         """
         Run the benchmarking for all tasks and estimators.
@@ -397,8 +316,6 @@ class BaseBenchmark:
             * If "all", will run validation for all tasks and models.
             * If list of str, will run validation for tasks and models in list.
         """
-        self.register_stored_tasks()
-
         results = _BenchmarkingResults(path=results_path)
 
         for task_id, estimator_id, task, estimator in self._generate_experiments():
