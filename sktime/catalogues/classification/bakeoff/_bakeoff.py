@@ -27,11 +27,12 @@ class BakeOffCatalogue(BaseCatalogue):
     Examples
     --------
     >>> from sktime.catalogues.classification import BakeOffCatalogue
-    >>> from sktime.benchmarking.classification import ClassificationBenchmark
     >>> catalogue = BakeOffCatalogue(random_state=42)
-    >>> benchmark = ClassificationBenchmark()
-    >>> benchmark.add(catalogue) # doctest: +SKIP
-    >>> benchmark.run() # doctest: +SKIP
+    >>> all_items = catalogue.get("all")
+    >>> datasets = catalogue.get("dataset")
+    >>> classifiers = catalogue.get("classifier")
+    >>> metrics = catalogue.get("metric")
+    >>> cv_splitters = catalogue.get("cv_splitter")
     """
 
     _tags = {
