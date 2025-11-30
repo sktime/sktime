@@ -56,6 +56,12 @@ class CNNClassifier(BaseDeepClassifier):
         - "auto": as per original implementation, ``"same"`` is passed if
           ``input_shape[0] < 60`` in the input layer, and ``"valid"`` otherwise.
         - "valid", "same", and other values are passed directly to ``Conv1D``
+    compile_kwargs : KerasCompileKwargs, default=None
+        Additional arguments for Keras model compilation.
+        See ``KerasCompileKwargs`` for available options.
+    fit_kwargs : KerasFitKwargs, default=None
+        Additional arguments for Keras model training.
+        See ``KerasFitKwargs`` for available options.
 
     References
     ----------
@@ -105,6 +111,8 @@ class CNNClassifier(BaseDeepClassifier):
         optimizer=None,
         filter_sizes=None,
         padding="auto",
+        compile_kwargs=None,
+        fit_kwargs=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -127,7 +135,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.filter_sizes = filter_sizes
         self.padding = padding
 
-        super().__init__()
+        super().__init__(compile_kwargs=compile_kwargs, fit_kwargs=fit_kwargs)
 
         self._network = CNNNetwork(
             kernel_size=self.kernel_size,
@@ -184,6 +192,7 @@ class CNNClassifier(BaseDeepClassifier):
             loss=self.loss,
             optimizer=self.optimizer_,
             metrics=metrics,
+            **self.compile_kwargs.as_dict(),
         )
         return model
 
@@ -210,6 +219,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.model_ = self.build_model(self.input_shape, self.n_classes_)
         if self.verbose:
             self.model_.summary()
+
         self.history = self.model_.fit(
             X,
             y_onehot,
@@ -217,6 +227,7 @@ class CNNClassifier(BaseDeepClassifier):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=deepcopy(self.callbacks) if self.callbacks else [],
+            **self.fit_kwargs.as_dict(),
         )
         return self
 
