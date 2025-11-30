@@ -28,19 +28,33 @@ class ExtensionTemplateIncludeDirective(SphinxDirective):
 
         # Get the template file name
         template_name = self.arguments[0].strip()
-        # The extension templates directory is at the root of the project
+
+        # More robust way to find the extension templates directory
+        # First try relative to source directory
         template_path = (
             Path(env.srcdir) / ".." / ".." / "extension_templates" / template_name
         )
 
+        # If that doesn't work, try to find project root by looking for pyproject.toml
         if not template_path.exists():
-            logger.warning(f"Extension template file not found: {template_path}")
-            error = self.state_machine.reporter.error(
-                f"Extension template file not found: {template_path}",
-                nodes.literal_block(self.block_text, self.block_text),
-                line=self.lineno,
-            )
-            return [error]
+            # Go up the directory tree from the source dir until we find pyproject.toml
+            src_path = Path(env.srcdir)
+            project_root = src_path.parent.parent.absolute()
+            template_path = project_root / "extension_templates" / template_name
+
+        if not template_path.exists():
+            # Try using the current working directory as fallback
+            fallback_path = Path("extension_templates") / template_name
+            if fallback_path.exists():
+                template_path = fallback_path
+            else:
+                logger.warning(f"Extension template file not found: {template_path}")
+                error = self.state_machine.reporter.error(
+                    f"Extension template file not found: {template_path}",
+                    nodes.literal_block(self.block_text, self.block_text),
+                    line=self.lineno,
+                )
+                return [error]
 
         # Read the template file
         try:
@@ -59,9 +73,26 @@ class ExtensionTemplateIncludeDirective(SphinxDirective):
         # Apply line filtering if requested
         if "lines" in self.options:
             line_spec = self.options["lines"]
-            start_line, end_line = map(int, line_spec.split("-"))
-            lines = content.split("\n")
-            content = "\n".join(lines[start_line - 1 : end_line])
+            try:
+                line_parts = line_spec.strip().split("-")
+                if len(line_parts) != 2:
+                    raise ValueError(
+                        f"Invalid line range format: {line_spec}. Expected: start-end"
+                    )
+                start_line, end_line = map(int, line_parts)
+                lines = content.split("\n")
+                # Ensure valid range
+                start_line = max(1, start_line)
+                end_line = min(len(lines), end_line)
+                content = "\n".join(lines[start_line - 1 : end_line])
+            except ValueError as e:
+                logger.warning(f"Error parsing lines option: {e}")
+                error = self.state_machine.reporter.error(
+                    f"Error parsing lines option '{line_spec}': {str(e)}",
+                    nodes.literal_block(self.block_text, self.block_text),
+                    line=self.lineno,
+                )
+                return [error]
         elif "start-after" in self.options or "end-before" in self.options:
             lines = content.split("\n")
             start_after = self.options.get("start-after", "")

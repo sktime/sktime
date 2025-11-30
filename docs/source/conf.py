@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 
 import sktime
 
+sys.path.insert(0, os.path.abspath("_ext"))
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -22,7 +23,7 @@ if not ON_READTHEDOCS:
     sys.path.insert(0, os.path.abspath("../.."))
 
 # Add the extensions directory to the Python path
-sys.path.insert(0, os.path.abspath("."))
+sys.path.insert(0, os.path.abspath("_ext"))
 
 # -- Project information -----------------------------------------------------
 current_year = datetime.datetime.now().year
