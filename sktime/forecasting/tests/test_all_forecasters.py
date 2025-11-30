@@ -15,6 +15,7 @@ from sktime.datatypes._utilities import get_cutoff
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.stream._update import UpdateRefitsEvery
 from sktime.forecasting.tests._config import (
     TEST_ALPHAS,
     TEST_FHS,
@@ -732,6 +733,52 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         actual = y_pred.index
         np.testing.assert_array_equal(actual, expected)
+
+    @pytest.mark.parametrize(
+        "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
+    )
+    @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS_INT)
+    def test_update_predict_with_exogenous(
+        self,
+        estimator_instance,
+        fh_int_oos,
+        step_length,
+        initial_window,
+        update_params,
+    ):
+        """Check update_predict with exogenous features."""
+        if (
+            estimator_instance.get_tag("ignores-exogeneous-X", False)
+            or "IgnoreX" in type(estimator_instance).__name__
+        ):
+            pytest.skip("Forecaster ignores exogenous variables.")
+
+        n = 100
+        y = _make_series(
+            n_columns=1, all_positive=True, index_type="datetime", n_timepoints=n
+        )
+        X = pd.DataFrame(np.random.rand(n, 1), index=y.index, columns=["feature"])
+        initial_window = 80
+        y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+        updating_forecaster = UpdateRefitsEvery(estimator_instance, 1)
+        updating_forecaster.fit(y_train, X_train, fh=fh_int_oos)
+        cv = SlidingWindowSplitter(
+            initial_window=initial_window,
+            step_length=step_length,
+            fh=fh_int_oos,
+            start_with_window=True,
+        )
+        y_update = pd.concat([y_train, y_test])
+        X_update = pd.concat([X_train, X_test])
+        y_pred = updating_forecaster.update_predict(
+            y=y_update, X=X_update, cv=cv, update_params=update_params
+        )
+        assert isinstance(y_pred, (pd.Series, pd.DataFrame))
+        expected_index = _get_expected_index_for_update_predict(
+            y_update.iloc[initial_window:], fh_int_oos, step_length, initial_window
+        )
+        np.testing.assert_array_equal(y_pred.index, expected_index)
+
 
     def test__y_and_cutoff(self, estimator_instance, n_columns):
         """Check cutoff and _y."""
