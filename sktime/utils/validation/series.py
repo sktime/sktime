@@ -143,6 +143,10 @@ def check_series(
             f"{var_name} must be a one of {valid_data_types}, but found type: {type(Z)}"
         )
 
+    # Check for empty pandas Series or DataFrame
+    if isinstance(Z, (pd.Series, pd.DataFrame)) and Z.empty and not allow_empty:
+        raise ValueError("Input time series is empty. Provide at least one observation.")
+
     if enforce_univariate and enforce_multivariate:
         raise ValueError(
             "`enforce_univariate` and `enforce_multivariate` cannot both be set to "
