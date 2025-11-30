@@ -130,3 +130,75 @@ def test_DynamicFactor_with_exogenous_variables():
     compare_predictions_against_statsmodels(
         sktime_point_predictions, sktime_interval_predictions, statsmodels_predictions
     )
+
+
+def test_DynamicFactor_in_sample_forecast_absolute_fh():
+    """Test ``DynamicFactor`` in-sample forecast, non-relative forecast horizon."""
+    from statsmodels.tsa.statespace.dynamic_factor import (
+        DynamicFactor as _DynamicFactor,
+    )
+
+    from sktime.datasets import load_macroeconomic
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.dynamic_factor import DynamicFactor
+
+    # prepare data
+    df = load_macroeconomic()
+    Y_train = df.loc[:"2007Q4", ["realgdp", "realcons", "realinv"]].copy()
+    X_train = df.loc[:"2007Q4", ["unemp", "pop", "infl", "cpi"]].copy()
+    unfitted_sktime_model = DynamicFactor(
+        enforce_stationarity=False, k_factors=2, factor_order=1
+    )
+    fitted_sktime_model = unfitted_sktime_model.fit(Y_train, X=X_train)
+    # testing absolute fh
+    fh_in_sample = ForecastingHorizon([2, 3, 4, 5, 6, 7], is_relative=False)
+    sktime_point_predictions = fitted_sktime_model.predict(fh=fh_in_sample, X=X_train)
+    unfitted_statsmodels_model = _DynamicFactor(
+        endog=Y_train,
+        k_factors=2,
+        factor_order=1,
+        exog=X_train,
+        enforce_stationarity=False,
+    )
+    fitted_statsmodels_model = unfitted_statsmodels_model.fit()
+
+    statsmodels_predictions = fitted_statsmodels_model.predict(
+        start=2, end=7, exog=X_train
+    )
+    assert_frame_equal(sktime_point_predictions, statsmodels_predictions)
+
+
+def test_DynamicFactor_in_sample_forecast_relative_fh():
+    """Test ``DynamicFactor`` in-sample forecast, relative forecast horizon."""
+    from statsmodels.tsa.statespace.dynamic_factor import (
+        DynamicFactor as _DynamicFactor,
+    )
+
+    from sktime.datasets import load_macroeconomic
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.dynamic_factor import DynamicFactor
+
+    # prepare data
+    df = load_macroeconomic()
+    Y_train = df.loc[:"2007Q4", ["realgdp", "realcons", "realinv"]].copy()
+    X_train = df.loc[:"2007Q4", ["unemp", "pop", "infl", "cpi"]].copy()
+    unfitted_sktime_model = DynamicFactor(
+        enforce_stationarity=False, k_factors=2, factor_order=1
+    )
+    fitted_sktime_model = unfitted_sktime_model.fit(Y_train, X=X_train)
+    # testing relative fh
+    fh_in_sample = ForecastingHorizon([-7, -6, -5, -4, -3, -2, -1], is_relative=True)
+    sktime_point_predictions = fitted_sktime_model.predict(fh=fh_in_sample, X=X_train)
+    unfitted_statsmodels_model = _DynamicFactor(
+        endog=Y_train,
+        k_factors=2,
+        factor_order=1,
+        exog=X_train,
+        enforce_stationarity=False,
+    )
+    fitted_statsmodels_model = unfitted_statsmodels_model.fit()
+    statsmodels_predictions = fitted_statsmodels_model.predict(
+        start=Y_train.index[-8], end=Y_train.index[-2], exog=X_train
+    )
+
+    assert_frame_equal(sktime_point_predictions, statsmodels_predictions)
