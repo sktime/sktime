@@ -21,7 +21,7 @@ class JohansenCointegration(BaseParamFitter):
         * -1 - no deterministic terms
         *  0 - constant term
         *  1 - linear trend
-        
+
     k_ar_diff : int, nonnegative, default=1
         Number of lagged differences in the model. Needs multivariate version of
         ARLagOrderSelector, See also: statsmodels.tsa.vector_ar.vecm.select_order
