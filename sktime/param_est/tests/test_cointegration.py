@@ -29,7 +29,10 @@ def test_cointegration():
     expected = [0, 1]
     np.testing.assert_array_equal(actual, expected)
 
-
+@pytest.mark.skipif(
+    not _check_estimator_deps(SeasonalityACF, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_against_statsmodels():
     """Compare sktime's cointegrtion wrapper against statsmodels cointegration"""
     from statsmodels.tsa.vector_ar.vecm import coint_johansen
