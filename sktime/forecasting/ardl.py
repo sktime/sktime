@@ -433,6 +433,8 @@ class ARDL(_StatsModelsAdapter):
         # beginning of the training series when passing integers
 
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        if start == end:
+            start = 0
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute_index(self.cutoff)
