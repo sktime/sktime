@@ -37,9 +37,8 @@ def _get_validated_input_size(input_size, inference_input_size, model_name):
     ValueError
         If neuralforecast v3+ and no valid input_size is provided.
     """
-    from packaging.version import Version
-
     import neuralforecast
+    from packaging.version import Version
 
     nf_version = Version(neuralforecast.__version__)
 
