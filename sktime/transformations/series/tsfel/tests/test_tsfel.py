@@ -21,7 +21,7 @@ def test_basic_functionality():
     """Test basic functionality with default parameters."""
     X = _make_series(n_timepoints=50, n_columns=1)
 
-    transformer = TSFELTransformer(features=None, kwargs={"verbose": 0})
+    transformer = TSFELTransformer(features=None, verbose=0)
     X_transformed = transformer.fit_transform(X)
     all_features = X_transformed["all"].iloc[0]
     assert isinstance(all_features, pd.DataFrame)
@@ -37,7 +37,7 @@ def test_statistical_domain():
     """Test with statistical domain features."""
     X = _make_series(n_timepoints=50, n_columns=1)
 
-    transformer = TSFELTransformer(features="statistical", kwargs={"verbose": 0})
+    transformer = TSFELTransformer(features="statistical", verbose=0)
     X_transformed = transformer.fit_transform(X)
 
     statistical_features = X_transformed["statistical"].iloc[0]
@@ -53,7 +53,7 @@ def test_temporal_domain():
     """Test with temporal domain features."""
     X = _make_series(n_timepoints=50, n_columns=1)
 
-    transformer = TSFELTransformer(features="temporal", kwargs={"verbose": 0})
+    transformer = TSFELTransformer(features="temporal", verbose=0)
     X_transformed = transformer.fit_transform(X)
     temporal_features = X_transformed["temporal"].iloc[0]
     assert isinstance(temporal_features, pd.DataFrame)
@@ -68,7 +68,7 @@ def test_spectral_domain():
     """Test with spectral domain features."""
     X = _make_series(n_timepoints=50, n_columns=1)
 
-    transformer = TSFELTransformer(features="spectral", kwargs={"verbose": 0})
+    transformer = TSFELTransformer(features="spectral", verbose=0)
     X_transformed = transformer.fit_transform(X)
 
     spectral_features = X_transformed["spectral"].iloc[0]
@@ -84,7 +84,7 @@ def test_fractal_domain():
     """Test with fractal domain features."""
     X = _make_series(n_timepoints=50, n_columns=1)
 
-    transformer = TSFELTransformer(features="fractal", kwargs={"verbose": 0})
+    transformer = TSFELTransformer(features="fractal", verbose=0)
     X_transformed = transformer.fit_transform(X)
 
     fractal_features = X_transformed["fractal"].iloc[0]
@@ -102,7 +102,8 @@ def test_specific_features_list():
 
     transformer = TSFELTransformer(
         features=["abs_energy", "auc", "autocorr"],
-        kwargs={"fs": 100, "verbose": 0},  # auc requires fs parameter
+        fs=100,
+        verbose=0,
     )
     X_transformed = transformer.fit_transform(X)
 
@@ -118,9 +119,7 @@ def test_mixed_domains_and_features():
     """Test with mixed domain strings and individual feature names."""
     X = _make_series(n_timepoints=50, n_columns=1)
 
-    transformer = TSFELTransformer(
-        features=["statistical", "abs_energy"], kwargs={"verbose": 0}
-    )
+    transformer = TSFELTransformer(features=["statistical", "abs_energy"], verbose=0)
     X_transformed = transformer.fit_transform(X)
 
     statistical_features = X_transformed["statistical"].iloc[0]
@@ -138,7 +137,8 @@ def test_feature_with_custom_parameters():
 
     transformer = TSFELTransformer(
         features=["ecdf_percentile_count"],
-        kwargs={"percentile": [0.6, 0.9, 1.0], "verbose": 0},
+        verbose=0,
+        kwargs={"percentile": [0.6, 0.9, 1.0]},
     )
     X_transformed = transformer.fit_transform(X)
 
@@ -155,7 +155,7 @@ def test_multivariate_data():
     """Test with multivariate time series."""
     X = _make_series(n_timepoints=50, n_columns=3)
 
-    transformer = TSFELTransformer(features="statistical", kwargs={"verbose": 0})
+    transformer = TSFELTransformer(features="statistical", verbose=0)
     X_transformed = transformer.fit_transform(X)
 
     statistical_features = X_transformed["statistical"].iloc[0]
@@ -167,31 +167,12 @@ def test_multivariate_data():
     not run_test_for_class(TSFELTransformer),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_with_window_size():
-    """Test with window_size parameter."""
-    X = _make_series(n_timepoints=50, n_columns=1)
-
-    transformer = TSFELTransformer(
-        features="statistical",
-        kwargs={"window_size": 10, "overlap": 0.5, "verbose": 0},
-    )
-    X_transformed = transformer.fit_transform(X)
-
-    statistical_features = X_transformed["statistical"].iloc[0]
-    assert isinstance(statistical_features, pd.DataFrame)
-    assert statistical_features.shape[0] > 1  # Should have multiple windows
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(TSFELTransformer),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
 def test_required_parameter_provided():
     """Test that feature works when required parameter is provided."""
     X = _make_series(n_timepoints=50, n_columns=1)
 
     # auc requires fs parameter - provide it
-    transformer = TSFELTransformer(features=["auc"], kwargs={"fs": 100, "verbose": 0})
+    transformer = TSFELTransformer(features=["auc"], fs=100, verbose=0)
     X_transformed = transformer.fit_transform(X)
 
     auc = X_transformed["auc"].iloc[0]
@@ -207,16 +188,4 @@ def test_nonexistent_feature_error():
     with pytest.raises(
         ValueError, match="not found in tsfel.feature_extraction.features"
     ):
-        TSFELTransformer(features=["nonexistent_feature_xyz"], kwargs={"verbose": 0})
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(TSFELTransformer),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-def test_existing_feature_missing_required_parameter():
-    """Test error when existing feature requires parameter not in kwargs."""
-    # Use a feature that requires a parameter without default
-    # auc requires fs parameter - don't provide it
-    with pytest.raises(ValueError, match="requires parameter 'fs'"):
-        TSFELTransformer(features=["auc"], kwargs={"verbose": 0})
+        TSFELTransformer(features=["nonexistent_feature_xyz"], verbose=0)

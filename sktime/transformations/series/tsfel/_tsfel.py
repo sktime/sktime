@@ -27,23 +27,24 @@ class TSFELTransformer(BaseTransformer):
 
     Parameters
     ----------
-    features : str, list of str, or None, optional (default=None)
+    - features : str, list of str, or None, optional (default=None)
         Features to extract. Can be:
 
         - A domain string: 'statistical', 'temporal', 'spectral', 'fractal'
         - A list of feature function names: ['abs_energy', 'auc', 'autocorr']
         - A list mixing domains and features: ['statistical', 'abs_energy']
         - None: extract all features from all domains
+    - fs : float, sampling frequency
+    - window_size : int, size of windows for feature extraction
+    - overlap : float, overlap between windows (0-1)
+    - verbose : int, verbosity level (0 or 1)
 
     kwargs : dict, optional (default=None)
-        Additional keyword arguments passed to tsfel's feature extractor or
-        individual feature functions. Common parameters include:
-
-        - fs : float, sampling frequency
-        - window_size : int, size of windows for feature extraction
-        - overlap : float, overlap between windows (0-1)
-        - verbose : int, verbosity level (0 or 1)
-        - Any feature-specific parameters (e.g., percentile for ecdf_percentile_count)
+        Dictionary of additional keyword arguments that will be forwarded to TSFEL's
+        underlying feature extraction functions. Use this parameter to specify
+        feature-specific options (e.g., "percentile" for "ecdf_percentile_count").
+        Refer to TSFEL's documentation for allowed options for each feature and domain.
+        If not provided, defaults from TSFEL functions will apply.
 
     Examples
     --------
@@ -52,7 +53,7 @@ class TSFELTransformer(BaseTransformer):
     >>> y = load_airline()
     >>> # Extract all statistical domain features
     >>> transformer = TSFELTransformer(
-    ...     features="statistical", kwargs={"verbose": 0}
+    ...     features="statistical", verbose=0
     ... )
     >>> features = transformer.fit_transform(y)  # doctest: +SKIP
     >>> # Access TSFEL output for feature
@@ -60,14 +61,35 @@ class TSFELTransformer(BaseTransformer):
     >>> # Extract feature with custom parameters
     >>> transformer = TSFELTransformer(
     ...     features=["ecdf_percentile_count"],
-    ...     kwargs={"percentile": [0.6, 0.9, 1.0], "verbose": 0}
+    ...     verbose=0,
+    ...     kwargs={"percentile": [0.6, 0.9, 1.0]}
     ... )
     >>> features = transformer.fit_transform(y)  # doctest: +SKIP
     >>> transformer['ecdf_percentile_count'].iloc[0]  # doctest: +SKIP
     """
 
     _tags = {
-        "authors": ["Faakhir30"],
+        "authors": [
+            "Barandas",
+            "Marília",
+            "Folgado",
+            "Duarte",
+            "Fernandes",
+            "Letícia",
+            "Santos",
+            "Sara",
+            "Abreu",
+            "Mariana",
+            "Bota",
+            "Patrícia",
+            "Liu",
+            "Hui",
+            "Schultz",
+            "Tanja",
+            "Gamboa",
+            "Hugo",
+        ],
+        "maintainers": ["Faakhir30"],
         "python_dependencies": ["tsfel"],
         # estimator type
         # --------------
@@ -98,6 +120,10 @@ class TSFELTransformer(BaseTransformer):
     def __init__(
         self,
         features=None,
+        fs=None,
+        window_size=None,
+        overlap=0,
+        verbose=1,
         kwargs=None,
     ):
         # Call super().__init__() first to check soft dependencies
@@ -105,6 +131,10 @@ class TSFELTransformer(BaseTransformer):
 
         self.domain_strings = ["statistical", "temporal", "spectral", "fractal"]
         self.features = features
+        self.fs = fs
+        self.window_size = window_size
+        self.overlap = overlap
+        self.verbose = verbose
         self.kwargs = kwargs
 
         # Validate features after initialization
@@ -149,6 +179,14 @@ class TSFELTransformer(BaseTransformer):
             sig = inspect.signature(feature_func)
             sig_params = sig.parameters
             kwargs = {} if self.kwargs is None else self.kwargs
+            kwargs.update(
+                {
+                    "fs": self.fs,
+                    "window_size": self.window_size,
+                    "overlap": self.overlap,
+                    "verbose": self.verbose,
+                }
+            )
 
             for param_name, param in sig_params.items():
                 if param_name == "signal":
@@ -198,8 +236,15 @@ class TSFELTransformer(BaseTransformer):
         for param_name, param in sig_params.items():
             if param_name == "signal":
                 continue
-
-            if self.kwargs is not None and param_name in self.kwargs:
+            if param_name == "fs":
+                feature_kwargs[param_name] = self.fs
+            elif param_name == "window_size":
+                feature_kwargs[param_name] = self.window_size
+            elif param_name == "overlap":
+                feature_kwargs[param_name] = self.overlap
+            elif param_name == "verbose":
+                feature_kwargs[param_name] = self.verbose
+            elif self.kwargs is not None and param_name in self.kwargs:
                 feature_kwargs[param_name] = self.kwargs[param_name]
             elif param.default != Parameter.empty:
                 feature_kwargs[param_name] = param.default
@@ -292,16 +337,21 @@ class TSFELTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {"features": "statistical", "kwargs": {"verbose": 0}}
+        params1 = {"features": "statistical", "verbose": 0}
         params2 = {"features": "abs_energy"}
         params3 = {
             "features": ["abs_energy", "auc"],
-            "kwargs": {"fs": 100, "verbose": 0},
+            "fs": 100,
+            "verbose": 0,
+        }
+        params5 = {
+            "features": ["ecdf_percentile_count"],
+            "verbose": 0,
+            "kwargs": {"percentile": [0.6, 0.9, 1.0]},
         }
         # mixed features and domains
         params4 = {
             "features": ["statistical", "abs_energy"],
-            "kwargs": {"verbose": 0},
+            "verbose": 0,
         }
-
-        return [params1, params2, params3, params4]
+        return [params1, params2, params3, params4, params5]
