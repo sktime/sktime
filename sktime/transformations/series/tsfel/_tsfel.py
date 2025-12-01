@@ -12,15 +12,15 @@ from sktime.transformations.base import BaseTransformer
 class TSFELTransformer(BaseTransformer):
     """TSFEL transformer to extract features by domain or specific feature names.
 
-    This transformer uses `features` parameter to extract features in following ways:
+    This transformer uses ``features`` parameter to extract features in following ways:
 
     1. By domain: Pass a domain ('statistical', 'temporal', 'spectral', 'fractal')
     2. By feature names: Pass feature function names (e.g., 'abs_energy', 'auc')
     3. Mixed: Pass a list containing both domain strings and feature names
 
-    For domain-based extraction, uses TSFEL's `time_series_features_extractor`.
+    For domain-based extraction, uses TSFEL's ``time_series_features_extractor``.
     For individual features, calls the feature functions directly from
-    `tsfel.feature_extraction.features`.
+    ``tsfel.feature_extraction.features``.
 
     See tsfel documentation for available options for features and parameters.
     https://tsfel.readthedocs.io/en/latest/descriptions/feature_list.html
@@ -238,8 +238,8 @@ class TSFELTransformer(BaseTransformer):
         -------
         X_transformed : pd.DataFrame
             DataFrame containing extracted features. To access raw TSFEL output
-            for a feature, use `transformer['feature_name'].iloc[0]` or
-            `transformer[domain_name].iloc[0]` if no feature name or domain name
+            for a feature, use ``transformer['feature_name'].iloc[0]`` or
+            ``transformer[domain_name].iloc[0]`` if no feature name or domain name
             is provided, use `transformer['all'].iloc[0]` to get all features.
         """
         import tsfel
