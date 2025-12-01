@@ -3,6 +3,7 @@
 import numpy as np
 
 from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.utils.warnings import warn
 
 
 class GRUClassifier(BaseDeepClassifierPytorch):
@@ -16,9 +17,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         Number of features in the hidden state.
     n_layers : int
         Number of recurrent layers.
-    batch_first : bool
-        If True, then the input and output tensors are provided
-        as (batch, seq, feature), default is False.
     bias : bool
         If False, then the layer does not use bias weights, default is True.
     init_weights : bool
@@ -49,6 +47,13 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         Whether to print progress information during training.
     random_state : int, optional (default=None)
         Seed to ensure reproducibility.
+    batch_first : bool, default="deprecated"
+        .. deprecated:: 0.40.0
+            The ``batch_first`` parameter is deprecated and will be removed in
+            version 0.41.0. The parameter is now always set to True internally
+            to match the data format from PytorchDataset. Prior behavior with
+            ``batch_first=False`` cannot be retained as it conflicts with
+            sktime's internal data format requirements.
 
     References
     ----------
@@ -78,12 +83,12 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         "tests:libs": ["sktime.networks.gru"],
     }
 
+    # TODO 0.41.0: remove batch_first parameter
     def __init__(
         self: "GRUClassifier",
         # model specific
         hidden_dim: int = 256,
         n_layers: int = 4,
-        batch_first: bool = False,
         bias: bool = True,
         init_weights: bool = True,
         dropout: float = 0.0,
@@ -99,10 +104,11 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int = None,
+        # deprecated parameter - moved to end
+        batch_first: bool = "deprecated",
     ):
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
-        self.batch_first = batch_first
         self.bias = bias
         self.init_weights = init_weights
         self.dropout = dropout
@@ -117,6 +123,20 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.batch_first = batch_first
+
+        # TODO 0.41.0: remove this deprecation warning block
+        if batch_first != "deprecated":
+            warn(
+                "In GRUClassifier, the 'batch_first' parameter is deprecated "
+                "and will be removed in sktime version 0.41.0. "
+                "The parameter is now always True internally to match sktime's "
+                "data format. Prior behavior with batch_first=False cannot be "
+                "retained as it conflicts with sktime's internal data format. "
+                "To silence this warning, remove the 'batch_first' argument.",
+                category=DeprecationWarning,
+                obj=self,
+            )
 
         # infer from the data
         self.input_size = None
@@ -139,14 +159,13 @@ class GRUClassifier(BaseDeepClassifierPytorch):
     def _build_network(self, X, y):
         from sktime.networks.gru import GRU
 
-        # n_instances, n_dims, n_timesteps = X.shape
         self.numclasses = len(np.unique(y))
         _, self.input_size, _ = X.shape
         return GRU(
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
             n_layers=self.n_layers,
-            batch_first=self.batch_first,
+            batch_first=True,  # Always True to match PytorchDataset transpose
             bias=self.bias,
             num_classes=self.numclasses,
             init_weights=self.init_weights,
@@ -181,7 +200,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
             {
                 "hidden_dim": 256,
                 "n_layers": 2,
-                "batch_first": False,
                 "bias": True,
                 "init_weights": True,
                 "dropout": 0.1,
@@ -196,7 +214,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
             {
                 "hidden_dim": 64,
                 "n_layers": 3,
-                "batch_first": False,
                 "bias": True,
                 "init_weights": False,
                 "dropout": 0.1,
@@ -225,9 +242,6 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         Number of features in the hidden state.
     gru_layers : int
         Number of recurrent layers.
-    batch_first : bool
-        If True, then the input and output tensors are provided
-        as (batch, seq, feature), default is False.
     bias : bool
         If False, then the layer does not use bias weights, default is True.
     init_weights : bool
@@ -264,6 +278,13 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         Whether to print progress information during training.
     random_state : int, optional (default=None)
         Seed to ensure reproducibility.
+    batch_first : bool, default="deprecated"
+        .. deprecated:: 0.40.0
+            The ``batch_first`` parameter is deprecated and will be removed in
+            version 0.41.0. The parameter is now always set to True internally
+            to match the data format from PytorchDataset. Prior behavior with
+            ``batch_first=False`` cannot be retained as it conflicts with
+            sktime's internal data format requirements.
 
     References
     ----------
@@ -292,12 +313,12 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         "tests:libs": ["sktime.networks.gru"],
     }
 
+    # TODO 0.41.0: remove batch_first parameter
     def __init__(
         self: "GRUFCNNClassifier",
         # model specific
         hidden_dim: int,
         gru_layers: int,
-        batch_first: bool = False,
         bias: bool = True,
         init_weights: bool = True,
         dropout: float = 0.0,
@@ -315,10 +336,11 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         lr: float = 0.01,
         verbose: bool = False,
         random_state: int = None,
+        # deprecated parameter - moved to end
+        batch_first: bool = "deprecated",
     ):
         self.hidden_dim = hidden_dim
         self.gru_layers = gru_layers
-        self.batch_first = batch_first
         self.bias = bias
         self.init_weights = init_weights
         self.dropout = dropout
@@ -335,6 +357,20 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.batch_first = batch_first
+
+        # TODO 0.41.0: remove this deprecation warning block
+        if batch_first != "deprecated":
+            warn(
+                "In GRUFCNNClassifier, the 'batch_first' parameter is deprecated "
+                "and will be removed in sktime version 0.41.0. "
+                "The parameter is now always True internally to match sktime's "
+                "data format. Prior behavior with batch_first=False cannot be "
+                "retained as it conflicts with sktime's internal data format. "
+                "To silence this warning, remove the 'batch_first' argument.",
+                category=DeprecationWarning,
+                obj=self,
+            )
 
         # infer from the data
         self.input_size = None
@@ -357,14 +393,16 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
     def _build_network(self, X, y):
         from sktime.networks.gru import GRUFCNN
 
-        # n_instances, n_dims, n_timesteps = X.shape
+        # X.shape = [n_instances, n_dims, n_timesteps] (sktime format)
+        # PytorchDataset will transpose to [n_instances, n_timesteps, n_dims]
+        # So we extract n_dims (features) from axis 1
         self.numclasses = len(np.unique(y))
         _, self.input_size, _ = X.shape
         return GRUFCNN(
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
             gru_layers=self.gru_layers,
-            batch_first=self.batch_first,
+            batch_first=True,  # Always True to match PytorchDataset transpose
             bias=self.bias,
             num_classes=self.numclasses,
             init_weights=self.init_weights,
@@ -401,7 +439,6 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
             {
                 "hidden_dim": 256,
                 "gru_layers": 2,
-                "batch_first": False,
                 "bias": True,
                 "init_weights": True,
                 "dropout": 0.1,
@@ -418,7 +455,6 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
             {
                 "hidden_dim": 64,
                 "gru_layers": 3,
-                "batch_first": False,
                 "bias": True,
                 "init_weights": False,
                 "dropout": 0.1,
