@@ -231,7 +231,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {"batch_size": 2}
+        params1 = {}
         params2 = {
             "hidden_dim": 5,
             "n_layers": 1,

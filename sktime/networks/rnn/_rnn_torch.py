@@ -142,23 +142,20 @@ class RNNNetworkTorch(NNModule):
 
         Parameters
         ----------
-        X : torch.Tensor of shape (seq_length, batch_size input_size) or
-            (batch_size, seq_length, input_size) if batch_first=True
+        X : torch.Tensor of shape (batch_size, seq_length, input_size)
             Input tensor containing the time series data.
 
         Returns
         -------
-        out : torch.Tensor of shape (seq_length, batch_size, hidden_size) or
-            (batch_size, seq_length, hidden_size) if batch_first=True
-            Output tensor containing the hidden states for each time step.
+        out : torch.Tensor of shape (batch_size, hidden_size)
+            Output tensor containing the hidden states for each sequence.
         """
         if isinstance(X, np.ndarray):
             torchFrom_numpy = _safe_import("torch.from_numpy")
             X = torchFrom_numpy(X).float()
 
         output, h_n = self.rnn(X)
-        # output shape: (batch_size, seq_length, hidden_size) if batch_first=True
-        # or (seq_length, batch_size, hidden_size) if batch_first=False.
+        # output shape: (batch_size, seq_length, hidden_size) since batch_first=True
         # h_n shape: (num_layers * num_directions, batch_size, hidden_size)
         # irrespective of batch_first parameter.
         # The self.fc layer expects one vector per sequence,
@@ -166,10 +163,10 @@ class RNNNetworkTorch(NNModule):
         # Hence, we extract the final hidden state for each sequence.
         # We use h_n for this purpose, instead of output, because
         # 1. padding may have been used, and in that case
-        #    output[-1] may not correspond to the final time step of the sequence
+        #    output[:, -1, :] may not correspond to the final time step of the sequence
         # 2. to have a consistent behavior regardless of batch_first value.
         out = self.get_sequence_vector_from_hidden(h_n)
-        # old logic using output tensor directly and prone to batch_first errors:
+        # old logic using output tensor directly
         # out = output[:, -1, :]
         if self.fc_dropout:
             out = self.out_dropout(out)
@@ -240,7 +237,7 @@ class RNNNetworkTorch(NNModule):
         This function is BATCH_FIRST-AGNOSTIC because h_n shape does not depend
         on the batch_first parameter. h_n always has shape:
             (num_layers * num_directions, batch, hidden_size)
-        regardless of whether batch_first=True or False in the RNN call.
+        regardless of whether batch_first=True or False in the RNN/GRU/LSTM call.
 
         Parameters
         ----------
