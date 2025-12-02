@@ -37,9 +37,6 @@ class RNNNetworkTorch(NNModule):
         https://docs.pytorch.org/docs/stable/generated/torch.nn.RNN.html#torch.nn.RNN
     bias : bool, default = False
         If False, then the layer does not use bias weights.
-    batch_first : bool, default = False
-        If True, then the input and output tensors are provided
-        as (batch, seq, feature) instead of (seq, batch, feature).
     init_weights : bool, default = True
         If True, then Tensorflow like initializations are applied to the weights.
         Adapted from:
@@ -76,7 +73,6 @@ class RNNNetworkTorch(NNModule):
         activation: str | None = None,
         activation_hidden: str = "relu",
         bias: bool = False,
-        batch_first: bool = False,
         init_weights: bool = True,
         dropout: float = 0.0,
         fc_dropout: float = 0.0,
@@ -91,7 +87,6 @@ class RNNNetworkTorch(NNModule):
         self.activation_hidden = activation_hidden
         self.n_layers = n_layers
         self.bias = bias
-        self.batch_first = batch_first
         self.dropout = dropout
         self.bidirectional = bidirectional
         super().__init__()
@@ -121,7 +116,7 @@ class RNNNetworkTorch(NNModule):
             num_layers=self.n_layers,
             nonlinearity=self.activation_hidden,
             bias=self.bias,
-            batch_first=self.batch_first,
+            batch_first=True,
             dropout=self.dropout,
             bidirectional=self.bidirectional,
         )
@@ -160,23 +155,22 @@ class RNNNetworkTorch(NNModule):
         if isinstance(X, np.ndarray):
             torchFrom_numpy = _safe_import("torch.from_numpy")
             X = torchFrom_numpy(X).float()
-            # X = X.permute(1, 0, 2)
-            # X = X.unsqueeze(0)
 
-        out, h_n = self.rnn(X)
-        # out shape: (batch_size, seq_length, hidden_size) if batch_first=True
+        output, h_n = self.rnn(X)
+        # output shape: (batch_size, seq_length, hidden_size) if batch_first=True
         # or (seq_length, batch_size, hidden_size) if batch_first=False.
         # h_n shape: (num_layers * num_directions, batch_size, hidden_size)
         # irrespective of batch_first parameter.
         # The self.fc layer expects one vector per sequence,
         # not a whole sequence of hidden states.
         # Hence, we extract the final hidden state for each sequence.
-        # We use h_n for this purpose, instead of out, because
+        # We use h_n for this purpose, instead of output, because
         # 1. padding may have been used, and in that case
-        #    out[-1] may not correspond to the final time step of the sequence
+        #    output[-1] may not correspond to the final time step of the sequence
         # 2. to have a consistent behavior regardless of batch_first value.
         out = self.get_sequence_vector_from_hidden(h_n)
-        # out = out[:, -1, :]
+        # old logic using output tensor directly and prone to batch_first errors:
+        # out = output[:, -1, :]
         if self.fc_dropout:
             out = self.out_dropout(out)
         out = self.fc(out)
@@ -238,34 +232,6 @@ class RNNNetworkTorch(NNModule):
                 "`activation` should either be of type str or torch.nn.Module. "
                 f"But found the type to be: {type(self.activation)}"
             )
-
-    def get_sequence_vector_from_hidden_debug(self, h_n):
-        print(f"[DEBUG] Input h_n shape: {h_n.shape}")
-
-        num_directions_h_n = 2 if self.bidirectional else 1
-        batch_size_h_n = h_n.size(1)
-        hidden_size_h_n = h_n.size(2)
-        num_layers_h_n = self.n_layers
-
-        print(f"[DEBUG] n_layers={num_layers_h_n}, num_directions={num_directions_h_n}")
-        print(f"[DEBUG] batch_size={batch_size_h_n}, hidden_size={hidden_size_h_n}")
-
-        h_n = h_n.view(
-            num_layers_h_n, num_directions_h_n, batch_size_h_n, hidden_size_h_n
-        )
-        print(f"[DEBUG] After view: {h_n.shape}")
-
-        last_layer = h_n[-1]
-        print(f"[DEBUG] Last layer shape: {last_layer.shape}")
-
-        sequence_vector = (
-            last_layer.permute(1, 0, 2)
-            .contiguous()
-            .view(batch_size_h_n, num_directions_h_n * hidden_size_h_n)
-        )
-        print(f"[DEBUG] Final sequence_vector shape: {sequence_vector.shape}")
-
-        return sequence_vector
 
     def get_sequence_vector_from_hidden(self, h_n):
         """
