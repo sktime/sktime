@@ -45,6 +45,12 @@ class KerasCompileKwargs(BaseObject):
         https://keras.io/api/models/model_training_apis/#compile-method
     """
 
+    _tags = {
+        "authors": ["achieveordie"],
+        "maintainers": ["achieveordie"],
+        "python_dependencies": "tensorflow",
+    }
+
     loss_weights: list[float] | dict[str, float] | None = None
     weighted_metrics: list[str] | None = None
     run_eagerly: bool = False
@@ -88,6 +94,12 @@ class KerasFitKwargs(BaseObject):
     Keras fit documentation :
         https://keras.io/api/models/model_training_apis/#fit-method
     """
+
+    _tags = {
+        "authors": ["achieveordie"],
+        "maintainers": ["achieveordie"],
+        "python_dependencies": "tensorflow",
+    }
 
     validation_split: float = 0.0
     validation_data: Any | None = None
