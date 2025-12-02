@@ -17,7 +17,7 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import SERIALIZATION_FORMATS, BaseObject
 from sktime.classification.base import BaseClassifier
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies, _check_soft_dependencies
 
 
 @dataclass
@@ -57,6 +57,9 @@ class KerasCompileKwargs(BaseObject):
     steps_per_execution: int = 1
     jit_compile: str | bool = "auto"
     auto_scale_loss: bool = True
+
+    def __post_init__(self) -> None:
+        _check_dl_dependencies(severity="error")
 
     def as_dict(self) -> dict[Any, Any]:
         return asdict(self)
@@ -113,6 +116,8 @@ class KerasFitKwargs(BaseObject):
     validation_freq: int = 1
 
     def __post_init__(self) -> None:
+        _check_dl_dependencies(severity="error")
+
         from keras.utils import PyDataset
         from tensorflow.python.data import Dataset
 
