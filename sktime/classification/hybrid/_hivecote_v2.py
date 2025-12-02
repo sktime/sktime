@@ -401,7 +401,6 @@ class HIVECOTEV2(BaseClassifier):
                 },
             }
         else:
-            # Return both the original minimal set and the full fast param1 set
             param1 = {
                 "stc_params": {
                     "estimator": RandomForestClassifier(n_estimators=1),
@@ -421,8 +420,6 @@ class HIVECOTEV2(BaseClassifier):
                     "randomly_selected_params": 1,
                 },
             }
-
-            # Full fast test parameter set
             param2 = {
                 "stc_params": {
                     "estimator": RandomForestClassifier(n_estimators=1),
@@ -478,7 +475,6 @@ class HIVECOTEV2(BaseClassifier):
                 "save_component_probas": False,
                 "verbose": 0,
                 "n_jobs": 1,
-                "random_state": 42
+                "random_state": 42,
             }
-
             return [param1, param2]
