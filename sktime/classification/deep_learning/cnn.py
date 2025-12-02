@@ -188,11 +188,14 @@ class CNNClassifier(BaseDeepClassifier):
         )
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
+        compile_kwargs = (
+            self.compile_kwargs.as_dict() if self.compile_kwargs is not None else {}
+        )
         model.compile(
             loss=self.loss,
             optimizer=self.optimizer_,
             metrics=metrics,
-            **self.compile_kwargs.as_dict(),
+            **compile_kwargs,
         )
         return model
 
@@ -220,6 +223,7 @@ class CNNClassifier(BaseDeepClassifier):
         if self.verbose:
             self.model_.summary()
 
+        fit_kwargs = self.fit_kwargs.as_dict() if self.fit_kwargs is not None else {}
         self.history = self.model_.fit(
             X,
             y_onehot,
@@ -227,7 +231,7 @@ class CNNClassifier(BaseDeepClassifier):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=deepcopy(self.callbacks) if self.callbacks else [],
-            **self.fit_kwargs.as_dict(),
+            **fit_kwargs,
         )
         return self
 

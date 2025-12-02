@@ -165,10 +165,8 @@ class BaseDeepClassifier(BaseClassifier):
         compile_kwargs: KerasCompileKwargs | None,
         fit_kwargs: KerasFitKwargs | None,
     ):
-        self.compile_kwargs = (
-            compile_kwargs if compile_kwargs is not None else KerasCompileKwargs()
-        )
-        self.fit_kwargs = fit_kwargs if fit_kwargs is not None else KerasFitKwargs()
+        self.compile_kwargs = compile_kwargs
+        self.fit_kwargs = fit_kwargs
 
         super().__init__()
 
