@@ -117,7 +117,7 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
         callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
         criterion_kwargs: dict = None,
         optimizer_kwargs: dict = None,
-        callback_kwargs: dict | None = None,  # to be checked
+        callback_kwargs: dict | None = None,  # currently only schedulers supported
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int = 0,
