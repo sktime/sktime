@@ -62,16 +62,19 @@ class MLPNetwork(BaseDeepNetwork):
         input_layer : a keras layer
         output_layer : a keras layer
         """
-        if isinstance(self.dropout, (float)):
-            dropout_rates = [float(self.dropout)] * 4
+        if isinstance(self.dropout, float):
+            _dropout = (self.dropout,) * 4
         elif isinstance(self.dropout, tuple):
             if len(self.dropout) != 4:
                 raise ValueError(
-                    "If `dropout` is a tuple, it must be of length 4"
-                    "for MLPNetwork. "
-                    f"Found length of {len(self.dropout)}"
+                    "If `dropout` is a tuple, it must have length equal to the "
+                    "number of hidden layers in the MLP, where each element "
+                    "specifies the rate for the corresponding layer. "
+                    "The current implementation of the MLP has 4 hidden layers, "
+                    f"hence the tuple must be of length 4. "
+                    f"Found length of dropout to be: {len(self.dropout)}."
                 )
-            dropout_rates = self.dropout
+            _dropout = self.dropout
         else:
             raise TypeError(
                 "`dropout` should either be of type float or tuple. "
@@ -84,15 +87,15 @@ class MLPNetwork(BaseDeepNetwork):
         input_layer = keras.layers.Input(input_shape)
         input_layer_flattened = keras.layers.Flatten()(input_layer)
 
-        layer_1 = keras.layers.Dropout(dropout_rates[0])(input_layer_flattened)
+        layer_1 = keras.layers.Dropout(_dropout[0])(input_layer_flattened)
         layer_1 = keras.layers.Dense(500, activation=self.activation)(layer_1)
 
-        layer_2 = keras.layers.Dropout(dropout_rates[1])(layer_1)
+        layer_2 = keras.layers.Dropout(_dropout[1])(layer_1)
         layer_2 = keras.layers.Dense(500, activation=self.activation)(layer_2)
 
-        layer_3 = keras.layers.Dropout(dropout_rates[2])(layer_2)
+        layer_3 = keras.layers.Dropout(_dropout[2])(layer_2)
         layer_3 = keras.layers.Dense(500, activation=self.activation)(layer_3)
 
-        output_layer = keras.layers.Dropout(dropout_rates[3])(layer_3)
+        output_layer = keras.layers.Dropout(_dropout[3])(layer_3)
 
         return input_layer, output_layer
