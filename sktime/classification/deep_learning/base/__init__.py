@@ -2,10 +2,10 @@
 
 __all__ = [
     "BaseDeepClassifier",
-    "BaseDeepClassifierTorch",
+    "BaseDeepClassifierPytorch",
 ]
 
 from sktime.classification.deep_learning.base._base_tf import BaseDeepClassifier
 from sktime.classification.deep_learning.base._base_torch import (
-    BaseDeepClassifierTorch,
+    BaseDeepClassifierPytorch,
 )
