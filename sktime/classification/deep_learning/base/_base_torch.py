@@ -34,14 +34,14 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         If None, CrossEntropyLoss is used.
         If a string/Callable is passed, it must be one of the loss functions defined in
         https://pytorch.org/docs/stable/nn.html#loss-functions
-    criterion_kwargs : dict, default = None
+    criterion_kwargs : dict or None, default = None
         The keyword arguments to be passed to the loss function.
     optimizer : case insensitive str or an instance of an optimizer
         defined in PyTorch, default = None
         The optimizer to use for training the model. If None, Adam optimizer is used.
         If a string/Callable is passed, it must be one of the optimizers defined in
         https://pytorch.org/docs/stable/optim.html#algorithms
-    optimizer_kwargs : dict, default = None
+    optimizer_kwargs : dict or None, default = None
         The keyword arguments to be passed to the optimizer.
     callbacks : None or str or a tuple of str, default = None
         Currently only learning rate schedulers are supported as callbacks.
@@ -81,10 +81,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         batch_size: int = 8,
         activation: str | None | Callable = None,
         criterion: str | None | Callable = None,
-        criterion_kwargs: dict = None,
+        criterion_kwargs: dict | None = None,
         optimizer: str | Callable | None = None,
-        optimizer_kwargs: dict = None,
-        callbacks: None | Callable | tuple[Callable, ...] = None,
+        optimizer_kwargs: dict | None = None,
+        callbacks: None | str | tuple[str, ...] = None,
         callback_kwargs: dict | None = None,
         lr: float = 0.001,
         verbose: bool = True,
