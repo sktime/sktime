@@ -44,7 +44,6 @@ EXCLUDE_ESTIMATORS = [
     "MLPClassifier",
     "MLPRegressor",
     "ResNetRegressor",
-    "FCNRegressor",
     "LSTMFCNRegressor",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
@@ -264,7 +263,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
         "WEASEL",
-        "WhiteNoiseAugmenter",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
         # too after adding test parameters to them
         "BaggingForecaster",
