@@ -2,7 +2,7 @@
 
 __authors__ = ["geetu040", "RecreationalMath"]
 
-__all__ = ["BaseDeepClassifierTorch"]
+__all__ = ["BaseDeepClassifierPytorch"]
 
 import abc
 from collections.abc import Callable
@@ -16,7 +16,7 @@ from sktime.utils.dependencies import _safe_import
 ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
 
 
-class BaseDeepClassifierTorch(BaseClassifier):
+class BaseDeepClassifierPytorch(BaseClassifier):
     """Abstract base class for the Pytorch neural network classifiers.
 
     Parameters
@@ -76,7 +76,7 @@ class BaseDeepClassifierTorch(BaseClassifier):
     }
 
     def __init__(
-        self: "BaseDeepClassifierTorch",
+        self: "BaseDeepClassifierPytorch",
         num_epochs: int = 16,
         batch_size: int = 8,
         activation: str | None | Callable = None,

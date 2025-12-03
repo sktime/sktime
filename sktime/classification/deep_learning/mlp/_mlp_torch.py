@@ -7,11 +7,11 @@ from collections.abc import Callable
 
 import numpy as np
 
-from sktime.classification.deep_learning.base import BaseDeepClassifierTorch
+from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.mlp import MLPNetworkTorch
 
 
-class MLPClassifierTorch(BaseDeepClassifierTorch):
+class MLPClassifierTorch(BaseDeepClassifierPytorch):
     """Multi Layer Perceptron classifier in PyTorch for time series classification.
 
     A simple MLP classifier based on MLP network defined in [1]_.

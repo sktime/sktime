@@ -7,11 +7,11 @@ from collections.abc import Callable
 
 import numpy as np
 
-from sktime.classification.deep_learning.base import BaseDeepClassifierTorch
+from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.rnn import RNNNetworkTorch
 
 
-class SimpleRNNClassifierTorch(BaseDeepClassifierTorch):
+class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
     """Simple recurrent neural network in PyTorch for time series classification.
 
     Parameters
