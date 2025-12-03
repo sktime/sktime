@@ -27,6 +27,8 @@ class RNNNetwork(BaseDeepNetwork):
         https://keras.io/api/layers/activations/
         Default value of activation will change to "tanh"
         in version '0.41.0'.
+    dropout : float, default = 0.0
+        The dropout rate for the RNN layer.
     """
 
     _tags = {
@@ -49,6 +51,7 @@ class RNNNetwork(BaseDeepNetwork):
         units=6,
         random_state=0,
         activation="changing_from_linear_to_tanh_in_0.41.0",
+        dropout=0.0,
     ):
         self.activation = activation
         # TODO (release 0.41.0)
@@ -71,6 +74,7 @@ class RNNNetwork(BaseDeepNetwork):
             self._activation = activation
         self.random_state = random_state
         self.units = units
+        self.dropout = dropout
         super().__init__()
 
     def build_network(self, input_shape, **kwargs):
@@ -120,7 +124,7 @@ class RNNNetwork(BaseDeepNetwork):
             kernel_initializer="glorot_uniform",
             recurrent_initializer="orthogonal",
             bias_initializer="zeros",
-            dropout=0.0,
+            dropout=self.dropout,
             recurrent_dropout=0.0,
         )(input_layer)
 
