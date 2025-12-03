@@ -1,6 +1,7 @@
 """Recurrent Neural Network (RNN) for Classification and Regression in PyTorch."""
 
 __authors__ = ["RecreationalMath"]
+__all__ = ["RNNNetworkTorch"]
 
 import numpy as np
 
@@ -79,6 +80,7 @@ class RNNNetworkTorch(NNModule):
         bidirectional: bool = False,
         random_state: int = 0,
     ):
+        self.input_size = input_size
         self.random_state = random_state
         self.hidden_dim = hidden_dim
         self.activation = activation
@@ -91,22 +93,22 @@ class RNNNetworkTorch(NNModule):
         self.bidirectional = bidirectional
         super().__init__()
 
-        # Checking input dimensions.
-        if isinstance(input_size, int):
-            in_features = input_size
-        elif isinstance(input_size, tuple):
-            if len(input_size) == 3:
-                in_features = input_size[1]
+        # Checking input dimensions
+        if isinstance(self.input_size, int):
+            in_features = self.input_size
+        elif isinstance(self.input_size, tuple):
+            if len(self.input_size) == 3:
+                in_features = self.input_size[1]
             else:
                 raise ValueError(
                     "If `input_size` is a tuple, it must either be of length 3 and in "
                     "format (n_instances, n_dims, series_length). "
-                    f"Found length of {len(input_size)}"
+                    f"Found length of {len(self.input_size)}"
                 )
         else:
             raise TypeError(
                 "`input_size` should either be of type int or tuple. "
-                f"But found the type to be: {type(input_size)}"
+                f"But found the type to be: {type(self.input_size)}"
             )
 
         nnRNN = _safe_import("torch.nn.RNN")
