@@ -44,9 +44,6 @@ class MLPNetworkTorch(NNModule):
         "rrelu", "celu", "tanh", "hardtanh".
     bias : bool, default = True
         If False, then the layer does not use bias weights.
-    batch_first : bool, default = False
-        If True, then the input and output tensors are provided
-        as (batch, seq, feature) instead of (seq, batch, feature).
     dropout : float or tuple of floats, default = (0.1, 0.2, 0.2, 0.3)
         If dropout is a non-zero float, it introduces a Dropout layer on the outputs
         of each hidden layer of the MLP, with dropout probability equal to dropout.
@@ -89,7 +86,6 @@ class MLPNetworkTorch(NNModule):
         activation: str | None | Callable = None,
         activation_hidden: str | None | Callable = "relu",
         bias: bool = True,
-        batch_first: bool = False,
         dropout: float | tuple[float, ...] = (0.1, 0.2, 0.2, 0.3),
         fc_dropout: float = 0.0,
         random_state: int = 0,
@@ -101,7 +97,6 @@ class MLPNetworkTorch(NNModule):
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.bias = bias
-        self.batch_first = batch_first
         self.dropout = dropout
         # dropout type checking
         if isinstance(self.dropout, tuple):
@@ -132,7 +127,7 @@ class MLPNetworkTorch(NNModule):
                 )
         else:
             raise TypeError(
-                "`input_shape` should either be of type tuple. "
+                "`input_shape` should be of type tuple. "
                 f"But found the type to be: {type(self.input_shape)}"
             )
 

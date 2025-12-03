@@ -33,9 +33,6 @@ class MLPClassifierTorch(BaseDeepClassifierTorch):
         The activation function applied inside the hidden layers of the MLP.
         Can be any of "relu", "leakyrelu", "elu", "prelu", "gelu", "selu",
         "rrelu", "celu", "tanh", "hardtanh".
-    batch_first : bool, default = False
-        If True, then the input and output tensors are provided
-        as (batch, seq, feature) instead of (seq, batch, feature).
     bias : bool, default = True
         If False, then the layer does not use bias weights.
     dropout : float or tuple of floats, default = (0.1, 0.2, 0.2, 0.3)
@@ -123,7 +120,6 @@ class MLPClassifierTorch(BaseDeepClassifierTorch):
         n_layers: int = 4,
         activation: str | None | Callable = None,
         activation_hidden: str | None | Callable = "relu",
-        batch_first: bool = False,
         bias: bool = True,
         dropout: float | tuple[float, ...] = (0.1, 0.2, 0.2, 0.3),
         fc_dropout: float = 0.0,
@@ -144,7 +140,6 @@ class MLPClassifierTorch(BaseDeepClassifierTorch):
         self.n_layers = n_layers
         self.activation = activation
         self.activation_hidden = activation_hidden
-        self.batch_first = batch_first
         self.bias = bias
         self.dropout = dropout
         self.fc_dropout = fc_dropout
@@ -213,7 +208,6 @@ class MLPClassifierTorch(BaseDeepClassifierTorch):
             activation=self._validated_activation,  # use self._validated_activation
             activation_hidden=self.activation_hidden,
             bias=self.bias,
-            batch_first=self.batch_first,
             dropout=self.dropout,
             fc_dropout=self.fc_dropout,
             random_state=self.random_state,
