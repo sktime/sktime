@@ -430,6 +430,12 @@ class SeasonalityPeriodogram(BaseParamFitter):
     and finds significant periods based on their spectral power, using
     Welch's method of periodogram averaging [1]_.
 
+    Computes significant periods based on a threshold of the maximum power,
+    i.e., periods with power above ``thresh * maxpower`` are considered significant,
+    and the one with highest power is considered the main seasonality period.
+
+    Significance is determined by thresholding as above, not by statistical testing.
+
     Based on ``seasonal`` package by ``welch`` [2]_.
 
     Parameters
