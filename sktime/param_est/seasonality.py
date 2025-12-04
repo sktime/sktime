@@ -426,9 +426,11 @@ class SeasonalityACFqstat(BaseParamFitter):
 class SeasonalityPeriodogram(BaseParamFitter):
     """Score periodicities by their spectral power.
 
-    Interfacing ``seasonal.periodogram`` to determine candidate seasonality parameters.
+    Computes seasonality periodogram based on ``iloc`` indices, not ``loc`` labels,
+    and finds significant periods based on their spectral power, using
+    Welch's method of periodogram averaging [1]_.
 
-    Computes seasonality periodogram based on ``iloc`` indices, not ``loc`` labels.
+    Based on ``seasonal`` package by ``welch`` [2]_.
 
     Parameters
     ----------
@@ -447,6 +449,11 @@ class SeasonalityPeriodogram(BaseParamFitter):
     sp_significant_ : list of int, array of Fourier periods in descending order
         of their powers.
 
+    References
+    ----------
+    .. [1]: https://en.wikipedia.org/wiki/Welch%27s_method
+    .. [2]: https://github.com/welch/seasonal
+        
     Examples
     --------
     >>> from sktime.datasets import load_airline
@@ -462,7 +469,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
     """
 
     _tags = {
-        "authors": ["blazingbhavneek"],
+        "authors": ["welch", "blazingbhavneek", " JATAYU000"],
         "maintainers": ["blazingbhavneek"],
         "X_inner_mtype": "pd.Series",
         "scitype:X": "Series",
@@ -490,19 +497,19 @@ class SeasonalityPeriodogram(BaseParamFitter):
         can be accommodated by lowering thresh (resulting in more
         intervals being returned)
 
+        Code adapted from the standalone ``seasonal`` package by ``welch``.
 
         Parameters
         ----------
-        data : ndarray
+        data : 1D ndarray
             Data series, evenly spaced samples.
-        min_period : int
+        min_period : int, optional, default=4
             Disregard periods shorter than this number of samples.
-            Defaults to 4
-        max_period : int
+        max_period : int, optional, default = None = as below
             Disregard periods longer than this number of samples.
             Defaults to the smaller of len(data)/MIN_FFT_CYCLES or MAX_FFT_PERIOD
-        thresh : float (0..1)
-            Retain periods scoring above thresh*maxscore. Defaults to 0.9
+        thresh : float (0..1), optional, default=0.9
+            Retain periods scoring above thresh*maxscore.
 
         Returns
         -------
@@ -518,7 +525,6 @@ class SeasonalityPeriodogram(BaseParamFitter):
         References
         ----------
         .. [1] https://github.com/welch/seasonal
-
         """
         periods, power = self.periodogram(data, min_period, max_period)
         if np.all(np.isclose(power, 0.0)):
@@ -541,17 +547,15 @@ class SeasonalityPeriodogram(BaseParamFitter):
         Produce a robust periodogram estimate for each possible periodicity
         of the (possibly noisy) data.
 
-        **Important**: Periods are computed with respect to positional indices (iloc),
-        not label-based indices (loc).
+        Code adapted from the standalone ``seasonal`` package by ``welch``.
 
         Parameters
         ----------
-        data : ndarray
+        data : 1D ndarray
             Data series, having at least three periods of data.
-        min_period : int
+        min_period : int, optional, default=4
             Disregard periods shorter than this number of samples.
-            Defaults to 4
-        max_period : int
+        max_period : int, optional, default = None = as below
             Disregard periods longer than this number of samples.
             Defaults to the smaller of len(data)/MIN_FFT_CYCLES or MAX_FFT_PERIOD
 
@@ -574,7 +578,6 @@ class SeasonalityPeriodogram(BaseParamFitter):
         ----------
         .. [1]: https://en.wikipedia.org/wiki/Welch%27s_method
         .. [2]: https://github.com/welch/seasonal
-
         """
         import scipy.signal
 
