@@ -428,6 +428,8 @@ class SeasonalityPeriodogram(BaseParamFitter):
 
     Interfacing ``seasonal.periodogram`` to determine candidate seasonality parameters.
 
+    Computes seasonality periodogram based on ``iloc`` indices, not ``loc`` labels.
+
     Parameters
     ----------
     min_period : int
@@ -449,13 +451,13 @@ class SeasonalityPeriodogram(BaseParamFitter):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityPeriodogram
-    >>> X = load_airline().diff()[1:]  # doctest: +SKIP
-    >>> sp_est = SeasonalityPeriodogram()  # doctest: +SKIP
-    >>> sp_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline().diff()[1:]
+    >>> sp_est = SeasonalityPeriodogram()
+    >>> sp_est.fit(X)
     SeasonalityPeriodogram(...)
-    >>> sp_est.get_fitted_params()["sp"]  # doctest: +SKIP
+    >>> sp_est.get_fitted_params()["sp"]
     6
-    >>> sp_est.get_fitted_params()["sp_significant"]  # doctest: +SKIP
+    >>> sp_est.get_fitted_params()["sp_significant"]
     array([6, 12, 14, 4, 10, 5])
     """
 
