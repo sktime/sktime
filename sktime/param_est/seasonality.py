@@ -426,7 +426,7 @@ class SeasonalityACFqstat(BaseParamFitter):
 class SeasonalityPeriodogram(BaseParamFitter):
     """Score periodicities by their spectral power.
 
-    Computes seasonality periodogram based on ``iloc`` indices, not ``loc`` labels,
+    Computes seasonality periodogram based on ``iloc`` indices (not ``loc`` labels),
     and finds significant periods based on their spectral power, using
     Welch's method of periodogram averaging [1]_.
 
