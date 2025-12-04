@@ -44,7 +44,6 @@ EXCLUDE_ESTIMATORS = [
     "MLPClassifier",
     "MLPRegressor",
     "ResNetRegressor",
-    "FCNRegressor",
     "LSTMFCNRegressor",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
@@ -105,11 +104,6 @@ EXCLUDED_TESTS = {
         "test_multioutput",  # see 6201
         "test_classifier_on_unit_test_data",  # see 6201
     ],
-    "SimpleRNNRegressor": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-    ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
     "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
@@ -143,7 +137,6 @@ EXCLUDED_TESTS = {
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
     "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
-    "PyKANForecaster": ["test_predict_time_index_in_sample_full"],
     "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
     # StatsForecastMSTL is failing in probabistic forecasts, see #5703, #5920
     "StatsForecastMSTL": ["test_pred_int_tag"],
@@ -189,10 +182,6 @@ EXCLUDED_TESTS = {
     "ARLagOrderSelector": [
         "test_doctest_examples",  # doctest fails, see #8129
     ],
-    "ESRNNForecaster": [  # pickling problem, see #8135
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-    ],
 }
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
@@ -208,7 +197,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ColumnwiseTransformer",
         "ContractableBOSS",
         "DOBIN",
-        "DWTTransformer",
         "DilationMappingTransformer",
         "DirRecTabularRegressionForecaster",
         "DirRecTimeSeriesRegressionForecaster",
@@ -277,7 +265,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
         "WEASEL",
-        "WhiteNoiseAugmenter",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
         # too after adding test parameters to them
         "BaggingForecaster",

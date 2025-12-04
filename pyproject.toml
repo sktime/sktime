@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.39.0"
+version = "0.40.1"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -29,7 +29,7 @@ maintainers = [
 authors = [
     { name = "sktime developers", email = "sktime.toolbox@gmail.com" },
 ]
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.10,<3.15"
 classifiers = [
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
@@ -44,7 +44,9 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Scientific/Engineering",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
   "Topic :: Software Development",
 ]
 # core dependencies of sktime
@@ -54,7 +56,7 @@ dependencies = [
   "numpy>=1.21,<2.4",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<2.4.0,>=1.1",  # pandas is the main in-memory data container
-  "scikit-base>=0.6.1,<0.13.0",  # base module for sklearn compatible base API
+  "scikit-base>=0.6.1,<0.14.0",  # base module for sklearn compatible base API
   "scikit-learn>=0.24,<1.8.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
@@ -86,9 +88,9 @@ all_extras = [
   'hmmlearn>=0.2.7; python_version < "3.11"',
   'holidays; python_version < "3.13"',
   'matplotlib!=3.9.1,>=3.3.2; python_version < "3.13"',
-  'numba<0.63,>=0.53',
+  'numba<0.63,>=0.53; python_version < "3.14"',
   'optuna<4.5',
-  'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
+  'pmdarima!=1.8.1,<3.0.0,>=1.8',
   'polars[pandas]>=0.20,<2.0; python_version < "3.13"',
   'prophet>=1.1; python_version < "3.12"',
   'pycatch22<0.4.6; python_version < "3.13"',
@@ -99,11 +101,11 @@ all_extras = [
   'scikit_posthocs>=0.6.5; python_version < "3.13"',
   'seaborn>=0.11; python_version < "3.13"',
   'simdkalman',
-  'skforecast<0.19,>=0.15',
-  "skpro>=2,<2.10.0",
+  'skforecast<0.19,>=0.12.1; python_version < "3.14"',
+  "skpro>=2,<2.11.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels>=0.12.1; python_version < "3.13"',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'xarray; python_version < "3.13"',
@@ -122,9 +124,9 @@ all_extras_pandas2 = [
   'hmmlearn>=0.2.7; python_version < "3.11"',
   'holidays; python_version < "3.13"',
   'matplotlib!=3.9.1,>=3.3.2; python_version < "3.13"',
-  'numba<0.63,>=0.53',
+  'numba<0.63,>=0.53; python_version < "3.14"',
   'optuna<4.5',
-  'pmdarima!=1.8.1,<3.0.0,>=1.8; python_version < "3.12"',
+  'pmdarima!=1.8.1,<3.0.0,>=1.8',
   'polars[pandas]>=0.20,<2.0; python_version < "3.13"',
   'prophet>=1.1; python_version < "3.12"',
   'pycatch22<0.4.6; python_version < "3.13"',
@@ -133,11 +135,11 @@ all_extras_pandas2 = [
   'scikit_posthocs>=0.6.5; python_version < "3.13"',
   'seaborn>=0.11; python_version < "3.13"',
   'simdkalman',
-  'skforecast<0.19,>=0.15',
-  'skpro>=2,<2.10.0',
+  'skforecast<0.19,>=0.12.1; python_version < "3.14"',
+  "skpro>=2,<2.11.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels>=0.12.1; python_version < "3.13"',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'xarray; python_version < "3.13"',
@@ -155,53 +157,53 @@ all_extras_pandas2 = [
 alignment = [
   'dtaidistance<2.4; python_version < "3.13"',
   'dtw-python>=1.3,<1.6; python_version < "3.13"',
-  'numba<0.63,>=0.53',
+  'numba<0.63,>=0.53; python_version < "3.14"',
 ]
 annotation = [
   'hmmlearn<0.4,>=0.2.7; python_version < "3.13"',
-  'numba<0.63,>=0.53',
+  'numba<0.63,>=0.53; python_version < "3.14"',
   'pyod<1.2,>=0.8; python_version < "3.12"',
 ]
 classification = [
-  'numba<0.63,>=0.53',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'numba<0.63,>=0.53; python_version < "3.14"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
   'tsfresh<0.21,>=0.17; python_version < "3.12"',
 ]
 clustering = [
   'networkx<3.5',
-  'numba<0.63,>=0.53',
+  'numba<0.63,>=0.53; python_version < "3.14"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
   'ts2vg<1.3; python_version < "3.13" and platform_machine != "aarch64"',
 ]
 detection = [
   'hmmlearn<0.4,>=0.2.7; python_version < "3.13"',
-  'numba<0.63,>=0.53',
+  'numba<0.63,>=0.53; python_version < "3.14"',
   'pyod<1.2,>=0.8; python_version < "3.12"',
 ]
 forecasting = [
   'arch>=5.6,<7.1; python_version < "3.13"',
   'autots<0.7,>=0.6.1; python_version < "3.13"',
-  'pmdarima!=1.8.1,<2.1,>=1.8; python_version < "3.12"',
+  'pmdarima!=1.8.1,<2.2,>=1.8',
   'prophet<1.2,>=1.1; python_version < "3.13"',
-  'skforecast<0.19,>=0.15',
-  "skpro>=2,<2.10.0",
+  'skforecast<0.19,>=0.12.1; python_version < "3.14"',
+  "skpro>=2,<2.11.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
 ]
 networks = [
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
 ]
 param_est = [
   'seasonal<0.4,>=0.3.1; python_version < "3.13"',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
 ]
 regression = [
-  'numba<0.63,>=0.53',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
+  'numba<0.63,>=0.53; python_version < "3.14"',
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
 ]
 transformations = [
   'holidays>=0.29,<0.59; python_version < "3.13"',
-  'numba<0.63,>=0.53',
+  'numba<0.63,>=0.53; python_version < "3.14"',
   'pycatch22>=0.4,<0.4.6; python_version < "3.13"',
   'simdkalman',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
@@ -238,7 +240,7 @@ docs = [
   "tabulate",
 ]
 tests = [
-  "pytest>=7.4,<8.5",
+  "pytest>=7.4,<9.1",
   "pytest-randomly>=3.15,<4.1",
   "pytest-timeout>=2.1,<2.5",
   "pytest-xdist>=3.3,<3.9",
@@ -253,7 +255,7 @@ binder = [
 cython_extras = [
   "mrseql < 0.0.3",
   'mrsqm; python_version < "3.11"',
-  "numba<0.63",
+  'numba<0.63; python_version < "3.14"',
 ]
 datasets = [
   "huggingface-hub",
@@ -261,14 +263,12 @@ datasets = [
   "requests",
 ]
 dl = [
-  'FrEIA; python_version < "3.12"',
   'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
   'peft>=0.10.0,<0.14.0; python_version < "3.12"',
-  'tensorflow<2.20,>=2; python_version < "3.13"',
-  "torch; (sys_platform != 'darwin' or python_version != '3.13')",
-  'transformers[torch]<4.41.0; python_version < "3.12"',
-  'pykan>=0.2.1,<0.2.9; python_version > "3.9.7"',
-  "pytorch-forecasting>=1.0.0,<1.5.0; (sys_platform != 'darwin' or python_version != '3.13')",
+  'tensorflow<2.20,>=2.15; python_version < "3.13"',
+  "torch; (sys_platform != 'darwin' or python_version < '3.13')",
+  'transformers[torch]<4.41.0; python_version < "3.13"',
+  "pytorch-forecasting>=1.0.0,<1.6.0; (sys_platform != 'darwin' or python_version != '3.13') and python_version < '3.14'",
   'lightning>=2.0; python_version < "3.12"',
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
@@ -449,7 +449,6 @@ allowed-confusables=["σ"]
   "D104", # Missing docstring in public package
   "D106", # Missing docstring in public nested class
 ]
-"sktime/libs/tirex/**/*.py" = ["ALL"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

@@ -10,8 +10,8 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.utils.dependencies import _placeholder_record
 
 
-# TODO 0.39.0: update upper and lower bounds when Prophetverse 0.9.0 is released
-@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.8.0,<0.10.0")
+# TODO 0.41.0: update upper and/or lower bounds when Prophetverse 0.11.0 is released
+@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.8.0,<0.11.0")
 class Prophetverse(_DelegatedForecaster):
     """Univariate prophetverse forecaster - prophet model implemented in numpyro.
 
@@ -149,8 +149,8 @@ class Prophetverse(_DelegatedForecaster):
         self._delegate = Prophetverse(**self.get_params())
 
 
-# TODO 0.40.0: update upper and lower bounds when Prophetverse 0.10.0 is released
-@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.8.0,<0.10.0")
+# TODO 0.41.0: update upper and/or lower bounds when Prophetverse 0.11.0 is released
+@_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.8.0,<0.11.0")
 class HierarchicalProphet(_DelegatedForecaster):
     """A Bayesian hierarchical time series forecasting model based on Meta's Prophet.
 

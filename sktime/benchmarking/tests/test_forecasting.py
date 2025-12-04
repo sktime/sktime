@@ -406,7 +406,7 @@ def test_dataset_classes(tmp_path):
         pd.Series(
             [
                 "[dataset=Longley]_[cv_splitter=ExpandingWindowSplitter]",
-                "_[cv_splitter=ExpandingWindowSplitter]",
+                "[dataset=cif_2016_dataset]_[cv_splitter=ExpandingWindowSplitter]",
             ],
             name="validation_id",
         ),

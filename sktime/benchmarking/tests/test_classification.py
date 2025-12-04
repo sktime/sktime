@@ -203,7 +203,7 @@ def test_multiple_dataset_format(tmp_path):
         pd.Series(
             [
                 "[dataset=ArrowHead]_[cv_splitter=KFold]",
-                "_[cv_splitter=KFold]",
+                "[dataset=Beef]_[cv_splitter=KFold]",
             ],
             name="validation_id",
         ),
