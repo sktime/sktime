@@ -471,7 +471,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
     >>> sp_est.get_fitted_params()["sp"]
     6
     >>> sp_est.get_fitted_params()["sp_significant"]
-    array([6, 12, 14, 4, 10, 5])
+    array([ 6, 12, 14,  4, 10,  5])
     """
 
     _tags = {
@@ -638,9 +638,9 @@ class SeasonalityPeriodogram(BaseParamFitter):
             self.sp_ = 1
             self.sp_significant_ = []
         else:
-            seasons = [x[0] for x in seasons]
-            self.sp_significant_ = seasons
-            self.sp_ = self.sp_significant_[0]
+            seasons = [int(x[0]) for x in seasons]
+            self.sp_significant_ = np.array(seasons)
+            self.sp_ = int(self.sp_significant_[0])
 
         return self
 
