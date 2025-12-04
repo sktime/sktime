@@ -459,7 +459,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
     ----------
     .. [1]: https://en.wikipedia.org/wiki/Welch%27s_method
     .. [2]: https://github.com/welch/seasonal
-        
+
     Examples
     --------
     >>> from sktime.datasets import load_airline
@@ -475,7 +475,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
     """
 
     _tags = {
-        "authors": ["welch", "blazingbhavneek", " JATAYU000"],
+        "authors": ["welch", "blazingbhavneek", "JATAYU000"],
         "maintainers": ["blazingbhavneek"],
         "X_inner_mtype": "pd.Series",
         "scitype:X": "Series",
