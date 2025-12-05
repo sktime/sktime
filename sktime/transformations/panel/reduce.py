@@ -110,6 +110,7 @@ class TimeBinner(BaseTransformer):
         "X_inner_mtype": ["nested_univ"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # and for y?
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self, idx, aggfunc=None):
@@ -182,5 +183,8 @@ class TimeBinner(BaseTransformer):
         import pandas as pd
 
         idx = pd.interval_range(start=0, end=100, freq=10, closed="left")
-        params = {"idx": idx}
-        return params
+        return [
+            {"idx": idx},
+            {"idx": idx, "aggfunc": np.median},
+            {"idx": idx, "aggfunc": np.sum},
+        ]

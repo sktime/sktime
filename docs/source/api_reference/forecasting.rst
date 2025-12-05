@@ -381,6 +381,14 @@ Auto-ARIMA models
 
     StatsForecastAutoARIMA
 
+.. currentmodule:: sktime.forecasting.arar
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARARForecaster
+
 
 ARCH models
 -----------
@@ -492,6 +500,14 @@ Deep learning based forecasters
     :template: class.rst
 
     SCINetForecaster
+
+.. currentmodule:: sktime.forecasting.convtimenet
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ConvTimeNetForecaster
 
 .. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
 
@@ -650,6 +666,14 @@ Intermittent time series forecasters
 
     StatsForecastADIDA
 
+.. currentmodule:: sktime.forecasting.tsb
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSB
+
 Ensembles and stacking
 ----------------------
 
@@ -686,6 +710,17 @@ Ensembles and stacking
     :template: class.rst
 
     MAPAForecaster
+
+Causal Forecasting
+------------------
+
+.. currentmodule:: sktime.forecasting.causal
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DoubleMLForecaster
 
 Hierarchical reconciliation
 ---------------------------

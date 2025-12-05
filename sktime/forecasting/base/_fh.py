@@ -201,14 +201,17 @@ class ForecastingHorizon:
     ----------
     values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
         Values of forecasting horizon
+
     is_relative : bool, optional (default=None)
+
         - If True, a relative ForecastingHorizon is created:
-                values are relative to end of training series.
+          values are relative to end of training series.
         - If False, an absolute ForecastingHorizon is created:
-                values are absolute.
+          values are absolute.
         - if None, the flag is determined automatically:
-            relative, if values are of supported relative index type
-            absolute, if not relative and values of supported absolute index type
+          relative, if values are of supported relative index type
+          absolute, if not relative and values of supported absolute index type
+
     freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
         object carrying frequency information on values
         ignored unless values is without inferable freq
@@ -966,7 +969,7 @@ def _index_range(relative, cutoff):
 
 def _is_pandas_arithmetic_bug_fixed():
     """Check if pandas supports correct arithmetic without a workaround."""
-    # TODO: 0.40.0:
+    # TODO: 0.41.0:
     # Check at every minor release whether lower pandas bound >=1.5.0
     # if yes, can remove the workaround in the "else" condition and the check
     #

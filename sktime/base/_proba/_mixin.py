@@ -328,3 +328,11 @@ class _PredictProbaMixin:
         pred_dist = Normal(mu=pred_mean, sigma=pred_std, index=index, columns=columns)
 
         return pred_dist
+
+    def _add_det_to_proba(self, y_proba, y_pred):
+        """Add multiindex columns to probabilistic forecasts."""
+        y_proba = y_proba.copy()
+        for col in y_proba.columns:
+            var = col[0]
+            y_proba[col] = y_proba[col] + y_pred[var]
+        return y_proba

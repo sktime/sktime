@@ -466,11 +466,12 @@ class SeasonalityPeriodogram(BaseParamFitter):
         "scitype:X": "Series",
         "capability:missing_values": True,
         "capability:multivariate": False,
-        # todo 0.40.0: check whether scipy<1.16 is still needed
+        # todo 0.41.0: check whether scipy<1.16 is still needed
         "python_dependencies": ["seasonal", "scipy<1.16"],
         # CI and test flags
         # -----------------
         "tests:vm": True,  # tested on separate VM due to seasonal dependency
+        "tests:core": False,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, min_period=4, max_period=None, thresh=0.10):

@@ -99,10 +99,10 @@ class MyForecaster(BaseForecaster):
         # capability tags: properties of the estimator
         # --------------------------------------------
         #
-        # ignores-exogeneous-X = does estimator ignore the exogeneous X?
+        # capability:exogenous = does estimator use exogeneous X nontrivially?
         "capability:exogenous": True,
         # valid values: boolean False (ignores X), True (uses X in non-trivial manner)
-        # CAVEAT: if tag is set to True, inner methods always see X=None
+        # CAVEAT: if tag is set to False, inner methods always see X=None
         #
         # requires-fh-in-fit = is forecasting horizon always required in fit?
         "requires-fh-in-fit": True,
