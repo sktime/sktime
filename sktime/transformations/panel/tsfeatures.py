@@ -4,7 +4,6 @@
 __author__ = ["Faakhir30"]
 __all__ = ["TSFeaturesTransformer"]
 
-import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
@@ -73,7 +72,7 @@ class TSFeaturesTransformer(BaseTransformer):
             "jose-moralez",
             "rolivaresar",
             "mergenthaler",
-            ],
+        ],
         "maintainers": ["Faakhir30"],
         "python_dependencies": ["tsfeatures"],
         #
@@ -98,9 +97,8 @@ class TSFeaturesTransformer(BaseTransformer):
         "capability:multivariate": False,
         # testing configuration
         # ---------------------
-        # "tests:vm": True,
+        "tests:vm": True,
     }
-
 
     def __init__(
         self,
@@ -121,7 +119,9 @@ class TSFeaturesTransformer(BaseTransformer):
         Parameters
         ----------
         X : Series
-            A single univariate time series with 1 column and a datetime index.
+            A single univariate time series with 1 column.
+            If the index is not a DatetimeIndex, a default daily DatetimeIndex
+            will be created.
         y : None
             Ignored. Present only for interface compatibility.
 
@@ -139,22 +139,35 @@ class TSFeaturesTransformer(BaseTransformer):
             self.features if self.features is not None else self._get_default_features()
         )
 
-        if type(X.index) != pd.DatetimeIndex:
-            return pd.DataFrame()
+        # Ensure X is a Series
+        if isinstance(X, pd.DataFrame):
+            if X.shape[1] == 1:
+                X = X.iloc[:, 0]
+            else:
+                raise ValueError(
+                    f"X must be univariate (1 column), but got {X.shape[1]} columns"
+                )
+
+        values = X.values
+        # Handle non-DatetimeIndex
+        if not isinstance(X.index, pd.DatetimeIndex):
+            datetime_index = pd.date_range(start="2000-01-01", periods=len(X), freq="D")
+        else:
+            datetime_index = X.index
 
         # Convert to tsfeatures long format ['unique_id', 'ds', 'y']
         ts_long = pd.DataFrame(
             {
                 # used "0" as arbitrary unique_id
                 # since considering X as a single Series
-                "unique_id": "0", 
-                "ds": X.index,
-                "y": [val[0] for val in X.values],
+                "unique_id": "0",
+                "ds": datetime_index,
+                "y": values,
             }
         )
-        
-        freq = FREQS.get(pd.infer_freq(X.index))
-        
+
+        freq = FREQS.get(pd.infer_freq(datetime_index))
+
         # Extract features
         Xt = tsfeatures_func(
             ts=ts_long,
@@ -252,10 +265,3 @@ class TSFeaturesTransformer(BaseTransformer):
             )
 
         return params
-
-
-# from sktime.transformations.panel.tsfeatures import TSFeaturesTransformer
-# from sktime.utils._testing.series import _make_series
-# X = _make_series()
-# transformer = TSFeaturesTransformer()
-# Xt = transformer.fit_transform(X)
