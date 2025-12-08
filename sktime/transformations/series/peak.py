@@ -197,12 +197,7 @@ class PeakTimeFeature(BaseTransformer):
             "pd_multiindex_hier",
         ],
         # which mtypes do _fit/_predict support for y?
-        "y_inner_mtype": [
-            "pd.Series",
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
+        "y_inner_mtype": "None",
         "capability:multivariate": True,
         "fit_is_empty": True,
         "transform-returns-same-time-index": True,
