@@ -179,8 +179,8 @@ class BaseDeepClassifier(BaseClassifier):
 
     def __init__(
         self,
-        compile_kwargs: KerasCompileKwargs | None,
-        fit_kwargs: KerasFitKwargs | None,
+        compile_kwargs: KerasCompileKwargs | None = None,
+        fit_kwargs: KerasFitKwargs | None = None,
     ):
         self.compile_kwargs = compile_kwargs
         self.fit_kwargs = fit_kwargs
