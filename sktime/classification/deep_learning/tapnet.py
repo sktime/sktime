@@ -60,6 +60,12 @@ class TapNetClassifier(BaseDeepClassifier):
         whether to output extra information
     random_state : int or None, default = None
         seed for random
+    compile_kwargs : KerasCompileKwargs, default=None
+        Additional arguments for Keras model compilation.
+        See ``KerasCompileKwargs`` for available options.
+    fit_kwargs : KerasFitKwargs, default=None
+        Additional arguments for Keras model training.
+        See ``KerasFitKwargs`` for available options.
 
     Attributes
     ----------
@@ -128,6 +134,8 @@ class TapNetClassifier(BaseDeepClassifier):
         metrics=None,
         callbacks=None,
         verbose=False,
+        compile_kwargs=None,
+        fit_kwargs=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -159,7 +167,7 @@ class TapNetClassifier(BaseDeepClassifier):
         self.use_rp = use_rp
         self.rp_params = rp_params
 
-        super().__init__()
+        super().__init__(compile_kwargs=compile_kwargs, fit_kwargs=fit_kwargs)
 
         self._network = TapNetNetwork(
             activation=self.activation_hidden,
@@ -219,10 +227,14 @@ class TapNetClassifier(BaseDeepClassifier):
         )
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
+        compile_kwargs = (
+            self.compile_kwargs.as_dict() if self.compile_kwargs is not None else {}
+        )
         model.compile(
             loss=self.loss,
             optimizer=self.optimizer_,
             metrics=metrics,
+            **compile_kwargs,
         )
 
         return model
@@ -250,6 +262,8 @@ class TapNetClassifier(BaseDeepClassifier):
         self.model_ = self.build_model(self.input_shape, self.n_classes_)
         if self.verbose:
             self.model_.summary()
+
+        fit_kwargs = self.fit_kwargs.as_dict() if self.fit_kwargs is not None else {}
         self.history = self.model_.fit(
             X,
             y_onehot,
@@ -257,6 +271,7 @@ class TapNetClassifier(BaseDeepClassifier):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=deepcopy(self.callbacks) if self.callbacks else [],
+            **fit_kwargs,
         )
 
         return self

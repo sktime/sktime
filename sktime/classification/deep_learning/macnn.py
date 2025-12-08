@@ -61,6 +61,12 @@ class MACNNClassifier(BaseDeepClassifier):
     verbose : bool, optional (default=False)
         Verbosity during model training, making it ``True`` will
         print model summary, training information etc.
+    compile_kwargs : KerasCompileKwargs, default=None
+        Additional arguments for Keras model compilation.
+        See ``KerasCompileKwargs`` for available options.
+    fit_kwargs : KerasFitKwargs, default=None
+        Additional arguments for Keras model training.
+        See ``KerasFitKwargs`` for available options.
 
     References
     ----------
@@ -109,6 +115,8 @@ class MACNNClassifier(BaseDeepClassifier):
         callbacks=None,
         random_state=0,
         verbose=False,
+        compile_kwargs=None,
+        fit_kwargs=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -131,7 +139,7 @@ class MACNNClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self.verbose = verbose
 
-        super().__init__()
+        super().__init__(compile_kwargs=compile_kwargs, fit_kwargs=fit_kwargs)
 
         self.history = None
         self._network = MACNNNetwork(
@@ -185,10 +193,14 @@ class MACNNClassifier(BaseDeepClassifier):
         )
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
+        compile_kwargs = (
+            self.compile_kwargs.as_dict() if self.compile_kwargs is not None else {}
+        )
         model.compile(
             loss=self.loss,
             optimizer=self.optimizer_,
             metrics=metrics,
+            **compile_kwargs,
         )
 
         return model
@@ -218,6 +230,7 @@ class MACNNClassifier(BaseDeepClassifier):
         if self.verbose:
             self.model_.summary()
 
+        fit_kwargs = self.fit_kwargs.as_dict() if self.fit_kwargs is not None else {}
         self.history = self.model_.fit(
             X,
             y_onehot,
@@ -225,6 +238,7 @@ class MACNNClassifier(BaseDeepClassifier):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=self.callbacks_,
+            **fit_kwargs,
         )
 
         return self
