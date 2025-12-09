@@ -48,6 +48,12 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         Activation function used in the inception layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
+    compile_kwargs : KerasCompileKwargs, default=None
+        Additional arguments for Keras model compilation.
+        See ``KerasCompileKwargs`` for available options.
+    fit_kwargs : KerasFitKwargs, default=None
+        Additional arguments for Keras model training.
+        See ``KerasFitKwargs`` for available options.
 
     Notes
     -----
@@ -81,6 +87,8 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         activation="linear",
         activation_hidden="relu",
         activation_inception="linear",
+        compile_kwargs=None,
+        fit_kwargs=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -104,7 +112,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         self.use_residual = use_residual
         self.verbose = verbose
 
-        super().__init__()
+        super().__init__(compile_kwargs=compile_kwargs, fit_kwargs=fit_kwargs)
 
         network_params = {
             "n_filters": n_filters,
@@ -149,10 +157,14 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         else:
             metrics = self.metrics
 
+        compile_kwargs = (
+            self.compile_kwargs.as_dict() if self.compile_kwargs is not None else {}
+        )
         model.compile(
             loss=self.loss,
             optimizer=keras.optimizers.Adam(),
             metrics=metrics,
+            **compile_kwargs,
         )
 
         return model
@@ -181,6 +193,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
             self.model_.summary()
 
         callbacks = self._check_callbacks(self.callbacks)
+        fit_kwargs = self.fit_kwargs.as_dict() if self.fit_kwargs is not None else {}
 
         self.history = self.model_.fit(
             X,
@@ -189,6 +202,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=deepcopy(callbacks) if callbacks else [],
+            **fit_kwargs,
         )
         return self
 
