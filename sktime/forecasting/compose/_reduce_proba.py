@@ -1139,86 +1139,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         # Create the combined Empirical distribution
         return Empirical(spl=combined_spl, index=full_index, columns=columns)
 
-    def _predict_proba_empirical(self, fh, X, marginal=True):
-        """Compute probabilistic forecasts as Empirical distribution.
-
-        .. deprecated::
-            This method is deprecated. Use _predict_proba directly which now
-            returns an Empirical distribution by default.
-
-        Alternative method that returns the raw Empirical distribution.
-        Now equivalent to _predict_proba since the default behavior was changed
-        from Normal approximation to Empirical distribution.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-            Forecasting horizon.
-        X : pd.DataFrame, optional
-            Exogeneous time series.
-        marginal : bool, optional, default=True
-            Whether returned distribution is marginal by time index.
-
-        Returns
-        -------
-        pred_dist : Empirical
-            Empirical distribution from MC samples.
-        """
-        from skpro.distributions import Empirical
-
-        if X is not None and self._X is not None:
-            X_pool = X.combine_first(self._X)
-        elif X is None and self._X is not None:
-            X_pool = self._X
-        else:
-            X_pool = X
-
-        fh_idx = self._get_expected_pred_idx(fh=fh)
-        y_cols = self._y.columns
-
-        # Handle empty lags case
-        if self.empty_lags_:
-            samples = np.full(
-                (self.n_samples, len(fh_idx), len(y_cols)),
-                self.dummy_value_.values[0],
-            )
-            return Empirical(
-                spl=pd.DataFrame(
-                    samples.reshape(-1, len(y_cols)),
-                    columns=y_cols,
-                    index=pd.MultiIndex.from_product(
-                        [range(self.n_samples), fh_idx], names=["sample", "time"]
-                    ),
-                ),
-                index=fh_idx,
-                columns=y_cols,
-            )
-
-        # Generate MC sample trajectories using ancestral sampling
-        all_trajectories = self._generate_mc_trajectories(fh, X_pool)
-
-        # Reshape for Empirical distribution
-        sample_indices = []
-        time_indices = []
-        values = []
-
-        for sample_idx in range(self.n_samples):
-            for h_idx, time_idx in enumerate(fh_idx):
-                sample_indices.append(sample_idx)
-                time_indices.append(time_idx)
-                values.append(all_trajectories[sample_idx, h_idx, :])
-
-        # Create MultiIndex DataFrame for Empirical
-        multi_idx = pd.MultiIndex.from_arrays(
-            [sample_indices, time_indices], names=["sample", "time"]
-        )
-        spl_df = pd.DataFrame(np.vstack(values), index=multi_idx, columns=y_cols)
-
-        # Create Empirical distribution
-        pred_dist = Empirical(spl=spl_df, index=fh_idx, columns=y_cols)
-
-        return pred_dist
-
     def _generate_mc_trajectories(self, fh, X_pool):
         """Generate Monte Carlo sample trajectories using ancestral sampling.
 
@@ -1338,8 +1258,8 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         # Import a simple probabilistic regressor for testing
         # Note: This requires skpro to be installed
         try:
-            from skpro.regression.residual import ResidualDouble
             from sklearn.linear_model import LinearRegression
+            from skpro.regression.residual import ResidualDouble
 
             est = ResidualDouble(LinearRegression())
         except ImportError:
