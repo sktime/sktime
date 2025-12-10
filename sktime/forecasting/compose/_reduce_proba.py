@@ -6,7 +6,7 @@ regressors like XGBoostLSS).
 """
 
 __author__ = ["marrov"]
-__all__ = ["DirectProbaReductionForecaster"]
+__all__ = ["DirectProbaReductionForecaster", "MCRecursiveProbaReductionForecaster"]
 
 import numpy as np
 import pandas as pd
@@ -613,6 +613,502 @@ class DirectProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             "X_treatment": "concurrent",
             "pooling": "global",
             "windows_identical": False,
+        }
+
+        return [params1, params2]
+
+
+class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
+    """Monte Carlo Recursive reduction forecaster with probabilistic prediction.
+
+    Implements recursive reduction with ancestral sampling for multi-step ahead
+    probabilistic forecasting. Uses Monte Carlo sampling to generate multiple
+    forecast trajectories, where each step is sampled from the predicted
+    distribution conditioned on previously sampled values.
+
+    This approach is inspired by DeepAR's ancestral sampling strategy, adapted
+    for use with any tabular probabilistic regressor (e.g., XGBoostLSS from skpro).
+
+    Algorithm details:
+
+    In ``fit``, given endogeneous time series ``y`` and possibly exogeneous ``X``:
+        fits ``estimator`` to feature-label pairs for one-step-ahead prediction:
+        features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_length+1)``,
+                   if provided: ``X(t+1)``
+        labels = ``y(t+1)``
+        ranging over all ``t`` where the above have been observed
+
+    In ``predict_proba``, given possibly exogeneous ``X``, at cutoff time ``c``:
+        1. Generate ``n_samples`` Monte Carlo trajectories using ancestral sampling
+        2. For each trajectory and each horizon step ``h``:
+           a. Get probabilistic prediction from estimator using lagged features
+           b. Sample one value from the predicted distribution
+           c. Use this sampled value as input for the next step
+        3. Construct empirical distribution from the ``n_samples`` trajectories
+
+    In ``predict``, returns the mean of the empirical distribution from MC samples.
+
+    Parameters
+    ----------
+    estimator : skpro probabilistic regressor
+        Tabular probabilistic regression algorithm used in reduction.
+        Must support ``predict_proba`` method returning a distribution object.
+
+    window_length : int, optional, default=10
+        Window length used in the reduction algorithm (number of lags).
+
+    n_samples : int, optional, default=100
+        Number of Monte Carlo sample trajectories to generate.
+        Higher values give more accurate distribution estimates but slower inference.
+
+    impute_method : str, None, or sktime transformation, optional
+        Imputation method to use for missing values in the lagged data.
+        default="bfill"
+        if str, admissible strings are of ``Imputer.method`` parameter.
+        if sktime transformer, this transformer is applied to the lagged data.
+        if None, no imputation is done.
+
+    pooling : str, one of ["local", "global", "panel"], optional, default="local"
+        Level on which data are pooled to fit the supervised regression model.
+        "local" = unit/instance level, one reduced model per lowest hierarchy level
+        "global" = top level, one reduced model overall, on pooled data
+        "panel" = second lowest level, one reduced model per panel level (-2)
+
+    random_state : int, RandomState instance or None, optional, default=None
+        Controls the randomness of the Monte Carlo sampling.
+
+    Attributes
+    ----------
+    estimator_ : fitted estimator
+        The fitted probabilistic regressor.
+
+    Examples
+    --------
+    >>> from skpro.regression.xgboostlss import XGBoostLSS
+    >>> from sktime.forecasting.compose import MCRecursiveProbaReductionForecaster
+    >>> from sktime.datasets import load_airline
+    >>>
+    >>> y = load_airline()
+    >>> estimator = XGBoostLSS(dist="Normal", n_trials=0)
+    >>> forecaster = MCRecursiveProbaReductionForecaster(
+    ...     estimator=estimator,
+    ...     window_length=5,
+    ...     n_samples=100,
+    ... )
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>> y_pred_dist = forecaster.predict_proba(fh=[1, 2, 3])
+    """
+
+    _tags = {
+        "authors": ["marrov"],
+        "requires-fh-in-fit": False,
+        "capability:exogenous": True,
+        "capability:pred_int": True,
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+    }
+
+    def __init__(
+        self,
+        estimator,
+        window_length=10,
+        n_samples=100,
+        impute_method="bfill",
+        pooling="local",
+        random_state=None,
+    ):
+        self.window_length = window_length
+        self.estimator = estimator
+        self.n_samples = n_samples
+        self.impute_method = impute_method
+        self.pooling = pooling
+        self.random_state = random_state
+        self._lags = list(range(window_length))
+        super().__init__()
+
+        # Detect if estimator is a probabilistic regressor (skpro)
+        if hasattr(estimator, "get_tags"):
+            _est_type = estimator.get_tag("object_type", "regressor", False)
+        else:
+            _est_type = "regressor"
+
+        if _est_type != "regressor_proba":
+            raise ValueError(
+                "MCRecursiveProbaReductionForecaster requires an skpro probabilistic "
+                f"regressor, but received estimator of type {_est_type}. "
+                "Use RecursiveReductionForecaster for non-probabilistic estimators."
+            )
+
+        self._est_type = _est_type
+
+        if pooling == "local":
+            mtypes = "pd.DataFrame"
+        elif pooling == "global":
+            mtypes = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+        elif pooling == "panel":
+            mtypes = ["pd.DataFrame", "pd-multiindex"]
+        else:
+            raise ValueError(
+                "pooling in MCRecursiveProbaReductionForecaster must be one of"
+                ' "local", "global", "panel", '
+                f"but found {pooling}"
+            )
+        self.set_tags(**{"X_inner_mtype": mtypes})
+        self.set_tags(**{"y_inner_mtype": mtypes})
+
+    def _fit(self, y, X, fh):
+        """Fit forecaster to training data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Time series to fit the forecaster to.
+        X : pd.DataFrame, optional
+            Exogeneous time series.
+        fh : ForecastingHorizon
+            Forecasting horizon.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.transformations.series.lag import Lag, ReducerTransform
+
+        impute_method = self.impute_method
+        lags = self._lags
+
+        # Create the lagger for transforming y into features
+        lagger_y_to_X = ReducerTransform(lags=lags, impute_method=impute_method)
+        self.lagger_y_to_X_ = lagger_y_to_X
+
+        # Fit the lagger and transform y to get features
+        Xt = lagger_y_to_X.fit_transform(X=y, y=X)
+
+        # Create target by lagging y by 1 step
+        lagger_y_to_y = Lag(lags=-1, index_out="original", keep_column_names=True)
+        self.lagger_y_to_y_ = lagger_y_to_y
+
+        yt = lagger_y_to_y.fit_transform(X=y)
+
+        # Get valid indices (no NaN)
+        Xt_notna_idx = _get_notna_idx(Xt)
+        yt_notna_idx = _get_notna_idx(yt)
+        notna_idx = Xt_notna_idx.intersection(yt_notna_idx)
+
+        if len(notna_idx) == 0:
+            self.empty_lags_ = True
+            self.dummy_value_ = y.mean()
+            return self
+        else:
+            self.empty_lags_ = False
+
+        yt = yt.loc[notna_idx]
+        Xt = Xt.loc[notna_idx]
+
+        Xt = prep_skl_df(Xt)
+        yt = prep_skl_df(yt)
+
+        # Clone and fit the estimator
+        estimator = clone(self.estimator)
+        estimator.fit(Xt, yt)
+        self.estimator_ = estimator
+
+        return self
+
+    def _predict(self, fh=None, X=None):
+        """Forecast time series at future horizon.
+
+        Returns the mean of the Monte Carlo sampled distributions.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            Forecasting horizon.
+        X : pd.DataFrame, optional
+            Exogeneous time series.
+
+        Returns
+        -------
+        y_pred : pd.DataFrame
+            Point predictions (mean of MC samples).
+        """
+        # Get the probabilistic prediction and return its mean
+        pred_dist = self._predict_proba(fh=fh, X=X, marginal=True)
+        return pred_dist.mean()
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute probabilistic forecasts using Monte Carlo ancestral sampling.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            Forecasting horizon.
+        X : pd.DataFrame, optional
+            Exogeneous time series.
+        marginal : bool, optional, default=True
+            Whether returned distribution is marginal by time index.
+
+        Returns
+        -------
+        pred_dist : skpro BaseDistribution
+            Predictive distribution.
+            Returns a Normal distribution fitted to the MC samples.
+        """
+        from skpro.distributions import Normal
+
+        if X is not None and self._X is not None:
+            X_pool = X.combine_first(self._X)
+        elif X is None and self._X is not None:
+            X_pool = self._X
+        else:
+            X_pool = X
+
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_cols = self._y.columns
+
+        # Handle empty lags case
+        if self.empty_lags_:
+            # Return Normal distribution with mean and small variance
+            mu = np.full((len(fh_idx), len(y_cols)), self.dummy_value_.values[0])
+            sigma = np.ones((len(fh_idx), len(y_cols)))
+            return Normal(mu=mu, sigma=sigma, index=fh_idx, columns=y_cols)
+
+        # Generate MC sample trajectories using ancestral sampling
+        all_trajectories = self._generate_mc_trajectories(fh, X_pool)
+
+        # all_trajectories shape: (n_samples, n_horizons, n_cols)
+        # Fit Normal distribution to the samples at each time step
+        n_horizons = len(fh_idx)
+        n_cols = len(y_cols)
+
+        # Compute mean and std across samples for each (horizon, column)
+        mu = np.mean(all_trajectories, axis=0)  # (n_horizons, n_cols)
+        sigma = np.std(all_trajectories, axis=0)  # (n_horizons, n_cols)
+
+        # Ensure sigma is not zero (add small epsilon)
+        sigma = np.maximum(sigma, 1e-6)
+
+        # Create Normal distribution
+        pred_dist = Normal(mu=mu, sigma=sigma, index=fh_idx, columns=y_cols)
+
+        return pred_dist
+
+    def _predict_proba_empirical(self, fh, X, marginal=True):
+        """Compute probabilistic forecasts as Empirical distribution.
+
+        Alternative method that returns the raw Empirical distribution
+        instead of a Normal approximation. Use this directly if you need
+        the full sample trajectories.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            Forecasting horizon.
+        X : pd.DataFrame, optional
+            Exogeneous time series.
+        marginal : bool, optional, default=True
+            Whether returned distribution is marginal by time index.
+
+        Returns
+        -------
+        pred_dist : Empirical
+            Empirical distribution from MC samples.
+        """
+        from skpro.distributions import Empirical
+
+        if X is not None and self._X is not None:
+            X_pool = X.combine_first(self._X)
+        elif X is None and self._X is not None:
+            X_pool = self._X
+        else:
+            X_pool = X
+
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_cols = self._y.columns
+
+        # Handle empty lags case
+        if self.empty_lags_:
+            samples = np.full(
+                (self.n_samples, len(fh_idx), len(y_cols)),
+                self.dummy_value_.values[0],
+            )
+            return Empirical(
+                spl=pd.DataFrame(
+                    samples.reshape(-1, len(y_cols)),
+                    columns=y_cols,
+                    index=pd.MultiIndex.from_product(
+                        [range(self.n_samples), fh_idx], names=["sample", "time"]
+                    ),
+                ),
+                index=fh_idx,
+                columns=y_cols,
+            )
+
+        # Generate MC sample trajectories using ancestral sampling
+        all_trajectories = self._generate_mc_trajectories(fh, X_pool)
+
+        # Reshape for Empirical distribution
+        sample_indices = []
+        time_indices = []
+        values = []
+
+        for sample_idx in range(self.n_samples):
+            for h_idx, time_idx in enumerate(fh_idx):
+                sample_indices.append(sample_idx)
+                time_indices.append(time_idx)
+                values.append(all_trajectories[sample_idx, h_idx, :])
+
+        # Create MultiIndex DataFrame for Empirical
+        multi_idx = pd.MultiIndex.from_arrays(
+            [sample_indices, time_indices], names=["sample", "time"]
+        )
+        spl_df = pd.DataFrame(np.vstack(values), index=multi_idx, columns=y_cols)
+
+        # Create Empirical distribution
+        pred_dist = Empirical(spl=spl_df, index=fh_idx, columns=y_cols)
+
+        return pred_dist
+
+    def _generate_mc_trajectories(self, fh, X_pool):
+        """Generate Monte Carlo sample trajectories using ancestral sampling.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            Forecasting horizon.
+        X_pool : pd.DataFrame or None
+            Pooled exogeneous data.
+
+        Returns
+        -------
+        trajectories : np.ndarray
+            Shape (n_samples, n_horizons, n_cols) array of sampled trajectories.
+        """
+        from sktime.transformations.series.lag import Lag
+
+        y_cols = self._y.columns
+        n_cols = len(y_cols)
+
+        fh_rel = fh.to_relative(self.cutoff)
+        fh_abs = fh.to_absolute(self.cutoff)
+        y_lags_rel = list(fh_rel)
+
+        # Get the maximum horizon to fill in gaps
+        max_horizon = max(y_lags_rel)
+        y_lags_no_gaps = list(range(1, max_horizon + 1))
+
+        n_horizons = len(y_lags_rel)
+        trajectories = np.zeros((self.n_samples, n_horizons, n_cols))
+
+        # Set random state for reproducibility
+        if self.random_state is not None:
+            np.random.seed(self.random_state)
+
+        lagger_y_to_X = self.lagger_y_to_X_
+        estimator = self.estimator_
+
+        # Generate n_samples trajectories
+        for sample_idx in range(self.n_samples):
+            # Start with the observed y values
+            y_extended = self._y.copy()
+
+            # Iterate through each horizon step
+            for step_idx, horizon in enumerate(y_lags_no_gaps):
+                # Transform current y to get features using the same lagger as in fit
+                Xt = lagger_y_to_X.transform(X=y_extended, y=X_pool)
+
+                # Get the cutoff (last time point in extended y)
+                current_cutoff = y_extended.index.get_level_values(-1).max()
+
+                # Get features at the current cutoff point
+                Xt_predrow = slice_at_ix(Xt, current_cutoff)
+
+                # Add exogeneous features if available
+                if X_pool is not None:
+                    # For recursive forecasting, we need X at the prediction time
+                    # which is cutoff + 1 step
+                    try:
+                        # Try to get X at current_cutoff + 1 (prediction time)
+                        # This may not always be available
+                        predict_time = (
+                            fh_abs[step_idx] if step_idx < len(fh_abs) else None
+                        )
+                        if predict_time is not None:
+                            X_at_idx = slice_at_ix(X_pool, predict_time)
+                            Xt_predrow = pd.concat([X_at_idx, Xt_predrow], axis=1)
+                    except (KeyError, IndexError):
+                        # X not available at this index, proceed without it
+                        pass
+
+                Xt_predrow = prep_skl_df(Xt_predrow)
+
+                # Get probabilistic prediction
+                pred_dist = estimator.predict_proba(Xt_predrow)
+
+                # Sample from the distribution (ancestral sampling)
+                # Note: skpro sample() doesn't take random_state, use global seed
+                sample_val = pred_dist.sample(n_samples=1)
+
+                # Extract the sampled value
+                if hasattr(sample_val, "values"):
+                    sampled_value = sample_val.values.flatten()
+                else:
+                    sampled_value = np.array(sample_val).flatten()
+
+                # Store if this horizon is in our requested fh
+                if horizon in y_lags_rel:
+                    traj_idx = y_lags_rel.index(horizon)
+                    trajectories[sample_idx, traj_idx, :] = sampled_value
+
+                # Extend y with the sampled value for next iteration
+                # We need to compute the next time index
+                # Use the forecasting horizon to get the absolute index
+                if step_idx < len(fh_abs):
+                    predict_idx = fh_abs[step_idx]
+                else:
+                    # Fallback: extend by one period from cutoff
+                    from pandas import DateOffset
+
+                    if hasattr(self.fh, "freq") and self.fh.freq is not None:
+                        predict_idx = current_cutoff + self.fh.freq
+                    else:
+                        predict_idx = current_cutoff + 1
+
+                new_idx = self._get_expected_pred_idx(fh=[predict_idx])
+                new_row = pd.DataFrame(
+                    sampled_value.reshape(1, -1), columns=y_cols, index=new_idx
+                )
+                y_extended = pd.concat([y_extended, new_row])
+
+        return trajectories
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator."""
+        # Import a simple probabilistic regressor for testing
+        # Note: This requires skpro to be installed
+        try:
+            from skpro.regression.residual import ResidualDouble
+            from sklearn.linear_model import LinearRegression
+
+            est = ResidualDouble(LinearRegression())
+        except ImportError:
+            # Fallback if skpro not available
+            from sklearn.linear_model import LinearRegression
+
+            est = LinearRegression()
+
+        params1 = {
+            "estimator": est,
+            "window_length": 3,
+            "n_samples": 10,
+            "pooling": "local",
+        }
+        params2 = {
+            "estimator": est,
+            "window_length": 3,
+            "n_samples": 20,
+            "pooling": "global",
         }
 
         return [params1, params2]
