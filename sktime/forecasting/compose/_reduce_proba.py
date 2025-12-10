@@ -10,9 +10,10 @@ __all__ = ["DirectProbaReductionForecaster"]
 
 import numpy as np
 import pandas as pd
-from base_proba_forecaster import BaseProbaForecaster
 from sklearn.base import clone
 from sklearn.multioutput import MultiOutputRegressor
+
+from sktime.forecasting.base import BaseProbaForecaster
 from sktime.forecasting.compose._reduce import _get_notna_idx, _ReducerMixin
 from sktime.utils.sklearn import prep_skl_df
 
