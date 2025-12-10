@@ -682,6 +682,11 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     estimator_ : fitted estimator
         The fitted probabilistic regressor.
 
+    trajectories_ : np.ndarray or None
+        The most recently generated MC sample trajectories from predict_proba.
+        Shape is (n_samples, n_horizons, n_cols). Available after calling
+        predict or predict_proba. Useful for analysis and visualization.
+
     Examples
     --------
     >>> from skpro.regression.xgboostlss import XGBoostLSS
@@ -725,6 +730,13 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         self.random_state = random_state
         self._lags = list(range(window_length))
         super().__init__()
+
+        # Initialize cache attributes for avoiding duplicate computation
+        self._cached_pred_dist_ = None
+        self._cached_fh_key_ = None
+        self._cached_X_key_ = None
+        # Public attribute for user access to MC trajectories
+        self.trajectories_ = None
 
         # Detect if estimator is a probabilistic regressor (skpro)
         if hasattr(estimator, "get_tags"):
@@ -773,6 +785,9 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         self : reference to self
         """
         from sktime.transformations.series.lag import Lag, ReducerTransform
+
+        # Invalidate any cached predictions from previous fit
+        self._invalidate_cache()
 
         impute_method = self.impute_method
         lags = self._lags
@@ -832,8 +847,10 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         y_pred : pd.DataFrame
             Point predictions (mean of MC samples).
         """
-        # Get the probabilistic prediction and return its mean
-        pred_dist = self._predict_proba(fh=fh, X=X, marginal=True)
+        # Use cached distribution if available and valid
+        pred_dist = self._get_cached_pred_dist(fh=fh, X=X)
+        if pred_dist is None:
+            pred_dist = self._predict_proba(fh=fh, X=X, marginal=True)
         return pred_dist.mean()
 
     def _predict_proba(self, fh, X, marginal=True):
@@ -852,9 +869,14 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         -------
         pred_dist : skpro BaseDistribution
             Predictive distribution.
-            Returns a Normal distribution fitted to the MC samples.
+            Returns an Empirical distribution from the MC samples.
         """
-        from skpro.distributions import Normal
+        from skpro.distributions import Empirical
+
+        # Check cache first to avoid recomputation
+        cached = self._get_cached_pred_dist(fh=fh, X=X)
+        if cached is not None:
+            return cached
 
         if X is not None and self._X is not None:
             X_pool = X.combine_first(self._X)
@@ -868,37 +890,265 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
         # Handle empty lags case
         if self.empty_lags_:
-            # Return Normal distribution with mean and small variance
-            mu = np.full((len(fh_idx), len(y_cols)), self.dummy_value_.values[0])
-            sigma = np.ones((len(fh_idx), len(y_cols)))
-            return Normal(mu=mu, sigma=sigma, index=fh_idx, columns=y_cols)
+            samples = np.full(
+                (self.n_samples, len(fh_idx), len(y_cols)),
+                self.dummy_value_.values[0],
+            )
+            # Store trajectories for user access
+            self.trajectories_ = samples
+            pred_dist = Empirical(
+                spl=pd.DataFrame(
+                    samples.reshape(-1, len(y_cols)),
+                    columns=y_cols,
+                    index=pd.MultiIndex.from_product(
+                        [range(self.n_samples), fh_idx], names=["sample", "time"]
+                    ),
+                ),
+                index=fh_idx,
+                columns=y_cols,
+            )
+            self._cache_pred_dist(pred_dist, fh=fh, X=X)
+            return pred_dist
 
         # Generate MC sample trajectories using ancestral sampling
         all_trajectories = self._generate_mc_trajectories(fh, X_pool)
 
-        # all_trajectories shape: (n_samples, n_horizons, n_cols)
-        # Fit Normal distribution to the samples at each time step
-        n_horizons = len(fh_idx)
-        n_cols = len(y_cols)
+        # Store trajectories for user access
+        self.trajectories_ = all_trajectories
 
-        # Compute mean and std across samples for each (horizon, column)
-        mu = np.mean(all_trajectories, axis=0)  # (n_horizons, n_cols)
-        sigma = np.std(all_trajectories, axis=0)  # (n_horizons, n_cols)
+        # Reshape for Empirical distribution
+        sample_indices = []
+        time_indices = []
+        values = []
 
-        # Ensure sigma is not zero (add small epsilon)
-        sigma = np.maximum(sigma, 1e-6)
+        for sample_idx in range(self.n_samples):
+            for h_idx, time_idx in enumerate(fh_idx):
+                sample_indices.append(sample_idx)
+                time_indices.append(time_idx)
+                values.append(all_trajectories[sample_idx, h_idx, :])
 
-        # Create Normal distribution
-        pred_dist = Normal(mu=mu, sigma=sigma, index=fh_idx, columns=y_cols)
+        # Create MultiIndex DataFrame for Empirical
+        multi_idx = pd.MultiIndex.from_arrays(
+            [sample_indices, time_indices], names=["sample", "time"]
+        )
+        spl_df = pd.DataFrame(np.vstack(values), index=multi_idx, columns=y_cols)
+
+        # Create Empirical distribution (non-parametric, preserves actual samples)
+        pred_dist = Empirical(spl=spl_df, index=fh_idx, columns=y_cols)
+
+        # Cache the result
+        self._cache_pred_dist(pred_dist, fh=fh, X=X)
 
         return pred_dist
+
+    def _get_cache_key(self, fh, X):
+        """Generate a cache key based on forecasting horizon and exogeneous data.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            Forecasting horizon.
+        X : pd.DataFrame or None
+            Exogeneous time series.
+
+        Returns
+        -------
+        tuple : (fh_key, X_key) for cache comparison
+        """
+        # Create a hashable key from fh
+        fh_key = tuple(fh.to_relative(self.cutoff)) if fh is not None else None
+
+        # Create a key from X (use shape and hash of values if available)
+        if X is not None:
+            try:
+                X_key = (X.shape, hash(X.values.tobytes()))
+            except (AttributeError, TypeError):
+                X_key = id(X)  # Fallback to object id
+        else:
+            X_key = None
+
+        return fh_key, X_key
+
+    def _get_cached_pred_dist(self, fh, X):
+        """Return cached prediction distribution if cache is valid.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            Forecasting horizon.
+        X : pd.DataFrame or None
+            Exogeneous time series.
+
+        Returns
+        -------
+        pred_dist or None : cached distribution if valid, None otherwise
+        """
+        if self._cached_pred_dist_ is None:
+            return None
+
+        fh_key, X_key = self._get_cache_key(fh, X)
+
+        if self._cached_fh_key_ == fh_key and self._cached_X_key_ == X_key:
+            return self._cached_pred_dist_
+
+        return None
+
+    def _cache_pred_dist(self, pred_dist, fh, X):
+        """Cache the prediction distribution with its parameters.
+
+        Parameters
+        ----------
+        pred_dist : skpro BaseDistribution
+            The prediction distribution to cache.
+        fh : ForecastingHorizon
+            Forecasting horizon.
+        X : pd.DataFrame or None
+            Exogeneous time series.
+        """
+        fh_key, X_key = self._get_cache_key(fh, X)
+        self._cached_pred_dist_ = pred_dist
+        self._cached_fh_key_ = fh_key
+        self._cached_X_key_ = X_key
+
+    def _invalidate_cache(self):
+        """Invalidate the prediction cache.
+
+        Should be called when the model state changes (e.g., after fit or update).
+        """
+        self._cached_pred_dist_ = None
+        self._cached_fh_key_ = None
+        self._cached_X_key_ = None
+        self.trajectories_ = None
+
+    def _concat_distributions_hierarchical(self, dist_list, yvec):
+        """Concatenate Empirical distributions from vectorized prediction.
+
+        This override handles Empirical distributions properly by concatenating
+        the sample DataFrames with proper hierarchical indexing.
+
+        Parameters
+        ----------
+        dist_list : list of skpro Empirical
+            List of Empirical distributions from each instance.
+        yvec : VectorizedDF
+            The vectorized data structure with instance information.
+
+        Returns
+        -------
+        concat_dist : skpro Empirical
+            Concatenated Empirical distribution with proper hierarchical index.
+        """
+        from skpro.distributions import Empirical
+
+        if len(dist_list) == 0:
+            raise ValueError("Cannot concatenate empty list of distributions")
+
+        if len(dist_list) == 1:
+            return dist_list[0]
+
+        # Get the instance indices from the vectorized structure
+        row_idx, _ = yvec.get_iter_indices()
+
+        # Build concatenated sample DataFrames
+        spl_dfs = []
+        combined_indices = []
+
+        for i, dist in enumerate(dist_list):
+            # Get the sample DataFrame from this Empirical distribution
+            spl = dist.spl  # DataFrame with MultiIndex (sample, time)
+
+            # Get the instance identifier for this distribution
+            instance_idx = row_idx[i]  # This is a tuple like ('h0_0', 'h1_0')
+
+            # Create new MultiIndex with sample level first, then instance levels + time
+            # Empirical requires: first index is sample, further indices are instance
+            if isinstance(spl.index, pd.MultiIndex):
+                # spl has MultiIndex (sample, time)
+                sample_level = spl.index.get_level_values(0)
+                time_level = spl.index.get_level_values(1)
+
+                if isinstance(instance_idx, tuple):
+                    # Multiple hierarchy levels
+                    # New structure: (sample, h0, h1, time)
+                    new_tuples = [
+                        (s,) + instance_idx + (t,)
+                        for s, t in zip(sample_level, time_level)
+                    ]
+                else:
+                    # Single hierarchy level
+                    # New structure: (sample, h0, time)
+                    new_tuples = [
+                        (s, instance_idx, t) for s, t in zip(sample_level, time_level)
+                    ]
+
+                # Get names: sample first, then instance names, then time
+                spl_sample_name = spl.index.names[0]  # usually "sample"
+
+                if isinstance(row_idx, pd.MultiIndex):
+                    instance_names = list(row_idx.names)
+                else:
+                    instance_names = [
+                        row_idx.name if hasattr(row_idx, "name") else "level_0"
+                    ]
+
+                spl_time_name = spl.index.names[1]  # usually "time"
+                new_names = [spl_sample_name] + instance_names + [spl_time_name]
+
+                new_spl_index = pd.MultiIndex.from_tuples(new_tuples, names=new_names)
+            else:
+                # spl has simple index (shouldn't happen for Empirical, but handle it)
+                new_spl_index = spl.index
+
+            # Create new DataFrame with updated index
+            new_spl = spl.copy()
+            new_spl.index = new_spl_index
+            spl_dfs.append(new_spl)
+
+            # Also update the distribution index (instance + time points)
+            dist_index = dist.index
+            if isinstance(instance_idx, tuple):
+                new_dist_tuples = [instance_idx + (t,) for t in dist_index]
+            else:
+                new_dist_tuples = [(instance_idx, t) for t in dist_index]
+
+            if isinstance(row_idx, pd.MultiIndex):
+                instance_names = list(row_idx.names)
+            else:
+                instance_names = [
+                    row_idx.name if hasattr(row_idx, "name") else "level_0"
+                ]
+            time_name = dist_index.name if dist_index.name is not None else "time"
+
+            new_dist_index = pd.MultiIndex.from_tuples(
+                new_dist_tuples,
+                names=instance_names + [time_name],
+            )
+            combined_indices.append(new_dist_index)
+
+        # Concatenate all sample DataFrames
+        combined_spl = pd.concat(spl_dfs, axis=0)
+
+        # Concatenate all distribution indices
+        full_index = combined_indices[0]
+        for idx in combined_indices[1:]:
+            full_index = full_index.append(idx)
+
+        # Get columns from first distribution
+        columns = dist_list[0].columns
+
+        # Create the combined Empirical distribution
+        return Empirical(spl=combined_spl, index=full_index, columns=columns)
 
     def _predict_proba_empirical(self, fh, X, marginal=True):
         """Compute probabilistic forecasts as Empirical distribution.
 
-        Alternative method that returns the raw Empirical distribution
-        instead of a Normal approximation. Use this directly if you need
-        the full sample trajectories.
+        .. deprecated::
+            This method is deprecated. Use _predict_proba directly which now
+            returns an Empirical distribution by default.
+
+        Alternative method that returns the raw Empirical distribution.
+        Now equivalent to _predict_proba since the default behavior was changed
+        from Normal approximation to Empirical distribution.
 
         Parameters
         ----------
