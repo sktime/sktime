@@ -2793,16 +2793,18 @@ def mean_squared_log_error(
     import numpy as np
     from sklearn.utils import check_consistent_length
 
-    # Basic validation: lengths must match
     check_consistent_length(y_true, y_pred)
 
-    # MSLE Logic: (log(1+y) - log(1+p))^2
-    # Clip negative values to 0 to avoid log domain errors
-    y_true = np.maximum(y_true, 0)
-    y_pred = np.maximum(y_pred, 0)
+    # [FIX] Force to numpy to avoid pandas index alignment causing NaNs/crashes
+    y_true_np = np.asanyarray(y_true)
+    y_pred_np = np.asanyarray(y_pred)
 
-    y_true_log = np.log1p(y_true)
-    y_pred_log = np.log1p(y_pred)
+    # Clip negative values to 0 to avoid log domain errors
+    y_true_np = np.maximum(y_true_np, 0)
+    y_pred_np = np.maximum(y_pred_np, 0)
+
+    y_true_log = np.log1p(y_true_np)
+    y_pred_log = np.log1p(y_pred_np)
 
     squared_log_error = np.square(y_true_log - y_pred_log)
 
@@ -2812,11 +2814,9 @@ def mean_squared_log_error(
     else:
         msle = np.mean(squared_log_error, axis=0)
 
-    # Square Root (RMSLE)
     if square_root:
         msle = np.sqrt(msle)
 
-    # Multioutput handling
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return np.atleast_1d(msle)

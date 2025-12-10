@@ -4,6 +4,7 @@
 __author__ = ["alphaleporus"]
 
 import numpy as np
+import pandas as pd
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._functions import mean_squared_log_error
@@ -56,18 +57,30 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point."""
+        # Convert to numpy to avoid index alignment issues (e.g. broadcasting errors)
+        y_true_np = np.asanyarray(y_true)
+        y_pred_np = np.asanyarray(y_pred)
+
         # Clip negative values
-        y_true = y_true.clip(lower=0)
-        y_pred = y_pred.clip(lower=0)
+        y_true_np = np.maximum(y_true_np, 0)
+        y_pred_np = np.maximum(y_pred_np, 0)
 
-        # Log Transform
-        y_true_log = np.log1p(y_true)
-        y_pred_log = np.log1p(y_pred)
+        y_true_log = np.log1p(y_true_np)
+        y_pred_log = np.log1p(y_pred_np)
 
-        # Squared Error Vector
         squared_log_error = np.square(y_true_log - y_pred_log)
 
-        # Weighting and Multioutput are handled by base class helper
+        # Reconstruct Pandas container if input was Pandas to support aggregation
+        if isinstance(y_true, (pd.DataFrame, pd.Series)):
+            if isinstance(y_true, pd.Series):
+                squared_log_error = pd.Series(
+                    squared_log_error, index=y_true.index, name=y_true.name
+                )
+            else:
+                squared_log_error = pd.DataFrame(
+                    squared_log_error, index=y_true.index, columns=y_true.columns
+                )
+
         squared_log_error = self._get_weighted_df(squared_log_error, **kwargs)
 
         return self._handle_multioutput(squared_log_error, self.multioutput)
