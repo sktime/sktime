@@ -79,13 +79,17 @@ class ForecastingGridSearchCV(BaseGridSearch):
         The test score returned when a forecaster fails to be fitted.
     return_train_score : bool, optional (default=False)
 
-    backend : {"dask", "loky", "multiprocessing", "threading","ray"}, by default "loky".
+    backend : {"dask", "dask_lazy", "loky", "multiprocessing", "threading", "ray"},
+        by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask",
+          but uses lazy scheduling internally. Results are still materialized
+          into in-memory structures (cv_results_, best_forecaster_, etc.).
         - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
