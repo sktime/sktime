@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Common timeseries plotting functionality."""
 
-__all__ = ["plot_series", "plot_correlations", "plot_windows", "plot_calibration"]
+__all__ = ["plot_series", "plot_correlations", "plot_windows", "plot_calibration", "plot_quantile_intervals", "plot_distribution"]
 __author__ = ["mloning", "RNKuhns", "Dbhasin1", "chillerobscuro", "benheid"]
 
 import math
@@ -257,6 +257,293 @@ def plot_interval(ax, interval_df):
         )
     ax.legend()
     return ax
+
+
+def plot_quantile_intervals(ax, quantile_df, color=None):
+    """Plot quantile predictions on an existing matplotlib axes.
+
+    This function overlays quantile predictions on an existing plot to visualize
+    forecast uncertainty using quantiles instead of prediction intervals.
+    Uses a single color with varying opacity to show the distribution,
+    with more extreme quantiles having lower opacity.
+
+    Quantiles must be provided in symmetric pairs around 0.5 (e.g., 0.1 and 0.9,
+    0.05 and 0.95). The median (0.5) is optional.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to add the quantile predictions to.
+    quantile_df : pd.DataFrame
+        A multi-index DataFrame containing quantile predictions.
+        The columns should have a MultiIndex with variable name at level 0
+        and quantile values (e.g., 0.1, 0.5, 0.9) at level 1.
+        Quantiles must be symmetric pairs around 0.5.
+    color : str or tuple, optional
+        The color to use for the quantile bands. If None, uses the color
+        of the last plotted line on the axes.
+
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The matplotlib axes with the quantile predictions added.
+
+    Raises
+    ------
+    ValueError
+        If quantiles are not provided in symmetric pairs around 0.5.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveVariance
+    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> from sktime.utils.plotting import plot_series, plot_quantiles
+
+    >>> y = load_airline()
+    >>> forecaster = NaiveVariance(ThetaForecaster(sp=12))
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=range(1, 13))  # doctest: +SKIP
+    >>> y_probas = forecaster.predict_proba(fh=range(1, 13))  # doctest: +SKIP
+    >>> quantile_df = y_probas.quantile([0.1, 0.5, 0.9])  # doctest: +SKIP
+
+    >>> fig, ax = plot_series(y, y_pred, labels=["y", "y_pred"])  # doctest: +SKIP
+    >>> plot_quantiles(ax, quantile_df)  # doctest: +SKIP
+    """
+    import numpy as np
+
+    var_name = quantile_df.columns.levels[0][0]
+    quantiles = sorted(quantile_df.columns.levels[1])
+
+    # Get color from the last plotted line if not specified
+    if color is None:
+        lines = ax.get_lines()
+        if lines:
+            color = lines[-1].get_color()
+        else:
+            color = "C0"  # Default matplotlib color
+
+    # Convert index to timestamp if it's a PeriodIndex
+    if hasattr(quantile_df.index, "to_timestamp"):
+        quantile_df = quantile_df.copy()
+        quantile_df.index = quantile_df.index.to_timestamp()
+
+    # Separate quantiles into lower (<0.5), median (0.5), and upper (>0.5)
+    lower_quantiles = sorted([q for q in quantiles if q < 0.5])
+    upper_quantiles = sorted([q for q in quantiles if q > 0.5], reverse=True)
+
+    # Validate symmetric pairs
+    if len(lower_quantiles) != len(upper_quantiles):
+        raise ValueError(
+            f"Quantiles must be provided in symmetric pairs around 0.5. "
+            f"Got {len(lower_quantiles)} lower quantiles {lower_quantiles} and "
+            f"{len(upper_quantiles)} upper quantiles {upper_quantiles}."
+        )
+
+    # Check that each lower quantile has a matching upper quantile
+    pairs = []
+    for lq, uq in zip(lower_quantiles, upper_quantiles):
+        expected_uq = 1.0 - lq
+        if abs(uq - expected_uq) > 0.001:
+            raise ValueError(
+                f"Quantile {lq} does not have a matching symmetric pair. "
+                f"Expected {expected_uq}, but closest upper quantile is {uq}. "
+                f"Quantiles must be symmetric around 0.5 (e.g., 0.1 and 0.9)."
+            )
+        pairs.append((lq, uq))
+
+    # Sort pairs by coverage (outer to inner)
+    pairs.sort(key=lambda x: x[1] - x[0], reverse=True)
+
+    # Calculate alpha values - more coverage = lower alpha
+    n_pairs = len(pairs)
+    if n_pairs > 0:
+        # Alpha ranges from 0.1 (outermost) to 0.4 (innermost)
+        alphas = np.linspace(0.1, 0.4, n_pairs)
+
+        # Create a nice label showing all intervals
+        coverages = [int((uq - lq) * 100) for lq, uq in pairs]
+        if len(coverages) == 1:
+            interval_label = f"{coverages[0]}% interval"
+        else:
+            interval_label = f"Intervals: {', '.join(f'{c}%' for c in coverages)}"
+
+        for i, (q_lower, q_upper) in enumerate(pairs):
+            ax.fill_between(
+                quantile_df.index,
+                quantile_df[var_name][q_lower].astype("float64").to_numpy(),
+                quantile_df[var_name][q_upper].astype("float64").to_numpy(),
+                alpha=alphas[i],
+                color=color,
+                label=interval_label if i == 0 else None,
+            )
+
+    ax.legend()
+    return ax
+
+
+def plot_distribution(ax, distribution, n_samples=100, color=None, show_mean=True, show_std_bands=True):
+    """Plot a probability distribution on an existing matplotlib axes.
+
+    This function overlays a probability distribution on an existing plot,
+    showing the mean and uncertainty bands based on the distribution's
+    parameters or by sampling.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to add the distribution to.
+    distribution : skpro distribution object
+        A distribution object with methods like `mean()`, `std()`, or `sample()`.
+        Common types include Normal, and other skpro distributions.
+    n_samples : int, default=100
+        Number of samples to draw if sampling-based visualization is used.
+    color : str or tuple, optional
+        The color to use for the distribution visualization. If None, uses
+        the color of the last plotted line on the axes.
+    show_mean : bool, default=True
+        Whether to plot the mean as a line.
+    show_std_bands : bool, default=True
+        Whether to show standard deviation bands (1, 2, 3 sigma).
+
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The matplotlib axes with the distribution added.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveVariance
+    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> from sktime.utils.plotting import plot_series, plot_distribution
+
+    >>> y = load_airline()
+    >>> forecaster = NaiveVariance(ThetaForecaster(sp=12))
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=range(1, 13))  # doctest: +SKIP
+    >>> y_probas = forecaster.predict_proba(fh=range(1, 13))  # doctest: +SKIP
+
+    >>> fig, ax = plot_series(y, y_pred, labels=["y", "y_pred"])  # doctest: +SKIP
+    >>> plot_distribution(ax, y_probas)  # doctest: +SKIP
+    """
+    # Get color from the last plotted line if not specified
+    if color is None:
+        lines = ax.get_lines()
+        if lines:
+            color = lines[-1].get_color()
+        else:
+            color = "C0"  # Default matplotlib color
+
+    # Try to get distribution parameters directly
+    try:
+        # Get the DataFrame representation
+        dist_df = distribution.to_df()
+        var_name = dist_df.columns.levels[0][0]
+
+        # Convert index to timestamp if it's a PeriodIndex
+        index = dist_df.index
+        if hasattr(index, "to_timestamp"):
+            index = index.to_timestamp()
+
+        # Check if we have mu and sigma (Normal distribution)
+        params = dist_df.columns.levels[1].tolist()
+
+        if "mu" in params and "sigma" in params:
+            mu = dist_df[var_name]["mu"].astype("float64").to_numpy()
+            sigma = dist_df[var_name]["sigma"].astype("float64").to_numpy()
+
+            if show_mean:
+                ax.plot(
+                    index,
+                    mu,
+                    linestyle="--",
+                    color=color,
+                    alpha=0.9,
+                    linewidth=1.5,
+                    label="Mean (μ)",
+                )
+
+            if show_std_bands:
+                # Plot standard deviation bands (3σ, 2σ, 1σ)
+                std_levels = [3, 2, 1]
+                alphas = [0.1, 0.2, 0.3]
+
+                for std_mult, alpha in zip(std_levels, alphas):
+                    lower = mu - std_mult * sigma
+                    upper = mu + std_mult * sigma
+                    label = f"±{std_mult}σ" if std_mult == 3 else None
+                    ax.fill_between(
+                        index,
+                        lower,
+                        upper,
+                        alpha=alpha,
+                        color=color,
+                        label=label,
+                    )
+
+            ax.legend()
+            return ax
+
+    except (AttributeError, KeyError, TypeError):
+        pass
+
+    # Fallback: use quantiles if available
+    try:
+        quantiles = [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]
+        quantile_df = distribution.quantile(quantiles)
+        return plot_quantile_intervals(ax, quantile_df, color=color)
+    except (AttributeError, TypeError):
+        pass
+
+    # Last resort: sample from the distribution
+    try:
+        samples = distribution.sample(n_samples)
+        var_name = samples.columns[0] if hasattr(samples, 'columns') else 0
+
+        index = samples.index
+        if hasattr(index, "to_timestamp"):
+            index = index.to_timestamp()
+
+        # Calculate statistics from samples
+        mean_vals = samples.groupby(level=0).mean()[var_name].to_numpy()
+        std_vals = samples.groupby(level=0).std()[var_name].to_numpy()
+
+        if show_mean:
+            ax.plot(
+                index.unique(),
+                mean_vals,
+                linestyle="--",
+                color=color,
+                alpha=0.9,
+                label="Mean",
+            )
+
+        if show_std_bands:
+            std_levels = [3, 2, 1]
+            alphas = [0.1, 0.2, 0.3]
+
+            for std_mult, alpha in zip(std_levels, alphas):
+                lower = mean_vals - std_mult * std_vals
+                upper = mean_vals + std_mult * std_vals
+                ax.fill_between(
+                    index.unique(),
+                    lower,
+                    upper,
+                    alpha=alpha,
+                    color=color,
+                )
+
+        ax.legend()
+        return ax
+
+    except (AttributeError, TypeError) as e:
+        raise ValueError(
+            f"Could not visualize distribution. Ensure it has `to_df()`, "
+            f"`quantile()`, or `sample()` methods. Error: {e}"
+        )
 
 
 def plot_lags(series, lags=1, suptitle=None):
