@@ -33,6 +33,7 @@ __all__ = [
     "YfromX",
     "SkforecastAutoreg",
     "IgnoreX",
+    "DirectProbaReductionForecaster",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
@@ -70,6 +71,7 @@ from sktime.forecasting.compose._reduce import (
     YfromX,
     make_reduction,
 )
+from sktime.forecasting.compose._reduce_proba import DirectProbaReductionForecaster
 from sktime.forecasting.compose._skforecast_reduce import (
     SkforecastAutoreg,
     SkforecastRecursive,
