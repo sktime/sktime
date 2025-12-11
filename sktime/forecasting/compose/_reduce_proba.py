@@ -1139,8 +1139,98 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         # Create the combined Empirical distribution
         return Empirical(spl=combined_spl, index=full_index, columns=columns)
 
+    def _fast_sample_from_dist(self, pred_dist, rng):
+        """Sample from skpro distribution using fast numpy operations.
+
+        This bypasses skpro's slow sample() method which creates DataFrames
+        with MultiIndex. Instead, we extract distribution parameters and
+        sample directly with numpy.
+
+        Parameters
+        ----------
+        pred_dist : skpro BaseDistribution
+            Distribution to sample from (one sample per row).
+        rng : np.random.Generator
+            Numpy random generator for reproducibility.
+
+        Returns
+        -------
+        samples : np.ndarray
+            Shape (n_rows, n_cols) array of samples.
+        """
+        dist_type = type(pred_dist).__name__
+
+        # Try to extract parameters and sample with numpy
+        # This is much faster than skpro's sample() for large batches
+        try:
+            if dist_type == "Normal":
+                # Normal distribution: sample using loc (mu) and scale (sigma)
+                mu = np.asarray(pred_dist.mu).flatten()
+                sigma = np.asarray(pred_dist.sigma).flatten()
+                samples = rng.normal(loc=mu, scale=sigma)
+                return samples.reshape(-1, 1)
+
+            elif dist_type == "LogNormal":
+                # LogNormal: numpy uses different parameterization
+                # skpro LogNormal has mu, sigma as log-space parameters
+                mu = np.asarray(pred_dist.mu).flatten()
+                sigma = np.asarray(pred_dist.sigma).flatten()
+                samples = rng.lognormal(mean=mu, sigma=sigma)
+                return samples.reshape(-1, 1)
+
+            elif dist_type == "Laplace":
+                mu = np.asarray(pred_dist.mu).flatten()
+                scale = np.asarray(pred_dist.scale).flatten()
+                samples = rng.laplace(loc=mu, scale=scale)
+                return samples.reshape(-1, 1)
+
+            elif dist_type == "Gamma":
+                # Gamma: skpro uses alpha (shape) and beta (rate)
+                # numpy uses shape and scale (1/rate)
+                alpha = np.asarray(pred_dist.alpha).flatten()
+                beta = np.asarray(pred_dist.beta).flatten()
+                samples = rng.gamma(shape=alpha, scale=1.0 / beta)
+                return samples.reshape(-1, 1)
+
+            elif dist_type == "TDistribution":
+                # T-distribution with location and scale
+                df = np.asarray(pred_dist.df).flatten()
+                mu = np.asarray(pred_dist.mu).flatten()
+                sigma = np.asarray(pred_dist.sigma).flatten()
+                # Sample standard t, then scale and shift
+                samples = rng.standard_t(df=df) * sigma + mu
+                return samples.reshape(-1, 1)
+
+            elif dist_type == "Weibull":
+                # Weibull: skpro uses scale and concentration (k/shape)
+                scale = np.asarray(pred_dist.scale).flatten()
+                k = np.asarray(pred_dist.k).flatten()
+                samples = scale * rng.weibull(a=k)
+                return samples.reshape(-1, 1)
+
+            else:
+                # Fallback to skpro's sample method for unknown distributions
+                # This may be slow but ensures correctness
+                sampled_values = pred_dist.sample(n_samples=1)
+                if hasattr(sampled_values, "values"):
+                    return sampled_values.values.reshape(-1, 1)
+                else:
+                    return np.array(sampled_values).reshape(-1, 1)
+
+        except (AttributeError, TypeError):
+            # If parameter extraction fails, fall back to skpro's sample
+            sampled_values = pred_dist.sample(n_samples=1)
+            if hasattr(sampled_values, "values"):
+                return sampled_values.values.reshape(-1, 1)
+            else:
+                return np.array(sampled_values).reshape(-1, 1)
+
     def _generate_mc_trajectories(self, fh, X_pool):
         """Generate Monte Carlo sample trajectories using ancestral sampling.
+
+        Optimized version that batches predictions across all samples at each
+        horizon step, reducing the number of estimator calls from
+        n_samples * max_horizon to just max_horizon.
 
         Parameters
         ----------
@@ -1154,10 +1244,10 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         trajectories : np.ndarray
             Shape (n_samples, n_horizons, n_cols) array of sampled trajectories.
         """
-        from sktime.transformations.series.lag import Lag
-
         y_cols = self._y.columns
         n_cols = len(y_cols)
+        n_samples = self.n_samples
+        window_length = self.window_length
 
         fh_rel = fh.to_relative(self.cutoff)
         fh_abs = fh.to_absolute(self.cutoff)
@@ -1168,87 +1258,89 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         y_lags_no_gaps = list(range(1, max_horizon + 1))
 
         n_horizons = len(y_lags_rel)
-        trajectories = np.zeros((self.n_samples, n_horizons, n_cols))
+        trajectories = np.zeros((n_samples, n_horizons, n_cols))
 
         # Set random state for reproducibility
-        if self.random_state is not None:
-            np.random.seed(self.random_state)
+        rng = np.random.default_rng(self.random_state)
 
-        lagger_y_to_X = self.lagger_y_to_X_
         estimator = self.estimator_
 
-        # Generate n_samples trajectories
-        for sample_idx in range(self.n_samples):
-            # Start with the observed y values
-            y_extended = self._y.copy()
+        # Extract historical y values as numpy array for fast access
+        # Shape: (T, n_cols) where T is the number of historical time points
+        y_history = self._y.values  # (T, n_cols)
 
-            # Iterate through each horizon step
+        # Initialize sample paths with the last window_length values from history
+        # Shape: (n_samples, window_length, n_cols)
+        # All samples start with the same historical window
+        initial_window = y_history[-window_length:, :]  # (window_length, n_cols)
+        # Replicate for all samples
+        sample_windows = np.tile(initial_window, (n_samples, 1, 1))
+        # sample_windows shape: (n_samples, window_length, n_cols)
+
+        # Get exogenous features for each future time step if available
+        X_features_by_step = {}
+        if X_pool is not None:
             for step_idx, horizon in enumerate(y_lags_no_gaps):
-                # Transform current y to get features using the same lagger as in fit
-                Xt = lagger_y_to_X.transform(X=y_extended, y=X_pool)
-
-                # Get the cutoff (last time point in extended y)
-                current_cutoff = y_extended.index.get_level_values(-1).max()
-
-                # Get features at the current cutoff point
-                Xt_predrow = slice_at_ix(Xt, current_cutoff)
-
-                # Add exogeneous features if available
-                if X_pool is not None:
-                    # For recursive forecasting, we need X at the prediction time
-                    # which is cutoff + 1 step
+                if step_idx < len(fh_abs):
+                    predict_time = fh_abs[step_idx]
                     try:
-                        # Try to get X at current_cutoff + 1 (prediction time)
-                        # This may not always be available
-                        predict_time = (
-                            fh_abs[step_idx] if step_idx < len(fh_abs) else None
-                        )
-                        if predict_time is not None:
-                            X_at_idx = slice_at_ix(X_pool, predict_time)
-                            Xt_predrow = pd.concat([X_at_idx, Xt_predrow], axis=1)
+                        X_at_idx = slice_at_ix(X_pool, predict_time)
+                        X_features_by_step[step_idx] = X_at_idx.values.flatten()
                     except (KeyError, IndexError):
-                        # X not available at this index, proceed without it
                         pass
 
-                Xt_predrow = prep_skl_df(Xt_predrow)
+        # Build feature column names to match training format
+        # The lagger creates columns like "lag_0__col", "lag_1__col", etc.
+        lag_col_names = []
+        for lag in range(window_length):
+            for col in y_cols:
+                lag_col_names.append(f"lag_{lag}__{col}")
 
-                # Get probabilistic prediction
-                pred_dist = estimator.predict_proba(Xt_predrow)
+        # Add exogenous column names if present
+        if X_pool is not None:
+            X_col_names = list(X_pool.columns)
+        else:
+            X_col_names = []
 
-                # Sample from the distribution (ancestral sampling)
-                # Note: skpro sample() doesn't take random_state, use global seed
-                sample_val = pred_dist.sample(n_samples=1)
+        # Iterate over horizon steps (not samples!) - this is the key optimization
+        for step_idx, horizon in enumerate(y_lags_no_gaps):
+            # Build feature matrix for ALL samples at once
+            # Features are the lagged y values from each sample's window
+            # Shape: (n_samples, window_length * n_cols)
+            lag_features = sample_windows.reshape(n_samples, -1)
 
-                # Extract the sampled value
-                if hasattr(sample_val, "values"):
-                    sampled_value = sample_val.values.flatten()
-                else:
-                    sampled_value = np.array(sample_val).flatten()
+            # Create DataFrame with proper column names
+            Xt_batch = pd.DataFrame(lag_features, columns=lag_col_names)
 
-                # Store if this horizon is in our requested fh
-                if horizon in y_lags_rel:
-                    traj_idx = y_lags_rel.index(horizon)
-                    trajectories[sample_idx, traj_idx, :] = sampled_value
+            # Add exogenous features if available (same for all samples at this step)
+            if step_idx in X_features_by_step:
+                X_vals = X_features_by_step[step_idx]
+                for i, col_name in enumerate(X_col_names):
+                    Xt_batch[col_name] = X_vals[i]
+                # Reorder columns to put X first (matching training format)
+                Xt_batch = Xt_batch[X_col_names + lag_col_names]
 
-                # Extend y with the sampled value for next iteration
-                # We need to compute the next time index
-                # Use the forecasting horizon to get the absolute index
-                if step_idx < len(fh_abs):
-                    predict_idx = fh_abs[step_idx]
-                else:
-                    # Fallback: extend by one period from cutoff
-                    from pandas import DateOffset
+            Xt_batch = prep_skl_df(Xt_batch)
 
-                    if hasattr(self.fh, "freq") and self.fh.freq is not None:
-                        predict_idx = current_cutoff + self.fh.freq
-                    else:
-                        predict_idx = current_cutoff + 1
+            # Get probabilistic prediction for ALL samples at once
+            pred_dist = estimator.predict_proba(Xt_batch)
 
-                new_idx = self._get_expected_pred_idx(fh=[predict_idx])
-                new_row = pd.DataFrame(
-                    sampled_value.reshape(1, -1), columns=y_cols, index=new_idx
-                )
-                y_extended = pd.concat([y_extended, new_row])
+            # Sample one value per row using fast numpy sampling
+            # This bypasses skpro's slow DataFrame-based sample() method
+            sampled_array = self._fast_sample_from_dist(pred_dist, rng)
+
+            # Ensure correct shape (n_samples, n_cols)
+            sampled_array = sampled_array.reshape(n_samples, n_cols)
+
+            # Store if this horizon is in our requested fh
+            if horizon in y_lags_rel:
+                traj_idx = y_lags_rel.index(horizon)
+                trajectories[:, traj_idx, :] = sampled_array
+
+            # Update sample windows: roll and append new values
+            # Shift window left by 1 and append new sampled values
+            sample_windows = np.roll(sample_windows, -1, axis=1)
+            sample_windows[:, -1, :] = sampled_array
 
         return trajectories
 
