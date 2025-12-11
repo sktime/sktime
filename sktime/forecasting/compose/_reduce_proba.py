@@ -682,10 +682,11 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     estimator_ : fitted estimator
         The fitted probabilistic regressor.
 
-    trajectories_ : np.ndarray or None
+    trajectories_ : dict or None
         The most recently generated MC sample trajectories from predict_proba.
-        Shape is (n_samples, n_horizons, n_cols). Available after calling
-        predict or predict_proba. Useful for analysis and visualization.
+        For single series: dict with key None, value shape (n_samples, n_horizons).
+        For hierarchical: dict with instance tuple keys, each (n_samples, n_horizons).
+        Available after calling predict or predict_proba.
 
     Examples
     --------
@@ -771,6 +772,9 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
+        Follows the pattern from RecursiveReductionForecaster, using sktime
+        transformers for lag feature creation.
+
         Parameters
         ----------
         y : pd.DataFrame
@@ -784,7 +788,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         -------
         self : reference to self
         """
-        from sktime.transformations.series.lag import Lag, ReducerTransform
+        from sktime.transformations.series.lag import Lag
 
         # Invalidate any cached predictions from previous fit
         self._invalidate_cache()
@@ -793,39 +797,47 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         lags = self._lags
 
         # Create the lagger for transforming y into features
-        lagger_y_to_X = ReducerTransform(lags=lags, impute_method=impute_method)
+        # Using Lag directly like RecursiveReductionForecaster
+        lagger_y_to_X = Lag(lags=lags, index_out="extend")
+
+        if impute_method is not None:
+            if isinstance(impute_method, str):
+                from sktime.transformations.series.impute import Imputer
+
+                imputer = Imputer(method=impute_method)
+            else:
+                imputer = impute_method.clone()
+            lagger_y_to_X = lagger_y_to_X * imputer
+
         self.lagger_y_to_X_ = lagger_y_to_X
 
         # Fit the lagger and transform y to get features
-        Xt = lagger_y_to_X.fit_transform(X=y, y=X)
+        Xt = lagger_y_to_X.fit_transform(y)
 
-        # Create target by lagging y by 1 step
-        lagger_y_to_y = Lag(lags=-1, index_out="original", keep_column_names=True)
-        self.lagger_y_to_y_ = lagger_y_to_y
+        # Create lag by 1 step to align features with targets
+        lag_plus = Lag(lags=1, index_out="extend")
+        Xtt = lag_plus.fit_transform(Xt)
+        Xtt_notna_idx = _get_notna_idx(Xtt)
+        notna_idx = Xtt_notna_idx.intersection(y.index)
 
-        yt = lagger_y_to_y.fit_transform(X=y)
-
-        # Get valid indices (no NaN)
-        Xt_notna_idx = _get_notna_idx(Xt)
-        yt_notna_idx = _get_notna_idx(yt)
-        notna_idx = Xt_notna_idx.intersection(yt_notna_idx)
-
+        # Check if we have valid training data
         if len(notna_idx) == 0:
-            self.empty_lags_ = True
-            self.dummy_value_ = y.mean()
+            self.estimator_ = y.mean()
             return self
-        else:
-            self.empty_lags_ = False
 
-        yt = yt.loc[notna_idx]
-        Xt = Xt.loc[notna_idx]
+        yt = y.loc[notna_idx]
+        Xtt = Xtt.loc[notna_idx]
 
-        Xt = prep_skl_df(Xt)
+        # Add exogeneous features if provided
+        if X is not None:
+            Xtt = pd.concat([X.loc[notna_idx], Xtt], axis=1)
+
+        Xtt = prep_skl_df(Xtt)
         yt = prep_skl_df(yt)
 
         # Clone and fit the estimator
         estimator = clone(self.estimator)
-        estimator.fit(Xt, yt)
+        estimator.fit(Xtt, yt)
         self.estimator_ = estimator
 
         return self
@@ -856,6 +868,10 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     def _predict_proba(self, fh, X, marginal=True):
         """Compute probabilistic forecasts using Monte Carlo ancestral sampling.
 
+        This method follows the pattern of RecursiveReductionForecaster._predict,
+        using sktime transformers for feature creation and handling hierarchical
+        indices properly.
+
         Parameters
         ----------
         fh : ForecastingHorizon
@@ -878,6 +894,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         if cached is not None:
             return cached
 
+        # Pool exogeneous data
         if X is not None and self._X is not None:
             X_pool = X.combine_first(self._X)
         elif X is None and self._X is not None:
@@ -888,58 +905,349 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
 
-        # Handle empty lags case
-        if self.empty_lags_:
+        # Handle case where estimator is just mean (no valid training data)
+        if isinstance(self.estimator_, pd.Series):
+            n_horizons = len(fh_idx)
             samples = np.full(
-                (self.n_samples, len(fh_idx), len(y_cols)),
-                self.dummy_value_.values[0],
+                (self.n_samples, n_horizons, len(y_cols)),
+                self.estimator_.values,
             )
-            # Store trajectories for user access
-            self.trajectories_ = samples
-            pred_dist = Empirical(
-                spl=pd.DataFrame(
-                    samples.reshape(-1, len(y_cols)),
-                    columns=y_cols,
-                    index=pd.MultiIndex.from_product(
-                        [range(self.n_samples), fh_idx], names=["sample", "time"]
-                    ),
-                ),
-                index=fh_idx,
-                columns=y_cols,
-            )
+            self.trajectories_ = {None: samples[:, :, 0]}
+            pred_dist = self._build_empirical_distribution(samples, fh_idx, y_cols)
             self._cache_pred_dist(pred_dist, fh=fh, X=X)
             return pred_dist
 
-        # Generate MC sample trajectories using ancestral sampling
-        all_trajectories = self._generate_mc_trajectories(fh, X_pool)
+        # Generate MC trajectories using sktime-native recursive prediction
+        all_trajectories, fh_time_idx = self._generate_mc_trajectories_native(
+            fh, X_pool
+        )
 
         # Store trajectories for user access
         self.trajectories_ = all_trajectories
 
-        # Reshape for Empirical distribution
-        sample_indices = []
-        time_indices = []
-        values = []
-
-        for sample_idx in range(self.n_samples):
-            for h_idx, time_idx in enumerate(fh_idx):
-                sample_indices.append(sample_idx)
-                time_indices.append(time_idx)
-                values.append(all_trajectories[sample_idx, h_idx, :])
-
-        # Create MultiIndex DataFrame for Empirical
-        multi_idx = pd.MultiIndex.from_arrays(
-            [sample_indices, time_indices], names=["sample", "time"]
+        # Build Empirical distribution from trajectories
+        pred_dist = self._build_empirical_from_trajectories(
+            all_trajectories, fh_idx, fh_time_idx, y_cols
         )
-        spl_df = pd.DataFrame(np.vstack(values), index=multi_idx, columns=y_cols)
-
-        # Create Empirical distribution (non-parametric, preserves actual samples)
-        pred_dist = Empirical(spl=spl_df, index=fh_idx, columns=y_cols)
 
         # Cache the result
         self._cache_pred_dist(pred_dist, fh=fh, X=X)
 
         return pred_dist
+
+    def _generate_mc_trajectories_native(self, fh, X_pool):
+        """Generate MC trajectories using sktime-native pattern.
+
+        Follows the recursive prediction pattern from RecursiveReductionForecaster,
+        properly handling hierarchical indices and using sktime transformers.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            Forecasting horizon.
+        X_pool : pd.DataFrame or None
+            Pooled exogeneous data.
+
+        Returns
+        -------
+        trajectories : dict
+            Dictionary mapping instance identifiers to trajectory arrays.
+            For single series, key is None.
+            Each array has shape (n_samples, n_horizons).
+        fh_time_idx : pd.Index
+            The time index for the forecasting horizon (without instance levels).
+        """
+        from sktime.transformations.series.lag import Lag
+
+        n_samples = self.n_samples
+        y_cols = self._y.columns
+
+        # Set random state for reproducibility
+        rng = np.random.default_rng(self.random_state)
+
+        fh_rel = fh.to_relative(self.cutoff)
+        y_lags_rel = list(fh_rel)
+
+        # Get the maximum horizon to fill in gaps
+        max_horizon = max(y_lags_rel)
+        y_lags_no_gaps = list(range(1, max_horizon + 1))
+        n_horizons = len(y_lags_rel)
+
+        lagger_y_to_X = self.lagger_y_to_X_
+        estimator = self.estimator_
+
+        # Determine if we have hierarchical data
+        y_index = self._y.index
+        is_hierarchical = isinstance(y_index, pd.MultiIndex)
+
+        if is_hierarchical:
+            # Get unique instance identifiers (all levels except time)
+            instance_idx = y_index.droplevel(-1).unique()
+        else:
+            instance_idx = [None]
+
+        # Initialize trajectories storage
+        trajectories = {}
+        for inst in instance_idx:
+            trajectories[inst] = np.zeros((n_samples, n_horizons))
+
+        # Optimized batched trajectory generation
+        # Instead of looping over samples, we batch all samples together
+        # at each horizon step, using numpy arrays for efficiency
+
+        # Extract feature column structure from a single transformer application
+        Xt_initial = lagger_y_to_X.transform(self._y)
+        lag_plus_init = Lag(lags=1, index_out="extend")
+        if isinstance(self.impute_method, str):
+            from sktime.transformations.series.impute import Imputer
+
+            lag_plus_init = lag_plus_init * Imputer(method=self.impute_method)
+        Xtt_initial = lag_plus_init.fit_transform(Xt_initial)
+        y_plus_one_init = lag_plus_init.fit_transform(self._y)
+
+        # Get the prediction time index for first step
+        first_predict_idx = y_plus_one_init.iloc[[-1]].index.get_level_values(-1)[0]
+        Xtt_template = slice_at_ix(Xtt_initial, first_predict_idx)
+
+        # Add exogeneous features structure if available
+        if X_pool is not None:
+            try:
+                X_at_idx = slice_at_ix(X_pool, first_predict_idx)
+                Xtt_template = pd.concat([X_at_idx, Xtt_template], axis=1)
+            except (KeyError, IndexError):
+                pass
+
+        feature_cols = Xtt_template.columns.tolist()
+        n_instances = len(Xtt_template) if is_hierarchical else 1
+
+        # Initialize sample windows with the feature values from the last time step
+        # Shape: (n_samples, n_instances, n_features)
+        initial_features = prep_skl_df(Xtt_template).values
+        sample_features = np.tile(initial_features, (n_samples, 1, 1))
+        # sample_features shape: (n_samples, n_instances, n_features)
+
+        # Get exogenous features for each future time step if available
+        fh_abs = fh.to_absolute(self.cutoff)
+        X_features_by_step = {}
+        if X_pool is not None:
+            for step_idx in range(max_horizon):
+                # Calculate the time index for this step
+                time_delta = step_idx + 1
+                y_plus_step = lag_plus_init.fit_transform(self._y)
+                for _ in range(time_delta):
+                    y_plus_step = Lag(lags=1, index_out="extend").fit_transform(
+                        y_plus_step
+                    )
+                predict_time = y_plus_step.iloc[[-1]].index.get_level_values(-1)[0]
+                try:
+                    X_at_idx = slice_at_ix(X_pool, predict_time)
+                    X_features_by_step[step_idx] = prep_skl_df(X_at_idx).values
+                except (KeyError, IndexError):
+                    pass
+
+        # Determine the number of lag features vs exog features
+        n_lag_features = Xt_initial.shape[1]
+        n_exog_features = (
+            len(feature_cols) - n_lag_features if X_pool is not None else 0
+        )
+        n_y_cols = len(y_cols)
+
+        # Iterate over horizon steps - batch across all samples
+        for step_idx in range(max_horizon):
+            # Build feature matrix for ALL samples and instances at once
+            # Shape: (n_samples * n_instances, n_features)
+            batch_features = sample_features.reshape(n_samples * n_instances, -1)
+
+            # Update exogenous features if available for this step
+            if step_idx in X_features_by_step:
+                X_vals = X_features_by_step[step_idx]
+                # Tile for all samples
+                X_batch = np.tile(X_vals, (n_samples, 1))
+                # Replace the exogenous columns
+                if n_exog_features > 0:
+                    batch_features[:, :n_exog_features] = X_batch
+
+            # Create DataFrame with proper column names
+            Xt_batch = pd.DataFrame(batch_features, columns=feature_cols)
+            Xt_batch = prep_skl_df(Xt_batch)
+
+            # Get probabilistic prediction for ALL samples and instances at once
+            pred_dist = estimator.predict_proba(Xt_batch)
+
+            # Sample from the distribution using native skpro sampling
+            sampled_df = pred_dist.sample(n_samples=1)
+            if hasattr(sampled_df, "values"):
+                sampled_values = sampled_df.values.flatten()
+            else:
+                sampled_values = np.array(sampled_df).flatten()
+
+            # Reshape to (n_samples, n_instances, n_y_cols)
+            sampled_values = sampled_values.reshape(n_samples, n_instances, n_y_cols)
+
+            # Store if this horizon is in our requested fh
+            horizon = step_idx + 1
+            if horizon in y_lags_rel:
+                traj_idx = y_lags_rel.index(horizon)
+                if is_hierarchical:
+                    for inst_num, inst in enumerate(instance_idx):
+                        # Store all samples for this instance at this horizon
+                        trajectories[inst][:, traj_idx] = sampled_values[:, inst_num, 0]
+                else:
+                    trajectories[None][:, traj_idx] = sampled_values[:, 0, 0]
+
+            # Update features for next step: shift lag features and add new values
+            # The lag features need to be rolled and updated with sampled values
+            # This assumes lag features are ordered as [lag_0, lag_1, ..., lag_n-1]
+            # where lag_0 is most recent
+
+            # Shift lag features: each lag_i becomes lag_{i+1}
+            # and lag_0 gets the new sampled value
+            window_length = self.window_length
+
+            for sample_idx in range(n_samples):
+                for inst_idx in range(n_instances):
+                    # Get current lag features (after exog features if present)
+                    start_idx = n_exog_features
+                    lag_features = sample_features[sample_idx, inst_idx, start_idx:]
+
+                    # Shift lags: move each to the next position
+                    # lag_0__col0, lag_0__col1, lag_1__col0, lag_1__col1, ...
+                    n_lag_cols = n_lag_features
+                    for lag in range(window_length - 1, 0, -1):
+                        for col in range(n_y_cols):
+                            old_pos = (lag - 1) * n_y_cols + col
+                            new_pos = lag * n_y_cols + col
+                            if new_pos < n_lag_cols:
+                                sample_features[
+                                    sample_idx, inst_idx, start_idx + new_pos
+                                ] = sample_features[
+                                    sample_idx, inst_idx, start_idx + old_pos
+                                ]
+
+                    # Set lag_0 to the new sampled value
+                    for col in range(n_y_cols):
+                        sample_features[sample_idx, inst_idx, start_idx + col] = (
+                            sampled_values[sample_idx, inst_idx, col]
+                        )
+
+        # Get the time-only index for the forecast horizon
+        fh_time_idx = pd.Index(list(fh_abs))
+
+        return trajectories, fh_time_idx
+
+    def _build_empirical_from_trajectories(
+        self, trajectories, fh_idx, fh_time_idx, y_cols
+    ):
+        """Build Empirical distribution from trajectory dictionary.
+
+        Parameters
+        ----------
+        trajectories : dict
+            Dictionary mapping instance identifiers to trajectory arrays.
+        fh_idx : pd.Index
+            The full forecast index (may include instance levels).
+        fh_time_idx : pd.Index
+            The time-only forecast index.
+        y_cols : pd.Index
+            Column names for the target variable.
+
+        Returns
+        -------
+        pred_dist : skpro Empirical
+            The empirical distribution built from samples.
+        """
+        from skpro.distributions import Empirical
+
+        n_samples = self.n_samples
+        is_hierarchical = isinstance(fh_idx, pd.MultiIndex)
+
+        sample_indices = []
+        row_indices = []
+        values = []
+
+        if is_hierarchical:
+            # For hierarchical data, iterate over instances and time
+            # The fh_idx already contains the full (instance..., time) tuples
+            for inst, traj_array in trajectories.items():
+                for sample_idx in range(n_samples):
+                    for h_idx, time_val in enumerate(fh_time_idx):
+                        sample_indices.append(sample_idx)
+                        if isinstance(inst, tuple):
+                            row_indices.append(inst + (time_val,))
+                        else:
+                            row_indices.append((inst, time_val))
+                        values.append([traj_array[sample_idx, h_idx]])
+
+            # Create MultiIndex with sample as first level, then the instance+time levels
+            # Get the level names from fh_idx
+            fh_names = list(fh_idx.names)
+            spl_names = ["sample"] + fh_names
+
+            # Build tuples with sample as first element
+            spl_tuples = [
+                (s,) + (r if isinstance(r, tuple) else (r,))
+                for s, r in zip(sample_indices, row_indices)
+            ]
+            multi_idx = pd.MultiIndex.from_tuples(spl_tuples, names=spl_names)
+        else:
+            # For single series, simple (sample, time) structure
+            traj_array = trajectories[None]
+            for sample_idx in range(n_samples):
+                for h_idx, time_val in enumerate(fh_time_idx):
+                    sample_indices.append(sample_idx)
+                    row_indices.append(time_val)
+                    values.append([traj_array[sample_idx, h_idx]])
+
+            multi_idx = pd.MultiIndex.from_arrays(
+                [sample_indices, row_indices], names=["sample", "time"]
+            )
+
+        spl_df = pd.DataFrame(np.array(values), index=multi_idx, columns=y_cols)
+
+        # Create Empirical distribution
+        pred_dist = Empirical(spl=spl_df, index=fh_idx, columns=y_cols)
+
+        return pred_dist
+
+    def _build_empirical_distribution(self, samples, fh_idx, y_cols):
+        """Build Empirical distribution from numpy array of samples.
+
+        Parameters
+        ----------
+        samples : np.ndarray
+            Shape (n_samples, n_horizons, n_cols) array.
+        fh_idx : pd.Index
+            Forecast horizon index.
+        y_cols : pd.Index
+            Column names.
+
+        Returns
+        -------
+        pred_dist : skpro Empirical
+            The empirical distribution.
+        """
+        from skpro.distributions import Empirical
+
+        n_samples = samples.shape[0]
+        n_horizons = samples.shape[1]
+        n_cols = samples.shape[2]
+
+        sample_indices = []
+        time_indices = []
+        values = []
+
+        for sample_idx in range(n_samples):
+            for h_idx, time_idx in enumerate(fh_idx):
+                sample_indices.append(sample_idx)
+                time_indices.append(time_idx)
+                values.append(samples[sample_idx, h_idx, :])
+
+        multi_idx = pd.MultiIndex.from_arrays(
+            [sample_indices, time_indices], names=["sample", "time"]
+        )
+        spl_df = pd.DataFrame(np.vstack(values), index=multi_idx, columns=y_cols)
+
+        return Empirical(spl=spl_df, index=fh_idx, columns=y_cols)
 
     def _get_cache_key(self, fh, X):
         """Generate a cache key based on forecasting horizon and exogeneous data.
@@ -968,6 +1276,121 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             X_key = None
 
         return fh_key, X_key
+
+    def _concat_distributions_hierarchical(self, dist_list, yvec):
+        """Concatenate Empirical distributions from vectorized prediction.
+
+        This override handles Empirical distributions properly by concatenating
+        the sample DataFrames with proper hierarchical indexing.
+
+        Parameters
+        ----------
+        dist_list : list of skpro Empirical
+            List of Empirical distributions from each instance.
+        yvec : VectorizedDF
+            The vectorized data structure with instance information.
+
+        Returns
+        -------
+        concat_dist : skpro Empirical
+            Concatenated Empirical distribution with proper hierarchical index.
+        """
+        from skpro.distributions import Empirical
+
+        if len(dist_list) == 0:
+            raise ValueError("Cannot concatenate empty list of distributions")
+
+        if len(dist_list) == 1:
+            return dist_list[0]
+
+        # Get the instance indices from the vectorized structure
+        row_idx, _ = yvec.get_iter_indices()
+
+        # Build concatenated sample DataFrames
+        spl_dfs = []
+        combined_indices = []
+
+        for i, dist in enumerate(dist_list):
+            # Get the sample DataFrame from this Empirical distribution
+            spl = dist.spl  # DataFrame with MultiIndex (sample, time)
+
+            # Get the instance identifier for this distribution
+            instance_idx = row_idx[i]  # This is a tuple like ('h0_0', 'h1_0')
+
+            # Create new MultiIndex with sample level first, then instance levels + time
+            if isinstance(spl.index, pd.MultiIndex):
+                # spl has MultiIndex (sample, time)
+                sample_level = spl.index.get_level_values(0)
+                time_level = spl.index.get_level_values(-1)  # Last level is time
+
+                if isinstance(instance_idx, tuple):
+                    # Multiple hierarchy levels
+                    new_tuples = [
+                        (s,) + instance_idx + (t,)
+                        for s, t in zip(sample_level, time_level)
+                    ]
+                else:
+                    # Single hierarchy level
+                    new_tuples = [
+                        (s, instance_idx, t) for s, t in zip(sample_level, time_level)
+                    ]
+
+                # Get names: sample first, then instance names, then time
+                spl_sample_name = spl.index.names[0]  # usually "sample"
+
+                if isinstance(row_idx, pd.MultiIndex):
+                    instance_names = list(row_idx.names)
+                else:
+                    instance_names = [
+                        row_idx.name if hasattr(row_idx, "name") else "level_0"
+                    ]
+
+                spl_time_name = spl.index.names[-1]  # Last name is time
+                new_names = [spl_sample_name] + instance_names + [spl_time_name]
+
+                new_spl_index = pd.MultiIndex.from_tuples(new_tuples, names=new_names)
+            else:
+                new_spl_index = spl.index
+
+            # Create new DataFrame with updated index
+            new_spl = spl.copy()
+            new_spl.index = new_spl_index
+            spl_dfs.append(new_spl)
+
+            # Also update the distribution index (instance + time points)
+            dist_index = dist.index
+            if isinstance(instance_idx, tuple):
+                new_dist_tuples = [instance_idx + (t,) for t in dist_index]
+            else:
+                new_dist_tuples = [(instance_idx, t) for t in dist_index]
+
+            if isinstance(row_idx, pd.MultiIndex):
+                instance_names = list(row_idx.names)
+            else:
+                instance_names = [
+                    row_idx.name if hasattr(row_idx, "name") else "level_0"
+                ]
+            time_name = dist_index.name if dist_index.name is not None else "time"
+
+            new_dist_index = pd.MultiIndex.from_tuples(
+                new_dist_tuples,
+                names=instance_names + [time_name],
+            )
+            combined_indices.append(new_dist_index)
+
+        # Concatenate all sample DataFrames
+        combined_spl = pd.concat(spl_dfs, axis=0)
+
+        # Concatenate all distribution indices
+        full_index = combined_indices[0]
+        for idx in combined_indices[1:]:
+            full_index = full_index.append(idx)
+
+        # Get columns from first distribution
+        columns = dist_list[0].columns
+
+        # Create the combined Empirical distribution
+        return Empirical(spl=combined_spl, index=full_index, columns=columns)
 
     def _get_cached_pred_dist(self, fh, X):
         """Return cached prediction distribution if cache is valid.
@@ -1019,330 +1442,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         self._cached_fh_key_ = None
         self._cached_X_key_ = None
         self.trajectories_ = None
-
-    def _concat_distributions_hierarchical(self, dist_list, yvec):
-        """Concatenate Empirical distributions from vectorized prediction.
-
-        This override handles Empirical distributions properly by concatenating
-        the sample DataFrames with proper hierarchical indexing.
-
-        Parameters
-        ----------
-        dist_list : list of skpro Empirical
-            List of Empirical distributions from each instance.
-        yvec : VectorizedDF
-            The vectorized data structure with instance information.
-
-        Returns
-        -------
-        concat_dist : skpro Empirical
-            Concatenated Empirical distribution with proper hierarchical index.
-        """
-        from skpro.distributions import Empirical
-
-        if len(dist_list) == 0:
-            raise ValueError("Cannot concatenate empty list of distributions")
-
-        if len(dist_list) == 1:
-            return dist_list[0]
-
-        # Get the instance indices from the vectorized structure
-        row_idx, _ = yvec.get_iter_indices()
-
-        # Build concatenated sample DataFrames
-        spl_dfs = []
-        combined_indices = []
-
-        for i, dist in enumerate(dist_list):
-            # Get the sample DataFrame from this Empirical distribution
-            spl = dist.spl  # DataFrame with MultiIndex (sample, time)
-
-            # Get the instance identifier for this distribution
-            instance_idx = row_idx[i]  # This is a tuple like ('h0_0', 'h1_0')
-
-            # Create new MultiIndex with sample level first, then instance levels + time
-            # Empirical requires: first index is sample, further indices are instance
-            if isinstance(spl.index, pd.MultiIndex):
-                # spl has MultiIndex (sample, time)
-                sample_level = spl.index.get_level_values(0)
-                time_level = spl.index.get_level_values(1)
-
-                if isinstance(instance_idx, tuple):
-                    # Multiple hierarchy levels
-                    # New structure: (sample, h0, h1, time)
-                    new_tuples = [
-                        (s,) + instance_idx + (t,)
-                        for s, t in zip(sample_level, time_level)
-                    ]
-                else:
-                    # Single hierarchy level
-                    # New structure: (sample, h0, time)
-                    new_tuples = [
-                        (s, instance_idx, t) for s, t in zip(sample_level, time_level)
-                    ]
-
-                # Get names: sample first, then instance names, then time
-                spl_sample_name = spl.index.names[0]  # usually "sample"
-
-                if isinstance(row_idx, pd.MultiIndex):
-                    instance_names = list(row_idx.names)
-                else:
-                    instance_names = [
-                        row_idx.name if hasattr(row_idx, "name") else "level_0"
-                    ]
-
-                spl_time_name = spl.index.names[1]  # usually "time"
-                new_names = [spl_sample_name] + instance_names + [spl_time_name]
-
-                new_spl_index = pd.MultiIndex.from_tuples(new_tuples, names=new_names)
-            else:
-                # spl has simple index (shouldn't happen for Empirical, but handle it)
-                new_spl_index = spl.index
-
-            # Create new DataFrame with updated index
-            new_spl = spl.copy()
-            new_spl.index = new_spl_index
-            spl_dfs.append(new_spl)
-
-            # Also update the distribution index (instance + time points)
-            dist_index = dist.index
-            if isinstance(instance_idx, tuple):
-                new_dist_tuples = [instance_idx + (t,) for t in dist_index]
-            else:
-                new_dist_tuples = [(instance_idx, t) for t in dist_index]
-
-            if isinstance(row_idx, pd.MultiIndex):
-                instance_names = list(row_idx.names)
-            else:
-                instance_names = [
-                    row_idx.name if hasattr(row_idx, "name") else "level_0"
-                ]
-            time_name = dist_index.name if dist_index.name is not None else "time"
-
-            new_dist_index = pd.MultiIndex.from_tuples(
-                new_dist_tuples,
-                names=instance_names + [time_name],
-            )
-            combined_indices.append(new_dist_index)
-
-        # Concatenate all sample DataFrames
-        combined_spl = pd.concat(spl_dfs, axis=0)
-
-        # Concatenate all distribution indices
-        full_index = combined_indices[0]
-        for idx in combined_indices[1:]:
-            full_index = full_index.append(idx)
-
-        # Get columns from first distribution
-        columns = dist_list[0].columns
-
-        # Create the combined Empirical distribution
-        return Empirical(spl=combined_spl, index=full_index, columns=columns)
-
-    def _fast_sample_from_dist(self, pred_dist, rng):
-        """Sample from skpro distribution using fast numpy operations.
-
-        This bypasses skpro's slow sample() method which creates DataFrames
-        with MultiIndex. Instead, we extract distribution parameters and
-        sample directly with numpy.
-
-        Parameters
-        ----------
-        pred_dist : skpro BaseDistribution
-            Distribution to sample from (one sample per row).
-        rng : np.random.Generator
-            Numpy random generator for reproducibility.
-
-        Returns
-        -------
-        samples : np.ndarray
-            Shape (n_rows, n_cols) array of samples.
-        """
-        dist_type = type(pred_dist).__name__
-
-        # Try to extract parameters and sample with numpy
-        # This is much faster than skpro's sample() for large batches
-        try:
-            if dist_type == "Normal":
-                # Normal distribution: sample using loc (mu) and scale (sigma)
-                mu = np.asarray(pred_dist.mu).flatten()
-                sigma = np.asarray(pred_dist.sigma).flatten()
-                samples = rng.normal(loc=mu, scale=sigma)
-                return samples.reshape(-1, 1)
-
-            elif dist_type == "LogNormal":
-                # LogNormal: numpy uses different parameterization
-                # skpro LogNormal has mu, sigma as log-space parameters
-                mu = np.asarray(pred_dist.mu).flatten()
-                sigma = np.asarray(pred_dist.sigma).flatten()
-                samples = rng.lognormal(mean=mu, sigma=sigma)
-                return samples.reshape(-1, 1)
-
-            elif dist_type == "Laplace":
-                mu = np.asarray(pred_dist.mu).flatten()
-                scale = np.asarray(pred_dist.scale).flatten()
-                samples = rng.laplace(loc=mu, scale=scale)
-                return samples.reshape(-1, 1)
-
-            elif dist_type == "Gamma":
-                # Gamma: skpro uses alpha (shape) and beta (rate)
-                # numpy uses shape and scale (1/rate)
-                alpha = np.asarray(pred_dist.alpha).flatten()
-                beta = np.asarray(pred_dist.beta).flatten()
-                samples = rng.gamma(shape=alpha, scale=1.0 / beta)
-                return samples.reshape(-1, 1)
-
-            elif dist_type == "TDistribution":
-                # T-distribution with location and scale
-                df = np.asarray(pred_dist.df).flatten()
-                mu = np.asarray(pred_dist.mu).flatten()
-                sigma = np.asarray(pred_dist.sigma).flatten()
-                # Sample standard t, then scale and shift
-                samples = rng.standard_t(df=df) * sigma + mu
-                return samples.reshape(-1, 1)
-
-            elif dist_type == "Weibull":
-                # Weibull: skpro uses scale and concentration (k/shape)
-                scale = np.asarray(pred_dist.scale).flatten()
-                k = np.asarray(pred_dist.k).flatten()
-                samples = scale * rng.weibull(a=k)
-                return samples.reshape(-1, 1)
-
-            else:
-                # Fallback to skpro's sample method for unknown distributions
-                # This may be slow but ensures correctness
-                sampled_values = pred_dist.sample(n_samples=1)
-                if hasattr(sampled_values, "values"):
-                    return sampled_values.values.reshape(-1, 1)
-                else:
-                    return np.array(sampled_values).reshape(-1, 1)
-
-        except (AttributeError, TypeError):
-            # If parameter extraction fails, fall back to skpro's sample
-            sampled_values = pred_dist.sample(n_samples=1)
-            if hasattr(sampled_values, "values"):
-                return sampled_values.values.reshape(-1, 1)
-            else:
-                return np.array(sampled_values).reshape(-1, 1)
-
-    def _generate_mc_trajectories(self, fh, X_pool):
-        """Generate Monte Carlo sample trajectories using ancestral sampling.
-
-        Optimized version that batches predictions across all samples at each
-        horizon step, reducing the number of estimator calls from
-        n_samples * max_horizon to just max_horizon.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-            Forecasting horizon.
-        X_pool : pd.DataFrame or None
-            Pooled exogeneous data.
-
-        Returns
-        -------
-        trajectories : np.ndarray
-            Shape (n_samples, n_horizons, n_cols) array of sampled trajectories.
-        """
-        y_cols = self._y.columns
-        n_cols = len(y_cols)
-        n_samples = self.n_samples
-        window_length = self.window_length
-
-        fh_rel = fh.to_relative(self.cutoff)
-        fh_abs = fh.to_absolute(self.cutoff)
-        y_lags_rel = list(fh_rel)
-
-        # Get the maximum horizon to fill in gaps
-        max_horizon = max(y_lags_rel)
-        y_lags_no_gaps = list(range(1, max_horizon + 1))
-
-        n_horizons = len(y_lags_rel)
-        trajectories = np.zeros((n_samples, n_horizons, n_cols))
-
-        # Set random state for reproducibility
-        rng = np.random.default_rng(self.random_state)
-
-        estimator = self.estimator_
-
-        # Extract historical y values as numpy array for fast access
-        # Shape: (T, n_cols) where T is the number of historical time points
-        y_history = self._y.values  # (T, n_cols)
-
-        # Initialize sample paths with the last window_length values from history
-        # Shape: (n_samples, window_length, n_cols)
-        # All samples start with the same historical window
-        initial_window = y_history[-window_length:, :]  # (window_length, n_cols)
-        # Replicate for all samples
-        sample_windows = np.tile(initial_window, (n_samples, 1, 1))
-        # sample_windows shape: (n_samples, window_length, n_cols)
-
-        # Get exogenous features for each future time step if available
-        X_features_by_step = {}
-        if X_pool is not None:
-            for step_idx, horizon in enumerate(y_lags_no_gaps):
-                if step_idx < len(fh_abs):
-                    predict_time = fh_abs[step_idx]
-                    try:
-                        X_at_idx = slice_at_ix(X_pool, predict_time)
-                        X_features_by_step[step_idx] = X_at_idx.values.flatten()
-                    except (KeyError, IndexError):
-                        pass
-
-        # Build feature column names to match training format
-        # The lagger creates columns like "lag_0__col", "lag_1__col", etc.
-        lag_col_names = []
-        for lag in range(window_length):
-            for col in y_cols:
-                lag_col_names.append(f"lag_{lag}__{col}")
-
-        # Add exogenous column names if present
-        if X_pool is not None:
-            X_col_names = list(X_pool.columns)
-        else:
-            X_col_names = []
-
-        # Iterate over horizon steps (not samples!) - this is the key optimization
-        for step_idx, horizon in enumerate(y_lags_no_gaps):
-            # Build feature matrix for ALL samples at once
-            # Features are the lagged y values from each sample's window
-            # Shape: (n_samples, window_length * n_cols)
-            lag_features = sample_windows.reshape(n_samples, -1)
-
-            # Create DataFrame with proper column names
-            Xt_batch = pd.DataFrame(lag_features, columns=lag_col_names)
-
-            # Add exogenous features if available (same for all samples at this step)
-            if step_idx in X_features_by_step:
-                X_vals = X_features_by_step[step_idx]
-                for i, col_name in enumerate(X_col_names):
-                    Xt_batch[col_name] = X_vals[i]
-                # Reorder columns to put X first (matching training format)
-                Xt_batch = Xt_batch[X_col_names + lag_col_names]
-
-            Xt_batch = prep_skl_df(Xt_batch)
-
-            # Get probabilistic prediction for ALL samples at once
-            pred_dist = estimator.predict_proba(Xt_batch)
-
-            # Sample one value per row using fast numpy sampling
-            # This bypasses skpro's slow DataFrame-based sample() method
-            sampled_array = self._fast_sample_from_dist(pred_dist, rng)
-
-            # Ensure correct shape (n_samples, n_cols)
-            sampled_array = sampled_array.reshape(n_samples, n_cols)
-
-            # Store if this horizon is in our requested fh
-            if horizon in y_lags_rel:
-                traj_idx = y_lags_rel.index(horizon)
-                trajectories[:, traj_idx, :] = sampled_array
-
-            # Update sample windows: roll and append new values
-            # Shift window left by 1 and append new sampled values
-            sample_windows = np.roll(sample_windows, -1, axis=1)
-            sample_windows[:, -1, :] = sampled_array
-
-        return trajectories
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
