@@ -323,14 +323,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
     def is_fitted(self):
         """Whether ``fit`` has been called.
 
-        Inspects object's ``_is_fitted` attribute that should initialize to ``False``
-        during object construction, and be set to True in calls to an object's
-        `fit` method.
+        Checks if the estimator state is "fitted". Returns True only after
+        a successful call to ``fit()``, not after ``pretrain()``.
 
         Returns
         -------
         bool
-            Whether the estimator has been `fit`.
+            True if the estimator has been fitted, False otherwise.
         """
         return self.state == "fitted"
 

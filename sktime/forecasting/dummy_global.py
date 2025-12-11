@@ -17,6 +17,7 @@ class DummyGlobalForecaster(BaseForecaster):
     mean for all future time points.
 
     Useful for:
+
     - Testing the pretraining API
     - Baseline comparisons for global forecasting models
     - Educational examples
