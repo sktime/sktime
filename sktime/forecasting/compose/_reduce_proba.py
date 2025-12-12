@@ -13,7 +13,7 @@ import pandas as pd
 from sklearn.base import clone
 from sklearn.multioutput import MultiOutputRegressor
 
-from sktime.forecasting.base import BaseProbaForecaster
+from sktime.forecasting.base import BaseProbaForecaster, ForecastingHorizon
 from sktime.forecasting.compose._reduce import _get_notna_idx, _ReducerMixin
 from sktime.utils.sklearn import prep_skl_df
 
@@ -913,7 +913,9 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 self.estimator_.values,
             )
             self.trajectories_ = {None: samples[:, :, 0]}
-            pred_dist = self._build_empirical_distribution(samples, fh_idx, y_cols)
+            pred_dist = self._build_empirical_distribution(
+                samples, fh_idx, y_cols
+            )
             self._cache_pred_dist(pred_dist, fh=fh, X=X)
             return pred_dist
 
@@ -1029,27 +1031,31 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         # Get exogenous features for each future time step if available
         fh_abs = fh.to_absolute(self.cutoff)
         X_features_by_step = {}
+        X_fallback = None  # Fallback for static exog features (e.g., instance identifiers)
         if X_pool is not None:
+            # Create a mapping from relative horizon (1, 2, ...) to absolute time index
+            # y_lags_no_gaps contains [1, 2, ..., max_horizon]
             for step_idx in range(max_horizon):
-                # Calculate the time index for this step
-                time_delta = step_idx + 1
-                y_plus_step = lag_plus_init.fit_transform(self._y)
-                for _ in range(time_delta):
-                    y_plus_step = Lag(lags=1, index_out="extend").fit_transform(
-                        y_plus_step
-                    )
-                predict_time = y_plus_step.iloc[[-1]].index.get_level_values(-1)[0]
+                horizon = step_idx + 1  # 1-based horizon
+                # Get the absolute time for this horizon step
+                # Use ForecastingHorizon to compute the absolute index for this horizon
+                fh_step = ForecastingHorizon([horizon], is_relative=True, freq=self._cutoff)
+                fh_step_abs = fh_step.to_absolute_index(self._cutoff)
+                predict_time = fh_step_abs[0]
                 try:
                     X_at_idx = slice_at_ix(X_pool, predict_time)
                     X_features_by_step[step_idx] = prep_skl_df(X_at_idx).values
+                    # Store first successful X as fallback for static features
+                    if X_fallback is None:
+                        X_fallback = X_features_by_step[step_idx]
                 except (KeyError, IndexError):
-                    pass
+                    # If X not available at this time, use fallback (for static features)
+                    if X_fallback is not None:
+                        X_features_by_step[step_idx] = X_fallback
 
         # Determine the number of lag features vs exog features
         n_lag_features = Xt_initial.shape[1]
-        n_exog_features = (
-            len(feature_cols) - n_lag_features if X_pool is not None else 0
-        )
+        n_exog_features = len(feature_cols) - n_lag_features if X_pool is not None else 0
         n_y_cols = len(y_cols)
 
         # Iterate over horizon steps - batch across all samples
@@ -1076,7 +1082,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
             # Sample from the distribution using native skpro sampling
             sampled_df = pred_dist.sample(n_samples=1)
-            if hasattr(sampled_df, "values"):
+            if hasattr(sampled_df, 'values'):
                 sampled_values = sampled_df.values.flatten()
             else:
                 sampled_values = np.array(sampled_df).flatten()
@@ -1118,11 +1124,9 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                             old_pos = (lag - 1) * n_y_cols + col
                             new_pos = lag * n_y_cols + col
                             if new_pos < n_lag_cols:
-                                sample_features[
-                                    sample_idx, inst_idx, start_idx + new_pos
-                                ] = sample_features[
-                                    sample_idx, inst_idx, start_idx + old_pos
-                                ]
+                                sample_features[sample_idx, inst_idx, start_idx + new_pos] = (
+                                    sample_features[sample_idx, inst_idx, start_idx + old_pos]
+                                )
 
                     # Set lag_0 to the new sampled value
                     for col in range(n_y_cols):
