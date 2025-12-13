@@ -233,9 +233,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 ),
             )
             if self._trainer.checkpoint_callback is not None:
-                # load model from checkpoint
-                # [FIX] PyTorch 2.6+ security update compatibility
-                import torch
+                best_model_path = self._trainer.checkpoint_callback.best_model_path
  
                 try:
                     self.best_model = self.algorithm_class.load_from_checkpoint(
