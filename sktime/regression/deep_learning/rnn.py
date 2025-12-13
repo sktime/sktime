@@ -52,6 +52,8 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = RMSprop(lr=0.001)
         specify the optimizer and the learning rate to be used.
+    dropout : float, default = 0.0
+        The dropout rate for the RNN layer.
 
     References
     ----------
@@ -98,6 +100,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         activation_hidden="changing_from_linear_to_tanh_in_0.41.0",
         use_bias=True,
         optimizer=None,
+        dropout=0.0,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -112,6 +115,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         self.metrics = metrics
         self.activation = activation
         self.activation_hidden = activation_hidden
+        self.dropout = dropout
 
         # TODO (release 0.41.0)
         # After changing the default value of 'activation_hidden' to "tanh"
@@ -145,6 +149,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
             activation=self._activation_hidden,
             random_state=random_state,
             units=units,
+            dropout=dropout,
         )
 
     def build_model(self, input_shape, **kwargs):
@@ -283,5 +288,6 @@ class SimpleRNNRegressor(BaseDeepRegressor):
             "batch_size": 2,
             "units": 5,
             "use_bias": False,
+            "dropout": 0.1,
         }
         return [params1, params2]
