@@ -336,6 +336,7 @@ dependencies_2024 = [
     "scikit-learn==1.5.1",
     "scipy==1.14.1",
     "torch==2.4.0",
+    "lightning==2.4.0",
 ]
 
 [project.urls]
