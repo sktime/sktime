@@ -236,10 +236,17 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 # load model from checkpoint
                 # [FIX] PyTorch 2.6+ security update compatibility
                 import torch
-                self.best_model = self.algorithm_class.load_from_checkpoint(
-                    best_model_path,
-                    weights_only=False
-                )
+ 
+                try:
+                    self.best_model = self.algorithm_class.load_from_checkpoint(
+                        best_model_path,
+                        weights_only=False
+                    )
+                except TypeError:
+                    
+                    self.best_model = self.algorithm_class.load_from_checkpoint(
+                        best_model_path
+                    )
             else:
                 self.best_model = self._forecaster
         else:
