@@ -13,7 +13,6 @@ __all__ = [
     "StatsForecastADIDA",
     "StatsForecastAutoMFLES",
 ]
-from typing import Any, Optional, Union
 
 import numpy as np
 
@@ -1260,11 +1259,11 @@ class StatsForecastAutoMFLES(_GeneralisedStatsForecastAdapter):
 
     def __init__(
         self,
-        test_size: Optional[int] = None,
-        season_length: Optional[Union[int, list[int]]] = None,
+        test_size: int | None = None,
+        season_length: int | list[int] | None = None,
         n_windows: int = 2,
-        config: Optional[dict[str, Any]] = None,
-        step_size: Optional[int] = None,
+        config: dict | None = None,
+        step_size: int | None = None,
         metric: str = "smape",
         verbose: bool = False,
     ):
