@@ -73,10 +73,12 @@ class Lag(BaseTransformer):
         if False, columns are MultiIndex (lagname, variablename)
         has no effect if return mtype is one without column names
     keep_column_names : bool, optional (default=False)
-        has an effect only if ``lags`` contains only a single element
-        if True, ensures that column names of ``transform`` output are same as in input,
-        i.e., not ``lag_x__varname`` but ``varname``. Overrides
-        ``flatten_transform_index``.
+        if True, preserves original columns in the output:
+        - For single lag: column names of ``transform`` output are same as in input,
+          i.e., not ``lag_x__varname`` but ``varname``. Overrides
+          ``flatten_transform_index``.
+        - For multiple lags: original columns are appended to the lagged columns,
+          allowing subsequent transformers to access original data.
     remember_data : bool, optional (default=True)
         if True, memorizes data seen in ``fit``, ``update``, uses it in ``transform``
         if False, only uses data seen in ``transform`` to produce lags
@@ -277,8 +279,15 @@ class Lag(BaseTransformer):
         Xt = pd.concat(Xt_list, axis=1, keys=lag_names, names=["lag", "variable"])
         if self.flatten_transform_index:
             Xt.columns = flatten_multiindex(Xt.columns)
-        if len(shift_params) == 1 and self.keep_column_names:
-            Xt.columns = X_orig_cols
+        if self.keep_column_names:
+            if len(shift_params) == 1:
+                # Single lag: keep original column names (existing behavior)
+                Xt.columns = X_orig_cols
+            else:
+                # Multiple lags: append original columns (new behavior)
+                # This allows subsequent transformers to access original columns
+                X_original = X[X_orig_cols].copy()
+                Xt = pd.concat([Xt, X_original], axis=1)
 
         # some pandas versions do not sort index automatically after concat
         # so removing will break specific pandas versions
