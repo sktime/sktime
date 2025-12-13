@@ -49,6 +49,12 @@ class CNTCRegressor(BaseDeepRegressor):
     activation_attention : string, default="sigmoid",
         activation function for the attention layer
         List of available activation functions: https://keras.io/api/layers/activations/
+    compile_kwargs : KerasCompileKwargs, default=None
+        Additional arguments for Keras model compilation.
+        See ``KerasCompileKwargs`` for available options.
+    fit_kwargs : KerasFitKwargs, default=None
+        Additional arguments for Keras model training.
+        See ``KerasFitKwargs`` for available options.
 
     References
     ----------
@@ -105,6 +111,8 @@ class CNTCRegressor(BaseDeepRegressor):
         activation="linear",
         activation_hidden="relu",
         activation_attention="sigmoid",
+        compile_kwargs=None,
+        fit_kwargs=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -124,7 +132,7 @@ class CNTCRegressor(BaseDeepRegressor):
         self.metrics = metrics
         self.random_state = random_state
 
-        super().__init__()
+        super().__init__(compile_kwargs=compile_kwargs, fit_kwargs=fit_kwargs)
 
         self._network = CNTCNetwork(
             activation=self.activation_hidden,
@@ -158,10 +166,14 @@ class CNTCRegressor(BaseDeepRegressor):
         )(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
+        compile_kwargs = (
+            self.compile_kwargs.as_dict() if self.compile_kwargs is not None else {}
+        )
         model.compile(
             loss=self.loss,
             optimizer=keras.optimizers.Adam(),
             metrics=metrics,
+            **compile_kwargs,
         )
         return model
 
@@ -253,6 +265,7 @@ class CNTCRegressor(BaseDeepRegressor):
         X2 = self.prepare_input(X)
         if self.verbose:
             self.model_.summary()
+        fit_kwargs = self.fit_kwargs.as_dict() if self.fit_kwargs is not None else {}
         self.history = self.model_.fit(
             [X2, X, X],
             y,
@@ -260,6 +273,7 @@ class CNTCRegressor(BaseDeepRegressor):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=self._callbacks,
+            **fit_kwargs,
         )
         return self
 

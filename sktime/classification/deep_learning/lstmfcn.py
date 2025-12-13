@@ -52,6 +52,12 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         environment).
     random_state : int or None, default=None
         Seed for random, integer.
+    compile_kwargs : KerasCompileKwargs, default=None
+        Additional arguments for Keras model compilation.
+        See ``KerasCompileKwargs`` for available options.
+    fit_kwargs : KerasFitKwargs, default=None
+        Additional arguments for Keras model training.
+        See ``KerasFitKwargs`` for available options.
 
     References
     ----------
@@ -93,6 +99,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         verbose=0,
         activation="softmax",
         activation_hidden="relu",
+        compile_kwargs=None,
+        fit_kwargs=None,
     ):
         # predefined
         self.activation = activation
@@ -109,7 +117,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self.verbose = verbose
 
-        super().__init__()
+        super().__init__(compile_kwargs=compile_kwargs, fit_kwargs=fit_kwargs)
 
         self._network = LSTMFCNNetwork(
             activation=self.activation_hidden,
@@ -149,10 +157,14 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
         model = keras.models.Model(inputs=input_layers, outputs=output_layer)
 
+        compile_kwargs = (
+            self.compile_kwargs.as_dict() if self.compile_kwargs is not None else {}
+        )
         model.compile(
             loss="categorical_crossentropy",
             optimizer="adam",
             metrics=["accuracy"],
+            **compile_kwargs,
         )
         # .get_params() returns an empty list for callback.
         # inconsistent with function initial run where callbacks was set to None
@@ -205,6 +217,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         if self.verbose:
             self.model_.summary()
 
+        fit_kwargs = self.fit_kwargs.as_dict() if self.fit_kwargs is not None else {}
         self.history = self.model_.fit(
             X,
             y_onehot,
@@ -212,6 +225,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=deepcopy(self._callbacks) if self._callbacks else None,
+            **fit_kwargs,
         )
 
         return self

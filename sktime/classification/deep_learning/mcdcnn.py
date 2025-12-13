@@ -62,6 +62,12 @@ class MCDCNNClassifier(BaseDeepClassifier):
         The callback(s) to use during training.
     random_state : int, optional (default=0)
         The seed to any random action.
+    compile_kwargs : KerasCompileKwargs, default=None
+        Additional arguments for Keras model compilation.
+        See ``KerasCompileKwargs`` for available options.
+    fit_kwargs : KerasFitKwargs, default=None
+        Additional arguments for Keras model training.
+        See ``KerasFitKwargs`` for available options.
 
     References
     ----------
@@ -107,6 +113,8 @@ class MCDCNNClassifier(BaseDeepClassifier):
         optimizer=None,
         verbose=False,
         random_state=0,
+        compile_kwargs=None,
+        fit_kwargs=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -128,7 +136,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         self.verbose = verbose
         self.random_state = random_state
 
-        super().__init__()
+        super().__init__(compile_kwargs=compile_kwargs, fit_kwargs=fit_kwargs)
 
         self.history = None
         self._network = MCDCNNNetwork(
@@ -188,10 +196,14 @@ class MCDCNNClassifier(BaseDeepClassifier):
 
         model = keras.models.Model(inputs=input_layers, outputs=output_layer)
 
+        compile_kwargs = (
+            self.compile_kwargs.as_dict() if self.compile_kwargs is not None else {}
+        )
         model.compile(
             loss=self.loss,
             optimizer=self.optimizer_,
             metrics=metrics,
+            **compile_kwargs,
         )
 
         return model
@@ -223,6 +235,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         if self.verbose:
             self.model_.summary()
 
+        fit_kwargs = self.fit_kwargs.as_dict() if self.fit_kwargs is not None else {}
         self.history = self.model_.fit(
             X,
             y_onehot,
@@ -230,6 +243,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             verbose=self.verbose,
             callbacks=self.callbacks_,
+            **fit_kwargs,
         )
 
         return self

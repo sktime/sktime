@@ -14,6 +14,7 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.utils import check_random_state
 
 from sktime.base._base import SERIALIZATION_FORMATS
+from sktime.base._base_tf import KerasCompileKwargs, KerasFitKwargs
 from sktime.classification.base import BaseClassifier
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -27,8 +28,12 @@ class BaseDeepClassifier(BaseClassifier):
 
     Parameters
     ----------
-    batch_size : int, default = 40
-        training batch size for the model
+    compile_kwargs : KerasCompileKwargs, default=None
+        Additional arguments for Keras model compilation.
+        See ``KerasCompileKwargs`` for available options.
+    fit_kwargs : KerasFitKwargs, default=None
+        Additional arguments for Keras model training.
+        See ``KerasFitKwargs`` for available options.
 
     Attributes
     ----------
@@ -50,6 +55,16 @@ class BaseDeepClassifier(BaseClassifier):
             "noxthot",
         ],
     }
+
+    def __init__(
+        self,
+        compile_kwargs: KerasCompileKwargs | None = None,
+        fit_kwargs: KerasFitKwargs | None = None,
+    ):
+        self.compile_kwargs = compile_kwargs
+        self.fit_kwargs = fit_kwargs
+
+        super().__init__()
 
     @abstractmethod
     def build_model(self, input_shape, n_classes, **kwargs):

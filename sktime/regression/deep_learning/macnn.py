@@ -61,6 +61,12 @@ class MACNNRegressor(BaseDeepRegressor):
         Activation function used in the hidden layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
+    compile_kwargs : KerasCompileKwargs, default=None
+        Additional arguments for Keras model compilation.
+        See ``KerasCompileKwargs`` for available options.
+    fit_kwargs : KerasFitKwargs, default=None
+        Additional arguments for Keras model training.
+        See ``KerasFitKwargs`` for available options.
 
     References
     ----------
@@ -99,6 +105,8 @@ class MACNNRegressor(BaseDeepRegressor):
         verbose=False,
         activation="linear",
         activation_hidden="relu",
+        compile_kwargs=None,
+        fit_kwargs=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -121,7 +129,7 @@ class MACNNRegressor(BaseDeepRegressor):
         self.random_state = random_state
         self.verbose = verbose
 
-        super().__init__()
+        super().__init__(compile_kwargs=compile_kwargs, fit_kwargs=fit_kwargs)
 
         self.history = None
         self._network = MACNNNetwork(
@@ -175,10 +183,14 @@ class MACNNRegressor(BaseDeepRegressor):
         )
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
+        compile_kwargs = (
+            self.compile_kwargs.as_dict() if self.compile_kwargs is not None else {}
+        )
         model.compile(
             loss=self.loss,
             optimizer=self.optimizer_,
             metrics=metrics,
+            **compile_kwargs,
         )
 
         return model
@@ -207,6 +219,7 @@ class MACNNRegressor(BaseDeepRegressor):
         if self.verbose:
             self.model_.summary()
 
+        fit_kwargs = self.fit_kwargs.as_dict() if self.fit_kwargs is not None else {}
         self.history = self.model_.fit(
             X,
             y,
@@ -214,6 +227,7 @@ class MACNNRegressor(BaseDeepRegressor):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=self.callbacks_,
+            **fit_kwargs,
         )
 
         return self

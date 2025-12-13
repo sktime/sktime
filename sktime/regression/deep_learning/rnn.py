@@ -52,6 +52,12 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = RMSprop(lr=0.001)
         specify the optimizer and the learning rate to be used.
+    compile_kwargs : KerasCompileKwargs, default=None
+        Additional arguments for Keras model compilation.
+        See ``KerasCompileKwargs`` for available options.
+    fit_kwargs : KerasFitKwargs, default=None
+        Additional arguments for Keras model training.
+        See ``KerasFitKwargs`` for available options.
 
     References
     ----------
@@ -98,6 +104,8 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         activation_hidden="changing_from_linear_to_tanh_in_0.41.0",
         use_bias=True,
         optimizer=None,
+        compile_kwargs=None,
+        fit_kwargs=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -133,7 +141,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         self.use_bias = use_bias
         self.optimizer = optimizer
 
-        super().__init__()
+        super().__init__(compile_kwargs=compile_kwargs, fit_kwargs=fit_kwargs)
 
         # TODO (release 0.41.0)
         # After changing the default value of 'activation_hidden' to "tanh"
@@ -178,7 +186,15 @@ class SimpleRNNRegressor(BaseDeepRegressor):
             else self.optimizer
         )
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
-        model.compile(loss=self.loss, optimizer=self.optimizer_, metrics=metrics)
+        compile_kwargs = (
+            self.compile_kwargs.as_dict() if self.compile_kwargs is not None else {}
+        )
+        model.compile(
+            loss=self.loss,
+            optimizer=self.optimizer_,
+            metrics=metrics,
+            **compile_kwargs,
+        )
         return model
 
     def _fit(self, X, y):
@@ -245,6 +261,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         else:
             self.callbacks_ = deepcopy(self.callbacks)
 
+        fit_kwargs = self.fit_kwargs.as_dict() if self.fit_kwargs is not None else {}
         self.history = self.model_.fit(
             X,
             y,
@@ -252,6 +269,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=self.callbacks_,
+            **fit_kwargs,
         )
         return self
 

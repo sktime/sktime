@@ -41,6 +41,12 @@ class ResNetRegressor(BaseDeepRegressor):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
+    compile_kwargs : KerasCompileKwargs, default=None
+        Additional arguments for Keras model compilation.
+        See ``KerasCompileKwargs`` for available options.
+    fit_kwargs : KerasFitKwargs, default=None
+        Additional arguments for Keras model training.
+        See ``KerasFitKwargs`` for available options.
 
     References
     ----------
@@ -81,6 +87,8 @@ class ResNetRegressor(BaseDeepRegressor):
         activation_hidden="relu",
         use_bias=True,
         optimizer=None,
+        compile_kwargs=None,
+        fit_kwargs=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -96,7 +104,7 @@ class ResNetRegressor(BaseDeepRegressor):
         self.use_bias = use_bias
         self.optimizer = optimizer
 
-        super().__init__()
+        super().__init__(compile_kwargs=compile_kwargs, fit_kwargs=fit_kwargs)
 
         self.history = None
         self._network = ResNetNetwork(
@@ -146,10 +154,14 @@ class ResNetRegressor(BaseDeepRegressor):
         )(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
+        compile_kwargs = (
+            self.compile_kwargs.as_dict() if self.compile_kwargs is not None else {}
+        )
         model.compile(
             loss=self.loss,
             optimizer=self.optimizer_,
             metrics=metrics,
+            **compile_kwargs,
         )
 
         return model
@@ -177,6 +189,7 @@ class ResNetRegressor(BaseDeepRegressor):
         if self.verbose:
             self.model_.summary()
 
+        fit_kwargs = self.fit_kwargs.as_dict() if self.fit_kwargs is not None else {}
         self.callbacks_ = deepcopy(self.callbacks)
         self.history = self.model_.fit(
             X,
@@ -185,6 +198,7 @@ class ResNetRegressor(BaseDeepRegressor):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=self.callbacks_,
+            **fit_kwargs,
         )
         return self
 

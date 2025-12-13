@@ -69,6 +69,12 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         This is passed directly to Keras' ``fit`` method as the ``class_weight``
         argument after converting labels to integer encoding.
         If None, all classes are given equal weight.
+    compile_kwargs : KerasCompileKwargs, default=None
+        Additional arguments for Keras model compilation.
+        See ``KerasCompileKwargs`` for available options.
+    fit_kwargs : KerasFitKwargs, default=None
+        Additional arguments for Keras model training.
+        See ``KerasFitKwargs`` for available options.
 
     Notes
     -----
@@ -137,6 +143,8 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         activation="softmax",
         activation_hidden="relu",
         activation_inception="linear",
+        compile_kwargs=None,
+        fit_kwargs=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -159,7 +167,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         self.verbose = verbose
         self.class_weight = class_weight
 
-        super().__init__()
+        super().__init__(compile_kwargs=compile_kwargs, fit_kwargs=fit_kwargs)
 
         network_params = {
             "activation": self.activation_hidden,
@@ -207,10 +215,14 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         else:
             metrics = self.metrics
 
+        compile_kwargs = (
+            self.compile_kwargs.as_dict() if self.compile_kwargs is not None else {}
+        )
         model.compile(
             loss=self.loss,
             optimizer=keras.optimizers.Adam(),
             metrics=metrics,
+            **compile_kwargs,
         )
 
         return model
@@ -260,6 +272,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
             # if nothing valid left, set to None so keras treats all equally
             class_weight = filtered_class_weight if filtered_class_weight else None
 
+        fit_kwargs = self.fit_kwargs.as_dict() if self.fit_kwargs is not None else {}
         self.history = self.model_.fit(
             X,
             y_onehot,
@@ -268,6 +281,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
             verbose=self.verbose,
             callbacks=deepcopy(callbacks) if callbacks else [],
             class_weight=class_weight,
+            **fit_kwargs,
         )
         return self
 

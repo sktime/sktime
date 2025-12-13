@@ -43,6 +43,12 @@ class FCNRegressor(BaseDeepRegressor):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
+    compile_kwargs : KerasCompileKwargs, default=None
+        Additional arguments for Keras model compilation.
+        See ``KerasCompileKwargs`` for available options.
+    fit_kwargs : KerasFitKwargs, default=None
+        Additional arguments for Keras model training.
+        See ``KerasFitKwargs`` for available options.
 
     References
     ----------
@@ -72,6 +78,8 @@ class FCNRegressor(BaseDeepRegressor):
         activation_hidden="relu",
         use_bias=True,
         optimizer=None,
+        compile_kwargs=None,
+        fit_kwargs=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -88,7 +96,7 @@ class FCNRegressor(BaseDeepRegressor):
         self.optimizer = optimizer
         self.history = None
 
-        super().__init__()
+        super().__init__(compile_kwargs=compile_kwargs, fit_kwargs=fit_kwargs)
 
         self._network = FCNNetwork(
             activation=self.activation_hidden,
@@ -134,10 +142,14 @@ class FCNRegressor(BaseDeepRegressor):
         )
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
+        compile_kwargs = (
+            self.compile_kwargs.as_dict() if self.compile_kwargs is not None else {}
+        )
         model.compile(
             loss=self.loss,
             optimizer=self.optimizer_,
             metrics=metrics,
+            **compile_kwargs,
         )
         return model
 
@@ -163,6 +175,8 @@ class FCNRegressor(BaseDeepRegressor):
         self.model_ = self.build_model(self.input_shape)
         if self.verbose:
             self.model_.summary()
+
+        fit_kwargs = self.fit_kwargs.as_dict() if self.fit_kwargs is not None else {}
         self.history = self.model_.fit(
             X,
             y,
@@ -170,6 +184,7 @@ class FCNRegressor(BaseDeepRegressor):
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=deepcopy(self.callbacks) if self.callbacks else [],
+            **fit_kwargs,
         )
         return self
 
