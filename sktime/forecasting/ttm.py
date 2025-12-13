@@ -11,14 +11,11 @@ from skbase.utils.stdout_mute import StdoutMute
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.split import temporal_train_test_split
+from sktime.utils.dependencies import _safe_import
 from sktime.utils.warnings import warn
 
-if _check_soft_dependencies("torch", severity="none"):
-    from torch.utils.data import Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
+torch = _safe_import("torch")
+Dataset = _safe_import("torch.utils.data.Dataset")
 
 
 class TinyTimeMixerForecaster(_BaseGlobalForecaster):
@@ -275,7 +272,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             "pd_multiindex_hier",
         ],
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,

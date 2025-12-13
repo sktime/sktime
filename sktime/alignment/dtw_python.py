@@ -26,17 +26,21 @@ class AlignerDTW(BaseAligner):
     dist_method : str, optional, default = "euclidean"
         distance function to use, a distance on real n-space
         one of the functions in ``scipy.spatial.distance.cdist``
+
     step_pattern : str, optional, or dtw_python stepPattern object, optional
         step pattern to use in time warping
         one of: 'symmetric1', 'symmetric2' (default), 'asymmetric',
         and dozens of other more non-standard step patterns;
         list can be displayed by calling help(stepPattern) in dtw
+
     window_type : string, the chosen windowing function
         "none", "itakura", "sakoechiba", or "slantedband"
-        "none" (default) - no windowing
-        "sakoechiba" - a band around main diagonal
-        "slantedband" - a band around slanted diagonal
-        "itakura" - Itakura parallelogram
+
+        * "none" (default) - no windowing
+        * "sakoechiba" - a band around main diagonal
+        * "slantedband" - a band around slanted diagonal
+        * "itakura" - Itakura parallelogram
+
     window_size: int, optional, default=None
         size of the window if a windowing function is used
         if None and window_type="sakoechiba", defaults to 10% of series length
@@ -51,6 +55,7 @@ class AlignerDTW(BaseAligner):
     Examples
     --------
     Basic usage example:
+
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sktime.alignment.dtw_python import AlignerDTW
@@ -64,6 +69,7 @@ class AlignerDTW(BaseAligner):
     >>> alignment_df = aligner.get_alignment()
 
     Advanced usage example with open-ended alignment:
+
     >>> aligner_advanced = AlignerDTW(
     ...     dist_method='cityblock',
     ...     window_type='sakoechiba',
@@ -263,23 +269,28 @@ class AlignerDTWfromDist(BaseAligner):
     ----------
     dist_trafo: estimator following the pairwise transformer template
         i.e., instance of concrete class implementing template BasePairwiseTransformer
+
     step_pattern : str, optional, default = "symmetric2",
         or dtw_python stepPattern object, optional
-        step pattern to use in time warping
+        step pattern to use in time warping,
         one of: 'symmetric1', 'symmetric2' (default), 'asymmetric',
         and dozens of other more non-standard step patterns;
         list can be displayed by calling help(stepPattern) in dtw
-    window_type: str  optional, default = "none"
+
+    window_type: str, "none" (default), "itakura", "sakoechiba", "slantedband", optional
         the chosen windowing function
-        "none", "itakura", "sakoechiba", or "slantedband"
-        "none" (default) - no windowing
-        "sakoechiba" - a band around main diagonal
-        "slantedband" - a band around slanted diagonal
-        "itakura" - Itakura parallelogram
+
+        * "none" (default) - no windowing
+        * "sakoechiba" - a band around main diagonal
+        * "slantedband" - a band around slanted diagonal
+        * "itakura" - Itakura parallelogram
+
     window_size: int, optional, default=None
         size of the window if a windowing function is used
         if None and window_type="sakoechiba", defaults to 10% of series length
+
     open_begin : boolean, optional, default=False
+
     open_end: boolean, optional, default=False
         whether to perform open-ended alignments
         open_begin = whether alignment open ended at start (low index)
@@ -288,6 +299,7 @@ class AlignerDTWfromDist(BaseAligner):
     Examples
     --------
     Basic usage example:
+
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sktime.alignment.dtw_python import AlignerDTWfromDist

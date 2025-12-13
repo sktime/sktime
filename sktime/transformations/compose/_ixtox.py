@@ -43,18 +43,27 @@ class IxToX(BaseTransformer):
         date-like indices to float (via int64)
         object, string, and category indices to integer
         values other than "auto" are passed to ``DataFrame.astype`` in ``transform``
+
     level : None (default), int, str, or iterable of pandas index level name elements
         if passed, selects the hierarchy levels that will be turned into columns in
-        ``X``
+        ``X``;
         if passed, passed on as ``level`` to ``reset_index`` internally
-        if None, will convert only the time index (last level) into features
-        Note that this is different from the default of ``reset_index``
-    ix_source : str, optional, default="X"
+
+        * if ``str`` or list/tuple of ``str``, selects levels by name.
+          Exceptions from this rule are below.
+        * if ``int`` or list/tuple of ``int``, selects levels by index (0 is first)
+        * if None, will convert only the time index (last level) into features
+          Note that this is different from the default of ``reset_index``.
+        * if the ``str`` ``"__all_but_time"``, selects all levels except the time index
+          (all but last level, level -1).
+        * of the ``str`` ``"__all"``, selects all levels
+
+    ix_source : str, "X" (default) or "y", optional
         which object to take the index from
-        default = "X" = ``X`` as passed to ``transform``
-            if used within ``ForecastingPipeline``, this means ``X`` by default
-        "y" = ``y`` as passed to ``transform``, if passed (not ``None``), otherwise
-        ``X``
+        * "X" = ``X`` as passed to ``transform``;
+          if used within ``ForecastingPipeline``, this means ``X`` by default
+        * "y" = ``y`` as passed to ``transform``, if passed (not ``None``), otherwise
+          ``X``
 
     Examples
     --------
@@ -67,10 +76,10 @@ class IxToX(BaseTransformer):
     """
 
     _tags = {
-        "authors": "fkiraly",
+        "authors": ["fkiraly", "RobKuebler"],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "scitype:y": "both",
@@ -114,7 +123,11 @@ class IxToX(BaseTransformer):
         if ix_source == "y" and y is not None:
             X = y
 
-        if level is None:
+        if level == "__all_but_time":
+            level = X.index.names[:-1]
+        elif level == "__all":
+            level = X.index.names
+        elif level is None:
             level = -1
 
         X_only_ix = X.drop(columns=X.columns)

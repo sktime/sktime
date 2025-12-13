@@ -729,6 +729,40 @@ class capability__train_estimate(_BaseTag):
     }
 
 
+class capability__random_state(_BaseTag):
+    """Capability: the estimator can be derandomized using a random_state.
+
+    - String name: ``"capability:random_state"``
+    - Public capability tag
+    - Values: bool, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the estimator can be derandomized using a ``random_state``
+    parameter. If the ``random_state`` parameter is set, then the estimator will produce
+    the same results on every run,
+    up to minimal numerical precision discrepancies (1e-5 relative error).
+    If the tag is ``False``, the estimator does not have a ``random_state``
+    parameter and cannot be derandomized.
+
+    The tag may be inspected by the user to find estimators
+    that can be derandomized.
+
+    The tag is also used internally in tests of ``sktime`` to verify
+    the behaviour of estimators.
+    """
+
+    _tags = {
+        "tag_name": "capability:random_state",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": (
+            "does the object have a random_state parameter for derandomization?"
+        ),
+        "user_facing": True,
+    }
+
+
 class fit_is_empty(_BaseTag):
     """Property: Whether the estimator has an empty fit method.
 
@@ -761,47 +795,87 @@ class fit_is_empty(_BaseTag):
     }
 
 
+class property__randomness(_BaseTag):
+    """Property: Degree of randomness vs determinism of the estimator.
+
+    - String name: ``"property:randomness"``
+    - Public property tag
+    - Values: str, ``"stochastic"``, ``"deterministic"``, ``"derandomized"``
+    - Example: ``"deterministic"``
+    - Default: ``"deterministic"``
+
+    * If the tag is ``"stochastic"``, the estimator is stochastic and
+      may produce different results on different runs.
+    * If the tag is ``"deterministic"``, the estimator is
+      deterministic and will produce the same results on every run,
+      up to minimal numerical precision discrepancies (1e-5 relative error).
+    * If the tag is ``"derandomized"``, the estimator can be derandomized
+      using a ``random_state`` parameter. It behaves as ``"stochastic"``
+      if the ``random_state`` parameter is not set, and it behaves as
+      ``"deterministic"`` if the ``random_state`` parameter is set.
+
+    This tag applies to instances with a given set of parameters,
+    and all computational methods of the estimator.
+
+    If at least one of the methods has stochastic behaviour, the tag should
+    be set to ``"stochastic"``, even if other methods are deterministic.
+
+    The tag may be inspected by the user to distinguish between
+    estimators with deterministic and stochastic behaviour.
+
+    The tag is also used internally in tests of ``sktime`` to verify
+    the behaviour of estimators.
+    """
+
+    _tags = {
+        "tag_name": "property:randomness",
+        "parent_type": "object",
+        "tag_type": "str",
+        "short_descr": "does the object behave deterministically or stochastically?",
+        "user_facing": True,
+    }
+
+
 # Forecasters
 # -----------
 
 
 class capability__exogeneous(_BaseTag):
-    """Capability: the forecaster can use exogeneous data.
+    """Capability: the forecaster can use exogenous data.
 
     The tag is currently named ``ignores-exogeneous-X``, and will be renamed.
 
-    ``False`` = does use exogeneous data, ``True`` = does not use exogeneous data.
+    ``False`` = does use exogenous data, ``True`` = does not use exogenous data.
 
-    - String name: ``"ignores-exogeneous-X"``
+    - String name: ``"capability:exogenous"``
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: ``capability:exogeneous`` (currently not used)
+    - Alias: boolean negation of ``"ignores-exogeneous-X"`` (legacy)
 
-    Exogeneous data are additional time series,
+    Exogenous data are additional time series,
     that can be used to improve forecasting accuracy.
 
-    If the forecaster uses exogeneous data (``ignore-exogeneous-X=False``),
+    If the forecaster uses exogenous data (``capability:exogenous=True``),
     the ``X`` parameter in ``fit``, ``predict``, and other methods
-    can be used to pass exogeneous data to the forecaster.
+    can be used to pass exogenous data to the forecaster.
 
     If the ``X-y-must-have-same-index`` tag is ``True``,
     then such data must always have an index that contains that of the target series,
     i.e., ``y`` in ``fit``, or the indices specified by ``fh`` in ``predict``.
 
-    If the tag is ``False``, the forecaster does not make use of exogeneous data.
+    If the tag is ``False``, the forecaster does not make use of exogenous data.
     ``X`` parameters can still be passed to methods, to ensure a uniform interface,
     but the data will be ignored,
     i.e., not used in the internal logic of the forecaster.
-
     """
 
     _tags = {
-        "tag_name": "ignores-exogeneous-X",
+        "tag_name": "capability:exogenous",
         "parent_type": "forecaster",
         "tag_type": "bool",
-        "short_descr": "does forecaster make use of exogeneous data?",
+        "short_descr": "does forecaster make use of exogenous data?",
         "user_facing": True,
     }
 
@@ -965,7 +1039,7 @@ class requires_fh_in_fit(_BaseTag):
 
 
 class capability__categorical_in_X(_BaseTag):
-    """Capability: If estimator can handle categorical natively in exogeneous(X) data.
+    """Capability: If estimator can handle categorical variables in the X argument.
 
     ``False`` = cannot handle categorical natively in X,
     ``True`` = can handle categorical natively in X
@@ -984,7 +1058,32 @@ class capability__categorical_in_X(_BaseTag):
         "tag_name": "capability:categorical_in_X",
         "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
         "tag_type": "bool",
-        "short_descr": "can the estimator natively handle categorical data in exogeneous X?",  # noqa: E501
+        "short_descr": "can the estimator handle categorical data in X arguments?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__categorical_in_y(_BaseTag):
+    """Capability: If estimator can handle categorical variables in the y argument.
+
+    ``False`` = cannot handle categorical natively in y,
+    ``True`` = can handle categorical natively in y
+
+    - String name: ``"capability:categorical_in_y"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    Exogeneous data are additional time series,
+    that can be used to improve forecasting accuracy.
+    """
+
+    _tags = {
+        "tag_name": "capability:categorical_in_y",
+        "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
+        "tag_type": "bool",
+        "short_descr": "can the estimator handle categorical data in y arguments?",
         "user_facing": True,
     }
 
@@ -1011,8 +1110,10 @@ class capability__multivariate(_BaseTag):
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
     regressors, clusterers, ordinary transformers, and pairwise transformers.
 
-    If the tag is ``False``, the estimator can only handle univariate time series,
-    and will broadcast to variables (ordinary transformers), or raise an error (others).
+    If the tag is ``False``, the estimator can only handle univariate time series
+    natively. Depending on the type of object, multivariate time series may be valid
+    inputs, in this case the estimator will broadcast to variables
+    (transformers, forecasters), or raise an error (others).
 
     This condition is specific to the main input data representation,
     target data (e.g., classifier or transformation ``y``) are not considered.
@@ -1029,13 +1130,15 @@ class capability__multivariate(_BaseTag):
             "classifier",
             "clusterer",
             "early_classifier",
+            "metric",
             "param_est",
             "regressor",
+            "transformer",
             "transformer-pairwise",
             "transformer-pairwise-panel",
         ],
         "tag_type": "bool",
-        "short_descr": "can the estimator be applied to time series with 2 or more variables?",  # noqa: E501
+        "short_descr": "does the object natively support time series with 2 or more variables?",  # noqa: E501
         "user_facing": True,
     }
 
@@ -1836,6 +1939,83 @@ class capability__bootstrap_index(_BaseTag):
     }
 
 
+class capability__unequal_length__removes(_BaseTag):
+    """Capability: the transformer produces equal length series on unequal length input.
+
+    - String name: ``"capability:unequal_length:removes"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag is only meaningful for transformers that return time series as output,
+    i.e., the tag ``scitype:transform-output`` is ``"Series"`` or ``"Panel"``.
+
+    The tag specifies whether the transformer returns equal length time series,
+    when given unequal length time series as input.
+    This is the case for example for truncation or padding transformers,
+    that is, transformations that are specifically designed to remove
+    unequal length.
+    However, the tag may also be ``True`` for other transformers,
+    that are not specifically designed for this purpose.
+
+    If the tag is ``True``, the transformer will return equal length time series,
+    when given unequal length time series as input.
+
+    If the tag is ``False``, the transformer may return unequal length time series,
+    when given unequal length time series as input.
+
+    Also see the tag ``capability:unequal_length:adds``.
+    The typical transformer with series output will have both tags being ``False``.
+    """
+
+    _tags = {
+        "tag_name": "capability:unequal_length:removes",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer output have equal length time series?",
+        "user_facing": True,
+    }
+
+
+class capability__unequal_length__adds(_BaseTag):
+    """Capability: transformer may produce unequal length series on equal length input.
+
+    - String name: ``"capability:unequal_length:adds"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag is only meaningful for transformers that return time series as output,
+    i.e., the tag ``scitype:transform-output`` is ``"Series"`` or ``"Panel"``.
+
+    The tag specifies whether the transformer can return unequal length time series
+    on equal length time series as input.
+
+    If the tag is ``True``, the transformer may return unequal length time series,
+    when given equal length time series as input.
+
+    If the tag is ``False``, the transformer will
+    always return equal length time series,
+    when given equal length time series as input.
+
+    Note that even if the tag is ``False``, the transformer may still return
+    unequal length time series, when given unequal length time series as input.
+
+    Also see the tag ``capability:unequal_length:removes``.
+    The typical transformer with series output will have both tags being ``False``.
+    """
+
+    _tags = {
+        "tag_name": "capability:unequal_length:adds",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "can outputs be unequal length even if inputs are equal length?",
+        "user_facing": True,
+    }
+
+
 # Detector tags
 # --------------
 
@@ -1998,6 +2178,162 @@ class capability__variable_identification(_BaseTag):
         "parent_type": "detector",
         "tag_type": "bool",
         "short_descr": "Can the detector identify the variables causing each detection?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+# Time series aligner tags
+# ------------------------
+
+
+class capability__multiple_alignment(_BaseTag):
+    """Capability: aligner can align multiple series.
+
+    - String name: ``"capability:multiple-alignment"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to time series aligners.
+
+    If the tag is ``True``, the aligner can align multiple time series
+    in a single alignment operation.
+    If the tag is ``False``, the aligner can only align two time series
+    in a single alignment operation.
+
+    If the tag is ``True``, the aligner's ``fit`` method can take as input
+    a collection of more than two time series.
+
+    Otherwise, the aligner's ``fit`` method can only take as input two time series.
+    """
+
+    _tags = {
+        "tag_name": "capability:multiple-alignment",
+        "parent_type": "aligner",
+        "tag_type": "bool",
+        "short_descr": "is aligner capable of aligning multiple series (True) or only two (False)?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__distance(_BaseTag):
+    """Capability: aligner can return overall distance between aligned series.
+
+    - String name: ``"capability:distance"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to time series aligners.
+
+    If the tag is ``True``, the aligner is capable of returning an overall distance
+    between the aligned time series via the ``get_distance`` method.
+
+    If the tag is ``False``, the aligner cannot return an overall distance
+    between the aligned time series, and calling ``get_distance`` will raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:distance",
+        "parent_type": "aligner",
+        "tag_type": "bool",
+        "short_descr": "can aligner return overall distance between aligned series?",
+        "user_facing": True,
+    }
+
+
+class capability__distance_matrix(_BaseTag):
+    """Capability: aligner can return a distance matrix between aligned series.
+
+    - String name: ``"capability:distance-matrix"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to time series aligners.
+
+    If the tag is ``True``, the aligner is capable of returning a pairwise
+    distance matrix
+    between the aligned time series via the ``get_distance_matrix`` method.
+
+    If the tag is ``False``, the aligner cannot return a pairwise distance matrix
+    between the aligned time series,
+    and calling ``get_distance_matrix`` will raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:distance-matrix",
+        "parent_type": "aligner",
+        "tag_type": "bool",
+        "short_descr": "can aligner return pairwise distance matrix between aligned series?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class property__alignment_type(_BaseTag):
+    """Property: type of alignment produced by the aligner.
+
+    - String name: ``"alignment_type"``
+    - Public property tag
+    - Values: string, one of ``"full"``, ``"partial"``
+    - Example: ``"full"``
+    - Default: ``"full"``
+
+    This tag applies to time series aligners.
+
+    The tag specifies whether the aligner produces a full alignment,
+    where the entire time series are aligned,
+    or a partial alignment, where only subsequences of the time series are aligned.
+
+    The possible values are:
+
+    * ``"full"``: the aligner produces a full alignment of the time series.
+      In this case, ``get_alignment`` will return alignments where indices
+      cover the entire length of the input time series.
+    * ``"partial"``: the aligner produces a partial alignment of the time series.
+      In this case, ``get_alignment`` returned alignments do not necessarily
+      cover the entire length of the input time series.
+    """
+
+    _tags = {
+        "tag_name": "alignment_type",
+        "parent_type": "aligner",
+        "tag_type": ("str", ["full", "partial"]),
+        "short_descr": "does aligner produce a full or partial alignment?",
+        "user_facing": True,
+    }
+
+
+# Parameter estimator tags
+# ------------------------
+
+
+class capability__pairwise_parameter_estimation(_BaseTag):
+    """Capability: parameter estimator supports pairwise parameter estimation.
+
+    - String name: ``"capability:pairwise"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to parameter estimators.
+
+    If the tag is ``True``, the estimator supports pairwise parameter estimation,
+    i.e., estimating parameters for a pair of time series.
+
+    If the tag is ``False``, the estimator does not support
+    pairwise parameter estimation.
+    """
+
+    _tags = {
+        "tag_name": "capability:pairwise",
+        "parent_type": "param_est",
+        "tag_type": "bool",
+        "short_descr": "does the estimator support pairwise parameter estimation?",
         "user_facing": True,
     }
 
@@ -2915,12 +3251,6 @@ ESTIMATOR_TAG_REGISTER = [
         "does the transformer transform instances independently?",
     ),
     (
-        "capability:unequal_length:removes",
-        "transformer",
-        "bool",
-        "is the transformer result guaranteed to be equal length series (and series)?",
-    ),
-    (
         "capability:missing_values:removes",
         "transformer",
         "bool",
@@ -2949,36 +3279,6 @@ ESTIMATOR_TAG_REGISTER = [
         ),
         "which type the classifier falls under in the taxonomy of time series "
         "classification algorithms.",
-    ),
-    (
-        "capability:multiple-alignment",
-        "aligner",
-        "bool",
-        "is aligner capable of aligning multiple series (True) or only two (False)?",
-    ),
-    (
-        "capability:pairwise",
-        "param_est",
-        "bool",
-        "Indicates whether the estimator supports pairwise parameter estimation.",
-    ),
-    (
-        "capability:distance",
-        "aligner",
-        "bool",
-        "does aligner return overall distance between aligned series?",
-    ),
-    (
-        "capability:distance-matrix",
-        "aligner",
-        "bool",
-        "does aligner return pairwise distance matrix between aligned series?",
-    ),
-    (
-        "alignment_type",
-        "aligner",
-        ("str", ["full", "partial"]),
-        "does aligner produce a full or partial alignment",
     ),
     (
         "remember_data",
@@ -3140,6 +3440,12 @@ ESTIMATOR_TAG_REGISTER = [
         "object",
         "dict",
         "deprecated tag for dependency import aliases",
+    ),
+    (
+        "ignores-exogeneous-X",
+        "forecaster",
+        "bool",
+        "deprecated tag for exogenous capability",
     ),
 ]
 

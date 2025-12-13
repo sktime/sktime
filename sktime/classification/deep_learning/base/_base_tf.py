@@ -4,7 +4,6 @@ The reason for this class between BaseClassifier and deep_learning classifiers i
 because we can generalise tags, _predict and _predict_proba
 """
 
-__author__ = ["James-Large", "ABostrom", "TonyBagnall", "aurunmpegasus", "achieveordie"]
 __all__ = ["BaseDeepClassifier"]
 
 import os
@@ -40,6 +39,16 @@ class BaseDeepClassifier(BaseClassifier):
         "X_inner_mtype": "numpy3D",
         "capability:multivariate": True,
         "python_dependencies": "tensorflow",
+        "property:randomness": "stochastic",
+        "capability:random_state": True,
+        "authors": [
+            "James-Large",
+            "ABostrom",
+            "TonyBagnall",
+            "aurunmpegasus",
+            "achieveordie",
+            "noxthot",
+        ],
     }
 
     @abstractmethod
@@ -276,6 +285,7 @@ class BaseDeepClassifier(BaseClassifier):
     def _serialize_using_dump_func(self, path, dump, dumps):
         """Serialize & return DL Estimator using ``dump`` and ``dumps`` functions."""
         import shutil
+        import tempfile
         from zipfile import ZipFile
 
         history = self.history.history if self.history is not None else None
@@ -285,9 +295,18 @@ class BaseDeepClassifier(BaseClassifier):
 
             in_memory_model = None
             if self.model_ is not None:
-                self.model_.save("disk_less.h5")
-                with h5py.File("disk_less.h5", "r") as h5file:
-                    in_memory_model = h5file.id.get_file_image()
+                # Python 3.12 introduces `delete_on_close` which we could use here
+                # to avoid having to delete the file ourselves.
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".h5") as tmpfile:
+                    tmpfilepath = tmpfile.name
+                    tmpfile.close()
+
+                    self.model_.save(tmpfilepath)
+
+                    with h5py.File(tmpfilepath, "r") as h5file:
+                        in_memory_model = h5file.id.get_file_image()
+
+                    os.remove(tmpfilepath)
 
             in_memory_history = dumps(history)
             return (
@@ -333,6 +352,7 @@ class BaseDeepClassifier(BaseClassifier):
         """
         _check_soft_dependencies("h5py")
         import pickle
+        import tempfile
 
         from tensorflow.keras.models import load_model
 
@@ -353,9 +373,16 @@ class BaseDeepClassifier(BaseClassifier):
         if in_memory_model is None:
             cls.model_ = None
         else:
-            with open("diskless.h5", "wb") as store_:
-                store_.write(in_memory_model)
-                cls.model_ = load_model("diskless.h5")
+            # Python 3.12 introduces `delete_on_close` which we could use here
+            # to avoid having to delete the file ourselves.
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".h5") as tmpfile:
+                tmpfilepath = tmpfile.name
+
+                tmpfile.write(in_memory_model)
+                tmpfile.close()
+
+                cls.model_ = load_model(tmpfilepath)
+                os.remove(tmpfilepath)
 
         cls.history = pickle.loads(in_memory_history)
         return pickle.loads(serial)

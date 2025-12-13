@@ -33,6 +33,21 @@ Benchmarking Framework v2
 
     ClassificationBenchmark
 
+
+Storage Backends
+----------------
+
+.. currentmodule:: sktime.benchmarking._storage_handlers
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    JSONStorageHandler
+    ParquetStorageHandler
+    CSVStorageHandler
+    NullStorageHandler
+
+
 Benchmarking Framework v1
 -------------------------
 

@@ -19,17 +19,8 @@ from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-
-    Dataset = _safe_import("torch.utils.data.Dataset")
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
-
-        pass
-
+torch = _safe_import("torch")
+Dataset = _safe_import("torch.utils.data.Dataset")
 
 PatchTSTConfig = _safe_import("transformers.PatchTSTConfig")
 PatchTSTForPrediction = _safe_import("transformers.PatchTSTForPrediction")
@@ -260,11 +251,11 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
             "pd_multiindex_hier",
         ],
         "scitype:y": "both",
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
