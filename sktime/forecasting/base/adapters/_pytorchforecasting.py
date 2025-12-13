@@ -234,14 +234,12 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             )
             if self._trainer.checkpoint_callback is not None:
                 best_model_path = self._trainer.checkpoint_callback.best_model_path
- 
+
                 try:
                     self.best_model = self.algorithm_class.load_from_checkpoint(
-                        best_model_path,
-                        weights_only=False
+                        best_model_path, weights_only=False
                     )
                 except TypeError:
-                    
                     self.best_model = self.algorithm_class.load_from_checkpoint(
                         best_model_path
                     )
