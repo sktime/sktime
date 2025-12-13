@@ -301,6 +301,7 @@ notebooks = [
   "dtw-python",
   "prophet",
   "pytorch-forecasting",
+  "torch<2.6",
   "skpro",
   "statsforecast",
 ]
