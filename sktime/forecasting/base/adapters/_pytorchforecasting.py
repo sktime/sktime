@@ -10,13 +10,11 @@ from copy import deepcopy
 from random import randint
 from typing import Any
 
-
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
-from sktime.utils.dependencies import _check_soft_dependencies
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
@@ -235,30 +233,17 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 ),
             )
             if self._trainer.checkpoint_callback is not None:
+                # load model from checkpoint
                 best_model_path = self._trainer.checkpoint_callback.best_model_path
-            
-                load_kwargs = {}
-                if _check_soft_dependencies("lightning>=2.6.0", severity="none"):
-                    load_kwargs["weights_only"] = False
-
                 self.best_model = self.algorithm_class.load_from_checkpoint(
-                    best_model_path,
-                    **load_kwargs
+                    best_model_path
                 )
             else:
                 self.best_model = self._forecaster
-
         else:
             # load model from disk
-            load_kwargs = {}
-            if _check_soft_dependencies("lightning>=2.6.0", severity="none"):
-                load_kwargs["weights_only"] = False
-            
-            self.best_model = self.algorithm_class.load_from_checkpoint(
-                self.model_path,
-                **load_kwargs
-            )
-        return self
+            self.best_model = self.algorithm_class.load_from_checkpoint(self.model_path)
+        return self
 
     def _predict(
         self: "_PytorchForecastingAdapter",
@@ -676,6 +661,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 lambda x: pd.concat([x.droplevel(list(range(len_levels - 1))), _y])
             )
         return _y
+
 
 def _series_to_frame(data):
     converted = False
