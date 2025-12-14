@@ -238,7 +238,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 best_model_path = self._trainer.checkpoint_callback.best_model_path
             
                 load_kwargs = {}
-                if _check_soft_dependencies("torch>=2.4.0", severity="none"):
+                if _check_soft_dependencies("lightning>=2.6.0", severity="none"):
                     load_kwargs["weights_only"] = False
 
                 self.best_model = self.algorithm_class.load_from_checkpoint(
