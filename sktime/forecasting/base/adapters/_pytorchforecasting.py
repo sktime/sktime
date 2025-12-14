@@ -676,7 +676,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 lambda x: pd.concat([x.droplevel(list(range(len_levels - 1))), _y])
             )
         return _y
-        
+
 def _series_to_frame(data):
     converted = False
     if data is not None:
