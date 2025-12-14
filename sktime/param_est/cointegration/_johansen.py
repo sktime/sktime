@@ -11,8 +11,22 @@ class JohansenCointegration(BaseParamFitter):
     """Test for cointegration ranks/relationships for VECM Time-Series.
 
     Direct interface to ``statsmodels.tsa.vector_ar.vecm``.
-    Determines the coint parameter value to be used in VECM time-series module vecm.py:
-    `coint_rank`. Uses trace statistics or eigenvalue.
+
+    The Johansen Cointegration test is a test solely used in Vector Error
+    Correction Models (VECM) to determine the occurence of a long-term relationship
+    (cointegration rank) between two time series or several long-term relationships
+    in case of multiple time-series. The idea of the underlying test is to estimate,
+    if such (a) relationship(s) exist(s). In case there is a relationship (or several),
+    the time series used in the model, can be in its original scale in levels without
+    dedifferencing them. Normally, time series not being stationary need to be
+    'integrated'(dedifferenced) before using them in time series analysis, e.g.
+    VAR or ARIMA.If however, (a) long-term relationship(s) exist(s), that means that
+    the variables inthe 'long term' are stationary 'together', and can be used without
+    any transformation. If no relationship (no cointegration rank) is found, a VECM
+    can not be used and a VAR needs to considered but with integrated/dedifferenced
+    time-series. The estimator used in the code determines the coint parameter value
+    to be used in VECM time-series module/estimator vecm.py: `coint_rank`.
+    Use trace statistics or eigenvalue to find it.
 
     Parameters
     ----------

@@ -113,3 +113,14 @@ Residual tests and estimators
     :template: class.rst
 
     JarqueBera
+
+Johansen Cointegration estimators
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.param_est.cointegration
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    JohansenCointegration
