@@ -10,11 +10,13 @@ from copy import deepcopy
 from random import randint
 from typing import Any
 
+
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.utils.dependencies import _check_soft_dependencies
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
@@ -234,17 +236,18 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             )
             if self._trainer.checkpoint_callback is not None:
                 best_model_path = self._trainer.checkpoint_callback.best_model_path
+            
+                load_kwargs = {}
+                if _check_soft_dependencies("torch>=2.4.0", severity="none"):
+                    load_kwargs["weights_only"] = False
 
-                try:
-                    self.best_model = self.algorithm_class.load_from_checkpoint(
-                        best_model_path, weights_only=False
-                    )
-                except TypeError:
-                    self.best_model = self.algorithm_class.load_from_checkpoint(
-                        best_model_path
-                    )
+                self.best_model = self.algorithm_class.load_from_checkpoint(
+                    best_model_path,
+                    **load_kwargs
+                )
             else:
                 self.best_model = self._forecaster
+
         else:
             # load model from disk
             self.best_model = self.algorithm_class.load_from_checkpoint(self.model_path)
