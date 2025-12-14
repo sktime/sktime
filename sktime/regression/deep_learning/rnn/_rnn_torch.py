@@ -1,18 +1,16 @@
-"""Time Recurrent Neural Network (RNN) for classification in PyTorch."""
+"""Time Recurrent Neural Network (RNN) for regression in PyTorch."""
 
 __authors__ = ["RecreationalMath"]
-__all__ = ["SimpleRNNClassifierTorch"]
+__all__ = ["SimpleRNNRegressorTorch"]
 
 from collections.abc import Callable
 
-import numpy as np
-
-from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.rnn import RNNNetworkTorch
+from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
 
 
-class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
-    """Simple recurrent neural network in PyTorch for time series classification.
+class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
+    """Simple recurrent neural network in PyTorch for time series regression.
 
     Parameters
     ----------
@@ -53,7 +51,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
     batch_size : int, default = 1
         The size of each mini-batch during training.
     criterion : case insensitive str or None or an instance of a loss function
-        defined in PyTorch, default = "CrossEntropyLoss"
+        defined in PyTorch, default = "MSELoss"
         The loss function to be used in training the neural network.
         List of available loss functions:
         https://pytorch.org/docs/stable/nn.html#loss-functions
@@ -80,13 +78,13 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
 
     Examples
     --------
-    >>> from sktime.classification.deep_learning.rnn import SimpleRNNClassifierTorch
+    >>> from sktime.regression.deep_learning.rnn import SimpleRNNRegressorTorch
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> clf = SimpleRNNClassifierTorch(n_epochs=50,batch_size=2) # doctest: +SKIP
-    >>> clf.fit(X_train, y_train) # doctest: +SKIP
-    SimpleRNNClassifierTorch(...)
+    >>> reg = SimpleRNNRegressorTorch(n_epochs=50,batch_size=2) # doctest: +SKIP
+    >>> reg.fit(X_train, y_train) # doctest: +SKIP
+    SimpleRNNRegressorTorch(...)
     """
 
     _tags = {
@@ -94,14 +92,13 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         # --------------
         "authors": ["RecreationalMath"],
         "maintainers": ["RecreationalMath"],
-        "python_version": ">=3.9",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
     }
 
     def __init__(
-        self: "SimpleRNNClassifierTorch",
+        self: "SimpleRNNRegressorTorch",
         # model specific
         hidden_dim: int = 6,
         n_layers: int = 1,
@@ -116,11 +113,11 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         num_epochs: int = 100,
         batch_size: int = 1,
         optimizer: str | None | Callable = "RMSprop",
-        criterion: str | None | Callable = "CrossEntropyLoss",
+        criterion: str | None | Callable = "MSELoss",
         callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
-        optimizer_kwargs: dict | None = None,
-        criterion_kwargs: dict | None = None,
-        callback_kwargs: dict | None = None,
+        criterion_kwargs: dict = None,
+        optimizer_kwargs: dict = None,
+        callback_kwargs: dict | None = None,  # currently only schedulers supported
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int = 0,
@@ -150,15 +147,14 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         self.verbose = verbose
         self.random_state = random_state
 
-        # input_size and num_classes to be inferred from the data
+        # input_size to be inferred from the data
         # and will be set in _build_network
         self.input_size = None
-        self.num_classes = None
+        self.num_classes = 1  # because regression
 
         super().__init__(
             num_epochs=self.num_epochs,
             batch_size=self.batch_size,
-            activation=self.activation,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
             optimizer=self.optimizer,
@@ -170,15 +166,13 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             random_state=self.random_state,
         )
 
-    def _build_network(self, X, y):
+    def _build_network(self, X):
         """Build the RNN network.
 
         Parameters
         ----------
         X : numpy.ndarray
             Input data containing the time series data.
-        y : numpy.ndarray
-            Target labels for the classification task.
 
         Returns
         -------
@@ -192,13 +186,12 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
                 "properly formatted."
             )
         # n_instances, n_dims, n_timesteps = X.shape
-        self.num_classes = len(np.unique(y))
         _, self.input_size, _ = X.shape
         return RNNNetworkTorch(
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
             n_layers=self.n_layers,
-            activation=self._validated_activation,  # use self._validated_activation
+            activation=self.activation,
             activation_hidden=self.activation_hidden,
             bias=self.bias,
             num_classes=self.num_classes,
@@ -245,7 +238,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "num_epochs": 50,
             "batch_size": 2,
             "optimizer": "RMSprop",
-            "criterion": "CrossEntropyLoss",
+            "criterion": "MSELoss",
             "callbacks": None,
             "criterion_kwargs": None,
             "optimizer_kwargs": None,
@@ -254,70 +247,4 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "verbose": False,
             "random_state": 0,
         }
-        params3 = {
-            "hidden_dim": 5,
-            "n_layers": 1,
-            "activation": "sigmoid",
-            "activation_hidden": "relu",
-            "bias": False,
-            "init_weights": True,
-            "dropout": 0.0,
-            "fc_dropout": 0.0,
-            "bidirectional": False,
-            "num_epochs": 50,
-            "batch_size": 2,
-            "optimizer": "RMSprop",
-            "criterion": "BCELoss",
-            "callbacks": None,
-            "criterion_kwargs": None,
-            "optimizer_kwargs": None,
-            "callback_kwargs": None,
-            "lr": 0.001,
-            "verbose": False,
-            "random_state": 0,
-        }  # functionally equivalent to params2 for binary classification
-        params4 = {
-            "hidden_dim": 5,
-            "n_layers": 1,
-            "activation": None,
-            "activation_hidden": "relu",
-            "bias": False,
-            "init_weights": True,
-            "dropout": 0.0,
-            "fc_dropout": 0.0,
-            "bidirectional": False,
-            "num_epochs": 50,
-            "batch_size": 2,
-            "optimizer": "RMSprop",
-            "criterion": "BCEWithLogitsLoss",
-            "callbacks": None,
-            "criterion_kwargs": None,
-            "optimizer_kwargs": None,
-            "callback_kwargs": None,
-            "lr": 0.001,
-            "verbose": False,
-            "random_state": 0,
-        }  # functionally equivalent to params2 for binary classification
-        params5 = {
-            "hidden_dim": 5,
-            "n_layers": 1,
-            "activation": "logsoftmax",
-            "activation_hidden": "relu",
-            "bias": False,
-            "init_weights": True,
-            "dropout": 0.0,
-            "fc_dropout": 0.0,
-            "bidirectional": False,
-            "num_epochs": 50,
-            "batch_size": 2,
-            "optimizer": "RMSprop",
-            "criterion": "NLLLoss",
-            "callbacks": None,
-            "criterion_kwargs": None,
-            "optimizer_kwargs": None,
-            "callback_kwargs": None,
-            "lr": 0.001,
-            "verbose": False,
-            "random_state": 0,
-        }  # functionally equivalent to params2 for multi-class classification
-        return [params1, params2, params3, params4, params5]
+        return [params1, params2]
