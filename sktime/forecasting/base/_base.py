@@ -137,8 +137,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
     }
 
     def __init__(self):
-        self._is_fitted = False
-
         self._y = None
         self._X = None
 
@@ -334,6 +332,33 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         return self.state == "fitted"
 
     @property
+    def _is_fitted(self):
+        """Internal fitted state for backward compatibility.
+
+        Returns True if the estimator has been fitted or pretrained.
+
+        Returns
+        -------
+        bool
+            True if state is "fitted" or "pretrained", False otherwise.
+        """
+        return self._state in ("fitted", "pretrained")
+
+    @_is_fitted.setter
+    def _is_fitted(self, value):
+        """Setter for backward compatibility.
+
+        Parameters
+        ----------
+        value : bool
+            If True, sets state to "fitted". If False, sets state to "new".
+        """
+        if value:
+            self._state = "fitted"
+        else:
+            self._state = "new"
+
+    @property
     def state(self):
         """State of the estimator.
 
@@ -433,7 +458,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
 
         # this should happen last
-        self._is_fitted = True
         self._state = "fitted"
 
         return self
@@ -604,7 +628,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             # otherwise we call the vectorized version of fit
             self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
 
-        self._is_fitted = True
         self._state = "fitted"
         # call the public predict to avoid duplicating output conversions
         #  input conversions are skipped since we are using X_inner
