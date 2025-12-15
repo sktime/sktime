@@ -219,6 +219,48 @@ class DummyGlobalForecaster(BaseForecaster):
                 pred_value = pred_value[0]
             return pd.Series(pred_value, index=fh_abs, name=self._y.name)
 
+    def _predict_mean_by_index(self, fh_abs):
+        """Predict using mean by index strategy.
+
+        Maps forecast horizon indices to pretrain index means.
+        Falls back to global_mean_ for indices not in pretrain data.
+
+        Parameters
+        ----------
+        fh_abs : pd.Index
+            Absolute forecast horizon index
+
+        Returns
+        -------
+        y_pred : pd.Series or pd.DataFrame
+            Point predictions
+        """
+        mean_idx = self.mean_by_index_.index
+
+        # Check if we're dealing with multivariate data
+        if isinstance(self._y, pd.DataFrame):
+            n_cols = len(self._y.columns)
+            data = np.full((len(fh_abs), n_cols), self.global_mean_)
+
+            for i, idx in enumerate(fh_abs):
+                if idx in mean_idx:
+                    if isinstance(self.mean_by_index_, pd.DataFrame):
+                        data[i, :] = self.mean_by_index_.loc[idx].values
+                    else:
+                        data[i, :] = self.mean_by_index_.loc[idx]
+
+            return pd.DataFrame(data, index=fh_abs, columns=self._y.columns)
+        else:
+            # Univariate
+            pred_values = []
+            for idx in fh_abs:
+                if idx in mean_idx:
+                    pred_values.append(self.mean_by_index_.loc[idx])
+                else:
+                    pred_values.append(self.global_mean_)
+
+            return pd.Series(pred_values, index=fh_abs, name=self._y.name)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
