@@ -1005,15 +1005,27 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             * Sets ``self._pretrained_attrs`` to list of pretrained attribute names
               (as strings).
         """
+        # check and convert X/y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # pretrain does not support vectorization - global learning requires
+        # the forecaster to handle panel data directly
+        if isinstance(y_inner, VectorizedDF):
+            raise TypeError(
+                f"{type(self).__name__}.pretrain does not support automatic "
+                "vectorization. Pretraining requires global learning across all "
+                "instances, so the forecaster must natively support the input data."
+            )
+
         # Convert fh to ForecastingHorizon if needed
         _fh = fh
         if fh is not None and not isinstance(fh, ForecastingHorizon):
             _fh = ForecastingHorizon(fh)
 
         if self._state == "new":
-            self._pretrain(y=y, X=X, fh=_fh)
+            self._pretrain(y=y_inner, X=X_inner, fh=_fh)
         else:
-            self._pretrain_update(y=y, X=X, fh=_fh)
+            self._pretrain_update(y=y_inner, X=X_inner, fh=_fh)
 
         if not hasattr(self, "_pretrained_attrs"):
             self._pretrained_attrs = []
