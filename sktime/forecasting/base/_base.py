@@ -1002,7 +1002,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             * Sets pretrained model attributes ending in "_", fitted attributes are
               inspectable via ``get_pretrained_params``.
             * Sets ``self.state`` flag to ``"pretrained"``.
-            * Sets ``self._pretrained_attrs`` to list of pretrained attributes.
+            * Sets ``self._pretrained_attrs`` to list of pretrained attribute names
+              (as strings).
         """
         # Convert fh to ForecastingHorizon if needed
         _fh = fh
