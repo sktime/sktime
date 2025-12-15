@@ -1602,34 +1602,44 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
               all parameters of ``componentname`` appear as ``paramname`` with its value
             * if ``deep=True``, also contains arbitrary levels of component recursion,
               e.g., ``[componentname]__[componentcomponentname]__[paramname]``, etc
+
+        Notes
+        -----
+        Pretrained parameters (set via ``pretrain``) are excluded from the result.
+        Use ``get_pretrained_params`` to retrieve those.
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
-            return super().get_fitted_params(deep=deep)
+            fitted_params = super().get_fitted_params(deep=deep)
+        else:
+            # otherwise, we delegate to the instances' get_fitted_params
+            # instances' parameters are returned at dataframe-slice-like keys
+            fitted_params = {}
 
-        # otherwise, we delegate to the instances' get_fitted_params
-        # instances' parameters are returned at dataframe-slice-like keys
-        fitted_params = {}
+            # forecasters contains a pd.DataFrame with the individual forecasters
+            forecasters = self.forecasters_
 
-        # forecasters contains a pd.DataFrame with the individual forecasters
-        forecasters = self.forecasters_
+            # return forecasters in the "forecasters" param
+            fitted_params["forecasters"] = forecasters
 
-        # return forecasters in the "forecasters" param
-        fitted_params["forecasters"] = forecasters
+            def _to_str(x):
+                if isinstance(x, str):
+                    x = f"'{x}'"
+                return str(x)
 
-        def _to_str(x):
-            if isinstance(x, str):
-                x = f"'{x}'"
-            return str(x)
+            # populate fitted_params with forecasters and their parameters
+            for ix, col in product(forecasters.index, forecasters.columns):
+                fcst = forecasters.loc[ix, col]
+                fcst_key = f"forecasters.loc[{_to_str(ix)},{_to_str(col)}]"
+                fitted_params[fcst_key] = fcst
+                fcst_params = fcst.get_fitted_params(deep=deep)
+                for key, val in fcst_params.items():
+                    fitted_params[f"{fcst_key}__{key}"] = val
 
-        # populate fitted_params with forecasters and their parameters
-        for ix, col in product(forecasters.index, forecasters.columns):
-            fcst = forecasters.loc[ix, col]
-            fcst_key = f"forecasters.loc[{_to_str(ix)},{_to_str(col)}]"
-            fitted_params[fcst_key] = fcst
-            fcst_params = fcst.get_fitted_params(deep=deep)
-            for key, val in fcst_params.items():
-                fitted_params[f"{fcst_key}__{key}"] = val
+        # Remove pretrained attributes from fitted params
+        if hasattr(self, "_pretrained_attrs"):
+            for attr in self._pretrained_attrs:
+                fitted_params.pop(attr, None)
 
         return fitted_params
 
