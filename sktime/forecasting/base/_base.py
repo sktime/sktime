@@ -1041,11 +1041,21 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         self._state = "pretrained"
         return self
 
-    def get_pretrained_params(self):
+    def get_pretrained_params(self, deep=True):
         """Get pretrained parameters of this estimator.
 
         State required:
             Requires state to be "pretrained" or "fitted" (after pretraining).
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            Whether to return pretrained parameters of nested estimators.
+
+            * If True, will return a dict of parameter name : value for this object,
+              including pretrained parameters of nested estimators.
+            * If False, will return a dict of parameter name : value for this object,
+              but not include pretrained parameters of nested estimators.
 
         Returns
         -------
@@ -1053,6 +1063,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             Dictionary of pretrained parameter names mapped to their values.
             Keys are attribute names ending in "_" that were set during pretraining.
             Returns empty dict if estimator has not been pretrained.
+
+            If ``deep=True``, also contains keys/value pairs of nested estimators'
+            pretrained parameters, indexed as ``[attrname]__[paramname]``.
 
         Examples
         --------
@@ -1069,7 +1082,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         params = {}
         for attr in self._pretrained_attrs:
             if hasattr(self, attr):
-                params[attr] = getattr(self, attr)
+                value = getattr(self, attr)
+                params[attr] = value
+
+                # Handle nesting: if value is an estimator with pretrained params
+                if deep and hasattr(value, "get_pretrained_params"):
+                    nested = value.get_pretrained_params(deep=True)
+                    for nested_key, nested_val in nested.items():
+                        params[f"{attr}__{nested_key}"] = nested_val
 
         return params
 
