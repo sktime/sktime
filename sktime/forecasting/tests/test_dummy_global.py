@@ -115,6 +115,9 @@ class TestDummyGlobalForecaster:
         forecaster.pretrain(y_panel1)
         mean_after_first = forecaster.global_mean_
 
+        # Check that mean is computed and valid after first pretrain
+        assert np.isfinite(mean_after_first)
+
         # Second pretrain batch
         y_panel2 = _make_hierarchical(
             hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10
