@@ -24,11 +24,13 @@ class DummyGlobalForecaster(BaseForecaster):
 
     Parameters
     ----------
-    strategy : str, one of {"mean", "last"}, default="mean"
+    strategy : str, one of {"mean", "last", "mean_by_index"}, default="mean"
         Strategy for prediction:
 
         - "mean": predict mean of all values in pretrain set
         - "last": predict last value from fit data
+        - "mean_by_index": predict mean computed per time index across pretrain series.
+          Useful for cold start scenarios where pattern by index matters.
 
     Attributes
     ----------
@@ -42,6 +44,9 @@ class DummyGlobalForecaster(BaseForecaster):
         Total number of time points in pretrain data (set after pretrain)
     last_value_ : float or array-like
         Last value from fit data (set after fit)
+    mean_by_index_ : pd.Series
+        Mean value at each time index across pretrain series (set after pretrain
+        when strategy="mean_by_index")
 
     Examples
     --------
@@ -113,10 +118,23 @@ class DummyGlobalForecaster(BaseForecaster):
             # Panel data with MultiIndex
             self.n_pretrain_instances_ = len(y.index.get_level_values(0).unique())
             self.n_pretrain_timepoints_ = len(y)
+
+            if self.strategy == "mean_by_index":
+                time_level = y.index.nlevels - 1
+                if isinstance(y, pd.DataFrame):
+                    self.mean_by_index_ = y.groupby(level=time_level).mean()
+                else:
+                    self.mean_by_index_ = y.groupby(level=time_level).mean()
         else:
             # Single series
             self.n_pretrain_instances_ = 1
             self.n_pretrain_timepoints_ = len(y)
+
+            if self.strategy == "mean_by_index":
+                if isinstance(y, pd.DataFrame):
+                    self.mean_by_index_ = y.copy()
+                else:
+                    self.mean_by_index_ = y.copy()
 
         return self
 
@@ -165,13 +183,19 @@ class DummyGlobalForecaster(BaseForecaster):
         else:
             self.last_value_ = y.iloc[-1]
 
-        # If not pretrained, compute mean from this series
+        # If not pretrained, compute statistics from this series
         if not hasattr(self, "global_mean_"):
             if isinstance(y, pd.DataFrame):
                 values = y.values.flatten()
             else:
                 values = y.values
             self.global_mean_ = float(np.nanmean(values))
+
+        if self.strategy == "mean_by_index" and not hasattr(self, "mean_by_index_"):
+            if isinstance(y, pd.DataFrame):
+                self.mean_by_index_ = y.copy()
+            else:
+                self.mean_by_index_ = y.copy()
 
         return self
 
