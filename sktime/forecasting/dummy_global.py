@@ -99,7 +99,6 @@ class DummyGlobalForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        # Handle both Series and DataFrame
         if isinstance(y, pd.Series):
             values = y.values
         elif isinstance(y, pd.DataFrame):
@@ -107,11 +106,9 @@ class DummyGlobalForecaster(BaseForecaster):
         else:
             values = np.asarray(y).flatten()
 
-        # Compute global statistics
         self.global_mean_ = float(np.nanmean(values))
         self.global_std_ = float(np.nanstd(values))
 
-        # Track metadata about pretrain data
         if isinstance(y, (pd.Series, pd.DataFrame)) and isinstance(
             y.index, pd.MultiIndex
         ):
@@ -126,7 +123,6 @@ class DummyGlobalForecaster(BaseForecaster):
                 else:
                     self.mean_by_index_ = y.groupby(level=time_level).mean()
         else:
-            # Single series
             self.n_pretrain_instances_ = 1
             self.n_pretrain_timepoints_ = len(y)
 
@@ -212,6 +208,10 @@ class DummyGlobalForecaster(BaseForecaster):
         y_pred : pd.Series or pd.DataFrame
             Point predictions
         """
+        fh_abs = fh.to_absolute_index(self.cutoff)
+        if self.strategy == "mean_by_index":
+            return self._predict_mean_by_index(fh_abs)
+
         # Determine prediction value based on strategy
         if self.strategy == "mean":
             pred_value = self.global_mean_
@@ -220,11 +220,8 @@ class DummyGlobalForecaster(BaseForecaster):
         else:
             raise ValueError(
                 f"Unknown strategy: {self.strategy}. "
-                f"Must be one of ['mean', 'last']"
+                f"Must be one of ['mean', 'last', 'mean_by_index']"
             )
-
-        # Create output with correct shape
-        fh_abs = fh.to_absolute_index(self.cutoff)
 
         # Check if we're dealing with multivariate data
         if isinstance(self._y, pd.DataFrame):
