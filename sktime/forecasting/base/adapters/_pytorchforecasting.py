@@ -15,6 +15,7 @@ import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.utils.dependencies import _check_soft_dependencies
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
@@ -233,22 +234,22 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 ),
             )
             if self._trainer.checkpoint_callback is not None:
-                best_model_path = self._trainer.checkpoint_callback.best_model_path
 
-                try:
-                    self.best_model = self.algorithm_class.load_from_checkpoint(
-                        best_model_path, weights_only=False
-                    )
-                except TypeError:
-                    self.best_model = self.algorithm_class.load_from_checkpoint(
-                        best_model_path
-                    )
+                best_model_path = self._trainer.checkpoint_callback.best_model_path
+                load_kwargs = {}
+                if _check_soft_dependencies("lightning>=2.6.0", severity="none"):
+                    load_kwargs["weights_only"] = False
+
+                self.best_model = self.algorithm_class.load_from_checkpoint(
+                    best_model_path,
+                    **load_kwargs
+
+                )
             else:
                 self.best_model = self._forecaster
+
         else:
-            # load model from disk
-            self.best_model = self.algorithm_class.load_from_checkpoint(self.model_path)
-        return self
+            load_kwargs = {}
 
     def _predict(
         self: "_PytorchForecastingAdapter",
