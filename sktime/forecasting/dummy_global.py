@@ -298,4 +298,5 @@ class DummyGlobalForecaster(BaseForecaster):
         """
         params1 = {"strategy": "mean"}
         params2 = {"strategy": "last"}
-        return [params1, params2]
+        params3 = {"strategy": "mean_by_index"}
+        return [params1, params2, params3]
