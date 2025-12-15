@@ -195,13 +195,15 @@ class DummyGlobalForecaster(BaseForecaster):
 
         return self
 
-    def _predict(self, fh):
+    def _predict(self, fh, X=None):
         """Forecast using pretrained statistics or last value.
 
         Parameters
         ----------
         fh : ForecastingHorizon
             Forecasting horizon
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
 
         Returns
         -------
