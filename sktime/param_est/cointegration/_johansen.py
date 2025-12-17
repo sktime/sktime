@@ -5,7 +5,9 @@ author = ["PBormann"]
 all = ["JohansenCointegration"]
 
 import warnings
+
 import pandas as pd
+
 from sktime.param_est.base import BaseParamFitter
 
 
@@ -159,6 +161,7 @@ class JohansenCointegration(BaseParamFitter):
         self : reference to self
         """
         from statsmodels.tsa.vector_ar.vecm import coint_johansen
+
         if len(X.shape) < 2 or X.shape[1] < 2:
             warnings.warn(
                 f"Johansen test: Input requires at least 2 variables, "
@@ -249,4 +252,3 @@ class JohansenCointegration(BaseParamFitter):
         }
 
         return [params1, params2]
-    
