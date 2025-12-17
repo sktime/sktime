@@ -4,6 +4,8 @@
 author = ["PBormann"]
 all = ["JohansenCointegration"]
 
+import warnings
+import pandas as pd
 from sktime.param_est.base import BaseParamFitter
 
 
@@ -85,6 +87,7 @@ class JohansenCointegration(BaseParamFitter):
     >>> df = pd.DataFrame({"X":X, "X2": X2})
     >>> coint_est = JohansenCointegration()
     >>> coint_est.fit(df)
+    JohansenCointegration(...)
     >>> print(coint_est.get_fitted_params()["cvm"])
     [[15.0006 17.1481 21.7465]
      [ 2.7055  3.8415  6.6349]]
@@ -135,6 +138,8 @@ class JohansenCointegration(BaseParamFitter):
 
         As long as a trace statistic is bigger as a critical value
         (dep. on 90, 95 or 99 sig-level), there exists a cointegration up to this level.
+        If X1 is univariate, X2 will be inverted X1 automatically, as test makes only
+        sense with two different time series.
 
         Reading Example for 0-2 cointegration ranks.:
         self.lr1 = [400, 300, 50]
@@ -154,9 +159,21 @@ class JohansenCointegration(BaseParamFitter):
         self : reference to self
         """
         from statsmodels.tsa.vector_ar.vecm import coint_johansen
+        if len(X.shape) < 2 or X.shape[1] < 2:
+            warnings.warn(
+                f"Johansen test: Input requires at least 2 variables, "
+                f"but got shape {X.shape}. Inverting input and adding additional X."
+                f"Converting both X to pd.DataFrame"
+            )
+            X = pd.DataFrame(X)
+            X2 = pd.DataFrame(X).shift(1).bfill()
+            df = pd.concat([X, X2], axis=1)
+            print(df)
+        else:
+            df = X.copy()
 
         cojo_res = coint_johansen(
-            endog=X, det_order=self.det_order, k_ar_diff=self.k_ar_diff
+            endog=df, det_order=self.det_order, k_ar_diff=self.k_ar_diff
         )
 
         # Critical values (90%, 95%, 99%) of maximum eigenvalue statistic.
@@ -232,3 +249,4 @@ class JohansenCointegration(BaseParamFitter):
         }
 
         return [params1, params2]
+    
