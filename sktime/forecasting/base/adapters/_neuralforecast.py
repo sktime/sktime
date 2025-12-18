@@ -251,26 +251,29 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         -------
         int
             Validated input_size value.
-
-        Raises
-        ------
-        ValueError
-            If neuralforecast>=3.0.0 and input_size=-1 with no valid fallback.
         """
+        import warnings
+
         if _check_soft_dependencies("neuralforecast>=3.0.0", severity="none"):
             if input_size == -1:
                 # Fall back to inference_input_size if available
                 if inference_input_size != -1:
                     return inference_input_size
                 else:
-                    raise ValueError(
+                    # Use a sensible default and warn the user
+                    default_input_size = 10
+                    warnings.warn(
                         f"neuralforecast>=3.0.0 requires 'input_size' to be set "
                         f"explicitly for recurrent models ({self.algorithm_name}). "
                         f"Got input_size={input_size} and "
                         f"inference_input_size={inference_input_size}. "
+                        f"Using default input_size={default_input_size}. "
                         f"Please provide a positive integer value for 'input_size' "
-                        f"or 'inference_input_size'."
+                        f"or 'inference_input_size' to suppress this warning.",
+                        UserWarning,
+                        stacklevel=2,
                     )
+                    return default_input_size
         return input_size
 
     def _instantiate_model(self: "_NeuralForecastAdapter", fh: ForecastingHorizon):
