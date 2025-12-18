@@ -10,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -37,19 +37,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.10'
 
       - name: Build wheel
         run: |
-          python -m pip install build
-          python -m build --wheel --sdist --outdir wheelhouse
+          uv pip install build
+          uv build --wheel --sdist --out-dir wheelhouse
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Store wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: wheels
           path: wheelhouse/*
@@ -62,15 +69,21 @@ jobs:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v7
         with:
           name: wheels
           path: wheelhouse
@@ -82,7 +95,9 @@ jobs:
         run: echo "WHEELNAME=$(ls ./wheelhouse/sktime-*none-any.whl)" >> $GITHUB_ENV
 
       - name: Install wheel and extras
-        run: python -m pip install "${{ env.WHEELNAME }}[all_extras_pandas2,dev]"
+        run: uv pip install "${{ env.WHEELNAME }}[all_extras_pandas2,dev]"
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Run tests
         run: make test_without_datasets
@@ -95,15 +110,21 @@ jobs:
       fail-fast: false  # to not fail all combinations if just one fail
       matrix:
         os: [windows-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v7
         with:
           name: wheels
           path: wheelhouse
@@ -115,7 +136,9 @@ jobs:
         run: echo "WHEELNAME=$(ls ./wheelhouse/sktime-*none-any.whl)" >> $env:GITHUB_ENV
 
       - name: Install wheel and extras
-        run: python -m pip install "${env:WHEELNAME}[all_extras_pandas2,dev]"
+        run: uv pip install "${env:WHEELNAME}[all_extras_pandas2,dev]"
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Run tests  # explicit commands as windows does not support make
         run: python -m pytest  --ignore sktime/datasets
@@ -129,7 +152,7 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v7
         with:
           name: wheels
           path: wheelhouse

@@ -4,7 +4,6 @@
 
 __author__ = ["fkiraly", "ltsaprounis"]
 
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -84,7 +83,7 @@ class BaggingForecaster(BaseForecaster):
     _tags = {
         "authors": ["fkiraly", "ltsaprounis"],
         "scitype:y": "both",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:missing_values": True,  # can estimator handle missing data?
         "y_inner_mtype": PANDAS_MTYPES,
         # which types do _fit, _predict, assume for y?
@@ -96,6 +95,8 @@ class BaggingForecaster(BaseForecaster):
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": True,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # ... for in-sample horizons?
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -103,7 +104,7 @@ class BaggingForecaster(BaseForecaster):
         bootstrap_transformer: BaseTransformer = None,
         forecaster: BaseForecaster = None,
         sp: int = 2,
-        random_state: Union[int, np.random.RandomState] = None,
+        random_state: int | np.random.RandomState = None,
     ):
         self.bootstrap_transformer = bootstrap_transformer
         self.forecaster = forecaster
@@ -376,7 +377,8 @@ class BaggingForecaster(BaseForecaster):
         y_bootstraps = self.bootstrap_transformer_.fit_transform(X=_y)
 
         # generate replicates of exogenous data for bootstrap
-        X_inner = self._gen_X_bootstraps(X)
+        _X = update_data(self._X, X)
+        X_inner = self._gen_X_bootstraps(_X)
 
         self.forecaster_.update(y=y_bootstraps, X=X_inner, update_params=update_params)
         return self

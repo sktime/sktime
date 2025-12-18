@@ -6,7 +6,7 @@ from warnings import warn
 
 import pandas
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.adapters.forward import _clone_fitted_params
 
 __all__ = ["_GeneralisedStatsForecastAdapter", "StatsForecastBackAdapter"]
@@ -22,8 +22,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         "authors": ["yarnabrina", "arnaujc91"],
         "maintainers": ["yarnabrina"],
         "python_version": ">=3.8",
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast", "scipy<1.16"],
+        "python_dependencies": ["statsforecast"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
@@ -33,6 +32,9 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
         # "enforce_index_type": None,  # TODO: need to check (how?)
         "capability:missing_values": False,
+        # CI and test flags
+        # -----------------
+        "tests:libs": ["sktime.forecasting.base.adapters._generalised_statsforecast"],
     }
 
     def __init__(self):
@@ -160,7 +162,6 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         self : reference to self
         """
         del fh  # avoid being detected as unused by ``vulture`` like tools
-
         self._forecaster = self._instantiate_model()
 
         y_fit_input = y.to_numpy(copy=False)
@@ -470,6 +471,7 @@ class StatsForecastBackAdapter:
 
         self.estimator = estimator
         self.prediction_intervals = None
+        self._inner_fh = None
 
     def __repr__(self):
         """Representation dunder."""
@@ -480,6 +482,34 @@ class StatsForecastBackAdapter:
         _self = type(self).__new__(type(self))
         _self.__dict__.update(self.__dict__)
         return _self
+
+    def set_fh(self, fh: ForecastingHorizon | None):
+        """Set forecasting horizon.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon, optional
+            Forecasting horizon to set.
+
+        Returns
+        -------
+        self : returns reference to self
+        """
+        self._inner_fh = fh
+
+    def _get_MSTL_fh(self):
+        """
+        Get forecasting horizon.
+
+        Using the specifics of MSTL inherited from
+        `_predict_in_or_out_of_sample` method of `_GeneralisedStatsForecastAdapter`.
+        """
+        if self._inner_fh is not None and not self._inner_fh.is_all_in_sample():
+            # Case on which we neeed to calcualte the maximum horizon passing it to MSTL
+            maximum_forecast_horizon = self._inner_fh[-1]
+            return range(1, maximum_forecast_horizon + 1)
+        else:
+            return self._inner_fh
 
     def fit(self, y, X=None):
         """Fit to training data.
@@ -494,7 +524,8 @@ class StatsForecastBackAdapter:
         -------
         self : returns an instance of self.
         """
-        self.estimator = self.estimator.fit(y=y, X=X)
+        fh = self._get_MSTL_fh()
+        self.estimator = self.estimator.fit(y=y, X=X, fh=fh)
 
         return self
 
@@ -516,7 +547,8 @@ class StatsForecastBackAdapter:
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
-        mean = self.estimator.predict(fh=range(1, h + 1), X=X)[:, 0]
+        fh = self._get_MSTL_fh() or range(1, h + 1)
+        mean = self.estimator.predict(fh=fh, X=X)[:, 0]
         if level is None:
             return {"mean": mean}
         # if a level is passed, and if prediction_intervals has not been instantiated
@@ -529,9 +561,7 @@ class StatsForecastBackAdapter:
         level = sorted(level)
         coverage = [round(_l / 100, 2) for _l in level]
 
-        pred_int = self.estimator.predict_interval(
-            fh=range(1, h + 1), X=X, coverage=coverage
-        )
+        pred_int = self.estimator.predict_interval(fh=fh, X=X, coverage=coverage)
 
         return self.format_pred_int("mean", mean, pred_int, coverage, level)
 

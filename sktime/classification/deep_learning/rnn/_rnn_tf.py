@@ -1,20 +1,28 @@
 #!/usr/bin/env python3 -u
-"""Time Recurrent Neural Network (RNN) for regression."""
+"""Time Recurrent Neural Network (RNN) for classification."""
 
-__author__ = ["mloning"]
-__all__ = ["SimpleRNNRegressor"]
+__all__ = ["SimpleRNNClassifier"]
 
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
+from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.rnn import RNNNetwork
-from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
 
-class SimpleRNNRegressor(BaseDeepRegressor):
+# TODO (release 0.41.0)
+# change the default value of 'activation_hidden' to "tanh"
+# update the docstring for activation_hidden from "linear" to "tanh"
+# and remove the note about the change from the docstring.
+# Remove the usage of self._activation_hidden throughout the class
+# and replace it with self.activation_hidden
+class SimpleRNNClassifier(BaseDeepClassifier):
     """Simple recurrent neural network.
+
+    For a drop-in replacement based on PyTorch, see `SimpleRNNClassifierTorch`.
 
     Parameters
     ----------
@@ -24,7 +32,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         the number of samples per gradient update.
     units : int, default = 6
         number of units in the network
-    callbacks : list of tf.keras.callbacks.Callback objects, default = None
+    callbacks : tuple of tf.keras.callbacks.Callback objects, default = None
     add_default_callback : bool, default = True
         whether to add default callback
     random_state : int or None, default=0
@@ -35,9 +43,14 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         fit parameter for the keras model
     metrics : list of strings, default=["accuracy"]
         metrics to use in fitting the neural network
-    activation : string or a tf callable, default="linear"
+    activation : string or a tf callable, default="sigmoid"
         Activation function used in the output layer.
         List of available activation functions: https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="linear"
+        Activation function used in the hidden layers.
+        List of available activation functions: https://keras.io/api/layers/activations/
+        Default value of activation_hidden will change to "tanh"
+        in version '0.41.0'.
     use_bias : boolean, default = True
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = RMSprop(lr=0.001)
@@ -50,22 +63,25 @@ class SimpleRNNRegressor(BaseDeepRegressor):
 
     Examples
     --------
-    >>> from sktime.regression.deep_learning.rnn import SimpleRNNRegressor
+    >>> from sktime.classification.deep_learning.rnn import SimpleRNNClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, Y_train = load_unit_test(split="train")
-    >>> clf = SimpleRNNRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
-    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
-    SimpleRNNRegressor(...)
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> clf = SimpleRNNClassifier(n_epochs=20,batch_size=20) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
+    ResNetClassifier(...)
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["mloning"],
-        "python_dependencies": "tensorflow",
+        "authors": ["mloning", "noxthot"],
+        "property:randomness": "stochastic",
+        "capability:random_state": True,
         # estimator type handled by parent class
     }
 
+    # TODO (release 0.41.0)
+    # Change the default value of 'activation_hidden' to "tanh"
     def __init__(
         self,
         n_epochs=100,
@@ -77,14 +93,15 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         verbose=False,
         loss="mean_squared_error",
         metrics=None,
-        activation="linear",
+        activation="sigmoid",
+        activation_hidden="changing_from_linear_to_tanh_in_0.41.0",
         use_bias=True,
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
 
-        self.n_epochs = n_epochs
         self.batch_size = batch_size
+        self.n_epochs = n_epochs
         self.verbose = verbose
         self.units = units
         self.callbacks = callbacks
@@ -93,21 +110,56 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         self.loss = loss
         self.metrics = metrics
         self.activation = activation
+        self.activation_hidden = activation_hidden
+        # TODO (release 0.41.0)
+        # After changing the default value of 'activation_hidden' to "tanh"
+        # in the __init__ method signature,
+        # remove the following 'if-else' check.
+        # Remove the usage of self._activation_hidden throughout the class
+        # and replace it with self.activation_hidden
+        if activation_hidden == "changing_from_linear_to_tanh_in_0.41.0":
+            warn(
+                "in `SimpleRNNClassifier`, the default value of parameter "
+                "'activation_hidden' will change to 'tanh' in version '0.41.0'. "
+                "To keep current behaviour and to silence this warning, "
+                "set 'activation_hidden' to 'linear' explicitly.",
+                category=DeprecationWarning,
+                obj=self,
+            )
+            self._activation_hidden = "linear"
+        else:
+            self._activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
 
         super().__init__()
 
+        # TODO (release 0.41.0)
+        # After changing the default value of 'activation_hidden' to "tanh"
+        # in the __init__ method signature,
+        # remove the usage of self._activation_hidden in the following lines
+        # and replace it with self.activation_hidden
         self.history = None
-        self._network = RNNNetwork(random_state=random_state, units=units)
+        self._network = RNNNetwork(
+            activation=self._activation_hidden,
+            random_state=random_state,
+            units=units,
+        )
 
-    def build_model(self, input_shape, **kwargs):
+    def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
+
+        In sktime, time series are stored in numpy arrays of shape (d,m), where d
+        is the number of dimensions, m is the series length. Keras/tensorflow assume
+        data is in shape (m,d). This method also assumes (m,d). Transpose should
+        happen in fit.
 
         Parameters
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer, should be (m,d)
+        n_classes: int
+            The number of classes, which becomes the size of the output layer
 
         Returns
         -------
@@ -121,9 +173,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         metrics = self.metrics if self.metrics is not None else ["accuracy"]
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
         output_layer = keras.layers.Dense(
-            units=1,
-            activation=self.activation,
-            use_bias=self.use_bias,
+            units=n_classes, activation=self.activation, use_bias=self.use_bias
         )(output_layer)
 
         self.optimizer_ = (
@@ -136,7 +186,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         return model
 
     def _fit(self, X, y):
-        """Fit the regressor on the training set (X, y).
+        """Fit the classifier on the training set (X, y).
 
         Parameters
         ----------
@@ -153,18 +203,19 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         """
         from tensorflow import keras
 
+        y_onehot = self._convert_y_to_keras(y)
         X = X.transpose(0, 2, 1)
 
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
 
-        self.model_ = self.build_model(self.input_shape)
+        self.model_ = self.build_model(self.input_shape, self.n_classes_)
 
         if self.verbose:
             self.model_.summary()
 
-        # add a ReduceLROnPlateau callback if default is enabled
-        # if an instance of ReduceLRonPlateau is already present
+        # add a ReduceLROnPlateau callback is default is enabled
+        # if an instance of ReduceLROnPlateau is already present
         # then don't add it again.
         if self.add_default_callback:
             reduce_lr = keras.callbacks.ReduceLROnPlateau(
@@ -201,7 +252,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
 
         self.history = self.model_.fit(
             X,
-            y,
+            y_onehot,
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,

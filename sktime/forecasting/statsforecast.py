@@ -12,9 +12,10 @@ __all__ = [
     "StatsForecastMSTL",
     "StatsForecastADIDA",
 ]
-from typing import Optional, Union
 
-from sktime.forecasting.base import BaseForecaster
+import numpy as np
+
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
@@ -186,26 +187,27 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.0.0", "scipy<1.16"],
+        "python_dependencies": ["statsforecast>=1.0.0"],
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],
+        # known failure in case of non-contiguous X, see issue #8787
     }
 
     def __init__(
         self,
         start_p: int = 2,
-        d: Optional[int] = None,
+        d: int | None = None,
         start_q: int = 2,
         max_p: int = 5,
         max_d: int = 2,
         max_q: int = 5,
         start_P: int = 1,
-        D: Optional[int] = None,
+        D: int | None = None,
         start_Q: int = 1,
         max_P: int = 2,
         max_D: int = 1,
@@ -220,15 +222,15 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         stepwise: bool = True,
         n_jobs: int = 2,
         trend: bool = True,
-        method: Optional[str] = None,
-        offset_test_args: Optional[str] = None,
-        seasonal_test_args: Optional[dict] = None,
+        method: str | None = None,
+        offset_test_args: str | None = None,
+        seasonal_test_args: dict | None = None,
         trace: bool = False,
         n_fits: int = 94,
         with_intercept: bool = True,
-        approximation: Optional[bool] = None,
-        truncate: Optional[bool] = None,
-        blambda: Optional[float] = None,
+        approximation: bool | None = None,
+        truncate: bool | None = None,
+        blambda: float | None = None,
         biasadj: bool = False,
         parallel: bool = False,
     ):
@@ -388,18 +390,17 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.3.0", "scipy<1.16"],
+        "python_dependencies": ["statsforecast>=1.3.0"],
     }
 
     def __init__(
         self,
         season_length: int = 1,
         decomposition_type: str = "multiplicative",
-        model: Optional[str] = None,
+        model: str | None = None,
     ):
         self.season_length = season_length
         self.decomposition_type = decomposition_type
@@ -499,24 +500,23 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
             "luca-miniati",
         ],
         # AzulGarza and jmoralez for statsforecast AutoETS
-        # "maintainers": ["yarnabrina"],
-        # "python_dependencies": "statsforecast"
+        "maintainers": ["yarnabrina"],
+        "python_dependencies": ["statsforecast>=1.3.2"],
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.3.2", "scipy<1.16"],
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
     }
 
     def __init__(
         self,
         season_length: int = 1,
         model: str = "ZZZ",
-        damped: Optional[bool] = None,
-        phi: Optional[float] = None,
+        damped: bool | None = None,
+        phi: float | None = None,
     ):
         self.season_length = season_length
         self.model = model
@@ -613,11 +613,10 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.1.0", "scipy<1.16"],
+        "python_dependencies": ["statsforecast>=1.1.0"],
     }
 
     def __init__(self, season_length: int = 1, model: str = "Z"):
@@ -724,19 +723,18 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.7.2", "scipy<1.16"],
+        "python_dependencies": ["statsforecast>=1.7.2"],
     }
 
     def __init__(
         self,
-        seasonal_periods: Union[int, list[int]] = 1,
-        use_boxcox: Optional[bool] = None,
-        use_trend: Optional[bool] = None,
-        use_damped_trend: Optional[bool] = None,
+        seasonal_periods: int | list[int] = 1,
+        use_boxcox: bool | None = None,
+        use_trend: bool | None = None,
+        use_damped_trend: bool | None = None,
         use_arma_errors: bool = True,
         bc_lower_bound: float = 0.0,
         bc_upper_bound: float = 1.0,
@@ -869,19 +867,18 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.2.0", "scipy<1.16"],
+        "python_dependencies": ["statsforecast>=1.2.0"],
     }
 
     def __init__(
         self,
-        season_length: Union[int, list[int]],
+        season_length: int | list[int],
         trend_forecaster=None,
-        stl_kwargs: Optional[dict] = None,
-        pred_int_kwargs: Optional[dict] = None,
+        stl_kwargs: dict | None = None,
+        pred_int_kwargs: dict | None = None,
     ):
         self.season_length = season_length
         self.trend_forecaster = trend_forecaster
@@ -938,6 +935,109 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             "season_length": self.season_length,
             "trend_forecaster": self._trend_forecaster,
         }
+
+    def _calculate_fh_for_MSTL(self, fh, y):
+        """Calculate the fh to be used for MSTL model.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon or None
+            The forecasting horizon with the steps ahead to to predict.
+        y : pd.Series
+            The time series data used for fitting.
+
+        Returns
+        -------
+        fh : ForecastingHorizon
+            The forecasting horizon to be used for MSTL model.
+        """
+        _fh = self._check_fh(fh)
+
+        # Convert fh to relative if it is absolute before setting it
+        _fh = _fh.to_relative(self.cutoff)
+
+        if _fh.is_all_in_sample():
+            _fh = ForecastingHorizon(y.index, is_relative=False)
+            _fh = _fh.to_relative(self.cutoff)
+        return _fh
+
+    def _set_fh_to_trend_forecaster(self, fh, y):
+        """Set forecasting horizon to trend forecaster if it exists.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon or None
+            The forecasting horizon with the steps ahead to to predict.
+        y : pd.Series
+            The time series data used for fitting.
+        """
+        if fh is not None:
+            _fh = self._calculate_fh_for_MSTL(fh, y)
+            # pass the fh to _trend_forecaster in case it needs it
+            self._trend_forecaster.set_fh(_fh)
+
+    def check_fh(self, fh):
+        """Check the fh to ensure consistency with `inner_fh` of trend forecaster."""
+        inner_fh = getattr(self._trend_forecaster, "_inner_fh", None)
+        _fh_for_MSTL = self._calculate_fh_for_MSTL(fh, self._y)
+
+        msg = (
+            f"This is because fitting of the "
+            f"forecaster {self.__class__.__name__} "
+            f"depends on `fh`. "
+        )
+
+        if inner_fh and not np.array_equal(_fh_for_MSTL, inner_fh):
+            # raise error if existing fh and new one don't match
+            raise ValueError(
+                "A different forecasting horizon `fh` has been "
+                "provided from "
+                "the one seen already in `fit`, in this instance of "
+                f"{self.__class__.__name__}. "
+                "If you want to change the forecasting "
+                "horizon, please re-fit the forecaster. " + msg
+            )
+        super()._check_fh(fh)
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit the forecaster to training data and forward fh to trend forecaster.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Univariate target series used for fitting.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables (ignored by this forecaster).
+        fh : ForecastingHorizon or array-like, optional
+            Forecasting horizon to be used for training.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator instance.
+        """
+        self._set_fh_to_trend_forecaster(fh, y)
+        return super()._fit(y=y, X=X, fh=fh)
+
+    def _predict(self, fh, X):
+        """Predict time series at future horizon.
+
+        Internal method for making forecasting predictions.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables.
+
+        Returns
+        -------
+        y_pred : pd.DataFrame
+            Predictions for the forecasting horizon.
+        """
+        self.check_fh(fh)
+        return super()._predict(fh, X)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1041,16 +1141,15 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["statsforecast>=1.4.0", "scipy<1.16"],
+        "python_dependencies": ["statsforecast>=1.4.0"],
     }
 
     def __init__(
         self,
-        prediction_intervals: Optional[object] = None,
+        prediction_intervals: object | None = None,
     ):
         self.prediction_intervals = prediction_intervals
 

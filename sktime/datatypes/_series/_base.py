@@ -40,23 +40,26 @@ class ScitypeSeries(BaseDatatype):
     Parameters
     ----------
     is_univariate: bool
-        True iff table has one variable
+        True iff the series has one variable, i.e., :math:`y_i` is a scalar
     is_equally_spaced : bool
-        True iff series index is equally spaced
+        True iff the series index is equally spaced, i.e.,
+        :math:`t_{i} - t_{i-1}` does not depend on :math:`i`
     is_empty: bool
-        True iff table has no variables or no instances
+        True iff the series has no variables, or no instances
     has_nans: bool
-        True iff the table contains NaN values
+        True iff the the series contains NaN values
     n_features: int
-        number of variables in table
+        number of variables in the series
     feature_names: list of int or object
-        names of variables in table
+        names of variables in the series
     dtypekind_dfip: list of DtypeKind enum
-        list of DtypeKind enum values for each feature in the panel,
-        following the data frame interface protocol
+        list of DtypeKind enum values for each feature in the series,
+        following the data frame interface protocol.
+        In same order as ``feature_names``.
     feature_kind: list of str
-        list of feature kind strings for each feature in the panel,
-        coerced to FLOAT or CATEGORICAL type
+        list of feature-kind strings for each feature in the series,
+        coerced to ``"FLOAT"`` or ``"CATEGORICAL"`` type string.
+        In same order as ``feature_names``.
     """
 
     _tags = {

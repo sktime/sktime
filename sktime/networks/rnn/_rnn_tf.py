@@ -1,10 +1,15 @@
 """Time Recurrent Neural Network (RNN) (minus the final output layer)."""
 
-__authors__ = ["James-Large", "Withington", "TonyBagnall", "achieveordie"]
-
 from sktime.networks.base import BaseDeepNetwork
+from sktime.utils.warnings import warn
 
 
+# TODO (release 0.41.0)
+# change the default value of 'activation' to "tanh"
+# update the docstring for activation from "linear" to "tanh"
+# and remove the note about the change from the docstring.
+# Remove the usage of self._activation throughout the class
+# and replace it with self.activation
 class RNNNetwork(BaseDeepNetwork):
     """Establish the network structure for an RNN.
 
@@ -12,17 +17,58 @@ class RNNNetwork(BaseDeepNetwork):
 
     Parameters
     ----------
-    units           : int, default = 6
+    units : int, default = 6
         the number of recurring units
-    random_state    : int, default = 0
+    random_state : int, default = 0
         seed to any needed random actions
+    activation : str, default = "linear"
+        activation function to use in the RNN layer;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
+        Default value of activation will change to "tanh"
+        in version '0.41.0'.
     """
 
+    _tags = {
+        "authors": [
+            "James-Large",
+            "Withington",
+            "TonyBagnall",
+            "achieveordie",
+            "noxthot",
+        ],
+        "python_dependencies": ["tensorflow"],
+        "capability:random_state": True,
+        "property:randomness": "stochastic",
+    }
+
+    # TODO (release 0.41.0)
+    # Change the default value of 'activation' to "tanh"
     def __init__(
         self,
         units=6,
         random_state=0,
+        activation="changing_from_linear_to_tanh_in_0.41.0",
     ):
+        self.activation = activation
+        # TODO (release 0.41.0)
+        # After changing the default value of 'activation' to "tanh"
+        # in the __init__ method signature,
+        # remove the following 'if-else' check.
+        # Remove the usage of self._activation throughout the class
+        # and replace it with self.activation
+        if activation == "changing_from_linear_to_tanh_in_0.41.0":
+            warn(
+                "in `RNNNetwork`, the default value of parameter "
+                "'activation' will change to 'tanh' in version '0.41.0'. "
+                "To keep current behaviour and to silence this warning, "
+                "set 'activation' to 'linear' explicitly.",
+                category=DeprecationWarning,
+                obj=self,
+            )
+            self._activation = "linear"
+        else:
+            self._activation = activation
         self.random_state = random_state
         self.units = units
         super().__init__()
@@ -61,10 +107,15 @@ class RNNNetwork(BaseDeepNetwork):
                 f"But found the type to be: {type(input_shape)}"
             )
 
+        # TODO (release 0.41.0)
+        # After changing the default value of 'activation' to "tanh"
+        # in the __init__ method signature,
+        # remove the usage of self._activation in the following lines
+        # and replace it with self.activation
         output_layer = keras.layers.SimpleRNN(
             units=self.units,
             input_shape=input_layer.shape,
-            activation="linear",
+            activation=self._activation,
             use_bias=False,
             kernel_initializer="glorot_uniform",
             recurrent_initializer="orthogonal",

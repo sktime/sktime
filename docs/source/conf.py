@@ -248,6 +248,12 @@ html_sidebars = {
 html_static_path = ["_static"]
 html_css_files = ["css/custom.css"]
 
+# A list of paths that contain extra files not directly related to
+# the documentation, such as robots.txt or .htaccess.
+# Relative paths are taken as relative to the configuration directory.
+# They are copied to the output directory.
+html_extra_path = ["../_extra"]
+
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 #
@@ -362,7 +368,7 @@ def _make_estimator_overview(app):
             "capability:pred_int",
             "capability:pred_int:insample",
             "capability:missing_values",
-            "ignores-exogeneous-X",
+            "capability:exogenous",
             "scitype:y",
             "requires-fh-in-fit",
             "X-y-must-have-same-index",
@@ -374,6 +380,7 @@ def _make_estimator_overview(app):
             "scitype:transform-input",
             "scitype:transform-output",
             "scitype:transform-labels",
+            "capability:multivariate",
             "capability:inverse_transform",
             "capability:missing_values",
             "capability:missing_values:removes",
@@ -463,7 +470,7 @@ def _make_estimator_overview(app):
             "lower_is_better",
             "requires-y-train",
             "requires-y-pred-benchmark",
-            "univariate-only",
+            "capability:multivariate",
             "scitype:y_pred",
             "python_dependencies",
             "authors",
