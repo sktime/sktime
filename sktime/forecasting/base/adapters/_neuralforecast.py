@@ -257,7 +257,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             model = NeuralForecast(
                 models=[algorithm_instance],
                 freq=self._freq,
-                scaler_type=self.local_scaler_type,
+                local_scaler_type=self.local_scaler_type,
             )
         else:
             model = NeuralForecast(
