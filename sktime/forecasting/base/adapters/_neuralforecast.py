@@ -583,8 +583,10 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                 data=ins, index=id_int, columns=new_index_names[:-1]
             )
             id_ins = id_ins.drop_duplicates()
+            id_lookup = model_forecasts[self.id_col].tolist()
+            id_ins_aligned = id_ins.loc[id_lookup].reset_index(drop=True)
             final_predictions = pandas.concat(
-                (model_forecasts, id_ins.loc[model_forecasts.index.tolist()]),
+                (model_forecasts, id_ins_aligned),
                 axis=1,
             )
             if self._is_PeriodIndex:
