@@ -1890,7 +1890,9 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "kernel_size": self.kernel_size,
             "dilations": self._dilations,
