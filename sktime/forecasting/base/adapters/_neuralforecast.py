@@ -238,7 +238,8 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         """Validate input_size for neuralforecast v3+ compatibility.
 
         In neuralforecast v3.0.0+, input_size is mandatory for recurrent models
-        (RNN, LSTM, GRU, DilatedRNN) and cannot be -1.
+        (RNN, LSTM, GRU, DilatedRNN) and cannot be -1. This method handles the
+        transition by using inference_input_size as fallback, or a sensible default.
 
         Parameters
         ----------
@@ -252,28 +253,25 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         int
             Validated input_size value.
         """
-        import warnings
-
         if _check_soft_dependencies("neuralforecast>=3.0.0", severity="none"):
             if input_size == -1:
                 # Fall back to inference_input_size if available
                 if inference_input_size != -1:
                     return inference_input_size
                 else:
-                    # Use a sensible default and warn the user
-                    default_input_size = 10
+                    # Use a sensible default for v3+ when neither is set
+                    # This maintains backward compatibility with existing code
+                    import warnings
+
                     warnings.warn(
                         f"neuralforecast>=3.0.0 requires 'input_size' to be set "
                         f"explicitly for recurrent models ({self.algorithm_name}). "
-                        f"Got input_size={input_size} and "
-                        f"inference_input_size={inference_input_size}. "
-                        f"Using default input_size={default_input_size}. "
-                        f"Please provide a positive integer value for 'input_size' "
-                        f"or 'inference_input_size' to suppress this warning.",
+                        f"Using default input_size=16. Consider setting 'input_size' "
+                        f"or 'inference_input_size' explicitly.",
                         UserWarning,
-                        stacklevel=2,
+                        stacklevel=4,
                     )
-                    return default_input_size
+                    return 16
         return input_size
 
     def _instantiate_model(self: "_NeuralForecastAdapter", fh: ForecastingHorizon):
@@ -301,7 +299,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             model = NeuralForecast(
                 models=[algorithm_instance],
                 freq=self._freq,
-                scaler_type=self.local_scaler_type,  # renamed in v3
+                local_scaler_type=self.local_scaler_type,
             )
         else:
             model = NeuralForecast(
