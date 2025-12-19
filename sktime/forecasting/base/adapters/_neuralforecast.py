@@ -427,8 +427,8 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         else:
             id_idx = indices.to_frame().values
             # with ("h0":"h0_0", "h1":"h1_1") as instance index,
-            # the id_int would be "h0_1h1_1"
-            id_int = id_idx[:, :-1].sum(axis=1)
+            # the id_int would be "h0_0__h1_1" (string concatenation)
+            id_int = np.array(["__".join(str(x) for x in row[:-1]) for row in id_idx])
             id_time = indices.get_level_values(-1)
         return id_int, id_time
 
@@ -577,16 +577,15 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                 id_idx = np.array(y.index.to_list())
             else:
                 id_idx = np.array(y.index.to_list())
-            id_int = id_idx[:, :-1].sum(axis=1)
+            # Use string concatenation to create unique IDs (matching _get_id_idx)
+            id_int = np.array(["__".join(str(x) for x in row[:-1]) for row in id_idx])
             ins = id_idx[:, :-1]
             id_ins = pandas.DataFrame(
                 data=ins, index=id_int, columns=new_index_names[:-1]
             )
             id_ins = id_ins.drop_duplicates()
-            id_lookup = model_forecasts[self.id_col].tolist()
-            id_ins_aligned = id_ins.loc[id_lookup].reset_index(drop=True)
             final_predictions = pandas.concat(
-                (model_forecasts, id_ins_aligned),
+                (model_forecasts, id_ins.loc[model_forecasts.index.tolist()]),
                 axis=1,
             )
             if self._is_PeriodIndex:
