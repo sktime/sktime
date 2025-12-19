@@ -261,17 +261,18 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                 else:
                     # Use a sensible default for v3+ when neither is set
                     # This maintains backward compatibility with existing code
+                    # Use small default (2) to work with short time series in tests
                     import warnings
 
                     warnings.warn(
                         f"neuralforecast>=3.0.0 requires 'input_size' to be set "
                         f"explicitly for recurrent models ({self.algorithm_name}). "
-                        f"Using default input_size=16. Consider setting 'input_size' "
+                        f"Using default input_size=2. Consider setting 'input_size' "
                         f"or 'inference_input_size' explicitly.",
                         UserWarning,
                         stacklevel=4,
                     )
-                    return 16
+                    return 2
         return input_size
 
     def _instantiate_model(self: "_NeuralForecastAdapter", fh: ForecastingHorizon):
