@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -36,7 +36,7 @@ jobs:
           UV_SYSTEM_PYTHON: 1
 
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -72,7 +72,7 @@ jobs:
     outputs:
       notebooks: ${{ steps.check.outputs.notebooks }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Needed to access the full git history
 
@@ -95,7 +95,7 @@ jobs:
     if: ${{ needs.detect-notebooks-change.outputs.notebooks == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -124,7 +124,7 @@ jobs:
     if: ${{ needs.detect-notebooks-change.outputs.notebooks == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -157,7 +157,7 @@ jobs:
       obj_list_length: ${{ steps.get-change-list.outputs.obj_list_length }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - run: git remote set-branches origin 'main'
 
@@ -208,7 +208,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -257,7 +257,7 @@ jobs:
     outputs:
       sktime: ${{ steps.check.outputs.sktime }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Needed to access the full git history
 
@@ -279,7 +279,7 @@ jobs:
     needs: detect-package-change
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -308,7 +308,7 @@ jobs:
     if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -338,7 +338,7 @@ jobs:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - run: git remote set-branches origin 'main'
 
@@ -376,7 +376,7 @@ jobs:
         mlflow-version: ['2.9.2', '3.latest']
     name: test-mlflow-${{ matrix.mlflow-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -407,11 +407,11 @@ jobs:
       - name: Run tests
         run: make test_mlflow
 
-  test-lowerdeps:
+  test-deps-2023:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - run: git remote set-branches origin 'main'
 
@@ -441,6 +441,40 @@ jobs:
       - name: Run tests
         run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
 
+  test-deps-2024:
+    needs: test-nosoftdeps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - run: git remote set-branches origin 'main'
+
+      - run: git fetch --depth 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12
+
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install sktime and dependencies
+        run: pip install .[dev,dependencies_2024]
+        env:
+          UV_SYSTEM_PYTHON: 1
+
+      - name: Show dependencies
+        run: uv pip list
+
+      - name: Run tests
+        run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
+
   detect:
     needs: test-nosoftdeps
     name: detect changes
@@ -451,7 +485,7 @@ jobs:
       datasets: ${{ steps.filter.outputs.datasets }}
       pyproject: ${{ steps.filter.outputs.pyproject }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: dorny/paths-filter@v3
         id: filter
@@ -499,7 +533,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - run: git remote set-branches origin 'main'
 
@@ -549,7 +583,7 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - run: git remote set-branches origin 'main'
 
