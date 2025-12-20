@@ -275,10 +275,25 @@ def _evaluate_window(x, meta):
                     y_pred = y_preds_cache[y_pred_key][0]
 
                 # evaluate metrics
-                if global_mode:
-                    score = metric(y_true, y_pred, y_train=y_train)
+                # Capture the by_index setting from the metric
+                by_index = getattr(metric, "by_index", False)
+
+                if by_index:
+                    # Evaluate_by_index for per-time-point scores
+                    if global_mode:
+                        score = metric.evaluate_by_index(
+                            y_true, y_pred, y_train=y_train
+                        )
+                    else:
+                        score = metric.evaluate_by_index(
+                            y_test, y_pred, y_train=y_train
+                        )
                 else:
-                    score = metric(y_test, y_pred, y_train=y_train)
+                    # Evaluate for aggregated scores
+                    if global_mode:
+                        score = metric.evaluate(y_true, y_pred, y_train=y_train)
+                    else:
+                        score = metric.evaluate(y_test, y_pred, y_train=y_train)
                 temp_result[result_key] = [score]
 
         # get cutoff
@@ -525,6 +540,11 @@ def evaluate(
         default=None. Used to get a score function that takes y_pred and y_test
         arguments and accept y_train as keyword argument.
         If None, then uses scoring = MeanAbsolutePercentageError(symmetric=True).
+
+        Metrics can be configured with ``by_index=True`` to return per-time-point
+        scores instead of aggregated scores. When ``by_index=True``, the result
+        DataFrame will contain ``pd.Series`` (one score per time point) instead of
+        scalar values in the test score columns.
     return_data : bool, default=False
         Returns three additional columns in the DataFrame, by default False.
         The cells of the columns contain each a pd.Series for y_train,
@@ -698,6 +718,18 @@ def evaluate(
     ...     return_model=True
     ... )
     >>> fitted_forecaster = results.iloc[0]["fitted_forecaster"]
+
+    To evaluate scores at each time point (per-index) instead of averaged scores,
+    pass a metric with ``by_index=True``:
+
+    >>> import pandas as pd
+    >>> metric_by_index = MeanAbsoluteError(by_index=True)
+    >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=metric_by_index)
+    >>> # Now results["test_MeanAbsoluteError"] contains pd.Series for each fold
+    >>> # instead of scalar values
+    >>> per_index_scores = results.iloc[0]["test_MeanAbsoluteError"]
+    >>> isinstance(per_index_scores, pd.Series)
+    True
     """
     if backend in ["dask", "dask_lazy"]:
         if not _check_soft_dependencies("dask", severity="none"):
