@@ -114,8 +114,8 @@ Residual tests and estimators
 
     JarqueBera
 
-Johansen Cointegration estimators
-~~~~~~~~~~~~~~~~~~~~~~
+Cointegration
+~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.param_est.cointegration
 
