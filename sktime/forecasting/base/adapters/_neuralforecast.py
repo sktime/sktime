@@ -233,19 +233,22 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         }
 
     def _get_validated_input_size(
-        self: "_NeuralForecastAdapter", input_size: int, inference_input_size: int
+        self: "_NeuralForecastAdapter",
+        input_size: int,
+        inference_input_size: int | None = None,
     ) -> int:
         """Validate input_size for neuralforecast v3+ compatibility.
 
-        In neuralforecast v3.0.0+, input_size is mandatory for recurrent models
-        (RNN, LSTM, GRU, DilatedRNN) and cannot be -1. This method handles the
-        transition by using inference_input_size as fallback, or a sensible default.
+        In neuralforecast v3.0.0+, input_size is required for recurrent models
+        (RNN, LSTM, GRU, DilatedRNN) and the default -1 may cause issues with
+        short time series. This method handles the transition by using
+        inference_input_size as fallback, or a sensible default.
 
         Parameters
         ----------
         input_size : int
             The input_size parameter value.
-        inference_input_size : int
+        inference_input_size : int, optional
             The inference_input_size parameter value, used as fallback.
 
         Returns
@@ -255,24 +258,19 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         """
         if _check_soft_dependencies("neuralforecast>=3.0.0", severity="none"):
             if input_size == -1:
-                # Fall back to inference_input_size if available
-                if inference_input_size != -1:
+                # Fall back to inference_input_size if available and not -1
+                if inference_input_size is not None and inference_input_size != -1:
                     return inference_input_size
-                else:
-                    # Use a sensible default for v3+ when neither is set
-                    # This maintains backward compatibility with existing code
-                    # Use small default (2) to work with short time series in tests
-                    import warnings
-
-                    warnings.warn(
-                        f"neuralforecast>=3.0.0 requires 'input_size' to be set "
-                        f"explicitly for recurrent models ({self.algorithm_name}). "
-                        f"Using default input_size=2. Consider setting 'input_size' "
-                        f"or 'inference_input_size' explicitly.",
-                        UserWarning,
-                        stacklevel=4,
-                    )
-                    return 2
+                # Auto-default to 2 for v3+ to handle short time series in tests
+                # and provide a smoother v2->v3 transition
+                warn(
+                    "neuralforecast>=3.0.0 requires 'input_size' to be set "
+                    "explicitly for recurrent models. Using default input_size=2. "
+                    "Consider setting 'input_size' explicitly for your data.",
+                    obj=self,
+                    stacklevel=2,
+                )
+                return 2
         return input_size
 
     def _instantiate_model(self: "_NeuralForecastAdapter", fh: ForecastingHorizon):
@@ -295,19 +293,12 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
         from neuralforecast import NeuralForecast
 
-        # Check neuralforecast version
-        if _check_soft_dependencies("neuralforecast>=3.0.0", severity="none"):
-            model = NeuralForecast(
-                models=[algorithm_instance],
-                freq=self._freq,
-                local_scaler_type=self.local_scaler_type,
-            )
-        else:
-            model = NeuralForecast(
-                [algorithm_instance],
-                self._freq,
-                local_scaler_type=self.local_scaler_type,
-            )
+        # Use keyword arguments for better forward compatibility
+        model = NeuralForecast(
+            models=[algorithm_instance],
+            freq=self._freq,
+            local_scaler_type=self.local_scaler_type,
+        )
 
         return model
 
@@ -427,8 +418,8 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         else:
             id_idx = indices.to_frame().values
             # with ("h0":"h0_0", "h1":"h1_1") as instance index,
-            # the id_int would be "h0_0__h1_1" (string concatenation)
-            id_int = np.array(["__".join(str(x) for x in row[:-1]) for row in id_idx])
+            # the id_int would be "h0_1h1_1"
+            id_int = id_idx[:, :-1].sum(axis=1)
             id_time = indices.get_level_values(-1)
         return id_int, id_time
 
@@ -577,8 +568,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                 id_idx = np.array(y.index.to_list())
             else:
                 id_idx = np.array(y.index.to_list())
-            # Use string concatenation to create unique IDs (matching _get_id_idx)
-            id_int = np.array(["__".join(str(x) for x in row[:-1]) for row in id_idx])
+            id_int = id_idx[:, :-1].sum(axis=1)
             ins = id_idx[:, :-1]
             id_ins = pandas.DataFrame(
                 data=ins, index=id_int, columns=new_index_names[:-1]
