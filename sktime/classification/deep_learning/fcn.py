@@ -24,6 +24,8 @@ class FCNClassifier(BaseDeepClassifier):
         the number of epochs to train the model
     batch_size : int, default = 16
         the number of samples per gradient update.
+    callbacks : list of keras.callbacks.Callback, optional (default=None)
+        List of Keras callbacks to apply during model training.
     random_state : int or None, default=None
         Seed for random number generation.
     verbose : boolean, default = False
