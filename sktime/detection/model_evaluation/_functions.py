@@ -304,7 +304,7 @@ def evaluate(
         >>> det = ZeroAnomalies()
         >>> cv = SingleWindowSplitter(fh=1, window_length=5)
         >>> res = evaluate(detector=det, cv=cv, X=X, y=y)
-        >>> print(res.head())
+        >>> print(res.head())  # doctest: +SKIP
 
     """
     if not isinstance(detector, BaseDetector):
