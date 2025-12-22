@@ -570,14 +570,23 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                 id_idx = np.array(y.index.to_list())
             id_int = id_idx[:, :-1].sum(axis=1)
             ins = id_idx[:, :-1]
-            id_ins = pandas.DataFrame(
-                data=ins, index=id_int, columns=new_index_names[:-1]
+
+            # Create a mapping from unique_id to original index level values
+            # Use DataFrame with unique_id as a regular column for proper merging
+            id_ins = pandas.DataFrame(data=ins, columns=new_index_names[:-1])
+            id_ins[self.id_col] = id_int
+            # Keep only unique combinations of instance info
+            id_ins = id_ins.drop_duplicates(subset=[self.id_col])
+
+            # neuralforecast v3 returns unique_id and ds as columns, not index
+            # Merge predictions with instance info on unique_id
+            final_predictions = pandas.merge(
+                model_forecasts,
+                id_ins,
+                on=self.id_col,
+                how="left",
             )
-            id_ins = id_ins.drop_duplicates()
-            final_predictions = pandas.concat(
-                (model_forecasts, id_ins.loc[model_forecasts.index.tolist()]),
-                axis=1,
-            )
+
             if self._is_PeriodIndex:
                 time_idx = pandas.DatetimeIndex(final_predictions[self.time_col])
                 time_idx = time_idx.to_period(
@@ -590,6 +599,8 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                     prediction_column_names[0]: y.columns[0],
                 },
             )
+            # Drop the unique_id column as it's only used for internal mapping
+            final_predictions = final_predictions.drop(columns=[self.id_col])
             final_predictions = final_predictions.set_index(new_index_names)
         else:
             model_point_predictions = model_forecasts[
