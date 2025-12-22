@@ -269,7 +269,7 @@ dl = [
   "torch; (sys_platform != 'darwin' or python_version < '3.13')",
   'transformers[torch]<4.41.0; python_version < "3.13"',
   "pytorch-forecasting>=1.0.0,<1.6.0; (sys_platform != 'darwin' or python_version != '3.13') and python_version < '3.14'",
-  "lightning>=2.0,<2.6; (sys_platform != 'darwin' or python_version < '3.13')",
+  "lightning>=2.0,<2.7; (sys_platform != 'darwin' or python_version < '3.13')",
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
   'huggingface-hub>=0.23.0; python_version < "3.12"',
@@ -302,7 +302,7 @@ notebooks = [
   "prophet",
   "pytorch-forecasting",
   "torch",
-  "lightning>=2.0,<2.6",
+  "lightning>=2.0,<2.7",
   "skpro",
   "statsforecast",
 ]
