@@ -10,66 +10,64 @@ from sktime.forecasting.base import _BaseGlobalForecaster
 
 
 class LagLlamaForecaster(_BaseGlobalForecaster):
-    """Base class that interfaces the LagLlama forecaster.
+    """LagLlama Foundation Model for Zero-Shot Time Series Forecasting.
+
+    LagLlama is a foundation model for univariate probabilistic time series forecasting
+    based on a decoder-only transformer architecture. This implementation provides
+    zero-shot prediction using pretrained weights from HuggingFace.
+
+    The model checkpoint is automatically downloaded on first use if not provided.
 
     Parameters
     ----------
-    weights_url : str, optional (default="time-series-foundation-models/Lag-Llama")'
-        The URL of the weights on hugging face for the LagLlama estimator to fetch.
-
-    device : str, optional (default="cpu")
-        Specifies the device on which to load the model.
-
-    context_length: int, optional (default=32)
-        The number of prior timestep data entries provided.
-
-    num_samples: int, optional (default=10)
-        Number of sample paths desired for evaluation.
-
-    batch_size: int, optional (default=32)
-        The number of batches to train for in parallel.
-
-    nonnegative_pred_samples: bool, optional (default=False)
-        If True, ensures all predicted samples are passed
-        through ReLU,and are thus positive or 0.
-
-    lr: float, optional (default=5e-5)
-        The learning rate of the model.
-
-    shuffle_buffer_length: int, optional (default=1000)
-        The size of the buffer from which training samples are drawn
-
-    trainer_kwargs: dict, optional (default={"num_epochs": 50})
-        The arguments to pass to the GluonTS trainer.
+    ckpt_path : str, optional (default=None)
+        Path to LagLlama checkpoint file. If None, automatically downloads
+        from HuggingFace: "time-series-foundation-models/Lag-Llama".
+    device : str, optional (default=None)
+        Device for inference ("cpu", "cuda", "cuda:0", etc.).
+        If None, uses CUDA if available, otherwise CPU.
+    context_length : int, optional (default=32)
+        Number of past time steps used as context for prediction.
+        LagLlama was trained with context_length=32.
+    num_samples : int, optional (default=100)
+        Number of sample paths for probabilistic forecasting.
+    batch_size : int, optional (default=1)
+        Batch size for prediction.
+    use_rope_scaling : bool, optional (default=False)
+        Whether to use RoPE scaling for handling longer context lengths.
+    nonnegative_pred_samples : bool, optional (default=False)
+        If True, ensures all predicted samples are passed through ReLU.
+    use_source_package : bool, optional (default=False)
+        If True, uses the external lag-llama package instead of vendored version.
 
     Examples
     --------
-    >>> from gluonts.dataset.repository.datasets import get_dataset
-    >>> from sktime.forecasting.lagllama import LagLlamaForecaster
-    >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from gluonts.dataset.common import ListDataset
+    >>> from sktime.forecasting.lagllama import LagLlamaForecaster  # doctest: +SKIP
+    >>> from sktime.forecasting.base import ForecastingHorizon  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>>
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> forecaster = LagLlamaForecaster(  # doctest: +SKIP
+    ...     context_length=32,
+    ...     num_samples=100
+    ... )
+    >>> fh = ForecastingHorizon([1, 2, 3, 4, 5, 6])  # doctest: +SKIP
+    >>> forecaster.fit(y, fh=fh)  # doctest: +SKIP
+    LagLlamaForecaster(...)
+    >>> y_pred = forecaster.predict()  # Point predictions  # doctest: +SKIP
+    >>> # 90% prediction intervals  # doctest: +SKIP
+    >>> y_interval = forecaster.predict_interval(coverage=0.9)  # doctest: +SKIP
 
-    >>> dataset = get_dataset("m4_weekly")
-
-    # Converts to a GluonTS ListDataset, a format supported by sktime!
-    >>> train_dataset = ListDataset(dataset.train, freq='W')
-    >>> test_dataset = ListDataset(dataset.test, freq='W')
-
-    >>> forecaster = LagLlamaForecaster(
-    ...     context_length=dataset.metadata.prediction_length * 3,
-    ...     lr=5e-4,
-    ...     )
-
-    >>> fh=ForecastingHorizon(range(dataset.metadata.prediction_length))
-    >>> forecaster.fit(y=train_dataset,fh = fh)
-    >>> y_pred = forecaster.predict(y=test_dataset)
-
-    >>> y_pred
+    References
+    ----------
+    .. [1] Rasul, Kashif, et al. "Lag-Llama: Towards Foundation Models for
+           Probabilistic Time Series Forecasting."
+           arXiv preprint arXiv:2310.08278 (2023).
     """
 
     _tags = {
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "X_inner_mtype": ["gluonts_ListDataset_panel", "gluonts_ListDataset_series"],
+        "X_inner_mtype": ["pd.DataFrame"],
         "scitype:y": "both",
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
@@ -83,7 +81,12 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         "authors": ["shlok191"],
         "maintainers": ["shlok191"],
         "python_version": None,
-        "python_dependencies": ["gluonts", "huggingface-hub"],
+        "python_dependencies": [
+            "gluonts>=0.14.0",
+            "torch",
+            "lightning>=2.0,<2.6",
+            "huggingface-hub",
+        ],
     }
 
     def __init__(
@@ -448,6 +451,117 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         return predictions
 
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Compute quantile forecasts.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series (ignored).
+        alpha : list of float, optional (default=None)
+            The quantiles to predict. If None, uses default [0.1, 0.25, 0.5, 0.75, 0.9].
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Quantile forecasts with MultiIndex (alpha, time) or
+            MultiIndex (alpha, item, time) for panel data.
+        """
+        from gluonts.evaluation import make_evaluation_predictions
+
+        if alpha is None:
+            alpha = [0.1, 0.25, 0.5, 0.75, 0.9]
+
+        # Get the data (same as _predict)
+        y = self._y
+        _y = self._y.copy()
+
+        _y = self._extend_df(_y, fh)
+
+        # Handle range index
+        original_is_range_index = False
+        if self.check_range_index(y):
+            _y.index = self.handle_range_index(_y.index)
+            original_is_range_index = True
+
+        _y = self._convert_to_float(_y)
+        dataset = self._get_gluonts_dataset(_y)
+
+        # Get predictions with samples
+        forecast_it, _ = make_evaluation_predictions(
+            dataset=dataset, predictor=self.predictor_, num_samples=self.num_samples
+        )
+
+        forecasts = list(forecast_it)
+
+        # Extract quantiles for each forecast
+        quantile_dfs = []
+
+        for forecast in forecasts:
+            # GluonTS forecasts have .quantile(q) method
+            forecast_quantiles = {}
+            for q in alpha:
+                forecast_quantiles[q] = forecast.quantile(q)
+
+            # Build DataFrame for this forecast
+            if forecast.item_id is not None:
+                # Panel data - need MultiIndex (alpha, item_id, timepoints)
+                for q in alpha:
+                    q_series = forecast_quantiles[q]
+                    if isinstance(q_series, pd.Series):
+                        df = q_series.reset_index()
+                        df.columns = [self._df_config["timepoints"], "quantile"]
+                        df["alpha"] = q
+                        df[self._df_config["item_id"]] = forecast.item_id
+                        quantile_dfs.append(df)
+            else:
+                # Single series - MultiIndex (alpha, timepoints)
+                for q in alpha:
+                    q_series = forecast_quantiles[q]
+                    if isinstance(q_series, pd.Series):
+                        df = q_series.to_frame(name="quantile")
+                        df["alpha"] = q
+                        df = df.reset_index()
+                        df.columns = ["timepoints", "quantile", "alpha"]
+                        quantile_dfs.append(df)
+
+        # Combine all quantile forecasts
+        if len(quantile_dfs) > 0:
+            result = pd.concat(quantile_dfs, ignore_index=True)
+
+            # Set appropriate index
+            if forecasts[0].item_id is not None:
+                # Panel: MultiIndex (alpha, item_id, timepoints)
+                result = result.set_index(
+                    ["alpha", self._df_config["item_id"], self._df_config["timepoints"]]
+                )
+                result = result["quantile"].unstack(level=0).T
+            else:
+                # Single series: MultiIndex (alpha, timepoints)
+                result = result.set_index(["alpha", "timepoints"])
+                result = result["quantile"].unstack(level=0).T
+
+            # Handle range index conversion back
+            if original_is_range_index:
+                timepoints = self.return_time_index(result)
+                timepoints = timepoints.to_timestamp()
+                timepoints = (timepoints - pd.Timestamp("2010-01-01")).map(
+                    lambda x: x.days
+                ) + self.return_time_index(y)[0]
+
+                if isinstance(result.index, pd.MultiIndex):
+                    result.index = result.index.set_levels(
+                        levels=timepoints.unique(), level=-1
+                    )
+                else:
+                    result.index = timepoints
+
+            return result
+
+        return pd.DataFrame()
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -469,18 +583,14 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         """
         params = [
             {
-                "context_length": 50,
-                "num_samples": 16,
-                "batch_size": 32,
-                "shuffle_buffer_length": 64,
-                "lr": 5e-5,
+                "context_length": 32,
+                "num_samples": 10,  # Reduced for faster tests
+                "batch_size": 1,
             },
             {
-                "context_length": 50,
-                "num_samples": 16,
-                "batch_size": 32,
-                "shuffle_buffer_length": 64,
-                "lr": 5e-5,
+                "context_length": 64,
+                "num_samples": 20,
+                "use_rope_scaling": True,
             },
         ]
 
