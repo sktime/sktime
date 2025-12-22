@@ -88,63 +88,85 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
     def __init__(
         self,
-        train=False,
-        model_path=None,
+        ckpt_path=None,
         device=None,
-        context_length=None,
-        num_samples=None,
-        batch_size=None,
-        nonnegative_pred_samples=None,
-        lr=None,
-        trainer_kwargs=None,
-        shuffle_buffer_length=None,
+        context_length=32,
+        num_samples=100,
+        batch_size=1,
+        use_rope_scaling=False,
+        nonnegative_pred_samples=False,
         use_source_package=False,
     ):
-        # Initializing parent class
+        """Initialize LagLlamaForecaster.
+
+        Parameters
+        ----------
+        ckpt_path : str, optional (default=None)
+            Path to LagLlama checkpoint file. If None, automatically downloads
+            from HuggingFace: "time-series-foundation-models/Lag-Llama"
+        device : str, optional (default=None)
+            Device for inference ("cpu", "cuda", "cuda:0", etc.).
+            If None, uses CUDA if available, otherwise CPU.
+        context_length : int, optional (default=32)
+            Number of past time steps used as context for prediction.
+            LagLlama was trained with context_length=32.
+        num_samples : int, optional (default=100)
+            Number of sample paths for probabilistic forecasting.
+        batch_size : int, optional (default=1)
+            Batch size for prediction.
+        use_rope_scaling : bool, optional (default=False)
+            Whether to use RoPE scaling for handling longer context lengths.
+        nonnegative_pred_samples : bool, optional (default=False)
+            If True, ensures all predicted samples are passed through ReLU.
+        use_source_package : bool, optional (default=False)
+            If True, uses the external lag-llama package instead of vendored version.
+        """
+        # Initialize parent class
         super().__init__()
 
         import torch
 
-        # Defining private variable values
-        self.model_path = model_path
-        self.model_path_ = (
-            "time-series-foundation-models/Lag-Llama" if not model_path else model_path
-        )
-
+        # Store parameters
+        self.ckpt_path = ckpt_path
         self.device = device
-        self.device_ = torch.device("cpu") if not device else torch.device(device)
-
         self.context_length = context_length
-        self.context_length_ = 32 if not context_length else context_length
-
         self.num_samples = num_samples
-        self.num_samples_ = 10 if not num_samples else num_samples
-
         self.batch_size = batch_size
-        self.batch_size_ = 32 if not batch_size else batch_size
-
-        # Now storing the training related variables
-        self.lr = lr
-        self.lr_ = 5e-5 if not lr else lr
-
-        self.shuffle_buffer_length = shuffle_buffer_length
-        self.shuffle_buffer_length_ = (
-            1000 if not shuffle_buffer_length else shuffle_buffer_length
-        )
-
-        self.train = train
-        self.trainer_kwargs = trainer_kwargs
-        self.trainer_kwargs_ = (
-            {"max_epochs": 10} if not trainer_kwargs else trainer_kwargs
-        )
-
-        # Load in the lag llama checkpoint
-        ckpt = torch.load(self.ckpt_url_, map_location=self.device_)
-
-        estimator_args = ckpt["hyper_parameters"]["model_kwargs"]
-        self.estimator_args = estimator_args
-
+        self.use_rope_scaling = use_rope_scaling
+        self.nonnegative_pred_samples = nonnegative_pred_samples
         self.use_source_package = use_source_package
+
+        # Set device (lazy - actual device object created when needed)
+        if device is None:
+            self.device_ = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            self.device_ = torch.device(device)
+
+    def _ensure_checkpoint(self):
+        """Download checkpoint from HuggingFace if not found locally.
+
+        Returns
+        -------
+        str
+            Path to the checkpoint file.
+        """
+        import os
+
+        from huggingface_hub import hf_hub_download
+
+        ckpt_path = self.ckpt_path if self.ckpt_path else "lag-llama.ckpt"
+
+        if not os.path.exists(ckpt_path):
+            # Download from HuggingFace
+            ckpt_path = hf_hub_download(
+                repo_id="time-series-foundation-models/Lag-Llama",
+                filename="lag-llama.ckpt",
+                local_dir=(
+                    os.path.dirname(ckpt_path) if os.path.dirname(ckpt_path) else "."
+                ),
+            )
+
+        return ckpt_path
 
     def _get_gluonts_dataset(self, y):
         from gluonts.dataset.pandas import PandasDataset
@@ -189,64 +211,91 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
+        For LagLlama, this creates the zero-shot predictor from pretrained weights.
+        No training/fine-tuning is performed - only model initialization.
 
         Parameters
         ----------
-        y : GluonTS ListDataset Object, optional (default=None)
+        y : pd.DataFrame
             Time series to which to fit the forecaster.
-
-        fh : guaranteed to be ForecastingHorizon or None
-            The length of future of timesteps to predict
-
-        X : GluonTS ListDataset Object, optional (default=None)
-            Exogeneous time series to fit to.
+            Guaranteed to be of mtype in self.get_tag("y_inner_mtype").
+        X : pd.DataFrame, optional (default=None)
+            Exogeneous time series (ignored by LagLlama).
+        fh : ForecastingHorizon
+            The forecasting horizon.
 
         Returns
         -------
         self : reference to self
         """
+        import torch
+
+        # Import LagLlama estimator
         if self.use_source_package:
-            if _check_soft_dependencies("lag-llama"):
+            if _check_soft_dependencies("lag-llama", severity="warning"):
                 from lag_llama.gluon.estimator import LagLlamaEstimator
+            else:
+                from sktime.libs.lag_llama.gluon.estimator import LagLlamaEstimator
         else:
             from sktime.libs.lag_llama.gluon.estimator import LagLlamaEstimator
 
-        # Creating a new LagLlama estimator with the appropriate
-        # forecasting horizon
+        # Get or download checkpoint
+        ckpt_path = self._ensure_checkpoint()
+
+        # Load checkpoint with PyTorch 2.6+ compatibility
+        ckpt = torch.load(ckpt_path, map_location=self.device_, weights_only=False)
+        estimator_args = ckpt["hyper_parameters"]["model_kwargs"]
+
+        # Setup RoPE scaling if requested
+        rope_scaling_arguments = None
+        if self.use_rope_scaling:
+            prediction_length = max(fh.to_relative(self.cutoff))
+            rope_scaling_arguments = {
+                "type": "linear",
+                "factor": max(
+                    1.0,
+                    (self.context_length + prediction_length)
+                    / estimator_args["context_length"],
+                ),
+            }
+
+        # Create LagLlama estimator
         self.estimator_ = LagLlamaEstimator(
-            ckpt_path=self.ckpt_url_,
+            ckpt_path=ckpt_path,
             prediction_length=max(fh.to_relative(self.cutoff)),
-            context_length=self.context_length_,
-            input_size=self.estimator_args["input_size"],
-            n_layer=self.estimator_args["n_layer"],
-            n_embd_per_head=self.estimator_args["n_embd_per_head"],
-            n_head=self.estimator_args["n_head"],
-            scaling=self.estimator_args["scaling"],
-            time_feat=self.estimator_args["time_feat"],
-            batch_size=self.batch_size_,
+            context_length=self.context_length,
+            input_size=estimator_args["input_size"],
+            n_layer=estimator_args["n_layer"],
+            n_embd_per_head=estimator_args["n_embd_per_head"],
+            n_head=estimator_args["n_head"],
+            scaling=estimator_args["scaling"],
+            time_feat=estimator_args["time_feat"],
+            rope_scaling=rope_scaling_arguments,
+            batch_size=self.batch_size,
+            num_parallel_samples=self.num_samples,
             device=self.device_,
-            lr=self.lr_,
-            trainer_kwargs=self.trainer_kwargs_,
         )
 
-        lightning_module = self.estimator_.create_lightning_module()
-        transformation = self.estimator_.create_transformation()
+        # Create predictor with PyTorch 2.6+ compatibility patch
+        # Lightning uses weights_only=True by default which causes issues
+        original_load = torch.load
 
-        # Creating a new predictor
-        self.model = self.estimator_.create_predictor(transformation, lightning_module)
+        def patched_load(*args, **kwargs):
+            kwargs["weights_only"] = False
+            return original_load(*args, **kwargs)
 
-        if self.train:
-            # Updating y value to make it compatible with LagLlama
-            y = self._convert_to_float(y)
-            y = self._get_gluonts_dataset(y)
-            # Lastly, training the model
-            self.model = self.estimator_.train(
-                y, cache_data=True, shuffle_buffer_length=self.shuffle_buffer_length_
+        torch.load = patched_load
+        try:
+            lightning_module = self.estimator_.create_lightning_module()
+            transformation = self.estimator_.create_transformation()
+            self.predictor_ = self.estimator_.create_predictor(
+                transformation, lightning_module
             )
+        finally:
+            # Restore original torch.load
+            torch.load = original_load
+
+        return self
 
     def infer_freq(self, index):
         """
@@ -378,7 +427,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         # Forming a list of the forecasting iterations
         forecast_it, _ = make_evaluation_predictions(
-            dataset=dataset, predictor=self.model, num_samples=100
+            dataset=dataset, predictor=self.predictor_, num_samples=self.num_samples
         )
         predictions = self._get_prediction_df(forecast_it, self._df_config)
 
