@@ -22,6 +22,8 @@ class FCNClassifier(BaseDeepClassifier):
     should inherited fields be listed here?
     n_epochs : int, default = 2000
         the number of epochs to train the model
+    callbacks : list of tf.keras.callbacks.Callback objects, default=None
+        List of callbacks to apply during training.
     batch_size : int, default = 16
         the number of samples per gradient update.
     random_state : int or None, default=None
