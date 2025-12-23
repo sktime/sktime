@@ -8,6 +8,7 @@ from sktime.datatypes import mtype_to_scitype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
 from sktime.utils.warnings import warn
@@ -175,6 +176,24 @@ class BaseGridSearch(_DelegatedForecaster):
         backend = self.backend
         backend_params = self.backend_params if self.backend_params else {}
 
+        # Check for dask dependency when using dask or dask_lazy backend
+        if backend in ["dask", "dask_lazy"]:
+            if not _check_soft_dependencies("dask", severity="none"):
+                raise RuntimeError(
+                    f"running {self.__class__.__name__} with backend='{backend}' "
+                    "requires the dask package installed, but dask is not present "
+                    "in the python environment"
+                )
+
+        # Check for ray dependency when using ray backend
+        if backend == "ray":
+            if not _check_soft_dependencies("ray", severity="none"):
+                raise RuntimeError(
+                    f"running {self.__class__.__name__} with backend='ray' "
+                    "requires the ray package installed, but ray is not present "
+                    "in the python environment"
+                )
+
         def evaluate_candidates(candidate_params):
             candidate_params = list(candidate_params)
 
@@ -204,6 +223,15 @@ class BaseGridSearch(_DelegatedForecaster):
                 backend=backend,
                 backend_params=backend_params,
             )
+
+            # For dask_lazy, parallelize returns delayed objects that need computing
+            # For dask, parallelize already computes the results
+            # We materialize here since cv_results_ and best_forecaster_ must be
+            # in-memory objects
+            if backend == "dask_lazy":
+                from dask import compute
+
+                out = list(compute(*out, **backend_params))
 
             if len(out) < 1:
                 raise ValueError(
