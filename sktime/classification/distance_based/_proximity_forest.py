@@ -1755,10 +1755,14 @@ def _stdp(X):
         for dimension_index in range(0, num_dimensions):
             instance = X.iloc[instance_index, dimension_index]
             for value in instance:
-                num_values += 1
-                sum += value
-                sum_sq += value**2  # todo missing values NaN messes
-                # this up!
+                if not np.isnan(value):
+                    num_values += 1
+                    sum += value
+                    sum_sq += value**2
+
+    if num_values == 0:
+        return 0.0
+
     mean = sum / num_values
     stdp_val = math.sqrt(sum_sq / num_values - mean**2)
     return stdp_val
