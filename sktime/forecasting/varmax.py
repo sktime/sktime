@@ -403,9 +403,9 @@ class VARMAX(_StatsModelsAdapter):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
-            {"order": (1, 0)},
-            {"order": (0, 1)},
-            {"order": (1, 1)},
+            {"order": (1, 0), "low_memory": True, "maxiter": 20},
+            {"order": (0, 1), "low_memory": True, "maxiter": 20},
+            {"order": (1, 1), "low_memory": True, "maxiter": 20},
         ]
 
         return params
