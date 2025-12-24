@@ -55,7 +55,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
     >>> forecaster.fit(y, fh=fh)  # doctest: +SKIP
     LagLlamaForecaster(...)
     >>> y_pred = forecaster.predict()  # Point predictions  # doctest: +SKIP
-    >>> # 90% prediction intervals  # doctest: +SKIP
+    >>> # 90% prediction intervals
     >>> y_interval = forecaster.predict_interval(coverage=0.9)  # doctest: +SKIP
 
     References
@@ -69,7 +69,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "X_inner_mtype": ["pd.DataFrame"],
         "scitype:y": "both",
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
