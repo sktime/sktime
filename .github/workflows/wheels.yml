@@ -74,11 +74,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
@@ -101,9 +96,7 @@ jobs:
         run: echo "WHEELNAME=$(ls ./wheelhouse/sktime-*none-any.whl)" >> $env:GITHUB_ENV
 
       - name: Install wheel and extras
-        run: uv pip install "${{ env.WHEELNAME }}[all_extras_pandas2,dev]"
-        env:
-          UV_SYSTEM_PYTHON: 1
+        run: python3 -m pip install "${{ env.WHEELNAME }}[all_extras_pandas2,dev]"
 
       - name: Run tests  # explicit commands as windows does not support make
         run: python -m pytest  --ignore sktime/datasets
