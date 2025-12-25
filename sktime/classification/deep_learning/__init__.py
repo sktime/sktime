@@ -14,6 +14,7 @@ __all__ = [
     "SimpleRNNClassifier",
     "SimpleRNNClassifierTorch",
     "TapNetClassifier",
+    "TleNetClassifier",
     "GRUClassifier",
     "GRUFCNNClassifier",
     "ConvTimeNetClassifier",
@@ -41,3 +42,4 @@ from sktime.classification.deep_learning.rnn import (
     SimpleRNNClassifierTorch,
 )
 from sktime.classification.deep_learning.tapnet import TapNetClassifier
+from sktime.classification.deep_learning.tlenet import TleNetClassifier
