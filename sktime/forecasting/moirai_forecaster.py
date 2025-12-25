@@ -93,7 +93,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             "torch",
             "einops",
             "huggingface-hub",
-            "hf_xet",
+            "hf-xet",
             "lightning",
             "hydra-core",
         ],
