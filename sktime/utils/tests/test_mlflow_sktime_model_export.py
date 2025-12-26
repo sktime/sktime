@@ -32,8 +32,10 @@ if not sys.platform.startswith("linux"):
 def mlflow_tracking_uri(tmp_path, monkeypatch):
     """Set up isolated MLflow tracking URI for each test to avoid database conflicts."""
     if _check_soft_dependencies("mlflow", severity="none"):
+        import logging
+
         import mlflow
-        
+
         # Use a unique temporary directory for MLflow tracking
         tracking_uri = str(tmp_path / "mlruns")
         monkeypatch.setenv("MLFLOW_TRACKING_URI", tracking_uri)
@@ -43,8 +45,9 @@ def mlflow_tracking_uri(tmp_path, monkeypatch):
         # Clean up: end any active runs
         try:
             mlflow.end_run()
-        except Exception:
-            pass
+        except Exception as e:
+            # Ignore errors if no run is active (common in test teardown)
+            logging.debug(f"mlflow.end_run() failed (expected if no active run): {e}")
     else:
         yield None
 
