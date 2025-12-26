@@ -28,6 +28,27 @@ if not sys.platform.startswith("linux"):
     pytest.skip("Skipping MLflow tests for Windows and macOS", allow_module_level=True)
 
 
+@pytest.fixture(autouse=True)
+def mlflow_tracking_uri(tmp_path, monkeypatch):
+    """Set up isolated MLflow tracking URI for each test to avoid database conflicts."""
+    if _check_soft_dependencies("mlflow", severity="none"):
+        import mlflow
+        
+        # Use a unique temporary directory for MLflow tracking
+        tracking_uri = str(tmp_path / "mlruns")
+        monkeypatch.setenv("MLFLOW_TRACKING_URI", tracking_uri)
+        # Also set it directly in mlflow to ensure it's used
+        mlflow.set_tracking_uri(tracking_uri)
+        yield tracking_uri
+        # Clean up: end any active runs
+        try:
+            mlflow.end_run()
+        except Exception:
+            pass
+    else:
+        yield None
+
+
 @pytest.fixture
 def model_path(tmp_path):
     """Create a temporary path to save/log model."""
