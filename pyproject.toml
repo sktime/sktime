@@ -278,15 +278,15 @@ dl = [
   'hydra-core; python_version < "3.13"',
 ]
 mlflow = [
-  "mlflow!=2.20.0,!=3.8.0,<4.0",
+  "mlflow!=3.8.0,<4.0",
 ]
 mlflow2 = [
-  "mlflow!=2.20.0,<3.0",
+  "mlflow<3.0",
 ]
 mlflow_tests = [
   "boto3",
   "botocore",
-  "mlflow!=2.20.0,!=3.8.0,<4.0",
+  "mlflow!=3.8.0,<4.0",
   "moto",
 ]
 notebooks = [
