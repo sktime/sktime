@@ -248,6 +248,12 @@ html_sidebars = {
 html_static_path = ["_static"]
 html_css_files = ["css/custom.css"]
 
+# A list of paths that contain extra files not directly related to
+# the documentation, such as robots.txt or .htaccess.
+# Relative paths are taken as relative to the configuration directory.
+# They are copied to the output directory.
+html_extra_path = ["../_extra"]
+
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 #
