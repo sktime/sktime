@@ -14,7 +14,6 @@
 
 import math
 from dataclasses import dataclass
-from typing import Optional
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -38,7 +37,7 @@ class LTSMConfig:
     n_layer: int = 32
     n_head: int = 32
     n_embd_per_head: int = 128
-    rope_scaling: Optional[dict] = None
+    rope_scaling: dict | None = None
     dropout: float = 0.0
 
 
@@ -493,9 +492,9 @@ class LagLlamaModel(nn.Module):
         self,
         past_target: torch.Tensor,
         past_observed_values: torch.Tensor,
-        past_time_feat: Optional[torch.Tensor] = None,
-        future_time_feat: Optional[torch.Tensor] = None,
-        future_target: Optional[torch.Tensor] = None,
+        past_time_feat: torch.Tensor | None = None,
+        future_time_feat: torch.Tensor | None = None,
+        future_target: torch.Tensor | None = None,
     ):
         scaled_past_target, loc, scale = self.scaler(
             past_target, past_observed_values
@@ -555,9 +554,9 @@ class LagLlamaModel(nn.Module):
         self,
         past_target: torch.Tensor,
         past_observed_values: torch.Tensor,
-        past_time_feat: Optional[torch.Tensor] = None,
-        future_time_feat: Optional[torch.Tensor] = None,
-        future_target: Optional[torch.Tensor] = None,
+        past_time_feat: torch.Tensor | None = None,
+        future_time_feat: torch.Tensor | None = None,
+        future_target: torch.Tensor | None = None,
         use_kv_cache: bool = False,
     ) -> torch.Tensor:
         # if past_time_feat is not None:

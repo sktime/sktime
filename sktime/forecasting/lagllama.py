@@ -73,7 +73,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": True,
         "capability:global_forecasting": True,
         "capability:pred_int": True,
@@ -157,24 +157,22 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         from huggingface_hub import hf_hub_download
 
-        ckpt_path = self.ckpt_path if self.ckpt_path else "lag-llama.ckpt"
+        # If a local path is provided and exists, use it
+        if self.ckpt_path and os.path.exists(self.ckpt_path):
+            return self.ckpt_path
 
-        if not os.path.exists(ckpt_path):
-            # Download from HuggingFace
-            ckpt_path = hf_hub_download(
-                repo_id="time-series-foundation-models/Lag-Llama",
-                filename="lag-llama.ckpt",
-                local_dir=(
-                    os.path.dirname(ckpt_path) if os.path.dirname(ckpt_path) else "."
-                ),
-            )
+        # Otherwise, download from HuggingFace (uses default cache directory)
+        ckpt_path = hf_hub_download(
+            repo_id="time-series-foundation-models/Lag-Llama",
+            filename="lag-llama.ckpt",
+        )
 
         return ckpt_path
 
     def _get_gluonts_dataset(self, y):
         from gluonts.dataset.pandas import PandasDataset
 
-        target_col = str(y.columns[0])
+        target_col = y.columns[0]
         if isinstance(y.index, pd.MultiIndex):
             if None in y.index.names:
                 y.index.names = ["item_id", "timepoints"]
@@ -394,21 +392,19 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon is not read here, please set it as
-            `prediction_length` during initialization or when calling the fit function
-
-        X : GluonTS ListDataset Object (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
-
-        y : GluonTS ListDataset Object (default=None)
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+        y : time series in ``sktime`` compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
 
         Returns
         -------
-        y_pred : GluonTS ListDataset Object
-            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
-            Point predictions
+        y_pred : pd.DataFrame
+            Point predictions with same index type as input y
         """
         from gluonts.evaluation import make_evaluation_predictions
 
@@ -420,10 +416,19 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         _y = self._extend_df(_y, fh)
 
+        # Check for range index
         self._is_range_index = False
         if self.check_range_index(y):
             _y.index = self.handle_range_index(_y.index)
             self._is_range_index = True
+
+        # Check for hierarchical data and convert to panel
+        _is_hierarchical = False
+        _original_index_names = None
+        if _y.index.nlevels >= 3:
+            _original_index_names = _y.index.names
+            _y = self._convert_hierarchical_to_panel(_y)
+            _is_hierarchical = True
 
         _y = self._convert_to_float(_y)
         dataset = self._get_gluonts_dataset(_y)
@@ -434,6 +439,13 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         )
         predictions = self._get_prediction_df(forecast_it, self._df_config)
 
+        # Convert back to hierarchical if needed
+        if _is_hierarchical:
+            predictions = self._convert_panel_to_hierarchical(
+                predictions, _original_index_names
+            )
+
+        # Handle range index conversion back
         if self._is_range_index:
             timepoints = self.return_time_index(predictions)
             timepoints = timepoints.to_timestamp()
@@ -485,6 +497,14 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         if self.check_range_index(y):
             _y.index = self.handle_range_index(_y.index)
             original_is_range_index = True
+
+        # Check for hierarchical data and convert to panel
+        _is_hierarchical = False
+        _original_index_names = None
+        if _y.index.nlevels >= 3:
+            _original_index_names = _y.index.names
+            _y = self._convert_hierarchical_to_panel(_y)
+            _is_hierarchical = True
 
         _y = self._convert_to_float(_y)
         dataset = self._get_gluonts_dataset(_y)
@@ -542,6 +562,12 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
                 # Single series: MultiIndex (alpha, timepoints)
                 result = result.set_index(["alpha", "timepoints"])
                 result = result["quantile"].unstack(level=0).T
+
+            # Convert back to hierarchical if needed
+            if _is_hierarchical:
+                result = self._convert_panel_to_hierarchical(
+                    result, _original_index_names
+                )
 
             # Handle range index conversion back
             if original_is_range_index:

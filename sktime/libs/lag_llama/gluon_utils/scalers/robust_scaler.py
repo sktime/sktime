@@ -54,9 +54,9 @@ class RobustScaler(Scaler):
     def __call__(
         self, data: torch.Tensor, weights: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        assert (
-            data.shape == weights.shape
-        ), "data and observed_indicator must have same shape"
+        assert data.shape == weights.shape, (
+            "data and observed_indicator must have same shape"
+        )
 
         with torch.no_grad():
             observed_data = torch.where(weights == 1, data, torch.nan)

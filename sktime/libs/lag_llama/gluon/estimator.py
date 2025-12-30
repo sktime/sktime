@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from collections.abc import Iterable
-from typing import Any, Optional
+from typing import Any
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -112,14 +112,14 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
     def __init__(
         self,
         prediction_length: int,
-        context_length: Optional[int] = None,
+        context_length: int | None = None,
         input_size: int = 1,
         n_layer: int = 1,
         n_embd_per_head: int = 32,
         n_head: int = 4,
         max_context_length: int = 2048,
         rope_scaling=None,
-        scaling: Optional[str] = "mean",
+        scaling: str | None = "mean",
         lr: float = 1e-3,
         weight_decay: float = 1e-8,
         # Augmentations arguments
@@ -151,9 +151,9 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         num_parallel_samples: int = 100,
         batch_size: int = 32,
         num_batches_per_epoch: int = 50,
-        trainer_kwargs: Optional[dict[str, Any]] = None,
-        train_sampler: Optional[InstanceSampler] = None,
-        validation_sampler: Optional[InstanceSampler] = None,
+        trainer_kwargs: dict[str, Any] | None = None,
+        train_sampler: InstanceSampler | None = None,
+        validation_sampler: InstanceSampler | None = None,
         time_feat: bool = False,
         dropout: float = 0.0,
         lags_seq: list = ["Q", "M", "W", "D", "H", "T", "S"],
@@ -161,7 +161,7 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         use_cosine_annealing_lr: bool = False,
         cosine_annealing_lr_args: dict = {},
         track_loss_per_series: bool = False,
-        ckpt_path: Optional[str] = None,
+        ckpt_path: str | None = None,
         nonnegative_pred_samples: bool = False,
         use_single_pass_sampling: bool = False,
         device: torch.device = torch.device("cuda")
@@ -416,7 +416,7 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         self,
         data: Dataset,
         module: LagLlamaLightningModule,
-        shuffle_buffer_length: Optional[int] = None,
+        shuffle_buffer_length: int | None = None,
         **kwargs,
     ) -> Iterable:
         data = Cyclic(data).stream()

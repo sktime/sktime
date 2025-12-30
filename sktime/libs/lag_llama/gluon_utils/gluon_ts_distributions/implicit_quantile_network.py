@@ -11,8 +11,8 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+from collections.abc import Callable
 from functools import partial
-from typing import Callable, Optional
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -160,7 +160,7 @@ class ImplicitQuantileNetworkOutput(DistributionOutput):
     @validated()
     def __init__(
         self,
-        output_domain: Optional[str] = None,
+        output_domain: str | None = None,
         concentration1: float = 1.0,
         concentration0: float = 1.0,
         cos_embedding_dim: int = 64,
@@ -212,8 +212,8 @@ class ImplicitQuantileNetworkOutput(DistributionOutput):
         self,
         target: torch.Tensor,
         distr_args: tuple[torch.Tensor, ...],
-        loc: Optional[torch.Tensor] = None,
-        scale: Optional[torch.Tensor] = None,
+        loc: torch.Tensor | None = None,
+        scale: torch.Tensor | None = None,
     ) -> torch.Tensor:
         distribution = self.distribution(distr_args, loc=loc, scale=scale)
         return distribution.quantile_loss(target)
