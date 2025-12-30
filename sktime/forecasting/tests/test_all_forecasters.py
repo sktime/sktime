@@ -1025,9 +1025,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         # Initial state should be "new"
-        assert (
-            estimator_instance.state == "new"
-        ), f"Initial state should be 'new', got {estimator_instance.state}"
+        assert estimator_instance.state == "new", (
+            f"Initial state should be 'new', got {estimator_instance.state}"
+        )
 
         # Generate panel data for pretraining
         y_panel = _make_hierarchical(
@@ -1060,9 +1060,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # Fit after pretrain should result in fitted state
         y_series = _make_series(n_columns=n_columns)
         estimator_instance.fit(y_series, fh=[1, 2, 3])
-        assert (
-            estimator_instance.state == "fitted"
-        ), f"State after fit should be 'fitted', got {estimator_instance.state}"
+        assert estimator_instance.state == "fitted", (
+            f"State after fit should be 'fitted', got {estimator_instance.state}"
+        )
 
     def test_pretrain_fit_predict_workflow(self, estimator_instance, n_columns):
         """Test full pretrain → fit → predict workflow.

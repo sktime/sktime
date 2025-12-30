@@ -1056,8 +1056,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         # Track new pretrained attributes (extend, not append, to avoid nested lists)
         new_attrs = [
-            a for a in dir(self)
-            if a.endswith("_") and not a.startswith("_")
+            a
+            for a in dir(self)
+            if a.endswith("_")
+            and not a.startswith("_")
             and a not in self._pretrained_attrs
         ]
         self._pretrained_attrs.extend(new_attrs)
