@@ -72,7 +72,12 @@ class DummyGlobalForecaster(BaseForecaster):
     _tags = {
         "capability:pretrain": True,
         "scitype:y": "both",
-        "y_inner_mtype": ["pd.DataFrame", "pd.Series", "pd-multiindex"],
+        "y_inner_mtype": [
+            "pd.DataFrame",
+            "pd.Series",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "requires-fh-in-fit": False,
         "capability:pred_int": False,
         "capability:insample": False,
@@ -112,8 +117,13 @@ class DummyGlobalForecaster(BaseForecaster):
         if isinstance(y, (pd.Series, pd.DataFrame)) and isinstance(
             y.index, pd.MultiIndex
         ):
-            # Panel data with MultiIndex
-            self.n_pretrain_instances_ = len(y.index.get_level_values(0).unique())
+            # Panel or hierarchical data with MultiIndex
+            n_levels = y.index.nlevels
+            if n_levels == 2:  # Panel data
+                self.n_pretrain_instances_ = len(y.index.get_level_values(0).unique())
+            else:
+                # Hierarchical data: all levels except last are instance identifiers
+                self.n_pretrain_instances_ = len(y.index.droplevel(-1).unique())
             self.n_pretrain_timepoints_ = len(y)
 
             if self.strategy == "mean_by_index":
