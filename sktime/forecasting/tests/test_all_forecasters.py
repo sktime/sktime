@@ -1181,6 +1181,44 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             f"Add 'pd-multiindex' or 'pd_multiindex_hier' to y_inner_mtype."
         )
 
+    def test_pretrain_with_hierarchical_data(self, estimator_instance, n_columns):
+        """Test that pretrain works with hierarchical data (3+ level MultiIndex).
+
+        This verifies forecasters can handle hierarchical data structure
+        where multiple levels identify individual time series instances.
+        """
+        has_pretrain = estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        )
+
+        if not has_pretrain:
+            return None
+
+        y_inner_mtype = estimator_instance.get_tag("y_inner_mtype")
+        if isinstance(y_inner_mtype, str):
+            y_inner_mtype = [y_inner_mtype]
+
+        if "pd_multiindex_hier" not in y_inner_mtype:
+            return None
+
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        y_hier = _make_hierarchical(
+            hierarchy_levels=(2, 3),
+            min_timepoints=15,
+            max_timepoints=15,
+            n_columns=n_columns,
+        )
+        assert y_hier.index.nlevels >= 3, "Test data should have 3+ index levels"
+
+        # pretrain should work without error
+        estimator_instance.pretrain(y_hier)
+        assert estimator_instance.state == "pretrained"
+
+        pretrained_params = estimator_instance.get_pretrained_params()
+        assert len(pretrained_params) > 0, "Expected pretrained attributes to be set"
+
+
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
     """Module level tests for all global forecasters."""
 
