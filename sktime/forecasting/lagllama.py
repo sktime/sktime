@@ -10,13 +10,24 @@ from sktime.forecasting.base import _BaseGlobalForecaster
 
 
 class LagLlamaForecaster(_BaseGlobalForecaster):
-    """LagLlama Foundation Model for Zero-Shot Time Series Forecasting.
+    """LagLlama Foundation Model for Time Series Forecasting.
 
     LagLlama is a foundation model for univariate probabilistic time series forecasting
-    based on a decoder-only transformer architecture. This implementation provides
-    zero-shot prediction using pretrained weights from HuggingFace.
+    based on a decoder-only transformer architecture. This implementation supports
+    both zero-shot prediction using pretrained weights and fine-tuning on custom data.
 
     The model checkpoint is automatically downloaded on first use if not provided.
+
+    **Fit Strategies: Zero-Shot and Fine-Tuning**
+
+    This model supports two fit strategies via the ``fit_strategy`` parameter:
+
+    - **zero-shot** (default): Uses pretrained model as-is without training.
+      Fast inference with no training overhead. Suitable for quick predictions.
+
+    - **finetuning**: Fine-tunes all model parameters on the provided data.
+      Takes longer but may improve accuracy on specific datasets.
+      Controlled by ``trainer_kwargs``, ``lr``, and ``aug_prob`` parameters.
 
     Parameters
     ----------
@@ -42,6 +53,8 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
     Examples
     --------
+    **Zero-shot forecasting (default)**
+
     >>> from sktime.forecasting.lagllama import LagLlamaForecaster  # doctest: +SKIP
     >>> from sktime.forecasting.base import ForecastingHorizon  # doctest: +SKIP
     >>> from sktime.datasets import load_airline  # doctest: +SKIP
@@ -57,6 +70,24 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
     >>> y_pred = forecaster.predict()  # Point predictions  # doctest: +SKIP
     >>> # 90% prediction intervals
     >>> y_interval = forecaster.predict_interval(coverage=0.9)  # doctest: +SKIP
+
+    **Fine-tuning on custom data**
+
+    >>> from sktime.forecasting.lagllama import LagLlamaForecaster  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>>
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> forecaster = LagLlamaForecaster(  # doctest: +SKIP
+    ...     fit_strategy="finetuning",
+    ...     context_length=32,
+    ...     num_samples=100,
+    ...     trainer_kwargs={"max_epochs": 10},
+    ...     lr=5e-4,
+    ...     validation_split=0.2
+    ... )
+    >>> forecaster.fit(y, fh=[1, 2, 3, 4, 5, 6])  # doctest: +SKIP
+    LagLlamaForecaster(...)
+    >>> y_pred = forecaster.predict()  # doctest: +SKIP
 
     References
     ----------
@@ -99,6 +130,11 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         use_rope_scaling=False,
         nonnegative_pred_samples=False,
         use_source_package=False,
+        fit_strategy="zero-shot",
+        validation_split=0.2,
+        trainer_kwargs=None,
+        lr=5e-4,
+        aug_prob=0.0,
     ):
         """Initialize LagLlamaForecaster.
 
@@ -123,6 +159,24 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             If True, ensures all predicted samples are passed through ReLU.
         use_source_package : bool, optional (default=False)
             If True, uses the external lag-llama package instead of vendored version.
+        fit_strategy : str, optional (default="zero-shot")
+            Strategy to use for fitting the model. One of:
+            - "zero-shot": Use pretrained model as-is without training
+            - "finetuning": Fine-tune all model parameters on the provided data
+        validation_split : float, optional (default=0.2)
+            Fraction of data to use for validation during fine-tuning.
+            Only used when fit_strategy="finetuning". Set to None to skip validation.
+        trainer_kwargs : dict, optional (default=None)
+            Additional arguments for PyTorch Lightning Trainer during fine-tuning.
+            Only used when fit_strategy="finetuning".
+            If None, defaults to {"max_epochs": 50}.
+            Common options: "max_epochs", "devices", "accelerator", etc.
+        lr : float, optional (default=5e-4)
+            Learning rate for fine-tuning.
+            Only used when fit_strategy="finetuning".
+        aug_prob : float, optional (default=0.0)
+            Probability of applying data augmentation during training.
+            Only used when fit_strategy="finetuning".
         """
         # Initialize parent class
         super().__init__()
@@ -138,6 +192,21 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         self.use_rope_scaling = use_rope_scaling
         self.nonnegative_pred_samples = nonnegative_pred_samples
         self.use_source_package = use_source_package
+        self.fit_strategy = fit_strategy
+        self.validation_split = validation_split
+        self.trainer_kwargs = trainer_kwargs
+        self._trainer_kwargs = (
+            trainer_kwargs if trainer_kwargs is not None else {"max_epochs": 50}
+        )
+        self.lr = lr
+        self.aug_prob = aug_prob
+
+        # Validate fit_strategy
+        if self.fit_strategy not in ["zero-shot", "finetuning"]:
+            raise ValueError(
+                f"fit_strategy must be 'zero-shot' or 'finetuning', "
+                f"got '{self.fit_strategy}'"
+            )
 
         # Set device (lazy - actual device object created when needed)
         if device is None:
@@ -209,11 +278,46 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         return df
 
+    def _prepare_training_data(self, y, fh):
+        """Prepare training data for fine-tuning.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Training time series data.
+        fh : ForecastingHorizon
+            Forecasting horizon.
+
+        Returns
+        -------
+        training_data : GluonTS Dataset
+            Training dataset in GluonTS format.
+        validation_data : GluonTS Dataset or None
+            Validation dataset in GluonTS format, or None if validation_split is None.
+        """
+        from sktime.split import temporal_train_test_split
+
+        # Convert to float
+        _y = self._convert_to_float(y.copy())
+
+        # Split into train/validation if needed
+        if self.validation_split is not None and self.validation_split > 0:
+            y_train, y_val = temporal_train_test_split(
+                _y, test_size=self.validation_split
+            )
+            training_data = self._get_gluonts_dataset(y_train)
+            validation_data = self._get_gluonts_dataset(y_val)
+            return training_data, validation_data
+        else:
+            training_data = self._get_gluonts_dataset(_y)
+            return training_data, None
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
-        For LagLlama, this creates the zero-shot predictor from pretrained weights.
-        No training/fine-tuning is performed - only model initialization.
+        For LagLlama, behavior depends on fit_strategy:
+        - "zero-shot": Creates predictor from pretrained weights without training
+        - "finetuning": Fine-tunes the model on provided data using PyTorch Lightning
 
         Parameters
         ----------
@@ -275,6 +379,10 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             batch_size=self.batch_size,
             num_parallel_samples=self.num_samples,
             device=self.device_,
+            lr=self.lr,
+            aug_prob=self.aug_prob,
+            trainer_kwargs=self._trainer_kwargs,
+            nonnegative_pred_samples=self.nonnegative_pred_samples,
         )
 
         # Create predictor with PyTorch 2.6+ compatibility patch
@@ -287,11 +395,32 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
 
         torch.load = patched_load
         try:
-            lightning_module = self.estimator_.create_lightning_module()
-            transformation = self.estimator_.create_transformation()
-            self.predictor_ = self.estimator_.create_predictor(
-                transformation, lightning_module
-            )
+            if self.fit_strategy == "zero-shot":
+                # Zero-shot: create predictor without training
+                lightning_module = self.estimator_.create_lightning_module()
+                transformation = self.estimator_.create_transformation()
+                self.predictor_ = self.estimator_.create_predictor(
+                    transformation, lightning_module
+                )
+            elif self.fit_strategy == "finetuning":
+                # Fine-tuning: train the model on provided data
+                # Prepare training data
+                training_data, validation_data = self._prepare_training_data(y, fh)
+
+                # Train and get predictor
+                if validation_data is not None:
+                    self.predictor_ = self.estimator_.train(
+                        training_data=training_data,
+                        validation_data=validation_data,
+                        cache_data=True,
+                        shuffle_buffer_length=1000,
+                    )
+                else:
+                    self.predictor_ = self.estimator_.train(
+                        training_data=training_data,
+                        cache_data=True,
+                        shuffle_buffer_length=1000,
+                    )
         finally:
             # Restore original torch.load
             torch.load = original_load
@@ -612,11 +741,22 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
                 "context_length": 32,
                 "num_samples": 10,  # Reduced for faster tests
                 "batch_size": 1,
+                "fit_strategy": "zero-shot",
             },
             {
                 "context_length": 64,
                 "num_samples": 20,
                 "use_rope_scaling": True,
+                "fit_strategy": "zero-shot",
+            },
+            {
+                "context_length": 32,
+                "num_samples": 10,
+                "batch_size": 1,
+                "fit_strategy": "finetuning",
+                "trainer_kwargs": {"max_epochs": 1},  # Fast for tests
+                "lr": 5e-4,
+                "validation_split": 0.2,
             },
         ]
 
