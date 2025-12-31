@@ -1138,6 +1138,20 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 f"after fit: {pretrained_attrs_after}"
             )
 
+    def test_pretrain_rejects_single_series(self, estimator_instance, n_columns):
+        """Test that pretrain() raises TypeError for single series input.
+
+        Pretraining requires panel/hierarchical data (multiple time series).
+        Passing a single series should raise TypeError with informative message.
+        """
+        if not estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        y_single = _make_series(n_columns=n_columns, n_timepoints=20)
+        with pytest.raises(TypeError, match="requires Panel or Hierarchical data"):
+            estimator_instance.pretrain(y_single)
 
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
     """Module level tests for all global forecasters."""
