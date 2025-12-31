@@ -218,6 +218,33 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
 
         return self
 
+    def _fit(self, y, fh, X=None):
+        """Fit the network, preserving pretrained weights if available.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Training data
+        fh : ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        """
+        fh = fh.to_relative(self.cutoff)
+
+        # Only build network if not already pretrained
+        if not hasattr(self, "network") or self.network is None:
+            self.network = self._build_network(list(fh)[-1])
+
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
+
+        dataloader = self.build_pytorch_train_dataloader(y)
+        self.network.train()
+
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
     def _build_panel_dataloader(self, y):
         """Build PyTorch DataLoader for panel data pretraining.
 
@@ -712,6 +739,33 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
                 self.n_pretrain_instances_ = n_new
 
         return self
+
+    def _fit(self, y, fh, X=None):
+        """Fit the network, preserving pretrained weights if available.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Training data
+        fh : ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        """
+        fh = fh.to_relative(self.cutoff)
+
+        # Only build network if not already pretrained
+        if not hasattr(self, "network") or self.network is None:
+            self.network = self._build_network(list(fh)[-1])
+
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
+
+        dataloader = self.build_pytorch_train_dataloader(y)
+        self.network.train()
+
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
 
     def _build_panel_dataloader(self, y):
         """Build PyTorch DataLoader for panel data pretraining.
