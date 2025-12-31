@@ -1032,6 +1032,15 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
+        y_scitype = self._y_metadata.get("scitype", None)
+        if y_scitype == "Series":
+            raise TypeError(
+                f"{type(self).__name__}.pretrain requires Panel or Hierarchical data "
+                "(multiple time series instances), but a single Series was passed. "
+                "Use fit() for fitting on a single series, or pass panel data "
+                "(e.g., pd.DataFrame with MultiIndex) to pretrain()."
+            )
+
         # pretrain does not support vectorization - global learning requires
         # the forecaster to handle panel data directly
         if isinstance(y_inner, VectorizedDF):
