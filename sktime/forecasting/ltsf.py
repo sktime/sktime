@@ -261,50 +261,19 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         """
         from torch.utils.data import ConcatDataset, DataLoader
 
-        from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
+        from sktime.forecasting.base.adapters._pytorch import (
+            PyTorchTrainDataset,
+            _get_series_from_panel,
+        )
 
-        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
-            n_levels = y.index.nlevels
+        all_series = _get_series_from_panel(y)
 
-            if n_levels == 2: # Panel data
-                instances = y.index.get_level_values(0).unique()
-                all_series = []
-                for instance in instances:
-                    series_data = y.loc[instance]
-                    if not isinstance(series_data, pd.DataFrame):
-                        series_data = pd.DataFrame(series_data)
-                    all_series.append(series_data)
-            else: # Hierarchical data
-                # Get unique combinations of all instance levels
-                instance_tuples = y.index.droplevel(-1).unique()
-                all_series = []
-                for instance_tuple in instance_tuples:
-                    series_data = y.loc[instance_tuple]
-                    if not isinstance(series_data, pd.DataFrame):
-                        series_data = pd.DataFrame(series_data)
-                    all_series.append(series_data)
+        datasets = [
+            PyTorchTrainDataset(y=series, seq_len=self.seq_len, fh=self.pred_len)
+            for series in all_series
+        ]
 
-            # Create combined dataset from all series
-            datasets = [
-                PyTorchTrainDataset(
-                    y=series,
-                    seq_len=self.seq_len,
-                    fh=self.pred_len,
-                )
-                for series in all_series
-            ]
-
-            combined_dataset = ConcatDataset(datasets)
-        else:
-            if not isinstance(y, pd.DataFrame):
-                y = pd.DataFrame(y)
-
-            combined_dataset = PyTorchTrainDataset(
-                y=y,
-                seq_len=self.seq_len,
-                fh=self.pred_len,
-            )
-
+        combined_dataset = ConcatDataset(datasets)
         return DataLoader(combined_dataset, self.batch_size, shuffle=True)
 
     @classmethod
@@ -790,50 +759,19 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         """
         from torch.utils.data import ConcatDataset, DataLoader
 
-        from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
+        from sktime.forecasting.base.adapters._pytorch import (
+            PyTorchTrainDataset,
+            _get_series_from_panel,
+        )
 
-        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
-            n_levels = y.index.nlevels
+        all_series = _get_series_from_panel(y)
 
-            if n_levels == 2: # Panel data
-                instances = y.index.get_level_values(0).unique()
-                all_series = []
-                for instance in instances:
-                    series_data = y.loc[instance]
-                    if not isinstance(series_data, pd.DataFrame):
-                        series_data = pd.DataFrame(series_data)
-                    all_series.append(series_data)
-            else: # Hierarchical data
-                # Get unique combinations of all instance levels
-                instance_tuples = y.index.droplevel(-1).unique()
-                all_series = []
-                for instance_tuple in instance_tuples:
-                    series_data = y.loc[instance_tuple]
-                    if not isinstance(series_data, pd.DataFrame):
-                        series_data = pd.DataFrame(series_data)
-                    all_series.append(series_data)
+        datasets = [
+            PyTorchTrainDataset(y=series, seq_len=self.seq_len, fh=self.pred_len)
+            for series in all_series
+        ]
 
-            # Create combined dataset from all series
-            datasets = [
-                PyTorchTrainDataset(
-                    y=series,
-                    seq_len=self.seq_len,
-                    fh=self.pred_len,
-                )
-                for series in all_series
-            ]
-
-            combined_dataset = ConcatDataset(datasets)
-        else:
-            if not isinstance(y, pd.DataFrame):
-                y = pd.DataFrame(y)
-
-            combined_dataset = PyTorchTrainDataset(
-                y=y,
-                seq_len=self.seq_len,
-                fh=self.pred_len,
-            )
-
+        combined_dataset = ConcatDataset(datasets)
         return DataLoader(combined_dataset, self.batch_size, shuffle=True)
 
     @classmethod
