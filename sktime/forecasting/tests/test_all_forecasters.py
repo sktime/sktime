@@ -1153,6 +1153,34 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         with pytest.raises(TypeError, match="requires Panel or Hierarchical data"):
             estimator_instance.pretrain(y_single)
 
+    def test_pretrain_capability_requires_panel_mtype(self, estimator_instance):
+        """Test that forecasters with pretrain capability support panel data.
+
+        If capability:pretrain is True, y_inner_mtype must include a panel format
+        (pd-multiindex or pd_multiindex_hier) to properly handle pretraining data.
+        """
+        has_pretrain = estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        )
+
+        if not has_pretrain:
+            return None
+
+        y_inner_mtype = estimator_instance.get_tag("y_inner_mtype")
+
+        # Normalize to list for consistent checking
+        if isinstance(y_inner_mtype, str):
+            y_inner_mtype = [y_inner_mtype]
+
+        panel_mtypes = {"pd-multiindex", "pd_multiindex_hier"}
+        has_panel_mtype = bool(set(y_inner_mtype) & panel_mtypes)
+
+        assert has_panel_mtype, (
+            f"{type(estimator_instance).__name__} has capability:pretrain=True "
+            f"but y_inner_mtype={y_inner_mtype} does not include a panel format. "
+            f"Add 'pd-multiindex' or 'pd_multiindex_hier' to y_inner_mtype."
+        )
+
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
     """Module level tests for all global forecasters."""
 
