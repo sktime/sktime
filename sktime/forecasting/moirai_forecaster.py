@@ -154,6 +154,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
     if _check_soft_dependencies(["lightning", "huggingface-hub"], severity="none"):
+        import sktime
         from sktime.libs.uni2ts.forecast import MoiraiForecast
 
         @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
@@ -169,6 +170,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 )
                 return MoiraiForecast(**model_kwargs)
             else:
+                from huggingface_hub import hf_hub_download
+
                 model_kwargs["checkpoint_path"] = hf_hub_download(
                     repo_id=self.checkpoint_path, filename="model.ckpt"
                 )
