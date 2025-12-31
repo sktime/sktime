@@ -31,7 +31,6 @@ class _PretrainedCloner(BaseCloner):
 
     def _clone(self, obj):
         """Clone obj and preserve pretrained attributes."""
-
         # First, do the standard clone (copies hyperparameters)
         new_object = _default_clone(estimator=obj, recursive_clone=self.recursive_clone)
         if obj.get_config()["clone_config"]:
