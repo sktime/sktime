@@ -81,7 +81,7 @@ def _safe_import(import_path, pkg_name=None):
             module_name, attr_name = import_path.rsplit(".", 1)
             module = importlib.import_module(module_name)
             return getattr(module, attr_name)
-        except (ImportError, AttributeError):
+        except Exception:
             pass
 
     mock_obj = _create_mock_class(obj_name)
