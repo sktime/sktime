@@ -5,14 +5,8 @@ from unittest.mock import patch
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("lightning", severity="none"):
-    import sktime.libs.uni2ts
 
 from sktime.forecasting.base import _BaseGlobalForecaster
-
-if _check_soft_dependencies("huggingface-hub", severity="none"):
-    from huggingface_hub import hf_hub_download
-
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
@@ -218,6 +212,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                     )
                     self.model = MoiraiForecast(**model_kwargs)
                 else:
+                    from huggingface_hub import hf_hub_download
+
                     model_kwargs["checkpoint_path"] = hf_hub_download(
                         repo_id=self.checkpoint_path, filename="model.ckpt"
                     )
