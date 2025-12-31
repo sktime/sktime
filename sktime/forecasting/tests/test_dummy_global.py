@@ -214,3 +214,14 @@ class TestDummyGlobalForecaster:
         # Pretrained params should be preserved
         np.testing.assert_almost_equal(forecaster.global_mean_, pretrained_mean)
         np.testing.assert_almost_equal(forecaster.global_std_, pretrained_std)
+
+    def test_pretrain_rejects_single_series(self):
+        """Test that pretrain() raises TypeError when passed a single Series."""
+        forecaster = DummyGlobalForecaster()
+
+        # Create a single series (not panel data)
+        y_single = _make_series(n_columns=1, n_timepoints=20)
+
+        # pretrain() should reject single Series
+        with pytest.raises(TypeError, match="requires Panel or Hierarchical data"):
+            forecaster.pretrain(y_single)
