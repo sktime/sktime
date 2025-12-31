@@ -61,6 +61,7 @@ from sktime.utils.dependencies import _check_estimator_deps, _check_soft_depende
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.warnings import warn
+from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 
 DEFAULT_ALPHA = 0.05
 
@@ -150,6 +151,24 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         super().__init__()
         _check_estimator_deps(self)
         self._state = "new"
+
+    @classmethod
+    def _get_clone_plugins(cls):
+        """Get clone plugins for BaseForecaster.
+
+        Overrides the default skbase clone behavior to preserve
+        pretrained attributes when cloning forecasters.
+
+        The ``_PretrainedCloner`` plugin ensures that when a forecaster
+        with pretrained state is cloned (e.g., during cross-validation),
+        the pretrained attributes are copied to the clone.
+
+        Returns
+        -------
+        list
+            List containing ``_PretrainedCloner`` plugin class.
+        """
+        return [_PretrainedCloner]
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformedTargetForecaster.
