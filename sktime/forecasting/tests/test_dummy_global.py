@@ -225,3 +225,19 @@ class TestDummyGlobalForecaster:
         # pretrain() should reject single Series
         with pytest.raises(TypeError, match="requires Panel or Hierarchical data"):
             forecaster.pretrain(y_single)
+
+    def test_clone_preserves_pretrained_attrs(self):
+        """Test that clone() preserves pretrained attributes."""
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        forecaster = DummyGlobalForecaster(strategy="mean")
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+        cloned = forecaster.clone()
+
+        assert cloned._state == "pretrained"
+        assert hasattr(cloned, "global_mean_")
+        assert hasattr(cloned, "_pretrained_attrs")
+        np.testing.assert_almost_equal(cloned.global_mean_, pretrain_mean)
