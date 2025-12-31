@@ -84,6 +84,7 @@ def _safe_import(import_path, pkg_name=None):
         except Exception as e:
             # if not (ImportError, AttributeError), raise warning
             from warnings import warn
+
             if not isinstance(e, (ImportError, AttributeError)):
                 warn(
                     f"Importing '{import_path}' failed with error "
