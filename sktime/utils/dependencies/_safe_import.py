@@ -88,7 +88,7 @@ def _safe_import(import_path, pkg_name=None):
                 warn(
                     f"Importing '{import_path}' failed with error "
                     "other than ImportError or AttributeError:"
-                    f": {e}. "
+                    f": {e}. ",
                     ImportWarning,
                 )
             pass
