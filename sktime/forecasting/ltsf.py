@@ -77,6 +77,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
         "capability:pretrain": True,
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
 
     def __init__(
@@ -246,32 +247,42 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             self._run_epoch(epoch, dataloader)
 
     def _build_panel_dataloader(self, y):
-        """Build PyTorch DataLoader for panel data pretraining.
+        """Build PyTorch DataLoader for panel/hierarchical data pretraining.
 
         Parameters
         ----------
-        y : pd.DataFrame with MultiIndex or pd.Series
-            Panel data
+        y : pd.DataFrame with MultiIndex
+            Panel data (2-level MultiIndex) or hierarchical data (3+ level MultiIndex)
 
         Returns
         -------
         dataloader : torch.utils.data.DataLoader
-            DataLoader for panel data
+            DataLoader for panel/hierarchical data
         """
-        from torch.utils.data import DataLoader
+        from torch.utils.data import ConcatDataset, DataLoader
+
+        from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
 
         if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
-            from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
+            n_levels = y.index.nlevels
 
-            instances = y.index.get_level_values(0).unique()
-
-            # Collect all series data
-            all_series = []
-            for instance in instances:
-                series_data = y.loc[instance]
-                if not isinstance(series_data, pd.DataFrame):
-                    series_data = pd.DataFrame(series_data)
-                all_series.append(series_data)
+            if n_levels == 2: # Panel data
+                instances = y.index.get_level_values(0).unique()
+                all_series = []
+                for instance in instances:
+                    series_data = y.loc[instance]
+                    if not isinstance(series_data, pd.DataFrame):
+                        series_data = pd.DataFrame(series_data)
+                    all_series.append(series_data)
+            else: # Hierarchical data
+                # Get unique combinations of all instance levels
+                instance_tuples = y.index.droplevel(-1).unique()
+                all_series = []
+                for instance_tuple in instance_tuples:
+                    series_data = y.loc[instance_tuple]
+                    if not isinstance(series_data, pd.DataFrame):
+                        series_data = pd.DataFrame(series_data)
+                    all_series.append(series_data)
 
             # Create combined dataset from all series
             datasets = [
@@ -283,12 +294,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
                 for series in all_series
             ]
 
-            from torch.utils.data import ConcatDataset
-
             combined_dataset = ConcatDataset(datasets)
         else:
-            from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
-
             if not isinstance(y, pd.DataFrame):
                 y = pd.DataFrame(y)
 
@@ -599,6 +606,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
         "capability:pretrain": True,
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
 
     def __init__(
@@ -768,32 +776,42 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             self._run_epoch(epoch, dataloader)
 
     def _build_panel_dataloader(self, y):
-        """Build PyTorch DataLoader for panel data pretraining.
+        """Build PyTorch DataLoader for panel/hierarchical data pretraining.
 
         Parameters
         ----------
-        y : pd.DataFrame with MultiIndex or pd.Series
-            Panel data
+        y : pd.DataFrame with MultiIndex
+            Panel data (2-level MultiIndex) or hierarchical data (3+ level MultiIndex)
 
         Returns
         -------
         dataloader : torch.utils.data.DataLoader
-            DataLoader for panel data
+            DataLoader for panel/hierarchical data
         """
-        from torch.utils.data import DataLoader
+        from torch.utils.data import ConcatDataset, DataLoader
+
+        from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
 
         if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
-            from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
+            n_levels = y.index.nlevels
 
-            instances = y.index.get_level_values(0).unique()
-
-            # Collect all series data
-            all_series = []
-            for instance in instances:
-                series_data = y.loc[instance]
-                if not isinstance(series_data, pd.DataFrame):
-                    series_data = pd.DataFrame(series_data)
-                all_series.append(series_data)
+            if n_levels == 2: # Panel data
+                instances = y.index.get_level_values(0).unique()
+                all_series = []
+                for instance in instances:
+                    series_data = y.loc[instance]
+                    if not isinstance(series_data, pd.DataFrame):
+                        series_data = pd.DataFrame(series_data)
+                    all_series.append(series_data)
+            else: # Hierarchical data
+                # Get unique combinations of all instance levels
+                instance_tuples = y.index.droplevel(-1).unique()
+                all_series = []
+                for instance_tuple in instance_tuples:
+                    series_data = y.loc[instance_tuple]
+                    if not isinstance(series_data, pd.DataFrame):
+                        series_data = pd.DataFrame(series_data)
+                    all_series.append(series_data)
 
             # Create combined dataset from all series
             datasets = [
@@ -805,12 +823,8 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
                 for series in all_series
             ]
 
-            from torch.utils.data import ConcatDataset
-
             combined_dataset = ConcatDataset(datasets)
         else:
-            from sktime.forecasting.base.adapters._pytorch import PyTorchTrainDataset
-
             if not isinstance(y, pd.DataFrame):
                 y = pd.DataFrame(y)
 
