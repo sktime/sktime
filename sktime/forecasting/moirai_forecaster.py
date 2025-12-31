@@ -88,7 +88,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
         # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
         "maintainers": ["pranavvp16"],
-        "python_version": "< 3.13",
+        "python_version": "< 3.14",
         "python_dependencies": [
             "gluonts",
             "torch",
