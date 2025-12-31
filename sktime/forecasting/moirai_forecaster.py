@@ -5,7 +5,6 @@ from unittest.mock import patch
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-
 from sktime.forecasting.base import _BaseGlobalForecaster
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
