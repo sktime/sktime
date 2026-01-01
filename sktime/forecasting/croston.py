@@ -78,7 +78,7 @@ class Croston(BaseForecaster):
         # --------------
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
         "capability:exogenous": False,
-        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
