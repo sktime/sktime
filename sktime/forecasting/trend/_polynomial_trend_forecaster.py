@@ -96,6 +96,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:pred_int": True,
+        "y_inner_mtype": "pd.DataFrame",
     }
 
     def __init__(
@@ -149,7 +150,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         X_sklearn = _get_X_numpy_int_from_pandas(y.index)
 
         # fit regressor
-        self.regressor_.fit(X_sklearn, y)
+        self.regressor_.fit(X_sklearn, y.iloc[:, 0])
 
         if self.prediction_intervals:
             # calculate and save values needed for the prediction interval method
@@ -180,8 +181,8 @@ class PolynomialTrendForecaster(BaseForecaster):
         fh = self.fh.to_absolute_index(self.cutoff)
         X_sklearn = _get_X_numpy_int_from_pandas(fh)
         y_pred_sklearn = self.regressor_.predict(X_sklearn)
-        y_pred = pd.Series(y_pred_sklearn, index=fh)
-        y_pred.name = self._get_varnames()[0]
+        cols = self._get_varnames()
+        y_pred = pd.DataFrame(y_pred_sklearn, index=fh, columns=cols)
         return y_pred
 
     def _predict_var(self, fh=None, X=None, cov=False):
