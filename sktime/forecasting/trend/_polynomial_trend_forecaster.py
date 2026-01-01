@@ -155,7 +155,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         if self.prediction_intervals:
             # calculate and save values needed for the prediction interval method
             fitted_values = self.regressor_.predict(X_sklearn)
-            residuals = y - fitted_values
+            residuals = y.iloc[:, 0] - fitted_values
             p = self.degree + int(self.with_intercept)
             self.s_squared_ = np.sum(residuals**2) / (len(y) - p)
             self.train_index_ = y.index
