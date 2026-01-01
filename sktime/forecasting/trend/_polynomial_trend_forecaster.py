@@ -220,7 +220,9 @@ class PolynomialTrendForecaster(BaseForecaster):
         v = (1 + np.array(v)).flatten()  # see Hyndman FPP3 Section 7.9
 
         l_var = v * self.s_squared_  # see Hyndman FPP3 Section 7.9
-        pred_var = pd.DataFrame(l_var, columns=[self._y.name])
+        cols = self._get_varnames()
+        fh = self.fh.to_absolute_index(self.cutoff)
+        pred_var = pd.DataFrame(l_var, index=fh, columns=cols)
         return pred_var
 
     @classmethod
