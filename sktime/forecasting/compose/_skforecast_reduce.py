@@ -596,10 +596,7 @@ class SkforecastRecursive(BaseForecaster):
         "capability:categorical_in_X": True,
         "python_version": ">=3.9",
         "python_dependencies": ["skforecast>=0.14"],
-        # CI and testing
-        # --------------
-        "tests:skip_by_name": ["test_predict_time_index_with_X"],
-        # skforecast requires contiguous X for prediction, see issue #8787
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(
