@@ -523,7 +523,7 @@ class ARARForecaster(BaseForecaster):
 
         Returns
         -------
-        y_pred : pd.Series
+        y_pred : pd.DataFrame
             Point predictions for the forecast horizon.
         """
         # Get the forecast horizon as integer steps
@@ -543,7 +543,8 @@ class ARARForecaster(BaseForecaster):
         index = fh_abs.to_pandas()
 
         # Return as pandas Series
-        return pd.Series(y_pred_values, index=index, name=self._y.name)
+        cols = self._get_varnames()[0]
+        return pd.DataFrame(y_pred_values, index=index, columns=cols)
 
     def _predict_interval(self, fh, X, coverage):
         """Compute prediction intervals.
