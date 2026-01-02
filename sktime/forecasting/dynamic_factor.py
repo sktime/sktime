@@ -214,9 +214,10 @@ class DynamicFactor(_StatsModelsAdapter):
         y_pred : pd.DataFrame
             Returns series of predicted values.
         """
+        y_first_index = self._y_first_index
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        start, end = fh.to_absolute_int(y_first_index, self.cutoff)[[0, -1]]
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
 
@@ -228,9 +229,9 @@ class DynamicFactor(_StatsModelsAdapter):
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
 
-        if "int" in (self._y.index[0]).__class__.__name__:  # Rather fishy solution
+        if "int" in (y_first_index).__class__.__name__:  # Rather fishy solution
             y_pred.index = np.arange(
-                start + self._y.index[0], end + self._y.index[0] + 1
+                start + y_first_index, end + y_first_index + 1
             )
         return y_pred.loc[fh.to_absolute_index(self.cutoff)]
 
@@ -272,14 +273,15 @@ class DynamicFactor(_StatsModelsAdapter):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
+        y_first_index = self._y_first_index
+
         if not isinstance(coverage, list):
             coverage_list = [coverage]
         else:
             coverage_list = coverage
 
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        steps = end - len(self._y) + 1
-        ix = fh.to_indexer(self.cutoff)
+        _, end = fh.to_absolute_int(y_first_index, self.cutoff)[[0, -1]]
+        steps = end - self._y_len + 1
 
         model = self._fitted_forecaster
 
