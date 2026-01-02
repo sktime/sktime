@@ -461,6 +461,16 @@ allowed-confusables=["σ"]
   "D104", # Missing docstring in public package
   "D106", # Missing docstring in public nested class
 ]
+"sktime/libs/lag_llama/**/*.py" = [
+  "F722", # Checks for forward annotations that include invalid syntax.
+  "F821", # Checks for uses of undefined names.
+  "D100", # Missing docstring in public module
+  "D101", # Missing docstring in public class
+  "D102", # Missing docstring in public method
+  "D103", # Missing docstring in public function
+  "D104", # Missing docstring in public package
+  "D106", # Missing docstring in public nested class
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
