@@ -36,8 +36,9 @@ class ApplyAugmentations(nn.Module):
 class RandomApply(nn.Module):
     def __init__(self, transforms, p=0.5):
         super().__init__()
-        # 'transforms' is a list of transformation modules to be applied to the input data.
-        # These could be any transformations like normalization, augmentation, etc.
+        # 'transforms' is a list of transformation modules to be applied to the
+        # input data. These could be any transformations like normalization,
+        # augmentation, etc.
         self.transforms = nn.ModuleList(transforms)
 
         # 'p' is the probability with which the transformations will be applied.
@@ -45,7 +46,8 @@ class RandomApply(nn.Module):
         self.p = p
 
     def forward(self, x):
-        # Randomly decide whether to apply the transformations or not, based on probability 'p'.
+        # Randomly decide whether to apply the transformations or not, based on
+        # probability 'p'.
         if self.p < torch.rand(1):
             # If the random number is greater than 'p', return the input as it is.
             return x
@@ -70,28 +72,35 @@ class RandomApply(nn.Module):
 
 class Jitter(nn.Module):
     """
-    The Jitter class implements a jittering transformation as described in the paper:
-    'Data Augmentation for Machine Learning Algorithms' (https://arxiv.org/pdf/1706.00527.pdf).
-    It adds random noise to the input data, which is a common technique for data augmentation.
+    The Jitter class implements a jittering transformation.
+
+    As described in the paper: 'Data Augmentation for Machine Learning Algorithms'
+    (https://arxiv.org/pdf/1706.00527.pdf). It adds random noise to the input data,
+    which is a common technique for data augmentation.
     """
 
     def __init__(self, p, sigma=0.03):
         super().__init__()
-        # 'p' is the probability with which the jitter (noise) will be applied to the input data.
+        # 'p' is the probability with which the jitter (noise) will be applied
+        # to the input data.
         self.p = p
 
-        # 'sigma' defines the standard deviation of the normal distribution used for generating the jitter.
-        # It controls the magnitude of the noise added to the data.
+        # 'sigma' defines the standard deviation of the normal distribution used
+        # for generating the jitter. It controls the magnitude of the noise
+        # added to the data.
         self.sigma = sigma
 
     def forward(self, x):
-        # Randomly decide whether to apply jitter (noise) or not, based on the probability 'p'.
+        # Randomly decide whether to apply jitter (noise) or not, based on the
+        # probability 'p'.
         if self.p < torch.rand(1):
-            # If the random number is greater than 'p', return the input as it is, without adding noise.
+            # If the random number is greater than 'p', return the input as it is,
+            # without adding noise.
             return x
 
-        # Generate random noise from a normal distribution with mean 0 and standard deviation 'sigma'.
-        # The size and device of the noise tensor are the same as the input tensor 'x'.
+        # Generate random noise from a normal distribution with mean 0 and
+        # standard deviation 'sigma'. The size and device of the noise tensor
+        # are the same as the input tensor 'x'.
         noise = torch.normal(mean=0.0, std=self.sigma, size=x.shape, device=x.device)
 
         # Add the generated noise to the input data and return the result.
@@ -100,29 +109,37 @@ class Jitter(nn.Module):
 
 class Scaling(nn.Module):
     """
-    The Scaling class implements a scaling transformation as described in the paper:
-    'Data Augmentation for Machine Learning Algorithms' (https://arxiv.org/pdf/1706.00527.pdf).
-    This transformation scales the input data by a random factor, which can be useful for data augmentation.
+    The Scaling class implements a scaling transformation.
+
+    As described in the paper: 'Data Augmentation for Machine Learning Algorithms'
+    (https://arxiv.org/pdf/1706.00527.pdf). This transformation scales the input
+    data by a random factor, which can be useful for data augmentation.
     """
 
     def __init__(self, p, sigma=0.1):
         super().__init__()
-        # 'p' is the probability with which the scaling will be applied to the input data.
+        # 'p' is the probability with which the scaling will be applied to the
+        # input data.
         self.p = p
 
-        # 'sigma' defines the standard deviation of the normal distribution used for generating the scaling factor.
-        # It controls the variability of the scaling factor.
+        # 'sigma' defines the standard deviation of the normal distribution used
+        # for generating the scaling factor. It controls the variability of the
+        # scaling factor.
         self.sigma = sigma
 
     def forward(self, x):
-        # Randomly decide whether to apply scaling or not, based on the probability 'p'.
+        # Randomly decide whether to apply scaling or not, based on the
+        # probability 'p'.
         if self.p < torch.rand(1):
-            # If the random number is greater than 'p', return the input as it is, without scaling.
+            # If the random number is greater than 'p', return the input as it is,
+            # without scaling.
             return x
 
-        # Generate random scaling factors from a normal distribution with mean 1 and standard deviation 'sigma'.
-        # The size of the scaling factor tensor is tailored to match the batch and time dimensions of the input tensor 'x',
-        # but it has a single channel so that the same factor is applied across all channels.
+        # Generate random scaling factors from a normal distribution with mean 1
+        # and standard deviation 'sigma'. The size of the scaling factor tensor is
+        # tailored to match the batch and time dimensions of the input tensor 'x',
+        # but it has a single channel so that the same factor is applied across
+        # all channels.
         factor = torch.normal(
             mean=1.0, std=self.sigma, size=(x.shape[0], 1, x.shape[2]), device=x.device
         )
@@ -134,8 +151,9 @@ class Scaling(nn.Module):
 class Rotation(nn.Module):
     """
     Rotation class is designed to randomly rotate the input data.
-    It's a form of data augmentation that can be particularly useful in scenarios where
-    the orientation of the data is not a defining characteristic.
+
+    It's a form of data augmentation that can be particularly useful in scenarios
+    where the orientation of the data is not a defining characteristic.
     """
 
     def __init__(self, p):
@@ -144,19 +162,23 @@ class Rotation(nn.Module):
         self.p = p
 
     def forward(self, x):
-        # Randomly decide whether to rotate the data or not, based on the probability 'p'.
+        # Randomly decide whether to rotate the data or not, based on the
+        # probability 'p'.
         if self.p < torch.rand(1):
-            # If the random number is greater than 'p', return the input as it is, without rotation.
+            # If the random number is greater than 'p', return the input as it is,
+            # without rotation.
             return x
 
-        # Create an index for flipping, where each element has a 50% chance of being 0 or 1.
+        # Create an index for flipping, where each element has a 50% chance of
+        # being 0 or 1.
         flip_index = torch.multinomial(
             torch.tensor([0.5, 0.5], dtype=x.dtype, device=x.device),
             num_samples=x.shape[0] * x.shape[2],
             replacement=True,
         )
 
-        # Create a tensor of ones, which will be used to flip the sign of the data based on the flip_index.
+        # Create a tensor of ones, which will be used to flip the sign of the
+        # data based on the flip_index.
         ones = torch.ones((x.shape[0] * x.shape[2]), device=x.device)
         flip = torch.where(flip_index == 0, -ones, ones)
 
@@ -170,9 +192,11 @@ class Rotation(nn.Module):
 
 class Permutation(nn.Module):
     """
-    The Permutation class implements a data augmentation technique where the data is divided into segments,
-    and these segments are then randomly permuted. This can be useful for tasks where the order of data points
-    is not crucial and can help in improving the robustness of models.
+    The Permutation class implements a data augmentation technique.
+
+    The data is divided into segments, and these segments are then randomly
+    permuted. This can be useful for tasks where the order of data points is not
+    crucial and can help in improving the robustness of models.
     """
 
     def __init__(self, p, max_segments=5, seg_mode="equal"):
@@ -180,16 +204,20 @@ class Permutation(nn.Module):
         # 'p' is the probability of applying the permutation to the input data.
         self.p = p
 
-        # 'max_segments' defines the maximum number of segments into which the data can be split for permutation.
+        # 'max_segments' defines the maximum number of segments into which the
+        # data can be split for permutation.
         self.max_segments = max_segments
 
-        # 'seg_mode' determines how the segments are created: 'equal' for equal-sized segments, 'random' for random splits.
+        # 'seg_mode' determines how the segments are created: 'equal' for
+        # equal-sized segments, 'random' for random splits.
         self.seg_mode = seg_mode
 
     def forward(self, x):
-        # Randomly decide whether to permute the data or not, based on the probability 'p'.
+        # Randomly decide whether to permute the data or not, based on the
+        # probability 'p'.
         if self.p < torch.rand(1):
-            # If the random number is greater than 'p', return the input as it is, without permutation.
+            # If the random number is greater than 'p', return the input as it is,
+            # without permutation.
             return x
 
         # Create an array representing the original order of data points.
@@ -225,10 +253,12 @@ class Permutation(nn.Module):
 
 class MagnitudeWarp(nn.Module):
     """
-    The MagnitudeWarp class applies a non-linear warping to the magnitude of the input data.
-    This is achieved by using cubic splines to create smooth, random warp functions that are
-    then applied to the input. It's a form of data augmentation useful in scenarios where the
-    model needs to be robust to variations in the magnitude of the input data.
+    The MagnitudeWarp class applies a non-linear warping to the magnitude.
+
+    This is achieved by using cubic splines to create smooth, random warp
+    functions that are then applied to the input. It's a form of data
+    augmentation useful in scenarios where the model needs to be robust to
+    variations in the magnitude of the input data.
     """
 
     def __init__(self, p, sigma=0.2, knot=4):
@@ -236,7 +266,8 @@ class MagnitudeWarp(nn.Module):
         # 'p' is the probability with which the magnitude warp will be applied.
         self.p = p
 
-        # 'sigma' controls the variability of the warp. Higher values lead to more pronounced warping.
+        # 'sigma' controls the variability of the warp. Higher values lead to
+        # more pronounced warping.
         self.sigma = sigma
 
         # 'knot' is the number of points in the cubic spline used for warping.
@@ -266,8 +297,9 @@ class MagnitudeWarp(nn.Module):
         # Initialize a tensor to hold the warped data.
         ret = torch.zeros_like(x)
         for i, pat in enumerate(x):
-            # For each dimension, create a cubic spline based on the warp steps and random warps,
-            # and apply it to the original steps to get the warper.
+            # For each dimension, create a cubic spline based on the warp steps
+            # and random warps, and apply it to the original steps to get the
+            # warper.
             warper = np.array(
                 [
                     CubicSpline(warp_steps[:, dim], random_warps[i, :, dim])(orig_steps)
@@ -283,10 +315,12 @@ class MagnitudeWarp(nn.Module):
 
 class TimeWarp(nn.Module):
     """
-    The TimeWrap class applies a non-linear warping to the time axis of the input data.
-    This is achieved by using cubic splines to create smooth, random warp functions that
-    distort the time dimension of the input. It's a form of data augmentation useful for
-    tasks where the model needs to be robust to variations in the timing of the input data.
+    The TimeWrap class applies a non-linear warping to the time axis.
+
+    This is achieved by using cubic splines to create smooth, random warp
+    functions that distort the time dimension of the input. It's a form of data
+    augmentation useful for tasks where the model needs to be robust to
+    variations in the timing of the input data.
     """
 
     def __init__(self, p, sigma=0.2, knot=4):
@@ -294,7 +328,8 @@ class TimeWarp(nn.Module):
         # 'p' is the probability with which the time warp will be applied.
         self.p = p
 
-        # 'sigma' controls the variability of the warp. Higher values lead to more pronounced warping.
+        # 'sigma' controls the variability of the warp. Higher values lead to
+        # more pronounced warping.
         self.sigma = sigma
 
         # 'knot' is the number of points in the cubic spline used for warping.
@@ -325,7 +360,8 @@ class TimeWarp(nn.Module):
         ret = torch.zeros_like(x)
         for i, pat in enumerate(x):
             for dim in range(x.shape[2]):
-                # Create a cubic spline based on the warp steps and random warps to generate the time warp.
+                # Create a cubic spline based on the warp steps and random warps
+                # to generate the time warp.
                 time_warp = CubicSpline(
                     warp_steps[:, dim],
                     warp_steps[:, dim] * random_warps[i, :, dim],
@@ -345,10 +381,13 @@ class TimeWarp(nn.Module):
 
 class WindowSlice(nn.Module):
     """
-    The WindowSlice class implements a data augmentation technique where a slice of the input data
-    is stretched to fill the entire length of the input. This technique is useful for training models
-    to focus on local features of the data and can be found in literature such as:
-    'Time Series Data Augmentation for Deep Learning: A Survey' (https://halshs.archives-ouvertes.fr/halshs-01357973/document).
+    The WindowSlice class implements a data augmentation technique.
+
+    A slice of the input data is stretched to fill the entire length of the
+    input. This technique is useful for training models to focus on local
+    features of the data and can be found in literature such as: 'Time Series
+    Data Augmentation for Deep Learning: A Survey'
+    (https://halshs.archives-ouvertes.fr/halshs-01357973/document).
     """
 
     def __init__(self, p, reduce_ratio=0.9):
@@ -379,7 +418,8 @@ class WindowSlice(nn.Module):
         ret = torch.zeros_like(x)
         for i, pat in enumerate(x):
             for dim in range(x.shape[2]):
-                # Interpolate the slice to stretch it across the original length of the data.
+                # Interpolate the slice to stretch it across the original length
+                # of the data.
                 warp = np.interp(
                     np.linspace(0, target_len, num=x.shape[1]),
                     np.arange(target_len),
@@ -392,10 +432,13 @@ class WindowSlice(nn.Module):
 
 class WindowWarp(nn.Module):
     """
-    The WindowWarp class implements a data augmentation technique where a segment (window) of the input data
-    is selected and warped in size. This technique is useful for simulating variations in the speed or rate
-    of the data within a certain window, as discussed in:
-    'Time Series Data Augmentation for Deep Learning: A Survey' (https://halshs.archives-ouvertes.fr/halshs-01357973/document).
+    The WindowWarp class implements a data augmentation technique.
+
+    A segment (window) of the input data is selected and warped in size. This
+    technique is useful for simulating variations in the speed or rate of the
+    data within a certain window, as discussed in: 'Time Series Data
+    Augmentation for Deep Learning: A Survey'
+    (https://halshs.archives-ouvertes.fr/halshs-01357973/document).
     """
 
     def __init__(self, p, window_ratio=0.1, scales=[0.5, 2.0]):
@@ -403,7 +446,8 @@ class WindowWarp(nn.Module):
         # 'p' is the probability of applying the window warp to the input data.
         self.p = p
 
-        # 'window_ratio' determines the size of the window relative to the original data.
+        # 'window_ratio' determines the size of the window relative to the
+        # original data.
         self.window_ratio = window_ratio
 
         # 'scales' are the possible scaling factors to be applied to the window.
@@ -444,7 +488,8 @@ class WindowWarp(nn.Module):
                 )
                 end_seg = pat[window_ends[i] :, dim].cpu().numpy()
 
-                # Concatenate the segments and stretch them to fit the original data length.
+                # Concatenate the segments and stretch them to fit the original
+                # data length.
                 warped = np.concatenate((start_seg, window_seg, end_seg))
                 warp = np.interp(
                     np.arange(x.shape[1]),

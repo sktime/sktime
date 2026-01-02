@@ -71,10 +71,11 @@ def freq_mix(x, y, rate=0.1, dim=1):
     xy_f = torch.complex(freal, fimag)
     xy = torch.fft.irfft(xy_f, dim=dim)
 
-    # If the reconstructed data length differs from the original concatenated length,
-    # adjust it to maintain consistency.
+    # If the reconstructed data length differs from the original concatenated
+    # length, adjust it to maintain consistency.
     if x_len + y_len != xy.shape[dim]:
         xy = torch.cat([x[:, 0:1, ...], xy], 1)
 
-    # Split the reconstructed data back into two parts corresponding to the original x and y.
+    # Split the reconstructed data back into two parts corresponding to the
+    # original x and y.
     return torch.split(xy, [x_len, y_len], dim=dim)

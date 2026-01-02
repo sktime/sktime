@@ -51,9 +51,7 @@ from ..model.module import LagLlamaModel
 
 
 class LagLlamaLightningModule(LightningModule):
-    """
-    A ``pl.LightningModule`` class that can be used to train a
-    ``LagLlamaLightningModule`` with PyTorch Lightning.
+    """A ``pl.LightningModule`` class for training ``LagLlamaLightningModule``.
 
     This is a thin layer around a (wrapped) ``LagLlamaLightningModule`` object,
     that exposes the methods to evaluate training and validation loss.
@@ -238,7 +236,9 @@ class LagLlamaLightningModule(LightningModule):
         future_samples = []
 
         if use_single_pass_sampling:
-            # Single-pass sampling mode: Single forward pass per step, save distribution parameters, sample `num_parallel_samples` times, add mean to context.
+            # Single-pass sampling mode: Single forward pass per step, save
+            # distribution parameters, sample `num_parallel_samples` times, add
+            # mean to context.
             for t in range(self.prediction_length):
                 params, loc, scale = self.model(
                     *args,
@@ -261,13 +261,15 @@ class LagLlamaLightningModule(LightningModule):
                 repeated_sliced_params = [
                     p[:, -1:].repeat_interleave(self.model.num_parallel_samples, 0)
                     for p in params
-                ]  # Take the last timestep predicted and repeat for number of samples. Each tensor is of shape (#bsz*#parallel_samples, 1)
+                ]  # Take the last timestep predicted and repeat for number of
+                # samples. Each tensor is of shape (#bsz*#parallel_samples, 1)
                 repeated_loc = loc.repeat_interleave(self.model.num_parallel_samples, 0)
                 repeated_scale = scale.repeat_interleave(
                     self.model.num_parallel_samples, 0
                 )
                 # Repeated distribution is used for getting the parallel samples
-                # (distr.sample([self.model.num_parallel_samples]) seems to give terrible results)
+                # (distr.sample([self.model.num_parallel_samples]) seems to give
+                # terrible results)
                 repeated_distr = self.model.distr_output.distribution(
                     repeated_sliced_params, repeated_loc, repeated_scale
                 )
@@ -281,7 +283,9 @@ class LagLlamaLightningModule(LightningModule):
                     (past_observed_values, torch.ones_like(greedy_prediction)), dim=1
                 )
         else:
-            # Original probabilistic forecasting: Duplicate input, `num_parallel_samples` forward passes per step, sample each distribution once, add samples to context.
+            # Original probabilistic forecasting: Duplicate input,
+            # `num_parallel_samples` forward passes per step, sample each
+            # distribution once, add samples to context.
             repeated_past_target = past_target.repeat_interleave(
                 self.model.num_parallel_samples, 0
             )
@@ -343,11 +347,13 @@ class LagLlamaLightningModule(LightningModule):
         ]  # (bsz, model.context_length+max(model.lags_seq))
         past_observed_values = batch[
             "past_observed_values"
-        ]  # (bsz, model.context_length+max(model.lags_seq)) with 0s or 1s indicating available (1s) or missing (0s)
+        ]  # (bsz, model.context_length+max(model.lags_seq)) with 0s or 1s
+        # indicating available (1s) or missing (0s)
         future_target = batch["future_target"]  # (bsz, model.prediction_length)
         future_observed_values = batch[
             "future_observed_values"
-        ]  # (bsz, model.prediction_length) with 0s or 1s indicating available (1s) or missing (0s)
+        ]  # (bsz, model.prediction_length) with 0s or 1s indicating available
+        # (1s) or missing (0s)
         if self.time_feat:
             past_time_feat = batch["past_time_feat"]
             future_time_feat = batch["future_time_feat"]
@@ -381,10 +387,12 @@ class LagLlamaLightningModule(LightningModule):
             past_time_feat=past_time_feat,
             future_time_feat=future_time_feat,
             future_target=future_target_reshaped,
-        )  # distr_args is a tuple with two tensors of shape (bsz, context_length+pred_len-1)
+        )  # distr_args is a tuple with two tensors of shape
+        # (bsz, context_length+pred_len-1)
         context_target = take_last(
             past_target, dim=-1, num=self.context_length - 1
-        )  # (bsz, context_length-1) # Basically removes the first value since it cannot be predicted
+        )  # (bsz, context_length-1) # Basically removes the first value since
+        # it cannot be predicted
         target = torch.cat(
             (context_target, future_target_reshaped),
             dim=1,
@@ -410,7 +418,8 @@ class LagLlamaLightningModule(LightningModule):
         else:
             distr = self.model.distr_output.distribution(
                 distr_args, loc=loc, scale=scale
-            )  # an object representing a distribution with the specified parameters. We need this to compute the NLL loss.
+            )  # an object representing a distribution with the specified
+            # parameters. We need this to compute the NLL loss.
             if not do_not_average:
                 loss = (
                     self.loss(distr, target) * observed_values
@@ -424,9 +433,7 @@ class LagLlamaLightningModule(LightningModule):
             return loss, observed_values
 
     def training_step(self, batch, batch_idx: int):  # type: ignore
-        """
-        Execute training step.
-        """
+        """Execute training step."""
         if random.random() < self.aug_prob:
             # Freq mix and Freq mask have separate functions
             if self.freq_mask_rate > 0:
@@ -488,9 +495,7 @@ class LagLlamaLightningModule(LightningModule):
         self.train_loss_dict_per_series = {}
 
     def validation_step(self, batch, batch_idx: int):  # type: ignore
-        """
-        Execute validation step.
-        """
+        """Execute validation step."""
         val_loss_per_sample, observed_values = self._compute_loss(
             batch, do_not_average=True, return_observed_values=True
         )
@@ -537,9 +542,7 @@ class LagLlamaLightningModule(LightningModule):
         self.val_loss_dict_per_series = {}
 
     def configure_optimizers(self):
-        """
-        Returns the optimizer to use.
-        """
+        """Return the optimizer to use."""
         optimizer = torch.optim.Adam(
             self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay
         )

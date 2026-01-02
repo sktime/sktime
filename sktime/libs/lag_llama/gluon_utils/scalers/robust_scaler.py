@@ -25,9 +25,7 @@ if _check_soft_dependencies("gluonts"):
 
 
 class RobustScaler(Scaler):
-    """
-    Computes a scaling factor by removing the median and scaling by the
-    interquartile range (IQR).
+    """Computes a scaling factor using median and interquartile range (IQR).
 
     Parameters
     ----------

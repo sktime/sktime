@@ -103,9 +103,10 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
     validation_sampler
         Controls the sampling of windows during validation.
     use_single_pass_sampling
-        If True, use a single forward pass and sample N times from the saved distribution, much more efficient.
-        If False, perform N forward passes and maintain N parallel prediction paths, this is true probalistic forecasting.
-            (default: False)
+        If True, use a single forward pass and sample N times from the saved
+        distribution, much more efficient. If False, perform N forward passes
+        and maintain N parallel prediction paths, this is true probalistic
+        forecasting. (default: False)
     """
 
     @validated()

@@ -470,6 +470,7 @@ allowed-confusables=["σ"]
   "D103", # Missing docstring in public function
   "D104", # Missing docstring in public package
   "D106", # Missing docstring in public nested class
+  "S311", # Standard pseudo-random generators are not suitable for cryptographic purposes
 ]
 
 [tool.ruff.lint.pydocstyle]

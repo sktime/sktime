@@ -29,10 +29,10 @@ if _check_soft_dependencies("gluonts"):
 
 
 class QuantileLayer(nn.Module):
-    r"""
-    Implicit Quantile Layer from the paper ``IQN for Distributional
-    Reinforcement Learning`` (https://arxiv.org/abs/1806.06923) by
-    Dabney et al. 2018.
+    r"""Implicit Quantile Layer.
+
+    From the paper ``IQN for Distributional Reinforcement Learning``
+    (https://arxiv.org/abs/1806.06923) by Dabney et al. 2018.
     """
 
     def __init__(self, num_output: int, cos_embedding_dim: int = 128):
@@ -52,10 +52,10 @@ class QuantileLayer(nn.Module):
 
 
 class ImplicitQuantileModule(nn.Module):
-    r"""
-    Implicit Quantile Network from the paper ``IQN for Distributional
-    Reinforcement Learning`` (https://arxiv.org/abs/1806.06923) by
-    Dabney et al. 2018.
+    r"""Implicit Quantile Network.
+
+    From the paper ``IQN for Distributional Reinforcement Learning``
+    (https://arxiv.org/abs/1806.06923) by Dabney et al. 2018.
     """
 
     def __init__(
@@ -102,8 +102,9 @@ class ImplicitQuantileModule(nn.Module):
 
 class ImplicitQuantileNetwork(Distribution):
     r"""
-    Distribution class for the Implicit Quantile from which
-    we can sample or calculate the quantile loss.
+    Distribution class for the Implicit Quantile.
+
+    From which we can sample or calculate the quantile loss.
 
     Parameters
     ----------
@@ -134,7 +135,8 @@ class ImplicitQuantileNetwork(Distribution):
 
 class ImplicitQuantileNetworkOutput(DistributionOutput):
     r"""
-    DistributionOutput class for the IQN from the paper
+    DistributionOutput class for the IQN from the paper.
+
     ``Probabilistic Time Series Forecasting with Implicit Quantile Networks``
     (https://arxiv.org/abs/2107.03743) by Gouttes et al. 2021.
 
