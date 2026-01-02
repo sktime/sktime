@@ -442,10 +442,11 @@ class ColumnwiseTransformer(BaseTransformer):
         self.transformer = transformer
         self.columns = columns
 
-        self._transformer = coerce_scitype(transformer, "transformer")
-
         super().__init__()
 
+        self._transformer = coerce_scitype(transformer, "transformer")
+
+        # Clone tags from the internal transformer (guaranteed to be sktime)
         tags_to_clone = [
             "y_inner_mtype",
             "capability:inverse_transform",
