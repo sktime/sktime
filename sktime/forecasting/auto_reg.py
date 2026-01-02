@@ -165,8 +165,11 @@ class AutoREG(_StatsModelsAdapter):
         """
         from statsmodels.tsa.ar_model import AutoReg as _AutoReg
 
+        endog = y.iloc[:, 0]
+        endog.name = None
+
         self._forecaster = _AutoReg(
-            endog=y.iloc[:, 0].values,
+            endog=endog,
             lags=self.lags,
             trend=self.trend,
             seasonal=self.seasonal,
@@ -221,7 +224,7 @@ class AutoREG(_StatsModelsAdapter):
         y_pred = self._fitted_forecaster.predict(
             start=start, end=end, exog=self._X, exog_oos=X, dynamic=self.dynamic
         )
-        y_pred.columns = self._get_varnames()
+        y_pred = y_pred.to_frame(name=self._get_varnames()[0])
 
         return y_pred.loc[valid_indices]
 
