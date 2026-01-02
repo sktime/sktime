@@ -496,6 +496,7 @@ class ColumnwiseTransformer(BaseTransformer):
             transformer = self._transformer.clone()
             self.transformers_[colname] = transformer
             self.transformers_[colname].fit(X[colname], y)
+
         return self
 
     def _transform(self, X, y=None):
