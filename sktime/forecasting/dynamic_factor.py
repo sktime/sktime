@@ -279,9 +279,9 @@ class DynamicFactor(_StatsModelsAdapter):
             coverage_list = [coverage]
         else:
             coverage_list = coverage
-
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        steps = end - len(self._y) + 1
+        
+        start, end = fh.to_absolute_int(y_first_index, self.cutoff)[[0, -1]]
+        steps = end - start + 1
         ix = fh.to_indexer(self.cutoff)
 
         model = self._fitted_forecaster
