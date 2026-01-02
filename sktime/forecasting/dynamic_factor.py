@@ -280,6 +280,7 @@ class DynamicFactor(_StatsModelsAdapter):
 
         _, end = fh.to_absolute_int(y_first_index, self.cutoff)[[0, -1]]
         steps = end - self._y_len + 1
+        ix = fh.to_indexer(self.cutoff)
 
         model = self._fitted_forecaster
 
@@ -292,7 +293,7 @@ class DynamicFactor(_StatsModelsAdapter):
 
             # if y is univariate, we duplicated the column in fit,
             # so now we need to revert this duplication
-            # subste to first two columns as "lower" and "upper"
+            # subset to first two columns as "lower" and "upper"
             if self._was_univariate:
                 y_pred = y_pred.iloc[:, [0, 1]]
 
