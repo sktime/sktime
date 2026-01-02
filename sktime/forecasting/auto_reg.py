@@ -166,7 +166,7 @@ class AutoREG(_StatsModelsAdapter):
         from statsmodels.tsa.ar_model import AutoReg as _AutoReg
 
         self._forecaster = _AutoReg(
-            endog=y.iloc[:, 0],
+            endog=y.iloc[:, 0].values,
             lags=self.lags,
             trend=self.trend,
             seasonal=self.seasonal,
