@@ -94,6 +94,10 @@ class _StatsModelsAdapter(BaseForecaster):
                     y = y.loc[index_diff]
                     X = X.loc[index_diff].set_index(y.index) if X is not None else None
 
+                if isinstance(y, pd.DataFrame):
+                    y = y.iloc[:, 0]
+                    y.name = None
+
                 self._fitted_forecaster = self._fitted_forecaster.append(y, exog=X)
 
     def _predict(self, fh, X):
