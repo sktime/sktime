@@ -437,12 +437,12 @@ class ColumnwiseTransformer(BaseTransformer):
     }
 
     def __init__(self, transformer, columns=None):
-        from sktime.registry import coerce_scitype
-
         self.transformer = transformer
         self.columns = columns
 
         super().__init__()
+
+        from sktime.registry import coerce_scitype
 
         self._transformer = coerce_scitype(transformer, "transformer")
 
