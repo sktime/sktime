@@ -95,7 +95,7 @@ class AutoREG(_StatsModelsAdapter):
         "python_dependencies": "statsmodels>=0.13.0",
         # estimator type
         # --------------
-        "y_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
         "capability:exogenous": True,
@@ -165,11 +165,8 @@ class AutoREG(_StatsModelsAdapter):
         """
         from statsmodels.tsa.ar_model import AutoReg as _AutoReg
 
-        endog = y.iloc[:, 0]
-        endog.name = None
-
         self._forecaster = _AutoReg(
-            endog=endog,
+            endog=y,
             lags=self.lags,
             trend=self.trend,
             seasonal=self.seasonal,
@@ -215,8 +212,8 @@ class AutoREG(_StatsModelsAdapter):
         """
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
-        y_first_index = self._y_first_index
-        start, end = fh.to_absolute_int(y_first_index, self.cutoff)[[0, -1]]
+
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute_index(self.cutoff)
@@ -224,9 +221,11 @@ class AutoREG(_StatsModelsAdapter):
         y_pred = self._fitted_forecaster.predict(
             start=start, end=end, exog=self._X, exog_oos=X, dynamic=self.dynamic
         )
-        y_pred = y_pred.to_frame(name=self._get_varnames()[0])
+        y_pred.name = self._y.name
 
         return y_pred.loc[valid_indices]
+        # implement here
+        # IMPORTANT: avoid side effects to X, fh
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
