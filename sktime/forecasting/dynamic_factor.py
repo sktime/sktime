@@ -230,9 +230,7 @@ class DynamicFactor(_StatsModelsAdapter):
         # horizon, but only return given time points in forecasting horizon
 
         if "int" in (y_first_index).__class__.__name__:  # Rather fishy solution
-            y_pred.index = np.arange(
-                start + y_first_index, end + y_first_index + 1
-            )
+            y_pred.index = np.arange(start + y_first_index, end + y_first_index + 1)
         return y_pred.loc[fh.to_absolute_index(self.cutoff)]
 
     def _predict_interval(self, fh, X, coverage):
