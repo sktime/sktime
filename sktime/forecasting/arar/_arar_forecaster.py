@@ -543,7 +543,7 @@ class ARARForecaster(BaseForecaster):
         index = fh_abs.to_pandas()
 
         # Return as pandas Series
-        cols = self._get_varnames()[0]
+        cols = self._get_varnames()
         return pd.DataFrame(y_pred_values, index=index, columns=cols)
 
     def _predict_interval(self, fh, X, coverage):
