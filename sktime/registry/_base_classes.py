@@ -1,54 +1,28 @@
 """Register of estimator base classes corresponding to sktime scitypes.
 
-This module exports the following:
+To add a new base class to the register,
+define a new class inheriting from ``_BaseScitypeOfObject``, fill in the tags below,
+and implement the methods below.
 
----
+Tags to fill in:
 
-BASE_CLASS_REGISTER - list of tuples
+* ``scitype_name`` : scitype shorthand string. IMPORTANT: this will be used
+  across the codebase as a unique identifier.
+* ``short_descr`` : short English description of the scitype
+* ``parent_scitype`` : parent scitype shorthand string, for scitype inheritance.
+  IF not filled in, will inherit from ``object`` scitype.
+* ``mixin`` : whether this is a mixin scitype (True) or full scitype (False).
+  Only fill in with value ``True`` if used as a mixin class.
 
-each tuple corresponds to a base class, elements as follows:
-    0 : string - scitype shorthand
-    1 : type - the base class itself
-    2 : string - plain English description of the scitype
+Class methods to implement:
 
----
+* ``get_base_class`` : should return the base class corresponding to the scitype.
+  The base class should inherit from ``sktime.base.BaseObject``, or a subclass thereof.
+* ``get_test_class`` : should return the test class for the scitype.
+  This class should follow the pattern of ``TestAll[ScitypeName]s`` classes in
+  ``sktime``.
 
-TRANSFORMER_MIXIN_REGISTER - list of tuples
-
-each tuple corresponds to a transformer mixin, elements as follows:
-    0 : string - scitype shorthand
-    1 : type - the transformer mixin itself
-    2 : string - plain English description of the scitype
-
----
-
-BASE_CLASS_SCITYPE_LIST - list of string
-    elements are 0-th entries of BASE_CLASS_REGISTER, in same order
-
----
-
-BASE_CLASS_LIST - list of classes
-    elements are 1-st entries of BASE_CLASS_REGISTER, in same order
-
----
-
-BASE_CLASS_LOOKUP - dictionary
-    keys/entries are 0/1-th entries of BASE_CLASS_REGISTER
-
----
-
-TRANSFORMER_MIXIN_SCITYPE_LIST - list of string
-    elements are 0-th entries of TRANSFORMER_MIXIN_REGISTER, in same order
-
----
-
-TRANSFORMER_MIXIN_LIST - list of string
-    elements are 1-st entries of TRANSFORMER_MIXIN_REGISTER, in same order
-
----
-
-TRANSFORMER_MIXIN_LOOKUP - dictionary
-    keys/entries are 0/1-th entries of TRANSFORMER_MIXIN_REGISTER
+For examples, see below, and follow the pattern to add new scitypes.
 """
 
 import inspect
@@ -514,22 +488,6 @@ class transformer_pairwise_panel(_BaseScitypeOfObject):
         return TestAllPanelTransformers
 
 
-class distribution(_BaseScitypeOfObject):
-    """Pandas-like probability distribution."""
-
-    _tags = {
-        "scitype_name": "distribution",
-        "short_descr": "pandas-like probability distribution",
-        "parent_scitype": "object",
-    }
-
-    @classmethod
-    def get_base_class(cls):
-        from sktime.proba._base import BaseDistribution
-
-        return BaseDistribution
-
-
 class dataset(_BaseScitypeOfObject):
     """Dataset object."""
 
@@ -592,6 +550,54 @@ class dataset_regression(_BaseScitypeOfObject):
         from sktime.datasets.regression._base import BaseRegressionDataset
 
         return BaseRegressionDataset
+
+
+class catalogue(_BaseScitypeOfObject):
+    """Catalogue of objects."""
+
+    _tags = {
+        "scitype_name": "catalogue",
+        "short_descr": "catalogue of datasets, estimators, cv splitters, and metrics.",
+        "parent_scitype": "object",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.catalogues.base import BaseCatalogue
+
+        return BaseCatalogue
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.catalogues.tests.test_all_catalogues import (
+            TestAllCatalogues,
+        )
+
+        return TestAllCatalogues
+
+
+class reconciler(_BaseScitypeOfObject):
+    _tags = {
+        "scitype_name": "reconciler",
+        "short_descr": "time series reconciliation transformer",
+        "parent_scitype": "transformer",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.transformations.hierarchical.reconcile._base import (
+            _ReconcilerTransformer,
+        )
+
+        return _ReconcilerTransformer
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.transformations.tests.test_all_reconcilers import (
+            TestAllReconciliationTransformers,
+        )
+
+        return TestAllReconciliationTransformers
 
 
 # ----------------------------------

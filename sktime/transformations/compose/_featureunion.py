@@ -48,7 +48,7 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,  # depends on components
-        "univariate-only": False,  # depends on components
+        "capability:multivariate": True,  # depends on components
         "capability:missing_values": False,  # depends on components
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",
@@ -61,6 +61,10 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         "visual_block_kind": "parallel",
         # unclear what inverse transform should be, since multiple inverse_transform
         #   would have to inverse transform to one
+        #
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
@@ -112,7 +116,7 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         self._anytagis_then_set("skip-inverse-transform", True, False, ests)
         # self._anytagis_then_set("capability:inverse_transform", False, True, ests)
         self._anytagis_then_set("capability:missing_values", False, True, ests)
-        self._anytagis_then_set("univariate-only", True, False, ests)
+        self._anytagis_then_set("capability:multivariate", False, True, ests)
 
         # if any of the components require_X or require_y, set it for the composite
         self._anytagis_then_set("requires_X", True, False, ests)

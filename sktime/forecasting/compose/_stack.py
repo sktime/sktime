@@ -61,9 +61,11 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
     _tags = {
         "authors": ["mloning", "fkiraly", "indinewton"],
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "capability:missing_values": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "scitype:y": "univariate",
         "X-y-must-have-same-index": True,
     }
@@ -74,7 +76,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
         super().__init__(forecasters=forecasters, n_jobs=n_jobs)
 
-        self._anytagis_then_set("ignores-exogeneous-X", False, True, forecasters)
+        self._anytagis_then_set("capability:exogenous", True, False, forecasters)
         self._anytagis_then_set("capability:missing_values", False, True, forecasters)
         self._anytagis_then_set("fit_is_empty", False, True, forecasters)
 

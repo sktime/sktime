@@ -124,8 +124,8 @@ def _check_equal_index(X):
 
     Returns
     -------
-    indexes : list of indixes
-        List of indixes with one index for each column
+    indexes : list of indexes
+        List of indexes with one index for each column
     """
     # TODO handle 1d series, not only 2d dataframes
     # TODO assumes columns are typed (i.e. all rows for a given column have

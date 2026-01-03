@@ -47,9 +47,12 @@ class IndexSubset(BaseTransformer):
         "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "transform-returns-same-time-index": False,
         "fit_is_empty": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "capability:inverse_transform": False,
         "remember_data": True,  # remember all data seen as _X
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, index_treatment="keep"):
@@ -161,7 +164,7 @@ class ColumnSelect(BaseTransformer):
         "y_inner_mtype": "None",
         "transform-returns-same-time-index": True,
         "fit_is_empty": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "capability:inverse_transform": False,
         "skip-inverse-transform": True,
         "capability:categorical_in_X": True,

@@ -8,7 +8,9 @@ transformations.
 
 All (simple) transformers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="transformer"``, optionally filtered by tags.
-Valid tags can be listed using ``sktime.registry.all_tags``.
+
+Valid tags are listed in :ref:`the transformations tags API reference <transformer_tags>`,
+and can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
 :doc:`Estimator Search Page </estimator_overview>`
@@ -58,11 +60,19 @@ Pipeline building - Structural
     TransformerPipeline
     FeatureUnion
     ColumnEnsembleTransformer
-    ColumnSelect
     FitInTransform
     InvertTransform
     YtoX
     IxToX
+
+.. currentmodule:: sktime.transformations.series.subset
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ColumnSelect
+    IndexSubset
 
 Pipeline building - Broadcasting and apply-map
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -117,8 +127,19 @@ Pipeline building - Logging
 
     Logger
 
-Sklearn and pandas adapters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Pipeline building - Output combination
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CombineTransformers
+
+Sklearn, pandas, numpy adapters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.panel.reduce
 
@@ -137,6 +158,7 @@ Sklearn and pandas adapters
 
     TabularToSeriesAdaptor
     PandasTransformAdaptor
+
 
 Series-to-features transformers
 -------------------------------
@@ -247,6 +269,7 @@ Dictionary-based features
     SFAFast
     PAAlegacy
     SAXlegacy
+    fABBA
 
 Auto-correlation-based features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -375,6 +398,14 @@ Depending on the transformer, the transformation parameters can be fitted.
     :template: class.rst
 
     ScaledAsinhTransformer
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CombineTransformers
 
 Detrending and Decomposition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -565,6 +596,14 @@ Binning, sampling and segmentation
     :template: class.rst
 
     SAX
+
+.. currentmodule:: sktime.transformations.series.fabba
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    fABBA
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -895,3 +934,17 @@ The transformation depends on the specified hierarchy in a non-trivial way.
     :template: class.rst
 
     Reconciler
+
+For usage of Reconciliation with pipelines, these transformations below are more
+efficient and should be preferred:
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BottomUpReconciler
+    MiddleOutReconciler
+    NonNegativeOptimalReconciler
+    OptimalReconciler
+    TopdownReconciler

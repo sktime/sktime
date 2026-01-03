@@ -12,36 +12,39 @@ __all__ = ["MultiplexForecaster"]
 
 
 class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
-    """MultiplexForecaster for selecting among different models.
+    """MultiplexForecaster for selecting among different models in Auto-ML pipelines.
 
-    MultiplexForecaster facilitates a framework for performing
-    model selection process over different model classes.
-    It should be used in conjunction with ForecastingGridSearchCV
-    to get full utilization. It can be used with univariate and
-    multivariate forecasters.
+    ``MultiplexForecaster`` facilitates a framework for performing
+    automated model selection process over different model classes.
+    It should be used in conjunction with ``ForecastingGridSearchCV`` or similar tuners
+    to build an Auto-ML pipeline for forecasters.
+    ``MultiplexForecaster`` can be used with univariate and multivariate forecasters.
 
-    MultiplexForecaster is specified with a (named) list of forecasters
+    ``MultiplexForecaster`` is specified with a (named) list of forecasters
     and a selected_forecaster hyper-parameter, which is one of the forecaster names.
-    The MultiplexForecaster then behaves precisely as the forecaster with
-    name selected_forecaster, ignoring functionality in the other forecasters.
+    The ``MultiplexForecaster`` then behaves precisely as the forecaster with
+    name ``selected_forecaster``, ignoring functionality in the other forecasters.
 
-    When used with ForecastingGridSearchCV, MultiplexForecaster
-    provides an ability to tune across multiple estimators, i.e., to perform AutoML,
-    by tuning the selected_forecaster hyper-parameter. This combination will then
+    When used with ``ForecastingGridSearchCV``, ``MultiplexForecaster``
+    provides an ability to tune across multiple estimators, i.e., to perform Auto-ML,
+    by tuning the ``,selected_forecaster``, hyper-parameter. This combination will then
     select one of the passed forecasters via the tuning algorithm.
 
     Parameters
     ----------
     forecasters : list of sktime forecasters, or
         list of tuples (str, estimator) of sktime forecasters
-        MultiplexForecaster can switch ("multiplex") between these forecasters.
+        ``MultiplexForecaster`` can switch ("multiplex") between these forecasters.
         These are "blueprint" forecasters, states do not change when ``fit`` is called.
+
     selected_forecaster: str or None, optional, Default=None.
-        If str, must be one of the forecaster names.
-            If no names are provided, must coincide with auto-generated name strings.
-            To inspect auto-generated name strings, call get_params.
-        If None, behaves as if the first forecaster in the list is selected.
-        Selects the forecaster as which MultiplexForecaster behaves.
+        Name of the forecaster to be selected from the list of forecasters.
+
+        * If str, must be one of the forecaster names.
+          If no names are provided, must coincide with auto-generated name strings.
+          To inspect auto-generated name strings, call ``get_params``.
+        * If None, behaves as if the first forecaster in the list is selected.
+          Selects the forecaster as which ``MultiplexForecaster`` behaves.
 
     Attributes
     ----------
@@ -85,6 +88,9 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -232,12 +238,12 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
                 ("Naive_last", NaiveForecaster(strategy="last")),
                 ("Naive_drift", NaiveForecaster(strategy="drift")),
             ],
-            "selected_forecaster": "Naive_mean",
+            "selected_forecaster": "Naive_last",
         }
         params2 = {
             "forecasters": [
-                NaiveForecaster(strategy="mean"),
                 NaiveForecaster(strategy="last"),
+                NaiveForecaster(strategy="mean"),
                 NaiveForecaster(strategy="drift"),
             ],
         }

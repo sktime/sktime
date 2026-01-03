@@ -93,9 +93,11 @@ class VAR(_StatsModelsAdapter):
         "scitype:y": "both",
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -174,7 +176,6 @@ class VAR(_StatsModelsAdapter):
         y_pred_insample = None
         exog_future = X.values if X is not None else None
         # fh in stats
-        # fh_int = fh.to_absolute_int(self._y.index[0], self._y.index[-1])
         fh_int = fh.to_relative(self.cutoff)
         n_lags = self._fitted_forecaster.k_ar
 

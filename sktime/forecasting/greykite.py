@@ -26,9 +26,8 @@ class GreykiteForecaster(BaseForecaster):
     Parameters
     ----------
     forecast_config : ForecastConfig, optional
-        Configuration object for Greykite's forecasting pipeline. If None,
-         a default configuration
-        is created.
+        Configuration object for Greykite's forecasting pipeline.
+        If None, a default configuration is created.
     date_format : str, optional
         Format of the timestamp in the data. If None, it is inferred.
     model_template : str, optional
@@ -64,8 +63,8 @@ class GreykiteForecaster(BaseForecaster):
 
     _tags = {
         "scitype:y": "univariate",  # Handles univariate targets here.
-        "ignores-exogeneous-X": False,  # Can handle exogenous variables.
-        "handles-missing-data": True,  # Handles missing data.
+        "capability:exogenous": True,  # Can handle exogenous variables.
+        "capability:missing_values": True,  # Handles missing data.
         "y_inner_mtype": "pd.Series",  # Expected input type for y.
         "X_inner_mtype": "pd.DataFrame",  # Expected input type for X.
         "requires-fh-in-fit": True,  # Forecasting horizon is required in fit.
@@ -78,7 +77,7 @@ class GreykiteForecaster(BaseForecaster):
     def __init__(
         self,
         forecast_config: Optional["GreykiteForecaster.ForecastConfig"] = None,
-        date_format: Optional[str] = None,
+        date_format: str | None = None,
         model_template: str = "SILVERKITE",
         coverage: float = 0.95,
     ):

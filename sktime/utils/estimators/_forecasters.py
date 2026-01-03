@@ -29,7 +29,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
 
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
@@ -211,7 +211,7 @@ class MockForecaster(BaseForecaster):
 
     _tags = {
         "scitype:y": "both",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
@@ -282,9 +282,9 @@ class MockForecaster(BaseForecaster):
             Point predictions
         """
         index = fh.to_absolute_index(self.cutoff)
-        return pd.DataFrame(
-            self.prediction_constant, index=index, columns=self._y.columns
-        )
+        prediction_constant = self.prediction_constant
+        cols = self._get_varnames()
+        return pd.DataFrame(prediction_constant, index=index, columns=cols)
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
@@ -353,7 +353,7 @@ class MockForecaster(BaseForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        cols = self._y.columns
+        cols = self._get_varnames()
 
         col_index = pd.MultiIndex.from_product([cols, alpha])
         fh_index = fh.to_absolute_index(self.cutoff)

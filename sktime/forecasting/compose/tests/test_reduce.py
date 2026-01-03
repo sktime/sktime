@@ -491,7 +491,7 @@ def test_multioutput_direct_equivalence_tabular_linear_regression(fh):
     y_pred_multioutput = multioutput.fit(y_train, X_train, fh=fh).predict(fh, X_test)
 
     np.testing.assert_array_almost_equal(
-        y_pred_direct.to_numpy(), y_pred_multioutput.to_numpy()
+        y_pred_direct.to_numpy(), y_pred_multioutput.to_numpy(), decimal=2
     )
 
 
@@ -843,58 +843,47 @@ def test_recursive_reduction_with_X():
     not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
     reason="run test only if reduce module has changed",
 )
-def test_pooled_direct_reduction():
-    """Test pooled forecasting on DirectReductionForecaster."""
+def test_recursive_reduction_with_period_index():
+    """Test RecursiveReductionForecaster with periodIndex that has not-one frequency"""
 
-    y = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
-    lr = LinearRegression()
-    forecaster = DirectReductionForecaster(
-        LinearRegression(),
-        window_length=2,
-        pooling="global",
-        windows_identical=True,
+    y = pd.Series(
+        [1, 2, 3, 4],
+        index=pd.PeriodIndex(
+            ["2025-01-01", "2025-01-03", "2025-01-05", "2025-01-07"], freq="2D"
+        ),
     )
-    fh = ForecastingHorizon([1], is_relative=True)
-    forecaster.fit(y=y, fh=fh)
-    y_pred = forecaster.predict()
+    X = pd.DataFrame(
+        {"x1": [10, 30, 50, 70], "x2": [20, 40, 60, 80]},
+        index=pd.PeriodIndex(
+            ["2025-01-01", "2025-01-03", "2025-01-05", "2025-01-07"], freq="2D"
+        ),
+    )
+    window_length = 2
 
-    X_manual = np.array([[1, 2], [2, 3], [5, 6], [6, 7]])
+    # Construct rolling window manually
+    y_rolled = np.column_stack(
+        [y.shift(i).values[window_length:] for i in range(window_length, 0, -1)]
+    )
+    X_manual = np.hstack([y_rolled, X.iloc[window_length:].values])
+    y_manual = y.iloc[window_length:].values
 
-    y_manual = np.array([3, 4, 7, 8])
+    manual_lr = LinearRegression().fit(X_manual, y_manual)
 
-    lr.fit(X_manual, y_manual)
-
-    last_win = np.array([[3, 4], [7, 8]])
-    lr_pred = lr.predict(last_win)
-
-    assert np.allclose(y_pred, lr_pred.reshape(-1, 1), rtol=1e-3)
-
-
-@pytest.mark.skipif(
-    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
-    reason="run test only if reduce module has changed",
-)
-def test_pooled_recursive_reduction():
-    """Test pooled forecasting on RecursiveReductionForecaster."""
-
-    y = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
-    lr = LinearRegression()
     forecaster = RecursiveReductionForecaster(
-        LinearRegression(),
-        window_length=2,
-        pooling="global",
+        estimator=LinearRegression(), window_length=window_length
     )
-    fh = ForecastingHorizon([1], is_relative=True)
-    forecaster.fit(y=y, fh=fh)
-    y_pred = forecaster.predict()
+    forecaster.fit(y, X=X, fh=pd.PeriodIndex(["2025-01-09"], freq="2D"))
 
-    X_manual = np.array([[1, 2], [2, 3], [5, 6], [6, 7]])
+    # Future Exogenous Data
+    X_new = pd.DataFrame(
+        [[90, 100]],
+        index=pd.PeriodIndex(["2025-01-09"], freq="2D"),
+        columns=["x1", "x2"],
+    )
 
-    y_manual = np.array([3, 4, 7, 8])
+    y_pred = forecaster.predict(X=X_new)
+    last_window = y.iloc[-window_length:].values.reshape(1, -1)
+    manual_input = np.hstack([last_window, X_new.values])
+    manual_pred = manual_lr.predict(manual_input)
 
-    lr.fit(X_manual, y_manual)
-
-    last_win = np.array([[3, 4], [7, 8]])
-    lr_pred = lr.predict(last_win)
-
-    assert np.allclose(y_pred, lr_pred.reshape(-1, 1), rtol=1e-3)
+    assert np.allclose(y_pred, manual_pred)

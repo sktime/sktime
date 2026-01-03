@@ -29,6 +29,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         # therefore, we need to restrict the version of scipy
         # the dependency tag translates to:
         # tsfresh is required, and tsfresh>=0.21 or scipy<1.15
+        "capability:categorical_in_X": False,
     }
 
     def __init__(

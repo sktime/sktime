@@ -57,7 +57,7 @@ class ClustererAsTransformer(BaseTransformer):
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
@@ -69,6 +69,9 @@ class ClustererAsTransformer(BaseTransformer):
         "capability:unequal_length:removes": False,
         "capability:missing_values": True,
         "capability:missing_values:removes": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, clusterer):
@@ -90,7 +93,7 @@ class ClustererAsTransformer(BaseTransformer):
 
         # forward tag information
         tags_to_set = {
-            "univariate-only": not multivariate,
+            "capability:multivariate": multivariate,
             "capability:missing_values": missing,
             "capability:unequal_length": unequal,
         }
@@ -104,9 +107,9 @@ class ClustererAsTransformer(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns
@@ -154,9 +157,9 @@ class ClustererAsTransformer(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns

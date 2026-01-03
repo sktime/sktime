@@ -20,11 +20,11 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting         - _fit(self, X, y=None)
     transformation  - _transform(self, X, y=None)
 
-Optional implements:
+Optional methods to implement:
     inverse transformation      - _inverse_transform(self, X, y=None)
     update                      - _update(self, X, y=None)
     fitted parameter inspection - _get_fitted_params()
@@ -142,11 +142,11 @@ class MyTransformer(BaseTransformer):
         #   in that case, X/y are passed through without conversion if on the list
         #   if not on the list, converted to the first entry of the same scitype
         #
-        # univariate-only controls whether internal X can be univariate/multivariate
-        # if True (only univariate), always applies vectorization over variables
-        "univariate-only": False,
-        # valid values: True = inner _fit, _transform receive only univariate series
-        #   False = uni- and multivariate series are passed to inner methods
+        # capability:multivariate controls whether internal X can be multivariate
+        # if False (only univariate), always applies vectorization over variables
+        "capability:multivariate": True,
+        # valid values: False = inner _fit, _transform receive only univariate series
+        #   True = uni- and multivariate series are passed to inner methods
         #
         # requires_X = does X need to be passed in fit?
         "requires_X": True,
@@ -400,6 +400,7 @@ class MyTransformer(BaseTransformer):
     # if not implementing, delete the _inverse_transform method
     # inverse transform exists only if transform does not change scitype
     #  i.e., Series transformed to Series
+    # delete for Series-to-Primitives or Series-to-Panel transformers
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
 

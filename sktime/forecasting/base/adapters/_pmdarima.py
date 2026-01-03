@@ -18,13 +18,12 @@ class _PmdArimaAdapter(BaseForecaster):
     _tags = {
         "authors": ["mloning", "hyang1996", "kejsitake", "fkiraly"],
         "maintainers": "hyang1996",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
-        # TODO 0.38.0: check if numpy 2 incompatiblity can be removed
-        "python_dependencies": ["pmdarima", "numpy<2"],
+        "python_dependencies": ["pmdarima"],
     }
 
     def __init__(self):

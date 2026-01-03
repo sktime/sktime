@@ -77,7 +77,11 @@ class Croston(BaseForecaster):
         # estimator type
         # --------------
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
+        "y_inner_mtype": "pd.DataFrame",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, smoothing=0.1):
@@ -105,7 +109,7 @@ class Croston(BaseForecaster):
         n_timepoints = len(y)  # Historical period: i.e the input array's length
         smoothing = self.smoothing
 
-        y = y.to_numpy()  # Transform the input into a numpy array
+        y = y.to_numpy().flatten()  # Transform the input into a numpy array
         # Fit the parameters: level(q), periodicity(a) and forecast(f)
         q, a, f = np.full((3, n_timepoints + 1), np.nan)
         p = 1  # periods since last demand observation
@@ -158,7 +162,7 @@ class Croston(BaseForecaster):
         y_pred = np.full(len_fh, f[-1])
 
         index = self.fh.to_absolute_index(self.cutoff)
-        return pd.Series(y_pred, index=index, name=self._y.name)
+        return pd.DataFrame(y_pred, index=index, columns=self._get_varnames())
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

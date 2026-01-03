@@ -15,6 +15,7 @@ from sktime.transformations.bootstrap import STLBootstrapTransformer
 from sktime.transformations.compose import (
     FeatureUnion,
     InvertTransform,
+    IxToX,
     OptionalPassthrough,
     TransformerPipeline,
 )
@@ -371,8 +372,8 @@ def test_input_output_series_panel_chain():
     X = load_airline()
     bootstrap_trafo = STLBootstrapTransformer(4, sp=4) * Imputer(method="nearest")
 
-    assert bootstrap_trafo.get_tags()["scitype:transform-input"] == "Series"
-    assert bootstrap_trafo.get_tags()["scitype:transform-output"] == "Panel"
+    assert bootstrap_trafo.get_tag("scitype:transform-input") == "Series"
+    assert bootstrap_trafo.get_tag("scitype:transform-output") == "Panel"
 
     Xt = bootstrap_trafo.fit_transform(X)
     assert isinstance(Xt, pd.DataFrame)
@@ -403,10 +404,37 @@ def test_requires_tags_trafopipe():
         ]
     )
 
-    assert not pipe.get_tags()["requires_X"]
+    assert not pipe.get_tag("requires_X")
     # should not requires X as input, because YtoX does not
 
-    assert pipe.get_tags()["requires_y"]
+    assert pipe.get_tag("requires_y")
     # should require y as input, because YtoX does
 
     pipe.fit_transform(X=None, y=X)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_ixtox():
+    index = pd.MultiIndex.from_product(
+        [["X", "Y"], ["A", "B", "C"], [1, 2, 3]],
+        names=["level_0", "level_1", "level_2"],
+    )
+    X = pd.DataFrame(index=index)
+
+    ixtox = IxToX(level="__all_but_time")
+    assert ixtox.fit_transform(X).columns.tolist() == ["level_0", "level_1"]
+
+    ixtox = IxToX(level="__all")
+    assert ixtox.fit_transform(X).columns.tolist() == ["level_0", "level_1", "level_2"]
+
+    ixtox = IxToX(level=None)
+    assert ixtox.fit_transform(X).columns.tolist() == ["level_2"]
+
+    ixtox = IxToX(level=["level_0", "level_2"])
+    assert ixtox.fit_transform(X).columns.tolist() == ["level_0", "level_2"]
+
+    ixtox = IxToX(level=-1)
+    assert ixtox.fit_transform(X).columns.tolist() == ["level_2"]

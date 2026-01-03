@@ -91,13 +91,16 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     _tags = {
         "authors": ["GuzalBulatova", "mloning", "fkiraly"],
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "y_inner_mtype": PANDAS_MTYPES,
         "X_inner_mtype": PANDAS_MTYPES,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
@@ -121,7 +124,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
             tags_to_clone = [
                 "requires-fh-in-fit",
                 "capability:pred_int",
-                "ignores-exogeneous-X",
+                "capability:exogenous",
                 "capability:missing_values",
             ]
             self.clone_tags(forecasters, tags_to_clone)
@@ -129,7 +132,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
             l_forecasters = [(x[0], x[1]) for x in forecasters]
             self._anytagis_then_set("requires-fh-in-fit", True, False, l_forecasters)
             self._anytagis_then_set("capability:pred_int", False, True, l_forecasters)
-            self._anytagis_then_set("ignores-exogeneous-X", False, True, l_forecasters)
+            self._anytagis_then_set("capability:exogenous", True, False, l_forecasters)
             self._anytagis_then_set(
                 "capability:missing_values", False, True, l_forecasters
             )

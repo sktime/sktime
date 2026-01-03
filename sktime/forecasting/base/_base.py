@@ -95,18 +95,19 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # --------------
         "object_type": "forecaster",  # type of object
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
         "capability:missing_values": False,  # can estimator handle missing data?
+        "capability:non_contiguous_X": True,  # support non-contiguous X?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
-        "capability:categorical_in_X": False,
+        "capability:categorical_in_X": True,
         # does the forecaster natively support categorical in exogeneous X?
     }
 
@@ -936,9 +937,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         if not non_default_pred_proba and not skpro_present:
             warn(msg, obj=self, stacklevel=2)
 
-        if non_default_pred_proba and not skpro_present:
-            raise ImportError(msg)
-
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
@@ -948,7 +946,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         X_inner = self._check_X(X=X)
 
         # pass to inner _predict_proba
-        pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
+        try:  # try/except for handling notification about missing skpro softdep
+            pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
+        except ImportError as e:
+            if non_default_pred_proba and not skpro_present:
+                raise ImportError(msg)
+            else:
+                raise e
 
         return pred_dist
 
@@ -1664,7 +1668,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 )
 
             if (
-                not self.get_tag("ignores-exogeneous-X")
+                self.get_tag("capability:exogenous")
                 and DtypeKind.CATEGORICAL in X_metadata["feature_kind"]
                 and not self.get_tag("capability:categorical_in_X")
             ):
@@ -1685,7 +1689,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             X_scitype = None
 
         # extra check: if X is ignored by inner methods, pass None to them
-        if self.get_tag("ignores-exogeneous-X"):
+        if not self.get_tag("capability:exogenous"):
             X = None
             X_scitype = None
         # end checking X
@@ -1695,7 +1699,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             if self.get_tag("X-y-must-have-same-index"):
                 # currently, check_equal_time_index only works for Series
                 # TODO: fix this so the check is general, using get_time_index
-                if not self.get_tag("ignores-exogeneous-X") and X_scitype == "Series":
+                if self.get_tag("capability:exogenous") and X_scitype == "Series":
                     check_equal_time_index(X, y, mode="contains")
 
             if y_scitype != X_scitype:
@@ -2573,12 +2577,14 @@ class _BaseGlobalForecaster(BaseForecaster):
         Returns
         -------
         quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+
+            * Column has multi-index: first level is variable name from y in fit,
+              second level being the values of ``alpha`` passed to the function.
+            * Row index is ``fh``.
+              If ``y`` seen in fit was Panel or Hierarchical, has additional
+              (upper) levels equal to instance levels, from ``y`` seen in ``fit``.
+            * Entries are quantile forecasts, for variable in column index,
+              at quantile probability in second column index, for the row index.
 
         Notes
         -----
@@ -2698,17 +2704,19 @@ class _BaseGlobalForecaster(BaseForecaster):
         Returns
         -------
         pred_int : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level coverage fractions for which intervals were computed.
-                    in the same order as in input ``coverage``.
-                Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                from y seen in fit, if y seen in fit was Panel or Hierarchical.
-            Entries are forecasts of lower/upper interval end,
-                for var in col index, at nominal coverage in second col index,
-                lower/upper depending on third col index, for the row index.
-                Upper/lower interval end forecasts are equivalent to
-                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+
+            * Column has multi-index: first level is variable name from y in fit,
+              second level are the coverage fractions for which intervals were computed,
+              in the same order as in input ``coverage``.
+              Third level is string "lower" or "upper", for lower/upper interval end.
+            * Row index is ``fh``.
+              If ``y`` seen in fit was Panel or Hierarchical, has additional
+              (upper) levels equal to instance levels, from ``y`` seen in ``fit``.
+            * Entries are forecasts of lower/upper interval end,
+              for variable in column index, at nominal coverage in second column index,
+              lower/upper depending on third col index, for the row index.
+              Upper/lower interval end forecasts are equivalent to
+              quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
 
         Notes
         -----
@@ -2818,22 +2826,26 @@ class _BaseGlobalForecaster(BaseForecaster):
         Returns
         -------
         pred_var : pd.DataFrame, format dependent on ``cov`` variable
+
             If cov=False:
-                Column names are exactly those of ``y`` passed in ``fit``/``update``.
-                    For nameless formats, column index will be a RangeIndex.
-                Row index is fh, with additional levels equal to instance levels,
-                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
-                Entries are variance forecasts, for var in col index.
-                A variance forecast for given variable and fh index is a predicted
-                    variance for that variable and index, given observed data.
+
+            * Column names are exactly those of ``y`` passed in ``fit``/``update``.
+              For nameless formats, column index will be a ``RangeIndex``.
+            * Row index is ``fh``. If ``y`` seen in ``fit`` was Panel or Hierarchical,
+              has additional levels equal to instance levels, from ``y`` in ``fit``.
+            * Entries are variance forecasts, for var in col index.
+              A variance forecast for given variable and fh index is a predicted
+              variance for that variable and index, given observed data.
+
             If cov=True:
-                Column index is a multiindex: 1st level is variable names (as above)
-                    2nd level is fh.
-                Row index is fh, with additional levels equal to instance levels,
-                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
-                Entries are (co-)variance forecasts, for var in col index, and
-                    covariance between time index in row and col.
-                Note: no covariance forecasts are returned between different variables.
+
+            * Column index is a multiindex: 1st level is variable names (as above)
+              2nd level is fh.
+            * Row index is ``fh``. If ``y`` seen in ``fit`` was Panel or Hierarchical,
+              has additional levels equal to instance levels, from ``y`` in ``fit``.
+            * Entries are (co-)variance forecasts, for var in col index, and
+              covariance between time index in row and col.
+              Note: no covariance forecasts are returned between different variables.
 
         Notes
         -----
