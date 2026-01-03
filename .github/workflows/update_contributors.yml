@@ -7,6 +7,7 @@ on:
 
 jobs:
   generate-markdown-and-create-pr:
+    if: ${{ github.repository == 'sktime/sktime' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6

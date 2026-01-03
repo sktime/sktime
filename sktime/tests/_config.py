@@ -194,7 +194,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "CircularBinarySegmentation",
         "ClaSPTransformer",
         "ClearSky",
-        "ColumnwiseTransformer",
         "ContractableBOSS",
         "DOBIN",
         "DilationMappingTransformer",
