@@ -1002,6 +1002,56 @@ class capability__pred_int__insample(_BaseTag):
     }
 
 
+class capability__non_contiguous_X(_BaseTag):
+    """Capability: the forecaster can handle non-contiguous exogenous data.
+
+    - String name: ``"capability:non_contiguous_X"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    Exogenous data are additional time series that can be used to improve
+    forecasting accuracy. When using `temporal_train_test_split` with a
+    non-contiguous forecasting horizon `fh` (e.g., `fh=[2, 5]`), the resulting
+    `X_test` will only contain observations corresponding to the specific time
+    points in `fh`, rather than a complete contiguous range.
+
+
+    If the ``capability:non_contiguous_X`` tag is ``True``, the forecaster
+    can handle non-contiguous exogenous data and will make predictions
+    correctly even when ``X`` contains only the requested time points.
+
+    If the tag is ``False``, the forecaster requires contiguous exogenous data
+    covering all time points from the first to the last element of ``fh``.
+    For example, if ``fh=[2, 5]``, the forecaster requires ``X`` to contain
+    data for time points 1, 2, 3, 4, and 5, not just 2 and 5.
+
+    Forecasters with ``capability:non_contiguous_X=False`` include those that:
+
+    * Use underlying libraries (e.g., statsmodels, statsforecast) that
+      internally generate predictions for all intermediate time steps
+    * Require contiguous data for their recursive prediction algorithms
+
+    If a forecaster has this tag set to ``False`` and receives non-contiguous
+    exogenous data, it will raise an error during prediction.
+
+    The ``ForecastX`` compositor directly addresses the ``capability:non_contiguous_X``
+    tag by providing a solution for forecasters that cannot handle non-contiguous
+    exogenous data. Instead of requiring contiguous exogenous data covering all
+    time points from the first to the last element of fh, ForecastX forecasts
+    the missing exogenous values internally.
+    """
+
+    _tags = {
+        "tag_name": "capability:non_contiguous_X",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can the forecaster handle non-contiguous exogenous data?",
+        "user_facing": True,
+    }
+
+
 class requires_fh_in_fit(_BaseTag):
     """Behaviour flag: forecaster requires forecasting horizon in fit.
 
@@ -3198,6 +3248,196 @@ class visual_block_kind(_BaseTag):
         "tag_type": ("str", ["single", "serial", "parallel"]),
         "short_descr": "how to display html representation of a meta-estimator in jupyter notebook",  # noqa: E501
         "user_facing": False,
+    }
+
+
+# Catalogue tags
+# --------------
+
+
+class catalogue_type(_BaseTag):
+    """Catalogue subtype: what kind of catalogue this is.
+
+    - String name: ``"catalogue_type"``
+    - Public tag
+    - Values: string (e.g., ``"mixed"``, ``"datasets"``, ``"estimators"``)
+    - Example: ``"mixed"``
+    """
+
+    _tags = {
+        "tag_name": "catalogue_type",
+        "parent_type": "catalogue",
+        "tag_type": "str",
+        "short_descr": "Subtype of the catalogue (e.g., mixed, datasets, estimators).",
+        "user_facing": True,
+    }
+
+
+class n_items(_BaseTag):
+    """Number of total items in the catalogue.
+
+    - String name: ``"n_items"``
+    - Values: integer
+    - Example: ``5``
+    """
+
+    _tags = {
+        "tag_name": "n_items",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of items in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_datasets(_BaseTag):
+    """Number of dataset entries in the catalogue.
+
+    - String name: ``"n_datasets"``
+    - Values: integer
+    - Example: ``2``
+    """
+
+    _tags = {
+        "tag_name": "n_datasets",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of datasets in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_metrics(_BaseTag):
+    """Number of metric objects in the catalogue.
+
+    - String name: ``"n_metrics"``
+    - Values: integer
+    - Example: ``1``
+    """
+
+    _tags = {
+        "tag_name": "n_metrics",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of metrics in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_cv_splitters(_BaseTag):
+    """Number of cross-validation splitters in the catalogue.
+
+    - String name: ``"n_cv_splitters"``
+    - Values: integer
+    - Example: ``1``
+    """
+
+    _tags = {
+        "tag_name": "n_cv_splitters",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of CV splitters in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_classifiers(_BaseTag):
+    """Number of classifier estimators in the catalogue.
+
+    - String name: ``"n_classifiers"``
+    - Values: integer
+    - Example: ``1``
+    """
+
+    _tags = {
+        "tag_name": "n_classifiers",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of classifiers in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_forecasters(_BaseTag):
+    """Number of forecaster estimators in the catalogue.
+
+    - String name: ``"n_forecasters"``
+    - Values: integer
+    - Example: ``1``
+    """
+
+    _tags = {
+        "tag_name": "n_forecasters",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of forecasters in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class info__name(_BaseTag):
+    """Information tag: human-readable name of the catalogue.
+
+    - String name: ``"info:name"``
+    - Public information tag
+    - Values: string (e.g., ``"TSC Bake Off Catalogue"``)
+    - Example: ``"My Catalogue"``
+    - Default: empty string
+
+    This tag should contain a short, human-readable name that describes
+    the catalogue.
+    """
+
+    _tags = {
+        "tag_name": "info:name",
+        "parent_type": "catalogue",
+        "tag_type": "str",
+        "short_descr": "Human-readable name for this catalogue.",
+        "user_facing": True,
+    }
+
+
+class info__description(_BaseTag):
+    """Information tag: short textual description of the catalogue.
+
+    - String name: ``"info:description"``
+    - Public information tag
+    - Values: string
+    - Example: ``"A M4 catalogue containing datasets, metrics, and models."``
+    - Default: empty string
+
+    This tag provides a concise description of the catalogue's purpose
+    or contents. Suitable for documentation or rendered UI text.
+    """
+
+    _tags = {
+        "tag_name": "info:description",
+        "parent_type": "catalogue",
+        "tag_type": "str",
+        "short_descr": "Short description of the catalogue.",
+        "user_facing": True,
+    }
+
+
+class info__source(_BaseTag):
+    """Information tag: source or reference for the catalogue.
+
+    - String name: ``"info:source"``
+    - Public information tag
+    - Values: string (e.g., a DOI)
+    - Example: ``"10.1016/j.ijforecast.2019.04.014"``
+    - Default: empty string
+
+    This tag should contain the source or origin of the catalogue,
+    typically a DOI, citation string, URL, or dataset repository reference.
+    """
+
+    _tags = {
+        "tag_name": "info:source",
+        "parent_type": "catalogue",
+        "tag_type": "str",
+        "short_descr": "Source reference for this catalogue (e.g., DOI).",
+        "user_facing": True,
     }
 
 

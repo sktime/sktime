@@ -102,7 +102,7 @@ all_extras = [
   'seaborn>=0.11; python_version < "3.13"',
   'simdkalman',
   'skforecast<0.19,>=0.12.1; python_version < "3.14"',
-  "skpro>=2,<2.11.0",
+  "skpro>=2,<2.12.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels>=0.12.1; python_version < "3.13"',
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
@@ -136,7 +136,7 @@ all_extras_pandas2 = [
   'seaborn>=0.11; python_version < "3.13"',
   'simdkalman',
   'skforecast<0.19,>=0.12.1; python_version < "3.14"',
-  "skpro>=2,<2.11.0",
+  "skpro>=2,<2.12.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels>=0.12.1; python_version < "3.13"',
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
@@ -186,7 +186,7 @@ forecasting = [
   'pmdarima!=1.8.1,<2.2,>=1.8',
   'prophet<1.2,>=1.1; python_version < "3.13"',
   'skforecast<0.19,>=0.12.1; python_version < "3.14"',
-  "skpro>=2,<2.11.0",
+  "skpro>=2,<2.12.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
 ]
@@ -235,7 +235,7 @@ docs = [
   "Sphinx!=7.2.0,<9.0.0",
   "sphinx-copybutton",
   "sphinx-design<0.7.0",
-  "sphinx-gallery<0.20.0",
+  "sphinx-gallery<0.21.0",
   "sphinx-issues<6.0.0",
   "tabulate",
 ]
@@ -269,7 +269,7 @@ dl = [
   "torch; (sys_platform != 'darwin' or python_version < '3.13')",
   'transformers[torch]<4.41.0; python_version < "3.13"',
   "pytorch-forecasting>=1.0.0,<1.6.0; (sys_platform != 'darwin' or python_version != '3.13') and python_version < '3.14'",
-  'lightning>=2.0; python_version < "3.12"',
+  "lightning>=2.0,<2.6; (sys_platform != 'darwin' or python_version < '3.13')",
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
   'huggingface-hub>=0.23.0; python_version < "3.12"',
@@ -301,6 +301,8 @@ notebooks = [
   "dtw-python",
   "prophet",
   "pytorch-forecasting",
+  "torch",
+  "lightning>=2.0,<2.6",
   "skpro",
   "statsforecast",
 ]
@@ -327,6 +329,16 @@ dependencies_lower = [
     "pandas==2.0.2",
     "scikit-learn==1.3.0",
     "scipy==1.10.1",
+]
+
+# August 2024 (briefly after numpy2 release)
+dependencies_2024 = [
+    "numpy==2.1.0",
+    "pandas==2.3.2",
+    "scikit-learn==1.5.1",
+    "scipy==1.14.1",
+    "torch==2.4.0",
+    "lightning==2.4.0",
 ]
 
 [project.urls]
