@@ -224,7 +224,7 @@ class VECM(_StatsModelsAdapter):
 
         # invert the "only_1s" column if it was added during fit
         if self._y_metadata["n_features"] == 1:
-            y_pred = y_pred[:, 0]
+            y_pred = y_pred[:, [0]]
 
         index = fh.get_expected_pred_idx(cutoff=self.cutoff)
         y_pred = pd.DataFrame(
