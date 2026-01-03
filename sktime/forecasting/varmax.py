@@ -309,6 +309,11 @@ class VARMAX(_StatsModelsAdapter):
         if self.suppress_warnings:
             warnings.filterwarnings("ignore")
 
+        # if univariate, add an "only 1s" column
+        if len(y.shape) == 1 or y.shape[1] == 1:
+            y = y.copy()
+            y["only_1s"] = 1.0
+
         from statsmodels.tsa.statespace.varmax import VARMAX as _VARMAX
 
         self._forecaster = _VARMAX(
@@ -379,6 +384,10 @@ class VARMAX(_StatsModelsAdapter):
         y_pred.index = full_range
         y_pred = y_pred.loc[abs_idx.to_pandas()]
         y_pred.index = fh.to_absolute_index(self.cutoff)
+
+        # invert the "only_1s" column if it was added during fit
+        if self._y_metadata["n_features"] == 1:
+            y_pred = y_pred.iloc[:, 0]
 
         return y_pred
 

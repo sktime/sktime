@@ -30,10 +30,12 @@ class VAR(_StatsModelsAdapter):
     verbose : bool (default=False)
         Print order selection output to the screen
     trend : str {"c", "ct", "ctt", "n"} (default="c")
-        "c" - add constant
-        "ct" - constant and trend
-        "ctt" - constant, linear and quadratic trend
-        "n" - co constant, no trend
+
+        * "c" - add constant
+        * "ct" - constant and trend
+        * "ctt" - constant, linear and quadratic trend
+        * "n" - co constant, no trend
+
         Note that these are prepended to the columns of the dataset.
     missing: str, optional (default='none')
         A string specifying if data is missing
@@ -44,10 +46,12 @@ class VAR(_StatsModelsAdapter):
         An array like object containing dates.
     ic: One of {'aic', 'fpe', 'hqic', 'bic', None} (default=None)
         Information criterion to use for VAR order selection.
-        aic : Akaike
-        fpe : Final prediction error
-        hqic : Hannan-Quinn
-        bic : Bayesian a.k.a. Schwarz
+
+        * `"aic"` : Akaike
+        * `"fpe"` : Final prediction error
+        * `"hqic"` : Hannan-Quinn
+        * `"bic"` : Bayesian a.k.a. Schwarz
+
     random_state : int, RandomState instance or None, optional ,
         default=None - If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
@@ -141,6 +145,11 @@ class VAR(_StatsModelsAdapter):
         -------
         self : returns an instance of self.
         """
+        # if univariate, add an "only 1s" column
+        if len(y.shape) == 1 or y.shape[1] == 1:
+            y = y.copy()
+            y["only_1s"] = 1.0
+
         from statsmodels.tsa.api import VAR as _VAR
 
         self._forecaster = _VAR(
@@ -205,6 +214,11 @@ class VAR(_StatsModelsAdapter):
             index=index,
             columns=self._y.columns,
         )
+
+        # invert the "only_1s" column if it was added during fit
+        if self._y_metadata["n_features"] == 1:
+            y_pred = y_pred.iloc[:, 0]
+
         return y_pred
 
     def _predict_interval(self, fh, X, coverage):
@@ -319,6 +333,11 @@ class VAR(_StatsModelsAdapter):
         index = fh.to_absolute_index(self.cutoff)
         index.name = self._y.index.name
         final_df.index = index
+
+        # invert the "only_1s" column if it was added during fit
+        if self._y_metadata["n_features"] == 1:
+            colname = self._get_varnames()[0]
+            final_df = final_df.xs(colname, level=0, axis=1)
 
         return final_df
 
