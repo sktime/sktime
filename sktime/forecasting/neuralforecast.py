@@ -12,6 +12,54 @@ from sktime.utils.dependencies import _check_soft_dependencies
 __author__ = ["yarnabrina", "geetu040", "pranavvp16"]
 
 
+def _get_validated_input_size(input_size, inference_input_size, model_name):
+    """Validate and return input_size compatible with neuralforecast version.
+
+    neuralforecast v3.0.0+ requires a positive integer for input_size
+    in recurrent models. This function handles backward compatibility.
+
+    Parameters
+    ----------
+    input_size : int
+        The input_size parameter from the estimator.
+    inference_input_size : int
+        The inference_input_size parameter from the estimator.
+    model_name : str
+        Name of the model for error messaging.
+
+    Returns
+    -------
+    int
+        Validated input_size value.
+
+    Raises
+    ------
+    ValueError
+        If neuralforecast v3+ and no valid input_size is provided.
+    """
+    import neuralforecast
+    from packaging.version import Version
+
+    nf_version = Version(neuralforecast.__version__)
+
+    if nf_version >= Version("3.0.0"):
+        # v3+ requires explicit positive input_size for recurrent models
+        if input_size == -1:
+            if inference_input_size > 0:
+                return inference_input_size
+            else:
+                raise ValueError(
+                    f"neuralforecast version {neuralforecast.__version__} requires "
+                    f"a positive 'input_size' for {model_name}. "
+                    "Please initialize the estimator with a positive integer for "
+                    "'input_size' or 'inference_input_size'."
+                )
+        return input_size
+    else:
+        # v1.x/v2.x: -1 means use all history
+        return input_size
+
+
 class NeuralForecastRNN(_NeuralForecastAdapter):
     """NeuralForecast RNN model.
 
@@ -301,8 +349,13 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         if self.valid_loss:
             self._valid_loss = self.valid_loss
 
+        # Shim for neuralforecast v3.0.0+ compatibility
+        validated_input_size = _get_validated_input_size(
+            self.input_size, self.inference_input_size, "RNN"
+        )
+
         return {
-            "input_size": self.input_size,
+            "input_size": validated_input_size,
             "inference_input_size": self.inference_input_size,
             "encoder_n_layers": self.encoder_n_layers,
             "encoder_hidden_size": self.encoder_hidden_size,
@@ -690,8 +743,13 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         if self.valid_loss:
             self._valid_loss = self.valid_loss
 
+        # Shim for neuralforecast v3.0.0+ compatibility
+        validated_input_size = _get_validated_input_size(
+            self.input_size, self.inference_input_size, "LSTM"
+        )
+
         return {
-            "input_size": self.input_size,
+            "input_size": validated_input_size,
             "inference_input_size": self.inference_input_size,
             "encoder_n_layers": self.encoder_n_layers,
             "encoder_hidden_size": self.encoder_hidden_size,
@@ -1080,8 +1138,13 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         if self.valid_loss:
             self._valid_loss = self.valid_loss
 
+        # Shim for neuralforecast v3.0.0+ compatibility
+        validated_input_size = _get_validated_input_size(
+            self.input_size, self.inference_input_size, "GRU"
+        )
+
         return {
-            "input_size": self.input_size,
+            "input_size": validated_input_size,
             "inference_input_size": self.inference_input_size,
             "encoder_n_layers": self.encoder_n_layers,
             "encoder_hidden_size": self.encoder_hidden_size,
@@ -1483,8 +1546,13 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         if self.valid_loss:
             self._valid_loss = self.valid_loss
 
+        # Shim for neuralforecast v3.0.0+ compatibility
+        validated_input_size = _get_validated_input_size(
+            self.input_size, self.inference_input_size, "DilatedRNN"
+        )
+
         return {
-            "input_size": self.input_size,
+            "input_size": validated_input_size,
             "inference_input_size": self.inference_input_size,
             "cell_type": self.cell_type,
             "dilations": self._dilations,
