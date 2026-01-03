@@ -274,8 +274,8 @@ class VAR(_StatsModelsAdapter):
             if alpha >= 0.99999:
                 alpha = 0.99999
 
-            lower_cols=[f"{col} {alpha} lower" for col in y_cols_no_space]
-            upper_cols=[f"{col} {alpha} upper" for col in y_cols_no_space]
+            lower_cols = [f"{col} {alpha} lower" for col in y_cols_no_space]
+            upper_cols = [f"{col} {alpha} upper" for col in y_cols_no_space]
 
             fcast_interval = model.forecast_interval(
                 self._last_n_lags_of_y, steps=steps, alpha=alpha
