@@ -5,6 +5,7 @@ __author__ = ["KatieBuc"]
 
 import warnings
 
+import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
@@ -309,10 +310,10 @@ class VARMAX(_StatsModelsAdapter):
         if self.suppress_warnings:
             warnings.filterwarnings("ignore")
 
-        # if univariate, add an "only 1s" column
+        # if univariate, add a linear column with very low slope
         if y.shape[1] == 1:
             y = y.copy()
-            y["only_1s"] = 1.0
+            y["only_1s"] = np.arange(len(y)) * 1e-5 + 1.0
 
         from statsmodels.tsa.statespace.varmax import VARMAX as _VARMAX
 

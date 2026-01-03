@@ -151,6 +151,11 @@ class VECM(_StatsModelsAdapter):
         -------
         self : reference to self
         """
+        # if univariate, add a linear column with very low slope
+        if y.shape[1] == 1:
+            y = y.copy()
+            y["only_1s"] = np.arange(len(y)) * 1e-5 + 1.0
+
         from statsmodels.tsa.vector_ar.vecm import VECM as _VECM
 
         self._forecaster = _VECM(
@@ -224,6 +229,10 @@ class VECM(_StatsModelsAdapter):
             columns=self._y.columns,
         )
 
+        # invert the "only_1s" column if it was added during fit
+        if self._y_metadata["n_features"] == 1:
+            y_pred = y_pred.iloc[:, 0]
+
         return y_pred
 
     def _predict_interval(self, fh, X, coverage):
@@ -290,6 +299,11 @@ class VECM(_StatsModelsAdapter):
         pred_int = pd.DataFrame(
             [all_values], index=fh.to_absolute_index(self.cutoff), columns=int_idx
         )
+
+        # invert the "only_1s" column if it was added during fit
+        if self._y_metadata["n_features"] == 1:
+            colname = self._get_varnames()[0]
+            final_df = final_df.xs(colname, level=0, axis=1)
 
         return pred_int
 
