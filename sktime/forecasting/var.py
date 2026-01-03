@@ -162,6 +162,9 @@ class VAR(_StatsModelsAdapter):
             verbose=self.verbose,
             ic=self.ic,
         )
+
+        n_lags = self._fitted_forecaster.k_ar
+        self._last_n_lags_of_y = y.values[-n_lags:]
         return self
 
     def _predict(self, fh, X):
@@ -186,12 +189,11 @@ class VAR(_StatsModelsAdapter):
         exog_future = X.values if X is not None else None
         # fh in stats
         fh_int = fh.to_relative(self.cutoff)
-        n_lags = self._fitted_forecaster.k_ar
 
         # out-sample predictions
         if fh_int.max() > 0:
             y_pred_outsample = self._fitted_forecaster.forecast(
-                y=self._y.values[-n_lags:],
+                y=self._last_n_lags_of_y,
                 steps=fh_int[-1],
                 exog_future=exog_future,
             )
@@ -207,11 +209,11 @@ class VAR(_StatsModelsAdapter):
                 y_pred_insample if y_pred_insample is not None else y_pred_outsample
             )
 
-        y_pred = y_pred.loc[fh.to_indexer(self.cutoff), :]
+        y_pred = y_pred[fh.to_indexer(self.cutoff), :]
 
         # invert the "only_1s" column if it was added during fit
         if self._y_metadata["n_features"] == 1:
-            y_pred = y_pred.iloc[:, 0]
+            y_pred = y_pred[:, [0]]
 
         ix = fh.get_expected_pred_idx(cutoff=self.cutoff)
         cols = self._get_columns()
@@ -261,9 +263,8 @@ class VAR(_StatsModelsAdapter):
         model = self._fitted_forecaster
         fh_int = fh.to_relative(self.cutoff)
         steps = fh_int[-1]
-        n_lags = model.k_ar
 
-        y_cols_no_space = [str(col).replace(" ", "") for col in self._y.columns]
+        y_cols_no_space = [str(col).replace(" ", "") for col in self._get_columns()]
 
         df_list = []
 
@@ -272,23 +273,22 @@ class VAR(_StatsModelsAdapter):
             # A hacky way to coerce error-inducing alpha==1 into its approximant
             if alpha >= 0.99999:
                 alpha = 0.99999
+
+            lower_cols=[f"{col} {alpha} lower" for col in y_cols_no_space]
+            upper_cols=[f"{col} {alpha} upper" for col in y_cols_no_space]
+
             fcast_interval = model.forecast_interval(
-                self._y.values[-n_lags:], steps=steps, alpha=alpha
+                self._last_n_lags_of_y, steps=steps, alpha=alpha
             )
             lower_int, upper_int = fcast_interval[1], fcast_interval[-1]
 
-            lower_df = pd.DataFrame(
-                lower_int,
-                columns=[
-                    col + " " + str(alpha) + " " + "lower" for col in y_cols_no_space
-                ],
-            )
-            upper_df = pd.DataFrame(
-                upper_int,
-                columns=[
-                    col + " " + str(alpha) + " " + "upper" for col in y_cols_no_space
-                ],
-            )
+            # invert the "only_1s" column if it was added during fit
+            if self._y_metadata["n_features"] == 1:
+                lower_int = lower_int[:, [0]]
+                upper_int = upper_int[:, [0]]
+
+            lower_df = pd.DataFrame(lower_int, columns=lower_cols)
+            upper_df = pd.DataFrame(upper_int, columns=upper_cols)
 
             df_list.append(pd.concat((lower_df, upper_df), axis=1))
 
@@ -332,11 +332,6 @@ class VAR(_StatsModelsAdapter):
         index = fh.to_absolute_index(self.cutoff)
         index.name = self._y.index.name
         final_df.index = index
-
-        # invert the "only_1s" column if it was added during fit
-        if self._y_metadata["n_features"] == 1:
-            colname = self._get_varnames()[0]
-            final_df = final_df.xs(colname, level=0, axis=1)
 
         return final_df
 
