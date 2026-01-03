@@ -310,7 +310,7 @@ class VARMAX(_StatsModelsAdapter):
             warnings.filterwarnings("ignore")
 
         # if univariate, add an "only 1s" column
-        if len(y.shape) == 1 or y.shape[1] == 1:
+        if y.shape[1] == 1:
             y = y.copy()
             y["only_1s"] = 1.0
 
