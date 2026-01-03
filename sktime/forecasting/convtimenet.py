@@ -236,15 +236,15 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
 
         # Check if context_window needs adjustment
         # Formula: len(y) - context_window - fh + 1 must be > 0 for training samples
-        dataset_len = len(self._y) - self.context_window - fh + 1
+        dataset_len = self._y_len - self.context_window - fh + 1
 
         if dataset_len <= 0:
             original_context_window = self.context_window
-            adjusted_context_window = max(1, len(self._y) - fh)
+            adjusted_context_window = max(1, self._y_len - fh)
 
             warnings.warn(
                 f"The context_window ({original_context_window}) is too large "
-                f"for the given time series (length={len(self._y)}) and forecast "
+                f"for the given time series (length={self._y_len}) and forecast "
                 f"horizon (fh={fh}). Adjusting context_window from "
                 f"{original_context_window} to {adjusted_context_window} to ensure "
                 f"at least one training sample.\nConsider using a longer time series "
@@ -270,7 +270,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
             )
             self.patch_ks = adjusted_patch_ks
 
-        dataset_len = len(self._y) - self.context_window - fh + 1
+        dataset_len = self._y_len - self.context_window - fh + 1
 
         if self.norm == "batch" and dataset_len == 1:
             self.norm = "layer"
@@ -284,7 +284,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
             )
         self.n_layers = len(self.dw_ks)
         configs = {
-            "enc_in": self._y.shape[-1],
+            "enc_in": self._y_metadata["n_features"],
             "seq_len": self.context_window,
             "pred_len": fh,
             "d_model": self.d_model,

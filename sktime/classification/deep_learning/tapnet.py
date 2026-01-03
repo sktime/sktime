@@ -32,6 +32,8 @@ class TapNetClassifier(BaseDeepClassifier):
         number of epochs to train the model
     batch_size : int, default = 16
         number of samples per update
+    callbacks : list of keras.callbacks.Callback, optional (default=None)
+        List of Keras callbacks to apply during model training.
     dropout : float, default = 0.5
         dropout rate, in the range [0, 1)
     dilation : int, default = 1
