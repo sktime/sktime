@@ -396,6 +396,25 @@ class VARMAX(_StatsModelsAdapter):
 
         return y_pred
 
+    def _update(self, y, X=None, update_params=True):
+        """Update used internally in update."""
+        if update_params or self.is_composite():
+            super()._update(y, X, update_params=update_params)
+            return self
+
+        index_diff = y.index.difference(self._fitted_forecaster.fittedvalues.index)
+        if index_diff.isin(y.index).all():
+            y = y.loc[index_diff]
+            X = X.loc[index_diff].set_index(y.index) if X is not None else None
+
+        # if univariate, add a linear column with very low slope
+        if y.shape[1] == 1:
+            y = y.copy()
+            y["__only_1s"] = np.arange(len(y)) * 1e-5 + 1.0
+
+        self._fitted_forecaster = self._fitted_forecaster.append(y, exog=X)
+        return self
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
