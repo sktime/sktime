@@ -220,7 +220,7 @@ class AutoTS(BaseForecaster):
         "capability:exogenous": False,  # TODO: add capability
         "capability:insample": False,
         "capability:pred_int:insample": False,
-        "capability:pred_int": False,  # TODO: add capability
+        "capability:pred_int": True,
         "requires-fh-in-fit": True,
     }
 
@@ -646,3 +646,91 @@ class AutoTS(BaseForecaster):
         else:
             transformed_fh_cutoff = len(cutoff.index)
         return transformed_fh_cutoff
+
+    def _predict_interval(self, fh, X, coverage):
+        """Compute/return prediction intervals for a forecast.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff, self._is_fitted
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        coverage : list of float (guaranteed not None and not empty)
+            The coverage rates for which to compute the prediction intervals.
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Prediction intervals.
+            Column index is pd.MultiIndex with levels:
+            0. variable name
+            1. coverage rate
+            2. "lower"/"upper"
+            Row index is fh.
+        """
+        import pandas as pd
+
+        # Prepare coverage list for AutoTS
+        # AutoTS supports a list of floats for prediction_interval
+        coverage_list = list(coverage)
+
+        y_date = self._y_date
+
+        # Call predict on the internal forecaster
+        # This returns a dict of PredictionObjects if prediction_interval is a list,
+        # or a single PredictionObject if it's a float.
+        prediction = self.forecaster_.predict(
+            forecast_length=self._get_forecast_length(),
+            prediction_interval=coverage_list,
+        )
+
+        cutoff = self._fh_cutoff_transformation(y_date)
+        # _fh keys are 1-based relative indices, adjust to 0-based
+        relative_fh_idx = self._fh.to_relative(cutoff)._values - 1
+
+        var_names = y_date.columns
+        row_idx = self._fh.to_absolute_index(self.cutoff)
+
+        dfs = {}
+
+        def _process_pred_obj(pred_obj, cov_val):
+            lower = pred_obj.lower_forecast
+            upper = pred_obj.upper_forecast
+
+            lower_vals = lower.values[relative_fh_idx]
+            upper_vals = upper.values[relative_fh_idx]
+
+            for var_idx, var_name in enumerate(var_names):
+                dfs[(var_name, cov_val, "lower")] = lower_vals[:, var_idx]
+                dfs[(var_name, cov_val, "upper")] = upper_vals[:, var_idx]
+
+        if isinstance(prediction, dict):
+            for c_str, pred_obj in prediction.items():
+                _process_pred_obj(pred_obj, float(c_str))
+        else:
+            # Fallback for single object (though passing list usually returns dict)
+            # If we passed a single value list and got an object,
+            # ensure we match it to the coverage
+            if len(coverage) == 1:
+                _process_pred_obj(prediction, coverage[0])
+            else:
+                # Should not happen if API is consistent
+                raise ValueError(
+                    "AutoTS returned single prediction for multiple coverages."
+                )
+
+        pred_int = pd.DataFrame(dfs, index=row_idx)
+        pred_int.columns.names = ["variable", "coverage", "lower/upper"]
+        # Ensure columns are sorted/ordered correctly if needed,
+        # sktime usually handles it
+        pred_int.sort_index(axis=1, inplace=True)
+
+        return pred_int
