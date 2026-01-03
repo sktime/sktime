@@ -384,11 +384,15 @@ class VARMAX(_StatsModelsAdapter):
 
         y_pred.index = full_range
         y_pred = y_pred.loc[abs_idx.to_pandas()]
-        y_pred.index = fh.to_absolute_index(self.cutoff)
 
         # invert the "only_1s" column if it was added during fit
         if self._y_metadata["n_features"] == 1:
             y_pred = y_pred.iloc[:, 0]
+
+        ix = fh.get_expected_pred_idx(cutoff=self.cutoff)
+        cols = self._get_columns()
+
+        y_pred = pd.DataFrame(y_pred, index=ix, columns=cols)
 
         return y_pred
 
