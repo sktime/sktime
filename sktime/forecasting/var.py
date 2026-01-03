@@ -148,7 +148,7 @@ class VAR(_StatsModelsAdapter):
         # if univariate, add a linear column with very low slope
         if y.shape[1] == 1:
             y = y.copy()
-            y["only_1s"] = np.arange(len(y)) * 1e-5 + 1.0
+            y["__only_1s"] = np.arange(len(y)) * 1e-5 + 1.0
 
         from statsmodels.tsa.api import VAR as _VAR
 
