@@ -227,6 +227,7 @@ class VARMAX(_StatsModelsAdapter):
         "enforce_index_type": None,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(
@@ -346,6 +347,9 @@ class VARMAX(_StatsModelsAdapter):
             flags=self.flags,
             low_memory=self.low_memory,
         )
+
+        self._y_index_0 = y.index[0]
+        self._y_len = len(y)
         return self
 
     # defining `_predict`, instead of inheriting from `_StatsModelsAdapter`,
@@ -369,8 +373,9 @@ class VARMAX(_StatsModelsAdapter):
         y_pred : np.ndarray
             Returns series of predicted values.
         """
-        abs_idx = fh.to_absolute_int(self._y.index[0], self.cutoff)
-        start, end = abs_idx[[0, -1]]
+        abs_idx = fh.to_absolute_int(self._y_index_0, self.cutoff)
+        end = abs_idx[-1]
+        start = end - self._y_len + 1
         full_range = pd.RangeIndex(start=start, stop=end + 1)
 
         y_pred = self._fitted_forecaster.predict(
