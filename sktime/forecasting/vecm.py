@@ -296,11 +296,6 @@ class VECM(_StatsModelsAdapter):
             [all_values], index=fh.to_absolute_index(self.cutoff), columns=int_idx
         )
 
-        # invert the "only_1s" column if it was added during fit
-        if self._y_metadata["n_features"] == 1:
-            colname = self._get_varnames()[0]
-            pred_int = pred_int.xs(colname, level=0, axis=1)
-
         return pred_int
 
     @classmethod
