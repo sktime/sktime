@@ -113,7 +113,6 @@ all_extras = [
 # all soft dependencies compatible with pandas 2
 all_extras_pandas2 = [
   'arch>=5.6,<7.1.0; python_version < "3.13"',
-  'autots<0.7,>=0.6.1; python_version < "3.13"',
   'cloudpickle; python_version < "3.13"',
   'dash!=2.9.0; python_version < "3.13"',
   'dask<2025.2.1,>2024.8.2; extra == "dataframe" and python_version < "3.13"',
@@ -181,7 +180,6 @@ detection = [
 ]
 forecasting = [
   'arch>=5.6,<7.1; python_version < "3.13"',
-  'autots<0.7,>=0.6.1; python_version < "3.13"',
   'pmdarima!=1.8.1,<2.2,>=1.8',
   'prophet<1.2,>=1.1; python_version < "3.13"',
   'skforecast<0.19,>=0.12.1; python_version < "3.14"',
