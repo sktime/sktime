@@ -152,10 +152,10 @@ class VECM(_StatsModelsAdapter):
         -------
         self : reference to self
         """
-        # if univariate, add a linear column with very low slope
+        # if univariate, add an almost constant term (sine to avoid singular matrix)
         if y.shape[1] == 1:
             y = y.copy()
-            y["__only_1s"] = np.arange(len(y)) * 1e-5 + 1.0
+            y["__only_1s"] = np.arange(len(y)) + 1e-2 * np.sin(np.arange(len(y)))
 
         from statsmodels.tsa.vector_ar.vecm import VECM as _VECM
 
