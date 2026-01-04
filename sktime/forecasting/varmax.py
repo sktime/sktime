@@ -374,8 +374,7 @@ class VARMAX(_StatsModelsAdapter):
             Returns series of predicted values.
         """
         abs_idx = fh.to_absolute_int(self._y_index_0, self.cutoff)
-        end = abs_idx[-1]
-        start = end - self._y_len + 1
+        start, end = abs_idx[[0, -1]]
         full_range = pd.RangeIndex(start=start, stop=end + 1)
 
         y_pred = self._fitted_forecaster.predict(
