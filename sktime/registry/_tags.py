@@ -3689,15 +3689,6 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "can the estimator handle missing data (NA, np.nan) in inputs?",
     ),
-    (
-        "scitype:y",  # -> capability:multivariate
-        # the scitype:y tag should be kept but for separate use,
-        # a list of the internal scitypes supported by the estimator
-        # or the base scitype of the target data
-        "forecaster",
-        ("str", ["univariate", "multivariate", "both"]),
-        "which series type does the forecaster support? multivariate means >1 vars",
-    ),
     # ---------------------------
     # to be deprecated or removed
     # ---------------------------
@@ -3726,6 +3717,15 @@ ESTIMATOR_TAG_REGISTER = [
         "forecaster",
         "bool",
         "deprecated tag for exogenous capability",
+    ),
+    (
+        "scitype:y",  # -> capability:multivariate
+        # the scitype:y tag should be kept but for separate use,
+        # a list of the internal scitypes supported by the estimator
+        # or the base scitype of the target data
+        "forecaster",
+        ("str", ["univariate", "multivariate", "both"]),
+        "which series type does the forecaster support? multivariate means >1 vars",
     ),
 ]
 
