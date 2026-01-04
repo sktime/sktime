@@ -331,6 +331,14 @@ These transformers extract larger collections of features.
 
     Catch22Wrapper
 
+.. currentmodule:: sktime.transformations.series.tsfel
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSFELTransformer
+
 Series-to-series transformers
 -----------------------------
 
