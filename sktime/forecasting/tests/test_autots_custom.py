@@ -3,17 +3,17 @@
 import pandas as pd
 import pytest
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.forecasting.autots import AutoTS
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("autots", severity="none"),
+    not _check_estimator_deps(AutoTS, severity="none"),
     reason="autots not available",
 )
 def test_autots_prediction_intervals():
     """Test that AutoTS can predict intervals."""
     from sktime.datasets import load_airline
-    from sktime.forecasting.autots import AutoTS
 
     y = load_airline()
 
@@ -58,12 +58,10 @@ def test_autots_prediction_intervals():
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("autots", severity="none"),
+    not _check_estimator_deps(AutoTS, severity="none"),
     reason="autots not available",
 )
 def test_autots_tags():
     """Test that AutoTS has correct tags."""
-    from sktime.forecasting.autots import AutoTS
-
     forecaster = AutoTS()
     assert forecaster.get_tag("capability:pred_int") is True
