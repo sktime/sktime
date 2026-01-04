@@ -413,11 +413,13 @@ class TagAliaserMixin(_TagAliaserMixin):
         "handles-missing-data": "capability:missing_values",
         "ignores-exogeneous-X": "capability:exogenous",
         "univariate-only": "capability:multivariate",
+        "scitype:y": "capability:multivariate",
     }
     deprecate_dict = {
         "handles-missing-data": "1.0.0",
         "ignores-exogeneous-X": "1.0.0",
         "univariate-only": "1.0.0",
+        "scitype:y": "1.0.0",
     }
 
     @classmethod
@@ -506,6 +508,14 @@ class TagAliaserMixin(_TagAliaserMixin):
                 )
                 if old_tag_queried and old_tag_name in cls.FLIPPED_TAGS:
                     return not new_tag_value
+                if old_tag_queried and old_tag_name == "scitype:y":
+                    # special case for scitype:y -> capability:multivariate
+                    # scitype:y queried and not present, capability:multivariate present
+                    # to maintain backwards compatibility during deprecation period
+                    if new_tag_value:  # True -> "multivariate"
+                        return "both"
+                    else:  # False -> "univariate"
+                        return "univariate"
                 return new_tag_value
 
         # if we reach here, then:
@@ -592,6 +602,14 @@ class TagAliaserMixin(_TagAliaserMixin):
                 # todo 1.0.0 - remove this special case
                 if new_tag_queried and old_tag_name in self.FLIPPED_TAGS:
                     return not old_tag_val
+                if new_tag_queried and old_tag_name == "scitype:y":
+                    # special case for scitype:y -> capability:multivariate
+                    # capability:multivariate queried and scitype:y present
+                    # to maintain backwards compatibility during deprecation period
+                    if old_tag_val == "both":
+                        return True  # capability:multivariate = True
+                    elif old_tag_val == "univariate":
+                        return False  # capability:multivariate = False
                 return old_tag_val
             # case 2: old tag was queried, but old tag not present
             # then: return value of new tag
@@ -606,6 +624,14 @@ class TagAliaserMixin(_TagAliaserMixin):
                 )
                 if old_tag_queried and old_tag_name in self.FLIPPED_TAGS:
                     return not new_tag_value
+                if old_tag_queried and old_tag_name == "scitype:y":
+                    # special case for scitype:y -> capability:multivariate
+                    # scitype:y queried and not present, capability:multivariate present
+                    # to maintain backwards compatibility during deprecation period
+                    if new_tag_value:  # True -> "multivariate"
+                        return "both"
+                    else:  # False -> "univariate"
+                        return "univariate"
                 return new_tag_value
 
         # if we reach here, then:
@@ -717,6 +743,27 @@ class TagAliaserMixin(_TagAliaserMixin):
                 new_tag_dict[new_tag] = not tag_dict[old_tag]
             if direction == "both" and new_tag in tag_dict and old_tag not in tag_dict:
                 new_tag_dict[old_tag] = not tag_dict[new_tag]
+            if direction == "old_to_new" and old_tag in new_tag_dict:
+                del new_tag_dict[old_tag]
+            return new_tag_dict
+        # todo 1.0.0 - remove this special case
+        # special treatment for scitype:y -> capability:multivariate
+        if old_tag == "scitype:y":
+            # special case for scitype:y -> capability:multivariate
+            if old_tag in tag_dict and new_tag != "":
+                if tag_dict[old_tag] == "both":
+                    new_tag_dict[new_tag] = True
+                elif tag_dict[old_tag] == "univariate":
+                    new_tag_dict[new_tag] = False
+            if (
+                direction == "both"
+                and new_tag in tag_dict
+                and old_tag not in tag_dict
+            ):
+                if tag_dict[new_tag]:
+                    new_tag_dict[old_tag] = "both"
+                else:
+                    new_tag_dict[old_tag] = "univariate"
             if direction == "old_to_new" and old_tag in new_tag_dict:
                 del new_tag_dict[old_tag]
             return new_tag_dict
