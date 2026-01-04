@@ -240,7 +240,7 @@ jobs:
 
       - name: Install dependencies for ${{ matrix.flag }}
         run: |
-          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}')))" > deps.txt
+          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}', include_test_deps=True)))" > deps.txt
           uv pip install -r deps.txt
         continue-on-error: true
 
