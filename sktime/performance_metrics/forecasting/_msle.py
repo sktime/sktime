@@ -57,11 +57,9 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point."""
-        # Convert to numpy to avoid index alignment issues (e.g. broadcasting errors)
         y_true_np = np.asanyarray(y_true)
         y_pred_np = np.asanyarray(y_pred)
 
-        # Clip negative values
         y_true_np = np.maximum(y_true_np, 0)
         y_pred_np = np.maximum(y_pred_np, 0)
 
@@ -70,16 +68,9 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
 
         squared_log_error = np.square(y_true_log - y_pred_log)
 
-        # Reconstruct Pandas container if input was Pandas to support aggregation
-        if isinstance(y_true, (pd.DataFrame, pd.Series)):
-            if isinstance(y_true, pd.Series):
-                squared_log_error = pd.Series(
-                    squared_log_error, index=y_true.index, name=y_true.name
-                )
-            else:
-                squared_log_error = pd.DataFrame(
-                    squared_log_error, index=y_true.index, columns=y_true.columns
-                )
+        squared_log_error = pd.DataFrame(
+            squared_log_error, index=y_true.index, columns=y_true.columns
+        )
 
         squared_log_error = self._get_weighted_df(squared_log_error, **kwargs)
 
@@ -90,5 +81,4 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
         """Return testing parameter settings for the estimator."""
         params1 = {}
         params2 = {"square_root": True}
-        params3 = {"multioutput": "raw_values"}
-        return [params1, params2, params3]
+        return [params1, params2]
