@@ -400,6 +400,8 @@ class VARMAX(_StatsModelsAdapter):
         if self._y_metadata["n_features"] == 1:
             y_pred = y_pred.iloc[:, 0]
 
+        y_pred.columns = self._get_columns()
+
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
