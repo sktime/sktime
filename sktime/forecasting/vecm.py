@@ -155,7 +155,7 @@ class VECM(_StatsModelsAdapter):
         # if univariate, add an almost constant term (sine to avoid singular matrix)
         if y.shape[1] == 1:
             y = y.copy()
-            y["__only_1s"] = np.arange(len(y)) + 1e-2 * np.sin(np.arange(len(y)))
+            y["__y_shifted"] = y.iloc[:, 0].abs().pow(0.1) + 1.0
 
         from statsmodels.tsa.vector_ar.vecm import VECM as _VECM
 
