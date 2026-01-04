@@ -131,9 +131,6 @@ EXCLUDED_TESTS = {
     "ARIMA": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
-    "VECM": [
-        "test_hierarchical_with_exogeneous",  # refer to #4743
-    ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
     "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],

@@ -45,6 +45,12 @@ class MLPRegressor(BaseDeepRegressor):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
+    dropout : float or tuple, default=(0.1, 0.2, 0.2, 0.3)
+        The dropout rate for the hidden layers.
+        If float, the same rate is used for all layers.
+        If tuple, it must have length equal to number of hidden layers in the MLP,
+        each element specifying the dropout rate for the corresponding hidden layer.
+        Current implementation of the MLP has 4 hidden layers.
 
     References
     ----------
@@ -85,6 +91,7 @@ class MLPRegressor(BaseDeepRegressor):
         activation_hidden="relu",
         use_bias=True,
         optimizer=None,
+        dropout=(0.1, 0.2, 0.2, 0.3),
     ):
         _check_dl_dependencies(severity="error")
 
@@ -99,6 +106,7 @@ class MLPRegressor(BaseDeepRegressor):
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
+        self.dropout = dropout
 
         super().__init__()
 
@@ -106,6 +114,7 @@ class MLPRegressor(BaseDeepRegressor):
         self._network = MLPNetwork(
             activation=self.activation_hidden,
             random_state=self.random_state,
+            dropout=self.dropout,
         )
 
     def build_model(self, input_shape, **kwargs):
@@ -215,13 +224,10 @@ class MLPRegressor(BaseDeepRegressor):
             "n_epochs": 10,
             "batch_size": 4,
             "use_bias": False,
+            "dropout": (0.2, 0.1, 0.1, 0.2),
         }
 
-        param2 = {
-            "n_epochs": 12,
-            "batch_size": 6,
-            "use_bias": True,
-        }
+        param2 = {"n_epochs": 12, "batch_size": 6, "use_bias": True, "dropout": 0.1}
         test_params = [param1, param2]
 
         if _check_soft_dependencies("keras", severity="none"):

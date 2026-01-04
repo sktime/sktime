@@ -222,6 +222,10 @@ class AutoTS(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:pred_int": True,
         "requires-fh-in-fit": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:python_dependencies": ["matplotlib"],
     }
 
     def __init__(

@@ -101,6 +101,7 @@ class VECM(_StatsModelsAdapter):
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(
@@ -264,11 +265,7 @@ class VECM(_StatsModelsAdapter):
         """
         exog_fc = X.values if X is not None else None
         fh_int = fh.to_relative(self.cutoff)
-        var_names = (
-            self._y.index.name
-            if self._y.index.name is not None
-            else self._y.columns.values
-        )
+        var_names = self._get_varnames()
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
 
         all_values = []  # will store predicted intervals for each coverage value
