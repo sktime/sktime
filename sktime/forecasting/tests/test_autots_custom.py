@@ -73,9 +73,10 @@ def test_autots_tags():
 )
 def test_autots_exogenous():
     """Test that AutoTS can handle exogenous data."""
-    from sktime.datasets import load_airline
-    import pandas as pd
     import numpy as np
+    import pandas as pd
+
+    from sktime.datasets import load_airline
 
     y = load_airline()
     # Create random exogenous data
