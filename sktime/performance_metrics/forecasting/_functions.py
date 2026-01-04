@@ -2790,8 +2790,20 @@ def mean_squared_log_error(
     loss : float or ndarray of floats
         The computed metric value.
     """
+    import traceback
+
     import numpy as np
     from sklearn.utils import check_consistent_length
+
+    # Only print if inputs are pandas objects (where the bug happens)
+    if hasattr(y_true, "index") and hasattr(y_pred, "index"):
+        # Check if indices are different
+        if not y_true.index.equals(y_pred.index):
+            print("\n🚨 DETECTED INDEX MISMATCH!")
+            print(f"y_true index: {y_true.index}")
+            print(f"y_pred index: {y_pred.index}")
+            print("🔍 CALL STACK (Who called me?):")
+            traceback.print_stack(limit=3)  # Print the last 3 callers
 
     check_consistent_length(y_true, y_pred)
 
