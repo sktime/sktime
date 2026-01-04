@@ -225,6 +225,7 @@ class AutoTS(BaseForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:python_dependencies": ["matplotlib"],
     }
 
     def __init__(
