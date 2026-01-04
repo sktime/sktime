@@ -48,6 +48,15 @@ class TSFeaturesTransformer(BaseTransformer):
 
     - ``series_length:`` Length of the time series
 
+    **Other supported features (non-default)**:
+
+    - ``count_entropy:`` Entropy using only positive data.
+    - ``intervals:`` Mean and Standard Deviation of intervals with positive values.
+    - ``frequency:`` Wrapper of freq parameter.
+    - ``guerrero:`` Applies Guerrero's (1993) method to select the lambda which
+    minimises the coefficient of variation for subseries of x.
+    - ``sparsity:`` Average obs with zero values.
+
     Parameters
     ----------
     features : list of callable, optional
@@ -86,6 +95,7 @@ class TSFeaturesTransformer(BaseTransformer):
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
         "scitype:transform-labels": "None",
+        "fit_is_empty": True,
         #
         # behavioural tags: internal type
         # ----------------------------------
@@ -94,7 +104,6 @@ class TSFeaturesTransformer(BaseTransformer):
         #
         # capability tags: properties of the estimator
         # --------------------------------------------
-        "fit_is_empty": True,
         "capability:unequal_length": True,
         "capability:missing_values": False,
         "capability:categorical_in_X": False,
