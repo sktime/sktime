@@ -62,7 +62,7 @@ class GreykiteForecaster(BaseForecaster):
     """
 
     _tags = {
-        "scitype:y": "univariate",  # Handles univariate targets here.
+        "capability:multivariate": False,  # Handles univariate targets here.
         "capability:exogenous": True,  # Can handle exogenous variables.
         "capability:missing_values": True,  # Handles missing data.
         "y_inner_mtype": "pd.Series",  # Expected input type for y.

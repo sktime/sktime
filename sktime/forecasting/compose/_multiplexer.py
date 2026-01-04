@@ -84,7 +84,7 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         "authors": ["kkoralturk", "aiwalter", "fkiraly", "miraep8"],
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,

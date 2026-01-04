@@ -169,7 +169,7 @@ class DoubleMLForecaster(BaseForecaster):
     _tags = {
         "authors": ["geetu040", "XAheli"],
         "maintainers": ["geetu040", "XAheli"],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:insample": True,
         "capability:pred_int": True,

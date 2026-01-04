@@ -115,7 +115,7 @@ class TiRexForecaster(BaseForecaster):
         # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         # CI and test flags

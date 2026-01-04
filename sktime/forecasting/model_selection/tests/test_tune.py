@@ -106,7 +106,8 @@ def _create_hierarchical_data(n_columns=1):
 # estimator fixtures used for tuning
 # set_tags in NaiveForecaster ensures that it is univariate and broadcasts
 # this is currently the case, but a future improved NaiveForecaster may reduce coverage
-NAIVE = NaiveForecaster(strategy="mean").set_tags(**{"scitype:y": "univariate"})
+capability_multivariate_tag = {"capability:multivariate": False}
+NAIVE = NaiveForecaster(strategy="mean").set_tags(**capability_multivariate_tag)
 NAIVE_GRID = {"window_length": TEST_WINDOW_LENGTHS_INT}
 PIPE = TransformedTargetForecaster(
     [

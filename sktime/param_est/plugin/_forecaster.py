@@ -109,7 +109,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         "authors": "fkiraly",
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "fit_is_empty": False,
     }
@@ -135,7 +135,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         # so broadcasting needs to be done by the composite (i.e., self)
         if param_est.get_tag("object_type") == "param_est":
             if not param_est.get_tag("capability:multivariate"):
-                self.set_tags(**{"scitype:y": "univariate"})
+                self.set_tags(**{"capability:multivariate": False})
 
         self.set_tags(**{"fit_is_empty": False})
         # todo: only works for single series now

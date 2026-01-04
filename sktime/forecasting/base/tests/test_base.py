@@ -324,7 +324,7 @@ def test_col_vectorization_correct_col_order():
 
     f = NaiveForecaster()
     # force univariate tag to trigger vectorization over columns for sure
-    f.set_tags(**{"scitype:y": "univariate"})
+    f.set_tags(**{"capability:multivariate": False})
 
     f.fit(y=y, fh=[1])
     y_pred = f.predict()

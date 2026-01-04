@@ -66,7 +66,7 @@ class ForecastKnownValues(BaseForecaster):
         # --------------
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         # CI and test flags

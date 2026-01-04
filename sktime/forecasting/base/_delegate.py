@@ -80,7 +80,7 @@ class _DelegatedForecaster(BaseForecaster):
         ]
 
         TAGS_TO_SET = {
-            "scitype:y": "both",
+            "capability:multivariate": True,
             "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
             "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         }

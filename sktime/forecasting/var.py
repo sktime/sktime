@@ -94,7 +94,7 @@ class VAR(_StatsModelsAdapter):
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "capability:exogenous": False,

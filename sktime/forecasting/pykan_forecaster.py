@@ -64,7 +64,7 @@ class PyKANForecaster(BaseForecaster):
         # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,

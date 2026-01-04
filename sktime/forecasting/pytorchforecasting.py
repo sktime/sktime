@@ -118,7 +118,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:pred_int": True,
         # CI and test flags
         # -----------------
@@ -405,7 +405,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "capability:exogenous": False,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
     }
 
     def __init__(
@@ -699,7 +699,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:pred_int": True,
     }
 
@@ -978,7 +978,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:pred_int": True,
     }
 

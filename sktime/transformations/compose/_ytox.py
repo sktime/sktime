@@ -124,7 +124,7 @@ class YtoX(BaseTransformer):
         "capability:multivariate": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "fit_is_empty": True,
         "requires_X": False,
         "requires_y": True,

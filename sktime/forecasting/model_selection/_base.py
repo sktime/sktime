@@ -16,7 +16,7 @@ from sktime.utils.warnings import warn
 class BaseGridSearch(_DelegatedForecaster):
     _tags = {
         "authors": ["mloning", "fkiraly", "aiwalter"],
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,
@@ -68,7 +68,7 @@ class BaseGridSearch(_DelegatedForecaster):
         # this ensures univariate broadcasting over variables
         # if tune_by_variable is True
         if tune_by_variable:
-            self.set_tags(**{"scitype:y": "univariate"})
+            self.set_tags(**{"capability:multivariate": False})
 
         # todo 1.0.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts

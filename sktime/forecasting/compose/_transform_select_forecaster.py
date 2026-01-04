@@ -99,7 +99,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     _tags = {
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,

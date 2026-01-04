@@ -86,7 +86,7 @@ class FhPlexForecaster(BaseForecaster):
         "authors": "fkiraly",
         "requires-fh-in-fit": True,
         "capability:missing_values": True,
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": PANDAS_TS_MTYPES,
         "X_inner_mtype": PANDAS_TS_MTYPES,
         "fit_is_empty": False,
