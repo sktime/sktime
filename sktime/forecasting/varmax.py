@@ -362,7 +362,7 @@ class VARMAX(_StatsModelsAdapter):
     # 1. to pass in `dynamic`, `information_set` and `signal_only`
     # 2. to deal with statsmodel integer indexing issue
     def _predict(self, fh, X):
-        """Wrap Statmodel's VARMAX forecast method.
+        """Wrap statmodels VARMAX forecast method.
 
         Parameters
         ----------
@@ -398,9 +398,7 @@ class VARMAX(_StatsModelsAdapter):
 
         # invert the "only_1s" column if it was added during fit
         if self._y_metadata["n_features"] == 1:
-            y_pred = y_pred.iloc[:, 0]
-
-        y_pred.columns = self._get_columns()
+            y_pred = y_pred.iloc[:, [0]]
 
         return y_pred
 
