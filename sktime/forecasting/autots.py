@@ -222,6 +222,10 @@ class AutoTS(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:pred_int": False,  # TODO: add capability
         "requires-fh-in-fit": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:python_dependencies": ["matplotlib"],
     }
 
     def __init__(
@@ -333,22 +337,18 @@ class AutoTS(BaseForecaster):
         """
         # various type input indices are converted to datetime
         # since AutoTS can only deal with dates
-        y = self._convert_input_to_date(y)
-        self._y = y
+        y_date = self._convert_input_to_date(y)
+        self._y_date = y_date
 
         self._fh = fh
         self._instantiate_model()
         try:
-            self.forecaster_.fit(df=self._y)
+            self.forecaster_.fit(df=y_date)
         except Exception as e:
             raise e
         return self
 
-    def _predict(
-        self,
-        fh: ForecastingHorizon | None = None,
-        X: [pd.DataFrame, None] = None,  # noqa: F841
-    ):
+    def _predict(self, fh, X):
         """Provide forecast at future horizon using fitted forecaster.
 
         State required:
@@ -369,19 +369,18 @@ class AutoTS(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
-        if fh is not None:
-            self._fh = fh
+        y_date = self._y_date
 
         values = self.forecaster_.predict(
             forecast_length=self._get_forecast_length()
         ).forecast.values
 
-        cutoff = self._fh_cutoff_transformation(self._y)
+        cutoff = self._fh_cutoff_transformation(y_date)
         values = values[self._fh.to_relative(cutoff)._values - 1]
 
         # convert back to original index
         row_idx: pd.Index = self._fh.to_absolute_index(self.cutoff)
-        col_idx = self._y.columns
+        col_idx = y_date.columns
         y_pred = pd.DataFrame(values, index=row_idx, columns=col_idx)
 
         return y_pred
@@ -633,7 +632,7 @@ class AutoTS(BaseForecaster):
         return y
 
     def _get_forecast_length(self):
-        cutoff = self._fh_cutoff_transformation(self._y)
+        cutoff = self._fh_cutoff_transformation(self._y_date)
         fh_length = max(self._fh.to_relative(cutoff)._values)
         if fh_length <= 0:
             raise ValueError(
