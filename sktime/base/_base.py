@@ -755,7 +755,7 @@ class TagAliaserMixin(_TagAliaserMixin):
                     new_tag_dict[new_tag] = True
                 elif tag_dict[old_tag] == "univariate":
                     new_tag_dict[new_tag] = False
-            if direction == "both"and new_tag in tag_dict and old_tag not in tag_dict:
+            if direction == "both" and new_tag in tag_dict and old_tag not in tag_dict:
                 if tag_dict[new_tag]:
                     new_tag_dict[old_tag] = "both"
                 else:
