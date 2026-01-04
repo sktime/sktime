@@ -1612,13 +1612,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             )
             requires_vectorization = req_vec_because_rows or req_vec_because_cols
 
-            if self.get_tag("capability:multivariate") and y_metadata["is_univariate"]:
-                raise ValueError(
-                    f"Unsupported input data type in {type(self).__name__}, "
-                    "this forecaster accepts only strictly multivariate data. "
-                    "y must have two or more variables, but found only one."
-                )
-
             _check_missing(y_metadata, "y")
 
         else:
