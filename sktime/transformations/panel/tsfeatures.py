@@ -21,32 +21,32 @@ class TSFeaturesTransformer(BaseTransformer):
 
     **Autocorrelation Features**:
 
-    - acf_features: Autocorrelation function features (6-7 features)
-    - pacf_features: Partial autocorrelation function features (3-4 features)
+    - ``acf_features:`` Autocorrelation function features (6-7 features)
+    - ``pacf_features:`` Partial autocorrelation function features (3-4 features)
 
     **Model-based Features**:
 
-    - arch_stat: ARCH model test statistic
-    - heterogeneity: ARCH/GARCH heterogeneity features (4 features)
-    - holt_parameters: Holt exponential smoothing parameters (2 features)
-    - hw_parameters: Holt-Winters parameters (3 features, only if freq > 1)
-    - stl_features: Seasonal-trend decomposition features (8-11 features)
+    - ``arch_stat:`` ARCH model test statistic
+    - ``heterogeneity:`` ARCH/GARCH heterogeneity features (4 features)
+    - ``holt_parameters:`` Holt exponential smoothing parameters (2 features)
+    - ``hw_parameters:`` Holt-Winters parameters (3 features, only if freq > 1)
+    - ``stl_features:`` Seasonal-trend decomposition features (8-11 features)
 
     **Statistical Features**:
 
-    - crossing_points: Number of median crossings
-    - entropy: Spectral entropy
-    - flat_spots: Number of flat spots
-    - hurst: Hurst exponent
-    - lumpiness: Variance of variances across windows
-    - nonlinearity: Terasvirta nonlinearity test
-    - stability: Variance of means across windows
-    - unitroot_kpss: KPSS unit root test statistic
-    - unitroot_pp: Phillips-Perron unit root test statistic
+    - ``crossing_points:`` Number of median crossings
+    - ``entropy:`` Spectral entropy
+    - ``flat_spots:`` Number of flat spots
+    - ``hurst:`` Hurst exponent
+    - ``lumpiness:`` Variance of variances across windows
+    - ``nonlinearity:`` Terasvirta nonlinearity test
+    - ``stability:`` Variance of means across windows
+    - ``unitroot_kpss:`` KPSS unit root test statistic
+    - ``unitroot_pp:`` Phillips-Perron unit root test statistic
 
     **Basic Features**:
 
-    - series_length: Length of the time series
+    - ``series_length:`` Length of the time series
 
     Parameters
     ----------
