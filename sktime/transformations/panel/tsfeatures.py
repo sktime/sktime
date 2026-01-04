@@ -75,6 +75,10 @@ class TSFeaturesTransformer(BaseTransformer):
     >>> X = _make_series()
     >>> transformer = TSFeaturesTransformer()
     >>> Xt = transformer.fit_transform(X)
+    >>> # Example using specific features
+    >>> from tsfeatures.tsfeatures import acf_features # doctest: +SKIP
+    >>> acf_transformer = TSFeaturesTransformer(features=[acf_features]) # doctest: +SKIP
+    >>> acf_Xt = acf_transformer.fit_transform(X) # doctest: +SKIP
     """
 
     _tags = {
