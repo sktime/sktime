@@ -16,16 +16,93 @@ from functools import partial
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("torch"):
+if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
     from torch.distributions import Beta, Distribution, constraints
+else:
+    # Create dummy classes when torch is not available
+    class torch:
+        class Tensor:
+            pass
 
-if _check_soft_dependencies("gluonts"):
+        @staticmethod
+        def arange(*args, **kwargs):
+            pass
+
+        @staticmethod
+        def cos(*args, **kwargs):
+            pass
+
+        @staticmethod
+        def pi():
+            pass
+
+        @staticmethod
+        def rand(*args, **kwargs):
+            pass
+
+        @staticmethod
+        def no_grad():
+            def decorator(func):
+                return func
+
+            return decorator
+
+        class Size:
+            pass
+
+        class distributions:
+            class Beta:
+                pass
+
+            class Distribution:
+                pass
+
+            class constraints:
+                class Constraint:
+                    pass
+
+    # Make Distribution, Beta, and constraints available at module level
+    Distribution = torch.distributions.Distribution
+    Beta = torch.distributions.Beta
+    constraints = torch.distributions.constraints
+
+    class nn:
+        class Module:
+            pass
+
+        class Sequential:
+            pass
+
+        class Linear:
+            pass
+
+        class PReLU:
+            pass
+
+    class F:
+        pass
+
+
+if _check_soft_dependencies("gluonts", severity="none"):
     from gluonts.core.component import validated
     from gluonts.torch.distributions import DistributionOutput
     from gluonts.torch.modules.lambda_layer import LambdaLayer
+else:
+    # Create dummy classes when gluonts is not available
+    def validated():
+        def decorator(func):
+            return func
+
+        return decorator
+
+    class DistributionOutput:
+        pass
+
+    class LambdaLayer:
+        pass
 
 
 class QuantileLayer(nn.Module):

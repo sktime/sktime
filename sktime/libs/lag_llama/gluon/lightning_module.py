@@ -17,18 +17,54 @@ import random
 import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("lightning"):
+if _check_soft_dependencies("lightning", severity="none"):
     from lightning import LightningModule
+else:
+    # Create dummy class when lightning is not available
+    class LightningModule:
+        pass
 
-if _check_soft_dependencies("torch"):
+
+if _check_soft_dependencies("torch", severity="none"):
     import torch
     import torch.nn.functional as F
+else:
+    # Create dummy classes when torch is not available
+    class torch:
+        class Tensor:
+            pass
 
-if _check_soft_dependencies("gluonts"):
+    class F:
+        pass
+
+
+if _check_soft_dependencies("gluonts", severity="none"):
     from gluonts.core.component import validated
     from gluonts.itertools import prod
     from gluonts.torch.modules.loss import DistributionLoss, NegativeLogLikelihood
     from gluonts.torch.util import repeat_along_dim, take_last
+else:
+    # Create dummy classes when gluonts is not available
+    def validated():
+        def decorator(func):
+            return func
+
+        return decorator
+
+    def prod(*args, **kwargs):
+        pass
+
+    class DistributionLoss:
+        pass
+
+    class NegativeLogLikelihood:
+        pass
+
+    def repeat_along_dim(*args, **kwargs):
+        pass
+
+    def take_last(*args, **kwargs):
+        pass
 
 
 from ..data.augmentations.augmentations import (

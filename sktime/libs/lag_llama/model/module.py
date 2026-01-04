@@ -19,15 +19,51 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from ..gluon_utils.scalers.robust_scaler import RobustScaler
 
-if _check_soft_dependencies("torch"):
+if _check_soft_dependencies("torch", severity="none"):
     import torch
     from torch import nn
     from torch.nn import functional as F
+else:
+    # Create dummy classes when torch is not available
+    class torch:
+        class Tensor:
+            pass
 
-if _check_soft_dependencies("gluonts"):
+        class nn:
+            class Module:
+                pass
+
+    class nn:
+        class Module:
+            pass
+
+    class F:
+        pass
+
+
+if _check_soft_dependencies("gluonts", severity="none"):
     from gluonts.torch.distributions import DistributionOutput
     from gluonts.torch.scaler import MeanScaler, NOPScaler, StdScaler
     from gluonts.torch.util import lagged_sequence_values, unsqueeze_expand
+else:
+    # Create dummy classes when gluonts is not available
+    class DistributionOutput:
+        pass
+
+    class MeanScaler:
+        pass
+
+    class NOPScaler:
+        pass
+
+    class StdScaler:
+        pass
+
+    def lagged_sequence_values(*args, **kwargs):
+        pass
+
+    def unsqueeze_expand(*args, **kwargs):
+        pass
 
 
 @dataclass

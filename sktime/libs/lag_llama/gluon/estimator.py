@@ -19,6 +19,29 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
+else:
+    # Create dummy class when torch is not available
+    class _DummyDevice:
+        def __init__(self, device_str):
+            self.device_str = device_str
+
+    class torch:
+        @staticmethod
+        def device(device_str):
+            return _DummyDevice(device_str)
+
+        @staticmethod
+        def no_grad():
+            def decorator(func):
+                return func
+
+            return decorator
+
+        class cuda:
+            @staticmethod
+            def is_available():
+                return False
+
 
 if _check_soft_dependencies("gluonts", severity="none"):
     from gluonts.core.component import validated
@@ -47,6 +70,83 @@ if _check_soft_dependencies("gluonts", severity="none"):
         Transformation,
         ValidationSplitSampler,
     )
+else:
+    # Create dummy classes when gluonts is not available
+    def validated():
+        def decorator(func):
+            return func
+
+        return decorator
+
+    class Dataset:
+        pass
+
+    class FieldName:
+        pass
+
+    def as_stacked_batches(*args, **kwargs):
+        pass
+
+    def calculate_dataset_statistics(*args, **kwargs):
+        pass
+
+    class Cyclic:
+        pass
+
+    def get_lags_for_frequency(*args, **kwargs):
+        pass
+
+    def time_features_from_frequency_str(*args, **kwargs):
+        pass
+
+    class NegativeBinomialOutput:
+        pass
+
+    class StudentTOutput:
+        pass
+
+    class PyTorchLightningEstimator:
+        pass
+
+    class PyTorchPredictor:
+        pass
+
+    class DistributionLoss:
+        pass
+
+    class NegativeLogLikelihood:
+        pass
+
+    class AddObservedValuesIndicator:
+        pass
+
+    class AddTimeFeatures:
+        pass
+
+    class Chain:
+        pass
+
+    class DummyValueImputation:
+        pass
+
+    class ExpectedNumInstanceSampler:
+        pass
+
+    class InstanceSampler:
+        pass
+
+    class InstanceSplitter:
+        pass
+
+    class TestSplitSampler:
+        pass
+
+    class Transformation:
+        pass
+
+    class ValidationSplitSampler:
+        pass
+
 
 from ..gluon.lightning_module import LagLlamaLightningModule
 from ..gluon_utils.gluon_ts_distributions.implicit_quantile_network import (

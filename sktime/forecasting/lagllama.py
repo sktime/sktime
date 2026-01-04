@@ -333,6 +333,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         -------
         self : reference to self
         """
+        _check_soft_dependencies("torch", severity="error")
         import torch
 
         # Import LagLlama estimator
