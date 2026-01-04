@@ -222,6 +222,9 @@ class AutoTS(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:pred_int": False,  # TODO: add capability
         "requires-fh-in-fit": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
     }
 
     def __init__(
