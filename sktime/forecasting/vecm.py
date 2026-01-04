@@ -152,7 +152,7 @@ class VECM(_StatsModelsAdapter):
         -------
         self : reference to self
         """
-        # if univariate, add an almost constant term (sine to avoid singular matrix)
+        # if univariate, add a shifted copy of the data
         if y.shape[1] == 1:
             y = y.copy()
             y["__y_shifted"] = y.iloc[:, 0].abs().pow(0.1) + 1.0
