@@ -34,7 +34,6 @@ from sktime.utils._testing.forecasting import (
     _assert_correct_columns,
     _assert_correct_pred_time_index,
     _get_expected_index_for_update_predict,
-    _get_n_columns,
     _make_fh,
     make_forecasting_problem,
 )
