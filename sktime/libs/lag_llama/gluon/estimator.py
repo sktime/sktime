@@ -43,7 +43,10 @@ else:
                 return False
 
 
-if _check_soft_dependencies("gluonts", severity="none"):
+# gluonts requires torch, so only import when both are available
+if _check_soft_dependencies("gluonts", severity="none") and _check_soft_dependencies(
+    "torch", severity="none"
+):
     from gluonts.core.component import validated
     from gluonts.dataset.common import Dataset
     from gluonts.dataset.field_names import FieldName

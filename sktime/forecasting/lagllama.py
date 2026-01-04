@@ -118,6 +118,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
             "lightning>=2.0,<2.6",
             "huggingface-hub",
         ],
+        "tests:vm": True,
     }
 
     def __init__(

@@ -41,7 +41,10 @@ else:
         pass
 
 
-if _check_soft_dependencies("gluonts", severity="none"):
+# gluonts requires torch, so only import when both are available
+if _check_soft_dependencies("gluonts", severity="none") and _check_soft_dependencies(
+    "torch", severity="none"
+):
     from gluonts.torch.distributions import DistributionOutput
     from gluonts.torch.scaler import MeanScaler, NOPScaler, StdScaler
     from gluonts.torch.util import lagged_sequence_values, unsqueeze_expand
