@@ -145,6 +145,27 @@ class AlignerDTW(BaseAligner):
         X: list of pd.DataFrame (sequence) of length n - panel of series to align
         Z: pd.DataFrame with n rows, optional; metadata, row correspond to indices of X
         """
+        # Check for incorrect dtw package installation
+        try:
+            import dtw
+
+            # 'stepPattern' exists in dtw-python but NOT in the R-port 'dtw'
+            # We use a flag to check validity outside the try/except block
+            # to ensure we don't catch our own ModuleNotFoundError
+            is_wrong_dtw = not hasattr(dtw, "stepPattern")
+        except ImportError:
+            # If import fails entirely, we can't check attributes, so assume safe
+            # (The actual import later will fail with the standard error if missing)
+            is_wrong_dtw = False
+
+        if is_wrong_dtw:
+            raise ModuleNotFoundError(
+                "Error: usage of the incorrect 'dtw' package detected. "
+                "sktime requires 'dtw-python', but you have the unrelated "
+                "'dtw' package installed. "
+                "Please run: `pip uninstall dtw` followed by `pip install dtw-python`."
+            )
+
         # soft dependency import of dtw
         from dtw import dtw
 
@@ -374,6 +395,23 @@ class AlignerDTWfromDist(BaseAligner):
         X: list of pd.DataFrame (sequence) of length n - panel of series to align
         Z: pd.DataFrame with n rows, optional; metadata, row correspond to indices of X
         """
+        # Check for incorrect dtw package installation
+        try:
+            import dtw
+
+            # 'stepPattern' exists in dtw-python but NOT in the R-port 'dtw'
+            is_wrong_dtw = not hasattr(dtw, "stepPattern")
+        except ImportError:
+            is_wrong_dtw = False
+
+        if is_wrong_dtw:
+            raise ModuleNotFoundError(
+                "Error: usage of the incorrect 'dtw' package detected. "
+                "sktime requires 'dtw-python', but you have the unrelated "
+                "'dtw' package installed. "
+                "Please run: `pip uninstall dtw` followed by `pip install dtw-python`."
+            )
+
         # soft dependency import of dtw
         from dtw import dtw
 
