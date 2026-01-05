@@ -19,6 +19,45 @@ class ResNetNetwork(BaseDeepNetwork):
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
 
+    Examples
+    --------
+    >>> from sktime.datasets.classification import ItalyPowerDemand
+    >>> from sktime.networks.resnet import ResNetNetwork
+    >>> from sktime.datatypes import convert_to
+    >>> from tensorflow import keras
+    >>>
+    >>> # Load dataset
+    >>> dataset = ItalyPowerDemand()
+    >>> X_train, y_train = dataset.load("X_train", "y_train")
+    >>> X_test, y_test = dataset.load("X_test", "y_test")
+    >>>
+    >>> # Convert to 3D numpy arrays
+    >>> X_train_np = convert_to(X_train, to_type="numpy3D")
+    >>> X_test_np = convert_to(X_test, to_type="numpy3D")
+    >>>
+    >>> # Prepare labels for binary classification
+    >>> y_train_np = y_train.astype(int) - 1
+    >>> y_test_np = y_test.astype(int) - 1
+    >>>
+    >>> # Build ResNet architecture
+    >>> resnet = ResNetNetwork(random_state=42)
+    >>> input_shape = (X_train_np.shape[1], X_train_np.shape[2])
+    >>> input_layer, output_layer = resnet.build_network(input_shape=input_shape)
+    >>>
+    >>> # Add output layer for binary classification
+    >>> output = keras.layers.Dense(1, activation='sigmoid')(output_layer)
+    >>> model = keras.models.Model(inputs=input_layer, outputs=output)
+    >>>
+    >>> # Compile and train
+    >>> model.compile(optimizer='adam', loss='binary_crossentropy',
+    ...               metrics=['accuracy'])
+    >>> history = model.fit(X_train_np, y_train_np, epochs=50, batch_size=16,
+    ...                     validation_data=(X_test_np, y_test_np), verbose=0)
+    >>>
+    >>> # Evaluate
+    >>> loss, accuracy = model.evaluate(X_test_np, y_test_np, verbose=0)
+    >>> print(f"Test accuracy: {accuracy:.4f}")
+
     References
     ----------
     .. [1] H. Fawaz, G. B. Lanckriet, F. Petitjean, and L. Idoumghar,
