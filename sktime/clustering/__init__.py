@@ -2,7 +2,6 @@
 
 __all__ = [
     "BaseClusterer",
-    "TimeSeriesAgglomerativeClustering",
 ]
 
 from sktime.clustering.agglomerative import TimeSeriesAgglomerativeClustering
