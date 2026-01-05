@@ -100,6 +100,7 @@ class AutoREG(_StatsModelsAdapter):
         "capability:multivariate": False,
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(
