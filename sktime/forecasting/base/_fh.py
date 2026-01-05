@@ -760,6 +760,7 @@ class ForecastingHorizon:
             If cutoff is not provided, is computed from ``y`` via ``get_cutoff``.
         sort_by_time : bool, optional (default=False)
             for MultiIndex returns, whether to sort by time index (level -1)
+
             - If True, result Index is sorted by time index (level -1)
             - If False, result Index is sorted overall
 

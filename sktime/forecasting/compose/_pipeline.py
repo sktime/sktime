@@ -192,7 +192,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         #   in the case where there is only one variable
                         if len(yt[ix].columns) == 1:
                             temp = yt[ix].columns
-                            yt[ix].columns = self._y.columns
+                            yt[ix].columns = self._get_varnames()
                         yt[ix] = transformer.inverse_transform(yt[ix], X)
                         if len(yt[ix].columns) == 1:
                             yt[ix].columns = temp
