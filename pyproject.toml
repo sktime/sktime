@@ -333,7 +333,7 @@ dependencies_2024 = [
     "numpy==2.1.0",
     "pandas==2.3.2",
     "scikit-learn==1.5.1",
-    "scipy==1.14.1",
+    "scipy==1.16.3",
     "torch==2.4.0",
     "lightning==2.4.0",
 ]
