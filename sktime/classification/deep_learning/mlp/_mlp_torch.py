@@ -177,10 +177,11 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         return MLPNetworkTorch(
             input_size=self.input_size,
             num_classes=self.num_classes,
-            activation=self.activation_hidden,
+            activation=self._validated_activation,
+            activation_hidden=self.activation_hidden,
+            use_bias=self.use_bias,
             dropout=self.dropout,
             random_state=self.random_state,
-            # use_bias=self.use_bias,
         )
 
     @classmethod
