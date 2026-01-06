@@ -240,4 +240,3 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
             "random_state": 0,
         }
         return [params1, params2, params3]
-

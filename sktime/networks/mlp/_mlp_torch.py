@@ -4,6 +4,7 @@ __authors__ = ["Faakhir30"]
 __all__ = ["MLPNetworkTorch"]
 
 from collections.abc import Callable
+
 import numpy as np
 
 from sktime.utils.dependencies import _safe_import
@@ -114,7 +115,9 @@ class MLPNetworkTorch(NNModule):
             )
 
         # Instantiate activation functions for hidden layers and output layer
-        self._activation_hidden_fn = self._instantiate_activation(self.activation_hidden)
+        self._activation_hidden_fn = self._instantiate_activation(
+            self.activation_hidden
+        )
         if self.activation:
             self._activation_fn = self._instantiate_activation(self.activation)
 
@@ -166,7 +169,9 @@ class MLPNetworkTorch(NNModule):
         if isinstance(self.input_size, tuple):
             # X shape: (batch_size, series_length, n_dimensions)
             batch_size = X.size(0)
-            X = X.view(batch_size, -1)  # Flatten to (batch_size, series_length * n_dimensions)
+            X = X.view(
+                batch_size, -1
+            )  # Flatten to (batch_size, series_length * n_dimensions)
 
         # First layer
         out = self.dropout1(X)
@@ -219,11 +224,11 @@ class MLPNetworkTorch(NNModule):
             else:
                 raise ValueError(
                     f"Unsupported activation function: {activation}. "
-                    "Supported activations: 'relu', 'tanh', 'sigmoid', 'gelu', 'elu', 'leakyrelu'"
+                    "Supported activations:"
+                    "'relu', 'tanh', 'sigmoid', 'gelu', 'elu', 'leakyrelu'"
                 )
         else:
             raise TypeError(
                 "`activation` should either be of type str or torch.nn.Module. "
                 f"But found the type to be: {type(activation)}"
             )
-
