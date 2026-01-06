@@ -11,4 +11,3 @@ __all__ = [
 
 from sktime.regression.deep_learning.mlp._mlp_tf import MLPRegressor
 from sktime.regression.deep_learning.mlp._mlp_torch import MLPRegressorTorch
-

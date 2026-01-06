@@ -165,7 +165,8 @@ class MLPNetworkTorch(NNModule):
         -------
         out : torch.Tensor
             Output tensor after passing through the MLP layers and final output layer.
-            Shape: (batch_size, num_classes) for classification, (batch_size,) for regression.
+            Shape: (batch_size, num_classes) for classification and (batch_size,)
+            for regression if num_classes == 1.
         """
         if isinstance(X, np.ndarray):
             torchFrom_numpy = _safe_import("torch.from_numpy")
@@ -201,8 +202,9 @@ class MLPNetworkTorch(NNModule):
         if self.activation:
             out = self._activation_fn(out)
 
-        # For regression (num_classes == 1), squeeze to (batch_size,) to match target shape
-        if self.task=="regression" and self.num_classes == 1:
+        # For regression (num_classes == 1),
+        # squeeze to (batch_size,) to match target shape
+        if self.task == "regression" and self.num_classes == 1:
             out = out.squeeze(-1)
 
         return out

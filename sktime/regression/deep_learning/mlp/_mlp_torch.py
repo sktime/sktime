@@ -4,8 +4,6 @@ __all__ = ["MLPRegressorTorch"]
 
 from collections.abc import Callable
 
-import numpy as np
-
 from sktime.networks.mlp import MLPNetworkTorch
 from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
 
@@ -221,4 +219,3 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
         test_params = [param1, param2]
 
         return test_params
-
