@@ -180,6 +180,7 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
         return MLPNetworkTorch(
             input_size=self.input_size,
             num_classes=self.num_classes,
+            task="regression",
             activation=self.activation,
             activation_hidden=self.activation_hidden,
             use_bias=self.use_bias,

@@ -4,6 +4,7 @@ __authors__ = ["Faakhir30"]
 __all__ = ["MLPNetworkTorch"]
 
 from collections.abc import Callable
+from typing import Literal
 
 import numpy as np
 
@@ -26,6 +27,8 @@ class MLPNetworkTorch(NNModule):
         If tuple, it should be of shape (series_length, n_dimensions).
     num_classes : int
         Number of classes to predict
+    task : Literal["classification", "regression"], default = "classification"
+        The task type of the network. Networks output shape depends on the task type.
     use_bias : bool, default = True
         Whether to use bias in the fully connected layers.
     activation : str or None or an instance of activation functions defined in
@@ -67,6 +70,7 @@ class MLPNetworkTorch(NNModule):
         self,
         input_size: int | tuple,
         num_classes: int,
+        task: Literal["classification", "regression"] = "classification",
         activation: str | None | Callable = None,
         activation_hidden: str = "relu",
         use_bias: bool = True,
@@ -76,6 +80,7 @@ class MLPNetworkTorch(NNModule):
         super().__init__()
         self.input_size = input_size
         self.num_classes = num_classes
+        self.task = task
         self.random_state = random_state
         self.activation = activation
         self.activation_hidden = activation_hidden
@@ -158,8 +163,9 @@ class MLPNetworkTorch(NNModule):
 
         Returns
         -------
-        out : torch.Tensor of shape (batch_size, num_classes)
+        out : torch.Tensor
             Output tensor after passing through the MLP layers and final output layer.
+            Shape: (batch_size, num_classes) for classification, (batch_size,) for regression.
         """
         if isinstance(X, np.ndarray):
             torchFrom_numpy = _safe_import("torch.from_numpy")
@@ -194,6 +200,10 @@ class MLPNetworkTorch(NNModule):
 
         if self.activation:
             out = self._activation_fn(out)
+
+        # For regression (num_classes == 1), squeeze to (batch_size,) to match target shape
+        if self.task=="regression" and self.num_classes == 1:
+            out = out.squeeze(-1)
 
         return out
 
