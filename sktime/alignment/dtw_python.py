@@ -134,13 +134,12 @@ class AlignerDTW(BaseAligner):
             self.set_tags(**{"alignment_type": "full"})
 
         # Check if the user has the incorrect 'dtw' package installed.
-        # 'dtw' on PyPI is the R-port (wrong one).
-        # 'dtw-python' is the correct one.
         if _check_soft_dependencies("dtw", severity="none"):
             raise ModuleNotFoundError(
                 "Error: usage of the incorrect 'dtw' package detected. "
-                "sktime requires 'dtw-python', but you have the unrelated "
-                "'dtw' package installed. "
+                f"{self.__class__.__name__} requires the 'dtw' package to be absent, "
+                "because 'dtw' uses the same import path as the required "
+                "'dtw-python' package. "
                 "Please run: `pip uninstall dtw` followed by `pip install dtw-python`."
             )
 
@@ -377,8 +376,9 @@ class AlignerDTWfromDist(BaseAligner):
         if _check_soft_dependencies("dtw", severity="none"):
             raise ModuleNotFoundError(
                 "Error: usage of the incorrect 'dtw' package detected. "
-                "sktime requires 'dtw-python', but you have the unrelated "
-                "'dtw' package installed. "
+                f"{self.__class__.__name__} requires the 'dtw' package to be absent, "
+                "because 'dtw' uses the same import path as the required "
+                "'dtw-python' package. "
                 "Please run: `pip uninstall dtw` followed by `pip install dtw-python`."
             )
 
