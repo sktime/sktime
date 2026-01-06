@@ -13,6 +13,9 @@ from sktime.networks.mlp import MLPNetworkTorch
 class MLPClassifierTorch(BaseDeepClassifierPytorch):
     """Multi Layer Perceptron Network (MLP) in PyTorch for time series classification.
 
+    Adapted from the implementation from source code
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mlp.py
+
     Implements a simple MLP network, as in [1]_.
 
     Parameters
