@@ -103,7 +103,7 @@ class ThetaForecaster(ExponentialSmoothing):
         # packaging info
         # --------------
         "authors": ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
@@ -462,7 +462,7 @@ class ThetaModularForecaster(BaseForecaster):
 
     _tags = {
         "authors": ["GuzalBulatova", "fkiraly"],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "capability:missing_values": False,

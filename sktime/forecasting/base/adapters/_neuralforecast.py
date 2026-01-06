@@ -82,7 +82,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "capability:missing_values": False,

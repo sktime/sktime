@@ -125,7 +125,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,

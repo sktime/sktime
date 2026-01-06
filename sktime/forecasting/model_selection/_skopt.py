@@ -221,7 +221,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "python_version": ">= 3.6",
         # estimator type
         # --------------
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,

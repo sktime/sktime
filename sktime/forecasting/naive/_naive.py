@@ -136,7 +136,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:exogenous": False,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:pred_var": True,
         "capability:pred_int": True,
         # CI and test flags
@@ -688,7 +688,7 @@ class NaiveVariance(BaseForecaster):
         "authors": ["fkiraly", "bethrice44"],
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,

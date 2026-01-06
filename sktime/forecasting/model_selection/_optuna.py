@@ -158,7 +158,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     _tags = {
         "authors": ["gareth-brown-86", "mk406", "bastisar"],
         "maintainers": ["gareth-brown-86", "mk406"],
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,

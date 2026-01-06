@@ -34,7 +34,6 @@ from sktime.utils._testing.forecasting import (
     _assert_correct_columns,
     _assert_correct_pred_time_index,
     _get_expected_index_for_update_predict,
-    _get_n_columns,
     _make_fh,
     make_forecasting_problem,
 )
@@ -99,19 +98,8 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
             1 for univariate forecasters, 2 for multivariate forecasters
             ranges over 1 and 2 for forecasters which are both uni/multivariate
         """
-        if "estimator_class" in kwargs.keys():
-            scitype_tag = kwargs["estimator_class"].get_class_tag("scitype:y")
-        elif "estimator_instance" in kwargs.keys():
-            scitype_tag = kwargs["estimator_instance"].get_tag("scitype:y")
-        else:
-            return []
-
-        n_columns_list = _get_n_columns(scitype_tag)
-        if len(n_columns_list) == 1:
-            n_columns_names = ["" for x in n_columns_list]
-        else:
-            n_columns_names = [f"y:{x}cols" for x in n_columns_list]
-
+        n_columns_list = [1, 2]
+        n_columns_names = [f"y:{x}cols" for x in n_columns_list]
         return n_columns_list, n_columns_names
 
     def _generate_update_params(self, test_name, **kwargs):
@@ -270,20 +258,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         with pytest.raises(NotFittedError):
             estimator_instance.get_fitted_params()
-
-    def test_y_multivariate_raises_error(self, estimator_instance):
-        """Test that wrong y scitype raises error (uni/multivariate not supported)."""
-        if estimator_instance.get_tag("scitype:y") == "multivariate":
-            y = _make_series(n_columns=1)
-            with pytest.raises(ValueError, match=r"two or more variables"):
-                estimator_instance.fit(y, fh=FH0)
-
-        # we could remove the below entirely because there are no other values,
-        # but left for clarity
-        if estimator_instance.get_tag("scitype:y") in ["univariate", "both"]:
-            # this should pass since "both" allows any number of variables
-            # and "univariate" automatically vectorizes, behaves multivariate
-            pass
 
     # todo: should these not be "negative scenarios", tested in test_all_estimators?
     @pytest.mark.parametrize("y", INVALID_y_INPUT_TYPES)
@@ -482,12 +456,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
     def test_predict_series_name_preserved(self, estimator_instance):
         """Test that fit/predict preserves name attribute and type of pd.Series."""
-        # skip this test if estimator needs multivariate data
-        # because then it does not take pd.Series at all
-        if estimator_instance.get_tag("scitype:y") == "multivariate":
-            return None
-
-        y_train = _make_series(n_timepoints=15)
+        y_train = _make_series(n_timepoints=15, n_columns=1)
         y_train.name = "foo"
 
         estimator_instance.fit(y_train, fh=[1, 2, 3])

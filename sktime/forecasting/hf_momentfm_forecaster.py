@@ -136,7 +136,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
         "capability:missing_values": False,

@@ -130,7 +130,7 @@ class DynamicFactor(_StatsModelsAdapter):
         # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "capability:exogenous": True,
         "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
