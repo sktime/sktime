@@ -332,7 +332,7 @@ dependencies_lower = [
 dependencies_2024 = [
     "numpy==2.1.0",
     "pandas==2.3.2",
-    "scikit-learn==1.5.1",
+    "scikit-learn==1.8.0",
     "scipy==1.14.1",
     "torch==2.4.0",
     "lightning==2.4.0",
