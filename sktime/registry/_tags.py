@@ -570,6 +570,46 @@ class tests__skip_by_name(_BaseTag):
     }
 
 
+class tests__python_dependencies(_BaseTag):
+    """Python package dependency requirement specifiers for tests (PEP 440).
+
+    Part of packaging metadata for the object.
+
+    - String name: ``"tests:python_dependencies"``
+    - Private tag, developer and framework facing
+    - Values: str or list of str, each str a PEP 440 compliant dependency specifier
+    - Example: ``"numpy>=1.20.0"``
+    - Example 2: ``["numpy>=1.20.0", "pandas>=1.3.0"]``
+    - Default: no requirements beyond ``sktime`` core dependencies (``None``)
+
+    ``sktime``'s CI framework regularly tests estimators in pull request.
+
+    The ``tests:python_dependencies`` tag specifies additional environment dependencies
+    required for testing the object, in a VM setup, via the ``tests:vm`` tag.
+
+    These dependencies will not be highlighted to the user when using the
+    estimator, and are used only in the CI testing setup.
+
+    This tag should be used, for example, if the tests instances in ``get_test_params``
+    requre additional packages not required for the main functionality of the object.
+
+    The ``tests:python_dependencies`` tag of an object is a string,
+    a list of strings, or a nested list of strings, with same format, convention,
+    and meaning as ``python_dependencies``.
+
+    It is developer facing only, and is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:python_dependencies",
+        "parent_type": "object",
+        "tag_type": ("list", "str"),
+        "short_descr": "additional python dependencies for testing the estimator, as str or list of str (PEP 440)",  # noqa: E501
+        "user_facing": False,
+    }
+
+
 # Estimator tags
 # --------------
 
@@ -998,6 +1038,56 @@ class capability__pred_int__insample(_BaseTag):
         "parent_type": "forecaster",
         "tag_type": "bool",
         "short_descr": "can the forecaster make in-sample predictions in predict_interval/quantiles?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__non_contiguous_X(_BaseTag):
+    """Capability: the forecaster can handle non-contiguous exogenous data.
+
+    - String name: ``"capability:non_contiguous_X"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    Exogenous data are additional time series that can be used to improve
+    forecasting accuracy. When using `temporal_train_test_split` with a
+    non-contiguous forecasting horizon `fh` (e.g., `fh=[2, 5]`), the resulting
+    `X_test` will only contain observations corresponding to the specific time
+    points in `fh`, rather than a complete contiguous range.
+
+
+    If the ``capability:non_contiguous_X`` tag is ``True``, the forecaster
+    can handle non-contiguous exogenous data and will make predictions
+    correctly even when ``X`` contains only the requested time points.
+
+    If the tag is ``False``, the forecaster requires contiguous exogenous data
+    covering all time points from the first to the last element of ``fh``.
+    For example, if ``fh=[2, 5]``, the forecaster requires ``X`` to contain
+    data for time points 1, 2, 3, 4, and 5, not just 2 and 5.
+
+    Forecasters with ``capability:non_contiguous_X=False`` include those that:
+
+    * Use underlying libraries (e.g., statsmodels, statsforecast) that
+      internally generate predictions for all intermediate time steps
+    * Require contiguous data for their recursive prediction algorithms
+
+    If a forecaster has this tag set to ``False`` and receives non-contiguous
+    exogenous data, it will raise an error during prediction.
+
+    The ``ForecastX`` compositor directly addresses the ``capability:non_contiguous_X``
+    tag by providing a solution for forecasters that cannot handle non-contiguous
+    exogenous data. Instead of requiring contiguous exogenous data covering all
+    time points from the first to the last element of fh, ForecastX forecasts
+    the missing exogenous values internally.
+    """
+
+    _tags = {
+        "tag_name": "capability:non_contiguous_X",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can the forecaster handle non-contiguous exogenous data?",
         "user_facing": True,
     }
 
