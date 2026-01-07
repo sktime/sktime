@@ -24,6 +24,7 @@ Benchmarking Framework v2
     :template: class.rst
 
     ForecastingBenchmark
+    TimeSeriesSimulator
 
 .. currentmodule:: sktime.benchmarking.classification
 
