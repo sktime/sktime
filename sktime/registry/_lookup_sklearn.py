@@ -15,7 +15,7 @@ def _all_sklearn_estimators(
     as_dataframe=False,
     suppress_import_stdout=True,
 ):
-    """List all scikit-learn objects in sktime and sklearn, by scitype or tag.
+    """List all scikit-learn objects in sktime and sklearn.
 
     This function retrieves all sklearn objects inheriting from ``BaseEstimator``,
     from the following locations:
@@ -89,7 +89,10 @@ def _all_sklearn_estimators_cached(
     as_dataframe=False,
     suppress_import_stdout=True,
 ):
-    """Cached version of _all_sklearn_estimators, see above for docstring."""
+    """List all scikit-learn objects in sktime and sklearn.
+
+    Cached version of _all_sklearn_estimators, see above for docstring.
+    """
     from sklearn.base import BaseEstimator
 
     MODULES_TO_IGNORE_SKLEARN = ["array_api_compat", "tests", "experimental"]
