@@ -70,12 +70,21 @@ else:
 
 
 # gluonts requires torch, so only import when both are available
+# Use try-except to handle cases where check passes but import fails (version issues)
+_gluonts_available = False
 if _check_soft_dependencies("gluonts", severity="none") and _check_soft_dependencies(
     "torch", severity="none"
 ):
-    from gluonts.core.component import validated
-    from gluonts.torch.scaler import Scaler
-else:
+    try:
+        from gluonts.core.component import validated
+        from gluonts.torch.scaler import Scaler
+
+        _gluonts_available = True
+    except (ImportError, ModuleNotFoundError):
+        # If import fails (e.g., version mismatch), fall back to dummy classes
+        _gluonts_available = False
+
+if not _gluonts_available:
     # Create dummy classes when gluonts is not available
     def validated():
         def decorator(func):
