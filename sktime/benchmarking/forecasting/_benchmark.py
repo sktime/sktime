@@ -63,15 +63,8 @@ class ModelComparisonBenchmark(BaseEstimator):
     test_size : int or float, default=0.2
         If int, number of observations to use as test set.
         If float, proportion of data to use as test set.
-    cv_folds : int, optional, default=None
-        Number of cross-validation folds. If None, uses simple train/test split.
-    n_jobs : int, default=1
-        Number of jobs to run in parallel for model fitting. -1 means using all
-        processors.
     verbose : bool, default=True
         Whether to print progress information.
-    random_state : int, RandomState instance or None, default=None
-        Random state for reproducibility.
 
     Attributes
     ----------
@@ -140,10 +133,7 @@ class ModelComparisonBenchmark(BaseEstimator):
         fh=1,
         metrics=None,
         test_size=0.2,
-        cv_folds=None,
-        n_jobs=1,
         verbose=True,
-        random_state=None,
     ):
         if isinstance(test_size, float) and not (0 < test_size < 1):
             raise ValueError(f"test_size must be in (0, 1), got {test_size}")
@@ -154,10 +144,7 @@ class ModelComparisonBenchmark(BaseEstimator):
         self.fh = fh
         self.metrics = metrics
         self.test_size = test_size
-        self.cv_folds = cv_folds
-        self.n_jobs = n_jobs
         self.verbose = verbose
-        self.random_state = random_state
 
         super().__init__()
 

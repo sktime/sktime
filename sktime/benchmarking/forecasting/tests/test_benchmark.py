@@ -43,7 +43,7 @@ class TestModelComparisonBenchmark:
         ]
 
         benchmark = ModelComparisonBenchmark(
-            models=models, fh=1, test_size=20, verbose=False, random_state=42
+            models=models, fh=1, test_size=20, verbose=False
         )
 
         results = benchmark.run(sample_data)
@@ -257,12 +257,12 @@ class TestModelComparisonBenchmark:
         models = [("naive", NaiveForecaster())]
 
         benchmark1 = ModelComparisonBenchmark(
-            models=models, fh=1, test_size=20, verbose=False, random_state=42
+            models=models, fh=1, test_size=20, verbose=False
         )
         results1 = benchmark1.run(sample_data)
 
         benchmark2 = ModelComparisonBenchmark(
-            models=models, fh=1, test_size=20, verbose=False, random_state=42
+            models=models, fh=1, test_size=20, verbose=False
         )
         results2 = benchmark2.run(sample_data)
 
