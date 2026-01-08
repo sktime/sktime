@@ -671,6 +671,15 @@ Seasonality and Date-Time Features
 
     TimeSince
 
+.. currentmodule:: sktime.transformations.series.degree_day
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DegreeDayFeatures
+
+
 .. currentmodule:: sktime.transformations.series.fourier
 
 .. autosummary::
