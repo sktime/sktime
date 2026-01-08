@@ -18,50 +18,29 @@ from sktime.registry import scitype
 from sktime.utils.unique_str import _make_strings_unique
 
 
-def _is_initialised_estimator(estimator) -> bool:
-    """Check if estimator is an initialised sktime/sklearn estimator."""
-    allowed_scitypes = {
-        "classifier",
-        "forecaster",
-        "regressor",
-        "clusterer",
-        "transformer",
-        "classifier_tabular",
-        "regressor_tabular",
-        "clusterer_tabular",
-        "transformer_tabular",
-    }
-
-    if isinstance(estimator, type):
-        return False
-
-    object_type = estimator.get_tag("object_type")
-    if object_type is None:
-        return False
-
-    if isinstance(object_type, str):
-        object_type = {object_type}
-
-    return bool(set(object_type) & allowed_scitypes)
+def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
+    """Check if estimator is initialised BaseEstimator object."""
+    if isinstance(estimator, BaseEstimator):
+        return True
+    return False
 
 
-def _check_estimators_type(objs) -> None:
-    """Check if all estimators are valid, initialised sktime/sklearn estimators.
+def _check_estimators_type(objs: dict | list | BaseEstimator) -> None:
+    """Check if all estimators are initialised BaseEstimator objects.
 
     Raises
     ------
     TypeError
-        If any of the estimators are not compatible.
+        If any of the estimators are not BaseEstimator objects.
     """
-    if not isinstance(objs, (list, dict)):
+    if isinstance(objs, BaseEstimator):
         objs = [objs]
-
     items = objs.values() if isinstance(objs, dict) else objs
-
-    if not all(_is_initialised_estimator(est) for est in items):
+    compatible = all(_is_initialised_estimator(estimator) for estimator in items)
+    if not compatible:
         raise TypeError(
-            "One or more estimators is not a valid, initialised estimator. "
-            "Estimators must be of valid sktime/sklearn object type and initialised."
+            "One or many estimator(s) is not an initialised BaseEstimator "
+            "object(s). Please instantiate the estimator(s) first."
         )
 
 
@@ -354,7 +333,7 @@ class BaseBenchmark:
 
             # single object type (estimators or one of the tasks)
             sctype = scitype(obj)
-            if sctype in ["classifier", "forecaster", "classifier_tabular"]:
+            if sctype in ["classifier", "forecaster"]:
                 self.add_estimator(obj)
             elif sctype in ["dataset_classification", "dataset_forecasting"]:
                 self._datasets.append(obj)
