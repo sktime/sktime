@@ -3,8 +3,8 @@
 
 __all__ = [
     "TimeSeriesSimulator",
-    "ForecastingBenchmark",
+    "ModelComparisonBenchmark",
 ]
 
-from sktime.benchmarking.forecasting._benchmark import ForecastingBenchmark
+from sktime.benchmarking.forecasting._benchmark import ModelComparisonBenchmark
 from sktime.benchmarking.forecasting._simulator import TimeSeriesSimulator

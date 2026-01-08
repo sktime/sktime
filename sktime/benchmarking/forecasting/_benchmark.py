@@ -6,7 +6,7 @@ on simulated or real time series data.
 """
 
 __author__ = ["sktime developers"]
-__all__ = ["ForecastingBenchmark"]
+__all__ = ["ModelComparisonBenchmark"]
 
 
 import numpy as np
@@ -35,10 +35,10 @@ from sktime.registry import all_estimators
 from sktime.utils.validation.forecasting import check_fh
 
 
-class ForecastingBenchmark(BaseEstimator):
+class ModelComparisonBenchmark(BaseEstimator):
     """Benchmark multiple forecasting models on time series data.
 
-    The ForecastingBenchmark class provides a framework for testing and comparing
+    The ModelComparisonBenchmark class provides a framework for testing and comparing
     multiple forecasting models on specified time series data. It supports both
     simulated and real data, and can automatically select univariate-capable models
     from sktime's registry or use user-specified models.
@@ -89,7 +89,7 @@ class ForecastingBenchmark(BaseEstimator):
     --------
     >>> from sktime.benchmarking.forecasting import (
     ...     TimeSeriesSimulator,
-    ...     ForecastingBenchmark
+    ...     ModelComparisonBenchmark
     ... )
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.theta import ThetaForecaster
@@ -108,7 +108,7 @@ class ForecastingBenchmark(BaseEstimator):
     ...     ("naive_drift", NaiveForecaster(strategy="drift")),
     ...     ("theta", ThetaForecaster(sp=12))
     ... ]
-    >>> benchmark = ForecastingBenchmark(
+    >>> benchmark = ModelComparisonBenchmark(
     ...     models=models,
     ...     fh=[1, 2, 3],
     ...     test_size=20

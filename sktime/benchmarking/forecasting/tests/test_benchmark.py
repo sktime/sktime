@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Tests for ForecastingBenchmark."""
+"""Tests for ModelComparisonBenchmark."""
 
 __author__ = ["sktime developers"]
 
@@ -7,7 +7,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.benchmarking.forecasting import ForecastingBenchmark, TimeSeriesSimulator
+from sktime.benchmarking.forecasting import (
+    ModelComparisonBenchmark,
+    TimeSeriesSimulator,
+)
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.tests.test_switch import run_test_for_class
@@ -15,11 +18,11 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(ForecastingBenchmark),
-    reason="Run tests for ForecastingBenchmark only if explicitly requested",
+    not run_test_for_class(ModelComparisonBenchmark),
+    reason="Run tests for ModelComparisonBenchmark only if explicitly requested",
 )
-class TestForecastingBenchmark:
-    """Tests for ForecastingBenchmark class."""
+class TestModelComparisonBenchmark:
+    """Tests for ModelComparisonBenchmark class."""
 
     @pytest.fixture
     def sample_data(self):
@@ -39,7 +42,7 @@ class TestForecastingBenchmark:
             ("naive_mean", NaiveForecaster(strategy="mean")),
         ]
 
-        benchmark = ForecastingBenchmark(
+        benchmark = ModelComparisonBenchmark(
             models=models, fh=1, test_size=20, verbose=False, random_state=42
         )
 
@@ -59,7 +62,7 @@ class TestForecastingBenchmark:
             ("naive", NaiveForecaster()),
         ]
 
-        benchmark = ForecastingBenchmark(
+        benchmark = ModelComparisonBenchmark(
             models=models, fh=1, test_size=20, verbose=False
         )
 
@@ -70,7 +73,7 @@ class TestForecastingBenchmark:
         """Test that models can be provided as instances."""
         models = [NaiveForecaster()]
 
-        benchmark = ForecastingBenchmark(
+        benchmark = ModelComparisonBenchmark(
             models=models, fh=1, test_size=20, verbose=False
         )
 
@@ -84,7 +87,7 @@ class TestForecastingBenchmark:
             return np.mean(np.abs(y_true - y_pred))
 
         models = [("naive", NaiveForecaster())]
-        benchmark = ForecastingBenchmark(
+        benchmark = ModelComparisonBenchmark(
             models=models,
             fh=1,
             metrics=[custom_metric],
@@ -99,7 +102,7 @@ class TestForecastingBenchmark:
         """Test benchmark with multiple forecast horizons."""
         models = [("naive", NaiveForecaster())]
 
-        benchmark = ForecastingBenchmark(
+        benchmark = ModelComparisonBenchmark(
             models=models, fh=[1, 2, 3], test_size=20, verbose=False
         )
 
@@ -110,7 +113,7 @@ class TestForecastingBenchmark:
         """Test benchmark with integer test size."""
         models = [("naive", NaiveForecaster())]
 
-        benchmark = ForecastingBenchmark(
+        benchmark = ModelComparisonBenchmark(
             models=models, fh=1, test_size=15, verbose=False
         )
 
@@ -121,7 +124,7 @@ class TestForecastingBenchmark:
         """Test benchmark with float test size."""
         models = [("naive", NaiveForecaster())]
 
-        benchmark = ForecastingBenchmark(
+        benchmark = ModelComparisonBenchmark(
             models=models, fh=1, test_size=0.3, verbose=False
         )
 
@@ -135,7 +138,7 @@ class TestForecastingBenchmark:
             ("naive_mean", NaiveForecaster(strategy="mean")),
         ]
 
-        benchmark = ForecastingBenchmark(
+        benchmark = ModelComparisonBenchmark(
             models=models, fh=1, test_size=20, verbose=False
         )
 
@@ -149,7 +152,7 @@ class TestForecastingBenchmark:
 
     def test_benchmark_get_best_model_before_run(self):
         """Test that get_best_model fails before running benchmark."""
-        benchmark = ForecastingBenchmark(verbose=False)
+        benchmark = ModelComparisonBenchmark(verbose=False)
 
         with pytest.raises(ValueError, match="Must run benchmark"):
             benchmark.get_best_model()
@@ -158,7 +161,7 @@ class TestForecastingBenchmark:
         """Test that fitted models are stored."""
         models = [("naive", NaiveForecaster())]
 
-        benchmark = ForecastingBenchmark(
+        benchmark = ModelComparisonBenchmark(
             models=models, fh=1, test_size=20, verbose=False
         )
 
@@ -171,7 +174,7 @@ class TestForecastingBenchmark:
         """Test that predictions are stored."""
         models = [("naive", NaiveForecaster())]
 
-        benchmark = ForecastingBenchmark(
+        benchmark = ModelComparisonBenchmark(
             models=models, fh=1, test_size=20, verbose=False
         )
 
@@ -197,7 +200,7 @@ class TestForecastingBenchmark:
             ("naive", NaiveForecaster()),
         ]
 
-        benchmark = ForecastingBenchmark(
+        benchmark = ModelComparisonBenchmark(
             models=models, fh=1, test_size=10, verbose=False
         )
 
@@ -220,7 +223,7 @@ class TestForecastingBenchmark:
             ("theta", ThetaForecaster()),
         ]
 
-        benchmark = ForecastingBenchmark(
+        benchmark = ModelComparisonBenchmark(
             models=models, fh=1, test_size=20, verbose=False
         )
 
@@ -233,7 +236,7 @@ class TestForecastingBenchmark:
         """Test that invalid model types raise errors."""
         models = ["not_a_model"]
 
-        benchmark = ForecastingBenchmark(models=models, verbose=False)
+        benchmark = ModelComparisonBenchmark(models=models, verbose=False)
 
         with pytest.raises(ValueError, match="must be BaseForecaster"):
             benchmark.run(sample_data)
@@ -244,7 +247,7 @@ class TestForecastingBenchmark:
             np.random.randn(50), index=pd.date_range("2020-01-01", periods=50)
         )
 
-        benchmark = ForecastingBenchmark(models=[], verbose=False)
+        benchmark = ModelComparisonBenchmark(models=[], verbose=False)
 
         with pytest.raises(ValueError, match="No models available"):
             benchmark.run(y)
@@ -253,12 +256,12 @@ class TestForecastingBenchmark:
         """Test that random_state ensures reproducible results."""
         models = [("naive", NaiveForecaster())]
 
-        benchmark1 = ForecastingBenchmark(
+        benchmark1 = ModelComparisonBenchmark(
             models=models, fh=1, test_size=20, verbose=False, random_state=42
         )
         results1 = benchmark1.run(sample_data)
 
-        benchmark2 = ForecastingBenchmark(
+        benchmark2 = ModelComparisonBenchmark(
             models=models, fh=1, test_size=20, verbose=False, random_state=42
         )
         results2 = benchmark2.run(sample_data)
@@ -284,7 +287,7 @@ class TestForecastingBenchmark:
             ("naive_mean", NaiveForecaster(strategy="mean")),
         ]
 
-        benchmark = ForecastingBenchmark(
+        benchmark = ModelComparisonBenchmark(
             models=models, fh=[1, 2, 3], test_size=30, verbose=False
         )
 
