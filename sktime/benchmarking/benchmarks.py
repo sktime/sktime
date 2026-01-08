@@ -5,9 +5,8 @@ import warnings
 from dataclasses import dataclass, field
 
 import pandas as pd
-from sklearn.base import BaseEstimator as BaseEstimatorSklearn
 
-from sktime.base import BaseEstimator as BaseEstimatorSktime
+from sktime.base import BaseEstimator
 from sktime.benchmarking._benchmarking_dataclasses import (
     ResultObject,
     TaskObject,
@@ -19,30 +18,28 @@ from sktime.registry import scitype
 from sktime.utils.unique_str import _make_strings_unique
 
 
-def _is_initialised_estimator(estimator) -> bool:
-    """Check if estimator is an initialised sktime or sklearn estimator."""
-    if isinstance(estimator, (BaseEstimatorSktime, BaseEstimatorSklearn)):
+def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
+    """Check if estimator is initialised BaseEstimator object."""
+    if isinstance(estimator, BaseEstimator):
         return True
     return False
 
 
-def _check_estimators_type(
-    objs: dict | list | BaseEstimatorSktime | BaseEstimatorSklearn,
-) -> None:
+def _check_estimators_type(objs: dict | list | BaseEstimator) -> None:
     """Check if all estimators are initialised BaseEstimator objects.
 
     Raises
     ------
     TypeError
-        If any of the estimators are not initialised sktime or sklearn objects.
+        If any of the estimators are not BaseEstimator objects.
     """
-    if isinstance(objs, (BaseEstimatorSktime, BaseEstimatorSklearn)):
+    if isinstance(objs, BaseEstimator):
         objs = [objs]
     items = objs.values() if isinstance(objs, dict) else objs
     compatible = all(_is_initialised_estimator(estimator) for estimator in items)
     if not compatible:
         raise TypeError(
-            "One or many estimator(s) is not an initialised sktime/sklearn "
+            "One or many estimator(s) is not an initialised BaseEstimator "
             "object(s). Please instantiate the estimator(s) first."
         )
 
@@ -140,9 +137,7 @@ class _SktimeRegistry:
         self.entity_id_format = entity_id_format
         self.entities = {}
 
-    def register(
-        self, entity_id, entity: BaseEstimatorSktime | BaseEstimatorSklearn | TaskObject
-    ):
+    def register(self, entity_id, entity: BaseEstimator | TaskObject):
         """Register an entity.
 
         Parameters
@@ -255,7 +250,7 @@ class BaseBenchmark:
 
     def add_estimator(
         self,
-        estimator: BaseEstimatorSktime | BaseEstimatorSklearn,
+        estimator: BaseEstimator,
         estimator_id: str | None = None,
     ):
         """Register an estimator to the benchmark.
@@ -281,7 +276,7 @@ class BaseBenchmark:
 
     def _add_estimator(
         self,
-        estimator: BaseEstimatorSktime | BaseEstimatorSklearn,
+        estimator: BaseEstimator,
         estimator_id: str | None = None,
     ):
         """Register a single estimator to the benchmark.
@@ -475,10 +470,6 @@ class BaseBenchmark:
         """
         return self._run(output_file, force_rerun)
 
-    def _run_validation(
-        self,
-        task: TaskObject,
-        estimator: BaseEstimatorSktime | BaseEstimatorSklearn,
-    ):
+    def _run_validation(self, task: TaskObject, estimator: BaseEstimator):
         """Run validation for a single task and estimator."""
         raise NotImplementedError("This method must be implemented by a subclass.")
