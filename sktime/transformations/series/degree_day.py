@@ -40,6 +40,43 @@ class DegreeDayFeatures(BaseTransformer):
         If True, raises when tmin > tmax; if False, auto-swaps those rows.
     keep_original_columns : bool, default=False
         If True, appends features to X. If False, returns only features.
+
+    Examples
+    --------
+    Basic usage with explicit max/min temperature columns:
+
+    import pandas as pd
+    from sktime.transformations.series.degree_day import DegreeDayFeatures
+    X = pd.DataFrame(
+    ...     {"high": [60, 70, 90], "low": [40, 60, 70]},
+    ...     index=pd.to_datetime(["2025-01-01", "2025-01-02", "2025-01-03"]),
+    ... )
+    tx = DegreeDayFeatures(base_temp=65.0, tmax_col="high", tmin_col="low")
+    tx.fit_transform(X)[["hdd", "cdd"]].round(1)
+                hdd   cdd
+    2025-01-01  15.0   0.0
+    2025-01-02   0.0   0.0
+    2025-01-03   0.0  15.0
+
+    Auto mode: if ``X`` has a single column, it is treated as mean temperature
+    (``tmean``):
+
+    X_mean = pd.DataFrame(
+    ...     {"temp": [50.0, 65.0, 80.0]},
+    ...     index=pd.to_datetime(["2025-01-01", "2025-01-02", "2025-01-03"]),
+    ... )
+    DegreeDayFeatures(base_temp=65.0, return_tmean=False).fit_transform(X_mean)
+                hdd   cdd
+    2025-01-01  15.0   0.0
+    2025-01-02   0.0   0.0
+    2025-01-03   0.0  15.0
+
+    Append features to the original data using ``keep_original_columns=True``:
+
+    DegreeDayFeatures(
+    ...     base_temp=65.0, tmax_col="high", tmin_col="low", keep_original_columns=True
+    ... ).fit_transform(X).columns.tolist()
+    ['high', 'low', 'tmean', 'hdd', 'cdd']
     """
 
     _tags = {
