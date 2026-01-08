@@ -343,10 +343,7 @@ class AutoTS(BaseForecaster):
         self._fh = fh
         self._instantiate_model()
         try:
-            if X is not None:
-                self.forecaster_.fit(df=y_date, future_regressor=X)
-            else:
-                self.forecaster_.fit(df=y_date)
+            self.forecaster_.fit(df=y_date, future_regressor=X)
         except Exception as e:
             raise e
         return self
@@ -374,15 +371,10 @@ class AutoTS(BaseForecaster):
         """
         y_date = self._y_date
 
-        if X is not None:
-            values = self.forecaster_.predict(
-                forecast_length=self._get_forecast_length(),
-                future_regressor=X,
-            ).forecast.values
-        else:
-            values = self.forecaster_.predict(
-                forecast_length=self._get_forecast_length()
-            ).forecast.values
+        values = self.forecaster_.predict(
+            forecast_length=self._get_forecast_length(),
+            future_regressor=X,
+        ).forecast.values
 
         cutoff = self._fh_cutoff_transformation(y_date)
         values = values[self._fh.to_relative(cutoff)._values - 1]
@@ -700,17 +692,11 @@ class AutoTS(BaseForecaster):
         # Call predict on the internal forecaster
         # This returns a dict of PredictionObjects if prediction_interval is a list,
         # or a single PredictionObject if it's a float.
-        if X is not None:
-            prediction = self.forecaster_.predict(
-                forecast_length=self._get_forecast_length(),
-                prediction_interval=coverage_list,
-                future_regressor=X,
-            )
-        else:
-            prediction = self.forecaster_.predict(
-                forecast_length=self._get_forecast_length(),
-                prediction_interval=coverage_list,
-            )
+        prediction = self.forecaster_.predict(
+            forecast_length=self._get_forecast_length(),
+            prediction_interval=coverage_list,
+            future_regressor=X,
+        )
 
         cutoff = self._fh_cutoff_transformation(y_date)
         # _fh keys are 1-based relative indices, adjust to 0-based
