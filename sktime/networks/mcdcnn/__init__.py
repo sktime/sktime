@@ -1,4 +1,4 @@
-"""MCDCNN deep learning network structure implemented in TensorFlow & PyTorch backends."""
+"""MCDCNN deep learning network implemented in TensorFlow & PyTorch backends."""
 
 __all__ = [
     "MCDCNNNetwork",

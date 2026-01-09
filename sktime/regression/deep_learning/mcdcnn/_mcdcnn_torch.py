@@ -1,6 +1,5 @@
 """Multi Channel Deep Convolutional Neural Regressor (MCDCNN)."""
 
-from collections.abc import Callable
 
 from sktime.networks.mcdcnn import MCDCNNNetworkTorch
 from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
@@ -170,7 +169,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         model : torch.nn.Module
             The constructed MCDCNN network with output layer.
         """
-
         if len(X.shape) != 3:
             raise ValueError(
                 f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
@@ -178,7 +176,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
                 "properly formatted."
             )
 
-        # Build base network
         return MCDCNNNetworkTorch(
             kernel_size=self.kernel_size,
             pool_size=self.pool_size,
@@ -191,8 +188,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             activation_hidden=self.activation_hidden,
             use_bias=self.use_bias,
         )
-
-
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

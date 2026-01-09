@@ -1,9 +1,6 @@
 """Multi Channel Deep Convolutional Neural Classifier (MCDCNN)."""
 
-from copy import deepcopy
-
 import numpy as np
-from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.mcdcnn import MCDCNNNetworkTorch
@@ -67,6 +64,8 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         The keyword arguments to be passed to the callbacks.
     lr : float, optional (default=0.01)
         The learning rate to use for the optimizer.
+    criterion_kwargs : dict or None, optional (default=None)
+        Additional keyword arguments to pass to the criterion.
     verbose : bool, optional (default=False)
         Whether to print progress information during training.
     random_state : int, optional (default=0)
@@ -115,6 +114,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         metrics=None,
         optimizer=None,
         optimizer_kwargs=None,
+        criterion_kwargs=None,
         callback_kwargs=None,
         lr=0.01,
         verbose=False,
@@ -142,7 +142,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         self.optimizer_kwargs = optimizer_kwargs
         self.callback_kwargs = callback_kwargs
         self.lr = lr
-
+        self.criterion_kwargs = criterion_kwargs
         # Set default optimizer to SGD with TF version defaults if not provided
         if self.optimizer is None:
             self.optimizer = "SGD"
@@ -152,8 +152,9 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         super().__init__(
             num_epochs=self.n_epochs,
             batch_size=self.batch_size,
+            activation=self.activation,
             criterion=self.criterion,
-            criterion_kwargs=None,
+            criterion_kwargs=self.criterion_kwargs,
             optimizer=self.optimizer,
             optimizer_kwargs=self.optimizer_kwargs,
             callbacks=self.callbacks,
@@ -172,34 +173,33 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             Input data containing the time series data.
         y : numpy.ndarray
             Target labels for the classification task.
+
         Returns
         -------
         model : torch.nn.Module
             The constructed MCDCNN network with output layer.
         """
-
         if len(X.shape) != 3:
             raise ValueError(
                 f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
                 f"but got shape {X.shape}. Please ensure your input data is "
                 "properly formatted."
             )
-        # n_instances, n_dims, n_timesteps = X.shape
+
         self.num_classes = len(np.unique(y))
-        _, self.input_size, _ = X.shape
 
         return MCDCNNNetworkTorch(
-            activation=self._validated_activation,
-            activation_hidden=self.activation_hidden,
-            use_bias=self.use_bias,
+            num_classes=self.num_classes,
             kernel_size=self.kernel_size,
             pool_size=self.pool_size,
             filter_sizes=self.filter_sizes,
             dense_units=self.dense_units,
             conv_padding=self.conv_padding,
             pool_padding=self.pool_padding,
+            activation=self._validated_activation,
+            activation_hidden=self.activation_hidden,
+            use_bias=self.use_bias,
             random_state=self.random_state,
-            num_classes=self.num_classes,
         )
 
     @classmethod

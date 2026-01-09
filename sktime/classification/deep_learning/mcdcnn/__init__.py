@@ -10,4 +10,6 @@ __all__ = [
 ]
 
 from sktime.classification.deep_learning.mcdcnn._mcdcnn_tf import MCDCNNClassifier
-from sktime.classification.deep_learning.mcdcnn._mcdcnn_torch import MCDCNNClassifierTorch
+from sktime.classification.deep_learning.mcdcnn._mcdcnn_torch import (
+    MCDCNNClassifierTorch,
+)

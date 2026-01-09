@@ -3,7 +3,6 @@
 __authors__ = ["Faakhir30"]
 __all__ = ["MCDCNNNetworkTorch"]
 
-import numpy as np
 
 # from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _safe_import
@@ -50,7 +49,7 @@ class MCDCNNNetworkTorch(NNModule):
         Whether bias should be included in the output layer.
     num_classes : int, optional (default=1)
         The number of classes to classify. Used for the output layer.
-        Default is 1 for regression.
+        Default is 1 (regression).
     """
 
     _tags = {
@@ -81,8 +80,11 @@ class MCDCNNNetworkTorch(NNModule):
         self.num_classes = num_classes
 
         super().__init__()
+
         conv_pad_size = kernel_size // 2 if conv_padding == "same" else 0
+
         nnConv1d = _safe_import("torch.nn.Conv1d")
+
         self.conv1 = nnConv1d(
             in_channels=1,
             out_channels=filter_sizes[0],
@@ -95,13 +97,18 @@ class MCDCNNNetworkTorch(NNModule):
             kernel_size=kernel_size,
             padding=conv_pad_size,
         )
-        # nnMaxPool1d = _safe_import("torch.nn.MaxPool1d")
-        from torch.nn import MaxPool1d as nnMaxPool1d
+
+        nnMaxPool1d = _safe_import("torch.nn.MaxPool1d")
+
         pool_pad_size = pool_size // 2 if pool_padding == "same" else 0
         self.pool = nnMaxPool1d(pool_size, padding=pool_pad_size)
+
+        nnLinear = _safe_import("torch.nn.Linear")
+        self.out = nnLinear(self.dense_units, self.num_classes, bias=self.use_bias)
+
         # Dense layer created lazily (depends on input length)
         self.fc = None
-        self.out = None
+
         self._activation_hidden = self._instantiate_activation(activation_hidden)
         if self.activation:
             self._activation = self._instantiate_activation(activation)
@@ -123,7 +130,7 @@ class MCDCNNNetworkTorch(NNModule):
         outputs = []
         torchFlatten = _safe_import("torch.flatten")
         for i in range(n_vars):
-            xi = X[:, i:i+1, :]          # (batch, 1, n_t)
+            xi = X[:, i : i + 1, :]  # (batch, 1, n_t)
 
             x = self._activation_hidden(self.conv1(xi))
             x = self.pool(x)
@@ -134,7 +141,6 @@ class MCDCNNNetworkTorch(NNModule):
             x = torchFlatten(x, start_dim=1)
             outputs.append(x)
 
-
         if n_vars == 1:
             x = outputs[0]
         else:
@@ -144,19 +150,20 @@ class MCDCNNNetworkTorch(NNModule):
         # Lazy dense creation
         if self.fc is None:
             nnLinear = _safe_import("torch.nn.Linear")
-            self.fc = nnLinear(x.shape[1], self.dense_units, bias=self.use_bias).to(x.device)
-
-        if self.out is None:
-            nnLinear = _safe_import("torch.nn.Linear")
-            self.out = nnLinear(self.dense_units, self.num_classes, bias=self.use_bias).to(x.device)
+            self.fc = nnLinear(x.shape[1], self.dense_units, bias=self.use_bias).to(
+                x.device
+            )
 
         x = self._activation_hidden(self.fc(x))
- 
+
         x = self.out(x)
         if self.activation:
             x = self._activation(x)
+
+        # regression: (n_instances, 1) -> (n_instances,)
         if self.num_classes == 1:
             return x.squeeze(-1)
+
         return x
 
     def _instantiate_activation(self, activation):
