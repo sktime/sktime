@@ -1,6 +1,5 @@
 """Multi Channel Deep Convolutional Neural Regressor (MCDCNN)."""
 
-
 from sktime.networks.mcdcnn import MCDCNNNetworkTorch
 from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
 from sktime.utils.dependencies import _check_dl_dependencies
