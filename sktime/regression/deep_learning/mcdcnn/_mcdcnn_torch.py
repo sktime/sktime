@@ -217,7 +217,10 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {"n_epochs": 1}  # default params with 1 epoch
+        params1 = {
+            "n_epochs": 1,
+            "random_state": 0,
+        }  # default params with 1 epoch
         params2 = {
             "n_epochs": 1,
             "batch_size": 16,
@@ -227,6 +230,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             "dense_units": 10,
             "use_bias": True,
             "activation": None,
+            "random_state": 0,
         }
         params3 = {
             "n_epochs": 2,
@@ -242,6 +246,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             "optim": "Adam",
             "optim_kwargs": {"weight_decay": 0.001},
             "lr": 0.01,
+            "random_state": 0,
         }  # override optimizer
 
         return [params1, params2, params3]

@@ -227,7 +227,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {}
+        params1 = {"random_state": 0}
         params2 = {
             "n_epochs": 1,
             "batch_size": 4,
@@ -240,6 +240,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             "activation_hidden": "logsigmoid",
             "use_bias": True,
             "lr": 0.005,
+            "random_state": 0,
         }
         params3 = {
             "n_epochs": 2,
@@ -255,5 +256,6 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             "optim": "Adam",
             "optim_kwargs": {"weight_decay": 0.001},
             "lr": 0.01,
+            "random_state": 0,
         }
         return [params1, params2, params3]
