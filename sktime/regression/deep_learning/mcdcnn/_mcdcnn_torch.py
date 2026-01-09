@@ -36,6 +36,8 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
     criterion : str, optional (default="MSELoss")
         The name of the loss function to be used during training,
         should be supported by PyTorch.
+    criterion_kwargs : dict or None, optional (default=None)
+        Additional keyword arguments to pass to the loss function.
     activation : str or None, optional (default=None)
         The activation function to apply at the output.
         List of available activation functions:
@@ -46,14 +48,16 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
     use_bias : bool, optional (default=True)
         Whether bias should be included in the output layer.
-    optimizer : str or None or an instance of optimizers defined in torch.optim,
+    optim: str or None or an instance of optimizers defined in torch.optim,
         optional (default=None)
-        The optimizer to use for training the model. If None, SGD is used with
-        learning_rate=0.01, momentum=0.9, weight_decay=0.0005.
+        The optimizer to use for training the model. If left with None, "SGD" is
+        used with momentum=0.9, weight_decay=0.0005.
         List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
-    optimizer_kwargs : dict or None, optional (default=None)
+
+    optim_kwargs : dict or None, optional (default=None)
         Additional keyword arguments to pass to the optimizer.
+        If None, SGD is used with momentum=0.9, weight_decay=0.0005.
     callbacks : None or str or a tuple of str, optional (default=None)
         Currently only learning rate schedulers are supported as callbacks.
         If more than one scheduler is passed, they are applied sequentially in the
@@ -102,11 +106,12 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         conv_padding="same",
         pool_padding="same",
         criterion="MSELoss",
+        criterion_kwargs=None,
         activation=None,
         activation_hidden="relu",
         use_bias=True,
-        optimizer=None,
-        optimizer_kwargs=None,
+        optim=None,
+        optim_kwargs=None,
         callbacks=None,
         callback_kwargs=None,
         lr=0.01,
@@ -124,28 +129,36 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.conv_padding = conv_padding
         self.pool_padding = pool_padding
         self.criterion = criterion
+        self.criterion_kwargs = criterion_kwargs
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
-        self.optimizer = optimizer
-        self.optimizer_kwargs = optimizer_kwargs
+
+        # used to difrentiate between user passed "SGD"
+        # and the default "SGD" with kwargs
+        self.optim = optim
+        self.optim_kwargs = optim_kwargs
+
+        self.optimizer = optim
+        self.optimizer_kwargs = optim_kwargs
+
+        # default case
+        if self.optim is None:
+            self.optimizer = "SGD"
+            if self.optimizer_kwargs is None:
+                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
+
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
 
-        # Set default optimizer to SGD with TF version defaults if not provided
-        if self.optimizer is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
-
         super().__init__(
             num_epochs=self.n_epochs,
             batch_size=self.batch_size,
             criterion=self.criterion,
-            criterion_kwargs=None,
+            criterion_kwargs=self.criterion_kwargs,
             optimizer=self.optimizer,
             optimizer_kwargs=self.optimizer_kwargs,
             callbacks=self.callbacks,
@@ -207,15 +220,31 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {}
+        params1 = {"n_epochs": 1}  # default params with 1 epoch
         params2 = {
             "n_epochs": 1,
-            "batch_size": 2,
-            "kernel_size": 4,
+            "batch_size": 16,
+            "kernel_size": 5,
             "pool_size": 2,
-            "filter_sizes": (4, 4),
+            "filter_sizes": (8, 8),
             "dense_units": 10,
-            "use_bias": False,
+            "use_bias": True,
             "activation": None,
         }
-        return [params1, params2]
+        params3 = {
+            "n_epochs": 2,
+            "batch_size": 2,
+            "kernel_size": 7,
+            "pool_size": 2,
+            "filter_sizes": (8, 8),
+            "dense_units": 1,
+            "conv_padding": "same",
+            "pool_padding": "same",
+            "activation_hidden": "relu",
+            "use_bias": False,
+            "optim": "Adam",
+            "optim_kwargs": {"weight_decay": 0.001},
+            "lr": 0.01,
+        }  # override optimizer
+
+        return [params1, params2, params3]

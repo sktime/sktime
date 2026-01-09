@@ -35,13 +35,15 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         layers.
     pool_padding : str or None, optional (default="same")
         The type of padding to be applied to pooling layers.
-    criterion : str, optional (default="MSELoss")
+    criterion : str, optional (default="CrossEntropyLoss")
         The name of the loss function to be used during training,
         should be supported by PyTorch.
-    activation : str or None, optional (default="sigmoid")
+    activation : str or None, optional (default=None)
         The activation function to apply at the output.
         List of available activation functions:
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
+        When using CrossEntropyLoss (default) as the loss function,
+        the activation function in the output layer must be None.
     activation_hidden : string, default="relu"
         Activation function used in the hidden layers.
         List of available activation functions:
@@ -50,8 +52,8 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         Whether bias should be included in the output layer.
     optimizer : str or None or an instance of optimizers defined in torch.optim,
         optional (default=None)
-        The optimizer to use for training the model. If None, SGD is used with
-        learning_rate=0.01, momentum=0.9, weight_decay=0.0005.
+        The optimizer to use for training the model. If left as None, SGD is used
+        with momentum=0.9, weight_decay=0.0005.
         List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
     optimizer_kwargs : dict or None, optional (default=None)
@@ -107,13 +109,13 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         conv_padding="same",
         pool_padding="same",
         criterion="CrossEntropyLoss",
-        activation="sigmoid",
+        activation=None,
         activation_hidden="relu",
         use_bias=True,
         callbacks=None,
         metrics=None,
-        optimizer=None,
-        optimizer_kwargs=None,
+        optim=None,
+        optim_kwargs=None,
         criterion_kwargs=None,
         callback_kwargs=None,
         lr=0.01,
@@ -136,15 +138,22 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         self.use_bias = use_bias
         self.callbacks = callbacks
         self.metrics = metrics
-        self.optimizer = optimizer
         self.verbose = verbose
         self.random_state = random_state
-        self.optimizer_kwargs = optimizer_kwargs
         self.callback_kwargs = callback_kwargs
         self.lr = lr
         self.criterion_kwargs = criterion_kwargs
-        # Set default optimizer to SGD with TF version defaults if not provided
-        if self.optimizer is None:
+
+        # used to difrentiate between user passed "SGD"
+        # and the default "SGD" with kwargs
+        self.optim = optim
+        self.optim_kwargs = optim_kwargs
+
+        self.optimizer = optim
+        self.optimizer_kwargs = optim_kwargs
+
+        # default case
+        if self.optim is None:
             self.optimizer = "SGD"
             if self.optimizer_kwargs is None:
                 self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
@@ -224,12 +233,30 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         params1 = {}
         params2 = {
             "n_epochs": 1,
-            "batch_size": 2,
-            "kernel_size": 4,
-            "pool_size": 2,
-            "filter_sizes": (4, 4),
-            "dense_units": 10,
-            "use_bias": False,
-            "activation": None,
+            "batch_size": 4,
+            "kernel_size": 3,
+            "pool_size": 3,
+            "filter_sizes": (6, 12),
+            "dense_units": 21,
+            "conv_padding": "valid",
+            "pool_padding": "valid",
+            "activation_hidden": "logsigmoid",
+            "use_bias": True,
+            "lr": 0.005,
         }
-        return [params1, params2]
+        params3 = {
+            "n_epochs": 2,
+            "batch_size": 2,
+            "kernel_size": 7,
+            "pool_size": 2,
+            "filter_sizes": (8, 8),
+            "dense_units": 1,
+            "conv_padding": "same",
+            "pool_padding": "same",
+            "activation_hidden": "relu",
+            "use_bias": False,
+            "optim": "Adam",
+            "optim_kwargs": {"weight_decay": 0.001},
+            "lr": 0.01,
+        }
+        return [params1, params2, params3]
