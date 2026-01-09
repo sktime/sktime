@@ -22,7 +22,6 @@ __author__ = ["fkiraly"]
 import re
 
 from sktime.registry._lookup import all_estimators
-from sktime.registry._lookup_sklearn import _all_sklearn_estimators
 
 
 def _extract_class_names(spec):
@@ -70,10 +69,7 @@ def craft(spec):
     obj : skbase BaseObject descendant, constructed from ``spec``
         this will have the property that ``spec == str(obj)`` (up to formatting)
     """
-    # retrieve all estimators from sktime and sklearn for namespace resolution
-    register_sktime = dict(all_estimators())  # noqa: F841
-    register_sklearn = dict(_all_sklearn_estimators())  # noqa: F841
-    register = {**register_sktime, **register_sklearn}
+    register = dict(all_estimators())  # noqa: F841
 
     try:
         obj = eval(spec, globals(), register)
