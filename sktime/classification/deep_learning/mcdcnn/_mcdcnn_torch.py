@@ -4,7 +4,6 @@ import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.mcdcnn import MCDCNNNetworkTorch
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
@@ -122,8 +121,6 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         verbose=False,
         random_state=0,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.kernel_size = kernel_size

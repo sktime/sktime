@@ -2,7 +2,6 @@
 
 from sktime.networks.mcdcnn import MCDCNNNetworkTorch
 from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
@@ -118,8 +117,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         verbose=False,
         random_state=0,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.kernel_size = kernel_size
