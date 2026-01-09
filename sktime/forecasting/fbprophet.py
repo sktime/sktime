@@ -203,6 +203,13 @@ class Prophet(_ProphetAdapter):
         self._ModelClass = _Prophet
 
     def _instantiate_model(self):
+        # FIX: Robustly access stan_backend using getattr to prevent AttributeError
+        stan_backend = getattr(self, "stan_backend", None)
+
+        kwargs = {}
+        if stan_backend is not None:
+            kwargs["stan_backend"] = stan_backend
+
         self._forecaster = self._ModelClass(
             growth=self.growth,
             changepoints=self.changepoints,
@@ -219,8 +226,13 @@ class Prophet(_ProphetAdapter):
             mcmc_samples=self.mcmc_samples,
             interval_width=1 - self.alpha,
             uncertainty_samples=self.uncertainty_samples,
-            stan_backend=self.stan_backend,
+            **kwargs,
         )
+
+        # FIX: Ensure attribute exists on the inner forecaster object
+        if not hasattr(self._forecaster, "stan_backend"):
+            setattr(self._forecaster, "stan_backend", stan_backend)
+
         return self
 
     @classmethod
@@ -248,3 +260,47 @@ class Prophet(_ProphetAdapter):
             "fit_kwargs": {"seed": 12345},
         }
         return params
+
+    def _get_fitted_params(self):
+        """Get fitted parameters."""
+        import numpy as np
+
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies("prophet", severity="none"):
+            param_names = ["k", "m", "sigma_obs", "delta", "beta"]
+            model_attr = [
+                "growth",
+                "changepoints",
+                "n_changepoints",
+                "seasonality_mode",
+            ]
+            params = {}
+
+            # Explicitly return stan_backend from self to satisfy sktime inspection
+            # Use getattr for robustness
+            params["stan_backend"] = getattr(self, "stan_backend", None)
+
+            # Try to get coefficients from the .params dict if available
+            inner_params = getattr(self._forecaster, "params", {})
+            for name in param_names:
+                if name in inner_params:
+                    val = inner_params[name]
+                    # Convert 1-element arrays to scalars
+                    if isinstance(val, np.ndarray) and val.size == 1:
+                        params[name] = val.item()
+                    else:
+                        params[name] = val
+
+            # Fallback/Add general attributes from the object directly
+            for name in model_attr + param_names:
+                if name not in params:
+                    val = getattr(self._forecaster, name, None)
+                    if val is not None:
+                        if isinstance(val, np.ndarray) and val.size == 1:
+                            params[name] = val.item()
+                        else:
+                            params[name] = val
+            return params
+
+        return {}

@@ -3,6 +3,7 @@
 """Implements a piecewise linear trend forecaster by wrapping fbprophet."""
 
 __author__ = ["sbuse"]
+__all__ = ["ProphetPiecewiseLinearTrendForecaster"]
 
 import pandas as pd
 
@@ -105,6 +106,8 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         yearly_seasonality=False,
         weekly_seasonality=False,
         daily_seasonality=False,
+        # Added stan_backend to init so it can be passed
+        stan_backend=None,
     ):
         self.freq = None
         self.add_seasonality = None
@@ -126,7 +129,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         self.mcmc_samples = 0
         self.alpha = DEFAULT_ALPHA
         self.uncertainty_samples = 1000
-        self.stan_backend = None
+        self.stan_backend = stan_backend
         self.verbose = verbose
 
         super().__init__()
@@ -137,6 +140,13 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         self._ModelClass = _Prophet
 
     def _instantiate_model(self):
+        # FIX: Robustly access stan_backend using getattr
+        stan_backend = getattr(self, "stan_backend", None)
+
+        kwargs = {}
+        if stan_backend is not None:
+            kwargs["stan_backend"] = stan_backend
+
         self._forecaster = self._ModelClass(
             growth=self.growth,
             changepoints=self.changepoints,
@@ -153,8 +163,13 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
             mcmc_samples=self.mcmc_samples,
             interval_width=1 - self.alpha,
             uncertainty_samples=self.uncertainty_samples,
-            stan_backend=self.stan_backend,
+            **kwargs,
         )
+
+        # FIX: Ensure attribute exists
+        if not hasattr(self._forecaster, "stan_backend"):
+            setattr(self._forecaster, "stan_backend", stan_backend)
+
         return self
 
     # _fit is defined in the superclass and is fine as it is.
