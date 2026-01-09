@@ -8,6 +8,7 @@ __author__ = ["mloning", "fkiraly"]
 from functools import reduce
 
 import numpy as np
+import pandas as pd
 import pytest
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 
@@ -453,6 +454,46 @@ def test_gscv_backends(backend_set):
         backend_params=backend_params,
     )
     gscv.fit(y, X)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ForecastingGridSearchCV)
+    or not _check_soft_dependencies("dask", severity="none"),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_gscv_dask_lazy_backend():
+    """Test ForecastingGridSearchCV with dask_lazy backend.
+
+    This test ensures that the dask_lazy backend:
+    1. Completes without error
+    2. Returns cv_results_ as a pandas DataFrame
+    3. Contains expected columns and best parameters
+    """
+    y, X = load_longley()
+
+    gscv = ForecastingGridSearchCV(
+        NAIVE,
+        param_grid=NAIVE_GRID,
+        cv=CVs[0],
+        scoring=TEST_METRICS[0],
+        error_score=ERROR_SCORES[0],
+        backend="dask_lazy",
+        backend_params={"scheduler": "synchronous"},
+    )
+    gscv.fit(y, X)
+
+    # Check that cv_results_ is a pandas DataFrame (not a dask DataFrame)
+    assert isinstance(gscv.cv_results_, pd.DataFrame)
+
+    # Check that expected columns are present
+    scoring_name = f"mean_test_{TEST_METRICS[0].name}"
+    assert scoring_name in gscv.cv_results_.columns
+    assert "params" in gscv.cv_results_.columns
+
+    # Check that best parameters were selected
+    assert hasattr(gscv, "best_params_")
+    assert hasattr(gscv, "best_score_")
+    assert hasattr(gscv, "best_forecaster_")
 
 
 TEST_PARAMS_DICT = PIPE_GRID
