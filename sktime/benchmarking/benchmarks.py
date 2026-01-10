@@ -16,32 +16,44 @@ from sktime.benchmarking._utils import _check_id_format
 from sktime.catalogues.base import BaseCatalogue
 from sktime.registry import scitype
 from sktime.utils.unique_str import _make_strings_unique
+from sklearn.base import BaseEstimator as SklearnBaseEstimator
+from sklearn.base import clone as sklearn_clone
 
 
-def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
-    """Check if estimator is initialised BaseEstimator object."""
+def _is_initialised_estimator(estimator) -> bool:
+    """Check if estimator is a valid initialized estimator.
+
+    Accepts:
+    - sktime BaseEstimator
+    - sklearn BaseEstimator
+    """
     if isinstance(estimator, BaseEstimator):
         return True
+
+    if isinstance(estimator, SklearnBaseEstimator):
+        return True
+
     return False
 
 
-def _check_estimators_type(objs: dict | list | BaseEstimator) -> None:
-    """Check if all estimators are initialised BaseEstimator objects.
+def _check_estimators_type(objs) -> None:
+    """Check if all estimators are valid initialized estimators."""
+    if isinstance(objs, dict):
+        items = objs.values()
+    elif isinstance(objs, list):
+        items = objs
+    else:
+        # single estimator → wrap safely
+        items = [objs]
 
-    Raises
-    ------
-    TypeError
-        If any of the estimators are not BaseEstimator objects.
-    """
-    if isinstance(objs, BaseEstimator):
-        objs = [objs]
-    items = objs.values() if isinstance(objs, dict) else objs
     compatible = all(_is_initialised_estimator(estimator) for estimator in items)
+
     if not compatible:
         raise TypeError(
-            "One or many estimator(s) is not an initialised BaseEstimator "
-            "object(s). Please instantiate the estimator(s) first."
+            "One or many estimator(s) is not a valid initialized estimator. "
+            "Expected sktime or sklearn BaseEstimator instances."
         )
+
 
 
 def _coerce_estimator_and_id(estimators, estimator_id=None):
@@ -293,7 +305,11 @@ class BaseBenchmark:
         estimator_id : str, optional (default=None)
             Identifier for estimator. If none given then uses estimator's class name.
         """
-        estimator = estimator.clone()
+        if hasattr(estimator, "clone"):
+            estimator = estimator.clone()
+        else:
+            estimator = sklearn_clone(estimator)
+
         if estimator_id is None:
             estimator_id = estimator.__class__.__name__
         self.estimators.register(entity_id=estimator_id, entity=estimator)
