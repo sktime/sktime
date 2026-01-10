@@ -73,7 +73,7 @@ def craft(spec):
     # retrieve all estimators from sktime and sklearn for namespace resolution
     register_sktime = dict(all_estimators())  # noqa: F841
     register_sklearn = dict(_all_sklearn_estimators())  # noqa: F841
-    register = {**register_sktime, **register_sklearn}
+    register = {**register_sklearn, **register_sktime}
 
     try:
         obj = eval(spec, globals(), register)
