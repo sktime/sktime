@@ -65,3 +65,57 @@ def test_autots_tags():
     """Test that AutoTS has correct tags."""
     forecaster = AutoTS()
     assert forecaster.get_tag("capability:pred_int") is True
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoTS, severity="none"),
+    reason="autots not available",
+)
+def test_autots_exogenous():
+    """Test that AutoTS can handle exogenous data."""
+    import numpy as np
+    import pandas as pd
+
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    # Create random exogenous data
+    X = pd.DataFrame(
+        np.random.randint(0, 100, size=(len(y), 2)),
+        index=y.index,
+        columns=["ex1", "ex2"],
+    )
+
+    # Configure with FAST settings
+    forecaster = AutoTS(
+        model_list="superfast",
+        max_generations=1,
+        num_validations=0,
+        random_seed=42,
+    )
+
+    # Create future X for prediction
+    fh = [1, 2, 3]
+
+    # Test fit with X
+    forecaster.fit(y, X=X, fh=fh)
+    # Get last index and extend
+    last_idx = y.index[-1]
+    if isinstance(last_idx, pd.Period):
+        future_idx = pd.period_range(start=last_idx + 1, periods=3, freq=y.index.freq)
+    else:
+        future_idx = pd.date_range(start=last_idx, periods=3 + 1, freq=y.index.freq)[1:]
+
+    X_pred = pd.DataFrame(
+        np.random.randint(0, 100, size=(3, 2)),
+        index=future_idx,
+        columns=["ex1", "ex2"],
+    )
+
+    # Test predict with X
+    y_pred = forecaster.predict(fh=fh, X=X_pred)
+    assert len(y_pred) == 3
+
+    # Test predict_interval with X
+    intervals = forecaster.predict_interval(fh=fh, X=X_pred, coverage=0.9)
+    assert len(intervals) == 3
