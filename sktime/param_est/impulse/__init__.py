@@ -6,7 +6,6 @@ VARMAX and other. The main class ImpulseResponseFunction provides shall give
 a unified approach for any time series supported by statsmodels. 
 Supported IRFs according to statsmodels (x marks a check done for sktime, 
 given the estimator exists in the library):
-
 - ARIMA
 - ARMA
 - DynamicFactor
