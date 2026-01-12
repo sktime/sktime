@@ -84,7 +84,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         criterion_kwargs: dict = None,
         optimizer: str | Callable | None = None,
         optimizer_kwargs: dict = None,
-        callbacks: None | Callable | tuple[Callable, ...] = None,
+        callbacks: None | str | tuple[str, ...] = None,
         callback_kwargs: dict | None = None,
         lr: float = 0.001,
         verbose: bool = True,
@@ -115,7 +115,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         # validate activation function w.r.t. criterion specified
         self._validate_activation_criterion()
         # post this function call,
-        # self.validated_criterion and self.validated_activation are used
+        # self._validated_criterion and self._validated_activation are used
         # and self.criterion and self.activation are ignored
 
         # optimizers, criterions, callbacks will be instantiated in
@@ -162,7 +162,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     scheduler.step(epoch_loss)
                 else:
                     scheduler.step()
-        # print loss for the epoch
+        # print loss for the epoch, if verbose is True
         if self.verbose:
             print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
 
@@ -595,6 +595,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         dataloader = self._build_dataloader(X)
         y_pred = []
         torchNo_grad = _safe_import("torch.no_grad")
+        # disable gradient calculation for inference
         with torchNo_grad():
             for inputs in dataloader:
                 y_pred.append(self.network(**inputs).detach())
