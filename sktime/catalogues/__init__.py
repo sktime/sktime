@@ -3,4 +3,4 @@
 from sktime.catalogues.classification import DummyClassificationCatalogue
 from sktime.catalogues.forecasting import DummyForecastingCatalogue
 
-__all__ = [DummyClassificationCatalogue, DummyForecastingCatalogue]
+__all__ = ["DummyClassificationCatalogue", "DummyForecastingCatalogue"]

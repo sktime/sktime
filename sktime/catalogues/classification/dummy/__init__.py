@@ -5,5 +5,5 @@ from sktime.catalogues.classification.dummy._dummy_classification import (
 )
 
 __all__ = [
-    DummyClassificationCatalogue,
+    "DummyClassificationCatalogue",
 ]

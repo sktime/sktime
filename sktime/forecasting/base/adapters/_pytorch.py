@@ -57,6 +57,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         """
         fh = fh.to_relative(self.cutoff)
 
+        self._y_len = len(y)
+
         self.network = self._build_network(list(fh)[-1])
 
         self._criterion = self._instantiate_criterion()
@@ -110,7 +112,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
             # default criterion
             return torch.nn.MSELoss()
 
-    def _predict(self, X=None, fh=None):
+    def _predict(self, fh=None, X=None):
         """Predict with fitted model."""
         from torch import cat
 

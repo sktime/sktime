@@ -184,7 +184,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.40.0 - check why this cannot be easily removed
+                        # todo 0.41.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -192,7 +192,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         #   in the case where there is only one variable
                         if len(yt[ix].columns) == 1:
                             temp = yt[ix].columns
-                            yt[ix].columns = self._y.columns
+                            yt[ix].columns = self._get_varnames()
                         yt[ix] = transformer.inverse_transform(yt[ix], X)
                         if len(yt[ix].columns) == 1:
                             yt[ix].columns = temp
@@ -729,8 +729,8 @@ class ForecastingPipeline(_Pipeline):
                 # we create a zero-column y from the forecasting horizon
                 requires_y = transformer.get_tag("requires_y", False)
                 if isinstance(y, ForecastingHorizon) and requires_y:
-                    y = y.to_absolute_index(self.cutoff)
-                    y = pd.DataFrame(index=y)
+                    y_index = y.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
+                    y = pd.DataFrame(index=y_index)
                 elif isinstance(y, ForecastingHorizon) and not requires_y:
                     y = None
                 # else we just pass on y
