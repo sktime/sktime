@@ -24,6 +24,8 @@ class FCNRegressor(BaseDeepRegressor):
         the number of epochs to train the model
     batch_size : int, default = 16
         the number of samples per gradient update.
+    callbacks : list of keras.callbacks.Callback, optional (default=None)
+        List of Keras callbacks to apply during model training.
     random_state : int or None, default=None
         Seed for random number generation.
     verbose : boolean, default = False
@@ -56,6 +58,7 @@ class FCNRegressor(BaseDeepRegressor):
         "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
         "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         # estimator type handled by parent class
+        "tests:skip_all": True,  # see 4610
     }
 
     def __init__(

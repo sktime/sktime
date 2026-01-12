@@ -58,10 +58,11 @@ def craft(spec):
     spec : str, sktime/skbase compatible object specification
         i.e., a string that executes to construct an object if all imports were present
         imports inferred are of any classes in the scope of ``all_estimators``
-        option 1: a string that evaluates to an estimator
-        option 2: a sequence of assignments in valid python code,
-            with the object to be defined preceded by a "return"
-            assignments can use names of classes as if all imports were present
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
 
     Returns
     -------
@@ -89,7 +90,7 @@ def build_obj():
     return obj
 
 
-def deps(spec):
+def deps(spec, include_test_deps=False):
     """Get PEP 440 dependency requirements for a craft spec.
 
     This will result in a list of PEP 440 compatible requirement string.
@@ -108,6 +109,10 @@ def deps(spec):
         * option 2: a sequence of assignments in valid python code,
           with the object to be defined preceded by a "return".
           assignments can use names of classes as if all imports were present
+
+    include_test_deps : bool, default=False
+        whether to include dependencies tagged as
+        "tests:python_dependencies" in addition to "python_dependencies"
 
     Returns
     -------
@@ -135,18 +140,25 @@ def deps(spec):
                 return dep[0]  # pick first dependency in disjunction
             return dep
 
-        if new_deps is None:
-            new_deps_coerced = []
-        elif isinstance(new_deps, str) and len(new_deps) > 0:
-            new_deps_coerced = [new_deps]
-        elif isinstance(new_deps, str) and len(new_deps) == 0:
-            new_deps_coerced = []
-        elif isinstance(new_deps, list):
-            new_deps_coerced = [_resolve_disjunctions(dep) for dep in new_deps]
-        else:
-            new_deps_coerced = new_deps
+        def _coerce_dep_strs(dep):
+            """Coerce dependency tag value to list of strings."""
+            if dep is None:
+                return []
+            elif isinstance(dep, str) and len(dep) > 0:
+                return [dep]
+            elif isinstance(dep, str) and len(dep) == 0:
+                return []
+            elif isinstance(dep, list):
+                return [_resolve_disjunctions(d) for d in dep]
+            else:
+                return dep
 
-        dep_strs += new_deps_coerced
+        new_deps = cls.get_class_tag("python_dependencies")
+        dep_strs += _coerce_dep_strs(new_deps)
+
+        if include_test_deps:
+            test_deps = cls.get_class_tag("tests:python_dependencies")
+            dep_strs += _coerce_dep_strs(test_deps)
 
         reqs = list(set(dep_strs))
 
@@ -161,10 +173,11 @@ def imports(spec):
     spec : str, sktime/skbase compatible object specification
         i.e., a string that executes to construct an object if all imports were present
         imports inferred are of any classes in the scope of ``all_estimators``
-        option 1: a string that evaluates to an estimator
-        option 2: a sequence of assignments in valid python code,
-            with the object to be defined preceded by a "return"
-            assignments can use names of classes as if all imports were present
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
 
     Returns
     -------
