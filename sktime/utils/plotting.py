@@ -2,7 +2,14 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Common timeseries plotting functionality."""
 
-__all__ = ["plot_series", "plot_correlations", "plot_windows", "plot_calibration", "plot_quantile_intervals", "plot_distribution"]
+__all__ = [
+    "plot_series",
+    "plot_correlations",
+    "plot_windows",
+    "plot_calibration",
+    "plot_quantile_intervals",
+    "plot_distribution",
+]
 __author__ = ["mloning", "RNKuhns", "Dbhasin1", "chillerobscuro", "benheid"]
 
 import math
@@ -384,7 +391,9 @@ def plot_quantile_intervals(ax, quantile_df, color=None):
     return ax
 
 
-def plot_distribution(ax, distribution, n_samples=100, color=None, show_mean=True, show_std_bands=True):
+def plot_distribution(
+    ax, distribution, n_samples=100, color=None, show_mean=True, show_std_bands=True
+):
     """Plot a probability distribution on an existing matplotlib axes.
 
     This function overlays a probability distribution on an existing plot,
@@ -501,7 +510,7 @@ def plot_distribution(ax, distribution, n_samples=100, color=None, show_mean=Tru
     # Last resort: sample from the distribution
     try:
         samples = distribution.sample(n_samples)
-        var_name = samples.columns[0] if hasattr(samples, 'columns') else 0
+        var_name = samples.columns[0] if hasattr(samples, "columns") else 0
 
         index = samples.index
         if hasattr(index, "to_timestamp"):

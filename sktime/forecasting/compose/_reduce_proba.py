@@ -887,8 +887,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             Predictive distribution.
             Returns an Empirical distribution from the MC samples.
         """
-        from skpro.distributions import Empirical
-
         # Check cache first to avoid recomputation
         cached = self._get_cached_pred_dist(fh=fh, X=X)
         if cached is not None:
@@ -913,9 +911,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 self.estimator_.values,
             )
             self.trajectories_ = {None: samples[:, :, 0]}
-            pred_dist = self._build_empirical_distribution(
-                samples, fh_idx, y_cols
-            )
+            pred_dist = self._build_empirical_distribution(samples, fh_idx, y_cols)
             self._cache_pred_dist(pred_dist, fh=fh, X=X)
             return pred_dist
 
@@ -965,14 +961,13 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         y_cols = self._y.columns
 
         # Set random state for reproducibility
-        rng = np.random.default_rng(self.random_state)
+        np.random.default_rng(self.random_state)
 
         fh_rel = fh.to_relative(self.cutoff)
         y_lags_rel = list(fh_rel)
 
         # Get the maximum horizon to fill in gaps
         max_horizon = max(y_lags_rel)
-        y_lags_no_gaps = list(range(1, max_horizon + 1))
         n_horizons = len(y_lags_rel)
 
         lagger_y_to_X = self.lagger_y_to_X_
@@ -1031,7 +1026,9 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         # Get exogenous features for each future time step if available
         fh_abs = fh.to_absolute(self.cutoff)
         X_features_by_step = {}
-        X_fallback = None  # Fallback for static exog features (e.g., instance identifiers)
+        X_fallback = (
+            None  # Fallback for static exog features (e.g., instance identifiers)
+        )
         if X_pool is not None:
             # Create a mapping from relative horizon (1, 2, ...) to absolute time index
             # y_lags_no_gaps contains [1, 2, ..., max_horizon]
@@ -1039,7 +1036,9 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 horizon = step_idx + 1  # 1-based horizon
                 # Get the absolute time for this horizon step
                 # Use ForecastingHorizon to compute the absolute index for this horizon
-                fh_step = ForecastingHorizon([horizon], is_relative=True, freq=self._cutoff)
+                fh_step = ForecastingHorizon(
+                    [horizon], is_relative=True, freq=self._cutoff
+                )
                 fh_step_abs = fh_step.to_absolute_index(self._cutoff)
                 predict_time = fh_step_abs[0]
                 try:
@@ -1049,13 +1048,15 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                     if X_fallback is None:
                         X_fallback = X_features_by_step[step_idx]
                 except (KeyError, IndexError):
-                    # If X not available at this time, use fallback (for static features)
+                    # If X not available at, use fallback (for static features)
                     if X_fallback is not None:
                         X_features_by_step[step_idx] = X_fallback
 
         # Determine the number of lag features vs exog features
         n_lag_features = Xt_initial.shape[1]
-        n_exog_features = len(feature_cols) - n_lag_features if X_pool is not None else 0
+        n_exog_features = (
+            len(feature_cols) - n_lag_features if X_pool is not None else 0
+        )
         n_y_cols = len(y_cols)
 
         # Iterate over horizon steps - batch across all samples
@@ -1082,7 +1083,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
             # Sample from the distribution using native skpro sampling
             sampled_df = pred_dist.sample(n_samples=1)
-            if hasattr(sampled_df, 'values'):
+            if hasattr(sampled_df, "values"):
                 sampled_values = sampled_df.values.flatten()
             else:
                 sampled_values = np.array(sampled_df).flatten()
@@ -1114,7 +1115,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 for inst_idx in range(n_instances):
                     # Get current lag features (after exog features if present)
                     start_idx = n_exog_features
-                    lag_features = sample_features[sample_idx, inst_idx, start_idx:]
 
                     # Shift lags: move each to the next position
                     # lag_0__col0, lag_0__col1, lag_1__col0, lag_1__col1, ...
@@ -1124,9 +1124,11 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                             old_pos = (lag - 1) * n_y_cols + col
                             new_pos = lag * n_y_cols + col
                             if new_pos < n_lag_cols:
-                                sample_features[sample_idx, inst_idx, start_idx + new_pos] = (
-                                    sample_features[sample_idx, inst_idx, start_idx + old_pos]
-                                )
+                                sample_features[
+                                    sample_idx, inst_idx, start_idx + new_pos
+                                ] = sample_features[
+                                    sample_idx, inst_idx, start_idx + old_pos
+                                ]
 
                     # Set lag_0 to the new sampled value
                     for col in range(n_y_cols):
@@ -1182,7 +1184,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                             row_indices.append((inst, time_val))
                         values.append([traj_array[sample_idx, h_idx]])
 
-            # Create MultiIndex with sample as first level, then the instance+time levels
+            # Create MultiIndex with sample as first level, then instance+time levels
             # Get the level names from fh_idx
             fh_names = list(fh_idx.names)
             spl_names = ["sample"] + fh_names
@@ -1233,8 +1235,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         from skpro.distributions import Empirical
 
         n_samples = samples.shape[0]
-        n_horizons = samples.shape[1]
-        n_cols = samples.shape[2]
 
         sample_indices = []
         time_indices = []

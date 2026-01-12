@@ -188,7 +188,7 @@ class BaseProbaForecaster(BaseForecaster):
         dist_class = type(dist_list[0])
 
         # Get the instance indices from the vectorized structure
-        # yvec.get_iter_indices() returns (row_idx, col_idx) where row_idx is a MultiIndex
+        # yvec.get_iter_indices returns (row_idx, col_idx) where row_idx is a MultiIndex
         row_idx, _ = yvec.get_iter_indices()
 
         # Build the combined index
