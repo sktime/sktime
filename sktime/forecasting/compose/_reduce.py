@@ -1160,51 +1160,47 @@ class _DirRecReducer(_Reducer):
         # Build X_full with shape (n_samples, n_vars, window + horizon)
         # For DirRec, we need both lags and future values
         if X is not None:
-            # Extract future X values using custom slicing on the transformed data
-            # We need to redo the sliding window transform to get future X values
-            # Similar to how yt contains future y values
-
-            # Get the internal transformed data to extract future X
-            z = _concat_y_X(y, X)
-            n_timepoints, n_variables = z.shape
-            fh = self.fh.to_relative(self.cutoff)
-            fh_max = fh[-1]
-            effective_window_length = self.window_length_ + fh_max
-
-            # Create sliding window array
-            Zt = np.zeros(
-                (
-                    n_timepoints + effective_window_length,
-                    n_variables,
-                    effective_window_length + 1,
-                )
-            )
-            for k in range(effective_window_length + 1):
-                i = effective_window_length - k
-                j = n_timepoints + effective_window_length - k
-                Zt[i:j, :, k] = z
-
-            # Truncate to match yt/Xt - same as _sliding_window_transform_local
-            # with windows_identical=True
-            Zt = Zt[effective_window_length:-effective_window_length]
-
-            # Extract future X values (channels 1+ in z, which is concat of y and X)
-            # yt is from channel 0, so X starts at channel 1
+            # Extract future X values by using _transform on each X column
+            # This ensures we respect the same windowing/boundary logic as y
             n_exog = X.shape[1]
-            Xt_future = Zt[
-                :, 1 : 1 + n_exog, self.window_length_ : self.window_length_ + len(fh)
-            ]
+            Xt_future_list = []
+
+            # Helper to iterate over X columns
+            if isinstance(X, pd.DataFrame):
+                iterable = [X.iloc[:, k] for k in range(n_exog)]
+            else:
+                # Assuming 2D numpy or similar
+                iterable = [X[:, k] for k in range(n_exog)]
+
+            for col_X in iterable:
+                # Treat this exogenous column as a target 'y' to extract its futures
+                # transform returns (yt, Xt). yt corresponds to the "future" values
+                # relative to the window_length and fh
+                yt_col, _ = self._transform(y=col_X, X=None)
+
+                # yt_col is (n_samples, 1, len(fh)) or (n_samples, len(fh))
+                if yt_col.ndim == 2:
+                    yt_col = np.expand_dims(yt_col, axis=1)
+
+                # Ensure sample count matches Xt (which comes from original transform)
+                # If transform handles boundaries correctly, they should match exactly
+                if yt_col.shape[0] != Xt.shape[0]:
+                    yt_col = yt_col[: Xt.shape[0]]
+
+                Xt_future_list.append(yt_col)
+
+            # Stack the futures along the variable axis (axis 1)
+            # Each element in list is (n_samples, 1, len(fh))
+            Xt_future = np.concatenate(Xt_future_list, axis=1)
             # Shape: (n_samples, n_exog, len(fh))
 
             # yt needs to be reshaped to (n_samples, 1, len(fh))
             if yt.ndim == 2:
                 yt = np.expand_dims(yt, axis=1)
 
-            # Ensure Xt_future and yt have the same number of samples
-            n_samples = min(yt.shape[0], Xt_future.shape[0])
-            yt = yt[:n_samples]
-            Xt_future = Xt_future[:n_samples]
-            Xt = Xt[:n_samples]  # Also truncate Xt to match
+            # Ensure sample count matches Xt
+            if yt.shape[0] != Xt.shape[0]:
+                yt = yt[: Xt.shape[0]]
 
             # Concatenate futures: y_future + X_future
             futures = np.concatenate([yt, Xt_future], axis=1)
@@ -1269,10 +1265,25 @@ class _DirRecReducer(_Reducer):
         else:
             n_vars = 1
 
-        X_full = np.zeros((1, n_vars, window_length + len(self.fh)))
+        # Determine n_samples from y_last
+        # y_last could be (window,) or (n_samples, window) or (vars, window)
+        # _get_last_window behavior:
+        # If single series: (window,) --> expand to (1, window)
+        # If panel/hierarchical: might be (n_samples, window)
+        n_samples = 1
+        if y_last.ndim == 2:
+            n_samples = y_last.shape[0]
+            # If shape is (n_vars, window) because n_vars > 1 and n_samples=1?
+            # DirRec usually treats univariate y, so >1 dim means samples.
+
+        X_full = np.zeros((n_samples, n_vars, window_length + len(self.fh)))
 
         # Fill lagged values
-        X_full[:, 0, :window_length] = y_last
+        if n_samples == 1 and y_last.ndim == 1:
+            X_full[:, 0, :window_length] = y_last
+        else:
+            # Broadcast or direct assign
+            X_full[:, 0, :window_length] = y_last
         if X is not None:
             X_full[:, 1:, :window_length] = X_last.T
 
