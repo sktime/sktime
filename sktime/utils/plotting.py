@@ -302,22 +302,20 @@ def plot_quantile_intervals(ax, quantile_df, color=None):
 
     Examples
     --------
-    >>> import pandas as pd
-    >>> import numpy as np
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.naive import NaiveVariance
-    >>> from sktime.forecasting.theta import ThetaForecaster
-    >>> from sktime.utils.plotting import plot_series, plot_quantiles
+    >>> from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
+    >>> from sktime.utils.plotting import plot_quantile_intervals, plot_series
 
     >>> y = load_airline()
-    >>> forecaster = NaiveVariance(ThetaForecaster(sp=12))
-    >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=range(1, 13))  # doctest: +SKIP
-    >>> y_probas = forecaster.predict_proba(fh=range(1, 13))  # doctest: +SKIP
-    >>> quantile_df = y_probas.quantile([0.1, 0.5, 0.9])  # doctest: +SKIP
+    >>> forecaster = NaiveForecaster(strategy="mean", sp=12, window_length=12)
+    >>> proba_forecaster = NaiveVariance(forecaster)
+    >>> proba_forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = proba_forecaster.predict(fh=range(1, 13))  # doctest: +SKIP
+    >>> y_probas = proba_forecaster.predict_proba(fh=range(1, 13))  # doctest: +SKIP
+    >>> quantile_df = y_probas.quantile([0.01, 0.1, 0.5, 0.9, 0.99])  # doctest: +SKIP
 
     >>> fig, ax = plot_series(y, y_pred, labels=["y", "y_pred"])  # doctest: +SKIP
-    >>> plot_quantiles(ax, quantile_df)  # doctest: +SKIP
+    >>> plot_quantile_intervals(ax, quantile_df)  # doctest: +SKIP
     """
     import numpy as np
 
@@ -425,15 +423,15 @@ def plot_distribution(
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.naive import NaiveVariance
-    >>> from sktime.forecasting.theta import ThetaForecaster
-    >>> from sktime.utils.plotting import plot_series, plot_distribution
+    >>> from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
+    >>> from sktime.utils.plotting import plot_distribution, plot_series
 
     >>> y = load_airline()
-    >>> forecaster = NaiveVariance(ThetaForecaster(sp=12))
-    >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=range(1, 13))  # doctest: +SKIP
-    >>> y_probas = forecaster.predict_proba(fh=range(1, 13))  # doctest: +SKIP
+    >>> forecaster = NaiveForecaster(strategy="mean", sp=12, window_length=12)
+    >>> proba_forecaster = NaiveVariance(forecaster)
+    >>> proba_forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = proba_forecaster.predict(fh=range(1, 13))  # doctest: +SKIP
+    >>> y_probas = proba_forecaster.predict_proba(fh=range(1, 13))  # doctest: +SKIP
 
     >>> fig, ax = plot_series(y, y_pred, labels=["y", "y_pred"])  # doctest: +SKIP
     >>> plot_distribution(ax, y_probas)  # doctest: +SKIP
