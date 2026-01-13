@@ -744,7 +744,7 @@ class _DirectReducer(_Reducer):
                 X_pred[:, 0, :] = y_last
                 if self._X is not None:
                     X_pred[:, 1:, :] = X_last.T
-                
+
             # We need to make sure that X has the same order as used in fit.
             if self._estimator_scitype == "tabular-regressor":
                 X_pred = X_pred.reshape(n_samples, -1)
