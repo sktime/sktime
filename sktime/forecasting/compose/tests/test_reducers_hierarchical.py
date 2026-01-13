@@ -1,11 +1,11 @@
 import pandas as pd
+import pytest
 from sklearn.linear_model import LinearRegression
 
 from sktime.forecasting.base import ForecastingHorizon
-import pytest
 from sktime.forecasting.compose import (
-    DirRecTabularRegressionForecaster,
     DirectTabularRegressionForecaster,
+    DirRecTabularRegressionForecaster,
     RecursiveTabularRegressionForecaster,
 )
 from sktime.utils._testing.hierarchical import _make_hierarchical
