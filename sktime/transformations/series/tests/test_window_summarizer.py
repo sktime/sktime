@@ -378,4 +378,3 @@ def test_windowsummarizer_bfill_respects_multiindex_groups():
         assert pd.isna(group.iloc[2][lag_1_col]), (
             f"Group {name} row 3 lag_1 should be NaN but got {group.iloc[2][lag_1_col]}"
         )
-
