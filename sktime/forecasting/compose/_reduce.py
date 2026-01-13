@@ -725,20 +725,33 @@ class _DirectReducer(_Reducer):
 
             # Pre-allocate arrays.
             window_length = self.window_length_
-            X_pred = np.zeros((1, n_columns, window_length))
+            
+            # Determine n_samples
+            n_samples = 1
+            if y_last.ndim == 2:
+                n_samples = y_last.shape[0]
+
+            X_pred = np.zeros((n_samples, n_columns, window_length))
 
             # Fill pre-allocated arrays with available data.
-            X_pred[:, 0, :] = y_last
+            if n_samples == 1 and y_last.ndim == 1:
+                X_pred[:, 0, :] = y_last
+            else:
+                X_pred[:, 0, :] = y_last
+                
             if self._X is not None:
                 X_pred[:, 1:, :] = X_last.T
 
             # We need to make sure that X has the same order as used in fit.
             if self._estimator_scitype == "tabular-regressor":
-                X_pred = X_pred.reshape(1, -1)
+                X_pred = X_pred.reshape(n_samples, -1)
 
             # Allocate array for predictions.
             if est_type == "regressor":
-                y_pred = np.zeros(len(fh))
+                if n_samples == 1:
+                    y_pred = np.zeros(len(fh))
+                else:
+                    y_pred = np.zeros((len(fh), n_samples))
             else:  # est_type == "regressor_proba"
                 y_preds = []
 
@@ -746,13 +759,25 @@ class _DirectReducer(_Reducer):
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_pred, **kwargs)
                 if est_type == "regressor":
-                    y_pred[i] = y_pred_est[0]
+                    if n_samples == 1:
+                         y_pred[i] = y_pred_est[0]
+                    else:
+                         y_pred[i] = y_pred_est
                 else:  # est_type == "regressor_proba"
                     y_pred_v = _coerce_to_numpy(y_pred_est)
                     y_pred_i = _create_fcst_df([fh[i]], y_pred_est, fill=y_pred_v)
                     y_preds.append(y_pred_i)
 
-            if est_type != "regressor":
+            if est_type == "regressor":
+                 # If n_samples > 1, we might need to handle shape for downstream
+                 # But keeping it simple: returns whatever shape came out.
+                 # The BaseForecaster or _create_fcst_df handles indices.
+                 # For Direct, y_pred is used to create DF/Series next.
+                 if n_samples > 1:
+                     # Flatten appropriately if needed, or rely on downstream
+                     # Usually direct returns vector.
+                     y_pred = y_pred.T.ravel()
+            else:
                 y_pred = pool_preds(y_preds)
 
         # coerce index and columns to expected
@@ -843,16 +868,26 @@ class _MultioutputReducer(_Reducer):
 
         # Pre-allocate arrays.
         window_length = self.window_length_
-        X_pred = np.zeros((1, n_columns, window_length))
+        
+        # Determine n_samples from y_last
+        n_samples = 1
+        if y_last.ndim == 2:
+            n_samples = y_last.shape[0]
+
+        X_pred = np.zeros((n_samples, n_columns, window_length))
 
         # Fill pre-allocated arrays with available data.
-        X_pred[:, 0, :] = y_last
+        if n_samples == 1 and y_last.ndim == 1:
+            X_pred[:, 0, :] = y_last
+        else:
+            X_pred[:, 0, :] = y_last
+
         if self._X is not None:
             X_pred[:, 1:, :] = X_last.T
 
         # We need to make sure that X has the same order as used in fit.
         if self._estimator_scitype == "tabular-regressor":
-            X_pred = X_pred.reshape(1, -1)
+            X_pred = X_pred.reshape(n_samples, -1)
 
         # Iterate over estimators/forecast horizon
         y_pred = self.estimator_.predict(X_pred)
@@ -1044,13 +1079,23 @@ class _RecursiveReducer(_Reducer):
             window_length = self.window_length_
             fh_max = fh.to_relative(self.cutoff)[-1]
 
-            y_pred = np.zeros(fh_max)
+            # Determine n_samples
+            n_samples = 1
+            if y_last.ndim == 2:
+                n_samples = y_last.shape[0]
 
-            # Array with input data for prediction.
-            last = np.zeros((1, n_columns, window_length + fh_max))
+            if n_samples == 1:
+                y_pred = np.zeros(fh_max)
+                last = np.zeros((1, n_columns, window_length + fh_max))
+            else:
+                y_pred = np.zeros((fh_max, n_samples))
+                last = np.zeros((n_samples, n_columns, window_length + fh_max))
 
             # Fill pre-allocated arrays with available data.
-            last[:, 0, :window_length] = y_last
+            if n_samples == 1 and y_last.ndim == 1:
+                last[:, 0, :window_length] = y_last
+            else:
+                last[:, 0, :window_length] = y_last
             if X is not None:
                 X_to_use = np.concatenate(
                     [X_last.T, X.iloc[-(last.shape[2] - window_length) :, :].T], axis=1
@@ -1074,10 +1119,17 @@ class _RecursiveReducer(_Reducer):
 
                 # Reshape data into tabular array.
                 if self._estimator_scitype == "tabular-regressor":
-                    X_pred = X_pred.reshape(1, -1)
+                    X_pred = X_pred.reshape(n_samples, -1)
 
                 # Generate predictions.
-                y_pred[i] = self.estimator_.predict(X_pred)[0]
+                y_pred_est = self.estimator_.predict(X_pred)
+                
+                if n_samples == 1:
+                    y_pred[i] = y_pred_est[0]
+                    last[:, 0, window_length + i] = y_pred[i]
+                else:
+                    y_pred[i] = y_pred_est
+                    last[:, 0, window_length + i] = y_pred[i]
 
                 # Update last window with previous prediction.
                 last[:, 0, window_length + i] = y_pred[i]

@@ -2,11 +2,20 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.compose import DirRecTabularRegressionForecaster
+import pytest
+from sktime.forecasting.compose import (
+    DirRecTabularRegressionForecaster,
+    DirectTabularRegressionForecaster,
+    RecursiveTabularRegressionForecaster,
+)
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
-
-def test_dirrec_hierarchical_exogenous_repro():
+@pytest.mark.parametrize("forecaster_cls", [
+    DirRecTabularRegressionForecaster,
+    DirectTabularRegressionForecaster,
+    RecursiveTabularRegressionForecaster,
+])
+def test_reducer_hierarchical_exogenous_repro(forecaster_cls):
     # Create Hierarchical Data (2 levels, 2 nodes each = 4 instances)
     y = _make_hierarchical(
         hierarchy_levels=(2, 2),
@@ -38,7 +47,7 @@ def test_dirrec_hierarchical_exogenous_repro():
     # Predict 1,2,3 -> indices 15, 16, 17.
     X_test = X.groupby(level=[0, 1]).nth([15, 16, 17])
 
-    forecaster = DirRecTabularRegressionForecaster(
+    forecaster = forecaster_cls(
         estimator=LinearRegression(), window_length=5
     )
 
