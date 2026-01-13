@@ -1105,7 +1105,7 @@ class _DirRecReducer(_Reducer):
     strategy = "dirrec"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        "capability:exogenous": False,
+        "capability:exogenous": True,
     }
 
     def _transform(self, y, X=None):
@@ -1137,10 +1137,6 @@ class _DirRecReducer(_Reducer):
         self : Estimator
             An fitted instance of self.
         """
-        # todo: logic for X below is broken. Escape X until fixed.
-        if X is not None:
-            X = None
-
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)
         )
@@ -1150,13 +1146,78 @@ class _DirRecReducer(_Reducer):
 
         # We cast the 2d tabular array into a 3d panel array to handle the data
         # consistently for the reduction to tabular and time-series regression.
-        if self._estimator_scitype == "tabular-regressor":
-            Xt = np.expand_dims(Xt, axis=1)
+        if self._estimator_scitype == "tabular-regressor" and Xt.ndim == 2:
+            if X is not None:
+                # Xt was flattened to 2D by _sliding_window_transform
+                # Reshape to (samples, n_vars, window) where n_vars = 1 + n_exog
+                n_exog = X.shape[1]
+                n_vars = 1 + n_exog
+                Xt = Xt.reshape(Xt.shape[0], n_vars, self.window_length_)
+            else:
+                # No X, just expand dims to add channel dimension
+                Xt = np.expand_dims(Xt, axis=1)
 
-        # This only works without exogenous variables. To support exogenous
-        # variables, we need additional values for X to fill the array
-        # appropriately.
-        X_full = np.concatenate([Xt, np.expand_dims(yt, axis=1)], axis=2)
+        # Build X_full with shape (n_samples, n_vars, window + horizon)
+        # For DirRec, we need both lags and future values
+        if X is not None:
+            # Extract future X values using custom slicing on the transformed data
+            # We need to redo the sliding window transform to get future X values
+            # Similar to how yt contains future y values
+
+            # Get the internal transformed data to extract future X
+            z = _concat_y_X(y, X)
+            n_timepoints, n_variables = z.shape
+            fh = self.fh.to_relative(self.cutoff)
+            fh_max = fh[-1]
+            effective_window_length = self.window_length_ + fh_max
+
+            # Create sliding window array
+            Zt = np.zeros(
+                (
+                    n_timepoints + effective_window_length,
+                    n_variables,
+                    effective_window_length + 1,
+                )
+            )
+            for k in range(effective_window_length + 1):
+                i = effective_window_length - k
+                j = n_timepoints + effective_window_length - k
+                Zt[i:j, :, k] = z
+
+            # Truncate to match yt/Xt - same as _sliding_window_transform_local
+            # with windows_identical=True
+            Zt = Zt[effective_window_length:-effective_window_length]
+
+            # Extract future X values (channels 1+ in z, which is concat of y and X)
+            # yt is from channel 0, so X starts at channel 1
+            n_exog = X.shape[1]
+            Xt_future = Zt[
+                :, 1 : 1 + n_exog, self.window_length_ : self.window_length_ + len(fh)
+            ]
+            # Shape: (n_samples, n_exog, len(fh))
+
+            # yt needs to be reshaped to (n_samples, 1, len(fh))
+            if yt.ndim == 2:
+                yt = np.expand_dims(yt, axis=1)
+
+            # Ensure Xt_future and yt have the same number of samples
+            n_samples = min(yt.shape[0], Xt_future.shape[0])
+            yt = yt[:n_samples]
+            Xt_future = Xt_future[:n_samples]
+            Xt = Xt[:n_samples]  # Also truncate Xt to match
+
+            # Concatenate futures: y_future + X_future
+            futures = np.concatenate([yt, Xt_future], axis=1)
+            # Shape: (n_samples, 1+n_exog, len(fh))
+
+            # Concatenate lags and futures along time axis
+            X_full = np.concatenate([Xt, futures], axis=2)
+            # Shape: (n_samples, 1+n_exog, window+horizon)
+        else:
+            # Original logic: only y, no X
+            if yt.ndim == 2:
+                yt = np.expand_dims(yt, axis=1)
+            X_full = np.concatenate([Xt, yt], axis=2)
 
         self.estimators_ = []
         n_timepoints = Xt.shape[2]
@@ -1167,11 +1228,16 @@ class _DirRecReducer(_Reducer):
             # Slice data using expanding window.
             X_fit = X_full[:, :, : n_timepoints + i]
 
-            # Convert to 2d tabular array for reduction to tabular regression.
             if self._estimator_scitype == "tabular-regressor":
                 X_fit = X_fit.reshape(X_fit.shape[0], -1)
 
-            estimator.fit(X_fit, yt[:, i])
+            # Extract target for this horizon step
+            if yt.ndim == 3:
+                y_target = yt[:, 0, i]  # (n_samples,) from (n_samples, 1, horizon)
+            else:
+                y_target = yt[:, i]  # Fallback for 2D yt
+
+            estimator.fit(X_fit, y_target)
             self.estimators_.append(estimator)
         return self
 
@@ -1189,11 +1255,6 @@ class _DirRecReducer(_Reducer):
         -------
         y_pred = pd.Series or pd.DataFrame
         """
-        # Exogenous variables are not yet support for the dirrec strategy.
-        # todo: implement this. For now, we escape.
-        if X is not None:
-            X = None
-
         # Get last window of available data.
         y_last, X_last = self._get_last_window()
         if not self._is_predictable(y_last):
@@ -1202,11 +1263,23 @@ class _DirRecReducer(_Reducer):
         window_length = self.window_length_
 
         # Pre-allocated arrays.
-        # We set `n_columns` here to 1, because exogenous variables
-        # are not yet supported.
-        n_columns = 1
-        X_full = np.zeros((1, n_columns, window_length + len(self.fh)))
+        if X is not None:
+            n_exog = X.shape[1]
+            n_vars = 1 + n_exog
+        else:
+            n_vars = 1
+
+        X_full = np.zeros((1, n_vars, window_length + len(self.fh)))
+
+        # Fill lagged values
         X_full[:, 0, :window_length] = y_last
+        if X is not None:
+            X_full[:, 1:, :window_length] = X_last.T
+
+            # Fill future X values
+            # X passed to predict should have shape (len(fh), n_exog)
+            X_values = X.values if hasattr(X, "values") else X
+            X_full[:, 1:, window_length:] = X_values.T
 
         y_pred = np.zeros(len(fh))
 
@@ -1219,8 +1292,8 @@ class _DirRecReducer(_Reducer):
 
             y_pred[i] = self.estimators_[i].predict(X_pred)[0]
 
-            # Update the last window with previously predicted value.
-            X_full[:, :, window_length + i] = y_pred[i]
+            # Update the last window with previously predicted value (only y channel)
+            X_full[:, 0, window_length + i] = y_pred[i]
 
         return y_pred
 
