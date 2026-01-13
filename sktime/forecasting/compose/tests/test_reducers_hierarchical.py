@@ -10,11 +10,15 @@ from sktime.forecasting.compose import (
 )
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
-@pytest.mark.parametrize("forecaster_cls", [
-    DirRecTabularRegressionForecaster,
-    DirectTabularRegressionForecaster,
-    RecursiveTabularRegressionForecaster,
-])
+
+@pytest.mark.parametrize(
+    "forecaster_cls",
+    [
+        DirRecTabularRegressionForecaster,
+        DirectTabularRegressionForecaster,
+        RecursiveTabularRegressionForecaster,
+    ],
+)
 def test_reducer_hierarchical_exogenous_repro(forecaster_cls):
     # Create Hierarchical Data (2 levels, 2 nodes each = 4 instances)
     y = _make_hierarchical(
@@ -47,9 +51,7 @@ def test_reducer_hierarchical_exogenous_repro(forecaster_cls):
     # Predict 1,2,3 -> indices 15, 16, 17.
     X_test = X.groupby(level=[0, 1]).nth([15, 16, 17])
 
-    forecaster = forecaster_cls(
-        estimator=LinearRegression(), window_length=5
-    )
+    forecaster = forecaster_cls(estimator=LinearRegression(), window_length=5)
 
     # FIT
     forecaster.fit(y_train, X=X_train, fh=fh)

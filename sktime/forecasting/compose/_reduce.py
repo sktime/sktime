@@ -725,7 +725,7 @@ class _DirectReducer(_Reducer):
 
             # Pre-allocate arrays.
             window_length = self.window_length_
-            
+
             # Determine n_samples
             n_samples = 1
             if y_last.ndim == 2:
@@ -738,7 +738,7 @@ class _DirectReducer(_Reducer):
                 X_pred[:, 0, :] = y_last
             else:
                 X_pred[:, 0, :] = y_last
-                
+
             if self._X is not None:
                 X_pred[:, 1:, :] = X_last.T
 
@@ -760,23 +760,23 @@ class _DirectReducer(_Reducer):
                 y_pred_est = getattr(estimator, method)(X_pred, **kwargs)
                 if est_type == "regressor":
                     if n_samples == 1:
-                         y_pred[i] = y_pred_est[0]
+                        y_pred[i] = y_pred_est[0]
                     else:
-                         y_pred[i] = y_pred_est
+                        y_pred[i] = y_pred_est
                 else:  # est_type == "regressor_proba"
                     y_pred_v = _coerce_to_numpy(y_pred_est)
                     y_pred_i = _create_fcst_df([fh[i]], y_pred_est, fill=y_pred_v)
                     y_preds.append(y_pred_i)
 
             if est_type == "regressor":
-                 # If n_samples > 1, we might need to handle shape for downstream
-                 # But keeping it simple: returns whatever shape came out.
-                 # The BaseForecaster or _create_fcst_df handles indices.
-                 # For Direct, y_pred is used to create DF/Series next.
-                 if n_samples > 1:
-                     # Flatten appropriately if needed, or rely on downstream
-                     # Usually direct returns vector.
-                     y_pred = y_pred.T.ravel()
+                # If n_samples > 1, we might need to handle shape for downstream
+                # But keeping it simple: returns whatever shape came out.
+                # The BaseForecaster or _create_fcst_df handles indices.
+                # For Direct, y_pred is used to create DF/Series next.
+                if n_samples > 1:
+                    # Flatten appropriately if needed, or rely on downstream
+                    # Usually direct returns vector.
+                    y_pred = y_pred.T.ravel()
             else:
                 y_pred = pool_preds(y_preds)
 
@@ -868,7 +868,7 @@ class _MultioutputReducer(_Reducer):
 
         # Pre-allocate arrays.
         window_length = self.window_length_
-        
+
         # Determine n_samples from y_last
         n_samples = 1
         if y_last.ndim == 2:
@@ -1123,7 +1123,7 @@ class _RecursiveReducer(_Reducer):
 
                 # Generate predictions.
                 y_pred_est = self.estimator_.predict(X_pred)
-                
+
                 if n_samples == 1:
                     y_pred[i] = y_pred_est[0]
                     last[:, 0, window_length + i] = y_pred[i]
