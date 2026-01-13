@@ -734,14 +734,17 @@ class _DirectReducer(_Reducer):
             X_pred = np.zeros((n_samples, n_columns, window_length))
 
             # Fill pre-allocated arrays with available data.
-            if n_samples == 1 and y_last.ndim == 1:
-                X_pred[:, 0, :] = y_last
+            # Explicitly split logic to preserve original behavior for scalar case
+            if n_samples == 1:
+                X_pred[0, 0, :] = y_last
+                if self._X is not None:
+                    X_pred[0, 1:, :] = X_last.T
             else:
+                # Hierarchical/Panel case
                 X_pred[:, 0, :] = y_last
-
-            if self._X is not None:
-                X_pred[:, 1:, :] = X_last.T
-
+                if self._X is not None:
+                    X_pred[:, 1:, :] = X_last.T
+                
             # We need to make sure that X has the same order as used in fit.
             if self._estimator_scitype == "tabular-regressor":
                 X_pred = X_pred.reshape(n_samples, -1)
@@ -1092,8 +1095,8 @@ class _RecursiveReducer(_Reducer):
                 last = np.zeros((n_samples, n_columns, window_length + fh_max))
 
             # Fill pre-allocated arrays with available data.
-            if n_samples == 1 and y_last.ndim == 1:
-                last[:, 0, :window_length] = y_last
+            if n_samples == 1:
+                last[0, 0, :window_length] = y_last
             else:
                 last[:, 0, :window_length] = y_last
             if X is not None:
@@ -3205,7 +3208,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
 
         X_pool = prep_skl_df(X_pool, copy_df=True)
 
-        X_idx = X_pool.loc[fh_idx]
+        X_idx = X_pool.reindex(fh_idx).fillna(0)
         return X_idx
 
     @classmethod
