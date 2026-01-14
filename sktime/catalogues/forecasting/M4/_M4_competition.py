@@ -23,11 +23,11 @@ class M4CompetitionCatalogue(BaseCatalogue):
         "maintainers": "jgyasu",
         "object_type": "catalogue",
         "catalogue_type": "mixed",
-        "n_items": 19,
+        "n_items": 18,
         "n_datasets": 6,
         "n_forecasters": 11,
         "n_metrics": 1,
-        "n_cv_splitters": 1,
+        "n_cv_splitters": 0,
     }
 
     def _get(self):
@@ -60,7 +60,7 @@ class M4CompetitionCatalogue(BaseCatalogue):
             ")",  # Comb
         ]
 
-        metrics = [...]  # Overall Weighted Average (OWA)
+        metrics = ["OverallWeightedAverage()"]
 
         cv_splitters = [...]
 
