@@ -101,6 +101,6 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {"sp": None}
-        params2 = {"sp": 2}
+        params1 = {}
+        params2 = {"sp": None}
         return [params1, params2]
