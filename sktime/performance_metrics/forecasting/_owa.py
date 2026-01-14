@@ -46,6 +46,7 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
     >>> y_pred_benchmark = np.array([105, 100, 110, 105])
     >>> metric = OverallWeightedAverage(sp=2)
     >>> metric(y_true, y_pred, y_pred_benchmark=y_pred_benchmark, y_train=y_train)
+    np.float64(0.22826157321109153)
     """
 
     _tags = {
