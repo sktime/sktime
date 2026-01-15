@@ -10,8 +10,15 @@ from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.rnn import RNNNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
 
+# TODO (release 0.41.0)
+# change the default value of 'activation_hidden' to "tanh"
+# update the docstring for activation_hidden from "linear" to "tanh"
+# and remove the note about the change from the docstring.
+# Remove the usage of self._activation_hidden throughout the class
+# and replace it with self.activation_hidden
 class SimpleRNNClassifier(BaseDeepClassifier):
     """Simple recurrent neural network.
 
@@ -42,10 +49,14 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     activation_hidden : string or a tf callable, default="linear"
         Activation function used in the hidden layers.
         List of available activation functions: https://keras.io/api/layers/activations/
+        Default value of activation_hidden will change to "tanh"
+        in version '0.41.0'.
     use_bias : boolean, default = True
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = RMSprop(lr=0.001)
         specify the optimizer and the learning rate to be used.
+    dropout : float, default=0.0
+        The dropout rate for the RNN layer.
 
     References
     ----------
@@ -71,6 +82,8 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         # estimator type handled by parent class
     }
 
+    # TODO (release 0.41.0)
+    # Change the default value of 'activation_hidden' to "tanh"
     def __init__(
         self,
         n_epochs=100,
@@ -83,9 +96,10 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         loss="mean_squared_error",
         metrics=None,
         activation="sigmoid",
-        activation_hidden="linear",
+        activation_hidden="changing_from_linear_to_tanh_in_0.41.0",
         use_bias=True,
         optimizer=None,
+        dropout=0.0,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -100,16 +114,41 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self.metrics = metrics
         self.activation = activation
         self.activation_hidden = activation_hidden
+        # TODO (release 0.41.0)
+        # After changing the default value of 'activation_hidden' to "tanh"
+        # in the __init__ method signature,
+        # remove the following 'if-else' check.
+        # Remove the usage of self._activation_hidden throughout the class
+        # and replace it with self.activation_hidden
+        if activation_hidden == "changing_from_linear_to_tanh_in_0.41.0":
+            warn(
+                "in `SimpleRNNClassifier`, the default value of parameter "
+                "'activation_hidden' will change to 'tanh' in version '0.41.0'. "
+                "To keep current behaviour and to silence this warning, "
+                "set 'activation_hidden' to 'linear' explicitly.",
+                category=DeprecationWarning,
+                obj=self,
+            )
+            self._activation_hidden = "linear"
+        else:
+            self._activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
+        self.dropout = dropout
 
         super().__init__()
 
+        # TODO (release 0.41.0)
+        # After changing the default value of 'activation_hidden' to "tanh"
+        # in the __init__ method signature,
+        # remove the usage of self._activation_hidden in the following lines
+        # and replace it with self.activation_hidden
         self.history = None
         self._network = RNNNetwork(
-            activation=self.activation_hidden,
+            activation=self._activation_hidden,
             random_state=random_state,
             units=units,
+            dropout=self.dropout,
         )
 
     def build_model(self, input_shape, n_classes, **kwargs):
@@ -254,5 +293,6 @@ class SimpleRNNClassifier(BaseDeepClassifier):
             "batch_size": 2,
             "units": 5,
             "use_bias": False,
+            "dropout": 0.1,
         }
         return [params1, params2]
