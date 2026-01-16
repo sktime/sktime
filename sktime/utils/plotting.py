@@ -2,12 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Common timeseries plotting functionality."""
 
-__all__ = [
-    "plot_series",
-    "plot_correlations",
-    "plot_windows",
-    "plot_calibration",
-]
+__all__ = ["plot_series", "plot_correlations", "plot_windows", "plot_calibration"]
 __author__ = ["mloning", "RNKuhns", "Dbhasin1", "chillerobscuro", "benheid"]
 
 import math
@@ -262,8 +257,6 @@ def plot_interval(ax, interval_df):
         )
     ax.legend()
     return ax
-
-
 
 
 def plot_lags(series, lags=1, suptitle=None):
