@@ -154,13 +154,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         self._lags = list(range(window_length))
         super().__init__()
 
-        # Initialize cache attributes for avoiding duplicate computation
-        self._cached_pred_dist_ = None
-        self._cached_fh_key_ = None
-        self._cached_X_key_ = None
-        # Public attribute for user access to MC trajectories
-        self.trajectories_ = None
-
         # Detect if estimator is a probabilistic regressor (skpro)
         if hasattr(estimator, "get_tags"):
             _est_type = estimator.get_tag("object_type", "regressor", False)
@@ -218,8 +211,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         impute_method = self.impute_method
         lags = self._lags
 
-        # Create the lagger for transforming y into features
-        # Using Lag directly like RecursiveReductionForecaster
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
 
         if impute_method is not None:
@@ -233,16 +224,14 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
         self.lagger_y_to_X_ = lagger_y_to_X
 
-        # Fit the lagger and transform y to get features
         Xt = lagger_y_to_X.fit_transform(y)
 
-        # Create lag by 1 step to align features with targets
+        # Shift by 1 to align features at time t with target at time t+1
         lag_plus = Lag(lags=1, index_out="extend")
         Xtt = lag_plus.fit_transform(Xt)
         Xtt_notna_idx = _get_notna_idx(Xtt)
         notna_idx = Xtt_notna_idx.intersection(y.index)
 
-        # Check if we have valid training data
         if len(notna_idx) == 0:
             self.estimator_ = y.mean()
             return self
@@ -250,14 +239,12 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         yt = y.loc[notna_idx]
         Xtt = Xtt.loc[notna_idx]
 
-        # Add exogeneous features if provided
         if X is not None:
             Xtt = pd.concat([X.loc[notna_idx], Xtt], axis=1)
 
         Xtt = prep_skl_df(Xtt)
         yt = prep_skl_df(yt)
 
-        # Clone and fit the estimator
         estimator = clone(self.estimator)
         estimator.fit(Xtt, yt)
         self.estimator_ = estimator
@@ -290,10 +277,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     def _predict_proba(self, fh, X, marginal=True):
         """Compute probabilistic forecasts using Monte Carlo ancestral sampling.
 
-        This method follows the pattern of RecursiveReductionForecaster._predict,
-        using sktime transformers for feature creation and handling hierarchical
-        indices properly.
-
         Parameters
         ----------
         fh : ForecastingHorizon
@@ -309,12 +292,10 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             Predictive distribution.
             Returns an Empirical distribution from the MC samples.
         """
-        # Check cache first to avoid recomputation
         cached = self._get_cached_pred_dist(fh=fh, X=X)
         if cached is not None:
             return cached
 
-        # Pool exogeneous data
         if X is not None and self._X is not None:
             X_pool = X.combine_first(self._X)
         elif X is None and self._X is not None:
@@ -325,7 +306,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
 
-        # Handle case where estimator is just mean (no valid training data)
+        # Fallback for edge case: no valid training data
         if isinstance(self.estimator_, pd.Series):
             n_horizons = len(fh_idx)
             samples = np.full(
@@ -337,29 +318,20 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             self._cache_pred_dist(pred_dist, fh=fh, X=X)
             return pred_dist
 
-        # Generate MC trajectories using sktime-native recursive prediction
         all_trajectories, fh_time_idx = self._generate_mc_trajectories_native(
             fh, X_pool
         )
-
-        # Store trajectories for user access
         self.trajectories_ = all_trajectories
 
-        # Build Empirical distribution from trajectories
         pred_dist = self._build_empirical_from_trajectories(
             all_trajectories, fh_idx, fh_time_idx, y_cols
         )
-
-        # Cache the result
         self._cache_pred_dist(pred_dist, fh=fh, X=X)
 
         return pred_dist
 
     def _generate_mc_trajectories_native(self, fh, X_pool):
-        """Generate MC trajectories using sktime-native pattern.
-
-        Follows the recursive prediction pattern from RecursiveReductionForecaster,
-        properly handling hierarchical indices and using sktime transformers.
+        """Generate MC trajectories for recursive probabilistic prediction.
 
         Parameters
         ----------
@@ -382,41 +354,29 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         n_samples = self.n_samples
         y_cols = self._y.columns
 
-        # Set random state for reproducibility
-        # Note: We use np.random.seed for compatibility with skpro's sample()
-        if self.random_state is not None:
-            np.random.seed(self.random_state)
+        rng = np.random.default_rng(self.random_state)
 
         fh_rel = fh.to_relative(self.cutoff)
         y_lags_rel = list(fh_rel)
-
-        # Get the maximum horizon to fill in gaps
         max_horizon = max(y_lags_rel)
         n_horizons = len(y_lags_rel)
 
         lagger_y_to_X = self.lagger_y_to_X_
         estimator = self.estimator_
 
-        # Determine if we have hierarchical data
         y_index = self._y.index
         is_hierarchical = isinstance(y_index, pd.MultiIndex)
 
         if is_hierarchical:
-            # Get unique instance identifiers (all levels except time)
             instance_idx = y_index.droplevel(-1).unique()
         else:
             instance_idx = [None]
 
-        # Initialize trajectories storage
-        trajectories = {}
-        for inst in instance_idx:
-            trajectories[inst] = np.zeros((n_samples, n_horizons))
+        trajectories = {
+            inst: np.zeros((n_samples, n_horizons)) for inst in instance_idx
+        }
 
-        # Optimized batched trajectory generation
-        # Instead of looping over samples, we batch all samples together
-        # at each horizon step, using numpy arrays for efficiency
-
-        # Extract feature column structure from a single transformer application
+        # Build initial feature template from lagged data
         Xt_initial = lagger_y_to_X.transform(self._y)
         lag_plus_init = Lag(lags=1, index_out="extend")
         if isinstance(self.impute_method, str):
@@ -426,11 +386,9 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         Xtt_initial = lag_plus_init.fit_transform(Xt_initial)
         y_plus_one_init = lag_plus_init.fit_transform(self._y)
 
-        # Get the prediction time index for first step
         first_predict_idx = y_plus_one_init.iloc[[-1]].index.get_level_values(-1)[0]
         Xtt_template = _slice_at_ix(Xtt_initial, first_predict_idx)
 
-        # Add exogeneous features structure if available
         if X_pool is not None:
             try:
                 X_at_idx = _slice_at_ix(X_pool, first_predict_idx)
@@ -441,25 +399,17 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         feature_cols = Xtt_template.columns.tolist()
         n_instances = len(Xtt_template) if is_hierarchical else 1
 
-        # Initialize sample windows with the feature values from the last time step
-        # Shape: (n_samples, n_instances, n_features)
+        # Initialize feature arrays: shape (n_samples, n_instances, n_features)
         initial_features = prep_skl_df(Xtt_template).values
         sample_features = np.tile(initial_features, (n_samples, 1, 1))
-        # sample_features shape: (n_samples, n_instances, n_features)
 
-        # Get exogenous features for each future time step if available
+        # Precompute exogenous features for each horizon step
         fh_abs = fh.to_absolute(self.cutoff)
         X_features_by_step = {}
-        X_fallback = (
-            None  # Fallback for static exog features (e.g., instance identifiers)
-        )
+        X_fallback = None
         if X_pool is not None:
-            # Create a mapping from relative horizon (1, 2, ...) to absolute time index
-            # y_lags_no_gaps contains [1, 2, ..., max_horizon]
             for step_idx in range(max_horizon):
-                horizon = step_idx + 1  # 1-based horizon
-                # Get the absolute time for this horizon step
-                # Use ForecastingHorizon to compute the absolute index for this horizon
+                horizon = step_idx + 1
                 fh_step = ForecastingHorizon(
                     [horizon], is_relative=True, freq=self._cutoff
                 )
@@ -468,97 +418,74 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 try:
                     X_at_idx = _slice_at_ix(X_pool, predict_time)
                     X_features_by_step[step_idx] = prep_skl_df(X_at_idx).values
-                    # Store first successful X as fallback for static features
                     if X_fallback is None:
                         X_fallback = X_features_by_step[step_idx]
                 except (KeyError, IndexError):
-                    # If X not available at, use fallback (for static features)
                     if X_fallback is not None:
                         X_features_by_step[step_idx] = X_fallback
 
-        # Determine the number of lag features vs exog features
         n_lag_features = Xt_initial.shape[1]
         n_exog_features = (
             len(feature_cols) - n_lag_features if X_pool is not None else 0
         )
         n_y_cols = len(y_cols)
 
-        # Iterate over horizon steps - batch across all samples
         for step_idx in range(max_horizon):
-            # Build feature matrix for ALL samples and instances at once
-            # Shape: (n_samples * n_instances, n_features)
             batch_features = sample_features.reshape(n_samples * n_instances, -1)
 
-            # Update exogenous features if available for this step
             if step_idx in X_features_by_step:
                 X_vals = X_features_by_step[step_idx]
-                # Tile for all samples
                 X_batch = np.tile(X_vals, (n_samples, 1))
-                # Replace the exogenous columns
                 if n_exog_features > 0:
                     batch_features[:, :n_exog_features] = X_batch
 
-            # Create DataFrame with proper column names
             Xt_batch = pd.DataFrame(batch_features, columns=feature_cols)
             Xt_batch = prep_skl_df(Xt_batch)
 
-            # Get probabilistic prediction for ALL samples and instances at once
             pred_dist = estimator.predict_proba(Xt_batch)
 
-            # Sample from the distribution using native skpro sampling
+            # Seed per-step for reproducibility (skpro uses global random state)
+            if self.random_state is not None:
+                sample_seed = rng.integers(0, 2**31)
+                np.random.seed(sample_seed)
             sampled_df = pred_dist.sample(n_samples=1)
-            if hasattr(sampled_df, "values"):
-                sampled_values = sampled_df.values.flatten()
-            else:
-                sampled_values = np.array(sampled_df).flatten()
-
-            # Reshape to (n_samples, n_instances, n_y_cols)
+            sampled_values = (
+                sampled_df.values.flatten()
+                if hasattr(sampled_df, "values")
+                else np.array(sampled_df).flatten()
+            )
             sampled_values = sampled_values.reshape(n_samples, n_instances, n_y_cols)
 
-            # Store if this horizon is in our requested fh
+            # Store trajectory values for requested horizons
             horizon = step_idx + 1
             if horizon in y_lags_rel:
                 traj_idx = y_lags_rel.index(horizon)
                 if is_hierarchical:
                     for inst_num, inst in enumerate(instance_idx):
-                        # Store all samples for this instance at this horizon
                         trajectories[inst][:, traj_idx] = sampled_values[:, inst_num, 0]
                 else:
                     trajectories[None][:, traj_idx] = sampled_values[:, 0, 0]
 
-            # Update features for next step: shift lag features and add new values
-            # The lag features need to be rolled and updated with sampled values
-            # This assumes lag features are ordered as [lag_0, lag_1, ..., lag_n-1]
-            # where lag_0 is most recent
-
-            # Shift lag features: each lag_i becomes lag_{i+1}
-            # and lag_0 gets the new sampled value
+            # Shift lag features and insert new sampled values at lag_0
             window_length = self.window_length
+            start_idx = n_exog_features
 
-            for sample_idx in range(n_samples):
-                for inst_idx in range(n_instances):
-                    # Get current lag features (after exog features if present)
-                    start_idx = n_exog_features
-
-                    # Shift lags: move each to the next position
-                    # lag_0__col0, lag_0__col1, lag_1__col0, lag_1__col1, ...
-                    n_lag_cols = n_lag_features
-                    for lag in range(window_length - 1, 0, -1):
-                        for col in range(n_y_cols):
-                            old_pos = (lag - 1) * n_y_cols + col
-                            new_pos = lag * n_y_cols + col
-                            if new_pos < n_lag_cols:
-                                sample_features[
-                                    sample_idx, inst_idx, start_idx + new_pos
-                                ] = sample_features[
-                                    sample_idx, inst_idx, start_idx + old_pos
-                                ]
-
-                    # Set lag_0 to the new sampled value
+            # Vectorized lag shifting: roll features and update lag_0 with new samples
+            if window_length > 1:
+                # Shift lag features: move later positions to earlier positions
+                # lag_i+1 <- lag_i for i = window_length-2 down to 0
+                for lag in range(window_length - 1, 0, -1):
                     for col in range(n_y_cols):
-                        sample_features[sample_idx, inst_idx, start_idx + col] = (
-                            sampled_values[sample_idx, inst_idx, col]
-                        )
+                        src_pos = start_idx + (lag - 1) * n_y_cols + col
+                        dst_pos = start_idx + lag * n_y_cols + col
+                        if dst_pos < start_idx + n_lag_features:
+                            sample_features[:, :, dst_pos] = sample_features[
+                                :, :, src_pos
+                            ]
+
+            # Set lag_0 to the new sampled values
+            for col in range(n_y_cols):
+                sample_features[:, :, start_idx + col] = sampled_values[:, :, col]
 
         # Get the time-only index for the forecast horizon
         fh_time_idx = pd.Index(list(fh_abs))
@@ -694,12 +621,12 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         # Create a hashable key from fh
         fh_key = tuple(fh.to_relative(self.cutoff)) if fh is not None else None
 
-        # Create a key from X (use shape and hash of values if available)
         if X is not None:
             try:
                 X_key = (X.shape, hash(X.values.tobytes()))
             except (AttributeError, TypeError):
-                X_key = id(X)  # Fallback to object id
+                # If X cannot be hashed, disable caching by returning None
+                X_key = None
         else:
             X_key = None
 
