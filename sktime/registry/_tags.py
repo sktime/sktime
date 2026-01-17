@@ -883,16 +883,13 @@ class property__randomness(_BaseTag):
 class capability__exogeneous(_BaseTag):
     """Capability: the forecaster can use exogenous data.
 
-    The tag is currently named ``ignores-exogeneous-X``, and will be renamed.
-
-    ``False`` = does use exogenous data, ``True`` = does not use exogenous data.
+    ``True`` = does use exogenous data, ``False`` = does not use exogenous data.
 
     - String name: ``"capability:exogenous"``
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: boolean negation of ``"ignores-exogeneous-X"`` (legacy)
 
     Exogenous data are additional time series,
     that can be used to improve forecasting accuracy.
@@ -1193,9 +1190,6 @@ class capability__multivariate(_BaseTag):
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: ``univariate-only``  (transformations, note: boolean is inverted)
-    - Alias: ``univariate-metric`` (performance metrics, note: boolean is inverted)
-
     If the tag is ``True``, the estimator can handle multivariate time series,
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
     regressors, clusterers, ordinary transformers, and pairwise transformers.
@@ -3672,12 +3666,6 @@ ESTIMATOR_TAG_REGISTER = [
     # ---------------------
     # the following tags are to be renamed or aliased
     (
-        "univariate-only",  # -> capability:multivariate, invert
-        "transformer",
-        "bool",
-        "can transformer handle multivariate series? True = no",
-    ),
-    (
         "univariate-metric",  # -> capability:multivariate, invert
         "metric",
         "bool",
@@ -3720,12 +3708,6 @@ ESTIMATOR_TAG_REGISTER = [
         "object",
         "dict",
         "deprecated tag for dependency import aliases",
-    ),
-    (
-        "ignores-exogeneous-X",
-        "forecaster",
-        "bool",
-        "deprecated tag for exogenous capability",
     ),
 ]
 
