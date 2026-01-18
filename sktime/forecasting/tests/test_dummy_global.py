@@ -241,3 +241,60 @@ class TestDummyGlobalForecaster:
         assert hasattr(cloned, "global_mean_")
         assert hasattr(cloned, "_pretrained_attrs")
         np.testing.assert_almost_equal(cloned.global_mean_, pretrain_mean)
+
+    def test_clone_after_fit_preserves_only_pretrained(self):
+        """Test that clone() after fit preserves pretrained but not fitted attrs."""
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        forecaster = DummyGlobalForecaster(strategy="last")
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+
+        # Fit on a single series
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+
+        assert forecaster._state == "fitted"
+        assert hasattr(forecaster, "last_value_")
+
+        # Clone after fit
+        cloned = forecaster.clone()
+
+        # Verify: pretrained attrs preserved, fitted attrs NOT preserved
+        assert cloned._state == "pretrained"  # Not "fitted"
+        assert hasattr(cloned, "global_mean_")
+        np.testing.assert_almost_equal(cloned.global_mean_, pretrain_mean)
+        assert not hasattr(cloned, "last_value_")  # Fitted attr NOT copied
+
+    def test_clone_composite_preserves_inner_pretrained(self):
+        """Test clone preserves pretrained state in composite forecasters."""
+        from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.series.detrend import Detrender
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        # Pretrain inner forecaster
+        inner_forecaster = DummyGlobalForecaster(strategy="mean")
+        inner_forecaster.pretrain(y_panel)
+        pretrain_mean = inner_forecaster.global_mean_
+
+        # Create pipeline
+        pipeline = TransformedTargetForecaster(
+            [
+                ("detrender", Detrender()),
+                ("forecaster", inner_forecaster),
+            ]
+        )
+
+        # Clone the pipeline
+        cloned_pipeline = pipeline.clone()
+        cloned_inner = cloned_pipeline.steps_[1][1]
+
+        # Verify inner forecaster preserved pretrained state
+        assert cloned_inner._state == "pretrained"
+        assert hasattr(cloned_inner, "global_mean_")
+        np.testing.assert_almost_equal(cloned_inner.global_mean_, pretrain_mean)
