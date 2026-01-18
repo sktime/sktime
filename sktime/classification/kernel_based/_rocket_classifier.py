@@ -234,32 +234,34 @@ class RocketClassifier(_DelegatedClassifier):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
-            For classifiers, a "default" set of parameters should be provided for
-            general testing, and a "results_comparison" set for comparing against
-            previously recorded results if the general set does not produce suitable
-            probabilities to compare against.
-
-        Returns
-        -------
-        params : dict or list of dict, default={}
-            Parameters to create testing instances of the class.
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
-            instance.
-            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
-        """
+        """Return testing parameter settings for the estimator."""
         if parameter_set == "results_comparison":
-            return {"num_kernels": 100}
+            return {"num_kernels": 100, "random_state": 0}
 
-        params1 = {"num_kernels": 100}
-        params2 = {"num_kernels": 20}
-        params3 = {"num_kernels": 20, "rocket_transform": "minirocket"}
-        params4 = {"num_kernels": 20, "rocket_transform": "multirocket"}
+        # Test 1: Default "rocket" transform (Fastest check)
+        params1 = {"num_kernels": 20, "random_state": 0}
+
+        # Test 2: "minirocket" transform
+        # Note: num_kernels < 84 will be automatically bumped to 84 by the transformer
+        params2 = {
+            "num_kernels": 20,
+            "rocket_transform": "minirocket",
+            "random_state": 0,
+        }
+
+        # Test 3: "multirocket" transform
+        params3 = {
+            "num_kernels": 20,
+            "rocket_transform": "multirocket",
+            "random_state": 0,
+        }
+
+        # Test 4: Explicitly disable multivariate to test the "no" code path
+        params4 = {
+            "num_kernels": 20,
+            "rocket_transform": "minirocket",
+            "use_multivariate": "no",
+            "random_state": 0,
+        }
+
         return [params1, params2, params3, params4]
