@@ -94,6 +94,41 @@ def craft(spec):
     -------
     obj : skbase BaseObject descendant, constructed from ``spec``
         this will have the property that ``spec == str(obj)`` (up to formatting)
+
+    Examples
+    --------
+    >>> from sktime.craft import craft
+
+    Example 1: simple estimator
+
+    * serialized as the string ``"NaiveForecaster(sp=2)"``
+    * deserialized as the estimator ``NaiveForecaster(sp=2)``
+
+    >>> spec = "NaiveForecaster(sp=2)"
+    >>> est = craft(spec)
+    >>> print(est)
+    NaiveForecaster(sp=2)
+
+    Example 2: composite estimator
+
+    * serialized as the string ``"Deseasonalizer() * NaiveForecaster()"``
+    * deserialized as the estimator ``Deseasonalizer() * NaiveForecaster()``,
+      same as ``ForecastingPipeline([Deseasonalizer(), NaiveForecaster()])``
+
+    >>> spec = "Deseasonalizer() * NaiveForecaster()"
+    >>> est = craft(spec)
+
+    Example 3: longer code block
+
+    * serialized as a code block with assignments and return statement
+    * deserialized as the estimator defined in the return statement
+
+    >>> spec = '''
+    ... deseason = Deseasonalizer()
+    ... naive = NaiveForecaster()
+    ... return deseason * naive
+    ... '''
+    >>> est = craft(spec)
     """
     # retrieve all estimators from sktime and sklearn for namespace resolution
     register_sktime = dict(all_estimators())  # noqa: F841
