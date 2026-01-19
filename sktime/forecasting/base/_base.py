@@ -362,14 +362,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             If ``self.get_tag("requires-fh-in-fit")`` is ``True``,
             must be passed in ``fit``, not optional
 
-        X : time series in ``sktime`` compatible format, optional (default=None).
+       X : time series in ``sktime`` compatible format, optional (default=None)
             Exogeneous time series to fit the model to.
             Should be of same :term:`scitype` (``Series``, ``Panel``,
             or ``Hierarchical``) as ``y``.
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``y.index``.
 
-       sample_weight : array-like of shape (n_samples,), optional (default=None)
+        sample_weight : array-like of shape (n_samples,), optional (default=None)
             Sample weights for weighted fitting.
             If None, all samples are weighted equally.
             Only used if the forecaster supports sample weights
