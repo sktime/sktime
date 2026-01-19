@@ -73,6 +73,7 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
 
     _tags = {
         "requires-y-train": True,
+        "python_dependencies": ["statsmodels"],
     }
 
     def __init__(self, sp=1):
