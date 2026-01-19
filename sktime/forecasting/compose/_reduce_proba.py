@@ -14,6 +14,7 @@ from sklearn.base import clone
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base_proba import BaseProbaForecaster
 from sktime.forecasting.compose._reduce import _get_notna_idx, _ReducerMixin
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.sklearn import prep_skl_df
 
 
@@ -800,22 +801,21 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sklearn.linear_model import LinearRegression
-        from skpro.regression.residual import ResidualDouble
+        common = {"window_length": 3}
+        params1 = {**common, "n_samples": 10, "pooling": "local"}
+        params2 = {**common, "n_samples": 20, "pooling": "global"}
 
-        est = ResidualDouble(LinearRegression())
+        params = []
 
-        params1 = {
-            "estimator": est,
-            "window_length": 3,
-            "n_samples": 10,
-            "pooling": "local",
-        }
-        params2 = {
-            "estimator": est,
-            "window_length": 3,
-            "n_samples": 20,
-            "pooling": "global",
-        }
+        if _check_soft_dependencies("skpro", severity="none"):
+            from sklearn.linear_model import LinearRegression
+            from skpro.regression.residual import ResidualDouble
 
-        return [params1, params2]
+            est = ResidualDouble(LinearRegression())
+
+            params1 = {**params1, "estimator": est}
+            params2 = {**params2, "estimator": est}
+
+            params = [params1, params2]
+
+        return params
