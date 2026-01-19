@@ -100,6 +100,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
         "capability:missing_values": False,  # can estimator handle missing data?
+        "capability:sample_weight": False,  # can the estimator handle sample weights?
         "capability:non_contiguous_X": True,  # support non-contiguous X?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
@@ -319,7 +320,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         else:
             return ColumnSelect(key) ** self
 
-    def fit(self, y, X=None, fh=None):
+    def fit(self, y, X=None, fh=None, sample_weight=None):
         """Fit forecaster to training data.
 
         State change:
@@ -368,6 +369,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``y.index``.
 
+        sample_weight : array-like of shape (n_samples,), optional (default=None)
+            Sample weights for weighted fitting.
+            If None, all samples are weighted equally.
+            Only used if the forecaster supports sample weights
+            (tag ``capability:sample_weight`` is ``True``).
+
         Returns
         -------
         self : Reference to self.
@@ -388,16 +395,34 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # check forecasting horizon and coerce to ForecastingHorizon object
         fh = self._check_fh(fh)
 
+        # ═══════════════════════════════════════════════════════════════
+        # SAMPLE WEIGHT HANDLING (New Logic)
+        # ═══════════════════════════════════════════════════════════════
+        fit_kwargs = {}
+        if sample_weight is not None:
+            # Check if this forecaster actually supports weights
+            if not self.get_tag("capability:sample_weight", tag_value_default=False):
+                raise NotImplementedError(
+                    f"{self.__class__.__name__} does not support sample_weight. "
+                    "If you believe this forecaster should support sample weights, "
+                    "please open an issue on sktime."
+                )
+            # If supported, add to kwargs to pass down safely
+            fit_kwargs["sample_weight"] = sample_weight
+        # ═══════════════════════════════════════════════════════════════
+
         # checks and conversions complete, pass to inner fit
         #####################################################
         vectorization_needed = isinstance(y_inner, VectorizedDF)
         self._is_vectorized = vectorization_needed
+        
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
-            self._fit(y=y_inner, X=X_inner, fh=fh)
+            # We use **fit_kwargs to safely pass sample_weight ONLY if it exists
+            self._fit(y=y_inner, X=X_inner, fh=fh, **fit_kwargs)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
+            self._vectorize("fit", y=y_inner, X=X_inner, fh=fh, **fit_kwargs)
 
         # this should happen last
         self._is_fitted = True
