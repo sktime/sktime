@@ -369,7 +369,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``y.index``.
 
-        sample_weight : array-like of shape (n_samples,), optional (default=None)
+       sample_weight : array-like of shape (n_samples,), optional (default=None)
             Sample weights for weighted fitting.
             If None, all samples are weighted equally.
             Only used if the forecaster supports sample weights
@@ -462,6 +462,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``fh`` index reference.
+            
 
         Returns
         -------
