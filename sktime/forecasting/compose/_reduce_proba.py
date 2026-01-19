@@ -49,7 +49,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     distribution conditioned on previously sampled values.
 
     This approach is inspired by DeepAR's ancestral sampling strategy, adapted
-    for use with any tabular probabilistic regressor (e.g., XGBoostLSS from skpro).
+    for use with any tabular probabilistic regressor from `skpro`.
 
     Algorithm details:
 
@@ -112,23 +112,24 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
     Examples
     --------
-    >>> from skpro.regression.xgboostlss import XGBoostLSS
-    >>> from sktime.forecasting.compose import MCRecursiveProbaReductionForecaster
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from skpro.regression.residual import ResidualDouble
     >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.compose import MCRecursiveProbaReductionForecaster
     >>>
     >>> y = load_airline()
-    >>> estimator = XGBoostLSS(dist="Normal", n_trials=0)
-    >>> forecaster = MCRecursiveProbaReductionForecaster(
-    ...     estimator=estimator,
-    ...     window_length=5,
-    ...     n_samples=100,
-    ... )
-    >>> forecaster.fit(y, fh=[1, 2, 3])
-    >>> y_pred_dist = forecaster.predict_proba(fh=[1, 2, 3])
+    >>>
+    >>> base_estimator = LinearRegression()
+    >>> estimator = ResidualDouble(base_estimator)
+    >>> forecaster = MCRecursiveProbaReductionForecaster(estimator)
+    >>>
+    >>> forecaster.fit(y)
+    >>> y_pred_dist = forecaster.predict_proba(fh=range(1, 13))
     """
 
     _tags = {
         "authors": ["marrov"],
+        "python_dependencies": ["skpro>=2.11.0"],
         "requires-fh-in-fit": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
@@ -801,18 +802,10 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        # Import a simple probabilistic regressor for testing
-        # Note: This requires skpro to be installed
-        try:
-            from sklearn.linear_model import LinearRegression
-            from skpro.regression.residual import ResidualDouble
+        from sklearn.linear_model import LinearRegression
+        from skpro.regression.residual import ResidualDouble
 
-            est = ResidualDouble(LinearRegression())
-        except ImportError:
-            # Fallback if skpro not available
-            from sklearn.linear_model import LinearRegression
-
-            est = LinearRegression()
+        est = ResidualDouble(LinearRegression())
 
         params1 = {
             "estimator": est,
