@@ -319,9 +319,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             self._cache_pred_dist(pred_dist, fh=fh, X=X)
             return pred_dist
 
-        all_trajectories, fh_time_idx = self._generate_mc_trajectories_native(
-            fh, X_pool
-        )
+        all_trajectories, fh_time_idx = self._generate_mc_trajectories(fh, X_pool)
         self.trajectories_ = all_trajectories
 
         pred_dist = self._build_empirical_from_trajectories(
@@ -331,7 +329,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
         return pred_dist
 
-    def _generate_mc_trajectories_native(self, fh, X_pool):
+    def _generate_mc_trajectories(self, fh, X_pool):
         """Generate MC trajectories for recursive probabilistic prediction.
 
         Parameters
