@@ -97,7 +97,7 @@ def craft(spec):
 
     Examples
     --------
-    >>> from sktime.craft import craft
+    >>> from sktime.registry import craft
 
     Example 1: simple estimator
 
