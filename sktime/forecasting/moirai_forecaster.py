@@ -5,14 +5,7 @@ from unittest.mock import patch
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("lightning", severity="none"):
-    import sktime.libs.uni2ts
-
 from sktime.forecasting.base import _BaseGlobalForecaster
-
-if _check_soft_dependencies("huggingface-hub", severity="none"):
-    from huggingface_hub import hf_hub_download
-
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
@@ -83,20 +76,29 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
+        # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
+        "maintainers": ["pranavvp16"],
+        "python_version": "<3.14",
+        "python_dependencies": [
+            "gluonts",
+            "torch",
+            "einops",
+            "huggingface-hub",
+            "hf-xet",
+            "lightning",
+            "hydra-core",
+        ],
+        # estimator type
+        # --------------
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "capability:missing_values": False,
         "capability:pred_int": False,
-        "python_dependencies": [
-            "gluonts",
-            "torch",
-            "einops",
-            "huggingface-hub",
-            "lightning",
-            "hydra-core",
-        ],
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": [
             "pd.Series",
@@ -107,9 +109,9 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
-        "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
-        # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
-        "maintainers": ["pranavvp16"],
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
@@ -118,8 +120,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         context_length=200,
         patch_size=32,
         num_samples=100,
-        num_feat_dynamic_real=0,
-        num_past_feat_dynamic_real=0,
+        num_feat_dynamic_real=None,
+        num_past_feat_dynamic_real=None,
         map_location=None,
         target_dim=2,
         broadcasting=False,
@@ -152,6 +154,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
     if _check_soft_dependencies(["lightning", "huggingface-hub"], severity="none"):
+        import sktime
         from sktime.libs.uni2ts.forecast import MoiraiForecast
 
         @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
@@ -167,6 +170,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 )
                 return MoiraiForecast(**model_kwargs)
             else:
+                from huggingface_hub import hf_hub_download
+
                 model_kwargs["checkpoint_path"] = hf_hub_download(
                     repo_id=self.checkpoint_path, filename="model.ckpt"
                 )
@@ -178,8 +183,13 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         else:
             prediction_length = 1
 
-        if self.num_feat_dynamic_real is None and X is not None:
-            self.num_feat_dynamic_real = X.shape[1]
+        # Set feature dimensions based on X if not already set
+        if self.num_feat_dynamic_real is None:
+            if X is not None:
+                self.num_feat_dynamic_real = X.shape[1]
+            else:
+                self.num_feat_dynamic_real = 0
+
         if self.num_past_feat_dynamic_real is None:
             self.num_past_feat_dynamic_real = 0
 
@@ -204,6 +214,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                     )
                     self.model = MoiraiForecast(**model_kwargs)
                 else:
+                    from huggingface_hub import hf_hub_download
+
                     model_kwargs["checkpoint_path"] = hf_hub_download(
                         repo_id=self.checkpoint_path, filename="model.ckpt"
                     )

@@ -201,9 +201,8 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         fh : optional
             Forecasting horizon (not used).
         """
-        if _check_soft_dependencies("torch", severity="none"):
-            import torch
-            from torch.utils.data import DataLoader, TensorDataset
+        import torch
+        from torch.utils.data import DataLoader, TensorDataset
 
         self._y = y.copy()
         if isinstance(y, pd.Series):
@@ -235,7 +234,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
 
         return self
 
-    def _predict(self, X=None, fh=None):
+    def _predict(self, fh=None, X=None):
         """Generate predictions for the specified forecasting horizon.
 
         Parameters
@@ -245,8 +244,8 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         X : optional
             Additional exogenous data (not used).
         """
-        if _check_soft_dependencies("torch", severity="none"):
-            import torch
+        import torch
+
         fh_abs = fh.to_absolute(self._y.index[-1]).to_numpy()
         n_steps = len(fh_abs)
         predictions = np.zeros(n_steps)

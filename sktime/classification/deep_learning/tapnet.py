@@ -1,10 +1,5 @@
 """Time Convolutional Neural Network (CNN) for classification."""
 
-__author__ = [
-    "jnrusson1",
-    "TonyBagnall",
-    "achieveordie",
-]
 __all__ = [
     "TapNetClassifier",
 ]
@@ -23,43 +18,49 @@ class TapNetClassifier(BaseDeepClassifier):
 
     Parameters
     ----------
-    filter_sizes        : array of int, default = (256, 256, 128)
+    filter_sizes : array of int, default = (256, 256, 128)
         sets the kernel size argument for each convolutional block.
         Controls number of convolutional filters
         and number of neurons in attention dense layers.
-    kernel_sizes        : array of int, default = (8, 5, 3)
+    kernel_sizes : array of int, default = (8, 5, 3)
         controls the size of the convolutional kernels
-    layers              : array of int, default = (500, 300)
+    layers : array of int, default = (500, 300)
         size of dense layers
-    reduction           : int, default = 16
+    reduction : int, default = 16
         divides the number of dense neurons in the first layer of the attention block.
-    n_epochs            : int, default = 2000
+    n_epochs : int, default = 2000
         number of epochs to train the model
-    batch_size          : int, default = 16
+    batch_size : int, default = 16
         number of samples per update
-    dropout             : float, default = 0.5
+    callbacks : list of keras.callbacks.Callback, optional (default=None)
+        List of Keras callbacks to apply during model training.
+    dropout : float, default = 0.5
         dropout rate, in the range [0, 1)
-    dilation            : int, default = 1
+    dilation : int, default = 1
         dilation value
-    activation          : str, default = "sigmoid"
+    activation : str, default = "sigmoid"
         activation function for the last output layer
-    loss                : str, default = "binary_crossentropy"
+        List of available activation functions: https://keras.io/api/layers/activations/
+    activation_hidden : str, default = "leaky_relu"
+        activation function for the hidden layers
+        List of available activation functions: https://keras.io/api/layers/activations/
+    loss : str, default = "binary_crossentropy"
         loss function for the classifier
-    optimizer           : str or None, default = "Adam(lr=0.01)"
+    optimizer : str or None, default = "Adam(lr=0.01)"
         gradient updating function for the classifier
-    use_bias            : bool, default = True
+    use_bias : bool, default = True
         whether to use bias in the output dense layer
-    use_rp              : bool, default = True
+    use_rp : bool, default = True
         whether to use random projections
-    use_att             : bool, default = True
+    use_att : bool, default = True
         whether to use self attention
-    use_lstm        : bool, default = True
+    use_lstm : bool, default = True
         whether to use an LSTM layer
-    use_cnn         : bool, default = True
+    use_cnn : bool, default = True
         whether to use a CNN layer
-    verbose         : bool, default = False
+    verbose : bool, default = False
         whether to output extra information
-    random_state    : int or None, default = None
+    random_state : int or None, default = None
         seed for random
 
     Attributes
@@ -88,7 +89,7 @@ class TapNetClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jnrusson1", "TonyBagnall", "achieveordie"],
+        "authors": ["jnrusson1", "TonyBagnall", "achieveordie", "noxthot"],
         "maintainers": ["jnrusson1", "achieveordie"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
@@ -117,6 +118,7 @@ class TapNetClassifier(BaseDeepClassifier):
         use_rp=True,
         rp_params=(-1, 3),
         activation="sigmoid",
+        activation_hidden="leaky_relu",
         use_bias=True,
         use_att=True,
         use_lstm=True,
@@ -138,6 +140,7 @@ class TapNetClassifier(BaseDeepClassifier):
         self.rp_params = rp_params
         self.filter_sizes = filter_sizes
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_att = use_att
         self.use_bias = use_bias
 
@@ -161,6 +164,7 @@ class TapNetClassifier(BaseDeepClassifier):
         super().__init__()
 
         self._network = TapNetNetwork(
+            activation=self.activation_hidden,
             dropout=self.dropout,
             filter_sizes=self.filter_sizes,
             kernel_size=self.kernel_size,

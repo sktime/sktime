@@ -29,8 +29,6 @@ ONLY_CHANGED_MODULES = False
 # DO NOT ADD ESTIMATORS HERE ANYMORE
 # ADD TEST SKIPS TO TAG tag tests:skip_all INSTEAD
 EXCLUDE_ESTIMATORS = [
-    # PlateauFinder seems to be broken, see #2259
-    "PlateauFinder",
     # below are removed due to mac failures we don't fully understand, see #3103
     "HIVECOTEV1",
     "HIVECOTEV2",
@@ -46,7 +44,6 @@ EXCLUDE_ESTIMATORS = [
     "MLPClassifier",
     "MLPRegressor",
     "ResNetRegressor",
-    "FCNRegressor",
     "LSTMFCNRegressor",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
@@ -76,8 +73,6 @@ EXCLUDE_ESTIMATORS = [
     "FreshPRINCE",
     # multiple timeouts and sporadic failures reported related to VARMAX
     # 2997, 3176, 7985
-    "VARMAX",
-    "SARIMAX",
     "SCINetForecaster",  # known bug #7871
     "MAPAForecaster",  # known bug #8039
 ]
@@ -108,11 +103,6 @@ EXCLUDED_TESTS = {
         "test_multioutput",  # see 6201
         "test_classifier_on_unit_test_data",  # see 6201
     ],
-    "SimpleRNNRegressor": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-    ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
     "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
@@ -140,13 +130,9 @@ EXCLUDED_TESTS = {
     "ARIMA": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
-    "VECM": [
-        "test_hierarchical_with_exogeneous",  # refer to #4743
-    ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
     "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
-    "PyKANForecaster": ["test_predict_time_index_in_sample_full"],
     "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
     # StatsForecastMSTL is failing in probabistic forecasts, see #5703, #5920
     "StatsForecastMSTL": ["test_pred_int_tag"],
@@ -192,10 +178,6 @@ EXCLUDED_TESTS = {
     "ARLagOrderSelector": [
         "test_doctest_examples",  # doctest fails, see #8129
     ],
-    "ESRNNForecaster": [  # pickling problem, see #8135
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-    ],
 }
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
@@ -205,15 +187,11 @@ EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "CAPA",
         "CNTCNetwork",
-        "CanonicalIntervalForest",
         "CircularBinarySegmentation",
         "ClaSPTransformer",
         "ClearSky",
-        "ColumnEnsembleClassifier",
-        "ColumnwiseTransformer",
         "ContractableBOSS",
         "DOBIN",
-        "DWTTransformer",
         "DilationMappingTransformer",
         "DirRecTabularRegressionForecaster",
         "DirRecTimeSeriesRegressionForecaster",
@@ -225,7 +203,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ElasticEnsemble",
         "FeatureSelection",
         "FreshPRINCE",
-        "GreedyGaussianSegmentation",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
         "HIVECOTEV2",
@@ -234,7 +211,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "InceptionTimeNetwork",
         "IndividualBOSS",
         "IndividualTDE",
-        "InformationGainSegmentation",
         "M5Dataset",
         "MCDCNNClassifier",
         "MCDCNNNetwork",
@@ -283,10 +259,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "TemporalDictionaryEnsemble",
         "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
-        "TruncationTransformer",
-        "UnobservedComponents",
         "WEASEL",
-        "WhiteNoiseAugmenter",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
         # too after adding test parameters to them
         "BaggingForecaster",
