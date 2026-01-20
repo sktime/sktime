@@ -216,7 +216,7 @@ class GroupByCategoryTransformer(BaseTransformer, _HeterogenousMetaEstimator):
 
         super().__init__()
 
-        #validate inputs
+        # validate inputs
         for key, transformer in transformers.items():
             if not isinstance(transformer, BaseTransformer):
                 raise TypeError(
