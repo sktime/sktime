@@ -150,8 +150,15 @@ class PolynomialTrendForecaster(BaseForecaster):
         # the sklearn y can be taken as the y seen here
         X_sklearn = _get_X_numpy_int_from_pandas(y.index)
 
-        # fit regressor
-        self.regressor_.fit(X_sklearn, y, sample_weight=sample_weight)
+        # fit regressor with sample_weights routed to the specific step
+        regressor_name = self.regressor_.steps[-1][0]
+        
+        kwargs = {}
+        if sample_weight is not None:
+            kwargs[f"{regressor_name}__sample_weight"] = sample_weight
+            
+        # We use y.iloc[:, 0] to ensure 1D target (avoids shape mismatch errors)
+        self.regressor_.fit(X_sklearn, y.iloc[:, 0], **kwargs)
 
         if self.prediction_intervals:
             # calculate and save values needed for the prediction interval method
