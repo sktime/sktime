@@ -261,3 +261,85 @@ class GroupByCategoryTransformer(BaseTransformer, _HeterogenousMetaEstimator):
 
         Xt = pd.concat(transformed_parts, axis=0).sort_index()
         return Xt
+
+    def _inverse_transform(self, X, y=None):
+        """transform X using category transformers.
+
+        Only available if all wrapped transformers support inverse_transform.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to inverse transform.
+        y : ignored
+
+        Returns
+        -------
+        Xi : pd.DataFrame
+            Inverse transformed data.
+        """
+        inverse_parts = []
+
+        for category, group in self.grouped_by_category_:
+            X_category = self._loc_group(X, group)
+            transformer = self.transformers_[category]
+            Xi_category = transformer.inverse_transform(X=X_category, y=y)
+            inverse_parts.append(Xi_category)
+
+        Xi = pd.concat(inverse_parts, axis=0).sort_index()
+        return Xi
+
+    def _loc_group(self, df, group):
+        """Subset DataFrame to rows matching group.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Data to subset.
+        group : pd.DataFrame or None
+            Group indices. None means return full df.
+
+        Returns
+        -------
+        pd.DataFrame
+            Subset of df matching group.
+        """
+        if df is None or group is None:
+            return df
+        return df.loc[df.index.droplevel(-1).isin(group.index)]
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return.
+
+        Returns
+        -------
+        params : list of dict
+            Test parameter configurations.
+        """
+        from sktime.transformations.series.adi_cv import ADICVTransformer
+        from sktime.transformations.series.difference import Differencer
+
+        param1 = {
+            "transformers": {
+                "smooth": Differencer(),
+                "erratic": Differencer(lags=1),
+                "intermittent": Differencer(),
+                "lumpy": Differencer(),
+            },
+            "categorizer": ADICVTransformer(features=["class"]),
+            "fallback_transformer": None,
+        }
+
+        param2 = {
+            "transformers": {},
+            "categorizer": ADICVTransformer(features=["class"]),
+            "fallback_transformer": Differencer(),
+        }
+
+        return [param1, param2]
