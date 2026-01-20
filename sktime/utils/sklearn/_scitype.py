@@ -94,6 +94,7 @@ def sklearn_scitype(obj, var_name="obj"):
     * "classifier" - supervised classifier
     * "clusterer" - unsupervised clusterer
     * "metric" - sklearn metric function
+    * "metric_proba" - sklearn probabilistic metric function
     * "regressor" - supervised regressor
     * "splitter" - sklearn splitter (cross-validation generator)
     * "transformer" - transformer (pipeline element, feature extractor, unsupervised)
