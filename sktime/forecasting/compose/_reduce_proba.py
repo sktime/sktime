@@ -805,8 +805,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         params1 = {**common, "n_samples": 10, "pooling": "local"}
         params2 = {**common, "n_samples": 20, "pooling": "global"}
 
-        params = []
-
         if _check_soft_dependencies("skpro", severity="none"):
             from sklearn.linear_model import LinearRegression
             from skpro.regression.residual import ResidualDouble
@@ -817,5 +815,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             params2 = {**params2, "estimator": est}
 
             params = [params1, params2]
+        else:
+            params = [{**params1, "estimator": "placeholder"}]
 
         return params
