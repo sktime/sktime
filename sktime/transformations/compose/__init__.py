@@ -9,6 +9,7 @@ from sktime.transformations.compose._column import (
 )
 from sktime.transformations.compose._featureunion import FeatureUnion
 from sktime.transformations.compose._fitintransform import FitInTransform
+from sktime.transformations.compose._grouped import GroupByCategoryTransformer
 from sktime.transformations.compose._grouped import TransformByLevel
 from sktime.transformations.compose._id import Id
 from sktime.transformations.compose._invert import InvertTransform
@@ -20,7 +21,7 @@ from sktime.transformations.compose._pipeline import TransformerPipeline
 from sktime.transformations.compose._transformif import TransformIf
 from sktime.transformations.compose._ytox import YtoX
 
-__author__ = ["fkiraly", "mloning", "miraep8", "aiwalter", "SveaMeyer13"]
+__author__ = ["fkiraly", "mloning", "miraep8", "aiwalter", "SveaMeyer13", "prashantpandeygit"]
 __all__ = [
     "ColumnwiseTransformer",
     "ColumnEnsembleTransformer",
@@ -28,6 +29,7 @@ __all__ = [
     "DataLog",
     "FeatureUnion",
     "FitInTransform",
+    "GroupByCategoryTransformer",
     "Id",
     "InvertTransform",
     "IxToX",
