@@ -130,10 +130,8 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
             X_train = None
 
         if self.use_exogenous_in_regressor and X is None:
-            warn(
-                "use_exogenous_in_regressor=True but no X provided; "
-                "meta-regressor will ignore exogenous features.",
-                obj=self,
+            raise ValueError(
+                "X must be provided when use_exogenous_in_regressor is True during fit"
             )
 
         # fit forecasters on training window
@@ -190,12 +188,14 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         """
         y_preds = np.column_stack(self._predict_forecasters(fh=fh, X=X))
 
-        if self.use_exogenous_in_regressor:
-            if X is None:
-                raise ValueError(
-                    "X must be provided when use_exogenous_in_regressor is True "
-                    "during predict"
-                )
+        if self.use_exogenous_in_regressor and X is None:
+            warn(
+                "use_exogenous_in_regressor=True but no X provided; "
+                "meta-regressor will ignore exogenous features.",
+                obj=self,
+            )
+            meta_features = y_preds
+        elif self.use_exogenous_in_regressor:
             meta_features = np.column_stack([y_preds, X.to_numpy()])
         else:
             meta_features = y_preds
