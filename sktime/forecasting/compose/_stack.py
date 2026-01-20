@@ -130,8 +130,10 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
             X_train = None
 
         if self.use_exogenous_in_regressor and X is None:
-            raise ValueError(
-                "X must be provided when use_exogenous_in_regressor is True during fit"
+            warn(
+                "use_exogenous_in_regressor=True but no X provided; "
+                "meta-regressor will ignore exogenous features.",
+                obj=self,
             )
 
         # fit forecasters on training window
