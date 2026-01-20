@@ -191,7 +191,8 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         if self.use_exogenous_in_regressor:
             if X is None:
                 raise ValueError(
-                    "X must be provided when use_exogenous_in_regressor is True during predict"
+                    "X must be provided when use_exogenous_in_regressor is True "
+                    "during predict"
                 )
             meta_features = np.column_stack([y_preds, X.to_numpy()])
         else:
