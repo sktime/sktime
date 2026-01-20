@@ -93,6 +93,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
         "maintainers": ["tensorflow-as-tf"],
         "capability:exogenous": False,
+        "capability:sample_weight": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:pred_int": True,
@@ -115,7 +116,7 @@ class PolynomialTrendForecaster(BaseForecaster):
 
         self.set_tags(**{"capability:pred_int": prediction_intervals})
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X=None, fh=None, sample_weight=None):
         """Fit to training data.
 
         Parameters
@@ -150,7 +151,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         X_sklearn = _get_X_numpy_int_from_pandas(y.index)
 
         # fit regressor
-        self.regressor_.fit(X_sklearn, y.iloc[:, 0])
+        self.regressor_.fit(X_sklearn, y, sample_weight=sample_weight)
 
         if self.prediction_intervals:
             # calculate and save values needed for the prediction interval method
