@@ -2,8 +2,11 @@
 """Implements compositors for performing transformations by group."""
 
 import pandas as pd
+from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
+from sktime.registry import coerce_scitype
 from sktime.transformations._delegate import _DelegatedTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.warnings import warn
 
 __author__ = ["fkiraly"]
@@ -142,3 +145,58 @@ class TransformByLevel(_DelegatedTransformer):
         params = [{"transformer": t, "groupby": g} for g in groupbys]
 
         return params
+
+
+class GroupByCategoryTransformer(BaseTransformer, _HeterogenousMetaEstimator):
+
+    def __init__(
+        self,
+        transformers,
+        categorizer=None,
+        fallback_transformer=None,
+    ):
+        self.transformers = transformers
+        self.fallback_transformer = fallback_transformer
+
+        if categorizer is not None:
+            self.categorizer = categorizer
+        else:
+            from sktime.transformations.series.adi_cv import ADICVTransformer
+
+            self.categorizer = ADICVTransformer(features=["class"])
+
+        self.categorizer_ = coerce_scitype(self.categorizer, "transformer").clone()
+
+        super().__init__()
+
+        #validate inputs
+        for key, transformer in transformers.items():
+            if not isinstance(transformer, BaseTransformer):
+                raise TypeError(
+                    f"transformers[{key}] must be a BaseTransformer, "
+                    f"got {type(transformer)}"
+                )
+
+        # capability tags from wrapped transformers
+        self._set_capability_tags()
+
+    def _set_capability_tags(self):
+        """Set capability tags based on wrapped transformers."""
+        all_transformers = list(self.transformers.values())
+        if self.fallback_transformer is not None:
+            all_transformers.append(self.fallback_transformer)
+
+        if len(all_transformers) == 0:
+            return
+
+        can_inverse = all(
+            t.get_tag("capability:inverse_transform", False) for t in all_transformers
+        )
+        self.set_tags(**{"capability:inverse_transform": can_inverse})
+
+        handles_missing = all(
+            t.get_tag("capability:missing_values", True) for t in all_transformers
+        )
+        self.set_tags(**{"capability:missing_values": handles_missing})
+
+
