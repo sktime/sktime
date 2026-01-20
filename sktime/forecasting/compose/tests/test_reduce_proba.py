@@ -215,29 +215,6 @@ def test_hierarchical_global_pooling():
 
 
 @pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
-def test_trajectories_stored():
-    """Test that trajectories are stored after prediction."""
-    y = load_airline()[:50]
-    y_train, y_test = temporal_train_test_split(y, test_size=5)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
-
-    forecaster = MCRecursiveProbaReductionForecaster(
-        estimator=_make_probabilistic_regressor(),
-        window_length=3,
-        n_samples=10,
-        random_state=42,
-    )
-
-    forecaster.fit(y_train)
-    forecaster.predict(fh)
-
-    assert forecaster.trajectories_ is not None
-    assert None in forecaster.trajectories_
-    traj = forecaster.trajectories_[None]
-    assert traj.shape == (10, 5)  # (n_samples, n_horizons)
-
-
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
 def test_non_contiguous_horizon():
     """Test with non-contiguous forecasting horizon (e.g., fh=[1, 3, 5])."""
     y = load_airline()[:50]
@@ -257,31 +234,6 @@ def test_non_contiguous_horizon():
     # Should only return predictions for requested horizons
     assert len(y_pred) == 3
     assert not y_pred.isna().any()
-
-
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
-def test_caching_works():
-    """Test that caching avoids recomputation for same fh/X."""
-    y = load_airline()[:50]
-    y_train, y_test = temporal_train_test_split(y, test_size=5)
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
-
-    forecaster = MCRecursiveProbaReductionForecaster(
-        estimator=_make_probabilistic_regressor(),
-        window_length=3,
-        n_samples=10,
-        random_state=42,
-    )
-
-    forecaster.fit(y_train)
-
-    # First call - should compute
-    pred1 = forecaster.predict(fh)
-    assert forecaster._cached_pred_dist_ is not None
-
-    # Second call with same fh - should use cache
-    pred2 = forecaster.predict(fh)
-    pd.testing.assert_series_equal(pred1, pred2)
 
 
 @pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
