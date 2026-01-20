@@ -5,10 +5,25 @@
 __author__ = ["fkiraly"]
 __all__ = ["TransformerPipeline"]
 
+from joblib import Memory
+
 from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.registry import is_scitype, scitype
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.compose._common import CORE_MTYPES
+
+
+def _check_memory(memory):
+    if memory is None:
+        return None
+    if hasattr(memory, "cache"):
+        return memory
+    return Memory(location=memory, verbose=0)
+
+
+def _fit_transform_one(transformer, X, y):
+    Xt = transformer.fit_transform(X=X, y=y)
+    return Xt, transformer
 
 
 class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
@@ -66,6 +81,9 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     steps : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
         these are "blueprint" transformers, states do not change when ``fit`` is called
+    memory : str, joblib.Memory, or None, default=None
+        Cache directory or Memory instance to cache transformer ``fit_transform``
+        results. If None, no caching is performed.
 
     Attributes
     ----------
@@ -144,8 +162,9 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "steps_"
 
-    def __init__(self, steps):
+    def __init__(self, steps, memory=None):
         self.steps = steps
+        self.memory = memory
 
         super().__init__()
 
@@ -362,8 +381,15 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         self: reference to self
         """
         Xt = X
-        for _, transformer in self.steps_:
-            Xt = transformer.fit_transform(X=Xt, y=y)
+        memory = _check_memory(self.memory)
+        if memory is None:
+            for _, transformer in self.steps_:
+                Xt = transformer.fit_transform(X=Xt, y=y)
+        else:
+            cached_fit_transform = memory.cache(_fit_transform_one)
+            for step_idx, (name, transformer) in enumerate(self.steps_):
+                Xt, fitted_transformer = cached_fit_transform(transformer, Xt, y)
+                self.steps_[step_idx] = (name, fitted_transformer)
 
         return self
 
