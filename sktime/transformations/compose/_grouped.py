@@ -1,12 +1,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositors for performing transformations by group."""
 
+import pandas as pd
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.utils.warnings import warn
 
 __author__ = ["fkiraly"]
-__all__ = ["TransformByLevel"]
+__all__ = ["TransformByLevel", "GroupByCategoryTransformer"]
 
 
 class TransformByLevel(_DelegatedTransformer):
