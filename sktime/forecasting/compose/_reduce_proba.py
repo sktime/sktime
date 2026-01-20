@@ -105,12 +105,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     estimator_ : fitted estimator
         The fitted probabilistic regressor.
 
-    trajectories_ : dict or None
-        The most recently generated MC sample trajectories from predict_proba.
-        For single series: dict with key None, value shape (n_samples, n_horizons).
-        For hierarchical: dict with instance tuple keys, each (n_samples, n_horizons).
-        Available after calling predict or predict_proba.
-
     Examples
     --------
     >>> from sklearn.linear_model import LinearRegression
@@ -124,7 +118,8 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     >>> estimator = ResidualDouble(base_estimator)
     >>> forecaster = MCRecursiveProbaReductionForecaster(estimator)
     >>>
-    >>> forecaster.fit(y)
+    >>> forecaster.fit(y)  # doctest: +ELLIPSIS
+    MCRecursiveProbaReductionForecaster(...)
     >>> y_pred_dist = forecaster.predict_proba(fh=range(1, 13))
     """
 
@@ -134,6 +129,8 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         "requires-fh-in-fit": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
+        "capability:random_state": True,
+        "scitype:y": "both",
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
@@ -207,9 +204,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         """
         from sktime.transformations.series.lag import Lag
 
-        # Invalidate any cached predictions from previous fit
-        self._invalidate_cache()
-
         impute_method = self.impute_method
         lags = self._lags
 
@@ -270,10 +264,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         y_pred : pd.DataFrame
             Point predictions (mean of MC samples).
         """
-        # Use cached distribution if available and valid
-        pred_dist = self._get_cached_pred_dist(fh=fh, X=X)
-        if pred_dist is None:
-            pred_dist = self._predict_proba(fh=fh, X=X, marginal=True)
+        pred_dist = self._predict_proba(fh=fh, X=X, marginal=True)
         return pred_dist.mean()
 
     def _predict_proba(self, fh, X, marginal=True):
@@ -294,10 +285,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             Predictive distribution.
             Returns an Empirical distribution from the MC samples.
         """
-        cached = self._get_cached_pred_dist(fh=fh, X=X)
-        if cached is not None:
-            return cached
-
         if X is not None and self._X is not None:
             X_pool = X.combine_first(self._X)
         elif X is None and self._X is not None:
@@ -315,18 +302,14 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 (self.n_samples, n_horizons, len(y_cols)),
                 self.estimator_.values,
             )
-            self.trajectories_ = {None: samples[:, :, 0]}
             pred_dist = self._build_empirical_distribution(samples, fh_idx, y_cols)
-            self._cache_pred_dist(pred_dist, fh=fh, X=X)
             return pred_dist
 
         all_trajectories, fh_time_idx = self._generate_mc_trajectories(fh, X_pool)
-        self.trajectories_ = all_trajectories
 
         pred_dist = self._build_empirical_from_trajectories(
             all_trajectories, fh_idx, fh_time_idx, y_cols
         )
-        self._cache_pred_dist(pred_dist, fh=fh, X=X)
 
         return pred_dist
 
@@ -372,8 +355,9 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         else:
             instance_idx = [None]
 
+        n_y_cols = len(y_cols)
         trajectories = {
-            inst: np.zeros((n_samples, n_horizons)) for inst in instance_idx
+            inst: np.zeros((n_samples, n_horizons, n_y_cols)) for inst in instance_idx
         }
 
         # Build initial feature template from lagged data
@@ -394,7 +378,13 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 X_at_idx = _slice_at_ix(X_pool, first_predict_idx)
                 Xtt_template = pd.concat([X_at_idx, Xtt_template], axis=1)
             except (KeyError, IndexError):
-                pass
+                # If X at first_predict_idx not available, use last available X
+                # This ensures we have the right column structure for the estimator
+                X_last = X_pool.iloc[[-1]]
+                # Get just the values, using same index structure as Xtt_template
+                X_fallback_df = X_last.copy()
+                X_fallback_df.index = Xtt_template.index
+                Xtt_template = pd.concat([X_fallback_df, Xtt_template], axis=1)
 
         feature_cols = Xtt_template.columns.tolist()
         n_instances = len(Xtt_template) if is_hierarchical else 1
@@ -462,9 +452,11 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 traj_idx = y_lags_rel.index(horizon)
                 if is_hierarchical:
                     for inst_num, inst in enumerate(instance_idx):
-                        trajectories[inst][:, traj_idx] = sampled_values[:, inst_num, 0]
+                        trajectories[inst][:, traj_idx, :] = sampled_values[
+                            :, inst_num, :
+                        ]
                 else:
-                    trajectories[None][:, traj_idx] = sampled_values[:, 0, 0]
+                    trajectories[None][:, traj_idx, :] = sampled_values[:, 0, :]
 
             # Shift lag features and insert new sampled values at lag_0
             window_length = self.window_length
@@ -533,7 +525,8 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                             row_indices.append(inst + (time_val,))
                         else:
                             row_indices.append((inst, time_val))
-                        values.append([traj_array[sample_idx, h_idx]])
+                        # traj_array shape is (n_samples, n_horizons, n_y_cols)
+                        values.append(traj_array[sample_idx, h_idx, :])
 
             # Create MultiIndex with sample as first level, then instance+time levels
             # Get the level names from fh_idx
@@ -553,7 +546,8 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 for h_idx, time_val in enumerate(fh_time_idx):
                     sample_indices.append(sample_idx)
                     row_indices.append(time_val)
-                    values.append([traj_array[sample_idx, h_idx]])
+                    # traj_array shape is (n_samples, n_horizons, n_y_cols)
+                    values.append(traj_array[sample_idx, h_idx, :])
 
             multi_idx = pd.MultiIndex.from_arrays(
                 [sample_indices, row_indices], names=["sample", "time"]
@@ -604,34 +598,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
         return Empirical(spl=spl_df, index=fh_idx, columns=y_cols)
 
-    def _get_cache_key(self, fh, X):
-        """Generate a cache key based on forecasting horizon and exogeneous data.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-            Forecasting horizon.
-        X : pd.DataFrame or None
-            Exogeneous time series.
-
-        Returns
-        -------
-        tuple : (fh_key, X_key) for cache comparison
-        """
-        # Create a hashable key from fh
-        fh_key = tuple(fh.to_relative(self.cutoff)) if fh is not None else None
-
-        if X is not None:
-            try:
-                X_key = (X.shape, hash(X.values.tobytes()))
-            except (AttributeError, TypeError):
-                # If X cannot be hashed, disable caching by returning None
-                X_key = None
-        else:
-            X_key = None
-
-        return fh_key, X_key
-
     def _concat_distributions_hierarchical(self, dist_list, yvec):
         """Concatenate Empirical distributions from vectorized prediction.
 
@@ -660,6 +626,10 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
         # Get the instance indices from the vectorized structure
         row_idx, _ = yvec.get_iter_indices()
+
+        # If row_idx is None, concatenate using integer indices as instance identifiers
+        if row_idx is None:
+            row_idx = pd.RangeIndex(len(dist_list))
 
         # Build concatenated sample DataFrames
         spl_dfs = []
@@ -747,61 +717,10 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         # Create the combined Empirical distribution
         return Empirical(spl=combined_spl, index=full_index, columns=columns)
 
-    def _get_cached_pred_dist(self, fh, X):
-        """Return cached prediction distribution if cache is valid.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-            Forecasting horizon.
-        X : pd.DataFrame or None
-            Exogeneous time series.
-
-        Returns
-        -------
-        pred_dist or None : cached distribution if valid, None otherwise
-        """
-        if self._cached_pred_dist_ is None:
-            return None
-
-        fh_key, X_key = self._get_cache_key(fh, X)
-
-        if self._cached_fh_key_ == fh_key and self._cached_X_key_ == X_key:
-            return self._cached_pred_dist_
-
-        return None
-
-    def _cache_pred_dist(self, pred_dist, fh, X):
-        """Cache the prediction distribution with its parameters.
-
-        Parameters
-        ----------
-        pred_dist : skpro BaseDistribution
-            The prediction distribution to cache.
-        fh : ForecastingHorizon
-            Forecasting horizon.
-        X : pd.DataFrame or None
-            Exogeneous time series.
-        """
-        fh_key, X_key = self._get_cache_key(fh, X)
-        self._cached_pred_dist_ = pred_dist
-        self._cached_fh_key_ = fh_key
-        self._cached_X_key_ = X_key
-
-    def _invalidate_cache(self):
-        """Invalidate the prediction cache.
-
-        Should be called when the model state changes (e.g., after fit or update).
-        """
-        self._cached_pred_dist_ = None
-        self._cached_fh_key_ = None
-        self._cached_X_key_ = None
-        self.trajectories_ = None
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        common = {"window_length": 3}
+        common = {"window_length": 3, "random_state": 42}
         params1 = {**common, "n_samples": 10, "pooling": "local"}
         params2 = {**common, "n_samples": 20, "pooling": "global"}
 
