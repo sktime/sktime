@@ -199,4 +199,65 @@ class GroupByCategoryTransformer(BaseTransformer, _HeterogenousMetaEstimator):
         )
         self.set_tags(**{"capability:missing_values": handles_missing})
 
+    def _fit(self, X, y=None):
+        """Fit categorizer and category-specific transformers.
 
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Panel data to fit transformers to.
+        y : ignored
+
+        Returns
+        -------
+        self
+        """
+        self.category_ = self.categorizer_.fit_transform(X=X, y=y).iloc[:, 0]
+        self.transformers_ = {}
+
+        if X.index.nlevels == 1:
+            self.grouped_by_category_ = [(self.category_.values[0], None)]
+        else:
+            self.grouped_by_category_ = self.category_.groupby(self.category_)
+
+        for category, group in self.grouped_by_category_:
+            if category in self.transformers:
+                transformer = self.transformers[category].clone()
+            elif self.fallback_transformer is not None:
+                transformer = self.fallback_transformer.clone()
+            else:
+                raise ValueError(
+                    f"No transformer for category '{category}' and no "
+                    "fallback_transformer given."
+                )
+
+            X_category = self._loc_group(X, group)
+            transformer.fit(X=X_category, y=y)
+            self.transformers_[category] = transformer
+
+        return self
+
+    def _transform(self, X, y=None):
+        """Transform X using category-specific transformers.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Panel data to transform.
+        y : ignored
+
+        Returns
+        -------
+        Xt : pd.DataFrame
+            Transformed data.
+        """
+        transformed_parts = []
+
+        for category, group in self.grouped_by_category_:
+            X_category = self._loc_group(X, group)
+            transformer = self.transformers_[category]
+            Xt_category = transformer.transform(X=X_category, y=y)
+            transformed_parts.append(Xt_category)
+
+        Xt = pd.concat(transformed_parts, axis=0).sort_index()
+        return Xt
