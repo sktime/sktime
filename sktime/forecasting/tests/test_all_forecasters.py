@@ -250,6 +250,14 @@ def _check_predict_proba(pred_dist, y_test, fh_int):
 class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     """Module level tests for all sktime forecasters."""
 
+    @pytest.fixture(autouse=True)
+    def apply_collection(self):
+        print("Collecting garbage")
+        yield
+        import gc
+
+        gc.collect()
+
     def test_get_fitted_params(self, estimator_instance, scenario):
         """Test get_fitted_params."""
         scenario.run(estimator_instance, method_sequence=["fit"])
@@ -985,6 +993,14 @@ class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
     """Module level tests for all global forecasters."""
 
     estimator_type_filter = "global_forecaster"
+
+    @pytest.fixture(autouse=True)
+    def apply_collection(self):
+        print("Collecting garbage")
+        yield
+        import gc
+
+        gc.collect()
 
     def test_global_forecasting_tag(self, estimator_class):
         global_forecasting_tag = estimator_class.get_class_tag(
