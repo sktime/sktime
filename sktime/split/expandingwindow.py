@@ -25,6 +25,13 @@ from sktime.utils.validation import (
 class ExpandingWindowSplitter(BaseWindowSplitter):
     r"""Expanding window splitter.
 
+     .. note::
+        This class was moved from
+        ``sktime.forecasting.model_selection.ExpandingWindowSplitter``
+        to
+        ``sktime.split.ExpandingWindowSplitter``
+        starting in version 0.22.0.
+
     Split time series repeatedly into an growing training set and a fixed-size test set.
 
     Test window is defined by forecasting horizons
