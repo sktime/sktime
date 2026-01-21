@@ -341,6 +341,7 @@ class AutoTS(BaseForecaster):
         self._y_date = y_date
 
         self._fh = fh
+
         self._instantiate_model()
         try:
             self.forecaster_.fit(df=y_date, future_regressor=X)
