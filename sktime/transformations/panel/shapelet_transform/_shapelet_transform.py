@@ -19,7 +19,9 @@ from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.parallel import parallelize
 from sktime.utils.validation import check_n_jobs
+from sktime.utils.warnings import warn
 
 
 class Shapelet:
@@ -1000,19 +1002,36 @@ class RandomShapeletTransform(BaseTransformer):
         Default of 0 means n_shapelet_samples is used.
     contract_max_n_shapelet_samples : int, default=np.inf
         Max number of shapelets to extract when time_limit_in_minutes is set.
-    n_jobs : int, default=1
-        The number of jobs to run in parallel for both ``fit`` and ``transform``.
-        ``-1`` means using all processors.
-    parallel_backend : str, ParallelBackendBase instance or None, default=None
-        Specify the parallelisation backend implementation in joblib, if None a 'prefer'
-        value of "threads" is used by default.
-        Valid options are "loky", "multiprocessing", "threading" or a custom backend.
-        See the joblib Parallel documentation for more details.
     batch_size : int or None, default=100
         Number of shapelet candidates processed before being merged into the set of best
         shapelets.
     random_state : int or None, default=None
         Seed for random number generation.
+
+    backend : str, optional, default="loky"
+        backend to use for parallelization, one of
+
+        - "None": executes loop sequentally, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib`` ``Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as ``"dask"``, but returns delayed object instead of list
+
+    backend_params : dict, optional
+        additional parameters passed to the backend as config.
+        Valid keys depend on the value of ``backend``:
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by ``backend``.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+        - "dask": any valid keys for ``dask.compute`` can be passed, e.g., ``scheduler``
 
     Attributes
     ----------
@@ -1093,6 +1112,7 @@ class RandomShapeletTransform(BaseTransformer):
         "capability:categorical_in_X": False,
     }
 
+    # todo 0.30.0: remove n_jobs and parallel_backend parameters
     def __init__(
         self,
         n_shapelet_samples=10000,
@@ -1102,9 +1122,11 @@ class RandomShapeletTransform(BaseTransformer):
         remove_self_similar=True,
         time_limit_in_minutes=0.0,
         contract_max_n_shapelet_samples=np.inf,
-        n_jobs=1,
-        parallel_backend=None,
+        n_jobs="deprecated",
+        parallel_backend="deprecated",
         batch_size=100,
+        backend="loky",
+        backend_params=None,
         random_state=None,
     ):
         self.n_shapelet_samples = n_shapelet_samples
@@ -1120,6 +1142,10 @@ class RandomShapeletTransform(BaseTransformer):
         self.parallel_backend = parallel_backend
         self.batch_size = batch_size
         self.random_state = random_state
+
+        # Setting the two new arguments of backend and backend_params
+        self.backend = backend
+        self.backend_params = backend_params
 
         # The following set in method fit
         self.n_classes = 0
@@ -1139,6 +1165,36 @@ class RandomShapeletTransform(BaseTransformer):
         self._sorted_indices = []
 
         super().__init__()
+
+        # todo 0.30.0: remove this warning and logic
+        self.n_jobs = n_jobs
+        if n_jobs != "deprecated" or parallel_backend != "deprecated":
+            warn(
+                "In RandomShapeletTransform, the parameters "
+                "n_jobs and parallel_backend are deprecated "
+                "and will be removed in v0.30.0. "
+                "For n_jobs, use the backend_params "
+                "parameter, and pass n_jobs as a parameter of backend_params. "
+                "For parallel_backend, set backend to 'joblib', and "
+                "pass the backend to the backend parameter of the dict backend_params.",
+                FutureWarning,
+                obj=self,
+            )
+            self._backend = backend
+            n_jobs = check_n_jobs(n_jobs)
+            if backend_params is None:
+                self._backend_params = {}
+            else:
+                self._backend_params = backend_params
+            if n_jobs != "deprecated":
+                self._backend_params.update(**{"n_jobs": n_jobs})
+            if parallel_backend != "deprecated":
+                self._backend = "joblib"
+                self._backend_params.update(**{"backend": parallel_backend})
+        else:
+            self._backend = backend
+            self._backend_params = backend_params
+        # todo 0.30.0 - end remove
 
     def _fit(self, X, y=None):
         """Fit the shapelet transform to a specified X and y.
@@ -1164,8 +1220,6 @@ class RandomShapeletTransform(BaseTransformer):
             _remove_self_similar_shapelets,
         )
         from sktime.utils.numba.general import z_normalise_series
-
-        self._n_jobs = check_n_jobs(self.n_jobs)
 
         self.classes_, self._class_counts = np.unique(y, return_counts=True)
         self.n_classes = self.classes_.shape[0]
@@ -1202,17 +1256,19 @@ class RandomShapeletTransform(BaseTransformer):
                 fit_time < time_limit
                 and n_shapelets_extracted < self.contract_max_n_shapelet_samples
             ):
-                candidate_shapelets = Parallel(
-                    n_jobs=self._n_jobs, backend=self.parallel_backend, prefer="threads"
-                )(
-                    delayed(self._extract_random_shapelet)(
-                        X,
-                        y,
-                        n_shapelets_extracted + i,
-                        shapelets,
-                        max_shapelets_per_class,
-                    )
-                    for i in range(self._batch_size)
+                candidate_shapelets = parallelize(
+                    fun=self._extract_random_shapelet,
+                    iter=range(
+                        n_shapelets_extracted, n_shapelets_extracted + self._batch_size
+                    ),
+                    meta={
+                        "X": X,
+                        "y": y,
+                        "shapelets": shapelets,
+                        "max_shapelets_per_class": max_shapelets_per_class,
+                    },
+                    backend=self._backend,
+                    backend_params=self._backend_params,
                 )
 
                 for i, heap in enumerate(shapelets):
@@ -1239,17 +1295,21 @@ class RandomShapeletTransform(BaseTransformer):
                     else self._n_shapelet_samples - n_shapelets_extracted
                 )
 
-                candidate_shapelets = Parallel(
-                    n_jobs=self._n_jobs, backend=self.parallel_backend, prefer="threads"
-                )(
-                    delayed(self._extract_random_shapelet)(
-                        X,
-                        y,
-                        n_shapelets_extracted + i,
-                        shapelets,
-                        max_shapelets_per_class,
-                    )
-                    for i in range(n_shapelets_to_extract)
+                candidate_shapelets = parallelize(
+                    fun=self._extract_random_shapelet,
+                    iter=range(
+                        n_shapelets_extracted,
+                        n_shapelets_extracted + n_shapelets_to_extract,
+                    ),
+                    meta={
+                        "X": X,
+                        "y": y,
+                        "shapelets": shapelets,
+                        "max_shapelets_per_class": max_shapelets_per_class,
+                    },
+                    # todo 0.30.0: change to non-underscore params
+                    backend=self._backend,
+                    backend_params=self._backend_params,
                 )
 
                 for i, heap in enumerate(shapelets):
