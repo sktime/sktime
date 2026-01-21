@@ -1,20 +1,24 @@
-"""M4 forecasting competition catalogue."""
+"""M4 forecasting competition catalogues by period."""
 
 from sktime.catalogues.base import BaseCatalogue
 
 
-class M4CompetitionCatalogue(BaseCatalogue):
-    """M4 forecasting competition catalogue.
+class _BaseM4CompetitionCatalogue(BaseCatalogue):
+    """Base catalogue for M4 forecasting competition benchmarks.
 
-    Catalogue of datasets, forecasters, metrics, and cross-validation splitters
-    used to reproduce classical statistical and ML benchmarks from the M4 forecasting
-    competition.
+    This base class defines the common structure, forecasters, and evaluation
+    protocol used to reproduce classical statistical and machine learning
+    benchmarks from the M4 forecasting competition.
+
+    Concrete subclasses represent a single temporal granularity of the M4
+    competition (hourly, daily, weekly, monthly, quarterly, or yearly) and
+    bind the corresponding dataset and seasonal period (sp) used by the
+    Overall Weighted Average (OWA) metric.
 
     The M4 competition is a large-scale forecasting benchmark that evaluates
-    forecast accuracy across multiple temporal granularities, including hourly,
-    daily, weekly, monthly, quarterly, and yearly time series. This catalogue
-    collects commonly used classical baselines from the M4 literature and exposes
-    them in a unified, reproducible form compatible with the sktime benchmarking
+    forecast accuracy across multiple temporal granularities. This catalogue
+    family exposes commonly used classical baselines from the M4 literature
+    in a unified, reproducible form compatible with the sktime benchmarking
     framework.
     """
 
@@ -23,23 +27,20 @@ class M4CompetitionCatalogue(BaseCatalogue):
         "maintainers": "jgyasu",
         "object_type": "catalogue",
         "catalogue_type": "mixed",
-        "n_items": 18,
-        "n_datasets": 6,
+        "n_items": 11,
+        "n_datasets": 0,
         "n_forecasters": 11,
-        "n_metrics": 1,
+        "n_metrics": 0,
         "n_cv_splitters": 0,
     }
 
+    _dataset_name = None
+    _metric_name = None
+
     def _get(self):
         """Return a dict of items (datasets, forecasters, metrics)."""
-        datasets = [
-            "m4_hourly_dataset",
-            "m4_daily_dataset",
-            "m4_weekly_dataset",
-            "m4_monthly_dataset",
-            "m4_quarterly_dataset",
-            "m4_yearly_dataset",
-        ]
+        if self._dataset_name is None or self._metric_name is None:
+            raise ValueError("_dataset_name and _metric_name must be set in subclass")
 
         forecasters = [
             "NaiveForecaster(strategy='last')",  # Naïve 1
@@ -60,14 +61,9 @@ class M4CompetitionCatalogue(BaseCatalogue):
             ")",  # Comb
         ]
 
-        metrics = ["OverallWeightedAverage()"]
-
-        cv_splitters = [...]
-
-        all_objects = {
-            "dataset": [f"ForecastingData('{dataset}')" for dataset in datasets],
+        return {
+            "dataset": [f"ForecastingData('{self._dataset_name}')"],
             "forecaster": forecasters,
-            "metric": metrics,
-            "cv_splitter": cv_splitters,
+            "metric": [f"{self._metric_name}())"],
+            "cv_splitter": [],
         }
-        return all_objects
