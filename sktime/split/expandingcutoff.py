@@ -35,18 +35,15 @@ def _validate_cutoff(cutoff):
 
 
 class ExpandingCutoffSplitter(BaseSplitter):
-    """
+    r"""
     Expanding cutoff splitter for time series data.
 
-    This splitter combines elements of `ExpandingWindowSplitter` and `CutoffSplitter`
-    to create training and testing sets. Unlike `ExpandingWindowSplitter` which begins
-    with a fixed initial window, this splitter uses a specific cutoff point as the
-    starting window for the training set. The training set then expands incrementally
+    This splitter combines elements of ``ExpandingWindowSplitter`` and
+    ``CutoffSplitter`` to create training and testing sets indices. Unlike
+    ``ExpandingWindowSplitter`` which begins with a fixed initial window,
+    this splitter uses a specific cutoff point as the starting window
+    for the training set. The training set then expands incrementally
     in each split until it reaches the end of the series.
-
-    The test set is defined by a forecast horizon relative to the last point in the
-    training set, containing as many subsequent indices as specified by the `fh`
-    parameter.
 
     The valid types of y-index and cutoff pairings are datelike-datelike, datelike-int,
     and int-int. When a datelike index is combined with an int cutoff, the cutoff
@@ -54,20 +51,60 @@ class ExpandingCutoffSplitter(BaseSplitter):
     cutoff, the cutoff serves as a loc indexer. If the int cutoff is negative, it
     functions as an iloc indexer.
 
-    For example for ``cutoff = 10``, ``step_length = 1`` and ``fh = [1, 2, 3, 4, 5, 6]``
-    here is a representation of the folds:
+    The test set is defined by a forecast horizon (``fh``) relative
+    to the last point in the training set, containing the specified
+    number of subsequent indices.
 
-    ```
-                          c
-    |---------------------|----fh----|------|
+    Suppose to have a time-series :math:`s_0, \ldots, s_M`, where
+    :math:`s_j` is the time-series value at index :math:`j` and
+    :math:`M` is the total number of points of the time-series.
+
+    The traning folds indices are defined as follows: the training set
+    starts from the beginning of the series and extends up to
+    the ``cutoff`` index for the first split. In each subsequent
+    split, the training set expands by ``step_length``,
+    including all prior data up to the new cutoff.
+
+    .. math::
+        \text{TrainingFolds} = \{
+        [0, \ldots, cutoff + j * \textbf{step_length}]
+        \}_{j=0}^{N + 1}
+
+    where
+
+    .. math::
+        N = \left\lceil
+        \frac{ M
+        - cutoff
+        - n_{fh}}{\textbf{step_length}}
+        \right\rceil
+
+    and :math:`n_{fh}= fh` if ``fh`` is an integer or
+    :math:`len(fh)` if ``fh`` is a list/array.
+
+    The test folds indices are defined as follows: the test set consists of
+    the indices immediately following the cutoff in each split, defined by
+    ``fh``.
+    The number of test samples in each fold corresponds to the number
+    of indices specified in ``fh``.
+
+    .. math::
+        \textbf{TestFolds} = \{
+        [cutoff + 1 + j*\textbf{step_length},
+        \ldots,
+        cutoff + 1 + n_{fh} + j * \textbf{step_length}]
+        \}_{j=0}^{N + 1}
+
+    and :math:`N` is defined as above.
+
+    For example for ``cutoff = 9``, ``step_length = 1`` and ``fh = [1, 2, 3, 4, 5, 6]``
+    here is a representation of the folds::
+
+    |---------------------------------------|
     | * * * * * * * * * * x x x x x x - - - |
     | * * * * * * * * * * * x x x x x x - - |
     | * * * * * * * * * * * * x x x x x x - |
     | * * * * * * * * * * * * * x x x x x x |
-
-    ```
-
-    ``c`` = cutoff date or index.
 
     ``*`` = training fold.
 
@@ -75,13 +112,16 @@ class ExpandingCutoffSplitter(BaseSplitter):
 
     Parameters
     ----------
-    cutoff (int or pd.Timestamp):
+    cutoff : int or pd.Timestamp
         The initial cutoff point in the series, which marks the beginning of the
         first test set.
-    fh (int, list, or np.array):
+    fh : int, list, or np.array
         Forecasting horizon, determining the size and  indices of the test sets.
-        It can be an integer, a list, or an array.
-    step_length (int):
+
+        - If an integer, indication how many steps ahead to forecast
+        - If a list or an array of integers, specifying exact test indices relative
+         to the cutoff
+    step_length : int
         The step length to expand the training set size in each split.
 
     Examples
