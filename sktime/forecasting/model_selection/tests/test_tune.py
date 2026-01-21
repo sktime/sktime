@@ -363,7 +363,7 @@ def optuna_samplers():
             None,
             optuna.samplers.NSGAIISampler(seed=42),
             optuna.samplers.QMCSampler(seed=42),
-            optuna.samplers.CmaEsSampler(seed=42),
+            # optuna.samplers.CmaEsSampler(seed=42),
         ]
 
 
