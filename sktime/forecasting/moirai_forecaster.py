@@ -8,13 +8,13 @@ from skbase.utils.dependencies import _check_soft_dependencies
 if _check_soft_dependencies("lightning", severity="none"):
     import sktime.libs.uni2ts
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
 
 
-class MOIRAIForecaster(BaseForecaster):
+class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """
     Adapter for using MOIRAI Forecasters.
 

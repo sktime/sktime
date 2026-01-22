@@ -9,7 +9,11 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 from skbase.utils.stdout_mute import StdoutMute
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _GlobalForecastingDeprecationMixin,
+)
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
 from sktime.utils.warnings import warn
@@ -18,7 +22,7 @@ torch = _safe_import("torch")
 Dataset = _safe_import("torch.utils.data.Dataset")
 
 
-class TinyTimeMixerForecaster(BaseForecaster):
+class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """
     TinyTimeMixer Forecaster for Zero-Shot Forecasting of Multivariate Time Series.
 
