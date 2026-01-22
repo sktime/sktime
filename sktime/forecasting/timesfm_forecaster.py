@@ -9,11 +9,11 @@ import os
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
 
-class TimesFMForecaster(_BaseGlobalForecaster):
+class TimesFMForecaster(BaseForecaster):
     """TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
 
     TimesFM (Time Series Foundation Model) is a pretrained time-series foundation model
@@ -140,7 +140,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     ...     horizon_len=8,
     ... ) # doctest: +SKIP
     >>>
-    >>> # train and predict
+    >>> # fit sets the context, predict uses it
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
@@ -179,6 +179,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "capability:pretrain": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -250,7 +251,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
 
         super().__init__()
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X=None, fh=None):
         if fh is None and self.horizon_len is None:
             raise ValueError(
                 "Both 'fh' and 'horizon_len' cannot be None. Provide at least one."
@@ -305,7 +306,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         }
         return str(sorted(kwargs_plus_repo_id.items()))
 
-    def _predict(self, fh, X, y=None):
+    def _predict(self, fh, X=None):
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
@@ -317,7 +318,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 " when initializing the model or try another forecasting horizon."
             )
 
-        _y = y if self._global_forecasting else self._y
+        _y = self._y
 
         # multi-index conversion goes here
         if isinstance(_y.index, pd.MultiIndex):
