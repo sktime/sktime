@@ -73,19 +73,25 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         super().__init__()
 
     def _fit(self, y, fh, X=None):
-        """Fit the network.
+        """Fit the network, preserving pretrained weights if available.
 
         Changes to state:
             writes to self._network.state_dict
 
         Parameters
         ----------
-        X : iterable-style or map-style dataset
-            see (https://pytorch.org/docs/stable/data.html) for more information
+        y : pd.DataFrame
+            Training data
+        fh : ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used in base implementation)
         """
         fh = fh.to_relative(self.cutoff)
 
-        self.network = self._build_network(list(fh)[-1])
+        # Only build network if not already pretrained
+        if not hasattr(self, "network") or self.network is None:
+            self.network = self._build_network(list(fh)[-1])
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -95,6 +101,183 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
 
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, dataloader)
+
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain the neural network on panel data.
+
+        This is the default implementation for PyTorch-based forecasters.
+        Subclasses can override ``_build_panel_dataloader`` to customize
+        the dataset creation for panel data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Panel data to pretrain on. Should have (instance, time) hierarchy.
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        fh : ForecastingHorizon, optional
+            Forecasting horizon. If not provided, uses pred_len from constructor.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        pred_len = self._get_pretrain_pred_len(fh)
+
+        all_series = _get_series_from_panel(y)
+
+        # Use first series as reference for network dimensions
+        self._y = all_series[0]
+
+        self.network = self._build_network(pred_len)
+        dataloader = self._build_panel_dataloader(y, all_series, pred_len)
+
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
+
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+        self._store_pretrain_metadata(y, pred_len)
+
+        return self
+
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Update pretrained network with additional panel data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Additional panel data to train on
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        fh : ForecastingHorizon, optional
+            Forecasting horizon (uses stored pretrain pred_len if not provided)
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # Use stored pred_len from initial pretrain, or get from fh
+        if hasattr(self, "_pretrain_pred_len"):
+            pred_len = self._pretrain_pred_len
+        else:
+            pred_len = self._get_pretrain_pred_len(fh)
+
+        all_series = _get_series_from_panel(y)
+        dataloader = self._build_panel_dataloader(y, all_series, pred_len)
+
+        # Continue training
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+        # Update instance count
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            n_new = len(y.index.get_level_values(0).unique())
+            if hasattr(self, "n_pretrain_instances_"):
+                self.n_pretrain_instances_ += n_new
+            else:
+                self.n_pretrain_instances_ = n_new
+
+        return self
+
+    def _build_panel_dataloader(self, y, all_series, pred_len):
+        """Build PyTorch DataLoader for panel/hierarchical data pretraining.
+
+        This is the default implementation using PyTorchTrainDataset.
+        Subclasses can override this method to use custom datasets.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Panel data (not used in default implementation, but available for overrides)
+        all_series : list of pd.DataFrame
+            Pre-extracted individual time series from panel data
+        pred_len : int
+            Prediction length for the dataset
+
+        Returns
+        -------
+        dataloader : torch.utils.data.DataLoader
+            DataLoader for panel/hierarchical data
+        """
+        from torch.utils.data import ConcatDataset, DataLoader
+
+        seq_len = self._get_seq_len()
+
+        datasets = [
+            PyTorchTrainDataset(y=series, seq_len=seq_len, fh=pred_len)
+            for series in all_series
+        ]
+
+        combined_dataset = ConcatDataset(datasets)
+        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
+
+    def _get_pretrain_pred_len(self, fh):
+        """Get prediction length for pretraining.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon or list or int, optional
+            Forecasting horizon
+
+        Returns
+        -------
+        pred_len : int
+            Prediction length to use for pretraining
+        """
+        if fh is not None:
+            if hasattr(fh, "__iter__"):
+                return list(fh)[-1]
+            return fh
+        elif hasattr(self, "pred_len") and self.pred_len is not None:
+            return self.pred_len
+        else:
+            raise ValueError(
+                "pred_len must be specified either in constructor or via fh parameter "
+                "for pretraining."
+            )
+
+    def _get_seq_len(self):
+        """Get sequence length parameter.
+
+        Returns seq_len or context_window depending on which is defined.
+
+        Returns
+        -------
+        seq_len : int
+            Sequence length for the model
+        """
+        if hasattr(self, "seq_len"):
+            return self.seq_len
+        elif hasattr(self, "context_window"):
+            return self.context_window
+        else:
+            raise AttributeError(
+                f"{self.__class__.__name__} must define either 'seq_len' or "
+                "'context_window' for pretraining."
+            )
+
+    def _store_pretrain_metadata(self, y, pred_len):
+        """Store metadata after pretraining.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Panel data that was used for pretraining
+        pred_len : int
+            Prediction length used for pretraining
+        """
+        # Store number of pretrain instances for inspection
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            self.n_pretrain_instances_ = len(y.index.get_level_values(0).unique())
+        else:
+            self.n_pretrain_instances_ = 1
+
+        # Store pred_len for _pretrain_update
+        self._pretrain_pred_len = pred_len
 
     def _run_epoch(self, epoch, dataloader):
         for x, y in dataloader:

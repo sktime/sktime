@@ -152,130 +152,6 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             self.individual,
         )._build()
 
-    def _pretrain(self, y, X=None, fh=None):
-        """Pretrain the neural network on panel data.
-
-        Parameters
-        ----------
-        y : pd.DataFrame with MultiIndex or pd.Series
-            Panel data to pretrain on. If MultiIndex DataFrame,
-            should have (instance, time) hierarchy.
-        X : pd.DataFrame, optional
-            Exogenous data (currently not used)
-        fh : ForecastingHorizon, optional
-            Forecasting horizon (currently not used)
-
-        Returns
-        -------
-        self : reference to self
-        """
-        self.network = self._build_network(self.pred_len)
-        dataloader = self._build_panel_dataloader(y)
-
-        self._criterion = self._instantiate_criterion()
-        self._optimizer = self._instantiate_optimizer()
-
-        self.network.train()
-        for epoch in range(self.num_epochs):
-            self._run_epoch(epoch, dataloader)
-
-        # Store number of pretrain instances for inspection
-        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
-            self.n_pretrain_instances_ = len(y.index.get_level_values(0).unique())
-        else:
-            self.n_pretrain_instances_ = 1
-
-        return self
-
-    def _pretrain_update(self, y, X=None, fh=None):
-        """Update pretrained network with additional panel data.
-
-        Parameters
-        ----------
-        y : pd.DataFrame with MultiIndex or pd.Series
-            Additional panel data to train on
-        X : pd.DataFrame, optional
-            Exogenous data (currently not used)
-        fh : ForecastingHorizon, optional
-            Forecasting horizon (currently not used)
-
-        Returns
-        -------
-        self : reference to self
-        """
-        dataloader = self._build_panel_dataloader(y)
-
-        self.network.train()
-        for epoch in range(self.num_epochs):
-            self._run_epoch(epoch, dataloader)
-
-        # Update pretrain instance count
-        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
-            n_new = len(y.index.get_level_values(0).unique())
-            if hasattr(self, "n_pretrain_instances_"):
-                self.n_pretrain_instances_ += n_new
-            else:
-                self.n_pretrain_instances_ = n_new
-
-        return self
-
-    def _fit(self, y, fh, X=None):
-        """Fit the network, preserving pretrained weights if available.
-
-        Parameters
-        ----------
-        y : pd.DataFrame
-            Training data
-        fh : ForecastingHorizon
-            Forecasting horizon
-        X : pd.DataFrame, optional
-            Exogenous data (currently not used)
-        """
-        fh = fh.to_relative(self.cutoff)
-
-        # Only build network if not already pretrained
-        if not hasattr(self, "network") or self.network is None:
-            self.network = self._build_network(list(fh)[-1])
-
-        self._criterion = self._instantiate_criterion()
-        self._optimizer = self._instantiate_optimizer()
-
-        dataloader = self.build_pytorch_train_dataloader(y)
-        self.network.train()
-
-        for epoch in range(self.num_epochs):
-            self._run_epoch(epoch, dataloader)
-
-    def _build_panel_dataloader(self, y):
-        """Build PyTorch DataLoader for panel/hierarchical data pretraining.
-
-        Parameters
-        ----------
-        y : pd.DataFrame with MultiIndex
-            Panel data (2-level MultiIndex) or hierarchical data (3+ level MultiIndex)
-
-        Returns
-        -------
-        dataloader : torch.utils.data.DataLoader
-            DataLoader for panel/hierarchical data
-        """
-        from torch.utils.data import ConcatDataset, DataLoader
-
-        from sktime.forecasting.base.adapters._pytorch import (
-            PyTorchTrainDataset,
-            _get_series_from_panel,
-        )
-
-        all_series = _get_series_from_panel(y)
-
-        datasets = [
-            PyTorchTrainDataset(y=series, seq_len=self.seq_len, fh=self.pred_len)
-            for series in all_series
-        ]
-
-        combined_dataset = ConcatDataset(datasets)
-        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -388,6 +264,8 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "capability:pretrain": True,
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
 
     def __init__(
@@ -650,130 +528,6 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             self.individual,
         )._build()
 
-    def _pretrain(self, y, X=None, fh=None):
-        """Pretrain the neural network on panel data.
-
-        Parameters
-        ----------
-        y : pd.DataFrame with MultiIndex or pd.Series
-            Panel data to pretrain on. If MultiIndex DataFrame,
-            should have (instance, time) hierarchy.
-        X : pd.DataFrame, optional
-            Exogenous data (currently not used)
-        fh : ForecastingHorizon, optional
-            Forecasting horizon (currently not used)
-
-        Returns
-        -------
-        self : reference to self
-        """
-        self.network = self._build_network(self.pred_len)
-        dataloader = self._build_panel_dataloader(y)
-
-        self._criterion = self._instantiate_criterion()
-        self._optimizer = self._instantiate_optimizer()
-
-        self.network.train()
-        for epoch in range(self.num_epochs):
-            self._run_epoch(epoch, dataloader)
-
-        # Store number of pretrain instances for inspection
-        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
-            self.n_pretrain_instances_ = len(y.index.get_level_values(0).unique())
-        else:
-            self.n_pretrain_instances_ = 1
-
-        return self
-
-    def _pretrain_update(self, y, X=None, fh=None):
-        """Update pretrained network with additional panel data.
-
-        Parameters
-        ----------
-        y : pd.DataFrame with MultiIndex or pd.Series
-            Additional panel data to train on
-        X : pd.DataFrame, optional
-            Exogenous data (currently not used)
-        fh : ForecastingHorizon, optional
-            Forecasting horizon (currently not used)
-
-        Returns
-        -------
-        self : reference to self
-        """
-        dataloader = self._build_panel_dataloader(y)
-
-        self.network.train()
-        for epoch in range(self.num_epochs):
-            self._run_epoch(epoch, dataloader)
-
-        # Update pretrain instance count
-        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
-            n_new = len(y.index.get_level_values(0).unique())
-            if hasattr(self, "n_pretrain_instances_"):
-                self.n_pretrain_instances_ += n_new
-            else:
-                self.n_pretrain_instances_ = n_new
-
-        return self
-
-    def _fit(self, y, fh, X=None):
-        """Fit the network, preserving pretrained weights if available.
-
-        Parameters
-        ----------
-        y : pd.DataFrame
-            Training data
-        fh : ForecastingHorizon
-            Forecasting horizon
-        X : pd.DataFrame, optional
-            Exogenous data (currently not used)
-        """
-        fh = fh.to_relative(self.cutoff)
-
-        # Only build network if not already pretrained
-        if not hasattr(self, "network") or self.network is None:
-            self.network = self._build_network(list(fh)[-1])
-
-        self._criterion = self._instantiate_criterion()
-        self._optimizer = self._instantiate_optimizer()
-
-        dataloader = self.build_pytorch_train_dataloader(y)
-        self.network.train()
-
-        for epoch in range(self.num_epochs):
-            self._run_epoch(epoch, dataloader)
-
-    def _build_panel_dataloader(self, y):
-        """Build PyTorch DataLoader for panel/hierarchical data pretraining.
-
-        Parameters
-        ----------
-        y : pd.DataFrame with MultiIndex
-            Panel data (2-level MultiIndex) or hierarchical data (3+ level MultiIndex)
-
-        Returns
-        -------
-        dataloader : torch.utils.data.DataLoader
-            DataLoader for panel/hierarchical data
-        """
-        from torch.utils.data import ConcatDataset, DataLoader
-
-        from sktime.forecasting.base.adapters._pytorch import (
-            PyTorchTrainDataset,
-            _get_series_from_panel,
-        )
-
-        all_series = _get_series_from_panel(y)
-
-        datasets = [
-            PyTorchTrainDataset(y=series, seq_len=self.seq_len, fh=self.pred_len)
-            for series in all_series
-        ]
-
-        combined_dataset = ConcatDataset(datasets)
-        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -910,6 +664,8 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["geetu040"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "capability:pretrain": True,
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
 
     def __init__(
@@ -1130,6 +886,45 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             activation=self.activation,
             c_out=self.c_out,
         )._build()
+
+    def _build_panel_dataloader(self, y, all_series, pred_len):
+        """Build PyTorch DataLoader for panel/hierarchical data pretraining.
+
+        Overrides base class to use PytorchFormerDataset instead of PyTorchTrainDataset.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Panel data (not used directly, but available for subclass overrides)
+        all_series : list of pd.DataFrame
+            Pre-extracted series from panel data
+        pred_len : int
+            Prediction length (uses self._pred_len set by _build_network)
+
+        Returns
+        -------
+        dataloader : torch.utils.data.DataLoader
+            DataLoader for panel/hierarchical data
+        """
+        from torch.utils.data import ConcatDataset, DataLoader
+
+        from sktime.networks.ltsf.data.dataset import PytorchFormerDataset
+
+        datasets = [
+            PytorchFormerDataset(
+                y=series,
+                seq_len=self.seq_len,
+                context_len=self.context_len,
+                pred_len=self._pred_len,  # Set by _build_network
+                freq=self.freq,
+                temporal_encoding=self._temporal_encoding,  # Set by _build_network
+                temporal_encoding_type=self.temporal_encoding_type,
+            )
+            for series in all_series
+        ]
+
+        combined_dataset = ConcatDataset(datasets)
+        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
