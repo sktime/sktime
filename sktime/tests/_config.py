@@ -44,7 +44,6 @@ EXCLUDE_ESTIMATORS = [
     "MLPClassifier",
     "MLPRegressor",
     "ResNetRegressor",
-    "FCNRegressor",
     "LSTMFCNRegressor",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
@@ -74,7 +73,6 @@ EXCLUDE_ESTIMATORS = [
     "FreshPRINCE",
     # multiple timeouts and sporadic failures reported related to VARMAX
     # 2997, 3176, 7985
-    "VARMAX",
     "SCINetForecaster",  # known bug #7871
     "MAPAForecaster",  # known bug #8039
 ]
@@ -131,9 +129,6 @@ EXCLUDED_TESTS = {
     ],
     "ARIMA": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
-    ],
-    "VECM": [
-        "test_hierarchical_with_exogeneous",  # refer to #4743
     ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
@@ -195,7 +190,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "CircularBinarySegmentation",
         "ClaSPTransformer",
         "ClearSky",
-        "ColumnwiseTransformer",
         "ContractableBOSS",
         "DOBIN",
         "DilationMappingTransformer",
