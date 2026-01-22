@@ -64,6 +64,6 @@ class _BaseM4CompetitionCatalogue(BaseCatalogue):
         return {
             "dataset": [f"ForecastingData('{self._dataset_name}')"],
             "forecaster": forecasters,
-            "metric": [f"{self._metric_name}())"],
-            "cv_splitter": [],
+            "metric": [f"{self._metric_name}"],
+            "cv_splitter": ["TemporalTrainTestSplitter(test_size=0.2)"],
         }
