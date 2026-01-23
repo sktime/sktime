@@ -112,7 +112,7 @@ class LagLlamaForecaster(_BaseGlobalForecaster):
         "capability:pred_int:insample": False,
         "authors": ["shlok191"],
         "maintainers": ["shlok191"],
-        "python_version": None,
+        "python_version": "<3.14",
         "python_dependencies": [
             "gluonts>=0.14.0",
             "torch",
