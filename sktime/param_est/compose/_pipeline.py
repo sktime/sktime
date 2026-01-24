@@ -60,6 +60,9 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     transformers : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
         these are "blueprint" transformers, states do not change when ``fit`` is called
+    memory : str, joblib.Memory, or None, default=None
+        Cache directory or Memory instance to cache transformer ``fit_transform``
+        results. If None, no caching is performed.
 
     Attributes
     ----------
@@ -102,11 +105,12 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
 
     # no default tag values - these are set dynamically below
 
-    def __init__(self, param_est, transformers):
+    def __init__(self, param_est, transformers, memory=None):
         self.param_est = param_est
         self.param_est_ = param_est.clone()
         self.transformers = transformers
-        self.transformers_ = TransformerPipeline(transformers)
+        self.memory = memory
+        self.transformers_ = TransformerPipeline(transformers, memory=memory)
 
         super().__init__()
 
@@ -173,6 +177,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
             new_pipeline = ParamFitterPipeline(
                 param_est=self.param_est,
                 transformers=trafo_pipeline.steps,
+                memory=self.memory,
             )
             return new_pipeline
         else:

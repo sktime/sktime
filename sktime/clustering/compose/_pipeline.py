@@ -61,6 +61,9 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
     transformers : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
         these are "blueprint" transformers, states do not change when `fit` is called
+    memory : str, joblib.Memory, or None, default=None
+        Cache directory or Memory instance to cache transformer ``fit_transform``
+        results. If None, no caching is performed.
 
     Attributes
     ----------
@@ -112,11 +115,12 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
 
     # no default tag values - these are set dynamically below
 
-    def __init__(self, clusterer, transformers):
+    def __init__(self, clusterer, transformers, memory=None):
         self.clusterer = clusterer
         self.clusterer_ = clusterer.clone()
         self.transformers = transformers
-        self.transformers_ = TransformerPipeline(transformers)
+        self.memory = memory
+        self.transformers_ = TransformerPipeline(transformers, memory=memory)
 
         super().__init__()
 
@@ -200,6 +204,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
             new_pipeline = ClustererPipeline(
                 clusterer=self.clusterer,
                 transformers=trafo_pipeline.steps,
+                memory=self.memory,
             )
             return new_pipeline
         else:
@@ -411,6 +416,9 @@ class SklearnClustererPipeline(ClustererPipeline):
     transformers : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
         these are "blueprint" transformers, states do not change when `fit` is called
+    memory : str, joblib.Memory, or None, default=None
+        Cache directory or Memory instance to cache transformer ``fit_transform``
+        results. If None, no caching is performed.
 
     Attributes
     ----------
@@ -454,13 +462,14 @@ class SklearnClustererPipeline(ClustererPipeline):
 
     # no default tag values - these are set dynamically below
 
-    def __init__(self, clusterer, transformers):
+    def __init__(self, clusterer, transformers, memory=None):
         from sklearn.base import clone
 
         self.clusterer = clusterer
         self.clusterer_ = clone(clusterer)
         self.transformers = transformers
-        self.transformers_ = TransformerPipeline(transformers)
+        self.memory = memory
+        self.transformers_ = TransformerPipeline(transformers, memory=memory)
 
         super(ClustererPipeline, self).__init__()
 
@@ -527,6 +536,7 @@ class SklearnClustererPipeline(ClustererPipeline):
             new_pipeline = SklearnClustererPipeline(
                 clusterer=self.clusterer,
                 transformers=trafo_pipeline.steps,
+                memory=self.memory,
             )
             return new_pipeline
         else:
