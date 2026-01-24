@@ -10,12 +10,13 @@ from sktime.performance_metrics.forecasting.probabilistic._classes import (
     CRPS,
     AUCalibration,
     LogLoss,
+    SquaredDistrLoss,
 )
 from sktime.tests.test_switch import run_test_module_changed
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-DISTR_METRICS = [CRPS, AUCalibration, LogLoss]
+DISTR_METRICS = [CRPS, AUCalibration, LogLoss, SquaredDistrLoss]
 
 normal_dists = [Normal]
 
