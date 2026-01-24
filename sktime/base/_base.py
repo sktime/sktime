@@ -411,13 +411,9 @@ class TagAliaserMixin(_TagAliaserMixin):
 
     alias_dict = {
         "handles-missing-data": "capability:missing_values",
-        "ignores-exogeneous-X": "capability:exogenous",
-        "univariate-only": "capability:multivariate",
     }
     deprecate_dict = {
         "handles-missing-data": "1.0.0",
-        "ignores-exogeneous-X": "1.0.0",
-        "univariate-only": "1.0.0",
     }
 
     @classmethod
@@ -708,20 +704,7 @@ class TagAliaserMixin(_TagAliaserMixin):
         alias_dict = cls.alias_dict
         new_tag = alias_dict[old_tag]
 
-        # todo 1.0.0 - remove this special case
-        # special treatment for tags that get boolean flipped:
-        # "ignores-exogeneous-X", "univariate-only"
-        # the new tag is the negation of the old tag
-        if old_tag in cls.FLIPPED_TAGS:
-            if old_tag in tag_dict and new_tag != "":
-                new_tag_dict[new_tag] = not tag_dict[old_tag]
-            if direction == "both" and new_tag in tag_dict and old_tag not in tag_dict:
-                new_tag_dict[old_tag] = not tag_dict[new_tag]
-            if direction == "old_to_new" and old_tag in new_tag_dict:
-                del new_tag_dict[old_tag]
-            return new_tag_dict
-
-        # standard treatment for all other tags
+        # standard treatment for all tags
         if old_tag in tag_dict and new_tag != "":
             new_tag_dict[new_tag] = tag_dict[old_tag]
         if direction == "both" and new_tag in tag_dict and old_tag not in tag_dict:
@@ -733,7 +716,7 @@ class TagAliaserMixin(_TagAliaserMixin):
     # package name used for deprecation warnings
     _package_name = "sktime"
 
-    FLIPPED_TAGS = ["ignores-exogeneous-X", "univariate-only"]
+    FLIPPED_TAGS = []
 
 
 # todo 1.0.0: remove TagAliaserMixin from inheritance
