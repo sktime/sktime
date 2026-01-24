@@ -510,13 +510,13 @@ def test_featurizer_forecastingpipeline_logic():
 def test_exogenousx_ignore_tag_set():
     """Tests that TransformedTargetForecaster sets X tag for feature selection.
 
-    If the forecaster ignores X, but the feature selector does not, then the
-    ignores-exogeneous-X tag should be correctly set to False, not True.
+    If the forecaster does not use X, but the feature selector does, then the
+    capability:exogenous tag should be correctly set to True.
 
     This is the failure case in bug report #5518.
 
-    More generally, the tag should be set to True iff all steps in the pipeline
-    ignore X.
+    More generally, the tag should be set to True iff at least one step in the
+    pipeline uses X.
     """
     fcst_does_not_ignore_x = YfromX.create_test_instance()
     fcst_ignores_x = NaiveForecaster()
@@ -524,7 +524,7 @@ def test_exogenousx_ignore_tag_set():
     trafo_ignores_x = ExponentTransformer()
     trafo_does_not_ignore_x = FeatureSelection()
 
-    # check that ignores-exogeneous-X tag is set correctly
+    # check that capability:exogenous tag is set correctly
     pipe1 = trafo_ignores_x * fcst_does_not_ignore_x
     pipe2 = trafo_ignores_x * fcst_ignores_x
     pipe3 = trafo_does_not_ignore_x * fcst_does_not_ignore_x
