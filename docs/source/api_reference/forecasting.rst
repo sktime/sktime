@@ -583,6 +583,14 @@ Pre-trained and foundation models
 
     HFTransformersForecaster
 
+.. currentmodule:: sktime.forecasting.lagllama
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LagLlamaForecaster
+
 .. currentmodule:: sktime.forecasting.moirai_forecaster
 
 .. autosummary::
