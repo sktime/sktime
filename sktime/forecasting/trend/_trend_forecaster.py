@@ -61,6 +61,7 @@ class TrendForecaster(BaseForecaster):
     _tags = {
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"],
         "maintainers": ["tensorflow-as-tf"],
+        "capability:sample_weight": True,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
@@ -75,7 +76,7 @@ class TrendForecaster(BaseForecaster):
         self.regressor = regressor
         super().__init__()
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X=None, fh=None, sample_weight=None):
         """Fit to training data.
 
         Parameters
@@ -102,7 +103,7 @@ class TrendForecaster(BaseForecaster):
         X_sklearn = _get_X_numpy_int_from_pandas(y.index)
 
         # fit regressor
-        self.regressor_.fit(X_sklearn, y.iloc[:, 0])
+        self.regressor_.fit(X_sklearn, y, sample_weight=sample_weight)
         return self
 
     def _predict(self, fh=None, X=None):
