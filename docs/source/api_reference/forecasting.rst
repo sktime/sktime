@@ -647,6 +647,14 @@ Pre-trained and foundation models
 
     TotoForecaster
 
+.. currentmodule:: sktime.forecasting.itransformer
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ITransformerForecaster
+
 Intermittent time series forecasters
 ------------------------------------
 
