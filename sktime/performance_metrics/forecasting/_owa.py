@@ -93,7 +93,7 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
     >>> y_train = np.array([90, 95, 100, 110, 105, 100])
     >>> metric = OverallWeightedAverage(sp=1)
     >>> metric(y_true, y_pred, y_train=y_train)
-    0.14512226890252225
+    np.float64(0.14512226890252225)
     """
 
     _tags = {
