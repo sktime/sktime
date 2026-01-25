@@ -168,7 +168,7 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
         mase_ratio = mase_model / np.maximum(mase_naive2, eps)
         smape_ratio = smape_model / np.maximum(smape_naive2, eps)
 
-        owa = 0.5 * (mase_ratio + smape_ratio)
+        owa = np.float64(0.5) * (mase_ratio + smape_ratio)
 
         owa = self._get_weighted_df(owa, **kwargs)
         return self._handle_multioutput(owa, self.multioutput)
