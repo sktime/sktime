@@ -164,9 +164,6 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
             uncertainty_samples=self.uncertainty_samples,
             **kwargs,
         )
-        if not hasattr(self._forecaster, "stan_backend"):
-            setattr(self._forecaster, "stan_backend", stan_backend)
-
         return self
 
     # _fit is defined in the superclass and is fine as it is.

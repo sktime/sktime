@@ -204,7 +204,6 @@ class Prophet(_ProphetAdapter):
 
     def _instantiate_model(self):
         stan_backend = getattr(self, "stan_backend", None)
-
         kwargs = {}
         if stan_backend is not None:
             kwargs["stan_backend"] = stan_backend
@@ -213,23 +212,15 @@ class Prophet(_ProphetAdapter):
             growth=self.growth,
             changepoints=self.changepoints,
             n_changepoints=self.n_changepoints,
-            changepoint_range=self.changepoint_range,
-            yearly_seasonality=self.yearly_seasonality,
+            seasonality_mode=self.seasonality_mode,
             weekly_seasonality=self.weekly_seasonality,
             daily_seasonality=self.daily_seasonality,
-            holidays=self.holidays,
-            seasonality_mode=self.seasonality_mode,
-            seasonality_prior_scale=float(self.seasonality_prior_scale),
-            holidays_prior_scale=float(self.holidays_prior_scale),
-            changepoint_prior_scale=float(self.changepoint_prior_scale),
+            yearly_seasonality=self.yearly_seasonality,
             mcmc_samples=self.mcmc_samples,
             interval_width=1 - self.alpha,
             uncertainty_samples=self.uncertainty_samples,
             **kwargs,
         )
-        if not hasattr(self._forecaster, "stan_backend"):
-            setattr(self._forecaster, "stan_backend", stan_backend)
-
         return self
 
     @classmethod
