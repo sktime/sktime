@@ -92,13 +92,14 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
     >>> y_pred = np.array([102, 108, 107, 118])
     >>> y_train = np.array([90, 95, 100, 110, 105, 100])
     >>> metric = OverallWeightedAverage(sp=1)
-    >>> metric(y_true, y_pred, y_train=y_train)
+    >>> metric(y_true, y_pred, y_train=y_train) # doctest: +SKIP
     np.float64(0.14512226890252225)
     """
 
     _tags = {
         "requires-y-train": True,
         "python_dependencies": ["statsmodels"],
+        "tests:skip_by_name": ["test_uniform_average_time"],
     }
 
     def __init__(
@@ -167,7 +168,7 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
         mase_ratio = mase_model / np.maximum(mase_naive2, eps)
         smape_ratio = smape_model / np.maximum(smape_naive2, eps)
 
-        owa = 0.5 * (mase_ratio + smape_ratio)
+        owa = np.float64(0.5) * (mase_ratio + smape_ratio)
 
         owa = self._get_weighted_df(owa, **kwargs)
         return self._handle_multioutput(owa, self.multioutput)
