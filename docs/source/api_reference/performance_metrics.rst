@@ -90,6 +90,15 @@ Geometric errors
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
 
+Benchmark metrics
+^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    OverallWeightedAverage
+
 Under- and over-prediction errors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
