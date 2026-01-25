@@ -1,0 +1,300 @@
+"""Tests for DummyGlobalForecaster."""
+
+__author__ = ["SimonBlanke"]
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from sktime.forecasting.dummy_global import DummyGlobalForecaster
+from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils._testing.series import _make_series
+
+
+class TestDummyGlobalForecaster:
+    """Unit tests for DummyGlobalForecaster."""
+
+    def test_pretrain_fit_predict_mean_strategy(self):
+        """Test basic pretrain-fit-predict workflow with mean strategy."""
+        # Create panel data for pretraining
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        forecaster = DummyGlobalForecaster(strategy="mean")
+        forecaster.pretrain(y_panel)
+
+        # Check that global mean was computed
+        assert hasattr(forecaster, "global_mean_")
+        assert hasattr(forecaster, "n_pretrain_instances_")
+        assert forecaster.n_pretrain_instances_ == 3
+
+        # Fit on a single series
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+        y_pred = forecaster.predict()
+
+        # Check predictions
+        assert len(y_pred) == 3
+        assert isinstance(y_pred, pd.Series)
+        # All predictions should be the global mean
+        np.testing.assert_array_almost_equal(
+            y_pred.values, np.repeat(forecaster.global_mean_, 3)
+        )
+
+    def test_pretrain_fit_predict_last_strategy(self):
+        """Test basic pretrain-fit-predict workflow with last strategy."""
+        # Create panel data for pretraining
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(2,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        forecaster = DummyGlobalForecaster(strategy="last")
+        forecaster.pretrain(y_panel)
+
+        # Fit on a single series
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+        y_pred = forecaster.predict()
+
+        # Check predictions
+        assert len(y_pred) == 3
+        assert isinstance(y_pred, pd.Series)
+        # All predictions should be the last value
+        expected_value = y_train.iloc[-1]
+        np.testing.assert_array_almost_equal(
+            y_pred.values, np.repeat(expected_value, 3)
+        )
+
+    def test_without_pretraining(self):
+        """Test that forecaster works without pretraining (uses series mean)."""
+        forecaster = DummyGlobalForecaster(strategy="mean")
+
+        # Fit without pretraining
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+
+        # Check that global_mean_ was computed from the training series
+        assert hasattr(forecaster, "global_mean_")
+        expected_mean = y_train.mean()
+        np.testing.assert_almost_equal(forecaster.global_mean_, expected_mean)
+
+        y_pred = forecaster.predict()
+
+        assert len(y_pred) == 3
+        np.testing.assert_array_almost_equal(
+            y_pred.values, np.repeat(forecaster.global_mean_, 3)
+        )
+
+    def test_pretrain_updates_state(self):
+        """Test that pretrain() updates forecaster state correctly."""
+        forecaster = DummyGlobalForecaster()
+
+        assert forecaster.state == "new"
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(2,), min_timepoints=10, max_timepoints=10
+        )
+        forecaster.pretrain(y_panel)
+
+        assert forecaster.state == "pretrained"
+
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+
+        assert forecaster.state == "fitted"
+
+    def test_incremental_pretraining(self):
+        """Test that pretrain can be called multiple times (incremental)."""
+        forecaster = DummyGlobalForecaster()
+
+        # First pretrain batch
+        y_panel1 = _make_hierarchical(
+            hierarchy_levels=(2,), min_timepoints=10, max_timepoints=10
+        )
+        forecaster.pretrain(y_panel1)
+        mean_after_first = forecaster.global_mean_
+
+        # Check that mean is computed and valid after first pretrain
+        assert np.isfinite(mean_after_first)
+
+        # Second pretrain batch
+        y_panel2 = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10
+        )
+        forecaster.pretrain(y_panel2)
+        mean_after_second = forecaster.global_mean_
+
+        # Mean should be updated (not necessarily equal due to different data)
+        # Just check that it's computed and is a finite number
+        assert np.isfinite(mean_after_second)
+        assert forecaster.state == "pretrained"
+
+    def test_multivariate_forecasting(self):
+        """Test DummyGlobalForecaster with multivariate data."""
+        # Create multivariate panel data
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=2
+        )
+        forecaster = DummyGlobalForecaster(strategy="mean")
+        forecaster.pretrain(y_panel)
+
+        # Fit on multivariate series
+        y_train = _make_series(n_columns=2, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+        y_pred = forecaster.predict()
+
+        assert len(y_pred) == 3
+        assert isinstance(y_pred, pd.DataFrame)
+        assert y_pred.shape == (3, 2)  # 3 time points, 2 columns
+
+    def test_get_pretrained_params(self):
+        """Test get_pretrained_params method."""
+        forecaster = DummyGlobalForecaster()
+
+        # Before pretraining, should return empty dict
+        params = forecaster.get_pretrained_params()
+        assert params == {}
+
+        # After pretraining
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(2,), min_timepoints=10, max_timepoints=10
+        )
+        forecaster.pretrain(y_panel)
+        params = forecaster.get_pretrained_params()
+
+        # Should have pretrained attributes
+        assert "global_mean_" in params
+        assert "global_std_" in params
+        assert "n_pretrain_instances_" in params
+        assert "n_pretrain_timepoints_" in params
+
+        # After fit, pretrained params should still be available
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+
+        params_after_fit = forecaster.get_pretrained_params()
+        # All pretrained params should still exist
+        assert "global_mean_" in params_after_fit
+        assert "global_std_" in params_after_fit
+
+    def test_capability_tag(self):
+        """Test that DummyGlobalForecaster has correct capability tag."""
+        forecaster = DummyGlobalForecaster()
+
+        # Should have capability:pretrain tag set to True
+        assert forecaster.get_tag("capability:pretrain") is True
+
+    def test_invalid_strategy(self):
+        """Test that invalid strategy raises error."""
+        forecaster = DummyGlobalForecaster(strategy="invalid")
+
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+
+        # Predict should raise ValueError for invalid strategy
+        with pytest.raises(ValueError, match="Unknown strategy"):
+            forecaster.predict()
+
+    def test_preserves_fitted_params_after_fit(self):
+        """Test that fit() after pretrain() preserves pretrained parameters."""
+        forecaster = DummyGlobalForecaster()
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10
+        )
+        forecaster.pretrain(y_panel)
+        pretrained_mean = forecaster.global_mean_
+        pretrained_std = forecaster.global_std_
+
+        # Fit on different series
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+
+        # Pretrained params should be preserved
+        np.testing.assert_almost_equal(forecaster.global_mean_, pretrained_mean)
+        np.testing.assert_almost_equal(forecaster.global_std_, pretrained_std)
+
+    def test_pretrain_rejects_single_series(self):
+        """Test that pretrain() raises TypeError when passed a single Series."""
+        forecaster = DummyGlobalForecaster()
+
+        # Create a single series (not panel data)
+        y_single = _make_series(n_columns=1, n_timepoints=20)
+
+        # pretrain() should reject single Series
+        with pytest.raises(TypeError, match="requires Panel or Hierarchical data"):
+            forecaster.pretrain(y_single)
+
+    def test_clone_preserves_pretrained_attrs(self):
+        """Test that clone() preserves pretrained attributes."""
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        forecaster = DummyGlobalForecaster(strategy="mean")
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+        cloned = forecaster.clone()
+
+        assert cloned._state == "pretrained"
+        assert hasattr(cloned, "global_mean_")
+        assert hasattr(cloned, "_pretrained_attrs")
+        np.testing.assert_almost_equal(cloned.global_mean_, pretrain_mean)
+
+    def test_clone_after_fit_preserves_only_pretrained(self):
+        """Test that clone() after fit preserves pretrained but not fitted attrs."""
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        forecaster = DummyGlobalForecaster(strategy="last")
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+
+        # Fit on a single series
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+
+        assert forecaster._state == "fitted"
+        assert hasattr(forecaster, "last_value_")
+
+        # Clone after fit
+        cloned = forecaster.clone()
+
+        # Verify: pretrained attrs preserved, fitted attrs NOT preserved
+        assert cloned._state == "pretrained"  # Not "fitted"
+        assert hasattr(cloned, "global_mean_")
+        np.testing.assert_almost_equal(cloned.global_mean_, pretrain_mean)
+        assert not hasattr(cloned, "last_value_")  # Fitted attr NOT copied
+
+    def test_clone_composite_preserves_inner_pretrained(self):
+        """Test clone preserves pretrained state in composite forecasters."""
+        from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.series.detrend import Detrender
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        # Pretrain inner forecaster
+        inner_forecaster = DummyGlobalForecaster(strategy="mean")
+        inner_forecaster.pretrain(y_panel)
+        pretrain_mean = inner_forecaster.global_mean_
+
+        # Create pipeline
+        pipeline = TransformedTargetForecaster(
+            [
+                ("detrender", Detrender()),
+                ("forecaster", inner_forecaster),
+            ]
+        )
+
+        # Clone the pipeline
+        cloned_pipeline = pipeline.clone()
+        cloned_inner = cloned_pipeline.steps_[1][1]
+
+        # Verify inner forecaster preserved pretrained state
+        assert cloned_inner._state == "pretrained"
+        assert hasattr(cloned_inner, "global_mean_")
+        np.testing.assert_almost_equal(cloned_inner.global_mean_, pretrain_mean)
