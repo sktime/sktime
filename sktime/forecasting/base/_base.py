@@ -2389,19 +2389,152 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 BaseForecaster._init_dynamic_doc()
 
 
+class _GlobalForecastingDeprecationMixin:
+    """Mixin for backward-compatible y parameter in predict().
+
+    This mixin provides a deprecation path for forecasters that previously
+    inherited from ``_BaseGlobalForecaster`` and supported a ``y`` parameter
+    in ``predict()`` for global forecasting.
+
+    .. deprecated:: 0.41.0
+
+        The ``y`` parameter in ``predict()`` is deprecated and will be removed
+        in version 0.43.0. Global forecasting now uses the data from ``fit()``.
+
+    Usage
+    -----
+    Add this mixin BEFORE ``BaseForecaster`` in the inheritance list::
+
+        class MyForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+            ...
+
+    The mixin must come before ``BaseForecaster`` to ensure correct MRO.
+    """
+
+    # TODO 0.43.0: Remove this mixin class entirely
+
+    def predict(self, fh=None, X=None, y=None):
+        """Forecast time series at future horizon.
+
+        Wraps ``BaseForecaster.predict()`` with deprecation warning for ``y``.
+        """
+        if y is not None:
+            from sktime.utils.warnings import warn
+
+            warn(
+                f"In {self.__class__.__name__}.predict(), the 'y' parameter is "
+                "deprecated and will be removed in sktime version 0.43.0. "
+                "Global forecasting now uses the data passed to fit(). "
+                "To retain current behavior, pass your data to fit() instead.",
+                category=FutureWarning,
+                obj=self,
+            )
+        return super().predict(fh=fh, X=X)
+
+    def predict_interval(self, fh=None, X=None, coverage=0.90, y=None):
+        """Compute/return prediction interval forecasts.
+
+        Wraps ``BaseForecaster.predict_interval()`` with deprecation warning.
+        """
+        if y is not None:
+            from sktime.utils.warnings import warn
+
+            warn(
+                f"In {self.__class__.__name__}.predict_interval(), the 'y' parameter "
+                "is deprecated and will be removed in sktime version 0.43.0. "
+                "Global forecasting now uses the data passed to fit(). "
+                "To retain current behavior, pass your data to fit() instead.",
+                category=FutureWarning,
+                obj=self,
+            )
+        return super().predict_interval(fh=fh, X=X, coverage=coverage)
+
+    def predict_quantiles(self, fh=None, X=None, alpha=None, y=None):
+        """Compute/return quantile forecasts.
+
+        Wraps ``BaseForecaster.predict_quantiles()`` with deprecation warning.
+        """
+        if y is not None:
+            from sktime.utils.warnings import warn
+
+            warn(
+                f"In {self.__class__.__name__}.predict_quantiles(), the 'y' parameter "
+                "is deprecated and will be removed in sktime version 0.43.0. "
+                "Global forecasting now uses the data passed to fit(). "
+                "To retain current behavior, pass your data to fit() instead.",
+                category=FutureWarning,
+                obj=self,
+            )
+        return super().predict_quantiles(fh=fh, X=X, alpha=alpha)
+
+    def predict_var(self, fh=None, X=None, cov=False, y=None):
+        """Compute/return variance forecasts.
+
+        Wraps ``BaseForecaster.predict_var()`` with deprecation warning.
+        """
+        if y is not None:
+            from sktime.utils.warnings import warn
+
+            warn(
+                f"In {self.__class__.__name__}.predict_var(), the 'y' parameter "
+                "is deprecated and will be removed in sktime version 0.43.0. "
+                "Global forecasting now uses the data passed to fit(). "
+                "To retain current behavior, pass your data to fit() instead.",
+                category=FutureWarning,
+                obj=self,
+            )
+        return super().predict_var(fh=fh, X=X, cov=cov)
+
+
 class _BaseGlobalForecaster(BaseForecaster):
     """Base global forecaster template class.
 
-    This class is a temporal solution, might be merged into BaseForecaster later.
+    .. deprecated:: 0.41.0
+
+        ``_BaseGlobalForecaster`` is deprecated and will be removed in
+        version 0.43.0. Inherit from ``BaseForecaster`` directly instead.
+
+        For backward compatibility with the ``y`` parameter in ``predict()``,
+        also inherit from ``_GlobalForecastingDeprecationMixin``.
+
+        Key migration steps:
+
+        * Change base class from ``_BaseGlobalForecaster`` to ``BaseForecaster``
+        * Optionally add ``_GlobalForecastingDeprecationMixin`` for backward
+          compatibility with the ``y`` parameter in ``predict()``
+        * Update ``_fit`` signature to ``_fit(self, y, X=None, fh=None)``
+        * Update ``_predict`` signature to ``_predict(self, fh, X=None)``
+          (remove ``y`` parameter, use ``self._y`` instead)
+        * Remove usage of ``self._global_forecasting`` flag
 
     The base forecaster specifies the methods and method signatures that all
     global forecasters have to implement.
 
     Specific implementations of these methods is deferred to concrete forecasters.
-
     """
 
     _tags = {"object_type": ["global_forecaster", "forecaster"]}
+
+    # TODO 0.43.0: remove _BaseGlobalForecaster class entirely
+    def __init_subclass__(cls, **kwargs):
+        """Warn when _BaseGlobalForecaster is subclassed."""
+        super().__init_subclass__(**kwargs)
+
+        # Only warn for classes not in the sktime package
+        module = cls.__module__
+        if not module.startswith("sktime."):
+            from sktime.utils.warnings import warn
+
+            warn(
+                f"Class '{cls.__name__}' inherits from _BaseGlobalForecaster, "
+                "which is deprecated and will be removed in sktime version 0.43.0. "
+                "Please inherit from BaseForecaster instead. "
+                "For backward compatibility with the 'y' parameter in predict(), "
+                "also inherit from _GlobalForecastingDeprecationMixin. "
+                "See the _BaseGlobalForecaster docstring for migration steps.",
+                category=FutureWarning,
+                obj=cls,
+            )
 
     def predict(self, fh=None, X=None, y=None):
         """Forecast time series at future horizon.

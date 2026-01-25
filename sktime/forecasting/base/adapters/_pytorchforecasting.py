@@ -14,13 +14,17 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _GlobalForecastingDeprecationMixin,
+)
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
 
 
-class _PytorchForecastingAdapter(_BaseGlobalForecaster):
+class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """Base adapter class for pytorch-forecasting models.
 
     Parameters
@@ -176,8 +180,8 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
     def _fit(
         self: "_PytorchForecastingAdapter",
         y: pd.DataFrame,
-        X: pd.DataFrame | None,
-        fh: ForecastingHorizon,
+        X: pd.DataFrame | None = None,
+        fh: ForecastingHorizon | None = None,
     ) -> "_PytorchForecastingAdapter":
         """Fit forecaster to training data.
 
@@ -248,8 +252,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
     def _predict(
         self: "_PytorchForecastingAdapter",
         fh: ForecastingHorizon | None,
-        X: pd.DataFrame | None,
-        y: pd.DataFrame | None,
+        X: pd.DataFrame | None = None,
     ) -> pd.Series:
         """Forecast time series at future horizon.
 
@@ -269,36 +272,14 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
-            If ``y`` is not passed (not performing global forecasting), ``X`` should
-            only contain the time points to be predicted.
-            If ``y`` is passed (performing global forecasting), ``X`` must contain
-            all historical values and the time points to be predicted.
-        y : sktime time series object, optional (default=None)
-            Historical values of the time series that should be predicted.
-            If not None, global forecasting will be performed.
-            Only pass the historical values not the time points to be predicted.
 
         Returns
         -------
         y_pred : sktime time series object
             guaranteed to have a single column/variable
             Point predictions
-
-        Notes
-        -----
-        If ``y`` is not None, global forecast will be performed.
-        In global forecast mode,
-        ``X`` should contain all historical values and the time points to be predicted,
-        while ``y`` should only contain historical values
-        not the time points to be predicted.
-
-        If ``y`` is None, non global forecast will be performed.
-        In non global forecast mode,
-        ``X`` should only contain the time points to be predicted,
-        while ``y`` should only contain historical values
-        not the time points to be predicted.
         """
-        X, y = self._Xy_precheck(X, y)
+        X, y = self._Xy_precheck(X)
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
@@ -346,7 +327,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         )
         return output.loc[dateindex]
 
-    def _predict_quantiles(self, fh, X, alpha, y=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -359,14 +340,8 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
-            If ``y`` is passed (performing global forecasting), ``X`` must contain
-            all historical values and the time points to be predicted.
         alpha : list of float, optional (default=[0.5])
             A list of probabilities at which quantile forecasts are computed.
-        y : time series in ``sktime`` compatible format, optional (default=None)
-            Historical values of the time series that should be predicted.
-            If not None, global forecasting will be performed.
-            Only pass the historical values not the time points to be predicted.
 
         Returns
         -------
@@ -393,7 +368,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 "https://pytorch-forecasting.readthedocs.io/en/stable/metrics.html"
             )
 
-        X, y = self._Xy_precheck(X, y)
+        X, y = self._Xy_precheck(X)
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
@@ -443,13 +418,10 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         )
         return output.loc[dateindex]
 
-    def _Xy_precheck(self, X, y):
-        if y is None:
-            y = deepcopy(self._y)
+    def _Xy_precheck(self, X):
+        y = deepcopy(self._y)
         if X is None:
             X = deepcopy(self._X)
-        if X is not None and not self._global_forecasting:
-            X = pd.concat([self._X, X])
         return X, y
 
     def _Xy_to_dataset(
