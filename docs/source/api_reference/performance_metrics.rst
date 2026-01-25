@@ -90,7 +90,7 @@ Geometric errors
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
 
-Benchmark metrics
+Benchmark errors
 ^^^^^^^^^^^^^^^^^
 
 .. autosummary::
