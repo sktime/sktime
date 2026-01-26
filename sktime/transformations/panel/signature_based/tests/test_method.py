@@ -64,3 +64,20 @@ def test_window_error():
     )
     with pytest.raises(ValueError):
         method.fit_transform(X)
+
+@pytest.mark.skipif(
+    not run_test_for_class(SignatureTransformer),
+    reason="skip test if python environment requirements for estimator are not met",
+)
+def test_logsignature_post_rescaling_unsupported():
+    """Check logsignature + post rescaling raises clear error."""
+    X = np.random.randn(2, 4, 5)
+    method = SignatureTransformer(
+        depth=2,
+        window_name="global",
+        rescaling="post",
+        sig_tfm="logsignature",
+        backend="esig",
+    )
+    with pytest.raises(NotImplementedError, match="rescaling='post'"):
+        method.fit_transform(X)
