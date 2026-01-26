@@ -865,6 +865,18 @@ class TransformedTargetForecaster(_Pipeline):
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
     >>> pipe = imputer * Detrender() * forecaster * ExponentTransformer()
+
+        Example 4: using sklearn StandardScaler with a forecaster
+
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+    >>> pipe = TransformedTargetForecaster([
+    ...     ("scaler", TabularToSeriesAdaptor(StandardScaler())),
+    ...     ("forecaster", NaiveForecaster(strategy="mean")),
+    ... ])
+    >>> pipe.fit(y)
+    TransformedTargetForecaster(...)
+    >>> y_pred = pipe.predict(fh=[1, 2, 3])
     """
 
     _tags = {
