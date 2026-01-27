@@ -580,6 +580,11 @@ jobs:
         env:
           UV_SYSTEM_PYTHON: 1
 
+      - name: Install cmaes (required for Optuna CMA-ES samplers)
+        run: uv pip install cmaes
+        env:
+          UV_SYSTEM_PYTHON: 1
+
       - name: Show dependencies
         run: uv pip list
 

@@ -212,6 +212,7 @@ transformations = [
 # dev - the developer dependency set, for contributors to sktime
 dev = [
   "backoff",
+  "cmaes>=0.9.0; python_version < \"3.13\"",
   "httpx",
   "pre-commit",
   "pytest",
