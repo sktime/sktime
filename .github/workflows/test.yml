@@ -533,7 +533,21 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+      - name: Ensure workspace exists (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_WORKSPACE) {
+            $parent = Split-Path -Parent $env:GITHUB_WORKSPACE
+            if ($parent -and -not (Test-Path $parent)) {
+              New-Item -ItemType Directory -Force -Path $parent | Out-Null
+            }
+            New-Item -ItemType Directory -Force -Path $env:GITHUB_WORKSPACE | Out-Null
+          }
+
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - run: git remote set-branches origin 'main'
 
@@ -563,6 +577,11 @@ jobs:
       - name: Install sktime and dependencies
         shell: bash
         run: uv pip install .[all_extras_pandas2,dev,dl,compatibility_tests] --no-cache-dir
+        env:
+          UV_SYSTEM_PYTHON: 1
+
+      - name: Install cmaes (required for Optuna CMA-ES samplers)
+        run: uv pip install cmaes
         env:
           UV_SYSTEM_PYTHON: 1
 

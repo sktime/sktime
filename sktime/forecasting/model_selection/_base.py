@@ -40,6 +40,7 @@ class BaseGridSearch(_DelegatedForecaster):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
+        materialize_dask_lazy=True,
     ):
         self.forecaster = forecaster
         self.cv = cv
@@ -55,6 +56,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.tune_by_variable = tune_by_variable
         self.backend_params = backend_params
         self.n_jobs = n_jobs
+        self.materialize_dask_lazy = materialize_dask_lazy
 
         super().__init__()
 
@@ -211,6 +213,13 @@ class BaseGridSearch(_DelegatedForecaster):
                     "Was the CV iterator empty? "
                     "Were there no candidates?"
                 )
+
+            if backend == "dask_lazy":
+                if not self.materialize_dask_lazy:
+                    self.cv_results_lazy_ = out
+                from dask import compute
+
+                out = list(compute(*out, **backend_params))
 
             return out
 

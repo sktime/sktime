@@ -79,19 +79,29 @@ class ForecastingGridSearchCV(BaseGridSearch):
         The test score returned when a forecaster fails to be fitted.
     return_train_score : bool, optional (default=False)
 
-    backend : {"dask", "loky", "multiprocessing", "threading","ray"}, by default "loky".
+    backend : {"dask", "dask_lazy", "loky", "multiprocessing", "threading", "ray"},
+        by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
 
         - "None": executes loop sequentally, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "dask_lazy": same as "dask", but returns delayed objects when
+          ``materialize_dask_lazy=False``
         - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
         "threading" is unlikely to see speed ups due to the GIL and the serialization
         backend (``cloudpickle``) for "dask" and "loky" is generally more robust
         than the standard ``pickle`` library used in "multiprocessing".
+
+    materialize_dask_lazy : bool, optional (default=True)
+        If True (default), Dask lazy results are materialized immediately when
+        ``backend="dask_lazy"``. If False, lazy delayed objects are stored in
+        ``cv_results_lazy_`` attribute for external orchestration, but are still
+        materialized internally for finding best parameters and refitting.
+        Only has effect when ``backend="dask_lazy"``.
 
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
@@ -168,6 +178,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
         and at least one of the two is applicable.
         In this case, the other attributes are not present in self,
         only in the fields of forecasters_.
+    cv_results_lazy_ : list of dask.delayed objects, optional
+        Lazy delayed objects from parallelization when ``backend="dask_lazy"``
+        and ``materialize_dask_lazy=False``. Only present when the above
+        conditions are met.
 
     Examples
     --------
@@ -254,6 +268,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         tune_by_variable=False,
         backend_params=None,
         n_jobs="deprecated",
+        materialize_dask_lazy=True,
     ):
         super().__init__(
             forecaster=forecaster,
@@ -270,6 +285,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             tune_by_variable=tune_by_variable,
             backend_params=backend_params,
             n_jobs=n_jobs,
+            materialize_dask_lazy=materialize_dask_lazy,
         )
         self.param_grid = param_grid
 
