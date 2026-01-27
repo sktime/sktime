@@ -533,7 +533,21 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+      - name: Ensure workspace exists (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_WORKSPACE) {
+            $parent = Split-Path -Parent $env:GITHUB_WORKSPACE
+            if ($parent -and -not (Test-Path $parent)) {
+              New-Item -ItemType Directory -Force -Path $parent | Out-Null
+            }
+            New-Item -ItemType Directory -Force -Path $env:GITHUB_WORKSPACE | Out-Null
+          }
+
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - run: git remote set-branches origin 'main'
 
