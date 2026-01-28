@@ -35,6 +35,7 @@ __all__ = [
     "MedianSquaredError",
     "MedianSquaredPercentageError",
     "MedianSquaredScaledError",
+    "OverlayDX",
     "RelativeLoss",
     "mean_absolute_scaled_error",
     "median_absolute_scaled_error",
@@ -56,6 +57,7 @@ __all__ = [
     "geometric_mean_relative_squared_error",
     "mean_asymmetric_error",
     "mean_linex_error",
+    "overlay_dx_score",
     "relative_loss",
 ]
 
@@ -81,6 +83,7 @@ from sktime.performance_metrics.forecasting._functions import (
     median_squared_error,
     median_squared_percentage_error,
     median_squared_scaled_error,
+    overlay_dx_score,
     relative_loss,
 )
 from sktime.performance_metrics.forecasting._gmae import GeometricMeanAbsoluteError
@@ -112,4 +115,5 @@ from sktime.performance_metrics.forecasting._mse import MeanSquaredError
 from sktime.performance_metrics.forecasting._msep import MeanSquaredErrorPercentage
 from sktime.performance_metrics.forecasting._mspe import MeanSquaredPercentageError
 from sktime.performance_metrics.forecasting._msse import MeanSquaredScaledError
+from sktime.performance_metrics.forecasting._overlay_dx import OverlayDX
 from sktime.performance_metrics.forecasting._rell import RelativeLoss
