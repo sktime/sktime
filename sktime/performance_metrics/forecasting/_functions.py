@@ -2823,8 +2823,7 @@ def overlay_dx_score(
 
     References
     ----------
-    .. [1] Smile-SA/overlay_dx: Reference implementation
-           https://github.com/Smile-SA/overlay_dx
+    Based on Smile-SA/overlay_dx library.
     """
     # Import here to avoid circular import
     from sktime.performance_metrics.forecasting._overlay_dx import OverlayDX

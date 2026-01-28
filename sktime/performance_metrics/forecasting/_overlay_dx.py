@@ -143,8 +143,7 @@ class OverlayDX(BaseForecastingErrorMetric):
 
     References
     ----------
-    .. [1] Smile-SA/overlay_dx: Reference implementation
-           https://github.com/Smile-SA/overlay_dx
+    Based on Smile-SA/overlay_dx library.
 
     See Also
     --------
