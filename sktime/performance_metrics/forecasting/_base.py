@@ -317,7 +317,9 @@ class BaseForecastingErrorMetric(BaseMetric):
             # Pass the raw data to the fast inner function
             out_df = self._evaluate(y_true=y_true_raw, y_pred=y_pred_raw, **kwargs)
         else:
-            # Fallback to the slow looping logic (175x slower for large data)
+            # Fallback to legacy looping
+            # logic for metrics that do not
+            # implement vectorization
             out_df = self._evaluate_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )

@@ -13,7 +13,50 @@ from sktime.performance_metrics.forecasting._functions import mean_squared_log_e
 class MeanSquaredLogError(BaseForecastingErrorMetric):
     r"""Mean Squared Logarithmic Error (MSLE) or Root Mean Squared Log Error (RMSLE).
 
-    ... (docstring remains the same) ...
+    MSLE is the Mean Squared Error calculated in logarithmic space.
+    It is useful when targets have exponential growth (e.g., population, sales)
+    or when we care more about relative errors than absolute errors.
+    MSLE is sensitive to relative differences and is less sensitive to outliers
+    in large values compared to standard MSE.
+
+    The MSLE is defined as:
+
+    .. math::
+        \text{MSLE}(y, \hat{y}) = \frac{1}{n} \sum_{i=1}^{n}
+        (\log(1 + y_i) - \log(1 + \hat{y}_i))^2
+
+    If ``square_root`` is True, the Root Mean Squared Logarithmic Error (RMSLE)
+    is returned:
+
+    .. math::
+        \text{RMSLE}(y, \hat{y}) = \sqrt{\text{MSLE}(y, \hat{y})}
+
+    Parameters
+    ----------
+    multioutput : {'raw_values', 'uniform_average'} or array-like,
+        default='uniform_average'
+        Defines aggregating of multiple output values.
+        If 'raw_values', returns errors for all outputs in multivariate case.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average'}, default='uniform_average'
+        Defines aggregating of multiple hierarchical levels.
+        If 'raw_values', returns errors for all levels in hierarchical case.
+        If 'uniform_average', errors are mean-averaged across levels.
+    square_root : bool, default=False
+        Whether to take the square root of the mean squared log error.
+        If True, returns Root Mean Squared Log Error (RMSLE).
+    by_index : bool, default=False
+        If True, returns the metric value at each time point (jackknife pseudo-values).
+        If False, returns the aggregate metric value.
+
+    Examples
+    --------
+    >>> from sktime.performance_metrics.forecasting import MeanSquaredLogError
+    >>> y_true = [3, 5, 2.5, 7]
+    >>> y_pred = [2.5, 5, 4, 8]
+    >>> msle = MeanSquaredLogError()
+    >>> msle(y_true, y_pred)
+    0.039730...
     """
 
     _tags = {
@@ -39,10 +82,8 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
 
     def _evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the desired metric on given inputs."""
-        # Step 1: Get the element-wise squared log errors (Fast Vectorized)
         index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
 
-        # Step 2: Handle Multi-level aggregation
         if self.multilevel == "raw_values":
             # Group by all levels except the last one (the time index)
             # This returns the mean error for each series in the hierarchy
@@ -51,8 +92,6 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
         else:
             # Default: Average across both time and hierarchy levels
             out_df = index_df.mean(axis=0)
-
-        # Step 3: Apply square root for RMSLE if requested
         if self.square_root:
             out_df = np.sqrt(out_df)
 
