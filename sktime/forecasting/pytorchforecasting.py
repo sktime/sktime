@@ -1039,6 +1039,25 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             }
         return {}
 
+    def _fit(self, y, X, fh):
+        """Fit the model.
+
+        Overrides base class to provide a more descriptive error message
+        when the input series is too short for the model configuration.
+        """
+        try:
+            return super()._fit(y, X, fh)
+        # Catch AssertionError because pytorch-forecasting uses 'assert' for this check
+        except AssertionError as e:
+            if "filters should not remove entries" in str(e):
+                raise ValueError(
+                    "The input time series is too short for the current model "
+                    "configuration (encoder/decoder lengths). "
+                    "Please increase the length of your input data or adjust "
+                    "'min_encoder_length' in 'dataset_params'."
+                ) from e
+            raise e
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
