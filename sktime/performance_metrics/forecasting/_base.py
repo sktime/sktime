@@ -308,10 +308,16 @@ class BaseForecastingErrorMetric(BaseMetric):
         )
 
         requires_vectorization = isinstance(y_true_inner, VectorizedDF)
-        if not requires_vectorization:
-            # pass to inner function
-            out_df = self._evaluate(y_true=y_true_inner, y_pred=y_pred_inner, **kwargs)
+        can_handle_vector = self.get_tag("inner_implements_multilevel", False)
+
+        if not requires_vectorization or can_handle_vector:
+            # If it's a VectorizedDF, extract the raw underlying X (DataFrame)
+            y_true_raw = y_true_inner.X if requires_vectorization else y_true_inner
+            y_pred_raw = y_pred_inner.X if requires_vectorization else y_pred_inner
+            # Pass the raw data to the fast inner function
+            out_df = self._evaluate(y_true=y_true_raw, y_pred=y_pred_raw, **kwargs)
         else:
+            # Fallback to the slow looping logic (175x slower for large data)
             out_df = self._evaluate_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
