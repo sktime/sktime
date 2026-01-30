@@ -73,6 +73,7 @@ Deep learning
     gru.GRUFCNNClassifier
     inceptiontime.InceptionTimeClassifier
     lstmfcn.LSTMFCNClassifier
+    lstmfcn.LSTMFCNClassifierTorch
     macnn.MACNNClassifier
     mcdcnn.MCDCNNClassifier
     mlp.MLPClassifier
