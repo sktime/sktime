@@ -1303,7 +1303,7 @@ class ForecastX(BaseForecaster):
         * if "use_forecast", then ``forecaster_y`` uses the ``X`` predicted by
         ``forecaster_X`` as exogenous features in ``fit``
 
-    forecaster_X_exogeneous : optional, str, one of "None" (default), or "complement",
+    forecaster_X_exogeneous : optional, str, one of "None" (default), or "complement",\
         or ``pandas.Index`` coercible
 
         * if "None", then ``forecaster_X`` uses no exogenous data
