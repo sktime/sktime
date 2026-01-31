@@ -1,0 +1,55 @@
+name: Auto Assign Issue
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+
+jobs:
+  take-issue:
+    if: contains(github.event.comment.body, '.take')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Assign issue to commenter
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const commenter = context.payload.comment.user.login;
+
+            // Only allow "good first issue"
+            const labels = issue.labels.map(l => l.name);
+            if (!labels.includes("good first issue")) {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: issue.number,
+                body: "This issue is not marked as **good first issue**."
+              });
+              return;
+            }
+
+            // Prevent multiple assignees
+            if (issue.assignees.length > 0) {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: issue.number,
+                body: "This issue is already assigned."
+              });
+              return;
+            }
+
+            // Assign issue
+            await github.rest.issues.addAssignees({
+              ...context.repo,
+              issue_number: issue.number,
+              assignees: [commenter]
+            });
+
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: issue.number,
+              body: `Assigned to @${commenter}. Please open a PR within **15 days**, or the issue will be unassigned automatically.`
+            });
