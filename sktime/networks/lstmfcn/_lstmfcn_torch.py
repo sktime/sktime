@@ -22,9 +22,8 @@ class LSTMFCNNetworkTorch(NNModule):
 
     Parameters
     ----------
-    input_size : int or tuple
-        Number of expected features in the input. Can be an int representing the
-        number of input features, or a tuple of shape (n_instances, n_dims, series_len).
+    input_size : int
+        Number of expected features in the input.
     num_classes : int
         Number of classes to predict
     kernel_sizes : tuple of int, default=(8, 5, 3)
@@ -70,7 +69,7 @@ class LSTMFCNNetworkTorch(NNModule):
 
     def __init__(
         self,
-        input_size: int | tuple,
+        input_size: int,
         num_classes: int,
         kernel_sizes: tuple = (8, 5, 3),
         filter_sizes: tuple = (128, 256, 128),
@@ -94,36 +93,18 @@ class LSTMFCNNetworkTorch(NNModule):
 
         super().__init__()
 
-        # Checking input dimensions
-        if isinstance(self.input_size, int):
-            in_features = self.input_size
-        elif isinstance(self.input_size, tuple):
-            if len(self.input_size) == 3:
-                in_features = self.input_size[1]
-            else:
-                raise ValueError(
-                    "If `input_size` is a tuple, it must be of length 3 and in "
-                    "format (n_instances, n_dims, series_length). "
-                    f"Found length of {len(self.input_size)}"
-                )
-        else:
-            raise TypeError(
-                "`input_size` should either be of type int or tuple. "
-                f"But found the type to be: {type(self.input_size)}"
-            )
-
         # LSTM Arm
         if self.attention:
             # Attention mechanism: Multi-head attention
             nnMultiheadAttention = _safe_import("torch.nn.MultiheadAttention")
             self.attention_layer = nnMultiheadAttention(
-                embed_dim=in_features, num_heads=1, batch_first=True
+                embed_dim=self.input_size, num_heads=1, batch_first=True
             )
 
         nnLSTM = _safe_import("torch.nn.LSTM")
 
         self.lstm = nnLSTM(
-            input_size=in_features,
+            input_size=self.input_size,
             hidden_size=self.lstm_size,
             num_layers=1,
             batch_first=True,
@@ -138,7 +119,7 @@ class LSTMFCNNetworkTorch(NNModule):
 
         # First Conv Block
         self.conv1 = nnConv1d(
-            in_channels=in_features,
+            in_channels=self.input_size,
             out_channels=self.filter_sizes[0],
             kernel_size=self.kernel_sizes[0],
             padding="same",
