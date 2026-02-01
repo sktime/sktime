@@ -757,3 +757,205 @@ def _predict_proba(self, fh, X, marginal=True):
     return self._iterate_predict_method_over_categories(
         "predict_proba", X=X, fh=fh, marginal=marginal
     )
+
+
+
+
+
+import numpy as np
+import pandas as pd
+from typing import Dict, Optional
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+
+from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
+from sktime.transformations.series.summarize import SummaryTransformer
+
+
+# ============================================================================ 
+# TREND SLOPE TRANSFORMER
+# ============================================================================ 
+
+class TrendSlopeTransformer(BaseTransformer):
+    """
+    Extract linear trend slope from a time series.
+    
+    This transformer fits a first-degree polynomial (linear) to the time series
+    and extracts the slope coefficient as a feature.
+    """
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
+        "fit_is_empty": True,
+        "univariate-only": True,
+    }
+
+    def _fit(self, X, y=None):
+        return self
+
+    def _transform(self, X, y=None):
+        if isinstance(X, pd.DataFrame):
+            X = X.iloc[:, 0]
+
+        X_values = X.values.flatten()
+        t = np.arange(len(X_values))
+        coeffs = np.polyfit(t, X_values, deg=1)
+        slope = float(coeffs[0])
+        return pd.Series([slope], index=X.index[-1:], name="trend_slope")
+
+
+
+
+class GroupByFeatureClusterTransformer(_PanelToPanelTransformer):
+    """
+    Group panel time series into categories based on extracted features,
+    then apply different transformers per group.
+    """
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
+        "univariate-only": False,
+        "handles-missing-data": False,
+        "fit_is_empty": False,
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+    }
+
+    def __init__(
+        self,
+        transformers: Dict[str, BaseTransformer],
+        feature_transformer: Optional[BaseTransformer] = None,
+        clusterer: Optional[KMeans] = None,
+        fallback_transformer: Optional[BaseTransformer] = None,
+        verbose: bool = True,
+    ):
+        if not isinstance(transformers, dict):
+            raise TypeError("transformers must be a dictionary")
+        if len(transformers) == 0:
+            raise ValueError("transformers dictionary cannot be empty")
+        for name, transformer in transformers.items():
+            if not isinstance(transformer, BaseTransformer):
+                raise TypeError(f"Transformer for category '{name}' must be BaseTransformer, got {type(transformer)}")
+        
+        self.transformers = transformers
+        self.feature_transformer = feature_transformer
+        self.clusterer = clusterer
+        self.fallback_transformer = fallback_transformer
+        self.verbose = verbose
+        
+        super().__init__()
+
+        if self.verbose:
+            print("✅ GroupByFeatureClusterTransformer initialized")
+            print(f"   Categories: {list(transformers.keys())}")
+
+    def _fit(self, X: pd.DataFrame, y=None) -> "GroupByFeatureClusterTransformer":
+        if self.verbose:
+            print("\n📊 FITTING PHASE")
+            print(f"Input shape: {X.shape}\n")
+
+        # STEP 1: Feature extraction
+        if self.feature_transformer is None:
+            self.feature_transformer_ = SummaryTransformer(
+                summary_function=['mean', 'std', 'var', 'skew', 'kurt']
+            )
+        else:
+            self.feature_transformer_ = self.feature_transformer.clone()
+
+        features_df = self.feature_transformer_.fit_transform(X)
+
+        # STEP 2: Feature scaling
+        self.scaler_ = StandardScaler()
+        features_scaled = self.scaler_.fit_transform(features_df.values)
+
+        # STEP 3: Clustering
+        n_clusters = len(self.transformers)  # <-- automatic k = number of transformers
+        if self.clusterer is None:
+            self.clusterer_ = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+        else:
+            self.clusterer_ = self.clusterer.clone()
+            if hasattr(self.clusterer_, "n_clusters"):
+                self.clusterer_.n_clusters = n_clusters
+
+        cluster_labels = self.clusterer_.fit_predict(features_scaled)
+
+        # STEP 4: Assign category names
+        self.category_names_ = list(self.transformers.keys())
+        self.cluster_to_category_ = {i: self.category_names_[i] for i in range(n_clusters)}
+        self.category_ = pd.Series([self.cluster_to_category_[label] for label in cluster_labels],
+                                   index=features_df.index, name="category")
+
+        # STEP 5: Fit transformers per category
+        self.transformers_ = {}
+        for category in self.category_names_:
+            group_indices = self.category_[self.category_ == category].index
+            if len(group_indices) == 0:
+                if self.verbose:
+                    print(f"⚠️  Category '{category}' has no instances!")
+                continue
+
+            if category in self.transformers:
+                transformer = self.transformers[category].clone()
+            elif self.fallback_transformer is not None:
+                transformer = self.fallback_transformer.clone()
+            else:
+                raise ValueError(f"No transformer for category '{category}' and no fallback provided")
+
+            X_group = self._loc_group(X, group_indices)
+            transformer.fit(X_group, y)
+            self.transformers_[category] = transformer
+
+        if self.verbose:
+            print(f"\n✅ Fitting completed successfully!\n")
+
+        return self
+
+    def _transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
+        features_df = self.feature_transformer_.transform(X)
+        features_scaled = self.scaler_.transform(features_df.values)
+
+        cluster_labels = self.clusterer_.predict(features_scaled)
+        category_assignments = pd.Series([self.cluster_to_category_[label] for label in cluster_labels],
+                                         index=features_df.index, name="category")
+
+        transformed_parts = []
+        for category in self.category_names_:
+            group_indices = category_assignments[category_assignments == category].index
+            if len(group_indices) == 0:
+                continue
+            X_group = self._loc_group(X, group_indices)
+            transformer = self.transformers_[category]
+            X_transformed = transformer.transform(X_group)
+            transformed_parts.append(X_transformed)
+
+        if len(transformed_parts) == 0:
+            raise ValueError("No data to transform")
+
+        X_result = pd.concat(transformed_parts, axis=0).sort_index()
+        return X_result
+
+    def _loc_group(self, df: pd.DataFrame, group_indices) -> pd.DataFrame:
+        if df.index.nlevels == 1:
+            return df.loc[group_indices]
+        instance_level = df.index.get_level_values(0)
+        mask = instance_level.isin(group_indices)
+        return df.loc[mask]
+
+    def get_category_assignment(self) -> pd.Series:
+        if not hasattr(self, 'category_'):
+            raise ValueError("Transformer not fitted yet")
+        return self.category_.copy()
+
+    def get_clustering_info(self) -> Dict:
+        if not hasattr(self, 'clusterer_'):
+            raise ValueError("Transformer not fitted yet")
+        return {
+            'n_clusters': self.clusterer_.n_clusters,
+            'cluster_centers': self.clusterer_.cluster_centers_,
+            'inertia': self.clusterer_.inertia_,
+            'cluster_to_category': self.cluster_to_category_.copy(),
+            'category_names': self.category_names_.copy(),
+        }
