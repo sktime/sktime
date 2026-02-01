@@ -21,13 +21,27 @@ class _PretrainedCloner(BaseCloner):
     """
 
     def _check(self, obj):
-        """Check if obj has pretrained attributes that should be preserved."""
-        return (
+        """Check if obj has pretrained attributes that should be preserved.
+
+        This method checks both:
+        1. Class capability: The object's class declares ``capability:pretrain=True``
+        2. Instance state: The object was actually pretrained (has pretrained attrs)
+
+        Both conditions are required because:
+        - Tag alone would cause false positives for new (unfitted) estimators
+        - Runtime checks alone could trigger on non-pretrain estimators if
+          ``_pretrained_attrs`` somehow got set incorrectly
+        """
+        has_pretrain_capability = obj.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        )
+        has_pretrained_state = (
             hasattr(obj, "_pretrained_attrs")
             and obj._pretrained_attrs
             and hasattr(obj, "_state")
             and obj._state in ("pretrained", "fitted")
         )
+        return bool(has_pretrain_capability and has_pretrained_state)
 
     def _clone(self, obj):
         """Clone obj and preserve pretrained attributes."""
