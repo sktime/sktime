@@ -85,6 +85,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         """
         fh = fh.to_relative(self.cutoff)
 
+        self._y_len = len(y)
+
         self.network = self._build_network(list(fh)[-1])
 
         self._criterion = self._instantiate_criterion()

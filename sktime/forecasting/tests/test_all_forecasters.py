@@ -781,8 +781,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y = pd.Series(range(25), index=index, name="y")
         else:
             y_data = {}
+            np.random.seed(42)
             for i in range(n_columns):
-                y_data[f"y_{i}"] = range(25)
+                y_data[f"y_{i}"] = np.random.randn(25)
             y = pd.DataFrame(y_data, index=index)
 
         # Create X data (exogenous variables)
