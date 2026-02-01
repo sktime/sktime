@@ -67,6 +67,7 @@ Deep learning
     inceptiontime.InceptionTimeRegressor
     lstmfcn.LSTMFCNRegressor
     macnn.MACNNRegressor
+    macnn.MACCNNRegressorTorch
     mcdcnn.MCDCNNRegressor
     mlp.MLPRegressor
     resnet.ResNetRegressor
