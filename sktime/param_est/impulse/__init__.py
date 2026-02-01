@@ -8,7 +8,7 @@ Supported IRFs according to statsmodels (x marks a check done for sktime,
 given the estimator exists in the library):
 - ARIMA
 - ARMA
-- DynamicFactor
+- DynamicFactor (x)
 - DynamicFactorMQ
 - ExponentialSmoothing
 - KalmanFilter
@@ -19,7 +19,7 @@ given the estimator exists in the library):
 - SimulationSmoother
 - UnobservedComponents
 - VAR
-- VARMAX
+- VARMAX (x)
 - VECM
 """
 
