@@ -16,6 +16,25 @@ class LSTMFCNNetwork(BaseDeepNetwork):
     Ported from sktime-dl source code
     https://github.com/sktime/sktime-dl/blob/master/sktime_dl/networks/_lstmfcn.py
 
+    Parameters
+    ----------
+    kernel_sizes : List[int], default=[8, 5, 3]
+        specifying the length of the 1D convolution windows
+    filter_sizes : List[int], default=[128, 256, 128]
+        size of filter for each conv layer
+    random_state : int, default=0
+        seed to any needed random actions
+    lstm_size : int, default=8
+        output dimension for LSTM layer
+    dropout : float, default=0.8
+        controls dropout rate of LSTM layer
+    attention : boolean, default=False
+        If True, uses custom attention LSTM layer
+    activation : string, default = "relu"
+        activation function used for hidden layers;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
+
     References
     ----------
     .. [1] Karim et al. Multivariate LSTM-FCNs for Time Series Classification, 2019
