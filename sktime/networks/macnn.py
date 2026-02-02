@@ -108,7 +108,9 @@ class MACNNNetwork(BaseDeepNetwork):
 
         x2 = keras.layers.GlobalAveragePooling1D()(x1)
         x2 = keras.layers.Dense(
-            units=int(kernels * 3 / reduce), use_bias=False, activation=self.activation
+            units=max(1, int(kernels * 3 / reduce)),
+            use_bias=False,
+            activation=self.activation,
         )(x2)
         x2 = keras.layers.Dense(
             units=int(kernels * 3), use_bias=False, activation=self.activation
