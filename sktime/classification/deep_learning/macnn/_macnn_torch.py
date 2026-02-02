@@ -43,14 +43,14 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
     activation_hidden : str, default="relu"
         Activation function used for the hidden layers.
         Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    num_epochs : int, default=100
+    num_epochs : int, default=1500
         The number of epochs to train the model.
     optimizer : case insensitive str or None or an instance of optimizers
         defined in torch.optim, default = "RMSprop"
         The optimizer to use for training the model.
     optimizer_kwargs : dict or None, default = None
         Additional keyword arguments to pass to the optimizer.
-    batch_size : int, default=1
+    batch_size : int, default=4
         The size of each mini-batch during training.
     criterion : case insensitive str or None or an instance of a loss function
         defined in PyTorch, default = "CrossEntropyLoss"
@@ -224,7 +224,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
             "kernel_size": (3, 6, 12),
             "reduction": 16,
             "num_epochs": 50,
-            "batch_size": 2,
+            "batch_size": 4,
             "optimizer": "RMSprop",
             "criterion": "CrossEntropyLoss",
             "callbacks": None,
@@ -244,7 +244,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
             "kernel_size": (3, 6, 12),
             "reduction": 8,
             "num_epochs": 50,
-            "batch_size": 2,
+            "batch_size": 4,
             "optimizer": "RMSprop",
             "criterion": "CrossEntropyLoss",
             "callbacks": None,

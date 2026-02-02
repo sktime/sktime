@@ -41,14 +41,14 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
     activation_hidden : str, default="relu"
         Activation function used for the hidden layers.
         Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    num_epochs : int, default=100
+    num_epochs : int, default=1500
         The number of epochs to train the model.
     optimizer : case insensitive str or None or an instance of optimizers
         defined in torch.optim, default = "RMSprop"
         The optimizer to use for training the model.
     optimizer_kwargs : dict or None, default = None
         Additional keyword arguments to pass to the optimizer.
-    batch_size : int, default=1
+    batch_size : int, default=4
         The size of each mini-batch during training.
     criterion : case insensitive str or None or an instance of a loss function
         defined in PyTorch, default = "MSELoss"
@@ -108,8 +108,8 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
         activation: str | None = None,
         activation_hidden: str = "relu",
         # base regressor specific
-        num_epochs: int = 100,
-        batch_size: int = 1,
+        num_epochs: int = 1500,
+        batch_size: int = 4,
         optimizer: str | None | Callable = "RMSprop",
         criterion: str | None | Callable = "MSELoss",
         callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
@@ -222,7 +222,7 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
             "activation": None,
             "activation_hidden": "relu",
             "num_epochs": 50,
-            "batch_size": 2,
+            "batch_size": 4,
             "optimizer": "RMSprop",
             "criterion": "MSELoss",
             "callbacks": None,
@@ -244,7 +244,7 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
             "activation": None,
             "activation_hidden": "relu",
             "num_epochs": 50,
-            "batch_size": 2,
+            "batch_size": 4,
             "optimizer": "RMSprop",
             "criterion": "MSELoss",
             "callbacks": None,
