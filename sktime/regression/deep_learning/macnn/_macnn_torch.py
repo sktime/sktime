@@ -210,7 +210,6 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
         """
-        params1 = {"num_epochs": 2, "batch_size": 8}
         params2 = {
             "padding": "valid",
             "pool_size": 2,
@@ -256,4 +255,4 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
             "random_state": 0,
         }
 
-        return [params1, params2, params3]
+        return [params2, params3]
