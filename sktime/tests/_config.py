@@ -69,13 +69,12 @@ EXCLUDE_ESTIMATORS = [
     "RecursiveReductionForecaster",
     # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
     "TimeSeriesKvisibility",
-    # fails due to #8151 or #8059
-    "FreshPRINCE",
-    # multiple timeouts and sporadic failures reported related to VARMAX
+      # multiple timeouts and sporadic failures reported related to VARMAX
     # 2997, 3176, 7985
     "SCINetForecaster",  # known bug #7871
     "MAPAForecaster",  # known bug #8039
 ]
+   
 
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
