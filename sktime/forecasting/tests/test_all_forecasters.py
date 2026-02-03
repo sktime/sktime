@@ -419,6 +419,11 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         cutoff = get_cutoff(y.iloc[: len(y) // 2], return_index=True)
         fh = _make_fh(cutoff, fh_int_oos, fh_type, is_relative)
 
+        if not fh._is_contiguous() and not estimator_instance.get_tag(
+            "capability:non_contiguous_X"
+        ):
+            return None
+
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
         estimator_instance.fit(y_train, X_train, fh=fh)
@@ -775,8 +780,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y = pd.Series(range(25), index=index, name="y")
         else:
             y_data = {}
+            np.random.seed(42)
             for i in range(n_columns):
-                y_data[f"y_{i}"] = range(25)
+                y_data[f"y_{i}"] = np.random.randn(25)
             y = pd.DataFrame(y_data, index=index)
 
         # Create X data (exogenous variables)
