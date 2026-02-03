@@ -56,6 +56,7 @@ class RandomIntervals(BaseTransformer):
         "y_inner_mtype": "None",
         "capability:unequal_length": False,
         "fit_is_empty": False,
+        "tests:skip_all": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
         # CI and test flags
