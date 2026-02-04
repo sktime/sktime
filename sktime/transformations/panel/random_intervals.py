@@ -56,13 +56,11 @@ class RandomIntervals(BaseTransformer):
         "y_inner_mtype": "None",
         "capability:unequal_length": False,
         "fit_is_empty": False,
-        "tests:skip_all": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
         "tests:skip_by_name": ["test_categorical_X_passes"],
-        "tests:skip_all": True,
         # categoricals can be passed, but depending on transformers passed
     }
 
