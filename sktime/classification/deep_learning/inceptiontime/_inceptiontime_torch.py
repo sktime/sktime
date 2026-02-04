@@ -1,19 +1,30 @@
-"""InceptionTime Regressor in PyTorch."""
+"""InceptionTime Classifier in PyTorch."""
 
 __authors__ = ["Faakhir30"]
-__all__ = ["InceptionTimeRegressorTorch"]
+__all__ = ["InceptionTimeClassifierTorch"]
 
+import warnings
 from collections.abc import Callable
 
+import numpy as np
+
+from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.inceptiontime import InceptionTimeNetworkTorch
-from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
 
 
-class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
-    """InceptionTime Deep Learning Regressor in PyTorch.
+class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
+    """InceptionTime Deep Learning Classifier in PyTorch.
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/InceptionTime/blob/master/classifiers/inception.py
+
+    InceptionTimeClassifierTorch is a single instance of InceptionTime model
+    described in the original publication [1]_, which uses an ensemble of 5
+    single instances.
+
+    To build an ensemble of models mirroring [1]_, use the BaggingClassifier with
+    n_estimators=5, bootstrap=False, and estimator being an instance of
+    this InceptionTimeClassifierTorch.
 
     Parameters
     ----------
@@ -28,12 +39,12 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
     use_residual : bool, default=True
         If True, uses residual connections
     use_bottleneck : bool, default=True
-        If True, uses bottleneck layer in inception modules
+        If True, uses bottleneck layer in inception modules.
     bottleneck_size : int, default=32
-        Size of the bottleneck layer
+        Size of the bottleneck layer.
     depth : int, default=6
-        Number of inception modules to stack
-    activation : str or None, default=None
+        Number of inception modules to stack.
+    activation: str or None, default=None
         Activation function used for the final output layer.
         Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu', None
     activation_hidden : str, default="relu"
@@ -48,7 +59,7 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
     optimizer_kwargs : dict or None, default = None
         Additional keyword arguments to pass to the optimizer.
     criterion : case insensitive str or None or an instance of a loss function
-        defined in PyTorch, default = "MSELoss"
+        defined in PyTorch, default = "CrossEntropyLoss"
         The loss function to be used in training the neural network.
     criterion_kwargs : dict or None, default = None
         Additional keyword arguments to pass to the loss function.
@@ -74,21 +85,40 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
 
     Examples
     --------
-    >>> from sktime.regression.deep_learning.inceptiontime import (
-    ...     InceptionTimeRegressorTorch
+    Single instance of InceptionTime model:
+    >>> from sktime.classification.deep_learning.inceptiontime import (
+    ...     InceptionTimeClassifierTorch
     ... )
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> reg = InceptionTimeRegressorTorch(num_epochs=50, batch_size=2)  # doctest: +SKIP
-    >>> reg.fit(X_train, y_train)  # doctest: +SKIP
-    InceptionTimeRegressorTorch(...)
+    >>> clf = InceptionTimeClassifierTorch( # doctest: +SKIP
+    ...     num_epochs=50, batch_size=2
+    ... )
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    InceptionTimeClassifierTorch(...)
+
+    To build an ensemble of models mirroring [1]_, use the BaggingClassifier:
+    >>> from sktime.classification.ensemble import BaggingClassifier
+    >>> from sktime.classification.deep_learning.inceptiontime import (
+    ...     InceptionTimeClassifierTorch
+    ... )
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> clf = BaggingClassifier(
+    ...     InceptionTimeClassifierTorch(),
+    ...     n_estimators=5,
+    ...     bootstrap=False
+    ... )  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    BaggingClassifier(...)
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["Faakhir30"],
+        "authors": ["hfawaz", "james-large", "noxthot"],
         "maintainers": ["Faakhir30"],
         "python_version": ">=3.10",
         "python_dependencies": "torch",
@@ -97,9 +127,9 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
     }
 
     def __init__(
-        self: "InceptionTimeRegressorTorch",
-        n_filters: int = 32,
+        self: "InceptionTimeClassifierTorch",
         num_epochs: int = 1500,
+        n_filters: int = 32,
         batch_size: int = 64,
         kernel_size: int = 40,
         use_residual: bool = True,
@@ -108,10 +138,10 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         depth: int = 6,
         activation: str | None = None,
         activation_hidden: str = "relu",
-        activation_inception: str = "linear",
+        activation_inception: str | None = None,
         optimizer: str | None | Callable = "Adam",
         optimizer_kwargs: dict | None = None,
-        criterion: str | None | Callable = "MSELoss",
+        criterion: str | None | Callable = "CrossEntropyLoss",
         criterion_kwargs: dict | None = None,
         callbacks: None | str | tuple[str, ...] = None,
         callback_kwargs: dict | None = None,
@@ -142,10 +172,10 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         self.verbose = verbose
         self.random_state = random_state
 
-        # input_size to be inferred from the data
+        # input_size and num_classes to be inferred from the data
         # and will be set in _build_network
         self.input_size = None
-        self.num_classes = 1  # because regression
+        self.num_classes = None
 
         super().__init__(
             num_epochs=self.num_epochs,
@@ -155,19 +185,22 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
             optimizer=self.optimizer,
             optimizer_kwargs=self.optimizer_kwargs,
             callbacks=self.callbacks,
+            activation=self.activation,
             callback_kwargs=self.callback_kwargs,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
         )
 
-    def _build_network(self, X):
+    def _build_network(self, X, y):
         """Build the InceptionTime network.
 
         Parameters
         ----------
         X : numpy.ndarray
             Input data containing the time series data.
+        y : numpy.ndarray
+            Target labels for the classification task.
 
         Returns
         -------
@@ -181,8 +214,18 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
                 "properly formatted."
             )
         # n_instances, n_dims, n_timesteps = X.shape
-        X = X.transpose(0, 2, 1)  # to (n_instances, n_timesteps, n_dims)
+        self.num_classes = len(np.unique(y))
+
+        X = X.transpose(0, 2, 1)
         _, self.input_size, _ = X.shape
+
+        if self.n_classes_ == 1:
+            warnings.warn(
+                "The provided data passed to CNNClassifierTorch contains "
+                "a single label. If this is not intentional, please check.",
+                UserWarning,
+            )
+
         return InceptionTimeNetworkTorch(
             input_size=self.input_size,
             num_classes=self.num_classes,
@@ -193,7 +236,6 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
             depth=self.depth,
             kernel_size=self.kernel_size,
             random_state=self.random_state,
-            weights_init=self.weights_init,
             activation=self.activation,
             activation_hidden=self.activation_hidden,
             activation_inception=self.activation_inception,

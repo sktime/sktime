@@ -23,6 +23,8 @@ class InceptionTimeNetworkTorch(NNModule):
         Number of classes to predict
     n_filters : int, default=32
         Number of filters in the convolution layers
+    kernel_size : int, default=40
+        Base kernel size for inception modules
     use_residual : bool, default=True
         If True, uses residual connections
     use_bottleneck : bool, default=True
@@ -31,10 +33,6 @@ class InceptionTimeNetworkTorch(NNModule):
         Size of the bottleneck layer
     depth : int, default=6
         Number of inception modules to stack
-    kernel_size : int, default=40
-        Base kernel size for inception modules
-    random_state : int or None, default=None
-        Seed to ensure reproducibility
     activation : str or None, default=None
         Activation used for the final output layer.
         Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu', None
@@ -44,6 +42,12 @@ class InceptionTimeNetworkTorch(NNModule):
     activation_inception : str or None, default=None
         Activation function used inside the inception modules.
         Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu', None
+    weights_init : str or None, default = None
+        The method to initialize the weights of the conv layers. Supported values are
+        'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
+        for default PyTorch initialization.
+    random_state : int or None, default=None
+        Seed to ensure reproducibility
 
     Notes
     -----
@@ -65,7 +69,7 @@ class InceptionTimeNetworkTorch(NNModule):
         # --------------
         "authors": ["hfawaz", "JamesLarge", "Withington", "noxthot"],
         "maintainers": ["Faakhir30"],
-        "python_version": ">=3.9",
+        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
@@ -76,15 +80,16 @@ class InceptionTimeNetworkTorch(NNModule):
         input_size: int,
         num_classes: int,
         n_filters: int = 32,
+        kernel_size: int = 40,
         use_residual: bool = True,
         use_bottleneck: bool = True,
         bottleneck_size: int = 32,
         depth: int = 6,
-        kernel_size: int = 40,
-        random_state: int | None = None,
         activation: str | None = None,
         activation_hidden: str = "relu",
         activation_inception: str | None = None,
+        weights_init: str | None = None,
+        random_state: int | None = None,
     ):
         self.input_size = input_size
         self.num_classes = num_classes
@@ -94,10 +99,11 @@ class InceptionTimeNetworkTorch(NNModule):
         self.bottleneck_size = bottleneck_size
         self.depth = depth
         self.kernel_size = kernel_size
-        self.random_state = random_state
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.activation_inception = activation_inception
+        self.weights_init = weights_init
+        self.random_state = random_state
 
         super().__init__()
 
@@ -146,7 +152,8 @@ class InceptionTimeNetworkTorch(NNModule):
         nnLinear = _safe_import("torch.nn.Linear")
         self.fc = nnLinear(current_channels, num_classes)
 
-        self.apply(self._init_weights)
+        if self.weights_init is not None:
+            self.apply(self._init_weights)
 
     def forward(self, X):
         """Forward pass through the InceptionTime network.
@@ -184,28 +191,28 @@ class InceptionTimeNetworkTorch(NNModule):
         return out
 
     def _init_weights(self, module):
-        """Apply initialization to weights.
-
-        For Conv layers: He uniform initialization
-        For Linear layers: He uniform initialization
-
-        Parameters
-        ----------
-        module : torch.nn.Module
-            Input module on which to apply initializations.
-        """
-        nnInitKaiming_uniform_ = _safe_import("torch.nn.init.kaiming_uniform_")
         nnConv1d = _safe_import("torch.nn.Conv1d")
-        nnLinear = _safe_import("torch.nn.Linear")
+
+        kaiming_uniform_ = _safe_import("torch.nn.init.kaiming_uniform_")
+        kaiming_normal_ = _safe_import("torch.nn.init.kaiming_normal_")
+        xavier_uniform_ = _safe_import("torch.nn.init.xavier_uniform_")
+        xavier_normal_ = _safe_import("torch.nn.init.xavier_normal_")
 
         if isinstance(module, nnConv1d):
-            nnInitKaiming_uniform_(module.weight, nonlinearity="relu")
+            if self.weights_init == "kaiming_uniform":
+                kaiming_uniform_(module.weight, nonlinearity="relu")
+
+            elif self.weights_init == "kaiming_normal":
+                kaiming_normal_(module.weight, nonlinearity="relu")
+
+            elif self.weights_init == "xavier_uniform":
+                xavier_uniform_(module.weight)
+
+            elif self.weights_init == "xavier_normal":
+                xavier_normal_(module.weight)
+
             if module.bias is not None:
-                module.bias.data.fill_(0)
-        elif isinstance(module, nnLinear):
-            nnInitKaiming_uniform_(module.weight, nonlinearity="relu")
-            if module.bias is not None:
-                module.bias.data.fill_(0)
+                module.bias.data.zero_()
 
     def _instantiate_activation(self, activation_str):
         """Instantiate activation function.
