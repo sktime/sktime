@@ -20,7 +20,7 @@ jobs:
             const issue = context.payload.issue;
             const commenter = context.payload.comment.user.login;
 
-            // Only allow "good first issue"
+            
             const labels = issue.labels.map(l => l.name);
             if (!labels.includes("good first issue")) {
               await github.rest.issues.createComment({
@@ -31,7 +31,7 @@ jobs:
               return;
             }
 
-            // Prevent multiple assignees
+           
             if (issue.assignees.length > 0) {
               await github.rest.issues.createComment({
                 ...context.repo,
@@ -41,7 +41,7 @@ jobs:
               return;
             }
 
-            // Assign issue
+          
             await github.rest.issues.addAssignees({
               ...context.repo,
               issue_number: issue.number,

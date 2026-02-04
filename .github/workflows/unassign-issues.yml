@@ -1,8 +1,8 @@
-name: Unassign Inactive Issues
+name: Unassign Inactive Good First Issues
 
 on:
   schedule:
-    - cron: "0 3 * * *"   # runs daily at 03:00 UTC
+    - cron: "0 3 * * *"
 
 permissions:
   issues: write
@@ -12,35 +12,50 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Unassign inactive issues
+      - name: Unassign inactive good first issues
         uses: actions/github-script@v7
         with:
           script: |
-            const { data: issues } = await github.rest.issues.listForRepo({
-              ...context.repo,
-              state: "open",
-              per_page: 100
-            });
-
             const now = new Date();
+            let page = 1;
+            const perPage = 100;
 
-            for (const issue of issues) {
-              if (issue.assignees.length === 0) continue;
+            while (true) {
+              const { data: issues } = await github.rest.issues.listForRepo({
+                ...context.repo,
+                state: "open",
+                labels: "good first issue",
+                per_page: perPage,
+                page
+              });
 
-              const lastUpdated = new Date(issue.updated_at);
-              const diffDays = (now - lastUpdated) / (1000 * 60 * 60 * 24);
+              if (issues.length === 0) break;
 
-              if (diffDays >= 15) {
-                await github.rest.issues.removeAssignees({
-                  ...context.repo,
-                  issue_number: issue.number,
-                  assignees: issue.assignees.map(a => a.login)
-                });
+              for (const issue of issues) {
+                
+                if (issue.pull_request) continue;
 
-                await github.rest.issues.createComment({
-                  ...context.repo,
-                  issue_number: issue.number,
-                  body: "Unassigned due to **15 days of inactivity**. This issue is now available again."
-                });
+                
+                if (issue.assignees.length === 0) continue;
+
+                const lastUpdated = new Date(issue.updated_at);
+                const diffDays = (now - lastUpdated) / (1000 * 60 * 60 * 24);
+
+                if (diffDays >= 15) {
+                  await github.rest.issues.removeAssignees({
+                    ...context.repo,
+                    issue_number: issue.number,
+                    assignees: issue.assignees.map(a => a.login)
+                  });
+
+                  await github.rest.issues.createComment({
+                    ...context.repo,
+                    issue_number: issue.number,
+                    body: "Unassigned due to **15 days of inactivity** on a **good first issue**. This issue is now available again."
+                  });
+                }
               }
+
+              page++;
             }
+
