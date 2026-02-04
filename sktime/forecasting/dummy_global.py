@@ -78,6 +78,11 @@ class DummyGlobalForecaster(BaseForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "requires-fh-in-fit": False,
         "capability:pred_int": False,
         "capability:insample": False,
