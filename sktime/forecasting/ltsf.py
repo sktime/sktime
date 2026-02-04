@@ -162,15 +162,25 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             should have (instance, time) hierarchy.
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
-        fh : ForecastingHorizon, optional
-            Forecasting horizon (currently not used)
+        fh : ForecastingHorizon or int, optional
+            Forecasting horizon for pretraining. If not provided, uses pred_len
+            from constructor.
 
         Returns
         -------
         self : reference to self
         """
-        self.network = self._build_network(self.pred_len)
-        dataloader = self._build_panel_dataloader(y)
+        # Use fh if provided, otherwise fall back to pred_len
+        if fh is not None:
+            if hasattr(fh, "__iter__"):
+                fh = list(fh)[-1]
+            else:
+                fh = int(fh)
+        else:
+            fh = self.pred_len
+
+        self.network = self._build_network(fh)
+        dataloader = self._build_panel_dataloader(y, fh)
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -196,14 +206,32 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             Additional panel data to train on
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
-        fh : ForecastingHorizon, optional
-            Forecasting horizon (currently not used)
+        fh : ForecastingHorizon or int, optional
+            Forecasting horizon. Must match the horizon used in initial pretraining.
+            If not provided, uses the network's existing pred_len.
 
         Returns
         -------
         self : reference to self
         """
-        dataloader = self._build_panel_dataloader(y)
+        # Use network's pred_len (fh must match if provided)
+        network_fh = self.network.pred_len
+
+        if fh is not None:
+            if hasattr(fh, "__iter__"):
+                fh = list(fh)[-1]
+            else:
+                fh = int(fh)
+            if fh != network_fh:
+                raise ValueError(
+                    f"fh={fh} does not match pretrained network's "
+                    f"pred_len={network_fh}. Cannot change forecast horizon "
+                    "after initial pretraining."
+                )
+        else:
+            fh = network_fh
+
+        dataloader = self._build_panel_dataloader(y, fh)
 
         self.network.train()
         for epoch in range(self.num_epochs):
@@ -246,13 +274,15 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, dataloader)
 
-    def _build_panel_dataloader(self, y):
+    def _build_panel_dataloader(self, y, fh):
         """Build PyTorch DataLoader for panel/hierarchical data pretraining.
 
         Parameters
         ----------
         y : pd.DataFrame with MultiIndex
             Panel data (2-level MultiIndex) or hierarchical data (3+ level MultiIndex)
+        fh : int
+            Forecasting horizon (prediction length)
 
         Returns
         -------
@@ -269,7 +299,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         all_series = _get_series_from_panel(y)
 
         datasets = [
-            PyTorchTrainDataset(y=series, seq_len=self.seq_len, fh=self.pred_len)
+            PyTorchTrainDataset(y=series, seq_len=self.seq_len, fh=fh)
             for series in all_series
         ]
 
@@ -660,15 +690,25 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             should have (instance, time) hierarchy.
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
-        fh : ForecastingHorizon, optional
-            Forecasting horizon (currently not used)
+        fh : ForecastingHorizon or int, optional
+            Forecasting horizon for pretraining. If not provided, uses pred_len
+            from constructor.
 
         Returns
         -------
         self : reference to self
         """
-        self.network = self._build_network(self.pred_len)
-        dataloader = self._build_panel_dataloader(y)
+        # Use fh if provided, otherwise fall back to pred_len
+        if fh is not None:
+            if hasattr(fh, "__iter__"):
+                fh = list(fh)[-1]
+            else:
+                fh = int(fh)
+        else:
+            fh = self.pred_len
+
+        self.network = self._build_network(fh)
+        dataloader = self._build_panel_dataloader(y, fh)
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -694,14 +734,32 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             Additional panel data to train on
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
-        fh : ForecastingHorizon, optional
-            Forecasting horizon (currently not used)
+        fh : ForecastingHorizon or int, optional
+            Forecasting horizon. Must match the horizon used in initial pretraining.
+            If not provided, uses the network's existing pred_len.
 
         Returns
         -------
         self : reference to self
         """
-        dataloader = self._build_panel_dataloader(y)
+        # Use network's pred_len (fh must match if provided)
+        network_fh = self.network.pred_len
+
+        if fh is not None:
+            if hasattr(fh, "__iter__"):
+                fh = list(fh)[-1]
+            else:
+                fh = int(fh)
+            if fh != network_fh:
+                raise ValueError(
+                    f"fh={fh} does not match pretrained network's "
+                    f"pred_len={network_fh}. Cannot change forecast horizon "
+                    "after initial pretraining."
+                )
+        else:
+            fh = network_fh
+
+        dataloader = self._build_panel_dataloader(y, fh)
 
         self.network.train()
         for epoch in range(self.num_epochs):
@@ -744,13 +802,15 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, dataloader)
 
-    def _build_panel_dataloader(self, y):
+    def _build_panel_dataloader(self, y, fh):
         """Build PyTorch DataLoader for panel/hierarchical data pretraining.
 
         Parameters
         ----------
         y : pd.DataFrame with MultiIndex
             Panel data (2-level MultiIndex) or hierarchical data (3+ level MultiIndex)
+        fh : int
+            Forecasting horizon (prediction length)
 
         Returns
         -------
@@ -767,7 +827,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         all_series = _get_series_from_panel(y)
 
         datasets = [
-            PyTorchTrainDataset(y=series, seq_len=self.seq_len, fh=self.pred_len)
+            PyTorchTrainDataset(y=series, seq_len=self.seq_len, fh=fh)
             for series in all_series
         ]
 
