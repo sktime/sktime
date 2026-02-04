@@ -11,6 +11,25 @@ class LSTMFCNNetwork(BaseDeepNetwork):
     Combines an LSTM arm with a CNN arm. Optionally uses an attention mechanism in the
     LSTM which the author indicates provides improved performance.
 
+    Parameters
+    ----------
+    kernel_sizes : tuple of int, default=(8, 5, 3)
+        Length of the 1D convolution windows.
+    filter_sizes : tuple of int, default=(128, 256, 128)
+        Size of filter for each conv layer.
+    random_state : int, default=0
+        Seed for any needed random actions.
+    lstm_size : int, default=8
+        Output dimension for LSTM layer.
+    dropout : float, default=0.8
+        Dropout rate of LSTM layer.
+    attention : bool, default=False
+        If True, uses custom attention LSTM layer.
+    activation : str, default="relu"
+        Activation function used for hidden layers.
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
+
     Notes
     -----
     Ported from sktime-dl source code
@@ -56,28 +75,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         attention=False,
         activation="relu",
     ):
-        """Initialize a new LSTMFCNNetwork object.
-
-        Parameters
-        ----------
-        kernel_sizes : List[int], default=[8, 5, 3]
-            specifying the length of the 1D convolution
-         windows
-        filter_sizes : List[int], default=[128, 256, 128]
-            size of filter for each conv layer
-        random_state : int, default=0
-            seed to any needed random actions
-        lstm_size : int, default=8
-            output dimension for LSTM layer
-        dropout : float, default=0.8
-            controls dropout rate of LSTM layer
-        attention : boolean, default=False
-            If True, uses custom attention LSTM layer
-        activation : string, default = "relu"
-            activation function used for hidden layers;
-            List of available keras activation functions:
-            https://keras.io/api/layers/activations/
-        """
+        """Initialize a new LSTMFCNNetwork object."""
         self.activation = activation
         self.random_state = random_state
         self.kernel_sizes = kernel_sizes
