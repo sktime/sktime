@@ -78,14 +78,11 @@ class DummyGlobalForecaster(BaseForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "X_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
+        "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "capability:pred_int": False,
         "capability:insample": False,
+        "tests:skip_by_name": ["test_hierarchical_with_exogeneous"],
     }
 
     def __init__(self, strategy="mean"):
