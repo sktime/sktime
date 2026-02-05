@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 
 
 class GRUClassifier(BaseDeepClassifierPytorch):
@@ -133,8 +133,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
             verbose=verbose,
             random_state=random_state,
         )
-
-        self.criterions = {}
 
     def _build_network(self, X, y):
         from sktime.networks.gru import GRU
@@ -331,7 +329,12 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         self.criterion = criterion
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
-        self.optimizer_kwargs = {"betas": (0.9, 0.999)} if optimizer == "Adam" else {}
+        optimizer_kwargs_effective = (
+            {"betas": (0.9, 0.999)} if optimizer == "Adam" else {}
+        )
+        if optimizer_kwargs is not None:
+            optimizer_kwargs_effective = optimizer_kwargs
+        self.optimizer_kwargs = optimizer_kwargs_effective
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -346,13 +349,11 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
             criterion=criterion,
             batch_size=batch_size,
             criterion_kwargs=criterion_kwargs,
-            optimizer_kwargs=optimizer_kwargs,
+            optimizer_kwargs=optimizer_kwargs_effective,
             lr=lr,
             verbose=verbose,
             random_state=random_state,
         )
-
-        self.criterions = {}
 
     def _build_network(self, X, y):
         from sktime.networks.gru import GRUFCNN
