@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
@@ -147,21 +147,6 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
             random_state=random_state,
         )
 
-        from sktime.utils.dependencies import _check_soft_dependencies
-
-        if _check_soft_dependencies("torch"):
-            import torch
-
-            self.criterions = {}
-
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
-
     def _build_network(self, X, y):
         from sktime.networks.mvts_transformer import (
             TSTransformerEncoderClassiregressor,
@@ -248,7 +233,7 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
 class PytorchDataset(Dataset):
     """Dataset specific to TransformerClassifier."""
 
-    def __init__(self, X, y):
+    def __init__(self, X, y=None):
         # X.shape = (batch_size, n_dims, n_timestamps)
         X = np.transpose(X, (0, 2, 1))
         # X.shape = (batch_size, n_timestamps, n_dims)
