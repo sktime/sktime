@@ -1195,11 +1195,16 @@ class TransformedTargetForecaster(_Pipeline):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        pred_int = self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
-        pred_int_transformed = self._get_inverse_transform(
-            self.transformers_pre_, pred_int, mode="proba"
+        pred = self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+
+        pred = self._get_inverse_transform(
+            self.transformers_pre_, pred, mode="proba"
         )
-        return pred_int_transformed
+
+        for _, t in self.transformers_post_:
+            pred = t.transform(X=pred, y=X)
+
+        return pred
 
     def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
@@ -1237,11 +1242,18 @@ class TransformedTargetForecaster(_Pipeline):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        pred_int = self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
-        pred_int_transformed = self._get_inverse_transform(
-            self.transformers_pre_, pred_int, mode="proba"
+        pred = self.forecaster_.predict_interval(
+            fh=fh, X=X, coverage=coverage
         )
-        return pred_int_transformed
+
+        pred = self._get_inverse_transform(
+            self.transformers_pre_, pred, mode="proba"
+        )
+
+        for _, t in self.transformers_post_:
+            pred = t.transform(X=pred, y=X)
+
+        return pred
 
 
 class ForecastX(BaseForecaster):
