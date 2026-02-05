@@ -208,7 +208,7 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "capability:unequal_length:removes": True,
-       "tests:skip_all": True,#
+       "tests:skip_all": True,
         # is transform result always guaranteed to be equal length (and series)?
     }
 
