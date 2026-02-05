@@ -2,7 +2,7 @@
 
 import warnings
 from copy import copy, deepcopy
-
+from sklearn.utils.validation import check_memory
 from sktime.base import BaseEstimator
 from sktime.pipeline.step import Step
 from sktime.transformations.series.subset import ColumnSelect
@@ -50,7 +50,7 @@ class Pipeline(BaseEstimator):
         called can be overridden using the method kwarg. Further provided kwargs
         are directly provided to the skobject if it is called.
 
-    Parameters
+   Parameters
     ----------
     param steps : A list of dicts that specify the steps of the pipeline. Further
         steps can be added by using add_step method.
@@ -68,6 +68,8 @@ class Pipeline(BaseEstimator):
                 that is called on the pipeline (e.g., predict, transform, ..)
             * kwargs: additional kwargs are parameters that are provided to the
                 skobject if fit/predict/.. is called.
+    memory : str or object with the joblib.Memory interface, default=None
+        Used to cache the fitted transformers of the pipeline.
 
     Attributes
     ----------
@@ -157,7 +159,8 @@ class Pipeline(BaseEstimator):
     }
     """
 
-    def __init__(self, steps=None):
+    def __init__(self, steps=None, memory=None):
+        self.memory = check_memory(memory) 
         warnings.warn(
             "This generalised graphical pipeline is experimental, "
             "with all the usual risks of edge features. "
@@ -355,7 +358,12 @@ class Pipeline(BaseEstimator):
                 input_steps[key] = [self._get_step(edg) for edg in edge]
 
             step = Step(
-                cloned_skobject, name, input_steps, method=method, params=kwargs
+                cloned_skobject,
+                name,
+                input_steps,
+                method=method,
+                params=kwargs,
+                memory=self.memory,  
             )
             if name in self.assembled_steps:
                 raise ValueError(

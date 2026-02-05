@@ -17,6 +17,11 @@ ALLOWED_METHODS = [
 ]
 
 
+def _call_method(skobject, method, input_data, kwargs):
+    """Call a method on a skobject with input_data and kwargs."""
+    return getattr(skobject, method)(**input_data, **kwargs)
+
+
 class StepResult:
     """
     Result of a step.
@@ -56,6 +61,8 @@ class Step:
     params : dict
         The parameters that should be passed to the skobject when calling
         method
+    memory : joblib.Memory or None, default=None
+        The memory object that is used to cache the results of the step.
     """
 
     def __init__(
@@ -65,6 +72,7 @@ class Step:
         input_edges,
         method,
         params,
+        memory=None,
     ):
         self.buffer = None
         self.mode = ""
@@ -73,6 +81,7 @@ class Step:
         self.method = method
         self.input_edges = input_edges
         self.params = params
+        self.memory = memory
 
     def reset(self, reset_buffer=True):
         """Reset the step."""
@@ -166,18 +175,23 @@ class Step:
                         ).to_frame()
                     result = pd.concat(yt.values(), axis=1)
                 else:
-                    result = getattr(self.skobject, method)(
-                        **dict(
-                            filter(
-                                lambda k: k[0]
-                                in inspect.getfullargspec(
-                                    getattr(self.skobject, method)
-                                ).args,
-                                input_data.items(),
-                            )
-                        ),
-                        **kwargs_,
+                    relevant_args = dict(
+                        filter(
+                            lambda k: k[0]
+                            in inspect.getfullargspec(
+                                getattr(self.skobject, method)
+                            ).args,
+                            input_data.items(),
+                        )
                     )
+                    if self.memory is not None:
+                        result = self.memory.cache(_call_method)(
+                            self.skobject, method, relevant_args, kwargs_
+                        )
+                    else:
+                        result = _call_method(
+                            self.skobject, method, relevant_args, kwargs_
+                        )
 
                 self.mode = (
                     "proba"
