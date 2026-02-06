@@ -13,7 +13,7 @@ class CNNNetworkTorch(NNModule):
     """Establish the network structure for a CNN in PyTorch.
 
     Zhao et al. 2017 uses sigmoid activation in the hidden layers.
-    To obtain same behaviour as Zhao et al. 2017, set activation to "sigmoid".
+    To obtain same behaviour as Zhao et al. 2017, set activation_hidden to "sigmoid".
 
     Adapted from the implementation used in [1]_.
 
@@ -183,17 +183,6 @@ class CNNNetworkTorch(NNModule):
         if self.num_classes == 1:  # (regression)
             out = out.squeeze(1)  # (batch_size,)
         return out
-
-    def _output_length_after_conv_pool(
-        self, length, kernel_size, pool_size, padding_same
-    ):
-        """Compute sequence length after one conv + pool block."""
-        if padding_same:
-            L_conv = length
-        else:
-            L_conv = length - kernel_size + 1
-        L_pool = L_conv // pool_size
-        return max(L_pool, 1)
 
     def _instantiate_activation(self, activation):
         """Instantiate the activation function to be applied on the output layer.

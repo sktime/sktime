@@ -1,6 +1,5 @@
 """Time Convolutional Neural Network (CNN) for regression in PyTorch."""
 
-__authors__ = ["RecreationalMath"]
 __all__ = ["CNNRegressorTorch"]
 
 
@@ -78,17 +77,12 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
     """
 
     _tags = {
-        "authors": ["RecreationalMath"],
-        "maintainers": ["RecreationalMath"],
+        "authors": ["hfawaz", "AurumnPegasus", "achieveordie", "noxthot"],
+        "maintainers": ["Faakhir30"],
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
         "tests:vm": True,
-        "tests:skip_by_name": [
-            "test_fit_idempotent",
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
-        ],
     }
 
     def __init__(
