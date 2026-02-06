@@ -9,8 +9,8 @@ permissions:
 
 jobs:
   take-issue:
-    if: contains(github.event.comment.body, '.take')
     runs-on: ubuntu-latest
+    if: github.event.issue.pull_request == null
 
     steps:
       - name: Assign issue to commenter
@@ -19,9 +19,14 @@ jobs:
           script: |
             const issue = context.payload.issue;
             const commenter = context.payload.comment.user.login;
+            const commentBody = context.payload.comment.body.trim();
 
-            
+          
+            if (commentBody !== ".take") return;
+
             const labels = issue.labels.map(l => l.name);
+
+        
             if (!labels.includes("good first issue")) {
               await github.rest.issues.createComment({
                 ...context.repo,
@@ -31,7 +36,7 @@ jobs:
               return;
             }
 
-           
+            
             if (issue.assignees.length > 0) {
               await github.rest.issues.createComment({
                 ...context.repo,
@@ -41,15 +46,25 @@ jobs:
               return;
             }
 
-          
+           
             await github.rest.issues.addAssignees({
               ...context.repo,
               issue_number: issue.number,
               assignees: [commenter]
             });
 
+            if (!labels.includes("claimed")) {
+              await github.rest.issues.addLabels({
+                ...context.repo,
+                issue_number: issue.number,
+                labels: ["claimed"]
+              });
+            }
+
+            
             await github.rest.issues.createComment({
               ...context.repo,
               issue_number: issue.number,
-              body: `Assigned to @${commenter}. Please open a PR within **15 days**, or the issue will be unassigned automatically.`
+              body: `Assigned to @${commenter}.\n\n Please open a PR or post an update within **15 days**, otherwise the issue will be unassigned automatically.`
             });
+

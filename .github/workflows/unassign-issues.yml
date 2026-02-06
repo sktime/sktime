@@ -32,15 +32,31 @@ jobs:
               if (issues.length === 0) break;
 
               for (const issue of issues) {
-                
+
+              
                 if (issue.pull_request) continue;
 
                 
                 if (issue.assignees.length === 0) continue;
 
+                const labels = issue.labels.map(l => l.name);
+
+                if (!labels.includes("claimed")) continue;
+
                 const lastUpdated = new Date(issue.updated_at);
                 const diffDays = (now - lastUpdated) / (1000 * 60 * 60 * 24);
 
+              
+                if (diffDays >= 12 && diffDays < 15) {
+                  await github.rest.issues.createComment({
+                    ...context.repo,
+                    issue_number: issue.number,
+                    body: " **Reminder:** This **good first issue** has been inactive for nearly **12 days**.\n\nPlease post an update or open a PR within **3 days**, otherwise it will be unassigned automatically."
+                  });
+                  continue;
+                }
+
+               
                 if (diffDays >= 15) {
                   await github.rest.issues.removeAssignees({
                     ...context.repo,
@@ -48,10 +64,17 @@ jobs:
                     assignees: issue.assignees.map(a => a.login)
                   });
 
+                  
+                  await github.rest.issues.removeLabel({
+                    ...context.repo,
+                    issue_number: issue.number,
+                    name: "claimed"
+                  });
+
                   await github.rest.issues.createComment({
                     ...context.repo,
                     issue_number: issue.number,
-                    body: "Unassigned due to **15 days of inactivity** on a **good first issue**. This issue is now available again."
+                    body: " Unassigned due to **15 days of inactivity** on a **good first issue**.\n\nThe issue is now available again for others to claim."
                   });
                 }
               }
