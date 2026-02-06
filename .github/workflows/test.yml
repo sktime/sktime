@@ -431,7 +431,7 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: pip install .[dev,dependencies_lower]
+        run: uv pip install .[dev,dependencies_lower]
         env:
           UV_SYSTEM_PYTHON: 1
 
@@ -465,7 +465,7 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: pip install .[dev,dependencies_2024]
+        run: uv pip install .[dev,dependencies_2024]
         env:
           UV_SYSTEM_PYTHON: 1
 
