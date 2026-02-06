@@ -165,24 +165,15 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
         fh : ForecastingHorizon or int, optional
-            Forecasting horizon for pretraining. If not provided, uses pred_len
-            from constructor.
+            Not used. The network output dimension is always determined by
+            the ``pred_len`` constructor parameter.
 
         Returns
         -------
         self : reference to self
         """
-        # Use fh if provided, otherwise fall back to pred_len
-        if fh is not None:
-            if hasattr(fh, "__iter__"):
-                fh = list(fh)[-1]
-            else:
-                fh = int(fh)
-        else:
-            fh = self.pred_len
-
-        self.network = self._build_network(fh)
-        dataloader = self._build_panel_dataloader(y, fh)
+        self.network = self._build_network(self.pred_len)
+        dataloader = self._build_panel_dataloader(y, self.pred_len)
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -209,14 +200,13 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
         fh : ForecastingHorizon or int, optional
-            Forecasting horizon. Must match the horizon used in initial pretraining.
+            Forecasting horizon. Must match the network's pred_len.
             If not provided, uses the network's existing pred_len.
 
         Returns
         -------
         self : reference to self
         """
-        # Use network's pred_len (fh must match if provided)
         network_fh = self.network.pred_len
 
         if fh is not None:
@@ -226,9 +216,9 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
                 fh = int(fh)
             if fh != network_fh:
                 raise ValueError(
-                    f"fh={fh} does not match pretrained network's "
-                    f"pred_len={network_fh}. Cannot change forecast horizon "
-                    "after initial pretraining."
+                    f"fh={fh} does not match the network's "
+                    f"pred_len={network_fh}. The network output dimension "
+                    "is fixed at construction time via the pred_len parameter."
                 )
         else:
             fh = network_fh
@@ -262,6 +252,18 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             Exogenous data (currently not used)
         """
         fh = fh.to_relative(self.cutoff)
+
+        # Validate fh against pretrained network's output dimension
+        if hasattr(self, "network") and self.network is not None:
+            max_fh = max(list(fh))
+            if max_fh > self.network.pred_len:
+                raise ValueError(
+                    f"max(fh)={max_fh} exceeds the network's output dimension "
+                    f"(pred_len={self.network.pred_len}). "
+                    f"The network architecture was fixed during pretraining. "
+                    f"Either use a smaller fh (<= {self.network.pred_len}) "
+                    f"or create a new forecaster with a larger pred_len."
+                )
 
         # Only build network if not already pretrained
         if not hasattr(self, "network") or self.network is None:
@@ -323,10 +325,11 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         -------
         params : dict or list of dict
         """
+        # pred_len >= 3 because pretrain tests use fh=[1,2,3]
         params = [
             {
-                "seq_len": 2,
-                "pred_len": 2,
+                "seq_len": 3,
+                "pred_len": 3,
                 "lr": 0.003,
                 "optimizer": "AdamW",
                 "batch_size": 5,
@@ -336,8 +339,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
                 "individual": True,
             },
             {
-                "seq_len": 2,
-                "pred_len": 1,
+                "seq_len": 3,
+                "pred_len": 3,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
@@ -695,24 +698,16 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
         fh : ForecastingHorizon or int, optional
-            Forecasting horizon for pretraining. If not provided, uses pred_len
-            from constructor.
+            Not used. The network output dimension is always determined by
+            the ``pred_len`` constructor parameter.
 
         Returns
         -------
         self : reference to self
         """
-        # Use fh if provided, otherwise fall back to pred_len
-        if fh is not None:
-            if hasattr(fh, "__iter__"):
-                fh = list(fh)[-1]
-            else:
-                fh = int(fh)
-        else:
-            fh = self.pred_len
 
-        self.network = self._build_network(fh)
-        dataloader = self._build_panel_dataloader(y, fh)
+        self.network = self._build_network(self.pred_len)
+        dataloader = self._build_panel_dataloader(y, self.pred_len)
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -739,14 +734,13 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
         fh : ForecastingHorizon or int, optional
-            Forecasting horizon. Must match the horizon used in initial pretraining.
+            Forecasting horizon. Must match the network's pred_len.
             If not provided, uses the network's existing pred_len.
 
         Returns
         -------
         self : reference to self
         """
-        # Use network's pred_len (fh must match if provided)
         network_fh = self.network.pred_len
 
         if fh is not None:
@@ -756,9 +750,9 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
                 fh = int(fh)
             if fh != network_fh:
                 raise ValueError(
-                    f"fh={fh} does not match pretrained network's "
-                    f"pred_len={network_fh}. Cannot change forecast horizon "
-                    "after initial pretraining."
+                    f"fh={fh} does not match the network's "
+                    f"pred_len={network_fh}. The network output dimension "
+                    "is fixed at construction time via the pred_len parameter."
                 )
         else:
             fh = network_fh
@@ -792,6 +786,18 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             Exogenous data (currently not used)
         """
         fh = fh.to_relative(self.cutoff)
+
+        # Validate fh against pretrained network's output dimension
+        if hasattr(self, "network") and self.network is not None:
+            max_fh = max(list(fh))
+            if max_fh > self.network.pred_len:
+                raise ValueError(
+                    f"max(fh)={max_fh} exceeds the network's output dimension "
+                    f"(pred_len={self.network.pred_len}). "
+                    f"The network architecture was fixed during pretraining. "
+                    f"Either use a smaller fh (<= {self.network.pred_len}) "
+                    f"or create a new forecaster with a larger pred_len."
+                )
 
         # Only build network if not already pretrained
         if not hasattr(self, "network") or self.network is None:
@@ -853,10 +859,11 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         -------
         params : dict or list of dict
         """
+        # pred_len >= 3 because pretrain tests use fh=[1,2,3]
         params = [
             {
-                "seq_len": 2,
-                "pred_len": 2,
+                "seq_len": 3,
+                "pred_len": 3,
                 "lr": 0.003,
                 "optimizer": "AdamW",
                 "batch_size": 5,
@@ -866,8 +873,8 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
                 "individual": True,
             },
             {
-                "seq_len": 2,
-                "pred_len": 1,
+                "seq_len": 3,
+                "pred_len": 3,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
