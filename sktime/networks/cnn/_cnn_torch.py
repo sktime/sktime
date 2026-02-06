@@ -107,14 +107,6 @@ class CNNNetworkTorch(NNModule):
         else:
             pad_value = 0
 
-        # Compute flattened size after all conv+pool blocks
-        L = series_length
-        for _ in range(n_conv_layers):
-            L = self._output_length_after_conv_pool(
-                L, kernel_size, avg_pool_size, padding_same
-            )
-        self._flattened_size = L * fs[-1]
-
         self.kernel_size = kernel_size
         self.avg_pool_size = avg_pool_size
         self.n_conv_layers = n_conv_layers
@@ -145,6 +137,14 @@ class CNNNetworkTorch(NNModule):
 
         self.conv_blocks = _safe_import("torch.nn.Sequential")(*layers)
         self.flatten = nnFlatten()
+
+        # Compute flattened size
+        L = series_length
+        for _ in range(n_conv_layers):
+            L_conv = L + 2 * pad_value - kernel_size + 1
+            L = L_conv // avg_pool_size
+        self._flattened_size = L * fs[-1]
+
         self.fc = nnLinear(self._flattened_size, num_classes, bias=use_bias)
         self._out_act = self._instantiate_activation(activation)
 
@@ -204,8 +204,6 @@ class CNNNetworkTorch(NNModule):
             The activation function to be applied on the output layer.
         """
         # support for more activation functions will be added
-        # based on requirements of SimpleRNNRegressorTorch once it is implemented
-        # currently only used in SimpleRNNClassifierTorch
         if activation is None or activation == "linear":
             return _safe_import("torch.nn.Identity")()
         elif isinstance(activation, NNModule):
