@@ -705,7 +705,6 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         -------
         self : reference to self
         """
-
         self.network = self._build_network(self.pred_len)
         dataloader = self._build_panel_dataloader(y, self.pred_len)
 
