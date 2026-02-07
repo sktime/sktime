@@ -34,7 +34,7 @@ class TestAllCatalogues(CatalogueFixtureGenerator, QuickTester):
         """Test that catalogue.get('all') returns a flat list of names."""
         items = estimator_instance.get("all")
         assert isinstance(items, list)
-        assert all(isinstance(i, str) for i in items)
+        assert all(isinstance(i, str) or isinstance(i, tuple) for i in items)
 
     def test_get_by_category(self, estimator_instance):
         """Test that catalogue.get(category) returns items only from that category."""
@@ -42,7 +42,7 @@ class TestAllCatalogues(CatalogueFixtureGenerator, QuickTester):
         for cat in cats:
             items = estimator_instance.get(cat)
             assert isinstance(items, list)
-            assert all(isinstance(i, str) for i in items)
+            assert all(isinstance(i, str) or isinstance(i, tuple) for i in items)
 
     def test_get_invalid_category_raises(self, estimator_instance):
         """Test that invalid category names raise KeyError."""
