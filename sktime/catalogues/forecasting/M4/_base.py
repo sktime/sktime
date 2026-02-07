@@ -27,30 +27,25 @@ class _BaseM4CompetitionCatalogue(BaseCatalogue):
         "maintainers": "jgyasu",
         "object_type": "catalogue",
         "catalogue_type": "mixed",
-        "n_items": 11,
+        "n_items": 10,
         "n_datasets": 0,
-        "n_forecasters": 11,
+        "n_forecasters": 10,
         "n_metrics": 0,
         "n_cv_splitters": 0,
     }
 
     _dataset_name = None
     _metric_name = None
-
-    def _get(self):
-        """Return a dict of items (datasets, forecasters, metrics)."""
-        if self._dataset_name is None or self._metric_name is None:
-            raise ValueError("_dataset_name and _metric_name must be set in subclass")
-
-        forecasters = [
-            "NaiveForecaster(strategy='last')",  # Naïve 1
-            "NaiveForecaster(strategy='last', sp=1)",  # Naïve S
-            "ExponentialSmoothing(trend=None, seasonal=None)",  # SES
-            "ExponentialSmoothing(trend='add', seasonal=None)",  # Holt
-            "ExponentialSmoothing(trend='add', damped_trend=True)",  # Damped
-            "ThetaForecaster()",  # Theta
-            "AutoARIMA()",  # ARIMA
-            "AutoETS()",  # ETS
+    _base_forecasters = [
+        ("Naive_1", "NaiveForecaster(strategy='last')"),
+        ("SES", "ExponentialSmoothing(trend=None, seasonal=None)"),
+        ("Holt", "ExponentialSmoothing(trend='add', seasonal=None)"),
+        ("Damped", "ExponentialSmoothing(trend='add', damped_trend=True)"),
+        ("Theta", "ThetaForecaster()"),
+        ("AutoARIMA", "AutoARIMA()"),
+        ("AutoETS", "AutoETS()"),
+        (
+            "Comb",
             "EnsembleForecaster("
             "    ["
             "        ('ses', ExponentialSmoothing(trend=None)),"
@@ -58,8 +53,18 @@ class _BaseM4CompetitionCatalogue(BaseCatalogue):
             "        ('damped', ExponentialSmoothing(trend='add', damped_trend=True)),"
             "    ],"
             "    aggfunc='mean',"
-            ")",  # Comb
-        ]
+            ")",
+        ),
+    ]
+
+    _specific_forecasters = []
+
+    def _get(self):
+        """Return a dict of items (datasets, forecasters, metrics)."""
+        if self._dataset_name is None or self._metric_name is None:
+            raise ValueError("_dataset_name and _metric_name must be set in subclass")
+
+        forecasters = self._base_forecasters + self._specific_forecasters
 
         return {
             "dataset": [f"ForecastingData('{self._dataset_name}')"],

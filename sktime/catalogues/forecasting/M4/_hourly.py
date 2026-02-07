@@ -19,3 +19,4 @@ class M4CompetitionCatalogueHourly(_BaseM4CompetitionCatalogue):
 
     _dataset_name = "m4_hourly_dataset"
     _metric_name = "OverallWeightedAverage(sp=24)"
+    _specific_forecasters = [("Naive_S", "NaiveForecaster(strategy='last', sp=24)")]

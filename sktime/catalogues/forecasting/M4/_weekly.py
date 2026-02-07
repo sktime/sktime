@@ -19,3 +19,4 @@ class M4CompetitionCatalogueWeekly(_BaseM4CompetitionCatalogue):
 
     _dataset_name = "m4_weekly_dataset"
     _metric_name = "OverallWeightedAverage(sp=52)"
+    _specific_forecasters = [("Naive_S", "NaiveForecaster(strategy='last', sp=52)")]
