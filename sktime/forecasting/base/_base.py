@@ -1048,8 +1048,20 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             * Sets ``self._pretrained_attrs`` to list of pretrained attribute names
               (as strings).
         """
-        # check and convert X/y
+        # This is a hack, because _check_X_y should accept panel data only for pretrain.
+        # Temporarily ensure panel/hierarchical mtype support for _check_X_y.
+        # pretrain always requires panel data, independent of what fit/predict
+        # support via y_inner_mtype. This decouples pretrain's data requirements
+        # from the y_inner_mtype tag, which controls fit/predict behavior.
+        _PRETRAIN_MTYPES = ["pd-multiindex", "pd_multiindex_hier"]
+        orig_y_mtypes = _coerce_to_list(self.get_tag("y_inner_mtype"))
+        pretrain_y_mtypes = list(set(orig_y_mtypes + _PRETRAIN_MTYPES))
+        self.set_tags(**{"y_inner_mtype": pretrain_y_mtypes})
+
         X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # restore original y_inner_mtype so fit/predict are not affected
+        self.set_tags(**{"y_inner_mtype": orig_y_mtypes})
 
         y_scitype = self._y_metadata.get("scitype", None)
         if y_scitype == "Series":
