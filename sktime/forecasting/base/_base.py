@@ -2141,7 +2141,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # B. no fh is passed
         if fh is None:
             # A. strategy fitted (call of predict or similar)
-            if self._is_fitted:
+            if self.is_fitted:
                 # in case C. fh is optional in fit:
                 # if there is none from before, there is none overall - raise error
                 if not requires_fh and self._fh is None:
@@ -2181,13 +2181,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             # - fh has not been seen yet
             # - fh has been seen, but was optional in fit,
             #     this means fh needs not be same and can be overwritten
-            if not requires_fh or not self._fh or not self._is_fitted:
+            if not requires_fh or not self._fh or not self.is_fitted:
                 self._fh = fh
             # there is one error condition:
             # - fh is mandatory in fit, i.e., fh in predict must be same if passed
             # - fh already passed, and estimator is fitted
             # - fh that was passed in fit is not the same as seen in predict
-            # note that elif means: optfh == False, and self._is_fitted == True
+            # note that elif means: optfh == False, and self.is_fitted == True
             elif self._fh and not np.array_equal(fh, self._fh):
                 # raise error if existing fh and new one don't match
                 raise ValueError(
