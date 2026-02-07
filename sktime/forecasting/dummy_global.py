@@ -72,17 +72,9 @@ class DummyGlobalForecaster(BaseForecaster):
     _tags = {
         "capability:pretrain": True,
         "scitype:y": "both",
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd.Series",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "capability:pred_int": False,
         "capability:insample": False,
-        "tests:skip_by_name": ["test_hierarchical_with_exogeneous"],
     }
 
     def __init__(self, strategy="mean"):

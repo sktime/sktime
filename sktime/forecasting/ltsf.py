@@ -77,9 +77,6 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
         "capability:pretrain": True,
-        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "X_inner_mtype": "pd.DataFrame",
-        "tests:skip_by_name": ["test_hierarchical_with_exogeneous"],
     }
 
     def __init__(
@@ -610,9 +607,6 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
         "capability:pretrain": True,
-        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "X_inner_mtype": "pd.DataFrame",
-        "tests:skip_by_name": ["test_hierarchical_with_exogeneous"],
     }
 
     def __init__(
