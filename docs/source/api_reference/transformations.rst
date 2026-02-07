@@ -315,6 +315,15 @@ These transformers extract larger collections of features.
     TSFreshRelevantFeatureExtractor
     TSFreshFeatureExtractor
 
+.. currentmodule:: sktime.transformations.panel.tsfeatures
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSFeaturesTransformer
+    TSFeaturesWideTransformer
+
 .. currentmodule:: sktime.transformations.panel.catch22
 
 .. autosummary::
@@ -330,6 +339,14 @@ These transformers extract larger collections of features.
     :template: class.rst
 
     Catch22Wrapper
+
+.. currentmodule:: sktime.transformations.series.tsfel
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSFELTransformer
 
 Series-to-series transformers
 -----------------------------

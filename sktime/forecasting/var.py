@@ -30,10 +30,12 @@ class VAR(_StatsModelsAdapter):
     verbose : bool (default=False)
         Print order selection output to the screen
     trend : str {"c", "ct", "ctt", "n"} (default="c")
-        "c" - add constant
-        "ct" - constant and trend
-        "ctt" - constant, linear and quadratic trend
-        "n" - co constant, no trend
+
+        * "c" - add constant
+        * "ct" - constant and trend
+        * "ctt" - constant, linear and quadratic trend
+        * "n" - co constant, no trend
+
         Note that these are prepended to the columns of the dataset.
     missing: str, optional (default='none')
         A string specifying if data is missing
@@ -44,10 +46,12 @@ class VAR(_StatsModelsAdapter):
         An array like object containing dates.
     ic: One of {'aic', 'fpe', 'hqic', 'bic', None} (default=None)
         Information criterion to use for VAR order selection.
-        aic : Akaike
-        fpe : Final prediction error
-        hqic : Hannan-Quinn
-        bic : Bayesian a.k.a. Schwarz
+
+        * `"aic"` : Akaike
+        * `"fpe"` : Final prediction error
+        * `"hqic"` : Hannan-Quinn
+        * `"bic"` : Bayesian a.k.a. Schwarz
+
     random_state : int, RandomState instance or None, optional ,
         default=None - If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
@@ -90,7 +94,7 @@ class VAR(_StatsModelsAdapter):
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
-        "scitype:y": "multivariate",
+        "scitype:y": "both",
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "capability:exogenous": False,
@@ -141,6 +145,11 @@ class VAR(_StatsModelsAdapter):
         -------
         self : returns an instance of self.
         """
+        # if univariate, add a shifted copy of the data
+        if y.shape[1] == 1:
+            y = y.copy()
+            y["__y_shifted"] = y.iloc[:, 0].abs().pow(0.1) + 1.0
+
         from statsmodels.tsa.api import VAR as _VAR
 
         self._forecaster = _VAR(
@@ -153,6 +162,9 @@ class VAR(_StatsModelsAdapter):
             verbose=self.verbose,
             ic=self.ic,
         )
+
+        n_lags = self._fitted_forecaster.k_ar
+        self._last_n_lags_of_y = y.values[-n_lags:]
         return self
 
     def _predict(self, fh, X):
@@ -176,14 +188,12 @@ class VAR(_StatsModelsAdapter):
         y_pred_insample = None
         exog_future = X.values if X is not None else None
         # fh in stats
-        # fh_int = fh.to_absolute_int(self._y.index[0], self._y.index[-1])
         fh_int = fh.to_relative(self.cutoff)
-        n_lags = self._fitted_forecaster.k_ar
 
         # out-sample predictions
         if fh_int.max() > 0:
             y_pred_outsample = self._fitted_forecaster.forecast(
-                y=self._y.values[-n_lags:],
+                y=self._last_n_lags_of_y,
                 steps=fh_int[-1],
                 exog_future=exog_future,
             )
@@ -199,13 +209,17 @@ class VAR(_StatsModelsAdapter):
                 y_pred_insample if y_pred_insample is not None else y_pred_outsample
             )
 
-        index = fh.to_absolute_index(self.cutoff)
-        index.name = self._y.index.name
-        y_pred = pd.DataFrame(
-            y_pred[fh.to_indexer(self.cutoff), :],
-            index=index,
-            columns=self._y.columns,
-        )
+        y_pred = y_pred[fh.to_indexer(self.cutoff), :]
+
+        # invert the "only_1s" column if it was added during fit
+        if self._y_metadata["n_features"] == 1:
+            y_pred = y_pred[:, [0]]
+
+        ix = fh.get_expected_pred_idx(cutoff=self.cutoff)
+        cols = self._get_columns()
+
+        y_pred = pd.DataFrame(y_pred, index=ix, columns=cols)
+
         return y_pred
 
     def _predict_interval(self, fh, X, coverage):
@@ -249,9 +263,8 @@ class VAR(_StatsModelsAdapter):
         model = self._fitted_forecaster
         fh_int = fh.to_relative(self.cutoff)
         steps = fh_int[-1]
-        n_lags = model.k_ar
 
-        y_cols_no_space = [str(col).replace(" ", "") for col in self._y.columns]
+        y_cols_no_space = [str(col).replace(" ", "") for col in self._get_columns()]
 
         df_list = []
 
@@ -260,23 +273,22 @@ class VAR(_StatsModelsAdapter):
             # A hacky way to coerce error-inducing alpha==1 into its approximant
             if alpha >= 0.99999:
                 alpha = 0.99999
+
+            lower_cols = [f"{col} {alpha} lower" for col in y_cols_no_space]
+            upper_cols = [f"{col} {alpha} upper" for col in y_cols_no_space]
+
             fcast_interval = model.forecast_interval(
-                self._y.values[-n_lags:], steps=steps, alpha=alpha
+                self._last_n_lags_of_y, steps=steps, alpha=alpha
             )
             lower_int, upper_int = fcast_interval[1], fcast_interval[-1]
 
-            lower_df = pd.DataFrame(
-                lower_int,
-                columns=[
-                    col + " " + str(alpha) + " " + "lower" for col in y_cols_no_space
-                ],
-            )
-            upper_df = pd.DataFrame(
-                upper_int,
-                columns=[
-                    col + " " + str(alpha) + " " + "upper" for col in y_cols_no_space
-                ],
-            )
+            # invert the "only_1s" column if it was added during fit
+            if self._y_metadata["n_features"] == 1:
+                lower_int = lower_int[:, [0]]
+                upper_int = upper_int[:, [0]]
+
+            lower_df = pd.DataFrame(lower_int, columns=lower_cols)
+            upper_df = pd.DataFrame(upper_int, columns=upper_cols)
 
             df_list.append(pd.concat((lower_df, upper_df), axis=1))
 

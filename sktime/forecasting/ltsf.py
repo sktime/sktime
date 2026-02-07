@@ -77,7 +77,6 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
         "capability:pretrain": True,
-        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
 
     def __init__(
@@ -167,10 +166,11 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         -------
         params : dict or list of dict
         """
+        # pred_len >= 3 because pretrain tests use fh=[1,2,3]
         params = [
             {
-                "seq_len": 2,
-                "pred_len": 2,
+                "seq_len": 3,
+                "pred_len": 3,
                 "lr": 0.003,
                 "optimizer": "AdamW",
                 "batch_size": 5,
@@ -180,8 +180,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
                 "individual": True,
             },
             {
-                "seq_len": 2,
-                "pred_len": 1,
+                "seq_len": 3,
+                "pred_len": 3,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
@@ -453,7 +453,6 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
         "capability:pretrain": True,
-        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
 
     def __init__(
@@ -543,10 +542,11 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         -------
         params : dict or list of dict
         """
+        # pred_len >= 3 because pretrain tests use fh=[1,2,3]
         params = [
             {
-                "seq_len": 2,
-                "pred_len": 2,
+                "seq_len": 3,
+                "pred_len": 3,
                 "lr": 0.003,
                 "optimizer": "AdamW",
                 "batch_size": 5,
@@ -556,8 +556,8 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
                 "individual": True,
             },
             {
-                "seq_len": 2,
-                "pred_len": 1,
+                "seq_len": 3,
+                "pred_len": 3,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,

@@ -100,6 +100,7 @@ class AutoREG(_StatsModelsAdapter):
         "scitype:y": "univariate",
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(

@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.alignment.base import BaseAligner
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class AlignerDTW(BaseAligner):
@@ -131,6 +132,16 @@ class AlignerDTW(BaseAligner):
             self.set_tags(**{"alignment_type": "partial"})
         else:
             self.set_tags(**{"alignment_type": "full"})
+
+        # Check if the user has the incorrect 'dtw' package installed.
+        if _check_soft_dependencies("dtw", severity="none"):
+            raise ModuleNotFoundError(
+                "Error: usage of the incorrect 'dtw' package detected. "
+                f"{self.__class__.__name__} requires the 'dtw' package to be absent, "
+                "because 'dtw' uses the same import path as the required "
+                "'dtw-python' package. "
+                "Please run: `pip uninstall dtw` followed by `pip install dtw-python`."
+            )
 
     def _fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.
@@ -360,6 +371,16 @@ class AlignerDTWfromDist(BaseAligner):
         self.window_size = window_size
         self.open_begin = open_begin
         self.open_end = open_end
+
+        # Check if the user has the incorrect 'dtw' package installed.
+        if _check_soft_dependencies("dtw", severity="none"):
+            raise ModuleNotFoundError(
+                "Error: usage of the incorrect 'dtw' package detected. "
+                f"{self.__class__.__name__} requires the 'dtw' package to be absent, "
+                "because 'dtw' uses the same import path as the required "
+                "'dtw-python' package. "
+                "Please run: `pip uninstall dtw` followed by `pip install dtw-python`."
+            )
 
     def _fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.

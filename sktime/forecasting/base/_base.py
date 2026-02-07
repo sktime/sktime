@@ -353,16 +353,17 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
     @property
     def _is_fitted(self):
-        """Internal fitted state for backward compatibility.
+        """Internal fitted state for backward compatibility with skbase.
 
-        Returns True if the estimator has been fitted or pretrained.
+        Same semantics as ``is_fitted``: returns True only after ``fit()``.
+        For pretrain state checks, use ``self.state`` directly.
 
         Returns
         -------
         bool
-            True if state is "fitted" or "pretrained", False otherwise.
+            True if the estimator has been fitted, False otherwise.
         """
-        return self._state in ("fitted", "pretrained")
+        return self._state == "fitted"
 
     @_is_fitted.setter
     def _is_fitted(self, value):
@@ -1048,8 +1049,20 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             * Sets ``self._pretrained_attrs`` to list of pretrained attribute names
               (as strings).
         """
-        # check and convert X/y
+        # This is a hack, because _check_X_y should accept panel data only for pretrain.
+        # Temporarily ensure panel/hierarchical mtype support for _check_X_y.
+        # pretrain always requires panel data, independent of what fit/predict
+        # support via y_inner_mtype. This decouples pretrain's data requirements
+        # from the y_inner_mtype tag, which controls fit/predict behavior.
+        _PRETRAIN_MTYPES = ["pd-multiindex", "pd_multiindex_hier"]
+        orig_y_mtypes = _coerce_to_list(self.get_tag("y_inner_mtype"))
+        pretrain_y_mtypes = list(set(orig_y_mtypes + _PRETRAIN_MTYPES))
+        self.set_tags(**{"y_inner_mtype": pretrain_y_mtypes})
+
         X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # restore original y_inner_mtype so fit/predict are not affected
+        self.set_tags(**{"y_inner_mtype": orig_y_mtypes})
 
         y_scitype = self._y_metadata.get("scitype", None)
         if y_scitype == "Series":
@@ -2128,7 +2141,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # B. no fh is passed
         if fh is None:
             # A. strategy fitted (call of predict or similar)
-            if self._is_fitted:
+            if self.is_fitted:
                 # in case C. fh is optional in fit:
                 # if there is none from before, there is none overall - raise error
                 if not requires_fh and self._fh is None:
@@ -2168,13 +2181,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             # - fh has not been seen yet
             # - fh has been seen, but was optional in fit,
             #     this means fh needs not be same and can be overwritten
-            if not requires_fh or not self._fh or not self._is_fitted:
+            if not requires_fh or not self._fh or not self.is_fitted:
                 self._fh = fh
             # there is one error condition:
             # - fh is mandatory in fit, i.e., fh in predict must be same if passed
             # - fh already passed, and estimator is fitted
             # - fh that was passed in fit is not the same as seen in predict
-            # note that elif means: optfh == False, and self._is_fitted == True
+            # note that elif means: optfh == False, and self.is_fitted == True
             elif self._fh and not np.array_equal(fh, self._fh):
                 # raise error if existing fh and new one don't match
                 raise ValueError(

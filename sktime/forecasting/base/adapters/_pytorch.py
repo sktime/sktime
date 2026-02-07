@@ -89,9 +89,9 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         """
         fh = fh.to_relative(self.cutoff)
 
-        # Only build network if not already pretrained
-        if not hasattr(self, "network") or self.network is None:
-            self.network = self._build_network(list(fh)[-1])
+        self._y_len = len(y)
+
+        self.network = self._build_network(list(fh)[-1])
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()

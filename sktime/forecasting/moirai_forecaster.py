@@ -5,14 +5,7 @@ from unittest.mock import patch
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("lightning", severity="none"):
-    import sktime.libs.uni2ts
-
 from sktime.forecasting.base import _BaseGlobalForecaster
-
-if _check_soft_dependencies("huggingface-hub", severity="none"):
-    from huggingface_hub import hf_hub_download
-
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
@@ -88,12 +81,13 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
         # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
         "maintainers": ["pranavvp16"],
+        "python_version": "<3.14",
         "python_dependencies": [
             "gluonts",
             "torch",
             "einops",
             "huggingface-hub",
-            "hf_xet",
+            "hf-xet",
             "lightning",
             "hydra-core",
         ],
@@ -160,6 +154,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
     if _check_soft_dependencies(["lightning", "huggingface-hub"], severity="none"):
+        import sktime
         from sktime.libs.uni2ts.forecast import MoiraiForecast
 
         @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
@@ -175,6 +170,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 )
                 return MoiraiForecast(**model_kwargs)
             else:
+                from huggingface_hub import hf_hub_download
+
                 model_kwargs["checkpoint_path"] = hf_hub_download(
                     repo_id=self.checkpoint_path, filename="model.ckpt"
                 )
@@ -217,6 +214,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                     )
                     self.model = MoiraiForecast(**model_kwargs)
                 else:
+                    from huggingface_hub import hf_hub_download
+
                     model_kwargs["checkpoint_path"] = hf_hub_download(
                         repo_id=self.checkpoint_path, filename="model.ckpt"
                     )
