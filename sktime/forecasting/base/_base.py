@@ -353,16 +353,17 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
     @property
     def _is_fitted(self):
-        """Internal fitted state for backward compatibility.
+        """Internal fitted state for backward compatibility with skbase.
 
-        Returns True if the estimator has been fitted or pretrained.
+        Same semantics as ``is_fitted``: returns True only after ``fit()``.
+        For pretrain state checks, use ``self.state`` directly.
 
         Returns
         -------
         bool
-            True if state is "fitted" or "pretrained", False otherwise.
+            True if the estimator has been fitted, False otherwise.
         """
-        return self._state in ("fitted", "pretrained")
+        return self._state == "fitted"
 
     @_is_fitted.setter
     def _is_fitted(self, value):
