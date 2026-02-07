@@ -72,6 +72,7 @@ class DummyGlobalForecaster(BaseForecaster):
     _tags = {
         "capability:pretrain": True,
         "scitype:y": "both",
+        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
         "requires-fh-in-fit": False,
         "capability:pred_int": False,
         "capability:insample": False,
