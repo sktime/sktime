@@ -21,9 +21,28 @@ from sktime.transformations.base import BaseTransformer
 class DegreeDayFeatures(BaseTransformer):
     """Compute degree-day features (HDD/CDD) from daily temperatures.
 
+    Computes Heating Degree Days (HDD) and
+    Cooling Degree Days (CDD) from daily temperature inputs.
+
+    Degree days convert temperature into a simple proxy for heating/cooling demand by
+    measuring how far a day's mean temperature is from a base (balance-point)
+    temperature.
+
+    ``transform`` returns a DataFrame with column names ``hdd`` and ``cdd``,
+    indexed the same as the input.
+    If ``return_tmean=True``, also includes a ``tmean`` column.
+
+    Definitions (daily):
+
+    * ``tmean = (tmax + tmin) / 2``
+    * ``hdd = max(0, base_temp - tmean)``
+    * ``cdd = max(0, tmean - base_temp)``
+
     Supports two input modes:
-    - If no column names are provided: 1 column is treated as mean temperature (tmean);
-      2+ columns use the first two columns as (tmax, tmin).
+
+    - If no column names are provided via ``tmax_col``, ``tmin_col``, or ``tmean_col``:
+      1 column is treated as mean temperature (``tmean``);
+      2+ columns use the first two columns as (``tmax``, ``tmin``).
     - If column names are provided, the transformer uses those columns.
 
     Parameters
