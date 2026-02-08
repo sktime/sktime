@@ -11,14 +11,13 @@ These tests validate:
 - sktime estimator interface compliance via check_estimator.
 """
 
-from __future__ import annotations
-
 # Third-party imports.
 import pandas as pd
 import pytest
 
 # Local imports (within sktime).
 from sktime.transformations.series.degree_day import DegreeDayFeatures
+from sktime.tests.test_switch import run_test_for_class
 
 # sktime imports.
 from sktime.utils.estimator_checks import check_estimator
@@ -36,20 +35,14 @@ def _df_high_low(high, low, idx=None) -> pd.DataFrame:
 
 
 ###############################################################################
-# API compliance tests.
-###############################################################################
-
-
-def test_estimator_compliance():
-    """DegreeDayFeatures should satisfy sktime's estimator API checks."""
-    check_estimator(DegreeDayFeatures, raise_exceptions=True)
-
-
-###############################################################################
 # Correctness tests.
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DegreeDayFeatures),
+    reason="run_test_for_class marks if the test should be run for this class",
+)
 def test_basic_values():
     """
     Verify exact outputs on a small hand-checkable dataset.
@@ -90,6 +83,10 @@ def test_basic_values():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DegreeDayFeatures),
+    reason="run_test_for_class marks if the test should be run for this class",
+)
 def test_invariants():
     """Basic invariants should always hold for valid inputs."""
     X = _df_high_low(
@@ -123,6 +120,10 @@ def test_invariants():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DegreeDayFeatures),
+    reason="run_test_for_class marks if the test should be run for this class",
+)
 def test_missing_column_raises():
     """Missing required columns should raise when explicit columns are requested."""
     X = pd.DataFrame({"high": [70, 80]})
@@ -132,6 +133,10 @@ def test_missing_column_raises():
         tx.fit_transform(X)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DegreeDayFeatures),
+    reason="run_test_for_class marks if the test should be run for this class",
+)
 def test_non_numeric_raises():
     """Non-numeric temperature values should raise."""
     X = pd.DataFrame({"high": [70, "hot"], "low": [50, 40]})
@@ -146,6 +151,10 @@ def test_non_numeric_raises():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DegreeDayFeatures),
+    reason="run_test_for_class marks if the test should be run for this class",
+)
 def test_inverted_min_max_strict_raises():
     """If strict=True, rows where low > high should raise."""
     X = _df_high_low(high=[60], low=[70])
@@ -155,6 +164,10 @@ def test_inverted_min_max_strict_raises():
         tx.fit_transform(X)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DegreeDayFeatures),
+    reason="run_test_for_class marks if the test should be run for this class",
+)
 def test_inverted_min_max_swaps_when_not_strict():
     """If strict=False, rows where low > high should be auto-swapped."""
     X = _df_high_low(high=[60], low=[70])
@@ -169,6 +182,10 @@ def test_inverted_min_max_swaps_when_not_strict():
     assert out.loc[0, "cdd"] == 0.0
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DegreeDayFeatures),
+    reason="run_test_for_class marks if the test should be run for this class",
+)
 def test_keep_original_columns_appends_features():
     """If keep_original_columns=True, features should be appended to X."""
     X = _df_high_low(high=[80], low=[60])
