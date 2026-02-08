@@ -1,7 +1,4 @@
-"""
-test_degree_day.py
-
-Unit tests for DegreeDayFeatures (sktime transformer).
+"""Unit tests for DegreeDayFeatures (sktime transformer).
 
 These tests validate:
 - Correctness on hand-checkable examples.
