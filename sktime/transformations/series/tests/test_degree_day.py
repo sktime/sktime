@@ -8,7 +8,6 @@ These tests validate:
 - Invariants (non-negativity, mutually exclusive HDD/CDD positivity).
 - Input validation (missing columns, non-numeric values).
 - Handling of inverted min/max temperatures (strict vs auto-swap).
-- sktime estimator interface compliance via check_estimator.
 """
 
 # Third-party imports.
@@ -18,9 +17,6 @@ import pytest
 # Local imports (within sktime).
 from sktime.transformations.series.degree_day import DegreeDayFeatures
 from sktime.tests.test_switch import run_test_for_class
-
-# sktime imports.
-from sktime.utils.estimator_checks import check_estimator
 
 ###############################################################################
 # Test helpers.
