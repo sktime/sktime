@@ -1,22 +1,37 @@
-from sktime.param_est.impulse import ImpulseResponseFunction
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Tests for johansen parameter estimator."""
+
+__author__ = ["OldPatrick"]
+
 import numpy as np
-#from statsmodels.tsa.statespace.varmax import VARMAX as statvar
-#from sktime.forecasting.varmax import VARMAX as skvar
+import pandas as pd
+import pytest
 
-from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor as statvar
-from sktime.forecasting.dynamic_factor import DynamicFactor as skvar
+from sktime.datasets import load_airline
+from sktime.param_est.impulse import ImpulseResponseFunction
+from sktime.utils.dependencies import _check_estimator_deps
 
-print(skvar.__name__)
+@pytest.mark.skipif(
+    not _check_estimator_deps(ImpulseResponseFunction, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
+def test_irf_on_varmax():
+    """Test ImpulseResponseFunctions on airline data with VARMAX."""
+    pass
 
-data = np.random.randn(100, 2)
+def test_irf_on_dynamicfactor():
+    """Test ImpulseResponseFunctions on airline data with DynamicFactor."""
+    X = load_airline()
+    X2 = X.shift(1).bfill()
+    df = pd.DataFrame({"X": X, "X2": X2})
+    irf_est = ImpulseResponseFunction()
+    irf_est.fit(df)
 
-st_model = statvar(data, k_factors=1, factor_order=2)
-fitted_model = st_model.fit()
-eg = fitted_model.impulse_responses()
-print(eg)
+    #assert list(coint_est.get_fitted_params()["ind"]) == [0, 1]
+    # actual = coint_est.get_fitted_params()["ind"]
+    # expected = [0, 1]
+    # np.testing.assert_array_equal(actual, expected)
 
-
-sk_model = skvar(k_factors=1, factor_order=2)
-fitted_model2 = sk_model.fit(data)
-res = ImpulseResponseFunction(sk_model).get_irf_from_sktime()
-print(res)
+def test_irf_on_VECM():
+    """Test ImpulseResponseFunctions on airline data with VECM."""
+    pass
