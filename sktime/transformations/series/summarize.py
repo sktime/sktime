@@ -481,9 +481,11 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         raise ValueError("The provided summarizer is not callable.")
     feat = pd.DataFrame(feat)
 
-    # Handle backfill
     if bfill is True:
-        feat = feat.bfill()
+        if hasattr(Z, "grouper"):
+            feat = feat.groupby(Z.grouper).bfill()
+        else:
+            feat = feat.bfill()
 
     if callable(summarizer):
         name = summarizer.__name__
