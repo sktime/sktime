@@ -307,7 +307,8 @@ numpy1 = [
   "numpy<2.0.0",
 ]
 pandas1 = [
-  "pandas<2.0.0",
+  'pandas>=1.5.3,<2.0.0; python_version < "3.12"',
+  'pandas>=2.0.0,<2.3.0; python_version >= "3.12"',
 ]
 compatibility_tests = [
   'catboost; python_version < "3.13"',
