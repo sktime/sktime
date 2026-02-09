@@ -19,7 +19,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
     batch_size : int, optional (default=16)
         The number of samples per gradient update.
     kernel_sizes : tuple, optional (default=(5, 5))
-        The size of kernels in Conv1D layer.
+        The size of kernels in Conv1D layers.
     pool_size : int, optional (default=2)
         The size of kernel in (Max) Pool layer.
     filter_sizes : tuple, optional (default=(8, 8))

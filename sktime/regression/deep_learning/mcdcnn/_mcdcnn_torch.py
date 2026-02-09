@@ -17,7 +17,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
     batch_size : int, optional (default=16)
         The number of samples per gradient update.
     kernel_sizes : tuple, optional (default=(5, 5))
-        The size of kernels in Conv1D layer.
+        The size of kernels in Conv1D layers.
     pool_size : int, optional (default=2)
         The size of kernel in (Max) Pool layer.
     filter_sizes : tuple, optional (default=(8, 8))
@@ -81,7 +81,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
     >>> from sktime.regression.deep_learning.mcdcnn import MCDCNNRegressorTorch
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
-    >>> mcdcnn = MCDCNNRegressorTorch(n_epochs=1, kernel_sizes=4) # doctest: +SKIP
+    >>> mcdcnn = MCDCNNRegressorTorch(n_epochs=1, kernel_sizes=(4, 4)) # doctest: +SKIP
     >>> mcdcnn.fit(X_train, y_train) # doctest: +SKIP
     MCDCNNRegressorTorch(...)
     """

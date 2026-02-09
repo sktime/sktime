@@ -20,7 +20,7 @@ class MCDCNNNetworkTorch(NNModule):
     Parameters
     ----------
     kernel_sizes : tuple, optional (default=(5, 5))
-        The size of kernels in Conv1D layer.
+        The size of kernels in Conv1D layers.
     pool_size : int, optional (default=2)
         The size of kernel in (Max) Pool layer.
     filter_sizes : tuple, optional (default=(8, 8))
@@ -97,19 +97,6 @@ class MCDCNNNetworkTorch(NNModule):
                 padding=conv_pad_size,
             )
             self.conv_layers.append(conv_layer)
-
-        # self.conv1 = nnConv1d(
-        #     in_channels=1,
-        #     out_channels=filter_sizes[0],
-        #     kernel_size=kernel_size,
-        #     padding=conv_pad_size,
-        # )
-        # self.conv2 = nnConv1d(
-        #     in_channels=filter_sizes[0],
-        #     out_channels=filter_sizes[1],
-        #     kernel_size=kernel_size,
-        #     padding=conv_pad_size,
-        # )
 
         nnMaxPool1d = _safe_import("torch.nn.MaxPool1d")
 
