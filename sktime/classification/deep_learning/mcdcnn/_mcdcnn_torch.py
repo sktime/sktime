@@ -156,6 +156,13 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             if self.optimizer_kwargs is None:
                 self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
 
+        if len(self.filter_sizes) != len(self.kernel_sizes):
+            raise ValueError(
+                f"Length of `filter_sizes` {len(self.filter_sizes)} must match "
+                f"the number of convolutional layers determined by the length of tuple "
+                f"`kernel_sizes` {len(self.kernel_sizes)}."
+            )
+
         super().__init__(
             num_epochs=self.n_epochs,
             batch_size=self.batch_size,
@@ -191,12 +198,6 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
                 f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
                 f"but got shape {X.shape}. Please ensure your input data is "
                 "properly formatted."
-            )
-        if len(self.filter_sizes) != len(self.kernel_sizes):
-            raise ValueError(
-                f"Length of filter_sizes and kernel_sizes must be the same, "
-                f"but got {len(self.filter_sizes)} and {len(self.kernel_sizes)} "
-                f"respectively."
             )
 
         if len(np.unique(y)) == 1:

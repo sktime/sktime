@@ -151,6 +151,13 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.verbose = verbose
         self.random_state = random_state
 
+        if len(self.filter_sizes) != len(self.kernel_sizes):
+            raise ValueError(
+                f"Length of `filter_sizes` {len(self.filter_sizes)} must match "
+                f"the number of convolutional layers determined by the length of tuple "
+                f"`kernel_sizes` {len(self.kernel_sizes)}."
+            )
+
         super().__init__(
             num_epochs=self.n_epochs,
             batch_size=self.batch_size,
@@ -183,13 +190,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
                 f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
                 f"but got shape {X.shape}. Please ensure your input data is "
                 "properly formatted."
-            )
-
-        if len(self.filter_sizes) != len(self.kernel_sizes):
-            raise ValueError(
-                f"Length of `filter_sizes` {len(self.filter_sizes)} must match "
-                f"the number of convolutional layers determined by the length of tuple "
-                f"`kernel_sizes` {len(self.kernel_sizes)}."
             )
 
         return MCDCNNNetworkTorch(
