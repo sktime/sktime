@@ -436,7 +436,6 @@ class ForecastingPipeline(_Pipeline):
         self.memory = memory
         self.steps_ = self._check_steps(steps)
         super(ForecastingPipeline, self).__init__()
-       
         "capability:exogenous",  # does estimator ignore the exogeneous X?
         "capability:pred_int",  # can the estimator produce prediction intervals?
         "capability:pred_int:insample",  # ... for in-sample horizons?
@@ -445,9 +444,7 @@ class ForecastingPipeline(_Pipeline):
         "enforce_index_type",  # index type that needs to be enforced in X/y
         # we do not clone X-y-must-have-same-index, since transformers can
         #   create indices, and that behaviour is not tag-inspectable
-        self.clone_tags(self.forecaster_, tags_to_clone)
-        self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
-        
+                        
     @property
     def forecaster_(self):
         """Return reference to the forecaster in the pipeline.
