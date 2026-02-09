@@ -200,8 +200,8 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
 
         if self.num_classes == 1:
             warnings.warn(
-                "The provided data passed to XX_classifier contains a single label. "
-                "If this is not intentional, please check.",
+                "The provided data passed to LSTMFCNClassifierTorch contains "
+                "a single label. If this is not intentional, please check.",
                 UserWarning,
             )
 
