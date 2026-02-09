@@ -1243,6 +1243,131 @@ class TransformedTargetForecaster(_Pipeline):
         )
         return pred_int_transformed
 
+    def _predict_var(self, fh=None, X=None, cov=False):
+        """Forecast variance at future horizon.
+
+        Overrides the mixin default to always compute variance from
+        ``_predict_interval``, avoiding recursion through ``predict_proba``.
+
+        Without this override, the mixin's ``_predict_var`` sees that
+        ``_predict_proba`` is implemented and calls ``predict_proba``,
+        which calls ``_predict_proba``, which (in the fallback path) calls
+        ``_predict_var`` again — causing infinite recursion.
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on ``cov`` variable
+        """
+        from scipy.stats import norm
+
+        pred_int = self._predict_interval(fh=fh, X=X, coverage=[0.5])
+        var_names = pred_int.columns.get_level_values(0).unique()
+        vars_dict = {}
+        for i in var_names:
+            pred_int_i = pred_int[i].copy()
+            iqr_i = pred_int_i.iloc[:, 1] - pred_int_i.iloc[:, 0]
+            std_i = iqr_i / (2 * norm.ppf(0.75))
+            var_i = std_i**2
+            vars_dict[i] = var_i
+
+        pred_var = pd.DataFrame(vars_dict)
+        return pred_var
+
+    # todo: does not work properly for multivariate or hierarchical
+    #   still need to implement this - once interface is consolidated
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        If the wrapped forecaster natively implements ``_predict_proba``,
+        this delegates to it and wraps the result in a
+        ``TransformedDistribution`` (from ``skpro``) that applies
+        the inverse transform chain lazily.
+        Otherwise, falls back to the mixin default which constructs a
+        Normal distribution from ``_predict_var`` and ``predict``.
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
+        """
+        # check if the inner forecaster has a native _predict_proba
+        forecaster = self.forecaster_
+        inner_has_proba = forecaster._has_implementation_of("_predict_proba")
+
+        if not inner_has_proba:
+            # delegate to the mixin default (Normal from _predict_var + predict)
+            # this is safe because _predict_var is overridden above to go through
+            # _predict_interval directly, breaking the recursion cycle
+            from sktime.base._proba._mixin import _PredictProbaMixin
+
+            return _PredictProbaMixin._predict_proba(
+                self, fh=fh, X=X, marginal=marginal
+            )
+
+        # if the inner forecaster natively supports _predict_proba,
+        # delegate and wrap in a TransformedDistribution
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        if not _check_soft_dependencies("skpro", severity="none"):
+            raise RuntimeError(
+                "The skpro package is required for predict_proba with "
+                "TransformedTargetForecaster when the inner forecaster "
+                "natively implements predict_proba. "
+                "Please install skpro: pip install skpro"
+            )
+
+        from skpro.distributions.trafo import TransformedDistribution
+
+        pred_dist = forecaster.predict_proba(fh=fh, X=X, marginal=marginal)
+
+        # build inverse and forward transform callables from the
+        # pre-forecast transformer chain, for use by TransformedDistribution
+        transformers_pre = self.transformers_pre_
+
+        def _inverse_transform(y):
+            """Apply inverse transform chain to y."""
+            return self._get_inverse_transform(transformers_pre, y, X)
+
+        def _forward_transform(y):
+            """Apply forward transform chain to y."""
+            for _, transformer in transformers_pre:
+                y = transformer.transform(X=y, y=X)
+            return y
+
+        pred_dist = TransformedDistribution(
+            distribution=pred_dist,
+            transform=_inverse_transform,
+            inverse_transform=_forward_transform,
+            assume_monotonic=True,
+            index=pred_dist.index,
+            columns=pred_dist.columns,
+        )
+        return pred_dist
+
 
 class ForecastX(BaseForecaster):
     """Forecaster that forecasts exogeneous data for use in an endogeneous forecast.
