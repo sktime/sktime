@@ -431,23 +431,23 @@ class ForecastingPipeline(_Pipeline):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, steps):
+    def __init__(self, steps, memory=None):
         self.steps = steps
-        self.steps_ = self._check_steps(steps, allow_postproc=False)
-        super().__init__()
-        tags_to_clone = [
-            "capability:exogenous",  # does estimator ignore the exogeneous X?
-            "capability:pred_int",  # can the estimator produce prediction intervals?
-            "capability:pred_int:insample",  # ... for in-sample horizons?
-            "capability:insample",  # can the estimator make in-sample predictions?
-            "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "enforce_index_type",  # index type that needs to be enforced in X/y
-        ]
+        self.memory = memory
+        self.steps_ = self._check_steps(steps)
+        super(ForecastingPipeline, self).__init__()
+       
+        "capability:exogenous",  # does estimator ignore the exogeneous X?
+        "capability:pred_int",  # can the estimator produce prediction intervals?
+        "capability:pred_int:insample",  # ... for in-sample horizons?
+        "capability:insample",  # can the estimator make in-sample predictions?
+        "requires-fh-in-fit",  # is forecasting horizon already required in fit?
+        "enforce_index_type",  # index type that needs to be enforced in X/y
         # we do not clone X-y-must-have-same-index, since transformers can
         #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
-
+        
     @property
     def forecaster_(self):
         """Return reference to the forecaster in the pipeline.
@@ -882,12 +882,11 @@ class TransformedTargetForecaster(_Pipeline):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, steps):
+    def __init__(self, steps, memory=None):
         self.steps = steps
-        self.steps_ = self._check_steps(steps, allow_postproc=True)
-        super().__init__()
-
-        # set the tags based on forecaster
+        self.memory = memory
+        self.steps_ = self._check_steps(steps)
+        super(TransformedTargetForecaster, self).__init__()
         tags_to_clone = [
             "capability:exogenous",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
