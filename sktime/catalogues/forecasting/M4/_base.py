@@ -27,9 +27,9 @@ class _BaseM4CompetitionCatalogue(BaseCatalogue):
         "maintainers": "jgyasu",
         "object_type": "catalogue",
         "catalogue_type": "mixed",
-        "n_items": 10,
+        "n_items": 8,
         "n_datasets": 0,
-        "n_forecasters": 10,
+        "n_forecasters": 8,
         "n_metrics": 0,
         "n_cv_splitters": 0,
     }
@@ -69,6 +69,5 @@ class _BaseM4CompetitionCatalogue(BaseCatalogue):
         return {
             "dataset": [f"ForecastingData('{self._dataset_name}')"],
             "forecaster": forecasters,
-            "metric": [f"{self._metric_name}"],
-            "cv_splitter": ["TemporalTrainTestSplitter(test_size=0.2)"],
+            "metric": self._metric_name,
         }

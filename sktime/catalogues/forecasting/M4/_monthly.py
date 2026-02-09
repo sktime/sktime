@@ -12,11 +12,16 @@ class M4CompetitionCatalogueMonthly(_BaseM4CompetitionCatalogue):
     """
 
     _tags = {
-        "n_items": 14,
+        "n_items": 13,
         "n_datasets": 1,
-        "n_metrics": 1,
+        "n_metrics": 3,
+        "n_forecasters": 1,
     }
 
     _dataset_name = "m4_monthly_dataset"
-    _metric_name = "OverallWeightedAverage(sp=12)"
+    _metric_name = [
+        "OverallWeightedAverage(sp=12)",
+        "MeanAbsolutePercentageError(symmetric=True)",
+        "MeanAbsoluteScaledError()",
+    ]
     _specific_forecasters = [("Naive_S", "NaiveForecaster(strategy='last', sp=12)")]
