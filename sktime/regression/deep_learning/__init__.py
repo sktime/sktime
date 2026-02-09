@@ -9,6 +9,7 @@ __all__ = [
     "MACNNRegressor",
     "MACNNRegressorTorch",
     "MCDCNNRegressor",
+    "MCDCNNRegressorTorch",
     "MLPRegressor",
     "ResNetRegressor",
     "SimpleRNNRegressor",
@@ -22,7 +23,10 @@ from sktime.regression.deep_learning.fcn import FCNRegressor
 from sktime.regression.deep_learning.inceptiontime import InceptionTimeRegressor
 from sktime.regression.deep_learning.lstmfcn import LSTMFCNRegressor
 from sktime.regression.deep_learning.macnn import MACNNRegressor, MACNNRegressorTorch
-from sktime.regression.deep_learning.mcdcnn import MCDCNNRegressor
+from sktime.regression.deep_learning.mcdcnn import (
+    MCDCNNRegressor,
+    MCDCNNRegressorTorch,
+)
 from sktime.regression.deep_learning.mlp import MLPRegressor
 from sktime.regression.deep_learning.resnet import ResNetRegressor
 from sktime.regression.deep_learning.rnn import (

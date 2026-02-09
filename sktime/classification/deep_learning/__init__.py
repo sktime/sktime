@@ -9,6 +9,7 @@ __all__ = [
     "MACNNClassifier",
     "MACNNClassifierTorch",
     "MCDCNNClassifier",
+    "MCDCNNClassifierTorch",
     "MLPClassifier",
     "MVTSTransformerClassifier",
     "ResNetClassifier",
@@ -34,7 +35,10 @@ from sktime.classification.deep_learning.macnn import (
     MACNNClassifier,
     MACNNClassifierTorch,
 )
-from sktime.classification.deep_learning.mcdcnn import MCDCNNClassifier
+from sktime.classification.deep_learning.mcdcnn import (
+    MCDCNNClassifier,
+    MCDCNNClassifierTorch,
+)
 from sktime.classification.deep_learning.mlp import MLPClassifier
 from sktime.classification.deep_learning.mvts_transformer import (
     MVTSTransformerClassifier,
