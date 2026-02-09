@@ -36,8 +36,10 @@ class MACNNNetworkTorch(NNModule):
         The number of MACNN Blocks to be stacked.
     filter_sizes : tuple of int, default=(64, 128, 256)
         The filter sizes of Conv1D layers within each MACNN Block.
+        Length of this tuple determines the number of MACNN stacks.
     kernel_size : tuple of int, default=(3, 6, 12)
         The kernel sizes of Conv1D layers within each MACNN Block.
+        Length of this tuple determines the number of MACNN stacks.
     reduction : int, default=16
         The factor by which the first dense layer of a MACNN Block will be divided by.
     activation : str or None = None
@@ -46,6 +48,10 @@ class MACNNNetworkTorch(NNModule):
     activation_hidden : str, default="relu"
         Activation function used for internal layers.
         Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
+    weights_init: str or None, default = None
+        The method to initialize the weights of the conv layers. Supported values are
+        'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
+        for default PyTorch initialization.
     random_state : int, default=0
         Seed to ensure reproducibility
 
@@ -66,7 +72,7 @@ class MACNNNetworkTorch(NNModule):
         # --------------
         "authors": ["jnrusson1", "noxthot"],
         "maintainers": ["Faakhir30"],
-        "python_version": ">=3.9",
+        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
@@ -85,6 +91,7 @@ class MACNNNetworkTorch(NNModule):
         reduction: int = 16,
         activation: str | None = None,
         activation_hidden: str = "relu",
+        weights_init: str | None = None,
         random_state: int = 0,
     ):
         self.input_size = input_size
@@ -98,6 +105,7 @@ class MACNNNetworkTorch(NNModule):
         self.reduction = reduction
         self.activation = activation
         self.activation_hidden = activation_hidden
+        self.weights_init = weights_init
         self.random_state = random_state
 
         super().__init__()
@@ -109,36 +117,33 @@ class MACNNNetworkTorch(NNModule):
         nnMaxPool1d = _safe_import("torch.nn.MaxPool1d")
         nnAdaptiveAvgPool1d = _safe_import("torch.nn.AdaptiveAvgPool1d")
 
-        self.macnn_stack1 = self._build_macnn_stack(
-            self.input_size, self.filter_sizes[0], repeats
-        )
-        self.pool1 = nnMaxPool1d(
-            kernel_size=self.pool_size, stride=self.strides, padding=self._get_padding()
-        )
+        nnModuleList = _safe_import("torch.nn.ModuleList")
+        self.macnn_stacks = nnModuleList()
+        for i in range(len(self.filter_sizes)):
+            if i == 0:
+                in_ch = self.input_size
+            else:
+                in_ch = self.filter_sizes[i - 1] * len(self.kernel_size)
 
-        self.macnn_stack2 = self._build_macnn_stack(
-            self.filter_sizes[0] * len(self.kernel_size), self.filter_sizes[1], repeats
-        )
-        self.pool2 = nnMaxPool1d(
-            kernel_size=self.pool_size, stride=self.strides, padding=self._get_padding()
-        )
+            self.macnn_stacks.append(
+                self._build_macnn_stack(in_ch, self.filter_sizes[i], repeats)
+            )
 
-        self.macnn_stack3 = self._build_macnn_stack(
-            self.filter_sizes[1] * len(self.kernel_size), self.filter_sizes[2], repeats
+        pool_pad = 0
+        if self.padding.lower() == "same":
+            pool_pad = self.pool_size // 2
+
+        self.pool = nnMaxPool1d(
+            kernel_size=self.pool_size, stride=self.strides, padding=pool_pad
         )
 
         self.global_avg_pool = nnAdaptiveAvgPool1d(1)
 
         nnLinear = _safe_import("torch.nn.Linear")
-        self.fc = nnLinear(self.filter_sizes[2] * len(self.kernel_size), num_classes)
+        self.fc = nnLinear(self.filter_sizes[-1] * len(self.kernel_size), num_classes)
 
-        self.apply(self._init_weights)
-
-    def _get_padding(self):
-        """Convert padding string to integer for PyTorch."""
-        if self.padding.lower() == "same":
-            return self.pool_size // 2
-        return 0
+        if self.weights_init is not None:
+            self.apply(self._init_weights)
 
     def _build_macnn_stack(self, in_channels, filter_size, repeats):
         """Build a stack of MACNN blocks.
@@ -191,17 +196,14 @@ class MACNNNetworkTorch(NNModule):
         X = X.transpose(1, 2)  # (batch, channels, length)
 
         # First stack
-        x = self.macnn_stack1(X)
-        x = self.pool1(x)
+        x = X
+        for macnn_stack in self.macnn_stacks[:-1]:
+            x = macnn_stack(x)
+            x = self.pool(x)
 
-        # Second stack
-        x = self.macnn_stack2(x)
-        x = self.pool2(x)
-
-        # Third stack
-        x = self.macnn_stack3(x)
-
+        x = self.macnn_stacks[-1](x)
         x = self.global_avg_pool(x)
+
         x = x.squeeze(-1)
 
         out = self.fc(x)
@@ -213,27 +215,28 @@ class MACNNNetworkTorch(NNModule):
         return out
 
     def _init_weights(self, module):
-        """Apply initialization to weights.
-
-        For Conv layers: He uniform initialization
-
-        Parameters
-        ----------
-        module : torch.nn.Module
-            Input module on which to apply initializations.
-        """
-        nnInitKaiming_uniform_ = _safe_import("torch.nn.init.kaiming_uniform_")
         nnConv1d = _safe_import("torch.nn.Conv1d")
-        nnLinear = _safe_import("torch.nn.Linear")
+
+        kaiming_uniform_ = _safe_import("torch.nn.init.kaiming_uniform_")
+        kaiming_normal_ = _safe_import("torch.nn.init.kaiming_normal_")
+        xavier_uniform_ = _safe_import("torch.nn.init.xavier_uniform_")
+        xavier_normal_ = _safe_import("torch.nn.init.xavier_normal_")
 
         if isinstance(module, nnConv1d):
-            nnInitKaiming_uniform_(module.weight, nonlinearity="relu")
+            if self.weights_init == "kaiming_uniform":
+                kaiming_uniform_(module.weight, nonlinearity="relu")
+
+            elif self.weights_init == "kaiming_normal":
+                kaiming_normal_(module.weight, nonlinearity="relu")
+
+            elif self.weights_init == "xavier_uniform":
+                xavier_uniform_(module.weight)
+
+            elif self.weights_init == "xavier_normal":
+                xavier_normal_(module.weight)
+
             if module.bias is not None:
-                module.bias.data.fill_(0)
-        elif isinstance(module, nnLinear):
-            nnInitKaiming_uniform_(module.weight, nonlinearity="relu")
-            if module.bias is not None:
-                module.bias.data.fill_(0)
+                module.bias.data.zero_()
 
 
 class MACNNBlock(NNModule):

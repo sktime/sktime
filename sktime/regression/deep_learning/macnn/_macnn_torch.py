@@ -43,13 +43,13 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
         Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
     num_epochs : int, default=1500
         The number of epochs to train the model.
+    batch_size : int, default=4
+        The size of each mini-batch during training.
     optimizer : case insensitive str or None or an instance of optimizers
         defined in torch.optim, default = "RMSprop"
         The optimizer to use for training the model.
     optimizer_kwargs : dict or None, default = None
         Additional keyword arguments to pass to the optimizer.
-    batch_size : int, default=4
-        The size of each mini-batch during training.
     criterion : case insensitive str or None or an instance of a loss function
         defined in PyTorch, default = "MSELoss"
         The loss function to be used in training the neural network.
@@ -63,6 +63,10 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
         The learning rate to use for the optimizer.
     verbose : bool, default = False
         Whether to print progress information during training.
+    weights_init: str or None, default = None
+        The method to initialize the weights of the conv layers. Supported values are
+        'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
+        for default PyTorch initialization.
     random_state : int, default = 0
         Seed to ensure reproducibility.
 
@@ -89,7 +93,7 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
         # --------------
         "authors": ["jnrusson1", "noxthot"],
         "maintainers": ["Faakhir30"],
-        "python_version": ">=3.9",
+        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
@@ -111,13 +115,14 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
         num_epochs: int = 1500,
         batch_size: int = 4,
         optimizer: str | None | Callable = "RMSprop",
-        criterion: str | None | Callable = "MSELoss",
-        callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
-        criterion_kwargs: dict | None = None,
         optimizer_kwargs: dict | None = None,
+        criterion: str | None | Callable = "MSELoss",
+        criterion_kwargs: dict | None = None,
+        callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
         callback_kwargs: dict | None = None,
         lr: float = 0.001,
         verbose: bool = False,
+        weights_init: str | None = None,
         random_state: int = 0,
     ):
         self.padding = padding
@@ -139,6 +144,7 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
         self.callback_kwargs = callback_kwargs
         self.lr = lr
         self.verbose = verbose
+        self.weights_init = weights_init
         self.random_state = random_state
 
         # input_size to be inferred from the data
@@ -193,6 +199,7 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
             reduction=self.reduction,
             activation=self.activation,
             activation_hidden=self.activation_hidden,
+            weights_init=self.weights_init,
             random_state=self.random_state,
         )
 

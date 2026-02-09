@@ -3,6 +3,7 @@
 __authors__ = ["Faakhir30"]
 __all__ = ["MACNNClassifierTorch"]
 
+import warnings
 from collections.abc import Callable
 
 import numpy as np
@@ -45,13 +46,13 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
     num_epochs : int, default=1500
         The number of epochs to train the model.
+    batch_size : int, default=4
+        The size of each mini-batch during training.
     optimizer : case insensitive str or None or an instance of optimizers
         defined in torch.optim, default = "RMSprop"
         The optimizer to use for training the model.
     optimizer_kwargs : dict or None, default = None
         Additional keyword arguments to pass to the optimizer.
-    batch_size : int, default=4
-        The size of each mini-batch during training.
     criterion : case insensitive str or None or an instance of a loss function
         defined in PyTorch, default = "CrossEntropyLoss"
         The loss function to be used in training the neural network.
@@ -65,6 +66,10 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         The learning rate to use for the optimizer.
     verbose : bool, default = False
         Whether to print progress information during training.
+    weights_init: str or None, default = None
+        The method to initialize the weights of the conv layers. Supported values are
+        'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
+        for default PyTorch initialization.
     random_state : int, default = 0
         Seed to ensure reproducibility.
 
@@ -91,7 +96,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         # --------------
         "authors": ["jnrusson1", "noxthot"],
         "maintainers": ["Faakhir30"],
-        "python_version": ">=3.9",
+        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
@@ -113,13 +118,14 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         num_epochs: int = 100,
         batch_size: int = 1,
         optimizer: str | None | Callable = "RMSprop",
-        criterion: str | None | Callable = "CrossEntropyLoss",
-        callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
         optimizer_kwargs: dict | None = None,
+        criterion: str | None | Callable = "CrossEntropyLoss",
         criterion_kwargs: dict | None = None,
+        callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
         callback_kwargs: dict | None = None,
         lr: float = 0.001,
         verbose: bool = False,
+        weights_init: str | None = None,
         random_state: int = 0,
     ):
         self.padding = padding
@@ -141,6 +147,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         self.callback_kwargs = callback_kwargs
         self.lr = lr
         self.verbose = verbose
+        self.weights_init = weights_init
         self.random_state = random_state
 
         # input_size and num_classes to be inferred from the data
@@ -186,6 +193,14 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         # n_instances, n_dims, n_timesteps = X.shape
         self.num_classes = len(np.unique(y))
         _, self.input_size, _ = X.shape
+
+        if self.num_classes == 1:
+            warnings.warn(
+                "The provided data passed to MACNNClassifierTorch contains "
+                "a single label. If this is not intentional, please check.",
+                UserWarning,
+            )
+
         return MACNNNetworkTorch(
             input_size=self.input_size,
             num_classes=self.num_classes,
@@ -197,6 +212,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
             kernel_size=self.kernel_size,
             reduction=self.reduction,
             activation=self.activation,
+            weights_init=self.weights_init,
             random_state=self.random_state,
         )
 
@@ -234,6 +250,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
             "lr": 0.001,
             "verbose": False,
             "random_state": 0,
+            "weights_init": None,
         }
         params3 = {
             "padding": "same",
