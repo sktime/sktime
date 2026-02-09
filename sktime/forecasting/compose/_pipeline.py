@@ -901,11 +901,11 @@ class TransformedTargetForecaster(_Pipeline):
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 
-        # above, we cloned the ignores-exogeneous-X tag,
+        # above, we cloned the capability:exogenous tag,
         # but we also need to check whether X is used as y in some transformer
-        # in this case X is not ignored by the pipe, even if the forecaster ignores it
+        # in this case X is used by the pipe, even if the forecaster does not use it
         # logic below checks whether there is at least one such transformer
-        # if there is, we override the ignores-exogeneous-X tag to False
+        # if there is, we override the capability:exogenous tag to True
         # also see discussion in bug issue #5518
         pre_ts = self.transformers_pre_
         post_ts = self.transformers_post_
@@ -1325,7 +1325,7 @@ class ForecastX(BaseForecaster):
     forecaster_X_ : BaseForecaster
         clone of ``forecaster_X``, state updates with ``fit`` and ``update``
         created only if ``behaviour="update"`` and ``X`` passed is not None
-        and ``forecaster_y`` has ``ignores-exogeneous-X`` tag as ``False``
+        and ``forecaster_y`` has ``capability:exogenous`` tag as ``True``
     forecaster_y_ : BaseForecaster
         clone of ``forecaster_y``, state updates with ``fit`` and ``update``
 

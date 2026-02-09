@@ -76,6 +76,7 @@ Deep learning
     lstmfcn.LSTMFCNClassifierTorch
     macnn.MACNNClassifier
     mcdcnn.MCDCNNClassifier
+    mcdcnn.MCDCNNClassifierTorch
     mlp.MLPClassifier
     mvts_transformer.MVTSTransformerClassifier
     resnet.ResNetClassifier

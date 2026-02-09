@@ -69,6 +69,7 @@ Deep learning
     lstmfcn.LSTMFCNRegressorTorch
     macnn.MACNNRegressor
     mcdcnn.MCDCNNRegressor
+    mcdcnn.MCDCNNRegressorTorch
     mlp.MLPRegressor
     resnet.ResNetRegressor
     rnn.SimpleRNNRegressor
