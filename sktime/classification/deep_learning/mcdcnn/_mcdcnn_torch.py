@@ -1,5 +1,7 @@
 """Multi Channel Deep Convolutional Neural Classifier (MCDCNN)."""
 
+import warnings
+
 import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
@@ -201,9 +203,10 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             )
 
         if len(np.unique(y)) == 1:
-            raise ValueError(
+            warnings.warn(
                 "The provided data passed to MCDCNNClassifierTorch contains a "
-                "single label. If this is not intentional, please check."
+                "single label. If this is not intentional, please check.",
+                UserWarning,
             )
 
         self.num_classes = len(np.unique(y))
