@@ -35,14 +35,14 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
         Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
     num_epochs : int, default=2000
         The number of epochs to train the model.
+    batch_size : int, default=128
+        The size of each mini-batch during training.
     optimizer : case insensitive str or None or an instance of optimizers
         defined in torch.optim, default = "SGD"
         The optimizer to use for training the model. List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
     optimizer_kwargs : dict or None, default = None
         Additional keyword arguments to pass to the optimizer.
-    batch_size : int, default=128
-        The size of each mini-batch during training.
     criterion : case insensitive str or None or an instance of a loss function
         defined in PyTorch, default = "MSELoss"
         The loss function to be used in training the neural network.
@@ -62,6 +62,10 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
+    weights_init: str or None, default = 'kaiming_uniform'
+        The method to initialize the weights of the conv layers. Supported values are
+        'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
+        for default PyTorch initialization.
     lr : float, default = 0.001
         The learning rate to use for the optimizer.
     verbose : bool, default = False
@@ -90,7 +94,7 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
         # --------------
         "authors": ["jnrusson1", "solen0id", "nilesh05apr", "noxthot"],
         "maintainers": ["Faakhir30"],
-        "python_version": ">=3.9",
+        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
@@ -110,11 +114,12 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
         num_epochs: int = 2000,
         batch_size: int = 128,
         optimizer: str | None | Callable = "SGD",
-        criterion: str | None | Callable = "MSELoss",
-        callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
-        criterion_kwargs: dict | None = None,
         optimizer_kwargs: dict | None = None,
+        criterion: str | None | Callable = "MSELoss",
+        criterion_kwargs: dict | None = None,
+        callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
         callback_kwargs: dict | None = None,
+        weights_init: str | None = "kaiming_uniform",
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int | None = None,
@@ -137,11 +142,19 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.weights_init = weights_init
 
         # input_size to be inferred from the data
         # and will be set in _build_network
         self.input_size = None
         self.num_classes = 1  # because regression
+
+        if len(self.filter_sizes) != len(self.kernel_sizes):
+            raise ValueError(
+                f"Length of `filter_sizes` {len(self.filter_sizes)} must match "
+                f"the number of convolutional layers determined by the length of tuple "
+                f"`kernel_sizes` {len(self.kernel_sizes)}."
+            )
 
         super().__init__(
             num_epochs=self.num_epochs,
@@ -188,6 +201,7 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
             attention=self.attention,
             activation=self.activation,
             activation_hidden=self.activation_hidden,
+            weights_init=self.weights_init,
             random_state=self.random_state,
         )
 

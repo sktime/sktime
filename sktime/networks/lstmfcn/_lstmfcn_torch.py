@@ -42,6 +42,10 @@ class LSTMFCNNetworkTorch(NNModule):
     activation_hidden : str, default="relu"
         Activation function used for convolutional layers.
         Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
+    weights_init: str or None, default = 'kaiming_uniform'
+        The method to initialize the weights of the conv layers. Supported values are
+        'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
+        for default PyTorch initialization.
     random_state : int, default=0
         Seed to ensure reproducibility
 
@@ -61,7 +65,7 @@ class LSTMFCNNetworkTorch(NNModule):
         # --------------
         "authors": ["Faakhir30"],
         "maintainers": ["Faakhir30"],
-        "python_version": ">=3.9",
+        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
@@ -73,12 +77,13 @@ class LSTMFCNNetworkTorch(NNModule):
         num_classes: int,
         kernel_sizes: tuple = (8, 5, 3),
         filter_sizes: tuple = (128, 256, 128),
-        random_state: int = 0,
         lstm_size: int = 8,
         dropout: float = 0.8,
         attention: bool = False,
         activation: str | None = None,
         activation_hidden: str = "relu",
+        weights_init: str | None = "kaiming_uniform",
+        random_state: int = 0,
     ):
         self.input_size = input_size
         self.num_classes = num_classes
@@ -89,6 +94,7 @@ class LSTMFCNNetworkTorch(NNModule):
         self.attention = attention
         self.activation = activation
         self.activation_hidden = activation_hidden
+        self.weights_init = weights_init
         self.random_state = random_state
 
         super().__init__()
@@ -117,32 +123,21 @@ class LSTMFCNNetworkTorch(NNModule):
         nnConv1d = _safe_import("torch.nn.Conv1d")
         nnBatchNorm1d = _safe_import("torch.nn.BatchNorm1d")
 
-        # First Conv Block
-        self.conv1 = nnConv1d(
-            in_channels=self.input_size,
-            out_channels=self.filter_sizes[0],
-            kernel_size=self.kernel_sizes[0],
-            padding="same",
-        )
-        self.bn1 = nnBatchNorm1d(self.filter_sizes[0])
-
-        # Second Conv Block
-        self.conv2 = nnConv1d(
-            in_channels=self.filter_sizes[0],
-            out_channels=self.filter_sizes[1],
-            kernel_size=self.kernel_sizes[1],
-            padding="same",
-        )
-        self.bn2 = nnBatchNorm1d(self.filter_sizes[1])
-
-        # Third Conv Block
-        self.conv3 = nnConv1d(
-            in_channels=self.filter_sizes[1],
-            out_channels=self.filter_sizes[2],
-            kernel_size=self.kernel_sizes[2],
-            padding="same",
-        )
-        self.bn3 = nnBatchNorm1d(self.filter_sizes[2])
+        nnModuleList = _safe_import("torch.nn.ModuleList")
+        self.conv_layers = nnModuleList()
+        self.bn_layers = nnModuleList()
+        for i in range(len(self.filter_sizes)):
+            in_channels = self.input_size if i == 0 else self.filter_sizes[i - 1]
+            out_channels = self.filter_sizes[i]
+            conv_layer = nnConv1d(
+                in_channels=in_channels,
+                out_channels=out_channels,
+                kernel_size=self.kernel_sizes[i],
+                padding="same",
+            )
+            bn_layer = nnBatchNorm1d(out_channels)
+            self.conv_layers.append(conv_layer)
+            self.bn_layers.append(bn_layer)
 
         # Global Average Pooling
         nnAdaptiveAvgPool1d = _safe_import("torch.nn.AdaptiveAvgPool1d")
@@ -153,10 +148,10 @@ class LSTMFCNNetworkTorch(NNModule):
             self._activation = self._instantiate_activation(self.activation)
 
         # Output layer (concatenated LSTM + CNN outputs)
-        # LSTM outputs lstm_size, CNN outputs filter_sizes[2]
+        # LSTM outputs lstm_size, CNN outputs filter_sizes[-1]
         nnLinear = _safe_import("torch.nn.Linear")
         self.fc = nnLinear(
-            in_features=self.lstm_size + self.filter_sizes[2],
+            in_features=self.lstm_size + self.filter_sizes[-1],
             out_features=self.num_classes,
         )
 
@@ -196,17 +191,11 @@ class LSTMFCNNetworkTorch(NNModule):
         # CNN Arm
         # Conv1d expects (batch, channels, length) format
         x_cnn = X.transpose(1, 2)  # (batch, n_dims, seq_length)
-        y = self.conv1(x_cnn)
-        y = self.bn1(y)
-        y = self._activation_hidden(y)
-
-        y = self.conv2(y)
-        y = self.bn2(y)
-        y = self._activation_hidden(y)
-
-        y = self.conv3(y)
-        y = self.bn3(y)
-        y = self._activation_hidden(y)
+        y = x_cnn
+        for conv_layer, bn_layer in zip(self.conv_layers, self.bn_layers):
+            y = conv_layer(y)
+            y = bn_layer(y)
+            y = self._activation_hidden(y)
 
         # Global Average Pooling
         y = self.global_avg_pool(y)  # (batch, filter_sizes[2], 1)
@@ -228,23 +217,28 @@ class LSTMFCNNetworkTorch(NNModule):
         return out
 
     def _init_weights(self, module):
-        """Apply initialization to weights.
-
-        For Conv layers: He uniform initialization
-
-        Parameters
-        ----------
-        module : torch.nn.Module
-            Input module on which to apply initializations.
-        """
-        nnInitKaiming_uniform_ = _safe_import("torch.nn.init.kaiming_uniform_")
         nnConv1d = _safe_import("torch.nn.Conv1d")
 
+        kaiming_uniform_ = _safe_import("torch.nn.init.kaiming_uniform_")
+        kaiming_normal_ = _safe_import("torch.nn.init.kaiming_normal_")
+        xavier_uniform_ = _safe_import("torch.nn.init.xavier_uniform_")
+        xavier_normal_ = _safe_import("torch.nn.init.xavier_normal_")
+
         if isinstance(module, nnConv1d):
-            # He uniform for Conv layers
-            nnInitKaiming_uniform_(module.weight, nonlinearity="relu")
+            if self.weights_init == "kaiming_uniform":
+                kaiming_uniform_(module.weight, nonlinearity="relu")
+
+            elif self.weights_init == "kaiming_normal":
+                kaiming_normal_(module.weight, nonlinearity="relu")
+
+            elif self.weights_init == "xavier_uniform":
+                xavier_uniform_(module.weight)
+
+            elif self.weights_init == "xavier_normal":
+                xavier_normal_(module.weight)
+
             if module.bias is not None:
-                module.bias.data.fill_(0)
+                module.bias.data.zero_()
 
     def _instantiate_activation(self, activation):
         """Instantiate the activation function for CNN layers.
@@ -288,51 +282,3 @@ class LSTMFCNNetworkTorch(NNModule):
                 "`activation` should either be of type str or torch.nn.Module. "
                 f"But found the type to be: {type(activation)}"
             )
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
-        """
-        params = [
-            # Advanced model version with attention
-            {
-                "input_size": 10,
-                "num_classes": 2,
-                "kernel_sizes": (8, 5, 3),
-                "filter_sizes": (128, 256, 128),
-                "lstm_size": 8,
-                "dropout": 0.25,
-                "attention": True,
-            },
-            # Simpler model version without attention
-            {
-                "input_size": 10,
-                "num_classes": 2,
-                "kernel_sizes": (4, 2, 1),
-                "filter_sizes": (32, 64, 32),
-                "lstm_size": 8,
-                "dropout": 0.75,
-                "attention": False,
-            },
-            # Minimal configuration
-            {
-                "input_size": 5,
-                "num_classes": 3,
-            },
-        ]
-
-        return params
