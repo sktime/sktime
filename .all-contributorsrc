@@ -3774,5 +3774,15 @@
         "maintenance"
       ]
     }
+    {
+      "login": "Ayaan-Skh",
+      "name": "Ayaan Shaikh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/172408917?v=4",
+      "profile": "https://github.com/Ayaan-Skh",
+      "contributions": [
+        "BUG",
+        "Fix"
+      ]
+    }
   ]
 }
