@@ -20,37 +20,35 @@ import multiprocessing
 import time
 from os import path
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("einshape", severity="none"):
-    import einshape as es
+es = _safe_import("sktime.utils.einshape")
+jax = _safe_import("jax")
+jnp = _safe_import("jax.numpy")
 
-if _check_soft_dependencies("jax", severity="none"):
-    import jax
-    import jax.numpy as jnp
+snapshot_download = _safe_import(
+    "huggingface_hub.snapshot_download",
+    pkg_name="huggingface-hub",
+)
 
-if _check_soft_dependencies("huggingface-hub", severity="none"):
-    from huggingface_hub import snapshot_download
+checkpoints = _safe_import("paxml.checkpoints")
+tasks_lib = _safe_import("paxml.tasks_lib")
 
-if _check_soft_dependencies("paxml", severity="none"):
-    from paxml import checkpoints, tasks_lib
+FLAX = checkpoints.CheckpointType.FLAX
 
-    FLAX = checkpoints.CheckpointType.FLAX
-else:
-    FLAX = None
+base_hyperparams = _safe_import("praxis.base_hyperparams")
+base_layer = _safe_import("praxis.base_layer")
+pax_fiddle = _safe_import("praxis.pax_fiddle")
+py_utils = _safe_import("praxis.py_utils")
+pytypes = _safe_import("praxis.pytypes")
+normalizations = _safe_import("praxis.layers.normalizations")
+transformers = _safe_import("praxis.layers.transformers")
 
-if _check_soft_dependencies("praxis", severity="none"):
-    from praxis import base_hyperparams, base_layer, pax_fiddle, py_utils, pytypes
-    from praxis.layers import normalizations, transformers
+instantiate = base_hyperparams.instantiate
+NestedMap = py_utils.NestedMap
+JTensor = pytypes.JTensor
 
-    instantiate = base_hyperparams.instantiate
-    NestedMap = py_utils.NestedMap
-    JTensor = pytypes.JTensor
-
-
-if _check_soft_dependencies("utilsforecast", severity="none"):
-    from utilsforecast.processing import make_future_dataframe
-
+make_future_dataframe = _safe_import("utilsforecast.processing.make_future_dataframe")
 
 import numpy as np
 

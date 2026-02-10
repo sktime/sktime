@@ -100,6 +100,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
     >>> y_train, y_test = temporal_train_test_split(y, test_size=5)
     >>> forecaster = TimeMoEForecaster("Maple728/TimeMoE-50M")
     >>> forecaster.fit(y_train)
+    TimeMoEForecaster(model_path='Maple728/TimeMoE-50M')
     >>> y_pred = forecaster.predict(fh=[1, 2, 3], y = y_test)
     """
 
@@ -112,6 +113,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "python_dependencies": ["torch", "transformers<=4.40.1", "accelerate<=0.28.0"],
         # estimator type
         # --------------
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
@@ -127,6 +129,10 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.libs.timemoe"],
     }
 
     def __init__(

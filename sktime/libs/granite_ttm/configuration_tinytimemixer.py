@@ -1,15 +1,8 @@
 """TinyTimeMixer Model configuration."""
 
-from typing import Optional, Union
+from sktime.utils.dependencies import _safe_import
 
-from skbase.utils.dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers.configuration_utils import PretrainedConfig
-else:
-
-    class PretrainedConfig:
-        """Dummy class if transformers is unavailable."""
+PretrainedConfig = _safe_import("transformers.configuration_utils.PretrainedConfig")
 
 
 class TinyTimeMixerConfig(PretrainedConfig):
@@ -173,7 +166,7 @@ class TinyTimeMixerConfig(PretrainedConfig):
         num_input_channels: int = 1,
         prediction_length: int = 16,
         patch_stride: int = 8,
-        prediction_channel_indices: Optional[list] = None,
+        prediction_channel_indices: list | None = None,
         # General model configuration
         d_model: int = 16,
         expansion_factor: int = 2,
@@ -186,7 +179,7 @@ class TinyTimeMixerConfig(PretrainedConfig):
         self_attn_heads: int = 1,
         use_positional_encoding: bool = False,
         positional_encoding_type: str = "sincos",
-        scaling: Optional[Union[str, bool]] = "std",
+        scaling: str | bool | None = "std",
         loss: str = "mse",
         init_std: float = 0.02,
         post_init: bool = False,
@@ -204,7 +197,7 @@ class TinyTimeMixerConfig(PretrainedConfig):
         decoder_mode: str = "common_channel",
         use_decoder: bool = True,
         # prediction length filtering
-        prediction_filter_length: Optional[int] = None,
+        prediction_filter_length: int | None = None,
         **kwargs,
     ):
         self.num_input_channels = num_input_channels

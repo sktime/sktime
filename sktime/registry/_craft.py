@@ -22,6 +22,7 @@ __author__ = ["fkiraly"]
 import re
 
 from sktime.registry._lookup import all_estimators
+from sktime.registry._lookup_sklearn import _all_sklearn_estimators
 
 
 def _extract_class_names(spec):
@@ -58,17 +59,21 @@ def craft(spec):
     spec : str, sktime/skbase compatible object specification
         i.e., a string that executes to construct an object if all imports were present
         imports inferred are of any classes in the scope of ``all_estimators``
-        option 1: a string that evaluates to an estimator
-        option 2: a sequence of assignments in valid python code,
-            with the object to be defined preceded by a "return"
-            assignments can use names of classes as if all imports were present
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
 
     Returns
     -------
     obj : skbase BaseObject descendant, constructed from ``spec``
         this will have the property that ``spec == str(obj)`` (up to formatting)
     """
-    register = dict(all_estimators())  # noqa: F841
+    # retrieve all estimators from sktime and sklearn for namespace resolution
+    register_sktime = dict(all_estimators())  # noqa: F841
+    register_sklearn = dict(_all_sklearn_estimators())  # noqa: F841
+    register = {**register_sklearn, **register_sktime}
 
     try:
         obj = eval(spec, globals(), register)
@@ -89,18 +94,29 @@ def build_obj():
     return obj
 
 
-def deps(spec):
+def deps(spec, include_test_deps=False):
     """Get PEP 440 dependency requirements for a craft spec.
+
+    This will result in a list of PEP 440 compatible requirement string.
+
+    In case the spec includes estimators with disjunctions in their requirement
+    specifications, the first disjunctive requirement is returned, i.e.,
+    any disjunctions are resolved by picking the first dependency in the disjunction.
 
     Parameters
     ----------
     spec : str, sktime/skbase compatible object specification
-        i.e., a string that executes to construct an object if all imports were present
+        i.e., a string that executes to construct an object if all imports were present.
         imports inferred are of any classes in the scope of ``all_estimators``
-        option 1: a string that evaluates to an estimator
-        option 2: a sequence of assignments in valid python code,
-            with the object to be defined preceded by a "return"
-            assignments can use names of classes as if all imports were present
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
+
+    include_test_deps : bool, default=False
+        whether to include dependencies tagged as
+        "tests:python_dependencies" in addition to "python_dependencies"
 
     Returns
     -------
@@ -122,10 +138,31 @@ def deps(spec):
 
         new_deps = cls.get_class_tag("python_dependencies")
 
-        if isinstance(new_deps, list):
-            dep_strs += new_deps
-        elif isinstance(new_deps, str) and len(new_deps) > 0:
-            dep_strs += [new_deps]
+        def _resolve_disjunctions(dep):
+            """Resolve disjunctions in dependencies by picking first."""
+            if isinstance(dep, list):
+                return dep[0]  # pick first dependency in disjunction
+            return dep
+
+        def _coerce_dep_strs(dep):
+            """Coerce dependency tag value to list of strings."""
+            if dep is None:
+                return []
+            elif isinstance(dep, str) and len(dep) > 0:
+                return [dep]
+            elif isinstance(dep, str) and len(dep) == 0:
+                return []
+            elif isinstance(dep, list):
+                return [_resolve_disjunctions(d) for d in dep]
+            else:
+                return dep
+
+        new_deps = cls.get_class_tag("python_dependencies")
+        dep_strs += _coerce_dep_strs(new_deps)
+
+        if include_test_deps:
+            test_deps = cls.get_class_tag("tests:python_dependencies")
+            dep_strs += _coerce_dep_strs(test_deps)
 
         reqs = list(set(dep_strs))
 
@@ -140,10 +177,11 @@ def imports(spec):
     spec : str, sktime/skbase compatible object specification
         i.e., a string that executes to construct an object if all imports were present
         imports inferred are of any classes in the scope of ``all_estimators``
-        option 1: a string that evaluates to an estimator
-        option 2: a sequence of assignments in valid python code,
-            with the object to be defined preceded by a "return"
-            assignments can use names of classes as if all imports were present
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
 
     Returns
     -------

@@ -230,7 +230,7 @@ class _Reducer(_BaseWindowForecaster):
             "fkiraly",
             "benheid",
         ],
-        "ignores-exogeneous-X": False,  # reduction uses X in non-trivial way
+        "capability:exogenous": True,  # reduction uses X in non-trivial way
         "capability:missing_values": True,
         "capability:insample": False,
         "capability:pred_int": True,
@@ -1105,7 +1105,7 @@ class _DirRecReducer(_Reducer):
     strategy = "dirrec"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
     }
 
     def _transform(self, y, X=None):
@@ -1950,12 +1950,13 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "authors": "fkiraly",
         "maintainers": "hliebert",
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:libs": ["sktime.transformations.series.lag"],
     }
 
     def __init__(
@@ -2010,7 +2011,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         else:
             return self._fit_multiple(y=y, X=X, fh=fh)
 
-    def _predict(self, X=None, fh=None):
+    def _predict(self, fh=None, X=None):
         """Predict dispatcher based on X_treatment and windows_identical."""
         if self.X_treatment == "shifted":
             if self.windows_identical is True:
@@ -2023,6 +2024,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
         from sktime.transformations.series.lag import Lag, ReducerTransform
+        from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 
         impute_method = self.impute_method
         lags = self._lags
@@ -2062,19 +2064,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         Xt = prep_skl_df(Xt)
         yt = prep_skl_df(yt)
 
-        def sklearn_multioutput(estimator):
-            """Get sklearn tags for estimator."""
-            from sktime.utils.dependencies import _check_soft_dependencies
-
-            if _check_soft_dependencies("sklearn<1.6", severity="none"):
-                return estimator._get_tags().get("multioutput", False)
-            else:
-                from sklearn.utils import get_tags
-
-                return get_tags(estimator).target_tags.multi_output
-
         estimator = clone(self.estimator)
-        if not sklearn_multioutput(estimator):
+        if not get_sklearn_tag(estimator, "capability:multioutput"):
             estimator = MultiOutputRegressor(estimator)
         estimator.fit(Xt, yt)
         self.estimator_ = estimator
@@ -2367,9 +2358,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     _tags = {
         "authors": "fkiraly",
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        # CI and test flags
+        # -----------------
+        "tests:libs": ["sktime.transformations.series.lag"],
     }
 
     def __init__(
@@ -2486,7 +2480,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return self
 
-    def _predict(self, X=None, fh=None):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -2556,7 +2550,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         for _ in y_lags_no_gaps:
             if hasattr(self.fh, "freq") and self.fh.freq is not None:
                 y_plus_preds = apply_method_per_series(
-                    y_plus_preds, "asfreq", self.fh.freq
+                    y_plus_preds,
+                    "asfreq",
+                    self.fh.freq,
+                    how="start",
                 )
             Xt = lagger_y_to_X.transform(y_plus_preds)
 
@@ -2779,7 +2776,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:missing_values": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
@@ -2873,7 +2870,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
 
         return self
 
-    def _predict(self, X=None, fh=None):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict

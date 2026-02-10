@@ -270,10 +270,11 @@ class python_dependencies(_BaseTag):
     * ``"numba"``: ``numba`` must be present
     * ``"numpy>=1.20.0"``: ``numpy`` must be version 1.20.0 or higher
     * ``["numpy>=1.20.0", "pandas>=1.3.0"]``: ``numpy`` must be version 1.20.0 or
-        higher, and ``pandas`` must be version 1.3.0 or higher
+      higher, and ``pandas`` must be version 1.3.0 or higher
     * ``[["numpy>=1.20.0", "pandas>=1.3.0"], "scikit-learn>=0.24.0"]``:
-        ``scikit-learn`` must be version 0.24.0 or higher, and ``numpy`` must be
-        version 1.20.0 or higher, or ``pandas`` must be version 1.3.0 or higher
+      ``scikit-learn`` must be version 0.24.0 or higher, and at least one of the
+      following should be true> ``numpy`` must be
+      version 1.20.0 or higher, or ``pandas`` must be version 1.3.0 or higher
 
     Developers should note that package names in the PEP 440 specifier strings
     that should be provided
@@ -405,7 +406,7 @@ class tests__core(_BaseTag):
     tag set to true, to avoid that all estimators in ``sktime`` are triggered
     by a framework change.
 
-    It is not used in user facing checks, error messages,
+    The ``tests:core`` tag is not used in user facing checks, error messages,
     or recommended build processes otherwise.
     """
 
@@ -414,6 +415,197 @@ class tests__core(_BaseTag):
         "parent_type": "object",
         "tag_type": "bool",
         "short_descr": "whether framework changes trigger estimator tests",
+        "user_facing": False,
+    }
+
+
+class tests__vm(_BaseTag):
+    """Whether to spin up a separate VM to test the estimator.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:vm"``
+    - Private tag, developer and framework facing
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
+    usually only estimators that have changed, via ``run_test_for_class``.
+
+    The ``tests:vm`` tag of an object is a boolean,
+    it specifies whether the estimator should be tested in a separate VM,
+    with a fresh environment set up using the ``python_dependencies`` tag,
+    with version/OS matrix defined by ``python_version`` and ``env_marker`` tags.
+
+    This tag should be set to ``True`` for estimators that have a complex
+    dependency setup, or that are known to have issues with the default
+    ``sktime`` CI environment.
+    It can also be used for estimators with soft dependencies that occur
+    only in one or few specific estimators.
+    Otherwise, it should be used sparingly.
+
+    The ``tests:vm`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:vm",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "whether to test the object in its own VM",
+        "user_facing": False,
+    }
+
+
+class tests__libs(_BaseTag):
+    """Important library dependencies of the object, for test triggers.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:libs"``
+    - Private tag, developer and framework facing
+    - Values: list of str, or None
+    - Example: ``["sktime.libs.chronos"]``
+    - Default: ``None``
+
+    ``sktime``'s CI framework regularly tests estimators in pull request,
+    usually only estimators that have changed.
+
+    The ``tests:libs`` tag of an object is a list of strings,
+    it specifies important library dependencies of the object within ``sktime``.
+
+    Setting this tag triggers testing the estimator whenever any of the modules
+    in the ``tests:libs`` tags have changed, in additional to the other
+    test trigger conditions such as a direct change to the object class.
+
+    Developers should not specify framework imports here, e.g., ``sktime.base``,
+    but any modules that contain estimator specific logic, which are not
+    identical with the location of the class.
+
+    The ``tests:libs`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:libs",
+        "parent_type": "object",
+        "tag_type": "list",
+        "short_descr": "Core libraries used by the estimator, to trigger tests.",
+        "user_facing": False,
+    }
+
+
+class tests__skip_all(_BaseTag):
+    """Whether all tests for this estimator should be skipped.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:skip_all"``
+    - Private tag, developer and framework facing
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
+    usually only estimators that have changed, via ``run_test_for_class``.
+
+    The ``tests:skip_all`` tag of an object is a boolean.
+    If set to ``True``, all tests for the estimator are skipped.
+
+    WARNING: this tag should be used with caution,
+    as it will skip all tests for the estimator,
+    including those that are necessary for the estimator to be considered
+    a valid estimator in ``sktime``.
+
+    The ``tests:skip_all`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:skip_all",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "whether to skip all tests for the object",
+        "user_facing": False,
+    }
+
+
+class tests__skip_by_name(_BaseTag):
+    """A list of test names that should be skipped for this object.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:skip_by_name``
+    - Private tag, developer and framework facing
+    - Values: list of str, or None
+    - Example: ["test_fit_idempotent", "test_persistence_via_pickle"]
+    - Default: None
+
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
+    usually only estimators that have changed, via ``run_test_for_class``.
+
+    The ``tests:skip_by_name`` tag of an object is list of strings,
+    with strings being names of tests that should be skipped for the object.
+    The names should be the same as names of test functions in the "test all"
+    suite, and will be the same as test names in ``check_estimator`` returns.
+    If set to ``None`` (default), no tests are skipped.
+
+    WARNING: this tag should be used with caution.
+    When it is set, developers should leave a comment
+    next to the tag, explaining why the tests are skipped,
+    and optimally link from the comment to an open issue with the purpose to resolving
+    the skipped test(s).
+
+    The ``tests:skip_by_name`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:skip_by_name",
+        "parent_type": "object",
+        "tag_type": "list",
+        "short_descr": "list of names of tests that should be skipped for this object",
+        "user_facing": False,
+    }
+
+
+class tests__python_dependencies(_BaseTag):
+    """Python package dependency requirement specifiers for tests (PEP 440).
+
+    Part of packaging metadata for the object.
+
+    - String name: ``"tests:python_dependencies"``
+    - Private tag, developer and framework facing
+    - Values: str or list of str, each str a PEP 440 compliant dependency specifier
+    - Example: ``"numpy>=1.20.0"``
+    - Example 2: ``["numpy>=1.20.0", "pandas>=1.3.0"]``
+    - Default: no requirements beyond ``sktime`` core dependencies (``None``)
+
+    ``sktime``'s CI framework regularly tests estimators in pull request.
+
+    The ``tests:python_dependencies`` tag specifies additional environment dependencies
+    required for testing the object, in a VM setup, via the ``tests:vm`` tag.
+
+    These dependencies will not be highlighted to the user when using the
+    estimator, and are used only in the CI testing setup.
+
+    This tag should be used, for example, if the tests instances in ``get_test_params``
+    requre additional packages not required for the main functionality of the object.
+
+    The ``tests:python_dependencies`` tag of an object is a string,
+    a list of strings, or a nested list of strings, with same format, convention,
+    and meaning as ``python_dependencies``.
+
+    It is developer facing only, and is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:python_dependencies",
+        "parent_type": "object",
+        "tag_type": ("list", "str"),
+        "short_descr": "additional python dependencies for testing the estimator, as str or list of str (PEP 440)",  # noqa: E501
         "user_facing": False,
     }
 
@@ -489,6 +681,28 @@ class capability__feature_importance(_BaseTag):
     }
 
 
+class capability__sample_weight(_BaseTag):
+    """Capability: whether the estimator can handle sample weights.
+
+    - String name: ``"capability:sample_weight"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the estimator can handle sample weights.
+    If the tag is ``False``, the estimator cannot handle sample weights,
+    """
+
+    _tags = {
+        "tag_name": "capability:sample_weight",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "can the estimator handle sample weights?",
+        "user_facing": True,
+    }
+
+
 class capability__contractable(_BaseTag):
     """Capability: the estimator can be asked to satisfy a maximum time contract.
 
@@ -555,6 +769,40 @@ class capability__train_estimate(_BaseTag):
     }
 
 
+class capability__random_state(_BaseTag):
+    """Capability: the estimator can be derandomized using a random_state.
+
+    - String name: ``"capability:random_state"``
+    - Public capability tag
+    - Values: bool, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the estimator can be derandomized using a ``random_state``
+    parameter. If the ``random_state`` parameter is set, then the estimator will produce
+    the same results on every run,
+    up to minimal numerical precision discrepancies (1e-5 relative error).
+    If the tag is ``False``, the estimator does not have a ``random_state``
+    parameter and cannot be derandomized.
+
+    The tag may be inspected by the user to find estimators
+    that can be derandomized.
+
+    The tag is also used internally in tests of ``sktime`` to verify
+    the behaviour of estimators.
+    """
+
+    _tags = {
+        "tag_name": "capability:random_state",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": (
+            "does the object have a random_state parameter for derandomization?"
+        ),
+        "user_facing": True,
+    }
+
+
 class fit_is_empty(_BaseTag):
     """Property: Whether the estimator has an empty fit method.
 
@@ -587,47 +835,87 @@ class fit_is_empty(_BaseTag):
     }
 
 
+class property__randomness(_BaseTag):
+    """Property: Degree of randomness vs determinism of the estimator.
+
+    - String name: ``"property:randomness"``
+    - Public property tag
+    - Values: str, ``"stochastic"``, ``"deterministic"``, ``"derandomized"``
+    - Example: ``"deterministic"``
+    - Default: ``"deterministic"``
+
+    * If the tag is ``"stochastic"``, the estimator is stochastic and
+      may produce different results on different runs.
+    * If the tag is ``"deterministic"``, the estimator is
+      deterministic and will produce the same results on every run,
+      up to minimal numerical precision discrepancies (1e-5 relative error).
+    * If the tag is ``"derandomized"``, the estimator can be derandomized
+      using a ``random_state`` parameter. It behaves as ``"stochastic"``
+      if the ``random_state`` parameter is not set, and it behaves as
+      ``"deterministic"`` if the ``random_state`` parameter is set.
+
+    This tag applies to instances with a given set of parameters,
+    and all computational methods of the estimator.
+
+    If at least one of the methods has stochastic behaviour, the tag should
+    be set to ``"stochastic"``, even if other methods are deterministic.
+
+    The tag may be inspected by the user to distinguish between
+    estimators with deterministic and stochastic behaviour.
+
+    The tag is also used internally in tests of ``sktime`` to verify
+    the behaviour of estimators.
+    """
+
+    _tags = {
+        "tag_name": "property:randomness",
+        "parent_type": "object",
+        "tag_type": "str",
+        "short_descr": "does the object behave deterministically or stochastically?",
+        "user_facing": True,
+    }
+
+
 # Forecasters
 # -----------
 
 
 class capability__exogeneous(_BaseTag):
-    """Capability: the forecaster can use exogeneous data.
+    """Capability: the forecaster can use exogenous data.
 
     The tag is currently named ``ignores-exogeneous-X``, and will be renamed.
 
-    ``False`` = does use exogeneous data, ``True`` = does not use exogeneous data.
+    ``False`` = does use exogenous data, ``True`` = does not use exogenous data.
 
-    - String name: ``"ignores-exogeneous-X"``
+    - String name: ``"capability:exogenous"``
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: ``capability:exogeneous`` (currently not used)
+    - Alias: boolean negation of ``"ignores-exogeneous-X"`` (legacy)
 
-    Exogeneous data are additional time series,
+    Exogenous data are additional time series,
     that can be used to improve forecasting accuracy.
 
-    If the forecaster uses exogeneous data (``ignore-exogeneous-X=False``),
+    If the forecaster uses exogenous data (``capability:exogenous=True``),
     the ``X`` parameter in ``fit``, ``predict``, and other methods
-    can be used to pass exogeneous data to the forecaster.
+    can be used to pass exogenous data to the forecaster.
 
     If the ``X-y-must-have-same-index`` tag is ``True``,
     then such data must always have an index that contains that of the target series,
     i.e., ``y`` in ``fit``, or the indices specified by ``fh`` in ``predict``.
 
-    If the tag is ``False``, the forecaster does not make use of exogeneous data.
+    If the tag is ``False``, the forecaster does not make use of exogenous data.
     ``X`` parameters can still be passed to methods, to ensure a uniform interface,
     but the data will be ignored,
     i.e., not used in the internal logic of the forecaster.
-
     """
 
     _tags = {
-        "tag_name": "ignores-exogeneous-X",
+        "tag_name": "capability:exogenous",
         "parent_type": "forecaster",
         "tag_type": "bool",
-        "short_descr": "does forecaster make use of exogeneous data?",
+        "short_descr": "does forecaster make use of exogenous data?",
         "user_facing": True,
     }
 
@@ -754,6 +1042,56 @@ class capability__pred_int__insample(_BaseTag):
     }
 
 
+class capability__non_contiguous_X(_BaseTag):
+    """Capability: the forecaster can handle non-contiguous exogenous data.
+
+    - String name: ``"capability:non_contiguous_X"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    Exogenous data are additional time series that can be used to improve
+    forecasting accuracy. When using `temporal_train_test_split` with a
+    non-contiguous forecasting horizon `fh` (e.g., `fh=[2, 5]`), the resulting
+    `X_test` will only contain observations corresponding to the specific time
+    points in `fh`, rather than a complete contiguous range.
+
+
+    If the ``capability:non_contiguous_X`` tag is ``True``, the forecaster
+    can handle non-contiguous exogenous data and will make predictions
+    correctly even when ``X`` contains only the requested time points.
+
+    If the tag is ``False``, the forecaster requires contiguous exogenous data
+    covering all time points from the first to the last element of ``fh``.
+    For example, if ``fh=[2, 5]``, the forecaster requires ``X`` to contain
+    data for time points 1, 2, 3, 4, and 5, not just 2 and 5.
+
+    Forecasters with ``capability:non_contiguous_X=False`` include those that:
+
+    * Use underlying libraries (e.g., statsmodels, statsforecast) that
+      internally generate predictions for all intermediate time steps
+    * Require contiguous data for their recursive prediction algorithms
+
+    If a forecaster has this tag set to ``False`` and receives non-contiguous
+    exogenous data, it will raise an error during prediction.
+
+    The ``ForecastX`` compositor directly addresses the ``capability:non_contiguous_X``
+    tag by providing a solution for forecasters that cannot handle non-contiguous
+    exogenous data. Instead of requiring contiguous exogenous data covering all
+    time points from the first to the last element of fh, ForecastX forecasts
+    the missing exogenous values internally.
+    """
+
+    _tags = {
+        "tag_name": "capability:non_contiguous_X",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can the forecaster handle non-contiguous exogenous data?",
+        "user_facing": True,
+    }
+
+
 class requires_fh_in_fit(_BaseTag):
     """Behaviour flag: forecaster requires forecasting horizon in fit.
 
@@ -791,7 +1129,7 @@ class requires_fh_in_fit(_BaseTag):
 
 
 class capability__categorical_in_X(_BaseTag):
-    """Capability: If estimator can handle categorical natively in exogeneous(X) data.
+    """Capability: If estimator can handle categorical variables in the X argument.
 
     ``False`` = cannot handle categorical natively in X,
     ``True`` = can handle categorical natively in X
@@ -810,7 +1148,32 @@ class capability__categorical_in_X(_BaseTag):
         "tag_name": "capability:categorical_in_X",
         "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
         "tag_type": "bool",
-        "short_descr": "can the estimator natively handle categorical data in exogeneous X?",  # noqa: E501
+        "short_descr": "can the estimator handle categorical data in X arguments?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__categorical_in_y(_BaseTag):
+    """Capability: If estimator can handle categorical variables in the y argument.
+
+    ``False`` = cannot handle categorical natively in y,
+    ``True`` = can handle categorical natively in y
+
+    - String name: ``"capability:categorical_in_y"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    Exogeneous data are additional time series,
+    that can be used to improve forecasting accuracy.
+    """
+
+    _tags = {
+        "tag_name": "capability:categorical_in_y",
+        "parent_type": ["forecaster", "transformer", "regressor", "classifier"],
+        "tag_type": "bool",
+        "short_descr": "can the estimator handle categorical data in y arguments?",
         "user_facing": True,
     }
 
@@ -837,8 +1200,10 @@ class capability__multivariate(_BaseTag):
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
     regressors, clusterers, ordinary transformers, and pairwise transformers.
 
-    If the tag is ``False``, the estimator can only handle univariate time series,
-    and will broadcast to variables (ordinary transformers), or raise an error (others).
+    If the tag is ``False``, the estimator can only handle univariate time series
+    natively. Depending on the type of object, multivariate time series may be valid
+    inputs, in this case the estimator will broadcast to variables
+    (transformers, forecasters), or raise an error (others).
 
     This condition is specific to the main input data representation,
     target data (e.g., classifier or transformation ``y``) are not considered.
@@ -855,13 +1220,15 @@ class capability__multivariate(_BaseTag):
             "classifier",
             "clusterer",
             "early_classifier",
+            "metric",
             "param_est",
             "regressor",
+            "transformer",
             "transformer-pairwise",
             "transformer-pairwise-panel",
         ],
         "tag_type": "bool",
-        "short_descr": "can the estimator be applied to time series with 2 or more variables?",  # noqa: E501
+        "short_descr": "does the object natively support time series with 2 or more variables?",  # noqa: E501
         "user_facing": True,
     }
 
@@ -1001,6 +1368,40 @@ class capability__predict_proba(_BaseTag):
             "does the estimator implement a non-default predict_proba method? "
             "i.e., not just 0/1 probabilities obtained from predict?"
         ),
+        "user_facing": True,
+    }
+
+
+class capability__class_weight(_BaseTag):
+    """Capability: the classifier can use class weights to handle imbalanced data.
+
+    - String name: ``"capability:class_weight"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to classifiers only.
+
+    If the tag is ``True``, the classifier supports class weighting functionality,
+    through a ``class_weight`` parameter that allows users to assign
+    different weights to different classes during training. This is commonly used
+    to handle imbalanced datasets where some classes are underrepresented.
+
+    Class weights can usually be provided as:
+
+    - A dictionary mapping class labels to weights
+    - None for uniform class weights (default behavior)
+
+    If the tag is ``False``, the classifier does not support class weighting,
+    and any class_weight parameter will be ignored or may raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:class_weight",
+        "parent_type": "classifier",
+        "tag_type": "bool",
+        "short_descr": "can the classifier use class weights to handle imbalanced data",
         "user_facing": True,
     }
 
@@ -1628,6 +2029,83 @@ class capability__bootstrap_index(_BaseTag):
     }
 
 
+class capability__unequal_length__removes(_BaseTag):
+    """Capability: the transformer produces equal length series on unequal length input.
+
+    - String name: ``"capability:unequal_length:removes"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag is only meaningful for transformers that return time series as output,
+    i.e., the tag ``scitype:transform-output`` is ``"Series"`` or ``"Panel"``.
+
+    The tag specifies whether the transformer returns equal length time series,
+    when given unequal length time series as input.
+    This is the case for example for truncation or padding transformers,
+    that is, transformations that are specifically designed to remove
+    unequal length.
+    However, the tag may also be ``True`` for other transformers,
+    that are not specifically designed for this purpose.
+
+    If the tag is ``True``, the transformer will return equal length time series,
+    when given unequal length time series as input.
+
+    If the tag is ``False``, the transformer may return unequal length time series,
+    when given unequal length time series as input.
+
+    Also see the tag ``capability:unequal_length:adds``.
+    The typical transformer with series output will have both tags being ``False``.
+    """
+
+    _tags = {
+        "tag_name": "capability:unequal_length:removes",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer output have equal length time series?",
+        "user_facing": True,
+    }
+
+
+class capability__unequal_length__adds(_BaseTag):
+    """Capability: transformer may produce unequal length series on equal length input.
+
+    - String name: ``"capability:unequal_length:adds"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag is only meaningful for transformers that return time series as output,
+    i.e., the tag ``scitype:transform-output`` is ``"Series"`` or ``"Panel"``.
+
+    The tag specifies whether the transformer can return unequal length time series
+    on equal length time series as input.
+
+    If the tag is ``True``, the transformer may return unequal length time series,
+    when given equal length time series as input.
+
+    If the tag is ``False``, the transformer will
+    always return equal length time series,
+    when given equal length time series as input.
+
+    Note that even if the tag is ``False``, the transformer may still return
+    unequal length time series, when given unequal length time series as input.
+
+    Also see the tag ``capability:unequal_length:removes``.
+    The typical transformer with series output will have both tags being ``False``.
+    """
+
+    _tags = {
+        "tag_name": "capability:unequal_length:adds",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "can outputs be unequal length even if inputs are equal length?",
+        "user_facing": True,
+    }
+
+
 # Detector tags
 # --------------
 
@@ -1794,12 +2272,339 @@ class capability__variable_identification(_BaseTag):
     }
 
 
+# Time series aligner tags
+# ------------------------
+
+
+class capability__multiple_alignment(_BaseTag):
+    """Capability: aligner can align multiple series.
+
+    - String name: ``"capability:multiple-alignment"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to time series aligners.
+
+    If the tag is ``True``, the aligner can align multiple time series
+    in a single alignment operation.
+    If the tag is ``False``, the aligner can only align two time series
+    in a single alignment operation.
+
+    If the tag is ``True``, the aligner's ``fit`` method can take as input
+    a collection of more than two time series.
+
+    Otherwise, the aligner's ``fit`` method can only take as input two time series.
+    """
+
+    _tags = {
+        "tag_name": "capability:multiple-alignment",
+        "parent_type": "aligner",
+        "tag_type": "bool",
+        "short_descr": "is aligner capable of aligning multiple series (True) or only two (False)?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__distance(_BaseTag):
+    """Capability: aligner can return overall distance between aligned series.
+
+    - String name: ``"capability:distance"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to time series aligners.
+
+    If the tag is ``True``, the aligner is capable of returning an overall distance
+    between the aligned time series via the ``get_distance`` method.
+
+    If the tag is ``False``, the aligner cannot return an overall distance
+    between the aligned time series, and calling ``get_distance`` will raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:distance",
+        "parent_type": "aligner",
+        "tag_type": "bool",
+        "short_descr": "can aligner return overall distance between aligned series?",
+        "user_facing": True,
+    }
+
+
+class capability__distance_matrix(_BaseTag):
+    """Capability: aligner can return a distance matrix between aligned series.
+
+    - String name: ``"capability:distance-matrix"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to time series aligners.
+
+    If the tag is ``True``, the aligner is capable of returning a pairwise
+    distance matrix
+    between the aligned time series via the ``get_distance_matrix`` method.
+
+    If the tag is ``False``, the aligner cannot return a pairwise distance matrix
+    between the aligned time series,
+    and calling ``get_distance_matrix`` will raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:distance-matrix",
+        "parent_type": "aligner",
+        "tag_type": "bool",
+        "short_descr": "can aligner return pairwise distance matrix between aligned series?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class property__alignment_type(_BaseTag):
+    """Property: type of alignment produced by the aligner.
+
+    - String name: ``"alignment_type"``
+    - Public property tag
+    - Values: string, one of ``"full"``, ``"partial"``
+    - Example: ``"full"``
+    - Default: ``"full"``
+
+    This tag applies to time series aligners.
+
+    The tag specifies whether the aligner produces a full alignment,
+    where the entire time series are aligned,
+    or a partial alignment, where only subsequences of the time series are aligned.
+
+    The possible values are:
+
+    * ``"full"``: the aligner produces a full alignment of the time series.
+      In this case, ``get_alignment`` will return alignments where indices
+      cover the entire length of the input time series.
+    * ``"partial"``: the aligner produces a partial alignment of the time series.
+      In this case, ``get_alignment`` returned alignments do not necessarily
+      cover the entire length of the input time series.
+    """
+
+    _tags = {
+        "tag_name": "alignment_type",
+        "parent_type": "aligner",
+        "tag_type": ("str", ["full", "partial"]),
+        "short_descr": "does aligner produce a full or partial alignment?",
+        "user_facing": True,
+    }
+
+
+# Parameter estimator tags
+# ------------------------
+
+
+class capability__pairwise_parameter_estimation(_BaseTag):
+    """Capability: parameter estimator supports pairwise parameter estimation.
+
+    - String name: ``"capability:pairwise"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to parameter estimators.
+
+    If the tag is ``True``, the estimator supports pairwise parameter estimation,
+    i.e., estimating parameters for a pair of time series.
+
+    If the tag is ``False``, the estimator does not support
+    pairwise parameter estimation.
+    """
+
+    _tags = {
+        "tag_name": "capability:pairwise",
+        "parent_type": "param_est",
+        "tag_type": "bool",
+        "short_descr": "does the estimator support pairwise parameter estimation?",
+        "user_facing": True,
+    }
+
+
+# Metrics tags
+# ------------
+
+
+class requires_y_true(_BaseTag):
+    """Behaviour flag: metric requires y_true in evaluate.
+
+    If ``y_true`` is not required, the metric is an unsupervised metric.
+
+    - String name: ``"requires_y_true"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    This tag applies to metrics.
+
+    If the tag is ``True``, the metric requires the true target data argument
+    ``y_true`` to be passed in the ``evaluate`` and ``evaluate_by_index`` methods.
+    If the tag is ``False``, the metric does not require the true target data argument
+    ``y_true`` to be passed in the ``evaluate`` and ``evaluate_by_index`` methods.
+    """
+
+    _tags = {
+        "tag_name": "requires_y_true",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": "does the metric require y_true to be passed in evaluate?",
+        "user_facing": True,
+    }
+
+
+class requires_y_pred_benchmark(_BaseTag):
+    """Behaviour flag: metric requires y_pred in evaluate.
+
+    - String name: ``"requires-y-pred-benchmark"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+    - Alias: ``"requires_y_pred_benchmark"``
+
+    This tag applies to metrics.
+
+    If the tag is ``True``, the metric requires the benchmark prediction argument
+    ``y_pred_benchmark`` to be passed in the ``evaluate`` and ``evaluate_by_index``
+    methods.
+    If the tag is ``False``, the metric does not require the benchmark prediction
+    argument ``y_pred_benchmark`` to be passed in the ``evaluate`` and
+    ``evaluate_by_index`` methods.
+    """
+
+    _tags = {
+        "tag_name": "requires-y-pred-benchmark",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": (
+            "does the metric require y_pred_benchmark to be passed in evaluate?"
+        ),
+        "user_facing": True,
+    }
+
+
+class requires_y_train(_BaseTag):
+    """Behaviour flag: metric requires y_train in evaluate.
+
+    - String name: ``"requires-y-train"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+    - Alias: ``"requires_y_train"``
+
+    This tag applies to metrics.
+
+    If the tag is ``True``, the metric requires the training target data argument
+    ``y_train`` to be passed in the ``evaluate`` and ``evaluate_by_index`` methods.
+    If the tag is ``False``, the metric does not require the training target data
+    argument ``y_train`` to be passed in the ``evaluate`` and ``evaluate_by_index``
+    methods.
+    """
+
+    _tags = {
+        "tag_name": "requires-y-train",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": "does the metric require y_train to be passed in evaluate?",
+        "user_facing": True,
+    }
+
+
+class lower_is_better(_BaseTag):
+    """Property: whether lower metric values are better.
+
+    - String name: ``"lower_is_better"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    This tag applies to metrics.
+
+    If the tag is ``True``, lower values of the metric are considered better.
+    If the tag is ``False``, higher values of the metric are considered better.
+    """
+
+    _tags = {
+        "tag_name": "lower_is_better",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": "is lower value of the metric better?",
+        "user_facing": True,
+    }
+
+
+class scitype__y_pred(_BaseTag):
+    """The scitype of the predicted target data, for probabilistic metrics.
+
+    - String name: ``"scitype:y_pred"``
+    - Public property tag
+    - Values: string, one of ``"pred_quantiles"``, ``pred_interval``, ``pred_proba``
+    - Example: ``"pred_quantiles"``
+    - Default: ``"None"``
+
+    This tag applies to metrics.
+
+    The tag specifies the scitype of the predicted target data ``y_pred``
+    for probabilistic metrics:
+
+    * ``"pred_quantiles"``: predictive quantiles in ``predict_quantiles`` format
+    * ``"pred_interval"``: predictive intervals in ``predict_interval`` format
+    * ``"pred_proba"``: predictive probabilities in ``predict_proba`` format
+    """
+
+    _tags = {
+        "tag_name": "scitype:y_pred",
+        "parent_type": "metric",
+        "tag_type": "str",
+        "short_descr": "what is the scitype of the predicted target data y_pred?",
+        "user_facing": True,
+    }
+
+
+class inner_implements_multilevel(_BaseTag):
+    """Extension tag: whether the metric implements multilevel evaluation.
+
+    - String name: ``"inner_implements_multilevel"``
+    - Extension developer tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    Metrics broadcast by default over time series hierarchy indices.
+    If the tag is ``False``, the inner ``_evaluate`` and ``_evaluate_by_index``
+    methods are written for individual time series only, and the
+    boilerplate machinery is expected to handle hierarchy indices.
+
+    By setting this tag to ``False``, developers can force the hierarchical
+    time series to be passed to ``_evaluate`` and ``_evaluate_by_index``,
+    to treat the hierarchy index in deviation from the default.
+    """
+
+    _tags = {
+        "tag_name": "inner_implements_multilevel",
+        "parent_type": "metric",
+        "tag_type": "bool",
+        "short_descr": "does the metric implement multilevel evaluation internally?",
+        "user_facing": False,
+    }
+
+
 # Developer tags
 # --------------
 
 
 class x_inner_mtype(_BaseTag):
-    """The machine type(s) the transformer can deal with internally for X.
+    """The machine type(s) the estimator can deal with internally for X.
 
     - String name: ``"X_inner_mtype"``
     - Extension developer tag
@@ -1870,7 +2675,7 @@ class x_inner_mtype(_BaseTag):
 
 
 class y_inner_mtype(_BaseTag):
-    """The machine type(s) the transformer can deal with internally for y.
+    """The machine type(s) the estimator can deal with internally for y.
 
     - String name: ``"y_inner_mtype"``
     - Extension developer tag
@@ -2486,6 +3291,196 @@ class visual_block_kind(_BaseTag):
     }
 
 
+# Catalogue tags
+# --------------
+
+
+class catalogue_type(_BaseTag):
+    """Catalogue subtype: what kind of catalogue this is.
+
+    - String name: ``"catalogue_type"``
+    - Public tag
+    - Values: string (e.g., ``"mixed"``, ``"datasets"``, ``"estimators"``)
+    - Example: ``"mixed"``
+    """
+
+    _tags = {
+        "tag_name": "catalogue_type",
+        "parent_type": "catalogue",
+        "tag_type": "str",
+        "short_descr": "Subtype of the catalogue (e.g., mixed, datasets, estimators).",
+        "user_facing": True,
+    }
+
+
+class n_items(_BaseTag):
+    """Number of total items in the catalogue.
+
+    - String name: ``"n_items"``
+    - Values: integer
+    - Example: ``5``
+    """
+
+    _tags = {
+        "tag_name": "n_items",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of items in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_datasets(_BaseTag):
+    """Number of dataset entries in the catalogue.
+
+    - String name: ``"n_datasets"``
+    - Values: integer
+    - Example: ``2``
+    """
+
+    _tags = {
+        "tag_name": "n_datasets",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of datasets in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_metrics(_BaseTag):
+    """Number of metric objects in the catalogue.
+
+    - String name: ``"n_metrics"``
+    - Values: integer
+    - Example: ``1``
+    """
+
+    _tags = {
+        "tag_name": "n_metrics",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of metrics in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_cv_splitters(_BaseTag):
+    """Number of cross-validation splitters in the catalogue.
+
+    - String name: ``"n_cv_splitters"``
+    - Values: integer
+    - Example: ``1``
+    """
+
+    _tags = {
+        "tag_name": "n_cv_splitters",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of CV splitters in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_classifiers(_BaseTag):
+    """Number of classifier estimators in the catalogue.
+
+    - String name: ``"n_classifiers"``
+    - Values: integer
+    - Example: ``1``
+    """
+
+    _tags = {
+        "tag_name": "n_classifiers",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of classifiers in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_forecasters(_BaseTag):
+    """Number of forecaster estimators in the catalogue.
+
+    - String name: ``"n_forecasters"``
+    - Values: integer
+    - Example: ``1``
+    """
+
+    _tags = {
+        "tag_name": "n_forecasters",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of forecasters in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class info__name(_BaseTag):
+    """Information tag: human-readable name of the catalogue.
+
+    - String name: ``"info:name"``
+    - Public information tag
+    - Values: string (e.g., ``"TSC Bake Off Catalogue"``)
+    - Example: ``"My Catalogue"``
+    - Default: empty string
+
+    This tag should contain a short, human-readable name that describes
+    the catalogue.
+    """
+
+    _tags = {
+        "tag_name": "info:name",
+        "parent_type": "catalogue",
+        "tag_type": "str",
+        "short_descr": "Human-readable name for this catalogue.",
+        "user_facing": True,
+    }
+
+
+class info__description(_BaseTag):
+    """Information tag: short textual description of the catalogue.
+
+    - String name: ``"info:description"``
+    - Public information tag
+    - Values: string
+    - Example: ``"A M4 catalogue containing datasets, metrics, and models."``
+    - Default: empty string
+
+    This tag provides a concise description of the catalogue's purpose
+    or contents. Suitable for documentation or rendered UI text.
+    """
+
+    _tags = {
+        "tag_name": "info:description",
+        "parent_type": "catalogue",
+        "tag_type": "str",
+        "short_descr": "Short description of the catalogue.",
+        "user_facing": True,
+    }
+
+
+class info__source(_BaseTag):
+    """Information tag: source or reference for the catalogue.
+
+    - String name: ``"info:source"``
+    - Public information tag
+    - Values: string (e.g., a DOI)
+    - Example: ``"10.1016/j.ijforecast.2019.04.014"``
+    - Default: empty string
+
+    This tag should contain the source or origin of the catalogue,
+    typically a DOI, citation string, URL, or dataset repository reference.
+    """
+
+    _tags = {
+        "tag_name": "info:source",
+        "parent_type": "catalogue",
+        "tag_type": "str",
+        "short_descr": "Source reference for this catalogue (e.g., DOI).",
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
     (
         "sktime_version",
@@ -2536,12 +3531,6 @@ ESTIMATOR_TAG_REGISTER = [
         "does the transformer transform instances independently?",
     ),
     (
-        "capability:unequal_length:removes",
-        "transformer",
-        "bool",
-        "is the transformer result guaranteed to be equal length series (and series)?",
-    ),
-    (
         "capability:missing_values:removes",
         "transformer",
         "bool",
@@ -2570,72 +3559,6 @@ ESTIMATOR_TAG_REGISTER = [
         ),
         "which type the classifier falls under in the taxonomy of time series "
         "classification algorithms.",
-    ),
-    (
-        "capability:multiple-alignment",
-        "aligner",
-        "bool",
-        "is aligner capable of aligning multiple series (True) or only two (False)?",
-    ),
-    (
-        "capability:pairwise",
-        "param_est",
-        "bool",
-        "Indicates whether the estimator supports pairwise parameter estimation.",
-    ),
-    (
-        "capability:distance",
-        "aligner",
-        "bool",
-        "does aligner return overall distance between aligned series?",
-    ),
-    (
-        "capability:distance-matrix",
-        "aligner",
-        "bool",
-        "does aligner return pairwise distance matrix between aligned series?",
-    ),
-    (
-        "alignment_type",
-        "aligner",
-        ("str", ["full", "partial"]),
-        "does aligner produce a full or partial alignment",
-    ),
-    (
-        "requires-y-train",
-        "metric",
-        "bool",
-        "does metric require y-train data to be passed?",
-    ),
-    (
-        "requires-y-pred-benchmark",
-        "metric",
-        "bool",
-        "does metric require a predictive benchmark?",
-    ),
-    (
-        "requires_y_true",
-        "metric",
-        "bool",
-        "does metric require ground truth? If False, unsupervised metric",
-    ),
-    (
-        "scitype:y_pred",
-        "metric",
-        "str",
-        "What is the scitype of y_pred: quantiles, proba, interval?",
-    ),
-    (
-        "lower_is_better",
-        "metric",
-        "bool",
-        "Is a lower value better for the metric? True=yes, False=higher is better",
-    ),
-    (
-        "inner_implements_multilevel",
-        "metric",
-        "bool",
-        "whether inner _evaluate can deal with multilevel (Panel/Hierarchical)",
     ),
     (
         "remember_data",
@@ -2797,6 +3720,12 @@ ESTIMATOR_TAG_REGISTER = [
         "object",
         "dict",
         "deprecated tag for dependency import aliases",
+    ),
+    (
+        "ignores-exogeneous-X",
+        "forecaster",
+        "bool",
+        "deprecated tag for exogenous capability",
     ),
 ]
 

@@ -131,7 +131,7 @@ class DynamicFactor(_StatsModelsAdapter):
         # estimator type
         # --------------
         "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
@@ -141,6 +141,7 @@ class DynamicFactor(_StatsModelsAdapter):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(
@@ -213,9 +214,10 @@ class DynamicFactor(_StatsModelsAdapter):
         y_pred : pd.DataFrame
             Returns series of predicted values.
         """
+        y_first_index = self._y_first_index
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        start, end = fh.to_absolute_int(y_first_index, self.cutoff)[[0, -1]]
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
 
@@ -227,10 +229,8 @@ class DynamicFactor(_StatsModelsAdapter):
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
 
-        if "int" in (self._y.index[0]).__class__.__name__:  # Rather fishy solution
-            y_pred.index = np.arange(
-                start + self._y.index[0], end + self._y.index[0] + 1
-            )
+        if "int" in (y_first_index).__class__.__name__:  # Rather fishy solution
+            y_pred.index = np.arange(start + y_first_index, end + y_first_index + 1)
         return y_pred.loc[fh.to_absolute_index(self.cutoff)]
 
     def _predict_interval(self, fh, X, coverage):
@@ -271,13 +271,15 @@ class DynamicFactor(_StatsModelsAdapter):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
+        y_first_index = self._y_first_index
+
         if not isinstance(coverage, list):
             coverage_list = [coverage]
         else:
             coverage_list = coverage
 
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        steps = end - len(self._y) + 1
+        _, end = fh.to_absolute_int(y_first_index, self.cutoff)[[0, -1]]
+        steps = end - self._y_len + 1
         ix = fh.to_indexer(self.cutoff)
 
         model = self._fitted_forecaster
@@ -291,7 +293,7 @@ class DynamicFactor(_StatsModelsAdapter):
 
             # if y is univariate, we duplicated the column in fit,
             # so now we need to revert this duplication
-            # subste to first two columns as "lower" and "upper"
+            # subset to first two columns as "lower" and "upper"
             if self._was_univariate:
                 y_pred = y_pred.iloc[:, [0, 1]]
 

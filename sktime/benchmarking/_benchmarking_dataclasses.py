@@ -3,7 +3,6 @@
 import copy
 from collections.abc import Callable
 from dataclasses import dataclass, field, fields
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -13,36 +12,78 @@ from sktime.split.base._base_splitter import BaseSplitter
 from sktime.split.singlewindow import SingleWindowSplitter
 
 
-def _coerce_data_for_evaluate(dataset_loader):
-    """Coerce data input object to a dict to pass to forecasting evaluate."""
+def _coerce_data_for_evaluate(dataset_loader, task_type=None):
+    """Coerce data input object to a dict to pass to forecasting evaluate.
+
+    Parameters
+    ----------
+    dataset_loader : Callable or tuple
+
+        - a function which returns a dataset, like from `sktime.datasets`.
+        - a tuple containing two data container that are sktime comptaible.
+        - single data container that is sktime compatible (only first argument).
+
+    task_type : str, optional (default=None)
+        The type of task. One of "forecasting", "classification", "regression",
+        "clustering". If None, X is assumed to be the first argument.
+
+    Returns
+    -------
+    data_dict : dict
+        A dictionary with keys "y" and "X" as appropriate for the task type,
+        coerced from ``dataset_loader``.
+    """
     if callable(dataset_loader) and not hasattr(dataset_loader, "load"):
+        # Case 1: Loader function, e.g., load_longley
         data = dataset_loader()
-    elif callable(dataset_loader) and hasattr(dataset_loader, "load"):
-        data = dataset_loader.load()
+
+    elif hasattr(dataset_loader, "load"):
+        # Case 2: Dataset class or object, e.g., Longley or Longley()
+        # if class, instantiate
+        from inspect import isclass
+
+        if isclass(dataset_loader):
+            dataset_loader = dataset_loader()
+
+        X = dataset_loader.load("X")
+        y = dataset_loader.load("y")
+
+        return {"X": X, "y": y}
+
     else:
+        # Case 3: Data tuple or single data container
         data = dataset_loader
 
     if isinstance(data, tuple) and len(data) == 2:
-        y, X = data
-        return y, X
+        data0 = data[0]
+        data1 = data[1]
     elif isinstance(data, tuple) and len(data) == 1:
-        return data[0], None
+        data0 = data[0]
+        data1 = None
     else:
-        return data, None
+        data0 = data
+        data1 = None
+
+    if task_type == "forecasting":
+        return {"y": data0, "X": data1}
+    else:  # classification, regression, clustering
+        return {"X": data0, "y": data1}
 
 
 @dataclass
 class TaskObject:
     """
-    A forecasting task.
+    A benchmarking task.
 
     Parameters
     ----------
     data: Union[Callable, tuple]
         Can be
+
         - a function which returns a dataset, like from `sktime.datasets`.
         - a tuple containing two data container that are sktime comptaible.
         - single data container that is sktime compatible (only endogenous data).
+
     cv_splitter: BaseSplitter object
         Splitter used for generating validation folds.
     scorers: list of BaseMetric objects
@@ -64,18 +105,18 @@ class TaskObject:
         cv_global and cv_global_temporal.
     """
 
-    data: Union[Callable, tuple]
+    data: Callable | tuple
     cv_splitter: BaseSplitter
     scorers: list[BaseMetric]
     strategy: str = "refit"
     cv_X = None
-    cv_global: Optional[BaseSplitter] = None
+    cv_global: BaseSplitter | None = None
     error_score: str = "raise"
-    cv_global_temporal: Optional[SingleWindowSplitter] = None
+    cv_global_temporal: SingleWindowSplitter | None = None
 
-    def get_y_X(self):
+    def get_y_X(self, task_type=None):
         """Get the endogenous and exogenous data."""
-        return _coerce_data_for_evaluate(self.data)
+        return _coerce_data_for_evaluate(self.data, task_type=task_type)
 
 
 @dataclass
@@ -95,10 +136,10 @@ class FoldResults:
         The training data for this fold.
     """
 
-    scores: list[dict[str, Union[float, pd.DataFrame]]]
-    ground_truth: Optional[pd.DataFrame] = None
-    predictions: Optional[pd.DataFrame] = None
-    train_data: Optional[pd.DataFrame] = None
+    scores: list[dict[str, float | pd.DataFrame]]
+    ground_truth: pd.DataFrame | None = None
+    predictions: pd.DataFrame | None = None
+    train_data: pd.DataFrame | None = None
 
     def __post_init__(self):
         """Check that scores are in the correct format."""

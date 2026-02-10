@@ -52,6 +52,7 @@ class HFTransformersForecaster(BaseForecaster):
           Note: If the 'peft' package is not available, a `ModuleNotFoundError` will
           be raised, indicating that the 'peft' package is required. Please install
           it using `pip install peft` to use this fit strategy.
+
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
@@ -106,10 +107,10 @@ class HFTransformersForecaster(BaseForecaster):
 
     >>> from sktime.forecasting.hf_transformers_forecaster import (
     ...     HFTransformersForecaster,
-    ... )
-    >>> from sktime.datasets import load_airline
-    >>> from peft import LoraConfig
-    >>> y = load_airline()
+    ... ) # doctest: +SKIP
+    >>> from sktime.datasets import load_airline # doctest: +SKIP
+    >>> from peft import LoraConfig # doctest: +SKIP
+    >>> y = load_airline() # doctest: +SKIP
     >>> forecaster = HFTransformersForecaster(
     ...    model_path="huggingface/autoformer-tourism-monthly",
     ...    fit_strategy="peft",
@@ -117,20 +118,20 @@ class HFTransformersForecaster(BaseForecaster):
     ...        "num_train_epochs": 20,
     ...        "output_dir": "test_output",
     ...        "per_device_train_batch_size": 32,
-    ...    },
+    ...    }, # doctest: +SKIP
     ...    config={
     ...         "lags_sequence": [1, 2, 3],
     ...         "context_length": 2,
     ...         "prediction_length": 4,
     ...         "use_cpu": True,
     ...         "label_length": 2,
-    ...    },
+    ...    }, # doctest: +SKIP
     ...    peft_config=LoraConfig(
     ...        r=8,
     ...        lora_alpha=32,
     ...        target_modules=["q_proj", "v_proj"],
     ...        lora_dropout=0.01,
-    ...    )
+    ...    ) # doctest: +SKIP
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y) # doctest: +SKIP
     >>> fh = [1, 2, 3]
@@ -171,12 +172,12 @@ class HFTransformersForecaster(BaseForecaster):
     ... )
 
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> fh = [1, 2, 3]
+    >>> fh = [1, 2, 3] # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
     """
 
     _tags = {
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,

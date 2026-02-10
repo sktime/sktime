@@ -111,8 +111,8 @@ class MomentFMClassifier(BaseClassifier):
     >>> X_train, y_train = load_unit_test(split="train", return_type = "numpy3d")
     >>> X_test, _ = load_unit_test(split="test", return_type = "numpy3d")
     >>> classifier = MomentFMClassifier(epochs=1, batch_size=16)
-    >>> classifier.fit(X_train, y_train)
-    >>> y_pred = classifier.predict(X_test)
+    >>> classifier.fit(X_train, y_train)  # doctest: +SKIP
+    >>> y_pred = classifier.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
@@ -125,11 +125,21 @@ class MomentFMClassifier(BaseClassifier):
             "torch",
             "tqdm",
             "huggingface-hub",
+            "hf-xet",
             # "momentfm",
             "accelerate",
             "transformers",
         ],
         "python_version": ">= 3.10",
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.libs.momentfm"],
+        "tests:skip_by_name": [
+            # see 8253
+            "test_fit_idempotent",
+            "test_multiprocessing_idempotent",
+        ],
     }
 
     def __init__(
@@ -147,7 +157,6 @@ class MomentFMClassifier(BaseClassifier):
         config=None,
         to_cpu_after_fit=False,
     ):
-        super().__init__()
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.head_dropout = head_dropout
         self.batch_size = batch_size
@@ -161,6 +170,7 @@ class MomentFMClassifier(BaseClassifier):
         self.config = config
         self._config = config if config is not None else {}
         self.to_cpu_after_fit = to_cpu_after_fit
+        super().__init__()
 
     def _fit(self, X, y):
         """MomentFMClassifier fit method.

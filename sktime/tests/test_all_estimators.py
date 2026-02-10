@@ -16,7 +16,6 @@ from tempfile import TemporaryDirectory
 import numpy as np
 import pandas as pd
 import pytest
-from _pytest.outcomes import Skipped
 
 from sktime.base import BaseEstimator, BaseObject, load
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -29,7 +28,6 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.registry import all_estimators, get_base_class_lookup, scitype
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
-    CYTHON_ESTIMATORS,
     EXCLUDE_ESTIMATORS,
     EXCLUDED_TESTS,
     MATRIXDESIGN,
@@ -206,10 +204,7 @@ class BaseFixtureGenerator:
         # TODO(fangelim): refactor this _all_estimators
         # to make it possible to set custom tags to filter
         # as class attributes, similar to `estimator_type_filter`
-        if CYTHON_ESTIMATORS:
-            filter_tags = {"requires_cython": True}
-        else:
-            filter_tags = None
+        filter_tags = {"tests:skip_all": False}
 
         est_list = all_estimators(
             estimator_types=getattr(self, "estimator_type_filter", None),
@@ -256,7 +251,16 @@ class BaseFixtureGenerator:
     @staticmethod
     def is_excluded(test_name, est):
         """Shorthand to check whether test test_name is excluded for estimator est."""
-        return test_name in EXCLUDED_TESTS.get(est.__name__, [])
+        # there are two conditions for exclusion:
+        # 1. the estimator is excluded in the legacy EXCLUDED_TESTS list
+        # 2. the excluded test appears in the "tests:skip_by_name" tag
+        cond1 = test_name in EXCLUDED_TESTS.get(est.__name__, [])
+        excl_tag = est.get_class_tag("tests:skip_by_name", [])
+        if excl_tag is None:
+            excl_tag = []
+        cond2 = test_name in excl_tag
+        excluded = cond1 or cond2
+        return excluded
 
     # the following functions define fixture generation logic for pytest_generate_tests
     # each function is of signature (test_name:str, **kwargs) -> List of fixtures
@@ -313,7 +317,7 @@ class BaseFixtureGenerator:
     @pytest.fixture(scope="function")
     def estimator_instance(self, request):
         """estimator_instance fixture definition for indirect use."""
-        # esetimator_instance is cloned at the start of every test
+        # estimator_instance is cloned at the start of every test
         return request.param.clone()
 
     def _generate_scenario(self, test_name, **kwargs):
@@ -424,14 +428,19 @@ class QuickTester:
     ):
         """Run all tests on one single estimator.
 
-        All tests in self are run on the following estimator type fixtures:
-            if est is a class, then estimator_class = est, and
-                estimator_instance loops over est.create_test_instance()
-            if est is an object, then estimator_class = est.__class__, and
-                estimator_instance = est
+        All tests in ``self`` are run on the following object type fixtures:
 
-        This is compatible with pytest.mark.parametrize decoration,
-            but currently only with multiple *single variable* annotations.
+        * if est is a class, then ``object_class`` = ``est``, and
+          ``object_instance`` loops over ``est.create_test_instance()``
+        * if est is an object, then ``object_class`` = ``est.__class__``, and
+          ``object_instance`` = ``est``
+
+        Compatibility with ``pytest`` fixtures:
+
+        * ``run_tests`` is compatible with ``pytest.mark.parametrize`` decoration,
+          but currently only with multiple *single variable* annotations.
+        * the following ``pytest`` reserved fixture names are supported:
+          ``tmp_path``, ``monkeypatch``, ``capsys``, ``caplog``
 
         Parameters
         ----------
@@ -460,21 +469,29 @@ class QuickTester:
             removes test-fixture combinations that should not be run.
             This is done after subsetting via fixtures_to_run.
 
-        verbose : bool, optional, default=False
-            whether to print the results of the tests as they are run
+        verbose : int or bool, optional, default=1.
+            verbosity level for printouts from tests run.
+
+            * 0 or False: no printout
+            * 1 or True (default): print summary of test run, but no print from tests
+            * 2: print all test output, including output from within the tests
 
         Returns
         -------
         results : dict of results of the tests in self
-            keys are test/fixture strings, identical as in pytest, e.g., test[fixture]
-            entries are the string "PASSED" if the test passed,
-            or the exception raised if the test did not pass
-            returned only if all tests pass,
-            or raise_exceptions=False
+            dictionary of results of the tests that were run
+
+            keys are test/fixture strings, identical as in pytest,
+            e.g., ``test[fixture]``;
+            entries are the string ``"PASSED"`` if the test passed,
+            or the exception raised if the test did not pass.
+
+            ``results`` is returned only if all tests pass,
+            or ``raise_exceptions=False``.
 
         Raises
         ------
-        if raise_exceptions=True,
+        if ``raise_exceptions=True``,
         raises any exception produced by the tests directly
 
         Examples
@@ -491,6 +508,10 @@ class QuickTester:
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
         """
+        from _pytest.outcomes import Skipped
+        from skbase.utils.stderr_mute import StderrMute
+        from skbase.utils.stdout_mute import StdoutMute
+
         tests_to_run = self._check_None_str_or_list_of_str(
             tests_to_run, var_name="tests_to_run"
         )
@@ -561,8 +582,8 @@ class QuickTester:
             fixture_sequence = self.fixture_sequence
 
             # all arguments except the first one (self)
-            fixture_vars = getfullargspec(test_fun)[0][1:]
-            fixture_vars = [var for var in fixture_sequence if var in fixture_vars]
+            test_fun_vars = getfullargspec(test_fun)[0][1:]
+            fixture_vars = [var for var in fixture_sequence if var in test_fun_vars]
 
             # this call retrieves the conditional fixtures
             #  for the test test_name, and the estimator
@@ -595,7 +616,7 @@ class QuickTester:
                     )
 
             def print_if_verbose(msg):
-                if verbose:
+                if int(verbose) > 0:
                     print(msg)  # noqa: T001, T201
 
             # loop B: for each test, we loop over all fixtures
@@ -607,6 +628,10 @@ class QuickTester:
                 key = f"{test_name}[{fixt_name}]"
                 args = dict(zip(fixture_vars, params))
 
+                for f in test_fun_vars:
+                    if f not in args:
+                        args[f] = self._make_builtin_fixture_equivalents(f)
+
                 # we subset to test-fixtures to run by this, if given
                 #  key is identical to the pytest test-fixture string identifier
                 if fixtures_to_run is not None and key not in fixtures_to_run:
@@ -617,7 +642,8 @@ class QuickTester:
                 print_if_verbose(f"{key}")
 
                 try:
-                    test_fun(**deepcopy(args))
+                    with StderrMute(active=verbose < 2), StdoutMute(active=verbose < 2):
+                        test_fun(**deepcopy(args))
                     results[key] = "PASSED"
                     print_if_verbose("PASSED")
                 except Skipped as err:
@@ -715,6 +741,48 @@ class QuickTester:
         fixture_names_return = ["-".join(x) for x in fixture_names_return]
 
         return fixture_vars_return, fixture_prod_return, fixture_names_return
+
+    def _make_builtin_fixture_equivalents(self, name):
+        import io
+        import logging
+        import tempfile
+        from pathlib import Path
+
+        values = {}
+        if "tmp_path" == name:
+            return Path(tempfile.mkdtemp())
+        if "capsys" == name:
+            # crude emulation using StringIO
+            return type(
+                "Capsys",
+                (),
+                {
+                    "out": io.StringIO(),
+                    "err": io.StringIO(),
+                    "readouterr": lambda x: (x.out.getvalue(), x.err.getvalue()),
+                },
+            )()
+
+        if "monkeypatch" == name:
+            from _pytest.monkeypatch import MonkeyPatch
+
+            return MonkeyPatch()
+
+        if "caplog" == name:
+
+            class Caplog:
+                def __init__(self):
+                    self.records = []
+                    self.handler = logging.Handler()
+                    self.handler.emit = self.records.append
+                    logging.getLogger().addHandler(self.handler)
+
+                def clear(self):
+                    self.records.clear()
+
+            return Caplog()
+
+        return values
 
 
 class TestAllObjects(BaseFixtureGenerator, QuickTester):
@@ -1184,14 +1252,84 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     def test_valid_estimator_class_tags(self, estimator_class):
         """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
         for tag in estimator_class.get_class_tags().keys():
-            msg = "Found invalid tag: %s" % tag
+            msg = (
+                f"{estimator_class} has invalid tag: {tag!r} - "
+                "please check for spelling mistakes and if the tag exists "
+                "in the sktime API reference, or in registry.all_tags."
+            )
             assert tag in VALID_ESTIMATOR_TAGS, msg
+
+        from sktime.base._base import TagAliaserMixin
+
+        ALIAS_DICT = TagAliaserMixin.alias_dict
+
+        for tag in estimator_class._get_class_flags(flag_attr_name="_tags"):
+            if tag in ALIAS_DICT:
+                msg = (
+                    f"{estimator_class} has deprecated tag: {tag!r} - "
+                    f"please follow deprecation guide from sktime release notes "
+                    f"and replace with {ALIAS_DICT[tag]!r}"
+                )
+                raise AssertionError(msg)
 
     def test_valid_estimator_tags(self, estimator_instance):
         """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
         for tag in estimator_instance.get_tags().keys():
-            msg = "Found invalid tag: %s" % tag
+            msg = (
+                f"{estimator_instance} has invalid tag: {tag!r} - "
+                "please check for spelling mistakes and if the tag exists "
+                "in the sktime API reference, or in registry.all_tags."
+            )
             assert tag in VALID_ESTIMATOR_TAGS, msg
+
+        from sktime.base._base import TagAliaserMixin
+
+        ALIAS_DICT = TagAliaserMixin.alias_dict
+
+        for tag in estimator_instance._get_flags(flag_attr_name="_tags"):
+            if tag in ALIAS_DICT:
+                msg = (
+                    f"{estimator_instance} has deprecated tag: {tag!r} - "
+                    f"please follow deprecation guide from sktime release notes "
+                    f"and replace with {ALIAS_DICT[tag]!r}"
+                )
+                raise AssertionError(msg)
+
+    def test_random_tags(self, estimator_class):
+        """Check that estimator randomization tags are compatibly set."""
+        randomness = estimator_class.get_class_tag("property:randomness")
+        random_state = estimator_class.get_class_tag("capability:random_state")
+
+        # randomness = "derandomized" should be set only if random_state is available
+        if randomness == "derandomized":
+            assert random_state, (
+                f"{estimator_class.__name__} must set "
+                "'capability:random_state' tag to True if "
+                "'property:randomness' tag is set to 'derandomized'"
+            )
+
+        # random_state tag should be set iff the parameter exists in the signature
+        assert random_state == ("random_state" in estimator_class.get_param_names()), (
+            f"{estimator_class.__name__} must set "
+            "'capability:random_state' tag to True, if and only if the "
+            "random_state parameter exists in the estimator signature"
+        )
+
+    def test_obj_vs_cls_signature(self, estimator_class):
+        """Check that init signature is same for class as for instance.
+
+        Implies that constructor does not result in an object with different signature,
+        which could be caused by decorators or metaclasses.
+
+        This test is also relevant for placeholder records, to ensure that the
+        placeholder class and the actual class in the interfaced package
+        have not diverged in their constructor signature.
+        """
+        cls1 = estimator_class
+        cls2 = type(estimator_class.create_test_instance())
+
+        assert deep_equals(cls1.get_param_names(), cls2.get_param_names())
+        assert deep_equals(cls1.get_param_defaults(), cls2.get_param_defaults())
 
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
@@ -1260,6 +1398,15 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     def test_fit_idempotent(self, estimator_instance, scenario, method_nsc_arraylike):
         """Check that calling fit twice is equivalent to calling it once."""
         estimator = estimator_instance
+
+        random_tag = estimator.get_tag("property:randomness")
+        deterministic = random_tag in ["derandomized", "deterministic"]
+
+        # if the estimator is not deterministic, we cannot guarantee idempotency
+        # this includes the case where even after setting random_state,
+        # the estimator is known to be stochastic
+        if not deterministic:
+            return None
 
         # for now, we have to skip predict_proba, since current output comparison
         #   does not work for tensorflow Distribution
@@ -1332,7 +1479,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # fixed the random_state params recursively to be integer seeds.
             msg = (
                 "Estimator %s should not change or mutate "
-                " the parameter %s from %s to %s during fit."
+                "the parameter %s from %s to %s during fit."
                 % (estimator.__class__.__name__, param_name, original_value, new_value)
             )
             # joblib.hash has problems with pandas objects, so we use deep_equals then
@@ -1543,6 +1690,14 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         all CPUs. The test is not really necessary though, as we rely on joblib for
         parallelization and can trust that it works as expected.
         """
+        # this test compares outputs from two runs, single process and multi-process
+        # if the estimator cannot be derandomized, we cannot expect
+        # identical outputs, so we skip the test
+        randomness = estimator_instance.get_tag("property:randomness")
+        derandomizable = randomness != "stochastic"
+        if not derandomizable:
+            return None
+
         method_nsc = method_nsc_arraylike
         params = estimator_instance.get_params()
 

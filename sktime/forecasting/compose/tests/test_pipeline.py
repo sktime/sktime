@@ -510,13 +510,13 @@ def test_featurizer_forecastingpipeline_logic():
 def test_exogenousx_ignore_tag_set():
     """Tests that TransformedTargetForecaster sets X tag for feature selection.
 
-    If the forecaster ignores X, but the feature selector does not, then the
-    ignores-exogeneous-X tag should be correctly set to False, not True.
+    If the forecaster does not use X, but the feature selector does, then the
+    capability:exogenous tag should be correctly set to True.
 
     This is the failure case in bug report #5518.
 
-    More generally, the tag should be set to True iff all steps in the pipeline
-    ignore X.
+    More generally, the tag should be set to True iff at least one step in the
+    pipeline uses X.
     """
     fcst_does_not_ignore_x = YfromX.create_test_instance()
     fcst_ignores_x = NaiveForecaster()
@@ -524,7 +524,7 @@ def test_exogenousx_ignore_tag_set():
     trafo_ignores_x = ExponentTransformer()
     trafo_does_not_ignore_x = FeatureSelection()
 
-    # check that ignores-exogeneous-X tag is set correctly
+    # check that capability:exogenous tag is set correctly
     pipe1 = trafo_ignores_x * fcst_does_not_ignore_x
     pipe2 = trafo_ignores_x * fcst_ignores_x
     pipe3 = trafo_does_not_ignore_x * fcst_does_not_ignore_x
@@ -536,16 +536,16 @@ def test_exogenousx_ignore_tag_set():
     pipe9 = trafo_does_not_ignore_x * fcst_ignores_x * trafo_ignores_x
     pipe10 = trafo_ignores_x * fcst_ignores_x * trafo_ignores_x
 
-    assert not pipe1.get_tag("ignores-exogeneous-X")
-    assert pipe2.get_tag("ignores-exogeneous-X")
-    assert not pipe3.get_tag("ignores-exogeneous-X")
-    assert not pipe4.get_tag("ignores-exogeneous-X")
-    assert not pipe5.get_tag("ignores-exogeneous-X")
-    assert not pipe6.get_tag("ignores-exogeneous-X")
-    assert not pipe7.get_tag("ignores-exogeneous-X")
-    assert not pipe8.get_tag("ignores-exogeneous-X")
-    assert not pipe9.get_tag("ignores-exogeneous-X")
-    assert pipe10.get_tag("ignores-exogeneous-X")
+    assert pipe1.get_tag("capability:exogenous")
+    assert not pipe2.get_tag("capability:exogenous")
+    assert pipe3.get_tag("capability:exogenous")
+    assert pipe4.get_tag("capability:exogenous")
+    assert pipe5.get_tag("capability:exogenous")
+    assert pipe6.get_tag("capability:exogenous")
+    assert pipe7.get_tag("capability:exogenous")
+    assert pipe8.get_tag("capability:exogenous")
+    assert pipe9.get_tag("capability:exogenous")
+    assert not pipe10.get_tag("capability:exogenous")
 
 
 @pytest.mark.skipif(
@@ -638,3 +638,58 @@ def test_pipeline_with_gf_tag():
 
     pipe = MinMaxScaler() * model
     assert isinstance(pipe, TransformedTargetForecaster)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([ForecastingPipeline, YtoX]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_forecasting_pipeline_with_hierarchical_data():
+    """Test ForecastingPipeline with hierarchical MultiIndex data.
+
+    This test addresses issue #8455, where ForecastingPipeline's _transform method
+    failed when combining transformers that require y (like YtoX and WindowSummarizer)
+    with hierarchical/panel data having MultiIndex.
+
+    The bug was that _transform created a simple index for the dummy y DataFrame
+    instead of respecting the MultiIndex structure, causing a
+    "ValueError: cannot join with no overlapping index names" error.
+    """
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.transformations.series.summarize import WindowSummarizer
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    y = _make_hierarchical(
+        hierarchy_levels=(2, 2), max_timepoints=20, min_timepoints=20
+    )
+    fh = list(range(1, 4))
+
+    # Create a pipeline with YtoX() and WindowSummarizer
+    # Both require y and WindowSummarizer specifically needs correct index structure
+    window_features = WindowSummarizer(
+        lag_feature={"lag": fh},
+        truncate=None,
+        n_jobs=1,
+    )
+
+    forecaster = NaiveForecaster(strategy="last")
+
+    pipe = ForecastingPipeline(
+        steps=[
+            ("ytox", YtoX()),
+            ("window_features", window_features),
+            ("forecaster", forecaster),
+        ]
+    )
+
+    # this should work without raising ValueError
+    y_pred = pipe.fit_predict(y=y, X=None, fh=fh)
+
+    # Checks correct MultiIndex structure for pred
+    assert isinstance(y_pred.index, pd.MultiIndex)
+    assert y_pred.index.nlevels == y.index.nlevels
+    assert y_pred.index.names == y.index.names
+
+    # Checks predictions for all hierarchy levels and all forecast horizons
+    expected_rows = len(y.index.droplevel(-1).unique()) * len(fh)
+    assert len(y_pred) == expected_rows
