@@ -1242,6 +1242,24 @@ class TransformedTargetForecaster(_Pipeline):
             self.transformers_pre_, pred_int, mode="proba"
         )
         return pred_int_transformed
+    
+    
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts."""
+
+        pred = self.forecaster_.predict_proba(fh=fh, X=X, marginal=marginal)
+
+        pred = self._get_inverse_transform(
+            self.transformers_pre_,
+            pred,
+            X,
+            mode="proba",
+        )
+
+        for _, t in self.transformers_post_:
+            pred = t.transform(X=pred, y=X)
+
+        return pred
 
 
 class ForecastX(BaseForecaster):
