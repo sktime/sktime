@@ -3,7 +3,7 @@
 __author__ = ["Tanuj-Taneja1"]
 __all__ = ["ConvTimeNetClassifier"]
 
-from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 
 
 class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
