@@ -155,6 +155,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             lr=lr,
             verbose=verbose,
             random_state=random_state,
+            device=device,
         )
 
     def _build_network(self, X, y):

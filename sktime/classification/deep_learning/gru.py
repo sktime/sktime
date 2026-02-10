@@ -99,6 +99,7 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int = None,
+        device: str = "cpu",
     ):
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
@@ -117,6 +118,7 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.device = device
 
         # infer from the data
         self.input_size = None
@@ -315,6 +317,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         lr: float = 0.01,
         verbose: bool = False,
         random_state: int = None,
+        device: str = "cpu",
     ):
         self.hidden_dim = hidden_dim
         self.gru_layers = gru_layers
@@ -335,6 +338,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.device = device
 
         # infer from the data
         self.input_size = None
@@ -350,6 +354,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
             lr=lr,
             verbose=verbose,
             random_state=random_state,
+            device=device,
         )
 
         self.criterions = {}

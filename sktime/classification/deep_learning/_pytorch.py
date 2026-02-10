@@ -54,6 +54,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         lr=0.001,
         verbose=True,
         random_state=None,
+        device="cpu",
     ):
         self.num_epochs = num_epochs
         self.batch_size = batch_size
@@ -64,6 +65,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.device = device
 
         # use this when y has str
         self.label_encoder = None
@@ -72,13 +74,61 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         # instantiate optimizers
         self.optimizers = OPTIMIZERS
 
+    def _get_device(self):
+        """Get the device to use for training and inference.
+
+        Returns
+        -------
+        torch.device
+            The device object to use.
+        """
+        import warnings
+
+        requested_device = (
+            self.device.lower() if isinstance(self.device, str) else str(self.device)
+        )
+
+        # Handle CUDA devices
+        if "cuda" in requested_device:
+            if torch.cuda.is_available():
+                return torch.device(self.device)
+            else:
+                warnings.warn(
+                    f"CUDA device '{self.device}' was requested but CUDA is "
+                    "not available. Falling back to CPU.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                return torch.device("cpu")
+
+        # Handle MPS (Apple Silicon)
+        if "mps" in requested_device:
+            if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+                return torch.device("mps")
+            else:
+                warnings.warn(
+                    "MPS device was requested but MPS is not available. "
+                    "Falling back to CPU.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                return torch.device("cpu")
+
+        # Default to CPU
+        return torch.device("cpu")
+
     def _fit(self, X, y):
         if self.random_state is not None:
             torch.manual_seed(self.random_state)
 
+        # Determine the device to use
+        self._device = self._get_device()
+
         y = self._encode_y(y)
 
         self.network = self._build_network(X, y)
+        # Move network to device
+        self.network.to(self._device)
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -92,6 +142,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
     def _run_epoch(self, epoch, dataloader):
         losses = []
         for inputs, outputs in dataloader:
+            # Move batch data to device
+            inputs = {k: v.to(self._device) for k, v in inputs.items()}
+            outputs = outputs.to(self._device)
+
             y_pred = self.network(**inputs)
             loss = self._criterion(y_pred, outputs)
             self._optimizer.zero_grad()
@@ -211,10 +265,13 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         from torch import cat
 
         self.network.eval()
+        self.network.to(self._device)
         dataloader = self._build_dataloader(X)
         y_pred = []
         for inputs in dataloader:
-            y_pred.append(self.network(**inputs).detach())
+            # Move inputs to device
+            inputs = {k: v.to(self._device) for k, v in inputs.items()}
+            y_pred.append(self.network(**inputs).detach().cpu())
         y_pred = cat(y_pred, dim=0)
         # (batch_size, num_outputs)
         y_pred = F.softmax(y_pred, dim=-1)
