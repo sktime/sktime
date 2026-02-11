@@ -13,15 +13,18 @@ from scipy.stats import gmean
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
-from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
 from sktime.performance_metrics.forecasting._coerce import (
     _coerce_to_1d_numpy,
     _coerce_to_scalar,
 )
+from sktime.performance_metrics.forecasting._common import (
+    _percentage_error,
+    _relative_error,
+)
 from sktime.utils.sklearn import _check_reg_targets
-from sktime.utils.stats import _weighted_geometric_mean
+from sktime.utils.stats import _weighted_geometric_mean, _weighted_percentile
 
 if sklearn.__version__ >= "1.4.0":
     from sklearn.metrics import root_mean_squared_error as _root_mean_squared_error
@@ -2758,74 +2761,78 @@ def _linex_error(y_true, y_pred, a=1.0, b=1.0):
     return linex_error
 
 
-def _relative_error(y_true, y_pred, y_pred_benchmark):
-    """Relative error for observations to benchmark method.
+def mean_squared_log_error(
+    y_true,
+    y_pred,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    square_root=False,
+    **kwargs,
+):
+    """Mean Squared Logarithmic Error (MSLE).
 
     Parameters
     ----------
-    y_true : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs)
         Ground truth (correct) target values.
-
-    y_pred : pandas Series, pandas DataFrame or NumPy array of
-            shape (fh,) or (fh, n_outputs) where fh is the forecasting horizon
-        Forecasted values.
-
-    y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-             (fh, n_outputs) where fh is the forecasting horizon, default=None
-        Forecasted values from benchmark method.
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs)
+        Estimated target values.
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+    multioutput : {'raw_values', 'uniform_average'}, default='uniform_average'
+        Defines aggregating of multiple output values.
+    square_root : bool, default=False
+        Whether to take the square root of the mean squared log error.
+        If True, returns Root Mean Squared Log Error (RMSLE).
 
     Returns
     -------
-    relative_error : float
-        relative error
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of \
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+    loss : float or ndarray of floats
+        The computed metric value.
     """
-    denominator = np.where(
-        y_true - y_pred_benchmark >= 0,
-        np.maximum((y_true - y_pred_benchmark), EPS),
-        np.minimum((y_true - y_pred_benchmark), -EPS),
-    )
-    return (y_true - y_pred) / denominator
+    import traceback
 
+    import numpy as np
+    from sklearn.utils import check_consistent_length
 
-def _percentage_error(y_true, y_pred, symmetric=False, relative_to="y_true"):
-    """Percentage error.
+    # Only print if inputs are pandas objects (where the bug happens)
+    if hasattr(y_true, "index") and hasattr(y_pred, "index"):
+        # Check if indices are different
+        if not y_true.index.equals(y_pred.index):
+            print("\n🚨 DETECTED INDEX MISMATCH!")
+            print(f"y_true index: {y_true.index}")
+            print(f"y_pred index: {y_pred.index}")
+            print("🔍 CALL STACK (Who called me?):")
+            traceback.print_stack(limit=3)  # Print the last 3 callers
 
-    Parameters
-    ----------
-    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
-             where fh is the forecasting horizon
-        Ground truth (correct) target values.
+    check_consistent_length(y_true, y_pred)
 
-    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
-             where fh is the forecasting horizon
-        Forecasted values.
+    # [FIX] Force to numpy to avoid pandas index alignment causing NaNs/crashes
+    y_true_np = np.asanyarray(y_true)
+    y_pred_np = np.asanyarray(y_pred)
 
-    symmetric : bool, default = False
-        Whether to calculate symmetric percentage error.
+    # Clip negative values to 0 to avoid log domain errors
+    y_true_np = np.maximum(y_true_np, 0)
+    y_pred_np = np.maximum(y_pred_np, 0)
 
-    relative_to : bool, default = "y_true"
-        Whether to calculate percentage error by forecast.
+    y_true_log = np.log1p(y_true_np)
+    y_pred_log = np.log1p(y_pred_np)
 
-    Returns
-    -------
-    percentage_error : float
+    squared_log_error = np.square(y_true_log - y_pred_log)
 
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of \
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
-    """
-    if symmetric:
-        denominator = np.maximum(np.abs(y_true) + np.abs(y_pred), EPS) / 2
-    elif relative_to == "y_pred":
-        denominator = np.maximum(np.abs(y_pred), EPS)
+    # Average across time (axis 0)
+    if horizon_weight is not None:
+        msle = np.average(squared_log_error, axis=0, weights=horizon_weight)
     else:
-        denominator = np.maximum(np.abs(y_true), EPS)
-    percentage_error = np.abs(y_true - y_pred) / denominator
-    return percentage_error
+        msle = np.mean(squared_log_error, axis=0)
+
+    if square_root:
+        msle = np.sqrt(msle)
+
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return np.atleast_1d(msle)
+        if multioutput == "uniform_average":
+            return np.average(msle, weights=None)
+
+    return np.average(msle, weights=multioutput)

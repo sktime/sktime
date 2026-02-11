@@ -1,7 +1,5 @@
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
 
-__author__ = ["jnrusson1", "solen0id"]
-
 __all__ = ["LSTMFCNClassifier"]
 
 from copy import deepcopy
@@ -20,24 +18,32 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
     Parameters
     ----------
-    n_epochs: int, default=2000
+    activation : string or a tf callable, default="softmax"
+        Activation function used in the output layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    n_epochs : int, default=2000
      the number of epochs to train the model
-    batch_size: int, default=128
+    batch_size : int, default=128
         the number of samples per gradient update.
-    dropout: float, default=0.8
+    dropout : float, default=0.8
         controls dropout rate of LSTM layer
-    kernel_sizes: list of ints, default=[8, 5, 3]
+    kernel_sizes : list of ints, default=[8, 5, 3]
         specifying the length of the 1D convolution windows
-    filter_sizes: int, list of ints, default=[128, 256, 128]
+    filter_sizes : int, list of ints, default=[128, 256, 128]
         size of filter for each conv layer
-    lstm_size: int, default=8
+    lstm_size : int, default=8
         output dimension for LSTM layer
-    attention: boolean, default=False
+    attention : boolean, default=False
         If True, uses custom attention LSTM layer
-    callbacks: keras callbacks, default=ReduceLRonPlateau
+    callbacks : keras callbacks, default=ReduceLRonPlateau
         Keras callbacks to use such as learning rate reduction or saving best model
         based on validation error
-    verbose: 'auto', 0, 1, or 2. Verbosity mode.
+    verbose : 'auto', 0, 1, or 2. Verbosity mode.
         0 = silent, 1 = progress bar, 2 = one line per epoch.
         'auto' defaults to 1 for most cases, but 2 when used with
         ``ParameterServerStrategy``. Note that the progress bar is not
@@ -67,7 +73,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jnrusson1", "solen0id"],
+        "authors": ["jnrusson1", "solen0id", "noxthot"],
         "maintainers": ["jnrusson1", "solen0id"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
@@ -85,8 +91,12 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         callbacks=None,
         random_state=None,
         verbose=0,
+        activation="softmax",
+        activation_hidden="relu",
     ):
         # predefined
+        self.activation = activation
+        self.activation_hidden = activation_hidden
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.kernel_sizes = kernel_sizes
@@ -102,6 +112,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         super().__init__()
 
         self._network = LSTMFCNNetwork(
+            activation=self.activation_hidden,
             kernel_sizes=self.kernel_sizes,
             filter_sizes=self.filter_sizes,
             random_state=self.random_state,
@@ -132,7 +143,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
         input_layers, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(units=n_classes, activation="softmax")(
+        output_layer = keras.layers.Dense(units=n_classes, activation=self.activation)(
             output_layer
         )
 

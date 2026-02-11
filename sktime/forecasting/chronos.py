@@ -6,7 +6,6 @@ __author__ = ["abdulfatir", "lostella", "Z-Fran", "benheid", "geetu040", "Pranav
 __all__ = ["ChronosForecaster"]
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -185,6 +184,16 @@ class ChronosForecaster(BaseForecaster):
     developed by Amazon for time-series forecasting. This method has been
     proposed in [2]_ and official code is given at [1]_.
 
+    Note: vanilla Chronos is not exogenous capable despite being so advertised in [2]_.
+    The "exogenous capable" version is actually a composite forecaster rather than
+    an exogenous capable foundation model.
+
+    To obtain this "exogenous capable" version of Chronos as advertised in [2]_,
+    combine ``ChronosForecaster`` with an exogenous capable forecaster via
+    ``ResidualBoostingForecaster``. The original reference uses
+    tabularized linear regression, i.e., ``YtoX(LinearRegression())``,
+    with ``YtoX`` from ``sktime`` and ``LinearRegression`` from ``sklearn``.
+
     Parameters
     ----------
     model_path : str
@@ -296,6 +305,7 @@ class ChronosForecaster(BaseForecaster):
         "python_dependencies": ["torch", "transformers", "accelerate"],
         # estimator type
         # --------------
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
@@ -337,7 +347,7 @@ class ChronosForecaster(BaseForecaster):
         self,
         model_path: str,
         config: dict = None,
-        seed: Optional[int] = None,
+        seed: int | None = None,
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):
@@ -414,11 +424,7 @@ class ChronosForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        self.model_pipeline = self.model_strategy.create_pipeline(
-            key=self._get_unique_chronos_key(),
-            kwargs=self._get_chronos_kwargs(),
-            use_source_package=self.use_source_package,
-        ).load_from_checkpoint()
+        self.model_pipeline = self._load_pipeline()
         return self
 
     def _get_chronos_kwargs(self):
@@ -440,6 +446,37 @@ class ChronosForecaster(BaseForecaster):
             "use_source_package": use_source_package,
         }
         return str(sorted(kwargs_plus_model_path.items()))
+
+    def __getstate__(self):
+        """Return state for pickling, handling unpickleable model pipeline."""
+        state = self.__dict__.copy()
+        if hasattr(self, "model_pipeline"):
+            state["model_pipeline"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state from the unpickled state dictionary."""
+        self.__dict__.update(state)
+
+    def _ensure_model_pipeline_loaded(self):
+        """Ensure model pipeline is loaded, recreating if needed after unpickling."""
+        if not hasattr(self, "model_pipeline") or self.model_pipeline is None:
+            if hasattr(self, "_is_fitted") and self._is_fitted:
+                self.model_pipeline = self._load_pipeline()
+
+    def _load_pipeline(self):
+        """Load the model pipeline using the multiton pattern.
+
+        Returns
+        -------
+        pipeline : ChronosPipeline or ChronosBoltPipeline
+            The loaded model pipeline ready for predictions.
+        """
+        return self.model_strategy.create_pipeline(
+            key=self._get_unique_chronos_key(),
+            kwargs=self._get_chronos_kwargs(),
+            use_source_package=self.use_source_package,
+        ).load_from_checkpoint()
 
     def predict(self, fh=None, X=None, y=None):
         """Forecast time series at future horizon.
@@ -527,6 +564,8 @@ class ChronosForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Predicted forecasts.
         """
+        self._ensure_model_pipeline_loaded()
+
         transformers.set_seed(self._seed)
         if fh is not None:
             # needs to be integer not np.int64

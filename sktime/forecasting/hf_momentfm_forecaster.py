@@ -4,27 +4,14 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.split import temporal_train_test_split
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    from torch.cuda import empty_cache
-    from torch.utils.data import Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
-
-        pass
-
-
-if _check_soft_dependencies("accelerate", severity="none"):
-    pass
-
-if _check_soft_dependencies("transformers", severity="none"):
-    from sktime.libs.momentfm import MOMENTPipeline
+torch = _safe_import("torch")
+empty_cache = _safe_import("torch.cuda.empty_cache")
+Dataset = _safe_import("torch.utils.data.Dataset")
 
 
 class MomentFMForecaster(_BaseGlobalForecaster):
@@ -152,18 +139,19 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "scitype:y": "both",
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "y_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": True,
         "python_dependencies": [
             "torch",
             "tqdm",
             "huggingface-hub",
+            "hf-xet",
             # "momentfm",
             "accelerate",
             "transformers",
@@ -233,6 +221,8 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         from torch.optim import Adam
         from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
+
+        from sktime.libs.momentfm import MOMENTPipeline
 
         # keep a copy of y in case y is None in predict
         self._y = y

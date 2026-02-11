@@ -432,15 +432,21 @@ class ColumnwiseTransformer(BaseTransformer):
         "X_inner_mtype": "pd.DataFrame",
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
     }
 
     def __init__(self, transformer, columns=None):
         self.transformer = transformer
         self.columns = columns
+
         super().__init__()
 
+        from sktime.registry import coerce_scitype
+
+        self._transformer = coerce_scitype(transformer, "transformer")
+
+        # Clone tags from the internal transformer (guaranteed to be sktime)
         tags_to_clone = [
             "y_inner_mtype",
             "capability:inverse_transform",
@@ -450,7 +456,7 @@ class ColumnwiseTransformer(BaseTransformer):
             "skip-inverse-transform",
             "capability:categorical_in_X",
         ]
-        self.clone_tags(transformer, tag_names=tags_to_clone)
+        self.clone_tags(self._transformer, tag_names=tags_to_clone)
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -487,9 +493,10 @@ class ColumnwiseTransformer(BaseTransformer):
         # fit by iterating over columns
         self.transformers_ = {}
         for colname in self.columns_:
-            transformer = self.transformer.clone()
+            transformer = self._transformer.clone()
             self.transformers_[colname] = transformer
             self.transformers_[colname].fit(X[colname], y)
+
         return self
 
     def _transform(self, X, y=None):
@@ -601,9 +608,14 @@ class ColumnwiseTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sklearn.preprocessing import StandardScaler
+
         from sktime.transformations.series.detrend import Detrender
 
-        return {"transformer": Detrender()}
+        params1 = {"transformer": Detrender()}
+        params2 = {"transformer": StandardScaler()}
+
+        return [params1, params2]
 
 
 def _check_columns(z, selected_columns):
