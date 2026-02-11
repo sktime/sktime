@@ -1,12 +1,9 @@
-"""CNTC (Contextual Neural Networks for Time Series Classification) for Classification and Regression in PyTorch."""
-
+"""CNTC for Classification and Regression in PyTorch."""
 
 __authors__ = ["fnhirwa"]
+__all__ = ["CNTCNetworkTorch"]
 
 
-import numpy as np
-
-# from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _safe_import
 
 # handling soft dependencies for Torch modules
@@ -14,11 +11,12 @@ NNModule = _safe_import("torch.nn.Module")
 
 
 class CNTCNetworkTorch(NNModule):
-    """CNTC (Contextual Neural Networks for Time Series Classification) for Classification and Regression in PyTorch.
+    """CNTC (Contextual Neural Networks for Time Series Classification).
 
-    CNTC is a deep learning network architecture for time series classification and regression. It combines
-    convolutional layers, recurrent layers, attention mechanisms, and dense layers to capture both local and
-    global patterns in time series data.
+    CNTC is a deep learning network architecture for time series classification
+    and regression. It combines convolutional layers, recurrent layers,
+    attention mechanisms, and dense layers to capture both local
+    and global patterns in time series data.
 
     For more details on the architecture, see [1]_
 
@@ -30,10 +28,11 @@ class CNTCNetworkTorch(NNModule):
         The size of the pooling windows for the evg pooling layer.
     n_conv_layers: int, default = 2
         The number of convolutional layers in the network (plus the evg pooling layer).
-    filter_sizes: list of int,cwith the shape (n_conv_layers,), default = [64, 128]
+    filter_sizes: list of int, with the shape (n_conv_layers,), default = [64, 128]
         The number of filters in each convolutional layer.
     activation: str, default = 'relu'
-        The activation function used inside hidden layers (excluding the self attention module).
+        The activation function used inside hidden layers
+        (excluding the self attention module).
         List of available PyTorch activation functions:
         https://pytorch.org/docs/stable/nn.html#non-linear-activations
     activation_attention: str, default = 'sigmoid'
