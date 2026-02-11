@@ -1246,13 +1246,18 @@ class TransformedTargetForecaster(_Pipeline):
     def _predict_var(self, fh=None, X=None, cov=False):
         """Forecast variance at future horizon.
 
-        Overrides the mixin default to always compute variance from
-        ``_predict_interval``, avoiding recursion through ``predict_proba``.
+        Overrides the mixin default to avoid infinite recursion.
 
         Without this override, the mixin's ``_predict_var`` sees that
         ``_predict_proba`` is implemented and calls ``predict_proba``,
         which calls ``_predict_proba``, which (in the fallback path) calls
         ``_predict_var`` again — causing infinite recursion.
+
+        When the inner forecaster has a native ``_predict_proba``, this
+        delegates to ``predict_proba`` to obtain the exact variance from
+        the ``TransformedDistribution``.
+        Otherwise, falls back to an interval-based approximation to
+        break the recursion cycle.
 
         Parameters
         ----------
@@ -1268,6 +1273,17 @@ class TransformedTargetForecaster(_Pipeline):
         -------
         pred_var : pd.DataFrame, format dependent on ``cov`` variable
         """
+        forecaster = self.forecaster_
+        inner_has_proba = forecaster._has_implementation_of("_predict_proba")
+
+        if inner_has_proba:
+            # inner forecaster has native _predict_proba, so predict_proba
+            # will return a TransformedDistribution — get exact variance
+            pred_dist = self.predict_proba(fh=fh, X=X)
+            return pred_dist.var()
+
+        # fallback: compute variance from _predict_interval
+        # this breaks the recursion cycle since it does not call predict_proba
         from scipy.stats import norm
 
         pred_int = self._predict_interval(fh=fh, X=X, coverage=[0.5])
