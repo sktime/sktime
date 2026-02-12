@@ -191,3 +191,285 @@ def test_metric_coercion_bug():
 
     assert isinstance(metric, pd.DataFrame)
     assert metric.shape == (1, 1)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_msmape_class():
+    """Test MeanAbsolutePercentageErrorStabilized (msMAPE).
+
+    Hand-computed expected values for basic, single-observation,
+    all-zeros, and multivariate cases.
+    """
+    from sktime.performance_metrics.forecasting import (
+        MeanAbsolutePercentageErrorStabilized,
+    )
+
+    # --- basic case ---
+    y_true = np.array([3, 5, 2, 7])
+    y_pred = np.array([2.5, 4, 2, 8])
+    metric = MeanAbsolutePercentageErrorStabilized()
+    assert np.allclose(metric(y_true, y_pred), 0.13004235907461714)
+
+    # --- single observation (S_1 = 0, reduces to sMAPE-like term) ---
+    y_true_single = np.array([5.0])
+    y_pred_single = np.array([3.0])
+    assert np.allclose(metric(y_true_single, y_pred_single), 0.5)
+
+    # --- all zeros: numerator is zero so result is zero ---
+    y_true_zeros = np.array([0.0, 0.0, 0.0])
+    y_pred_zeros = np.array([0.0, 0.0, 0.0])
+    assert np.allclose(metric(y_true_zeros, y_pred_zeros), 0.0)
+
+    # --- multivariate with raw_values ---
+    y_true_mv = pd.DataFrame({"A": [3, 5, 2], "B": [10, 20, 30]})
+    y_pred_mv = pd.DataFrame({"A": [2.5, 4, 2], "B": [11, 19, 31]})
+    metric_raw = MeanAbsolutePercentageErrorStabilized(multioutput="raw_values")
+    result = metric_raw(y_true_mv, y_pred_mv)
+    expected = np.array([0.13468013468013468, 0.058229720201551184])
+    assert np.allclose(result, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_nmse_class():
+    """Test NormalizedMeanSquaredError (NMSE).
+
+    Hand-computed expected values for basic, constant-series, and multivariate cases.
+    """
+    from sktime.performance_metrics.forecasting import NormalizedMeanSquaredError
+
+    # --- basic case ---
+    y_true = np.array([3, -0.5, 2, 7, 2])
+    y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    metric = NormalizedMeanSquaredError()
+    assert np.allclose(metric(y_true, y_pred), 0.2630806138733395)
+
+    # --- perfect forecast ---
+    y_pred_perfect = y_true.copy()
+    assert np.allclose(metric(y_true, y_pred_perfect), 0.0)
+
+    # --- constant series: var=0 -> result is large but finite ---
+    y_const = np.array([5.0, 5.0, 5.0])
+    y_pred_const = np.array([4.0, 6.0, 5.5])
+    result = metric(y_const, y_pred_const)
+    assert np.isfinite(result)
+    assert result > 0
+
+    # --- multivariate with raw_values ---
+    y_true_mv = pd.DataFrame({"A": [3, -0.5, 2, 7, 2], "B": [1, 2, 3, 4, 5]})
+    y_pred_mv = pd.DataFrame(
+        {"A": [2.5, 0.0, 2, 8, 1.25], "B": [1.5, 2.5, 2.5, 3.5, 5.5]}
+    )
+    metric_raw = NormalizedMeanSquaredError(multioutput="raw_values")
+    result = metric_raw(y_true_mv, y_pred_mv)
+    expected = np.array([0.2630806138733395, 0.3535533905932738])
+    assert np.allclose(result, expected)
+
+    # --- uniform_average multivariate ---
+    metric_avg = NormalizedMeanSquaredError()
+    result = metric_avg(y_true_mv, y_pred_mv)
+    assert np.allclose(result, 0.3083170022333066)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_iqre_class():
+    """Test InterQuartileRangeError (IQR).
+
+    Hand-computed expected values for basic, constant-series, and multivariate cases.
+    """
+    from sktime.performance_metrics.forecasting import InterQuartileRangeError
+
+    # --- basic case ---
+    y_true = np.array([3, -0.5, 2, 7, 2])
+    y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    metric = InterQuartileRangeError()
+    assert np.allclose(metric(y_true, y_pred), 0.6422616289332564)
+
+    # --- perfect forecast ---
+    y_pred_perfect = y_true.copy()
+    assert np.allclose(metric(y_true, y_pred_perfect), 0.0)
+
+    # --- constant series: IQR=0 -> result is large but finite ---
+    y_const = np.array([5.0, 5.0, 5.0])
+    y_pred_const = np.array([4.0, 6.0, 5.5])
+    result = metric(y_const, y_pred_const)
+    assert np.isfinite(result)
+    assert result > 0
+
+    # --- multivariate with raw_values ---
+    y_true_mv = pd.DataFrame({"A": [3, -0.5, 2, 7, 2], "B": [1, 2, 3, 4, 5]})
+    y_pred_mv = pd.DataFrame(
+        {"A": [2.5, 0.0, 2, 8, 1.25], "B": [1.5, 2.5, 2.5, 3.5, 5.5]}
+    )
+    metric_raw = InterQuartileRangeError(multioutput="raw_values")
+    result = metric_raw(y_true_mv, y_pred_mv)
+    expected = np.array([0.6422616289332564, 0.25])
+    assert np.allclose(result, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_kln_class():
+    """Test KLDivergenceNormal (KL-N).
+
+    Hand-computed expected values for basic and perfect-forecast cases.
+    Uses test data where first two predictions exactly match to avoid
+    numerical blow-up from eps-clamped rolling variance at early indices.
+    """
+    from sktime.performance_metrics.forecasting import KLDivergenceNormal
+
+    # --- basic case ---
+    y_true = np.array([3.0, 5.0, 2.0, 7.0, 4.0, 6.0])
+    y_pred = np.array([3.0, 5.0, 3.0, 6.0, 5.0, 5.5])
+    metric = KLDivergenceNormal()
+    assert np.allclose(metric(y_true, y_pred), 0.5771341616115743)
+
+    # --- perfect forecast ---
+    y_pred_perfect = y_true.copy()
+    assert np.allclose(metric(y_true, y_pred_perfect), 0.0)
+
+    # --- with custom eps ---
+    metric_eps = KLDivergenceNormal(eps=1e-6)
+    result = metric_eps(y_true, y_pred)
+    assert np.isfinite(result)
+    assert result > 0
+
+    # --- with rolling window (window=3) ---
+    metric_w3 = KLDivergenceNormal(window=3)
+    result_w3 = metric_w3(y_true, y_pred)
+    assert np.isfinite(result_w3)
+    assert result_w3 > 0
+    # rolling window should differ from expanding window on this data
+    assert not np.allclose(result_w3, metric(y_true, y_pred))
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_klde2_class():
+    """Test KLDivergenceDoubleExponential (KL-DE2).
+
+    Hand-computed expected values for basic and perfect-forecast cases.
+    Uses test data where first two predictions exactly match to avoid
+    numerical blow-up from eps-clamped rolling MAD at early indices.
+    """
+    from sktime.performance_metrics.forecasting import KLDivergenceDoubleExponential
+
+    # --- basic case ---
+    y_true = np.array([3.0, 5.0, 2.0, 7.0, 4.0, 6.0])
+    y_pred = np.array([3.0, 5.0, 3.0, 6.0, 5.0, 5.5])
+    metric = KLDivergenceDoubleExponential()
+    assert np.allclose(metric(y_true, y_pred), 0.14407771573805175)
+
+    # --- perfect forecast ---
+    y_pred_perfect = y_true.copy()
+    assert np.allclose(metric(y_true, y_pred_perfect), 0.0)
+
+    # --- with custom eps ---
+    metric_eps = KLDivergenceDoubleExponential(eps=1e-6)
+    result = metric_eps(y_true, y_pred)
+    assert np.isfinite(result)
+    assert result > 0
+
+    # --- with rolling window (window=3) ---
+    metric_w3 = KLDivergenceDoubleExponential(window=3)
+    result_w3 = metric_w3(y_true, y_pred)
+    assert np.isfinite(result_w3)
+    assert result_w3 > 0
+    # rolling window should differ from expanding window on this data
+    assert not np.allclose(result_w3, metric(y_true, y_pred))
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_klde1_class():
+    """Test KLDivergenceSingleExponential (KL-DE1).
+
+    Hand-computed expected values for basic and perfect-forecast cases.
+    Uses test data where first two predictions exactly match to avoid
+    numerical blow-up from eps-clamped rolling std at early indices.
+    """
+    from sktime.performance_metrics.forecasting import (
+        KLDivergenceDoubleExponential,
+        KLDivergenceSingleExponential,
+    )
+
+    # --- basic case ---
+    y_true = np.array([3.0, 5.0, 2.0, 7.0, 4.0, 6.0])
+    y_pred = np.array([3.0, 5.0, 3.0, 6.0, 5.0, 5.5])
+    metric = KLDivergenceSingleExponential()
+    assert np.allclose(metric(y_true, y_pred), 0.1285730069501481)
+
+    # --- perfect forecast ---
+    y_pred_perfect = y_true.copy()
+    assert np.allclose(metric(y_true, y_pred_perfect), 0.0)
+
+    # --- with custom eps ---
+    metric_eps = KLDivergenceSingleExponential(eps=1e-6)
+    result = metric_eps(y_true, y_pred)
+    assert np.isfinite(result)
+    assert result > 0
+
+    # --- differs from KL-DE2 (different scale estimator) ---
+    klde2 = KLDivergenceDoubleExponential()
+    assert not np.allclose(metric(y_true, y_pred), klde2(y_true, y_pred))
+
+    # --- with rolling window (window=3) ---
+    metric_w3 = KLDivergenceSingleExponential(window=3)
+    result_w3 = metric_w3(y_true, y_pred)
+    assert np.isfinite(result_w3)
+    assert result_w3 > 0
+    # rolling window should differ from expanding window on this data
+    assert not np.allclose(result_w3, metric(y_true, y_pred))
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_theilu2_class():
+    """Test TheilU2 (Theil's U2 statistic).
+
+    Hand-computed expected values for basic, perfect-forecast, and
+    naive-equivalent cases.
+    """
+    from sktime.performance_metrics.forecasting import TheilU2
+
+    # --- basic case ---
+    y_train = np.array([5.0, 0.5, 4.0, 6.0, 3.0, 5.0, 2.0])
+    y_true = np.array([3.0, -0.5, 2.0, 7.0, 2.0])
+    y_pred = np.array([2.5, 0.0, 2.0, 8.0, 1.25])
+    metric = TheilU2()
+    result = metric(y_true, y_pred, y_train=y_train)
+    assert np.isfinite(result)
+    assert result > 0
+    assert np.allclose(result, 0.17226798597767884)
+
+    # --- perfect forecast -> 0.0 ---
+    y_pred_perfect = y_true.copy()
+    assert np.allclose(metric(y_true, y_pred_perfect, y_train=y_train), 0.0)
+
+    # --- forecast equal to naive -> 1.0 ---
+    # naive forecast with sp=1: previous actual value
+    y_naive_pred = np.concatenate([y_train[-1:], y_true[:-1]])
+    result_naive = metric(y_true, y_naive_pred, y_train=y_train)
+    assert np.allclose(result_naive, 1.0)
+
+    # --- sp=2 variant ---
+    metric_sp2 = TheilU2(sp=2)
+    result_sp2 = metric_sp2(y_true, y_pred, y_train=y_train)
+    assert np.isfinite(result_sp2)
+    assert result_sp2 > 0
