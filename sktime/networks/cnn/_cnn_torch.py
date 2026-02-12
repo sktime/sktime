@@ -30,8 +30,8 @@ class CNNNetworkTorch(NNModule):
         Length of the 1D convolution window.
     avg_pool_size : int, default = 3
         Size of the average pooling window.
-    filter_sizes : array-like of int, shape = (n_conv_layers), default = None
-        Number of filters per conv layer. If None, defaults to [6, 12].
+    filter_sizes : array-like of int, shape = (n_conv_layers), default = [6, 12]
+        Number of filters per conv layer.
     use_bias : bool, default = True
         Whether to use a bias in fully connected layers.
     padding : str, default = "auto"
@@ -72,7 +72,7 @@ class CNNNetworkTorch(NNModule):
         n_conv_layers=2,
         kernel_size=7,
         avg_pool_size=3,
-        filter_sizes=None,
+        filter_sizes=[6, 12],
         use_bias=True,
         padding="auto",
         activation=None,

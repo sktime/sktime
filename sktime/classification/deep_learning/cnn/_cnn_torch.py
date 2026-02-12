@@ -31,8 +31,8 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         Length of the 1D convolution window.
     avg_pool_size : int, default = 3
         Size of the average pooling window.
-    filter_sizes : array-like of int, shape = (n_conv_layers), default = None
-        Number of filters per conv layer. If None, defaults to [6, 12].
+    filter_sizes : array-like of int, shape = (n_conv_layers), default = [6, 12]
+        Number of filters per conv layer.
     padding : str, default = "auto"
         Padding for conv layers. "auto": "same" if series_length < 60 else "valid";
         "valid" or "same" otherwise.
