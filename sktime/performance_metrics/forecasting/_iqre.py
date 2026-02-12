@@ -103,6 +103,7 @@ class InterQuartileRangeError(BaseForecastingErrorMetric):
 
     _tags = {
         "authors": ["michaelellis003"],
+        "maintainers": ["michaelellis003"],
     }
 
     def __init__(

@@ -123,6 +123,7 @@ class KLDivergenceDoubleExponential(_KLDivergenceLaplaceBase):
 
     _tags = {
         "authors": ["michaelellis003"],
+        "maintainers": ["michaelellis003"],
     }
 
     def _compute_rolling_scale(self, y_true_vals, eps):
