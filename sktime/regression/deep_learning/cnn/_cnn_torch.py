@@ -20,32 +20,32 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
     ----------
     num_epochs : int, default = 2000
         Number of epochs to train the model.
+    n_conv_layers : int, default = 2
+        Number of convolutional plus average pooling layers.
     batch_size : int, default = 16
         Size of each mini-batch.
     kernel_size : int, default = 7
         Length of the 1D convolution window.
     avg_pool_size : int, default = 3
         Size of the average pooling window.
-    n_conv_layers : int, default = 2
-        Number of convolutional plus average pooling layers.
     filter_sizes : array-like of int, shape = (n_conv_layers), default = None
         Number of filters per conv layer. If None, defaults to [6, 12].
-    activation : str or None, default = None
-        Activation for the output layer.
-    activation_hidden : str, default = "sigmoid"
-        Activation for hidden conv layers: "sigmoid" or "relu".
+    use_bias : bool, default = True
+        Whether to use bias in output layer.
     padding : string, default = "auto"
         Controls padding logic for the convolutional layers,
         i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
         - "auto": as per original implementation, ``"same"`` is passed if
           ``input_shape[0] < 60`` in the input layer, and ``"valid"`` otherwise.
         - "valid", "same", and other values are passed directly to ``Conv1D``
+    activation : str or None, default = None
+        Activation for the output layer.
+    activation_hidden : str, default = "sigmoid"
+        Activation for hidden conv layers: "sigmoid" or "relu".
     optimizer : str or callable, default = "Adam"
         Optimizer to use. Same as TF default (Adam).
     optimizer_kwargs : dict or None, default = None
         Additional keyword arguments for the optimizer.
-    lr : float, default = 0.01
-        Learning rate (TF CNN uses Adam(lr=0.01)).
     criterion : str or callable, default = "MSELoss"
         Loss function (TF uses mean_squared_error).
     criterion_kwargs : dict or None, default = None
@@ -54,9 +54,11 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
         Learning rate schedulers as callbacks.
     callback_kwargs : dict or None, default = None
         Keyword arguments for callbacks.
+    lr : float, default = 0.01
+        Learning rate (TF CNN uses Adam(lr=0.01)).
     verbose : bool, default = False
         Whether to print progress during training.
-    random_state : int, default = 0
+    random_state : int or None, default = None
         Seed for reproducibility.
 
 
@@ -79,6 +81,7 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
     _tags = {
         "authors": ["hfawaz", "AurumnPegasus", "achieveordie", "noxthot"],
         "maintainers": ["Faakhir30"],
+        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
@@ -87,24 +90,25 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
 
     def __init__(
         self,
+        num_epochs=2000,
+        n_conv_layers=2,
+        batch_size=16,
         kernel_size=7,
         avg_pool_size=3,
-        n_conv_layers=2,
         filter_sizes=None,
-        activation_hidden="sigmoid",
-        activation=None,
+        use_bias=True,
         padding="auto",
-        num_epochs=2000,
-        batch_size=16,
+        activation=None,
+        activation_hidden="sigmoid",
         optimizer="Adam",
         optimizer_kwargs=None,
-        lr=0.01,
         criterion="MSELoss",
         criterion_kwargs=None,
         callbacks="ReduceLROnPlateau",
         callback_kwargs=None,
+        lr=0.01,
         verbose=False,
-        random_state=0,
+        random_state=None,
     ):
         self.kernel_size = kernel_size
         self.avg_pool_size = avg_pool_size
@@ -113,6 +117,7 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
         self.activation_hidden = activation_hidden
         self.activation = activation
         self.padding = padding
+        self.use_bias = use_bias
         self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.optimizer = optimizer
@@ -124,6 +129,12 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
         self.callback_kwargs = callback_kwargs
         self.verbose = verbose
         self.random_state = random_state
+
+        if len(filter_sizes) != n_conv_layers:
+            raise ValueError(
+                f"Length of filter_sizes ({len(filter_sizes)}) must match "
+                f"n_conv_layers ({n_conv_layers}) in CNNRegressorTorch."
+            )
 
         super().__init__(
             num_epochs=self.num_epochs,
@@ -169,6 +180,7 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
             n_conv_layers=self.n_conv_layers,
             filter_sizes=self.filter_sizes,
             activation_hidden=self.activation_hidden,
+            use_bias=self.use_bias,
             activation=self.activation,
             padding=self.padding,
             random_state=self.random_state,

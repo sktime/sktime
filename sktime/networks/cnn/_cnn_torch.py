@@ -24,26 +24,30 @@ class CNNNetworkTorch(NNModule):
         Used to compute the flattened size after conv and pool layers.
     num_classes : int
         Number of output classes (classification) or 1 (regression).
+    n_conv_layers : int, default = 2
+        Number of convolutional plus average pooling layers.
     kernel_size : int, default = 7
         Length of the 1D convolution window.
     avg_pool_size : int, default = 3
         Size of the average pooling window.
-    n_conv_layers : int, default = 2
-        Number of convolutional plus average pooling layers.
     filter_sizes : array-like of int, shape = (n_conv_layers), default = None
         Number of filters per conv layer. If None, defaults to [6, 12].
-    activation_hidden : str, default = "sigmoid"
-        Activation function for hidden conv layers: "sigmoid" or "relu".
-    activation : str or None, default = None
-        Activation applied to the output layer. None for regression.
-        For output layer, use None for regression (linear) or pass from
-        classifier/regressor.
     use_bias : bool, default = True
         Whether to use a bias in fully connected layers.
     padding : str, default = "auto"
         Padding for conv layers. "auto": "same" if series_length < 60 else "valid";
         "valid" or "same" passed directly.
-    random_state : int, default = 0
+    activation : str or None, default = None
+        Activation applied to the output layer. None for regression.
+        For output layer, use None for regression (linear) or pass from
+        classifier/regressor.
+    activation_hidden : str, default = "sigmoid"
+        Activation function for hidden conv layers: "sigmoid" or "relu".
+    weights_init: str or None, default = None
+        The method to initialize the weights of the conv layers. Supported values are
+        'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
+        for default PyTorch initialization.
+    random_state : int or None, default = None
         Seed for reproducibility.
 
     References
@@ -55,6 +59,7 @@ class CNNNetworkTorch(NNModule):
     _tags = {
         "authors": ["hfawaz", "James-Large", "Withington", "TonyBagnall", "noxthot"],
         "maintainers": ["Faakhir30"],
+        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
@@ -64,15 +69,16 @@ class CNNNetworkTorch(NNModule):
         self,
         input_shape,
         num_classes,
+        n_conv_layers=2,
         kernel_size=7,
         avg_pool_size=3,
-        n_conv_layers=2,
         filter_sizes=None,
-        activation_hidden="sigmoid",
-        activation=None,
         use_bias=True,
         padding="auto",
-        random_state=0,
+        activation=None,
+        activation_hidden="sigmoid",
+        weights_init=None,
+        random_state=None,
     ):
         self.input_shape = input_shape
         self.num_classes = num_classes
@@ -84,6 +90,7 @@ class CNNNetworkTorch(NNModule):
         self.activation = activation
         self.use_bias = use_bias
         self.padding = padding
+        self.weights_init = weights_init
         self.random_state = random_state
 
         super().__init__()
@@ -152,6 +159,9 @@ class CNNNetworkTorch(NNModule):
             torch_manual_seed = _safe_import("torch.manual_seed")
             torch_manual_seed(random_state)
 
+        if self.weights_init is not None:
+            self.apply(self._init_weights)
+
     def forward(self, X):
         """Forward pass.
 
@@ -183,6 +193,30 @@ class CNNNetworkTorch(NNModule):
         if self.num_classes == 1:  # (regression)
             out = out.squeeze(1)  # (batch_size,)
         return out
+
+    def _init_weights(self, module):
+        nnConv1d = _safe_import("torch.nn.Conv1d")
+
+        kaiming_uniform_ = _safe_import("torch.nn.init.kaiming_uniform_")
+        kaiming_normal_ = _safe_import("torch.nn.init.kaiming_normal_")
+        xavier_uniform_ = _safe_import("torch.nn.init.xavier_uniform_")
+        xavier_normal_ = _safe_import("torch.nn.init.xavier_normal_")
+
+        if isinstance(module, nnConv1d):
+            if self.weights_init == "kaiming_uniform":
+                kaiming_uniform_(module.weight, nonlinearity="relu")
+
+            elif self.weights_init == "kaiming_normal":
+                kaiming_normal_(module.weight, nonlinearity="relu")
+
+            elif self.weights_init == "xavier_uniform":
+                xavier_uniform_(module.weight)
+
+            elif self.weights_init == "xavier_normal":
+                xavier_normal_(module.weight)
+
+            if module.bias is not None:
+                module.bias.data.zero_()
 
     def _instantiate_activation(self, activation):
         """Instantiate the activation function to be applied on the output layer.

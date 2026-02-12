@@ -2,6 +2,8 @@
 
 __all__ = ["CNNClassifierTorch"]
 
+import warnings
+
 import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
@@ -21,31 +23,31 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
     ----------
     num_epochs : int, default = 2000
         Number of epochs to train the model.
+    n_conv_layers : int, default = 2
+        Number of convolutional plus average pooling layers.
     batch_size : int, default = 16
         Size of each mini-batch.
     kernel_size : int, default = 7
         Length of the 1D convolution window.
     avg_pool_size : int, default = 3
         Size of the average pooling window.
-    n_conv_layers : int, default = 2
-        Number of convolutional plus average pooling layers.
     filter_sizes : array-like of int, shape = (n_conv_layers), default = None
         Number of filters per conv layer. If None, defaults to [6, 12].
+    padding : str, default = "auto"
+        Padding for conv layers. "auto": "same" if series_length < 60 else "valid";
+        "valid" or "same" otherwise.
+    use_bias : bool, default = True
+        Whether to use bias in output layer.
     activation : str or None, default = None
         Activation on output layer. None when using CrossEntropyLoss.
     activation_hidden : str, default = "sigmoid"
         Activation for hidden conv layers.
         Supported activations include 'sigmoid', 'logsigmoid', 'relu',
         'softmax' or 'logsoftmax'.
-    padding : str, default = "auto"
-        Padding for conv layers. "auto": "same" if series_length < 60 else "valid";
-        "valid" or "same" otherwise.
     optimizer : str or callable, default = "Adam"
         Optimizer to use. Same as TF default (Adam).
     optimizer_kwargs : dict or None, default = None
         Additional keyword arguments for the optimizer.
-    lr : float, default = 0.01
-        Learning rate (TF CNN uses Adam(lr=0.01)).
     criterion : str or callable, default = "CrossEntropyLoss"
         Loss function for training.
     criterion_kwargs : dict or None, default = None
@@ -54,11 +56,11 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         Learning rate schedulers as callbacks.
     callback_kwargs : dict or None, default = None
         Keyword arguments for callbacks.
-    use_bias : bool, default = True
-        Whether to use bias in output layer.
+    lr : float, default = 0.01
+        Learning rate (TF CNN uses Adam(lr=0.01)).
     verbose : bool, default = False
         Whether to print progress during training.
-    random_state : int, default = 0
+    random_state : int or None, default = None
         Seed for reproducibility.
 
     References
@@ -80,6 +82,7 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
     _tags = {
         "authors": ["hfawaz", "James-Large", "noxthot"],
         "maintainers": ["Faakhir30"],
+        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
@@ -97,19 +100,19 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         avg_pool_size=3,
         n_conv_layers=2,
         filter_sizes=None,
-        activation_hidden="sigmoid",
         padding="auto",
+        use_bias=True,
+        activation=None,
+        activation_hidden="sigmoid",
         optimizer="Adam",
         optimizer_kwargs=None,
-        lr=0.01,
         criterion="CrossEntropyLoss",
         criterion_kwargs=None,
         callbacks="ReduceLROnPlateau",
         callback_kwargs=None,
-        activation=None,
-        use_bias=True,
+        lr=0.01,
         verbose=False,
-        random_state=0,
+        random_state=None,
     ):
         self.kernel_size = kernel_size
         self.avg_pool_size = avg_pool_size
@@ -130,6 +133,12 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         self.use_bias = use_bias
         self.verbose = verbose
         self.random_state = random_state
+
+        if len(filter_sizes) != n_conv_layers:
+            raise ValueError(
+                f"Length of filter_sizes ({len(filter_sizes)}) must match "
+                f"n_conv_layers ({n_conv_layers}) in CNNClassifierTorch."
+            )
 
         super().__init__(
             num_epochs=self.num_epochs,
@@ -170,6 +179,13 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         series_length = X.shape[2]
         input_shape = (n_dims, series_length)
         self.n_classes_ = len(np.unique(y))
+
+        if self.n_classes_ == 1:
+            warnings.warn(
+                "The provided data passed to CNNClassifierTorch contains "
+                "a single label. If this is not intentional, please check.",
+                UserWarning,
+            )
 
         return CNNNetworkTorch(
             input_shape=input_shape,
