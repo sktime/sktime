@@ -466,14 +466,14 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     if summarizer in pd_rolling:
         feat = Z.transform(
             lambda x: getattr(
-                x.rolling(window=window_length, min_periods=window_length), summarizer
+                x.rolling(window=window_length, min_periods=1), summarizer
             )().shift(lag)
         )
     elif summarizer == "lag":
         feat = Z.transform(lambda x: x.shift(lag))
     elif callable(summarizer):
         feat = Z.transform(
-            lambda x: x.rolling(window=window_length, min_periods=window_length)
+            lambda x: x.rolling(window=window_length, min_periods=1)
             .apply(summarizer, raw=True)
             .shift(lag)
         )
