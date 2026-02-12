@@ -65,7 +65,7 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
-    weights_init: str or None, default = 'kaiming_uniform'
+    init_weights: str or None, default = 'kaiming_uniform'
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
         for default PyTorch initialization.
@@ -122,7 +122,7 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
         criterion_kwargs: dict | None = None,
         callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
         callback_kwargs: dict | None = None,
-        weights_init: str | None = "kaiming_uniform",
+        init_weights: str | None = "kaiming_uniform",
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int | None = None,
@@ -142,7 +142,7 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
         self.optimizer_kwargs = optimizer_kwargs
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
-        self.weights_init = weights_init
+        self.init_weights = init_weights
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -217,7 +217,7 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
             attention=self.attention,
             activation=self.activation,
             activation_hidden=self.activation_hidden,
-            weights_init=self.weights_init,
+            init_weights=self.init_weights,
             random_state=self.random_state,
         )
 

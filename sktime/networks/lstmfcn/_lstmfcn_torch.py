@@ -42,7 +42,7 @@ class LSTMFCNNetworkTorch(NNModule):
     activation_hidden : str, default="relu"
         Activation function used for convolutional layers.
         Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    weights_init: str or None, default = 'kaiming_uniform'
+    init_weights: str or None, default = 'kaiming_uniform'
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
         for default PyTorch initialization.
@@ -82,7 +82,7 @@ class LSTMFCNNetworkTorch(NNModule):
         attention: bool = False,
         activation: str | None = None,
         activation_hidden: str = "relu",
-        weights_init: str | None = "kaiming_uniform",
+        init_weights: str | None = "kaiming_uniform",
         random_state: int = 0,
     ):
         self.input_size = input_size
@@ -94,7 +94,7 @@ class LSTMFCNNetworkTorch(NNModule):
         self.attention = attention
         self.activation = activation
         self.activation_hidden = activation_hidden
-        self.weights_init = weights_init
+        self.init_weights = init_weights
         self.random_state = random_state
 
         super().__init__()
@@ -155,8 +155,8 @@ class LSTMFCNNetworkTorch(NNModule):
             out_features=self.num_classes,
         )
 
-        # Initialize weights
-        self.apply(self._init_weights)
+        if self.init_weights is not None:
+            self.apply(self._init_weights)
 
     def forward(self, X):
         """Forward pass through the LSTM-FCN network.
@@ -225,16 +225,16 @@ class LSTMFCNNetworkTorch(NNModule):
         xavier_normal_ = _safe_import("torch.nn.init.xavier_normal_")
 
         if isinstance(module, nnConv1d):
-            if self.weights_init == "kaiming_uniform":
+            if self.init_weights == "kaiming_uniform":
                 kaiming_uniform_(module.weight, nonlinearity="relu")
 
-            elif self.weights_init == "kaiming_normal":
+            elif self.init_weights == "kaiming_normal":
                 kaiming_normal_(module.weight, nonlinearity="relu")
 
-            elif self.weights_init == "xavier_uniform":
+            elif self.init_weights == "xavier_uniform":
                 xavier_uniform_(module.weight)
 
-            elif self.weights_init == "xavier_normal":
+            elif self.init_weights == "xavier_normal":
                 xavier_normal_(module.weight)
 
             if module.bias is not None:
