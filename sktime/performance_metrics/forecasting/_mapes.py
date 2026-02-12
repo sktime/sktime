@@ -2,6 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Rolling MAD-stabilized symmetric MAPE (msMAPE) metric."""
 
+__author__ = ["michaelellis003"]
+
 import numpy as np
 import pandas as pd
 
@@ -108,6 +110,10 @@ class MeanAbsolutePercentageErrorStabilized(BaseForecastingErrorMetric):
     >>> metric(y_true, y_pred)
     np.float64(0.13004235907461714)
     """
+
+    _tags = {
+        "authors": ["michaelellis003"],
+    }
 
     def __init__(
         self,

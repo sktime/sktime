@@ -473,3 +473,43 @@ def test_theilu2_class():
     result_sp2 = metric_sp2(y_true, y_pred, y_train=y_train)
     assert np.isfinite(result_sp2)
     assert result_sp2 > 0
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_evaluate_by_index_returns_correct_index():
+    """Test that evaluate_by_index returns results with the correct index.
+
+    Metrics that use jackknife pseudo-values (NMSE, IQRE, KL-N, TheilU2) must
+    return a pd.Series/DataFrame whose index matches y_true's index.
+    """
+    from sktime.performance_metrics.forecasting import (
+        InterQuartileRangeError,
+        KLDivergenceNormal,
+        NormalizedMeanSquaredError,
+        TheilU2,
+    )
+
+    idx = pd.date_range("2020-01-01", periods=6, freq="D")
+    y_true = pd.DataFrame({"a": [3.0, 5.0, 2.0, 7.0, 4.0, 6.0]}, index=idx)
+    y_pred = pd.DataFrame({"a": [3.0, 5.0, 3.0, 6.0, 5.0, 5.5]}, index=idx)
+
+    for MetricCls in [NormalizedMeanSquaredError, InterQuartileRangeError,
+                      KLDivergenceNormal]:
+        metric = MetricCls()
+        result = metric.evaluate_by_index(y_true, y_pred)
+        assert result.index.equals(idx), (
+            f"{MetricCls.__name__}.evaluate_by_index returned wrong index"
+        )
+        assert len(result) == len(y_true)
+
+    # TheilU2 requires y_train
+    y_train = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]}, index=range(5))
+    metric_u2 = TheilU2()
+    result_u2 = metric_u2.evaluate_by_index(y_true, y_pred, y_train=y_train)
+    assert result_u2.index.equals(idx), (
+        "TheilU2.evaluate_by_index returned wrong index"
+    )
+    assert len(result_u2) == len(y_true)

@@ -2,6 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Theil's U2 statistic for forecast evaluation."""
 
+__author__ = ["michaelellis003"]
+
 import numpy as np
 import pandas as pd
 
@@ -117,6 +119,10 @@ class TheilU2(_ScaledMetricTags, BaseForecastingErrorMetric):
     np.float64(0.17226798597767884)
     """
 
+    _tags = {
+        "authors": ["michaelellis003"],
+    }
+
     def __init__(
         self,
         multioutput="uniform_average",
@@ -147,8 +153,15 @@ class TheilU2(_ScaledMetricTags, BaseForecastingErrorMetric):
             Naive seasonal forecast values.
         """
         sp = self.sp
+        n = y_true.shape[0]
         y_train_vals = y_train.values
         y_true_vals = y_true.values
+
+        if sp > n:
+            raise ValueError(
+                f"Seasonal periodicity sp={sp} exceeds the number of test "
+                f"observations ({n}). TheilU2 requires len(y_true) >= sp."
+            )
 
         # naive forecast: value from sp periods ago
         # first sp values come from end of y_train, rest from y_true shifted

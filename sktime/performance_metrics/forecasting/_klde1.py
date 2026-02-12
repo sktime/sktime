@@ -2,6 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """KL-divergence based metric assuming single-exponential errors (KL-DE1)."""
 
+__author__ = ["michaelellis003"]
+
 import numpy as np
 
 from sktime.performance_metrics.forecasting._klde_base import (
@@ -124,6 +126,10 @@ class KLDivergenceSingleExponential(_KLDivergenceLaplaceBase):
     np.float64(0.1285730069501481)
     """
 
+    _tags = {
+        "authors": ["michaelellis003"],
+    }
+
     def _compute_rolling_scale(self, y_true_vals, eps):
         """Compute rolling standard deviation for each time index.
 
@@ -143,7 +149,10 @@ class KLDivergenceSingleExponential(_KLDivergenceLaplaceBase):
         window = self.window
 
         if window is None:
-            # Vectorized expanding window: std = sqrt(E[X^2] - E[X]^2)
+            # Vectorized expanding window using population variance:
+            # std = sqrt(E[X^2] - E[X]^2)
+            # The paper defines sigma_i via (1/(i-1)) sum_{k=1}^{i-1}(...)
+            # which divides by the number of terms (population variance).
             cumsum = np.cumsum(y_true_vals, axis=0)
             cumsqsum = np.cumsum(y_true_vals**2, axis=0)
             counts = np.arange(1, n + 1, dtype=np.float64)

@@ -2,6 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """KL-divergence based metric assuming normal errors (KL-N)."""
 
+__author__ = ["michaelellis003"]
+
 import numpy as np
 import pandas as pd
 
@@ -119,6 +121,10 @@ class KLDivergenceNormal(BaseForecastingErrorMetric):
     np.float64(0.5771341616115743)
     """
 
+    _tags = {
+        "authors": ["michaelellis003"],
+    }
+
     def __init__(
         self,
         multioutput="uniform_average",
@@ -154,7 +160,10 @@ class KLDivergenceNormal(BaseForecastingErrorMetric):
         window = self.window
 
         if window is None:
-            # Vectorized expanding window: Var(X) = E[X^2] - E[X]^2
+            # Vectorized expanding window using population variance:
+            # Var(X) = E[X^2] - E[X]^2
+            # The paper defines S_i^2 = (1/(i-1)) sum_{k=1}^{i-1}(...)
+            # which divides by the number of terms (population variance).
             cumsum = np.cumsum(y_true_vals, axis=0)
             cumsqsum = np.cumsum(y_true_vals**2, axis=0)
             counts = np.arange(1, n + 1, dtype=np.float64)

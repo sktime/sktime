@@ -2,6 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Normalized mean squared error (NMSE) metric."""
 
+__author__ = ["michaelellis003"]
+
 import numpy as np
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
@@ -102,6 +104,10 @@ class NormalizedMeanSquaredError(BaseForecastingErrorMetric):
     np.float64(0.2630806138733395)
     """
 
+    _tags = {
+        "authors": ["michaelellis003"],
+    }
+
     def __init__(
         self,
         multioutput="uniform_average",
@@ -188,6 +194,10 @@ class NormalizedMeanSquaredError(BaseForecastingErrorMetric):
         y_var = np.maximum(y_var, eps)
         nmse = (mse / y_var).pow(0.5)
 
+        # Jackknife leave-one-out for both numerator (MSE) and denominator
+        # (variance). Note: y_dev uses the full-sample mean rather than each
+        # LOO mean; this is the standard first-order jackknife approximation
+        # and the bias is O(1/n).
         sqe_sum = sqe.sum(axis=0)
         y_dev = (y_true - y_true.mean()) ** 2
         y_dev_sum = y_dev.sum(axis=0)

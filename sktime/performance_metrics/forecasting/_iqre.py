@@ -2,6 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Interquartile range error (IQR) metric."""
 
+__author__ = ["michaelellis003"]
+
 import numpy as np
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
@@ -99,6 +101,10 @@ class InterQuartileRangeError(BaseForecastingErrorMetric):
     np.float64(0.6422616289332564)
     """
 
+    _tags = {
+        "authors": ["michaelellis003"],
+    }
+
     def __init__(
         self,
         multioutput="uniform_average",
@@ -189,6 +195,9 @@ class InterQuartileRangeError(BaseForecastingErrorMetric):
         iqr = np.maximum(q75 - q25, eps)
         full_val = rmse / iqr
 
+        # Jackknife leave-one-out: remove each squared error from the sum
+        # but keep IQR fixed (recomputing quantiles per LOO subset would be
+        # expensive and introduce discrete jumps that destabilize pseudo-values).
         sqe_sum = sqe.sum(axis=0)
         mse_jack = (sqe_sum - sqe) / (n - 1)
         rmse_jack = mse_jack.pow(0.5)

@@ -2,6 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """KL-divergence based metric assuming double-exponential errors (KL-DE2)."""
 
+__author__ = ["michaelellis003"]
+
 import numpy as np
 
 from sktime.performance_metrics.forecasting._klde_base import (
@@ -118,6 +120,10 @@ class KLDivergenceDoubleExponential(_KLDivergenceLaplaceBase):
     >>> klde2(y_true, y_pred)
     np.float64(0.14407771573805175)
     """
+
+    _tags = {
+        "authors": ["michaelellis003"],
+    }
 
     def _compute_rolling_scale(self, y_true_vals, eps):
         """Compute rolling mean absolute deviation (MAD) for each time index.

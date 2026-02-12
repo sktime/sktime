@@ -2,6 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Base class for KL-divergence metrics assuming Laplace-distributed errors."""
 
+__author__ = ["michaelellis003"]
+
 import numpy as np
 import pandas as pd
 
@@ -9,14 +11,29 @@ from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMet
 
 
 class _KLDivergenceLaplaceBase(BaseForecastingErrorMetric):
-    """Base class for KL-DE1 and KL-DE2 metrics.
+    r"""Base class for KL-DE1 and KL-DE2 metrics.
 
-    Implements the shared Laplace KL-divergence loss:
-    ``exp(-|e|/sigma) + |e|/sigma - 1``, averaged over time points.
+    Implements the shared Laplace KL-divergence loss, averaged over
+    time points:
+
+    .. math::
+        L_i = \exp\!\left(-\frac{|e_i|}{\hat{\sigma}_i}\right)
+        + \frac{|e_i|}{\hat{\sigma}_i} - 1
+
+    where :math:`e_i = y_i - \widehat{y}_i` and :math:`\hat{\sigma}_i`
+    is a rolling scale estimate provided by the subclass.
 
     Subclasses must implement ``_compute_rolling_scale`` to provide the
     scale estimator (standard deviation for KL-DE1, MAD for KL-DE2).
+
+    Only ``_evaluate_by_index`` is implemented here; the base class
+    ``_evaluate`` computes the mean of per-index values, which is correct
+    since the KL-DE loss is a simple average of per-index terms.
     """
+
+    _tags = {
+        "authors": ["michaelellis003"],
+    }
 
     def __init__(
         self,
