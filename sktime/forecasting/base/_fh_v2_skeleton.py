@@ -1,3 +1,6 @@
+# from earlier experimentation with new ForecastingHorizonV2 design
+# only kept as a reference
+# to be deleted before merging the new design into the main branch
 import numpy as np
 
 
@@ -51,12 +54,3 @@ class ForecastingHorizonV2:
         # Handle MultiIndex
         # Placeholder for implementation
         pass
-
-
-# Example usage
-if __name__ == "__main__":
-    freq = Frequency("D")  # Daily frequency
-    horizon_vals = _ForecastingHorizonValues(
-        np.array([0, 1, 2, 3, 4, 5])
-    )  # Example values
-    fh_v2 = ForecastingHorizonV2(horizon_vals, freq)
