@@ -202,3 +202,84 @@ class FHValues:
             f"freq={self.freq}, "
             f"timezone={self.timezone})"
         )
+
+    def sort(self) -> "FHValues":
+        """Return new FHValues with sorted values."""
+        # <check>check the final set of attributes to be stored</check>
+        # this will create a new instance with sorted values, same metadata
+        sorted_vals = np.sort(self.values)
+        return FHValues(sorted_vals, self.value_type, self.freq, self.timezone)
+
+    def unique(self) -> "FHValues":
+        """Return new FHValues with unique values (preserves sort order)."""
+        unique_vals = np.unique(self.values)
+        return FHValues(unique_vals, self.value_type, self.freq, self.timezone)
+
+    def max(self):
+        """Return maximum value."""
+        return self.values.max() if len(self.values) > 0 else None
+
+    def min(self):
+        """Return minimum value."""
+        return self.values.min() if len(self.values) > 0 else None
+
+    def nunique(self) -> int:
+        """Return number of unique values."""
+        return len(np.unique(self.values))
+
+    def is_contiguous(self) -> bool:
+        """Check if values form a contiguous sequence.
+
+        For INT and PERIOD: checks consecutive integers.
+        For TIMEDELTA and DATETIME: infers step from min diff, checks coverage.
+
+        Returns
+        -------
+        bool
+            True if values form a contiguous sequence.
+        """
+        if len(self.values) <= 1:
+            return True
+
+        sorted_vals = np.sort(self.values)
+
+        if self.value_type in (FHValueType.INT, FHValueType.PERIOD):
+            # <check>
+            # multiple cases need to be hanfled here:
+            #   - if the values are not perfectly regular
+            #   - if there are duplicates
+            #   - if there are missing values in between
+            #   - and other cases
+            # </check>
+            expected_len = int(sorted_vals[-1] - sorted_vals[0]) + 1
+            return len(self._values) == expected_len
+
+        # <check>
+        # same for TIMEDELTA or DATETIME
+        # Below is partial implementation
+        # </check>
+        diffs = np.diff(sorted_vals)
+        min_diff = diffs.min()
+        if min_diff == np.timedelta64(0):
+            return False  # duplicates
+        total_span = sorted_vals[-1] - sorted_vals[0]
+        expected_steps = total_span / min_diff
+        return len(self.values) == int(expected_steps) + 1
+
+    def __getitem__(self, key):
+        """Support integer and slice indexing.
+
+        Returns a new FHValues for slices/arrays, or a scalar for int index.
+        """
+        # <check>
+        # support for all valid slices and indexing needs to be implemented.
+        # </check>
+
+        result = self.values[key]
+        if isinstance(result, np.ndarray):
+            return FHValues(result, self.value_type, self.freq, self.timezone)
+        return result
+
+    def copy(self) -> "FHValues":
+        """Return a deep copy."""
+        return FHValues(self.values.copy(), self.value_type, self.freq, self.timezone)
