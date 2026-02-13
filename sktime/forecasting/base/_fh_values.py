@@ -117,7 +117,7 @@ class FHValues:
         self.values = values
         self.value_type = value_type
         self.freq = freq
-        self.timezone = timezone
+        self.timezone = timezone if value_type == FHValueType.DATETIME else None
         self.hash = None  # Cache for hash value, to be computerd lazily when needed
 
     @property
@@ -143,3 +143,62 @@ class FHValues:
     def timezone(self) -> str | None:
         """Return timezone string or None."""
         return self.timezone
+
+    def is_relative_type(self) -> bool:
+        """Whether the value type is a relative type."""
+        return self.value_type in _RELATIVE_VALUE_TYPES
+
+    def is_absolute_type(self) -> bool:
+        """Whether the value type is an absolute type."""
+        return self.value_type in _ABSOLUTE_VALUE_TYPES
+
+    def __len__(self) -> int:
+        return len(self.values)
+
+    def __eq__(self, other):
+        # <check>below implementation needs to be checked,
+        # its more of a placeholder right now.</check>
+        if not isinstance(other, FHValues):
+            return NotImplemented
+        return (
+            self.value_type == other.value_type
+            and self.freq == other.freq
+            and self.timezone == other.timezone
+            and np.array_equal(self.values, other.values)
+        )
+
+    def __hash__(self) -> int:
+        # <check>
+        # For hashing, we need to consider all attributes that define the
+        # identity of the instance.
+        # 1. meta attributes (value_type, freq, timezone) are directly hashable,
+        #    check if any other meta attributes are added later on
+        #    that need to be included in hashing.
+        # 2. numpy arrays are not, so we need to convert them to a hashable form
+        #   Option 1: convert to bytes for hashing
+        #   Option 2: convert to tuple (but can be expensive for large arrays)
+        #   Option 3: use a hash of the array content (e.g. using hashlib)
+        #       more complex but can be more efficient for large arrays
+        #   Needs checking for the best apporach.
+        # </check>
+        if self.hash is None:
+            self.hash = hash(
+                (
+                    self.values.tobytes(),
+                    # numpy arrays are not directly hashable, so we convert to bytes
+                    self.value_type,
+                    self.freq,
+                    self.timezone,
+                )
+            )
+        return self.hash
+
+    def __repr__(self) -> str:
+        # <check>to be implemented after checking the final set of
+        # attributes to be stored</check>
+        return (
+            f"FHValues(values={self.values}, "
+            f"value_type={self.value_type}, "
+            f"freq={self.freq}, "
+            f"timezone={self.timezone})"
+        )
