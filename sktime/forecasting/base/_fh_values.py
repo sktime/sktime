@@ -27,9 +27,9 @@ class FHValueType(Enum):
 
     Attributes
     ----------
-    INT : integer steps (e.g. [1, 2, 3])
+    INT : integer steps
         Used for both relative integer horizons and absolute integer indices.
-    TIMEDELTA : numpy timedelta64 durations (e.g. 1 day, 2 days)
+    TIMEDELTA : numpy timedelta64 durations
         Used for relative time-based horizons.
     PERIOD : integer ordinals that represent pandas Period values
         Used for absolute period-based horizons. Requires freq.
@@ -51,7 +51,7 @@ _ABSOLUTE_VALUE_TYPES = {FHValueType.INT, FHValueType.PERIOD, FHValueType.DATETI
 class FHValues:
     """Lightweight, hashable, numpy-backed container for fh values + metadata.
 
-    This class stores forecasting horizon values as sorted, deduplicated
+    This class stores forecasting horizon values as sorted and deduplicated
     numpy arrays together wiath metadata (value type, frequency string).
     <check>
     at each step in implementation check if any other information
@@ -97,7 +97,7 @@ class FHValues:
         if not isinstance(values, np.ndarray):
             raise TypeError(
                 f"FHValues expects the value to be passed as np.ndarray, "
-                f"instead got {type(values).__name__}"
+                f"instead got {type(values)}"
             )
         if values.ndim != 1:
             raise ValueError(
@@ -107,18 +107,21 @@ class FHValues:
         if not isinstance(value_type, FHValueType):
             raise TypeError(
                 f"FHValues expects the value_type to be `FHValueType`, "
-                f"instead got {type(value_type).__name__}"
+                f"instead got {type(value_type)}"
             )
         if value_type == FHValueType.PERIOD and freq is None:
             raise ValueError(
                 "freq can not be None when value_type is provided as PERIOD"
             )
 
+        # deduplication and sorting of values
+        # <check>check if this is the right place to do this, or if it should
+        # be done in the conversion layer before creating FHValues instance</check>
         self.values = values
         self.value_type = value_type
         self.freq = freq
         self.timezone = timezone if value_type == FHValueType.DATETIME else None
-        self.hash = None  # Cache for hash value, to be computerd lazily when needed
+        self.hash = None  # Cache for hash value
 
     @property
     def values(self) -> np.ndarray:
