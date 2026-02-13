@@ -7,8 +7,8 @@ All pandas-specific logic (type conversions, frequency handling, version detecti
 is delegated to the _fh_utils module.
 """
 
+from sktime.forecasting.base._fh_utils import PandasFHConverter
 from sktime.forecasting.base._fh_values import FHValueType
-from sktime.forecasting.base._pandas_fh_converter import PandasFHConverter
 
 # <check></check>
 # this is the marker left to mark all delayed checks
@@ -116,3 +116,4 @@ class ForecastingHorizonV2:
 
     # added dummy comment to test skipping of CI runs on every subsequent commit
     # until all checks are removed and code is ready for review/tests
+    # dummy line
