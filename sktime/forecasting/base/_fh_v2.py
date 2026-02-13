@@ -99,3 +99,17 @@ class ForecastingHorizonV2:
         # above code assumes fhvalues.is_relative_type and
         # fhvalues.is_absolute_type to be implemented.
         # Currently they are not implemented.</check>
+
+    # this class would also need a copy constructor
+    # because the conversion from pandas types to internal representation
+    # is done as first step in __init__,
+    # and the resulting FHValues instance is stored as an attribute.
+    # internal methods during various operations would need to create new FHValues
+    # instances with modified values. So a copy constructor that can take
+    # an existing FHValues instance and create a new one with modified values
+    # but same metadata would be needed
+    # to avoid having to go through the full conversion process again
+
+    # methods for operating on the internal FHValues instance,
+
+    # methods for converting back to pandas types when needed for interoperability
