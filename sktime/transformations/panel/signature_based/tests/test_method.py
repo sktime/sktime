@@ -65,6 +65,7 @@ def test_window_error():
     with pytest.raises(ValueError):
         method.fit_transform(X)
 
+
 @pytest.mark.skipif(
     not run_test_for_class(SignatureTransformer),
     reason="skip test if python environment requirements for estimator are not met",
