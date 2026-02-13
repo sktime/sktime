@@ -233,8 +233,11 @@ class FHValues:
     def is_contiguous(self) -> bool:
         """Check if values form a contiguous sequence.
 
-        For INT and PERIOD: checks consecutive integers.
-        For TIMEDELTA and DATETIME: infers step from min diff, checks coverage.
+        separate checking logic to be implemented for different value types.
+        Currently
+        - for INT and PERIOD: checks consecutive integers.
+        - for TIMEDELTA and DATETIME: infers step from min diff, checks coverage.
+        more to be added
 
         Returns
         -------
