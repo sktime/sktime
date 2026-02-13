@@ -493,6 +493,14 @@ Deep learning based forecasters
     LTSFNLinearForecaster
     LTSFTransformerForecaster
 
+.. currentmodule:: sktime.forecasting.xlstm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    XLSTMForecaster
+
 .. currentmodule:: sktime.forecasting.scinet
 
 .. autosummary::

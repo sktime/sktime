@@ -1,6 +1,6 @@
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements xLSMT forecaster."""
+"""xLSTM forecaster."""
 
 __all__ = ["XLSTMForecaster"]
 __author__ = ["muslehal", "vedantag17"]
