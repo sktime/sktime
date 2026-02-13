@@ -91,7 +91,7 @@ class FHValues:
         values: np.ndarray,
         value_type: FHValueType,
         freq: str | None = None,
-        tz: str | None = None,
+        timezone: str | None = None,
     ):
         # validation of input types
         if not isinstance(values, np.ndarray):
@@ -110,10 +110,36 @@ class FHValues:
                 f"instead got {type(value_type).__name__}"
             )
         if value_type == FHValueType.PERIOD and freq is None:
-            raise ValueError("freq is required for PERIOD value type")
+            raise ValueError(
+                "freq can not be None when value_type is provided as PERIOD"
+            )
 
         self.values = values
         self.value_type = value_type
         self.freq = freq
-        self.tz = tz
-        self.hash = None  # Cache for hash value
+        self.timezone = timezone
+        self.hash = None  # Cache for hash value, to be computerd lazily when needed
+
+    @property
+    def values(self) -> np.ndarray:
+        """Return the underlying numpy array (read-only view)."""
+        v = self.values.view()
+        # Set the writeable flag to False to prevent mutation
+        # to enforce quasi-immutability of the values array
+        v.flags.writeable = False
+        return v
+
+    @property
+    def value_type(self) -> FHValueType:
+        """Return the semantic value type."""
+        return self.value_type
+
+    @property
+    def freq(self) -> str | None:
+        """Return frequency string or None."""
+        return self.freq
+
+    @property
+    def timezone(self) -> str | None:
+        """Return timezone string or None."""
+        return self.timezone
