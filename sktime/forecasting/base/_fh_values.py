@@ -62,7 +62,10 @@ class FHValues:
 
     Note: Instances of this class are intended to be treated as quasi-immutable
     after creation. The ``values`` array should not be mutated externally.
-    <check>check for validation or enforecement of this</check>
+    class methods should be used to create new instances rather than
+    modifying existing ones as hashing will be implemented based on the
+    content of values and metadata.
+    <check>check for validation & enforecement of same</check>
 
     Parameters
     ----------
@@ -90,6 +93,25 @@ class FHValues:
         freq: str | None = None,
         tz: str | None = None,
     ):
+        # validation of input types
+        if not isinstance(values, np.ndarray):
+            raise TypeError(
+                f"FHValues expects the value to be passed as np.ndarray, "
+                f"instead got {type(values).__name__}"
+            )
+        if values.ndim != 1:
+            raise ValueError(
+                f"FHValues expects the value to be 1-D array, "
+                f"instead got {values.ndim}-D array"
+            )
+        if not isinstance(value_type, FHValueType):
+            raise TypeError(
+                f"FHValues expects the value_type to be `FHValueType`, "
+                f"instead got {type(value_type).__name__}"
+            )
+        if value_type == FHValueType.PERIOD and freq is None:
+            raise ValueError("freq is required for PERIOD value type")
+
         self.values = values
         self.value_type = value_type
         self.freq = freq
