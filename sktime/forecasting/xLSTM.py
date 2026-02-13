@@ -57,7 +57,7 @@ class XLSTMForecaster(BaseForecaster):
     """
 
     _tags = {
-        "python_dependencies": "torch>=2.0.0,<2.4.0",
+        "python_dependencies": "torch>=2.0.0",
         "capability:pred_int": False,
         "capability:pred_var": False,
         "requires-fh-in-fit": False,
