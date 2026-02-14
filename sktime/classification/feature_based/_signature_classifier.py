@@ -33,9 +33,11 @@ class SignatureClassifier(BaseClassifier):
 
     Note that the final classifier used on the UEA datasets involved tuning
     the hyper-parameters:
-        - ``depth`` over [1, 2, 3, 4, 5, 6]
-        - ``window_depth`` over [2, 3, 4]
-        - RandomForestClassifier hyper-parameters.
+
+    - ``depth`` over [1, 2, 3, 4, 5, 6]
+    - ``window_depth`` over [2, 3, 4]
+    - ``RandomForestClassifier`` hyper-parameters.
+
     as these were found to be the most dataset dependent hyper-parameters.
 
     Thus, we recommend always tuning *at least* these parameters to any given
@@ -100,6 +102,8 @@ class SignatureClassifier(BaseClassifier):
         # --------------
         "capability:multivariate": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randonmess": "deterministic",
         "classifier_type": "feature",
         # testing configuration
         # ---------------------
