@@ -7,13 +7,12 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
-from sktime.performance_metrics.forecasting._functions import (
-    mean_squared_percentage_error,
-)
+import numpy as np
+
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 
 
-class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
+class MeanSquaredPercentageError(BaseForecastingErrorMetric):
     """Mean squared percentage error (MSPE), or RMSPE, or symmetric MSPE, RMSPE.
 
     If ``square_root`` is False then calculates MSPE and if ``square_root`` is True
@@ -125,8 +124,6 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
     np.float64(0.7504665536595034)
     """
 
-    func = mean_squared_percentage_error
-
     def __init__(
         self,
         multioutput="uniform_average",
@@ -146,6 +143,119 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
             multilevel=multilevel,
             by_index=by_index,
         )
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs.
+
+        private _evaluate containing core logic, called from evaluate
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : float or np.ndarray
+            Calculated metric, possibly averaged by variable given ``multioutput``.
+
+            * float if ``multioutput="uniform_average" or array-like,
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              i-th entry is the, metric calculated for i-th variable
+        """
+        multioutput = self.multioutput
+        symmetric = self.symmetric
+        relative_to = self.relative_to
+        eps = self.eps
+
+        if eps is None:
+            eps = np.finfo(np.float64).eps
+
+        if symmetric:
+            denominator = np.abs(y_true) + np.abs(y_pred)
+            denominator = np.maximum(denominator, eps) / 2.0
+        elif relative_to == "y_true":
+            denominator = np.maximum(np.abs(y_true), eps)
+        else:
+            denominator = np.maximum(np.abs(y_pred), eps)
+
+        percentage_errors = np.abs(y_true - y_pred) / denominator
+        raw_values = percentage_errors**2
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        mspe = raw_values.mean()
+
+        if self.square_root:
+            mspe = mspe.pow(0.5)
+
+        return self._handle_multioutput(mspe, multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
+        """
+        multioutput = self.multioutput
+        symmetric = self.symmetric
+        relative_to = self.relative_to
+        eps = self.eps
+
+        if eps is None:
+            eps = np.finfo(np.float64).eps
+        if symmetric:
+            denominator = np.abs(y_true) + np.abs(y_pred)
+            denominator = np.maximum(denominator, eps) / 2.0
+        elif relative_to == "y_true":
+            denominator = np.maximum(np.abs(y_true), eps)
+        else:
+            denominator = np.maximum(np.abs(y_pred), eps)
+
+        percentage_errors = np.abs(y_true - y_pred) / denominator
+        raw_values = percentage_errors**2
+
+        if self.square_root:
+            n = raw_values.shape[0]
+            mspe = raw_values.mean(axis=0)
+            rmspe = mspe.pow(0.5)
+            spe_sum = raw_values.sum(axis=0)
+            mspe_jackknife = (spe_sum - raw_values) / (n - 1)
+            rmspe_jackknife = mspe_jackknife.pow(0.5)
+            pseudo_values = n * rmspe - (n - 1) * rmspe_jackknife
+        else:
+            pseudo_values = raw_values
+
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+
+        return self._handle_multioutput(pseudo_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
