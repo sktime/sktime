@@ -134,6 +134,60 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
             by_index=by_index,
         )
 
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs.
+
+        private _evaluate containing core logic, called from evaluate
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_train : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Training data used to calculate the naive forecasting error.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : float or np.ndarray
+            Calculated metric, possibly averaged by variable given ``multioutput``.
+
+            * float if ``multioutput="uniform_average" or array-like,
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              i-th entry is the, metric calculated for i-th variable
+        """
+        multioutput = self.multioutput
+        y_train = kwargs["y_train"]
+        sp = self.sp
+        eps = self.eps
+
+        if eps is None:
+            eps = np.finfo(np.float64).eps
+
+        raw_values = (y_true - y_pred) ** 2
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+        naive_forecast_true = y_train[sp:]
+        naive_forecast_pred = y_train[:-sp]
+
+        naive_error = np.mean(
+            (naive_forecast_true - naive_forecast_pred.values) ** 2, axis=0
+        )
+
+        msqse = raw_values.mean() / np.maximum(naive_error, eps)
+
+        if self.square_root:
+            msqse = msqse.pow(0.5)
+
+        return self._handle_multioutput(msqse, multioutput)
+
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
 
@@ -174,7 +228,6 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
             eps = np.finfo(np.float64).eps
 
         raw_values = (y_true - y_pred) ** 2
-        raw_values = self._get_weighted_df(raw_values, **kwargs)
 
         naive_forecast_true = y_train[sp:]
         naive_forecast_pred = y_train[:-sp]
@@ -183,14 +236,22 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
             (naive_forecast_true - naive_forecast_pred.values) ** 2, axis=0
         )
 
-        raw_values = raw_values / np.maximum(naive_error, eps)
+        scaled_squared_errors = raw_values / np.maximum(naive_error, eps)
 
         if self.square_root:
-            raw_values = np.sqrt(raw_values)
+            n = scaled_squared_errors.shape[0]
+            msse = scaled_squared_errors.mean(axis=0)
+            rmsse = msse.pow(0.5)
+            ssse_sum = scaled_squared_errors.sum(axis=0)
+            msse_jackknife = (ssse_sum - scaled_squared_errors) / (n - 1)
+            rmsse_jackknife = msse_jackknife.pow(0.5)
+            pseudo_values = n * rmsse - (n - 1) * rmsse_jackknife
+        else:
+            pseudo_values = scaled_squared_errors
 
-        raw_values = self._get_weighted_df(raw_values, **kwargs)
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
 
-        return self._handle_multioutput(raw_values, multioutput)
+        return self._handle_multioutput(pseudo_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
