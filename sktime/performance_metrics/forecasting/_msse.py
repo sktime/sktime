@@ -13,7 +13,6 @@ from sktime.performance_metrics.forecasting._base import (
     BaseForecastingErrorMetric,
     _ScaledMetricTags,
 )
-from sktime.performance_metrics.forecasting._functions import mean_squared_scaled_error
 
 
 class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
@@ -105,16 +104,14 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> rmsse(y_true, y_pred, y_train=y_train)
-    np.float64(0.15679361328058636)
+    np.float64(0.1570924698644255)
     >>> rmsse = MeanSquaredScaledError(multioutput='raw_values', square_root=True)
     >>> rmsse(y_true, y_pred, y_train=y_train)
     array([0.11215443, 0.20203051])
     >>> rmsse = MeanSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmsse(y_true, y_pred, y_train=y_train)
-    np.float64(0.17451891814894502)
+    np.float64(0.17506768548283214)
     """
-
-    func = mean_squared_scaled_error
 
     def __init__(
         self,
@@ -181,7 +178,8 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
             (naive_forecast_true - naive_forecast_pred.values) ** 2, axis=0
         )
 
-        msqse = raw_values.mean() / np.maximum(naive_error, eps)
+        error = raw_values.mean()
+        msqse = error / np.maximum(naive_error, eps)
 
         if self.square_root:
             msqse = msqse.pow(0.5)
