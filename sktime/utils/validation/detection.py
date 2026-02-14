@@ -21,6 +21,7 @@ def check_fmt(fmt):
     valid_fmts = ["sparse", "dense"]
     if fmt not in valid_fmts:
         raise ValueError(f"`fmt` must be in: {valid_fmts}, but found: {fmt}.")
+    return fmt
 
 
 def check_labels(labels):
@@ -39,6 +40,7 @@ def check_labels(labels):
     valid_labels = ["indicator", "score", "int_label"]
     if labels not in valid_labels:
         raise ValueError(f"`labels` must be in: {valid_labels}, but found: {labels}.")
+    return labels
 
 
 def check_task(task):
@@ -50,7 +52,7 @@ def check_task(task):
         Annotation task.
     """
     valid_tasks = ["segmentation", "change_point_detection", "anomaly_detection"]
-    if task != "None" and task not in valid_tasks:
+    if task is not None and task not in valid_tasks:
         raise ValueError(f"`task` must be in: {valid_tasks}, but found: {task}.")
 
 

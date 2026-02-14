@@ -250,7 +250,7 @@ def _get_duration(x, y=None, coerce_to_int=False, unit=None):
         assert isinstance(x, (int, np.integer, pd.Period, pd.Timestamp))
         # check types allowing (np.integer, int) combinations to pass
         assert type(x) is type(y) or (
-            isinstance(x, (np.integer, int)) and isinstance(x, (np.integer, int))
+            isinstance(x, (np.integer, int)) and isinstance(y, (np.integer, int))
         )
         duration = x - y
 

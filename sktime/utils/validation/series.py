@@ -236,9 +236,9 @@ def check_equal_time_index(*ys, mode="equal"):
         can be Series, Panel, Hierarchical, but must be pandas or numpy
         note: this assumption is not checked by the function itself
             if check is needed, use check_is_scitype or check_is_mtype before call
-    mode : str, "equal" or "contained", optional, default = "equal"
+    mode : str, "equal" or "contains", optional, default = "equal"
         if "equal" will check for all indices being exactly equal
-        if "contained", will check whether all indices are subset of ys[0].index
+        if "contains", will check whether all indices are subset of ys[0].index
 
     Raises
     ------

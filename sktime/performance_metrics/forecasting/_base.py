@@ -375,7 +375,9 @@ class BaseForecastingErrorMetric(BaseMetric):
             index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
             return index_df.mean(axis=0)
         except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+            raise RecursionError(
+                "Must implement one of _evaluate or _evaluate_by_index"
+            )
 
     def _evaluate_vectorized(self, y_true, y_pred, **kwargs):
         """Vectorized version of _evaluate.
@@ -629,7 +631,9 @@ class BaseForecastingErrorMetric(BaseMetric):
                 out_series.loc[idx] = pseudovalue
             return out_series
         except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+            raise RecursionError(
+                "Must implement one of _evaluate or _evaluate_by_index"
+            )
 
     def _check_consistent_input(self, y_true, y_pred, multioutput, multilevel):
         y_true_orig = y_true

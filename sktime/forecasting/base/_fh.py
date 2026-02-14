@@ -1013,9 +1013,11 @@ def _coerce_to_period(x, freq=None):
     """
     if isinstance(x, pd.Timestamp) and freq is None:
         freq = x.freq
-        raise ValueError(
-            "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
-        )
+        if freq is None:
+            raise ValueError(
+                "_coerce_to_period requires freq argument to be passed "
+                "if x is pd.Timestamp without freq attribute"
+            )
     return x.to_period(freq)
 
 

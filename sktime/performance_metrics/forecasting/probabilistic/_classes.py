@@ -171,7 +171,9 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
             out_df.columns = index_df.columns
             return out_df
         except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+            raise RecursionError(
+                "Must implement one of _evaluate or _evaluate_by_index"
+            )
 
     def evaluate_by_index(self, y_true, y_pred, multioutput=None, **kwargs):
         """Return the metric evaluated at each time point.
