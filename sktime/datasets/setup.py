@@ -33,6 +33,8 @@ def configuration(parent_package="", top_path=None):
         "PBS_dataset",
         "segmentation",
         "Covid3Month",
+        "oil",
+        "etth_display_W112"
     )
     for dataset in included_datasets:
         config.add_data_dir(f"data/{dataset}")

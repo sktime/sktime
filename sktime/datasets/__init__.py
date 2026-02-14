@@ -110,9 +110,11 @@ from sktime.datasets._single_problem_loaders import (
     load_solar,
     load_tecator,
     load_UCR_UEA_dataset,
-    load_unit_test,
-    load_unit_test_tsf,
-    load_uschange,
+    # load_unit_test,
+    # load_unit_test_tsf,
+    # load_uschange,
+    load_oil_display,
+    load_etth_display
 )
 from sktime.datasets.base import BaseDataset
 from sktime.datasets.classification import (

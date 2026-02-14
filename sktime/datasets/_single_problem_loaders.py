@@ -17,6 +17,8 @@ __author__ = [
 ]
 
 __all__ = [
+    "load_oil_display",
+    "load_etth_display",
     "load_airline",
     "load_plaid",
     "load_arrow_head",
@@ -40,6 +42,7 @@ __all__ = [
     "load_unit_test_tsf",
     "load_covid_3month",
     "load_tecator",
+
 ]
 
 import os
@@ -1187,41 +1190,16 @@ def load_macroeconomic():
     y.name = "US Macroeconomic Data"
     return y
 
-
-def load_unit_test_tsf():
-    """Load tsf UnitTest dataset.
-
-    Returns
-    -------
-    loaded_data: pd.DataFrame
-        The converted dataframe containing the time series.
-    frequency: str
-        The frequency of the dataset.
-    forecast_horizon: int
-        The expected forecast horizon of the dataset.
-    contain_missing_values: bool
-        Whether the dataset contains missing values or not.
-    contain_equal_length: bool
-        Whether the series have equal lengths or not.
-    """
-    path = os.path.join(MODULE, DIRNAME, "UnitTest", "UnitTest_Tsf_Loader.tsf")
-    (
-        loaded_data,
-        frequency,
-        forecast_horizon,
-        contain_missing_values,
-        contain_equal_length,
-    ) = load_tsf_to_dataframe(path)
-
-    return (
-        loaded_data,
-        frequency,
-        forecast_horizon,
-        contain_missing_values,
-        contain_equal_length,
-    )
-
-
+def load_etth_display():
+    path = os.path.join(MODULE, DIRNAME, "etth_display_W112", "etth_display_W112.csv")
+    import pandas as pd
+    return pd.read_csv(path)
+def load_oil_display():
+    path = os.path.join(MODULE, DIRNAME, "oil", "oil.csv")
+    import pandas as pd
+    t = np.arange(40)
+    
+    return pd.read_csv(path, na_values=['.'])[810:810 + len(t)]['DCOILWTICO'].bfill().values
 def load_solar(
     start="2021-05-01",
     end="2021-09-01",
