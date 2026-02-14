@@ -24,4 +24,4 @@ jobs:
           pip install --pre --upgrade numpy pandas scikit-learn
       - name: Run Smoke Test
         run: pytest sktime/tests/test_softdeps.py
-        
+
