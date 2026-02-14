@@ -103,7 +103,7 @@ class SignatureClassifier(BaseClassifier):
         "capability:multivariate": True,
         "capability:predict_proba": True,
         "capability:random_state": True,
-        "property:randonmess": "deterministic",
+        "property:randomness": "deterministic",
         "classifier_type": "feature",
         # testing configuration
         # ---------------------
