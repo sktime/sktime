@@ -103,9 +103,7 @@ class _KLDivergenceLaplaceBase(BaseForecastingErrorMetric):
 
         per_index = np.exp(-ratio) + ratio - 1.0
 
-        raw_values = pd.DataFrame(
-            per_index, index=y_true.index, columns=y_true.columns
-        )
+        raw_values = pd.DataFrame(per_index, index=y_true.index, columns=y_true.columns)
         raw_values = self._get_weighted_df(raw_values, **kwargs)
 
         return self._handle_multioutput(raw_values, multioutput)

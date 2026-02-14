@@ -179,9 +179,7 @@ class MeanAbsolutePercentageErrorStabilized(BaseForecastingErrorMetric):
 
         s_vals = np.zeros_like(y_true_vals, dtype=np.float64)
         for i in range(1, n):
-            s_vals[i] = np.abs(
-                y_true_vals[:i] - rolling_mean[i - 1]
-            ).mean(axis=0)
+            s_vals[i] = np.abs(y_true_vals[:i] - rolling_mean[i - 1]).mean(axis=0)
 
         numerator = (y_true - y_pred).abs()
         denominator_vals = (np.abs(y_true.values) + np.abs(y_pred.values)) / 2.0

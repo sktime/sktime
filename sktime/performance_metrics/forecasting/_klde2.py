@@ -154,9 +154,7 @@ class KLDivergenceDoubleExponential(_KLDivergenceLaplaceBase):
             rolling_mean = cumsum / counts
 
             for i in range(1, n):
-                sigma[i] = np.abs(
-                    y_true_vals[:i] - rolling_mean[i - 1]
-                ).mean(axis=0)
+                sigma[i] = np.abs(y_true_vals[:i] - rolling_mean[i - 1]).mean(axis=0)
         else:
             for i in range(1, n):
                 past = y_true_vals[max(0, i - window) : i]

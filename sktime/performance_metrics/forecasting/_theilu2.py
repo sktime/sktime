@@ -166,9 +166,7 @@ class TheilU2(_ScaledMetricTags, BaseForecastingErrorMetric):
 
         # naive forecast: value from sp periods ago
         # first sp values come from end of y_train, rest from y_true shifted
-        naive_source = np.concatenate(
-            [y_train_vals[-sp:], y_true_vals[:-sp]], axis=0
-        )
+        naive_source = np.concatenate([y_train_vals[-sp:], y_true_vals[:-sp]], axis=0)
         return naive_source
 
     def _evaluate(self, y_true, y_pred, **kwargs):
