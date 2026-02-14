@@ -397,6 +397,38 @@ conflicts = [
     { extra = "pandas1" },
     { extra = "dependencies_lower" },
   ],
+  [
+    { extra = "dependencies_2024" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "classification" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "networks" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "regression" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "dependencies_2024" },
+    { extra = "dependencies_lower" },
+  ],
+  [
+    { extra = "notebooks" },
+    { extra = "dependencies_2024" },
+  ],
+  [
+    { extra = "numpy1" },
+    { extra = "dependencies_2024" },
+  ],
+  [
+    { extra = "pandas1" },
+    { extra = "dependencies_2024" },
+  ],
 ]
 
 [tool.ruff]
