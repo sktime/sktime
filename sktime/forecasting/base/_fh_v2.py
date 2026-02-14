@@ -116,4 +116,3 @@ class ForecastingHorizonV2:
 
     # added dummy comment to test skipping of CI runs on every subsequent commit
     # until all checks are removed and code is ready for review/tests
-    # dummy line
