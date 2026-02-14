@@ -7,14 +7,16 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
+
 from sktime.performance_metrics.forecasting._base import (
-    BaseForecastingErrorMetricFunc,
+    BaseForecastingErrorMetric,
     _ScaledMetricTags,
 )
 from sktime.performance_metrics.forecasting._functions import mean_squared_scaled_error
 
 
-class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
+class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
     """Mean squared scaled error (MSSE) or root mean squared scaled error (RMSSE).
 
     If ``square_root`` is False then calculates MSSE, otherwise calculates RMSSE if
@@ -39,6 +41,11 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         Seasonal periodicity of data.
     square_root : bool, default = False
         Whether to take the square root of the metric
+
+    eps : float, default=None
+        Numerical epsilon used in denominator to avoid division by zero.
+        Absolute values smaller than eps are replaced by eps.
+        If None, defaults to np.finfo(np.float64).eps
 
     multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
         Whether and how to aggregate metric for multivariate (multioutput) data.
@@ -116,14 +123,74 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         sp=1,
         square_root=False,
         by_index=False,
+        eps=None,
     ):
         self.sp = sp
+        self.eps = eps
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
         )
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_train : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Training data used to calculate the naive forecasting error.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
+        """
+        multioutput = self.multioutput
+        y_train = kwargs["y_train"]
+        sp = self.sp
+        eps = self.eps
+
+        if eps is None:
+            eps = np.finfo(np.float64).eps
+
+        raw_values = (y_true - y_pred) ** 2
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        naive_forecast_true = y_train[sp:]
+        naive_forecast_pred = y_train[:-sp]
+
+        naive_error = np.mean(
+            (naive_forecast_true - naive_forecast_pred.values) ** 2, axis=0
+        )
+
+        raw_values = raw_values / np.maximum(naive_error, eps)
+
+        if self.square_root:
+            raw_values = np.sqrt(raw_values)
+
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        return self._handle_multioutput(raw_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
