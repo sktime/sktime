@@ -122,14 +122,16 @@ the following need to be updated:
    add the dependency or update version bounds in the ``all_extras`` dependency set.
    Following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention, all dependencies
    including build time dependencies and optional dependencies are specified in ``pyproject.toml``.
-*  Soft dependencies compatible with ``pandas 2`` should also be added/updated in the
-   ``all_extras_pandas2`` dependency set in ``pyproject.toml``. This dependency set
-   is used only in testing.
+*  Important: only the most important soft dependencies should be added to the ``all_extras``
+   dependency set. Soft dependencies required only be one estimator or a small number of estimators
+   should not be added to ``all_extras``, to avoid dependency bloat.
+   For testing purposes, the ``tests:vm``
+   tag of the estimator should be set, to ensure a VM with the specific soft dependencies
+   is spun up regularly.
 
-It should be checked that new soft dependencies do not imply
+It shhould be checked that new soft dependencies added to ``all_extras`` do not imply
 upper bounds on ``sktime`` core dependencies, or severe limitations to the user
 installation workflow.
-In such a case, it is strongly suggested not to add the soft dependency.
 
 For maintenance purposes, it has been decided that all soft-dependencies will have lower
 and upper bounds specified mandatorily. The soft-dependencies will be specified in
