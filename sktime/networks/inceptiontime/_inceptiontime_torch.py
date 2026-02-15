@@ -42,7 +42,7 @@ class InceptionTimeNetworkTorch(NNModule):
     activation_inception : str or None, default=None
         Activation function used inside the inception modules.
         Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu', None
-    weights_init : str or None, default = None
+    init_weights : str or None, default = None
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
         for default PyTorch initialization.
@@ -88,7 +88,7 @@ class InceptionTimeNetworkTorch(NNModule):
         activation: str | None = None,
         activation_hidden: str = "relu",
         activation_inception: str | None = None,
-        weights_init: str | None = None,
+        init_weights: str | None = None,
         random_state: int | None = None,
     ):
         self.input_size = input_size
@@ -102,7 +102,7 @@ class InceptionTimeNetworkTorch(NNModule):
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.activation_inception = activation_inception
-        self.weights_init = weights_init
+        self.init_weights = init_weights
         self.random_state = random_state
 
         super().__init__()
@@ -152,7 +152,7 @@ class InceptionTimeNetworkTorch(NNModule):
         nnLinear = _safe_import("torch.nn.Linear")
         self.fc = nnLinear(current_channels, num_classes)
 
-        if self.weights_init is not None:
+        if self.init_weights is not None:
             self.apply(self._init_weights)
 
     def forward(self, X):
@@ -199,16 +199,16 @@ class InceptionTimeNetworkTorch(NNModule):
         xavier_normal_ = _safe_import("torch.nn.init.xavier_normal_")
 
         if isinstance(module, nnConv1d):
-            if self.weights_init == "kaiming_uniform":
+            if self.init_weights == "kaiming_uniform":
                 kaiming_uniform_(module.weight, nonlinearity="relu")
 
-            elif self.weights_init == "kaiming_normal":
+            elif self.init_weights == "kaiming_normal":
                 kaiming_normal_(module.weight, nonlinearity="relu")
 
-            elif self.weights_init == "xavier_uniform":
+            elif self.init_weights == "xavier_uniform":
                 xavier_uniform_(module.weight)
 
-            elif self.weights_init == "xavier_normal":
+            elif self.init_weights == "xavier_normal":
                 xavier_normal_(module.weight)
 
             if module.bias is not None:

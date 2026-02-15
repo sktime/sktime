@@ -69,7 +69,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         The keyword arguments to be passed to the callbacks.
     lr : float, default = 0.001
         The learning rate to use for the optimizer.
-    weights_init : str or None, default = None
+    init_weights : str or None, default = None
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
         for default PyTorch initialization.
@@ -146,7 +146,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         callbacks: None | str | tuple[str, ...] = None,
         callback_kwargs: dict | None = None,
         lr: float = 0.001,
-        weights_init: str | None = None,
+        init_weights: str | None = None,
         verbose: bool = False,
         random_state: int | None = None,
     ):
@@ -168,7 +168,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
         self.lr = lr
-        self.weights_init = weights_init
+        self.init_weights = init_weights
         self.verbose = verbose
         self.random_state = random_state
 
