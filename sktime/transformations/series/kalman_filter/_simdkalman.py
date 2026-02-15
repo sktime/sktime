@@ -156,6 +156,7 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:vm": True,
     }
 
     def __init__(
