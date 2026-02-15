@@ -20,7 +20,7 @@ given the estimator exists in the library):
 - UnobservedComponents
 - VAR
 - VARMAX (x)
-- VECM
+- VECM (x)
 """
 
 __all__ = [
