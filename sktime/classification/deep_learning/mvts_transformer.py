@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
@@ -145,22 +145,10 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
             lr=lr,
             verbose=verbose,
             random_state=random_state,
+            activation=None,
         )
 
-        from sktime.utils.dependencies import _check_soft_dependencies
-
-        if _check_soft_dependencies("torch"):
-            import torch
-
-            self.criterions = {}
-
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+        self.activation = activation
 
     def _build_network(self, X, y):
         from sktime.networks.mvts_transformer import (
