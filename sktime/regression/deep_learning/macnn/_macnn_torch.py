@@ -63,7 +63,7 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
         The learning rate to use for the optimizer.
     verbose : bool, default = False
         Whether to print progress information during training.
-    weights_init: str or None, default = None
+    init_weights : str or None, default = None
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
         for default PyTorch initialization.
@@ -122,7 +122,7 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
         callback_kwargs: dict | None = None,
         lr: float = 0.001,
         verbose: bool = False,
-        weights_init: str | None = None,
+        init_weights: str | None = None,
         random_state: int = 0,
     ):
         self.padding = padding
@@ -144,7 +144,7 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
         self.callback_kwargs = callback_kwargs
         self.lr = lr
         self.verbose = verbose
-        self.weights_init = weights_init
+        self.init_weights = init_weights
         self.random_state = random_state
 
         # input_size to be inferred from the data
@@ -199,7 +199,7 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
             reduction=self.reduction,
             activation=self.activation,
             activation_hidden=self.activation_hidden,
-            weights_init=self.weights_init,
+            init_weights=self.init_weights,
             random_state=self.random_state,
         )
 

@@ -48,7 +48,7 @@ class MACNNNetworkTorch(NNModule):
     activation_hidden : str, default="relu"
         Activation function used for internal layers.
         Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    weights_init: str or None, default = None
+    init_weights : str or None, default = None
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
         for default PyTorch initialization.
@@ -91,7 +91,7 @@ class MACNNNetworkTorch(NNModule):
         reduction: int = 16,
         activation: str | None = None,
         activation_hidden: str = "relu",
-        weights_init: str | None = None,
+        init_weights: str | None = None,
         random_state: int = 0,
     ):
         self.input_size = input_size
@@ -105,7 +105,7 @@ class MACNNNetworkTorch(NNModule):
         self.reduction = reduction
         self.activation = activation
         self.activation_hidden = activation_hidden
-        self.weights_init = weights_init
+        self.init_weights = init_weights
         self.random_state = random_state
 
         super().__init__()
@@ -142,7 +142,7 @@ class MACNNNetworkTorch(NNModule):
         nnLinear = _safe_import("torch.nn.Linear")
         self.fc = nnLinear(self.filter_sizes[-1] * len(self.kernel_size), num_classes)
 
-        if self.weights_init is not None:
+        if self.init_weights is not None:
             self.apply(self._init_weights)
 
     def _build_macnn_stack(self, in_channels, filter_size, repeats):
@@ -223,16 +223,16 @@ class MACNNNetworkTorch(NNModule):
         xavier_normal_ = _safe_import("torch.nn.init.xavier_normal_")
 
         if isinstance(module, nnConv1d):
-            if self.weights_init == "kaiming_uniform":
+            if self.init_weights == "kaiming_uniform":
                 kaiming_uniform_(module.weight, nonlinearity="relu")
 
-            elif self.weights_init == "kaiming_normal":
+            elif self.init_weights == "kaiming_normal":
                 kaiming_normal_(module.weight, nonlinearity="relu")
 
-            elif self.weights_init == "xavier_uniform":
+            elif self.init_weights == "xavier_uniform":
                 xavier_uniform_(module.weight)
 
-            elif self.weights_init == "xavier_normal":
+            elif self.init_weights == "xavier_normal":
                 xavier_normal_(module.weight)
 
             if module.bias is not None:

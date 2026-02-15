@@ -66,7 +66,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         The learning rate to use for the optimizer.
     verbose : bool, default = False
         Whether to print progress information during training.
-    weights_init: str or None, default = None
+    init_weights: str or None, default = None
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
         for default PyTorch initialization.
@@ -125,7 +125,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         callback_kwargs: dict | None = None,
         lr: float = 0.001,
         verbose: bool = False,
-        weights_init: str | None = None,
+        init_weights: str | None = None,
         random_state: int = 0,
     ):
         self.padding = padding
@@ -147,7 +147,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         self.callback_kwargs = callback_kwargs
         self.lr = lr
         self.verbose = verbose
-        self.weights_init = weights_init
+        self.init_weights = init_weights
         self.random_state = random_state
 
         # input_size and num_classes to be inferred from the data
@@ -212,7 +212,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
             kernel_size=self.kernel_size,
             reduction=self.reduction,
             activation=self.activation,
-            weights_init=self.weights_init,
+            init_weights=self.init_weights,
             random_state=self.random_state,
         )
 
@@ -250,7 +250,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
             "lr": 0.001,
             "verbose": False,
             "random_state": 0,
-            "weights_init": None,
+            "init_weights": None,
         }
         params3 = {
             "padding": "same",
