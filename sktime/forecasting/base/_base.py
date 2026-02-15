@@ -137,7 +137,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """,
     }
 
-    def __init__(self):
+    def __init__(self, memory=None):
+        self.memory = memory
+
         self._is_fitted = False
 
         self._y = None
@@ -380,6 +382,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
+       
+        # check memory usage against limit if specified
+        if self.memory is not None:
+             self._check_memory_usage(y_inner, X_inner)
+        # check memory usage against limit if specified
+        if self.memory is not None:
+            self._check_memory_usage(y_inner, X_inner)
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
@@ -403,6 +412,45 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         self._is_fitted = True
 
         return self
+    
+    def _check_memory_usage(self, y, X=None):
+        """Check if X and y exceed the memory limit."""
+        if self.memory is None:
+            return
+
+        import sys
+
+        def _get_size(obj):
+            """Helper to get size in bytes safely."""
+            if obj is None:
+                return 0
+            
+            # Pandas objects (Series/DataFrame)
+            if hasattr(obj, "memory_usage"):
+                mem = obj.memory_usage(deep=True)
+                # TRY to sum it (for DataFrames). If that fails, it's already an int (for Series).
+                try:
+                    return mem.sum()
+                except AttributeError:
+                    return mem
+            
+            # Numpy arrays
+            if hasattr(obj, "nbytes"):
+                return obj.nbytes
+                
+            # Fallback
+            return sys.getsizeof(obj)
+
+        # Calculate total size
+        size_y = _get_size(y)
+        size_X = _get_size(X)
+        total_size = size_y + size_X
+        
+        if total_size > self.memory:
+            raise MemoryError(
+                f"Data size ({total_size} bytes) exceeds the memory limit "
+                f"of {self.memory} bytes."
+            )
 
     def predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
