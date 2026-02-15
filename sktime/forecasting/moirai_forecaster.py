@@ -5,9 +5,6 @@ from unittest.mock import patch
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("lightning", severity="none"):
-    import sktime.libs.uni2ts
-
 from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
