@@ -60,6 +60,10 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         Learning rate (TF CNN uses Adam(lr=0.01)).
     verbose : bool, default = False
         Whether to print progress during training.
+    init_weights: str or None, default = None
+        The method to initialize the weights of the conv layers. Supported values are
+        'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
+        for default PyTorch initialization.
     random_state : int or None, default = None
         Seed for reproducibility.
 
@@ -99,7 +103,7 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         kernel_size=7,
         avg_pool_size=3,
         n_conv_layers=2,
-        filter_sizes=None,
+        filter_sizes=[6, 12],
         padding="auto",
         use_bias=True,
         activation=None,
@@ -112,6 +116,7 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         callback_kwargs=None,
         lr=0.01,
         verbose=False,
+        init_weights=None,
         random_state=None,
     ):
         self.kernel_size = kernel_size
@@ -132,6 +137,7 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         self.activation = activation
         self.use_bias = use_bias
         self.verbose = verbose
+        self.init_weights = init_weights
         self.random_state = random_state
 
         if len(filter_sizes) != n_conv_layers:
@@ -224,6 +230,7 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
             "num_epochs": 12,
             "batch_size": 6,
             "kernel_size": 2,
+            "filter_sizes": [4],
             "n_conv_layers": 1,
         }
         params3 = {

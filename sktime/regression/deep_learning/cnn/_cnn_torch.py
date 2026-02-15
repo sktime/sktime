@@ -58,9 +58,12 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
         Learning rate (TF CNN uses Adam(lr=0.01)).
     verbose : bool, default = False
         Whether to print progress during training.
+    init_weights: str or None, default = None
+        The method to initialize the weights of the conv layers. Supported values are
+        'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
+        for default PyTorch initialization.
     random_state : int or None, default = None
         Seed for reproducibility.
-
 
     References
     ----------
@@ -108,6 +111,7 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
         callback_kwargs=None,
         lr=0.01,
         verbose=False,
+        init_weights=None,
         random_state=None,
     ):
         self.kernel_size = kernel_size
@@ -128,6 +132,7 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
         self.verbose = verbose
+        self.init_weights = init_weights
         self.random_state = random_state
 
         if len(filter_sizes) != n_conv_layers:
@@ -183,6 +188,7 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
             use_bias=self.use_bias,
             activation=self.activation,
             padding=self.padding,
+            init_weights=self.init_weights,
             random_state=self.random_state,
         )
 
@@ -209,6 +215,7 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
             "num_epochs": 12,
             "batch_size": 6,
             "kernel_size": 2,
+            "filter_sizes": [4],
             "n_conv_layers": 1,
         }
         params3 = {

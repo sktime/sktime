@@ -43,7 +43,7 @@ class CNNNetworkTorch(NNModule):
         classifier/regressor.
     activation_hidden : str, default = "sigmoid"
         Activation function for hidden conv layers: "sigmoid" or "relu".
-    weights_init: str or None, default = None
+    init_weights: str or None, default = None
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
         for default PyTorch initialization.
@@ -77,7 +77,7 @@ class CNNNetworkTorch(NNModule):
         padding="auto",
         activation=None,
         activation_hidden="sigmoid",
-        weights_init=None,
+        init_weights=None,
         random_state=None,
     ):
         self.input_shape = input_shape
@@ -90,12 +90,10 @@ class CNNNetworkTorch(NNModule):
         self.activation = activation
         self.use_bias = use_bias
         self.padding = padding
-        self.weights_init = weights_init
+        self.init_weights = init_weights
         self.random_state = random_state
 
         super().__init__()
-        if filter_sizes is None:
-            filter_sizes = [6, 12]
         fs = list(filter_sizes)
         # Extend to match n_conv_layers (same as TF)
         fs = fs[:n_conv_layers] + [fs[-1]] * max(0, n_conv_layers - len(fs))
@@ -119,6 +117,7 @@ class CNNNetworkTorch(NNModule):
         self.n_conv_layers = n_conv_layers
         self.activation_hidden = activation_hidden
         self.activation = activation
+        self.init_weights = init_weights
         self.random_state = random_state
 
         nnConv1d = _safe_import("torch.nn.Conv1d")
@@ -159,7 +158,7 @@ class CNNNetworkTorch(NNModule):
             torch_manual_seed = _safe_import("torch.manual_seed")
             torch_manual_seed(random_state)
 
-        if self.weights_init is not None:
+        if self.init_weights is not None:
             self.apply(self._init_weights)
 
     def forward(self, X):
@@ -203,16 +202,16 @@ class CNNNetworkTorch(NNModule):
         xavier_normal_ = _safe_import("torch.nn.init.xavier_normal_")
 
         if isinstance(module, nnConv1d):
-            if self.weights_init == "kaiming_uniform":
+            if self.init_weights == "kaiming_uniform":
                 kaiming_uniform_(module.weight, nonlinearity="relu")
 
-            elif self.weights_init == "kaiming_normal":
+            elif self.init_weights == "kaiming_normal":
                 kaiming_normal_(module.weight, nonlinearity="relu")
 
-            elif self.weights_init == "xavier_uniform":
+            elif self.init_weights == "xavier_uniform":
                 xavier_uniform_(module.weight)
 
-            elif self.weights_init == "xavier_normal":
+            elif self.init_weights == "xavier_normal":
                 xavier_normal_(module.weight)
 
             if module.bias is not None:
