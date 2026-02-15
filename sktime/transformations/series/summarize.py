@@ -484,6 +484,11 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     if bfill is True:
         if hasattr(Z, "grouper"):
             feat = feat.groupby(Z.grouper).bfill()
+        elif isinstance(Z, pd.core.groupby.GroupBy):
+            if Z.keys is not None:
+                feat = feat.groupby(Z.keys).bfill()
+            else:
+                feat = feat.groupby(level=Z.level).bfill()
         else:
             feat = feat.bfill()
 
