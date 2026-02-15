@@ -1184,6 +1184,30 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         pretrained_params = estimator_instance.get_pretrained_params()
         assert len(pretrained_params) > 0, "Expected pretrained attributes to be set"
 
+    def test_pretrain_predict_without_fit(self, estimator_instance, n_columns):
+        """Test that predict() after pretrain() without fit() raises error.
+
+        Pretrained state is not fitted state. Users who forget to call fit()
+        after pretrain() should get a clear NotFittedError, not a crash.
+        """
+        if not estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,),
+            min_timepoints=10,
+            max_timepoints=10,
+            n_columns=n_columns,
+        )
+        estimator_instance.pretrain(y_panel)
+        assert estimator_instance.state == "pretrained"
+
+        with pytest.raises(NotFittedError):
+            estimator_instance.predict(fh=[1, 2, 3])
 
     def test_pretrain_network_preserved_by_fit(self, estimator_instance, n_columns):
         """Test that fit() does not rebuild the network after pretrain().
