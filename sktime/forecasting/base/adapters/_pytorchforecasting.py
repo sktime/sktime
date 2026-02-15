@@ -52,7 +52,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html
     """  # noqa: E501
 
     _tags = {
