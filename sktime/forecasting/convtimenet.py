@@ -157,7 +157,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         "capability:random_state": True,
         "capability:pretrain": True,
         "property:randomness": "derandomized",
-        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and testing
         # --------------
         "tests:libs": [
