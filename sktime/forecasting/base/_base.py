@@ -1056,9 +1056,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         orig_y_mtypes = _coerce_to_list(self.get_tag("y_inner_mtype"))
         pretrain_y_mtypes = list(set(orig_y_mtypes + _PRETRAIN_MTYPES))
 
-        X_inner, y_inner = self._check_X_y(
-            X=X, y=y, y_inner_mtype=pretrain_y_mtypes
-        )
+        X_inner, y_inner = self._check_X_y(X=X, y=y, y_inner_mtype=pretrain_y_mtypes)
 
         y_scitype = self._y_metadata.get("scitype", None)
         if y_scitype == "Series":
