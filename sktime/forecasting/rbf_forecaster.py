@@ -98,6 +98,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:pred_int": False,
+        "capability:pretrain": True,
     }
 
     def __init__(
