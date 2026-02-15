@@ -103,7 +103,7 @@ class FABBA(BaseTransformer):
     return_start_values : bool, optional (default=False)
         whether to return the start values of each series
         start value is returned as first value in transformed data
-        neccessary for inverse transform
+        necessary for inverse transform
 
     alphabet_set : int or list, optional (default=0, {0, 1} or list of strings)
         alphabet set to use for symbolization
