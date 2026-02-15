@@ -131,7 +131,7 @@ jobs:
         run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: install core, test and all soft dependencies
-        run: uv pip install .[all_extras_pandas2,tests]
+        run: uv pip install .[all_extras,tests]
         env:
           UV_SYSTEM_PYTHON: 1
 
