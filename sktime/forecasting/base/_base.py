@@ -1049,20 +1049,16 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             * Sets ``self._pretrained_attrs`` to list of pretrained attribute names
               (as strings).
         """
-        # This is a hack, because _check_X_y should accept panel data only for pretrain.
-        # Temporarily ensure panel/hierarchical mtype support for _check_X_y.
         # pretrain always requires panel data, independent of what fit/predict
-        # support via y_inner_mtype. This decouples pretrain's data requirements
-        # from the y_inner_mtype tag, which controls fit/predict behavior.
+        # support via y_inner_mtype. Pass expanded mtypes directly to _check_X_y
+        # to decouple pretrain's data requirements from the tag.
         _PRETRAIN_MTYPES = ["pd-multiindex", "pd_multiindex_hier"]
         orig_y_mtypes = _coerce_to_list(self.get_tag("y_inner_mtype"))
         pretrain_y_mtypes = list(set(orig_y_mtypes + _PRETRAIN_MTYPES))
-        self.set_tags(**{"y_inner_mtype": pretrain_y_mtypes})
 
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
-
-        # restore original y_inner_mtype so fit/predict are not affected
-        self.set_tags(**{"y_inner_mtype": orig_y_mtypes})
+        X_inner, y_inner = self._check_X_y(
+            X=X, y=y, y_inner_mtype=pretrain_y_mtypes
+        )
 
         y_scitype = self._y_metadata.get("scitype", None)
         if y_scitype == "Series":
@@ -1687,7 +1683,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         return fitted_params
 
-    def _check_X_y(self, X=None, y=None):
+    def _check_X_y(self, X=None, y=None, y_inner_mtype=None):
         """Check and coerce X/y for fit/predict/update functions.
 
         Parameters
@@ -1765,7 +1761,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                     raise ValueError(msg)
 
         # retrieve supported mtypes
-        y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
+        if y_inner_mtype is None:
+            y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
+        else:
+            y_inner_mtype = _coerce_to_list(y_inner_mtype)
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
         y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
         X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
