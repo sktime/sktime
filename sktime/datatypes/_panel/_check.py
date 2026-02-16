@@ -60,7 +60,7 @@ VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
 
 def _is_coercible_time_level(level) -> bool:
-    """True if time level is numeric and can be coerced to valid index type."""
+    """Return True if time level is numeric and coercible to valid index type."""
     if not isinstance(level, pd.Index):
         return False
     return np.issubdtype(level.dtype, np.number)
