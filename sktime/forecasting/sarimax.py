@@ -202,6 +202,7 @@ class SARIMAX(_StatsModelsAdapter):
         If the data size exceeds this limit, a MemoryError is raised.
 
     See Also
+    
     --------
     ARIMA
     AutoARIMA
