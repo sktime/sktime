@@ -234,13 +234,6 @@ class FHValues:
             f"timezone={self.timezone})"
         )
 
-    def sort(self) -> "FHValues":
-        """Return new FHValues with sorted values."""
-        # <check>check the final set of attributes to be stored</check>
-        # this will create a new instance with sorted values, same metadata
-        sorted_vals = np.sort(self.values)
-        return FHValues(sorted_vals, self.value_type, self.freq, self.timezone)
-
     def unique(self) -> "FHValues":
         """Return new FHValues with unique values (preserves sort order)."""
         unique_vals = np.unique(self.values)
@@ -305,7 +298,7 @@ class FHValues:
         result = self.values[key]
         if isinstance(result, np.ndarray):
             return FHValues(result, self.value_type, self.freq, self.timezone)
-        return result
+        return result  # scalar int64 value, returned as is
 
     def copy(self) -> "FHValues":
         """Return a deep copy."""
