@@ -9,6 +9,8 @@ is delegated to the _fh_utils module.
 
 __all__ = ["ForecastingHorizonV2"]
 
+import numpy as np
+
 from sktime.forecasting.base._fh_utils import PandasFHConverter
 from sktime.forecasting.base._fh_values import FHValueType
 
@@ -218,3 +220,47 @@ class ForecastingHorizonV2:
                 # multiply by freq multiplier for multi-step freqs
                 # e.g., "2D" has multiplier 2, so step 1 = 2 ordinals
                 pass
+
+    # Dunders -> Arithmatic operators
+
+    def __add__(self, other):
+        if isinstance(other, ForecastingHorizonV2):
+            result = self.fhvalues.values + other.fhvalues.values
+        else:
+            result = self.fhvalues.values + np.int64(other)
+        fhv = self.fhvalues._new(values=result)
+        return self._new(fhvalues=fhv)
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        if isinstance(other, ForecastingHorizonV2):
+            result = self.fhvalues.values - other.fhvalues.values
+        else:
+            result = self.fhvalues.values - np.int64(other)
+        fhv = self.fhvalues._new(values=result)
+        return self._new(fhvalues=fhv)
+
+    def __rsub__(self, other):
+        # not checking if other is FH here
+        # because __rsub__ is mostly called
+        # when other does not support the operation with FH,
+        # in which case we want to treat other as a scalar.
+        # If other is FH, then other minus self
+        # would have been handled by other.__sub__
+        # and this method would not be called
+        result = np.int64(other) - self.fhvalues.values
+        fhv = self.fhvalues._new(values=result)
+        return self._new(fhvalues=fhv)
+
+    def __mul__(self, other):
+        if isinstance(other, ForecastingHorizonV2):
+            result = self.fhvalues.values * other.fhvalues.values
+        else:
+            result = self.fhvalues.values * np.int64(other)
+        fhv = self.fhvalues._new(values=result)
+        return self._new(fhvalues=fhv)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
