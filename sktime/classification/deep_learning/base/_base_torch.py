@@ -56,7 +56,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
-    metrics : None or str or tuple of str, default = None
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
         Metrics to compute during training. If None, no metrics are computed beyond
         the loss. Metrics are computed from torchmetrics library.
         If a string/Callable is passed, it must be one of the metrics defined in
