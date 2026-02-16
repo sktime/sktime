@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
 """Benchmarking base module."""
 
 __author__ = ["mloning", "viktorkaz"]
 __all__ = ["BaseDataset", "HDDBaseDataset", "BaseResults", "HDDBaseResults"]
 
 import os
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from warnings import warn
 
 import numpy as np
-from joblib import dump, load
 
 
 class BaseDataset:
@@ -38,7 +36,7 @@ class HDDBaseDataset(BaseDataset):
 
     def __init__(self, path, name):
         self._path = path
-        super(HDDBaseDataset, self).__init__(name=name)
+        super().__init__(name=name)
 
     @property
     def path(self):
@@ -137,7 +135,7 @@ class HDDBaseResults(BaseResults):
         # set path
         self._path = path
 
-        super(HDDBaseResults, self).__init__()
+        super().__init__()
 
     @property
     def path(self):
@@ -146,6 +144,8 @@ class HDDBaseResults(BaseResults):
 
     def save(self):
         """Save results object as master file."""
+        from joblib import dump, load
+
         file = os.path.join(self.path, "results.pickle")
 
         # if file does not exist already, create a new one
@@ -222,7 +222,7 @@ class _PredictionsWrapper:
         self.predict_estimator_end_time = predict_estimator_end_time
 
 
-class BaseMetric(ABC):
+class BaseMetric:
     def __init__(self, name, **kwargs):
         self.name = name
         self.kwargs = kwargs

@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Croston's Forecasting Method."""
-
 
 import numpy as np
 import pandas as pd
@@ -65,22 +63,34 @@ class Croston(BaseForecaster):
     References
     ----------
     .. [1] J. D. Croston. Forecasting and stock control for intermittent demands.
-       Operational Research Quarterly (1970-1977), 23(3):pp. 289–303, 1972.
+       Operational Research Quarterly (1970-1977), 23(3):pp. 289-303, 1972.
     .. [2] N. Vandeput. Forecasting Intermittent Demand with the Croston Model.
+
        https://towardsdatascience.com/croston-forecast-model-for-intermittent-demand-360287a17f5f
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "Riyabelle25",
+        "maintainers": "Riyabelle25",
+        # estimator type
+        # --------------
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
+        "capability:exogenous": False,
+        "y_inner_mtype": "pd.DataFrame",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, smoothing=0.1):
         # hyperparameter
         self.smoothing = smoothing
         self._f = None
-        super(Croston, self).__init__()
+        super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -99,7 +109,7 @@ class Croston(BaseForecaster):
         n_timepoints = len(y)  # Historical period: i.e the input array's length
         smoothing = self.smoothing
 
-        y = y.to_numpy()  # Transform the input into a numpy array
+        y = y.to_numpy().flatten()  # Transform the input into a numpy array
         # Fit the parameters: level(q), periodicity(a) and forecast(f)
         q, a, f = np.full((3, n_timepoints + 1), np.nan)
         p = 1  # periods since last demand observation
@@ -151,8 +161,8 @@ class Croston(BaseForecaster):
         # Predicting future forecasts:to_numpy()
         y_pred = np.full(len_fh, f[-1])
 
-        index = self.fh.to_absolute(self.cutoff)
-        return pd.Series(y_pred, index=index, name=self._y.name)
+        index = self.fh.to_absolute_index(self.cutoff)
+        return pd.DataFrame(y_pred, index=index, columns=self._get_varnames())
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -162,13 +172,17 @@ class Croston(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict
         """
-        params1 = {}
-        params2 = {"smoothing": 0.42}
+        params = [
+            {},
+            {"smoothing": 0},
+            {"smoothing": 0.42},
+            {"smoothing": 2},
+        ]
 
-        return [params1, params2]
+        return params

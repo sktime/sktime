@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Any, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -37,7 +36,7 @@ class _EdrDistance(NumbaDistance):
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
         epsilon: float = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceAlignmentPathCallable:
         """Create a no_python compiled edr alignment path distance callable.
 
@@ -101,7 +100,7 @@ class _EdrDistance(NumbaDistance):
             @njit(cache=True)
             def numba_edr_distance_alignment_path(
                 _x: np.ndarray, _y: np.ndarray
-            ) -> Tuple[List, float, np.ndarray]:
+            ) -> tuple[list, float, np.ndarray]:
                 if epsilon is None:
                     _epsilon = max(np.std(_x), np.std(_y)) / 4
                 else:
@@ -116,7 +115,7 @@ class _EdrDistance(NumbaDistance):
             @njit(cache=True)
             def numba_edr_distance_alignment_path(
                 _x: np.ndarray, _y: np.ndarray
-            ) -> Tuple[List, float]:
+            ) -> tuple[list, float]:
                 if epsilon is None:
                     _epsilon = max(np.std(_x), np.std(_y)) / 4
                 else:
@@ -136,7 +135,7 @@ class _EdrDistance(NumbaDistance):
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
         epsilon: float = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled edr distance callable.
 

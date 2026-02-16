@@ -1,24 +1,21 @@
-# -*- coding: utf-8 -*-
-"""tsfresh interface class."""
+"""Tsfresh interface class."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["AyushmaanSeth", "mloning", "Alwin Wang", "MatthewMiddlehurst"]
+__author__ = ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
-from warnings import warn
-
-from sktime.datatypes._panel._convert import from_nested_to_long
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tsfresh", severity="warning")
 
 
 class _TSFreshFeatureExtractor(BaseTransformer):
     """Base adapter class for tsfresh transformations."""
 
     _tags = {
+        "authors": ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"],
+        "maintainers": ["AyushmaanSeth"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -27,8 +24,12 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        "python_dependencies": "tsfresh",
-        "python_version": "<3.10",
+        "python_dependencies": ["tsfresh", ["tsfresh>=0.21", "scipy<1.15"]],
+        # if tsfresh is <0.21, it is incompatible with scipy>=1.15
+        # therefore, we need to restrict the version of scipy
+        # the dependency tag translates to:
+        # tsfresh is required, and tsfresh>=0.21 or scipy<1.15
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
@@ -57,7 +58,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         self.profiling_filename = profiling_filename
         self.distributor = distributor
 
-        super(_TSFreshFeatureExtractor, self).__init__()
+        super().__init__()
 
         # _get_extraction_params should be after the init because this imports tsfresh
         # and the init checks for python version and tsfresh being present
@@ -97,6 +98,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
             "profiling_sorting": PROFILING_SORTING,
             "profiling_filename": PROFILING_FILENAME,
             "profile": PROFILING,
+            "distributor": None,
         }
 
         # Replace defaults with user defined parameters
@@ -105,6 +107,12 @@ class _TSFreshFeatureExtractor(BaseTransformer):
                 value = getattr(self, name)
                 if value is not None:
                     extraction_params[name] = value
+
+            # Fixes key mismatch between tsfresh and sktime
+            # tsfresh uses "profile" while sktime uses "profiling"
+            # This fix keeps compatibility
+            if name == "profile":
+                extraction_params[name] = self.profiling
 
         self.n_jobs = n_jobs
 
@@ -140,9 +148,9 @@ class _TSFreshFeatureExtractor(BaseTransformer):
 
 
 class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
-    """Transformer for extracting time series features via `tsfresh.extract_features`.
+    """Transformer for extracting time series features via ``tsfresh.extract_features``.
 
-    Direct interface to `tsfresh.extract_features` [1] as an `sktime` transformer.
+    Direct interface to ``tsfresh.extract_features`` [1] as an ``sktime`` transformer.
 
     Parameters
     ----------
@@ -191,10 +199,9 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     profiling_filename : basestring, default=None
         Where to save the profiling results.
     distributor : distributor class, default=None
-        Advanced parameter: set this to a class name that you want to use as a
-        distributor. See the tsfresh package utilities/distribution.py for more
-        information.
-        Leave to None, if you want TSFresh to choose the best distributor.
+        Advanced parameter: class to use as a distributor.
+        See the tsfresh package utilities/distribution.py for more information.
+        The default=None has the tsfresh default implementation choose the distributor.
 
     References
     ----------
@@ -212,9 +219,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     --------
     >>> from sklearn.model_selection import train_test_split
     >>> from sktime.datasets import load_arrow_head
-    >>> from sktime.transformations.panel.tsfresh import (
-    ...     TSFreshFeatureExtractor
-    ... )
+    >>> from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
     >>> X, y = load_arrow_head(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
     >>> ts_eff = TSFreshFeatureExtractor(
@@ -232,6 +237,8 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     >>> X_transform2 = ts_custom.fit_transform(X_train) # doctest: +SKIP
     """
 
+    _tags = {"X_inner_mtype": "pd-long"}
+
     def __init__(
         self,
         default_fc_parameters="efficient",
@@ -246,7 +253,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         profiling_sorting=None,
         distributor=None,
     ):
-        super(TSFreshFeatureExtractor, self).__init__(
+        super().__init__(
             default_fc_parameters=default_fc_parameters,
             kind_to_fc_parameters=kind_to_fc_parameters,
             chunksize=chunksize,
@@ -278,34 +285,24 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
             each cell of Xt contains pandas.Series
             transformed version of X
         """
-        # tsfresh requires unique index, returns only values for
-        # unique index values
-        if X.index.nunique() < X.shape[0]:
-            warn(
-                "tsfresh requires a unique index, but found "
-                "non-unique. To avoid this warning, please make sure the index of X "
-                "contains only unique values."
-            )
-            X = X.reset_index(drop=True)
-
-        Xt = from_nested_to_long(X)
-
         # lazy imports to avoid hard dependency
         from tsfresh import extract_features
 
         Xt = extract_features(
-            Xt,
-            column_id="index",
-            column_value="value",
-            column_kind="column",
-            column_sort="time_index",
+            X,
+            column_id=X.columns[0],
+            column_value=X.columns[3],
+            column_kind=X.columns[2],
+            column_sort=X.columns[1],
             **self.default_fc_parameters_,
         )
 
         # When using the long input format, tsfresh seems to sort the index,
         # here we make sure we return the dataframe in the sort order as the
         # input data
-        return Xt.reindex(X.index)
+        instances = X.iloc[:, 0].unique()
+        Xt = Xt.reindex(instances)
+        return Xt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -315,7 +312,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -323,8 +320,9 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         features_to_calc = [
             "dim_0__quantile__q_0.6",
@@ -347,10 +345,10 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
 
 
 class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
-    """Transformer for extracting time series features via `tsfresh.extract_features`.
+    """Transformer for extracting time series features via ``tsfresh.extract_features``.
 
-    Direct interface to `tsfresh.extract_features` [1] followed by the tsfresh
-    FeatureSelector class as an `sktime` transformer.
+    Direct interface to ``tsfresh.extract_features`` [1] followed by the tsfresh
+    FeatureSelector class as an ``sktime`` transformer.
 
     Parameters
     ----------
@@ -399,10 +397,9 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     profiling_filename : basestring, default=None
         Where to save the profiling results.
     distributor : distributor class, default=None
-        Advanced parameter: set this to a class name that you want to use as a
-        distributor. See the tsfresh package utilities/distribution.py for more
-        information.
-        Leave to None, if you want TSFresh to choose the best distributor.
+        Advanced parameter: class to use as a distributor.
+        See the tsfresh package utilities/distribution.py for more information.
+        The default=None has the tsfresh default implementation choose the distributor.
     test_for_binary_target_binary_feature : str or None, default=None
         Which test to be used for binary target, binary feature (currently unused).
     test_for_binary_target_real_feature : str or None, default=None
@@ -419,10 +416,11 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         this should be set to False as the features are never independent (e.g. mean
         and median)
     ml_task: sre, default="auto"
-        The intended machine learning task. Either `'classification'`, `'regression'`
-        or `'auto'`.
-        Defaults to `'auto'`, meaning the intended task is inferred from `y`.
-        If `y` has a boolean, integer or object dtype, the task is assumed to be
+        The intended machine learning task. Either ``'classification'``,
+        ``'regression'``
+        or ``'auto'``.
+        Defaults to ``'auto'``, meaning the intended task is inferred from ``y``.
+        If ``y`` has a boolean, integer or object dtype, the task is assumed to be
         classification, else regression.
 
     References
@@ -491,7 +489,17 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         hypotheses_independent=None,
         ml_task="auto",
     ):
-        super(TSFreshRelevantFeatureExtractor, self).__init__(
+        self.test_for_binary_target_binary_feature = (
+            test_for_binary_target_binary_feature
+        )
+        self.test_for_binary_target_real_feature = test_for_binary_target_real_feature
+        self.test_for_real_target_binary_feature = test_for_real_target_binary_feature
+        self.test_for_real_target_real_feature = test_for_real_target_real_feature
+        self.fdr_level = fdr_level
+        self.hypotheses_independent = hypotheses_independent
+        self.ml_task = ml_task
+
+        super().__init__(
             default_fc_parameters=default_fc_parameters,
             kind_to_fc_parameters=kind_to_fc_parameters,
             chunksize=chunksize,
@@ -504,16 +512,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling_sorting=profiling_sorting,
             distributor=distributor,
         )
-
-        self.test_for_binary_target_binary_feature = (
-            test_for_binary_target_binary_feature
-        )
-        self.test_for_binary_target_real_feature = test_for_binary_target_real_feature
-        self.test_for_real_target_binary_feature = test_for_real_target_binary_feature
-        self.test_for_real_target_real_feature = test_for_real_target_real_feature
-        self.fdr_level = fdr_level
-        self.hypotheses_independent = hypotheses_independent
-        self.ml_task = ml_task
 
         self.default_fs_parameters_ = self._get_selection_params()
 
@@ -578,30 +576,35 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         -------
         transformed version of X
         type depends on type of X and scitype:transform-output tag:
-            |   `X`    | `tf-output`  |     type of return     |
+            |   ``X``    | ``tf-output``  |     type of return     |
             |----------|--------------|------------------------|
-            | `Series` | `Primitives` | `pd.DataFrame` (1-row) |
-            | `Panel`  | `Primitives` | `pd.DataFrame`         |
-            | `Series` | `Series`     | `Series`               |
-            | `Panel`  | `Series`     | `Panel`                |
-            | `Series` | `Panel`      | `Panel`                |
-        instances in return correspond to instances in `X`
+            | ``Series`` | ``Primitives`` | ``pd.DataFrame`` (1-row) |
+            | ``Panel``  | ``Primitives`` | ``pd.DataFrame``         |
+            | ``Series`` | ``Series``     | ``Series``               |
+            | ``Panel``  | ``Series``     | ``Panel``                |
+            | ``Series`` | ``Panel``      | ``Panel``                |
+        instances in return correspond to instances in ``X``
         combinations not in the table are currently not supported
 
         Explicitly, with examples:
-            if `X` is `Series` (e.g., `pd.DataFrame`) and `transform-output` is `Series`
-                then the return is a single `Series` of the same mtype
+            if ``X`` is ``Series`` (e.g., ``pd.DataFrame``) and ``transform-output`` is
+            ``Series``
+                then the return is a single ``Series`` of the same mtype
                 Example: detrending a single series
-            if `X` is `Panel` (e.g., `pd-multiindex`) and `transform-output` is `Series`
-                then the return is `Panel` with same number of instances as `X`
+            if ``X`` is ``Panel`` (e.g., ``pd-multiindex``) and ``transform-output`` is
+            ``Series``
+                then the return is ``Panel`` with same number of instances as ``X``
                     (the transformer is applied to each input Series instance)
                 Example: all series in the panel are detrended individually
-            if `X` is `Series` or `Panel` and `transform-output` is `Primitives`
-                then the return is `pd.DataFrame` with as many rows as instances in `X`
+            if ``X`` is ``Series`` or ``Panel`` and ``transform-output`` is
+            ``Primitives``
+                then the return is ``pd.DataFrame`` with as many rows as instances in
+                ``X``
                 Example: i-th row of the return has mean and variance of the i-th series
-            if `X` is `Series` and `transform-output` is `Panel`
-                then the return is a `Panel` object of type `pd-multiindex`
-                Example: i-th instance of the output is the i-th window running over `X`
+            if ``X`` is ``Series`` and ``transform-output`` is ``Panel``
+                then the return is a ``Panel`` object of type ``pd-multiindex``
+                Example: i-th instance of the output is the i-th window running over
+                ``X``
         """
         self.reset()
         if y is None:
@@ -621,6 +624,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling=self.profiling,
             profiling_filename=self.profiling_filename,
             profiling_sorting=self.profiling_sorting,
+            distributor=self.distributor,
         )
 
         self.selector_ = FeatureSelector(
@@ -669,6 +673,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling=self.profiling,
             profiling_filename=self.profiling_filename,
             profiling_sorting=self.profiling_sorting,
+            distributor=self.distributor,
         )
 
         self.selector_ = FeatureSelector(
@@ -709,7 +714,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -717,8 +722,9 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = {
             "default_fc_parameters": "efficient",
@@ -726,4 +732,22 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             "show_warnings": False,
             "fdr_level": 0.01,
         }
+        params2 = {
+            "default_fc_parameters": "minimal",
+            "disable_progressbar": True,
+            "show_warnings": False,
+        }
+        params = [params, params2]
+
+        if _check_estimator_deps(cls, severity="none"):
+            from tsfresh.utilities.distribution import MapDistributor
+
+            params3 = {
+                "default_fc_parameters": "minimal",
+                "disable_progressbar": True,
+                "show_warnings": False,
+                "distributor": MapDistributor(),
+            }
+            params.append(params3)
+
         return params

@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """A transformer to compute the time elapsed since a reference time."""
+
 from __future__ import annotations
 
 __author__ = ["KishManani"]
@@ -17,17 +17,17 @@ from sktime.transformations.base import BaseTransformer
 
 
 class TimeSince(BaseTransformer):
-    """Computes element-wise time elapsed between the time index and a reference start time.
+    """Compute element-wise time elapsed between time index and a reference start time.
 
-    Creates a column(s) which represents: `t` - `start`, where `start` is
-    a reference time and `t` is the time index. The type of `start` must be
-    compatible with the index of `X` used in `.fit()` and `.transform()`.
+    Creates a column(s) which represents: ``t`` - ``start``, where ``start`` is
+    a reference time and ``t`` is the time index. The type of ``start`` must be
+    compatible with the index of ``X`` used in ``.fit()`` and ``.transform()``.
 
     The output can be converted to an integer representing the number of periods
-    elapsed since the start time by setting `to_numeric=True`. The period is
-    determined by the frequency of the index. For example, if the `freq` of
+    elapsed since the start time by setting ``to_numeric=True``. The period is
+    determined by the frequency of the index. For example, if the ``freq`` of
     the index is "MS" or "M" then the output is the integer number of months
-    between `t` and `start`.
+    between ``t`` and ``start``.
 
     Parameters
     ----------
@@ -35,24 +35,25 @@ class TimeSince(BaseTransformer):
         a "start time" can be one of the following types:
 
         * int: Start time to compute the time elapsed, use when index is integer.
-        * time-like: `Period` or `datetime`
+        * time-like: ``Period`` or ``datetime``
             Start time to compute the time elapsed.
         * str: String is converted to datetime or period, depending on the index type, \
             to give the start time.
 
     to_numeric : string, optional (default=True)
-        Return the integer number of periods elapsed since `start`; the period
+        Return the integer number of periods elapsed since ``start``; the period
         is defined by the frequency of the data. Converts datetime types to
         pd.Period before calculating time differences.
     freq : 'str', optional, default=None
         Only used when X has a pd.DatetimeIndex without a specified frequency.
         Specifies the frequency of the index of your data. The string should
         match a pandas offset alias:
+
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     keep_original_columns :  boolean, optional, default=False
-        Keep original columns in X passed to `.transform()`.
+        Keep original columns in X passed to ``.transform()``.
     positive_only :  boolean, optional, default=False
-        Clips negative values to zero when `to_numeric` is True.
+        Clips negative values to zero when ``to_numeric`` is True.
 
     Examples
     --------
@@ -61,17 +62,25 @@ class TimeSince(BaseTransformer):
     >>> X = load_airline()
 
         Create a single column with time elapsed since start date of time series.
-        The output is in units of integer number of months, same as the index `freq`.
+        The output is in units of integer number of months, same as the index ``freq``.
+
     >>> transformer = TimeSince()
     >>> Xt = transformer.fit_transform(X)
 
         Create multiple columns with different start times. The output is in units
-        of integer number of months, same as the index `freq`.
+        of integer number of months, same as the index ``freq``.
+
     >>> transformer = TimeSince(["2000-01", "2000-02"])
     >>> Xt = transformer.fit_transform(X)
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["KishManani"],
+        "maintainers": ["KishManani"],
+        # estimator type
+        # --------------
         # what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
         # what scitype is returned: Primitives, Series, Panel
@@ -80,7 +89,7 @@ class TimeSince(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",
-        "univariate-only": False,
+        "capability:multivariate": True,
         "requires_y": False,
         "remember_data": False,
         "fit_is_empty": False,  # is fit empty and can be skipped?
@@ -91,8 +100,17 @@ class TimeSince(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        # the test_categorical_X_passes test uses RangeIndex,
+        # but this transformation requires DatetimeIndex
+        "tests:skip_by_name": [
+            "test_categorical_X_passes",
+            "test_categorical_y_raises_error",
+        ],
     }
 
     def __init__(
@@ -109,7 +127,7 @@ class TimeSince(BaseTransformer):
         self.freq = freq
         self.keep_original_columns = keep_original_columns
         self.positive_only = positive_only
-        super(TimeSince, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -130,9 +148,12 @@ class TimeSince(BaseTransformer):
         """
         time_index = _get_time_index(X)
 
-        if time_index.is_numeric():
+        if pd.api.types.is_numeric_dtype(time_index):
             if self.freq:
-                warnings.warn("Index is integer type. `freq` will be ignored.")
+                warnings.warn(
+                    "Index is integer type. `freq` will be ignored.",
+                    stacklevel=2,
+                )
             self.freq_ = None
         elif isinstance(time_index, (pd.DatetimeIndex, pd.PeriodIndex)):
             # Chooses first non None value
@@ -146,7 +167,8 @@ class TimeSince(BaseTransformer):
             ):
                 warnings.warn(
                     f"Using frequency from index: {time_index.freq}, which "
-                    f"does not match the frequency given: {self.freq}."
+                    f"does not match the frequency given: {self.freq}.",
+                    stacklevel=2,
                 )
         else:
             raise ValueError("Index must be of type int, datetime, or period.")
@@ -184,11 +206,12 @@ class TimeSince(BaseTransformer):
                     f"Period index. Check that `start` is of type "
                     f"pd.Period or a pd.Period parsable string."
                 )
-            elif time_index.is_numeric() and not isinstance(start_, (int, np.integer)):
-                raise ValueError(
-                    f"start_={start_} incompatible with a numeric index."
-                    f"Check that `start` is an integer."
-                )
+            elif pd.api.types.is_numeric_dtype(time_index):
+                if not isinstance(start_, (int, np.integer)):
+                    raise ValueError(
+                        f"start_={start_} incompatible with a numeric index."
+                        f"Check that `start` is an integer."
+                    )
 
         return self
 
@@ -226,7 +249,7 @@ class TimeSince(BaseTransformer):
                     # (e.g., "MS" -> "M"). We must strip the freq str of any
                     # integer multiplier (e.g., "15T" -> "T"). This is needed so that
                     # `get_period_alias` returns the correct result.
-                    # If `get_period_alias` recieves a freq str with a multiplier
+                    # If `get_period_alias` receives a freq str with a multiplier
                     # (e.g., "15T") it returns `None` which causes errors downstream.
                     freq_ = _remove_digits_from_str(self.freq_)
                     freq_period = get_period_alias(freq_)
@@ -271,7 +294,7 @@ class TimeSince(BaseTransformer):
                     # Compute time differences.
                     time_deltas = _get_period_diff_as_int(time_index, start_period)
 
-                elif time_index.is_numeric():
+                elif pd.api.types.is_numeric_dtype(time_index):
                     time_deltas = time_index - start_
             else:
                 time_deltas = time_index - start_
@@ -295,7 +318,7 @@ class TimeSince(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -303,8 +326,9 @@ class TimeSince(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         return [
             {"start": None, "to_numeric": True},
@@ -317,7 +341,7 @@ class TimeSince(BaseTransformer):
 
 
 def _get_period_diff_as_int(x: pd.PeriodIndex, y: pd.PeriodIndex) -> pd.Index:
-    return x.astype(int) - y.astype(int)
+    return x.astype("int64") - y.astype("int64")
 
 
 def _remove_digits_from_str(x: str) -> str:

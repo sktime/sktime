@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """WEASEL classifier.
 
 Dictionary based classifier based on SFA transform, BOSS and linear regression.
 """
 
-__author__ = ["patrickzib", "Arik Ermshaus"]
+__author__ = ["patrickzib", "ermshaua"]
 __all__ = ["WEASEL"]
 
 import math
@@ -28,12 +27,13 @@ class WEASEL(BaseClassifier):
     on this bag.
 
     There are these primary parameters:
-            - alphabet_size: alphabet size
-            - p-threshold: threshold used for chi^2-feature selection to
-                        select best words.
-            - anova: select best l/2 fourier coefficients other than first ones
-            - bigrams: using bigrams of SFA words
-            - binning_strategy: the binning strategy used to discretise into SFA words.
+
+    - alphabet_size: alphabet size
+    - p-threshold: threshold used for chi^2-feature selection to select best words.
+    - anova: select best l/2 fourier coefficients other than first ones
+    - bigrams: using bigrams of SFA words
+    - binning_strategy: the binning strategy used to discretise into SFA words.
+
     WEASEL slides a window length *w* along the series. The *w* length window
     is shortened to an *l* length word through taking a Fourier transform and
     keeping the best *l/2* complex coefficients using an anova one-sided
@@ -121,9 +121,18 @@ class WEASEL(BaseClassifier):
     """
 
     _tags = {
-        "capability:multithreading": True,
-        "classifier_type": "dictionary",
+        # packaging info
+        # --------------
+        "authors": ["patrickzib", "ermshaua"],
+        "maintainers": ["ermshaua"],
         "python_dependencies": "numba",
+        # estimator type
+        # --------------
+        "capability:multithreading": True,
+        "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        "classifier_type": "dictionary",
     }
 
     def __init__(
@@ -139,7 +148,6 @@ class WEASEL(BaseClassifier):
         support_probabilities=False,
         random_state=None,
     ):
-
         self.alphabet_size = alphabet_size
 
         # feature selection is applied based on the chi-squared test.
@@ -170,11 +178,15 @@ class WEASEL(BaseClassifier):
         self.n_jobs = n_jobs
         self.support_probabilities = support_probabilities
 
-        super(WEASEL, self).__init__()
+        super().__init__()
 
         from numba import set_num_threads
 
         set_num_threads(n_jobs)
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
@@ -233,7 +245,7 @@ class WEASEL(BaseClassifier):
         if type(all_words[0]) is np.ndarray:
             all_words = np.concatenate(all_words, axis=1)
         else:
-            all_words = hstack((all_words))
+            all_words = hstack(all_words)
 
         # Ridge Classifier does not give probabilities
         if not self.support_probabilities:
@@ -300,7 +312,7 @@ class WEASEL(BaseClassifier):
         if type(all_words[0]) is np.ndarray:
             all_words = np.concatenate(all_words, axis=1)
         else:
-            all_words = hstack((all_words))
+            all_words = hstack(all_words)
 
         return all_words
 
@@ -318,7 +330,7 @@ class WEASEL(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -329,8 +341,9 @@ class WEASEL(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         return {
             "window_inc": 4,

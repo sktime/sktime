@@ -1,11 +1,5 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for classification."""
 
-__author__ = [
-    "Jack Russon",
-    "TonyBagnall",
-    "achieveordie",
-]
 __all__ = [
     "TapNetClassifier",
 ]
@@ -16,9 +10,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.tapnet import TapNetNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class TapNetClassifier(BaseDeepClassifier):
@@ -26,43 +18,51 @@ class TapNetClassifier(BaseDeepClassifier):
 
     Parameters
     ----------
-    filter_sizes        : array of int, default = (256, 256, 128)
+    filter_sizes : array of int, default = (256, 256, 128)
         sets the kernel size argument for each convolutional block.
         Controls number of convolutional filters
         and number of neurons in attention dense layers.
-    kernel_sizes        : array of int, default = (8, 5, 3)
+    kernel_sizes : array of int, default = (8, 5, 3)
         controls the size of the convolutional kernels
-    layers              : array of int, default = (500, 300)
+    layers : array of int, default = (500, 300)
         size of dense layers
-    reduction           : int, default = 16
+    reduction : int, default = 16
         divides the number of dense neurons in the first layer of the attention block.
-    n_epochs            : int, default = 2000
+    n_epochs : int, default = 2000
         number of epochs to train the model
-    batch_size          : int, default = 16
+    batch_size : int, default = 16
         number of samples per update
-    dropout             : float, default = 0.5
+    callbacks : list of keras.callbacks.Callback, optional (default=None)
+        List of Keras callbacks to apply during model training.
+    dropout : float, default = 0.5
         dropout rate, in the range [0, 1)
-    dilation            : int, default = 1
+    lstm_dropout : float, default = 0.8
+        dropout rate for the LSTM layer, in the range [0, 1)
+    dilation : int, default = 1
         dilation value
-    activation          : str, default = "sigmoid"
+    activation : str, default = "sigmoid"
         activation function for the last output layer
-    loss                : str, default = "binary_crossentropy"
+        List of available activation functions: https://keras.io/api/layers/activations/
+    activation_hidden : str, default = "leaky_relu"
+        activation function for the hidden layers
+        List of available activation functions: https://keras.io/api/layers/activations/
+    loss : str, default = "binary_crossentropy"
         loss function for the classifier
-    optimizer           : str or None, default = "Adam(lr=0.01)"
-        gradient updating function for the classifer
-    use_bias            : bool, default = True
+    optimizer : str or None, default = "Adam(lr=0.01)"
+        gradient updating function for the classifier
+    use_bias : bool, default = True
         whether to use bias in the output dense layer
-    use_rp              : bool, default = True
+    use_rp : bool, default = True
         whether to use random projections
-    use_att             : bool, default = True
+    use_att : bool, default = True
         whether to use self attention
-    use_lstm        : bool, default = True
+    use_lstm : bool, default = True
         whether to use an LSTM layer
-    use_cnn         : bool, default = True
+    use_cnn : bool, default = True
         whether to use a CNN layer
-    verbose         : bool, default = False
+    verbose : bool, default = False
         whether to output extra information
-    random_state    : int or None, default = None
+    random_state : int or None, default = None
         seed for random
 
     Attributes
@@ -88,7 +88,25 @@ class TapNetClassifier(BaseDeepClassifier):
     TapNetClassifier(...)
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["jnrusson1", "TonyBagnall", "achieveordie", "noxthot"],
+        "maintainers": ["jnrusson1", "achieveordie"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+        # TapNet fails due to Lambda layer and stochastic failures,
+        # see #3539, #3616, #3525
+        "tests:skip_all": True,
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+        ],
+        # Run tests in a dedicated VM due to sporadic crashes and possible
+        # memory leaks (see #8518)
+        "tests:vm": True,
+    }
 
     def __init__(
         self,
@@ -102,6 +120,7 @@ class TapNetClassifier(BaseDeepClassifier):
         use_rp=True,
         rp_params=(-1, 3),
         activation="sigmoid",
+        activation_hidden="leaky_relu",
         use_bias=True,
         use_att=True,
         use_lstm=True,
@@ -113,9 +132,9 @@ class TapNetClassifier(BaseDeepClassifier):
         metrics=None,
         callbacks=None,
         verbose=False,
+        lstm_dropout=0.8,
     ):
         _check_dl_dependencies(severity="error")
-        super(TapNetClassifier, self).__init__()
 
         self.batch_size = batch_size
         self.random_state = random_state
@@ -124,6 +143,7 @@ class TapNetClassifier(BaseDeepClassifier):
         self.rp_params = rp_params
         self.filter_sizes = filter_sizes
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_att = use_att
         self.use_bias = use_bias
 
@@ -137,6 +157,7 @@ class TapNetClassifier(BaseDeepClassifier):
         self.verbose = verbose
 
         self.dropout = dropout
+        self.lstm_dropout = lstm_dropout
         self.use_lstm = use_lstm
         self.use_cnn = use_cnn
 
@@ -144,7 +165,10 @@ class TapNetClassifier(BaseDeepClassifier):
         self.use_rp = use_rp
         self.rp_params = rp_params
 
+        super().__init__()
+
         self._network = TapNetNetwork(
+            activation=self.activation_hidden,
             dropout=self.dropout,
             filter_sizes=self.filter_sizes,
             kernel_size=self.kernel_size,
@@ -157,6 +181,7 @@ class TapNetClassifier(BaseDeepClassifier):
             use_cnn=self.use_cnn,
             random_state=self.random_state,
             padding=self.padding,
+            lstm_dropout=self.lstm_dropout,
         )
 
     def build_model(self, input_shape, n_classes, **kwargs):
@@ -223,7 +248,7 @@ class TapNetClassifier(BaseDeepClassifier):
         -------
         self: object
         """
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         # Transpose to conform to expectation format by keras
         X = X.transpose(0, 2, 1)
 
@@ -251,7 +276,7 @@ class TapNetClassifier(BaseDeepClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -262,10 +287,11 @@ class TapNetClassifier(BaseDeepClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 20,

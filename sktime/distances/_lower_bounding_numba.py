@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 """Isolated numba imports for lower_bounding."""
 
 __author__ = ["chrisholder", "TonyBagnall"]
 
 import math
-from typing import Union
 
 import numpy as np
 
@@ -15,7 +13,7 @@ from sktime.utils.numba.njit import njit
 def create_shape_on_matrix(
     bounding_matrix: np.ndarray,
     y_upper_line: np.ndarray,
-    y_lower_line: Union[np.ndarray, None] = None,
+    y_lower_line: np.ndarray | None = None,
     x_step_size: int = 1,
     start_val: int = 0,
 ) -> np.ndarray:
@@ -52,30 +50,19 @@ def create_shape_on_matrix(
 
     if upper_line_y_values != lower_line_y_values:
         raise ValueError(
-            "The number of upper line values must equal the number of lower line "
-            "values"
+            "The number of upper line values must equal the number of lower line values"
         )
-
-    half_way = math.floor(upper_line_y_values / 2)
 
     for i in range(start_val, upper_line_y_values):
         x = i * x_step_size
 
-        if i > half_way:
-            upper_y = max(0, min(y_size - 1, math.ceil(y_upper_line[i])))
-            lower_y = max(0, min(y_size - 1, math.floor(y_lower_line[i])))
-        else:
-            upper_y = max(0, min(y_size - 1, math.ceil(y_upper_line[i])))
-            lower_y = max(0, min(y_size - 1, math.floor(y_lower_line[i])))
+        upper_y = max(0, min(y_size - 1, math.ceil(y_upper_line[i])))
+        lower_y = max(0, min(y_size - 1, math.floor(y_lower_line[i])))
 
-        if upper_line_y_values == lower_line_y_values:
-            if upper_y == lower_y:
-                bounding_matrix[upper_y, x] = 0.0
-            else:
-                bounding_matrix[upper_y : (lower_y + 1), x] = 0.0
-        else:
+        if upper_y == lower_y:
             bounding_matrix[upper_y, x] = 0.0
-            bounding_matrix[lower_y, x] = 0.0
+        else:
+            bounding_matrix[upper_y : (lower_y + 1), x] = 0.0
 
     return bounding_matrix
 
@@ -244,7 +231,7 @@ def numba_create_bounding_matrix(
     x: np.ndarray,
     y: np.ndarray,
     window: float = -1.0,
-    itakura_max_slope: Union[float, int] = -1.0,
+    itakura_max_slope: float = -1.0,
 ) -> np.ndarray:
     """Numba compiled way of creating bounding matrix.
 

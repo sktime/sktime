@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ColumnEnsembleClassifier: For Multivariate Time Series Classification.
 
 Builds classifiers on each dimension (column) independently.
@@ -21,15 +20,20 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     """Base Class for column ensemble."""
 
     _tags = {
+        "authors": ["abostrom"],
         "capability:multivariate": True,
+        "capability:predict_proba": True,
         "X_inner_mtype": ["nested_univ", "pd-multiindex"],
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, estimators, verbose=False):
+    def __init__(self, estimators, remainder="drop", verbose=False):
         self.verbose = verbose
         self.estimators = estimators
-        self.remainder = "drop"
-        super(BaseColumnEnsembleClassifier, self).__init__()
+        self.remainder = remainder
+        super().__init__()
         self._anytagis_then_set(
             "capability:unequal_length", False, True, self._estimators
         )
@@ -99,9 +103,9 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     def _iter(self, replace_strings=False):
         """Generate (name, estimator, column) tuples.
 
-        If fitted=True, use the fitted transformations, else use the
-        user specified transformations updated with converted column names
-        and potentially appended with transformer for remainder.
+        If fitted=True, use the fitted transformations, else use the user specified
+        transformations updated with converted column names and potentially appended
+        with transformer for remainder.
         """
         if self.is_fitted:
             estimators = self.estimators_
@@ -113,7 +117,9 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             ]
 
         # add transformer tuple for remainder
-        if self._remainder[2] is not None:
+        if self._remainder[2] is not None and (
+            self._remainder != "drop" or not self._remainder[1].is_fitted
+        ):
             estimators = chain(estimators, [self._remainder])
 
         for name, estimator, column in estimators:
@@ -139,7 +145,6 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
 
         y : array-like, shape (n_samples, ...), optional
             Targets for supervised learning.
-
         """
         if self.estimators is None or len(self.estimators) == 0:
             raise AttributeError(
@@ -164,6 +169,14 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             estimators_.append((name, estimator, column))
 
         self.estimators_ = estimators_
+
+        is_estimator_remainder = hasattr(estimators_[-1], "fit") or hasattr(
+            self.remainder, "predict_proba"
+        )
+
+        if is_estimator_remainder:
+            self._remainder = self.estimators_[-1]
+
         return self
 
     def _collect_probas(self, X):
@@ -202,22 +215,22 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             transformer and its parameters to be set using ``set_params`` and searched
             in grid search.
         estimator :  or {'drop'}
-            Estimator must support `fit` and `predict_proba`. Special-cased
+            Estimator must support ``fit`` and ``predict_proba``. Special-cased
             strings 'drop' and 'passthrough' are accepted as well, to
             indicate to drop the columns.
         column(s) : array-like of string or int, slice, boolean mask array or callable.
 
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
-        By default, only the specified columns in `transformations` are
+        By default, only the specified columns in ``transformations`` are
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``'drop'``).
         By specifying ``remainder='passthrough'``, all remaining columns
-        that were not specified in `transformations` will be automatically passed
+        that were not specified in ``transformations`` will be automatically passed
         through. This subset of columns is concatenated with the output of
         the transformations.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support `fit` and `transform`.
+        estimator must support ``fit`` and ``transform``.
 
     Examples
     --------
@@ -252,7 +265,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
     def __init__(self, estimators, remainder="drop", verbose=False):
         self.remainder = remainder
-        super(ColumnEnsembleClassifier, self).__init__(estimators, verbose=verbose)
+        super().__init__(estimators, remainder=remainder, verbose=verbose)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -262,7 +275,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -273,8 +286,9 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.classification.dictionary_based import ContractableBOSS
         from sktime.classification.interval_based import CanonicalIntervalForest
@@ -291,17 +305,19 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             )
             return {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
         else:
-            return {
+            param1 = {
                 "estimators": [
                     ("tsf1", TSFC(n_estimators=2), 0),
-                    ("tsf2", TSFC(n_estimators=2), 0),
+                    ("tsf2", TSFC(n_estimators=4), 0),
                 ]
             }
+            param2 = {**param1, "remainder": TSFC(n_estimators=2)}
+
+            return [param1, param2]
 
 
 def _get_column(X, key):
-    """
-    Get feature column(s) from input data X.
+    """Get feature column(s) from input data X.
 
     Supported input types (X): numpy arrays and DataFrames
 
@@ -318,7 +334,6 @@ def _get_column(X, key):
         - only supported for dataframes
         - So no keys other than strings are allowed (while in principle you
           can use any hashable object as key).
-
     """
     # check whether we have string column names or integers
     if _check_key_type(key, int):
@@ -354,19 +369,17 @@ def _get_column(X, key):
 
 
 def _check_key_type(key, superclass):
-    """
-    Check that scalar, list or slice is of a certain type.
+    """Check that scalar, list or slice is of a certain type.
 
     This is only used in _get_column and _get_column_indices to check
-    if the `key` (column specification) is fully integer or fully string-like.
+    if the ``key`` (column specification) is fully integer or fully string-like.
 
     Parameters
     ----------
     key : scalar, list, slice, array-like
         The column specification to check
     superclass : int or str
-        The type for which to check the `key`
-
+        The type for which to check the ``key``
     """
     if isinstance(key, superclass):
         return True
@@ -386,11 +399,9 @@ def _check_key_type(key, superclass):
 
 
 def _get_column_indices(X, key):
-    """
-    Get feature column indices for input data X and key.
+    """Get feature column indices for input data X and key.
 
-    For accepted values of `key`, see the docstring of _get_column
-
+    For accepted values of ``key``, see the docstring of _get_column
     """
     n_columns = X.shape[1]
 

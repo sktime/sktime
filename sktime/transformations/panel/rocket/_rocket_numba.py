@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """Isolated numba imports for Rocket."""
 
-__author__ = "angus924"
+__author__ = ["angus924"]
 
 import numpy as np
 
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.numba.njit import njit
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("numba", severity="none"):
     from numba import prange
@@ -45,7 +44,6 @@ def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
     a2 = 0  # for channel_indices
 
     for i in range(num_kernels):
-
         _length = lengths[i]
         _num_channel_indices = num_channel_indices[i]
 
@@ -100,18 +98,16 @@ def _apply_kernel_univariate(X, weights, length, bias, dilation, padding):
     output_length = (n_timepoints + (2 * padding)) - ((length - 1) * dilation)
 
     _ppv = 0
-    _max = np.NINF
+    _max = -np.inf
 
     end = (n_timepoints + padding) - ((length - 1) * dilation)
 
     for i in range(-padding, end):
-
         _sum = bias
 
         index = i
 
         for j in range(length):
-
             if index > -1 and index < n_timepoints:
                 _sum = _sum + weights[j] * X[index]
 
@@ -135,20 +131,17 @@ def _apply_kernel_multivariate(
     output_length = (n_timepoints + (2 * padding)) - ((length - 1) * dilation)
 
     _ppv = 0
-    _max = np.NINF
+    _max = -np.inf
 
     end = (n_timepoints + padding) - ((length - 1) * dilation)
 
     for i in range(-padding, end):
-
         _sum = bias
 
         index = i
 
         for j in range(length):
-
             if index > -1 and index < n_timepoints:
-
                 for k in range(num_channel_indices):
                     _sum = _sum + weights[k, j] * X[channel_indices[k], index]
 
@@ -189,19 +182,16 @@ def _apply_kernels(X, kernels):
     )  # 2 features per kernel
 
     for i in prange(n_instances):
-
         a1 = 0  # for weights
         a2 = 0  # for channel_indices
         a3 = 0  # for features
 
         for j in range(num_kernels):
-
             b1 = a1 + num_channel_indices[j] * lengths[j]
             b2 = a2 + num_channel_indices[j]
             b3 = a3 + 2
 
             if num_channel_indices[j] == 1:
-
                 _X[i, a3:b3] = _apply_kernel_univariate(
                     X[i, channel_indices[a2]],
                     weights[a1:b1],
@@ -212,7 +202,6 @@ def _apply_kernels(X, kernels):
                 )
 
             else:
-
                 _weights = weights[a1:b1].reshape((num_channel_indices[j], lengths[j]))
 
                 _X[i, a3:b3] = _apply_kernel_multivariate(

@@ -1,36 +1,30 @@
-# -*- coding: utf-8 -*-
-"""
-Implements Baxter-King bandpass filter transformation.
+"""Interface to Baxter-King bandpass filter from ``statsmodels``.
 
-Please see the original library
-(https://github.com/statsmodels/statsmodels/blob/main/statsmodels/tsa/filters/bk_filter.py)
+Interfaces ``bk_filter`` from ``statsmodels.tsa.filters``.
 """
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["klam-data", "pyyim", "mgorlin"]
 __all__ = ["BKFilter"]
 
 
-import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("statsmodels", severity="warning")
 
 
 class BKFilter(BaseTransformer):
     """Filter a times series using the Baxter-King filter.
 
-    This is a wrapper around statsmodels' bkfilter function
-    (see 'sm.tsa.filters.bk_filter.bkfilter').
+    This is a wrapper around the ``bkfilter`` function from ``statsmodels``.
+    (see ``statsmodels.tsa.filters.bk_filter.bkfilter``).
 
     The Baxter-King filter is intended for economic and econometric time series
     data and deals with the periodicity of the business cycle. Applying their
     band-pass filter to a series will produce a new series that does not contain
     fluctuations at a higher or lower frequency than those of the business cycle.
-    Baxter-King follow Burns and Mitchell’s work on business cycles, which suggests
+    Baxter-King follow Burns and Mitchell's work on business cycles, which suggests
     that U.S. business cycles typically last from 1.5 to 8 years.
 
     Parameters
@@ -59,23 +53,30 @@ class BKFilter(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.bkfilter import BKFilter # doctest: +SKIP
-    >>> import pandas as pd # doctest: +SKIP
-    >>> import statsmodels.api as sm # doctest: +SKIP
-    >>> dta = sm.datasets.macrodata.load_pandas().data # doctest: +SKIP
-    >>> index = pd.date_range(start='1959Q1', end='2009Q4', freq='Q') # doctest: +SKIP
-    >>> dta.set_index(index, inplace=True) # doctest: +SKIP
-    >>> bk = BKFilter(6, 24, 12) # doctest: +SKIP
-    >>> cycles = bk.fit_transform(X=dta[['realinv']]) # doctest: +SKIP
+    >>> from sktime.transformations.series.bkfilter import BKFilter
+    >>> import pandas as pd
+    >>> import statsmodels.api as sm
+    >>> dta = sm.datasets.macrodata.load_pandas().data
+    >>> index = pd.date_range(start='1959Q1', end='2009Q4', freq='Q')
+    >>> dta.set_index(index, inplace=True)
+    >>> bk = BKFilter(6, 24, 12)
+    >>> cycles = bk.fit_transform(X=dta[['realinv']])
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["klam-data", "pyyim", "mgorlin"],
+        "maintainers": "klam-data",
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
@@ -88,9 +89,8 @@ class BKFilter(BaseTransformer):
         # does transform return have the same time index as input X
         "capability:unequal_length": True,
         # can the transformer handle unequal length time series (if passed Panel)?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "remember_data": False,  # whether all data seen is remembered as self._X
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -102,7 +102,7 @@ class BKFilter(BaseTransformer):
         self.low = low
         self.high = high
         self.K = K
-        super(BKFilter, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -118,25 +118,10 @@ class BKFilter(BaseTransformer):
         -------
         transformed cyclical version of X
         """
-        from scipy.signal import fftconvolve
-        from statsmodels.tools.validation import PandasWrapper, array_like
+        from statsmodels.tsa.filters.bk_filter import bkfilter
 
-        pw = PandasWrapper(X)
-        X = array_like(X, "X", maxdim=2)
-        omega_1 = 2.0 * np.pi / self.high
-        omega_2 = 2.0 * np.pi / self.low
-        bweights = np.zeros(2 * self.K + 1)
-        bweights[self.K] = (omega_2 - omega_1) / np.pi
-        j = np.arange(1, int(self.K) + 1)
-        weights = 1 / (np.pi * j) * (np.sin(omega_2 * j) - np.sin(omega_1 * j))
-        bweights[self.K + j] = weights
-        bweights[: self.K] = weights[::-1]
-        bweights -= bweights.mean()
-        if X.ndim == 2:
-            bweights = bweights[:, None]
-        X = fftconvolve(X, bweights, mode="valid")
-
-        return pw.wrap(X, append="cycle", trim_start=self.K, trim_end=self.K)
+        kwargs = {"low": self.low, "high": self.high, "K": self.K}
+        return bkfilter(X, **kwargs)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -146,7 +131,7 @@ class BKFilter(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -154,8 +139,10 @@ class BKFilter(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = {"low": 6, "high": 24, "K": 12}
-        return params
+        params1 = {"low": 5, "high": 24, "K": 4}
+        params2 = {}
+        return [params1, params2]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests for pairwise panel transformer dunders."""
 
 __author__ = ["fkiraly"]
@@ -9,17 +8,29 @@ import pytest
 from sktime.dists_kernels.algebra import CombinedDistance
 from sktime.dists_kernels.compose import PwTrafoPanelPipeline
 from sktime.dists_kernels.edit_dist import EditDist
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.panel import _make_panel_X
 
-X1 = _make_panel_X(
-    n_instances=5, n_columns=5, n_timepoints=5, random_state=1, all_positive=True
-)
-X2 = _make_panel_X(
-    n_instances=6, n_columns=5, n_timepoints=5, random_state=2, all_positive=True
-)
+
+@pytest.fixture()
+def X1():
+    return _make_panel_X(
+        n_instances=5, n_columns=5, n_timepoints=5, random_state=1, all_positive=True
+    )
 
 
-def test_mul_algebra_dunder():
+@pytest.fixture()
+def X2():
+    return _make_panel_X(
+        n_instances=6, n_columns=5, n_timepoints=5, random_state=2, all_positive=True
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    reason="test only if anything in sktime.classification module has changed",
+)
+def test_mul_algebra_dunder(X1, X2):
     """Test multiplication dunder, algebraic case (two panel distances)."""
     t1 = EditDist()
     t2 = EditDist(distance="edr")
@@ -54,7 +65,11 @@ def test_mul_algebra_dunder():
     assert np.allclose(m123r, m1 * m2 * m3)
 
 
-def test_add_algebra_dunder():
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    reason="test only if anything in sktime.classification module has changed",
+)
+def test_add_algebra_dunder(X1, X2):
     """Test addition dunder, algebraic case (two panel distances)."""
     t1 = EditDist()
     t2 = EditDist(distance="edr")
@@ -89,7 +104,11 @@ def test_add_algebra_dunder():
     assert np.allclose(m123r, m1 + m2 + m3)
 
 
-def test_mixed_algebra_dunders():
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    reason="test only if anything in sktime.classification module has changed",
+)
+def test_mixed_algebra_dunders(X1, X2):
     """Test mix of algebraic dunders."""
     t1 = EditDist()
     t2 = EditDist(distance="edr")
@@ -112,8 +131,12 @@ def test_mixed_algebra_dunders():
     assert np.allclose(m123, m1 * m2 + m3)
 
 
-def test_pw_trafo_pipeline_mul_dunder():
-    """Tests creation of pairwise panel trafo pipeliens using mul dunder."""
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    reason="test only if anything in sktime.classification module has changed",
+)
+def test_pw_trafo_pipeline_mul_dunder(X1, X2):
+    """Tests creation of pairwise panel trafo pipelines using mul dunder."""
     from sktime.transformations.series.exponent import ExponentTransformer
 
     t3 = EditDist()
@@ -141,9 +164,13 @@ def test_pw_trafo_pipeline_mul_dunder():
     assert np.allclose(m123, m3)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    reason="test only if anything in sktime.classification module has changed",
+)
 @pytest.mark.parametrize("constant", [0, 1, -0.25])
-def test_dunders_with_constants(constant):
-    """Tests creation of pairwise panel trafo pipeliens using mul dunder."""
+def test_dunders_with_constants(constant, X1, X2):
+    """Tests creation of pairwise panel trafo pipelines using mul dunder."""
     t = EditDist()
 
     m = t.transform(X1, X2)
@@ -165,3 +192,32 @@ def test_dunders_with_constants(constant):
 
     mtimesc = ttimesc.transform(X1, X2)
     assert np.allclose(m * constant, mtimesc)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    reason="test only if anything in sktime.classification module has changed",
+)
+def test_getitem_dunder(X1, X2):
+    """Tests creation of pairwise panel trafo pipelines using mul dunder."""
+    t = EditDist()
+
+    idx_sub = ["var_1", "var_2"]
+
+    X1_sub = X1.loc[:, idx_sub]
+    X2_sub = X2.loc[:, idx_sub]
+
+    # compare manual subsetting with dunder subsetting
+    t_sub = t[idx_sub]
+
+    # manual: subset then transform
+    m_manual = t.transform(X1_sub, X2_sub)
+
+    # dunder: apply the subsetted transformer
+    m_dunder = t_sub.transform(X1, X2)
+
+    assert np.allclose(m_manual, m_dunder)
+
+    # this should not be the same as distance on all columns
+    m = t.transform(X1, X2)
+    assert not np.allclose(m_dunder, m)

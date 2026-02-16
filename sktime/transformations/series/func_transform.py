@@ -1,6 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
-
 """Implements FunctionTransformer, a class to create custom transformers."""
 
 __author__ = ["BoukePostma"]
@@ -20,12 +18,12 @@ class FunctionTransformer(BaseTransformer):
     r"""Constructs a transformer from an arbitrary callable.
 
     A FunctionTransformer forwards its y (and optionally X) arguments to a
-    user-defined function or function object and returns the result of this
+    user-defined function (or callable object) and returns the result of this
     function. This is useful for stateless transformations such as taking the
     log of frequencies, doing custom scaling, etc.
 
-    Note: If a lambda is used as the function, then the resulting
-    transformer will not be pickleable.
+    Note: If a lambda function is used as the ``func``, then the
+    resulting transformer will not be pickleable.
 
     Parameters
     ----------
@@ -76,6 +74,7 @@ class FunctionTransformer(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["BoukePostma"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -85,8 +84,13 @@ class FunctionTransformer(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": True,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "capability:inverse_transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_categorical_X_passes"],
+        # this test uses RangeIndex data which is not supported
     }
 
     def __init__(
@@ -105,7 +109,7 @@ class FunctionTransformer(BaseTransformer):
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
         self.X_type = X_type
-        super(FunctionTransformer, self).__init__()
+        super().__init__()
 
         if X_type is not None:
             self.set_tags(X_inner_mtype=X_type)
@@ -177,7 +181,7 @@ class FunctionTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -185,8 +189,9 @@ class FunctionTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         # default params, identity transform
         params1 = {}

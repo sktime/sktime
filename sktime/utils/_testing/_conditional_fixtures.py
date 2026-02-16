@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing utility for easy generation of conditional fixtures in pytest_generate_tests.
 
 Exports create_conditional_fixtures_and_names utility
@@ -8,8 +7,8 @@ __author__ = ["fkiraly"]
 
 __all__ = ["create_conditional_fixtures_and_names"]
 
+from collections.abc import Callable
 from copy import deepcopy
-from typing import Callable, Dict, List
 
 import numpy as np
 
@@ -24,9 +23,9 @@ class FixtureGenerationError(Exception):
 
 def create_conditional_fixtures_and_names(
     test_name: str,
-    fixture_vars: List[str],
-    generator_dict: Dict[str, Callable],
-    fixture_sequence: List[str] = None,
+    fixture_vars: list[str],
+    generator_dict: dict[str, Callable],
+    fixture_sequence: list[str] = None,
     raise_exceptions: bool = False,
     deepcopy_fixtures: bool = False,
 ):

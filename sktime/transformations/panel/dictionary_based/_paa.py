@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-
 """Piecewise Aggregate Approximation Transformer (PAA)."""
+
 import pandas as pd
 
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.base import BaseTransformer
 
-__author__ = "MatthewMiddlehurst"
+__author__ = ["MatthewMiddlehurst"]
 
 
-class PAA(BaseTransformer):
+class PAAlegacy(BaseTransformer):
     """Piecewise Aggregate Approximation Transformer (PAA).
 
     (PAA) Piecewise Aggregate Approximation Transformer, as described in
@@ -30,6 +30,7 @@ class PAA(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["MatthewMiddlehurst"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -37,11 +38,12 @@ class PAA(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self, num_intervals=8):
         self.num_intervals = num_intervals
-        super(PAA, self).__init__()
+        super().__init__()
 
     def set_num_intervals(self, n):
         """Set self.num_intervals to n."""

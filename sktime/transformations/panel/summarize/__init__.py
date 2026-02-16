@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Module for summarization transformers."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning"]

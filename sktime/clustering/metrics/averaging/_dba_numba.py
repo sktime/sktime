@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder"]
-
-from typing import Tuple
 
 import numpy as np
 
@@ -11,7 +8,7 @@ from sktime.utils.numba.njit import njit
 @njit(fastmath=True)
 def _dba_update(
     center: np.ndarray, X: np.ndarray, path_callable
-) -> Tuple[np.ndarray, float]:
+) -> tuple[np.ndarray, float]:
     """Perform an update iteration for dba.
 
     Parameters
@@ -32,7 +29,7 @@ def _dba_update(
         The time series that is the computed average series.
     """
     X_size, X_dims, X_timepoints = X.shape
-    sum = np.zeros((X_timepoints))
+    sum = np.zeros(X_timepoints)
 
     alignment = np.zeros((X_dims, X_timepoints))
     cost = 0.0

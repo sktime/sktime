@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Pipeline with a clusterer."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
 
@@ -88,10 +88,16 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
     >>> y_pred = pipeline.predict(X_test) # doctest: +SKIP
 
     Alternative construction via dunder method:
+
     >>> pipeline = PCATransformer() * TimeSeriesKMeans() # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "fkiraly",
+        # estimator type
+        # --------------
         "X_inner_mtype": "pd-multiindex",  # which type do _fit/_predict accept
         "capability:multivariate": False,
         "capability:unequal_length": False,
@@ -99,28 +105,32 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # no default tag values - these are set dynamically below
 
     def __init__(self, clusterer, transformers):
-
         self.clusterer = clusterer
         self.clusterer_ = clusterer.clone()
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(ClustererPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both clusterer and all transformers can
         multivariate = clusterer.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both clusterer and all transformers can,
         #   *or* transformer chain removes missing data
         missing = clusterer.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -144,6 +154,13 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         }
         self.set_tags(**tags_to_set)
 
+        tags_to_clone = [
+            "capability:out_of_sample",
+            "capability:predict",
+            "capability:predict_proba",
+        ]
+        self.clone_tags(clusterer, tags_to_clone)
+
     @property
     def _transformers(self):
         return self.transformers_._steps
@@ -151,6 +168,16 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.clusterer)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.clusterer_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.
@@ -308,7 +335,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         from sktime.clustering.dbscan import TimeSeriesDBSCAN
         from sktime.clustering.k_means import TimeSeriesKMeans
         from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_estimator_deps
 
         params = []
 
@@ -320,7 +347,6 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         params = params + [params1]
 
         if _check_estimator_deps(TimeSeriesKMeans, severity="none"):
-
             t1 = ExponentTransformer(power=2)
             t2 = ExponentTransformer(power=0.5)
             c = TimeSeriesKMeans(random_state=42)
@@ -412,6 +438,7 @@ class SklearnClustererPipeline(ClustererPipeline):
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
+
     >>> pipeline = t1 * t2 * KMeans()
     """
 
@@ -428,7 +455,6 @@ class SklearnClustererPipeline(ClustererPipeline):
     # no default tag values - these are set dynamically below
 
     def __init__(self, clusterer, transformers):
-
         from sklearn.base import clone
 
         self.clusterer = clusterer
@@ -440,11 +466,11 @@ class SklearnClustererPipeline(ClustererPipeline):
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate
-        multivariate = not self.transformers_.get_tag("univariate-only", True)
+        multivariate = self.transformers_.get_tag("capability:multivariate", False)
         # can handle missing values iff transformer chain removes missing data
         # sklearn clusterers might be able to handle missing data (but no tag there)
         # so better set the tag liberally
-        missing = self.transformers_.get_tag("handles-missing-data", False)
+        missing = self.transformers_.get_tag("capability:missing_values", False)
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -461,6 +487,24 @@ class SklearnClustererPipeline(ClustererPipeline):
             "capability:multithreading": False,
         }
         self.set_tags(**tags_to_set)
+
+    @property
+    def _transformers(self):
+        return self.transformers_._steps
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.clusterer)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.clusterer_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.
@@ -622,13 +666,13 @@ class SklearnClustererPipeline(ClustererPipeline):
         # example with series-to-series transformer before sklearn clusterer
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
-        c = KMeans(random_state=42)
+        c = KMeans(random_state=42, n_init=10)
         params1 = {"transformers": [t1, t2], "clusterer": c}
 
         # example with series-to-primitive transformer before sklearn clusterer
         t1 = ExponentTransformer(power=2)
         t2 = SummaryTransformer()
-        c = KMeans(random_state=42)
+        c = KMeans(random_state=42, n_init=10)
         params2 = {"transformers": [t1, t2], "clusterer": c}
 
         # construct without names

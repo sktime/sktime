@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
-
 import inspect
-from typing import Callable, List, Union
+from collections.abc import Callable
 
 import numpy as np
 
@@ -10,10 +8,10 @@ from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
 
 
 def _resolve_dist_instance(
-    metric: Union[str, Callable, NumbaDistance],
+    metric: str | Callable | NumbaDistance,
     x: np.ndarray,
     y: np.ndarray,
-    known_metric_dict: List[MetricInfo],
+    known_metric_dict: list[MetricInfo],
     **kwargs: dict,
 ):
     """Resolve a metric from a string, callable or NumbaDistance instance.
@@ -49,7 +47,7 @@ def _resolve_dist_instance(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
     """
-    numba_dist_instance: Union[NumbaDistance, None] = None
+    numba_dist_instance: NumbaDistance | None = None
 
     if isinstance(metric, NumbaDistance):
         numba_dist_instance = metric
@@ -76,10 +74,10 @@ def _resolve_dist_instance(
 
 
 def _resolve_metric_to_factory(
-    metric: Union[str, Callable, NumbaDistance],
+    metric: str | Callable | NumbaDistance,
     x: np.ndarray,
     y: np.ndarray,
-    known_metric_dict: List[MetricInfo],
+    known_metric_dict: list[MetricInfo],
     **kwargs: dict,
 ) -> DistanceCallable:
     """Resolve a metric from a string, callable or NumbaDistance instance.
@@ -112,7 +110,7 @@ def _resolve_metric_to_factory(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
     """
-    numba_dist_instance: Union[NumbaDistance, None] = None
+    numba_dist_instance: NumbaDistance | None = None
 
     if isinstance(metric, NumbaDistance):
         numba_dist_instance = metric
@@ -142,7 +140,7 @@ def _resolve_metric_to_factory(
 
 
 def _resolve_str_metric(
-    metric: str, known_metric_dict: List[MetricInfo]
+    metric: str, known_metric_dict: list[MetricInfo]
 ) -> NumbaDistance:
     """Resolve a string to a NumbaDistance.
 
@@ -215,7 +213,6 @@ def _is_no_python_distance_callable(metric: Callable) -> bool:
     bool
         Boolean that is true if callable is a valid no_python compiled distance and
         false if the callable is an invalid no_python callable.
-
     """
     from sktime.distances._numba_utils import is_no_python_compiled_callable
 

@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Pipeline with a regressor."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
 
@@ -84,6 +84,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
+
     >>> pipeline = PCATransformer() * KNeighborsTimeSeriesRegressor(n_neighbors=2)
     """
 
@@ -95,6 +96,10 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     _required_parameters = ["regressor"]
@@ -102,23 +107,24 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     # no default tag values - these are set dynamically below
 
     def __init__(self, regressor, transformers):
-
         self.regressor = regressor
         self.regressor_ = regressor.clone()
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(RegressorPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff: both regressor and all transformers can
         multivariate = regressor.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both regressor and all transformers can,
         #   *or* transformer chain removes missing data
         missing = regressor.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -149,6 +155,16 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.regressor)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.regressor_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
@@ -277,8 +293,9 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
         from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_estimator_deps
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
@@ -287,9 +304,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
         params1 = {"transformers": [t1, t2], "regressor": r}
 
-        if _check_soft_dependencies("numba", severity="none"):
-            from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
-
+        if _check_estimator_deps(KNeighborsTimeSeriesRegressor, severity="none"):
             c = KNeighborsTimeSeriesRegressor()
 
             # construct without names
@@ -374,6 +389,7 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
+
     >>> pipeline = t1 * t2 * KNeighborsRegressor()
     """
 
@@ -385,6 +401,7 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:categorical_in_X": True,
     }
 
     _required_parameters = ["regressor"]
@@ -392,7 +409,6 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     # no default tag values - these are set dynamically below
 
     def __init__(self, regressor, transformers):
-
         from sklearn.base import clone
 
         self.regressor = regressor
@@ -400,15 +416,15 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(SklearnRegressorPipeline, self).__init__()
+        super().__init__()
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate
-        multivariate = not self.transformers_.get_tag("univariate-only", True)
+        multivariate = self.transformers_.get_tag("capability:multivariate", False)
         # can handle missing values iff transformer chain removes missing data
         # sklearn regressors might be able to handle missing data (but no tag there)
         # so better set the tag liberally
-        missing = self.transformers_.get_tag("handles-missing-data", False)
+        missing = self.transformers_.get_tag("capability:missing_values", False)
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -433,6 +449,16 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.regressor)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.regressor_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.

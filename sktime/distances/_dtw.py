@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Any, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -46,10 +45,10 @@ class _DtwDistance(NumbaDistance):
     mining Proceedings of 5th SIAM International Conference on Data Mining, 2005
     .. [2] Sakoe H. and Chiba S.: Dynamic programming algorithm optimization for
     spoken word recognition. IEEE Transactions on Acoustics, Speech, and Signal
-    Processing 26(1):43–49, 1978
+    Processing 26(1):43-49, 1978
     .. [3] Itakura F: Minimum prediction residual principle applied to speech
     recognition. IEEE Transactions on Acoustics, Speech, and Signal Processing 23(
-    1):67–72, 1975
+    1):67-72, 1975
     """
 
     def _distance_alignment_path_factory(
@@ -60,7 +59,7 @@ class _DtwDistance(NumbaDistance):
         window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceAlignmentPathCallable:
         """Create a no_python compiled dtw path distance callable.
 
@@ -117,7 +116,7 @@ class _DtwDistance(NumbaDistance):
             def numba_dtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float, np.ndarray]:
+            ) -> tuple[list, float, np.ndarray]:
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
@@ -128,7 +127,7 @@ class _DtwDistance(NumbaDistance):
             def numba_dtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float]:
+            ) -> tuple[list, float]:
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
@@ -142,7 +141,7 @@ class _DtwDistance(NumbaDistance):
         window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled dtw distance callable.
 

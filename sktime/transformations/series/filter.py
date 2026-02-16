@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Frequency filters."""
 
 __author__ = ["sveameyer13"]
@@ -7,9 +6,6 @@ __all__ = ["Filter"]
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("mne", severity="warning")
 
 
 class Filter(BaseTransformer):
@@ -35,10 +31,24 @@ class Filter(BaseTransformer):
         Additional parameters passed on to ``mne.filter.filter_data``.
         See ``mne.filter.filter_data``
         documentation for a detailed description of all options.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.filter import Filter
+    >>> from sktime.datasets import load_arrow_head
+    >>> X, y = load_arrow_head(return_X_y=True, return_type="pd-multiindex")
+    >>> transformer = Filter(sfreq=128, l_freq=0.5, h_freq=40)
+    >>> X_filtered = transformer.fit_transform(X)  # doctest: +SKIP
     """
 
     # default tag values for "Series-to-Series"
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["sveameyer13"],
+        "python_dependencies": "mne",
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -47,7 +57,9 @@ class Filter(BaseTransformer):
         "X_inner_mtype": ["np.ndarray", "numpy3D"],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        "python_dependencies": "mne",
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,  # run in VM due to dependency requirement mne
     }
 
     def __init__(
@@ -71,8 +83,8 @@ class Filter(BaseTransformer):
             if not ((l_freq > 0) & (h_freq > 0)):
                 raise ValueError("Negative values not supported")
             if l_freq > h_freq:
-                raise ValueError("High frequency must be higher" " than low frequency")
-        super(Filter, self).__init__()
+                raise ValueError("High frequency must be higher than low frequency")
+        super().__init__()
 
     def _transform(self, X, y=None) -> np.ndarray:
         """Transform data.
@@ -123,14 +135,19 @@ class Filter(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"sfreq": 3}
+        param1 = {"sfreq": 3}
+        param2 = {"sfreq": 5000, "l_freq": 10, "h_freq": 1000}
+        params = [param1, param2]
+
+        return params

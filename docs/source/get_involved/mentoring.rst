@@ -43,4 +43,4 @@ How to apply
 
 We accept applications on a rolling basis and we will be in touch with you shortly!
 
-If you have any questions or get stuck, please don't hesitate to chat with us or join on of our collaborative community sessions on `discord <https://discord.com/invite/gqSab2K>`_, or email us at sktime.toolbox@gmail.com.
+If you have any questions or get stuck, please don't hesitate to chat with us or join on of our collaborative community sessions on `discord <https://discord.com/invite/54ACzaFsn7>`_, or email us at sktime.toolbox@gmail.com.

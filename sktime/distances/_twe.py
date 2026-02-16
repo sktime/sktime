@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Any, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -22,7 +21,7 @@ class _TweDistance(NumbaDistance):
     ----------
     .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
-    Intelligence. 31 (2): 306–318.
+    Intelligence. 31 (2): 306-318.
     """
 
     def _distance_alignment_path_factory(
@@ -36,7 +35,7 @@ class _TweDistance(NumbaDistance):
         lmbda: float = 1.0,
         nu: float = 0.001,
         p: int = 2,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled twe distance callable.
 
@@ -90,17 +89,18 @@ class _TweDistance(NumbaDistance):
         from sktime.distances.lower_bounding import resolve_bounding_matrix
         from sktime.utils.numba.njit import njit
 
+        if bounding_matrix is None:
+            bounding_matrix = np.zeros((x.shape[1] + 1, y.shape[1] + 1))
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
-
         if return_cost_matrix is True:
 
             @njit(cache=True)
             def numba_twe_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float, np.ndarray]:
+            ) -> tuple[list, float, np.ndarray]:
                 cost_matrix = _twe_cost_matrix(_x, _y, _bounding_matrix, lmbda, nu, p)
                 path = compute_twe_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
@@ -111,7 +111,7 @@ class _TweDistance(NumbaDistance):
             def numba_twe_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float]:
+            ) -> tuple[list, float]:
                 cost_matrix = _twe_cost_matrix(_x, _y, _bounding_matrix, lmbda, nu, p)
                 path = compute_twe_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
@@ -128,7 +128,7 @@ class _TweDistance(NumbaDistance):
         lmbda: float = 1.0,
         nu: float = 0.001,
         p: int = 2,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled twe distance callable.
 

@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """Time series interpolator/re-sampler."""
+
 import numpy as np
 import pandas as pd
-from scipy import interpolate
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.pandas import df_map
 
 __author__ = ["mloning"]
 
@@ -26,6 +26,7 @@ class TSInterpolator(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -34,6 +35,7 @@ class TSInterpolator(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
+        "python_dependencies": "scipy",
     }
 
     def __init__(self, length):
@@ -47,7 +49,7 @@ class TSInterpolator(BaseTransformer):
             raise ValueError("resizing length must be integer and > 0")
 
         self.length = length
-        super(TSInterpolator, self).__init__()
+        super().__init__()
 
     def _resize_cell(self, cell):
         """Resize a single array.
@@ -65,6 +67,8 @@ class TSInterpolator(BaseTransformer):
         -------
         numpy.array : with user defined size
         """
+        from scipy import interpolate
+
         f = interpolate.interp1d(list(np.linspace(0, 1, len(cell))), cell.to_numpy())
         Xt = f(np.linspace(0, 1, self.length))
         return pd.Series(Xt)
@@ -83,7 +87,7 @@ class TSInterpolator(BaseTransformer):
         pandas DataFrame : Transformed pandas DataFrame of shape [n_samples, n_features]
             follows nested_univ format
         """
-        return X.applymap(self._resize_cell)
+        return df_map(X)(self._resize_cell)
 
     @classmethod
     def get_test_params(cls):
@@ -94,8 +98,10 @@ class TSInterpolator(BaseTransformer):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        params = {"length": 10}
-        return params
+        params1 = {"length": 10}
+        params2 = {"length": 5}
+        return [params1, params2]

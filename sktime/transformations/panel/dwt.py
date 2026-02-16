@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Discrete wavelet transform."""
+
 import math
 
 import numpy as np
@@ -8,7 +8,7 @@ import pandas as pd
 from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
 
-__author__ = "Vincent Nicholson"
+__author__ = ["vnicholson1"]
 
 
 class DWTTransformer(BaseTransformer):
@@ -19,10 +19,21 @@ class DWTTransformer(BaseTransformer):
     Parameters
     ----------
     num_levels : int, number of levels to perform the Haar wavelet
-                 transformation.
+        transformation.
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.dwt import DWTTransformer
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.datatypes import convert
+    >>>
+    >>> y = load_airline()
+    >>> transformer = DWTTransformer(num_levels=3)
+    >>> y_transformed = transformer.fit_transform(y)
     """
 
     _tags = {
+        "authors": "vnicholson1",
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -31,11 +42,15 @@ class DWTTransformer(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
+        "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, num_levels=3):
         self.num_levels = num_levels
-        super(DWTTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -89,9 +104,8 @@ class DWTTransformer(BaseTransformer):
     def _extract_wavelet_coefficients(self, data):
         """Extract wavelet coefficients of a 2d array of time series.
 
-        The coefficients correspond to the wavelet coefficients
-        from levels 1 to num_levels followed by the approximation
-        coefficients of the highest level.
+        The coefficients correspond to the wavelet coefficients from levels 1 to
+        num_levels followed by the approximation coefficients of the highest level.
         """
         num_levels = self.num_levels
         res = []
@@ -152,3 +166,18 @@ class DWTTransformer(BaseTransformer):
         for x in range(math.floor(len(arr) / 2)):
             new.append((arr[2 * x] - arr[2 * x + 1]) / math.sqrt(2))
         return new
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Provides two parameter sets so the estimator is covered by the
+        `test_get_test_params_coverage` test (issue #3429).
+        """
+        # default / simple parameter sets
+        params1 = {"num_levels": 3}
+        params2 = {"num_levels": 100}
+        # alternate parameter set: edge case with zero levels
+        params3 = {"num_levels": 0}
+
+        return [params1, params2, params3]

@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Time binning for turning series equally spaced."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["fkiraly"]
@@ -15,17 +15,18 @@ from sktime.transformations.base import BaseTransformer
 class TimeBinAggregate(BaseTransformer):
     r"""Bins time series and aggregates by bin.
 
-    In `transform`, applies `groupby` with `aggfunc` on the temporal coordinate.
+    In ``transform``, applies ``groupby`` with ``aggfunc`` on the temporal coordinate.
 
     More precisely:
-    `bins` encodes bins :math:`B_1, \dots, B_k` where :math:`B_i` are intervals,
+    ``bins`` encodes bins :math:`B_1, \dots, B_k` where :math:`B_i` are intervals,
     in the reals or in a temporal (time stamp) range.
 
-    In `transform`, the estimator `TimeBinAggregate` collects values
-    at time stamps of `X` falling into :math:`B_i` as a sample :math:`S_i`,
-    and then applies `aggfunc` to :math:`S_i` to obtain an aggregate value :math:`v_i`.
+    In ``transform``, the estimator ``TimeBinAggregate`` collects values
+    at time stamps of ``X`` falling into :math:`B_i` as a sample :math:`S_i`,
+    and then applies ``aggfunc`` to :math:`S_i` to obtain an aggregate value
+    :math:`v_i`.
     The transformed series are values :math:`v_i` at time stamps :math:`t_i`,
-    determined from :math:`B_i` per the rule in `return_index`.
+    determined from :math:`B_i` per the rule in ``return_index``.
 
     Parameters
     ----------
@@ -37,14 +38,14 @@ class TimeBinAggregate(BaseTransformer):
         Should have signature 1D -> float and defaults
         to mean if None
     return_index : str, one of the below; optional, default="range"
-        "range" = RangeIndex with bins indexed in same order as in `bins`
+        "range" = RangeIndex with bins indexed in same order as in ``bins``
         "bin_start" = transformed pd.DataFrame will be indexed by bin starts
         "bin_end" = transformed pd.DataFrame will be indexed by bin starts
         "bin_mid" = transformed pd.DataFrame will be indexed by bin midpoints
-        "bin" = transformed pd.DataFrame will have `bins` as `IntervalIndex`
+        "bin" = transformed pd.DataFrame will have ``bins`` as ``IntervalIndex``
 
-    Example
-    -------
+    Examples
+    --------
     from sktime.datatypes import get_examples
     from sktime.transformations.series.binning import TimeBinAggregate
 
@@ -55,8 +56,9 @@ class TimeBinAggregate(BaseTransformer):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "fit_is_empty": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -65,15 +67,21 @@ class TimeBinAggregate(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # and for y?
-        "handles-missing-data": True,
+        "capability:missing_values": True,
         "capability:unequal_length": True,
         "capability:unequal_length:removes": True,
         "transform-returns-same-time-index": False,
         "capability:inverse_transform": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_categorical_X_passes"],
+        # fails for standard aggfuncs that are tested,
+        # but works if categorical aggfunc would be used,
+        # so "capability:categorical_in_X" should be the default, True
     }
 
     def __init__(self, bins, aggfunc=None, return_index="bin_start"):
-
         self.bins = bins
         self.aggfunc = aggfunc
         self.return_index = return_index
@@ -87,13 +95,16 @@ class TimeBinAggregate(BaseTransformer):
             self._aggfunc = np.mean
         else:
             assert callable(aggfunc), (
-                "aggfunc should be callable with" "signature 1D -> float"
+                "aggfunc should be callable withsignature 1D -> float"
             )
             if aggfunc.__name__ == "<lambda>":
-                warnings.warn("Save and load will not work with lambda functions")
+                warnings.warn(
+                    "Save and load will not work with lambda functions",
+                    stacklevel=2,
+                )
             self._aggfunc = self.aggfunc
 
-        super(TimeBinAggregate, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -114,7 +125,7 @@ class TimeBinAggregate(BaseTransformer):
         """
         bins = self.bins
         idx_cut = pd.cut(X.index, bins=self._bins, include_lowest=True)
-        Xt = X.groupby(idx_cut).apply(self._aggfunc)
+        Xt = X.groupby(idx_cut, observed=False).apply(self._aggfunc)
 
         if self.return_index == "range":
             Xt = Xt.reset_index(drop=True)
@@ -145,7 +156,7 @@ class TimeBinAggregate(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -153,8 +164,9 @@ class TimeBinAggregate(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"bins": [0, 1]}
 

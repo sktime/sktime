@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """Tests for mlflow-sktime custom model flavor."""
 
-__author__ = ["benjaminbluhm"]
+__author__ = ["benjaminbluhm", "achieveordie"]
 
 import os
 import sys
@@ -12,12 +11,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_airline, load_longley
+from sktime.datasets import load_airline, load_arrow_head, load_longley
 from sktime.forecasting.arima import AutoARIMA
-from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_for_class
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("mlflow", "boto3", "moto", "botocore", severity="none"):
     import boto3
@@ -26,6 +26,30 @@ if _check_soft_dependencies("mlflow", "boto3", "moto", "botocore", severity="non
 
 if not sys.platform.startswith("linux"):
     pytest.skip("Skipping MLflow tests for Windows and macOS", allow_module_level=True)
+
+
+@pytest.fixture(autouse=True)
+def mlflow_tracking_uri(tmp_path, monkeypatch):
+    """Set up isolated MLflow tracking URI for each test to avoid database conflicts."""
+    if _check_soft_dependencies("mlflow", severity="none"):
+        import logging
+
+        import mlflow
+
+        # Use a unique temporary directory for MLflow tracking
+        tracking_uri = str(tmp_path / "mlruns")
+        monkeypatch.setenv("MLFLOW_TRACKING_URI", tracking_uri)
+        # Also set it directly in mlflow to ensure it's used
+        mlflow.set_tracking_uri(tracking_uri)
+        yield tracking_uri
+        # Clean up: end any active runs
+        try:
+            mlflow.end_run()
+        except Exception as e:
+            # Ignore errors if no run is active (common in test teardown)
+            logging.debug(f"mlflow.end_run() failed (expected if no active run): {e}")
+    else:
+        yield None
 
 
 @pytest.fixture
@@ -42,7 +66,12 @@ def mock_s3_bucket():
     -------
     string with name of mock S3 bucket
     """
-    with moto.mock_s3():
+    if moto.__version__ < "5.0.0":
+        mock_method = moto.mock_s3
+    else:
+        mock_method = moto.mock_aws
+
+    with mock_method():
         bucket_name = "mock-bucket"
         my_config = Config(region_name="us-east-1")
         s3_client = boto3.client("s3", config=my_config)
@@ -79,10 +108,38 @@ def test_data_longley():
 
 
 @pytest.fixture(scope="module")
+def test_data_arrow_head():
+    """Create sample data for univariate classification."""
+    X_train, y_train = load_arrow_head(split="TRAIN")
+    X_test, y_test = load_arrow_head(split="TEST")
+    return y_train.astype(int), y_test.astype(int), X_train, X_test
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(AutoARIMA),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
+)
+@pytest.fixture(scope="module")
 def auto_arima_model(test_data_airline):
     """Create instance of fitted auto arima model."""
     return AutoARIMA(sp=12, d=0, max_p=2, max_q=2, suppress_warnings=True).fit(
         test_data_airline, fh=[1, 2, 3]
+    )
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tensorflow", severity="none"),
+    reason="skip test if required soft dependency is not available.",
+)
+@pytest.fixture(scope="module")
+def cnn_model(test_data_arrow_head):
+    """Create an instance of fitted ResNet Classifier model."""
+    from sktime.classification.deep_learning.cnn import CNNClassifier
+
+    y_train, _, X_train, _ = test_data_arrow_head
+
+    return CNNClassifier(n_epochs=1, n_conv_layers=1, kernel_size=3).fit(
+        X_train, y_train
     )
 
 
@@ -95,8 +152,11 @@ def naive_forecaster_model_with_regressor(test_data_longley):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 @pytest.mark.parametrize("serialization_format", ["pickle", "cloudpickle"])
 def test_auto_arima_model_save_and_load(
@@ -118,8 +178,11 @@ def test_auto_arima_model_save_and_load(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 @pytest.mark.parametrize("serialization_format", ["pickle", "cloudpickle"])
 def test_auto_arima_model_pyfunc_output(
@@ -170,8 +233,36 @@ def test_auto_arima_model_pyfunc_output(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not _check_soft_dependencies(["mlflow", "tensorflow"], severity="none"),
+    reason="skip mlflow tests on CNN if required soft dependency not available",
+)
+@pytest.mark.parametrize("serialization_format", ["pickle", "cloudpickle"])
+def test_cnn_model_save_and_load(
+    cnn_model, test_data_arrow_head, model_path, serialization_format
+):
+    """Test saving and loading of DL sktime estimator."""
+    from sktime.utils import mlflow_sktime
+
+    mlflow_sktime.save_model(
+        sktime_model=cnn_model,
+        path=model_path,
+        serialization_format=serialization_format,
+    )
+    loaded_model = mlflow_sktime.load_model(model_uri=model_path)
+
+    _, _, _, X_test = test_data_arrow_head
+
+    np.testing.assert_array_almost_equal(
+        cnn_model.predict(X_test), loaded_model.predict(X_test)
+    )
+
+
+@pytest.mark.skipif(
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 def test_auto_arima_model_pyfunc_with_params_output(auto_arima_model, model_path):
     """Test auto arima prediction of loaded pyfunc model with parameters."""
@@ -196,8 +287,8 @@ def test_auto_arima_model_pyfunc_with_params_output(auto_arima_model, model_path
     model_predict_interval = auto_arima_model.predict_interval(coverage=[0.1, 0.9])
     model_predict_interval.columns = flatten_multiindex(model_predict_interval)
     model_predict_proba_dist = auto_arima_model.predict_proba()
-    model_predict_proba = pd.DataFrame(model_predict_proba_dist.quantile([0.1, 0.9]))
-    model_predict_proba.index = model_predict_proba_dist.parameters["loc"].index
+    model_predict_proba = model_predict_proba_dist.quantile([0.1, 0.9])
+    model_predict_proba.columns = flatten_multiindex(model_predict_proba)
     model_predict_quantiles = auto_arima_model.predict_quantiles(alpha=[0.1, 0.9])
     model_predict_quantiles.columns = flatten_multiindex(model_predict_quantiles)
     model_predict_var = auto_arima_model.predict_var(cov=True)
@@ -224,8 +315,11 @@ def test_auto_arima_model_pyfunc_with_params_output(auto_arima_model, model_path
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 def test_auto_arima_model_pyfunc_without_params_output(auto_arima_model, model_path):
     """Test auto arima prediction of loaded pyfunc model without parameters."""
@@ -250,8 +344,8 @@ def test_auto_arima_model_pyfunc_without_params_output(auto_arima_model, model_p
     model_predict_interval = auto_arima_model.predict_interval()
     model_predict_interval.columns = flatten_multiindex(model_predict_interval)
     model_predict_proba_dist = auto_arima_model.predict_proba()
-    model_predict_proba = pd.DataFrame(model_predict_proba_dist.quantile([0.1, 0.9]))
-    model_predict_proba.index = model_predict_proba_dist.parameters["loc"].index
+    model_predict_proba = model_predict_proba_dist.quantile([0.1, 0.9])
+    model_predict_proba.columns = flatten_multiindex(model_predict_proba)
     model_predict_quantiles = auto_arima_model.predict_quantiles()
     model_predict_quantiles.columns = flatten_multiindex(model_predict_quantiles)
     model_predict_var = auto_arima_model.predict_var()
@@ -278,16 +372,21 @@ def test_auto_arima_model_pyfunc_without_params_output(auto_arima_model, model_p
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 def test_auto_arima_model_pyfunc_without_conf_output(auto_arima_model, model_path):
     """Test auto arima prediction of loaded pyfunc model without config."""
     from sktime.utils import mlflow_sktime
 
-    delattr(auto_arima_model, "pyfunc_predict_conf") if hasattr(
-        auto_arima_model, "pyfunc_predict_conf"
-    ) else None
+    (
+        delattr(auto_arima_model, "pyfunc_predict_conf")
+        if hasattr(auto_arima_model, "pyfunc_predict_conf")
+        else None
+    )
     mlflow_sktime.save_model(
         sktime_model=auto_arima_model,
         path=model_path,
@@ -356,8 +455,11 @@ def test_naive_forecaster_model_with_regressor_pyfunc_output(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 @pytest.mark.parametrize("use_signature", [True, False])
 @pytest.mark.parametrize("use_example", [True, False])
@@ -391,8 +493,11 @@ def test_signature_and_examples_saved_correctly(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 @pytest.mark.parametrize("use_signature", [True, False])
 def test_predict_var_signature_saved_correctly(
@@ -414,8 +519,11 @@ def test_predict_var_signature_saved_correctly(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 @pytest.mark.parametrize("use_signature", [True, False])
 @pytest.mark.parametrize("use_example", [True, False])
@@ -462,8 +570,11 @@ def test_signature_and_example_for_pyfunc_predict(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 def test_load_from_remote_uri_succeeds(auto_arima_model, model_path, mock_s3_bucket):
     """Test loading native sktime model from mock S3 bucket."""
@@ -488,8 +599,11 @@ def test_load_from_remote_uri_succeeds(auto_arima_model, model_path, mock_s3_buc
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 @pytest.mark.parametrize("should_start_run", [True, False])
 @pytest.mark.parametrize("serialization_format", ["pickle", "cloudpickle"])
@@ -515,24 +629,43 @@ def test_log_model(auto_arima_model, tmp_path, should_start_run, serialization_f
             conda_env=str(conda_env),
             serialization_format=serialization_format,
         )
-        model_uri = f"runs:/{mlflow.active_run().info.run_id}/{artifact_path}"
-        assert model_info.model_uri == model_uri
+
+        if _check_soft_dependencies("mlflow<3.0", severity="none"):
+            # MLflow 2.x format
+            assert model_info.model_uri.startswith("runs:/")
+            # Check format: runs:/run_id/artifact_path
+            uri_parts = model_info.model_uri.split("/")
+            assert len(uri_parts) >= 3
+            assert uri_parts[0] == "runs:"
+            assert uri_parts[2] == artifact_path
+        else:
+            # MLflow 3.x format
+            assert model_info.model_uri.startswith("models:/m-")
+            # Check format: models:/m-model_id
+            assert model_info.model_uri.count("/") == 1
+            assert len(model_info.model_uri) > len("models:/m-")
         reloaded_model = mlflow_sktime.load_model(
-            model_uri=model_uri,
+            model_uri=model_info.model_uri,
         )
         np.testing.assert_array_equal(
             auto_arima_model.predict(), reloaded_model.predict()
         )
-        model_path = Path(_download_artifact_from_uri(artifact_uri=model_uri))
+        model_path = Path(
+            _download_artifact_from_uri(artifact_uri=model_info.model_uri)
+        )
         model_config = Model.load(str(model_path.joinpath("MLmodel")))
         assert pyfunc.FLAVOR_NAME in model_config.flavors
     finally:
         mlflow.end_run()
 
 
+@pytest.mark.xfail(reason="known failure to be debugged, see #4904")
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 def test_log_model_calls_register_model(auto_arima_model, tmp_path):
     """Test log model calls register model."""
@@ -562,8 +695,11 @@ def test_log_model_calls_register_model(auto_arima_model, tmp_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 def test_log_model_no_registered_model_name(auto_arima_model, tmp_path):
     """Test log model calls register model without registered model name."""
@@ -586,8 +722,11 @@ def test_log_model_no_registered_model_name(auto_arima_model, tmp_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 def test_pyfunc_raises_invalid_attribute_type(auto_arima_model, model_path):
     """Test pyfunc raises exception with invalid attribute type."""
@@ -607,8 +746,11 @@ def test_pyfunc_raises_invalid_attribute_type(auto_arima_model, model_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 def test_pyfunc_raises_invalid_dict_key(auto_arima_model, model_path):
     """Test pyfunc raises exception with invalid dict key."""
@@ -628,8 +770,11 @@ def test_pyfunc_raises_invalid_dict_key(auto_arima_model, model_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 def test_pyfunc_raises_invalid_dict_value_type(auto_arima_model, model_path):
     """Test pyfunc raises exception with invalid dict value type."""
@@ -648,8 +793,11 @@ def test_pyfunc_raises_invalid_dict_value_type(auto_arima_model, model_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 def test_pyfunc_raises_invalid_dict_value(auto_arima_model, model_path):
     """Test pyfunc raises exception with invalid dict value."""
@@ -669,8 +817,11 @@ def test_pyfunc_raises_invalid_dict_value(auto_arima_model, model_path):
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 def test_pyfunc_predict_proba_raises_invalid_attribute_type(
     auto_arima_model, model_path
@@ -693,8 +844,11 @@ def test_pyfunc_predict_proba_raises_invalid_attribute_type(
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not (
+        _check_soft_dependencies("mlflow", severity="none")
+        and run_test_for_class(AutoARIMA)
+    ),
+    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
 )
 def test_pyfunc_predict_proba_raises_invalid_dict_value(auto_arima_model, model_path):
     """Test pyfunc predict_proba raises exception with invalid dict value."""

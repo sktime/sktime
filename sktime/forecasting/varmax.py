@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Vector Autoregressive Moving Average with eXogenous regressors model (VARMAX)."""
+
 __all__ = ["VARMAX"]
 __author__ = ["KatieBuc"]
 
@@ -11,7 +11,9 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class VARMAX(_StatsModelsAdapter):
-    r"""Wrapper for statsmodels VARMAX model.
+    r"""VARMAX forecasting model from statsmodels.
+
+    Direct interface to ``VARMAX`` from ``statsmodels.tsa.statespace.varmax``.
 
     Vector Autoregressive Moving Average with eXogenous regressors model (VARMAX)
 
@@ -26,7 +28,7 @@ class VARMAX(_StatsModelsAdapter):
         degree zero component of the trend polynomial), 't' indicates a
         linear trend with time, and 'ct' is both. Can also be specified as an
         iterable defining the non-zero polynomial exponents to include, in
-        increasing order. For example, `[1,1,0,1]` denotes
+        increasing order. For example, ``[1,1,0,1]`` denotes
         :math:`a + bt + ct^3`. Default is a constant trend component.
     error_cov_type : {'diagonal', 'unstructured'}, optional
         The structure of the covariance matrix of the error term, where
@@ -34,7 +36,7 @@ class VARMAX(_StatsModelsAdapter):
         requires it to be a diagonal matrix (uncorrelated errors). Default is
         "unstructured".
     measurement_error : bool, optional
-        Whether or not to assume the endogenous observations `endog` were
+        Whether or not to assume the endogenous observations ``endog`` were
         measured with error. Default is False.
     enforce_stationarity : bool, optional
         Whether or not to transform the AR parameters to enforce stationarity
@@ -44,7 +46,7 @@ class VARMAX(_StatsModelsAdapter):
         in the moving average component of the model. Default is True.
     trend_offset : int, optional
         The offset at which to start time trend values. Default is 1, so that
-        if `trend='t'` the trend is equal to 1, 2, ..., n_obs. Typically is only
+        if ``trend='t'`` the trend is equal to 1, 2, ..., n_obs. Typically is only
         set when the model created by extending a previous dataset.
     start_params : array_like, optional
         Initial guess of the solution for the loglikelihood maximization. If
@@ -56,8 +58,9 @@ class VARMAX(_StatsModelsAdapter):
         argument describes whether or not start_params also includes the
         fixed parameters, in addition to the free parameters. Default is False.
     cov_type : str, optional
-        The `cov_type` keyword governs the method for calculating the
+        The ``cov_type`` keyword governs the method for calculating the
         covariance matrix of parameter estimates. Can be one of:
+
          - 'opg' for the outer product of gradient estimator
          - 'oim' for the observed information matrix estimator, calculated
             using the method of Harvey (1989)
@@ -70,12 +73,14 @@ class VARMAX(_StatsModelsAdapter):
          - 'robust_approx' is the same as 'robust' except that the
             intermediate calculations use the 'approx' method.
          - 'none' for no covariance matrix calculation.
+
         Default is 'opg' unless memory conservation is used to avoid computing the
         loglikelihood values for each observation, in which case the default is
         'approx'.
     cov_kwds : dict or None, optional
         A dictionary of arguments affecting covariance matrix computation.
         opg, oim, approx, robust, robust_approx
+
          - 'approx_complex_step' : bool, optional - If True, numerical
             approximations are computed using complex-step methods. If False,
             numerical approximations are computed using finite difference
@@ -83,9 +88,11 @@ class VARMAX(_StatsModelsAdapter):
          - 'approx_centered' : bool, optional - If True, numerical
             approximations computed using finite difference methods use a
             centered approximation. Default is False.
+
     method : str, optional
-        The `method` determines which solver from `scipy.optimize`
+        The ``method`` determines which solver from ``scipy.optimize``
         is used, and it can be chosen from among the following strings:
+
          - 'newton' for Newton-Raphson
          - 'nm' for Nelder-Mead
          - 'bfgs' for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
@@ -94,7 +101,8 @@ class VARMAX(_StatsModelsAdapter):
          - 'cg' for conjugate gradient
          - 'ncg' for Newton-conjugate gradient
          - 'basinhopping' for global basin-hopping solver
-        The explicit arguments in `fit` are passed to the solver,
+
+        The explicit arguments in ``fit`` are passed to the solver,
         with the exception of the basin-hopping solver. Each
         solver has several optional arguments that are not the same across
         solvers. See the notes section below (or scipy.optimize) for the
@@ -118,14 +126,14 @@ class VARMAX(_StatsModelsAdapter):
         The method by which the score vector is calculated. 'harvey' uses
         the method from Harvey (1989), 'approx' uses either finite
         difference or complex step differentiation depending upon the
-        value of `optim_complex_step`, and None uses the built-in gradient
+        value of ``optim_complex_step``, and None uses the built-in gradient
         approximation of the optimizer. Default is None. This keyword is
         only relevant if the optimization method uses the score.
     optim_complex_step : bool, optional
         Whether or not to use complex step differentiation when
         approximating the score; if False, finite difference approximation
         is used. Default is True. This keyword is only relevant if
-        `optim_score` is set to 'harvey' or 'approx'.
+        ``optim_score`` is set to 'harvey' or 'approx'.
     optim_hessian : {'opg','oim','approx'}, optional
         The method by which the Hessian is numerically approximated. 'opg'
         uses outer product of gradients, 'oim' uses the information
@@ -139,7 +147,7 @@ class VARMAX(_StatsModelsAdapter):
         prediction), although out-of-sample forecasting is possible.
         Default is False.
     dynamic : bool, int, str, or datetime, optional
-        Integer offset relative to `start` at which to begin dynamic
+        Integer offset relative to ``start`` at which to begin dynamic
         prediction. Can also be an absolute date string to parse or a
         datetime type (these are not interpreted as offsets).
         Prior to this observation, true endogenous values will be used for
@@ -151,7 +159,7 @@ class VARMAX(_StatsModelsAdapter):
         "predicted", which computes predictions of period t values
         conditional on observed data through period t-1; these are
         one-step-ahead predictions, and correspond with the typical
-        `fittedvalues` results attribute. Alternatives are "filtered",
+        ``fittedvalues`` results attribute. Alternatives are "filtered",
         which computes predictions of period t values conditional on
         observed data through period t, and "smoothed", which computes
         predictions of period t values conditional on the entire dataset
@@ -178,7 +186,7 @@ class VARMAX(_StatsModelsAdapter):
         y_t = A(t) + A_1 y_{t-1} + \dots + A_p y_{t-p} + B x_t + \epsilon_t +
         M_1 \epsilon_{t-1} + \dots M_q \epsilon_{t-q}
     where :math:`\epsilon_t \sim N(0, \Omega)`, and where :math:`y_t` is a
-    `k_endog x 1` vector. Additionally, this model allows considering the case
+    ``k_endog x 1`` vector. Additionally, this model allows considering the case
     where the variables are measured with error.
     Note that in the full VARMA(p,q) case there is a fundamental identification
     problem in that the coefficient matrices :math:`\{A_i, M_j\}` are not
@@ -198,7 +206,7 @@ class VARMAX(_StatsModelsAdapter):
     --------
     >>> from sktime.forecasting.varmax import VARMAX
     >>> from sktime.datasets import load_macroeconomic
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> y = load_macroeconomic()  # doctest: +SKIP
     >>> forecaster = VARMAX(suppress_warnings=True)  # doctest: +SKIP
     >>> forecaster.fit(y[['realgdp', 'unemp']])  # doctest: +SKIP
@@ -207,15 +215,28 @@ class VARMAX(_StatsModelsAdapter):
     """
 
     _tags = {
-        "scitype:y": "multivariate",
-        "ignores-exogeneous-X": False,
-        "handles-missing-data": False,
+        # packaging info
+        # --------------
+        "authors": ["ChadFulton", "bashtage", "KatieBuc"],
+        # ChadFulton and bashtage for statsnodels VARMAX
+        # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
+        "scitype:y": "both",
+        "capability:exogenous": True,
+        "capability:missing_values": False,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "capability:pred_int": False,
+        "capability:pred_int:insample": False,
+        "capability:non_contiguous_X": False,
+        # CI and testing tags
+        # -------------------
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
+        # sporadic failures in update due to singular matrix error
     }
 
     def __init__(
@@ -277,7 +298,7 @@ class VARMAX(_StatsModelsAdapter):
         self.signal_only = signal_only
         self.suppress_warnings = suppress_warnings
 
-        super(VARMAX, self).__init__()
+        super().__init__()
 
     def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.
@@ -298,6 +319,11 @@ class VARMAX(_StatsModelsAdapter):
         """
         if self.suppress_warnings:
             warnings.filterwarnings("ignore")
+
+        # if univariate, add a shifted copy of the data
+        if y.shape[1] == 1:
+            y = y.copy()
+            y["__y_shifted"] = y.iloc[:, 0].abs().pow(0.1) + 1.0
 
         from statsmodels.tsa.statespace.varmax import VARMAX as _VARMAX
 
@@ -330,15 +356,17 @@ class VARMAX(_StatsModelsAdapter):
             flags=self.flags,
             low_memory=self.low_memory,
         )
+
+        self._y_index_0 = y.index[0]
+        self._y_len = len(y)
         return self
 
     # defining `_predict`, instead of inheriting from `_StatsModelsAdapter`,
     # for two reasons:
     # 1. to pass in `dynamic`, `information_set` and `signal_only`
     # 2. to deal with statsmodel integer indexing issue
-    def _predict(self, fh, X=None):
-        """
-        Wrap Statmodel's VARMAX forecast method.
+    def _predict(self, fh, X):
+        """Wrap statmodels VARMAX forecast method.
 
         Parameters
         ----------
@@ -354,7 +382,9 @@ class VARMAX(_StatsModelsAdapter):
         y_pred : np.ndarray
             Returns series of predicted values.
         """
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        abs_idx = fh.to_absolute_int(self._y_index_0, self.cutoff)
+        start, end = abs_idx[[0, -1]]
+        full_range = pd.RangeIndex(start=start, stop=end + 1)
 
         y_pred = self._fitted_forecaster.predict(
             start=start,
@@ -365,18 +395,35 @@ class VARMAX(_StatsModelsAdapter):
             exog=X,
         )
 
-        # statsmodel returns zero-based index when index is of type int with the
-        # following warning
-        # ValueWarning: No supported index is available. Prediction results will be
-        # given with an integer index beginning at `start`...
-        # but only when out-of-sample forecasting, i.e. when forecasting horizon is
-        # greater than zero
-        if (type(self._y.index) == pd.core.indexes.numeric.Int64Index) & (
-            any(fh.to_relative(self.cutoff) > 0)
-        ):
-            y_pred.index = y_pred.index + self._y.index[0]
+        y_pred.index = full_range
+        y_pred = y_pred.loc[abs_idx.to_pandas()]
 
-        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        y_pred.index = fh.to_absolute_index(self.cutoff)
+
+        # invert the "only_1s" column if it was added during fit
+        if self._y_metadata["n_features"] == 1:
+            y_pred = y_pred.iloc[:, [0]]
+
+        return y_pred
+
+    def _update(self, y, X=None, update_params=True):
+        """Update used internally in update."""
+        if update_params or self.is_composite():
+            super()._update(y, X, update_params=update_params)
+            return self
+
+        index_diff = y.index.difference(self._fitted_forecaster.fittedvalues.index)
+        if index_diff.isin(y.index).all():
+            y = y.loc[index_diff]
+            X = X.loc[index_diff].set_index(y.index) if X is not None else None
+
+        # if univariate, add a shifted copy of the data
+        if y.shape[1] == 1:
+            y = y.copy()
+            y["__y_shifted"] = y.iloc[:, 0].abs().pow(0.1) + 1.0
+
+        self._fitted_forecaster = self._fitted_forecaster.append(y, exog=X)
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -386,7 +433,7 @@ class VARMAX(_StatsModelsAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -394,8 +441,9 @@ class VARMAX(_StatsModelsAdapter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
             {"order": (1, 0)},

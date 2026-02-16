@@ -1,9 +1,14 @@
-$(document).ready(function () {
-  $("#myInput").on("keyup", function () {
-	var value = $(this).val().toLowerCase();
-	$("tr").filter(function () {
-	  $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-	});
+document.addEventListener("DOMContentLoaded", function () {
+  var myInput = document.getElementById("myInput");
+
+  myInput.addEventListener("keyup", function () {
+    var value = this.value.toLowerCase();
+    var rows = document.getElementsByTagName("tr");
+
+    for (var i = 0; i < rows.length; i++) {
+      var rowText = rows[i].textContent.toLowerCase();
+      rows[i].style.display = rowText.indexOf(value) > -1 ? "" : "none";
+    }
   });
 });
 
@@ -13,7 +18,7 @@ function includeHTML() {
   z = document.getElementsByTagName("*");
   for (i = 0; i < z.length; i++) {
 	elmnt = z[i];
-	/*search for elements with a certain atrribute:*/
+	/*search for elements with a certain attribute:*/
 	file = elmnt.getAttribute("w3-include-html");
 	if (file) {
 	  /*make an HTTP request using the attribute value as the file name:*/

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Eclectic utilities for the datatypes module."""
 
@@ -42,6 +41,9 @@ def get_time_index(X):
             return X.loc[tuple(list(X.index[0])[:-1])].index
         # nested_univ
         elif isinstance(X, pd.DataFrame) and isinstance(X.iloc[0, 0], pd.DataFrame):
+            return _get_index(X.iloc[0, 0])
+        # nested_univ
+        elif isinstance(X, pd.DataFrame) and isinstance(X.iloc[0, 0], pd.Series):
             return _get_index(X.iloc[0, 0])
         # pd.Series or pd.DataFrame
         else:
@@ -264,18 +266,29 @@ def get_cutoff(
     if reverse_order:
         ix = 0
         agg = min
+        agg_str = "min"
     else:
         ix = -1
         agg = max
+        agg_str = "max"
 
     def sub_idx(idx, ix, return_index=True):
         """Like sub-setting pd.index, but preserves freq attribute."""
         if not return_index:
             return idx[ix]
         res = idx[[ix]]
-        if hasattr(idx, "freq") and idx.freq is not None:
-            if res.freq != idx.freq:
-                res.freq = idx.freq
+        if hasattr(idx, "freq"):
+            if idx.freq is None:
+                try:
+                    res.freq = pd.infer_freq(idx)
+                except ValueError:
+                    # This can happen when there are fewer
+                    # than three values in the index
+                    # (see pd.infer_freq for details)
+                    pass
+            else:
+                if res.freq != idx.freq:
+                    res.freq = idx.freq
         return res
 
     if isinstance(obj, pd.Series):
@@ -304,7 +317,7 @@ def get_cutoff(
             .groupby(level=inst_levels, sort=False)
             .nth(ix)
             .iloc[:, -1]
-            .agg(agg)
+            .agg(agg_str)
         )
         if return_index:
             cuttoff_idx = ensure_index([cutoff])
@@ -385,7 +398,16 @@ def update_data(X, X_new=None):
             return np.concatenate([X, X_new], axis=2)
     #  if y is pandas, we use combine_first to update
     elif isinstance(X_new, (pd.Series, pd.DataFrame)) and len(X_new) > 0:
-        return X_new.combine_first(X)
+        # using .combine_first() can mess with pd.Series frequencies, e.g. change 24H
+        # to 1D, which can cause issues when converting fh.to_absolute() at the
+        # predict stage because to_absolute(self.cutoff) converts timestamps to
+        # period internally
+        X_new = X_new.combine_first(X)
+        if hasattr(X.index, "freq") and hasattr(X_new.index, "freq"):
+            if X.index.freq == X_new.index.freq:
+                if X.index.freqstr != X_new.index.freqstr:
+                    X_new.index.freq = X.index.freq
+        return X_new
 
 
 GET_WINDOW_SUPPORTED_MTYPES = [
@@ -495,7 +517,7 @@ def get_window(obj, window_length=None, lag=None):
     )
 
 
-def get_slice(obj, start=None, end=None):
+def get_slice(obj, start=None, end=None, start_inclusive=True, end_inclusive=False):
     """Slice obj with start (inclusive) and end (exclusive) indices.
 
     Returns time series or time series panel with time indices
@@ -516,9 +538,16 @@ def get_slice(obj, start=None, end=None):
         must be int if obj is int indexed, timestamp if datetime indexed
         Exclusive end of slice. Default = None
         If None, then no slice at the end
+    start_inclusive : bool, optional, default = True
+        whether start index is inclusive (True) or not (False)
+    end_inclusive : bool, optional, default = False
+        whether end index is inclusive (True) or not (False)
+
     Returns
     -------
-    obj sub-set sliced for `start` (inclusive) and `end` (exclusive) indices
+    obj sub-set sliced for `start` to `end`, default is start/inclusive, end/exclusive
+        contains all indices from `start` (in- or exclusive as per `start_inclusive`)
+        up until `end` (in- or exclusive as per `end_inclusive`)
         None if obj was None
     """
     from sktime.datatypes import check_is_scitype, convert_to
@@ -544,6 +573,16 @@ def get_slice(obj, start=None, end=None):
         # and always subset on first dimension
         if obj.ndim > 1:
             obj = obj.swapaxes(1, -1)
+        # deal with inclusive/exclusive
+        if not start_inclusive:
+            start = start + 1
+        if end_inclusive:
+            end = end + 1
+        # deal with out-of-index
+        if start < 0:
+            start = 0
+        if start >= len(obj):
+            start = len(obj) - 1
         # subsetting
         if start and end:
             obj_subset = obj[start:end]
@@ -565,12 +604,24 @@ def get_slice(obj, start=None, end=None):
         else:
             time_indices = obj.index.get_level_values(-1)
 
+        def get_start_cond():
+            if start_inclusive:
+                return time_indices >= start
+            else:
+                return time_indices > start
+
+        def get_end_cond():
+            if end_inclusive:
+                return time_indices <= end
+            else:
+                return time_indices < end
+
         if start and end:
-            slice_select = (time_indices >= start) & (time_indices < end)
+            slice_select = get_start_cond() & get_end_cond()
         elif end:
-            slice_select = time_indices < end
+            slice_select = get_end_cond()
         elif start:
-            slice_select = time_indices >= start
+            slice_select = get_start_cond()
 
         obj_subset = obj.iloc[slice_select]
         return convert_to(obj_subset, obj_in_mtype)

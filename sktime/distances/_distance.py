@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
-
-from typing import Any, Callable, Union
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 
@@ -33,9 +32,9 @@ from sktime.distances.base import (
 def erp_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     g: float = 0.0,
     **kwargs: Any,
 ) -> float:
@@ -91,21 +90,23 @@ def erp_distance(
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sktime.distances import erp_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> erp_distance(x_1d, y_1d)
-    16.0
+    >>> erp_distance(x_1d, y_1d)  # doctest: +SKIP
+    np.float64(16.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> erp_distance(x_2d, y_2d)
-    45.254833995939045
+    >>> erp_distance(x_2d, y_2d)  # doctest: +SKIP
+    np.float64(45.254833995939045)
 
     References
     ----------
     .. [1] Lei Chen and Raymond Ng. 2004. On the marriage of Lp-norms and edit distance.
     In Proceedings of the Thirtieth international conference on Very large data bases
-     - Volume 30 (VLDB '04). VLDB Endowment, 792–803.
+     - Volume 30 (VLDB '04). VLDB Endowment, 792-803.
     """
     format_kwargs = {
         "window": window,
@@ -121,9 +122,9 @@ def erp_distance(
 def edr_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     epsilon: float = None,
     **kwargs: Any,
 ) -> float:
@@ -183,22 +184,24 @@ def edr_distance(
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sktime.distances import edr_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> edr_distance(x_1d, y_1d)
-    1.0
+    >>> edr_distance(x_1d, y_1d)  # doctest: +SKIP
+    np.float64(1.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> edr_distance(x_2d, y_2d)
-    1.0
+    >>> edr_distance(x_2d, y_2d)  # doctest: +SKIP
+    np.float64(1.0)
 
     References
     ----------
     .. [1] Lei Chen, M. Tamer Özsu, and Vincent Oria. 2005. Robust and fast similarity
     search for moving object trajectories. In Proceedings of the 2005 ACM SIGMOD
     international conference on Management of data (SIGMOD '05). Association for
-    Computing Machinery, New York, NY, USA, 491–502.
+    Computing Machinery, New York, NY, USA, 491-502.
     DOI:https://doi.org/10.1145/1066157.1066213
     """
     format_kwargs = {
@@ -215,9 +218,9 @@ def edr_distance(
 def lcss_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     epsilon: float = 1.0,
     **kwargs: Any,
 ) -> float:
@@ -296,9 +299,9 @@ def lcss_distance(
 def wddtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     compute_derivative=None,
     g: float = 0.0,
     **kwargs: Any,
@@ -370,15 +373,17 @@ def wddtw_distance(
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sktime.distances import wddtw_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> wddtw_distance(x_1d, y_1d) # doctest: +SKIP
-    0.0
+    np.float64(0.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> wddtw_distance(x_2d, y_2d) # doctest: +SKIP
-    0.0
+    np.float64(0.0)
 
     References
     ----------
@@ -406,8 +411,8 @@ def wddtw_distance(
 def wdtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     g: float = 0.05,
     **kwargs: Any,
@@ -473,15 +478,17 @@ def wdtw_distance(
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sktime.distances import wdtw_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> wdtw_distance(x_1d, y_1d)
-    27.975712863958133
+    >>> wdtw_distance(x_1d, y_1d)  # doctest: +SKIP
+    np.float64(27.975712863958133)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> wdtw_distance(x_2d, y_2d)
-    243.2106560107827
+    >>> wdtw_distance(x_2d, y_2d)  # doctest: +SKIP
+    np.float64(243.2106560107827)
 
     References
     ----------
@@ -503,8 +510,8 @@ def wdtw_distance(
 def ddtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     compute_derivative=None,
     **kwargs: Any,
@@ -572,15 +579,16 @@ def ddtw_distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import ddtw_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> ddtw_distance(x_1d, y_1d) # doctest: +SKIP
-    0.0
+    np.float64(0.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> ddtw_distance(x_2d, y_2d) # doctest: +SKIP
-    0.0
+    np.float64(0.0)
 
     References
     ----------
@@ -607,8 +615,8 @@ def ddtw_distance(
 def dtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     **kwargs: Any,
 ) -> float:
@@ -623,9 +631,9 @@ def dtw_distance(
     * two time series of equal length
     * the Euclidean pairwise distance
 
-    For unequal length time series, use `sktime.dists_kernels.DistFromAligner`
-    with a time warping aligner such as `sktime.aligners.AlignerDTW`.
-    To use arbitrary pairwise distances, use `sktime.aligners.AlignerDTWfromDist`.
+    For unequal length time series, use ``sktime.dists_kernels.DistFromAligner``
+    with a time warping aligner such as ``sktime.aligners.AlignerDTW``.
+    To use arbitrary pairwise distances, use ``sktime.aligners.AlignerDTWfromDist``.
 
     Mathematically, for two sequences
     :math:'\mathbf{a}=\{a_1,a_2,\ldots,a_m\}' and :math:'\mathbf{b}=\{b_1,b_2,\ldots,
@@ -644,8 +652,10 @@ def dtw_distance(
     This implementation assumes for warping paths that:
     * closed paths: :math:`i_1 = j_1 = 1`; :math:`i_s = m, j_s = n`
     * monotonous paths: :math:`i_k \le i_{k+1}, j_k \le j_{k+1}` for all :math:`k`
-    * strictly monotonous paths: :math:`(i_k, j_k) \neq (i_{k+1}, j_{k+1})` for all :math:`k`
-    The DTW path between sequences is the path through :math:'M' that minimizes the total distance,
+    * strictly monotonous paths: :math:`(i_k, j_k) \neq (i_{k+1}, j_{k+1})` for all
+    :math:`k`
+    The DTW path between sequences is the path through :math:'M' that minimizes the total
+    distance,
     over all valid paths (satisfying the above assumptions), given the sequences.
     Formally:
     The distance for a warping path :math:'P' of length :math:'s' is
@@ -655,11 +665,12 @@ def dtw_distance(
     .. math::  P^* = \argmin_{P\in \mathcal{P}} D_{P}(\mathbf{a},\mathbf{b}).
     The DTW distance between the two sequences :math:'\mathbf{a},\mathbf{b}' is
     the minimum warping path distance:
-    .. math::  d_{dtw}(\mathbf{a}, \mathbf{b}) = \min_{P\in \mathcal{P}} D_{P}(\mathbf{a},\mathbf{b}) = D_{P^*}(\mathbf{a},\mathbf{b}).
+    .. math:: d_{dtw}(\mathbf{a}, \mathbf{b}) = \min_{P\in \mathcal{P}} D_{P}(\mathbf{a},\mathbf{b}) =
+    D_{P^*}(\mathbf{a},\mathbf{b}).
     The optimal warping path $P^*$ can be found exactly through dynamic programming.
     This can be a time consuming operation, and it is common to put a
     restriction on the amount of warping allowed. This is implemented through
-    the `bounding_matrix` structure, that restricts allowable warpings by a mask.
+    the ``bounding_matrix`` structure, that restricts allowable warpings by a mask.
     Common bounding strategies include the Sakoe-Chiba band [3]_ and the Itakura
     parallelogram [4_]. The Sakoe-Chiba band creates a warping path window that has
     the same width along the diagonal of :math:'M'. The Itakura paralleogram allows
@@ -713,15 +724,16 @@ def dtw_distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import dtw_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> dtw_distance(x_1d, y_1d)
-    58.0
+    >>> dtw_distance(x_1d, y_1d)  # doctest: +SKIP
+    np.float64(58.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> dtw_distance(x_2d, y_2d)
-    512.0
+    >>> dtw_distance(x_2d, y_2d)  # doctest: +SKIP
+    np.float64(512.0)
 
     References
     ----------
@@ -732,12 +744,12 @@ def dtw_distance(
     mining Proceedings of 5th SIAM International Conference on Data Mining, 2005
     .. [3] Sakoe H. and Chiba S.: Dynamic programming algorithm optimization for
     spoken word recognition. IEEE Transactions on Acoustics, Speech, and Signal
-    Processing 26(1):43–49, 1978.
+    Processing 26(1):43-49, 1978.
     .. [4] Itakura F: Minimum prediction residual principle applied to speech
     recognition. IEEE Transactions on Acoustics, Speech, and Signal Processing 23(
-    1):67–72, 1975.
+    1):67-72, 1975.
     .. [5] Shokoohi-Yekta M et al.: Generalizing DTW to the multi-dimensional case
-    requires an adaptive approach. Data Mining and Knowledge Discovery, 31, 1–31 (2017).
+    requires an adaptive approach. Data Mining and Knowledge Discovery, 31, 1-31 (2017).
     """  # noqa: E501
     format_kwargs = {
         "window": window,
@@ -805,11 +817,12 @@ def msm_distance(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
+
     References
     ----------
     .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
     for time  series. IEEE  Transactions  on  Knowledge  and  Data  Engineering,
-    25(6):1425–1438, 2013.
+    25(6):1425-1438, 2013.
     """
     format_kwargs = {
         "c": c,
@@ -825,8 +838,8 @@ def msm_distance(
 def twe_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     lmbda: float = 1.0,
     nu: float = 0.001,
@@ -892,21 +905,22 @@ def twe_distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import twe_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> twe_distance(x_1d, y_1d)
-    28.0
+    >>> twe_distance(x_1d, y_1d)  # doctest: +SKIP
+    np.float64(28.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> twe_distance(x_2d, y_2d)
-    78.37353236814714
+    >>> twe_distance(x_2d, y_2d)  # doctest: +SKIP
+    np.float64(78.37353236814714)
 
     References
     ----------
     .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
-    Intelligence. 31 (2): 306–318.
+    Intelligence. 31 (2): 306-318.
     """
     format_kwargs = {
         "window": window,
@@ -958,15 +972,16 @@ def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import squared_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> squared_distance(x_1d, y_1d)
-    64.0
+    >>> squared_distance(x_1d, y_1d)  # doctest: +SKIP
+    np.float64(64.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> squared_distance(x_2d, y_2d)
-    512.0
+    >>> squared_distance(x_2d, y_2d)  # doctest: +SKIP
+    np.float64(512.0)
     """
     return distance(x, y, metric="squared", **kwargs)
 
@@ -1011,15 +1026,16 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import euclidean_distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> euclidean_distance(x_1d, y_1d)
-    8.0
+    >>> euclidean_distance(x_1d, y_1d)  # doctest: +SKIP
+    np.float64(8.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> euclidean_distance(x_2d, y_2d)
-    22.627416997969522
+    >>> euclidean_distance(x_2d, y_2d)  # doctest: +SKIP
+    np.float64(22.627416997969522)
     """
     return distance(x, y, metric="euclidean", **kwargs)
 
@@ -1028,8 +1044,8 @@ def dtw_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
@@ -1115,8 +1131,8 @@ def wdtw_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     g: float = 0.05,
     **kwargs: Any,
@@ -1210,8 +1226,8 @@ def ddtw_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     compute_derivative=None,
     **kwargs: Any,
@@ -1311,9 +1327,9 @@ def wddtw_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     compute_derivative=None,
     g: float = 0.0,
     **kwargs: Any,
@@ -1419,9 +1435,9 @@ def edr_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     epsilon: float = None,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
@@ -1490,7 +1506,7 @@ def edr_alignment_path(
     .. [1] Lei Chen, M. Tamer Özsu, and Vincent Oria. 2005. Robust and fast similarity
     search for moving object trajectories. In Proceedings of the 2005 ACM SIGMOD
     international conference on Management of data (SIGMOD '05). Association for
-    Computing Machinery, New York, NY, USA, 491–502.
+    Computing Machinery, New York, NY, USA, 491-502.
     DOI:https://doi.org/10.1145/1066157.1066213
     """
     format_kwargs = {
@@ -1510,9 +1526,9 @@ def erp_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     g: float = 0.0,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
@@ -1577,7 +1593,7 @@ def erp_alignment_path(
     ----------
     .. [1] Lei Chen and Raymond Ng. 2004. On the marriage of Lp-norms and edit distance.
     In Proceedings of the Thirtieth international conference on Very large data bases
-     - Volume 30 (VLDB '04). VLDB Endowment, 792–803.
+     - Volume 30 (VLDB '04). VLDB Endowment, 792-803.
     """
     format_kwargs = {
         "window": window,
@@ -1596,9 +1612,9 @@ def lcss_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     epsilon: float = 1.0,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
@@ -1747,11 +1763,12 @@ def msm_alignment_path(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
+
     References
     ----------
     .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
     for time  series. IEEE  Transactions  on  Knowledge  and  Data  Engineering,
-    25(6):1425–1438, 2013.
+    25(6):1425-1438, 2013.
     """
     format_kwargs = {
         "c": c,
@@ -1845,7 +1862,7 @@ def twe_alignment_path(
     ----------
     .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
-    Intelligence. 31 (2): 306–318.
+    Intelligence. 31 (2): 306-318.
     """
     format_kwargs = {
         "window": window,
@@ -1865,14 +1882,12 @@ def twe_alignment_path(
 def distance(
     x: np.ndarray,
     y: np.ndarray,
-    metric: Union[
-        str,
-        Callable[
-            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
-        ],
-        Callable[[np.ndarray, np.ndarray], float],
-        NumbaDistance,
-    ],
+    metric: str
+    | Callable[
+        [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+    ]
+    | Callable[[np.ndarray, np.ndarray], float]
+    | NumbaDistance,
     **kwargs: Any,
 ) -> float:
     """Compute the distance between two time series.
@@ -1921,20 +1936,21 @@ def distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import distance
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> distance(x_1d, y_1d, metric='dtw')
-    58.0
+    >>> distance(x_1d, y_1d, metric='dtw')  # doctest: +SKIP
+    np.float64(58.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> distance(x_2d, y_2d, metric='dtw')
-    512.0
+    >>> distance(x_2d, y_2d, metric='dtw')  # doctest: +SKIP
+    np.float64(512.0)
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> distance(x_2d, y_2d, metric='dtw', window=0.5)
-    512.0
+    >>> distance(x_2d, y_2d, metric='dtw', window=0.5)  # doctest: +SKIP
+    np.float64(512.0)
 
     Returns
     -------
@@ -1950,20 +1966,22 @@ def distance(
         metric, _x, _y, _METRIC_INFOS, **kwargs
     )
 
-    return _metric_callable(_x, _y)
+    res = _metric_callable(_x, _y)
+
+    if isinstance(res, float) and not isinstance(res, np.float64):
+        res = np.float64(res)
+    return res
 
 
 def distance_factory(
     x: np.ndarray = None,
     y: np.ndarray = None,
-    metric: Union[
-        str,
-        Callable[
-            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
-        ],
-        Callable[[np.ndarray, np.ndarray], float],
-        NumbaDistance,
-    ] = "euclidean",
+    metric: str
+    | Callable[
+        [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+    ]
+    | Callable[[np.ndarray, np.ndarray], float]
+    | NumbaDistance = "euclidean",
     **kwargs: Any,
 ) -> DistanceCallable:
     """Create a no_python distance callable.
@@ -2033,14 +2051,12 @@ def distance_factory(
 def pairwise_distance(
     x: np.ndarray,
     y: np.ndarray = None,
-    metric: Union[
-        str,
-        Callable[
-            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
-        ],
-        Callable[[np.ndarray, np.ndarray], float],
-        NumbaDistance,
-    ] = "euclidean",
+    metric: str
+    | Callable[
+        [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+    ]
+    | Callable[[np.ndarray, np.ndarray], float]
+    | NumbaDistance = "euclidean",
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute the pairwise distance matrix between two time series.
@@ -2094,9 +2110,10 @@ def pairwise_distance(
     Examples
     --------
     >>> import numpy as np
+    >>> from sktime.distances import pairwise_distance  # doctest: +SKIP
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> pairwise_distance(x_1d, y_1d, metric='dtw')
+    >>> pairwise_distance(x_1d, y_1d, metric='dtw')  # doctest: +SKIP
     array([[16., 25., 36., 49.],
            [ 9., 16., 25., 36.],
            [ 4.,  9., 16., 25.],
@@ -2104,19 +2121,19 @@ def pairwise_distance(
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> pairwise_distance(x_2d, y_2d, metric='dtw')
+    >>> pairwise_distance(x_2d, y_2d, metric='dtw')  # doctest: +SKIP
     array([[256., 576.],
            [ 58., 256.]])
 
     >>> x_3d = np.array([[[1], [2], [3], [4]], [[5], [6], [7], [8]]])  # 3d array
     >>> y_3d = np.array([[[9], [10], [11], [12]], [[13], [14], [15], [16]]])  # 3d array
-    >>> pairwise_distance(x_3d, y_3d, metric='dtw')
+    >>> pairwise_distance(x_3d, y_3d, metric='dtw')  # doctest: +SKIP
     array([[256., 576.],
            [ 64., 256.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=0.5)
+    >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=0.5)  # doctest: +SKIP
     array([[256., 576.],
            [ 58., 256.]])
     """
@@ -2139,14 +2156,12 @@ def pairwise_distance(
 def distance_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
-    metric: Union[
-        str,
-        Callable[
-            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
-        ],
-        Callable[[np.ndarray, np.ndarray], float],
-        NumbaDistance,
-    ],
+    metric: str
+    | Callable[
+        [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+    ]
+    | Callable[[np.ndarray, np.ndarray], float]
+    | NumbaDistance,
     return_cost_matrix: bool = False,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
@@ -2198,7 +2213,7 @@ def distance_alignment_path(
     Returns
     -------
     list[tuple]
-        List of tuples containing the alginment path for the distance.
+        List of tuples containing the alignment path for the distance.
     float
         Distance between the x and y.
     np.ndarray (of shape (len(x), len(y)).
@@ -2220,14 +2235,12 @@ def distance_alignment_path(
 def distance_alignment_path_factory(
     x: np.ndarray,
     y: np.ndarray,
-    metric: Union[
-        str,
-        Callable[
-            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
-        ],
-        Callable[[np.ndarray, np.ndarray], float],
-        NumbaDistance,
-    ],
+    metric: str
+    | Callable[
+        [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+    ]
+    | Callable[[np.ndarray, np.ndarray], float]
+    | NumbaDistance,
     return_cost_matrix: bool = False,
     **kwargs: Any,
 ) -> DistanceAlignmentPathCallable:
@@ -2384,10 +2397,8 @@ _METRIC_INFOS = [
 ]
 
 _METRICS = {info.canonical_name: info for info in _METRIC_INFOS}
-_METRIC_ALIAS = dict((alias, info) for info in _METRIC_INFOS for alias in info.aka)
-_METRIC_CALLABLES = dict(
-    (info.canonical_name, info.dist_func) for info in _METRIC_INFOS
-)
+_METRIC_ALIAS = {alias: info for info in _METRIC_INFOS for alias in info.aka}
+_METRIC_CALLABLES = {info.canonical_name: info.dist_func for info in _METRIC_INFOS}
 _METRICS_NAMES = list(_METRICS.keys())
 
 ALL_DISTANCES = (

@@ -1,28 +1,25 @@
-# -*- coding: utf-8 -*-
 """Fully Connected Neural Network (FCN) (minus the final output layer)."""
 
-__author__ = ["James-Large", "AurumnPegasus"]
-
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
+from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class FCNNetwork(BaseDeepNetwork):
     """Establish the network structure for a FCN.
 
-    Adapted from the implementation used in [1]
+    Adapted from the implementation of Fawaz et. al
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
+
+    Implements network in [1]_.
 
     Parameters
     ----------
-    random_state    : int, default = 0
+    random_states : int, default = 0
         seed to any needed random actions
-
-    Notes
-    -----
-    Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
+    activation : string, default = "relu"
+        activation function used for hidden layers;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
 
     References
     ----------
@@ -39,15 +36,20 @@ class FCNNetwork(BaseDeepNetwork):
     }
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        "authors": ["James-Large", "AurumnPegasus", "noxthot"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,
         random_state=0,
+        activation="relu",
     ):
-        super(FCNNetwork, self).__init__()
+        super().__init__()
         _check_dl_dependencies(severity="error")
         self.random_state = random_state
+        self.activation = activation
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
@@ -70,16 +72,42 @@ class FCNNetwork(BaseDeepNetwork):
             input_layer
         )
         conv1 = keras.layers.BatchNormalization()(conv1)
-        conv1 = keras.layers.Activation(activation="relu")(conv1)
+        conv1 = keras.layers.Activation(activation=self.activation)(conv1)
 
         conv2 = keras.layers.Conv1D(filters=256, kernel_size=5, padding="same")(conv1)
         conv2 = keras.layers.BatchNormalization()(conv2)
-        conv2 = keras.layers.Activation(activation="relu")(conv2)
+        conv2 = keras.layers.Activation(activation=self.activation)(conv2)
 
         conv3 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv2)
         conv3 = keras.layers.BatchNormalization()(conv3)
-        conv3 = keras.layers.Activation(activation="relu")(conv3)
+        conv3 = keras.layers.Activation(activation=self.activation)(conv3)
 
         gap_layer = keras.layers.GlobalAveragePooling1D()(conv3)
 
         return input_layer, gap_layer
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            Reserved values for classifiers:
+                "results_comparison" - used for identity testing in some classifiers
+                    should contain parameter settings comparable to "TSC bakeoff"
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {"random_state": 42}
+        return [params1, params2]

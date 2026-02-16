@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Classifier Experiments: code to run experiments as an alternative to orchestration.
 
 This file is configured for runs of the main method with command line arguments, or for
@@ -15,10 +14,7 @@ import numpy as np
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
-import sklearn.metrics
 from sklearn.metrics import davies_bouldin_score
-from sklearn.model_selection import GridSearchCV
-from sklearn.preprocessing import normalize
 
 import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime.benchmarking.experiments import run_clustering_experiment
@@ -98,9 +94,8 @@ def tune_window(metric: str, train_X):
 
 
 if __name__ == "__main__":
-    """
-    Example simple usage, with arguments input via script or hard coded for testing.
-    """
+    """Example simple usage, with arguments input via script or hard coded for
+    testing."""
     clusterer = "kmeans"
     chris_config = True  # This is so chris doesn't have to change config each time
     tune = False

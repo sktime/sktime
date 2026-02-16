@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Classifier Examples: some use case examples for building and assessing classifiers.
 
 This will become a note book once complete.
@@ -10,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 
-from sktime.classification.dictionary_based import BOSSEnsemble, ContractableBOSS
+from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.datasets import load_unit_test
 
 

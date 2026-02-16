@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Temporal importance curve diagram generators for interval forests."""
 
 __author__ = ["MatthewMiddlehurst"]
@@ -7,7 +6,7 @@ import numpy as np
 
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.transformations.panel import catch22
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("matplotlib", severity="warning")
 

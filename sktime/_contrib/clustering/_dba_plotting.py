@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Plotting examples for DBA."""
 
 from sktime.clustering.metrics.averaging import dba

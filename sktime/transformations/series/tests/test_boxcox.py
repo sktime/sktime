@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Tests for BoxCoxTransformer."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning"]
@@ -7,13 +7,20 @@ __all__ = []
 
 import numpy as np
 import pytest
-from scipy.stats import boxcox
 
 from sktime.datasets import load_airline
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(BoxCoxTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_boxcox_against_scipy():
+    """Test boxcox transformer vs the scipy boxvox function."""
+    from scipy.stats import boxcox
+
     y = load_airline()
 
     t = BoxCoxTransformer()
@@ -25,6 +32,10 @@ def test_boxcox_against_scipy():
     assert t.lambda_ == expected_lambda
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(BoxCoxTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("bounds", [(0, 1), (-1, 0), (-1, 2)])
 @pytest.mark.parametrize(
     "method, sp", [("mle", None), ("pearsonr", None), ("guerrero", 5)]
@@ -36,6 +47,10 @@ def test_lambda_bounds(bounds, method, sp):
     assert bounds[0] < t.lambda_ < bounds[1]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(BoxCoxTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "bounds, r_lambda",
     [

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Standalone module to compute and plot critical difference diagrams."""
 
 __author__ = ["SveaMeyer13"]
@@ -6,16 +5,12 @@ __author__ = ["SveaMeyer13"]
 import math
 
 import numpy as np
-from scipy.stats import distributions, find_repeats, rankdata
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("matplotlib", severity="warning")
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def _check_friedman(n_strategies, n_datasets, ranked_data, alpha):
-    """
-    Check whether Friedman test is significant.
+    """Check whether Friedman test is significant.
 
     Larger parts of code copied from scipy.
 
@@ -34,6 +29,20 @@ def _check_friedman(n_strategies, n_datasets, ranked_data, alpha):
       Indicates whether strategies differ significantly in terms of performance
       (according to Friedman test).
     """
+    from scipy.stats import distributions
+
+    # scipy's find_repeats is deprecated from scipy 1.17 onwards
+    if _check_soft_dependencies("scipy<1.17", severity="none"):
+        from scipy.stats._stats_py import find_repeats
+
+    else:
+        # using np.unique_counts instead of scipy's find_repeats
+        def find_repeats(arr):
+            values, counts = np.unique(arr, return_counts=True)
+            replist = values[counts > 1]
+            repnum = counts[counts > 1]
+            return replist, repnum
+
     if n_strategies < 3:
         raise ValueError(
             "At least 3 sets of measurements must be given for Friedmann test, "
@@ -71,16 +80,19 @@ def plot_critical_difference(
     textspace=2.5,
     reverse=True,
 ):
-    """
-    Draw critical difference diagram.
+    """Compute critical difference statistics and plot critical difference diagram.
 
     Step 1 & 2: Calculate average ranks from data
+
     Step 3: Use Friedman test to check whether
     the strategy significantly affects the classification performance
+
     Step 4: Compute critical differences using Nemenyi post-hoc test.
     (How much should the average rank of two strategies differ to be
      statistically significant)
+
     Step 5: Compute statistically similar cliques of strategies
+
     Step 6: Draw the diagram
 
     See Janez Demsar, Statistical Comparisons of Classifiers over
@@ -91,29 +103,30 @@ def plot_critical_difference(
 
     Arguments
     ---------
-        scores : np.array
-            scores (either accuracies or errors) of dataset x strategy
-            (best strategy is in most left column)
-        labels : list of str
-            list with names of the strategies
-        cliques : lists of bit vectors,
-            e.g. [[0,1,1,1,0,0] [0,0,0,0,1,1]]
-            statistically similiar cliques of strategies
-            optional (default: None, in this case cliques will be computed)
-        is_errors : bool
-            indicates whether scores are passed as errors (default) or accuracies
-        alpha : float (currently supported: 0.1, 0.05 or 0.01)
-            Alpha level for statistical tests (default: 0.05)
-        width : int
-           width in inches (default: 10)
-        textspace : int
-           space on figure sides (in inches) for the method names (default: 2.5)
-        reverse : bool
-           if set to 'True', the lowest rank is on the right (default: 'True')
+    scores : np.array
+        scores (either accuracies or errors) of dataset x strategy
+        (best strategy is in most left column)
+    labels : list of str
+        list with names of the strategies
+    cliques : lists of bit vectors,
+        e.g. [[0,1,1,1,0,0] [0,0,0,0,1,1]]
+        statistically similar cliques of strategies
+        optional (default: None, in this case cliques will be computed)
+    is_errors : bool
+        indicates whether scores are passed as errors (default) or accuracies
+    alpha : float (currently supported: 0.1, 0.05 or 0.01)
+        Alpha level for statistical tests (default: 0.05)
+    width : int
+        width in inches (default: 10)
+    textspace : int
+        space on figure sides (in inches) for the method names (default: 2.5)
+    reverse : bool
+        if set to 'True', the lowest rank is on the right (default: 'True')
     """
     _check_soft_dependencies("matplotlib")
 
     import matplotlib.pyplot as plt
+    from scipy.stats import rankdata
 
     # Helper Functions
     def _nth(lst, n):
@@ -122,8 +135,7 @@ def plot_critical_difference(
         return [a[n] for a in lst]
 
     def _lloc(lst, n):
-        """
-        List location in list of list structure.
+        """List location in list of list structure.
 
         Enable the use of negative locations:
         -1 is the last element, -2 second last...
@@ -414,7 +426,7 @@ def plot_critical_difference(
     linesblank = 0  # lines between scale and text
     scalewidth = width - 2 * textspace
 
-    # calculate heigh needed height
+    # calculate height needed height
     minnotsignificant = max(2 * 0.2, linesblank)
     height = cline + ((n_strategies + 1) / 2) * 0.2 + minnotsignificant + 0.2
 

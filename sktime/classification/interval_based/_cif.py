@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """CIF classifier.
 
 Interval based CIF classifier extracting catch22 features from random intervals.
@@ -10,7 +9,6 @@ __all__ = ["CanonicalIntervalForest"]
 import math
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
@@ -26,17 +24,18 @@ from sktime.transformations.panel.catch22 import Catch22
 class CanonicalIntervalForest(BaseClassifier):
     """Canonical Interval Forest Classifier (CIF).
 
-    Implementation of the nterval based forest making use of the catch22 feature set
+    Implementation of the interval based forest making use of the catch22 feature set
     on randomly selected intervals described in Middlehurst et al. (2020). [1]_
 
     Overview: Input "n" series with "d" dimensions of length "m".
-    For each tree
-        - Sample n_intervals intervals of random position and length
-        - Subsample att_subsample_size catch22 or summary statistic attributes randomly
-        - Randomly select dimension for each interval
-        - Calculate attributes for each interval, concatenate to form new
-          data set
-        - Build decision tree on new data set
+    For each tree:
+
+    - Sample n_intervals intervals of random position and length
+    - Subsample att_subsample_size catch22 or summary statistic attributes randomly
+    - Randomly select dimension for each interval
+    - Calculate attributes for each interval, concatenate to form new data set
+    - Build decision tree on new data set
+
     ensemble the trees with averaged probability estimates
 
     Parameters
@@ -45,22 +44,24 @@ class CanonicalIntervalForest(BaseClassifier):
         Number of estimators to build for the ensemble.
     n_intervals : int or None, default=None
         Number of intervals to extract per tree, if None extracts
-        (sqrt(series_length) * sqrt(n_dims)) intervals.
+        ``(sqrt(series_length) * sqrt(n_dims))`` intervals.
     att_subsample_size : int, default=8
         Number of catch22 or summary statistic attributes to subsample per tree.
     min_interval : int, default=3
         Minimum length of an interval.
     max_interval : int or None, default=None
-        Maximum length of an interval, if None set to (series_length / 2).
-    base_estimator : BaseEstimator or str, default="DTC"
+        Maximum length of an interval, if ``None`` set to ``(series_length / 2)``.
+    base_estimator : sklearn classifier or str, default="CIT".
         Base estimator for the ensemble, can be supplied a sklearn BaseEstimator or a
-        string for suggested options.
-        "DTC" uses the sklearn DecisionTreeClassifier using entropy as a splitting
-        measure.
-        "CIT" uses the sktime ContinuousIntervalTree, an implementation of the original
-        tree used with embedded attribute processing for faster predictions.
+        string for predefined classifiers. Possible strings:
+
+        * ``"CIT"``, uses the sktime ``ContinuousIntervalTree``,
+          an implementation of the original
+          tree used with embedded attribute processing for faster predictions.
+        * ``"DTC"`` uses the sklearn ``DecisionTreeClassifier(criterion="entropy")``.
+
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
@@ -118,10 +119,18 @@ class CanonicalIntervalForest(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "MatthewMiddlehurst",
+        "python_dependencies": ["numba", "joblib"],
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "interval",
-        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -160,16 +169,23 @@ class CanonicalIntervalForest(BaseClassifier):
         self._min_interval = min_interval
         self._base_estimator = base_estimator
 
-        super(CanonicalIntervalForest, self).__init__()
+        super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
+        from joblib import Parallel, delayed
+
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
-        if self.base_estimator.lower() == "dtc":
+        est = self.base_estimator
+        if isinstance(est, str) and est.lower() == "dtc":
             self._base_estimator = DecisionTreeClassifier(criterion="entropy")
-        elif self.base_estimator.lower() == "cit":
+        elif isinstance(est, str) and est.lower() == "cit":
             self._base_estimator = ContinuousIntervalTree()
-        elif isinstance(self.base_estimator, BaseEstimator):
+        elif isinstance(est, BaseEstimator):
             self._base_estimator = self.base_estimator
         else:
             raise ValueError("DrCIF invalid base estimator given.")
@@ -217,6 +233,8 @@ class CanonicalIntervalForest(BaseClassifier):
         )
 
     def _predict_proba(self, X) -> np.ndarray:
+        from joblib import Parallel, delayed
+
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length_:
             raise ValueError(
@@ -378,7 +396,7 @@ class CanonicalIntervalForest(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -389,10 +407,17 @@ class CanonicalIntervalForest(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {"n_estimators": 10, "n_intervals": 2, "att_subsample_size": 4}
-        else:
-            return {"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2}
+
+        from sklearn.dummy import DummyClassifier
+
+        param0 = {"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2}
+        param1 = {**param0, "base_estimator": "DTC"}
+        param2 = {**param0, "base_estimator": DummyClassifier()}
+
+        return [param0, param1, param2]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements Theta-lines transformation for use with Theta forecasting."""
@@ -21,11 +20,11 @@ class ThetaLinesTransformer(BaseTransformer):
 
     Overview: Input :term:`univariate series <Univariate time series>` of length
     "n" and ThetaLinesTransformer modifies the local curvature of the time series
-    using Theta-coefficient values passed through the parameter `theta`.
+    using Theta-coefficient values passed through the parameter ``theta``.
 
     Each Theta-coefficient is applied directly to the second differences of the input
     series. The resulting transformed series (Theta-lines) are returned as a
-    pd.DataFrame of shape `len(input series) * len(theta)`.
+    pd.DataFrame of shape ``len(input series) * len(theta)``.
 
     Parameters
     ----------
@@ -61,6 +60,11 @@ class ThetaLinesTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["GuzalBulatova", "mloning"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -70,13 +74,14 @@ class ThetaLinesTransformer(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": True,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self, theta=(0, 2)):
         self.theta = theta
-        super(ThetaLinesTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -111,6 +116,27 @@ class ThetaLinesTransformer(BaseTransformer):
             return pd.Series(theta_lines.flatten(), index=X.index)
         else:
             return pd.DataFrame(theta_lines, columns=self.theta, index=X.index)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests.
+            If no special parameters are defined for a value,
+            will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class.
+            Each dict is used to construct an "interesting" test instance.
+        """
+        # Added empty dict for testing default case
+
+        return [{}, {"theta": (0, 2)}, {"theta": (0.5, 1.5)}]
 
 
 def _theta_transform(Z, trend, theta):

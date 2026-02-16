@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements framework for applying online ensembling algorithms to forecasters."""
 
-__author__ = ["magittan, mloning"]
+__author__ = ["magittan", "mloning"]
 
 import numpy as np
 import pandas as pd
@@ -17,7 +16,14 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     Parameters
     ----------
     ensemble_algorithm : ensemble algorithm
-    forecasters : list of (str, estimator) tuples
+
+    forecasters : list of estimator, (str, estimator), or (str, estimator, count) tuples
+        Estimators to apply to the input series.
+
+        * (str, estimator) tuples: the string is a name for the estimator.
+        * estimator without string will be assigned unique name based on class name
+        * (str, estimator, count) tuples: the estimator will be replicated count times.
+
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
@@ -25,21 +31,26 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        # packaging info
+        # --------------
+        "authors": ["magittan", "mloning"],
+        "maintainers": ["magittan"],
+        # estimator type
+        # --------------
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "y_inner_mtype": ["pd.Series"],
         "scitype:y": "univariate",
     }
 
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
-
         self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
 
-        super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
+        super().__init__(forecasters=forecasters, n_jobs=n_jobs)
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -55,7 +66,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        names, forecasters = self._check_forecasters()
+        forecasters = [x[1] for x in self.forecasters_]
         self.weights = np.ones(len(forecasters)) / len(forecasters)
         self._fit_forecasters(forecasters, y, X, fh)
         return self
@@ -81,7 +92,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self.ensemble_algorithm.update(estimator_predictions.T, y)
 
     def _update(self, y, X=None, update_params=False):
-        """Update fitted paramters and performs a new ensemble fit.
+        """Update fitted parameters and performs a new ensemble fit.
 
         Parameters
         ----------
@@ -96,7 +107,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         if len(y) >= 1 and self.ensemble_algorithm is not None:
             self._fit_ensemble(y, X)
 
-        for forecaster in self.forecasters_:
+        for forecaster in self._get_forecaster_list():
             forecaster.update(y, X, update_params=update_params)
 
         return self
@@ -117,7 +128,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns

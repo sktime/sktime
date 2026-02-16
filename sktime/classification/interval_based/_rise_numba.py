@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """Random Interval Spectral Ensemble (RISE)."""
 
 __author__ = ["TonyBagnall"]
 
 import numpy as np
 
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.numba.njit import jit
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("numba", severity="none"):
     from numba import int64, prange
@@ -91,7 +90,6 @@ def matrix_acf(x, num_cases, max_lag):
     Returns
     -------
     y : array-like shape = [num_cases,max_lag]
-
     """
     y = np.empty(shape=(num_cases, max_lag))
     length = x.shape[1]

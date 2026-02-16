@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Converter utilities between dask and pandas, with multiindex convention.
 
@@ -14,7 +13,12 @@ MultiIndex columns to DataFrame columns with the name:
     __index__[index_iloc], if level has no indexname and is index_iloc-th level
 index is replaced by a string index where tuples are replaced with str coerced elements
 """
+
 import pandas as pd
+
+from sktime.datatypes._base._common import _req
+from sktime.datatypes._base._common import _ret as ret
+from sktime.datatypes._dtypekind import _get_feature_kind, _pandas_dtype_to_kind
 
 
 def _is_mi_col(x):
@@ -42,11 +46,11 @@ def convert_dask_to_pandas(obj):
 
     Parameters
     ----------
-    obj : pandas.DataFrame
+    obj : dask DataFrame
 
     Returns
     -------
-    dask DataFrame
+    pandas.DataFrame
         MultiIndex levels 0 .. -1 of X are converted to columns of name
         __index__[indexname], where indexname is name of multiindex level,
         or the integer index if the level has no name
@@ -84,7 +88,7 @@ def convert_pandas_to_dask(obj, npartitions=1, chunksize=None, sort=True):
 
     Parameters
     ----------
-    obj : dask DataFrame
+    obj : pandas.DataFrame
     npartitions : int or None, optional, default = 1
         npartitions passed to dask from_pandas when converting obj to dask
     chunksize : int or None, optional, default = None
@@ -94,7 +98,7 @@ def convert_pandas_to_dask(obj, npartitions=1, chunksize=None, sort=True):
 
     Returns
     -------
-    pandas.DataFrame
+    dask DataFrame
         MultiIndex levels 0 .. -1 of X are converted to columns of name
         __index__[indexname], where indexname is name of multiindex level,
         or the integer index if the level has no name
@@ -128,16 +132,11 @@ def check_dask_frame(
     obj, return_metadata=False, var_name="obj", freq_set_check=False, scitype="Series"
 ):
     """Check dask frame, generic for sktime check format."""
-    import dask
+    import dask.dataframe as dd
 
     metadata = {}
 
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        return valid
-
-    if not isinstance(obj, dask.dataframe.core.DataFrame):
+    if not isinstance(obj, dd.DataFrame):
         msg = f"{var_name} must be a dask DataFrame, found {type(obj)}"
         return ret(False, msg, None, return_metadata)
 
@@ -174,8 +173,24 @@ def check_dask_frame(
         # dask series should have at most one __index__ col
         return ret(False, cols_msg, None, return_metadata)
 
-    metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
-    metadata["is_univariate"] = len(obj.columns) == 1
+    if _req("is_empty", return_metadata):
+        metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
+    if _req("is_univariate", return_metadata):
+        metadata["is_univariate"] = len(obj.columns) == 1
+    if _req("n_features", return_metadata):
+        metadata["n_features"] = len(obj.columns)
+    if _req("feature_names", return_metadata):
+        metadata["feature_names"] = obj.columns.to_list()
+    if _req("dtypekind_dfip", return_metadata):
+        index_cols_count = len(index_cols)
+        # slicing off additional index columns
+        dtype_list = obj.dtypes.to_list()[index_cols_count:]
+        metadata["dtypekind_dfip"] = _pandas_dtype_to_kind(dtype_list)
+    if _req("feature_kind", return_metadata):
+        index_cols_count = len(index_cols)
+        dtype_list = obj.dtypes.to_list()[index_cols_count:]
+        dtype_kind = _pandas_dtype_to_kind(dtype_list)
+        metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
     # check that columns are unique
     if not obj.columns.is_unique:
@@ -205,17 +220,20 @@ def check_dask_frame(
 
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
-    if return_metadata:
+    if _req("is_equally_spaced", return_metadata):
         # todo: logic for equal spacing
         metadata["is_equally_spaced"] = True
+    if _req("has_nans", return_metadata):
         metadata["has_nans"] = obj.isnull().values.any().compute()
 
-    if return_metadata and scitype in ["Panel", "Hierarchical"]:
-        instance_cols = index_cols[:-1]
-        metadata["n_instances"] = len(obj[instance_cols].drop_duplicates())
+    if scitype in ["Panel", "Hierarchical"]:
+        if _req("n_instances", return_metadata):
+            instance_cols = index_cols[:-1]
+            metadata["n_instances"] = len(obj[instance_cols].drop_duplicates())
 
-    if return_metadata and scitype in ["Hierarchical"]:
-        panel_cols = index_cols[:-2]
-        metadata["n_panels"] = len(obj[panel_cols].drop_duplicates())
+    if scitype in ["Hierarchical"]:
+        if _req("n_panels", return_metadata):
+            panel_cols = index_cols[:-2]
+            metadata["n_panels"] = len(obj[panel_cols].drop_duplicates())
 
     return ret(True, None, metadata, return_metadata)

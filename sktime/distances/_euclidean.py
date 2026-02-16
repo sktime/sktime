@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Euclidean distance."""
+
 __author__ = ["chrisholder", "TonyBagnall"]
 
 from typing import Any

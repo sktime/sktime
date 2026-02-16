@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 

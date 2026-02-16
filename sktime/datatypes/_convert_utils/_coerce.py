@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""Conercion utilities for mtypes."""
+"""Coercion utilities for mtypes."""
 
 __author__ = ["fkiraly"]
 
@@ -7,8 +6,7 @@ import pandas as pd
 
 
 def _is_nullable_numeric(dtype):
-
-    return dtype in ["Int64", "Float64"]
+    return dtype in ["Int64", "Float64", "boolean"]
 
 
 def _coerce_df_dtypes(obj):
@@ -36,7 +34,7 @@ def _coerce_df_dtypes(obj):
             col for col in obj.columns if _is_nullable_numeric(obj.dtypes[col])
         ]
         if len(nullable_cols) > 0:
-            obj = obj.astype({col: "float" for col in nullable_cols})
+            obj = obj.astype(dict.fromkeys(nullable_cols, "float"))
         return obj
 
     return obj

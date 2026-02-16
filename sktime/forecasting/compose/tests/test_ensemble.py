@@ -1,10 +1,8 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Unit tests of EnsembleForecaster functionality."""
 
 __author__ = ["GuzalBulatova", "RNKuhns"]
-import sys
 
 import numpy as np
 import pandas as pd
@@ -14,9 +12,14 @@ from sktime.forecasting.compose import EnsembleForecaster
 from sktime.forecasting.compose._ensemble import VALID_AGG_FUNCS
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(EnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasters",
     [
@@ -38,6 +41,10 @@ def test_avg_mean(forecasters):
     pd.testing.assert_series_equal(mean_pred, avg_pred)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(EnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("aggfunc", [*VALID_AGG_FUNCS.keys()])
 @pytest.mark.parametrize(
     "forecasters,y",
@@ -79,6 +86,10 @@ def test_aggregation_unweighted(forecasters, y, aggfunc):
     pd.testing.assert_frame_equal(actual_pred, expected_pred)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(EnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("aggfunc", [*VALID_AGG_FUNCS.keys()])
 @pytest.mark.parametrize("weights", [[1.44, 1.2]])
 @pytest.mark.parametrize(
@@ -94,7 +105,6 @@ def test_aggregation_unweighted(forecasters, y, aggfunc):
         ),
     ],
 )
-@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
 def test_aggregation_weighted(forecasters, y, aggfunc, weights):
     """Assert weighted aggfunc returns the correct values."""
     forecaster = EnsembleForecaster(
@@ -124,6 +134,10 @@ def test_aggregation_weighted(forecasters, y, aggfunc, weights):
     pd.testing.assert_frame_equal(actual_pred, expected_pred)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(EnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("aggfunc", ["miin", "maximum", ""])
 @pytest.mark.parametrize(
     "forecasters",

@@ -1,8 +1,6 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Do-nothing script for making a release.
+"""Do-nothing script for making a release.
 
 This idea comes from here:
 - https://blog.danslimmon.com/2019/07/15/do-nothing-scripting-the-key-to
@@ -81,13 +79,13 @@ def colored(msg, color=None, style=None):
 
 def cprint(msg, color=None, style=None):
     """Coloured printing."""
-    print(colored(msg, color=color, style=style))  # noqa
+    print(colored(msg, color=color, style=style))
 
 
 def wait_for_enter():
     """Wait for Enter."""
     input(colored("\nPress Enter to continue", style="dim"))
-    print()  # noqa
+    print()
 
 
 class Step:
@@ -95,7 +93,6 @@ class Step:
 
     def pre(self, context):
         """Pre-step."""
-        pass
 
     def post(self, context):
         """Post-step."""

@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for classification."""
 
-__author__ = ["James-Large", "TonyBagnall"]
 __all__ = ["CNNClassifier"]
 
 from copy import deepcopy
@@ -10,49 +8,66 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
-_check_dl_dependencies(severity="warning")
 
-
+# TODO (release 0.42.0)
+# change the default value of 'activation_hidden' to "relu"
+# update the docstring for activation_hidden from "sigmoid" to "relu"
+# and remove the note about the change from the docstring.
+# Remove the usage of self._activation_hidden throughout the class
+# and replace it with self.activation_hidden
 class CNNClassifier(BaseDeepClassifier):
     """Time Convolutional Neural Network (CNN), as described in [1]_.
 
-    Parameters
-    ----------
-    should inherited fields be listed here?
-    n_epochs       : int, default = 2000
-        the number of epochs to train the model
-    batch_size      : int, default = 16
-        the number of samples per gradient update.
-    kernel_size     : int, default = 7
-        the length of the 1D convolution window
-    avg_pool_size   : int, default = 3
-        size of the average pooling windows
-    n_conv_layers   : int, default = 2
-        the number of convolutional plus average pooling layers
-    filter_sizes    : array of shape (n_conv_layers) default = [6, 12]
-    random_state    : int or None, default=None
-        Seed for random number generation.
-    verbose         : boolean, default = False
-        whether to output extra information
-    loss            : string, default="mean_squared_error"
-        fit parameter for the keras model
-    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
-    metrics         : list of strings, default=["accuracy"],
-    activation      : string or a tf callable, default="sigmoid"
-        Activation function used in the output linear layer.
-        List of available activation functions:
-        https://keras.io/api/layers/activations/
-    use_bias        : boolean, default = True
-        whether the layer uses a bias vector.
-    optimizer       : keras.optimizers object, default = Adam(lr=0.01)
-        specify the optimizer and the learning rate to be used.
+    Zhao et al. 2017 uses sigmoid activation in the hidden layers.
+    To obtain same behaviour as Zhao et al. 2017, set activation_hidden to "sigmoid".
 
-    Notes
-    -----
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+
+    Parameters
+    ----------
+    n_epochs : int, default = 2000
+        the number of epochs to train the model
+    batch_size : int, default = 16
+        the number of samples per gradient update.
+    kernel_size : int, default = 7
+        the length of the 1D convolution window
+    avg_pool_size : int, default = 3
+        size of the average pooling windows
+    n_conv_layers : int, default = 2
+        the number of convolutional plus average pooling layers
+    callbacks : list of keras.callbacks, default = None
+    verbose : boolean, default = False
+        whether to output extra information
+    loss : string, default="categorical_crossentropy"
+        fit parameter for the keras model
+    metrics : list of strings, default=["accuracy"],
+    random_state : int or None, default=None
+        Seed for random number generation.
+    activation : string or a tf callable, default="softmax"
+        Activation function used in the output layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="sigmoid"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+        Default value of activation_hidden will change to "relu"
+        in version '0.42.0'.
+    use_bias : boolean, default = True
+        whether the layer uses a bias vector.
+    optimizer : keras.optimizers object, default = Adam(lr=0.01)
+        specify the optimizer and the learning rate to be used.
+    filter_sizes : array of shape (n_conv_layers) default = [6, 12]
+    padding : string, default = "auto"
+        Controls padding logic for the convolutional layers,
+        i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
+        - "auto": as per original implementation, ``"same"`` is passed if
+          ``input_shape[0] < 60`` in the input layer, and ``"valid"`` otherwise.
+        - "valid", "same", and other values are passed directly to ``Conv1D``
 
     References
     ----------
@@ -70,8 +85,22 @@ class CNNClassifier(BaseDeepClassifier):
     CNNClassifier(...)
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["hfawaz", "James-Large", "noxthot"],
+        # hfawaz for dl-4-tsc
+        "maintainers": ["James-Large"],
+        "python_dependencies": "tensorflow",
+        # estimator type handled by parent class
+        #
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,  # run in VM due to memory requirement
+    }
 
+    # TODO (release 0.42.0)
+    # Change the default value of 'activation_hidden' to "relu"
     def __init__(
         self,
         n_epochs=2000,
@@ -81,15 +110,19 @@ class CNNClassifier(BaseDeepClassifier):
         n_conv_layers=2,
         callbacks=None,
         verbose=False,
-        loss="mean_squared_error",
+        loss="categorical_crossentropy",
         metrics=None,
         random_state=None,
-        activation="sigmoid",
+        activation="softmax",
+        activation_hidden="changing_from_sigmoid_to_relu_in_0.42.0",
         use_bias=True,
         optimizer=None,
+        filter_sizes=None,
+        padding="auto",
     ):
         _check_dl_dependencies(severity="error")
-        super(CNNClassifier, self).__init__()
+
+        self.batch_size = batch_size
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
         self.kernel_size = kernel_size
@@ -101,14 +134,45 @@ class CNNClassifier(BaseDeepClassifier):
         self.metrics = metrics
         self.random_state = random_state
         self.activation = activation
+        self.activation_hidden = activation_hidden
+        # TODO (release 0.42.0)
+        # After changing the default value of 'activation_hidden' to "relu"
+        # in the __init__ method signature,
+        # remove the following 'if-else' check.
+        # Remove the usage of self._activation_hidden throughout the class
+        # and replace it with self.activation_hidden
+        if activation_hidden == "changing_from_sigmoid_to_relu_in_0.42.0":
+            warn(
+                "in `CNNClassifier`, the default value of parameter 'activation_hidden'"
+                " will change to 'relu' in version '0.42.0'. "
+                "To keep current behaviour and to silence this warning, "
+                "set 'activation_hidden' to 'sigmoid' explicitly.",
+                category=DeprecationWarning,
+                obj=self,
+            )
+            self._activation_hidden = "sigmoid"
+        else:
+            self._activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
+        self.filter_sizes = filter_sizes
+        self.padding = padding
+
+        super().__init__()
+
+        # TODO (release 0.42.0)
+        # After changing the default value of 'activation_hidden' to "relu"
+        # in the __init__ method signature,
+        # Remove the usage of self._activation_hidden in the following lines
+        # and replace it with self.activation_hidden
         self._network = CNNNetwork(
             kernel_size=self.kernel_size,
             avg_pool_size=self.avg_pool_size,
             n_conv_layers=self.n_conv_layers,
-            activation=self.activation,
+            filter_sizes=self.filter_sizes,
+            activation=self._activation_hidden,
+            padding=self.padding,
             random_state=self.random_state,
         )
 
@@ -174,7 +238,7 @@ class CNNClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
@@ -201,7 +265,7 @@ class CNNClassifier(BaseDeepClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -212,10 +276,11 @@ class CNNClassifier(BaseDeepClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

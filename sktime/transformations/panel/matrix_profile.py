@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Matrix profile transformer."""
 
 __author__ = ["Claudia Rincon Sanchez"]
@@ -207,7 +206,8 @@ class MatrixProfile(BaseTransformer):
     """
 
     _tags = {
-        "univariate-only": True,
+        "authors": "Claudia Rincon Sanchez",
+        "capability:multivariate": False,
         "fit_is_empty": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -216,11 +216,12 @@ class MatrixProfile(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self, m=10):
         self.m = m  # subsequence length
-        super(MatrixProfile, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Return the matrix profile for each single time series of the dataset.

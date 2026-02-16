@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 """Symbolic Fourier Approximation (SFA) Transformer.
 
 Configurable SFA transform for discretising time series into words.
-
 """
 
 __author__ = ["patrickzib"]
@@ -14,7 +12,6 @@ import sys
 
 import numpy as np
 import pandas as pd
-from scipy.sparse import csr_matrix
 from sklearn.feature_selection import chi2, f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
@@ -31,92 +28,90 @@ class SFAFast(BaseTransformer):
     """Symbolic Fourier Approximation (SFA) Transformer.
 
     Overview: for each series:
-        run a sliding window across the series
-        for each window
-            shorten the series with DFT
-            discretise the shortened series into bins set by MFC
-            form a word from these discrete values
-    by default SFA produces a single word per series (window_size=0)
+    run a sliding window across the series;
+    for each window, shorten the series with DFT;
+    discretise the shortened series into bins set by MFC;
+    form a word from these discrete values,
+    by default SFA produces a single word per series (window_size=0);
     if a window is used, it forms a histogram of counts of words.
 
     Parameters
     ----------
-        word_length:         int, default = 8
-            length of word to shorten window to (using PAA)
+    word_length:         int, default = 8
+        length of word to shorten window to (using PAA)
 
-        alphabet_size:       int, default = 4
-            number of values to discretise each value to
+    alphabet_size:       int, default = 4
+        number of values to discretise each value to
 
-        window_size:         int, default = 12
-            size of window for sliding. Input series
-            length for whole series transform
+    window_size:         int, default = 12
+        size of window for sliding. Input series
+        length for whole series transform
 
-        norm:                boolean, default = False
-            mean normalise words by dropping first fourier coefficient
+    norm:                boolean, default = False
+        mean normalise words by dropping first fourier coefficient
 
-        binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans",
-                              "quantile"},
-                             default="equi-depth"
-            the binning method used to derive the breakpoints.
+    binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans",
+                            "quantile"},
+                            default="equi-depth"
+        the binning method used to derive the breakpoints.
 
-        anova:               boolean, default = False
-            If True, the Fourier coefficient selection is done via a one-way
-            ANOVA test. If False, the first Fourier coefficients are selected.
-            Only applicable if labels are given
+    anova:               boolean, default = False
+        If True, the Fourier coefficient selection is done via a one-way
+        ANOVA test. If False, the first Fourier coefficients are selected.
+        Only applicable if labels are given
 
-        variance:               boolean, default = False
-            If True, the Fourier coefficient selection is done via the largest
-            variance. If False, the first Fourier coefficients are selected.
-            Only applicable if labels are given
+    variance:               boolean, default = False
+        If True, the Fourier coefficient selection is done via the largest
+        variance. If False, the first Fourier coefficients are selected.
+        Only applicable if labels are given
 
-        save_words:          boolean, default = False
-            whether to save the words generated for each series (default False)
+    save_words:          boolean, default = False
+        whether to save the words generated for each series (default False)
 
-        bigrams:             boolean, default = False
-            whether to create bigrams of SFA words
+    bigrams:             boolean, default = False
+        whether to create bigrams of SFA words
 
-        feature_selection: {"chi2", "none", "random"}, default: chi2
-            Sets the feature selections strategy to be used. Chi2 reduces the number
-            of words significantly and is thus much faster (preferred). Random also
-            reduces the number significantly. None applies not feature selectiona and
-            yields large bag of words, e.g. much memory may be needed.
+    feature_selection: {"chi2", "none", "random"}, default: chi2
+        Sets the feature selections strategy to be used. Chi2 reduces the number
+        of words significantly and is thus much faster (preferred). Random also
+        reduces the number significantly. None applies not feature selectiona and
+        yields large bag of words, e.g. much memory may be needed.
 
-        p_threshold:  int, default=0.05 (disabled by default)
-            If feature_selection=chi2 is chosen, feature selection is applied based on
-            the chi-squared test. This is the p-value threshold to use for chi-squared
-            test on bag-of-words (lower means more strict). 1 indicates that the test
-            should not be performed.
+    p_threshold:  int, default=0.05 (disabled by default)
+        If feature_selection=chi2 is chosen, feature selection is applied based on
+        the chi-squared test. This is the p-value threshold to use for chi-squared
+        test on bag-of-words (lower means more strict). 1 indicates that the test
+        should not be performed.
 
-        max_feature_count:  int, default=256
-            If feature_selection=random is chosen, this parameter defines the number of
-            randomly chosen unique words used.
+    max_feature_count:  int, default=256
+        If feature_selection=random is chosen, this parameter defines the number of
+        randomly chosen unique words used.
 
-        skip_grams:     boolean, default = False
-            whether to create skip-grams of SFA words
+    skip_grams:     boolean, default = False
+        whether to create skip-grams of SFA words
 
-        remove_repeat_words: boolean, default = False
-            whether to use numerosity reduction (default False)
+    remove_repeat_words: boolean, default = False
+        whether to use numerosity reduction (default False)
 
-        return_sparse:  boolean, default=True
-            if set to true, a scipy sparse matrix will be returned as BOP model.
-            If set to false a dense array will be returned as BOP model. Sparse
-            arrays are much more compact.
+    return_sparse:  boolean, default=True
+        if set to true, a scipy sparse matrix will be returned as BOP model.
+        If set to false a dense array will be returned as BOP model. Sparse
+        arrays are much more compact.
 
-        n_jobs:     int, optional, default = 1
-            The number of jobs to run in parallel for both `transform`.
-            ``-1`` means using all processors.
+    n_jobs:     int, optional, default = 1
+        The number of jobs to run in parallel for both `transform`.
+        ``-1`` means using all processors.
 
-        return_pandas_data_series:          boolean, default = False
-            set to true to return Pandas Series as a result of transform.
-            setting to true reduces speed significantly but is required for
-            automatic test.
+    return_pandas_data_series:          boolean, default = False
+        set to true to return Pandas Series as a result of transform.
+        setting to true reduces speed significantly but is required for
+        automatic test.
 
     Attributes
     ----------
     breakpoints: = []
     num_insts = 0
     num_atts = 0
-
 
     References
     ----------
@@ -126,7 +121,8 @@ class SFAFast(BaseTransformer):
     """
 
     _tags = {
-        "univariate-only": True,
+        "authors": ["patrickzib"],
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -135,7 +131,17 @@ class SFAFast(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
         "requires_y": True,  # does y need to be passed in fit?
-        "python_dependencies": "numba",
+        "python_dependencies": ["numba", "scipy"],
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": [
+            # SFAFast transformer requires nested dataframe for X.
+            "test_categorical_X_raises_error",
+            "test_categorical_y_raises_error",
+            "test_categorical_X_passes",
+        ],
     }
 
     def __init__(
@@ -210,7 +216,7 @@ class SFAFast(BaseTransformer):
         else:
             n_jobs = self.n_jobs
 
-        super(SFAFast, self).__init__()
+        super().__init__()
         # super raises numba import exception if not available
         # so now we know we can use numba
 
@@ -219,7 +225,7 @@ class SFAFast(BaseTransformer):
         set_num_threads(n_jobs)
 
         if not return_pandas_data_series:
-            self._output_convert = "off"
+            self.set_config(**{"output_conversion": "off"})
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it."""
@@ -323,6 +329,7 @@ class SFAFast(BaseTransformer):
         """
         from numba.core import types
         from numba.typed import Dict
+        from scipy.sparse import csr_matrix
 
         from sktime.transformations.panel.dictionary_based._sfa_fast_numba import (
             _transform_case,
@@ -383,6 +390,7 @@ class SFAFast(BaseTransformer):
         """Transform words to bag-of-pattern and apply feature selection."""
         from numba.core import types
         from numba.typed import Dict
+        from scipy.sparse import csr_matrix
 
         from sktime.transformations.panel.dictionary_based._sfa_fast_numba import (
             create_bag_feature_selection,
@@ -657,7 +665,7 @@ class SFAFast(BaseTransformer):
 
         state = self.__dict__.copy()
 
-        if type(state["relevant_features"]) == Dict:
+        if isinstance(state["relevant_features"], Dict):
             state["relevant_features"] = dict(state["relevant_features"])
         return state
 
@@ -667,7 +675,7 @@ class SFAFast(BaseTransformer):
         from numba.typed import Dict
 
         self.__dict__.update(state)
-        if type(self.relevant_features) == dict:
+        if isinstance(self.relevant_features, dict):
             typed_dict = Dict.empty(key_type=types.uint32, value_type=types.uint32)
             for key, value in self.relevant_features.items():
                 typed_dict[key] = value

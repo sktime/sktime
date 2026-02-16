@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = [
     "DistanceCallable",
@@ -8,24 +7,23 @@ __all__ = [
     "ValidCallableTypes",
     "AlignmentPathReturn",
 ]
-
-from typing import Callable, List, Tuple, Union
+from collections.abc import Callable
 
 import numpy as np
 
 # Callable types
 DistanceCallable = (Callable[[np.ndarray, np.ndarray], float],)
-AlignmentPathReturn = Union[
-    Tuple[List[Tuple], float], Tuple[List[Tuple], float, np.ndarray]
-]
+AlignmentPathReturn = tuple[list[tuple], float] | tuple[list[tuple], float, np.ndarray]
 DistanceAlignmentPathCallable = Callable[[np.ndarray, np.ndarray], AlignmentPathReturn]
 DistanceFactoryCallable = Callable[
     [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
 ]
 DistancePairwiseCallable = Callable[[np.ndarray, np.ndarray], np.ndarray]
 
-ValidCallableTypes = Union[
-    Callable[[np.ndarray, np.ndarray], float],
-    Callable[[np.ndarray, np.ndarray], np.ndarray],
-    Callable[[np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]],
-]
+ValidCallableTypes = (
+    Callable[[np.ndarray, np.ndarray], float]
+    | Callable[[np.ndarray, np.ndarray], np.ndarray]
+    | Callable[
+        [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+    ]
+)

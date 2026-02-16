@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """Multivariate MiniRocket transformer."""
 
-__author__ = "angus924"
+__author__ = ["angus924"]
 __all__ = ["MiniRocketMultivariate"]
 
 import multiprocessing
@@ -20,16 +19,35 @@ class MiniRocketMultivariate(BaseTransformer):
     convolutions with six of one weight, three of the second weight to seed dilations.
     MiniRocketMultivariate works with univariate and multivariate time series.
 
+    This transformer fits one set of paramereters per individual series,
+    and applies the transform with fitted parameter i to the i-th series in transform.
+    Vanilla use requires same number of series in fit and transform.
+
+    To fit and transform series at the same time,
+    without an identification of fit/transform instances,
+    wrap this transformer in ``FitInTransform``,
+    from ``sktime.transformations.compose``.
+
     Parameters
     ----------
     num_kernels : int, default=10,000
-       number of random convolutional kernels.
+       number of random convolutional kernels. This should be a multiple of 84.
+       If it is lower than 84, it will be set to 84. If it is higher than 84
+       and not a multiple of 84, the number of kernels used to transform the
+       data will rounded down to the next positive multiple of 84.
     max_dilations_per_kernel : int, default=32
         maximum number of dilations per kernel.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for `transform`. ``-1`` means using all
+        The number of jobs to run in parallel for ``transform``. ``-1`` means using all
         processors.
     random_state : None or int, default = None
+
+    Attributes
+    ----------
+    num_kernels_ : int
+        The true number of kernels used in the rocket transform. This is
+        num_kernels rounded down to the nearest multiple of 84. It is 84 if
+        num_kernels is less than 84.
 
     See Also
     --------
@@ -45,7 +63,7 @@ class MiniRocketMultivariate(BaseTransformer):
 
     Examples
     --------
-     >>> from sktime.transformations.panel.rocket import Rocket
+     >>> from sktime.transformations.panel.rocket import MiniRocketMultivariate
      >>> from sktime.datasets import load_basic_motions
      >>> X_train, y_train = load_basic_motions(split="train")
      >>> X_test, y_test = load_basic_motions(split="test") # doctest: +SKIP
@@ -57,7 +75,14 @@ class MiniRocketMultivariate(BaseTransformer):
     """
 
     _tags = {
-        "univariate-only": False,
+        # packaging info
+        # --------------
+        "authors": ["angus924"],
+        "maintainers": ["angus924"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
+        "capability:multivariate": True,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -66,7 +91,8 @@ class MiniRocketMultivariate(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "python_dependencies": "numba",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -78,7 +104,7 @@ class MiniRocketMultivariate(BaseTransformer):
     ):
         self.num_kernels = num_kernels
         self.max_dilations_per_kernel = max_dilations_per_kernel
-
+        self.num_kernels_ = None
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -92,7 +118,7 @@ class MiniRocketMultivariate(BaseTransformer):
         else:
             self.random_state_ = random_state
 
-        super(MiniRocketMultivariate, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fits dilations and biases to input time series.
@@ -115,14 +141,17 @@ class MiniRocketMultivariate(BaseTransformer):
         *_, n_timepoints = X.shape
         if n_timepoints < 9:
             raise ValueError(
-                (
-                    f"n_timepoints must be >= 9, but found {n_timepoints};"
-                    " zero pad shorter series so that n_timepoints == 9"
-                )
+                f"n_timepoints must be >= 9, but found {n_timepoints};"
+                " zero pad shorter series so that n_timepoints == 9"
             )
         self.parameters = _fit_multi(
             X, self.num_kernels, self.max_dilations_per_kernel, self.random_state_
         )
+        if self.num_kernels < 84:
+            self.num_kernels_ = 84
+        else:
+            self.num_kernels_ = (self.num_kernels // 84) * 84
+
         return self
 
     def _transform(self, X, y=None):
@@ -145,7 +174,7 @@ class MiniRocketMultivariate(BaseTransformer):
         )
 
         X = X.astype(np.float32)
-        # change n_jobs dependend on value and existing cores
+        # change n_jobs depended on value and existing cores
         prev_threads = get_num_threads()
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
             n_jobs = multiprocessing.cpu_count()
@@ -155,3 +184,38 @@ class MiniRocketMultivariate(BaseTransformer):
         X_ = _transform_multi(X, self.parameters)
         set_num_threads(prev_threads)
         return pd.DataFrame(X_)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter sets for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = [
+            {
+                "num_kernels": 84,
+                "random_state": 42,
+                "n_jobs": 1,
+                "max_dilations_per_kernel": 32,
+            },
+            {
+                "num_kernels": 42,
+                "random_state": 84,
+                "n_jobs": 1,
+                "max_dilations_per_kernel": 16,
+            },
+        ]
+
+        return params

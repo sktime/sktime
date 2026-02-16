@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """MP distance."""
 
 import numpy as np

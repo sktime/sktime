@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 """Continuous interval tree (CIT) vector classifier (aka Time Series Tree).
 
-Continuous Interval Tree aka Time Series Tree, base classifier originally used
-in the time series forest interval based classification algorithm. Fits sklearn
-conventions.
+Continuous Interval Tree aka Time Series Tree, base classifier originally used in the
+time series forest interval based classification algorithm. Fits sklearn conventions.
 """
 
 __author__ = ["MatthewMiddlehurst"]
@@ -11,6 +9,7 @@ __author__ = ["MatthewMiddlehurst"]
 import math
 
 import numpy as np
+import pandas as pd
 
 from sktime.utils.numba.njit import njit
 from sktime.utils.numba.stats import iqr, mean, numba_max, numba_min, slope, std
@@ -49,12 +48,28 @@ def _entropy(x, s):
 
 def _drcif_feature(X, interval, dim, att, c22, case_id=None):
     """Compute DrCIF feature."""
-    if att > 21:
-        return _summary_stat(X[:, dim, interval[0] : interval[1]], att)
+    if isinstance(X, pd.DataFrame):
+        series_col = X.iloc[:, dim]
+        X_interval = series_col.apply(
+            lambda x: pd.Series(x[interval[0] : interval[1]])
+            if isinstance(x, (pd.Series, np.ndarray))
+            else pd.Series([])
+        ).to_frame()
     else:
-        return c22._transform_single_feature(
-            X[:, dim, interval[0] : interval[1]], att, case_id=case_id
-        )
+        sliced = X[:, dim, interval[0] : interval[1]]
+        X_interval = pd.DataFrame({str(dim): [pd.Series(x) for x in sliced]})
+
+    if att > 21:
+        arr = np.stack(X_interval.iloc[:, 0].values)
+        return _summary_stat(arr, att)
+
+    c22.fit(X_interval)
+    full_feats = c22.transform(X_interval)
+    return (
+        full_feats.iloc[:, att]
+        if isinstance(full_feats, pd.DataFrame)
+        else full_feats[:, att]
+    )
 
 
 @njit(fastmath=True, cache=True)

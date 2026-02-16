@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformations to detrend a time series."""
 
@@ -21,10 +20,10 @@ class Detrender(BaseTransformer):
     of the forecaster's predicted values.
 
     The Detrender works as follows:
-    in "fit", the forecaster is fit to the input data, i.e., `forecaster.fit(y=X)`.
+    in "fit", the forecaster is fit to the input data, i.e., ``forecaster.fit(y=X)``.
     in "transform", returns forecast residuals of forecasts at the data index.
-    That is, `transform(X)` returns `X - forecaster.predict(fh=X.index)` (additive)
-    or `X / forecaster.predict(fh=X.index)` (multiplicative detrending).
+    That is, ``transform(X)`` returns ``X - forecaster.predict(fh=X.index)`` (additive)
+    or ``X / forecaster.predict(fh=X.index)`` (multiplicative detrending).
     Depending on time indices, this can generate in-sample or out-of-sample residuals.
 
     For example, to remove the linear trend of a time series:
@@ -41,12 +40,12 @@ class Detrender(BaseTransformer):
         The forecasting model to remove the trend with
             (e.g. PolynomialTrendForecaster).
         If forecaster is None, PolynomialTrendForecaster(degree=1) is used.
-        Must be a forecaster to which `fh` can be passed in `predict`.
+        Must be a forecaster to which ``fh`` can be passed in ``predict``.
     model : {"additive", "multiplicative"}, default="additive"
-        If `model="additive"` the `forecaster.transform` subtracts the trend,
-        i.e., `transform(X)` returns `X - forecaster.predict(fh=X.index)`
-        If `model="multiplicative"` the `forecaster.transform` divides by the trend,
-        i.e., `transform(X)` returns `X / forecaster.predict(fh=X.index)`
+        If ``model="additive"`` the ``forecaster.transform`` subtracts the trend,
+        i.e., ``transform(X)`` returns ``X - forecaster.predict(fh=X.index)``
+        If ``model="multiplicative"`` the ``forecaster.transform`` divides by the trend,
+        i.e., ``transform(X)`` returns ``X / forecaster.predict(fh=X.index)``
 
     Attributes
     ----------
@@ -69,6 +68,12 @@ class Detrender(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mloning", "SveaMeyer13", "KishManani", "fkiraly"],
+        "maintainers": ["SveaMeyer13", "KishManani"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -78,17 +83,21 @@ class Detrender(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
+        "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, forecaster=None, model="additive"):
         self.forecaster = forecaster
         self.model = model
 
-        super(Detrender, self).__init__()
+        super().__init__()
 
         # default for forecaster - written to forecaster_ to not overwrite param
         if self.forecaster is None:
@@ -169,7 +178,7 @@ class Detrender(BaseTransformer):
             return X / X_pred
 
     def _inverse_transform(self, X, y=None):
-        """Logic used by `inverse_transform` to reverse transformation on `X`.
+        """Logic used by ``inverse_transform`` to reverse transformation on ``X``.
 
         Parameters
         ----------
@@ -229,7 +238,7 @@ class Detrender(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -237,8 +246,9 @@ class Detrender(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.trend import TrendForecaster
 

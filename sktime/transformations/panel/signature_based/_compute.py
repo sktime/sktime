@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Class for signature computation over windows."""
+
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
@@ -8,9 +8,6 @@ from sktime.transformations.panel.signature_based._rescaling import (
     _rescale_signature,
 )
 from sktime.transformations.panel.signature_based._window import _window_getter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("esig", severity="warning")
 
 
 class _WindowSignatureTransform(BaseTransformer):
@@ -37,7 +34,6 @@ class _WindowSignatureTransform(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
         "python_dependencies": "esig",
-        "python_version": "<3.10",
     }
 
     def __init__(
@@ -49,6 +45,7 @@ class _WindowSignatureTransform(BaseTransformer):
         sig_tfm=None,
         sig_depth=None,
         rescaling=None,
+        backend=None,
     ):
         super().__init__()
         self.window_name = window_name
@@ -58,17 +55,26 @@ class _WindowSignatureTransform(BaseTransformer):
         self.sig_tfm = sig_tfm
         self.sig_depth = sig_depth
         self.rescaling = rescaling
+        self.backend = backend
 
         self.window = _window_getter(
             self.window_name, self.window_depth, self.window_length, self.window_step
         )
 
     def _transform(self, X, y=None):
-
         import esig
+
+        if self.backend == "iisignature":
+            esig.set_backend("iisignature")
 
         depth = self.sig_depth
         data = np.swapaxes(X, 1, 2)
+
+        if self.rescaling == "post" and self.sig_tfm == "logsignature":
+            raise NotImplementedError(
+                "rescaling='post' is not supported for sig_tfm='logsignature'. "
+                "Set rescaling=None."
+            )
 
         # Path rescaling
         if self.rescaling == "pre":

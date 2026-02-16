@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import numpy as np
 from sklearn.ensemble import IsolationForest, RandomForestClassifier
 
@@ -15,15 +14,11 @@ from sktime.classification.distance_based import (
     ProximityForest,
     ShapeDTW,
 )
-from sktime.classification.early_classification import (
-    TEASER,
-    ProbabilityThresholdEarlyClassifier,
-)
+from sktime.classification.early_classification import TEASER
 from sktime.classification.feature_based import (
     Catch22Classifier,
     MatrixProfileClassifier,
     RandomIntervalClassifier,
-    SignatureClassifier,
     SummaryClassifier,
 )
 from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
@@ -279,22 +274,6 @@ if __name__ == "__main__":
                 ),
                 estimator=RandomForestClassifier(n_estimators=10),
                 random_state=0,
-            )
-        ),
-    )
-    _print_array(
-        "SignatureClassifier - UnitTest",
-        _reproduce_classification_unit_test(
-            SignatureClassifier(
-                estimator=RandomForestClassifier(n_estimators=10), random_state=0
-            )
-        ),
-    )
-    _print_array(
-        "SignatureClassifier - BasicMotions",
-        _reproduce_classification_basic_motions(
-            SignatureClassifier(
-                estimator=RandomForestClassifier(n_estimators=10), random_state=0
             )
         ),
     )

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning"]
@@ -11,19 +10,17 @@ from sklearn.model_selection import train_test_split
 
 
 class PresplitFilesCV:
-    """
-    Cross-validation iterator over split predefined in files.
+    """Cross-validation iterator over split predefined in files.
 
-    This class is useful in orchestration where the train and test set
-    is provided in separate files.
+    This class is useful in orchestration where the train and test set is provided in
+    separate files.
     """
 
     def __init__(self, cv=None):
         self.cv = cv
 
     def split(self, data, y=None, groups=None):
-        """
-        Split the data according to the train/test index.
+        """Split the data according to the train/test index.
 
         Parameters
         ----------
@@ -32,7 +29,7 @@ class PresplitFilesCV:
         Yields
         ------
         train : ndarray
-            Train indicies
+            Train indices
         test : ndarray
             Test indices
         """
@@ -67,8 +64,7 @@ class PresplitFilesCV:
                 yield train, test
 
     def get_n_splits(self):
-        """
-        Return the number of splits.
+        """Return the number of splits.
 
         Returns
         -------
@@ -79,8 +75,7 @@ class PresplitFilesCV:
 
 
 class SingleSplit:
-    """
-    Helper class for orchestration that uses a single split for training and testing.
+    """Helper class for orchestration that uses a single split for training and testing.
 
     Wrapper for sklearn.model_selection.train_test_split
 
@@ -130,8 +125,7 @@ class SingleSplit:
         self._stratify = stratify
 
     def split(self, data, y=None, groups=None):
-        """
-        Split the data into training and testing data.
+        """Split the data into training and testing data.
 
         Parameters
         ----------

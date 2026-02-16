@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Multivariate MiniRocket transformer."""
 
 __author__ = ["angus924", "michaelfeil"]
@@ -6,7 +5,6 @@ __all__ = ["MiniRocketMultivariateVariable"]
 
 import multiprocessing
 import warnings
-from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -26,23 +24,40 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     performance, use the sktime class MiniRocket for univariate input,
     and MiniRocketMultivariate to equal length multivariate input.
 
+    This transformer fits one set of paramereters per individual series,
+    and applies the transform with fitted parameter i to the i-th series in transform.
+    Vanilla use requires same number of series in fit and transform.
+
+    To fit and transform series at the same time,
+    without an identification of fit/transform instances,
+    wrap this transformer in ``FitInTransform``,
+    from ``sktime.transformations.compose``.
+
     Parameters
     ----------
-    num_kernels : int, default=10,000
-       number of random convolutional kernels. The calculated number of features is the
-       nearest multiple of n_features_per_kernel(default 4)*84=336 < 50,000
-       (2*n_features_per_kernel(default 4)*num_kernels(default 10,000)).
+    num_kernels : int, default=10_000
+       number of random convolutional kernels. This should be a multiple of 84.
+       If it is lower than 84, it will be set to 84. If it is higher than 84
+       and not a multiple of 84, the number of kernels used to transform the
+       data will rounded down to the next positive multiple of 84.
     max_dilations_per_kernel : int, default=32
         maximum number of dilations per kernel.
-    reference_length : int or str, default = `'max'`
+    reference_length : int or str, default = ``'max'``
         series-length of reference, str defines how to infer from X during 'fit'.
-        options are `'max'`, `'mean'`, `'median'`, `'min'`.
+        options are ``'max'``, ``'mean'``, ``'median'``, ``'min'``.
     pad_value_short_series : float or None, default=None
         if padding series with len<9 to value. if None, not padding is performed.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for `transform`. ``-1`` means using all
+        The number of jobs to run in parallel for ``transform``. ``-1`` means using all
         processors.
     random_state : None or int, default = None
+
+    Attributes
+    ----------
+    num_kernels_ : int
+        The true number of kernels used in the rocket transform. This is
+        num_kernels rounded down to the nearest multiple of 84. It is 84 if
+        num_kernels is less than 84.
 
     Examples
     --------
@@ -78,11 +93,17 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
     .. [2] Angus Dempster, Daniel F Schmidt, Geoffrey I Webb
            https://github.com/angus924/minirocket
-
     """
 
     _tags = {
-        "univariate-only": False,
+        # packaging info
+        # --------------
+        "authors": ["angus924", "michaelfeil"],
+        "maintainers": ["angus924", "michaelfeil"],
+        "python_dependencies": "numba",
+        # estimator type
+        # --------------
+        "capability:multivariate": True,
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
@@ -92,12 +113,13 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         "X_inner_mtype": "df-list",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "requires_y": False,
-        "python_dependencies": "numba",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
         self,
-        num_kernels=10000,
+        num_kernels=10_000,
         max_dilations_per_kernel=32,
         reference_length="max",
         pad_value_short_series=None,
@@ -109,7 +131,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         self.reference_length = reference_length
         self._fitted_reference_length = None
         self.pad_value_short_series = pad_value_short_series
-
+        self.num_kernels_ = None
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -134,9 +156,9 @@ class MiniRocketMultivariateVariable(BaseTransformer):
                 f"{reference_length}"
             )
 
-        super(MiniRocketMultivariateVariable, self).__init__()
+        super().__init__()
 
-    def _fit(self, X: List[pd.DataFrame], y=None):
+    def _fit(self, X: list[pd.DataFrame], y=None):
         """Fits dilations and biases to input time series.
 
         Parameters
@@ -144,7 +166,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         X : pd.DataFrame
             Dataframe with n_instances-rows and n_dimensions-columns,
             each cell containing a series_length-long array.
-            n_dimensions is equal across all instances in `X`, and
+            n_dimensions is equal across all instances in ``X``, and
             series_length is constant within each instance.
         y : ignored argument for interface compatibility
 
@@ -182,22 +204,22 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         if lengths_1darray.min() < 9:
             failed_index = np.where(lengths_1darray < 9)[0]
             raise ValueError(
-                (
-                    f"X must be >= 9 for all samples, but found miniumum to be "
-                    f"{lengths_1darray.min()}; at index {failed_index}, pad shorter "
-                    "series so that n_timepoints >= 9 for all samples."
-                )
+                f"X must be >= 9 for all samples, but found minimum to be "
+                f"{lengths_1darray.min()}; at index {failed_index}, pad shorter "
+                "series so that n_timepoints >= 9 for all samples."
             )
 
         if lengths_1darray.min() == lengths_1darray.max():
             warnings.warn(
                 "X is of equal length, consider using MiniRocketMultivariate for "
-                "speedup and stability instead."
+                "speedup and stability instead.",
+                stacklevel=2,
             )
         if X_2d_t.shape[0] == 1:
             warnings.warn(
                 "X is univariate, consider using MiniRocket as Univariante for "
-                "speedup and stability instead."
+                "speedup and stability instead.",
+                stacklevel=2,
             )
 
         self.parameters = _fit_multi_var(
@@ -208,6 +230,11 @@ class MiniRocketMultivariateVariable(BaseTransformer):
             max_dilations_per_kernel=self.max_dilations_per_kernel,
             seed=self.random_state_,
         )
+        if self.num_kernels < 84:
+            self.num_kernels_ = 84
+        else:
+            self.num_kernels_ = (self.num_kernels // 84) * 84
+
         return self
 
     def _transform(self, X, y=None):
@@ -240,7 +267,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         X_2d_t, L = _nested_dataframe_to_transposed2D_array_and_len_list(
             X, pad=self.pad_value_short_series
         )
-        # change n_jobs dependend on value and existing cores
+        # change n_jobs depended on value and existing cores
         prev_threads = get_num_threads()
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
             n_jobs = multiprocessing.cpu_count()
@@ -251,9 +278,48 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         set_num_threads(prev_threads)
         return pd.DataFrame(X_)
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter sets for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = [
+            {
+                "num_kernels": 42,
+                "random_state": None,
+                "max_dilations_per_kernel": 32,
+                "reference_length": "min",
+                "pad_value_short_series": None,
+                "n_jobs": 1,
+            },
+            {
+                "num_kernels": 84,
+                "random_state": None,
+                "max_dilations_per_kernel": 16,
+                "reference_length": "max",
+                "pad_value_short_series": None,
+                "n_jobs": 1,
+            },
+        ]
+
+        return params
+
 
 def _nested_dataframe_to_transposed2D_array_and_len_list(
-    X: List[pd.DataFrame], pad: Union[int, float, None] = 0
+    X: list[pd.DataFrame], pad: int | float | None = 0
 ):
     """Convert a nested dataframe to a 2D array and a list of lengths.
 
@@ -294,14 +360,14 @@ def _nested_dataframe_to_transposed2D_array_and_len_list(
         )
 
     vec = []
-    lenghts = []
+    lengths = []
 
     for _x in X:
         _x_shape = _x.shape
         if _x_shape[0] < 9:
             if pad is not None:
                 # emergency: pad with zeros up to 9.
-                lenghts.append(9)
+                lengths.append(9)
                 vec.append(
                     np.vstack(
                         [_x.values, np.full([9 - _x_shape[0], _x_shape[1]], float(pad))]
@@ -314,11 +380,11 @@ def _nested_dataframe_to_transposed2D_array_and_len_list(
                     " padding, discard, or setting a pad_value_short_series value"
                 )
         else:
-            lenghts.append(_x_shape[0])
+            lengths.append(_x_shape[0])
             vec.append(_x.values)
 
     X_2d_t = np.vstack(vec).T.astype(dtype=np.float32)
-    lengths = np.array(lenghts, dtype=np.int32)
+    lengths = np.array(lengths, dtype=np.int32)
 
     if not lengths.sum() == X_2d_t.shape[1]:
         raise ValueError("X_new and lengths do not match. check input dimension")

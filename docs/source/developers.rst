@@ -13,10 +13,10 @@ Development
    :hidden:
 
    developer_guide
-   reviewer_guide
-   enhancement_proposals
+   contributing/reviewer_guide
+   contributing/enhancement_proposals
    roadmap
-   governance
+   get_involved/governance
 
 .. grid:: 1 2 2 2
     :gutter: 3

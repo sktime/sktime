@@ -1,22 +1,19 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements DynamicFactor Model as interface to statsmodels."""
-
-import inspect
 
 import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
-_all_ = ["DynamicFactor"]
+__all__ = ["DynamicFactor"]
 __author__ = ["Ris-Bali", "lbventura"]
 
 
 class DynamicFactor(_StatsModelsAdapter):
-    """Dynamic Factor Foracster.
+    """Dynamic Factor Forecaster.
 
-    Direct interface for `statsmodels.tsa.statespace.dynamic_factor
+    Direct interface for ``statsmodels.tsa.statespace.dynamic_factor``
 
     Parameters
     ----------
@@ -26,8 +23,8 @@ class DynamicFactor(_StatsModelsAdapter):
         The order of vector autoregression followed by factors.
     error_cov_type : {'scalar','diagonal','unstructured'} ,default = 'diagonal'
         The structure of the covariance matrix of the observation error term, where
-        “unstructured” puts no restrictions on the matrix, “diagonal” requires it
-        to be any diagonal matrix (uncorrelated errors), and “scalar” requires it
+        "unstructured" puts no restrictions on the matrix, "diagonal" requires it
+        to be any diagonal matrix (uncorrelated errors), and "scalar" requires it
         to be a scalar times the identity matrix.
     error_order : int , default = 0
         The order of the vector autoregression followed by the observation error
@@ -47,37 +44,37 @@ class DynamicFactor(_StatsModelsAdapter):
          describes whether or not start_params also includes the fixed parameters,
           in addition to the free parameters.
     cov_type : {'opg','oim','approx','robust','robust_approx','none'},default = 'opg'
-        ‘opg’ for the outer product of gradient estimator
-        ‘oim’ for the observed information matrix estimator, calculated
+        'opg' for the outer product of gradient estimator
+        'oim' for the observed information matrix estimator, calculated
         using the method of Harvey (1989)
-        ‘approx’ for the observed information matrix estimator, calculated using
+        'approx' for the observed information matrix estimator, calculated using
          a numerical approximation of the Hessian matrix.
-        ‘robust’ for an approximate (quasi-maximum likelihood) covariance matrix
+        'robust' for an approximate (quasi-maximum likelihood) covariance matrix
          that may be valid even in the presence of some misspecifications.
-          Intermediate calculations use the ‘oim’ method.
-        ‘robust_approx’ is the same as ‘robust’ except that the intermediate
-        calculations use the ‘approx’ method.
-        ‘none’ for no covariance matrix calculation
+          Intermediate calculations use the 'oim' method.
+        'robust_approx' is the same as 'robust' except that the intermediate
+        calculations use the 'approx' method.
+        'none' for no covariance matrix calculation
     cov_kwds :dict or None , default = None
-        ‘approx_complex_step’ : bool, optional - If True, numerical approximations are
+        'approx_complex_step' : bool, optional - If True, numerical approximations are
          computed using complex-step methods. If False, numerical approximations are
          computed using finite difference methods. Default is True.
-        ‘approx_centered’ : bool, optional - If True, numerical approximations computed
+        'approx_centered' : bool, optional - If True, numerical approximations computed
         using finite difference methods use a centered approximation. Default is False.
     method : str , 'lbfgs'
-        ‘newton’ for Newton-Raphson
-        ‘nm’ for Nelder-Mead
-        ‘bfgs’ for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
-        ‘lbfgs’ for limited-memory BFGS with optional box constraints
-        ‘powell’ for modified Powell’s method
-        ‘cg’ for conjugate gradient
-        ‘ncg’ for Newton-conjugate gradient
-        ‘basinhopping’ for global basin-hopping solver
+        'newton' for Newton-Raphson
+        'nm' for Nelder-Mead
+        'bfgs' for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
+        'lbfgs' for limited-memory BFGS with optional box constraints
+        'powell' for modified Powell's method
+        'cg' for conjugate gradient
+        'ncg' for Newton-conjugate gradient
+        'basinhopping' for global basin-hopping solver
     maxiter : int , optional ,default = 50
         The maximum number of iterations to perform.
     full_output : bool , default = 1
         Set to True to have all available output in the
-        Results object’s mle_retvals attribute.
+        Results object's mle_retvals attribute.
         The output is dependent on the solver.
     disp : bool ,   default = 5
         Set to True to print convergence messages.
@@ -87,16 +84,16 @@ class DynamicFactor(_StatsModelsAdapter):
     return_params : bool ,default = False
         Whether or not to return only the array of maximizing parameters.
     optim_score : {'harvey','approx'} , default = None
-        The method by which the score vector is calculated. ‘harvey’ uses the method
-        from Harvey (1989), ‘approx’ uses either finite difference or
+        The method by which the score vector is calculated. 'harvey' uses the method
+        from Harvey (1989), 'approx' uses either finite difference or
         complex step differentiation depending upon the value of optim_complex_step,
         and None uses the built-in gradient approximation of the optimizer.
     optim_complex_step : bool , default = True
         Whether or not to use complex step differentiation
         when approximating the score; if False, finite difference approximation is used.
     optim_hessian : {'opg','oim','approx'} , default = None
-        ‘opg’ uses outer product of gradients, ‘oim’ uses the information
-        matrix formula from Harvey (1989), and ‘approx’ uses numerical approximation.
+        'opg' uses outer product of gradients, 'oim' uses the information
+        matrix formula from Harvey (1989), and 'approx' uses numerical approximation.
     low_memory : bool , default = False
         If set to True, techniques are applied to substantially reduce memory usage.
         If used, some features of the results object will not be available
@@ -125,15 +122,26 @@ class DynamicFactor(_StatsModelsAdapter):
     """
 
     _tags = {
-        "scitype:y": "multivariate",
-        "ignores-exogeneous-X": False,
-        "handles-missing-data": True,
+        # packaging info
+        # --------------
+        "authors": ["ChadFulton", "bashtage", "Ris-Bali", "lbventura"],
+        # ChadFulton and bashtage for statemodels DynamicFactor
+        "maintainers": ["Ris-Bali", "lbventura"],
+        # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
+        # estimator type
+        # --------------
+        "scitype:y": "both",
+        "capability:exogenous": True,
+        "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
+        "capability:insample": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": True,
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(
@@ -187,9 +195,9 @@ class DynamicFactor(_StatsModelsAdapter):
         self.flags = flags
         self.low_memory = low_memory
 
-        super(DynamicFactor, self).__init__()
+        super().__init__()
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Make forecasts.
 
         Parameters
@@ -203,27 +211,29 @@ class DynamicFactor(_StatsModelsAdapter):
 
         Returns
         -------
-        y_pred : pd.Series
+        y_pred : pd.DataFrame
             Returns series of predicted values.
         """
+        y_first_index = self._y_first_index
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        start, end = fh.to_absolute_int(y_first_index, self.cutoff)[[0, -1]]
 
-        if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
-            y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
-        else:
-            y_pred = self._fitted_forecaster.predict(start=start, end=end)
+        y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
+
+        # if y is univariate, we duplicated the column in fit,
+        # so now we need to revert this duplication
+        if self._was_univariate:
+            y_pred = y_pred.iloc[:, [0]]
+
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
 
-        if "int" in (self._y.index[0]).__class__.__name__:  # Rather fishy solution
-            y_pred.index = np.arange(
-                start + self._y.index[0], end + self._y.index[0] + 1
-            )
-        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        if "int" in (y_first_index).__class__.__name__:  # Rather fishy solution
+            y_pred.index = np.arange(start + y_first_index, end + y_first_index + 1)
+        return y_pred.loc[fh.to_absolute_index(self.cutoff)]
 
-    def _predict_interval(self, fh, X=None, coverage: [float] = None):
+    def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -251,7 +261,7 @@ class DynamicFactor(_StatsModelsAdapter):
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
+                    in the same order as in input ``coverage``.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh, with additional (upper) levels equal to instance levels,
                 from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
@@ -261,30 +271,33 @@ class DynamicFactor(_StatsModelsAdapter):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        if type(coverage) is not list:
+        y_first_index = self._y_first_index
+
+        if not isinstance(coverage, list):
             coverage_list = [coverage]
         else:
             coverage_list = coverage
-        # statsmodels requires zero-based indexing starting at the
-        # beginning of the training series when passing integers
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+
+        _, end = fh.to_absolute_int(y_first_index, self.cutoff)[[0, -1]]
+        steps = end - self._y_len + 1
+        ix = fh.to_indexer(self.cutoff)
 
         model = self._fitted_forecaster
 
         df_list = []
         # generate the forecasts for each alpha/coverage
         for coverage in coverage_list:
+            alpha = 1 - coverage
 
-            alpha = -0.5 * coverage + 0.5
+            y_pred = model.get_forecast(steps=steps, exog=X).conf_int(alpha=alpha)
 
-            if "exog" in inspect.signature(model.__init__).parameters.keys():
-                y_pred = model.get_forecast(steps=(end - start) + 1, exog=X).conf_int(
-                    alpha=alpha
-                )
-            else:
-                y_pred = model.get_forecast(steps=(end - start) + 1).conf_int(
-                    alpha=alpha
-                )
+            # if y is univariate, we duplicated the column in fit,
+            # so now we need to revert this duplication
+            # subset to first two columns as "lower" and "upper"
+            if self._was_univariate:
+                y_pred = y_pred.iloc[:, [0, 1]]
+
+            y_pred = y_pred.iloc[ix]
 
             y_pred.rename(
                 columns={orig_col: orig_col + f" {coverage}" for orig_col in y_pred},
@@ -295,8 +308,12 @@ class DynamicFactor(_StatsModelsAdapter):
         # concatenate the predictions for different values of alpha
         predictions_df = pd.concat(df_list, axis=1)
 
+        ynames = model.data.ynames
+        if self._was_univariate:
+            ynames = [ynames[0]]
+
         # all the code below is just boilerplate for getting the correct columns
-        mod_var_list = list(map(lambda x: str(x).replace(" ", ""), model.data.ynames))
+        mod_var_list = list(map(lambda x: str(x).replace(" ", ""), ynames))
 
         rename_list = [
             var_name + " " + str(coverage) + " " + bound
@@ -315,30 +332,12 @@ class DynamicFactor(_StatsModelsAdapter):
         ]
 
         predictions_df = predictions_df[final_ord]
-        cols = [col_name.split(" ") for col_name in predictions_df.columns]
 
-        predictions_df_2 = pd.DataFrame(
-            predictions_df.values, columns=pd.MultiIndex.from_tuples(cols)
-        )
+        final_columns = self._get_columns("predict_interval", coverage=coverage_list)
+        predictions_df = pd.DataFrame(predictions_df.values, columns=final_columns)
+        predictions_df.index = fh.to_absolute_index(self.cutoff)
 
-        final_columns = [
-            [col_name, float(coverage), bound]
-            for col_name in model.data.ynames
-            for coverage in predictions_df_2.columns.get_level_values(1).unique()
-            for bound in predictions_df_2.columns.get_level_values(2).unique()
-        ]
-
-        predictions_df_3 = pd.DataFrame(
-            predictions_df_2.values, columns=pd.MultiIndex.from_tuples(final_columns)
-        )
-
-        if "int" in (self._y.index[0]).__class__.__name__:  # Rather fishy solution
-            predictions_df_3.index = np.arange(
-                start + self._y.index[0], end + self._y.index[0] + 1
-            )
-            return predictions_df_3.loc[fh.to_absolute(self.cutoff).to_pandas()]
-
-        return predictions_df_3
+        return predictions_df
 
     def _fit_forecaster(self, y, X=None):
         """Fit to training data.
@@ -346,13 +345,21 @@ class DynamicFactor(_StatsModelsAdapter):
         Parameters
         ----------
         y:pd.Series
-          Target time series to which forcaster is fit.
+          Target time series to which forecaster is fit.
         X:pd.DataFrame , optional (default=None)
           Exogenous variables
         """
         from statsmodels.tsa.statespace.dynamic_factor import (
             DynamicFactor as _DynamicFactor,
         )
+
+        # if y is single column DataFrame, duplicate the column to make it multivariate
+        if y.shape[1] == 1:
+            y = pd.concat([y, y], axis=1)
+            y.columns = [f"{y.columns[0]}{i}" for i in ["", "__1"]]
+            self._was_univariate = True
+        else:
+            self._was_univariate = False
 
         self._forecaster = _DynamicFactor(
             endog=y,
@@ -383,6 +390,14 @@ class DynamicFactor(_StatsModelsAdapter):
             flags=self.flags,
             low_memory=self.low_memory,
         )
+
+    def _update(self, y, X=None, update_params=True):
+        """Update used internally in update."""
+        if self._was_univariate:
+            y = pd.concat([y, y], axis=1)
+            y.columns = [f"{y.columns[0]}{i}" for i in ["", "__1"]]
+        super()._update(y, X, update_params=update_params)
+        return self
 
     def summary(self):
         """Get a summary of the fitted forecaster."""
@@ -432,15 +447,15 @@ class DynamicFactor(_StatsModelsAdapter):
             If unspecified, but the model has been initialized,
             then that initialization is used.
             This must be specified if anchor is anything
-            other than “start” or 0.
+            other than "start" or 0.
         anchor : int,str,or datetime , optional
             Starting point from which to begin the simulations; type depends
             on the index of the given endog model.
-            Two special cases are the strings ‘start’ and ‘end’,
+            Two special cases are the strings 'start' and 'end',
             which refer to starting at the beginning and end of the sample,
             respectively. If a date/time index was provided to the model,
             then this argument can be a date string to parse or a datetime type.
-            Otherwise, an integer index should be given. Default is ‘start’.
+            Otherwise, an integer index should be given. Default is 'start'.
         repetitions : int , optional
             Number of simulated paths to generate. Default is 1 simulated path
 
@@ -515,7 +530,7 @@ class DynamicFactor(_StatsModelsAdapter):
             the last significant autocorrelation.
             In this case, a moving average model is assumed for the data
             and the standard errors for the confidence intervals should be generated
-             using Bartlett’s formula.
+             using Bartlett's formula.
         acf_kwargs : dict , optional
             Optional dictionary of keyword arguments that are directly
             passed on to the correlogram Matplotlib plot produced by plot_acf().
@@ -544,18 +559,19 @@ class DynamicFactor(_StatsModelsAdapter):
         ----------
         parameter_set : str , default = "default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
         -------
         params :dict or list of dict , default = {}
-            arameters to create testing instances of the class
+            Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {"k_factors": 1, "factor_order": 1}
-        params2 = {"enforce_stationarity": False, "maxiter": 25, "low_memory": True}
+        params2 = {"maxiter": 25, "low_memory": True}
 
         return [params1, params2]

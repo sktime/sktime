@@ -5,12 +5,43 @@ Time series regression
 
 The :mod:`sktime.regression` module contains algorithms and composition tools for time series regression.
 
-All regressors in ``sktime``can be listed using the ``sktime.registry.all_estimators`` utility,
+All regressors in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="regressor"``, optionally filtered by tags.
-Valid tags can be listed using ``sktime.registry.all_tags``.
+
+Valid tags are listed in :ref:`the regressor tags API reference <panel_tags>`,
+and can be listed using ``sktime.registry.all_tags``.
+
+A full table with tag based search is also available on the
+:doc:`Estimator Search Page </estimator_overview>`
+(select "regresser" in the "Estimator type" dropdown).
+
 
 Composition
 -----------
+
+.. currentmodule:: sktime.regression.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RegressorPipeline
+    SklearnRegressorPipeline
+    MultiplexRegressor
+
+Model selection and tuning
+--------------------------
+
+.. currentmodule:: sktime.regression.model_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSRGridSearchCV
+
+Ensembles
+---------
 
 .. currentmodule:: sktime.regression.compose
 
@@ -26,11 +57,23 @@ Deep learning
 .. currentmodule:: sktime.regression.deep_learning
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    CNNRegressor
-    TapNetRegressor
+    cnn.CNNRegressor
+    cntc.CNTCRegressor
+    fcn.FCNRegressor
+    inceptiontime.InceptionTimeRegressor
+    lstmfcn.LSTMFCNRegressor
+    macnn.MACNNRegressor
+    mcdcnn.MCDCNNRegressor
+    mcdcnn.MCDCNNRegressorTorch
+    mlp.MLPRegressor
+    resnet.ResNetRegressor
+    rnn.SimpleRNNRegressor
+    rnn.SimpleRNNRegressorTorch
+    tapnet.TapNetRegressor
 
 Distance-based
 --------------
@@ -74,6 +117,7 @@ Kernel-based
     :toctree: auto_generated/
     :template: class.rst
 
+    TimeSeriesSVRTslearn
     RocketRegressor
 
 Base

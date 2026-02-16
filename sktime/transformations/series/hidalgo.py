@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Hidalgo (Heterogeneous Intrinsic Dimensionality Algorithm) Segmentation."""
 
 __author__ = ["KatieBuc"]
@@ -7,7 +5,6 @@ __all__ = ["Hidalgo"]
 
 
 from functools import reduce
-from typing import Union
 
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
@@ -32,7 +29,7 @@ class Hidalgo(BaseTransformer):
         distance used in the nearest neighbors part of the algorithm
     K : int, optional, default=2
         number of manifolds used in algorithm
-    zeta : float, optional, defualt=0.8
+    zeta : float, optional, default=0.8
         "local homogeneity level" used in the algorithm, see equation (4)
     q : int, optional, default=3
         number of points for local Z interaction, "local homogeneity range"
@@ -87,12 +84,14 @@ class Hidalgo(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["KatieBuc"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "transform-returns-same-time-index": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
+        "capability:categorical_in_X": False,
         "fit_is_empty": False,
     }
 
@@ -115,7 +114,6 @@ class Hidalgo(BaseTransformer):
         f=None,
         seed=1,
     ):
-
         self.metric = metric
         self.K = K
         self.zeta = zeta
@@ -133,11 +131,10 @@ class Hidalgo(BaseTransformer):
         self.f = f
         self.seed = seed
 
-        super(Hidalgo, self).__init__()
+        super().__init__()
 
     def _get_neighbourhood_params(self, X):
-        """
-        Neighbourhood information from input data X.
+        """Neighbourhood information from input data X.
 
         Parameters
         ----------
@@ -149,7 +146,7 @@ class Hidalgo(BaseTransformer):
         N : int
             number of rows of X
         mu : 1D np.ndarray of length N
-            paramerer in Pereto distribtion estimated by r2/r1
+            paramerer in Pereto distribution estimated by r2/r1
         Iin : 1D np.ndarray of length N * q
             encodes the q neighbour index values for point index i in 0:N-1
             e.g. popint i=0 has neighbours 2, 4, 7 and point i=1
@@ -208,8 +205,7 @@ class Hidalgo(BaseTransformer):
         return N_in, f1
 
     def _initialise_params(self, N, mu, Iin, _rng):
-        """
-        Initialise parameters used in algorithm.
+        """Initialise parameters used in algorithm.
 
         Outputs
         ----------
@@ -278,8 +274,7 @@ class Hidalgo(BaseTransformer):
         N_in,
         _rng,
     ):
-        """
-        Gibbs sampling method to find joint posterior distribution of target variables.
+        """Gibbs sampling method for joint posterior distribution of target variables.
 
         Notes
         -----
@@ -310,7 +305,6 @@ class Hidalgo(BaseTransformer):
         -------
         sampling : 2D np.ndarray of shape (n_iter, Npar), where Npar = N + 2 * K + 2 + 1
             posterior samples of d, p, Z and likelihood samples, respectively.
-
         """
         zeta = self.zeta
         q = self.q
@@ -439,7 +433,6 @@ class Hidalgo(BaseTransformer):
                 for k1 in range(K):
                     g = 0
                     if use_Potts:
-
                         n_in = sum([Z[Iin[q * i + j]] == k1 for j in range(q)])
 
                         m_in = sum(
@@ -509,7 +502,6 @@ class Hidalgo(BaseTransformer):
             return lik0, lik1
 
         for it in range(n_iter):
-
             d = sample_d(K, a1, b1, _rng)
             sampling = np.append(sampling, d)
 
@@ -552,7 +544,7 @@ class Hidalgo(BaseTransformer):
     def _fit(self, X, y=None):
         """Run the Hidalgo algorithm.
 
-        Find parameter esimates as distributions in sampling.
+        Find parameter estimates as distributions in sampling.
         Iterate through n_replicas random starts and get posterior
         samples with best max likelihood.
 
@@ -575,7 +567,7 @@ class Hidalgo(BaseTransformer):
             probability of posterior of z_i = k, point i can be safely
             assigned to manifold k if Pi > 0.8
         _Z : 1D np.ndarray of length N
-            base-zero integer values corresponsing to segment (manifold k)
+            base-zero integer values corresponding to segment (manifold k)
 
         Parameters
         ----------
@@ -603,7 +595,6 @@ class Hidalgo(BaseTransformer):
         maxlik = -1e10
 
         for _ in range(n_replicas):
-
             sampling = self._gibbs_sampling(
                 N,
                 mu,
@@ -628,9 +619,7 @@ class Hidalgo(BaseTransformer):
                 for it in range(n_iter)
                 if it % sampling_rate == 0 and it >= n_iter * burn_in
             ]
-            sampling = sampling[
-                idx,
-            ]
+            sampling = sampling[idx,]
 
             lik = np.mean(sampling[:, -1], axis=0)
 
@@ -720,13 +709,13 @@ class Hidalgo(BaseTransformer):
         }
 
 
-def binom(N: Union[int, float], q: Union[int, float]):
+def binom(N: float, q: float):
     """Calculate the binomial coefficient.
 
     Parameters
     ----------
     N : int, float
-        number of fixed elements from qhich q is chosen
+        number of fixed elements from which q is chosen
     q : int, float
         number of subset q elements chosen from N
     """

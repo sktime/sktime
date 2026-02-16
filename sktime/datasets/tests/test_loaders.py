@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""Test functions for loose loaers."""
+"""Test functions for loose loaders."""
 
 __author__ = ["fkiraly"]
 
@@ -8,7 +7,7 @@ __all__ = []
 
 import pytest
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

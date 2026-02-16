@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Clear sky transformer for solar time-series."""
 
@@ -6,13 +5,11 @@ __author__ = ["ciaran-g"]
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
-from scipy.stats import vonmises
 
 from sktime.transformations.base import BaseTransformer
 
 # todo: update function?
-# todo: clock changes, time-zone aware index, miliseconds?
+# todo: clock changes, time-zone aware index, milliseconds?
 
 
 class ClearSky(BaseTransformer):
@@ -32,7 +29,7 @@ class ClearSky(BaseTransformer):
     The weights are defined using von-mises kernels with bandwidths chosen by the
     user.
 
-    This transformation can be inacurate at low values, in the solar example during
+    This transformation can be inaccurate at low values, in the solar example during
     early morning and late evening. Therefore, clear sky values below a threshold can
     be fixed to zero in the transformed domain. Denominator values of zero are set
     to zero in the transformed domain by default.
@@ -75,12 +72,19 @@ class ClearSky(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ciaran-g"],
+        "maintainers": ["ciaran-g"],
+        "python_dependencies": ["statsmodels", "joblib", "scipy"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": True,  # can the transformer inverse transform?
-        "univariate-only": True,  # can the transformer handle multivariate X?
+        "capability:multivariate": False,  # can the transformer handle multivariate X?
         "X_inner_mtype": [
             "pd.Series",
         ],  # which mtypes do _fit/_predict support for X?
@@ -96,10 +100,13 @@ class ClearSky(BaseTransformer):
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
         "capability:unequal_length": False,
         "capability:unequal_length:removes": True,  # ?
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:missing_values:removes": True,
-        "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": "statsmodels",
+        "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_categorical_y_raises_error"],
+        # skip due to mismatch of index, not estimator but test issue, see issue #8828
     }
 
     def __init__(
@@ -111,7 +118,6 @@ class ClearSky(BaseTransformer):
         n_jobs=None,
         backend="loky",
     ):
-
         self.quantile_prob = quantile_prob
         self.bw_diurnal = bw_diurnal
         self.bw_annual = bw_annual
@@ -119,7 +125,7 @@ class ClearSky(BaseTransformer):
         self.n_jobs = n_jobs
         self.backend = backend
 
-        super(ClearSky, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -136,6 +142,8 @@ class ClearSky(BaseTransformer):
         -------
         self: reference to self
         """
+        from joblib import Parallel, delayed
+
         # check that the data is formatted correctly etc
         self.freq = _check_index(X)
         # now get grid of model
@@ -265,7 +273,7 @@ class ClearSky(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -273,8 +281,9 @@ class ClearSky(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = {
             "quantile_prob": 0.95,
@@ -305,6 +314,7 @@ def _clearskypower(y, q, tod_i, doy_i, tod_vec, doy_vec, bw_tod, bw_doy):
     csp : float
         The clear sky power at tod_i and doy_i
     """
+    from scipy.stats import vonmises
     from statsmodels.stats.weightstats import DescrStatsW
 
     wts_tod = vonmises.pdf(
@@ -340,7 +350,6 @@ def _check_index(X):
     -------
     freq_ind : str or None
         Frequency of data in string format
-
     """
     if not (isinstance(X.index, pd.DatetimeIndex)) | (
         isinstance(X.index, pd.PeriodIndex)
@@ -356,7 +365,7 @@ def _check_index(X):
             raise ValueError("Input index frequency cannot be inferred and is not set.")
 
     tod = pd.timedelta_range(start="0T", end="1D", freq=freq_ind)
-    # checck frequency of tod
+    # check frequency of tod
     if (tod.freq > pd.offsets.Day(1)) | (tod.freq < pd.offsets.Second(1)):
         raise ValueError(
             """

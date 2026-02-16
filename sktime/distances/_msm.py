@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "jlines", "TonyBagnall"]
 
-from typing import List, Tuple
 
 import numpy as np
 
@@ -33,7 +31,7 @@ class _MsmDistance(NumbaDistance):
     References
     ----------
     .. [1] Stefan A., Athitsos V., Das G.: The Move-Split-Merge metric for time
-    series. IEEE Transactions on Knowledge and Data Engineering 25(6):1425–1438, 2013
+    series. IEEE Transactions on Knowledge and Data Engineering 25(6):1425-1438, 2013
     """
 
     def _distance_alignment_path_factory(
@@ -113,7 +111,7 @@ class _MsmDistance(NumbaDistance):
             def numba_msm_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float, np.ndarray]:
+            ) -> tuple[list, float, np.ndarray]:
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix, c)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
@@ -124,7 +122,7 @@ class _MsmDistance(NumbaDistance):
             def numba_msm_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> Tuple[List, float]:
+            ) -> tuple[list, float]:
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix, c)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]

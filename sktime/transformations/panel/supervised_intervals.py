@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Supervised interval features.
 
 A transformer for the extraction of features on intervals extracted from a supervised
@@ -9,7 +8,6 @@ __author__ = ["MatthewMiddlehurst"]
 __all__ = ["SupervisedIntervals"]
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn import preprocessing
 from sklearn.utils import check_random_state
 
@@ -93,6 +91,12 @@ class SupervisedIntervals(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        "python_dependencies": ["numba", "joblib"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": False,
@@ -101,7 +105,9 @@ class SupervisedIntervals(BaseTransformer):
         "fit_is_empty": False,
         "capability:unequal_length": False,
         "requires_y": True,
-        "python_dependencies": "numba",
+        "capability:categorical_in_X": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -132,7 +138,7 @@ class SupervisedIntervals(BaseTransformer):
         self._transform_features = []
         self._n_jobs = n_jobs
 
-        super(SupervisedIntervals, self).__init__()
+        super().__init__()
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
@@ -190,6 +196,8 @@ class SupervisedIntervals(BaseTransformer):
                 then the return is a `Panel` object of type `pd-multiindex`
                 Example: i-th instance of the output is the i-th window running over `X`
         """
+        from joblib import Parallel, delayed
+
         from sktime.utils.numba.general import z_normalise_series_3d
 
         self.reset()
@@ -230,13 +238,20 @@ class SupervisedIntervals(BaseTransformer):
 
         self._is_fitted = True
 
-        if not hasattr(self, "_output_convert") or self._output_convert == "auto":
+        # obtain configs to control input and output control
+        configs = self.get_config()
+        input_conv = configs["input_conversion"]
+        output_conv = configs["output_conversion"]
+
+        if input_conv and output_conv:
             X_out = self._convert_output(Xt, metadata=metadata)
         else:
             X_out = Xt
         return X_out
 
     def _fit(self, X, y=None):
+        from joblib import Parallel, delayed
+
         from sktime.utils.numba.general import z_normalise_series_3d
 
         y = self._fit_setup(X, y)
@@ -269,6 +284,8 @@ class SupervisedIntervals(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
+        from joblib import Parallel, delayed
+
         transform = Parallel(
             n_jobs=self._n_jobs, backend=self.parallel_backend, prefer="threads"
         )(
@@ -505,7 +522,7 @@ class SupervisedIntervals(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_soft_dependencies
 
         params0 = {}
 

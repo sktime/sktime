@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
 """Numba statistics utilities."""
-
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("numba", severity="warning")
 
 import numpy as np  # noqa E402
 

@@ -1,87 +1,97 @@
-# -*- coding: utf-8 -*-
 """Estimator checker for extension."""
 
 __author__ = ["fkiraly"]
 __all__ = ["check_estimator"]
 
-from inspect import isclass
-from warnings import warn
 
-
-# todo 0.17.0:
-# * remove the return_exceptions arg
-# * move the raise_exceptions arg to 2nd place
-# * change its default to False, from None
-# * update the docstring - remove return_exceptions
-# * update the docstring - move raise_exceptions block to 2nd place
-# * update the docstring - remove deprecation references
-# * update the docstring - condition in return block, refer only to raise_exceptions
-# * update the docstring - condition in raises block to refer only to raise_exceptions
-# * remove the code block for input handling
-# * remove import of warn
 def check_estimator(
     estimator,
-    return_exceptions=None,
+    raise_exceptions=False,
     tests_to_run=None,
     fixtures_to_run=None,
     verbose=True,
     tests_to_exclude=None,
     fixtures_to_exclude=None,
-    raise_exceptions=None,
 ):
     """Run all tests on one single estimator.
 
-    Tests that are run on estimator:
-        all tests in test_all_estimators
-        all interface compatibility tests from the module of estimator's scitype
-            for example, test_all_forecasters if estimator is a forecaster
+    This utility runs all tests from the unified API conformance suites
+    applying to the estimator, including tests for the specific subtype
+    and all supertypes.
+
+    If ``estimator`` is an instance, tests are run on the specific instance
+    and its class;
+    if ``estimator`` is a class, tests are run on the class, and all instances
+    constructed via its ``create_test_instances_and_names`` method.
+
+    NOTE: individual tests not in the API conformance suites are not run.
+
+    Example: if ``estimator`` is a forecaster, runs:
+
+    * tests in ``TestAllObjects``, because every ``forecaster`` is an ``object``
+    * tests in ``TestAllEstimators``, because every ``forecaster`` is an ``estimator``
+    * tests in ``TestAllForecasters``
+
+    In the example, we do not run a ``test_my_favourite_estimator`` test that is not
+    in ``TestAll[Something]``, if the
+    ``estimator`` is an instance of ``MyFavouriteEstimator``.
 
     Parameters
     ----------
     estimator : estimator class or estimator instance
-    return_exceptions : bool, optional, default=True
-        whether to return exceptions/failures, or raise them
-            if True: returns exceptions in returned `results` dict
-            if False: raises exceptions as they occur
-        deprecated since 0.15.1, and will be replaced by `raise_exceptions` in 0.17.0.
-        Overridden to `False` if `raise_exceptions=True`.
-        For safe deprecation, use `raise_exceptions` instead of `return_exceptions`.
+        class or instance of the estimator to be tested
+
+        * if class: tests are run on the class, and all instances
+          constructed via its ``create_test_instances_and_names`` method
+        * if instance: tests are run on the instance, and its class
+
+    raise_exceptions : bool, optional, default=False
+        whether to return exceptions/failures in the results dict, or raise them
+
+        * if False: returns exceptions in returned ``results`` dict
+        * if True: raises exceptions as they occur
+
     tests_to_run : str or list of str, optional. Default = run all tests.
         Names (test/function name string) of tests to run.
         sub-sets tests that are run to the tests given here.
+
     fixtures_to_run : str or list of str, optional. Default = run all tests.
         pytest test-fixture combination codes, which test-fixture combinations to run.
         sub-sets tests and fixtures to run to the list given here.
         If both tests_to_run and fixtures_to_run are provided, runs the *union*,
         i.e., all test-fixture combinations for tests in tests_to_run,
-            plus all test-fixture combinations in fixtures_to_run.
-    verbose : str, optional, default=True.
-        whether to print out informative summary of tests run.
+        plus all test-fixture combinations in fixtures_to_run.
+
+    verbose : int or bool, optional, default=1.
+        verbosity level for printouts from tests run.
+
+        * 0 or False: no printout
+        * 1 or True (default): print summary of test run, but no print from tests
+        * 2: print all test output, including output from within the tests
+
     tests_to_exclude : str or list of str, names of tests to exclude. default = None
         removes tests that should not be run, after subsetting via tests_to_run.
+
     fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
         removes test-fixture combinations that should not be run.
         This is done after subsetting via fixtures_to_run.
-    raise_exceptions : bool, optional, default=False
-        whether to return exceptions/failures in the results dict, or raise them
-            if False: returns exceptions in returned `results` dict
-            if True: raises exceptions as they occur
-        Overrides `return_exceptions` if used as a keyword argument.
-        both `raise_exceptions=True` and `return_exceptions=True`.
-        Will move to replace `return_exceptions` as 2nd arg in 0.17.0.
 
     Returns
     -------
-    results : dict of results of the tests in self
-        keys are test/fixture strings, identical as in pytest, e.g., test[fixture]
-        entries are the string "PASSED" if the test passed,
-            or the exception raised if the test did not pass
-        returned only if all tests pass,
-        or both return_exceptions=True and raise_exceptions=False
+    results : dict
+        dictionary of results of the tests that were run
+
+        keys are test/fixture strings, identical as in pytest,
+        e.g., ``test[fixture]``;
+        entries are the string ``"PASSED"`` if the test passed,
+        or the exception raised if the test did not pass.
+
+        ``results`` is returned only if all tests pass,
+        or ``raise_exceptions=False``.
 
     Raises
     ------
-    if return_exceptions=False, or raise_exceptions=True,
+    if ``raise_exceptions=True``,
     raises any exception produced by the tests directly
 
     Examples
@@ -91,15 +101,18 @@ def check_estimator(
 
     Running all tests for ExponentTransformer class,
     this uses all instances from get_test_params and compatible scenarios
+
     >>> results = check_estimator(ExponentTransformer)
     All tests PASSED!
 
     Running all tests for a specific ExponentTransformer
     this uses the instance that is passed and compatible scenarios
+
     >>> results = check_estimator(ExponentTransformer(42))
     All tests PASSED!
 
     Running specific test (all fixtures) for ExponentTransformer
+
     >>> results = check_estimator(ExponentTransformer, tests_to_run="test_clone")
     All tests PASSED!
 
@@ -107,94 +120,58 @@ def check_estimator(
     'test_clone[ExponentTransformer-1]': 'PASSED'}
 
     Running one specific test-fixture-combination for ExponentTransformer
+
     >>> check_estimator(
     ...    ExponentTransformer, fixtures_to_run="test_clone[ExponentTransformer-1]"
     ... )
     All tests PASSED!
     {'test_clone[ExponentTransformer-1]': 'PASSED'}
     """
-    from sktime.base import BaseEstimator
-    from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
-        TestAllEarlyClassifiers,
-    )
-    from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
-    from sktime.dists_kernels.tests.test_all_dist_kernels import (
-        TestAllPairwiseTransformers,
-        TestAllPanelTransformers,
-    )
-    from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
-    from sktime.registry import scitype
-    from sktime.regression.tests.test_all_regressors import TestAllRegressors
-    from sktime.tests.test_all_estimators import TestAllEstimators, TestAllObjects
-    from sktime.transformations.tests.test_all_transformers import TestAllTransformers
-
-    # todo 0.17.0: remove this code block
-    if return_exceptions is None and raise_exceptions is None:
-        raise_exceptions = False
-
-    if return_exceptions is not None and raise_exceptions is None:
-        warn(
-            "The return_exceptions argument of check_estimator has been deprecated "
-            "since 0.15.1, and will be replaced by raise_exceptions in 0.17.0. "
-            "For safe deprecation: use raise_exceptions argument instead of "
-            "return_exceptions when using keywords. Avoid positional use, instead "
-            "ensure to use keywords. When not using keywords, the "
-            "default behaviour will not change."
-        )
-        raise_exceptions = not return_exceptions
-    # end block to remove
-
-    testclass_dict = dict()
-    testclass_dict["classifier"] = TestAllClassifiers
-    testclass_dict["early_classifier"] = TestAllEarlyClassifiers
-    testclass_dict["forecaster"] = TestAllForecasters
-    testclass_dict["regressor"] = TestAllRegressors
-    testclass_dict["transformer"] = TestAllTransformers
-    testclass_dict["transformer-pairwise"] = TestAllPairwiseTransformers
-    testclass_dict["transformer-pairwise-panel"] = TestAllPanelTransformers
-
-    results = TestAllObjects().run_tests(
-        estimator=estimator,
-        raise_exceptions=raise_exceptions,
-        tests_to_run=tests_to_run,
-        fixtures_to_run=fixtures_to_run,
-        tests_to_exclude=tests_to_exclude,
-        fixtures_to_exclude=fixtures_to_exclude,
+    from sktime.utils.dependencies import (
+        _check_estimator_deps,
+        _check_soft_dependencies,
     )
 
-    def is_estimator(obj):
-        """Return whether obj is an estimator class or estimator object."""
-        if isclass(obj):
-            return issubclass(obj, BaseEstimator)
-        else:
-            return isinstance(obj, BaseEstimator)
-
-    if is_estimator(estimator):
-        results_estimator = TestAllEstimators().run_tests(
-            estimator=estimator,
-            raise_exceptions=raise_exceptions,
-            tests_to_run=tests_to_run,
-            fixtures_to_run=fixtures_to_run,
-            tests_to_exclude=tests_to_exclude,
-            fixtures_to_exclude=fixtures_to_exclude,
-        )
-        results.update(results_estimator)
+    msg = (
+        "check_estimator is a testing utility for developers, and "
+        "requires pytest to be present "
+        "in the python environment, but pytest was not found. "
+        "pytest is a developer dependency and not included in the base "
+        "sktime installation. Please run: `pip install pytest` to "
+        "install the pytest package. "
+        "To install sktime with all developer dependencies, run:"
+        " `pip install sktime[dev]`"
+    )
+    _check_soft_dependencies("pytest", msg=msg)
 
     try:
-        scitype_of_estimator = scitype(estimator)
-    except Exception:
-        scitype_of_estimator = ""
+        _check_estimator_deps(estimator)
+    except ModuleNotFoundError as e:
+        msg = (
+            "check_estimator requires all dependencies of the tested object "
+            "to be present in the python environment, "
+            "but some were not found. "
+            f"Details: {e}"
+        )
+        raise ModuleNotFoundError(msg) from e
 
-    if scitype_of_estimator in testclass_dict.keys():
-        results_scitype = testclass_dict[scitype_of_estimator]().run_tests(
+    from sktime.tests.test_class_register import get_test_classes_for_obj
+
+    test_clss_for_est = get_test_classes_for_obj(estimator)
+
+    results = {}
+
+    for test_cls in test_clss_for_est:
+        test_cls_results = test_cls().run_tests(
             estimator=estimator,
             raise_exceptions=raise_exceptions,
             tests_to_run=tests_to_run,
             fixtures_to_run=fixtures_to_run,
             tests_to_exclude=tests_to_exclude,
             fixtures_to_exclude=fixtures_to_exclude,
+            verbose=verbose if raise_exceptions else False,
         )
-        results.update(results_scitype)
+        results.update(test_cls_results)
 
     failed_tests = [key for key in results.keys() if results[key] != "PASSED"]
     if len(failed_tests) > 0:
@@ -204,8 +181,103 @@ def check_estimator(
     else:
         msg = "All tests PASSED!"
 
-    if verbose:
+    if int(verbose) > 0:
         # printing is an intended feature, for console usage and interactive debugging
         print(msg)  # noqa T001
 
     return results
+
+
+def _get_test_names_from_class(test_cls):
+    """Get all test names from a test class.
+
+    Parameters
+    ----------
+    test_cls : class
+        class of the test
+
+    Returns
+    -------
+    test_names : list of str
+        list of test names
+    """
+    test_names = [attr for attr in dir(test_cls) if attr.startswith("test")]
+
+    return test_names
+
+
+def _get_test_names_for_obj(obj):
+    """Get all test names for an object.
+
+    Parameters
+    ----------
+    obj : object
+        object to get tests for
+
+    Returns
+    -------
+    test_names : list of str
+        list of test names
+    """
+    from sktime.tests.test_class_register import get_test_classes_for_obj
+
+    test_clss_for_obj = get_test_classes_for_obj(obj)
+
+    test_names = []
+    for test_cls in test_clss_for_obj:
+        test_names.extend(_get_test_names_from_class(test_cls))
+
+    return test_names
+
+
+def parametrize_with_checks(objs, obj_varname="obj", check_varname="test_name"):
+    """Pytest specific decorator for parametrizing estimator checks.
+
+    Designed for setting up API compliance checks in compatible 2nd and 3rd party
+    libraries, using ``pytest.mark.parametrize``.
+
+    Inspired by the ``sklearn`` utility of the same name.
+
+    Parameters
+    ----------
+    objs : objects class or instance, or list thereof
+        Objects to generate test names for.
+    obj_varname : str, optional, default = 'obj'
+        Name of the variable for objects to use in the parametrization.
+    check_varname : str, optional, default = 'test_name'
+        Name of the variable for test name strings to use in the parametrization.
+
+    Returns
+    -------
+    decorator : `pytest.mark.parametrize`
+
+    See Also
+    --------
+    check_estimator : Check if estimator adheres to sktime APi contracts.
+
+    Examples
+    --------
+    >>> from sktime.utils.estimator_checks import parametrize_with_checks
+    >>> from sktime.forecasting.croston import Croston
+    >>> from sktime.forecasting.naive import NaiveForecaster
+
+    >>> @parametrize_with_checks(NaiveForecaster, obj_varname='estimator')
+    ... def test_sktime_compatible_estimator(estimator, test_name):
+    ...     check_estimator(estimator, tests_to_run=test_name, raise_exceptions=True)
+
+    >>> @parametrize_with_checks([NaiveForecaster, Croston])
+    ... def test_sktime_compatible_estimators(obj, test_name):
+    ...     check_estimator(obj, tests_to_run=test_name, raise_exceptions=True)
+    """
+    import pytest
+
+    if not isinstance(objs, list):
+        objs = [objs]
+
+    test_names = []
+    for obj in objs:
+        tests_for_obj = _get_test_names_for_obj(obj)
+        test_names.extend([(obj, test) for test in tests_for_obj])
+
+    var_str = f"{obj_varname}, {check_varname}"
+    return pytest.mark.parametrize(var_str, test_names)

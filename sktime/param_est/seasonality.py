@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter estimators for seasonality."""
 
@@ -13,7 +12,7 @@ from sktime.param_est.base import BaseParamFitter
 class SeasonalityACF(BaseParamFitter):
     """Find candidate seasonality parameter using autocorrelation function CI.
 
-    Uses `statsmodels.tsa.stattools.act` for computing the autocorrelation function,
+    Uses ``statsmodels.tsa.stattools.act`` for computing the autocorrelation function,
     and uses its testing functionality to determine candidate seasonality parameters.
     ("seasonality parameter" are integer lags, and abbreviated by sp, below)
 
@@ -28,15 +27,15 @@ class SeasonalityACF(BaseParamFitter):
     ----------
     candidate_sp : None, int or list of int, optional, default = None
         candidate sp to test, and to restrict tests to; ints must be 2 or larger
-        if None, will test all integer lags between 2 and `nlags` (inclusive)
+        if None, will test all integer lags between 2 and ``nlags`` (inclusive)
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for seasonality
+        significance threshold to apply in testing for seasonality
     adjusted : bool, optional, default=False
         If True, then denominators for autocovariance are n-k, otherwise n.
     nlags : int, optional, default=None
         Number of lags to compute autocorrelations for and select from.
-        At default None, uses `min(10 * np.log10(nobs), nobs - 1)`.
-        Will be ignored if `candidate_sp` is provided.
+        At default None, uses ``min(10 * np.log10(nobs), nobs - 1)``.
+        Will be ignored if ``candidate_sp`` is provided.
     fft : bool, optional, default=True
         If True, computes the ACF via FFT.
     missing : str, ["none", "raise", "conservative", "drop"], optional, default="none"
@@ -52,7 +51,7 @@ class SeasonalityACF(BaseParamFitter):
     Attributes
     ----------
     sp_ : int, seasonality period at lowest p-level, if any sub-threshold, else 1
-        if `candidate_sp` is passed, will be in `candidate_sp` or 1
+        if ``candidate_sp`` is passed, will be in ``candidate_sp`` or 1
     sp_significant_ : list of int, seasonality periods with sub-threshold p-levels
         ordered increasingly by p-level. Empty list, not [1], if none are sub-threshold
 
@@ -72,6 +71,7 @@ class SeasonalityACF(BaseParamFitter):
 
     Series should be stationary before applying ACF.
     To pipeline SeasonalityACF with the Differencer, use the ParamFitterPipeline:
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.series.difference import Differencer
@@ -87,6 +87,7 @@ class SeasonalityACF(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
@@ -109,7 +110,7 @@ class SeasonalityACF(BaseParamFitter):
         self.nlags = nlags
         self.fft = fft
         self.missing = missing
-        super(SeasonalityACF, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.
@@ -142,6 +143,8 @@ class SeasonalityACF(BaseParamFitter):
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
             candidate_sp = range(2, nlags + 1)
+        elif isinstance(candidate_sp, int):
+            candidate_sp = [candidate_sp]
 
         fft = self.fft
         missing = self.missing
@@ -184,7 +187,7 @@ class SeasonalityACF(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -192,25 +195,28 @@ class SeasonalityACF(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"candidate_sp": [3, 7, 12]}
+        params3 = {"candidate_sp": 12}
 
-        return [params1, params2]
+        return [params1, params2, params3]
 
 
 class SeasonalityACFqstat(BaseParamFitter):
     """Find candidate seasonality parameter using autocorrelation function LB q-stat.
 
-    Uses `statsmodels.tsa.stattools.act` for computing the autocorrelation function,
+    Uses ``statsmodels.tsa.stattools.act`` for computing the autocorrelation function,
     and uses its testing functionality to determine candidate seasonality parameters.
     ("seasonality parameter" are integer lags, and abbreviated by sp, below)
 
-    Obtains Ljung-Box q-statistic to test for candidate sp at `candidate_sp`.
+    Obtains Ljung-Box q-statistic to test for candidate sp at ``candidate_sp``.
 
-    Then applies `statsmodels.stats.multitest.multipletests` to correct multiple tests.
+    Then applies ``statsmodels.stats.multitest.multipletests`` to correct multiple
+    tests.
     Fitted attributes returned are significant sp and the most significant sp.
     These can be used in conditional or unconditional deseasonalization.
 
@@ -222,22 +228,22 @@ class SeasonalityACFqstat(BaseParamFitter):
     ----------
     candidate_sp : None, int or list of int, optional, default = None
         candidate sp to test, and to restrict tests to; ints must be 2 or larger
-        if None, will test all integer lags between 2 and `nlags` (inclusive)
+        if None, will test all integer lags between 2 and ``nlags`` (inclusive)
     p_threshold : float, optional, default=0.05
-        significance threshold to apply in tesing for seasonality
+        significance threshold to apply in testing for seasonality
     p_adjust : str, optional, default="fdr_by" (Benjamini/Yekutieli)
         multiple testing correction applied to p-values of candidate sp in acf test
         multiple testing correction is applied to Ljung-Box tests on candidate_sp
-        values can be "none" or strings accepted by `statsmodels` `multipletests`
+        values can be "none" or strings accepted by ``statsmodels`` ``multipletests``
         "none" = no multiple testim correction is applied, raw p-values are used
         "fdr_by" = Benjamini-Yekutieli FDR control procedure
-        for other possible strings, see `statsmodels.stats.multitest.multipletests`
+        for other possible strings, see ``statsmodels.stats.multitest.multipletests``
     adjusted : bool, optional, default=False
         If True, then denominators for autocovariance are n-k, otherwise n.
     nlags : int, optional, default=None
         Number of lags to compute autocorrelations for and select from.
-        At default None, uses `min(10 * np.log10(nobs), nobs - 1)`.
-        Will be ignored if `candidate_sp` is provided.
+        At default None, uses ``min(10 * np.log10(nobs), nobs - 1)``.
+        Will be ignored if ``candidate_sp`` is provided.
     fft : bool, optional, default=True
         If True, computes the ACF via FFT.
     missing : str, ["none", "raise", "conservative", "drop"], optional, default="none"
@@ -253,7 +259,7 @@ class SeasonalityACFqstat(BaseParamFitter):
     Attributes
     ----------
     sp_ : int, seasonality period at lowest p-level, if any sub-threshold, else 1
-        if `candidate_sp` is passed, will be in `candidate_sp` or 1
+        if ``candidate_sp`` is passed, will be in ``candidate_sp`` or 1
     sp_significant_ : list of int, seasonality periods with sub-threshold p-levels
         ordered increasingly by p-level. Empty list, not [1], if none are sub-threshold
 
@@ -270,6 +276,7 @@ class SeasonalityACFqstat(BaseParamFitter):
     """
 
     _tags = {
+        "authors": "fkiraly",
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
@@ -294,7 +301,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         self.nlags = nlags
         self.fft = fft
         self.missing = missing
-        super(SeasonalityACFqstat, self).__init__()
+        super().__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.
@@ -332,6 +339,8 @@ class SeasonalityACFqstat(BaseParamFitter):
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
             candidate_sp = range(2, nlags + 1)
+        elif isinstance(candidate_sp, int):
+            candidate_sp = [candidate_sp]
 
         fft = self.fft
         missing = self.missing
@@ -351,15 +360,18 @@ class SeasonalityACFqstat(BaseParamFitter):
         self.pvalues_ = pvalues
 
         if candidate_sp is not None:
-            qstat_cand = qstat[candidate_sp]
-            pvalues_cand = pvalues[candidate_sp]
+            if isinstance(candidate_sp, int):
+                candidate_sp = [candidate_sp]
+            csp_ixer = [c - 1 for c in candidate_sp]
+            qstat_cand = qstat[csp_ixer]
+            pvalues_cand = pvalues[csp_ixer]
         else:
             qstat_cand = qstat
             pvalues_cand = pvalues
             candidate_sp = range(2, nlags + 1)
 
         self.qstat_cand_ = qstat_cand
-        self.pvalues_cand = pvalues_cand
+        self.pvalues_cand_ = pvalues_cand
 
         if p_adjust != "none":
             reject_cand, pvals_adj, _, _ = multipletests(
@@ -392,7 +404,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -400,19 +412,31 @@ class SeasonalityACFqstat(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"candidate_sp": [3, 7, 12]}
+        params3 = {"candidate_sp": 12}
 
-        return [params1, params2]
+        return [params1, params2, params3]
 
 
 class SeasonalityPeriodogram(BaseParamFitter):
     """Score periodicities by their spectral power.
 
-    Interfacing `seasonal.periodogram` to determine candidate seasonality parameters.
+    Computes seasonality periodogram based on ``iloc`` indices (not ``loc`` labels),
+    and finds significant periods based on their spectral power, using
+    Welch's method of periodogram averaging [1]_.
+
+    Computes significant periods based on a threshold of the maximum power,
+    i.e., periods with power above ``thresh * maxpower`` are considered significant,
+    and the one with highest power is considered the main seasonality period.
+
+    Significance is determined by thresholding as above, not by statistical testing.
+
+    Based on ``seasonal`` package by ``welch`` [2]_.
 
     Parameters
     ----------
@@ -431,33 +455,160 @@ class SeasonalityPeriodogram(BaseParamFitter):
     sp_significant_ : list of int, array of Fourier periods in descending order
         of their powers.
 
+    References
+    ----------
+    .. [1]: https://en.wikipedia.org/wiki/Welch%27s_method
+    .. [2]: https://github.com/welch/seasonal
+
     Examples
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityPeriodogram
-    >>> X = load_airline().diff()[1:]  # doctest: +SKIP
-    >>> sp_est = SeasonalityPeriodogram()  # doctest: +SKIP
-    >>> sp_est.fit(X)  # doctest: +SKIP
+    >>> X = load_airline().diff()[1:]
+    >>> sp_est = SeasonalityPeriodogram()
+    >>> sp_est.fit(X)
     SeasonalityPeriodogram(...)
-    >>> sp_est.get_fitted_params()["sp"]  # doctest: +SKIP
+    >>> sp_est.get_fitted_params()["sp"]
     6
-    >>> sp_est.get_fitted_params()["sp_significant"]  # doctest: +SKIP
-    array([6, 12, 14, 4, 10, 5])
+    >>> sp_est.get_fitted_params()["sp_significant"]
+    array([ 6, 12, 14,  4, 10,  5])
     """
 
     _tags = {
+        "authors": ["welch", "blazingbhavneek", "JATAYU000"],
+        "maintainers": ["blazingbhavneek"],
         "X_inner_mtype": "pd.Series",
         "scitype:X": "Series",
         "capability:missing_values": True,
         "capability:multivariate": False,
-        "python_dependencies": "seasonal",
     }
 
     def __init__(self, min_period=4, max_period=None, thresh=0.10):
         self.min_period = min_period
         self.max_period = max_period
         self.thresh = thresh
-        super(SeasonalityPeriodogram, self).__init__()
+        self.MIN_FFT_CYCLES = 3.0
+        self.MAX_FFT_PERIOD = 512
+        super().__init__()
+
+    def periodogram_peaks(self, data, min_period=4, max_period=None, thresh=0.90):
+        """Return a list of intervals containg high-scoring periods.
+
+        Use a robust periodogram to estimate ranges containing
+        high-scoring periodicities in possibly short, noisy data. Returns
+        each peak period along with its adjacent bracketing periods from
+        the FFT coefficient sequence.
+
+        Data should be detrended for sharpest results, but trended data
+        can be accommodated by lowering thresh (resulting in more
+        intervals being returned)
+
+        Code adapted from the standalone ``seasonal`` package by ``welch``.
+
+        Parameters
+        ----------
+        data : 1D ndarray
+            Data series, evenly spaced samples.
+        min_period : int, optional, default=4
+            Disregard periods shorter than this number of samples.
+        max_period : int, optional, default = None = as below
+            Disregard periods longer than this number of samples.
+            Defaults to the smaller of len(data)/MIN_FFT_CYCLES or MAX_FFT_PERIOD
+        thresh : float (0..1), optional, default=0.9
+            Retain periods scoring above thresh*maxscore.
+
+        Returns
+        -------
+        periods : array of quads, or None
+            Array of (period, power, period-, period+), maximizing period
+            and its score, and FFT periods bracketing the maximizing
+            period, returned in decreasing order of score
+
+        Notes
+        -----
+        This method is adapted from the standalone seasonal package.
+
+        References
+        ----------
+        .. [1] https://github.com/welch/seasonal
+        """
+        periods, power = self.periodogram(data, min_period, max_period)
+        if np.all(np.isclose(power, 0.0)):
+            return None  # DC
+        result = []
+        keep = power.max() * thresh
+        while True:
+            peak_i = power.argmax()
+            if power[peak_i] < keep:
+                break
+            min_period = periods[min(peak_i + 1, len(periods) - 1)]
+            max_period = periods[max(peak_i - 1, 0)]
+            result.append([periods[peak_i], power[peak_i], min_period, max_period])
+            power[peak_i] = 0
+        return result if len(result) else None
+
+    def periodogram(self, data, min_period=4, max_period=None):
+        """Score periodicities by their spectral power.
+
+        Produce a robust periodogram estimate for each possible periodicity
+        of the (possibly noisy) data.
+
+        Code adapted from the standalone ``seasonal`` package by ``welch``.
+
+        Parameters
+        ----------
+        data : 1D ndarray
+            Data series, having at least three periods of data.
+        min_period : int, optional, default=4
+            Disregard periods shorter than this number of samples.
+        max_period : int, optional, default = None = as below
+            Disregard periods longer than this number of samples.
+            Defaults to the smaller of len(data)/MIN_FFT_CYCLES or MAX_FFT_PERIOD
+
+        Returns
+        -------
+        periods, power : ndarray, ndarray
+            Periods is an array of Fourier periods in descending order,
+            beginning with the first one greater than max_period.
+            Power is an array of spectral power values for the periods
+
+        Notes
+        -----
+        This uses Welch's method (no relation) of periodogram
+        averaging[1]_, which trades off frequency precision for better
+        noise resistance. We don't look for sharp period estimates from
+        it, as it uses the FFT, which evaluates at periods N, N/2, N/3, ...,
+        so that longer periods are sparsely sampled.
+
+        References
+        ----------
+        .. [1]: https://en.wikipedia.org/wiki/Welch%27s_method
+        .. [2]: https://github.com/welch/seasonal
+        """
+        import scipy.signal
+
+        data = np.asarray(data)
+        if max_period is None:
+            max_period = int(min(len(data) / self.MIN_FFT_CYCLES, self.MAX_FFT_PERIOD))
+        nperseg = min(max_period * 2, len(data) // 2)  # FFT window
+        freqs, power = scipy.signal.welch(
+            data, 1.0, scaling="spectrum", nperseg=nperseg
+        )
+        periods = np.array([int(round(1.0 / freq)) for freq in freqs[1:]])
+        power = power[1:]
+        # take the max among frequencies having the same integer part
+        idx = 1
+        while idx < len(periods):
+            if periods[idx] == periods[idx - 1]:
+                power[idx - 1] = max(power[idx - 1], power[idx])
+                periods, power = np.delete(periods, idx), np.delete(power, idx)
+            else:
+                idx += 1
+        power[periods == nperseg] = 0  # disregard the artifact at nperseg
+        min_i = len(periods[periods >= max_period]) - 1
+        max_i = len(periods[periods < min_period])
+        periods, power = periods[min_i:-max_i], power[min_i:-max_i]
+        return periods, power
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.
@@ -476,23 +627,20 @@ class SeasonalityPeriodogram(BaseParamFitter):
         -------
         self : reference to self
         """
-        from seasonal.periodogram import periodogram_peaks
-
-        seasons = periodogram_peaks(
+        seasons = self.periodogram_peaks(
             X,
             min_period=self.min_period,
             max_period=self.max_period,
             thresh=self.thresh,
         )
 
-        seasons = [x[0] for x in seasons]
-
         if seasons is None or len(seasons) == 0:
             self.sp_ = 1
             self.sp_significant_ = []
         else:
-            self.sp_significant_ = seasons
-            self.sp_ = self.sp_significant_[0]
+            seasons = [int(x[0]) for x in seasons]
+            self.sp_significant_ = np.array(seasons)
+            self.sp_ = int(self.sp_significant_[0])
 
         return self
 
@@ -504,7 +652,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for transformers.
 
         Returns
@@ -512,8 +660,9 @@ class SeasonalityPeriodogram(BaseParamFitter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
         params2 = {"min_period": 5, "max_period": 24, "thresh": 0.1}

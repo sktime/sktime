@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements online algorithms for prediction weighted ensembles."""
@@ -22,16 +21,22 @@ class _PredictionWeightedEnsembler:
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        # packaging info
+        # --------------
+        "authors": ["magittan"],
+        "maintainers": ["magittan"],
+        # estimator type
+        # --------------
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, n_estimators=10, loss_func=None):
         self.n_estimators = n_estimators
         self.weights = np.ones(n_estimators) / n_estimators
         self.loss_func = loss_func
-        super(_PredictionWeightedEnsembler, self).__init__()
+        super().__init__()
 
     def _predict(self, y_pred):
         """Make predictions by taking weighted average of forecaster predictions.
@@ -62,7 +67,7 @@ class _PredictionWeightedEnsembler:
         self.weights /= np.sum(self.weights)
 
     def _update(self, y_pred, y_true):
-        """Update fitted paramters and performs a new ensemble fit.
+        """Update fitted parameters and performs a new ensemble fit.
 
         Resets the weights over the estimators by passing previous
         observations to the weighting algorithm.
@@ -107,9 +112,9 @@ class HedgeExpertEnsemble(_PredictionWeightedEnsembler):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, n_estimators=10, T=10, a=1, loss_func=None):
@@ -140,9 +145,9 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, n_estimators=10, a=1, loss_func=None):
@@ -184,7 +189,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
 
         Update the weights on each of the estimators by performing a potential
         function update with a root-finding search. low_c represents the lower
-        bound on the window that the root finding is occuring over.
+        bound on the window that the root finding is occurring over.
 
         Parameters
         ----------
@@ -252,9 +257,9 @@ class NNLSEnsemble(_PredictionWeightedEnsembler):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, n_estimators=10, loss_func=None):

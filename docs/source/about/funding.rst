@@ -25,7 +25,7 @@ of the initial development under the UKRI Strategic Priorities Fund
 Systems <https://www.turing.ac.uk/events/tools-practices-and-systems-data-science-and-artificial-intelligence-scoping-workshop>`__
 theme within that grant.
 
-Markus Löning’s contributions between 2019 and 2021 were supported by:
+Markus Löning's contributions between 2019 and 2021 were supported by:
 
 * the `UK Economic and Social Research Council (ESRC) <https://esrc.ukri.org>`_,
 * the `Consumer Data Research Centre (CDRC) <https://www.cdrc.ac.uk>`_,

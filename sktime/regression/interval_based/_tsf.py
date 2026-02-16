@@ -1,19 +1,21 @@
-# -*- coding: utf-8 -*-
 """Time Series Forest Regressor (TSF)."""
 
-__author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77", "mloning"]
+__author__ = [
+    "TonyBagnall",
+    "kkoziara",
+    "luiszugasti",
+    "kanand77",
+    "mloning",
+    "ksharma6",
+]
 __all__ = ["TimeSeriesForestRegressor"]
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 
+from sktime.base._panel.forest._tsf import BaseTimeSeriesForest, _transform
 from sktime.regression.base import BaseRegressor
-from sktime.series_as_features.base.estimators.interval_based._tsf import (
-    BaseTimeSeriesForest,
-    _transform,
-)
 
 
 class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegressor):
@@ -41,7 +43,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
     min_interval : int, default=3
         Minimum width of an interval.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
     random_state : int, default=None
 
@@ -64,11 +66,38 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
        classification and feature extraction", Information Sciences, 239, 2013
     .. [2] Java implementation https://github.com/uea-machine-learning/tsml
     .. [3] Arxiv paper: https://arxiv.org/abs/1302.2277
+
+    Examples
+    --------
+    >>> from sktime.regression.interval_based import TimeSeriesForestRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> regressor = TimeSeriesForestRegressor(n_estimators=150) # doctest: +SKIP
+    >>> regressor.fit(X_train, y_train) # doctest: +SKIP
+    TimeSeriesForestRegressor(n_estimators=150)
+    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": [
+            "TonyBagnall",
+            "kkoziara",
+            "luiszugasti",
+            "kanand77",
+            "mloning",
+            "ksharma6",
+        ],
+        "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
+        "python_dependencies": ["joblib"],
+        # estimator type
+        # --------------
         "capability:multivariate": False,
         "X_inner_mtype": "numpy3D",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     _base_estimator = DecisionTreeRegressor()
@@ -80,7 +109,10 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
         n_jobs=1,
         random_state=None,
     ):
-        super(TimeSeriesForestRegressor, self).__init__(
+        self.criterion = "gini"  # needed for BaseForest in sklearn > 1.4.0,
+        # because sklearn tag logic looks at this attribute
+
+        super().__init__(
             min_interval=min_interval,
             n_estimators=n_estimators,
             n_jobs=n_jobs,
@@ -116,6 +148,8 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
         np.ndarray
             Predictions.
         """
+        from joblib import Parallel, delayed
+
         X = X.squeeze(1)
 
         _, series_length = X.shape
@@ -129,6 +163,36 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
             for i in range(self.n_estimators)
         )
         return np.mean(y_pred, axis=0)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
+        """
+        param1 = {"n_estimators": 10, "min_interval": 3}
+        param2 = {
+            "n_estimators": 2,
+            "min_interval": 5,
+        }
+        return [param1, param2]
 
 
 def _predict(X, estimator, intervals):

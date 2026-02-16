@@ -1,0 +1,12 @@
+# Dataset Information
+# This is a dummy dataset used to test tsf file format
+#
+@relation Unknown
+@attribute series_name string
+@attribute start_timestamp date
+@frequency yearly
+@horizon 4
+@missing false
+@equallength false
+@data
+T1:1979-01-01 00-00-00:25092.2284,24271.5134,25828.9883,27697.5047,27956.2276,29924.4321,30216.8321,32613.4968,36053.1674,38472.7532,38420.894,36555.6156,37385.6371,38431.9699,40345.33

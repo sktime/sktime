@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Utilities for validating panel data."""
 
 __author__ = ["mloning"]
@@ -12,7 +11,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_consistent_length
 
-from sktime.datatypes._panel._check import is_nested_dataframe
+from sktime.datatypes._panel._check import _is_nested_dataframe
 from sktime.datatypes._panel._convert import (
     from_3d_numpy_to_nested,
     from_nested_to_3d_numpy,
@@ -65,7 +64,7 @@ def check_X(
 
     if not isinstance(X, VALID_X_TYPES):
         raise ValueError(
-            f"X must be a pd.DataFrame or a np.array, " f"but found: {type(X)}"
+            f"X must be a pd.DataFrame or a np.array, but found: {type(X)}"
         )
 
     # check np.array
@@ -103,7 +102,7 @@ def check_X(
 
     # check pd.DataFrame
     if isinstance(X, pd.DataFrame):
-        if not is_nested_dataframe(X):
+        if not _is_nested_dataframe(X):
             raise ValueError(
                 "If passed as a pd.DataFrame, X must be a nested "
                 "pd.DataFrame, with pd.Series or np.arrays inside cells."
@@ -129,6 +128,7 @@ def check_y(y, enforce_min_instances=1, coerce_to_numpy=False):
     Returns
     -------
     y : pd.Series or np.array
+
     Raises
     ------
     ValueError
@@ -136,8 +136,7 @@ def check_y(y, enforce_min_instances=1, coerce_to_numpy=False):
     """
     if not isinstance(y, VALID_Y_TYPES):
         raise ValueError(
-            f"y must be either a pd.Series or a np.ndarray, "
-            f"but found type: {type(y)}"
+            f"y must be either a pd.Series or a np.ndarray, but found type: {type(y)}"
         )
 
     if enforce_min_instances > 0:
@@ -179,6 +178,7 @@ def check_X_y(
     -------
     X : pd.DataFrame or np.array
     y : pd.Series
+
     Raises
     ------
     ValueError

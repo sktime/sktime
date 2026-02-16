@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
+"""sktime - the package for AI with time series.
 
-"""sktime."""
+See https://www.sktime.net/ for documentation and tutorials.
+"""
 
-__version__ = "0.16.1"
+__version__ = "0.40.1"
 
 __all__ = ["show_versions"]
 

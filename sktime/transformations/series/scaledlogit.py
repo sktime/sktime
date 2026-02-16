@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements the scaled logit transformation."""
 
@@ -6,11 +5,11 @@ __author__ = ["ltsaprounis"]
 __all__ = ["ScaledLogitTransformer"]
 
 from copy import deepcopy
-from warnings import warn
 
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.warnings import warn
 
 
 class ScaledLogitTransformer(BaseTransformer):
@@ -91,6 +90,11 @@ class ScaledLogitTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["ltsaprounis"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -100,16 +104,20 @@ class ScaledLogitTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
         "fit_is_empty": True,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "capability:inverse_transform": True,
         "skip-inverse-transform": False,
+        "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, lower_bound=None, upper_bound=None):
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
 
-        super(ScaledLogitTransformer, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -132,6 +140,7 @@ class ScaledLogitTransformer(BaseTransformer):
                 "X in ScaledLogitTransformer should not have values "
                 "greater than upper_bound",
                 RuntimeWarning,
+                obj=self,
             )
 
         if self.lower_bound is not None and np.any(X <= self.lower_bound):
@@ -139,6 +148,7 @@ class ScaledLogitTransformer(BaseTransformer):
                 "X in ScaledLogitTransformer should not have values "
                 "lower than lower_bound",
                 RuntimeWarning,
+                obj=self,
             )
 
         if self.upper_bound and self.lower_bound:
@@ -189,7 +199,7 @@ class ScaledLogitTransformer(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
 
         Returns
@@ -197,8 +207,9 @@ class ScaledLogitTransformer(BaseTransformer):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         test_params = [
             {"lower_bound": None, "upper_bound": None},

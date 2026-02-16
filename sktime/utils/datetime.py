@@ -1,5 +1,4 @@
 #!/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
 """Time format related utilities."""
 
 __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
@@ -7,7 +6,6 @@ __all__ = []
 
 import warnings
 from functools import singledispatch
-from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -15,12 +13,13 @@ import pandas as pd
 from sktime.datatypes import VectorizedDF
 from sktime.datatypes._utilities import get_time_index
 from sktime.utils.validation.series import check_time_index, is_integer_index
+from sktime.utils.warnings import _suppress_pd22_warning
 
 
 def _coerce_duration_to_int(
-    duration: Union[int, pd.Timedelta, pd.tseries.offsets.BaseOffset, pd.Index],
+    duration: int | pd.Timedelta | pd.tseries.offsets.BaseOffset | pd.Index,
     freq: str = None,
-) -> Union[int, pd.Index]:
+) -> int | pd.Index:
     """Coerce durations into integer representations for a given unit of duration.
 
     Parameters
@@ -61,7 +60,7 @@ def _coerce_duration_to_int(
         raise TypeError("`duration` type not understood.")
 
 
-def _get_intervals_count_and_unit(freq: str) -> Tuple[int, str]:
+def _get_intervals_count_and_unit(freq: str) -> tuple[int, str]:
     """Extract interval count and unit from frequency string.
 
     Supports eg: W, 3W, W-SUN, BQS, (B)Q(S)-MAR patterns, from which we
@@ -71,7 +70,8 @@ def _get_intervals_count_and_unit(freq: str) -> Tuple[int, str]:
     if freq is None:
         raise ValueError("frequency is missing")
     else:
-        offset = pd.tseries.frequencies.to_offset(freq)
+        with _suppress_pd22_warning():
+            offset = pd.tseries.frequencies.to_offset(freq)
         count, unit = offset.n, offset.base.freqstr
         return count, unit
 
@@ -116,7 +116,7 @@ def set_hier_freq(x):
         raise ValueError("Set_freq only supported for DatetimeIndex.")
 
     if timepoints.freq is not None:
-        warnings.warn("Frequency already set.")
+        warnings.warn("Frequency already set.", stacklevel=2)
     else:
         time_names = x.index.names[-1]
         x = (
@@ -128,7 +128,7 @@ def set_hier_freq(x):
 
 
 @singledispatch
-def infer_freq(y=None) -> Optional[str]:
+def infer_freq(y=None) -> str | None:
     """Infer frequency string from the time series object.
 
     Parameters
@@ -147,16 +147,16 @@ def infer_freq(y=None) -> Optional[str]:
 @infer_freq.register(pd.DataFrame)
 @infer_freq.register(pd.Series)
 @infer_freq.register(np.ndarray)
-def _(y) -> Optional[str]:
+def _(y) -> str | None:
     return _infer_freq_from_index(get_time_index(y))
 
 
 @infer_freq.register(VectorizedDF)
-def _(y) -> Optional[str]:
+def _(y) -> str | None:
     return _infer_freq_from_index(get_time_index(y.as_list()[0]))
 
 
-def _infer_freq_from_index(index: pd.Index) -> Optional[str]:
+def _infer_freq_from_index(index: pd.Index) -> str | None:
     """Infer frequency string from the pandas index.
 
     Parameters
@@ -173,7 +173,7 @@ def _infer_freq_from_index(index: pd.Index) -> Optional[str]:
         return index.freqstr
     else:
         try:
-            return pd.infer_freq(index, warn=False)
+            return pd.infer_freq(index)
         except (TypeError, ValueError):
             return None
 
@@ -211,7 +211,7 @@ def _shift(x, by=1, return_index=False):
 
     # if we want index, we can simply use add dunder or shift
     if return_index:
-        if idx.is_integer():
+        if pd.api.types.is_integer_dtype(idx):
             return idx + by
         else:
             return idx.shift(by)

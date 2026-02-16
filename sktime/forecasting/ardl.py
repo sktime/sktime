@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements ARDL Model as interface to statsmodels."""
+
 import warnings
 
 import pandas as pd
@@ -8,6 +8,7 @@ import pandas as pd
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from sktime.forecasting.base.adapters._statsmodels import _coerce_int_to_range_index
+from sktime.utils.dependencies import _check_soft_dependencies
 
 _all_ = ["ARDL"]
 __author__ = ["kcc-lion"]
@@ -16,7 +17,7 @@ __author__ = ["kcc-lion"]
 class ARDL(_StatsModelsAdapter):
     """Autoregressive Distributed Lag (ARDL) Model.
 
-    Direct interface for statsmodels.tsa.ardl.ARDL
+    Direct interface for ``statsmodels.tsa.ardl.ARDL``
 
     Parameters
     ----------
@@ -37,13 +38,15 @@ class ARDL(_StatsModelsAdapter):
     causal : bool, optional
         Whether to include lag 0 of exog variables.  If True, only includes
         lags 1, 2, ...
-    trend : {'n', 'c', 't', 'ct'}, optional
+    trend : {'n', 'c', 't', 'ct', 'ctt'}, optional
         The trend to include in the model:
 
         * 'n' - No trend.
         * 'c' - Constant only.
         * 't' - Time trend only.
         * 'ct' - Constant and time trend.
+        * 'ctt' - Constant plus linear plus quadratic time trends.
+                N.B. The choice of 'ctt' requires statsmodels >= 0.15.0.
 
         The default is 'c'.
 
@@ -78,22 +81,23 @@ class ARDL(_StatsModelsAdapter):
         * 'nonrobust' - The class OLS covariance estimator that assumes
           homoskedasticity.
         * 'HC0', 'HC1', 'HC2', 'HC3' - Variants of White's
-          (or Eiker-Huber-White) covariance estimator. `HC0` is the
+          (or Eiker-Huber-White) covariance estimator. ``HC0`` is the
           standard implementation.  The other make corrections to improve
           the finite sample performance of the heteroskedasticity robust
           covariance estimator.
         * 'HAC' - Heteroskedasticity-autocorrelation robust covariance
           estimation. Supports cov_kwds.
 
-          - `maxlags` integer (required) : number of lags to use.
-          - `kernel` callable or str (optional) : kernel
+          - ``maxlags`` integer (required) : number of lags to use.
+          - ``kernel`` callable or str (optional) : kernel
               currently available kernels are ['bartlett', 'uniform'],
               default is Bartlett.
-          - `use_correction` bool (optional) : If true, use small sample
+          - ``use_correction`` bool (optional) : If true, use small sample
               correction.
+
     cov_kwds : dict, optional
         A dictionary of keyword arguments to pass to the covariance
-        estimator. `nonrobust` and `HC#` do not support cov_kwds.
+        estimator. ``nonrobust`` and ``HC#`` do not support cov_kwds.
     use_t : bool, optional
         A flag indicating that inference should use the Student's t
         distribution that accounts for model degree of freedom.  If False,
@@ -132,13 +136,13 @@ class ARDL(_StatsModelsAdapter):
         Must have the same number of columns as the fixed array
         and at least as many rows as the number of out-of-sample forecasts.
     dynamic : {bool, int, str, datetime, Timestamp}, optional
-        Integer offset relative to `start` at which to begin dynamic
+        Integer offset relative to ``start`` at which to begin dynamic
         prediction. Prior to this observation, true endogenous values
         will be used for prediction; starting with this observation and
         continuing through the end of prediction, forecasted endogenous
         values will be used instead. Datetime-like objects are not
         interpreted as offsets. They are instead used to find the index
-        location of `dynamic` which is then used to to compute the offset.
+        location of ``dynamic`` which is then used to to compute the offset.
 
     Notes
     -----
@@ -179,31 +183,38 @@ class ARDL(_StatsModelsAdapter):
     >>> from sktime.datasets import load_macroeconomic
     >>> from sktime.forecasting.ardl import ARDL
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> data = load_macroeconomic()  # doctest: +SKIP
-    >>> oos = data.iloc[-5:, :]  # doctest: +SKIP
-    >>> data = data.iloc[:-5, :]  # doctest: +SKIP
-    >>> y = data.realgdp  # doctest: +SKIP
-    >>> X = data[["realcons", "realinv"]]  # doctest: +SKIP
-    >>> X_oos = oos[["realcons", "realinv"]]  # doctest: +SKIP
-    >>> ardl = ARDL(lags=2, order={"realcons": 1, "realinv": 2}, trend="c")\
-    # doctest: +SKIP
-    >>> ardl.fit(y=y, X=X)  # doctest: +SKIP
+    >>> data = load_macroeconomic()
+    >>> oos = data.iloc[-5:, :]
+    >>> data = data.iloc[:-5, :]
+    >>> y = data.realgdp
+    >>> X = data[["realcons", "realinv"]]
+    >>> X_oos = oos[["realcons", "realinv"]]
+    >>> ardl = ARDL(lags=2, order={"realcons": 1, "realinv": 2}, trend="c")
+    >>> ardl.fit(y=y, X=X)
     ARDL(lags=2, order={'realcons': 1, 'realinv': 2})
-    >>> fh = ForecastingHorizon([1, 2, 3])  # doctest: +SKIP
-    >>> y_pred = ardl.predict(fh=fh, X=X_oos)  # doctest: +SKIP
+    >>> fh = ForecastingHorizon([1, 2, 3])
+    >>> y_pred = ardl.predict(fh=fh, X=X_oos)
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["bashtage", "kcc-lion"],
+        # bashtage for statsmodels ARDL
+        "maintainers": "kcc-lion",
+        "python_dependencies": "statsmodels>=0.13.0",
+        # estimator type
+        # --------------
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
-        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(
@@ -230,13 +241,22 @@ class ARDL(_StatsModelsAdapter):
         X_oos=None,
         dynamic=False,
     ):
-
         # Model Params
         self.lags = lags
         self.order = order
         self.fixed = fixed
         self.causal = causal
         self.trend = trend
+        if self.trend == "ctt":
+            present = _check_soft_dependencies(
+                "statsmodels<0.15.0",
+                severity="none",
+            )
+            if present:
+                raise ImportError(
+                    "Using trend='ctt' requires statsmodels >= 0.15.0. "
+                    "Please install statsmodels."
+                )
         self.seasonal = seasonal
         self.deterministic = deterministic
         self.hold_back = hold_back
@@ -266,7 +286,7 @@ class ARDL(_StatsModelsAdapter):
         if self.auto_ardl and self.lags is not None:
             raise ValueError("lags should not be specified if auto_ardl is True")
 
-        super(ARDL, self).__init__()
+        super().__init__()
 
     def check_param_validity(self, X):
         """Check for the validity of entered parameter combination."""
@@ -278,7 +298,8 @@ class ARDL(_StatsModelsAdapter):
                 inner_order = 0
                 warnings.warn(
                     "X is none but the order for the exogenous variables was"
-                    " specified. Order was thus set to 0"
+                    " specified. Order was thus set to 0",
+                    stacklevel=2,
                 )
         else:
             if not isinstance(X, pd.DataFrame):
@@ -286,12 +307,13 @@ class ARDL(_StatsModelsAdapter):
                 inner_auto_ardl = False
                 warnings.warn(
                     "X is none but auto_ardl was set to True. auto_ardl was"
-                    " thus set to False with order=0"
+                    " thus set to False with order=0",
+                    stacklevel=2,
                 )
         return inner_order, inner_auto_ardl
 
     # todo: implement this, mandatory
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -321,7 +343,7 @@ class ARDL(_StatsModelsAdapter):
 
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
-        if isinstance(y, pd.Series) and y.index.is_integer():
+        if isinstance(y, pd.Series) and pd.api.types.is_integer_dtype(y.index):
             y, X = _coerce_int_to_range_index(y, X)
 
         # validity check of passed params
@@ -378,7 +400,7 @@ class ARDL(_StatsModelsAdapter):
         self.check_is_fitted()
         return self._fitted_forecaster.summary()
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -410,7 +432,7 @@ class ARDL(_StatsModelsAdapter):
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        valid_indices = fh.to_absolute_index(self.cutoff)
 
         y_pred = self._fitted_forecaster.predict(
             start=start, end=end, exog=self._X, exog_oos=X, fixed_oos=self.fixed_oos
@@ -453,7 +475,7 @@ class ARDL(_StatsModelsAdapter):
         -------
         self : reference to self
         """
-        warnings.warn("Defaulting to `update_params=True`")
+        warnings.warn("Defaulting to `update_params=True`", stacklevel=2)
         update_params = True
         if update_params:
             # default to re-fitting if update is not implemented
@@ -461,7 +483,8 @@ class ARDL(_StatsModelsAdapter):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called with update_params=True."
+                f"`update` is called with update_params=True.",
+                stacklevel=2,
             )
             # we need to overwrite the mtype last seen, since the _y
             #    may have been converted
@@ -480,7 +503,8 @@ class ARDL(_StatsModelsAdapter):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will update all component cutoffs each time"
-                f" `update` is called with update_params=False."
+                f" `update` is called with update_params=False.",
+                stacklevel=2,
             )
             comp_forecasters = self._components(base_class=BaseForecaster)
             for comp in comp_forecasters.values():
@@ -524,10 +548,10 @@ class ARDL(_StatsModelsAdapter):
                 fitted_params["hessian"] = self._fitted_forecaster.model.hessian(
                     self._fitted_forecaster.params
                 )
-                fitted_params[
-                    "information"
-                ] = self._fitted_forecaster.model.information(
-                    self._fitted_forecaster.params
+                fitted_params["information"] = (
+                    self._fitted_forecaster.model.information(
+                        self._fitted_forecaster.params
+                    )
                 )
                 fitted_params["loglike"] = self._fitted_forecaster.model.loglike(
                     self._fitted_forecaster.params
@@ -542,7 +566,7 @@ class ARDL(_StatsModelsAdapter):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -550,8 +574,9 @@ class ARDL(_StatsModelsAdapter):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
             {"lags": 1, "trend": "c", "order": 2},

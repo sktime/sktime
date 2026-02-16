@@ -1,16 +1,16 @@
-# -*- coding: utf-8 -*-
 """Sequence feature extraction transformers."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning"]
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
+from sktime.utils.pandas import df_map
 
 
 class PlateauFinder(BaseTransformer):
@@ -31,8 +31,9 @@ class PlateauFinder(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning"],
         "fit_is_empty": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -40,12 +41,13 @@ class PlateauFinder(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "tests:skip_all": True,  # PlateauFinder seems to be broken, see #2259
     }
 
     def __init__(self, value=np.nan, min_length=2):
         self.value = value
         self.min_length = min_length
-        super(PlateauFinder, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X.
@@ -97,19 +99,37 @@ class PlateauFinder(BaseTransformer):
 
         # put into dataframe
         Xt = pd.DataFrame()
-        column_prefix = "%s_%s" % (
+        column_prefix = "{}_{}".format(
             column_name,
             "nan" if np.isnan(self.value) else str(self.value),
         )
         Xt["%s_starts" % column_prefix] = pd.Series(self._starts)
         Xt["%s_lengths" % column_prefix] = pd.Series(self._lengths)
 
-        Xt = Xt.applymap(lambda x: pd.Series(x))
+        Xt = df_map(Xt)(lambda x: pd.Series(x))
         return Xt
 
 
 class DerivativeSlopeTransformer(BaseTransformer):
-    """Derivative slope transformer."""
+    r"""Derivative slope transformer.
+
+    Transformer that computes the derivative of a time series,
+    using ``numpy.gradient``.
+
+    Mathematically, uses the central difference method in the interior
+    and first differences at the boundaries, with respect to
+    integer (iloc) index, that is:
+
+    .. math::
+        f'(x) = (f(x+1) - f(x-1)) / 2, \mbox{ for } 1 \leq x \leq n-2
+
+        f'(0) = f(1) - f(0)
+
+        f'(n-1) = f(n-1) - f(n-2)
+
+    where n is the length of the time series, and indices
+    range from 0 to n-1.
+    """
 
     _tags = {
         "fit_is_empty": True,
@@ -118,33 +138,16 @@ class DerivativeSlopeTransformer(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "capability:categorical_in_X": False,
+        "capability:multivariate": True,
     }
 
-    # TODO add docstrings
     def _transform(self, X, y=None):
         """Transform X."""
-        num_cases, num_dim = X.shape
-        output_df = pd.DataFrame()
-        for dim in range(num_dim):
-            dim_data = X.iloc[:, dim]
-            out = self.row_wise_get_der(dim_data)
-            output_df["der_dim_" + str(dim)] = pd.Series(out)
-
-        return output_df
-
-    @staticmethod
-    def row_wise_get_der(X):
-        """Get derivatives."""
-
-        def get_der(x):
-            der = []
-            for i in range(1, len(x) - 1):
-                der.append(((x[i] - x[i - 1]) + ((x[i + 1] - x[i - 1]) / 2)) / 2)
-            return pd.Series([der[0]] + der + [der[-1]])
-
-        return [get_der(x) for x in X]
+        X_diff = np.gradient(X, axis=0)
+        return pd.DataFrame(X_diff, index=X.index, columns=X.columns)
 
 
 def _check_features(features):
@@ -189,12 +192,12 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         - If int, random_state is the seed used by the random number generator;
         - If RandomState instance, random_state is the random number generator;
         - If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
     """
 
     _tags = {
         "fit_is_empty": False,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -217,11 +220,10 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         self.max_length = max_length
         self.random_state = random_state
         self.features = features
-        super(RandomIntervalFeatureExtractor, self).__init__()
+        super().__init__()
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer, generating random interval indices.
+        """Fit transformer, generating random interval indices.
 
         Parameters
         ----------
@@ -243,7 +245,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         )
         self._interval_segmenter.fit(X, y)
         self.intervals_ = self._interval_segmenter.intervals_
-        self.input_shape_ = self._interval_segmenter.input_shape_
+        self.input_shape_ = X.shape
         self._time_index = self._interval_segmenter._time_index
         return self
 
@@ -252,7 +254,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
 
         Transform X, segments time-series in each column into random
         intervals using interval indices generated
-        during `fit` and extracts features from each interval.
+        during ``fit`` and extracts features from each interval.
 
         Parameters
         ----------
@@ -351,8 +353,10 @@ class FittedParamExtractor(BaseTransformer):
     """
 
     _tags = {
+        "authors": "mloning",
+        "python_dependencies": "joblib",
         "fit_is_empty": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
@@ -366,7 +370,7 @@ class FittedParamExtractor(BaseTransformer):
         self.forecaster = forecaster
         self.param_names = param_names
         self.n_jobs = n_jobs
-        super(FittedParamExtractor, self).__init__()
+        super().__init__()
 
     def _transform(self, X, y=None):
         """Transform X.
@@ -383,6 +387,8 @@ class FittedParamExtractor(BaseTransformer):
         Xt : pd.DataFrame
             Extracted parameters; columns are parameter values
         """
+        from joblib import Parallel, delayed
+
         param_names = self._check_param_names(self.param_names)
         n_instances = X.shape[0]
 
@@ -434,19 +440,20 @@ class FittedParamExtractor(BaseTransformer):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.exp_smoothing import ExponentialSmoothing
         from sktime.forecasting.trend import TrendForecaster
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.utils.dependencies import _check_estimator_deps
 
         # accessing a nested parameter
         params = [

@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Early classification time series classifiers."""
+
 __all__ = [
     "BaseEarlyClassifier",
     "ProbabilityThresholdEarlyClassifier",
