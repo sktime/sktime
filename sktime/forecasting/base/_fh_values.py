@@ -171,9 +171,14 @@ class FHValues:
 
     def __eq__(self, other):
         # <check>below implementation needs to be checked,
-        # its more of a placeholder right now.</check>
+        # its more of a placeholder right now.
+        # Update1: Added the check and corresponding error for
+        # equality check between un-matching instance types. </check>
         if not isinstance(other, FHValues):
-            return NotImplemented
+            raise TypeError(
+                "Comparison is only supported between FHValues instances, "
+                f"got {type(other)}"
+            )
         return (
             self.value_type == other.value_type
             and self.freq == other.freq
