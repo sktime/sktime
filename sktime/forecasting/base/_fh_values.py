@@ -128,6 +128,18 @@ class FHValues:
         # For now, keeping it here as this is the only use case.
         # </check>
         values = np.unique(values)  # np.unique both sorts and deduplicates
+        if len(values) == 0:
+            # if values is empty, we can not infer value_type, freq or timezone
+            # but we still want to allow creation of an empty FHValues instance
+            # for this we will set value_type to INT and freq and timezone to None
+            # as these are the most basic types that can represent an empty horizon
+            # <check>check if this handling is ok,
+            # or if we want to stop creation of empty FHValues instances,
+            # or if we want to allow passing of value_type and other metadata
+            # even for empty values</check>
+            value_type = FHValueType.INT
+            freq = None
+            timezone = None
         self.values = values
         self.value_type = value_type
         self.freq = freq
