@@ -8,7 +8,7 @@ This is the "core" layer that the conversion layer
 feeds into and that ForecastingHorizonV2 operates on.
 """
 
-__all__ = []
+__all__ = ["FHValueType", "FHValues"]
 
 from enum import Enum, auto
 
@@ -29,11 +29,12 @@ class FHValueType(Enum):
     ----------
     INT : integer steps
         Used for both relative integer horizons and absolute integer indices.
-    TIMEDELTA : numpy timedelta64 durations
+        Stored as int64 values directly.
+    TIMEDELTA : durations stored as int64 nanoseconds
         Used for relative time-based horizons.
     PERIOD : integer ordinals that represent pandas Period values
         Used for absolute period-based horizons. Requires freq.
-    DATETIME : numpy datetime64 timestamps
+    DATETIME : timestamps stored as int64 nanoseconds.
         Used for absolute datetime-based horizons.
     """
 
@@ -43,9 +44,13 @@ class FHValueType(Enum):
     DATETIME = auto()
 
 
-# Which value types are inherently relative vs absolute
-_RELATIVE_VALUE_TYPES = {FHValueType.INT, FHValueType.TIMEDELTA}
-_ABSOLUTE_VALUE_TYPES = {FHValueType.INT, FHValueType.PERIOD, FHValueType.DATETIME}
+# Which value types can represent relative forecasting horizons
+_RELATIVE_VALUE_TYPES = frozenset({FHValueType.INT, FHValueType.TIMEDELTA})
+
+# Which value types can represent absolute forecasting horizons
+_ABSOLUTE_VALUE_TYPES = frozenset(
+    {FHValueType.INT, FHValueType.PERIOD, FHValueType.DATETIME}
+)
 
 
 class FHValues:
@@ -70,12 +75,13 @@ class FHValues:
     Parameters
     ----------
     values : np.ndarray
-        1-D numpy array of horizon values. Must be sorted and unique.
-        dtype depends on ``value_type`` as below:
-        INT: int64
-        TIMEDELTA: timedelta64[ns]
-        PERIOD: int64 (ordinal representation)
-        DATETIME: datetime64[ns]
+        1-D numpy array of horizon values with dtype int64.
+        Will be sorted and deduplicated during construction.
+        Semantic meaning depends on ``value_type``:
+        INT: integer step counts
+        TIMEDELTA: durations stored as int64 nanoseconds
+        PERIOD: period ordinals
+        DATETIME: timestamps stored as int64 nanoseconds
     value_type : FHValueType
         Semantic type of the stored values.
     freq : str or None, default=None
@@ -116,7 +122,12 @@ class FHValues:
 
         # deduplication and sorting of values
         # <check>check if this is the right place to do this, or if it should
-        # be done in the conversion layer before creating FHValues instance</check>
+        # be done in the conversion layer before creating FHValues instance
+        # Depends on if we are making FHValues class a base sequence class
+        # and decoupling the FH specific need of sorting and deduplication from it
+        # For now, keeping it here as this is the only use case.
+        # </check>
+        values = np.unique(values)  # np.unique both sorts and deduplicates
         self.values = values
         self.value_type = value_type
         self.freq = freq
