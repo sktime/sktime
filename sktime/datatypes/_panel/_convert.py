@@ -33,7 +33,10 @@ __all__ = [
     "convert_dict",
 ]
 
-from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
+from sktime.datatypes._convert_utils._coerce import (
+    _coerce_df_dtypes,
+    _coerce_multiindex_time_level_to_valid,
+)
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.pandas import df_map
@@ -71,12 +74,13 @@ for tp in MTYPE_LIST_PANEL:
 
 
 def convert_coerce(obj, store=None):
-    # coerces pandas nullable dtypes; does nothing if obj is not pandas
+    # coerces pandas nullable dtypes and time level; does nothing if obj is not pandas
     obj = _coerce_df_dtypes(obj)
+    obj = _coerce_multiindex_time_level_to_valid(obj)
     return obj
 
 
-# coercing pd-multiindex nullable columns to non-nullable float
+# coercing pd-multiindex nullable columns and time level to valid types
 convert_dict[("pd-multiindex", "pd-multiindex", "Panel")] = convert_coerce
 
 

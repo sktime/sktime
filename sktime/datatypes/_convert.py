@@ -76,7 +76,6 @@ from sktime.datatypes._proba import convert_dict_Proba
 from sktime.datatypes._registry import mtype_to_scitype
 from sktime.datatypes._series import convert_dict_Series
 from sktime.datatypes._table import convert_dict_Table
-from sktime.utils.validation.series import is_in_valid_index_types
 
 # pool convert_dict-s and infer_mtype_dict-s
 convert_dict = dict()
@@ -85,7 +84,6 @@ convert_dict.update(convert_dict_Panel)
 convert_dict.update(convert_dict_Hierarchical)
 convert_dict.update(convert_dict_Table)
 convert_dict.update(convert_dict_Proba)
-
 
 def convert(
     obj,
@@ -261,10 +259,6 @@ def convert_to(
         # if None, infer from to_type
         as_scitype = mtype_to_scitype(to_type)
 
-    _scitypes = as_scitype if isinstance(as_scitype, list) else [as_scitype]
-    if "Hierarchical" in _scitypes:
-        obj = _coerce_hierarchical_time_level_to_valid(obj)
-
     # now further narrow down as_scitype by inference from the obj
     from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
     as_scitype = mtype_to_scitype(from_type)
@@ -359,26 +353,3 @@ def _check_str_or_list_of_str(obj, obj_name="obj"):
         raise TypeError(f"{obj} must be a str or list of str")
     else:
         return [obj]
-
-
-def _coerce_hierarchical_time_level_to_valid(obj):
-    """Coerce Hierarchical time level to valid index type per VALID_INDEX_TYPES.
-
-    Edge case: pandas MultiIndex with time level not in VALID_INDEX_TYPES
-    (e.g. float) so infer_mtype can run.
-    """
-    if not (
-        isinstance(obj, pd.DataFrame)
-        and isinstance(obj.index, pd.MultiIndex)
-        and obj.index.nlevels >= 3
-        and not is_in_valid_index_types(obj.index.levels[-1])
-    ):
-        return obj
-    obj = obj.copy()
-    lev = obj.index.levels[-1]
-    arr = np.nan_to_num(
-        np.asarray(lev, dtype=np.float64), nan=0.0, posinf=0.0, neginf=0.0
-    ).astype(np.int64)
-    new_level = pd.Index(arr, dtype=np.int64)
-    obj.index = obj.index.set_levels(new_level, level=-1)
-    return obj

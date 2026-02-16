@@ -59,6 +59,13 @@ VALID_MULTIINDEX_TYPES = (pd.RangeIndex, pd.Index)
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
 
+def _is_coercible_time_level(level) -> bool:
+    """True if time level is numeric and can be coerced to valid index type."""
+    if not isinstance(level, pd.Index):
+        return False
+    return np.issubdtype(level.dtype, np.number)
+
+
 def is_in_valid_multiindex_types(x) -> bool:
     """Check that the input type belongs to the valid multiindex types."""
     return isinstance(x, VALID_MULTIINDEX_TYPES) or is_integer_index(x)
@@ -548,8 +555,11 @@ def _check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=
         )
         return _ret(False, msg, None, return_metadata)
 
-    # check whether the time index is of valid type
-    if not is_in_valid_index_types(index.levels[-1]):
+    # check whether the time index is of valid type (or coercible, e.g. float)
+    time_level = index.levels[-1]
+    if not (
+        is_in_valid_index_types(time_level) or _is_coercible_time_level(time_level)
+    ):
         msg = (
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} or integer index instead."
