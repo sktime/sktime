@@ -85,6 +85,7 @@ convert_dict.update(convert_dict_Hierarchical)
 convert_dict.update(convert_dict_Table)
 convert_dict.update(convert_dict_Proba)
 
+
 def convert(
     obj,
     from_type: str,
