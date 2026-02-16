@@ -184,6 +184,30 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
 
         return self
 
+    def _build_train_dataset(self, y, pred_len):
+        """Build a training dataset for a single time series.
+
+        Subclasses should override this method to use custom dataset classes.
+        Both ``build_pytorch_train_dataloader`` and ``_build_panel_dataloader``
+        delegate to this method, so a single override customizes both
+        fit and pretrain data pipelines.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Single time series
+        pred_len : int
+            Prediction length (forecast horizon)
+
+        Returns
+        -------
+        dataset : torch.utils.data.Dataset
+            Training dataset
+        """
+        return PyTorchTrainDataset(
+            y=y, seq_len=self._get_seq_len(), fh=pred_len
+        )
+
     def _build_panel_dataloader(self, y, all_series, pred_len):
         """Build PyTorch DataLoader for panel/hierarchical data pretraining.
 
