@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements automatic and manually exponential time series smoothing models."""
 
-__author__ = ["hyang1996"]
+__author__ = ["hyang1996", "sabasiddique1"]
 __all__ = ["AutoETS"]
 
 import warnings
@@ -270,8 +270,12 @@ class AutoETS(_StatsModelsAdapter):
 
     def _fit_forecaster(self, y, X=None):
         from joblib import Parallel, delayed
-        from statsmodels.base.model import ConvergenceWarning
         from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
+
+        try:
+            from statsmodels.tools.sm_exceptions import ConvergenceWarning
+        except Exception:
+            ConvergenceWarning = None
 
         # Select model automatically
         if self.auto:
@@ -352,7 +356,10 @@ class AutoETS(_StatsModelsAdapter):
                 )
                 converged = True
                 with warnings.catch_warnings(record=True) as caught_warnings:
-                    warnings.simplefilter("always", ConvergenceWarning)
+                    if ConvergenceWarning is None:
+                        warnings.simplefilter("always")
+                    else:
+                        warnings.simplefilter("always", ConvergenceWarning)
                     _fitted_forecaster = _forecaster.fit(
                         start_params=self.start_params,
                         maxiter=self.maxiter,
@@ -361,7 +368,7 @@ class AutoETS(_StatsModelsAdapter):
                         callback=self.callback,
                         return_params=self.return_params,
                     )
-                if any(
+                if ConvergenceWarning is not None and any(
                     issubclass(warning.category, ConvergenceWarning)
                     for warning in caught_warnings
                 ):
