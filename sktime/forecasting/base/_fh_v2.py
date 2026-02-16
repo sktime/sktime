@@ -264,3 +264,54 @@ class ForecastingHorizonV2:
 
     def __rmul__(self, other):
         return self.__mul__(other)
+
+    # Dunders -> comparison operators
+    # Note:
+    # for euqality operator we can either do:
+    # 1. Element-wise comparison (numpy-style):
+    #   compare only raw int64 arrays elementwise
+    #   and return a boolean array,
+    #   fh == 3 → array([False, False, True])
+    # 2.Object identity/equality (Python-style):
+    #   "are these two FH objects the same?"
+    #   compare the entire FHValues instances,
+    #   which would take into account the value type,
+    #   freq, and timezone as well and return a single boolean
+    #   indicating whether the two FHValues instances are equal in all aspects.
+    #
+    # Number 2 seems more consistent with how equality is usually
+    # implemented in Python classes,
+    # but 1 might be usefull for comparing two forecasting horizons elementwise,
+    # for example when aligning two forecasting horizons with different cutoffs.
+    #
+    # Current implementation is for number 1
+
+    def __eq__(self, other):
+        if isinstance(other, ForecastingHorizonV2):
+            return self.fhvalues.values == other.fhvalues.values
+        return self.fhvalues.values == np.int64(other)
+
+    def __ne__(self, other):
+        if isinstance(other, ForecastingHorizonV2):
+            return self.fhvalues.values != other.fhvalues.values
+        return self.fhvalues.values != np.int64(other)
+
+    def __lt__(self, other):
+        if isinstance(other, ForecastingHorizonV2):
+            return self.fhvalues.values < other.fhvalues.values
+        return self.fhvalues.values < np.int64(other)
+
+    def __le__(self, other):
+        if isinstance(other, ForecastingHorizonV2):
+            return self.fhvalues.values <= other.fhvalues.values
+        return self.fhvalues.values <= np.int64(other)
+
+    def __gt__(self, other):
+        if isinstance(other, ForecastingHorizonV2):
+            return self.fhvalues.values > other.fhvalues.values
+        return self.fhvalues.values > np.int64(other)
+
+    def __ge__(self, other):
+        if isinstance(other, ForecastingHorizonV2):
+            return self.fhvalues.values >= other.fhvalues.values
+        return self.fhvalues.values >= np.int64(other)
