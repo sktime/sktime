@@ -63,6 +63,14 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         order they are passed. If None, then no learning rate scheduler is used.
     callback_kwargs : dict or None, optional (default=None)
         The keyword arguments to be passed to the callbacks.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
+    metrics_kwargs : dict or None, default = None
+        The keyword arguments to be passed to the metrics.
     lr : float, optional (default=0.01)
         The learning rate to use for the optimizer.
     verbose : bool, optional (default=False)
@@ -113,6 +121,8 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         optim_kwargs=None,
         callbacks=None,
         callback_kwargs=None,
+        metrics=None,
+        metrics_kwargs=None,
         lr=0.01,
         verbose=False,
         random_state=0,
@@ -130,6 +140,8 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
+        self.metrics = metrics
+        self.metrics_kwargs = metrics_kwargs
 
         # used to difrentiate between user passed "SGD"
         # and the default "SGD" with kwargs
@@ -170,6 +182,8 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
+            metrics=self.metrics,
+            metrics_kwargs=self.metrics_kwargs,
         )
 
     def _build_network(self, X):
