@@ -233,11 +233,13 @@ class WindowSummarizer(BaseTransformer):
         n_jobs=-1,
         target_cols=None,
         truncate=None,
+        min_periods=None,
     ):
         self.lag_feature = lag_feature
         self.n_jobs = n_jobs
         self.target_cols = target_cols
         self.truncate = truncate
+        self.min_periods = min_periods
 
         super().__init__()
 
@@ -341,12 +343,19 @@ class WindowSummarizer(BaseTransformer):
                 hier_levels = list(range(X.index.nlevels - 1))
                 X_grouped = X.groupby(level=hier_levels)[cols]
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X_grouped, **kwargs, bfill=bfill)
+                    delayed(_window_feature)(
+                        X_grouped, **kwargs, bfill=bfill, min_periods=self.min_periods
+                    )
                     for index, kwargs in func_dict.iterrows()
                 )
             else:
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X.loc[:, [cols]], **kwargs, bfill=bfill)
+                    delayed(_window_feature)(
+                        X.loc[:, [cols]],
+                        **kwargs,
+                        bfill=bfill,
+                        min_periods=self.min_periods,
+                    )
                     for _index, kwargs in func_dict.iterrows()
                 )
             Xt = pd.concat(df, axis=1)
