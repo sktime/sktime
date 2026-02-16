@@ -37,9 +37,6 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         layers.
     pool_padding : str or None, optional (default="same")
         The type of padding to be applied to pooling layers.
-    criterion : str, optional (default="CrossEntropyLoss")
-        The name of the loss function to be used during training,
-        should be supported by PyTorch.
     activation : str or None, optional (default=None)
         The activation function to apply at the output.
         List of available activation functions:
@@ -52,13 +49,18 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
     use_bias : bool, optional (default=True)
         Whether bias should be included in the output layer.
-    optimizer : str or None or an instance of optimizers defined in torch.optim,
+    criterion : str, optional (default="CrossEntropyLoss")
+        The name of the loss function to be used during training,
+        should be supported by PyTorch.
+    criterion_kwargs : dict or None, optional (default=None)
+        Additional keyword arguments to pass to the criterion.
+    optim : str or None or an instance of optimizers defined in torch.optim,
         optional (default=None)
         The optimizer to use for training the model. If left as None, SGD is used
         with momentum=0.9, weight_decay=0.0005.
         List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
-    optimizer_kwargs : dict or None, optional (default=None)
+    optim_kwargs : dict or None, optional (default=None)
         Additional keyword arguments to pass to the optimizer.
     callbacks : None or str or a tuple of str, optional (default=None)
         Currently only learning rate schedulers are supported as callbacks.
@@ -68,8 +70,6 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         The keyword arguments to be passed to the callbacks.
     lr : float, optional (default=0.01)
         The learning rate to use for the optimizer.
-    criterion_kwargs : dict or None, optional (default=None)
-        Additional keyword arguments to pass to the criterion.
     verbose : bool, optional (default=False)
         Whether to print progress information during training.
     random_state : int, optional (default=0)
@@ -110,16 +110,15 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         dense_units=732,
         conv_padding="same",
         pool_padding="same",
-        criterion="CrossEntropyLoss",
         activation=None,
         activation_hidden="relu",
         use_bias=True,
+        criterion="CrossEntropyLoss",
+        criterion_kwargs=None,
         callbacks=None,
-        metrics=None,
+        callback_kwargs=None,
         optim=None,
         optim_kwargs=None,
-        criterion_kwargs=None,
-        callback_kwargs=None,
         lr=0.01,
         verbose=False,
         random_state=0,
@@ -137,7 +136,6 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.callbacks = callbacks
-        self.metrics = metrics
         self.verbose = verbose
         self.random_state = random_state
         self.callback_kwargs = callback_kwargs

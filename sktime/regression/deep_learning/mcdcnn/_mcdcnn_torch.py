@@ -32,11 +32,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         layers.
     pool_padding : str or None, optional (default="same")
         The type of padding to be applied to pooling layers.
-    criterion : str, optional (default="MSELoss")
-        The name of the loss function to be used during training,
-        should be supported by PyTorch.
-    criterion_kwargs : dict or None, optional (default=None)
-        Additional keyword arguments to pass to the loss function.
     activation : str or None, optional (default=None)
         The activation function to apply at the output.
         List of available activation functions:
@@ -47,13 +42,17 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
     use_bias : bool, optional (default=True)
         Whether bias should be included in the output layer.
+    criterion : str, optional (default="MSELoss")
+        The name of the loss function to be used during training,
+        should be supported by PyTorch.
+    criterion_kwargs : dict or None, optional (default=None)
+        Additional keyword arguments to pass to the loss function.
     optim: str or None or an instance of optimizers defined in torch.optim,
         optional (default=None)
         The optimizer to use for training the model. If left with None, "SGD" is
         used with momentum=0.9, weight_decay=0.0005.
         List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
-
     optim_kwargs : dict or None, optional (default=None)
         Additional keyword arguments to pass to the optimizer.
         If None, SGD is used with momentum=0.9, weight_decay=0.0005.
@@ -104,11 +103,11 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         dense_units=732,
         conv_padding="same",
         pool_padding="same",
-        criterion="MSELoss",
-        criterion_kwargs=None,
         activation=None,
         activation_hidden="relu",
         use_bias=True,
+        criterion="MSELoss",
+        criterion_kwargs=None,
         optim=None,
         optim_kwargs=None,
         callbacks=None,
