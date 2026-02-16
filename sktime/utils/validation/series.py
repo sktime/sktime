@@ -245,8 +245,8 @@ def check_equal_time_index(*ys, mode="equal"):
     ValueError
         if mode = "equal", raised if there are at least two non-None entries of ys
             of which pandas indices are not the same
-        if mode = "contained, raised if there is at least one non-None ys[i]
-            such that ys[i].index is not contained in ys[o].index
+        if mode = "contains", raised if there is at least one non-None ys[i]
+            such that ys[i].index is not contained in ys[0].index
         np.ndarray are considered having (pandas) integer range index on axis 0
     """
     from sktime.datatypes._utilities import get_index_for_series

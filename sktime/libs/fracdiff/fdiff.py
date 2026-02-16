@@ -1,6 +1,5 @@
 """Fractional differentiation core implementation."""
 
-import warnings
 from functools import partial
 
 import numpy as np
