@@ -7,6 +7,8 @@ All pandas-specific logic (type conversions, frequency handling, version detecti
 is delegated to the _fh_utils module.
 """
 
+__all__ = ["ForecastingHorizonV2"]
+
 from sktime.forecasting.base._fh_utils import PandasFHConverter
 from sktime.forecasting.base._fh_values import FHValueType
 
@@ -116,3 +118,18 @@ class ForecastingHorizonV2:
 
     # added dummy comment to test skipping of CI runs on every subsequent commit
     # until all checks are removed and code is ready for review/tests
+
+    @property
+    def is_relative(self) -> bool:
+        """Whether forecasting horizon is relative to the end of the training series.
+
+        Returns
+        -------
+        is_relative : bool
+        """
+        return self.is_relative
+
+    @property
+    def freq(self) -> str | None:
+        """Frequency string, or None."""
+        return self.fhvalues.freq

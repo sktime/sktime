@@ -234,6 +234,17 @@ class FHValues:
             f"timezone={self.timezone})"
         )
 
+    # may need this function as a helper for checking
+    # immutability of values array.
+    def sort(self) -> "FHValues":
+        """Return new FHValues with sorted values."""
+        # <check>check the final set of attributes to be stored</check>
+        # this will create a new instance with sorted values, same metadata
+        sorted_vals = np.sort(self.values)
+        return FHValues(sorted_vals, self.value_type, self.freq, self.timezone)
+
+    # may need this function as a helper for checking
+    # immutability of values array.
     def unique(self) -> "FHValues":
         """Return new FHValues with unique values (preserves sort order)."""
         unique_vals = np.unique(self.values)
