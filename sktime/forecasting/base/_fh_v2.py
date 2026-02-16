@@ -133,3 +133,88 @@ class ForecastingHorizonV2:
     def freq(self) -> str | None:
         """Frequency string, or None."""
         return self.fhvalues.freq
+
+    @freq.setter
+    def freq(self, obj) -> None:
+        """Set frequency from string, pd.Index, pd.offset, or forecaster.
+
+        Parameters
+        ----------
+        obj : str, pd.Index, pd.offsets.BaseOffset, or forecaster
+            Object carrying frequency information.
+
+        Raises
+        ------
+        ValueError
+            If freq is already set and conflicts with new value.
+        """
+        new_freq = PandasFHConverter.extract_freq(obj)
+        old_freq = self.fhvalues.freq
+
+        if old_freq is not None and new_freq is not None and old_freq != new_freq:
+            raise ValueError(
+                f"Frequencies do not match: current={old_freq}, new={new_freq}"
+            )
+        if new_freq is not None:
+            self.fhvalues = self.fhvalues._new(freq=new_freq)
+
+    # core conversion methods
+
+    # <check>
+    # to_relative requires cutoff to be specified
+    # but for a drop-in replacement for the old FH,
+    # we want to allow users to call to_relative without cutoff
+    # and use the same default cutoff as the old FH, which is end of training series
+    # so we would need to add logic to determine the default cutoff
+    # when cutoff is not provided
+    # </check>
+    def to_relative(self, cutoff=None):
+        """Return relative version of forecasting horizon.
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, or pd.Index, optional
+            Cutoff value required for conversion.
+
+        Returns
+        -------
+        ForecastingHorizonV2
+            Relative representation of forecasting horizon.
+        """
+        pass
+
+    def to_absolute(self, cutoff):
+        """Return absolute version of forecasting horizon.
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, or pd.Index
+            Cutoff value is required to convert a relative forecasting
+            horizon to an absolute one (and vice versa).
+            If pd.Index, last/latest value is considered the cutoff
+
+        Returns
+        -------
+        ForecastingHorizonV2
+            Absolute representation of forecasting horizon.
+        """
+        if not self.is_relative:
+            # <check> _new is not yet implemented </check>"
+            return self._new()
+
+        cutoff_val, cutoff_type, cutoff_freq, cutoff_tz = (
+            PandasFHConverter.cutoff_to_internal(cutoff, freq=self.freq)
+        )
+
+        # update freq if not set
+        # freq = self.freq or cutoff_freq
+
+        vtype = self.fhvalues.value_type
+        # vals = self.fhvalues.values
+
+        if vtype == FHValueType.INT:
+            if cutoff_type == FHValueType.PERIOD:
+                # int steps + period ordinal -> period ordinals
+                # multiply by freq multiplier for multi-step freqs
+                # e.g., "2D" has multiplier 2, so step 1 = 2 ordinals
+                pass
