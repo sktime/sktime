@@ -198,6 +198,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         cov_kwds: dict | None = None,
         return_params: bool = False,
         low_memory: bool = False,
+        memory: int | None = None,
     ):
         self.order = order
         self.seasonal_order = seasonal_order
@@ -224,7 +225,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         self.return_params = return_params
         self.low_memory = low_memory
 
-        super().__init__()
+        super().__init__(...)
 
     def _fit_forecaster(self, y, X=None):
         from statsmodels.tsa.arima.model import ARIMA as _ARIMA
