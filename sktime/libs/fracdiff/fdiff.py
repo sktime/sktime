@@ -148,12 +148,8 @@ def fdiff(
     a = _combine_pre_append(a, prepend, append, axis)
 
     if mode == "full":
-        warnings.warn(
-            "mode 'full' was renamed to 'same'.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
         mode = "same"
+        raise DeprecationWarning("mode 'full' was renamed to 'same'.")
 
     if a.ndim == 0:
         raise ValueError("diff requires input that is at least one dimensional")
