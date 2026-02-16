@@ -441,7 +441,7 @@ def get_name_list(Z):
     return Z_name
 
 
-def _window_feature(Z, summarizer=None, window=None, bfill=False):
+def _window_feature(Z, summarizer=None, window=None, bfill=False, min_periods=None):
     """Compute window features and lag.
 
     Apply summarizer passed over a certain window
@@ -468,21 +468,39 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     window: list of integers
         List containing window_length and lag parameters, see WindowSummarizer
         class description for in-depth explanation.
+    min_periods: int, optional, default=None
+        Minimum number of observations in the window required to have a value.
+        If None, defaults to window_length (strict window semantics).
+        If set to 1, allows partial windows (flexible semantics).
     """
     lag = window[0]
     window_length = window[1]
+
+    # Determine min_periods
+    if min_periods is None:
+        mp = window_length  # Backwards compatible default
+    else:
+        mp = int(min_periods)
+        # Validate
+        if mp < 1:
+            raise ValueError(f"min_periods must be >= 1, got {mp}")
+        if mp > window_length:
+            raise ValueError(
+                f"min_periods ({mp}) cannot exceed window_length ({window_length})"
+            )
+
     feat: pd.DataFrame = pd.DataFrame()
     if summarizer in pd_rolling:
         feat = Z.transform(
             lambda x: getattr(
-                x.rolling(window=window_length, min_periods=1), summarizer
+                x.rolling(window=window_length, min_periods=mp), summarizer
             )().shift(lag)
         )
     elif summarizer == "lag":
         feat = Z.transform(lambda x: x.shift(lag))
     elif callable(summarizer):
         feat = Z.transform(
-            lambda x: x.rolling(window=window_length, min_periods=1)
+            lambda x: x.rolling(window=window_length, min_periods=mp)
             .apply(summarizer, raw=True)
             .shift(lag)
         )
