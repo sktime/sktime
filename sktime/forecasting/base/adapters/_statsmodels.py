@@ -31,11 +31,11 @@ class _StatsModelsAdapter(BaseForecaster):
         "capability:missing_values": False,
     }
 
-    def __init__(self, random_state=None):
+    def __init__(self, random_state=None, memory=None):
         self._forecaster = None
         self.random_state = random_state
         self._fitted_forecaster = None
-        super().__init__()
+        super().__init__(memory=memory)
 
     def _fit(self, y, X, fh):
         """Fit to training data.

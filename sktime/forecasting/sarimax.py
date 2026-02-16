@@ -197,6 +197,9 @@ class SARIMAX(_StatsModelsAdapter):
         used, some features of the results object will not be available (including
         smoothed results and in-sample prediction), although out-of-sample forecasting
         is possible. Default is False.
+    memory : int, optional (default=None)
+        The memory limit (in bytes) for the input data (X and y).
+        If the data size exceeds this limit, a MemoryError is raised.
 
     See Also
     --------
@@ -244,9 +247,9 @@ class SARIMAX(_StatsModelsAdapter):
     }
 
     def __init__(
-        self,
-        order=(1, 0, 0),
-        seasonal_order=(0, 0, 0, 0),
+    self,
+    order=(1, 0, 0),
+    seasonal_order=(0, 0, 0, 0),
         trend="c",
         measurement_error=False,
         time_varying_regression=False,
@@ -276,8 +279,9 @@ class SARIMAX(_StatsModelsAdapter):
         return_params=False,
         optim_score=None,
         optim_complex_step=None,
-        optim_hessian=None,
+       optim_hessian=None,
         low_memory=False,
+        memory=None,
     ):
         self.order = order
         self.seasonal_order = seasonal_order
@@ -314,7 +318,7 @@ class SARIMAX(_StatsModelsAdapter):
         self.optim_hessian = optim_hessian
         self.low_memory = low_memory
 
-        super().__init__(random_state=random_state)
+        super().__init__(random_state=random_state, memory=memory)
 
     def _fit_forecaster(self, y, X=None):
         from statsmodels.tsa.api import SARIMAX as _SARIMAX

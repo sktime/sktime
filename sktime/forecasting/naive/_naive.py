@@ -24,14 +24,14 @@ from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
-from sktime.forecasting.base._sktime import _BaseWindowForecaster
+from sktime.forecasting.base._sktime import BaseWindowForecaster
 from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.warnings import warn
 
 
-class NaiveForecaster(_BaseWindowForecaster):
+class NaiveForecaster(BaseWindowForecaster):
     """Forecast based on naive assumptions about past trends continuing.
 
     NaiveForecaster is a forecaster that makes forecasts using simple
@@ -89,9 +89,13 @@ class NaiveForecaster(_BaseWindowForecaster):
     sp : int, or None, default=1
         Seasonal periodicity to use in the seasonal forecasting. None=1.
 
-    window_length : int or None, default=None
+   window_length : int or None, default=None
         Window length to use in the ``mean`` strategy. If None, entire training
-            series will be used.
+        series will be used.
+
+    memory : int, optional (default=None)
+        The memory limit (in bytes) for the input data (X and y).
+        If the data size exceeds this limit, a MemoryError is raised.
 
     References
     ----------
@@ -144,11 +148,11 @@ class NaiveForecaster(_BaseWindowForecaster):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, strategy="last", window_length=None, sp=1):
-        super().__init__()
+    def __init__(self, strategy="last", window_length=None, sp=1, memory=None):
         self.strategy = strategy
-        self.sp = sp
         self.window_length = window_length
+        self.sp = sp
+        super().__init__(memory=memory)
 
         # Override tag for handling missing data
         # todo: remove if GH1367 is fixed

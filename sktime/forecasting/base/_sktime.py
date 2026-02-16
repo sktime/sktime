@@ -13,11 +13,11 @@ from sktime.split import CutoffSplitter
 from sktime.utils.datetime import _shift
 
 
-class _BaseWindowForecaster(BaseForecaster):
+class BaseWindowForecaster(BaseForecaster):
     """Base class for forecasters that use sliding windows."""
 
-    def __init__(self, window_length=None):
-        super().__init__()
+    def __init__(self, window_length=None, memory=None):
+        super().__init__(memory=memory)
         self.window_length = window_length
         self.window_length_ = None
 
