@@ -272,33 +272,26 @@ class FHValues:
         bool
             True if values form a contiguous sequence.
         """
+        # check added because currently FHValues instances
+        # can be created with no values
         if len(self.values) <= 1:
             return True
 
-        sorted_vals = np.sort(self.values)
-
         if self.value_type in (FHValueType.INT, FHValueType.PERIOD):
-            # <check>
-            # multiple cases need to be hanfled here:
-            #   - if the values are not perfectly regular
-            #   - if there are duplicates
-            #   - if there are missing values in between
-            #   - and other cases
-            # </check>
-            expected_len = int(sorted_vals[-1] - sorted_vals[0]) + 1
-            return len(self._values) == expected_len
+            # contiguous means every integer between min and max is present
+            expected_len = int(self._values[-1] - self._values[0]) + 1
+            # the above check is complete because self._values is sorted and unique
+            return len(self.values) == expected_len
 
-        # <check>
-        # same for TIMEDELTA or DATETIME
-        # Below is partial implementation
-        # </check>
-        diffs = np.diff(sorted_vals)
+        # TIMEDELTA or DATETIME: check uniform spacing
+        diffs = np.diff(self.values)
+        if diffs.min() <= 0:
+            # This shouldn't happen after unique+sort check in constructor,
+            # but adding this as a guard against any mutations to the values array
+            return False
         min_diff = diffs.min()
-        if min_diff == np.timedelta64(0):
-            return False  # duplicates
-        total_span = sorted_vals[-1] - sorted_vals[0]
-        expected_steps = total_span / min_diff
-        return len(self.values) == int(expected_steps) + 1
+        # all diffs should equal the minimum diff for uniform spacing
+        return bool(np.all(diffs == min_diff))
 
     def __getitem__(self, key):
         """Support integer and slice indexing.
