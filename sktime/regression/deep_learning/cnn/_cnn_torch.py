@@ -28,7 +28,7 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
         Length of the 1D convolution window.
     avg_pool_size : int, default = 3
         Size of the average pooling window.
-    filter_sizes : array-like of int, shape = (n_conv_layers), default = [6, 12]
+    filter_sizes : tuple of int, shape = (n_conv_layers), default = (6, 12)
         Number of filters per conv layer.
     use_bias : bool, default = True
         Whether to use bias in output layer.
@@ -98,7 +98,7 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
         batch_size=16,
         kernel_size=7,
         avg_pool_size=3,
-        filter_sizes=[6, 12],
+        filter_sizes=(6, 12),
         use_bias=True,
         padding="auto",
         activation=None,
@@ -215,7 +215,7 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
             "num_epochs": 12,
             "batch_size": 6,
             "kernel_size": 2,
-            "filter_sizes": [4],
+            "filter_sizes": (4,),
             "n_conv_layers": 1,
         }
         params3 = {
