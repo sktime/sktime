@@ -120,6 +120,10 @@ class WindowSummarizer(BaseTransformer):
             None will keep the NAs generated, and would leave it for the user to choose
             an estimator that can correctly deal with observations with missing values,
             "bfill" will fill the NAs by carrying the first observation backwards.
+        min_periods: int, optional (default = None)
+            Minimum number of observations in window required to have a value (otherwise
+            result is NA). If None, defaults to window_length. Set to 1 to allow partial
+            windows.
 
     Attributes
     ----------
@@ -470,18 +474,16 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False, min_periods=No
         class description for in-depth explanation.
     min_periods: int, optional, default=None
         Minimum number of observations in the window required to have a value.
-        If None, defaults to window_length (strict window semantics).
-        If set to 1, allows partial windows (flexible semantics).
+        If None, defaults to window_length. By seting it to a lower number, allows
+        partial windows.
     """
     lag = window[0]
     window_length = window[1]
 
-    # Determine min_periods
     if min_periods is None:
-        mp = window_length  # Backwards compatible default
+        mp = window_length
     else:
         mp = int(min_periods)
-        # Validate
         if mp < 1:
             raise ValueError(f"min_periods must be >= 1, got {mp}")
         if mp > window_length:
@@ -500,9 +502,11 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False, min_periods=No
         feat = Z.transform(lambda x: x.shift(lag))
     elif callable(summarizer):
         feat = Z.transform(
-            lambda x: x.rolling(window=window_length, min_periods=mp)
-            .apply(summarizer, raw=True)
-            .shift(lag)
+            lambda x: (
+                x.rolling(window=window_length, min_periods=mp)
+                .apply(summarizer, raw=True)
+                .shift(lag)
+            )
         )
     else:
         raise ValueError("The provided summarizer is not callable.")
