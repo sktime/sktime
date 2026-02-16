@@ -378,3 +378,101 @@ def test_windowsummarizer_bfill_respects_multiindex_groups():
         assert pd.isna(group.iloc[2][lag_1_col]), (
             f"Group {name} row 3 lag_1 should be NaN but got {group.iloc[2][lag_1_col]}"
         )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_min_periods_backwards_compatibility():
+    """Test that min_periods=None uses window_length (backwards compatible)."""
+    y = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]})
+
+    # Both should produce identical results
+    ws_default = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]]},
+        n_jobs=1,
+    )
+
+    ws_explicit_none = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]]},
+        n_jobs=1,
+        min_periods=None,
+    )
+
+    result_default = ws_default.fit_transform(y)
+    result_explicit = ws_explicit_none.fit_transform(y)
+
+    pd.testing.assert_frame_equal(result_default, result_explicit)
+
+    # Verify expected behavior: first 3 values should be NaN (strict windows)
+    assert pd.isna(result_default["a_mean_1_3"].iloc[0])
+    assert pd.isna(result_default["a_mean_1_3"].iloc[1])
+    assert pd.isna(result_default["a_mean_1_3"].iloc[2])
+    assert not pd.isna(result_default["a_mean_1_3"].iloc[3])
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_min_periods_one_allows_partial_windows():
+    """Test that min_periods=1 allows computation with partial windows."""
+    y = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]})
+
+    ws = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]]},
+        n_jobs=1,
+        min_periods=1,
+    )
+
+    result = ws.fit_transform(y)
+
+    # With min_periods=1, should compute even with 1 observation
+    # Index 0: window looks at nothing → NaN (nothing to compute)
+    # Index 1: window looks at [0] (1 value) → mean([1]) = 1.0
+    # Index 2: window looks at [0:1] (2 values) → mean([1,2]) = 1.5
+    # Index 3: window looks at [0:2] (3 values) → mean([1,2,3]) = 2.0
+    # Index 4: window looks at [1:3] (3 values) → mean([2,3,4]) = 3.0
+
+    assert pd.isna(result["a_mean_1_3"].iloc[0])
+    assert result["a_mean_1_3"].iloc[1] == 1.0
+    assert result["a_mean_1_3"].iloc[2] == 1.5
+    assert result["a_mean_1_3"].iloc[3] == 2.0
+    assert result["a_mean_1_3"].iloc[4] == 3.0
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_min_periods_validation():
+    """Test that invalid min_periods values raise appropriate errors."""
+    y = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]})
+
+    # min_periods = 0 should fail
+    ws = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]]},
+        min_periods=0,
+        n_jobs=1,
+    )
+    with pytest.raises(ValueError, match="min_periods must be >= 1"):
+        ws.fit_transform(y)
+
+    # min_periods > window_length should fail
+    ws = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]]},
+        min_periods=5,  # window_length is 3
+        n_jobs=1,
+    )
+    with pytest.raises(ValueError, match="cannot exceed window_length"):
+        ws.fit_transform(y)
+
+    # Negative min_periods should fail
+    ws = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]]},
+        min_periods=-1,
+        n_jobs=1,
+    )
+    with pytest.raises(ValueError, match="min_periods must be >= 1"):
+        ws.fit_transform(y)
