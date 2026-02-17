@@ -246,10 +246,10 @@ class SARIMAX(_StatsModelsAdapter):
         "tests:skip_all": True,  # Unkown reason
     }
 
-    def __init__(self, order=(1,0,0), ... memory=None):
-    self,
-    order=(1, 0, 0),
-    seasonal_order=(0, 0, 0, 0),
+    def __init__(
+        self,
+        order=(1, 0, 0),
+        seasonal_order=(0, 0, 0, 0),
         trend="c",
         measurement_error=False,
         time_varying_regression=False,
@@ -279,29 +279,21 @@ class SARIMAX(_StatsModelsAdapter):
         return_params=False,
         optim_score=None,
         optim_complex_step=None,
-       optim_hessian=None,
+        optim_hessian=None,
         low_memory=False,
         memory=None,
     ):
         self.order = order
         self.seasonal_order = seasonal_order
         self.trend = trend
-        self.measurement_error = measurement_error
-        self.time_varying_regression = time_varying_regression
-        self.mle_regression = mle_regression
-        self.simple_differencing = simple_differencing
         self.enforce_stationarity = enforce_stationarity
         self.enforce_invertibility = enforce_invertibility
-        self.hamilton_representation = hamilton_representation
         self.concentrate_scale = concentrate_scale
         self.trend_offset = trend_offset
-        self.use_exact_diffuse = use_exact_diffuse
         self.dates = dates
         self.freq = freq
         self.missing = missing
         self.validate_specification = validate_specification
-
-        # Fit params
         self.disp = disp
         self.start_params = start_params
         self.transformed = transformed
@@ -317,8 +309,9 @@ class SARIMAX(_StatsModelsAdapter):
         self.optim_complex_step = optim_complex_step
         self.optim_hessian = optim_hessian
         self.low_memory = low_memory
+        self.memory = memory
 
-        super().__init__(random_state=random_state, memory=memory)
+        super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
         from statsmodels.tsa.api import SARIMAX as _SARIMAX

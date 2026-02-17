@@ -1,6 +1,7 @@
 import pytest
 import pandas as pd
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.sarimax import SARIMAX
 
 def test_memory_limit_raises_error():
     """Test that memory limit raises MemoryError when exceeded."""

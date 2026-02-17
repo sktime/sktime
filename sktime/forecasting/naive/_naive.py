@@ -93,13 +93,10 @@ class NaiveForecaster(BaseWindowForecaster):
         Window length to use in the ``mean`` strategy. If None, entire training
         series will be used.
 
-   memory : int, default=None
-    The memory limit (in bytes) for the input data (X and y).
-    If the data size exceeds this limit, a MemoryError is raised.
-
+ memory : int, default=None
+        The memory limit (in bytes) for the input data (X and y).
+        If the data size exceeds this limit, a MemoryError is raised.
         
-    References                              
-    ----------
     .. [1] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting:
         principles and practice, 3rd edition, OTexts: Melbourne, Australia.
         OTexts.com/fpp3. Accessed on 22 September 2022.
