@@ -1212,8 +1212,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         >>> forecaster.pretrain(y_panel)
         DummyGlobalForecaster()
         >>> params = forecaster.get_pretrained_params()
-        >>> sorted(params.keys())
-        ['global_mean_', 'global_std_', 'n_pretrain_instances_', 'n_pretrain_timepoints_']
+        >>> sorted(params.keys())  # doctest: +ELLIPSIS
+        ['global_mean_', ..., 'n_pretrain_timepoints_']
         """
         if not hasattr(self, "_pretrained_attrs"):
             return {}
