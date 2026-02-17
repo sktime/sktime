@@ -219,7 +219,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MUSE",
         "MVCAPA",
         "MatrixProfile",
-        "MovingWindow",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
