@@ -225,14 +225,22 @@ class FHValues:
         return self.hash
 
     def __repr__(self) -> str:
-        # <check>to be implemented after checking the final set of
-        # attributes to be stored</check>
-        return (
-            f"FHValues(values={self.values}, "
-            f"value_type={self.value_type}, "
-            f"freq={self.freq}, "
-            f"timezone={self.timezone})"
-        )
+        cls = type(self).__name__
+        vtype = self.value_type.name
+        n = len(self.values)
+        if n <= 6:
+            vals_str = str(self.values.tolist())
+        else:
+            head = self.values[:3].tolist()
+            tail = self.values[-3:].tolist()
+            vals_str = f"[{head[0]}, {head[1]}, {head[2]}, ..., "
+            vals_str += f"{tail[0]}, {tail[1]}, {tail[2]}]"
+        parts = [f"values={vals_str}", f"value_type={vtype}"]
+        if self.freq is not None:
+            parts.append(f"freq={self.freq!r}")
+        if self._timezone is not None:
+            parts.append(f"timezone={self.timezone!r}")
+        return f"{cls}({', '.join(parts)})"
 
     # may need this function as a helper for checking
     # immutability of values array.
