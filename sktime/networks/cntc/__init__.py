@@ -1,5 +1,4 @@
-"""CNTC deep learning network structure implemented in TensorFlow and PyTorch backends."""
-
+"""CNTC network structure implemented in TensorFlow and PyTorch backends."""
 
 __all__ = [
     "CNTCNetwork",
