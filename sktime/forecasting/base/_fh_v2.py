@@ -12,7 +12,7 @@ __all__ = ["ForecastingHorizonV2"]
 import numpy as np
 
 from sktime.forecasting.base._fh_utils import PandasFHConverter
-from sktime.forecasting.base._fh_values import FHValueType
+from sktime.forecasting.base._fh_values import FHValues, FHValueType
 
 # <check></check>
 # this is the marker left to mark all delayed checks
@@ -315,3 +315,22 @@ class ForecastingHorizonV2:
         if isinstance(other, ForecastingHorizonV2):
             return self.fhvalues.values >= other.fhvalues.values
         return self.fhvalues.values >= np.int64(other)
+
+    # Dunders -> container methods len, getitem, max, min
+    def __len__(self):
+        return len(self.fhvalues)
+
+    def __getitem__(self, key):
+        result = self.fhvalues[key]
+        if isinstance(result, FHValues):
+            return self._new(fhvalues=result)
+        # scalar — return as-is
+        return result
+
+    def max(self):
+        """Return the maximum value."""
+        return self.fhvalues.max()
+
+    def min(self):
+        """Return the minimum value."""
+        return self.fhvalues.min()
