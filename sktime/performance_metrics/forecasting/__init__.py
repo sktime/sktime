@@ -58,6 +58,7 @@ __all__ = [
     "mean_linex_error",
     "relative_loss",
     "MeanSquaredLogError",
+    "mean_squared_log_error",
 ]
 
 from sktime.performance_metrics.forecasting._base import make_forecasting_scorer
@@ -73,6 +74,7 @@ from sktime.performance_metrics.forecasting._functions import (
     mean_linex_error,
     mean_relative_absolute_error,
     mean_squared_error,
+    mean_squared_log_error,
     mean_squared_percentage_error,
     mean_squared_scaled_error,
     median_absolute_error,
