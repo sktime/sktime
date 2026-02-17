@@ -977,8 +977,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         Writes to self:
 
                         * Updates ``self.cutoff`` to latest index seen in ``y``.
-                        * If ``update_params=True`` and a custom ``update`` is implemented,
-                            updates fitted model attributes ending in "_".
+                        * If ``update_params=True`` and a custom ``update``
+                            is implemented, updates fitted model attributes
+                            ending in "_".
 
         Parameters
         ----------
