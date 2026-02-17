@@ -1036,18 +1036,76 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         return pred_dist
 
     def pretrain(self, y, X=None, fh=None):
-        """Pre-train forecaster on data.
+        """Pre-train forecaster on panel (global) data.
+
+        Pre-trains the forecaster by learning shared patterns from multiple
+        time series (panel or hierarchical data). After pretraining, the
+        forecaster can be fine-tuned on a specific series via ``fit``,
+        which preserves the pretrained weights instead of resetting them.
+
+        Only forecasters with the ``capability:pretrain`` tag set to ``True``
+        implement meaningful pretraining logic. For all other forecasters,
+        ``pretrain`` is a no-op that still transitions the state.
+
+        If called when the forecaster is already in the ``"pretrained"`` or
+        ``"fitted"`` state, the internal ``_pretrain_update`` method is called
+        instead, enabling incremental pretraining on additional data batches.
 
         State change:
-            Changes state to "pretrained".
+            Changes ``state`` from ``"new"`` to ``"pretrained"``.
 
         Writes to self:
 
-            * Sets pretrained model attributes ending in "_", fitted attributes are
-              inspectable via ``get_pretrained_params``.
-            * Sets ``self.state`` flag to ``"pretrained"``.
-            * Sets ``self._pretrained_attrs`` to list of pretrained attribute names
-              (as strings).
+            * Sets pretrained model attributes ending in ``"_"``.
+              These are inspectable via ``get_pretrained_params``.
+            * Sets ``self.state`` to ``"pretrained"``.
+            * Sets ``self._pretrained_attrs`` to list of pretrained attribute
+              names (as strings).
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex, or other Panel/Hierarchical mtype
+            Panel or hierarchical time series data to pretrain on.
+            Must contain multiple time series instances (not a single series).
+            For ``pd-multiindex`` mtype, the index should have levels
+            ``(instance, timepoint)``.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series, if supported by the forecaster.
+        fh : int, list, np.array, or ForecastingHorizon, optional (default=None)
+            Forecasting horizon. Not required by all forecasters.
+            For neural network based forecasters, may need to match the
+            network's output dimension (e.g., ``pred_len``).
+
+        Returns
+        -------
+        self : reference to self
+
+        Raises
+        ------
+        TypeError
+            If ``y`` is a single Series instead of Panel/Hierarchical data.
+        TypeError
+            If the forecaster does not natively support the input data
+            and would require vectorization (not supported for pretraining).
+
+        See Also
+        --------
+        fit : Fit forecaster to a single series (fine-tunes after pretraining).
+        get_pretrained_params : Retrieve parameters set during pretraining.
+        state : Current state of the forecaster.
+
+        Examples
+        --------
+        >>> from sktime.forecasting.dummy_global import DummyGlobalForecaster
+        >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+        >>> y_panel = _make_hierarchical(
+        ...     hierarchy_levels=(3,), min_timepoints=12, max_timepoints=12
+        ... )
+        >>> forecaster = DummyGlobalForecaster()
+        >>> forecaster.pretrain(y_panel)
+        DummyGlobalForecaster()
+        >>> forecaster.state
+        'pretrained'
         """
         # pretrain always requires panel data, independent of what fit/predict
         # support via y_inner_mtype. Pass expanded mtypes directly to _check_X_y
@@ -1105,37 +1163,57 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
     def get_pretrained_params(self, deep=True):
         """Get pretrained parameters of this estimator.
 
+        Returns a dictionary of attributes that were set during ``pretrain``.
+        These are attributes ending in ``"_"`` that appeared on the estimator
+        after ``pretrain`` was called, and are tracked separately from the
+        fitted parameters set by ``fit``.
+
         State required:
-            Requires state to be "pretrained" or "fitted" (after pretraining).
+            Requires state to be ``"pretrained"`` or ``"fitted"``
+            (after pretraining). Returns an empty dict if the estimator
+            has not been pretrained.
 
         Parameters
         ----------
         deep : bool, default=True
             Whether to return pretrained parameters of nested estimators.
 
-            * If True, will return a dict of parameter name : value for this object,
-              including pretrained parameters of nested estimators.
-            * If False, will return a dict of parameter name : value for this object,
-              but not include pretrained parameters of nested estimators.
+            * If True, will return a dict of parameter name : value for this
+              object, including pretrained parameters of nested estimators.
+            * If False, will return a dict of parameter name : value for this
+              object, but not include pretrained parameters of nested
+              estimators.
 
         Returns
         -------
         params : dict
             Dictionary of pretrained parameter names mapped to their values.
-            Keys are attribute names ending in "_" that were set during pretraining.
-            Returns empty dict if estimator has not been pretrained.
+            Keys are attribute names ending in ``"_"`` that were set during
+            pretraining. Returns empty dict if estimator has not been
+            pretrained.
 
-            If ``deep=True``, also contains keys/value pairs of nested estimators'
-            pretrained parameters, indexed as ``[attrname]__[paramname]``.
+            If ``deep=True``, also contains keys/value pairs of nested
+            estimators' pretrained parameters, indexed as
+            ``[attrname]__[paramname]``.
+
+        See Also
+        --------
+        pretrain : Pre-train forecaster on panel data.
+        get_fitted_params : Get parameters set during ``fit``.
 
         Examples
         --------
-        >>> from sktime.forecasting import DummyGlobalForecaster
+        >>> from sktime.forecasting.dummy_global import DummyGlobalForecaster
+        >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+        >>> y_panel = _make_hierarchical(
+        ...     hierarchy_levels=(3,), min_timepoints=12, max_timepoints=12
+        ... )
         >>> forecaster = DummyGlobalForecaster()
-        >>> # After pretraining on panel data
-        >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
-        >>> params = forecaster.get_pretrained_params()  # doctest: +SKIP
-        >>> # params might contain: {"global_mean_": 42.0, "n_pretrain_instances_": 5}
+        >>> forecaster.pretrain(y_panel)
+        DummyGlobalForecaster()
+        >>> params = forecaster.get_pretrained_params()
+        >>> sorted(params.keys())
+        ['global_mean_', 'global_std_', 'n_pretrain_instances_', 'n_pretrain_timepoints_']
         """
         if not hasattr(self, "_pretrained_attrs"):
             return {}
