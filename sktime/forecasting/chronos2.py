@@ -6,6 +6,7 @@ import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.singleton import _multiton
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -48,7 +49,7 @@ class Chronos2Forecaster(BaseForecaster):
         - "torch_dtype" : torch.dtype, default=torch.bfloat16
         Data type to use for model weights and operations.
         - "device_map" : str, default="cpu"
-        Specifies the device on which to run the model, e.g.,
+        Specifies the device on which to run the model, example:
         "cpu" for CPU inference, "cuda" for GPU, or "mps" for Apple Silicon.
     quantile_levels : list of float, default=[0.1, 0.2, 0.3, 0.4, 0.5,
         0.6, 0.7, 0.8, 0.9]
@@ -131,6 +132,49 @@ class Chronos2Forecaster(BaseForecaster):
         """Get Chronos 2 specific kwargs from the config."""
         # This method would extract and validate the relevant configuration
         # settings for the Chronos 2 model, such as batch size, context length,
-        # cross-learning flag, etc., and return them in a format suitable for
+        # cross-learning flag, etc, and return them in a format suitable for
         # initializing the model pipeline.
         pass
+
+    def _load_pipeline(self):
+        """Load the model pipeline using the multiton pattern.
+
+        Returns
+        -------
+        pipeline : Chronos2Pipeline
+            The loaded model pipeline ready for predictions.
+        """
+        return _CachedChronos2(
+            key=self._get_unique_chronos2_key(),
+            chronos2_kwargs=self._get_chronos2_kwargs(),
+        ).load_from_checkpoint()
+
+
+@_multiton
+class _CachedChronos2:
+    """Cached Chronos 2 model, to ensure only one instance exists in memory.
+
+    Chronos 2 is a zero-shot model and immutable, hence there will not be
+    any side effects of sharing the same instance across multiple uses.
+    """
+
+    def __init__(self, key, chronos2_kwargs):
+        self.key = key
+        self.chronos2_kwargs = chronos2_kwargs
+        self.model_pipeline = None
+
+    def load_from_checkpoint(self):
+        if self.model_pipeline is not None:
+            return self.model_pipeline
+
+        from chronos import Chronos2Pipeline
+
+        self.model_pipeline = Chronos2Pipeline.from_pretrained(
+            **self.chronos2_kwargs,
+        )
+
+        return self.model_pipeline
+
+
+# if support for chronos 2 small is added,
+# it needs to cached separately
