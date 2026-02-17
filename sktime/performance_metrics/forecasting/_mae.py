@@ -101,6 +101,14 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
     np.float64(0.85)
     """
 
+    tags = {
+        "scitype:y": "both",
+        "requires-y-train": False,
+        "requires-y-pred": True,
+        "inner_implements_multilevel": True,
+        "capability:multivariate": True,
+    }
+
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
 

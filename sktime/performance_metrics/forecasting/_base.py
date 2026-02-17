@@ -333,7 +333,7 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         return out_df
 
-    def _evaluate(self, y_true, y_pred, **kwargs):
+    def _evaluate(self, y_true, y_pred, multioutput="uniform_average", **kwargs):
         """Evaluate the desired metric on given inputs.
 
         private _evaluate containing core logic, called from evaluate
@@ -380,10 +380,36 @@ class BaseForecastingErrorMetric(BaseMetric):
         # multioutput = self.multioutput
         # multilevel = self.multilevel
         try:
-            index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
-            return index_df.mean(axis=0)
+            # Check for opt-in and hierarchy
+            is_vectorized = self.get_tag("inner_implements_multilevel", False)
+            n_levels = y_true.index.nlevels
+
+            if is_vectorized and n_levels > 1:
+                index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
+                level_to_group = list(range(n_levels - 1))
+
+                per_instance = index_df.groupby(level=level_to_group).mean()
+
+                if self.multilevel == "raw_values":
+                    return per_instance
+                else:
+                    res = per_instance.mean(axis=0)
+
+                    if isinstance(res, (pd.Series, pd.DataFrame)):
+                        return self._handle_multioutput(res, multioutput)
+                    return float(res)
+
+            # Fallback for flat data or legacy paths
+            res = self._evaluate_by_index(y_true, y_pred, **kwargs).mean(axis=0)
+
+            if isinstance(res, (pd.Series, pd.DataFrame)):
+                return self._handle_multioutput(res, multioutput)
+            return float(res)
+
         except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+            raise RecursionError(
+                "Must implement one of _evaluate or _evaluate_by_index"
+            )
 
     def _evaluate_vectorized(self, y_true, y_pred, **kwargs):
         """Vectorized version of _evaluate.

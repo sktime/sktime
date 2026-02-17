@@ -141,6 +141,14 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
     np.float64(0.5668686868686869)
     """
 
+    _tags = {
+        "scitype:y": "both",
+        "requires-y-train": False,
+        "requires-y-pred": True,
+        "inner_implements_multilevel": True,
+        "capability:multivariate": True,
+    }
+
     def __init__(
         self,
         multioutput="uniform_average",

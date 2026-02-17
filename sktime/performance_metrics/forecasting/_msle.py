@@ -80,42 +80,46 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
             by_index=by_index,
         )
 
-    def _evaluate(self, y_true, y_pred, **kwargs):
-        """Evaluate the desired metric on given inputs."""
-        index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
+    def _evaluate(self, y_true, y_pred, multioutput="uniform_average", **kwargs):
+        """Evaluate MSLE or RMSLE with mathematical parity."""
+        is_hierarchical = y_true.index.nlevels > 1
 
-        if self.multilevel == "raw_values":
-            # Group by all levels except the last one (the time index)
-            # This returns the mean error for each series in the hierarchy
+        if self.square_root and is_hierarchical:
+            index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
             level_to_group = list(range(y_true.index.nlevels - 1))
-            out_df = index_df.groupby(level=level_to_group).mean()
-        else:
-            # Default: Average across both time and hierarchy levels
-            out_df = index_df.mean(axis=0)
-        if self.square_root:
-            out_df = np.sqrt(out_df)
 
-        return out_df
+            per_instance = index_df.groupby(level=level_to_group).mean()
+            per_instance = np.sqrt(per_instance)
+
+            if self.multilevel == "raw_values":
+                return per_instance
+
+            res = per_instance.mean(axis=0)
+
+            if isinstance(res, (pd.Series, pd.DataFrame)):
+                return self._handle_multioutput(res, multioutput)
+            return float(res)
+
+        res = super()._evaluate(y_true, y_pred, multioutput=multioutput, **kwargs)
+
+        if self.square_root:
+            res = np.sqrt(res)
+            if not isinstance(res, (pd.Series, pd.DataFrame)):
+                return float(res)
+
+        return res
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point."""
-        y_true_np = np.asanyarray(y_true)
-        y_pred_np = np.asanyarray(y_pred)
+        y_true_np = np.maximum(np.asanyarray(y_true), 0)
+        y_pred_np = np.maximum(np.asanyarray(y_pred), 0)
 
-        # Numerical stability: MSLE is undefined for negative values
-        y_true_np = np.maximum(y_true_np, 0)
-        y_pred_np = np.maximum(y_pred_np, 0)
+        # Core vectorized math
+        squared_log_error = np.square(np.log1p(y_true_np) - np.log1p(y_pred_np))
 
-        y_true_log = np.log1p(y_true_np)
-        y_pred_log = np.log1p(y_pred_np)
-
-        squared_log_error = np.square(y_true_log - y_pred_log)
-
-        # Reconstruct DataFrame with MultiIndex to preserve hierarchy
         squared_log_error = pd.DataFrame(
             squared_log_error, index=y_true.index, columns=y_true.columns
         )
-
         squared_log_error = self._get_weighted_df(squared_log_error, **kwargs)
 
         return self._handle_multioutput(squared_log_error, self.multioutput)

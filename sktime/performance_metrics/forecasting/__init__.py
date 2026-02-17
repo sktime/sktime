@@ -57,6 +57,7 @@ __all__ = [
     "mean_asymmetric_error",
     "mean_linex_error",
     "relative_loss",
+    "MeanSquaredLogError",
 ]
 
 from sktime.performance_metrics.forecasting._base import make_forecasting_scorer
@@ -110,6 +111,7 @@ from sktime.performance_metrics.forecasting._mlinex import MeanLinexError
 from sktime.performance_metrics.forecasting._mrelae import MeanRelativeAbsoluteError
 from sktime.performance_metrics.forecasting._mse import MeanSquaredError
 from sktime.performance_metrics.forecasting._msep import MeanSquaredErrorPercentage
+from sktime.performance_metrics.forecasting._msle import MeanSquaredLogError
 from sktime.performance_metrics.forecasting._mspe import MeanSquaredPercentageError
 from sktime.performance_metrics.forecasting._msse import MeanSquaredScaledError
 from sktime.performance_metrics.forecasting._rell import RelativeLoss
