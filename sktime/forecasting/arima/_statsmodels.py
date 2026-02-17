@@ -225,7 +225,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
         self.return_params = return_params
         self.low_memory = low_memory
 
-        super().__init__(...)
+        super().__init__(random_state=random_state, memory=memory)
 
     def _fit_forecaster(self, y, X=None):
         from statsmodels.tsa.arima.model import ARIMA as _ARIMA

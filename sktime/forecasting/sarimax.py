@@ -197,10 +197,9 @@ class SARIMAX(_StatsModelsAdapter):
         used, some features of the results object will not be available (including
         smoothed results and in-sample prediction), although out-of-sample forecasting
         is possible. Default is False.
-    memory : int, optional (default=None)
+    memory : int, default=None
         The memory limit (in bytes) for the input data (X and y).
         If the data size exceeds this limit, a MemoryError is raised.
-
     See Also
     
     --------
@@ -247,7 +246,7 @@ class SARIMAX(_StatsModelsAdapter):
         "tests:skip_all": True,  # Unkown reason
     }
 
-    def __init__(
+    def __init__(self, order=(1,0,0), ... memory=None):
     self,
     order=(1, 0, 0),
     seasonal_order=(0, 0, 0, 0),
