@@ -86,3 +86,34 @@ class Chronos2Forecaster(BaseForecaster):
         self.quantile_levels = quantile_levels
         self.seed = seed
         super().__init__()
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit the forecaster to training data.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.DataFrame
+            The target time series to which the forecaster will be fitted.
+            Can be univariate (Series) or multivariate (DataFrame).
+        X : pd.DataFrame, optional, default=None
+            Exogenous covariates corresponding to the target series. Should
+            have the same index as `y` and columns for each covariate.
+        fh : ForecastingHorizon, optional, default=None
+            The forecasting horizon with the time points to predict. If None,
+            it will be inferred from the training data.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        # Placeholder for actual fitting logic, which would involve loading the
+        # Chronos 2 model and preparing it for forecasting.
+        return self
+
+    def _get_chronos2_kwargs(self):
+        """Get Chronos 2 specific kwargs from the config."""
+        # This method would extract and validate the relevant configuration
+        # settings for the Chronos 2 model, such as batch size, context length,
+        # cross-learning flag, etc., and return them in a format suitable for
+        # initializing the model pipeline.
+        pass
