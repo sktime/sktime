@@ -34,30 +34,25 @@ class Chronos2Forecaster(BaseForecaster):
     model_path : str, default="amazon/chronos-2"
         Path to the Chronos 2 HuggingFace model. Available models include
         ``"amazon/chronos-2"`` (120M parameters).
-
     config : dict, optional, default={}
         A dictionary specifying the configuration settings for the model.
         The available configuration options include:
-
         - "batch_size" : int, default=256
-            Batch size for inference.
+        Batch size for inference.
         - "context_length" : int or None, default=None
-            Maximum context length. If None, uses the model default (8192).
+        Maximum context length. If None, uses the model default (8192).
         - "cross_learning" : bool, default=False
-            If True, enables cross-learning across variates for
-            multivariate forecasting.
+        If True, enables cross-learning across variates for multivariate forecasting.
         - "limit_prediction_length" : bool, default=False
-            If True, limits the prediction length to the model's maximum.
+        If True, limits the prediction length to the model's maximum.
         - "torch_dtype" : torch.dtype, default=torch.bfloat16
-            Data type to use for model weights and operations.
+        Data type to use for model weights and operations.
         - "device_map" : str, default="cpu"
-            Specifies the device on which to run the model, e.g.,
-            "cpu", "cuda", or "mps".
-
-    quantile_levels : list of float, default=[0.1, 0.2, 0.3, 0.4, 0.5, \
+        Specifies the device on which to run the model, e.g.,
+        "cpu" for CPU inference, "cuda" for GPU, or "mps" for Apple Silicon.
+    quantile_levels : list of float, default=[0.1, 0.2, 0.3, 0.4, 0.5,
         0.6, 0.7, 0.8, 0.9]
         Quantile levels for probabilistic predictions.
-
     seed : int or None, default=None
         Random seed for reproducibility.
 
@@ -77,8 +72,11 @@ class Chronos2Forecaster(BaseForecaster):
     def __init__(
         self,
         model_path: str = "amazon/chronos-2",
+        # there is a small version of the model,
+        # "amazon/chronos-2-small" (20M parameters),
+        # Should it be supported as well??
         config: dict = None,
-        quantile_levels: list = None,
+        quantile_levels: list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
         seed: int | None = None,
     ):
         self.model_path = model_path
