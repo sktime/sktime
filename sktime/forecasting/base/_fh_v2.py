@@ -334,3 +334,31 @@ class ForecastingHorizonV2:
     def min(self):
         """Return the minimum value."""
         return self.fhvalues.min()
+
+    # Below method computes a hash for the ForecastingHorizonV2 instance,
+    # which allows it to be used in sets and as dictionary keys.
+    # The hash is computed based on the tuple containing:
+    # 1. the internal FHValues instance which itself has a custom __hash__ based
+    #    on its int64 array bytes + metadata
+    # 2. the is_relative boolean flag, natively hashable
+    # <check>
+    # this implementation assumes that FHValues
+    # has a proper __hash__ method implemented.
+    # Note: currently there's an inconsistency between __eq__ and __hash__
+    # Python requires:
+    #   If a == b, then hash(a) == hash(b)
+    # current __eq__ only compares raw int64 arrays element-wise
+    # and returns a numpy array, not a bool.
+    # while __hash__ considers numpy array + all metadata + is_relative.
+    # This violates the contract.
+    # Two objects could be "=="" (same raw values)
+    # but have different hashes (different freq or is_relative).
+    # To fix, either:
+    # Make __eq__ return a single bool comparing all attributes when other is
+    # ForecastingHorizonV2, or
+    # Move element-wise comparison to a separate method
+    # and keep __eq__ consistent with __hash__.
+    # Need to consider this in th context of forecasting horizon usage.
+    # </check>
+    def __hash__(self):
+        return hash((self.fhvalues, self.is_relative))
