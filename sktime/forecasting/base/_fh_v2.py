@@ -362,3 +362,24 @@ class ForecastingHorizonV2:
     # </check>
     def __hash__(self):
         return hash((self.fhvalues, self.is_relative))
+
+    def __repr__(self):
+        class_name = type(self).__name__
+        vals = self.fhvalues
+        vtype = vals.value_type.name
+        n = len(vals)
+        parts = [f"n={n}", f"type={vtype}", f"is_relative={self._is_relative}"]
+        if vals.freq is not None:
+            parts.append(f"freq={vals.freq!r}")
+        # if less than 6 values, show all values in repr,
+        # otherwise show 1st and last 3 only
+        if n <= 6:
+            parts.append(f"values={vals.values.tolist()}")
+        else:
+            head = vals.values[:3].tolist()
+            tail = vals.values[-3:].tolist()
+            parts.append(
+                f"values=[{head[0]}, {head[1]}, {head[2]}, ..., "
+                f"{tail[0]}, {tail[1]}, {tail[2]}]"
+            )
+        return f"{class_name}({', '.join(parts)})"
