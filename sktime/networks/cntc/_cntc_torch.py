@@ -98,6 +98,9 @@ class CNTCNetworkTorch(NNModule):
         (conv1_dropout, rnn_dropout, conv2_dropout, lstm_dropout,
          pool_dropout, attention_dropout, mlp_dropout)
         where mlp_dropout is shared across both MLP hidden layers.
+    init_weights: str, default=None
+        Weight initialization method for all layers. Must be a valid method in
+        torch.nn.init, e.g. 'xavier_uniform', 'kaiming_normal', etc.
     random_state : int, default=0
         Seed for reproducible weight initialisation.
 
@@ -134,6 +137,7 @@ class CNTCNetworkTorch(NNModule):
         activation: str = "relu",
         activation_attention: str = "sigmoid",
         dropout: float | tuple = (0.8, 0.8, 0.7, 0.8, 0.6, 0.5, 0.8),
+        init_weights: str | None = None,
         random_state: int = 0,
     ):
         super().__init__()
@@ -160,6 +164,7 @@ class CNTCNetworkTorch(NNModule):
         self.random_state = random_state
         self.rnn_layer = rnn_layer
         self.lstm_layer = lstm_layer
+        self.init_weights = init_weights
 
         if isinstance(dropout, float):
             d = [dropout] * 7
@@ -224,6 +229,9 @@ class CNTCNetworkTorch(NNModule):
         self.drop7 = nn.Dropout(d_mlp)
         self.out = nn.Linear(dense_size, n_classes)
 
+        if init_weights is not None:
+            self.apply(self._init_weights)
+
     def forward(self, x1, x3):
         """Forward pass.
 
@@ -287,3 +295,25 @@ class CNTCNetworkTorch(NNModule):
         h = self._act(self.mlp2(h))
         h = self.drop7(h)
         return self.out(h)  # raw logits
+
+    def _init_weights(self, module):
+        """Initialize weights for the network modules."""
+        if isinstance(module, (nn.Conv1d, nn.Linear)):
+            init_fn = getattr(torch.nn.init, self.init_weights)
+            init_fn(module.weight)
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+        if isinstance(module, nn.LSTM):
+            for name, param in module.named_parameters():
+                if "weight" in name:
+                    init_fn = getattr(torch.nn.init, self.init_weights)
+                    init_fn(param)
+                elif "bias" in name:
+                    nn.init.zeros_(param)
+        if isinstance(module, SeqSelfAttention):
+            for name, param in module.named_parameters():
+                if "W_q" in name or "W_k" in name or "v" in name:
+                    init_fn = getattr(torch.nn.init, self.init_weights)
+                    init_fn(param.weight)
+                    if param.bias is not None:
+                        nn.init.zeros_(param.bias)
