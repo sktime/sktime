@@ -2,7 +2,7 @@
 
 __all__ = ["Chronos2Forecaster"]
 
-
+import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
@@ -69,6 +69,15 @@ class Chronos2Forecaster(BaseForecaster):
 
     """
 
+    _default_config = {
+        "batch_size": 256,
+        "context_length": None,
+        "cross_learning": False,
+        "limit_prediction_length": False,
+        "torch_dtype": torch.bfloat16,
+        "device_map": "cpu",
+    }
+
     def __init__(
         self,
         model_path: str = "amazon/chronos-2",
@@ -80,9 +89,19 @@ class Chronos2Forecaster(BaseForecaster):
         seed: int | None = None,
     ):
         self.model_path = model_path
-        self.config = config
         self.quantile_levels = quantile_levels
+
+        # set random seed for reproducibility
         self.seed = seed
+        self._seed = np.random.randint(0, 2**31) if seed is None else seed
+
+        self.config = config
+        self._config = self._default_config.copy()
+        if config is not None:
+            self._config.update(config)
+
+        self.context = None
+
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
