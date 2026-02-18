@@ -183,7 +183,6 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
-        "capability:pretrain": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,

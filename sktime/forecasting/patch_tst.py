@@ -274,7 +274,6 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "maintainers": ["julian-fong"],
         "python_dependencies": ["transformers", "torch", "accelerate"],
         "capability:global_forecasting": True,
-        "capability:pretrain": False,
         "tests:vm": True,
     }
 

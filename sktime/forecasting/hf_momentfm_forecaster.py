@@ -161,7 +161,6 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "transformers",
         ],
         "capability:global_forecasting": True,
-        "capability:pretrain": False,
         "python_version": ">= 3.10",
         "capability:insample": False,
         "capability:pred_int:insample": False,
