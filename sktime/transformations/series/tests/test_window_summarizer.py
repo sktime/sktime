@@ -405,11 +405,8 @@ def test_min_periods_backwards_compatibility():
 
     pd.testing.assert_frame_equal(result_default, result_explicit)
 
-    # Verify expected behavior: first 3 values should be NaN (strict windows)
-    assert pd.isna(result_default["a_mean_1_3"].iloc[0])
-    assert pd.isna(result_default["a_mean_1_3"].iloc[1])
-    assert pd.isna(result_default["a_mean_1_3"].iloc[2])
-    assert not pd.isna(result_default["a_mean_1_3"].iloc[3])
+    expected = pd.Series([np.nan, np.nan, np.nan, 2.0, 3.0], name="a_mean_1_3")
+    pd.testing.assert_series_equal(result_default["a_mean_1_3"], expected)
 
 
 @pytest.mark.skipif(
@@ -428,51 +425,104 @@ def test_min_periods_one_allows_partial_windows():
 
     result = ws.fit_transform(y)
 
-    # With min_periods=1, should compute even with 1 observation
-    # Index 0: window looks at nothing → NaN (nothing to compute)
-    # Index 1: window looks at [0] (1 value) → mean([1]) = 1.0
-    # Index 2: window looks at [0:1] (2 values) → mean([1,2]) = 1.5
-    # Index 3: window looks at [0:2] (3 values) → mean([1,2,3]) = 2.0
-    # Index 4: window looks at [1:3] (3 values) → mean([2,3,4]) = 3.0
-
-    assert pd.isna(result["a_mean_1_3"].iloc[0])
-    assert result["a_mean_1_3"].iloc[1] == 1.0
-    assert result["a_mean_1_3"].iloc[2] == 1.5
-    assert result["a_mean_1_3"].iloc[3] == 2.0
-    assert result["a_mean_1_3"].iloc[4] == 3.0
+    expected = pd.Series([np.nan, 1.0, 1.5, 2.0, 3.0], name="a_mean_1_3")
+    pd.testing.assert_series_equal(result["a_mean_1_3"], expected)
 
 
 @pytest.mark.skipif(
     not run_test_for_class(WindowSummarizer),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_min_periods_validation():
-    """Test that invalid min_periods values raise appropriate errors."""
+def test_min_periods_mixed_lag_and_rolling_no_error():
+    """Test min_periods with mixed lag and rolling features."""
     y = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]})
 
-    # min_periods = 0 should fail
+    ws = WindowSummarizer(
+        lag_feature={"lag": [1], "mean": [[1, 3]]},
+        n_jobs=1,
+        min_periods=2,
+    )
+
+    result = ws.fit_transform(y)
+
+    expected = pd.DataFrame(
+        {
+            "a_lag_1": [np.nan, 1.0, 2.0, 3.0, 4.0],
+            "a_mean_1_3": [np.nan, np.nan, 1.5, 2.0, 3.0],
+        }
+    )
+
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "min_periods, error_message",
+    [
+        (0, "min_periods must be >= 1"),
+        (-1, "min_periods must be >= 1"),
+        (5, "cannot exceed window_length"),
+        (1.5, "min_periods must be an integer >= 1 or None"),
+        ("2", "min_periods must be an integer >= 1 or None"),
+    ],
+)
+def test_min_periods_validation(min_periods, error_message):
+    """Test invalid min_periods values raise informative errors."""
+    y = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]})
+
     ws = WindowSummarizer(
         lag_feature={"mean": [[1, 3]]},
-        min_periods=0,
+        min_periods=min_periods,
         n_jobs=1,
     )
-    with pytest.raises(ValueError, match="min_periods must be >= 1"):
+    with pytest.raises(ValueError, match=error_message):
         ws.fit_transform(y)
 
-    # min_periods > window_length should fail
-    ws = WindowSummarizer(
-        lag_feature={"mean": [[1, 3]]},
-        min_periods=5,  # window_length is 3
-        n_jobs=1,
-    )
-    with pytest.raises(ValueError, match="cannot exceed window_length"):
-        ws.fit_transform(y)
 
-    # Negative min_periods should fail
-    ws = WindowSummarizer(
-        lag_feature={"mean": [[1, 3]]},
-        min_periods=-1,
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_min_periods_regression_prevents_na_propagation_in_rolling():
+    """Regression test for issue #9362 with NaN values in forecast horizon."""
+    X = pd.DataFrame(
+        {
+            "feature1": [1, 2, 3, 4, 5, np.nan, np.nan, np.nan],
+            "feature2": [10, 20, 30, 40, 50, np.nan, np.nan, np.nan],
+        }
+    )
+
+    ws_default = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]], "lag": [1]},
+        target_cols=["feature1", "feature2"],
+        truncate="bfill",
         n_jobs=1,
     )
-    with pytest.raises(ValueError, match="min_periods must be >= 1"):
-        ws.fit_transform(y)
+
+    ws_mp1 = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]], "lag": [1]},
+        target_cols=["feature1", "feature2"],
+        truncate="bfill",
+        n_jobs=1,
+        min_periods=1,
+    )
+
+    Xt_default = ws_default.fit_transform(X)
+    Xt_mp1 = ws_mp1.fit_transform(X)
+
+    mean_cols = ["feature1_mean_1_3", "feature2_mean_1_3"]
+
+    assert Xt_default.loc[[6, 7], mean_cols].isna().all().all()
+
+    expected_tail = pd.DataFrame(
+        {
+            "feature1_mean_1_3": [4.0, 4.5, 5.0],
+            "feature2_mean_1_3": [40.0, 45.0, 50.0],
+        },
+        index=[5, 6, 7],
+    )
+
+    pd.testing.assert_frame_equal(Xt_mp1.loc[[5, 6, 7], mean_cols], expected_tail)
