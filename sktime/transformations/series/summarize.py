@@ -5,6 +5,8 @@
 __author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut", "BensHamza"]
 __all__ = ["SummaryTransformer", "WindowSummarizer", "SplitterSummarizer"]
 
+import numbers
+
 import pandas as pd
 
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
@@ -445,6 +447,29 @@ def get_name_list(Z):
     return Z_name
 
 
+def _coerce_min_periods(min_periods):
+    """Validate and coerce min_periods to int, if not None."""
+    if min_periods is None:
+        return None
+
+    if isinstance(min_periods, bool) or not isinstance(min_periods, numbers.Real):
+        raise ValueError(
+            f"min_periods must be an integer >= 1 or None, got {min_periods!r}"
+        )
+
+    if not float(min_periods).is_integer():
+        raise ValueError(
+            f"min_periods must be an integer >= 1 or None, got {min_periods!r}"
+        )
+
+    mp = int(min_periods)
+
+    if mp < 1:
+        raise ValueError(f"min_periods must be >= 1, got {mp}")
+
+    return mp
+
+
 def _window_feature(Z, summarizer=None, window=None, bfill=False, min_periods=None):
     """Compute window features and lag.
 
@@ -474,36 +499,45 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False, min_periods=No
         class description for in-depth explanation.
     min_periods: int, optional, default=None
         Minimum number of observations in the window required to have a value.
-        If None, defaults to window_length. By seting it to a lower number, allows
-        partial windows.
+        If None, defaults to window_length. By setting it to a lower number, allows
+        partial windows for rolling summarizers.
     """
     lag = window[0]
     window_length = window[1]
 
-    if min_periods is None:
-        mp = window_length
-    else:
-        mp = int(min_periods)
-        if mp < 1:
-            raise ValueError(f"min_periods must be >= 1, got {mp}")
-        if mp > window_length:
-            raise ValueError(
-                f"min_periods ({mp}) cannot exceed window_length ({window_length})"
-            )
+    mp = _coerce_min_periods(min_periods)
 
     feat: pd.DataFrame = pd.DataFrame()
     if summarizer in pd_rolling:
+        if mp is None:
+            rolling_mp = window_length
+        else:
+            if mp > window_length:
+                raise ValueError(
+                    f"min_periods ({mp}) cannot exceed window_length ({window_length})"
+                )
+            rolling_mp = mp
+
         feat = Z.transform(
             lambda x: getattr(
-                x.rolling(window=window_length, min_periods=mp), summarizer
+                x.rolling(window=window_length, min_periods=rolling_mp), summarizer
             )().shift(lag)
         )
     elif summarizer == "lag":
         feat = Z.transform(lambda x: x.shift(lag))
     elif callable(summarizer):
+        if mp is None:
+            rolling_mp = window_length
+        else:
+            if mp > window_length:
+                raise ValueError(
+                    f"min_periods ({mp}) cannot exceed window_length ({window_length})"
+                )
+            rolling_mp = mp
+
         feat = Z.transform(
             lambda x: (
-                x.rolling(window=window_length, min_periods=mp)
+                x.rolling(window=window_length, min_periods=rolling_mp)
                 .apply(summarizer, raw=True)
                 .shift(lag)
             )
