@@ -2,6 +2,7 @@
 
 import warnings
 from copy import copy, deepcopy
+
 from sklearn.utils.validation import check_memory
 from sktime.base import BaseEstimator
 from sktime.pipeline.step import Step
@@ -50,7 +51,7 @@ class Pipeline(BaseEstimator):
         called can be overridden using the method kwarg. Further provided kwargs
         are directly provided to the skobject if it is called.
 
-   Parameters
+    Parameters
     ----------
     param steps : A list of dicts that specify the steps of the pipeline. Further
         steps can be added by using add_step method.
@@ -160,7 +161,7 @@ class Pipeline(BaseEstimator):
     """
 
     def __init__(self, steps=None, memory=None):
-        self.memory = check_memory(memory) 
+        self.memory = check_memory(memory) if memory is not None else None
         warnings.warn(
             "This generalised graphical pipeline is experimental, "
             "with all the usual risks of edge features. "
@@ -276,7 +277,8 @@ class Pipeline(BaseEstimator):
 
         if "steps" in params:
             new_step_infos = params["steps"]
-        self.__init__(steps=new_step_infos)
+        memory = params.get("memory", self.memory)
+        self.__init__(steps=new_step_infos, memory=memory)
         return self
 
     def _get_step(self, name):
@@ -321,7 +323,7 @@ class Pipeline(BaseEstimator):
         )
         steps = copy(self._steps)
         steps.append(step)
-        return Pipeline(steps=steps)
+        return Pipeline(steps=steps, memory=self.memory)
 
     def _assemble_steps(self):
         # Reset steps and id mappings
@@ -363,7 +365,7 @@ class Pipeline(BaseEstimator):
                 input_steps,
                 method=method,
                 params=kwargs,
-                memory=self.memory,  
+                memory=self.memory,
             )
             if name in self.assembled_steps:
                 raise ValueError(
