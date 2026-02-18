@@ -70,7 +70,7 @@ class CNTCNetworkTorch(NNModule):
         For univariate time series this is 1.
     n_classes : int
         Number of output classes for classification.
-    kernel_sizes : list of int, length n_conv_layers, default=[1, 1]
+    kernel_sizes : tuple of int, length n_conv_layers, default=(1, 1)
         Kernel size for each Conv1D layer (first and second conv block).
     rnn_layer : int, default=64
         Hidden size of the SimpleRNN used in the CCNN arm.
@@ -82,7 +82,7 @@ class CNTCNetworkTorch(NNModule):
     n_conv_layers : int, default=2
         Number of Conv1D blocks in the CCNN arm (must match len(kernel_sizes)
         and len(filter_sizes)).
-    filter_sizes : list of int, length n_conv_layers, default=[16, 8]
+    filter_sizes : tuple of int, length n_conv_layers, default=(16, 8)
         Number of output filters for each Conv1D block.
     dense_size : int, default=64
         Number of units in each of the two MLP hidden layers.
@@ -98,7 +98,7 @@ class CNTCNetworkTorch(NNModule):
         (conv1_dropout, rnn_dropout, conv2_dropout, lstm_dropout,
          pool_dropout, attention_dropout, mlp_dropout)
         where mlp_dropout is shared across both MLP hidden layers.
-    init_weights: str, default=None
+    init_weights: str, default="xavier_uniform"
         Weight initialization method for all layers. Must be a valid method in
         torch.nn.init, e.g. 'xavier_uniform', 'kaiming_normal', etc.
     random_state : int, default=0
@@ -127,17 +127,17 @@ class CNTCNetworkTorch(NNModule):
         self,
         in_channels: int,
         n_classes: int,
-        kernel_sizes: list = [1, 1],
+        kernel_sizes: tuple = (1, 1),
         rnn_layer: int = 64,
         lstm_layer: int = 8,
         evg_pool_size: int = 1,
         n_conv_layers: int = 2,
-        filter_sizes: list = [16, 8],
+        filter_sizes: tuple = (16, 8),
         dense_size: int = 64,
         activation: str = "relu",
         activation_attention: str = "sigmoid",
         dropout: float | tuple = (0.8, 0.8, 0.7, 0.8, 0.6, 0.5, 0.8),
-        init_weights: str | None = None,
+        init_weights: str | None = "xavier_uniform",
         random_state: int = 0,
     ):
         super().__init__()
