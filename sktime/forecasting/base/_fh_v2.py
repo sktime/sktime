@@ -183,7 +183,75 @@ class ForecastingHorizonV2:
         ForecastingHorizonV2
             Relative representation of forecasting horizon.
         """
-        pass
+        if self.is_relative:
+            return self._new()
+
+        if cutoff is None:
+            raise ValueError(
+                "`cutoff` must be provided to convert absolute FH to relative."
+            )
+
+        cutoff_val, cutoff_type, cutoff_freq, cutoff_tz = (
+            PandasFHConverter.cutoff_to_internal(cutoff, freq=self.freq)
+        )
+
+        # mismatch between the FH frequency and cutoff frequency
+        # can happen and should be flagged
+        if (
+            self.freq is not None
+            and cutoff_freq is not None
+            and self.freq != cutoff_freq
+        ):
+            raise ValueError(
+                f"Frequency mismatch between FH and cutoff: "
+                f"FH freq={self.freq}, cutoff freq={cutoff_freq}"
+            )
+        freq = self.freq or cutoff_freq
+
+        # vtype can only be absolute types (PERIOD, DATETIME, or INT) at this point,
+        # because if it were a relative type,
+        # to_relative would return at the start of the method
+        vtype = self.fhvalues.value_type
+        vals = self.fhvalues.values
+
+        # <check>
+        # PandasFHConverter methods not yet implemented
+        # </check>
+        if vtype == FHValueType.PERIOD:
+            # ordinal difference -> integer steps
+            # divide by freq multiplier to get step count
+            # e.g., "2D" has multiplier 2, so ordinal diff of 4 = 2 steps
+            relative_vals = vals - cutoff_val
+            if freq is not None:
+                mult = PandasFHConverter.freq_multiplier(freq)
+                if mult != 1:
+                    relative_vals = relative_vals // mult
+            fhv = FHValues(relative_vals.astype(np.int64), FHValueType.INT, freq=freq)
+            return self._new(fhvalues=fhv, is_relative=True)
+
+        if vtype == FHValueType.DATETIME:
+            # nanosecond difference
+            relative_nanos = (vals - cutoff_val).astype(np.int64)
+            if freq is not None:
+                # convert nanosecond diffs to integer steps using freq
+                relative_vals = PandasFHConverter.nanos_to_steps(
+                    relative_nanos, freq, ref_nanos=cutoff_val
+                )
+                fhv = FHValues(relative_vals, FHValueType.INT, freq=freq)
+            else:
+                # no freq: return as TIMEDELTA nanoseconds
+                fhv = FHValues(relative_nanos, FHValueType.TIMEDELTA, freq=freq)
+            return self._new(fhvalues=fhv, is_relative=True)
+
+        if vtype == FHValueType.INT:
+            # absolute int - cutoff int -> relative int
+            relative_vals = vals - cutoff_val
+            fhv = FHValues(relative_vals.astype(np.int64), FHValueType.INT, freq=freq)
+            return self._new(fhvalues=fhv, is_relative=True)
+
+        # if we reach this point,
+        # it means the value type is not compatible with relative representation
+        raise TypeError(f"Cannot convert {vtype.name} to relative.")
 
     def to_absolute(self, cutoff):
         """Return absolute version of forecasting horizon.
