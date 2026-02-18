@@ -23,8 +23,9 @@ jobs:
           pip install .[all_extras,dev]
           # keep nightly checks in currently supported compatibility windows
           # numpy 2.4 pre-releases are incompatible with numba in all_extras
+          # pandas 3.0+ currently breaks DateTimeFeatures in test_softdeps
           # scikit-learn 1.7 pre-releases currently break sklearn tag checks
-          pip install --upgrade "numpy<2.4.0a0" pandas "scikit-learn<1.7.0a0"
+          pip install --upgrade "numpy<2.4.0a0" "pandas<2.4.0a0" "scikit-learn<1.7.0a0"
           python -c "import numpy, pandas, sklearn; print('numpy', numpy.__version__); print('pandas', pandas.__version__); print('sklearn', sklearn.__version__)"
       - name: Run Smoke Test
         run: pytest sktime/tests/test_softdeps.py
