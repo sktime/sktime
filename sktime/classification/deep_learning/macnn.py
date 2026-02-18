@@ -21,6 +21,9 @@ class MACNNClassifier(BaseDeepClassifier):
     padding : str, optional (default="same")
         The type of padding to be provided in MACNN Blocks. Accepts
         all the string values that keras.layers supports.
+        Note: For Conv1D layers within MACNN Blocks, padding is always set to "same"
+        to ensure consistent output lengths for multi-scale convolutions.
+        This parameter only affects the pooling layers between MACNN Blocks.
     pool_size : int, optional (default=3)
         A single value representing pooling windows which are applied
         between two MACNN Blocks.
