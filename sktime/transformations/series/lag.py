@@ -144,7 +144,6 @@ class Lag(BaseTransformer):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
         lags=0,
@@ -337,7 +336,6 @@ class Lag(BaseTransformer):
         """
         return self
 
-    # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -468,7 +466,6 @@ class ReducerTransform(BaseTransformer):
         "capability:missing_values:removes": False,
     }
 
-    # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
         lags=0,
@@ -621,7 +618,6 @@ class ReducerTransform(BaseTransformer):
         self.trafo_.update(X=X, y=y)
         return self
 
-    # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -648,3 +644,4 @@ class ReducerTransform(BaseTransformer):
         params2 = {"lags": [1, 3, 5, 7], "impute_method": "ffill"}
 
         return [params1, params2]
+
