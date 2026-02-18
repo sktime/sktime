@@ -36,6 +36,8 @@ class TapNetClassifier(BaseDeepClassifier):
         List of Keras callbacks to apply during model training.
     dropout : float, default = 0.5
         dropout rate, in the range [0, 1)
+    lstm_dropout : float, default = 0.8
+        dropout rate for the LSTM layer, in the range [0, 1)
     dilation : int, default = 1
         dilation value
     activation : str, default = "sigmoid"
@@ -130,6 +132,7 @@ class TapNetClassifier(BaseDeepClassifier):
         metrics=None,
         callbacks=None,
         verbose=False,
+        lstm_dropout=0.8,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -154,6 +157,7 @@ class TapNetClassifier(BaseDeepClassifier):
         self.verbose = verbose
 
         self.dropout = dropout
+        self.lstm_dropout = lstm_dropout
         self.use_lstm = use_lstm
         self.use_cnn = use_cnn
 
@@ -177,6 +181,7 @@ class TapNetClassifier(BaseDeepClassifier):
             use_cnn=self.use_cnn,
             random_state=self.random_state,
             padding=self.padding,
+            lstm_dropout=self.lstm_dropout,
         )
 
     def build_model(self, input_shape, n_classes, **kwargs):
