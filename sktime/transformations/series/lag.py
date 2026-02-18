@@ -336,7 +336,6 @@ class Lag(BaseTransformer):
         """
         return self
 
-    #   required for automated unit and integration testing of estimator
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -618,7 +617,6 @@ class ReducerTransform(BaseTransformer):
         self.trafo_.update(X=X, y=y)
         return self
 
-    #   required for automated unit and integration testing of estimator
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
