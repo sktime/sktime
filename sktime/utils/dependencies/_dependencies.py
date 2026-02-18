@@ -12,6 +12,9 @@ from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
 
+# duplicate exists in skbase
+# 190+ imports in sktime
+# skbase adds unused `case_sensitive` param, otherwise identical
 def _check_soft_dependencies(
     *packages,
     severity="error",
@@ -354,6 +357,7 @@ def _check_mlflow_dependencies(msg=None, severity="error"):
     return _check_soft_dependencies(MLFLOW_DEPS, msg=msg, severity=severity)
 
 
+# duplicate exists in skbase
 @lru_cache
 def _get_installed_packages_private():
     """Get a dictionary of installed packages and their versions.
@@ -376,6 +380,7 @@ def _get_installed_packages_private():
     return package_versions
 
 
+# duplicate exists in skbase
 def _get_installed_packages():
     """Get a dictionary of installed packages and their versions.
 
@@ -388,6 +393,7 @@ def _get_installed_packages():
     return _get_installed_packages_private().copy()
 
 
+# duplicate exists in skbase
 def _get_pkg_version(package_name):
     """Check whether package is available in environment, and return its version if yes.
 
@@ -417,6 +423,11 @@ def _get_pkg_version(package_name):
     return pkg_env_version
 
 
+# duplicate exists in skbase
+# only 1 import in sktime
+# skbase is more flexible (accepts `str` obj)
+# making the skbase implementation a superset of sktime's implementation of the same
+# Safe to replace
 def _check_python_version(
     obj, package=None, msg=None, severity="error", prereleases=True
 ):
@@ -505,6 +516,10 @@ def _check_python_version(
     return False
 
 
+# duplicate exists in skbase
+# identical implementation
+# but it's a private function in skbase
+# and is not exported in skbase's __init__.py
 def _check_env_marker(obj, package=None, msg=None, severity="error"):
     """Check if packaging marker tag is with requirements of obj.
 
@@ -577,6 +592,9 @@ def _check_env_marker(obj, package=None, msg=None, severity="error"):
     return False
 
 
+# duplicate exists in sktbase
+# 40+ imports in sktime
+# functionally identical
 def _check_estimator_deps(obj, msg=None, severity="error"):
     """Check if object/estimator's package & python requirements are met by python env.
 
@@ -643,6 +661,7 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
     return compatible
 
 
+# duplicate exists in skbase
 def _normalize_requirement(req):
     """Normalize packaging Requirement by removing build metadata from versions.
 
@@ -674,6 +693,7 @@ def _normalize_requirement(req):
     return normalized_req
 
 
+# duplicate exists in skbase
 def _normalize_version(version):
     """Normalize version string by removing build metadata.
 
@@ -697,6 +717,7 @@ def _normalize_version(version):
     return normalized_version
 
 
+# duplicate exists in skbase
 def _raise_at_severity(
     msg,
     severity,

@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 from sktime.utils.dependencies import _check_soft_dependencies
 
 
+# duplicate exists in skbase
 def _safe_import(import_path, pkg_name=None):
     """Import a module/class, return a Mock object if import fails.
 
