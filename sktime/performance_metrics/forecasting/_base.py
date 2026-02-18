@@ -393,18 +393,9 @@ class BaseForecastingErrorMetric(BaseMetric):
                 if self.multilevel == "raw_values":
                     return per_instance
                 else:
-                    res = per_instance.mean(axis=0)
+                    return per_instance.mean(axis=0)
 
-                    if isinstance(res, (pd.Series, pd.DataFrame)):
-                        return self._handle_multioutput(res, multioutput)
-                    return float(res)
-
-            # Fallback for flat data or legacy paths
-            res = self._evaluate_by_index(y_true, y_pred, **kwargs).mean(axis=0)
-
-            if isinstance(res, (pd.Series, pd.DataFrame)):
-                return self._handle_multioutput(res, multioutput)
-            return float(res)
+            return self._evaluate_by_index(y_true, y_pred, **kwargs).mean(axis=0)
 
         except RecursionError:
             raise RecursionError(
