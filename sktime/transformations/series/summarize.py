@@ -123,9 +123,9 @@ class WindowSummarizer(BaseTransformer):
             an estimator that can correctly deal with observations with missing values,
             "bfill" will fill the NAs by carrying the first observation backwards.
         min_periods: int, optional (default = None)
-            Minimum number of observations in window required to have a value (otherwise
-            result is NA). If None, defaults to window_length. Set to 1 to allow partial
-            windows.
+            Minimum number of observations in the window required to have a value.
+            If None, defaults to window_length. By setting it to a lower number, allows
+            partial windows for rolling summarizers.
 
     Attributes
     ----------
