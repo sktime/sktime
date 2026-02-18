@@ -3,30 +3,16 @@
 from importlib.util import find_spec
 
 from skbase.utils.dependencies._dependencies import (
-    _check_env_marker,
-    _check_estimator_deps,
-    _check_python_version,
     _check_soft_dependencies,
     _get_installed_packages,
-    _get_installed_packages_private,
-    _get_pkg_version,
-    _normalize_requirement,
-    _normalize_version,
     _raise_at_severity,
 )
 
 __all__ = [
     "_check_dl_dependencies",
-    "_check_env_marker",
-    "_check_estimator_deps",
     "_check_mlflow_dependencies",
-    "_check_python_version",
     "_check_soft_dependencies",
     "_get_installed_packages",
-    "_get_installed_packages_private",
-    "_get_pkg_version",
-    "_normalize_requirement",
-    "_normalize_version",
     "_raise_at_severity",
 ]
 
