@@ -323,6 +323,23 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 }
             )
 
+    def _get_safe_device(self):
+        """Get appropriate device, defaulting to CPU in virtualized environments."""
+        import platform
+
+        import torch
+
+        if platform.system() == "Darwin":  # macOS
+            try:
+                if torch.backends.mps.is_available():
+                    return torch.device("mps")
+            except Exception:  # noqa: S110
+                # MPS not available in virtualized environments, fall back to CPU
+                # This is expected behavior in VMs and doesn't require logging
+                pass
+
+        return torch.device("cpu")
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -571,11 +588,11 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             hist, self.model.config.context_length
         )
 
-        past_values = (
-            torch.tensor(past_values).to(self.model.dtype).to(self.model.device)
+        past_values = torch.tensor(past_values, dtype=torch.float32).to(
+            self.model.device
         )
-        observed_mask = (
-            torch.tensor(observed_mask).to(self.model.dtype).to(self.model.device)
+        observed_mask = torch.tensor(observed_mask, dtype=torch.float32).to(
+            self.model.device
         )
 
         # Handle exogenous variables if provided
