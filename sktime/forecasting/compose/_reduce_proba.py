@@ -46,6 +46,48 @@ def _get_last_X_for_index(X, target_idx):
     return X_last
 
 
+def _align_X_columns(X, columns):
+    """Align ``X`` columns to ``columns`` and remove duplicate labels."""
+    X = X.copy()
+    columns = pd.Index(columns).drop_duplicates()
+
+    if len(X.columns) == len(columns):
+        X.columns = columns
+    else:
+        X = X.reindex(columns=columns)
+
+    if X.columns.has_duplicates:
+        X = X.loc[:, ~X.columns.duplicated(keep="first")]
+        X = X.reindex(columns=columns)
+
+    return X
+
+
+def _pool_exogeneous(X_hist, X_new=None):
+    """Pool historic and new exogeneous data with stable column schema."""
+    x_cols = pd.Index(X_hist.columns).drop_duplicates()
+    X_hist = _align_X_columns(X_hist, x_cols)
+
+    if X_new is None:
+        return X_hist
+
+    X_new = _align_X_columns(X_new, x_cols)
+    X_pool = pd.concat([X_hist, X_new], axis=0)
+    X_pool = X_pool[~X_pool.index.duplicated(keep="last")]
+
+    return X_pool
+
+
+def _align_X_index(X, target_index):
+    """Align exogeneous row index to ``target_index`` by shape where possible."""
+    X = X.copy()
+    if len(X) == len(target_index):
+        X.index = target_index
+        return X
+
+    return X.reindex(target_index)
+
+
 class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     """Monte Carlo Recursive reduction forecaster with probabilistic prediction.
 
@@ -290,10 +332,8 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             Predictive distribution.
             Returns an Empirical distribution from the MC samples.
         """
-        if X is not None and self._X is not None:
-            X_pool = X.combine_first(self._X)
-        elif X is None and self._X is not None:
-            X_pool = self._X
+        if self._X is not None:
+            X_pool = _pool_exogeneous(self._X, X)
         else:
             X_pool = X
 
@@ -381,15 +421,19 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         x_template_index = Xtt_template.index
 
         X_fallback_df = None
+        exog_cols = None
 
         if X_pool is not None:
+            exog_cols = pd.Index(X_pool.columns).drop_duplicates()
             X_fallback_df = _get_last_X_for_index(X_pool, x_template_index)
+            X_fallback_df = _align_X_columns(X_fallback_df, exog_cols)
             try:
                 X_at_idx = slice_at_ix(X_pool, first_predict_idx)
                 if len(X_at_idx) == 0:
                     raise KeyError(first_predict_idx)
-                X_at_idx = X_at_idx.reindex(x_template_index)
-                X_at_idx = X_at_idx.combine_first(X_fallback_df)
+                X_at_idx = _align_X_index(X_at_idx, x_template_index)
+                X_at_idx = _align_X_columns(X_at_idx, exog_cols)
+                X_at_idx = X_at_idx.fillna(X_fallback_df)
             except (KeyError, IndexError):
                 X_at_idx = X_fallback_df
 
@@ -418,9 +462,10 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                     X_at_idx = slice_at_ix(X_pool, predict_time)
                     if len(X_at_idx) == 0:
                         raise KeyError(predict_time)
-                    X_at_idx = X_at_idx.reindex(x_template_index)
+                    X_at_idx = _align_X_index(X_at_idx, x_template_index)
+                    X_at_idx = _align_X_columns(X_at_idx, exog_cols)
                     if X_fallback_df is not None:
-                        X_at_idx = X_at_idx.combine_first(X_fallback_df)
+                        X_at_idx = X_at_idx.fillna(X_fallback_df)
                     X_features_by_step[step_idx] = prep_skl_df(X_at_idx).values
                     X_fallback_df = X_at_idx
                 except (KeyError, IndexError):
@@ -428,9 +473,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                         X_features_by_step[step_idx] = prep_skl_df(X_fallback_df).values
 
         n_lag_features = Xt_initial.shape[1]
-        n_exog_features = (
-            len(feature_cols) - n_lag_features if X_pool is not None else 0
-        )
+        n_exog_features = len(exog_cols) if X_pool is not None else 0
 
         for step_idx in range(max_horizon):
             batch_features = sample_features.reshape(n_samples * n_instances, -1)
