@@ -23,7 +23,20 @@ from sktime.utils.sklearn import prep_skl_df
 
 
 def _get_last_X_for_index(X, target_idx):
-    """Get fallback exogeneous values aligned to ``target_idx``."""
+    """Get fallback exogeneous values aligned to ``target_idx``.
+
+    Parameters
+    ----------
+    X : pd.DataFrame
+        DataFrame containing at least one row of exogenous data.
+    target_idx : pd.Index or pd.MultiIndex
+        Target index to align the fallback values to.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with fallback values aligned to target_idx.
+    """
     if len(X) == 0:
         raise ValueError("`X` must contain at least one row.")
 
@@ -47,7 +60,20 @@ def _get_last_X_for_index(X, target_idx):
 
 
 def _align_X_columns(X, columns):
-    """Align ``X`` columns to ``columns`` and remove duplicate labels."""
+    """Align ``X`` columns to ``columns`` and remove duplicate labels.
+
+    Parameters
+    ----------
+    X : pd.DataFrame
+        DataFrame to align columns for.
+    columns : pd.Index or list
+        Target column labels to align to.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with aligned columns.
+    """
     X = X.copy()
     columns = pd.Index(columns).drop_duplicates()
 
@@ -63,8 +89,21 @@ def _align_X_columns(X, columns):
     return X
 
 
-def _pool_exogeneous(X_hist, X_new=None):
-    """Pool historic and new exogeneous data with stable column schema."""
+def _pool_exogenous(X_hist, X_new=None):
+    """Pool historic and new exogeneous data with stable column schema.
+
+    Parameters
+    ----------
+    X_hist : pd.DataFrame
+        Historic exogenous data.
+    X_new : pd.DataFrame, optional
+        New exogenous data to pool with historic data.
+
+    Returns
+    -------
+    pd.DataFrame
+        Combined DataFrame with deduplicated index (keep last).
+    """
     x_cols = pd.Index(X_hist.columns).drop_duplicates()
     X_hist = _align_X_columns(X_hist, x_cols)
 
@@ -79,7 +118,20 @@ def _pool_exogeneous(X_hist, X_new=None):
 
 
 def _align_X_index(X, target_index):
-    """Align exogeneous row index to ``target_index`` by shape where possible."""
+    """Align exogeneous row index to ``target_index`` by shape where possible.
+
+    Parameters
+    ----------
+    X : pd.DataFrame
+        DataFrame to align index for.
+    target_index : pd.Index
+        Target index to align to.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with aligned index.
+    """
     X = X.copy()
     if len(X) == len(target_index):
         X.index = target_index
@@ -333,7 +385,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             Returns an Empirical distribution from the MC samples.
         """
         if self._X is not None:
-            X_pool = _pool_exogeneous(self._X, X)
+            X_pool = _pool_exogenous(self._X, X)
         else:
             X_pool = X
 
