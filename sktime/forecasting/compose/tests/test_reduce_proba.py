@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import sktime.forecasting.compose._reduce_proba as reduce_proba_module
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import MCRecursiveProbaReductionForecaster
@@ -148,7 +149,8 @@ def test_with_exogenous_missing_first_future_index():
 
 @pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
 def test_with_exogenous_missing_first_future_index_hierarchical():
-    """Test exogeneous fallback for hierarchical data with missing first future index."""
+    """Test exogeneous fallback for hierarchical data
+    with missing first future index."""
     from sktime.utils._testing.hierarchical import _make_hierarchical
 
     y = _make_hierarchical(
@@ -346,3 +348,145 @@ def test_invalid_pooling_raises():
             window_length=3,
             pooling="invalid",
         )
+
+
+def test_get_test_params_no_skpro_returns_empty_list(monkeypatch):
+    """`get_test_params` should return empty list if skpro is unavailable."""
+
+    monkeypatch.setattr(
+        reduce_proba_module,
+        "_check_soft_dependencies",
+        lambda *args, **kwargs: False,
+    )
+
+    params = MCRecursiveProbaReductionForecaster.get_test_params()
+
+    assert params == []
+
+
+@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+def test_in_sample_horizon_rejected():
+    """In-sample horizons should be rejected for point and probabilistic prediction."""
+    y = load_airline()[:60]
+    fh_in_sample = ForecastingHorizon([-1, 1], is_relative=True)
+
+    forecaster = MCRecursiveProbaReductionForecaster(
+        estimator=_make_probabilistic_regressor(),
+        window_length=6,
+        n_samples=10,
+        random_state=42,
+    )
+
+    forecaster.fit(y)
+
+    with pytest.raises(NotImplementedError, match="in-sample"):
+        forecaster.predict(fh_in_sample)
+
+    with pytest.raises(NotImplementedError, match="in-sample"):
+        forecaster.predict_proba(fh_in_sample)
+
+
+@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+def test_multivariate_y_smoke():
+    """Multivariate y should produce multivariate point and probabilistic forecasts."""
+    y = load_airline()[:80]
+    y = pd.concat([y.rename("y1"), (y * 1.1).rename("y2")], axis=1)
+    y_train, y_test = temporal_train_test_split(y, test_size=6)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+
+    forecaster = MCRecursiveProbaReductionForecaster(
+        estimator=_make_probabilistic_regressor(),
+        window_length=6,
+        n_samples=20,
+        random_state=42,
+    )
+
+    forecaster.fit(y_train)
+    y_pred = forecaster.predict(fh)
+    pred_dist = forecaster.predict_proba(fh)
+
+    assert isinstance(y_pred, pd.DataFrame)
+    assert y_pred.shape == (len(fh), 2)
+    assert list(y_pred.columns) == ["y1", "y2"]
+
+    dist_mean = pred_dist.mean()
+    assert isinstance(dist_mean, pd.DataFrame)
+    assert dist_mean.shape == (len(fh), 2)
+
+
+@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+def test_predict_interval_and_quantiles_smoke():
+    """Smoke test for predict_interval and predict_quantiles."""
+    y = load_airline()[:80]
+    y_train, _ = temporal_train_test_split(y, test_size=10)
+    fh = ForecastingHorizon([1, 2, 3], is_relative=True)
+
+    forecaster = MCRecursiveProbaReductionForecaster(
+        estimator=_make_probabilistic_regressor(),
+        window_length=6,
+        n_samples=20,
+        random_state=42,
+    )
+
+    forecaster.fit(y_train)
+
+    pred_int = forecaster.predict_interval(fh, coverage=[0.8])
+    pred_q = forecaster.predict_quantiles(fh, alpha=[0.1, 0.9])
+
+    assert isinstance(pred_int, pd.DataFrame)
+    assert len(pred_int) == len(fh)
+    assert isinstance(pred_q, pd.DataFrame)
+    assert len(pred_q) == len(fh)
+
+
+@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+def test_short_series_warns_and_falls_back_to_mean():
+    """Fit should warn and fallback to constant mean for too-short series."""
+    y = load_airline()[:3]
+    fh = ForecastingHorizon([1, 2], is_relative=True)
+
+    forecaster = MCRecursiveProbaReductionForecaster(
+        estimator=_make_probabilistic_regressor(),
+        window_length=10,
+        impute_method=None,
+        n_samples=10,
+        random_state=42,
+    )
+
+    with pytest.warns(UserWarning, match="Falling back to constant mean forecasts"):
+        forecaster.fit(y)
+
+    y_pred = forecaster.predict(fh)
+
+    assert len(y_pred) == len(fh)
+    assert not y_pred.isna().any()
+
+
+@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+def test_vectorized_predict_proba_concat_path_smoke():
+    """Exercise vectorized predict_proba concatenation path for local pooling."""
+    y = _make_hierarchical(
+        hierarchy_levels=(2, 2),
+        max_timepoints=30,
+        min_timepoints=30,
+        n_columns=1,
+        random_state=42,
+    )
+    y_train, y_test = temporal_train_test_split(y, test_size=3)
+    fh = ForecastingHorizon([1, 2, 3], is_relative=True)
+
+    forecaster = MCRecursiveProbaReductionForecaster(
+        estimator=_make_probabilistic_regressor(),
+        window_length=5,
+        n_samples=5,
+        pooling="local",
+        random_state=42,
+    )
+
+    forecaster.fit(y_train)
+    pred_dist = forecaster.predict_proba(fh)
+    dist_mean = pred_dist.mean()
+
+    assert isinstance(dist_mean, pd.DataFrame)
+    assert dist_mean.index.nlevels == 3
+    assert len(dist_mean) == len(y_test)
