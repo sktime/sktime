@@ -70,6 +70,10 @@ class BaseProbaForecaster(BaseForecaster):
             )
         self.check_is_fitted()
 
+        # Non-vectorized path is identical to BaseForecaster behavior.
+        if not getattr(self, "_is_vectorized", False):
+            return super().predict_proba(fh=fh, X=X, marginal=marginal)
+
         # predict_proba requires skpro to provide the distribution object returns
         msg = (
             "Forecasters' predict_proba requires "
@@ -92,20 +96,18 @@ class BaseProbaForecaster(BaseForecaster):
         # check and convert X
         X_inner = self._check_X(X=X)
 
-        # Handle vectorized case (hierarchical/panel data)
-        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+        # Vectorized case (hierarchical/panel data)
+        try:
             pred_dist = self._vectorize_predict_proba(
-                fh=fh, X=X_inner, marginal=marginal
+                fh=fh,
+                X=X_inner,
+                marginal=marginal,
             )
-        else:
-            # Non-vectorized case: call the inner method directly
-            try:
-                pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
-            except ImportError as e:
-                if non_default_pred_proba and not skpro_present:
-                    raise ImportError(msg)
-                else:
-                    raise e
+        except ImportError as e:
+            if non_default_pred_proba and not skpro_present:
+                raise ImportError(msg)
+            else:
+                raise e
 
         return pred_dist
 
@@ -175,10 +177,9 @@ class BaseProbaForecaster(BaseForecaster):
         concat_dist : skpro BaseDistribution
             Concatenated distribution with proper hierarchical index.
         """
-        import inspect
-
         import numpy as np
         import pandas as pd
+        from skpro.distributions import Empirical
 
         if len(dist_list) == 0:
             raise ValueError("Cannot concatenate empty list of distributions")
@@ -199,8 +200,8 @@ class BaseProbaForecaster(BaseForecaster):
         if row_idx is None:
             row_idx = pd.RangeIndex(len(dist_list))
 
-        # Empirical needs concatenation via its sample DataFrame `spl`
-        if all(hasattr(dist, "spl") for dist in dist_list):
+        # Empirical distributions are concatenated through sample frame ``spl``.
+        if all(isinstance(dist, Empirical) for dist in dist_list):
             return self._concat_empirical_distributions(dist_list, row_idx)
 
         # Build the combined index
@@ -236,46 +237,89 @@ class BaseProbaForecaster(BaseForecaster):
             )
             combined_indices.append(new_index)
 
-        # Concatenate all indices using pd.concat (MultiIndex.append is deprecated)
+        # Concatenate all index frames row-wise (MultiIndex.append is deprecated).
         full_index = pd.concat([idx.to_frame() for idx in combined_indices]).index
-
-        # Get parameter names from the distribution's signature
-        sig = inspect.signature(dist_class.__init__)
-        param_names = [
-            p
-            for p in sig.parameters.keys()
-            if p not in ["self", "index", "columns", "args", "kwargs"]
-        ]
-
-        # Stack parameters from all distributions
-        param_arrays = {}
-        for param in param_names:
-            vals = []
-            has_param = False
-            for dist in dist_list:
-                if hasattr(dist, param):
-                    val = getattr(dist, param)
-                    if val is not None:
-                        has_param = True
-                        # Ensure val is 2D array with shape (n_samples, n_columns)
-                        val_arr = np.atleast_2d(val)
-                        # If val is 1D and was made 2D as (1, n), transpose to (n, 1)
-                        if val_arr.shape[0] == 1 and len(dist.index) > 1:
-                            val_arr = val_arr.T
-                        vals.append(val_arr)
-            if has_param and len(vals) == len(dist_list):
-                # Concatenate values along axis 0 (samples)
-                concatenated = np.vstack(vals)
-                param_arrays[param] = concatenated
 
         # Get columns from first distribution
         columns = dist_list[0].columns
+        n_cols = len(columns)
 
-        if param_arrays:
-            return dist_class(**param_arrays, index=full_index, columns=columns)
-        else:
-            # Fallback: return first distribution (shouldn't normally happen)
-            return dist_list[0]
+        first_params = dist_list[0].get_params(deep=False)
+        param_names = [k for k in first_params.keys() if k not in ["index", "columns"]]
+
+        if len(param_names) == 0:
+            raise RuntimeError(
+                "Unable to concatenate non-empirical distributions without explicit "
+                f"parameters. Unsupported distribution type: {dist_class.__name__}."
+            )
+
+        param_arrays = {param: [] for param in param_names}
+
+        for dist in dist_list:
+            dist_params = dist.get_params(deep=False)
+            dist_param_names = [
+                k for k in dist_params.keys() if k not in ["index", "columns"]
+            ]
+            if set(dist_param_names) != set(param_names):
+                raise RuntimeError(
+                    "Cannot concatenate distributions with mismatched parameters. "
+                    f"Expected {sorted(param_names)}, found {sorted(dist_param_names)}."
+                )
+
+            n_rows = len(dist.index)
+            for param in param_names:
+                param_arr = self._coerce_distribution_param(
+                    value=dist_params[param],
+                    n_rows=n_rows,
+                    n_cols=n_cols,
+                    param_name=param,
+                    dist_name=dist_class.__name__,
+                )
+                param_arrays[param].append(param_arr)
+
+        stacked_params = {k: np.vstack(v) for k, v in param_arrays.items()}
+
+        try:
+            return dist_class(**stacked_params, index=full_index, columns=columns)
+        except Exception as exc:
+            raise RuntimeError(
+                "Failed to concatenate non-empirical distributions of type "
+                f"{dist_class.__name__}."
+            ) from exc
+
+    def _coerce_distribution_param(
+        self, value, n_rows, n_cols, param_name, dist_name
+    ):
+        """Coerce a distribution parameter to 2D array shape ``(n_rows, n_cols)``."""
+        import numpy as np
+
+        arr = np.asarray(value)
+
+        if arr.ndim == 0:
+            return np.full((n_rows, n_cols), arr)
+
+        if arr.ndim == 1:
+            if n_cols == 1 and arr.shape[0] == n_rows:
+                return arr.reshape(-1, 1)
+            if n_rows == 1 and arr.shape[0] == n_cols:
+                return arr.reshape(1, -1)
+            raise RuntimeError(
+                f"Unsupported shape {arr.shape} for parameter `{param_name}` in "
+                f"{dist_name}; expected compatible with {(n_rows, n_cols)}."
+            )
+
+        if arr.ndim == 2:
+            if arr.shape != (n_rows, n_cols):
+                raise RuntimeError(
+                    f"Unsupported shape {arr.shape} for parameter `{param_name}` in "
+                    f"{dist_name}; expected {(n_rows, n_cols)}."
+                )
+            return arr
+
+        raise RuntimeError(
+            f"Unsupported parameter rank ({arr.ndim}) for `{param_name}` in "
+            f"{dist_name}; expected scalar, 1D, or 2D array-like."
+        )
 
     def _get_instance_names_from_row_idx(self, row_idx):
         """Get instance names from row_idx for MultiIndex construction.
@@ -304,7 +348,8 @@ class BaseProbaForecaster(BaseForecaster):
         dist_list : list of skpro BaseDistribution
             List of empirical distributions from each instance.
         row_idx : pd.Index or pd.MultiIndex
-            The row index from the vectorized structure, used for constructing the combined index.
+            The row index from the vectorized structure,
+            used for constructing the combined index.
 
         Returns
         -------
