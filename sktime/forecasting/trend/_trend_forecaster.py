@@ -103,7 +103,7 @@ class TrendForecaster(BaseForecaster):
         X_sklearn = _get_X_numpy_int_from_pandas(y.index)
 
         # fit regressor
-        self.regressor_.fit(X_sklearn, y, sample_weight=sample_weight)
+        self.regressor_.fit(X_sklearn, y.iloc[:, 0], sample_weight=sample_weight)
         return self
 
     def _predict(self, fh=None, X=None):
