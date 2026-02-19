@@ -760,6 +760,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
             params = [params1, params2]
         else:
-            params = []
+            params = [{**params1, "estimator": "placeholder"}]
 
         return params
