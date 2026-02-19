@@ -74,15 +74,16 @@ class KinematicFeatures(BaseTransformer):
         "y_inner_mtype": "None",
         "capability:multivariate": True,
         "requires_y": False,
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
         "capability:categorical_in_X": False,
+        "capability:update": True,
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, features=None):
+    def __init__(self, features=None, remember_data="last"):
         self.features = features
         if features is None:
             self._features = ["v_abs", "a_abs", "curv"]
@@ -91,7 +92,37 @@ class KinematicFeatures(BaseTransformer):
         else:
             self._features = features
 
+        self.remember_data = remember_data
+        allowed=["none","last","all"]
+        if remember_data not in allowed:
+           raise ValueError(
+                f'remember_data must be one of {allowed},got{remember_data}'
+              )
+
         super().__init__()
+
+    def _fit(self, X,y=None ):
+        """store history depending on the remember_data."""
+        if self.remember_data =="all":
+            self._history=X.copy()
+        elif self.remember_data =='last':
+            self._history=X.tail(2).copy()
+        else:
+            self._history = None
+        return self
+
+    def _update(self, X,y=None):
+        if not hasattr(self,"_history") or self._history is None:
+            self._history = X.tail(2).copy()
+            return self
+
+        if self.remember_data =="all":
+            self._history=pd.concat([self._history,X])
+        elif self.remember_data == 'last':
+             self._history = pd.concat([self._history,X]).tail(2)
+        
+        return self 
+
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -110,6 +141,16 @@ class KinematicFeatures(BaseTransformer):
         """
         features = self._features
         res = pd.DataFrame()
+        #prepend history
+        if hasattr(self,'_history') and self.remember_data != 'none' and self._history is not None:
+           X_full = pd.concat([self._history, X])
+           X_full = X_full[~X_full.index.duplicated(keep="last")]
+        else:
+            X_full = X
+       
+        orig_index = X.index
+        X=X_full
+  
 
         def prepend_cols(df, prefix):
             df.columns = [f"{prefix}__{col}" for col in df.columns]
@@ -140,7 +181,6 @@ class KinematicFeatures(BaseTransformer):
                 res = pd.concat([res, v_frame], axis=1)
             if feature_query(["v_abs"]):
                 vabs_frame = abs_rows(v_frame, "v_abs")
-                vabs_frame.iloc[0] = np.nan
                 res = pd.concat([res, vabs_frame], axis=1)
 
         if feature_query(["a", "a_abs", "curv"]):
@@ -150,8 +190,6 @@ class KinematicFeatures(BaseTransformer):
                 res = pd.concat([res, a_frame], axis=1)
             if feature_query(["a_abs"]):
                 aabs_frame = abs_rows(a_frame, "a_abs")
-                aabs_frame.iloc[0] = np.nan
-                aabs_frame.iloc[1] = np.nan
                 res = pd.concat([res, aabs_frame], axis=1)
 
         if feature_query(["curv"]):
@@ -164,7 +202,10 @@ class KinematicFeatures(BaseTransformer):
             curv_arr = np.abs(curv_arr) ** 0.5
             curv_frame = pd.DataFrame(curv_arr, columns=["curv"], index=X.index)
             res = pd.concat([res, curv_frame], axis=1)
-
+       
+        # returns new rows only
+        res = res.loc[orig_index]
+       
         return res
 
     @classmethod
@@ -187,6 +228,6 @@ class KinematicFeatures(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {}
-        params2 = {"features": ["v", "a"]}
+        params1 = {"remember_data":"none"}
+        params2 = {"features": ["v", "a"],"remember_data":"last"}
         return [params1, params2]
