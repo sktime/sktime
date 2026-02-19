@@ -32,20 +32,20 @@ class SeqSelfAttention(NNModule):
         self.v = nn.Linear(embed_dim, 1, bias=False)
         self._act = getattr(torchF, activation_attention)
 
-    def forward(self, x):
-        q = self.W_q(x)
-        k = self.W_k(x)
+    def forward(self, X):
+        q = self.W_q(X)
+        k = self.W_k(X)
         score = self.v(torch.tanh(q.unsqueeze(2) + k.unsqueeze(1))).squeeze(-1)
         if self.attention_width is not None:
-            T = x.size(1)
+            T = X.size(1)
             mask = torch.tril(
-                torch.ones(T, T, device=x.device), self.attention_width - 1
+                torch.ones(T, T, device=X.device), self.attention_width - 1
             )
             mask = torch.triu(mask, -(self.attention_width - 1))
             score = score.masked_fill(mask == 0, float("-inf"))
         attn = self._act(score)
         attn = attn / (attn.sum(dim=-1, keepdim=True) + 1e-9)
-        return torch.bmm(attn, x)
+        return torch.bmm(attn, X)
 
 
 class CNTCNetworkTorch(NNModule):
@@ -218,7 +218,9 @@ class CNTCNetworkTorch(NNModule):
 
         # self-attention operates on in_channels (the channel dim after all projections)
         self.att = SeqSelfAttention(
-            embed_dim=in_channels, attention_width=10, activation=activation_attention
+            embed_dim=in_channels,
+            attention_width=10,
+            activation_attention=activation_attention,
         )
         self.drop5 = nn.Dropout(d_att)
 
@@ -297,23 +299,36 @@ class CNTCNetworkTorch(NNModule):
         return self.out(h)  # raw logits
 
     def _init_weights(self, module):
-        """Initialize weights for the network modules."""
-        if isinstance(module, (nn.Conv1d, nn.Linear)):
-            init_fn = getattr(torch.nn.init, self.init_weights)
-            init_fn(module.weight)
-            if module.bias is not None:
-                nn.init.zeros_(module.bias)
-        if isinstance(module, nn.LSTM):
+        """Initialize the weights of the network."""
+        if self.init_weights is None:
+            return
+
+        init_fn = getattr(torch.nn.init, self.init_weights)
+
+        if isinstance(module, (nn.RNN, nn.LSTM)):
             for name, param in module.named_parameters():
                 if "weight" in name:
-                    init_fn = getattr(torch.nn.init, self.init_weights)
+                    # Skip initialization for uninitialized parameters
+                    if isinstance(param, nn.parameter.UninitializedParameter):
+                        continue
                     init_fn(param)
                 elif "bias" in name:
+                    # Skip initialization for uninitialized parameters
+                    if isinstance(param, nn.parameter.UninitializedParameter):
+                        continue
                     nn.init.zeros_(param)
-        if isinstance(module, SeqSelfAttention):
-            for name, param in module.named_parameters():
-                if "W_q" in name or "W_k" in name or "v" in name:
-                    init_fn = getattr(torch.nn.init, self.init_weights)
-                    init_fn(param.weight)
-                    if param.bias is not None:
-                        nn.init.zeros_(param.bias)
+        elif isinstance(module, (nn.Linear, nn.Conv1d, nn.MultiheadAttention)):
+            # Skip initialization for uninitialized parameters
+            if isinstance(module.weight, nn.parameter.UninitializedParameter):
+                return
+
+            init_fn(module.weight)
+            if module.bias is not None:
+                if isinstance(module.bias, nn.parameter.UninitializedParameter):
+                    return
+                nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Parameter):
+            # Handle standalone parameters like in SelfAttention
+            if isinstance(module, nn.parameter.UninitializedParameter):
+                return
+            init_fn(module)

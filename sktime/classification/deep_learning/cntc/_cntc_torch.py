@@ -13,6 +13,36 @@ import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.cntc import CNTCNetworkTorch
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+DataLoader = _safe_import("torch.utils.data.DataLoader")
+Dataset = _safe_import("torch.utils.data.Dataset")
+TensorDataset = _safe_import("torch.utils.data.TensorDataset")
+
+
+class _CNTCDataset(Dataset):
+    """Dataset that returns dict-based inputs for CNTCNetworkTorch.
+
+    Wraps two tensors (x1 and x3) and an optional label tensor, returning
+    items as ``({"x1": ..., "x3": ...}, y)`` tuples so that the base-class
+    ``_run_epoch`` can unpack them and call ``network(**inputs)`` as
+    ``network(x1=..., x3=...)``.
+    """
+
+    def __init__(self, X1, X3, y=None):
+        self.X1 = X1
+        self.X3 = X3
+        self.y = y
+
+    def __len__(self):
+        return len(self.X1)
+
+    def __getitem__(self, idx):
+        inputs = {"x1": self.X1[idx], "x3": self.X3[idx]}
+        if self.y is not None:
+            return inputs, self.y[idx]
+        return inputs
 
 
 class CNTCClassifierTorch(BaseDeepClassifierPytorch):
@@ -38,7 +68,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
         Number of output filters for each Conv1D block.
     dense_size : int, default=64
         Number of units in each of the two MLP hidden layers.
-    activation : str, default='relu'
+    hidden_activation : str, default='relu'
         Activation function name for hidden layers (excluding attention).
         Must be a valid attribute of torch.nn.functional, e.g. 'relu', 'tanh'.
     activation_attention : str, default='sigmoid'
@@ -111,7 +141,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
     ...     n_conv_layers=2,
     ...     filter_sizes=(16, 8),
     ...     dense_size=32,
-    ...     activation="relu",
+    ...     hidden_activation="relu",
     ...     activation_attention="sigmoid",
     ...     dropout=0.5,
     ...     init_weights="xavier_uniform",
@@ -142,7 +172,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
         n_conv_layers: int = 2,
         filter_sizes: tuple = (16, 8),
         dense_size: int = 64,
-        activation: str = "relu",
+        hidden_activation: str = "relu",
         activation_attention: str = "sigmoid",
         dropout: float | tuple = (0.8, 0.8, 0.7, 0.8, 0.6, 0.5, 0.8),
         init_weights: str | None = "xavier_uniform",
@@ -166,7 +196,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
         self.n_conv_layers = n_conv_layers
         self.filter_sizes = filter_sizes
         self.dense_size = dense_size
-        self.activation = activation
+        self.hidden_activation = hidden_activation
         self.activation_attention = activation_attention
         self.dropout = dropout
         self.init_weights = init_weights
@@ -189,6 +219,81 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             verbose=verbose,
             random_state=random_state,
         )
+
+    @staticmethod
+    def _make_x3(X):
+        """Compute rolling-mean-augmented input for the CLSTM arm.
+
+        Computes a window-3 rolling mean along the time axis (axis 2 in
+        sktime ``[B, n_dims, T]`` format) and returns an array of the
+        **same shape** as X.  This mirrors the original Keras
+        ``prepare_input`` logic while keeping the channel dimension
+        unchanged so it matches the LSTM's ``in_channels``.
+
+        Parameters
+        ----------
+        X : np.ndarray, shape (B, n_dims, T)
+            Raw time-series array.
+
+        Returns
+        -------
+        X3 : np.ndarray, shape (B, n_dims, T)
+        """
+        B, n_dims, T = X.shape
+        X3 = np.zeros_like(X)
+        for t in range(T):
+            start = max(0, t - 2)  # window=3
+            X3[:, :, t] = X[:, :, start : t + 1].mean(axis=2)
+        return X3
+
+    def _build_dataloader(self, X, y=None):
+        """Build a DataLoader producing ``({"x1": ..., "x3": ...}, y)`` batches.
+
+        Overrides the base-class implementation so that the base-class
+        ``_run_epoch`` can call ``self.network(**inputs)`` as
+        ``network(x1=..., x3=...)`` matching ``CNTCNetworkTorch.forward``.
+
+        Both x1 and x3 are transposed from sktime ``[B, n_dims, T]`` to
+        ``[B, T, n_dims]`` as required by the network's RNN/LSTM layers.
+        """
+        training = y is not None
+        # X3: rolling-mean augmented version of X with the same shape
+        X3 = self._make_x3(X)
+
+        # Transpose [B, n_dims, T] → [B, T, n_dims] to match forward(x1, x3)
+        tensor_X1 = torch.from_numpy(X.transpose(0, 2, 1)).float()
+        tensor_X3 = torch.from_numpy(X3.transpose(0, 2, 1)).float()
+
+        if y is not None:
+            tensor_y = torch.from_numpy(y).long()
+            dataset = _CNTCDataset(tensor_X1, tensor_X3, tensor_y)
+        else:
+            dataset = _CNTCDataset(tensor_X1, tensor_X3)
+
+        return DataLoader(dataset, batch_size=self.batch_size, shuffle=training)
+
+    def _get_dataloader(self, X, y=None, training=True):
+        """Create a DataLoader for the given data (used by _predict_proba)."""
+        X3 = self._make_x3(X)
+
+        # Transpose [B, n_dims, T] → [B, T, n_dims] to match forward(x1, x3)
+        tensor_X1 = torch.from_numpy(X.transpose(0, 2, 1)).float()
+        tensor_X3 = torch.from_numpy(X3.transpose(0, 2, 1)).float()
+
+        if y is None:
+            dataset = TensorDataset(tensor_X1, tensor_X3)
+        else:
+            tensor_y = torch.from_numpy(y).long()
+            dataset = TensorDataset(tensor_X1, tensor_X3, tensor_y)
+
+        return DataLoader(dataset, batch_size=self.batch_size, shuffle=training)
+
+    def _training_step(self, batch):
+        """Perform a single training step."""
+        x1_batch, x3_batch, y_batch = batch
+        y_pred = self.network(x1=x1_batch, x3=x3_batch)
+        loss = self._criterion(y_pred, y_batch)
+        return loss
 
     def _build_network(self, X, y):
         """Build the CNTC network.
@@ -213,7 +318,8 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             )
         # n_instances, n_dims, n_timesteps = X.shape
         self.num_classes = len(np.unique(y))
-        _, self.input_size, _ = X.shape
+        # The input size for the network is doubled for the third arm
+        self.input_size = X.shape[1]
 
         return CNTCNetworkTorch(
             in_channels=self.input_size,
@@ -225,12 +331,26 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             n_conv_layers=self.n_conv_layers,
             filter_sizes=self.filter_sizes,
             dense_size=self.dense_size,
-            activation=self.activation,
+            activation=self.hidden_activation,
             activation_attention=self.activation_attention,
             dropout=self.dropout,
             init_weights=self.init_weights,
             random_state=self.random_state,
         )
+
+    def _predict_proba(self, X, **kwargs):
+        """Predict class probabilities for samples in X."""
+        self.network.eval()
+        dataloader = self._get_dataloader(X, y=None, training=False)
+
+        all_probas = []
+        with torch.no_grad():
+            for x1_batch, x3_batch in dataloader:
+                y_pred = self.network(x1=x1_batch, x3=x3_batch)
+                probas = torch.nn.functional.softmax(y_pred, dim=1).numpy()
+                all_probas.append(probas)
+
+        return np.concatenate(all_probas, axis=0)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -254,53 +374,117 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        # Minimal params (default architecture, fast training) ──
         params1 = {
-            "kernel_sizes": (3, 3),
-            "rnn_layer": 16,
-            "lstm_layer": 8,
-            "evg_pool_size": 2,
-            "n_conv_layers": 2,
-            "filter_sizes": (16, 8),
-            "dense_size": 32,
-            "activation": "relu",
-            "activation_attention": "sigmoid",
-            "dropout": 0.5,
-            "init_weights": "xavier_uniform",
-            "num_epochs": 10,
+            "num_epochs": 1,
             "batch_size": 2,
-            "optimizer": "RMSprop",
-            "criterion": "CrossEntropyLoss",
             "callbacks": None,
-            "criterion_kwargs": None,
-            "optimizer_kwargs": None,
-            "callback_kwargs": None,
-            "lr": 0.001,
             "verbose": False,
             "random_state": 0,
         }
-        # binary classification
+
+        # Explicit architecture with non-default values + Adam
         params2 = {
             "kernel_sizes": (3, 3),
             "rnn_layer": 16,
-            "lstm_layer": 8,
+            "lstm_layer": 4,
             "evg_pool_size": 2,
             "n_conv_layers": 2,
-            "filter_sizes": (16, 8),
+            "filter_sizes": (8, 4),
             "dense_size": 32,
-            "activation": "relu",
+            "hidden_activation": "relu",
             "activation_attention": "sigmoid",
             "dropout": 0.5,
             "init_weights": "xavier_uniform",
-            "num_epochs": 10,
+            "num_epochs": 1,
             "batch_size": 2,
-            "optimizer": "RMSprop",
+            "optimizer": "Adam",
             "criterion": "CrossEntropyLoss",
             "callbacks": None,
-            "criterion_kwargs": None,
             "optimizer_kwargs": None,
+            "criterion_kwargs": None,
             "callback_kwargs": None,
             "lr": 0.001,
             "verbose": False,
             "random_state": 0,
         }
-        return [params1, params2]
+
+        # RMSprop + tanh activation + kaiming init
+        params3 = {
+            "kernel_sizes": (1, 1),
+            "rnn_layer": 32,
+            "lstm_layer": 8,
+            "evg_pool_size": 1,
+            "n_conv_layers": 2,
+            "filter_sizes": (16, 8),
+            "dense_size": 64,
+            "hidden_activation": "tanh",
+            "activation_attention": "sigmoid",
+            "dropout": 0.3,
+            "init_weights": "kaiming_normal",
+            "num_epochs": 1,
+            "batch_size": 2,
+            "optimizer": "RMSprop",
+            "criterion": "CrossEntropyLoss",
+            "callbacks": None,
+            "optimizer_kwargs": None,
+            "criterion_kwargs": None,
+            "callback_kwargs": None,
+            "lr": 0.0005,
+            "verbose": False,
+            "random_state": 0,
+        }
+
+        # Per-layer dropout tuple + learning rate scheduler
+        params4 = {
+            "kernel_sizes": (1, 1),
+            "rnn_layer": 64,
+            "lstm_layer": 8,
+            "evg_pool_size": 1,
+            "n_conv_layers": 2,
+            "filter_sizes": (16, 8),
+            "dense_size": 64,
+            "hidden_activation": "relu",
+            "activation_attention": "sigmoid",
+            "dropout": (0.8, 0.8, 0.7, 0.8, 0.6, 0.5, 0.8),  # per-layer
+            "init_weights": "xavier_uniform",
+            "num_epochs": 1,
+            "batch_size": 2,
+            "optimizer": "Adam",
+            "criterion": "CrossEntropyLoss",
+            "callbacks": "ReduceLROnPlateau",
+            "optimizer_kwargs": {"weight_decay": 1e-4},
+            "criterion_kwargs": None,
+            "callback_kwargs": {"factor": 0.5, "patience": 10},
+            "lr": 0.001,
+            "verbose": False,
+            "random_state": 0,
+        }
+
+        # No weight init + SGD with momentum + zero dropout
+        params5 = {
+            "kernel_sizes": (1, 1),
+            "rnn_layer": 64,
+            "lstm_layer": 8,
+            "evg_pool_size": 1,
+            "n_conv_layers": 2,
+            "filter_sizes": (16, 8),
+            "dense_size": 64,
+            "hidden_activation": "relu",
+            "activation_attention": "sigmoid",
+            "dropout": 0.0,  # no dropout
+            "init_weights": None,  # use PyTorch defaults
+            "num_epochs": 1,
+            "batch_size": 2,
+            "optimizer": "SGD",
+            "criterion": "CrossEntropyLoss",
+            "callbacks": None,
+            "optimizer_kwargs": {"momentum": 0.9},
+            "criterion_kwargs": None,
+            "callback_kwargs": None,
+            "lr": 0.01,
+            "verbose": False,
+            "random_state": 0,
+        }
+
+        return [params1, params2, params3, params4, params5]
