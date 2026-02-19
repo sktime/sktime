@@ -123,6 +123,30 @@ def test_with_exogenous():
 
 
 @pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+def test_with_exogenous_missing_first_future_index():
+    """Test exogeneous fallback when first prediction-time index is missing in X."""
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+
+    forecaster = MCRecursiveProbaReductionForecaster(
+        estimator=_make_probabilistic_regressor(),
+        window_length=2,
+        n_samples=20,
+        random_state=42,
+    )
+
+    # Drop first future row to trigger fallback in exogeneous slicing logic
+    X_test_missing = X_test.iloc[1:]
+
+    forecaster.fit(y_train, X=X_train)
+    y_pred = forecaster.predict(fh, X=X_test_missing)
+
+    assert len(y_pred) == len(y_test)
+    assert not y_pred.isna().any()
+
+
+@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
 def test_reproducibility_with_random_state():
     """Test that same random_state produces identical results."""
     y = load_airline()
