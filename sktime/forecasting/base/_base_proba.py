@@ -184,12 +184,22 @@ class BaseProbaForecaster(BaseForecaster):
         if len(dist_list) == 1:
             return dist_list[0]
 
-        # Get the distribution class from the first distribution
         dist_class = type(dist_list[0])
+        if not all(type(dist) is dist_class for dist in dist_list):
+            raise TypeError(
+                "All distributions in `dist_list` must have the same type, "
+                f"but found {[type(dist).__name__ for dist in dist_list]}."
+            )
 
         # Get the instance indices from the vectorized structure
         # yvec.get_iter_indices returns (row_idx, col_idx) where row_idx is a MultiIndex
         row_idx, _ = yvec.get_iter_indices()
+        if row_idx is None:
+            row_idx = pd.RangeIndex(len(dist_list))
+
+        # Empirical needs concatenation via its sample DataFrame `spl`
+        if all(hasattr(dist, "spl") for dist in dist_list):
+            return self._concat_empirical_distributions(dist_list, row_idx)
 
         # Build the combined index
         # Each distribution has its own index (time points)
@@ -266,3 +276,79 @@ class BaseProbaForecaster(BaseForecaster):
         else:
             # Fallback: return first distribution (shouldn't normally happen)
             return dist_list[0]
+
+    def _concat_empirical_distributions(self, dist_list, row_idx):
+        """Concatenate empirical distributions from vectorized prediction."""
+        import pandas as pd
+
+        dist_class = type(dist_list[0])
+
+        spl_dfs = []
+        combined_indices = []
+
+        for i, dist in enumerate(dist_list):
+            spl = dist.spl
+            instance_idx = row_idx[i]
+
+            if isinstance(spl.index, pd.MultiIndex):
+                sample_level = spl.index.get_level_values(0)
+                time_level = spl.index.get_level_values(-1)
+
+                if isinstance(instance_idx, tuple):
+                    new_tuples = [
+                        (s,) + instance_idx + (t,)
+                        for s, t in zip(sample_level, time_level)
+                    ]
+                else:
+                    new_tuples = [
+                        (s, instance_idx, t) for s, t in zip(sample_level, time_level)
+                    ]
+
+                spl_sample_name = spl.index.names[0]
+
+                if isinstance(row_idx, pd.MultiIndex):
+                    instance_names = list(row_idx.names)
+                else:
+                    instance_names = [
+                        row_idx.name if hasattr(row_idx, "name") else "level_0"
+                    ]
+
+                spl_time_name = spl.index.names[-1]
+                new_names = [spl_sample_name] + instance_names + [spl_time_name]
+
+                new_spl_index = pd.MultiIndex.from_tuples(new_tuples, names=new_names)
+            else:
+                new_spl_index = spl.index
+
+            new_spl = spl.copy()
+            new_spl.index = new_spl_index
+            spl_dfs.append(new_spl)
+
+            dist_index = dist.index
+            if isinstance(instance_idx, tuple):
+                new_dist_tuples = [instance_idx + (t,) for t in dist_index]
+            else:
+                new_dist_tuples = [(instance_idx, t) for t in dist_index]
+
+            if isinstance(row_idx, pd.MultiIndex):
+                instance_names = list(row_idx.names)
+            else:
+                instance_names = [
+                    row_idx.name if hasattr(row_idx, "name") else "level_0"
+                ]
+            time_name = dist_index.name if dist_index.name is not None else "time"
+
+            new_dist_index = pd.MultiIndex.from_tuples(
+                new_dist_tuples,
+                names=instance_names + [time_name],
+            )
+            combined_indices.append(new_dist_index)
+
+        combined_spl = pd.concat(spl_dfs, axis=0)
+
+        full_index = combined_indices[0]
+        for idx in combined_indices[1:]:
+            full_index = full_index.append(idx)
+
+        columns = dist_list[0].columns
+        return dist_class(spl=combined_spl, index=full_index, columns=columns)
