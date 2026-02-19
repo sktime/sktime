@@ -9,7 +9,7 @@ from copy import deepcopy
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
-from sktime.networks.tapnet import TapNetNetwork
+from sktime.networks.tapnet._tapnet_tf import TapNetNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
 
