@@ -26,7 +26,7 @@ from sktime.utils.warnings import warn
 
 
 def _get_last_X_for_index(X, target_idx):
-    """Get fallback exogeneous values aligned to ``target_idx``.
+    """Get fallback exogenous values aligned to ``target_idx``.
 
     Parameters
     ----------
@@ -93,7 +93,7 @@ def _align_X_columns(X, columns):
 
 
 def _pool_exogenous(X_hist, X_new=None):
-    """Pool historic and new exogeneous data with stable column schema.
+    """Pool historic and new exogenous data with stable column schema.
 
     Parameters
     ----------
@@ -121,7 +121,7 @@ def _pool_exogenous(X_hist, X_new=None):
 
 
 def _align_X_index(X, target_index):
-    """Align exogeneous row index to ``target_index`` by shape where possible.
+    """Align exogenous row index to ``target_index`` by shape where possible.
 
     Parameters
     ----------
@@ -156,14 +156,14 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
     Algorithm details:
 
-    In ``fit``, given endogeneous time series ``y`` and possibly exogeneous ``X``:
+    In ``fit``, given endogenous time series ``y`` and possibly exogenous ``X``:
         fits ``estimator`` to feature-label pairs for one-step-ahead prediction:
         features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_length+1)``,
                    if provided: ``X(t+1)``
         labels = ``y(t+1)``
         ranging over all ``t`` where the above have been observed
 
-    In ``predict_proba``, given possibly exogeneous ``X``, at cutoff time ``c``:
+    In ``predict_proba``, given possibly exogenous ``X``, at cutoff time ``c``:
         1. Generate ``n_samples`` Monte Carlo trajectories using ancestral sampling
         2. For each trajectory and each horizon step ``h``:
            a. Get probabilistic prediction from estimator using lagged features
@@ -299,7 +299,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         y : pd.DataFrame
             Time series to fit the forecaster to.
         X : pd.DataFrame, optional
-            Exogeneous time series.
+            Exogenous time series.
         fh : ForecastingHorizon
             Forecasting horizon.
 
@@ -369,7 +369,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         fh : ForecastingHorizon
             Forecasting horizon.
         X : pd.DataFrame, optional
-            Exogeneous time series.
+            Exogenous time series.
 
         Returns
         -------
@@ -387,7 +387,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         fh : ForecastingHorizon
             Forecasting horizon.
         X : pd.DataFrame, optional
-            Exogeneous time series.
+            Exogenous time series.
         marginal : bool, optional, default=True
             Whether returned distribution is marginal by time index.
 
@@ -431,7 +431,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         fh : ForecastingHorizon
             Forecasting horizon.
         X_pool : pd.DataFrame or None
-            Pooled exogeneous data.
+            Pooled exogenous data.
 
         Returns
         -------
