@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import sktime.forecasting.compose._reduce_proba as reduce_proba_module
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import MCRecursiveProbaReductionForecaster
