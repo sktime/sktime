@@ -12,6 +12,8 @@ predict_quantiles and predict_interval.
 __author__ = ["marrov"]
 __all__ = ["BaseProbaForecaster"]
 
+import pandas as pd
+
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
@@ -234,10 +236,8 @@ class BaseProbaForecaster(BaseForecaster):
             )
             combined_indices.append(new_index)
 
-        # Concatenate all indices
-        full_index = combined_indices[0]
-        for idx in combined_indices[1:]:
-            full_index = full_index.append(idx)
+        # Concatenate all indices using pd.concat (MultiIndex.append is deprecated)
+        full_index = pd.concat([idx.to_frame() for idx in combined_indices]).index
 
         # Get parameter names from the distribution's signature
         sig = inspect.signature(dist_class.__init__)
@@ -277,10 +277,40 @@ class BaseProbaForecaster(BaseForecaster):
             # Fallback: return first distribution (shouldn't normally happen)
             return dist_list[0]
 
-    def _concat_empirical_distributions(self, dist_list, row_idx):
-        """Concatenate empirical distributions from vectorized prediction."""
-        import pandas as pd
+    def _get_instance_names_from_row_idx(self, row_idx):
+        """Get instance names from row_idx for MultiIndex construction.
 
+        Parameters
+        ----------
+        row_idx : pd.Index or pd.MultiIndex
+            The row index from which to extract names.
+
+        Returns
+        -------
+        list
+            List of instance names.
+        """
+        if isinstance(row_idx, pd.MultiIndex):
+            return list(row_idx.names)
+        else:
+            return [row_idx.name if hasattr(row_idx, "name") else "level_0"]
+
+    def _concat_empirical_distributions(self, dist_list, row_idx):
+        """
+        Concatenate empirical distributions from vectorized prediction.
+
+        Parameters
+        ----------
+        dist_list : list of skpro BaseDistribution
+            List of empirical distributions from each instance.
+        row_idx : pd.Index or pd.MultiIndex
+            The row index from the vectorized structure, used for constructing the combined index.
+
+        Returns
+        -------
+        concat_dist : skpro BaseDistribution
+            Concatenated empirical distribution with proper hierarchical index.
+        """
         dist_class = type(dist_list[0])
 
         spl_dfs = []
@@ -306,12 +336,7 @@ class BaseProbaForecaster(BaseForecaster):
 
                 spl_sample_name = spl.index.names[0]
 
-                if isinstance(row_idx, pd.MultiIndex):
-                    instance_names = list(row_idx.names)
-                else:
-                    instance_names = [
-                        row_idx.name if hasattr(row_idx, "name") else "level_0"
-                    ]
+                instance_names = self._get_instance_names_from_row_idx(row_idx)
 
                 spl_time_name = spl.index.names[-1]
                 new_names = [spl_sample_name] + instance_names + [spl_time_name]
@@ -346,9 +371,8 @@ class BaseProbaForecaster(BaseForecaster):
 
         combined_spl = pd.concat(spl_dfs, axis=0)
 
-        full_index = combined_indices[0]
-        for idx in combined_indices[1:]:
-            full_index = full_index.append(idx)
+        # Concatenate indices using pd.concat (MultiIndex.append is deprecated)
+        full_index = pd.concat([idx.to_frame() for idx in combined_indices]).index
 
         columns = dist_list[0].columns
         return dist_class(spl=combined_spl, index=full_index, columns=columns)
