@@ -2,7 +2,7 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["chpatel"]
+__author__ = ["patelchaitany"]
 __all__ = ["EnsureMinLengthSegments"]
 
 import numpy as np
@@ -61,6 +61,7 @@ class EnsureMinLengthSegments(BaseDetector):
 
     _tags = {
         "authors": ["patelchaitany"],
+        "maintainers": ["patelchaitany"],
         "task": "change_point_detection",
         "learning_type": "unsupervised",
         "fit_is_empty": False,
