@@ -7,6 +7,8 @@ to produce multi-step probabilistic forecasts using ancestral sampling.
 __author__ = ["marrov"]
 __all__ = ["MCRecursiveProbaReductionForecaster"]
 
+import inspect
+
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -20,6 +22,7 @@ from sktime.forecasting.compose._reduce import (
 )
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.sklearn import prep_skl_df
+from sktime.utils.warnings import warn
 
 
 def _get_last_X_for_index(X, target_idx):
@@ -50,8 +53,8 @@ def _get_last_X_for_index(X, target_idx):
             X_last.index = target_idx
             return X_last
 
-        X_last = pd.concat([X.iloc[[-1]]] * len(target_idx), axis=0)
-        X_last.index = target_idx
+        X_last_vals = np.tile(X.iloc[[-1]].to_numpy(), (len(target_idx), 1))
+        X_last = pd.DataFrame(X_last_vals, columns=X.columns, index=target_idx)
         return X_last
 
     X_last = X.iloc[[-1]].copy()
@@ -220,6 +223,8 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     >>> forecaster.fit(y)  # doctest: +ELLIPSIS
     MCRecursiveProbaReductionForecaster(...)
     >>> y_pred_dist = forecaster.predict_proba(fh=range(1, 13))
+    >>> len(y_pred_dist.mean()) == 12
+    True
     """
 
     _tags = {
@@ -227,11 +232,14 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         "python_dependencies": ["skpro>=2.11.0"],
         "requires-fh-in-fit": False,
         "capability:exogenous": True,
+        "capability:insample": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": False,
         "capability:random_state": True,
         "scitype:y": "both",
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "tests:libs": ["sktime.transformations.series.lag"],
     }
 
     def __init__(
@@ -264,8 +272,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 f"regressor, but received estimator of type {_est_type}. "
                 "Use RecursiveReductionForecaster for non-probabilistic estimators."
             )
-
-        self._est_type = _est_type
 
         if pooling == "local":
             mtypes = "pd.DataFrame"
@@ -328,6 +334,13 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         notna_idx = Xtt_notna_idx.intersection(y.index)
 
         if len(notna_idx) == 0:
+            warn(
+                "No valid lagged rows were produced in fit; this can happen when "
+                "`window_length` is larger than available observations. Falling back "
+                "to constant mean forecasts via `y.mean()`.",
+                obj=self,
+                stacklevel=2,
+            )
             self.estimator_ = y.mean()
             return self
 
@@ -496,7 +509,9 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         n_instances = len(Xtt_template) if is_hierarchical else 1
 
         # Initialize feature arrays: shape (n_samples, n_instances, n_features)
-        initial_features = prep_skl_df(Xtt_template).values
+        Xtt_template = prep_skl_df(Xtt_template)
+        initial_features = Xtt_template.values
+        feature_cols = Xtt_template.columns
         sample_features = np.tile(initial_features, (n_samples, 1, 1))
 
         # Precompute exogenous features for each horizon step
@@ -526,6 +541,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
         n_lag_features = Xt_initial.shape[1]
         n_exog_features = len(exog_cols) if X_pool is not None else 0
+        sample_supports_random_state = None
 
         for step_idx in range(max_horizon):
             batch_features = sample_features.reshape(n_samples * n_instances, -1)
@@ -537,20 +553,43 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                     batch_features[:, :n_exog_features] = X_batch
 
             Xt_batch = pd.DataFrame(batch_features, columns=feature_cols)
-            Xt_batch = prep_skl_df(Xt_batch)
 
             pred_dist = estimator.predict_proba(Xt_batch)
 
-            if self.random_state is not None:
+            if sample_supports_random_state is None:
+                try:
+                    sample_supports_random_state = (
+                        "random_state" in inspect.signature(pred_dist.sample).parameters
+                    )
+                except (TypeError, ValueError):
+                    sample_supports_random_state = False
+
+            if self.random_state is None:
+                sampled_df = pred_dist.sample(n_samples=1)
+            elif sample_supports_random_state:
                 sample_seed = int(rng.integers(0, 2**31))
+                try:
+                    sampled_df = pred_dist.sample(
+                        n_samples=1,
+                        random_state=sample_seed,
+                    )
+                except TypeError:
+                    random_state_prev = np.random.get_state()
+                    np.random.seed(sample_seed)
+                    try:
+                        sampled_df = pred_dist.sample(n_samples=1)
+                    finally:
+                        np.random.set_state(random_state_prev)
+            else:
+                sample_seed = int(rng.integers(0, 2**31))
+                # Fallback for distributions that do not expose a random_state kwarg:
+                # temporarily set NumPy global RNG to preserve reproducibility.
                 random_state_prev = np.random.get_state()
                 np.random.seed(sample_seed)
                 try:
                     sampled_df = pred_dist.sample(n_samples=1)
                 finally:
                     np.random.set_state(random_state_prev)
-            else:
-                sampled_df = pred_dist.sample(n_samples=1)
 
             sampled_values = (
                 sampled_df.values.flatten()
@@ -574,23 +613,15 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             # Shift lag features and insert new sampled values at lag_0
             window_length = self.window_length
             start_idx = n_exog_features
+            lag_end_idx = start_idx + n_lag_features
 
-            # Vectorized lag shifting: roll features and update lag_0 with new samples
-            if window_length > 1:
-                # Shift lag features: move later positions to earlier positions
-                # lag_i+1 <- lag_i for i = window_length-2 down to 0
-                for lag in range(window_length - 1, 0, -1):
-                    for col in range(n_y_cols):
-                        src_pos = start_idx + (lag - 1) * n_y_cols + col
-                        dst_pos = start_idx + lag * n_y_cols + col
-                        if dst_pos < start_idx + n_lag_features:
-                            sample_features[:, :, dst_pos] = sample_features[
-                                :, :, src_pos
-                            ]
+            # Shift lag block one step to the right and write new values into lag_0.
+            if window_length > 1 and n_lag_features > n_y_cols:
+                sample_features[:, :, start_idx + n_y_cols : lag_end_idx] = (
+                    sample_features[:, :, start_idx : lag_end_idx - n_y_cols]
+                )
 
-            # Set lag_0 to the new sampled values
-            for col in range(n_y_cols):
-                sample_features[:, :, start_idx + col] = sampled_values[:, :, col]
+            sample_features[:, :, start_idx : start_idx + n_y_cols] = sampled_values
 
         # Get the time-only index for the forecast horizon
         fh_time_idx = pd.Index(list(fh_abs))
@@ -729,6 +760,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
             params = [params1, params2]
         else:
-            params = [{**params1, "estimator": "placeholder"}]
+            params = []
 
         return params
