@@ -287,9 +287,7 @@ class BaseProbaForecaster(BaseForecaster):
                 f"{dist_class.__name__}."
             ) from exc
 
-    def _coerce_distribution_param(
-        self, value, n_rows, n_cols, param_name, dist_name
-    ):
+    def _coerce_distribution_param(self, value, n_rows, n_cols, param_name, dist_name):
         """Coerce a distribution parameter to 2D array shape ``(n_rows, n_cols)``."""
         import numpy as np
 
