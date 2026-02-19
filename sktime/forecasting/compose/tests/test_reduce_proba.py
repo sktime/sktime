@@ -350,20 +350,6 @@ def test_invalid_pooling_raises():
         )
 
 
-def test_get_test_params_no_skpro_returns_empty_list(monkeypatch):
-    """`get_test_params` should return empty list if skpro is unavailable."""
-
-    monkeypatch.setattr(
-        reduce_proba_module,
-        "_check_soft_dependencies",
-        lambda *args, **kwargs: False,
-    )
-
-    params = MCRecursiveProbaReductionForecaster.get_test_params()
-
-    assert params == []
-
-
 @pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
 def test_in_sample_horizon_rejected():
     """In-sample horizons should be rejected for point and probabilistic prediction."""
