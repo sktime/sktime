@@ -41,7 +41,6 @@ EXCLUDE_ESTIMATORS = [
     # DL classifier suspected to cause hangs and memouts, see #4610
     "EditDist",
     "LSTMFCNClassifier",
-    "MLPClassifier",
     "MLPRegressor",
     "ResNetRegressor",
     "LSTMFCNRegressor",
