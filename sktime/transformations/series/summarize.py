@@ -315,7 +315,6 @@ class WindowSummarizer(BaseTransformer):
         boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
         func_dict["window"] = func_dict["window"].astype("object", copy=False)
         func_dict.loc[lags, "window"] = boost_lag
-        self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
 
         # Validate min_periods once in fit, not in parallel transform
@@ -326,6 +325,22 @@ class WindowSummarizer(BaseTransformer):
                 window_length = row["window"][1]
                 if summarizer != "lag":
                     _get_rolling_min_periods(self._min_periods, window_length)
+
+        # Calculate truncate_start accounting for min_periods
+        # For lag summarizers, use window_length (no partial window support)
+        # For rolling/callable summarizers, use min_periods if set
+        def _calc_truncate(row):
+            lag = row["window"][0]
+            window_length = row["window"][1]
+            if row["summarizer"] == "lag":
+                effective_periods = window_length
+            else:
+                effective_periods = _get_rolling_min_periods(
+                    self._min_periods, window_length
+                )
+            return lag + effective_periods - 1
+
+        self.truncate_start = func_dict.apply(_calc_truncate, axis=1).max()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
