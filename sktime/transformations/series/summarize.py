@@ -318,6 +318,15 @@ class WindowSummarizer(BaseTransformer):
         self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
 
+        # Validate min_periods once in fit, not in parallel transform
+        self._min_periods = _coerce_min_periods(self.min_periods)
+        if self._min_periods is not None:
+            for _, row in func_dict.iterrows():
+                summarizer = row["summarizer"]
+                window_length = row["window"][1]
+                if summarizer != "lag":
+                    _get_rolling_min_periods(self._min_periods, window_length)
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -350,7 +359,7 @@ class WindowSummarizer(BaseTransformer):
                 X_grouped = X.groupby(level=hier_levels)[cols]
                 df = Parallel(n_jobs=self.n_jobs)(
                     delayed(_window_feature)(
-                        X_grouped, **kwargs, bfill=bfill, min_periods=self.min_periods
+                        X_grouped, **kwargs, bfill=bfill, min_periods=self._min_periods
                     )
                     for index, kwargs in func_dict.iterrows()
                 )
@@ -360,7 +369,7 @@ class WindowSummarizer(BaseTransformer):
                         X.loc[:, [cols]],
                         **kwargs,
                         bfill=bfill,
-                        min_periods=self.min_periods,
+                        min_periods=self._min_periods,
                     )
                     for _index, kwargs in func_dict.iterrows()
                 )
