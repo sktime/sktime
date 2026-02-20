@@ -654,50 +654,45 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         n_samples = self.n_samples
         is_hierarchical = isinstance(fh_idx, pd.MultiIndex)
 
-        sample_indices = []
-        row_indices = []
-        values = []
+        n_horizons = len(fh_time_idx)
+        n_rows = n_samples * n_horizons
+
+        # Pre-build repeated index arrays (C-order so sample varies slowest)
+        sample_arange = np.arange(n_samples)
+        s_arr = np.repeat(sample_arange, n_horizons)
+        fh_time_arr = np.array(list(fh_time_idx), dtype=object)
+        t_arr = np.tile(fh_time_arr, n_samples)
 
         if is_hierarchical:
-            # For hierarchical data, iterate over instances and time
-            # The fh_idx already contains the full (instance..., time) tuples
-            for inst, traj_array in trajectories.items():
-                for sample_idx in range(n_samples):
-                    for h_idx, time_val in enumerate(fh_time_idx):
-                        sample_indices.append(sample_idx)
-                        if isinstance(inst, tuple):
-                            row_indices.append(inst + (time_val,))
-                        else:
-                            row_indices.append((inst, time_val))
-                        # traj_array shape is (n_samples, n_horizons, n_y_cols)
-                        values.append(traj_array[sample_idx, h_idx, :])
-
-            # Create MultiIndex with sample as first level, then instance+time levels
-            # Get the level names from fh_idx
             fh_names = list(fh_idx.names)
             spl_names = ["sample"] + fh_names
 
-            # Build tuples with sample as first element
-            spl_tuples = [
-                (s,) + (r if isinstance(r, tuple) else (r,))
-                for s, r in zip(sample_indices, row_indices)
-            ]
-            multi_idx = pd.MultiIndex.from_tuples(spl_tuples, names=spl_names)
+            spl_parts = []
+            for inst, traj_array in trajectories.items():
+                # Build per-instance index entirely from numpy arrays (no Python loops)
+                if isinstance(inst, tuple):
+                    arrays = (
+                        [s_arr]
+                        + [np.full(n_rows, v, dtype=object) for v in inst]
+                        + [t_arr]
+                    )
+                else:
+                    arrays = [s_arr, np.full(n_rows, inst, dtype=object), t_arr]
+
+                idx = pd.MultiIndex.from_arrays(arrays, names=spl_names)
+                # traj_array: (n_samples, n_horizons, n_y_cols) — reshape is zero-copy
+                vals = traj_array.reshape(n_rows, len(y_cols))
+                spl_parts.append(pd.DataFrame(vals, index=idx, columns=y_cols))
+
+            spl_df = pd.concat(spl_parts, axis=0)
         else:
-            # For single series, simple (sample, time) structure
+            # Single series: (sample, time) index
             traj_array = trajectories[None]
-            for sample_idx in range(n_samples):
-                for h_idx, time_val in enumerate(fh_time_idx):
-                    sample_indices.append(sample_idx)
-                    row_indices.append(time_val)
-                    # traj_array shape is (n_samples, n_horizons, n_y_cols)
-                    values.append(traj_array[sample_idx, h_idx, :])
-
             multi_idx = pd.MultiIndex.from_arrays(
-                [sample_indices, row_indices], names=["sample", "time"]
+                [s_arr, t_arr], names=["sample", "time"]
             )
-
-        spl_df = pd.DataFrame(np.array(values), index=multi_idx, columns=y_cols)
+            vals = traj_array.reshape(n_rows, len(y_cols))
+            spl_df = pd.DataFrame(vals, index=multi_idx, columns=y_cols)
 
         # Create Empirical distribution
         pred_dist = Empirical(spl=spl_df, index=fh_idx, columns=y_cols)
