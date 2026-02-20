@@ -463,7 +463,7 @@ class DontUpdate(_DelegatedForecaster):
     refit_window_lag : difference of sktime indices (int or timedelta), optional
         lag of the data window to refit to, w.r.t. cutoff, in case update calls fit
         default = 0, i.e., refit window ends with and includes cutoff
-    """
+""" 
 
     # attribute for _DelegatedForecaster, which then delegates
     #     all non-overridden methods are same as of getattr(self, _delegate_name)
