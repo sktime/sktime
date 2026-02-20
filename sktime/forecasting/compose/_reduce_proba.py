@@ -616,7 +616,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             lag_end_idx = start_idx + n_lag_features
 
             # Shift lag block one step to the right and write new values into lag_0.
-            if window_length > 1 and n_lag_features > n_y_cols:
+            if window_length > 1:
                 sample_features[:, :, start_idx + n_y_cols : lag_end_idx] = (
                     sample_features[:, :, start_idx : lag_end_idx - n_y_cols]
                 )
