@@ -14,7 +14,7 @@ __all__ = ["BaseProbaForecaster"]
 
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
