@@ -1,4 +1,4 @@
-"""Extension template for time series classifiers.
+"""Extension template for time series regressors.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -42,7 +42,7 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
-from sktime.classification.base import BaseClassifier
+from sktime.regression.base import BaseRegressor
 
 # todo: add any necessary imports here
 
@@ -52,7 +52,7 @@ from sktime.classification.base import BaseClassifier
 
 
 # todo: change class name and write docstring
-class MyTimeSeriesClassifier(BaseClassifier):
+class MyTimeSeriesRegressor(BaseRegressor):
     """Custom time series classifier. todo: write docstring.
 
     todo: describe your custom time series classifier here
@@ -189,7 +189,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
     # todo: implement this, mandatory
     def _predict(self, X):
-        """Predict labels for sequences in X.
+        """Predict target values for sequences in X.
 
         private _predict containing the core logic, called from predict
 
@@ -210,7 +210,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         y : should be of mtype in self.get_tag("y_inner_mtype")
             1D iterable, of shape [n_instances]
             or 2D iterable, of shape [n_instances, n_dimensions]
-            predicted class labels
+            predicted target values
             indices correspond to instance indices in X
             if self.get_tag("capaility:multioutput") = False, should be 1D
             if self.get_tag("capaility:multioutput") = True, should be 2D
