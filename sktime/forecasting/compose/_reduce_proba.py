@@ -25,7 +25,6 @@ from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.sklearn import prep_skl_df
 from sktime.utils.warnings import warn
 
-
 _NUMPY_GLOBAL_RNG_LOCK = threading.Lock()
 
 
