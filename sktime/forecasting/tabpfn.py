@@ -46,7 +46,10 @@ class TabPFNForecaster(BaseForecaster):
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
+        "X-y-must-have-same-index": True,
+        "capability:missing_values": True,
         "capability:insample": False,
     }
 
@@ -61,6 +64,39 @@ class TabPFNForecaster(BaseForecaster):
         self.tabpfn_output_selection = tabpfn_output_selection
 
         super().__init__()
+
+    def _make_context_df(self):
+        """Build the flat context DataFrame expected by predict_df."""
+        context_df = self._y_context.rename("target").to_frame()
+        if self._X_context is not None:
+            context_df = context_df.join(self._X_context, how="left")
+
+        if isinstance(context_df.index, pd.PeriodIndex):
+            context_df.index = context_df.index.to_timestamp()
+        context_df.index.name = "timestamp"
+        context_df = context_df.reset_index()
+        context_df.insert(0, "item_id", self._item_id)
+
+        return context_df
+
+    def _make_future_df(self, fh_abs, X):
+        """Build the flat future DataFrame expected by predict_df."""
+        fh_idx = fh_abs.to_pandas()
+        future_df = pd.DataFrame({"item_id": self._item_id, "timestamp": fh_idx})
+        if isinstance(future_df["timestamp"].dtype, pd.PeriodDtype):
+            future_df["timestamp"] = future_df["timestamp"].dt.to_timestamp()
+
+        if X is not None:
+            X_future = X.copy()
+            if isinstance(X_future.index, pd.PeriodIndex):
+                X_future.index = X_future.index.to_timestamp()
+            X_future = X_future.reindex(future_df["timestamp"])
+            future_df = pd.concat(
+                [future_df.reset_index(drop=True), X_future.reset_index(drop=True)],
+                axis=1,
+            )
+
+        return future_df
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data."""
@@ -84,6 +120,8 @@ class TabPFNForecaster(BaseForecaster):
 
         self._y_context = y.copy()
         self._X_context = X.copy() if X is not None else None
+        self._X_columns = [] if X is None else list(X.columns)
+        self._item_id = "__sktime_series_0"
 
         return self
 
@@ -91,29 +129,27 @@ class TabPFNForecaster(BaseForecaster):
         """Forecast time series at future horizon."""
         fh_abs = fh.to_absolute(self.cutoff)
 
-        context_df = self._y_context.rename("target").to_frame()
-        if self._X_context is not None:
-            context_df = context_df.join(self._X_context, how="left")
-        if isinstance(context_df.index, pd.PeriodIndex):
-            context_df.index = context_df.index.to_timestamp()
-        context_df.index.name = "timestamp"
-        context_df = context_df.reset_index()
-
-        fh_idx = fh_abs.to_pandas()
-        future_df = pd.DataFrame(index=fh_idx)
-        if isinstance(future_df.index, pd.PeriodIndex):
-            future_df.index = future_df.index.to_timestamp()
-        future_df.index.name = "timestamp"
-        future_df = future_df.reset_index()
+        context_df = self._make_context_df()
+        future_df = self._make_future_df(fh_abs, X)
 
         preds_df = self._pipeline.predict_df(
             context_df=context_df,
             future_df=future_df,
         )
 
-        preds_df = preds_df.reset_index(level="item_id", drop=True)
+        if isinstance(preds_df.index, pd.MultiIndex):
+            if "item_id" in preds_df.index.names:
+                preds_df = preds_df.xs(self._item_id, level="item_id", drop_level=True)
+            else:
+                preds_df = preds_df.droplevel(0)
+
         y_pred = preds_df["target"]
         y_pred.name = self._y_context.name
+
+        freq = getattr(self._y_context.index, "freq", None)
+        if isinstance(self._y_context.index, pd.PeriodIndex) and freq is not None:
+            y_pred.index = y_pred.index.to_period(freq=freq)
+
         y_pred = y_pred.reindex(fh_abs.to_pandas())
         return y_pred
 
