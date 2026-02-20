@@ -359,7 +359,6 @@ class BaseProbaForecaster(BaseForecaster):
         spl_dfs = []
         combined_indices = []
 
-        # Compute instance_names once; row_idx is fixed for the entire call.
         instance_names = self._get_instance_names_from_row_idx(row_idx)
 
         for i, dist in enumerate(dist_list):
