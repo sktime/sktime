@@ -124,7 +124,7 @@ def test_with_exogenous():
 
 @pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
 def test_with_exogenous_missing_first_future_index():
-    """Test exogeneous fallback when first prediction-time index is missing in X."""
+    """Test exogenous fallback when first prediction-time index is missing in X."""
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
     fh = ForecastingHorizon(y_test.index, is_relative=False)
@@ -136,7 +136,7 @@ def test_with_exogenous_missing_first_future_index():
         random_state=42,
     )
 
-    # Drop first future row to trigger fallback in exogeneous slicing logic
+    # Drop first future row to trigger fallback in exogenous slicing logic
     X_test_missing = X_test.iloc[1:]
 
     forecaster.fit(y_train, X=X_train)
@@ -148,7 +148,7 @@ def test_with_exogenous_missing_first_future_index():
 
 @pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
 def test_with_exogenous_missing_first_future_index_hierarchical():
-    """Test exogeneous fallback for hierarchical data
+    """Test exogenous fallback for hierarchical data
     with missing first future index."""
     y = _make_hierarchical(
         hierarchy_levels=(2, 2),

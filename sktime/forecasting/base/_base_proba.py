@@ -47,7 +47,7 @@ class BaseProbaForecaster(BaseForecaster):
             If has not been passed in fit, must be passed, not optional
 
         X : time series in ``sktime`` compatible format, optional (default=None)
-            Exogeneous time series to use in prediction.
+            Exogenous time series to use in prediction.
             Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
             as ``y`` in ``fit``.
 
@@ -122,7 +122,7 @@ class BaseProbaForecaster(BaseForecaster):
         fh : ForecastingHorizon
             The forecasting horizon.
         X : inner mtype format
-            Exogeneous time series, already converted to inner format.
+            Exogenous time series, already converted to inner format.
         marginal : bool
             Whether returned distribution is marginal by time index.
 
