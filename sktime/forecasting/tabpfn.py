@@ -49,6 +49,7 @@ class TabPFNForecaster(BaseForecaster):
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
         "capability:missing_values": True,
         "capability:insample": False,
     }
@@ -65,14 +66,45 @@ class TabPFNForecaster(BaseForecaster):
 
         super().__init__()
 
+    @staticmethod
+    def _is_integer_index(index):
+        return isinstance(index, pd.Index) and pd.api.types.is_integer_dtype(index)
+
+    @classmethod
+    def _require_supported_index(cls, index, var_name):
+        is_ok = isinstance(
+            index, (pd.DatetimeIndex, pd.PeriodIndex, pd.RangeIndex)
+        ) or cls._is_integer_index(index)
+
+        if not is_ok:
+            raise NotImplementedError(
+                f"{var_name} must have DatetimeIndex, PeriodIndex, RangeIndex, "
+                f"or integer Index, but found {type(index)}."
+            )
+
+    @classmethod
+    def _to_timestamp_index(cls, index, var_name):
+        """Convert a supported index to DatetimeIndex for TabPFN-TS."""
+        cls._require_supported_index(index, var_name=var_name)
+
+        if isinstance(index, pd.PeriodIndex):
+            return index.to_timestamp()
+        if isinstance(index, pd.DatetimeIndex):
+            return index
+
+        # RangeIndex / plain integer -> synthetic daily timestamps
+        return pd.DatetimeIndex(
+            pd.to_datetime(index.to_numpy(), unit="D", origin="unix"),
+            name=index.name,
+        )
+
     def _make_context_df(self):
         """Build the flat context DataFrame expected by predict_df."""
         context_df = self._y_context.rename("target").to_frame()
         if self._X_context is not None:
             context_df = context_df.join(self._X_context, how="left")
 
-        if isinstance(context_df.index, pd.PeriodIndex):
-            context_df.index = context_df.index.to_timestamp()
+        context_df.index = self._to_timestamp_index(context_df.index, "y")
         context_df.index.name = "timestamp"
         context_df = context_df.reset_index()
         context_df.insert(0, "item_id", self._item_id)
@@ -81,22 +113,20 @@ class TabPFNForecaster(BaseForecaster):
 
     def _make_future_df(self, fh_abs, X):
         """Build the flat future DataFrame expected by predict_df."""
-        fh_idx = fh_abs.to_pandas()
-        future_df = pd.DataFrame({"item_id": self._item_id, "timestamp": fh_idx})
-        if isinstance(future_df["timestamp"].dtype, pd.PeriodDtype):
-            future_df["timestamp"] = future_df["timestamp"].dt.to_timestamp()
+        fh_datetime = self._to_timestamp_index(fh_abs, "fh")
+        future_df = pd.DataFrame({"item_id": self._item_id, "timestamp": fh_datetime})
 
         if X is not None:
+            self._require_supported_index(X.index, "X")
             X_future = X.copy()
-            if isinstance(X_future.index, pd.PeriodIndex):
-                X_future.index = X_future.index.to_timestamp()
-            X_future = X_future.reindex(future_df["timestamp"])
+            X_future.index = self._to_timestamp_index(X_future.index, "X")
+            X_future = X_future.reindex(fh_datetime)
             future_df = pd.concat(
                 [future_df.reset_index(drop=True), X_future.reset_index(drop=True)],
                 axis=1,
             )
 
-        return future_df
+        return future_df, fh_datetime
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data."""
@@ -105,6 +135,10 @@ class TabPFNForecaster(BaseForecaster):
             TabPFNMode,
             TabPFNTSPipeline,
         )
+
+        self._require_supported_index(y.index, "y")
+        if X is not None:
+            self._require_supported_index(X.index, "X")
 
         mode_map = {
             "local": TabPFNMode.LOCAL,
@@ -127,30 +161,30 @@ class TabPFNForecaster(BaseForecaster):
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon."""
-        fh_abs = fh.to_absolute(self.cutoff)
+        fh_abs = fh.to_absolute_index(self.cutoff)
+        self._require_supported_index(fh_abs, "fh")
 
         context_df = self._make_context_df()
-        future_df = self._make_future_df(fh_abs, X)
+        future_df, fh_datetime = self._make_future_df(fh_abs, X)
 
         preds_df = self._pipeline.predict_df(
             context_df=context_df,
             future_df=future_df,
         )
 
+        # predict_df returns MultiIndex (item_id, timestamp)
         if isinstance(preds_df.index, pd.MultiIndex):
             if "item_id" in preds_df.index.names:
                 preds_df = preds_df.xs(self._item_id, level="item_id", drop_level=True)
             else:
                 preds_df = preds_df.droplevel(0)
 
-        y_pred = preds_df["target"]
+        preds_df = preds_df.reindex(fh_datetime)
+        preds_df.index = fh_abs
+
+        y_pred = preds_df["target"].copy()
         y_pred.name = self._y_context.name
 
-        freq = getattr(self._y_context.index, "freq", None)
-        if isinstance(self._y_context.index, pd.PeriodIndex) and freq is not None:
-            y_pred.index = y_pred.index.to_period(freq=freq)
-
-        y_pred = y_pred.reindex(fh_abs.to_pandas())
         return y_pred
 
     @classmethod
