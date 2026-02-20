@@ -438,7 +438,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         trajectories : dict
             Dictionary mapping instance identifiers to trajectory arrays.
             For single series, key is None.
-            Each array has shape (n_samples, n_horizons).
+            Each array has shape (n_samples, n_horizons, n_y_cols).
         fh_time_idx : pd.Index
             The time index for the forecasting horizon (without instance levels).
         """
