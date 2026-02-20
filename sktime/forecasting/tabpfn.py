@@ -128,6 +128,32 @@ class TabPFNForecaster(BaseForecaster):
 
         return future_df, fh_datetime
 
+    def _predict_tabpfn(self, fh, X, quantiles):
+        """Call predict_df and align the output index."""
+        fh_abs = fh.to_absolute_index(self.cutoff)
+        self._require_supported_index(fh_abs, "fh")
+
+        context_df = self._make_context_df()
+        future_df, fh_datetime = self._make_future_df(fh_abs, X)
+
+        preds_df = self._pipeline.predict_df(
+            context_df=context_df,
+            future_df=future_df,
+            quantiles=[float(q) for q in quantiles],
+        )
+
+        # predict_df returns MultiIndex (item_id, timestamp)
+        if isinstance(preds_df.index, pd.MultiIndex):
+            if "item_id" in preds_df.index.names:
+                preds_df = preds_df.xs(self._item_id, level="item_id", drop_level=True)
+            else:
+                preds_df = preds_df.droplevel(0)
+
+        preds_df = preds_df.reindex(fh_datetime)
+        preds_df.index = fh_abs
+
+        return preds_df
+
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data."""
         from tabpfn_time_series import (
@@ -161,26 +187,7 @@ class TabPFNForecaster(BaseForecaster):
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon."""
-        fh_abs = fh.to_absolute_index(self.cutoff)
-        self._require_supported_index(fh_abs, "fh")
-
-        context_df = self._make_context_df()
-        future_df, fh_datetime = self._make_future_df(fh_abs, X)
-
-        preds_df = self._pipeline.predict_df(
-            context_df=context_df,
-            future_df=future_df,
-        )
-
-        # predict_df returns MultiIndex (item_id, timestamp)
-        if isinstance(preds_df.index, pd.MultiIndex):
-            if "item_id" in preds_df.index.names:
-                preds_df = preds_df.xs(self._item_id, level="item_id", drop_level=True)
-            else:
-                preds_df = preds_df.droplevel(0)
-
-        preds_df = preds_df.reindex(fh_datetime)
-        preds_df.index = fh_abs
+        preds_df = self._predict_tabpfn(fh, X, quantiles=[0.5])
 
         y_pred = preds_df["target"].copy()
         y_pred.name = self._y_context.name
