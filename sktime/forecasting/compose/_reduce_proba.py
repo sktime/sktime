@@ -720,22 +720,29 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         """
         from skpro.distributions import Empirical
 
-        n_samples = samples.shape[0]
+        n_samples, n_points, n_cols = samples.shape
+        values = samples.reshape(n_samples * n_points, n_cols)
 
-        sample_indices = []
-        time_indices = []
-        values = []
+        sample_level = np.repeat(np.arange(n_samples), n_points)
 
-        for sample_idx in range(n_samples):
-            for h_idx, time_idx in enumerate(fh_idx):
-                sample_indices.append(sample_idx)
-                time_indices.append(time_idx)
-                values.append(samples[sample_idx, h_idx, :])
+        if isinstance(fh_idx, pd.MultiIndex):
+            fh_level_arrays = [
+                np.tile(fh_idx.get_level_values(i).to_numpy(), n_samples)
+                for i in range(fh_idx.nlevels)
+            ]
+            multi_idx = pd.MultiIndex.from_arrays(
+                [sample_level] + fh_level_arrays,
+                names=["sample"] + list(fh_idx.names),
+            )
+        else:
+            fh_values = np.tile(fh_idx.to_numpy(), n_samples)
+            fh_name = fh_idx.name if fh_idx.name is not None else "time"
+            multi_idx = pd.MultiIndex.from_arrays(
+                [sample_level, fh_values],
+                names=["sample", fh_name],
+            )
 
-        multi_idx = pd.MultiIndex.from_arrays(
-            [sample_indices, time_indices], names=["sample", "time"]
-        )
-        spl_df = pd.DataFrame(np.vstack(values), index=multi_idx, columns=y_cols)
+        spl_df = pd.DataFrame(values, index=multi_idx, columns=y_cols)
 
         return Empirical(spl=spl_df, index=fh_idx, columns=y_cols)
 
