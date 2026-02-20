@@ -51,22 +51,18 @@ class TapNetClassifierTorch(BaseDeepClassifierPytorch):
         Dropout rate before the output layer.
     num_epochs : int, default = 100
         The number of epochs to train the model.
+    batch_size : int, default = 1
+        The size of each mini-batch during training.
     optimizer : str or None or an instance of optimizers
         defined in torch.optim, default = "RMSprop"
         The optimizer to use for training the model.
         List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
-    optimizer_kwargs : dict or None, default = None
-        Additional keyword arguments to pass to the optimizer.
-    batch_size : int, default = 1
-        The size of each mini-batch during training.
     criterion : str or None or an instance of a loss function
         defined in PyTorch, default = "CrossEntropyLoss"
         The loss function to be used in training the neural network.
         List of available loss functions:
         https://pytorch.org/docs/stable/nn.html#loss-functions
-    criterion_kwargs : dict or None, default = None
-        Additional keyword arguments to pass to the loss function.
     callbacks : None or str or a tuple of str, default = "ReduceLROnPlateau"
         Learning rate schedulers applied during training.
         Currently only learning rate schedulers are supported as callbacks.
@@ -78,6 +74,10 @@ class TapNetClassifierTorch(BaseDeepClassifierPytorch):
         and unexpected behavior.
         List of available learning rate schedulers:
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+    optimizer_kwargs : dict or None, default = None
+        Additional keyword arguments to pass to the optimizer.
+    criterion_kwargs : dict or None, default = None
+        Additional keyword arguments to pass to the loss function.
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
     lr : float, default = 0.001
@@ -101,7 +101,7 @@ class TapNetClassifierTorch(BaseDeepClassifierPytorch):
     _tags = {
         "authors": ["srupat"],
         "maintainers": ["srupat"],
-        "python_version": ">=3.9",
+        "python_version": ">=3.10, <3.15",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
@@ -110,9 +110,9 @@ class TapNetClassifierTorch(BaseDeepClassifierPytorch):
     def __init__(
         self: "TapNetClassifierTorch",
         # model specific
-        filter_sizes: tuple[int, int, int] = (256, 256, 128),
-        kernel_size: tuple[int, int, int] = (8, 5, 3),
-        layers: tuple[int, int] = (500, 300),
+        filter_sizes: tuple[int, ...] = (256, 256, 128),
+        kernel_size: tuple[int, ...] = (8, 5, 3),
+        layers: tuple[int, ...] = (500, 300),
         dropout: float = 0.5,
         lstm_dropout: float = 0.8,
         dilation: int = 1,
@@ -166,6 +166,27 @@ class TapNetClassifierTorch(BaseDeepClassifierPytorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+
+        if not isinstance(self.kernel_size, tuple) or not all(
+            isinstance(k, int) for k in self.kernel_size
+        ):
+            raise TypeError("`kernel_size` must be a tuple of ints.")
+        if not isinstance(self.filter_sizes, tuple) or not all(
+            isinstance(f, int) for f in self.filter_sizes
+        ):
+            raise TypeError("`filter_sizes` must be a tuple of ints.")
+        if len(self.kernel_size) != len(self.filter_sizes):
+            raise ValueError(
+                "`kernel_size` and `filter_sizes` must be of the same length."
+            )
+        if len(self.kernel_size) < 3:
+            raise ValueError("`kernel_size` and `filter_sizes` must have length >= 3.")
+        if not isinstance(self.layers, tuple) or len(self.layers) != 2:
+            raise ValueError("`layers` must be a tuple of length 2.")
+        if not all(isinstance(l, int) for l in self.layers):
+            raise TypeError("`layers` must be a tuple of ints.")
+        if not isinstance(self.rp_params, tuple) or len(self.rp_params) != 2:
+            raise ValueError("`rp_params` must be a tuple of length 2.")
 
         # input_size and num_classes inferred from the data and will be
         # set in build_network

@@ -34,10 +34,6 @@ class TapNetNetworkTorch(NNModule):
         Size of dense layers in the mapping section.
     filter_sizes : tuple of int, default = (256, 256, 128)
         Number of convolutional filters in each conv block.
-    random_state : int or None, default=None
-        Seed to ensure reproducibility.
-    rp_params : tuple of int, default = (-1, 3)
-        Parameters for random projection.
     dropout : float, default = 0.5
         Dropout rate for the convolutional layers.
     lstm_dropout : float, default = 0.8
@@ -48,12 +44,16 @@ class TapNetNetworkTorch(NNModule):
         Type of padding for convolution layers.
     use_rp : bool, default = True
         Whether to use random projections.
+    rp_params : tuple of int, default = (-1, 3)
+        Parameters for random projection.
     use_att : bool, default = True
         Whether to use self attention.
     use_lstm : bool, default = True
         Whether to use an LSTM layer.
     use_cnn : bool, default = True
         Whether to use a CNN layer.
+    random_state : int or None, default=None
+        Seed to ensure reproducibility.
     init_weights : bool, default = True
         Whether to apply custom initialization.
     fc_dropout : float, default = 0.0
@@ -70,7 +70,7 @@ class TapNetNetworkTorch(NNModule):
     _tags = {
         "authors": ["srupat"],
         "maintainers": ["srupat"],
-        "python_version": ">=3.9",
+        "python_version": ">=3.10, <3.15",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
@@ -78,13 +78,13 @@ class TapNetNetworkTorch(NNModule):
 
     def __init__(
         self,
-        input_size: int | tuple[int, int, int],
+        input_size: int | tuple[int, ...],
         num_classes: int,
         activation: str | None = None,
         activation_hidden: str = "leaky_relu",
-        kernel_size: tuple[int, int, int] = (8, 5, 3),
-        layers: tuple[int, int] = (500, 300),
-        filter_sizes: tuple[int, int, int] = (256, 256, 128),
+        kernel_size: tuple[int, ...] = (8, 5, 3),
+        layers: tuple[int, ...] = (500, 300),
+        filter_sizes: tuple[int, ...] = (256, 256, 128),
         dropout: float = 0.5,
         lstm_dropout: float = 0.8,
         dilation: int = 1,
@@ -119,6 +119,27 @@ class TapNetNetworkTorch(NNModule):
         self.random_state = random_state
         self.init_weights = init_weights
         self.fc_dropout = fc_dropout
+
+        if not isinstance(self.kernel_size, tuple) or not all(
+            isinstance(k, int) for k in self.kernel_size
+        ):
+            raise TypeError("`kernel_size` must be a tuple of ints.")
+        if not isinstance(self.filter_sizes, tuple) or not all(
+            isinstance(f, int) for f in self.filter_sizes
+        ):
+            raise TypeError("`filter_sizes` must be a tuple of ints.")
+        if len(self.kernel_size) != len(self.filter_sizes):
+            raise ValueError(
+                "`kernel_size` and `filter_sizes` must be of the same length."
+            )
+        if len(self.kernel_size) < 3:
+            raise ValueError("`kernel_size` and `filter_sizes` must have length >= 3.")
+        if not isinstance(self.layers, tuple) or len(self.layers) != 2:
+            raise ValueError("`layers` must be a tuple of length 2.")
+        if not all(isinstance(l, int) for l in self.layers):
+            raise TypeError("`layers` must be a tuple of ints.")
+        if not isinstance(self.rp_params, tuple) or len(self.rp_params) != 2:
+            raise ValueError("`rp_params` must be a tuple of length 2.")
 
         # Validate input size and infer n_dims
         if isinstance(self.input_size, int):
