@@ -8,6 +8,7 @@ __author__ = ["marrov"]
 __all__ = ["MCRecursiveProbaReductionForecaster"]
 
 import inspect
+import threading
 
 import numpy as np
 import pandas as pd
@@ -23,6 +24,9 @@ from sktime.forecasting.compose._reduce import (
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.sklearn import prep_skl_df
 from sktime.utils.warnings import warn
+
+
+_NUMPY_GLOBAL_RNG_LOCK = threading.Lock()
 
 
 def _get_last_X_for_index(X, target_idx):
@@ -566,32 +570,11 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 except (TypeError, ValueError):
                     sample_supports_random_state = False
 
-            if self.random_state is None:
-                sampled_df = pred_dist.sample(n_samples=1)
-            elif sample_supports_random_state:
-                sample_seed = int(rng.integers(0, 2**31))
-                try:
-                    sampled_df = pred_dist.sample(
-                        n_samples=1,
-                        random_state=sample_seed,
-                    )
-                except TypeError:
-                    random_state_prev = np.random.get_state()
-                    np.random.seed(sample_seed)
-                    try:
-                        sampled_df = pred_dist.sample(n_samples=1)
-                    finally:
-                        np.random.set_state(random_state_prev)
-            else:
-                sample_seed = int(rng.integers(0, 2**31))
-                # Fallback for distributions that do not expose a random_state kwarg:
-                # temporarily set NumPy global RNG to preserve reproducibility.
-                random_state_prev = np.random.get_state()
-                np.random.seed(sample_seed)
-                try:
-                    sampled_df = pred_dist.sample(n_samples=1)
-                finally:
-                    np.random.set_state(random_state_prev)
+            sampled_df = self._sample_distribution_row(
+                pred_dist=pred_dist,
+                rng=rng,
+                sample_supports_random_state=sample_supports_random_state,
+            )
 
             sampled_values = (
                 sampled_df.values.flatten()
@@ -629,6 +612,39 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         fh_time_idx = pd.Index(list(fh_abs))
 
         return trajectories, fh_time_idx
+
+    def _sample_distribution_row(self, pred_dist, rng, sample_supports_random_state):
+        """Sample one draw from ``pred_dist`` with reproducibility-first policy.
+
+        The preferred route is to pass ``random_state`` to the distribution ``sample``
+        method. If unavailable, we preserve deterministic behavior by temporarily
+        seeding NumPy's global RNG under a process-local lock.
+        """
+        if self.random_state is None:
+            return pred_dist.sample(n_samples=1)
+
+        sample_seed = int(rng.integers(0, 2**31))
+
+        if sample_supports_random_state:
+            try:
+                return pred_dist.sample(n_samples=1, random_state=sample_seed)
+            except TypeError:
+                # Signature introspection may over-report support in some wrappers.
+                pass
+
+        # Reproducibility-first fallback for distributions that do not accept a
+        # call-level random_state argument.
+        #
+        # We serialize local global-RNG mutation with a lock to avoid races between
+        # concurrent calls from this estimator. External code mutating global RNG
+        # without the same lock can still interfere.
+        with _NUMPY_GLOBAL_RNG_LOCK:
+            random_state_prev = np.random.get_state()
+            np.random.seed(sample_seed)
+            try:
+                return pred_dist.sample(n_samples=1)
+            finally:
+                np.random.set_state(random_state_prev)
 
     def _build_empirical_from_trajectories(
         self, trajectories, fh_idx, fh_time_idx, y_cols
