@@ -80,9 +80,8 @@ def _align_X_columns(X, columns):
     X = X.copy()
     columns = pd.Index(columns).drop_duplicates()
 
-    if len(X.columns) == len(columns):
-        X.columns = columns
-    else:
+    # Use name-aware reindex to avoid silently reassigning columns by position.
+    if X.columns.tolist() != list(columns):
         X = X.reindex(columns=columns)
 
     if X.columns.has_duplicates:
