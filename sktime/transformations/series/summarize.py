@@ -470,6 +470,34 @@ def _coerce_min_periods(min_periods):
     return mp
 
 
+def _get_rolling_min_periods(min_periods, window_length):
+    """Get the min_periods value for rolling window operations.
+
+    Validates that min_periods does not exceed window_length and returns
+    the appropriate value to use for rolling operations.
+
+    Parameters
+    ----------
+    min_periods : int or None
+        The minimum number of observations required. If None, defaults to
+        window_length.
+    window_length : int
+        The length of the rolling window.
+
+    Returns
+    -------
+    int
+        The min_periods value to use for rolling operations.
+    """
+    if min_periods is None:
+        return window_length
+    if min_periods > window_length:
+        raise ValueError(
+            f"min_periods ({min_periods}) cannot exceed window_length ({window_length})"
+        )
+    return min_periods
+
+
 def _window_feature(Z, summarizer=None, window=None, bfill=False, min_periods=None):
     """Compute window features and lag.
 
@@ -509,14 +537,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False, min_periods=No
 
     feat: pd.DataFrame = pd.DataFrame()
     if summarizer in pd_rolling:
-        if mp is None:
-            rolling_mp = window_length
-        else:
-            if mp > window_length:
-                raise ValueError(
-                    f"min_periods ({mp}) cannot exceed window_length ({window_length})"
-                )
-            rolling_mp = mp
+        rolling_mp = _get_rolling_min_periods(mp, window_length)
 
         feat = Z.transform(
             lambda x: getattr(
@@ -526,14 +547,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False, min_periods=No
     elif summarizer == "lag":
         feat = Z.transform(lambda x: x.shift(lag))
     elif callable(summarizer):
-        if mp is None:
-            rolling_mp = window_length
-        else:
-            if mp > window_length:
-                raise ValueError(
-                    f"min_periods ({mp}) cannot exceed window_length ({window_length})"
-                )
-            rolling_mp = mp
+        rolling_mp = _get_rolling_min_periods(mp, window_length)
 
         feat = Z.transform(
             lambda x: (
