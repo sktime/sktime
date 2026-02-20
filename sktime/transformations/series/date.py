@@ -458,21 +458,17 @@ def _prep_dummies(DUMMIES):
 
     col = DUMMIES["child"]
     DUMMIES.insert(0, "ts_frequency", col)
-
-    DUMMIES = DUMMIES.replace(
+    DUMMIES["ts_frequency"] = DUMMIES["ts_frequency"].cat.rename_categories(
         {
-            "ts_frequency": {
-                "year": "Y",
-                "quarter": "Q",
-                "month": "M",
-                "week": "W",
-                "day": "D",
-                "hour": "H",
-                "minute": "T",
-                "second": "S",
-                "millisecond": "L",
-            }
+            "year": "Y",
+            "quarter": "Q",
+            "month": "M",
+            "week": "W",
+            "day": "D",
+            "hour": "H",
+            "minute": "T",
+            "second": "S",
+            "millisecond": "L",
         }
     )
-
     return DUMMIES
