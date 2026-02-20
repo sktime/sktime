@@ -3,9 +3,11 @@
 __all__ = ["Chronos2Forecaster"]
 
 import numpy as np
+import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -19,6 +21,14 @@ else:
 
         class Tensor:
             """Dummy class if torch is unavailable."""
+
+
+if _check_soft_dependencies("transformers", severity="none"):
+    import transformers
+else:
+
+    class PreTrainedModel:
+        """Dummy class if transformers is unavailable."""
 
 
 class Chronos2Forecaster(BaseForecaster):
@@ -70,6 +80,36 @@ class Chronos2Forecaster(BaseForecaster):
 
     """
 
+    # tag values are "safe defaults" which can usually be left as-is
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": [],
+        # abdulfatir and lostella for amazon-science/chronos-forecasting
+        "maintainers": [""],
+        "python_dependencies": ["torch", "transformers", "accelerate"],
+        # estimator type
+        # --------------
+        "capability:exogenous": True,
+        "requires-fh-in-fit": False,
+        "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
+        "capability:missing_values": False,
+        "capability:pred_int": False,
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
+        "scitype:y": "both",
+        "capability:insample": False,
+        "capability:pred_int:insample": False,
+        "capability:global_forecasting": True,
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,
+        "tests:libs": [],
+        "tests:skip_by_name": [
+            
+        ],
+    }
     _default_config = {
         "batch_size": 256,
         "context_length": None,
@@ -126,6 +166,7 @@ class Chronos2Forecaster(BaseForecaster):
         """
         # Placeholder for actual fitting logic, which would involve loading the
         # Chronos 2 model and preparing it for forecasting.
+        self.model_pipeline = self._load_pipeline()
         return self
 
     def _get_chronos2_kwargs(self):
@@ -134,7 +175,126 @@ class Chronos2Forecaster(BaseForecaster):
         # settings for the Chronos 2 model, such as batch size, context length,
         # cross-learning flag, etc, and return them in a format suitable for
         # initializing the model pipeline.
-        pass
+        """Get the kwargs for Chronos model."""
+        return {
+            "pretrained_model_name_or_path": self.model_path,
+            "torch_dtype": self._config["torch_dtype"],
+            "device_map": self._config["device_map"],
+        }
+
+    def _get_unique_chronos2_key(self):
+        """Get unique key for Chronos model to use in multiton."""
+        model_path = self.model_path
+        kwargs = self._get_chronos2_kwargs()
+        kwargs_plus_model_path = {
+            **kwargs,
+            "model_path": model_path,
+        }
+        return str(sorted(kwargs_plus_model_path.items()))
+
+    def _ensure_model_pipeline_loaded(self):
+        """Ensure model pipeline is loaded, recreating if needed after unpickling."""
+        if not hasattr(self, "model_pipeline") or self.model_pipeline is None:
+            if hasattr(self, "_is_fitted") and self._is_fitted:
+                self.model_pipeline = self._load_pipeline()
+
+    def _predict(self, fh, X=None):
+        """
+        X we receive is the one passed to predict, and self._X is the one passed to fit.
+
+        explicit outside function does no pass y to predict, so y is None here,
+        but self._y is the one passed to fit.
+        So here we predict using the pipeline with self._X as past_covariates and
+        self._y as target series, and fh as the forecasting horizon.
+        X passed in here will be used as future_covariates if not None.
+
+        """
+        self._ensure_model_pipeline_loaded()
+        transformers.set_seed(self._seed)
+        if fh is not None:
+            # needs to be integer not np.int64
+            prediction_length = int(max(fh.to_relative(self.cutoff)))
+        else:
+            prediction_length = 1
+        _y = self._y.copy()
+        context_length = self.model_pipeline.model.chronos_config.context_length
+        _y = _y.iloc[-context_length:]
+        index_names = _y.index.names
+        target = _y.values.T.astype(float)
+        past_covariates = None
+        if self._X is not None:
+            past_X = self._X.iloc[-context_length:]
+            past_covariates = {
+                col: past_X[col].values.astype(float) for col in past_X.columns
+            }
+        future_covariates = None
+        if X is not None:
+            fh_absolute = fh.to_absolute(self.cutoff)
+            future_X = X.loc[fh_absolute.to_pandas()]
+
+            # Validate alignment
+            if not future_X.index.equals(fh_absolute.to_pandas()):
+                raise ValueError(
+                    "Future X index must exactly match forecasting horizon."
+                )
+
+            if len(future_X) != prediction_length:
+                raise ValueError("Future X length must equal prediction_length.")
+
+            future_covariates = {
+                col: future_X[col].values.astype(float) for col in future_X.columns
+            }
+
+            # Ensure consistency with past covariates if both exist
+            if past_covariates is not None:
+                if not set(future_covariates.keys()).issubset(
+                    set(past_covariates.keys())
+                ):
+                    raise ValueError(
+                        "Future covariate keys must be subset of past covariate keys."
+                    )
+        input = {"target": target}
+        if past_covariates is not None:
+            input["past_covariates"] = past_covariates
+        if future_covariates is not None:
+            input["future_covariates"] = future_covariates
+        inputs = [input]
+        results = self.model_pipeline.predict(
+            inputs,
+            prediction_length=prediction_length,
+            batch_size=self._config["batch_size"],
+            context_length=self._config["context_length"],
+            cross_learning=self._config["cross_learning"],
+            limit_prediction_length=self._config["limit_prediction_length"],
+        )
+        pred = results[0]
+        n_variates, n_quantiles, pred_length = pred.shape
+        assert pred_length == prediction_length, "Prediction length mismatch."
+        if n_quantiles > 1:
+            # -> (n_variates, prediction_length)
+            pred = pred.median(dim=1).values
+        else:
+            # -> (n_variates, prediction_length)
+            pred = pred[:, 0, :]
+        pred_np = pred.detach().cpu().numpy().T
+        index = (
+            ForecastingHorizon(range(1, pred_length + 1))
+            .to_absolute(self._cutoff)
+            ._values
+        )
+
+        pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
+        pred = pd.DataFrame(
+            pred_np,
+            index=index,
+            columns=self._y.columns,
+        )
+        dateindex = pred.index.get_level_values(-1).map(lambda x: x in pred_out)
+        pred.index.names = index_names
+
+        y_pred = pred.loc[dateindex]
+
+        return y_pred
 
     def _load_pipeline(self):
         """Load the model pipeline using the multiton pattern.
