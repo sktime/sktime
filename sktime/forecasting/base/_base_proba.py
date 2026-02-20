@@ -359,6 +359,9 @@ class BaseProbaForecaster(BaseForecaster):
         spl_dfs = []
         combined_indices = []
 
+        # Compute instance_names once; row_idx is fixed for the entire call.
+        instance_names = self._get_instance_names_from_row_idx(row_idx)
+
         for i, dist in enumerate(dist_list):
             spl = dist.spl
             instance_idx = row_idx[i]
@@ -378,9 +381,6 @@ class BaseProbaForecaster(BaseForecaster):
                     ]
 
                 spl_sample_name = spl.index.names[0]
-
-                instance_names = self._get_instance_names_from_row_idx(row_idx)
-
                 spl_time_name = spl.index.names[-1]
                 new_names = [spl_sample_name] + instance_names + [spl_time_name]
 
@@ -398,12 +398,6 @@ class BaseProbaForecaster(BaseForecaster):
             else:
                 new_dist_tuples = [(instance_idx, t) for t in dist_index]
 
-            if isinstance(row_idx, pd.MultiIndex):
-                instance_names = list(row_idx.names)
-            else:
-                instance_names = [
-                    row_idx.name if hasattr(row_idx, "name") else "level_0"
-                ]
             time_name = dist_index.name if dist_index.name is not None else "time"
 
             new_dist_index = pd.MultiIndex.from_tuples(
