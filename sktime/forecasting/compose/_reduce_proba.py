@@ -311,6 +311,8 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         impute_method = self.impute_method
         lags = self._lags
 
+        self._fit_fallback_mean_ = False
+
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
 
         if impute_method is not None:
@@ -341,6 +343,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 stacklevel=2,
             )
             self.estimator_ = y.mean()
+            self._fit_fallback_mean_ = True
             return self
 
         yt = y.loc[notna_idx]
@@ -405,7 +408,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         y_cols = self._y.columns
 
         # Fallback for edge case: no valid training data
-        if isinstance(self.estimator_, pd.Series):
+        if self._fit_fallback_mean_:
             n_horizons = len(fh_idx)
             samples = np.full(
                 (self.n_samples, n_horizons, len(y_cols)),
