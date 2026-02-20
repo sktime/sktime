@@ -100,7 +100,7 @@ See Also
 ~~~~~~~~
 
 This section should reference other ``sktime`` code artifacts related to the code artifact being documented by the docstring. Developers should use
-judgement in determining related code artifacts. For example, rather than listin all other performance metrics, a percentage error based performance metric
+judgement in determining related code artifacts. For example, rather than listing all other performance metrics, a percentage error based performance metric
 might only list other percentage error based performance metrics.  Likewise, a distance based classifier might list other distance based classifiers but
 not include other types of time series classifiers.
 
