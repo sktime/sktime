@@ -150,8 +150,6 @@ def test_with_exogenous_missing_first_future_index():
 def test_with_exogenous_missing_first_future_index_hierarchical():
     """Test exogeneous fallback for hierarchical data
     with missing first future index."""
-    from sktime.utils._testing.hierarchical import _make_hierarchical
-
     y = _make_hierarchical(
         hierarchy_levels=(2, 2),
         max_timepoints=30,
@@ -178,8 +176,12 @@ def test_with_exogenous_missing_first_future_index_hierarchical():
         random_state=42,
     )
 
-    # Drop first future row from X_test to trigger fallback in hierarchical path
-    X_test_missing = X_test.iloc[4:]  # Keep only last row of each series
+    # Drop first future row per series to trigger fallback on first fh step.
+    instance_levels = list(range(X_test.index.nlevels - 1))
+    X_test_missing = X_test.groupby(
+        level=instance_levels,
+        group_keys=False,
+    ).apply(lambda x: x.iloc[1:])
 
     forecaster.fit(y_train, X=X_train)
     y_pred = forecaster.predict(fh, X=X_test_missing)
