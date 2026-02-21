@@ -89,7 +89,12 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
     def _evaluate(self, y_true, y_pred, multioutput="uniform_average", **kwargs):
         is_hierarchical = y_true.index.nlevels > 1
 
-        if self.square_root and is_hierarchical:
+        # Only group by instance if NOT uniform_average_time
+        if (
+            self.square_root
+            and is_hierarchical
+            and self.multilevel != "uniform_average_time"
+        ):
             index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
             level_to_group = list(range(y_true.index.nlevels - 1))
 
@@ -103,6 +108,7 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
 
             return per_instance.mean(axis=0)
 
+        # Flat path or uniform_average_time
         res = super()._evaluate(y_true, y_pred, multioutput=multioutput, **kwargs)
 
         if self.square_root:

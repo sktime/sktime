@@ -385,8 +385,15 @@ class BaseForecastingErrorMetric(BaseMetric):
 
             if is_vectorized and n_levels > 1:
                 index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
-                level_to_group = list(range(n_levels - 1))
 
+                if self.multilevel == "uniform_average_time":
+                    return (
+                        np.mean(index_df, axis=0)
+                        if hasattr(index_df, "shape")
+                        else index_df
+                    )
+
+                level_to_group = list(range(n_levels - 1))
                 per_instance = index_df.groupby(level=level_to_group).mean()
 
                 if self.multilevel == "raw_values":
@@ -405,7 +412,18 @@ class BaseForecastingErrorMetric(BaseMetric):
                     per_instance = per_instance.to_frame()
                 return per_instance
 
-            return index_df.mean(axis=0)
+            if hasattr(index_df, "mean"):
+                res = index_df.mean(axis=0)
+            else:
+                res = np.mean(index_df)
+
+            if self.multilevel == "raw_values":
+                if multioutput == "raw_values" and hasattr(res, "to_numpy"):
+                    return res.to_numpy()
+                if hasattr(res, "size") and res.size == 1:
+                    return float(res.iloc[0] if hasattr(res, "iloc") else res)
+
+            return res
 
         except RecursionError:
             raise RecursionError(
