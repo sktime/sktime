@@ -15,6 +15,12 @@ spec = str(my_est)
 new_est = craft(spec)
 
 will have the same effect as new_est = spec.clone()
+
+.. warning::
+
+    The ``craft`` function uses ``eval`` and ``exec`` internally.
+    Only use with trusted input strings. Do not pass untrusted or
+    user-supplied strings to this function.
 """
 
 __author__ = ["fkiraly"]
@@ -69,14 +75,70 @@ def craft(spec):
     -------
     obj : skbase BaseObject descendant, constructed from ``spec``
         this will have the property that ``spec == str(obj)`` (up to formatting)
+
+    Raises
+    ------
+    TypeError
+        If ``spec`` is not a string.
+    ValueError
+        If ``spec`` contains potentially unsafe patterns.
+
+    Warnings
+    --------
+    This function uses ``eval`` and ``exec`` internally to construct objects.
+    Only use with trusted input strings. Do not pass untrusted or
+    user-supplied strings to this function.
     """
+    if not isinstance(spec, str):
+        raise TypeError(
+            f"spec must be a string, got {type(spec).__name__}"
+        )
+
+    # Security: reject specs containing known dangerous patterns
+    _UNSAFE_PATTERNS = [
+        "__import__",
+        "__subclasses__",
+        "__builtins__",
+        "__globals__",
+        "os.system",
+        "os.popen",
+        "subprocess",
+        "shutil.rmtree",
+    ]
+    for pattern in _UNSAFE_PATTERNS:
+        if pattern in spec:
+            raise ValueError(
+                f"Potentially unsafe pattern '{pattern}' detected in spec. "
+                "The craft function only supports estimator construction specs. "
+                "Do not pass untrusted or user-supplied strings."
+            )
+
     # retrieve all estimators from sktime and sklearn for namespace resolution
     register_sktime = dict(all_estimators())  # noqa: F841
     register_sklearn = dict(_all_sklearn_estimators())  # noqa: F841
     register = {**register_sklearn, **register_sktime}
 
+    # Security: restrict builtins by removing dangerous functions
+    # to prevent arbitrary code execution via __import__, open, etc.
+    import builtins as _builtins_module
+
+    _restricted_builtins = {k: v for k, v in vars(_builtins_module).items()}
+    _DANGEROUS_BUILTINS = [
+        "__import__",
+        "open",
+        "exec",
+        "eval",
+        "compile",
+        "breakpoint",
+    ]
+    for name in _DANGEROUS_BUILTINS:
+        _restricted_builtins.pop(name, None)
+
+    safe_globals = {"__builtins__": _restricted_builtins}
+    safe_globals.update(register)
+
     try:
-        obj = eval(spec, globals(), register)
+        obj = eval(spec, safe_globals, register)
     except Exception:
         from textwrap import indent
 
@@ -88,8 +150,8 @@ def build_obj():
             + spec_fun
         )
 
-        exec(spec_fun, register, register)
-        obj = eval("build_obj()", register, register)
+        exec(spec_fun, safe_globals, register)
+        obj = eval("build_obj()", safe_globals, register)
 
     return obj
 
