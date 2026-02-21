@@ -96,6 +96,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         "capability:sample_weight": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        "capability:sample_weight": True,
         "capability:pred_int": True,
         "y_inner_mtype": "pd.DataFrame",
     }
