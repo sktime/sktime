@@ -112,6 +112,13 @@ class BaseDeepRegressorTorch(BaseRegressor):
         self._all_callbacks = None
 
     def _fit(self, X, y):
+        if len(X.shape) != 3:
+            raise ValueError(
+                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
+                f"but got shape {X.shape}. Please ensure your input data is "
+                "properly formatted."
+            )
+
         self.network = self._build_network(X)
 
         # instantiate loss function and optimizer

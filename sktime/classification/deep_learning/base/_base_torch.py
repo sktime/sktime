@@ -5,6 +5,7 @@ __authors__ = ["geetu040", "RecreationalMath"]
 __all__ = ["BaseDeepClassifierPytorch"]
 
 import abc
+import warnings
 from collections.abc import Callable
 
 import numpy as np
@@ -126,6 +127,20 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self._all_callbacks = None
 
     def _fit(self, X, y):
+        if len(X.shape) != 3:
+            raise ValueError(
+                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
+                f"but got shape {X.shape}. Please ensure your input data is "
+                "properly formatted."
+            )
+
+        if len(np.unique(y)) == 1:
+            warnings.warn(
+                f"The provided data passed to {self.__class__.__name__} contains a "
+                "single label. If this is not intentional, please check.",
+                UserWarning,
+            )
+
         y = self._encode_y(y)
 
         self.network = self._build_network(X, y)
