@@ -29,4 +29,5 @@ jobs:
           python -c "import numpy, pandas, sklearn; print('numpy', numpy.__version__); print('pandas', pandas.__version__); print('sklearn', sklearn.__version__)"
       - name: Run Smoke Test
         run: pytest sktime/tests/test_softdeps.py
+        
 
