@@ -387,41 +387,44 @@ class BaseForecastingErrorMetric(BaseMetric):
                 index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
 
                 if self.multilevel == "uniform_average_time":
-                    return (
+                    res = (
                         np.mean(index_df, axis=0)
                         if hasattr(index_df, "shape")
                         else index_df
                     )
+                else:
+                    level_to_group = list(range(n_levels - 1))
+                    per_instance = index_df.groupby(level=level_to_group).mean()
 
-                level_to_group = list(range(n_levels - 1))
-                per_instance = index_df.groupby(level=level_to_group).mean()
+                    if self.multilevel == "raw_values":
+                        if isinstance(per_instance, pd.Series):
+                            per_instance = per_instance.to_frame()
+                        res = per_instance
+                    else:
+                        res = per_instance.mean(axis=0)
 
-                if self.multilevel == "raw_values":
+            else:
+                index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
+
+                if self.multilevel == "raw_values" and n_levels > 1:
+                    level_to_group = list(range(n_levels - 1))
+                    per_instance = index_df.groupby(level=level_to_group).mean()
                     if isinstance(per_instance, pd.Series):
                         per_instance = per_instance.to_frame()
-                    return per_instance
-
-                return per_instance.mean(axis=0)
-
-            index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
-
-            if self.multilevel == "raw_values" and n_levels > 1:
-                level_to_group = list(range(n_levels - 1))
-                per_instance = index_df.groupby(level=level_to_group).mean()
-                if isinstance(per_instance, pd.Series):
-                    per_instance = per_instance.to_frame()
-                return per_instance
-
-            if hasattr(index_df, "mean"):
-                res = index_df.mean(axis=0)
-            else:
-                res = np.mean(index_df)
+                    res = per_instance
+                else:
+                    if hasattr(index_df, "mean"):
+                        res = index_df.mean(axis=0)
+                    else:
+                        res = np.mean(index_df)
 
             if self.multilevel == "raw_values":
-                if multioutput == "raw_values" and hasattr(res, "to_numpy"):
-                    return res.to_numpy()
-                if hasattr(res, "size") and res.size == 1:
-                    return float(res.iloc[0] if hasattr(res, "iloc") else res)
+                if n_levels == 1:
+                    if multioutput == "raw_values" and hasattr(res, "to_numpy"):
+                        return res.to_numpy()
+                    if hasattr(res, "size") and res.size == 1:
+                        return float(res.iloc[0] if hasattr(res, "iloc") else res)
+                return res
 
             return res
 
