@@ -96,9 +96,6 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
             and is_hierarchical
             and self.multilevel != "uniform_average_time"
         ):
-            import numpy as np
-            import pandas as pd
-
             index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
 
             level_to_group = list(range(y_true.index.nlevels - 1))
