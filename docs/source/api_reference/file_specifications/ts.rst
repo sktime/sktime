@@ -203,7 +203,7 @@ This section provides full set of instructions to create a format specification 
 for your dataset that is compatible with ``sktime``.
 
 Remember that this begins with the assumption that you have the dataset readily available in
-expected `format <https://github.com/alan-turing-institute/sktime/blob/main/examples/loading_data.ipynb>`_.
+expected `format <https://github.com/sktime/sktime/blob/main/examples/data/loading_data.ipynb>`_.
 
 Few points to keep in mind while creating the dataset:
 
