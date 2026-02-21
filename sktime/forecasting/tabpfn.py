@@ -4,9 +4,12 @@
 __author__ = ["priyanshuharshbodhi1"]
 __all__ = ["TabPFNForecaster"]
 
+from copy import deepcopy
+
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.singleton import _multiton
 
 
 def _normalise_for_key(value):
@@ -139,6 +142,20 @@ class TabPFNForecaster(BaseForecaster):
 
         return future_df, fh_datetime
 
+    def _get_tabpfn_kwargs(self, default_config, tabpfn_mode_enum):
+        """Build kwargs dict for TabPFNTSPipeline construction."""
+        mode_map = {
+            "local": tabpfn_mode_enum.LOCAL,
+            "client": tabpfn_mode_enum.CLIENT,
+        }
+
+        return {
+            "max_context_length": self.max_context_length,
+            "tabpfn_mode": mode_map[self.tabpfn_mode],
+            "tabpfn_output_selection": self.tabpfn_output_selection,
+            "tabpfn_model_config": deepcopy(default_config),
+        }
+
     def _get_unique_tabpfn_key(self, tabpfn_kwargs):
         """Deterministic hashable key for the multiton cache."""
         key_dict = {k: _normalise_for_key(v) for k, v in tabpfn_kwargs.items()}
@@ -171,28 +188,22 @@ class TabPFNForecaster(BaseForecaster):
         return preds_df
 
     def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data."""
-        from tabpfn_time_series import (
-            TABPFN_DEFAULT_CONFIG,
-            TabPFNMode,
-            TabPFNTSPipeline,
-        )
+        """Store training context and load the TabPFN pipeline."""
+        from tabpfn_time_series import TABPFN_DEFAULT_CONFIG, TabPFNMode
 
         self._require_supported_index(y.index, "y")
         if X is not None:
             self._require_supported_index(X.index, "X")
 
-        mode_map = {
-            "local": TabPFNMode.LOCAL,
-            "client": TabPFNMode.CLIENT,
-        }
-
-        self._pipeline = TabPFNTSPipeline(
-            max_context_length=self.max_context_length,
-            tabpfn_mode=mode_map[self.tabpfn_mode],
-            tabpfn_output_selection=self.tabpfn_output_selection,
-            tabpfn_model_config=TABPFN_DEFAULT_CONFIG,
+        tabpfn_kwargs = self._get_tabpfn_kwargs(
+            default_config=TABPFN_DEFAULT_CONFIG,
+            tabpfn_mode_enum=TabPFNMode,
         )
+
+        self._pipeline = _CachedTabPFN(
+            key=self._get_unique_tabpfn_key(tabpfn_kwargs),
+            tabpfn_kwargs=tabpfn_kwargs,
+        ).load_from_checkpoint()
 
         self._y_context = y.copy()
         self._X_context = X.copy() if X is not None else None
@@ -214,3 +225,23 @@ class TabPFNForecaster(BaseForecaster):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
         return [{"max_context_length": 512, "tabpfn_mode": "local"}]
+
+
+@_multiton
+class _CachedTabPFN:
+    """Multiton wrapper so identical configs share one pipeline in memory."""
+
+    def __init__(self, key, tabpfn_kwargs):
+        self.key = key
+        self.tabpfn_kwargs = tabpfn_kwargs
+        self._pipeline = None
+
+    def load_from_checkpoint(self):
+        """Load the TabPFNTSPipeline on first call, return cached after."""
+        if self._pipeline is not None:
+            return self._pipeline
+
+        from tabpfn_time_series import TabPFNTSPipeline
+
+        self._pipeline = TabPFNTSPipeline(**self.tabpfn_kwargs)
+        return self._pipeline
