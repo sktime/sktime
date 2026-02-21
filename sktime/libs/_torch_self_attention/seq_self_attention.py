@@ -73,6 +73,12 @@ class SeqSelfAttentionTorch(NNModule):
         self.attention = None
         self.attention_regularizer_loss = None
 
+        self.Wx = None
+        self.Wt = None
+        self.bh = None
+        self.Wa = None
+        self.ba = None
+
         if attention_type == SeqSelfAttentionTorch.ATTENTION_TYPE_ADD:
             self.Wx, self.Wt, self.bh = None, None, None
             self.Wa, self.ba = None, None
