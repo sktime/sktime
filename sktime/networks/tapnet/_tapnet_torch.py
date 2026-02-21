@@ -160,6 +160,11 @@ class TapNetNetworkTorch(NNModule):
                 f"But found the type to be: {type(self.input_size)}"
             )
         self.n_dims = n_dims
+        if self.n_dims < 2:
+            raise ValueError(
+                "TapNet supports multivariate time series only; "
+                f"found n_dims={self.n_dims}."
+            )
 
         # RNG setup for reproducibility
         if self.random_state is not None:
@@ -206,22 +211,14 @@ class TapNetNetworkTorch(NNModule):
         # Layers for CNN
         if self.use_cnn:
             if self.use_rp:
-                ModuleList = _safe_import("torch.nn.ModuleList")
-                self.rp_convs = ModuleList(
-                    [self._make_conv_stack(self.rp_dim) for _ in range(self.rp_group)]
-                )
+                self.rp_conv = self._make_conv_stack(self.rp_dim)
                 if self.use_att:
                     SeqSelfAttentionTorch = _safe_import(
                         "sktime.libs._torch_self_attention.seq_self_attention.SeqSelfAttentionTorch"
                     )
-                    self.rp_attn = ModuleList(
-                        [
-                            SeqSelfAttentionTorch(
-                                self.filter_sizes[2],
-                                attention_type="multiplicative",
-                            )
-                            for _ in range(self.rp_group)
-                        ]
+                    self.rp_attn = SeqSelfAttentionTorch(
+                        self.filter_sizes[2],
+                        attention_type="multiplicative",
                     )
                 # Pre-compute RP indices (deterministic if random_state is set)
                 for i in range(self.rp_group):
@@ -419,9 +416,9 @@ class TapNetNetworkTorch(NNModule):
                 for i in range(self.rp_group):
                     idx = getattr(self, f"rp_idx_{i}")
                     x_proj = x_cnn.index_select(dim=1, index=idx)
-                    x_conv = self.rp_convs[i](x_proj)
+                    x_conv = self.rp_conv(x_proj)
                     if self.use_att:
-                        x_conv = self.rp_attn[i](x_conv.transpose(1, 2))
+                        x_conv = self.rp_attn(x_conv.transpose(1, 2))
                         x_conv = x_conv.transpose(1, 2)
                     x_conv = x_conv.mean(dim=2)
                     rp_outs.append(x_conv)
@@ -444,7 +441,8 @@ class TapNetNetworkTorch(NNModule):
 
         x = self.fc1(x)
         x = self._activation_hidden(x)
-        x = self.bn1(x)
+        if x.shape[0] > 1:
+            x = self.bn1(x)
         x = self.fc2(x)
         if self.fc_dropout:
             x = self.out_dropout(x)
