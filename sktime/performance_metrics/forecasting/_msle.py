@@ -99,6 +99,7 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
             level_to_group = list(range(y_true.index.nlevels - 1))
 
             per_instance = index_df.groupby(level=level_to_group).mean()
+
             per_instance = np.sqrt(per_instance)
 
             if self.multilevel == "raw_values":
@@ -107,8 +108,10 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
                 return per_instance
 
             res = per_instance.mean(axis=0)
+
             if isinstance(res, (pd.Series, pd.DataFrame)):
                 return self._handle_multioutput(res, self.multioutput)
+
             return res
 
         res = super()._evaluate(y_true, y_pred, **kwargs)
