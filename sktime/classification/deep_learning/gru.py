@@ -45,6 +45,9 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         Additional keyword arguments to pass to the optimizer.
     lr : float, optional (default=0.001)
         The learning rate to use for the optimizer.
+    device : str, optional (default="cpu")
+        The device to use for training and inference.
+        Options include ``"cpu"``, ``"cuda"``, ``"mps"``.
     verbose : bool, optional (default=False)
         Whether to print progress information during training.
     random_state : int, optional (default=None)
@@ -99,6 +102,7 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int = None,
+        device: str = "cpu",
     ):
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
@@ -117,6 +121,7 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.device = device
 
         # infer from the data
         self.input_size = None
@@ -132,6 +137,7 @@ class GRUClassifier(BaseDeepClassifierPytorch):
             lr=lr,
             verbose=verbose,
             random_state=random_state,
+            device=device,
         )
 
         self.criterions = {}
@@ -264,6 +270,12 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         Whether to print progress information during training.
     random_state : int, optional (default=None)
         Seed to ensure reproducibility.
+    device : str, optional (default="cpu")
+        The device to use for training and inference. Options include
+        ``"cpu"``, ``"cuda"``, ``"mps"`` or any valid PyTorch device string.
+        If ``"cuda"`` is specified but not available, a warning is raised
+        and the model falls back to ``"cpu"``.
+        Similarly for ``"mps"``.
 
     References
     ----------
@@ -315,6 +327,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         lr: float = 0.01,
         verbose: bool = False,
         random_state: int = None,
+        device: str = "cpu",
     ):
         self.hidden_dim = hidden_dim
         self.gru_layers = gru_layers
@@ -335,6 +348,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.device = device
 
         # infer from the data
         self.input_size = None
@@ -350,6 +364,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
             lr=lr,
             verbose=verbose,
             random_state=random_state,
+            device=device,
         )
 
         self.criterions = {}
