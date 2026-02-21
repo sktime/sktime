@@ -3,7 +3,6 @@
 __authors__ = ["Faakhir30"]
 __all__ = ["InceptionTimeClassifierTorch"]
 
-import warnings
 from collections.abc import Callable
 
 import numpy as np
@@ -207,24 +206,11 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         model : InceptionTimeNetworkTorch instance
             The constructed InceptionTime network.
         """
-        if len(X.shape) != 3:
-            raise ValueError(
-                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
-                f"but got shape {X.shape}. Please ensure your input data is "
-                "properly formatted."
-            )
         # n_instances, n_dims, n_timesteps = X.shape
         self.num_classes = len(np.unique(y))
 
         X = X.transpose(0, 2, 1)
         _, self.input_size, _ = X.shape
-
-        if self.n_classes_ == 1:
-            warnings.warn(
-                "The provided data passed to CNNClassifierTorch contains "
-                "a single label. If this is not intentional, please check.",
-                UserWarning,
-            )
 
         return InceptionTimeNetworkTorch(
             input_size=self.input_size,

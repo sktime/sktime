@@ -174,12 +174,6 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         model : InceptionTimeNetworkTorch instance
             The constructed InceptionTime network.
         """
-        if len(X.shape) != 3:
-            raise ValueError(
-                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
-                f"but got shape {X.shape}. Please ensure your input data is "
-                "properly formatted."
-            )
         # n_instances, n_dims, n_timesteps = X.shape
         X = X.transpose(0, 2, 1)  # to (n_instances, n_timesteps, n_dims)
         _, self.input_size, _ = X.shape
