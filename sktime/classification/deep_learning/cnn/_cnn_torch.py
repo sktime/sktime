@@ -2,8 +2,6 @@
 
 __all__ = ["CNNClassifierTorch"]
 
-import warnings
-
 import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
@@ -176,22 +174,10 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         CNNNetworkTorch
             The constructed CNN network.
         """
-        if len(X.shape) != 3:
-            raise ValueError(
-                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
-                f"but got shape {X.shape}."
-            )
         n_dims = X.shape[1]
         series_length = X.shape[2]
         input_shape = (n_dims, series_length)
         self.n_classes_ = len(np.unique(y))
-
-        if self.n_classes_ == 1:
-            warnings.warn(
-                "The provided data passed to CNNClassifierTorch contains "
-                "a single label. If this is not intentional, please check.",
-                UserWarning,
-            )
 
         return CNNNetworkTorch(
             input_shape=input_shape,

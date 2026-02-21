@@ -168,11 +168,6 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
         CNNNetworkTorch
             The constructed CNN network.
         """
-        if len(X.shape) != 3:
-            raise ValueError(
-                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
-                f"but got shape {X.shape}."
-            )
         n_dims = X.shape[1]
         series_length = X.shape[2]
         input_shape = (n_dims, series_length)
