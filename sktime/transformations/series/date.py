@@ -458,6 +458,7 @@ def _prep_dummies(DUMMIES):
 
     col = DUMMIES["child"]
     DUMMIES.insert(0, "ts_frequency", col)
+
     DUMMIES["ts_frequency"] = DUMMIES["ts_frequency"].cat.rename_categories(
         {
             "year": "Y",
