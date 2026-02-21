@@ -48,7 +48,7 @@ Beyond basic NumPy docstring formatting conventions, developers should focus on:
 .. note::
 
     In many cases a parameter, attribute return object, or error may be described in many docstrings across sktime. To avoid confusion, developers should
-    make sure their docstrings are as similar as possible to existing docstring descriptions of the the same parameter, attribute, return object
+    make sure their docstrings are as similar as possible to existing docstring descriptions of the same parameter, attribute, return object
     or error.
 
 Accordingly, sktime estimators and most other public code artifcations should generally include the following NumPy docstring convention sections:
