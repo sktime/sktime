@@ -88,6 +88,7 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
 
     def _evaluate(self, y_true, y_pred, **kwargs):
         kwargs.pop("multioutput", None)
+
         is_hierarchical = y_true.index.nlevels > 1
 
         if (
@@ -95,24 +96,31 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
             and is_hierarchical
             and self.multilevel != "uniform_average_time"
         ):
-            index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
-            level_to_group = list(range(y_true.index.nlevels - 1))
+            import numpy as np
+            import pandas as pd
 
+            index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
+
+            level_to_group = list(range(y_true.index.nlevels - 1))
             per_instance = index_df.groupby(level=level_to_group).mean()
 
             per_instance = np.sqrt(per_instance)
 
-            if self.multilevel == "raw_values":
-                if isinstance(per_instance, pd.Series):
-                    per_instance = per_instance.to_frame()
-                return per_instance
+            if isinstance(per_instance, (pd.Series, pd.DataFrame)):
+                values = per_instance.to_numpy()
+            else:
+                values = np.asarray(per_instance)
 
-            res = per_instance.mean(axis=0)
+            values = np.asarray(values)
 
-            if isinstance(res, (pd.Series, pd.DataFrame)):
-                return self._handle_multioutput(res, self.multioutput)
+            if self.multioutput == "raw_values":
+                return values.ravel()
 
-            return res
+            if isinstance(self.multioutput, (list, tuple, np.ndarray)):
+                weights = np.asarray(self.multioutput)
+                return np.float64(np.average(values, weights=weights))
+
+            return np.float64(values.mean())
 
         res = super()._evaluate(y_true, y_pred, **kwargs)
 
