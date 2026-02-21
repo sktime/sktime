@@ -9,6 +9,17 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster
 
 
+def _normalise_for_key(value):
+    """Normalise mutable objects to hashable values for multiton cache keys."""
+    if isinstance(value, dict):
+        return tuple((k, _normalise_for_key(v)) for k, v in sorted(value.items()))
+    if isinstance(value, (list, tuple)):
+        return tuple(_normalise_for_key(v) for v in value)
+    if isinstance(value, (str, int, float, bool, type(None))):
+        return value
+    return repr(value)
+
+
 class TabPFNForecaster(BaseForecaster):
     """Interface to TabPFN-TS for zero-shot time series forecasting.
 
@@ -127,6 +138,11 @@ class TabPFNForecaster(BaseForecaster):
             )
 
         return future_df, fh_datetime
+
+    def _get_unique_tabpfn_key(self, tabpfn_kwargs):
+        """Deterministic hashable key for the multiton cache."""
+        key_dict = {k: _normalise_for_key(v) for k, v in tabpfn_kwargs.items()}
+        return str(sorted(key_dict.items()))
 
     def _predict_tabpfn(self, fh, X, quantiles):
         """Call predict_df and align the output index."""
