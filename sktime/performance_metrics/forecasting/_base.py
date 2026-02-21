@@ -333,7 +333,7 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         return out_df
 
-    def _evaluate(self, y_true, y_pred, **kwargs):
+    def _evaluate(self, y_true, y_pred, multioutput="uniform_average", **kwargs):
         """Evaluate the desired metric on given inputs.
 
         private _evaluate containing core logic, called from evaluate
@@ -379,8 +379,6 @@ class BaseForecastingErrorMetric(BaseMetric):
         """
         # multioutput = self.multioutput
         # multilevel = self.multilevel
-        kwargs.pop("multioutput", None)
-
         try:
             is_vectorized = self.get_tag("inner_implements_multilevel", False)
             n_levels = y_true.index.nlevels
@@ -390,8 +388,8 @@ class BaseForecastingErrorMetric(BaseMetric):
 
                 if self.multilevel == "uniform_average_time":
                     if hasattr(index_df, "values"):
-                        return np.float64(np.mean(index_df.values))
-                    return np.float64(np.mean(index_df))
+                        return float(np.mean(index_df.values))
+                    return float(np.mean(index_df))
 
                 level_to_group = list(range(n_levels - 1))
                 per_instance = index_df.groupby(level=level_to_group).mean()
@@ -405,32 +403,28 @@ class BaseForecastingErrorMetric(BaseMetric):
 
             index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
 
+            if self.multilevel == "raw_values" and n_levels > 1:
+                level_to_group = list(range(n_levels - 1))
+                per_instance = index_df.groupby(level=level_to_group).mean()
+                if isinstance(per_instance, pd.Series):
+                    per_instance = per_instance.to_frame()
+                return per_instance
+
             if hasattr(index_df, "mean"):
                 res = index_df.mean(axis=0)
             else:
                 res = np.mean(index_df)
 
             if self.__class__.__name__ == "MeanSquaredLogError":
-                mo = self.multioutput
-
-                if isinstance(res, pd.DataFrame):
-                    res = res.iloc[0] if len(res) == 1 else res.mean(axis=0)
-
-                if mo == "uniform_average":
-                    return np.float64(np.mean(res))
-                if mo == "raw_values":
-                    if isinstance(res, (pd.Series, pd.DataFrame)):
+                if multioutput == "raw_values":
+                    if hasattr(res, "to_numpy"):
                         return res.to_numpy()
-                    if isinstance(res, (float, int, np.floating)):
+                    if not isinstance(res, np.ndarray):
                         return np.array([res])
                     return res
-                if isinstance(mo, np.ndarray):
-                    return np.float64(np.average(res, weights=mo))
 
-                if isinstance(res, pd.Series) and len(res) == 1:
-                    return np.float64(res.iloc[0])
-                if isinstance(res, (float, int)):
-                    return np.float64(res)
+                if not isinstance(res, (pd.Series, pd.DataFrame, np.ndarray)):
+                    res = pd.Series([res])
 
             return res
 
