@@ -142,11 +142,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
     """
 
     _tags = {
-        "scitype:y": "both",
-        "requires-y-train": False,
-        "requires-y-pred": True,
         "inner_implements_multilevel": True,
-        "capability:multivariate": True,
     }
 
     def __init__(

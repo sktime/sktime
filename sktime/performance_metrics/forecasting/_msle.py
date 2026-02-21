@@ -13,50 +13,56 @@ from sktime.performance_metrics.forecasting._functions import mean_squared_log_e
 class MeanSquaredLogError(BaseForecastingErrorMetric):
     r"""Mean Squared Logarithmic Error (MSLE) or Root Mean Squared Log Error (RMSLE).
 
-    MSLE is the Mean Squared Error calculated in logarithmic space.
-    It is useful when targets have exponential growth (e.g., population, sales)
-    or when we care more about relative errors than absolute errors.
-    MSLE is sensitive to relative differences and is less sensitive to outliers
-    in large values compared to standard MSE.
+        MSLE is the Mean Squared Error calculated in logarithmic space.
+        It is useful when targets have exponential growth (e.g., population, sales)
+        or when we care more about relative errors than absolute errors.
+        MSLE is sensitive to relative differences and is less sensitive to outliers
+        in large values compared to standard MSE.
 
-    The MSLE is defined as:
+        The MSLE is defined as:
 
-    .. math::
-        \text{MSLE}(y, \hat{y}) = \frac{1}{n} \sum_{i=1}^{n}
-        (\log(1 + y_i) - \log(1 + \hat{y}_i))^2
+        .. math::
+            \text{MSLE}(y, \hat{y}) = \frac{1}{n} \sum_{i=1}^{n}
+            (\log(1 + y_i) - \log(1 + \hat{y}_i))^2
 
-    If ``square_root`` is True, the Root Mean Squared Logarithmic Error (RMSLE)
-    is returned:
+        If ``square_root`` is True, the Root Mean Squared Logarithmic Error (RMSLE)
+        is returned:
 
-    .. math::
-        \text{RMSLE}(y, \hat{y}) = \sqrt{\text{MSLE}(y, \hat{y})}
+        .. math::
+            \text{RMSLE}(y, \hat{y}) = \sqrt{\text{MSLE}(y, \hat{y})}
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like,
-        default='uniform_average'
-        Defines aggregating of multiple output values.
-        If 'raw_values', returns errors for all outputs in multivariate case.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
-    multilevel : {'raw_values', 'uniform_average'}, default='uniform_average'
-        Defines aggregating of multiple hierarchical levels.
-        If 'raw_values', returns errors for all levels in hierarchical case.
-        If 'uniform_average', errors are mean-averaged across levels.
-    square_root : bool, default=False
-        Whether to take the square root of the mean squared log error.
-        If True, returns Root Mean Squared Log Error (RMSLE).
-    by_index : bool, default=False
-        If True, returns the metric value at each time point (jackknife pseudo-values).
-        If False, returns the aggregate metric value.
+        multioutput : {'raw_values', 'uniform_average'} or array-like,
+            default='uniform_average'
+            Defines aggregating of multiple output values.
+            If 'raw_values', returns errors for all outputs in multivariate case.
+            If 'uniform_average', errors of all outputs are averaged with
+            uniform weight.
+        multilevel : {'raw_values', 'uniform_average'}, default='uniform_average'
+            Defines aggregating of multiple hierarchical levels.
+            If 'raw_values', returns errors for all levels in hierarchical case.
+            If 'uniform_average', errors are mean-averaged across levels.
+        square_root : bool, default=False
+            Whether to take the square root of the mean squared log error.
+            If True, returns Root Mean Squared Log Error (RMSLE).
+        by_index : bool, default=False
+            If True, returns the metric value at each time point
+            (jackknife pseudo-values).
+            If False, returns the aggregate metric value.
 
     Examples
     --------
-    >>> from sktime.performance_metrics.forecasting import MeanSquaredLogError
-    >>> y_true = [3, 5, 2.5, 7]
-    >>> y_pred = [2.5, 5, 4, 8]
-    >>> msle = MeanSquaredLogError()
-    >>> msle(y_true, y_pred)
-    0.039730...
+        >>> import numpy as np
+        >>> from sktime.performance_metrics.forecasting import MeanSquaredLogError
+        >>> y_true = np.array([3, 5, 2.5, 7])
+        >>> y_pred = np.array([2.5, 5, 4, 8])
+        >>> msle = MeanSquaredLogError()
+        >>> float(round(msle(y_true, y_pred), 2))
+        0.04
+        >>> msle_root = MeanSquaredLogError(square_root=True)
+        >>> float(round(msle_root(y_true, y_pred), 2))
+        0.2
     """
 
     _tags = {
@@ -81,7 +87,6 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
         )
 
     def _evaluate(self, y_true, y_pred, multioutput="uniform_average", **kwargs):
-        """Evaluate MSLE or RMSLE with mathematical parity."""
         is_hierarchical = y_true.index.nlevels > 1
 
         if self.square_root and is_hierarchical:
@@ -92,6 +97,8 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
             per_instance = np.sqrt(per_instance)
 
             if self.multilevel == "raw_values":
+                if isinstance(per_instance, pd.Series):
+                    per_instance = per_instance.to_frame()
                 return per_instance
 
             return per_instance.mean(axis=0)

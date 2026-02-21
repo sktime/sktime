@@ -380,7 +380,6 @@ class BaseForecastingErrorMetric(BaseMetric):
         # multioutput = self.multioutput
         # multilevel = self.multilevel
         try:
-            # Check for opt-in and hierarchy
             is_vectorized = self.get_tag("inner_implements_multilevel", False)
             n_levels = y_true.index.nlevels
 
@@ -391,11 +390,22 @@ class BaseForecastingErrorMetric(BaseMetric):
                 per_instance = index_df.groupby(level=level_to_group).mean()
 
                 if self.multilevel == "raw_values":
+                    if isinstance(per_instance, pd.Series):
+                        per_instance = per_instance.to_frame()
                     return per_instance
-                else:
-                    return per_instance.mean(axis=0)
 
-            return self._evaluate_by_index(y_true, y_pred, **kwargs).mean(axis=0)
+                return per_instance.mean(axis=0)
+
+            index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
+
+            if self.multilevel == "raw_values" and n_levels > 1:
+                level_to_group = list(range(n_levels - 1))
+                per_instance = index_df.groupby(level=level_to_group).mean()
+                if isinstance(per_instance, pd.Series):
+                    per_instance = per_instance.to_frame()
+                return per_instance
+
+            return index_df.mean(axis=0)
 
         except RecursionError:
             raise RecursionError(
