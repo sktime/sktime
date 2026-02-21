@@ -333,7 +333,7 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         return out_df
 
-    def _evaluate(self, y_true, y_pred, multioutput="uniform_average", **kwargs):
+    def _evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the desired metric on given inputs.
 
         private _evaluate containing core logic, called from evaluate
@@ -410,16 +410,27 @@ class BaseForecastingErrorMetric(BaseMetric):
             else:
                 res = np.mean(index_df)
 
-            if self.__class__.__name__ == "MeanSquaredLogError" and isinstance(
-                res, pd.Series
-            ):
+            if self.__class__.__name__ == "MeanSquaredLogError":
                 mo = self.multioutput
+
+                if isinstance(res, pd.DataFrame):
+                    res = res.iloc[0] if len(res) == 1 else res.mean(axis=0)
+
                 if mo == "uniform_average":
-                    return np.float64(res.mean())
+                    return np.float64(np.mean(res))
                 if mo == "raw_values":
-                    return res.to_numpy()
+                    if isinstance(res, (pd.Series, pd.DataFrame)):
+                        return res.to_numpy()
+                    if isinstance(res, (float, int, np.floating)):
+                        return np.array([res])
+                    return res
                 if isinstance(mo, np.ndarray):
-                    return np.average(res, weights=mo)
+                    return np.float64(np.average(res, weights=mo))
+
+                if isinstance(res, pd.Series) and len(res) == 1:
+                    return np.float64(res.iloc[0])
+                if isinstance(res, (float, int)):
+                    return np.float64(res)
 
             return res
 
