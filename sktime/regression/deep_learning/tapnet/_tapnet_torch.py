@@ -223,7 +223,7 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
                 f"but got shape {X.shape}. Please ensure your input data is "
                 "properly formatted."
             )
-        _, self.input_size, _ = X.shape
+        self.input_size = X.shape
         return TapNetNetworkTorch(
             input_size=self.input_size,
             num_classes=self.num_classes,

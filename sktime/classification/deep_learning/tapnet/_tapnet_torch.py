@@ -231,7 +231,7 @@ class TapNetClassifierTorch(BaseDeepClassifierPytorch):
                 "properly formatted."
             )
         self.num_classes = len(np.unique(y))
-        _, self.input_size, _ = X.shape
+        self.input_size = X.shape
         return TapNetNetworkTorch(
             input_size=self.input_size,
             num_classes=self.num_classes,
