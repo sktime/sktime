@@ -343,7 +343,7 @@ The sample dataset that we will use for this is as shown
 This concludes how to create string identifiers for ``.ts``  format. To learn more about ``sktime``, visit
 `tutorials`_ page.
 
-.. _loading data: https://github.com/alan-turing-institute/sktime/blob/main/examples/loading_data.ipynb
+.. _loading data: https://github.com/sktime/sktime/blob/main/examples/data/loading_data.ipynb
 .. _Basic Motion.ts: https://github.com/alan-turing-institute/sktime/blob/main/sktime/datasets/data/BasicMotions/BasicMotions_TEST.ts
 .. _issue: https://github.com/alan-turing-institute/sktime/issues
 .. _tsregression: http://tseregression.org/
