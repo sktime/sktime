@@ -1198,7 +1198,7 @@ class TransformedTargetForecaster(_Pipeline):
         pred = self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
 
         pred = self._get_inverse_transform(
-            self.transformers_pre_, pred, mode="proba"
+            self.transformers_pre_, pred,X, mode="proba"
         )
 
         for _, t in self.transformers_post_:
@@ -1247,7 +1247,7 @@ class TransformedTargetForecaster(_Pipeline):
         )
 
         pred = self._get_inverse_transform(
-            self.transformers_pre_, pred, mode="proba"
+            self.transformers_pre_, pred,X, mode="proba"
         )
 
         for _, t in self.transformers_post_:
