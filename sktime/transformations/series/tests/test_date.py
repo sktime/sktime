@@ -2,6 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Unit tests of DateTimeFeatures functionality."""
 
+import warnings
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -395,7 +397,7 @@ def test_manual_selection_hour_of_week(df_panel):
     """Tests that "hour_of_week" returns correct result in `manual_selection`."""
     y = pd.DataFrame(
         data={"y": range(6)},
-        index=pd.date_range(start="2023-01-01", freq="H", periods=6),
+        index=pd.date_range(start="2023-01-01", freq="h", periods=6),
     )
     transformer = DateTimeFeatures(
         manual_selection=["hour_of_week"], keep_original_columns=True
@@ -407,3 +409,16 @@ def test_manual_selection_hour_of_week(df_panel):
         index=y.index,
     )
     assert_frame_equal(yt, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_no_future_warning_on_fit_transform():
+    """Test that fit_transform does not raise FutureWarning, regression for #9432."""
+    y = load_airline()
+    transformer = DateTimeFeatures(ts_freq="M")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        transformer.fit_transform(y)
