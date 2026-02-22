@@ -27,6 +27,8 @@ class TabPFNForecaster(BaseForecaster):
     """Interface to TabPFN-TS for zero-shot time series forecasting.
 
     Wraps ``tabpfn_time_series.TabPFNTSPipeline`` as an sktime forecaster.
+    Uses ``_multiton`` caching so multiple instances with the same config
+    share one pipeline in memory.
 
     Parameters
     ----------
@@ -37,10 +39,18 @@ class TabPFNForecaster(BaseForecaster):
         hosted TabPFN cloud API.
     tabpfn_output_selection : {"mean", "median", "mode"}, default="median"
         Aggregation for the TabPFN ensemble output.
+    tabpfn_model_config : dict or None, default=None
+        Override keys merged into ``TABPFN_DEFAULT_CONFIG``.
+        ``None`` keeps the package defaults.
+    ignore_future_covariates_if_missing : bool, default=False
+        If ``True``, missing future covariates at predict time are
+        silently ignored instead of raising.
 
     References
     ----------
     .. [1] https://github.com/PriorLabs/tabpfn-time-series
+    .. [2] Hoo, L.S.B. et al., "TabPFN-TS: Zero-shot Time Series
+       Forecasting with TabPFNv2", arXiv preprint arXiv:2501.02945, 2025.
 
     Examples
     --------
@@ -54,9 +64,13 @@ class TabPFNForecaster(BaseForecaster):
     """
 
     _tags = {
+        # contribution and dependency tags
+        # ---------------------------------
         "authors": ["priyanshuharshbodhi1"],
         "maintainers": ["priyanshuharshbodhi1"],
         "python_dependencies": ["tabpfn-time-series"],
+        # estimator type tags
+        # --------------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
@@ -66,6 +80,8 @@ class TabPFNForecaster(BaseForecaster):
         "enforce_index_type": None,
         "capability:missing_values": True,
         "capability:insample": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": False,
     }
 
     def __init__(
@@ -73,10 +89,14 @@ class TabPFNForecaster(BaseForecaster):
         max_context_length=4096,
         tabpfn_mode="local",
         tabpfn_output_selection="median",
+        tabpfn_model_config=None,
+        ignore_future_covariates_if_missing=False,
     ):
         self.max_context_length = max_context_length
         self.tabpfn_mode = tabpfn_mode
         self.tabpfn_output_selection = tabpfn_output_selection
+        self.tabpfn_model_config = tabpfn_model_config
+        self.ignore_future_covariates_if_missing = ignore_future_covariates_if_missing
 
         super().__init__()
 
@@ -112,6 +132,29 @@ class TabPFNForecaster(BaseForecaster):
             name=index.name,
         )
 
+    def _get_tabpfn_kwargs(self, default_config, tabpfn_mode_enum):
+        """Build kwargs dict for TabPFNTSPipeline construction."""
+        mode_map = {
+            "local": tabpfn_mode_enum.LOCAL,
+            "client": tabpfn_mode_enum.CLIENT,
+        }
+
+        model_config = deepcopy(default_config)
+        if self.tabpfn_model_config is not None:
+            model_config.update(deepcopy(self.tabpfn_model_config))
+
+        return {
+            "max_context_length": self.max_context_length,
+            "tabpfn_mode": mode_map[self.tabpfn_mode],
+            "tabpfn_output_selection": self.tabpfn_output_selection,
+            "tabpfn_model_config": model_config,
+        }
+
+    def _get_unique_tabpfn_key(self, tabpfn_kwargs):
+        """Deterministic hashable key for the multiton cache."""
+        key_dict = {k: _normalise_for_key(v) for k, v in tabpfn_kwargs.items()}
+        return str(sorted(key_dict.items()))
+
     def _make_context_df(self):
         """Build the flat context DataFrame expected by predict_df."""
         context_df = self._y_context.rename("target").to_frame()
@@ -130,36 +173,44 @@ class TabPFNForecaster(BaseForecaster):
         fh_datetime = self._to_timestamp_index(fh_abs, "fh")
         future_df = pd.DataFrame({"item_id": self._item_id, "timestamp": fh_datetime})
 
-        if X is not None:
-            self._require_supported_index(X.index, "X")
-            X_future = X.copy()
-            X_future.index = self._to_timestamp_index(X_future.index, "X")
-            X_future = X_future.reindex(fh_datetime)
-            future_df = pd.concat(
-                [future_df.reset_index(drop=True), X_future.reset_index(drop=True)],
-                axis=1,
-            )
+        if X is None:
+            if self._X_columns and not self.ignore_future_covariates_if_missing:
+                raise ValueError(
+                    "Future covariates are required because fit() received "
+                    "exogenous variables. Either provide X in predict() or "
+                    "set ignore_future_covariates_if_missing=True."
+                )
+            return future_df, fh_datetime
+
+        self._require_supported_index(X.index, "X")
+        X_future = X.copy()
+        X_future.index = self._to_timestamp_index(X_future.index, "X")
+        X_future = X_future.reindex(fh_datetime)
+        future_df = pd.concat(
+            [future_df.reset_index(drop=True), X_future.reset_index(drop=True)],
+            axis=1,
+        )
 
         return future_df, fh_datetime
 
-    def _get_tabpfn_kwargs(self, default_config, tabpfn_mode_enum):
-        """Build kwargs dict for TabPFNTSPipeline construction."""
-        mode_map = {
-            "local": tabpfn_mode_enum.LOCAL,
-            "client": tabpfn_mode_enum.CLIENT,
-        }
+    @staticmethod
+    def _find_quantile_column(preds_df, alpha):
+        """Find the column in preds_df matching quantile alpha."""
+        if alpha in preds_df.columns:
+            return alpha
 
-        return {
-            "max_context_length": self.max_context_length,
-            "tabpfn_mode": mode_map[self.tabpfn_mode],
-            "tabpfn_output_selection": self.tabpfn_output_selection,
-            "tabpfn_model_config": deepcopy(default_config),
-        }
+        alpha_str = str(alpha)
+        if alpha_str in preds_df.columns:
+            return alpha_str
 
-    def _get_unique_tabpfn_key(self, tabpfn_kwargs):
-        """Deterministic hashable key for the multiton cache."""
-        key_dict = {k: _normalise_for_key(v) for k, v in tabpfn_kwargs.items()}
-        return str(sorted(key_dict.items()))
+        for col in preds_df.columns:
+            try:
+                if float(col) == float(alpha):
+                    return col
+            except (TypeError, ValueError):
+                continue
+
+        raise KeyError(f"Quantile column for alpha={alpha} not found in predictions.")
 
     def _predict_tabpfn(self, fh, X, quantiles):
         """Call predict_df and align the output index."""
@@ -221,10 +272,36 @@ class TabPFNForecaster(BaseForecaster):
 
         return y_pred
 
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute quantile forecasts for the given horizon."""
+        preds_df = self._predict_tabpfn(fh, X, quantiles=alpha)
+
+        var_names = self._get_varnames()
+        col_index = pd.MultiIndex.from_product([var_names, alpha])
+        pred_quantiles = pd.DataFrame(index=preds_df.index, columns=col_index)
+
+        for a in alpha:
+            col = self._find_quantile_column(preds_df, a)
+            pred_quantiles[(var_names[0], a)] = preds_df[col].values
+
+        return pred_quantiles
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        return [{"max_context_length": 512, "tabpfn_mode": "local"}]
+        return [
+            {
+                "max_context_length": 512,
+                "tabpfn_mode": "local",
+                "tabpfn_output_selection": "median",
+            },
+            {
+                "max_context_length": 1024,
+                "tabpfn_mode": "local",
+                "tabpfn_output_selection": "mean",
+                "ignore_future_covariates_if_missing": True,
+            },
+        ]
 
 
 @_multiton
