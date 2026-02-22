@@ -299,6 +299,18 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         return y_pred
 
+    def _update(self, y, X=None, update_params=False):
+        """Update the forecaster with new data."""
+        if not update_params:
+            return self
+
+        # If the user wants an expanding window (window_length=None), 
+        # we must increase the internal window size to include the new data.
+        if self.window_length is None:
+            self.window_length_ += len(y)
+            
+        return self
+
     def _reshape_last_window_for_sp(self, last_window):
         """Reshape the 1D last window into a 2D last window, prepended with NaN values.
 
