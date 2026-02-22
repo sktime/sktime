@@ -124,7 +124,7 @@ def test_lag_fit_transform_column_names(X, index_out, lags):
         if isinstance(X, pd.DataFrame):
             col_names = X.columns
         elif isinstance(X, pd.Series):
-            col_names = [X.name if X.name else 0]
+            col_names = [X.name]
         else:
             pass
 
