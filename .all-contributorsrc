@@ -13,6 +13,17 @@
   "badgeTemplate": "[![All Contributors](https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg)](#contributors)",
   "skipCi": true,
   "contributors": [
+   {
+      "login": "ojuschugh1",
+      "name": "Ojus Chugh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/79078267?v=4",
+      "profile": "https://github.com/ojuschugh1",
+      "contributions": [
+        "code",
+        "infra",
+        "bug"
+      ]
+    },
     {
       "login": "fkiraly",
       "name": "Franz Kiraly",
