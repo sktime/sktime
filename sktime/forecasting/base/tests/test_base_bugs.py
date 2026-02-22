@@ -2,8 +2,11 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+import numpy as np
+import pandas as pd
 import pytest
 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import ForecastByLevel, TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
@@ -79,3 +82,54 @@ def test_predict_residuals_conversion():
     result = pipe.predict_residuals()
 
     assert type(result) is type(y_train)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting.base"),
+    reason="run only if base module has changed",
+)
+def test_update_predict_with_x():
+    """Regression test for bugfix #6026, related to update_predict windowing."""
+    from sklearn.linear_model import Lasso
+
+    from sktime.forecasting.compose import make_reduction
+    from sktime.split import temporal_train_test_split
+
+    # Set seed for reproducibility
+    np.random.seed(0)
+
+    # Generate synthetic data
+    num_rows = 300
+    data = {
+        "open": np.random.uniform(10000, 20000, num_rows),
+        "high": np.random.uniform(10000, 20000, num_rows),
+        "low": np.random.uniform(10000, 20000, num_rows),
+        "close": np.random.uniform(10000, 20000, num_rows),
+        "target": np.random.uniform(10000, 20000, num_rows),
+    }
+
+    # Create DataFrame
+    synthetic_df = pd.DataFrame(data)
+
+    # Set index to DatetimeIndex similar to the provided index
+    synthetic_df.index = pd.date_range(start="2020-08-06", periods=num_rows, freq="D")
+
+    y = synthetic_df[["target"]]
+    X = synthetic_df[["open", "high", "low", "close"]]
+
+    test_size = int(len(X) * 0.33)
+    fh = ForecastingHorizon(np.arange(1, 3), is_relative=True)
+
+    y_train, y_test, X_train, X_test = temporal_train_test_split(
+        y, X, test_size=test_size
+    )
+
+    pipe = make_reduction(Lasso(alpha=0.1))
+
+    fh = ForecastingHorizon(np.arange(1, 2), is_relative=True)
+
+    # Fit the model
+    pipe.fit(y=y_train, X=X_train, fh=fh)
+
+    # Make forecasts
+    pipe.update_predict(y=y_test, X=X_test)
