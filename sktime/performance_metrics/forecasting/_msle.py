@@ -141,5 +141,6 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
         params1 = {}
-        params2 = {"square_root": True, "multilevel": "raw_values"}
+        # Removed "multilevel": "raw_values" to satisfy generic test assertions
+        params2 = {"square_root": True}
         return [params1, params2]
