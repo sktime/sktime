@@ -1,0 +1,26 @@
+# Interactive plotting dependencies for sktime
+# These are optional dependencies for enhanced visualization capabilities
+
+# Core interactive plotting
+plotly>=5.0.0
+ipywidgets>=8.0.0
+
+# Jupyter support (optional)
+jupyter>=1.0.0
+notebook>=6.0.0
+
+# Additional visualization libraries (optional)
+bokeh>=3.0.0
+holoviews>=1.15.0
+
+# For advanced interactions
+dash>=2.0.0
+dash-bootstrap-components>=1.0.0
+
+# For data manipulation in interactive contexts
+pandas>=1.3.0
+numpy>=1.20.0
+
+# For statistical outlier detection
+scipy>=1.7.0
+scikit-learn>=1.0.0 
