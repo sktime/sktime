@@ -1061,6 +1061,48 @@ class PanelDask(ScitypePanel):
 class PanelPolarsEager(ScitypePanel):
     """Data type: polars.DataFrame based specification of panel of time series.
 
+    Name: ``"polars_panel"``
+
+    Short description:
+
+    a ``polars.DataFrame``,
+    where instance index and time index are columns starting with ``__index__``,
+    having exactly two such columns.
+    The first (leftmost) column is the instance index,
+    the second (rightmost) column is the time index.
+    The other cols are the variables.
+
+    Long description:
+
+    The ``"polars_panel"`` :term:`mtype` is a concrete specification
+    that implements the ``Panel`` :term:`scitype`, i.e., the abstract
+    type of a collection of time series.
+
+    An object ``obj: polars.DataFrame`` follows the specification iff:
+
+    * structure convention: ``obj`` must be a ``polars.DataFrame``,
+      with exactly two columns starting with ``__index__``.
+      The values of the last, rightmost index must be monotonically increasing
+      with rows,
+      for rows with the same values of the first, leftmost index column.
+    * instances: the first column starting with ``__index__`` is interpreted
+      as an instance index. All rows with the same instance index value
+      correspond to the same instance.
+    * instance index: The values in the first column starting with ``__index__``.
+    * time points: the second column starting with ``__index__`` is interpreted
+      as a time index.
+    * time index: The values in the second column starting with ``__index__``.
+    * variables: all other columns are interpreted as variables.
+    * variable names: column names of ``obj`` which do not start with ``__index__``.
+
+    Capabilities:
+
+    * can represent panels of multivariate series
+    * can represent unequally spaced series
+    * can represent panels of unequally supported series
+    * cannot represent panels of series with different sets of variables
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool

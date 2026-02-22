@@ -308,6 +308,51 @@ class HierarchicalDask(ScitypeHierarchical):
 class HierarchicalPolarsEager(ScitypeHierarchical):
     """Data type: polars DataFrame frame based specification of hierarchical series.
 
+    Name: ``"polars_hierarchical"``
+
+    Short description:
+
+    a ``polars.DataFrame``,
+    where instance index and time index are columns starting with ``__index__``,
+    having exactly two such columns.
+    The last, rightmost column is interpreted as a time index,
+    and the other ``__index__`` columns are interpreted as hierarchy indices.
+    The other cols are the variables.
+
+    Long description:
+
+    The ``"polars_hierarchical"`` :term:`mtype` is a concrete specification
+    that implements the ``Hierarchical`` :term:`scitype`, i.e., the abstract
+    type of a hierarchically indexed collection of time series.
+
+    An object ``obj: polars.DataFrame`` follows the specification iff
+
+    * structure convention: ``obj`` must be a ``polars.DataFrame``,
+      with three or more columns starting with ``__index__``.
+      The last, rightmost ``__index__`` column is interpreted as a time index.
+      Its values must be monotonically increasing with rows,
+      for rows with the same values of other index columns.
+    * hierarchy level: rows with the same non-time index values correspond to the
+      same hierarchy unit; rows with different non-time index combination
+      correspond to different hierarchy unit.
+    * hierarchy: the non-time indices are interpreted as hierarchy identifying index.
+    * time index: the values in the last column starting with
+      ``__index__`` are interpreted as a time index.
+    * time points: rows of ``obj`` with the same time index index correspond
+      to the same time point; rows of ``obj`` with different time index
+      correspond to the different time points.
+    * variables: all columns not starting with ``__index__``
+      are interpreted as variables.
+    * variable names: column names of ``obj`` which do not start with ``__index__``.
+
+    Capabilities:
+
+    * can represent multivariate hierarchical series
+    * can represent unequally spaced hierarchical series
+    * can represent unequally supported hierarchical series
+    * cannot represent hierarchical series with different sets of variables
+    * can represent missing values
+
     Parameters
     ----------
     is_univariate: bool
