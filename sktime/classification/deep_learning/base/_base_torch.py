@@ -21,7 +21,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
     Parameters
     ----------
-    num_epochs : int, default = 100
+    num_epochs : int, default = 16
         The number of epochs to train the model
     batch_size : int, default = 8
         The size of each mini-batch during training

@@ -3,7 +3,7 @@
 __author__ = ["Tanuj-Taneja1"]
 __all__ = ["ConvTimeNetClassifier"]
 
-from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.classification.deep_learning.base._base_torch import BaseDeepClassifierPytorch
 
 
 class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
@@ -208,7 +208,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             "dw_ks": [3],
             "d_ff": 16,
             "batch_size": 2,
-            "optimizer": "Adam",
+            "optimizer": "adam",
             "lr": 1e-3,
             "device": "cpu",
             "verbose": False,
@@ -224,7 +224,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             "dw_ks": [5, 7],
             "d_ff": 64,
             "batch_size": 4,
-            "optimizer": "Adam",
+            "optimizer": "adam",
             "lr": 5e-4,
             "device": "cpu",
             "verbose": False,
@@ -240,7 +240,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             "dw_ks": [7, 13, 19],  # very large depthwise kernels
             "d_ff": 128,
             "batch_size": 8,
-            "optimizer": "SGD",  # different optimizer
+            "optimizer": "sgd",  # different optimizer
             "lr": 1e-2,
             "device": "cpu",
             "verbose": False,
