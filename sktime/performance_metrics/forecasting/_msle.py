@@ -103,21 +103,17 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
 
             per_instance = np.sqrt(per_instance)
 
-            if isinstance(per_instance, (pd.Series, pd.DataFrame)):
-                values = per_instance.to_numpy()
-            else:
-                values = np.asarray(per_instance)
+            if self.multilevel == "raw_values":
+                if isinstance(per_instance, pd.Series):
+                    return per_instance.to_frame()
+                return per_instance
 
-            values = np.asarray(values)
+            res = per_instance.mean(axis=0)
 
-            if self.multioutput == "raw_values":
-                return values.ravel()
+            if isinstance(res, (pd.Series, pd.DataFrame)):
+                return self._handle_multioutput(res, self.multioutput)
 
-            if isinstance(self.multioutput, (list, tuple, np.ndarray)):
-                weights = np.asarray(self.multioutput)
-                return np.float64(np.average(values, weights=weights))
-
-            return np.float64(values.mean())
+            return res
 
         res = super()._evaluate(y_true, y_pred, **kwargs)
 
