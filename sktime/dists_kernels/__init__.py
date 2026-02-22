@@ -25,4 +25,5 @@ __all__ = [
     "ConstantPwTrafoPanel",
     "PwTrafoPanelPipeline",
     "SignatureKernel",
+    "TransferEntropy",
 ]
