@@ -245,6 +245,39 @@ def test_all_estimators_tag_filter(tag_value, tag_name):
         assert "forecaster" in est_type
 
 
+def test_all_estimators_filter_tags_str():
+    """Test filter_tags with string argument (equivalent to {tag: True})."""
+    # Test with a single tag as string
+    tag_name = "capability:missing_values"
+
+    # Get results using string filter_tags
+    result_str = all_estimators("forecaster", filter_tags=tag_name, return_names=True)
+
+    # Get results using equivalent dict filter_tags
+    result_dict = all_estimators(
+        "forecaster", filter_tags={tag_name: True}, return_names=True
+    )
+
+    # They should be identical
+    str_names = {item[0] for item in result_str}
+    dict_names = {item[0] for item in result_dict}
+
+    assert str_names == dict_names, (
+        "String and dict filter_tags should give identical results"
+    )
+
+    # Verify all returned estimators have the tag set to True
+    for name, est in result_str:
+        assert est.get_class_tag(tag_name) is True
+
+
+def test_all_estimators_filter_tags_invalid_type():
+    """Test that invalid filter_tags types raise appropriate errors."""
+    # Test with invalid type (int) - should raise error from underlying all_objects
+    with pytest.raises(TypeError):
+        all_estimators("forecaster", filter_tags=123)
+
+
 @pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)
 def test_scitype_inference(estimator_scitype):
     """Check that scitype inverts _check_estimator_types."""
