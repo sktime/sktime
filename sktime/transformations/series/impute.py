@@ -101,7 +101,7 @@ class Imputer(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd.DataFrame"],
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,
@@ -161,7 +161,8 @@ class Imputer(BaseTransformer):
             )
 
         if method in "forecaster":
-            self.set_tags(**{"y_inner_mtype": ["pd.DataFrame"]})
+            pd_types = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+            self.set_tags(**{"y_inner_mtype": pd_types})
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
