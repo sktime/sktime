@@ -21,6 +21,7 @@ jobs:
       - name: Install sktime & dev deps
         run: |
           pip install .[all_extras,dev]
+          pip uninstall -y numba
           # keep nightly checks in currently supported compatibility windows
           # numpy 2.4 pre-releases are incompatible with numba in all_extras
           # pandas 3.0+ currently breaks DateTimeFeatures in test_softdeps
