@@ -383,6 +383,21 @@ class ForecastingHorizonV2:
         """
         return self._fhvalues.values.copy()
 
+    def to_absolute_index(self, cutoff=None):
+        """Return absolute values as pandas Index.
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, or pd.Index, optional
+            Cutoff value for conversion.
+
+        Returns
+        -------
+        pd.Index
+            Absolute forecasting horizon as pandas Index.
+        """
+        return self.to_absolute(cutoff).to_pandas()
+
     # Dunders -> Arithmatic operators
 
     def __add__(self, other):
