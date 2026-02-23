@@ -120,8 +120,9 @@ def test_cusum_ilocs_are_position_based():
         ({"k": -1.0}, "k must be positive"),
         ({"h": 0}, "h must be positive"),
         ({"h": -3.0}, "h must be positive"),
-        ({"warmup_len": 0}, "warmup_len must be a positive integer"),
-        ({"warmup_len": -5}, "warmup_len must be a positive integer"),
+        ({"warmup_len": 0}, "warmup_len must be a positive integer or None"),
+        ({"warmup_len": -5}, "warmup_len must be a positive integer or None"),
+        ({"warmup_len": 1.5}, "warmup_len must be a positive integer or None"),
     ],
 )
 def test_cusum_invalid_params_raise(bad_params, match):
@@ -136,11 +137,15 @@ def test_cusum_invalid_params_raise(bad_params, match):
 
 # Numerical fixture used across several score tests.
 # k=0.5, h=4.0, target=0  → alarm fires at t=21 (c_pos=5.0), CP iloc=20.
-# running_scores: [0]*20, 2.5, 0.0, [0]*18
+# running_scores: [0]*20, 2.5, 5.0 (pre-reset alarm value), 0.0, [0]*17
 _X_SCORE = pd.Series([0.0] * 20 + [3.0] * 20, dtype=float)
 _MODEL_SCORE = CUSUM(k=0.5, h=4.0, target=0.0)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(CUSUM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_predict_scores_length_matches_change_points():
     """predict_scores returns one score per detected change point."""
     model = _MODEL_SCORE.clone()
@@ -152,6 +157,10 @@ def test_predict_scores_length_matches_change_points():
     )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(CUSUM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_predict_scores_values():
     """predict_scores alarm value equals max(C+,C-) at alarm step."""
     model = _MODEL_SCORE.clone()
@@ -162,6 +171,10 @@ def test_predict_scores_values():
     assert abs(scores_df.iloc[0, 0] - 5.0) < 1e-9
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(CUSUM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_predict_scores_output_type():
     """predict_scores returns a pd.DataFrame (base class wraps to DataFrame)."""
     model = _MODEL_SCORE.clone()
@@ -170,6 +183,10 @@ def test_predict_scores_output_type():
     assert isinstance(scores_df, pd.DataFrame)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(CUSUM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_predict_scores_empty_when_no_change_point():
     """predict_scores is empty when the series contains no change point."""
     model = CUSUM(k=0.5, h=4.0)
@@ -179,6 +196,10 @@ def test_predict_scores_empty_when_no_change_point():
     assert len(scores_df) == 0
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(CUSUM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_transform_scores_length():
     """transform_scores returns one value per timepoint."""
     model = _MODEL_SCORE.clone()
@@ -187,6 +208,10 @@ def test_transform_scores_length():
     assert len(ts) == len(_X_SCORE)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(CUSUM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_transform_scores_index_preserved():
     """transform_scores preserves the original Series index."""
     idx = pd.date_range("2020-01-01", periods=40, freq="D")
@@ -197,6 +222,10 @@ def test_transform_scores_index_preserved():
     pd.testing.assert_index_equal(ts.index, idx)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(CUSUM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_transform_scores_pre_change_zeros():
     """Running statistic is 0 for all timepoints prior to the mean shift."""
     model = _MODEL_SCORE.clone()
@@ -206,23 +235,48 @@ def test_transform_scores_pre_change_zeros():
     assert (pre_change == 0.0).all(), "CUSUM statistic should be 0 before shift"
 
 
-def test_transform_scores_resets_after_alarm():
-    """Running statistic resets to 0 immediately after an alarm."""
+@pytest.mark.skipif(
+    not run_test_for_class(CUSUM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_transform_scores_alarm_value_at_alarm_timepoint():
+    """Running statistic at the alarm timepoint equals the pre-reset alarm score."""
     model = _MODEL_SCORE.clone()
     model.fit(_X_SCORE)
     ts = model.transform_scores(_X_SCORE)
-    # t=21 is where the alarm fires; running_scores[21] must be 0 (reset)
-    assert ts.iloc[21] == 0.0
+    # t=21 is the alarm step; value must be 5.0 (above h=4.0), not 0
+    assert abs(ts.iloc[21] - 5.0) < 1e-9
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(CUSUM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_transform_scores_resets_after_alarm():
+    """Running statistic resets to 0 on the timepoint *after* an alarm."""
+    model = _MODEL_SCORE.clone()
+    model.fit(_X_SCORE)
+    ts = model.transform_scores(_X_SCORE)
+    # t=21 is the alarm step; accumulator resets → statistic at t=22 must be 0
+    assert ts.iloc[22] == 0.0
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(CUSUM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_transform_scores_peak_before_alarm():
-    """Running statistic peaks at iloc 20 (rising c_pos = 2.5 at t=20)."""
+    """Running statistic at iloc 20 equals 2.5 (rising c_pos before alarm)."""
     model = _MODEL_SCORE.clone()
     model.fit(_X_SCORE)
     ts = model.transform_scores(_X_SCORE)
     assert abs(ts.iloc[20] - 2.5) < 1e-9
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(CUSUM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_transform_scores_output_type():
     """transform_scores returns a pd.Series."""
     model = _MODEL_SCORE.clone()

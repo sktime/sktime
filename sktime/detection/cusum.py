@@ -95,10 +95,11 @@ class CUSUM(BaseDetector):
             raise ValueError(f"k must be positive, got k={k!r}")
         if h <= 0:
             raise ValueError(f"h must be positive, got h={h!r}")
-        if warmup_len is not None and warmup_len < 1:
-            raise ValueError(
-                f"warmup_len must be a positive integer or None, got {warmup_len!r}"
-            )
+        if warmup_len is not None:
+            if not isinstance(warmup_len, int) or warmup_len < 1:
+                raise ValueError(
+                    f"warmup_len must be a positive integer or None, got {warmup_len!r}"
+                )
         self.k = k
         self.h = h
         self.target = target
@@ -160,10 +161,10 @@ class CUSUM(BaseDetector):
             if score > self.h and t > 0:
                 change_points.append(t - 1)
                 alarm_scores.append(score)
+                running_scores.append(score)  # record pre-reset value at alarm step
                 c_pos = 0.0
                 c_neg = 0.0
                 mu = self._segment_mean(x, t, warmup)
-                running_scores.append(0.0)
             else:
                 running_scores.append(score)
 
@@ -218,10 +219,11 @@ class CUSUM(BaseDetector):
         Returns
         -------
         pd.Series of float
-            ``max(C+, C-)`` at each index of ``X``.  Resets to 0.0
-            immediately after each alarm, mirroring the per-segment logic
-            in ``_predict``.  Values above ``h`` indicate a detected change
-            point at the *previous* index.
+            ``max(C+, C-)`` at each index of ``X``.  The value at each alarm
+            timepoint is the full pre-reset statistic (always above ``h``);
+            the corresponding change point (CP) is at the *previous* iloc
+            (alarm_t - 1).  From the next timepoint onward the statistic
+            resets to 0 and accumulates fresh for the new segment.
         """
         x = X.to_numpy(dtype=float)
         _, _, running_scores = self._run_cusum(x)
