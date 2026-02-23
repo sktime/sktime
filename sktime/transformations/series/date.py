@@ -35,145 +35,168 @@ _RAW_DUMMIES = [
 
 
 class DateTimeFeatures(BaseTransformer):
-    """DateTime feature extraction, e.g., for use as exogenous data in forecasting.
+    """Extract calendar features from a datetime index.
 
-    DateTimeFeatures uses a date index column and generates date features
-    identifying e.g. year, week of the year, day of the week.
+        Extracts calendar features from a datetime index, such as year, month,
+        week of year, day of week, and other date/time components. Works with
+        any pandas DatetimeIndex or PeriodIndex. Returns integer-valued columns
+        that can be used as exogenous features in forecasting models.
 
     Parameters
     ----------
-    ts_freq : str, optional (default="day")
-        Frequency of the time series.
-        Restricts selection of items to those with a frequency lower than
-        the frequency of the time series given by ts_freq.
-        E.g. if monthly data is provided and ts_freq = ("M"), it does not make
-        sense to derive dummies with higher frequency like weekly dummies.
-        Has to be provided by the user due to the abundance of different
-        frequencies supported by Pandas (e.g. every pandas allows freq of every 4 days).
-        Interaction with other arguments:
-        Used to narrow down feature selection for feature_scope, since only
-        features with a frequency lower than ts_freq are considered. Will be ignored
-        for the calculation of manually specified features, but when provided will
-        raise a warning if manual features have a frequency higher than ts_freq.
-        Only supports the following frequencies:
+        ts_freq : str, optional (default="day")
+            Frequency of the time series.
+            Restricts selection of items to those with a frequency lower than
+            the frequency of the time series given by ts_freq.
+            E.g. if monthly data is provided and ts_freq = ("M"), it does not make
+            sense to derive dummies with higher frequency like weekly dummies.
+            Has to be provided by the user due to the abundance of different
+            frequencies supported by Pandas (e.g. every pandas allows
+            freq of every 4 days).
+            Interaction with other arguments:
+            Used to narrow down feature selection for feature_scope, since only
+            features with a frequency lower than ts_freq are considered. Will be ignored
+            for the calculation of manually specified features, but when provided will
+            raise a warning if manual features have a frequency higher than ts_freq.
+            Only supports the following frequencies:
 
-        * Y - year
-        * Q - quarter
-        * M - month
-        * W - week
-        * D - day
-        * H - hour
-        * T - minute
-        * S - second
-        * L - millisecond
+            * Y - year
+            * Q - quarter
+            * M - month
+            * W - week
+            * D - day
+            * H - hour
+            * T - minute
+            * S - second
+            * L - millisecond
 
-    feature_scope: str, optional (default="minimal")
-        Specify how many calendar features you want to be returned.
-        E.g., rarely used features like week of quarter will only be returned
-        with feature_scope =  "comprehensive".
+        feature_scope: str, optional (default="minimal")
+            Specify how many calendar features you want to be returned.
+            E.g., rarely used features like week of quarter will only be returned
+            with feature_scope =  "comprehensive".
 
-        * "minimal"
-        * "efficient"
-        * "comprehensive"
+            * "minimal"
+            * "efficient"
+            * "comprehensive"
 
-    manual_selection: str, optional (default=None)
-        Manual selection of dummys. Notation is child of parent for precise notation.
-        Will ignore specified feature_scope, but will still check with warning against
-        a specified ts_freq. All columns returned are integer based. Dates are presented
-        in DD-MM-YYYY format below.
-        Supported values:
+        manual_selection: str, optional (default=None)
+            Manual selection of dummys. Notation is child of parent
+            for precise notation.
+            Will ignore specified feature_scope, but will still check
+            with warning against
+            a specified ts_freq. All columns returned are integer based.
+            Dates are presented
+            in DD-MM-YYYY format below.
+            Supported values:
 
-        * None
-        * quarter_of_year
-            1-based index
-            1-(Jan to Mar), 2-(Apr to Jun), 3-(Jul to Sep), 4-(Oct to Dec)
-        * month_of_year
-            1-based offset to January
-            1-January,2-February,...,12-December
-        * week_of_year
-            1-based offset to the first week of an ISO year
-        * day_of_year
-            1-based offset to first of January
-            1 is 01-01-YYYY, 2 is 02-01-YYYY and so on.
-        * month_of_quarter
-            1-based index to first month of each quarter(Jan,Apr,Jul,Oct)
-            For the first quarter: 1-January, 2-February, 3-March
-        * week_of_quarter
-            1-based offset to first week of the quarter.
-            The first/last week of the quarter may or may not include 7 days. All other
-            weeks have 7 days.
-            A week is taken to start on Monday.
-            If the month begins on a Monday, then the first seven days upto the next
-            Monday is week 1.
-            Otherwise, week 1 is from the 1st of that month upto the first Monday.
-            Example:
-                If 01-01-YYYY is a Monday,
-                Week 1 : Mon,Tue,Wed,Thu,Fri,Sat,Sun(07-01-YYYY)
-                Week 2 : Mon(08-01-YYYY),Tue,...,Sun
-                If 01-01-YYYY is a Thursday,
-                Week 1 : Thu,Fri,Sat,Sun(04-01-YYYY)
-                Week 2 : Mon(05-01-YYYY),Tue,...,Sun
-        * day_of_quarter
-            1-based index
-        * week_of_month
-            1-based index
-            1 indicates the first week of the month.
-            First week includes the first 7 days of the month(01-MM-YYYY to 07-MM-YYYY)
-            2 indicates the second week of the month.
-            Second week includes the next 7 days(08-MM-YYYY to 14-MM-YYYY) and so on.
-        * day_of_month
-            1-based offset to first day of each month
-            1 is 01-MM-YYYY, 2 is 02-MM-YYYY and so on.
-        * day_of_week
-            0-based offset to Monday
-            0-Monday,1-Tuesday,...,6-Sunday
-        * hour_of_week
-            0-based offset to Monday(00:00:00+00:00)
-        * hour_of_day
-            0-based offset to 00:00:00+00:00
-        * minute_of_hour
-            0-based offset to 00:00:00
-        * second_of_minute
-            0-based offset to 00:00:00
-        * millisecond_of_second
-            0-based offset to 00:00:00.0000
-        * is_weekend
-            1 indicates weekend, 0 indicates it is not a weekend
-        * year (special case with no lower frequency).
+            * None
+            * quarter_of_year
+                1-based index
+                1-(Jan to Mar), 2-(Apr to Jun), 3-(Jul to Sep), 4-(Oct to Dec)
+            * month_of_year
+                1-based offset to January
+                1-January,2-February,...,12-December
+            * week_of_year
+                1-based offset to the first week of an ISO year
+            * day_of_year
+                1-based offset to first of January
+                1 is 01-01-YYYY, 2 is 02-01-YYYY and so on.
+            * month_of_quarter
+                1-based index to first month of each quarter(Jan,Apr,Jul,Oct)
+                For the first quarter: 1-January, 2-February, 3-March
+            * week_of_quarter
+                1-based offset to first week of the quarter.
+                The first/last week of the quarter may or may not
+                include 7 days. All other
+                weeks have 7 days.
+                A week is taken to start on Monday.
+                If the month begins on a Monday, then the first seven days upto the next
+                Monday is week 1.
+                Otherwise, week 1 is from the 1st of that month upto the first Monday.
+                Example:
+                    If 01-01-YYYY is a Monday,
+                    Week 1 : Mon,Tue,Wed,Thu,Fri,Sat,Sun(07-01-YYYY)
+                    Week 2 : Mon(08-01-YYYY),Tue,...,Sun
+                    If 01-01-YYYY is a Thursday,
+                    Week 1 : Thu,Fri,Sat,Sun(04-01-YYYY)
+                    Week 2 : Mon(05-01-YYYY),Tue,...,Sun
+            * day_of_quarter
+                1-based index
+            * week_of_month
+                1-based index
+                1 indicates the first week of the month.
+                First week includes the first 7 days of the month
+                (01-MM-YYYY to 07-MM-YYYY)
+                2 indicates the second week of the month.
+                Second week includes the next 7 days
+                (08-MM-YYYY to 14-MM-YYYY) and so on.
+            * day_of_month
+                1-based offset to first day of each month
+                1 is 01-MM-YYYY, 2 is 02-MM-YYYY and so on.
+            * day_of_week
+                0-based offset to Monday
+                0-Monday,1-Tuesday,...,6-Sunday
+            * hour_of_week
+                0-based offset to Monday(00:00:00+00:00)
+            * hour_of_day
+                0-based offset to 00:00:00+00:00
+            * minute_of_hour
+                0-based offset to 00:00:00
+            * second_of_minute
+                0-based offset to 00:00:00
+            * millisecond_of_second
+                0-based offset to 00:00:00.0000
+            * is_weekend
+                1 indicates weekend, 0 indicates it is not a weekend
+            * year (special case with no lower frequency).
 
-    keep_original_columns :  boolean, optional, default=False
-        Keep original columns in X passed to ``.transform()``.
+        keep_original_columns :  boolean, optional, default=False
+            Keep original columns in X passed to ``.transform()``.
 
     Examples
     --------
-    >>> from sktime.transformations.series.date import DateTimeFeatures
-    >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
+        >>> from sktime.transformations.series.date import DateTimeFeatures
+        >>> from sktime.datasets import load_airline
+        >>> y = load_airline()
 
-    Returns columns ``y``, ``year``, ``month_of_year``
+        Returns columns ``y``, ``year``, ``month_of_year``
 
-    >>> transformer = DateTimeFeatures(ts_freq="M")
-    >>> y_hat = transformer.fit_transform(y)
+        >>> transformer = DateTimeFeatures(ts_freq="M")
 
-    Returns columns ``y``, ``month_of_year``
+        >>> y_hat = transformer.fit_transform(y)
 
-    >>> transformer = DateTimeFeatures(ts_freq="M", manual_selection=["month_of_year"])
-    >>> y_hat = transformer.fit_transform(y)
+        Returns columns ``y``, ``month_of_year``
 
-    Returns columns 'y', 'year', 'quarter_of_year', 'month_of_year', 'month_of_quarter'
+        >>> transformer = DateTimeFeatures(
+        ...     ts_freq="M", manual_selection=["month_of_year"]
+        ... )
 
-    >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="comprehensive")
-    >>> y_hat = transformer.fit_transform(y)
+        >>> y_hat = transformer.fit_transform(y)
 
-    Returns columns 'y', 'year', 'quarter_of_year', 'month_of_year'
+        Returns columns ``y``, ``year``, ``quarter_of_year``, ``month_of_year``,
+        ``month_of_quarter``
 
-    >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="efficient")
-    >>> y_hat = transformer.fit_transform(y)
+        >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="comprehensive")
 
-    Returns columns 'y',  'year', 'month_of_year'
+        >>> y_hat = transformer.fit_transform(y)
 
-    >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="minimal")
-    >>> y_hat = transformer.fit_transform(y)
+        Returns columns ``y``, ``year``, ``quarter_of_year``, ``month_of_year``
+
+        >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="efficient")
+
+        >>> y_hat = transformer.fit_transform(y)
+
+        Returns columns ``y``, ``year``, ``month_of_year``
+
+        >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="minimal")
+
+        >>> y_hat = transformer.fit_transform(y)
+
+        Returns columns ``y``,  ``year``, ``month_of_year``
+
+        >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="minimal")
+
+        >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {
