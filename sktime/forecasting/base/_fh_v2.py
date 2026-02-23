@@ -398,6 +398,92 @@ class ForecastingHorizonV2:
         """
         return self.to_absolute(cutoff).to_pandas()
 
+    def to_absolute_int(self, start, cutoff=None):
+        """Return absolute values as zero-based integer index from ``start``.
+
+        Parameters
+        ----------
+        start : pd.Period, pd.Timestamp, int
+            Start value returned as zero.
+        cutoff : pd.Period, pd.Timestamp, int, or pd.Index, optional
+            Cutoff value for conversion.
+
+        Returns
+        -------
+        ForecastingHorizonV2
+            Absolute representation as zero-based integer index.
+        """
+        # get absolute representation
+        absolute = self.to_absolute(cutoff)
+        abs_vals = absolute._fhvalues.values
+        abs_type = absolute._fhvalues.value_type
+        abs_freq = absolute._fhvalues.freq
+
+        # convert start to internal
+        start_val, start_type, start_freq, _ = PandasFHConverter.cutoff_to_internal(
+            start, freq=self.freq
+        )
+
+        # compute zero-based integers
+        if abs_type == FHValueType.PERIOD:
+            integers = abs_vals - start_val
+            # check for frequency mismatch between FH freq, cutoff freq, and start freq
+            freq = None
+            for candidate in (abs_freq, self.freq, start_freq):
+                if candidate is not None:
+                    if freq is None:
+                        freq = candidate
+                    elif candidate != freq:
+                        # below error message may need better wording
+                        # the idea is to flag any mismatch between the three freqs
+                        raise ValueError(
+                            f"Frequency mismatch in to_absolute_int: "
+                            f"abs_freq={abs_freq}, self.freq={self.freq}, "
+                            f"start_freq={start_freq}. All must agree."
+                        )
+            # <check> Can the freq be ever None here? If so, how to handle? </check>
+            # divide by freq multiplier for multi-step freqs
+            if freq is not None:
+                mult = PandasFHConverter.freq_multiplier(freq)
+                if mult != 1:
+                    integers = integers // mult
+            else:
+                # <check>
+                # no freq available
+                # raw ordinal differences may be incorrect for multi-step frequencies
+                # but we have no way to normalize without freq information
+                # should this be flagged as a warning? or an error? or just left as is?
+                # </check>
+                pass
+        elif abs_type == FHValueType.DATETIME:
+            nanos_diff = abs_vals - start_val
+            # check for frequency mismatch between FH freq, cutoff freq, and start freq
+            freq = None
+            for candidate in (abs_freq, self.freq, start_freq):
+                if candidate is not None:
+                    if freq is None:
+                        freq = candidate
+                    elif candidate != freq:
+                        # below error message may need better wording
+                        # the idea is to flag any mismatch between the three freqs
+                        raise ValueError(
+                            f"Frequency mismatch in to_absolute_int: "
+                            f"abs_freq={abs_freq}, self.freq={self.freq}, "
+                            f"start_freq={start_freq}. All must agree."
+                        )
+            if freq is not None:
+                integers = PandasFHConverter.nanos_to_steps(
+                    nanos_diff, freq, ref_nanos=start_val
+                )
+            else:
+                # fall back to raw nanos difference
+                integers = nanos_diff
+        else:
+            integers = abs_vals - start_val
+
+        fhv = FHValues(integers.astype(np.int64), FHValueType.INT, freq=self.freq)
+        return self._new(fhvalues=fhv, is_relative=False)
+
     # Dunders -> Arithmatic operators
 
     def __add__(self, other):
