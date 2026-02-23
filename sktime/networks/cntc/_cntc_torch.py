@@ -11,6 +11,31 @@ torch = _safe_import("torch")
 nn = _safe_import("torch.nn")
 torchF = _safe_import("torch.nn.functional")
 NNModule = _safe_import("torch.nn.Module")
+Dataset = _safe_import("torch.utils.data.Dataset")
+
+
+class _CNTCDataset(Dataset):
+    """Dataset that returns dict-based inputs for CNTCNetworkTorch.
+
+    Wraps two tensors (x1 and x3) and an optional label tensor, returning
+    items as ``({"x1": ..., "x3": ...}, y)`` tuples so that the base-class
+    ``_run_epoch`` can unpack them and call ``network(**inputs)`` as
+    ``network(x1=..., x3=...)``.
+    """
+
+    def __init__(self, X1, X3, y=None):
+        self.X1 = X1
+        self.X3 = X3
+        self.y = y
+
+    def __len__(self):
+        return len(self.X1)
+
+    def __getitem__(self, idx):
+        inputs = {"x1": self.X1[idx], "x3": self.X3[idx]}
+        if self.y is not None:
+            return inputs, self.y[idx]
+        return inputs
 
 
 class SeqSelfAttention(NNModule):

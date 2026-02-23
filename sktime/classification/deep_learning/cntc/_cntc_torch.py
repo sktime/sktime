@@ -13,36 +13,12 @@ import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.cntc import CNTCNetworkTorch
+from sktime.networks.cntc._cntc_torch import _CNTCDataset
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
 DataLoader = _safe_import("torch.utils.data.DataLoader")
-Dataset = _safe_import("torch.utils.data.Dataset")
 TensorDataset = _safe_import("torch.utils.data.TensorDataset")
-
-
-class _CNTCDataset(Dataset):
-    """Dataset that returns dict-based inputs for CNTCNetworkTorch.
-
-    Wraps two tensors (x1 and x3) and an optional label tensor, returning
-    items as ``({"x1": ..., "x3": ...}, y)`` tuples so that the base-class
-    ``_run_epoch`` can unpack them and call ``network(**inputs)`` as
-    ``network(x1=..., x3=...)``.
-    """
-
-    def __init__(self, X1, X3, y=None):
-        self.X1 = X1
-        self.X3 = X3
-        self.y = y
-
-    def __len__(self):
-        return len(self.X1)
-
-    def __getitem__(self, idx):
-        inputs = {"x1": self.X1[idx], "x3": self.X3[idx]}
-        if self.y is not None:
-            return inputs, self.y[idx]
-        return inputs
 
 
 class CNTCClassifierTorch(BaseDeepClassifierPytorch):
