@@ -647,6 +647,14 @@ Pre-trained and foundation models
 
     TotoForecaster
 
+.. currentmodule:: sktime.forecasting.tabpfn
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TabPFNForecaster
+
 Intermittent time series forecasters
 ------------------------------------
 
