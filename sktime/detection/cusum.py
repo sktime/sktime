@@ -62,6 +62,8 @@ class CUSUM(BaseDetector):
 
     Examples
     --------
+    Detect a single step-up:
+
     >>> import pandas as pd
     >>> from sktime.detection.cusum import CUSUM
     >>> X = pd.Series([0.0] * 20 + [5.0] * 20, dtype=float)
@@ -69,6 +71,13 @@ class CUSUM(BaseDetector):
     >>> model.fit_predict(X)
        ilocs
     0     19
+
+    Probe the running CUSUM statistic (useful for thresholding):
+
+    >>> X2 = pd.Series([0.0] * 20 + [3.0] * 20, dtype=float)
+    >>> scores = model.fit(X2).transform_scores(X2)
+    >>> int(scores.argmax())  # index where statistic peaks before the alarm
+    20
     """
 
     _tags = {
@@ -110,6 +119,56 @@ class CUSUM(BaseDetector):
         end = min(start + warmup, len(x))
         return float(x[start:end].mean())
 
+    def _run_cusum(self, x):
+        """Run the core two-sided CUSUM loop over a raw float array.
+
+        All three public detection paths (_predict, _predict_scores,
+        _transform_scores) call this so the statistics are computed once.
+
+        Parameters
+        ----------
+        x : np.ndarray, shape (n,)
+            Raw float values extracted from the input Series.
+
+        Returns
+        -------
+        change_points : list of int
+            iloc of each detected change point (``t - 1`` convention).
+        alarm_scores : list of float
+            Value of ``max(C+, C-)`` at the step that fired each alarm.
+        running_scores : list of float
+            ``max(C+, C-)`` at every timepoint.  Resets to 0.0 immediately
+            after an alarm so that subsequent segments start fresh.
+        """
+        n = len(x)
+        warmup = self._effective_warmup(n)
+        mu = (
+            self.target if self.target is not None else self._segment_mean(x, 0, warmup)
+        )
+
+        change_points = []
+        alarm_scores = []
+        running_scores = []
+        c_pos = 0.0
+        c_neg = 0.0
+
+        for t in range(n):
+            c_pos = max(0.0, c_pos + x[t] - mu - self.k)
+            c_neg = max(0.0, c_neg - x[t] + mu - self.k)
+            score = max(c_pos, c_neg)
+
+            if score > self.h and t > 0:
+                change_points.append(t - 1)
+                alarm_scores.append(score)
+                c_pos = 0.0
+                c_neg = 0.0
+                mu = self._segment_mean(x, t, warmup)
+                running_scores.append(0.0)
+            else:
+                running_scores.append(score)
+
+        return change_points, alarm_scores, running_scores
+
     def _predict(self, X):
         """Detect change points via two-sided CUSUM.
 
@@ -126,28 +185,47 @@ class CUSUM(BaseDetector):
             used by ``BinarySegmentation``.
         """
         x = X.to_numpy(dtype=float)
-        n = len(x)
-        warmup = self._effective_warmup(n)
-
-        mu = (
-            self.target if self.target is not None else self._segment_mean(x, 0, warmup)
-        )
-
-        change_points = []
-        c_pos = 0.0
-        c_neg = 0.0
-
-        for t in range(n):
-            c_pos = max(0.0, c_pos + x[t] - mu - self.k)
-            c_neg = max(0.0, c_neg - x[t] + mu - self.k)
-
-            if (c_pos > self.h or c_neg > self.h) and t > 0:
-                change_points.append(t - 1)
-                c_pos = 0.0
-                c_neg = 0.0
-                mu = self._segment_mean(x, t, warmup)
-
+        change_points, _, _ = self._run_cusum(x)
         return pd.Series(change_points, dtype="int64")
+
+    def _predict_scores(self, X):
+        """Return sparse CUSUM scores, one per detected change point.
+
+        Parameters
+        ----------
+        X : pd.Series
+            Univariate time series.
+
+        Returns
+        -------
+        pd.Series of float
+            One score per detected change point, in the same order as the
+            change points returned by ``_predict``.  Each value is
+            ``max(C+, C-)`` at the step that fired the alarm.
+        """
+        x = X.to_numpy(dtype=float)
+        _, alarm_scores, _ = self._run_cusum(x)
+        return pd.Series(alarm_scores, dtype=float)
+
+    def _transform_scores(self, X):
+        """Return the running CUSUM statistic at every timepoint.
+
+        Parameters
+        ----------
+        X : pd.Series
+            Univariate time series.
+
+        Returns
+        -------
+        pd.Series of float
+            ``max(C+, C-)`` at each index of ``X``.  Resets to 0.0
+            immediately after each alarm, mirroring the per-segment logic
+            in ``_predict``.  Values above ``h`` indicate a detected change
+            point at the *previous* index.
+        """
+        x = X.to_numpy(dtype=float)
+        _, _, running_scores = self._run_cusum(x)
+        return pd.Series(running_scores, index=X.index, dtype=float)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

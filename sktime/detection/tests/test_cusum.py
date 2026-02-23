@@ -128,3 +128,104 @@ def test_cusum_invalid_params_raise(bad_params, match):
     """CUSUM raises ValueError for parameters that are out of valid range."""
     with pytest.raises(ValueError, match=match):
         CUSUM(**bad_params)
+
+
+# ---------------------------------------------------------------------------
+# Score-method tests
+# ---------------------------------------------------------------------------
+
+# Numerical fixture used across several score tests.
+# k=0.5, h=4.0, target=0  → alarm fires at t=21 (c_pos=5.0), CP iloc=20.
+# running_scores: [0]*20, 2.5, 0.0, [0]*18
+_X_SCORE = pd.Series([0.0] * 20 + [3.0] * 20, dtype=float)
+_MODEL_SCORE = CUSUM(k=0.5, h=4.0, target=0.0)
+
+
+def test_predict_scores_length_matches_change_points():
+    """predict_scores returns one score per detected change point."""
+    model = _MODEL_SCORE.clone()
+    model.fit(_X_SCORE)
+    cp_df = model.predict(_X_SCORE)
+    scores_df = model.predict_scores(_X_SCORE)
+    assert len(scores_df) == len(cp_df), (
+        "predict_scores should have as many rows as predict"
+    )
+
+
+def test_predict_scores_values():
+    """predict_scores alarm value equals max(C+,C-) at alarm step."""
+    model = _MODEL_SCORE.clone()
+    model.fit(_X_SCORE)
+    scores_df = model.predict_scores(_X_SCORE)
+    # One CP detected; alarm fired when c_pos first exceeded h=4.0 → 5.0
+    assert len(scores_df) == 1
+    assert abs(scores_df.iloc[0, 0] - 5.0) < 1e-9
+
+
+def test_predict_scores_output_type():
+    """predict_scores returns a pd.DataFrame (base class wraps to DataFrame)."""
+    model = _MODEL_SCORE.clone()
+    model.fit(_X_SCORE)
+    scores_df = model.predict_scores(_X_SCORE)
+    assert isinstance(scores_df, pd.DataFrame)
+
+
+def test_predict_scores_empty_when_no_change_point():
+    """predict_scores is empty when the series contains no change point."""
+    model = CUSUM(k=0.5, h=4.0)
+    flat = pd.Series([1.0] * 40, dtype=float)
+    model.fit(flat)
+    scores_df = model.predict_scores(flat)
+    assert len(scores_df) == 0
+
+
+def test_transform_scores_length():
+    """transform_scores returns one value per timepoint."""
+    model = _MODEL_SCORE.clone()
+    model.fit(_X_SCORE)
+    ts = model.transform_scores(_X_SCORE)
+    assert len(ts) == len(_X_SCORE)
+
+
+def test_transform_scores_index_preserved():
+    """transform_scores preserves the original Series index."""
+    idx = pd.date_range("2020-01-01", periods=40, freq="D")
+    X = pd.Series([0.0] * 20 + [3.0] * 20, index=idx, dtype=float)
+    model = CUSUM(k=0.5, h=4.0, target=0.0)
+    model.fit(X)
+    ts = model.transform_scores(X)
+    pd.testing.assert_index_equal(ts.index, idx)
+
+
+def test_transform_scores_pre_change_zeros():
+    """Running statistic is 0 for all timepoints prior to the mean shift."""
+    model = _MODEL_SCORE.clone()
+    model.fit(_X_SCORE)
+    ts = model.transform_scores(_X_SCORE)
+    pre_change = ts.iloc[:20]
+    assert (pre_change == 0.0).all(), "CUSUM statistic should be 0 before shift"
+
+
+def test_transform_scores_resets_after_alarm():
+    """Running statistic resets to 0 immediately after an alarm."""
+    model = _MODEL_SCORE.clone()
+    model.fit(_X_SCORE)
+    ts = model.transform_scores(_X_SCORE)
+    # t=21 is where the alarm fires; running_scores[21] must be 0 (reset)
+    assert ts.iloc[21] == 0.0
+
+
+def test_transform_scores_peak_before_alarm():
+    """Running statistic peaks at iloc 20 (rising c_pos = 2.5 at t=20)."""
+    model = _MODEL_SCORE.clone()
+    model.fit(_X_SCORE)
+    ts = model.transform_scores(_X_SCORE)
+    assert abs(ts.iloc[20] - 2.5) < 1e-9
+
+
+def test_transform_scores_output_type():
+    """transform_scores returns a pd.Series."""
+    model = _MODEL_SCORE.clone()
+    model.fit(_X_SCORE)
+    ts = model.transform_scores(_X_SCORE)
+    assert isinstance(ts, pd.Series)
