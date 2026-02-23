@@ -46,6 +46,17 @@ Change Point Detection
         pelt.PELT
         seeded_binseg.SeededBinarySegmentation
 
+Dynamic Programming (Native)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    pelt.PELT
+
 Naive Baselines
 ^^^^^^^^^^^^^^^
 
