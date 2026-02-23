@@ -56,6 +56,9 @@ class ForecastingHorizonV2:
     ):
         # convert input to internal representation
         self.fhvalues = PandasFHConverter.to_internal(values, freq)
+        # above conversion would need to be bypassed when input is already in internal
+        # FHValues representation,
+        # for example when creating modified copies internally with the _new constructor
 
         if self.fhvalues.freq is None and freq is not None:
             # set freq from input if not already set
@@ -228,6 +231,8 @@ class ForecastingHorizonV2:
                     relative_vals = relative_vals // mult
             fhv = FHValues(relative_vals.astype(np.int64), FHValueType.INT, freq=freq)
             return self._new(fhvalues=fhv, is_relative=True)
+            # another place where _new is needed to create a new FHValues instance
+            # with modified values but same metadata
 
         if vtype == FHValueType.DATETIME:
             # nanosecond difference
@@ -276,18 +281,87 @@ class ForecastingHorizonV2:
             PandasFHConverter.cutoff_to_internal(cutoff, freq=self.freq)
         )
 
-        # update freq if not set
-        # freq = self.freq or cutoff_freq
+        # mismatch between the FH frequency and cutoff frequency
+        # can happen and should be flagged
+        if (
+            self.freq is not None
+            and cutoff_freq is not None
+            and self.freq != cutoff_freq
+        ):
+            raise ValueError(
+                f"Frequency mismatch between FH and cutoff: "
+                f"FH freq={self.freq}, cutoff freq={cutoff_freq}"
+            )
+        freq = self.freq or cutoff_freq
 
+        # vtype can only be relative types (INT or TIMEDELTA) at this point,
+        # because if it were an absolute type,
+        # to_absolute would return at the start of the method
         vtype = self.fhvalues.value_type
-        # vals = self.fhvalues.values
+        vals = self.fhvalues.values
 
         if vtype == FHValueType.INT:
             if cutoff_type == FHValueType.PERIOD:
                 # int steps + period ordinal -> period ordinals
                 # multiply by freq multiplier for multi-step freqs
                 # e.g., "2D" has multiplier 2, so step 1 = 2 ordinals
-                pass
+                step_vals = vals
+                if freq is not None:
+                    mult = PandasFHConverter.freq_multiplier(freq)
+                    if mult != 1:
+                        step_vals = vals * mult
+                absolute_vals = cutoff_val + step_vals
+                fhv = FHValues(
+                    absolute_vals.astype(np.int64),
+                    FHValueType.PERIOD,
+                    freq=freq,
+                )
+                return self._new(fhvalues=fhv, is_relative=False)
+            if cutoff_type == FHValueType.DATETIME:
+                if freq is None:
+                    raise ValueError(
+                        "freq is required to convert integer relative FH "
+                        "to absolute datetime. Set freq on the FH or provide "
+                        "a cutoff with frequency information."
+                    )
+                nanos = PandasFHConverter.steps_to_nanos(
+                    vals, freq, ref_nanos=cutoff_val
+                )
+                absolute_vals = cutoff_val + nanos
+                fhv = FHValues(
+                    absolute_vals.astype(np.int64),
+                    FHValueType.DATETIME,
+                    freq=freq,
+                    timezone=cutoff_tz,
+                )
+                return self._new(fhvalues=fhv, is_relative=False)
+
+            if cutoff_type == FHValueType.INT:
+                # int + int -> int (absolute)
+                absolute_vals = cutoff_val + vals
+                fhv = FHValues(
+                    absolute_vals.astype(np.int64),
+                    FHValueType.INT,
+                    freq=freq,
+                )
+                return self._new(fhvalues=fhv, is_relative=False)
+        if vtype == FHValueType.TIMEDELTA:
+            if cutoff_type == FHValueType.DATETIME:
+                # nanos + nanos -> absolute datetime nanos
+                absolute_vals = cutoff_val + vals
+                fhv = FHValues(
+                    absolute_vals.astype(np.int64),
+                    FHValueType.DATETIME,
+                    freq=freq,
+                    timezone=cutoff_tz,
+                )
+                return self._new(fhvalues=fhv, is_relative=False)
+        # if we reach this point,
+        # it means the value type is not compatible with absolute representation
+        raise TypeError(
+            f"Cannot convert {vtype.name} (relative) to absolute "
+            f"with cutoff type {cutoff_type.name}."
+        )
 
     # Dunders -> Arithmatic operators
 
