@@ -363,6 +363,26 @@ class ForecastingHorizonV2:
             f"with cutoff type {cutoff_type.name}."
         )
 
+    def to_pandas(self):
+        """Return forecasting horizon values as pd.Index.
+
+        Returns
+        -------
+        pd.Index
+            Pandas Index containing the forecasting horizon values.
+        """
+        return PandasFHConverter.to_pandas_index(self._fhvalues)
+
+    def to_numpy(self, **kwargs) -> np.ndarray:
+        """Return forecasting horizon values as numpy array.
+
+        Returns
+        -------
+        np.ndarray
+            Numpy array of int64 values.
+        """
+        return self._fhvalues.values.copy()
+
     # Dunders -> Arithmatic operators
 
     def __add__(self, other):
