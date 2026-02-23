@@ -21,14 +21,12 @@ jobs:
       - name: Install sktime & dev deps
         run: |
           pip install .[all_extras,dev]
+          # Uninstall numba to bypass a known dependency conflict with numpy pre-releases.
+          # Reference: PR #9286
           pip uninstall -y numba
-          # keep nightly checks in currently supported compatibility windows
-          # numpy 2.4 pre-releases are incompatible with numba in all_extras
-          # pandas 3.0+ currently breaks DateTimeFeatures in test_softdeps
-          # scikit-learn 1.7 pre-releases currently break sklearn tag checks
-          pip install --upgrade "numpy<2.4.0a0" "pandas<2.4.0a0" "scikit-learn<1.7.0a0"
+          # Install true pre-releases of core dependencies to detect upstream breaking changes early
+          pip install --pre --upgrade numpy pandas scikit-learn
           python -c "import numpy, pandas, sklearn; print('numpy', numpy.__version__); print('pandas', pandas.__version__); print('sklearn', sklearn.__version__)"
       - name: Run Smoke Test
         run: pytest sktime/tests/test_softdeps.py
         
-
