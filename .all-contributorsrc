@@ -107,7 +107,7 @@
     },
     {
       "login": "mloning",
-      "name": "Markus Löning",
+      "name": "Markus L\u00f6ning",
       "avatar_url": "https://avatars3.githubusercontent.com/u/21020482?v=4",
       "profile": "https://github.com/mloning",
       "contributions": [
@@ -573,7 +573,7 @@
     },
     {
       "login": "patrickzib",
-      "name": "Patrick Schäfer",
+      "name": "Patrick Sch\u00e4fer",
       "avatar_url": "https://avatars0.githubusercontent.com/u/7783034?v=4",
       "profile": "http://www2.informatik.hu-berlin.de/~schaefpa/",
       "contributions": [
@@ -876,7 +876,7 @@
     },
     {
       "login": "vnmabus",
-      "name": "Carlos Ramos Carreño",
+      "name": "Carlos Ramos Carre\u00f1o",
       "avatar_url": "https://avatars1.githubusercontent.com/u/2364173?v=4",
       "profile": "https://github.com/vnmabus",
       "contributions": [
@@ -1557,7 +1557,7 @@
     },
     {
       "login": "marcio55afr",
-      "name": "Márcio A. Freitas Jr",
+      "name": "M\u00e1rcio A. Freitas Jr",
       "avatar_url": "https://avatars.githubusercontent.com/u/42646282?v=4",
       "profile": "https://github.com/marcio55afr",
       "contributions": [
@@ -2016,7 +2016,7 @@
     },
     {
       "login": "dainelli98",
-      "name": "Daniel Martín Martínez",
+      "name": "Daniel Mart\u00edn Mart\u00ednez",
       "avatar_url": "https://avatars.githubusercontent.com/dainelli98",
       "profile": "https://www.linkedin.com/in/daniel-martin-martinez",
       "contributions": [
@@ -2127,7 +2127,7 @@
     },
     {
       "login": "hoesler",
-      "name": "Christoph Hösler",
+      "name": "Christoph H\u00f6sler",
       "avatar_url": "https://avatars.githubusercontent.com/u/1052770?v=4",
       "profile": "https://www.linkedin.com/in/hoesler/",
       "contributions": [
@@ -2316,7 +2316,7 @@
     },
     {
       "login": "eyjo",
-      "name": "Eyjólfur Sigurðsson",
+      "name": "Eyj\u00f3lfur Sigur\u00f0sson",
       "avatar_url": "https://avatars.githubusercontent.com/eyjo",
       "profile": "https://github.com/eyjo",
       "contributions": [
@@ -2795,7 +2795,7 @@
     },
     {
       "login": "manuel-munoz-aguirre",
-      "name": "Manuel Muñoz Aguirre",
+      "name": "Manuel Mu\u00f1oz Aguirre",
       "avatar_url": "https://avatars.githubusercontent.com/u/5576458?v=4",
       "profile": "https://github.com/manuel-munoz-aguirre",
       "contributions": [
@@ -2870,7 +2870,7 @@
     },
     {
       "login": "cedricdonie",
-      "name": "Cedric Donié",
+      "name": "Cedric Doni\u00e9",
       "avatar_url": "https://avatars.githubusercontent.com/u/6626593?v=4",
       "profile": "https://github.com/cedricdonie",
       "contributions": [
@@ -3112,7 +3112,7 @@
     },
     {
       "login": "jan-mue",
-      "name": "Jan Müller",
+      "name": "Jan M\u00fcller",
       "avatar_url": "https://avatars.githubusercontent.com/u/6440416?v=4",
       "profile": "https://github.com/jan-mue",
       "contributions": [
@@ -3159,7 +3159,7 @@
     },
     {
       "login": "RobKuebler",
-      "name": "Robert Kübler",
+      "name": "Robert K\u00fcbler",
       "avatar_url": "https://avatars.githubusercontent.com/u/932327?v=4",
       "profile": "https://linkedin.com/in/robert-kuebler",
       "contributions": [
@@ -3208,7 +3208,7 @@
     },
     {
       "login": "manolotis",
-      "name": "Manuel Muñoz Sánchez",
+      "name": "Manuel Mu\u00f1oz S\u00e1nchez",
       "avatar_url": "https://avatars.githubusercontent.com/manolotis",
       "profile": "https://github.com/manolotis",
       "contributions": [
@@ -3248,7 +3248,7 @@
     },
     {
       "login": "mjste",
-      "name": "Michał Stefanik",
+      "name": "Micha\u0142 Stefanik",
       "avatar_url": "https://avatars.githubusercontent.com/mjste",
       "profile": "https://github.com/mjste",
       "contributions": [
@@ -3424,7 +3424,7 @@
     },
     {
       "login": "LHoelper",
-      "name": "Luca Hölper",
+      "name": "Luca H\u00f6lper",
       "avatar_url": "https://avatars.githubusercontent.com/LHoelper",
       "profile": "https://github.com/LHoelper",
       "contributions": [
@@ -3772,6 +3772,15 @@
       "contributions": [
         "code",
         "maintenance"
+      ]
+    },
+    {
+      "login": "Abhiii47",
+      "name": "Abhijeet",
+      "avatar_url": "https://avatars.githubusercontent.com/Abhiii47",
+      "profile": "https://github.com/Abhiii47",
+      "contributions": [
+        "code"
       ]
     }
   ]
