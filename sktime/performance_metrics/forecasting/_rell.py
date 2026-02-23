@@ -120,12 +120,14 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         relative_loss_function=mean_absolute_error,
         by_index=False,
+        sample_weight=None,
     ):
         self.relative_loss_function = relative_loss_function
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
+            sample_weight=sample_weight,
         )
 
     @classmethod

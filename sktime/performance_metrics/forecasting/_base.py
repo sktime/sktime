@@ -89,6 +89,21 @@ class BaseForecastingErrorMetric(BaseMetric):
           equivalent to a call of the ``evaluate`` method.
         * If ``True``, direct call to the metric object evaluates the metric at each
           time point, equivalent to a call of the ``evaluate_by_index`` method.
+
+    sample_weight : None, 1D array-like, or callable, default=None
+        Sample weights for each time point, applied in all calls to this
+        metric instance.
+
+        * If ``None`` (default), no weighting is applied
+          (unless ``sample_weight`` is passed at call time).
+        * If 1D array-like, must have length matching the number of time points
+          in evaluation data, values are used as weights for each time point.
+        * If callable, must follow ``SampleWeightGenerator`` interface,
+          or have signature ``y_true: pd.DataFrame -> 1D array-like``,
+          or ``y_true: pd.DataFrame x y_pred: pd.DataFrame -> 1D array-like``.
+
+        If ``sample_weight`` is also passed at call time (e.g., in ``evaluate``),
+        the call-time value takes priority over the ``__init__`` value.
     """
 
     _tags = {
@@ -100,7 +115,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         "lower_is_better": True,
         # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
         "inner_implements_multilevel": False,
-        "reserved_params": ["multioutput", "multilevel", "by_index"],
+        "reserved_params": ["multioutput", "multilevel", "by_index", "sample_weight"],
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -111,10 +126,12 @@ class BaseForecastingErrorMetric(BaseMetric):
         multioutput="uniform_average",
         multilevel="uniform_average",
         by_index=False,
+        sample_weight=None,
     ):
         self.multioutput = multioutput
         self.multilevel = multilevel
         self.by_index = by_index
+        self.sample_weight = sample_weight
 
         if not hasattr(self, "name") or self.name is None:
             self.name = type(self).__name__
@@ -207,9 +224,16 @@ class BaseForecastingErrorMetric(BaseMetric):
     def _apply_sample_weight_to_kwargs(self, y_true, y_pred, **kwargs):
         """Apply sample weight to kwargs.
 
-        Sample weight is updated to kwargs if it is a callable and follows the
-        SampleWeightGenerator interface.
+        Merges ``self.sample_weight`` (from ``__init__``) into kwargs
+        if no ``sample_weight`` was passed at call time.
+
+        Then, if the resulting ``sample_weight`` is a callable that follows the
+        ``SampleWeightGenerator`` interface, it is called to produce an array.
         """
+        # merge __init__-level sample_weight into kwargs if not already present
+        if kwargs.get("sample_weight", None) is None and self.sample_weight is not None:
+            kwargs["sample_weight"] = self.sample_weight
+
         sample_weight = kwargs.get("sample_weight", None)
         if callable(sample_weight) and check_sample_weight_generator(sample_weight):
             kwargs["sample_weight"] = sample_weight(y_true, y_pred, **kwargs)
@@ -898,6 +922,7 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         lower_is_better=True,
         by_index=False,
+        sample_weight=None,
     ):
         self.multioutput = multioutput
         self.multilevel = multilevel
@@ -905,7 +930,10 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         self.name = name
         self.lower_is_better = lower_is_better
         super().__init__(
-            multioutput=multioutput, multilevel=multilevel, by_index=by_index
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+            sample_weight=sample_weight,
         )
 
         self.set_tags(**{"lower_is_better": lower_is_better})
@@ -983,6 +1011,7 @@ def make_forecasting_scorer(
     greater_is_better=False,
     multioutput="uniform_average",
     multilevel="uniform_average",
+    sample_weight=None,
 ):
     """Create a metric class from a metric function.
 
@@ -1020,6 +1049,14 @@ def make_forecasting_scorer(
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    sample_weight : None, array-like, or callable, default=None
+        Sample weights for each time point.
+
+        * If ``None``, the time indices are considered equally weighted.
+        * If array-like, must be 1D, with length matching the number of
+          time points in the evaluation data.
+        * If a callable, it must follow the ``SampleWeightGenerator`` interface.
+
     Returns
     -------
     scorer:
@@ -1032,4 +1069,5 @@ def make_forecasting_scorer(
         multioutput=multioutput,
         multilevel=multilevel,
         lower_is_better=lower_is_better,
+        sample_weight=sample_weight,
     )

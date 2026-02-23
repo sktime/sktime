@@ -136,6 +136,7 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         by_index=False,
         relative_to="y_true",
         eps=None,
+        sample_weight=None,
     ):
         self.symmetric = symmetric
         self.square_root = square_root
@@ -145,6 +146,7 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
+            sample_weight=sample_weight,
         )
 
     @classmethod

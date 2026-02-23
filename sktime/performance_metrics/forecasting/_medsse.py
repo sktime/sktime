@@ -118,6 +118,7 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         sp=1,
         square_root=False,
         by_index=False,
+        sample_weight=None,
     ):
         self.sp = sp
         self.square_root = square_root
@@ -125,6 +126,7 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
+            sample_weight=sample_weight,
         )
 
     @classmethod

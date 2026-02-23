@@ -198,6 +198,68 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
         if metric_obj(**y_kwargs) == metric_obj(sample_weight=wts, **y_kwargs):
             raise ValueError(f"Metric {metric} does not handle sample_weight correctly")
 
-        # wt_metr = metric(sample_weight=wts)
-        # res_wt = wt_metr(y_true, y_pred)
-        # assert np.allclose(res_wt, metric_obj(y_true, y_pred, sample_weight=wts))
+        # test that sample_weight can be passed at __init__ time
+        # and yields the same result as passing at call time
+        wt_metr = metric_obj.clone().set_params(sample_weight=wts)
+        res_wt_init = wt_metr(**y_kwargs)
+        res_wt_call = metric_obj(sample_weight=wts, **y_kwargs)
+        assert np.allclose(res_wt_init, res_wt_call), (
+            f"Metric {metric.__name__}: __init__ sample_weight gives different "
+            f"result than call-time sample_weight. "
+            f"__init__ result: {res_wt_init}, call result: {res_wt_call}"
+        )
+
+    def test_metric_weights_call_overrides_init(self, estimator_instance):
+        """Test that call-time sample_weight overrides __init__ sample_weight."""
+        metric = type(estimator_instance)
+
+        y_true = np.array([3, -0.5, 2, 7, 2])
+        y_pred = np.array([2.5, 0.5, 2.02, 8, 7.25])
+        wts_init = np.array([0.1, 0.2, 0.1, 0.3, 2.4])
+        wts_call = np.array([1.0, 1.0, 1.0, 1.0, 1.0])
+
+        # skip for private metrics such as dynamic error metrics
+        if metric.__name__.startswith("_"):
+            return None
+
+        y_kwargs = {
+            "y_true": y_true,
+            "y_pred": y_pred,
+            "y_pred_benchmark": y_true,
+            "y_train": y_true,
+        }
+
+        # metric with __init__ weights, preserving test instance params
+        wt_metr = estimator_instance.clone().set_params(sample_weight=wts_init)
+
+        # call time weight should take priority
+        res_call_override = wt_metr(sample_weight=wts_call, **y_kwargs)
+        res_just_call = estimator_instance.clone()(sample_weight=wts_call, **y_kwargs)
+        assert np.allclose(res_call_override, res_just_call), (
+            f"Metric {metric.__name__}: call-time sample_weight should override "
+            f"__init__ sample_weight, but results differ."
+        )
+
+    def test_metric_sample_weight_in_get_params(self, estimator_instance):
+        """Test that sample_weight appears in get_params and survives clone."""
+        metric = type(estimator_instance)
+
+        # skip for private metrics such as dynamic error metrics
+        if metric.__name__.startswith("_"):
+            return None
+
+        wts = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
+        wt_metr = estimator_instance.clone().set_params(sample_weight=wts)
+
+        # sample_weight should be in get_params
+        params = wt_metr.get_params()
+        assert "sample_weight" in params, (
+            f"Metric {metric.__name__}: sample_weight not in get_params"
+        )
+        assert np.array_equal(params["sample_weight"], wts)
+
+        # sample_weight should survive clone
+        cloned = wt_metr.clone()
+        cloned_params = cloned.get_params()
+        assert "sample_weight" in cloned_params
+        assert np.array_equal(cloned_params["sample_weight"], wts)

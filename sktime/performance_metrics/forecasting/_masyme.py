@@ -143,6 +143,7 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         left_error_penalty=1.0,
         right_error_penalty=1.0,
         by_index=False,
+        sample_weight=None,
     ):
         self.asymmetric_threshold = asymmetric_threshold
         self.left_error_function = left_error_function
@@ -154,6 +155,7 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
+            sample_weight=sample_weight,
         )
 
     @classmethod
