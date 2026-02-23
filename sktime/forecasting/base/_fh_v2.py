@@ -644,6 +644,15 @@ class ForecastingHorizonV2:
         fhv = FHValues(indexer_vals.astype(np.int64), FHValueType.INT)
         return PandasFHConverter.to_pandas_index(fhv)
 
+    def _is_contiguous(self) -> bool:
+        """Check if forecasting horizon values form a contiguous sequence.
+
+        Returns
+        -------
+        bool
+        """
+        return self._fhvalues.is_contiguous()
+
     # Dunders -> Arithmatic operators
 
     def __add__(self, other):
