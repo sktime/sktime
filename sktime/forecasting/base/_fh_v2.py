@@ -484,6 +484,100 @@ class ForecastingHorizonV2:
         fhv = FHValues(integers.astype(np.int64), FHValueType.INT, freq=self.freq)
         return self._new(fhvalues=fhv, is_relative=False)
 
+    # In-sample and out-of-sample methods
+
+    def _is_in_sample(self, cutoff=None) -> np.ndarray:
+        """Return boolean array indicating in-sample values.
+
+        In-sample values have relative representation <= 0.
+        """
+        relative = self.to_relative(cutoff)
+        return relative._fhvalues.values <= 0
+
+    def _is_out_of_sample(self, cutoff=None) -> np.ndarray:
+        """Return boolean array indicating out-of-sample values."""
+        return np.logical_not(self._is_in_sample(cutoff))
+
+    def is_all_in_sample(self, cutoff=None) -> bool:
+        """Whether the forecasting horizon is purely in-sample.
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, optional
+            Cutoff value.
+
+        Returns
+        -------
+        bool
+        """
+        return bool(self._is_in_sample(cutoff).all())
+
+    def is_all_out_of_sample(self, cutoff=None) -> bool:
+        """Whether the forecasting horizon is purely out-of-sample.
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, optional
+            Cutoff value.
+
+        Returns
+        -------
+        bool
+        """
+        return bool(self._is_out_of_sample(cutoff).all())
+
+        """Whether the forecasting horizon is purely out-of-sample for given cutoff.
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+            Cutoff value used to check if forecasting horizon is purely
+            out-of-sample.
+
+        Returns
+        -------
+        ret : bool
+            True if the forecasting horizon is purely out-of-sample for given
+            cutoff.
+        """
+        return sum(self._is_out_of_sample(cutoff)) == len(self)
+
+    def to_in_sample(self, cutoff=None):
+        """Return in-sample values of fh.
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, optional
+            Cutoff value for conversion.
+
+        Returns
+        -------
+        ForecastingHorizonV2
+            In-sample values of forecasting horizon.
+        """
+        mask = self._is_in_sample(cutoff)
+        filtered_vals = self._fhvalues.values[mask]
+        fhv = self._fhvalues._new(values=filtered_vals)
+        return self._new(fhvalues=fhv)
+
+    def to_out_of_sample(self, cutoff=None):
+        """Return out-of-sample values of fh.
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, optional
+            Cutoff value for conversion.
+
+        Returns
+        -------
+        ForecastingHorizonV2
+            Out-of-sample values of forecasting horizon.
+        """
+        mask = self._is_out_of_sample(cutoff)
+        filtered_vals = self._fhvalues.values[mask]
+        fhv = self._fhvalues._new(values=filtered_vals)
+        return self._new(fhvalues=fhv)
+
     # Dunders -> Arithmatic operators
 
     def __add__(self, other):
