@@ -578,6 +578,72 @@ class ForecastingHorizonV2:
         fhv = self._fhvalues._new(values=filtered_vals)
         return self._new(fhvalues=fhv)
 
+    # indexer method
+    # <check> partial implementation, supports relative integer FH
+    # </check>
+    def to_indexer(self, cutoff=None, from_cutoff=True):
+        """Return zero-based indexer for array access.
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, optional
+            Cutoff value for conversion.
+        from_cutoff : bool, optional (default=True)
+            If True, zero-based relative to cutoff.
+            If False, zero-based relative to first value in fh.
+
+        Returns
+        -------
+        pd.Index
+            Zero-based integer indexer.
+        """
+        if from_cutoff:
+            relative = self.to_relative(cutoff)
+            vtype = relative._fhvalues.value_type
+            if vtype == FHValueType.INT:
+                indexer_vals = relative._fhvalues.values - 1
+            elif vtype == FHValueType.TIMEDELTA:
+                freq = self.freq
+                if freq is None and cutoff is not None:
+                    _, _, cutoff_freq, _ = PandasFHConverter.cutoff_to_internal(
+                        cutoff, freq=self.freq
+                    )
+                    freq = cutoff_freq
+                if freq is None:
+                    raise ValueError(
+                        "freq is required to compute an integer indexer "
+                        "from timedelta-based forecasting horizon. "
+                        "Set freq on the FH or provide a cutoff with "
+                        "frequency information."
+                    )
+                # get cutoff nanos for calendar-aware conversion
+                if cutoff is not None:
+                    cutoff_val, _, _, _ = PandasFHConverter.cutoff_to_internal(
+                        cutoff, freq=self.freq
+                    )
+                    ref_nanos = cutoff_val
+                else:
+                    ref_nanos = np.int64(0)
+                # convert timedelta nanos to integer steps, then zero-base
+                indexer_vals = (
+                    PandasFHConverter.nanos_to_steps(
+                        relative._fhvalues.values, freq, ref_nanos=ref_nanos
+                    )
+                    - 1
+                )
+            else:
+                raise TypeError(
+                    f"Cannot compute indexer for relative FH with "
+                    f"value type {vtype.name}."
+                )
+        else:
+            relative = self.to_relative(cutoff)
+            vals = relative._fhvalues.values
+            indexer_vals = vals - vals[0]
+
+        fhv = FHValues(indexer_vals.astype(np.int64), FHValueType.INT)
+        return PandasFHConverter.to_pandas_index(fhv)
+
     # Dunders -> Arithmatic operators
 
     def __add__(self, other):

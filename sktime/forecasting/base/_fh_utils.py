@@ -14,6 +14,7 @@ Extracting and normalizing frequency strings from pandas objects.
 Converting cutoff values from pandas types to _FHValues.
 """
 
+import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._fh_values import FHValues
@@ -38,11 +39,47 @@ class PandasFHConverter:
 
     # cutoff conversion
     @staticmethod
-    def cutoff_to_internal(cutoff):
+    def cutoff_to_internal(cutoff, freq=None):
+        """Convert cutoff to internal representation.
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, pd.Index, or np.integer
+            Cutoff value. If pd.Index, the last element is used.
+        freq : str or None
+            Frequency hint.
+
+        Returns
+        -------
+        tuple of (np.int64, FHValueType, str or None, str or None)
+            (value, value_type, freq, timezone)
+        """
         pass
 
     @staticmethod
     def cutoff_to_pandas(cutoff_internal):
+        pass
+
+    @staticmethod
+    def steps_to_nanos(steps: np.ndarray, freq: str, ref_nanos=None) -> np.ndarray:
+        """Convert integer steps to int64 nanosecond offsets.
+
+        Parameters
+        ----------
+        steps : np.ndarray of int64
+            Integer step counts.
+        freq : str
+            Frequency string (e.g. "D", "h", "M").
+        ref_nanos : int or np.int64 or None, default=None
+            Reference point as nanoseconds since Unix epoch.
+            Used to correctly compute offsets for variable-length periods
+            (months, years). If None, uses 2000-01-01 as reference.
+
+        Returns
+        -------
+        np.ndarray of int64
+            Nanosecond offsets corresponding to each step.
+        """
         pass
 
     # frequency helper functions
