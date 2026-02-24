@@ -299,7 +299,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         return y_pred
 
-    def _update(self, y, X=None, update_params=False):
+    def _update(self, y, X=None, update_params=True):
         """Update the forecaster with new data."""
         if not update_params:
             return self
