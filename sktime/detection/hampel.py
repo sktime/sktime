@@ -68,13 +68,22 @@ class HampelFilter(BaseDetector):
 
         self.window_size = window_size
         self.n_sigmas = n_sigmas
+        if n_sigmas <= 0:
+            raise ValueError("n_sigmas must be > 0")
         self.center = center
         self.use_mmad = use_mmad
         self.mmad_window = mmad_window
+        if center and mmad_window is not None and mmad_window % 2 == 0:
+            mmad_window += 1
         super().__init__()
 
     def _predict(self, X):
         if isinstance(X, pd.DataFrame):
+            if X.shape[1] != 1:
+                raise ValueError(
+                    "HampelFilter only supports univariate input. "
+                    f"Received a DataFrame with {X.shape[1]} columns."
+                )
             X = X.iloc[:, 0]
 
         median_series = X.rolling(self.window_size, center=self.center).median()
