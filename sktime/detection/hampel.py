@@ -40,7 +40,7 @@ class HampelFilter(BaseDetector):
 
     Examples
     --------
-     Detect anomalies in a univariate time series.
+    Detect anomalies in a univariate time series.
 
      >>> import pandas as pd
      >>> from sktime.detection.hampel import HampelFilter
