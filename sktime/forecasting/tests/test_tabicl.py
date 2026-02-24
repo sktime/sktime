@@ -9,6 +9,7 @@ Or against only this estimator via the standard sktime check:
     from sktime.forecasting.tabicl import TabICLForecaster
     check_estimator(TabICLForecaster, raise_exceptions=True)
 """
+
 import pytest
 
 from sktime.utils.dependencies import _check_soft_dependencies
@@ -27,7 +28,9 @@ class TestTabICLForecaster:
         from sktime.forecasting.tabicl import TabICLForecaster
 
         y = load_airline()
-        forecaster = TabICLForecaster(window_length=3, n_estimators=1, use_kv_cache=False)
+        forecaster = TabICLForecaster(
+            window_length=3, n_estimators=1, use_kv_cache=False
+        )
         forecaster.fit(y, fh=[1, 2, 3])
         y_pred = forecaster.predict()
 
@@ -40,7 +43,9 @@ class TestTabICLForecaster:
         from sktime.forecasting.tabicl import TabICLForecaster
 
         y = load_airline()
-        forecaster = TabICLForecaster(window_length=4, n_estimators=1, use_kv_cache=False)
+        forecaster = TabICLForecaster(
+            window_length=4, n_estimators=1, use_kv_cache=False
+        )
         forecaster.fit(y, fh=[1])
         y_pred = forecaster.predict()
 
@@ -51,6 +56,7 @@ class TestTabICLForecaster:
         """Raise ValueError when window_length >= len(y)."""
         import numpy as np
         import pandas as pd
+
         from sktime.forecasting.tabicl import TabICLForecaster
 
         y = pd.Series(np.random.randn(5))
@@ -65,7 +71,9 @@ class TestTabICLForecaster:
         from sktime.forecasting.tabicl import TabICLForecaster
 
         y = load_airline()
-        forecaster = TabICLForecaster(window_length=3, n_estimators=1, use_kv_cache=False)
+        forecaster = TabICLForecaster(
+            window_length=3, n_estimators=1, use_kv_cache=False
+        )
         forecaster.fit(y)
         y_pred = forecaster.predict(fh=[1, 2])
 
@@ -77,7 +85,9 @@ class TestTabICLForecaster:
         from sktime.forecasting.tabicl import TabICLForecaster
 
         y = load_airline()
-        forecaster = TabICLForecaster(window_length=4, n_estimators=1, use_kv_cache=False)
+        forecaster = TabICLForecaster(
+            window_length=4, n_estimators=1, use_kv_cache=False
+        )
         forecaster.fit(y, fh=[1, 3, 6])
         y_pred = forecaster.predict()
 
@@ -86,6 +96,7 @@ class TestTabICLForecaster:
     def test_make_tabular_shape(self):
         """Unit test the _make_tabular module-level function."""
         import numpy as np
+
         from sktime.forecasting.tabicl import _make_tabular
 
         values = np.arange(20, dtype=float)
@@ -99,6 +110,7 @@ class TestTabICLForecaster:
     def test_impute_array_no_nans(self):
         """_impute_array returns original array when no NaNs present."""
         import numpy as np
+
         from sktime.forecasting.tabicl import _impute_array
 
         X = np.array([[1.0, 2.0], [3.0, 4.0]])
@@ -108,6 +120,7 @@ class TestTabICLForecaster:
     def test_impute_array_with_nans(self):
         """_impute_array replaces NaNs with column means."""
         import numpy as np
+
         from sktime.forecasting.tabicl import _impute_array
 
         X = np.array([[1.0, np.nan], [3.0, 4.0]])

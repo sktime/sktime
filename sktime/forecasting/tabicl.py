@@ -169,7 +169,7 @@ class TabICLForecaster(BaseForecaster):
         predictions = {}
 
         for step in range(1, max_step + 1):
-            x_row = window[-self.window_length:].reshape(1, -1)
+            x_row = window[-self.window_length :].reshape(1, -1)
             y_hat = self.regressor_.predict(_impute_array(x_row))[0]
 
             if step in fh_rel:
@@ -226,7 +226,7 @@ def _make_tabular(values, window_length):
     X = np.empty((n - window_length, window_length), dtype=np.float64)
     y = np.empty(n - window_length, dtype=np.float64)
     for i in range(n - window_length):
-        X[i] = values[i: i + window_length]
+        X[i] = values[i : i + window_length]
         y[i] = values[i + window_length]
     return X, y
 
