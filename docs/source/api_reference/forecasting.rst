@@ -647,6 +647,14 @@ Pre-trained and foundation models
 
     TotoForecaster
 
+.. currentmodule:: sktime.forecasting.tabicl_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TabICLForecaster
+
 Intermittent time series forecasters
 ------------------------------------
 
