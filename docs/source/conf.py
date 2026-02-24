@@ -639,6 +639,15 @@ nbsphinx_prolog = f"""
 .. _Binder: {binder_url}
 
 |Binder|_
+
+.. note::
+
+   To run interactively: click the Binder badge above, no install needed.
+
+   To run locally: install ``sktime`` - see the
+   `installation guide <https://www.sktime.net/en/stable/installation.html>`_.
+   For a dev install, see the
+   `developer install instructions <https://www.sktime.net/en/stable/installation.html#development-versions>`_.
 """
 
 # add link to original notebook at the bottom
