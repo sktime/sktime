@@ -653,6 +653,101 @@ class ForecastingHorizonV2:
         """
         return self._fhvalues.is_contiguous()
 
+    def get_expected_pred_idx(self, y=None, cutoff=None, sort_by_time=False):
+        """Construct expected prediction output index.
+
+        Parameters
+        ----------
+        y : pd.DataFrame, pd.Series, pd.Index, or None (default=None)
+            Data to compute fh relative to.
+        cutoff : pd.Period, pd.Timestamp, int, or pd.Index, optional (default=None)
+            Cutoff value. If None, inferred from ``y``.
+        sort_by_time : bool, optional (default=False)
+            For MultiIndex returns, whether to sort by time index.
+
+        Returns
+        -------
+        pd.Index
+            Expected index of y_pred returned by predict.
+        """
+        import pandas as pd
+
+        if hasattr(y, "index"):
+            y_index = y.index
+        elif isinstance(y, pd.Index):
+            y_index = y
+            y = pd.DataFrame(index=y_index)
+        elif y is not None:
+            y_index = pd.Index(y)
+            y = pd.DataFrame(index=y_index)
+        else:
+            y_index = None
+
+        # MultiIndex case: compute per-instance cutoffs and predictions
+        if y_index is not None and isinstance(y_index, pd.MultiIndex):
+            y_inst_idx = y_index.droplevel(-1).unique()
+
+            def _per_instance_pred(inst_key):
+                """Get absolute FH for a single instance."""
+                if isinstance(inst_key, tuple):
+                    inst_data = y.loc[inst_key]
+                else:
+                    inst_data = y.loc[inst_key]
+                if hasattr(inst_data, "index"):
+                    inst_idx = inst_data.index
+                else:
+                    inst_idx = pd.Index(inst_data)
+                # if inst_idx is still a MultiIndex, take the last level
+                if isinstance(inst_idx, pd.MultiIndex):
+                    inst_idx = inst_idx.get_level_values(-1)
+                inst_cutoff = inst_idx[[-1]]
+                return self.to_absolute_index(inst_cutoff)
+
+            if cutoff is not None:
+                # Global cutoff provided: use global absolute FH for all
+                fh_abs_idx = self.to_absolute_index(cutoff)
+                if isinstance(y_inst_idx, pd.MultiIndex) and sort_by_time:
+                    fh_list = [x + (t,) for t in fh_abs_idx for x in y_inst_idx]
+                elif isinstance(y_inst_idx, pd.MultiIndex):
+                    fh_list = [x + (t,) for x in y_inst_idx for t in fh_abs_idx]
+                elif sort_by_time:
+                    fh_list = [(x, t) for t in fh_abs_idx for x in y_inst_idx]
+                else:
+                    fh_list = [(x, t) for x in y_inst_idx for t in fh_abs_idx]
+            else:
+                # Per-instance cutoffs
+                fh_list = []
+                for inst_key in y_inst_idx:
+                    inst_abs = _per_instance_pred(inst_key)
+                    if isinstance(y_inst_idx, pd.MultiIndex):
+                        fh_list.extend([inst_key + (t,) for t in inst_abs])
+                    else:
+                        fh_list.extend([(inst_key, t) for t in inst_abs])
+
+            fh_idx = pd.Index(fh_list)
+
+            if sort_by_time and cutoff is None:
+                fh_df = pd.DataFrame(index=fh_idx)
+                fh_idx = fh_df.sort_index(level=-1).index
+
+            # replicate index names
+            if y_index.names is not None:
+                fh_idx.names = y_index.names
+
+            return fh_idx
+
+        # Simple (non-MultiIndex) case
+        if cutoff is None and y_index is not None:
+            cutoff = y_index[[-1]]
+
+        fh_abs_idx = self.to_absolute_index(cutoff)
+
+        # replicate index names
+        if y_index is not None and y_index.names is not None:
+            fh_abs_idx.names = y_index.names
+
+        return fh_abs_idx
+
     # Dunders -> Arithmatic operators
 
     def __add__(self, other):
