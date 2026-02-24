@@ -190,7 +190,11 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
         """
         self.num_classes = len(np.unique(y))
 
-        # n_instances, n_dims, n_timesteps = X.shape
+        # X arrives in sktime format: (n_instances, n_dims, n_timesteps)
+        # The base class's _build_dataloader transposes it to
+        # (batch, n_timesteps, n_dims) before passing to forward().
+        # But at this point, X has not been transposed.
+        # So input_size = n_dims is correct here
         _, self.input_size, _ = X.shape
         return LSTMFCNNetworkTorch(
             input_size=self.input_size,
