@@ -483,3 +483,57 @@ def test_insample_with_numpy_input():
     forecaster.fit(y)
     y_pred = forecaster.predict(np.arange(0, 10))
     assert len(y_pred) == 10
+
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_naive_update_efficiency_and_correctness():
+    """Test that NaiveForecaster update is efficient (no refit) and correct."""
+    y = pd.Series(np.arange(100.0))
+    y_train = y.iloc[:80]
+    y_new = y.iloc[80:90]
+
+    # 1. Verify window_length_ update for None
+    f = NaiveForecaster(strategy="mean", window_length=None)
+    f.fit(y_train)
+    assert f.window_length_ == 80
+
+    # Update should increase window_length_
+    f.update(y_new, update_params=True)
+    assert f.window_length_ == 90
+
+    # 2. Verify window_length_ update for int
+    f = NaiveForecaster(strategy="mean", window_length=10)
+    f.fit(y_train)
+    assert f.window_length_ == 10
+
+    # Update should keep window_length_ same
+    f.update(y_new, update_params=True)
+    assert f.window_length_ == 10
+
+    # 3. Verify window_length_ update for float
+    f = NaiveForecaster(strategy="mean", window_length=0.5)
+    f.fit(y_train)
+    # 0.5 * 80 = 40
+    assert f.window_length_ == 40
+
+    # Update should increase window_length_
+    # 0.5 * 90 = 45
+    f.update(y_new, update_params=True)
+    assert f.window_length_ == 45
+
+    # 4. Verify predictions match refitting
+    f_update = NaiveForecaster(strategy="mean", window_length=None)
+    f_refit = NaiveForecaster(strategy="mean", window_length=None)
+
+    f_update.fit(y_train)
+    f_update.update(y_new, update_params=True)
+
+    f_refit.fit(pd.concat([y_train, y_new]))
+
+    fh = [1, 2, 3]
+    pred_update = f_update.predict(fh)
+    pred_refit = f_refit.predict(fh)
+
+    np.testing.assert_allclose(pred_update, pred_refit)

@@ -227,6 +227,30 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         return self
 
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        Parameters
+        ----------
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series with which to update the forecaster.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if update_params:
+            n_timepoints = len(self._y)
+            self.window_length_ = check_window_length(self.window_length, n_timepoints)
+            if self.window_length is None:
+                self.window_length_ = n_timepoints
+        return self
+
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
