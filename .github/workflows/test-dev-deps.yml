@@ -6,7 +6,7 @@ on:
       - feat/dev-deps-test
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
 
 jobs:
   test-dev-deps:
@@ -19,12 +19,9 @@ jobs:
         with:
           python-version: "3.13"
       - name: Install sktime & dev deps
-        run: |
+        run: |-
           pip install .[all_extras,dev]
-          # Uninstall numba to bypass a known dependency conflict with numpy pre-releases.
-          # Reference: PR #9286
           pip uninstall -y numba
-          # Install true pre-releases of core dependencies to detect upstream breaking changes early
           pip install --pre --upgrade numpy pandas scikit-learn
           python -c "import numpy, pandas, sklearn; print('numpy', numpy.__version__); print('pandas', pandas.__version__); print('sklearn', sklearn.__version__)"
       - name: Run Smoke Test
