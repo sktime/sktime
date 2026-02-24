@@ -30,24 +30,28 @@ class HampelFilter(BaseDetector):
         If True, use a symmetric window around each time point. If False, use a
         trailing window suitable for causal detection.
     use_mmad : bool, default=False
-        If True, compute the modified MAD (mMAD) by applying a median filter to
-        the absolute deviations instead of computing the per-window MAD.
+        If True, compute the modified MAD (mMAD) by applying a secondary rolling
+        median to the absolute deviations, optionally using a different window
+        size controlled by ``mmad_window``. If False, the MAD is computed with
+        the same ``window_size`` used for the central median.
     mmad_window : int, optional (default=None)
         Window size used for the mMAD median filter. If None, defaults to
         ``window_size``.
 
     Examples
     --------
-    Detect anomalies in a univariate time series::
-        >>> import pandas as pd
-        >>> from sktime.detection.hampel import HampelFilter
-        >>> y = pd.Series([1.0, 1.1, 0.9, 10.0, 1.0, 1.2, 0.8])
-        >>> detector = HampelFilter(window_size=3, n_sigmas=3.0, center=True)
-        >>> detector.fit(y)
-        >>> anomalies = detector.predict(y)
-        >>> anomalies.head()
-           ilocs
-        0      3
+     Detect anomalies in a univariate time series.
+
+     >>> import pandas as pd
+     >>> from sktime.detection.hampel import HampelFilter
+     >>> y = pd.Series([1.0, 1.1, 0.9, 10.0, 1.0, 1.2, 0.8])
+     >>> detector = HampelFilter(window_size=3, n_sigmas=3.0, center=True)
+     >>> detector.fit(y)
+     HampelFilter(...)
+     >>> anomalies = detector.predict(y)
+     >>> anomalies
+         ilocs
+     0      3
     """
 
     _tags = {
@@ -78,10 +82,12 @@ class HampelFilter(BaseDetector):
 
         if use_mmad and mmad_window is not None and mmad_window < 3:
             raise ValueError("mmad_window must be >= 3")
+        if not use_mmad and mmad_window is not None:
+            raise ValueError("mmad_window requires use_mmad=True")
 
-        self.window_size = window_size
         if n_sigmas <= 0:
             raise ValueError("n_sigmas must be > 0")
+        self.window_size = window_size
         self.n_sigmas = n_sigmas
         self.center = center
         self.use_mmad = use_mmad

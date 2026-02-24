@@ -91,6 +91,19 @@ def test_short_series():
     not run_test_for_class(HampelFilter),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+def test_even_window_size_adjustment():
+    """Test window_size adjustment when center=True and even values are passed."""
+    model_centered = HampelFilter(window_size=4, center=True)
+    model_trailing = HampelFilter(window_size=4, center=False)
+
+    assert model_centered.window_size == 5
+    assert model_trailing.window_size == 4
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HampelFilter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "window_size,n_sigmas,use_mmad,mmad_window",
     [
