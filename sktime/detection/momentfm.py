@@ -1,7 +1,5 @@
 """Interface for the momentfm anomaly detector."""
 
-import numpy as np  # noqa: F401
-import pandas as pd  # noqa: F401
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.detection.base import BaseDetector
@@ -13,8 +11,8 @@ Dataset = _safe_import("torch.utils.data.Dataset")
 empty_cache = _safe_import("torch.cuda.empty_cache")
 
 if _check_soft_dependencies("transformers", severity="none"):
-    from sktime.libs.momentfm import MOMENTPipeline  # noqa: F401
-    from sktime.libs.momentfm.common import TASKS  # noqa: F401
+    from sktime.libs.momentfm import MOMENTPipeline
+    from sktime.libs.momentfm.common import TASKS
 
 
 class MomentFMDetector(BaseDetector):
@@ -129,7 +127,36 @@ class MomentFMDetector(BaseDetector):
         super().__init__()
 
     def _fit(self, X, y=None):
-        raise NotImplementedError
+        """Load MomentFM in reconstruction mode.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Time series to fit on. Not used for training - model weights
+            are loaded from the pretrained checkpoint. X is only needed
+            so the base class fit/predict contract is satisfied.
+        y : ignored
+
+        Returns
+        -------
+        self
+        """
+        self._pretrained_model_name_or_path = self._config.get(
+            "pretrained_model_name_or_path", self.pretrained_model_name_or_path
+        )
+        self._device = self._config.get("device", self.device)
+        self._device = _check_device(self._device)
+
+        self.model = MOMENTPipeline.from_pretrained(
+            self._pretrained_model_name_or_path,
+            model_kwargs={
+                "task_name": TASKS.RECONSTRUCTION,
+                "device": self._device,
+            },
+        )
+        self.model.init()
+
+        return self
 
     def _predict(self, X):
         raise NotImplementedError
@@ -138,3 +165,47 @@ class MomentFMDetector(BaseDetector):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
         raise NotImplementedError
+
+
+def _check_device(device):
+    """Resolve device string to a valid torch device.
+
+    Mirrors the same helper used in MomentFMForecaster and
+    MomentFMClassifier - kept here to avoid a cross-module import.
+    """
+    if device == "auto":
+        return device
+    mps = False
+    cuda = False
+    if device == "mps":
+        from torch.backends.mps import is_available, is_built
+
+        if not is_available():
+            if not is_built():
+                print(
+                    "MPS not available because the current PyTorch install was not "
+                    "built with MPS enabled."
+                )
+            else:
+                print(
+                    "MPS not available because the current MacOS version is not 12.3+ "
+                    "and/or you do not have an MPS-enabled device on this machine."
+                )
+        else:
+            _device = "mps"
+            mps = True
+    elif device in ("gpu", "cuda"):
+        from torch.cuda import is_available
+
+        if is_available():
+            _device = "cuda"
+            cuda = True
+    elif "cuda" in device:
+        from torch.cuda import is_available
+
+        if is_available():
+            _device = device
+            cuda = True
+    if mps or cuda:
+        return _device
+    return "cpu"
