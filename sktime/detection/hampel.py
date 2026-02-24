@@ -6,6 +6,7 @@ deviations, improving computational efficiency while retaining robustness.
 See: https://www.mdpi.com/1424-8220/25/11/3319
 """
 
+import numpy as np
 import pandas as pd
 
 from sktime.detection.base import BaseDetector
@@ -89,8 +90,9 @@ class HampelFilter(BaseDetector):
         outliers = abs_dev > (self.n_sigmas * sigma)
 
         # extract indices
-        outlier_indices = X.index[outliers.fillna(False)]
-        return pd.DataFrame({"ilocs": outlier_indices})
+        mask = outliers.fillna(False)
+        ilocs = np.where(mask)[0].tolist()
+        return pd.DataFrame({"ilocs": ilocs})
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

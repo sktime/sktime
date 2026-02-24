@@ -316,3 +316,25 @@ def test_get_test_params():
         # Each dict should have valid parameter combinations
         model = HampelFilter(**param_dict)
         assert model is not None
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HampelFilter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_non_default_index():
+    """Test with non-default index - ilocs should be positions, not labels."""
+    # Use a longer series with a clear outlier and custom index
+    X = pd.Series(
+        [2, 5, 7, 9, 12, 200, 1, 3, 2, 1],
+        index=[100, 101, 102, 103, 104, 105, 106, 107, 108, 109],
+    )
+    model = HampelFilter(window_size=5, n_sigmas=3.0)
+    model.fit(X)
+    y = model.predict(X)
+
+    # Should return position 5 (integer location), not label 105
+    assert len(y) > 0, "Should detect at least one outlier"
+    assert y["ilocs"].values[0] == 5, f"Expected iloc 5, got {y['ilocs'].values[0]}"
+    # Verify it's not returning the index label
+    assert y["ilocs"].values[0] != 105, "Should return iloc, not index label"
