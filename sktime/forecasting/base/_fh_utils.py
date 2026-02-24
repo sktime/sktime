@@ -92,6 +92,9 @@ class PandasFHConverter:
     # coerce function, a pandas-aware wrapper around FHValues
     # coercion that can handle pandas types as input
 
+    # below function is directly moved from ForecastingHorizonV2.get_expected_pred_idx()
+    # to avoid pandas imports in ForecastingHorizonV2
+    # it may contain some parts/checks which might require adjustments after the move
     @staticmethod
     def build_pred_index(fh, y=None, cutoff=None, sort_by_time=False):
         """Construct expected prediction output index.
