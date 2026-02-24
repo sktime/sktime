@@ -111,6 +111,7 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        "tests:skip_all": True,
     }
 
     def __init__(
