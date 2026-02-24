@@ -121,8 +121,8 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         return y_pred
 
     @classmethod
- @classmethod
     def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator."""
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.online_learning._hedge_expert import HedgeExpert
 
