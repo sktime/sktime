@@ -51,9 +51,6 @@ class TabPFNForecaster(BaseForecaster):
     _X_context : pd.DataFrame or None
         Copy of the training exogenous data ``X``, or ``None`` when not
         provided.
-    _cutoff_val : index element
-        Last index value of the training series, used to resolve relative
-        forecasting horizons to absolute timestamps.
 
     See Also
     --------
@@ -239,7 +236,6 @@ class TabPFNForecaster(BaseForecaster):
 
         self._y_context = y.copy()
         self._X_context = X.copy() if X is not None else None
-        self._cutoff_val = y.index[-1]
 
         return self
 
@@ -264,7 +260,7 @@ class TabPFNForecaster(BaseForecaster):
             Predicted values indexed by the absolute forecasting horizon.
             The series name matches the name of the training series ``y``.
         """
-        fh_abs = fh.to_absolute(self._cutoff_val)
+        fh_abs = fh.to_absolute(self.cutoff)
 
         context_df = self._make_context_df(self._y_context, self._X_context)
         future_df = self._make_future_df(fh_abs, X)
