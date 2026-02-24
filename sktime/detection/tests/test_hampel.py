@@ -357,3 +357,29 @@ def test_non_default_index():
     assert y["ilocs"].values[0] == 5, f"Expected iloc 5, got {y['ilocs'].values[0]}"
     # Verify it's not returning the index label
     assert y["ilocs"].values[0] != 105, "Should return iloc, not index label"
+
+
+def test_invalid_window_size():
+    """Test that window_size < 3 raises ValueError."""
+    with pytest.raises(ValueError, match="window_size must be >= 3"):
+        HampelFilter(window_size=2)
+
+
+def test_invalid_n_sigmas():
+    """Test that n_sigmas <= 0 raises ValueError."""
+    with pytest.raises(ValueError, match="n_sigmas must be > 0"):
+        HampelFilter(n_sigmas=0)
+    with pytest.raises(ValueError, match="n_sigmas must be > 0"):
+        HampelFilter(n_sigmas=-1.5)
+
+
+def test_invalid_mmad_window():
+    """Test that mmad_window < 3 raises ValueError when use_mmad=True."""
+    with pytest.raises(ValueError, match="mmad_window must be >= 3"):
+        HampelFilter(use_mmad=True, mmad_window=2)
+
+
+def test_mmad_window_without_use_mmad():
+    """Test that mmad_window raises ValueError when use_mmad=False."""
+    with pytest.raises(ValueError, match="mmad_window requires use_mmad=True"):
+        HampelFilter(use_mmad=False, mmad_window=5)

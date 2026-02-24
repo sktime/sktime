@@ -21,7 +21,7 @@ class HampelFilter(BaseDetector):
     Parameters
     ----------
     window_size : int, default=7
-        Window size used to compute the rolling median and deviations. If
+        Window size used to compute the rolling median and deviations. Must be >= 3. If
         ``center=True``, an even ``window_size`` is incremented to the next odd
         value.
     n_sigmas : float, default=3.0
