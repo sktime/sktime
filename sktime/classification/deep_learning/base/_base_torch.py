@@ -207,12 +207,12 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
         Sets
         ------
-        self.validated_criterion : str or Callable
+        self._validated_criterion : str or Callable
             The validated criterion to be used in training the neural network.
             This will either be the same as self.criterion, or "crossentropyloss"
             if a functionally equivalent combination of criterion and activation
             function is detected.
-        self.validated_activation : str or Callable or None
+        self._validated_activation : str or Callable or None
             The validated activation function to be used in the output layer.
             This will either be the same as self.activation, or None if a
             functionally equivalent combination is detected.
@@ -616,7 +616,15 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                 y_pred.append(self.network(**inputs).detach())
         y_pred = cat(y_pred, dim=0)
         # (batch_size, num_outputs)
-        y_pred = Fsoftmax(y_pred, dim=-1)
+
+        if self._validated_activation:
+            activation_instance = self.network._instantiate_activation(
+                self.self._validated_activation
+            )
+            y_pred = activation_instance(y_pred)
+        else:
+            y_pred = Fsoftmax(y_pred, dim=-1)
+
         y_pred = y_pred.numpy()
         return y_pred
 
