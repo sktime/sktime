@@ -95,7 +95,7 @@ class Chronos2Forecaster(BaseForecaster):
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "capability:missing_values": False,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
         "scitype:y": "both",
@@ -106,9 +106,7 @@ class Chronos2Forecaster(BaseForecaster):
         # ---------------------
         "tests:vm": True,
         "tests:libs": [],
-        "tests:skip_by_name": [
-            
-        ],
+        "tests:skip_by_name": [],
     }
     _default_config = {
         "batch_size": 256,
@@ -199,15 +197,25 @@ class Chronos2Forecaster(BaseForecaster):
                 self.model_pipeline = self._load_pipeline()
 
     def _predict(self, fh, X=None):
-        """
-        X we receive is the one passed to predict, and self._X is the one passed to fit.
+        """Forecast time series at future horizon.
 
-        explicit outside function does no pass y to predict, so y is None here,
-        but self._y is the one passed to fit.
-        So here we predict using the pipeline with self._X as past_covariates and
-        self._y as target series, and fh as the forecasting horizon.
-        X passed in here will be used as future_covariates if not None.
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to predict.
 
+        X : pd.DataFrame, optional (default=None)
+            Future covariates corresponding to the forecasting horizon. Should
+            have an index that matches the absolute time points in `fh`
+            and columns for each covariate.All future covariate keys
+            must be a subset of past covariate keys of past covariates are provided.
+
+        Returns
+        -------
+        y_pred : pd.DataFrame
+            Point forecasts at the time points specified by `fh`.
+            Columns correspond to variates if multivariate, and index corresponds to
+            the forecasted time points.
         """
         self._ensure_model_pipeline_loaded()
         transformers.set_seed(self._seed)
@@ -217,7 +225,10 @@ class Chronos2Forecaster(BaseForecaster):
         else:
             prediction_length = 1
         _y = self._y.copy()
-        context_length = self.model_pipeline.model.chronos_config.context_length
+        context_length = (
+            self._config["context_length"]
+            or self.model_pipeline.model.chronos_config.context_length
+        )
         _y = _y.iloc[-context_length:]
         index_names = _y.index.names
         target = _y.values.T.astype(float)
