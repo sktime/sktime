@@ -89,6 +89,97 @@ class PandasFHConverter:
     # 2. frequency normalization function,
     #    to convert pandas freq strings to a canonical form
     # 3. offset handler
-
     # coerce function, a pandas-aware wrapper around FHValues
     # coercion that can handle pandas types as input
+
+    @staticmethod
+    def build_pred_index(fh, y=None, cutoff=None, sort_by_time=False):
+        """Construct expected prediction output index.
+
+        This contains all pandas-dependent logic for building prediction
+        indices, including MultiIndex/DataFrame handling. Called by
+        ForecastingHorizonV2.get_expected_pred_idx().
+
+        Parameters
+        ----------
+        fh : ForecastingHorizonV2
+            Forecasting horizon instance.
+        y : pd.DataFrame, pd.Series, pd.Index, or None (default=None)
+            Data to compute fh relative to.
+        cutoff : pd.Period, pd.Timestamp, int, or pd.Index, optional
+            Cutoff value. If None, inferred from ``y``.
+        sort_by_time : bool, optional (default=False)
+            For MultiIndex returns, whether to sort by time index.
+
+        Returns
+        -------
+        pd.Index
+            Expected index of y_pred returned by predict.
+        """
+        from sktime.datatypes import get_cutoff
+
+        if hasattr(y, "index"):
+            y_index = y.index
+        elif isinstance(y, pd.Index):
+            y_index = y
+            y = pd.DataFrame(index=y_index)
+        elif cutoff is None and y is not None:
+            y_index = pd.Index(y)
+            y = pd.DataFrame(index=y_index)
+        else:
+            y_index = None
+
+        # MultiIndex case: compute per-instance cutoffs and predictions
+        if y_index is not None and isinstance(y_index, pd.MultiIndex):
+            y_inst_idx = y_index.droplevel(-1).unique()
+
+            def _per_instance_pred(inst_key):
+                """Get absolute FH for a single instance."""
+                inst_cutoff = get_cutoff(y.loc[inst_key])
+                return fh.to_absolute_index(inst_cutoff)
+
+            if cutoff is not None:
+                # Global cutoff provided: use global absolute FH for all
+                y_inst_idx = y_inst_idx.sort_values()
+                fh_abs_idx = fh.to_absolute_index(cutoff)
+                if isinstance(y_inst_idx, pd.MultiIndex) and sort_by_time:
+                    fh_list = [x + (t,) for t in fh_abs_idx for x in y_inst_idx]
+                elif isinstance(y_inst_idx, pd.MultiIndex):
+                    fh_list = [x + (t,) for x in y_inst_idx for t in fh_abs_idx]
+                elif sort_by_time:
+                    fh_list = [(x, t) for t in fh_abs_idx for x in y_inst_idx]
+                else:
+                    fh_list = [(x, t) for x in y_inst_idx for t in fh_abs_idx]
+            else:
+                # Per-instance cutoffs
+                fh_list = []
+                for inst_key in y_inst_idx:
+                    inst_abs = _per_instance_pred(inst_key)
+                    if isinstance(y_inst_idx, pd.MultiIndex):
+                        fh_list.extend([inst_key + (t,) for t in inst_abs])
+                    else:
+                        fh_list.extend([(inst_key, t) for t in inst_abs])
+
+            fh_idx = pd.Index(fh_list)
+
+            if sort_by_time and cutoff is None:
+                fh_df = pd.DataFrame(index=fh_idx)
+                fh_idx = fh_df.sort_index(level=-1).index
+
+            # replicate index names
+            if y_index.names is not None:
+                fh_idx.names = y_index.names
+
+            return fh_idx
+
+        # non-MultiIndex case
+        if cutoff is None and y_index is not None:
+            cutoff = get_cutoff(y)
+
+        fh_abs_idx = fh.to_absolute_index(cutoff)
+
+        # replicate index names
+        if y_index is not None and y_index.names is not None:
+            fh_abs_idx.names = y_index.names
+
+        return fh_abs_idx

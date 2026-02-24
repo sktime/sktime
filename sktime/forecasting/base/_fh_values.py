@@ -15,6 +15,9 @@ from enum import Enum, auto
 # core dependency
 import numpy as np
 
+# sentinel for distinguishing "not provided" from None in _new()
+_UNSET = object()
+
 # <check></check>
 # this is the marker left to mark all delayed checks
 # all occurences must be removed/addressed before merging this code
@@ -328,8 +331,8 @@ class FHValues:
         self,
         values: np.ndarray | None = None,
         value_type: FHValueType | None = None,
-        freq: str | None = ...,
-        timezone: str | None = ...,
+        freq: str | None = _UNSET,
+        timezone: str | None = _UNSET,
     ) -> "FHValues":
         """Create a new FHValues with selectively replaced attributes.
 
@@ -340,9 +343,9 @@ class FHValues:
         value_type : FHValueType, optional
             New value type. If None, uses current value type.
         freq : str or None, optional
-            New freq. If not provided (sentinel), uses current freq.
+            New freq. If not provided, uses current freq.
         timezone : str or None, optional
-            New timezone. If not provided (sentinel), uses current timezone.
+            New timezone. If not provided, uses current timezone.
 
         Returns
         -------
@@ -352,8 +355,8 @@ class FHValues:
         return FHValues(
             values=self._values.copy() if values is None else values,
             value_type=self._value_type if value_type is None else value_type,
-            freq=self._freq if freq is ... else freq,
-            timezone=self._timezone if timezone is ... else timezone,
+            freq=self._freq if freq is _UNSET else freq,
+            timezone=self._timezone if timezone is _UNSET else timezone,
         )
 
     def copy(self) -> "FHValues":
