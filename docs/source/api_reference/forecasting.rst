@@ -647,7 +647,7 @@ Pre-trained and foundation models
 
     TotoForecaster
 
-.. currentmodule:: sktime.forecasting.tabicl_forecaster
+.. currentmodule:: sktime.forecasting.tabicl
 
 .. autosummary::
     :toctree: auto_generated/
