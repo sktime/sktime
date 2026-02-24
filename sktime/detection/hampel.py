@@ -75,6 +75,7 @@ class HampelFilter(BaseDetector):
         self.mmad_window = mmad_window
         if center and mmad_window is not None and mmad_window % 2 == 0:
             mmad_window += 1
+            self.mmad_window = mmad_window
         super().__init__()
 
     def _predict(self, X):
