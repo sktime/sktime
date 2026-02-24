@@ -140,16 +140,16 @@ class FHValues:
             value_type = FHValueType.INT
             freq = None
             timezone = None
-        self.values = values
-        self.value_type = value_type
-        self.freq = freq
-        self.timezone = timezone if value_type == FHValueType.DATETIME else None
-        self.hash = None  # Cache for hash value
+        self._values = values
+        self._value_type = value_type
+        self._freq = freq
+        self._timezone = timezone if value_type == FHValueType.DATETIME else None
+        self._hash = None  # Cache for hash value
 
     @property
     def values(self) -> np.ndarray:
         """Return the underlying numpy array (read-only view)."""
-        v = self.values.view()
+        v = self._values.view()
         # Set the writeable flag to False to prevent mutation
         # to enforce quasi-immutability of the values array
         v.flags.writeable = False
@@ -158,17 +158,22 @@ class FHValues:
     @property
     def value_type(self) -> FHValueType:
         """Return the semantic value type."""
-        return self.value_type
+        return self._value_type
 
     @property
     def freq(self) -> str | None:
         """Return frequency string or None."""
-        return self.freq
+        return self._freq
+
+    @freq.setter
+    def freq(self, value: str | None) -> None:
+        """Set frequency string."""
+        self._freq = value
 
     @property
     def timezone(self) -> str | None:
         """Return timezone string or None."""
-        return self.timezone
+        return self._timezone
 
     def is_relative_type(self) -> bool:
         """Whether the value type is a relative type."""
@@ -212,8 +217,8 @@ class FHValues:
         #       more complex but can be more efficient for large arrays
         #   Needs checking for the best apporach.
         # </check>
-        if self.hash is None:
-            self.hash = hash(
+        if self._hash is None:
+            self._hash = hash(
                 (
                     self.values.tobytes(),
                     # numpy arrays are not directly hashable, so we convert to bytes
@@ -222,7 +227,7 @@ class FHValues:
                     self.timezone,
                 )
             )
-        return self.hash
+        return self._hash
 
     def __repr__(self) -> str:
         cls = type(self).__name__
@@ -318,6 +323,38 @@ class FHValues:
         if isinstance(result, np.ndarray):
             return FHValues(result, self.value_type, self.freq, self.timezone)
         return result  # scalar int64 value, returned as is
+
+    def _new(
+        self,
+        values: np.ndarray | None = None,
+        value_type: FHValueType | None = None,
+        freq: str | None = ...,
+        timezone: str | None = ...,
+    ) -> "FHValues":
+        """Create a new FHValues with selectively replaced attributes.
+
+        Parameters
+        ----------
+        values : np.ndarray, optional
+            New values array. If None, copies current values.
+        value_type : FHValueType, optional
+            New value type. If None, uses current value type.
+        freq : str or None, optional
+            New freq. If not provided (sentinel), uses current freq.
+        timezone : str or None, optional
+            New timezone. If not provided (sentinel), uses current timezone.
+
+        Returns
+        -------
+        FHValues
+            New instance with replaced attributes.
+        """
+        return FHValues(
+            values=self._values.copy() if values is None else values,
+            value_type=self._value_type if value_type is None else value_type,
+            freq=self._freq if freq is ... else freq,
+            timezone=self._timezone if timezone is ... else timezone,
+        )
 
     def copy(self) -> "FHValues":
         """Return a deep copy."""

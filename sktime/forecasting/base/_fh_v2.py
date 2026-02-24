@@ -55,51 +55,51 @@ class ForecastingHorizonV2:
         freq=None,
     ):
         # convert input to internal representation
-        self.fhvalues = PandasFHConverter.to_internal(values, freq)
+        self._fhvalues = PandasFHConverter.to_internal(values, freq)
         # above conversion would need to be bypassed when input is already in internal
         # FHValues representation,
         # for example when creating modified copies internally with the _new constructor
 
-        if self.fhvalues.freq is None and freq is not None:
+        if self._fhvalues.freq is None and freq is not None:
             # set freq from input if not already set
             # this stores normalized freq string
             # not the pandas freq object
-            self.fhvalues.freq = PandasFHConverter.extract_freq(freq)
+            self._fhvalues.freq = PandasFHConverter.extract_freq(freq)
 
         # if is_relative is provided, validate compatibility
         # of passed is_relative with value type
         if is_relative is not None:
             if not isinstance(is_relative, bool):
                 raise TypeError("`is_relative` must be a boolean or None")
-            self.is_relative = is_relative
-            if is_relative and not self.fhvalues.is_relative_type():
+            self._is_relative = is_relative
+            if is_relative and not self._fhvalues.is_relative_type():
                 # if is_relative is passed as True,
                 # then values must be of a type that can be relative
                 raise TypeError(
-                    f"`values` type {self.fhvalues.value_type.name} is "
+                    f"`values` type {self._fhvalues.value_type.name} is "
                     f"not compatible with `is_relative=True`."
                 )
-            if not is_relative and not self.fhvalues.is_absolute_type():
+            if not is_relative and not self._fhvalues.is_absolute_type():
                 # opposite for absolute
                 raise TypeError(
-                    f"`values` type {self.fhvalues.value_type.name} is "
+                    f"`values` type {self._fhvalues.value_type.name} is "
                     f"not compatible with `is_relative=False`."
                 )
         # determine is_relative if not provided
         else:
             # Infer from value type
-            vtype = self.fhvalues.value_type
+            vtype = self._fhvalues.value_type
             if vtype in (FHValueType.TIMEDELTA,):
-                self.is_relative = True
+                self._is_relative = True
             elif vtype in (FHValueType.PERIOD, FHValueType.DATETIME):
-                self.is_relative = False
+                self._is_relative = False
             elif vtype == FHValueType.INT:
                 # INT can be either relative or absolute
                 # in line 306 code block in _fh.py, the default for this case
                 # is set to relative, hence using the same here
                 # if this handling is ok, then this elif can be merged into the
                 # 1st if block above
-                self.is_relative = True
+                self._is_relative = True
             else:
                 raise TypeError(f"Cannot infer is_relative for value type {vtype.name}")
         # <check>
@@ -107,22 +107,27 @@ class ForecastingHorizonV2:
         # fhvalues.is_absolute_type to be implemented.
         # Currently they are not implemented.</check>
 
-    # this class would also need a copy constructor
-    # because the conversion from pandas types to internal representation
-    # is done as first step in __init__,
-    # and the resulting FHValues instance is stored as an attribute.
-    # internal methods during various operations would need to create new FHValues
-    # instances with modified values. So a copy constructor that can take
-    # an existing FHValues instance and create a new one with modified values
-    # but same metadata would be needed
-    # to avoid having to go through the full conversion process again
+    def _new(self, fhvalues=None, is_relative=None):
+        """Create a new ForecastingHorizonV2 bypassing __init__ conversion.
 
-    # methods for operating on the internal FHValues instance,
+        Parameters
+        ----------
+        fhvalues : FHValues, optional
+            New FHValues instance. If None, copies current.
+        is_relative : bool, optional
+            New is_relative flag. If None, uses current.
 
-    # methods for converting back to pandas types when needed for interoperability
-
-    # added dummy comment to test skipping of CI runs on every subsequent commit
-    # until all checks are removed and code is ready for review/tests
+        Returns
+        -------
+        ForecastingHorizonV2
+            New instance with replaced attributes.
+        """
+        new_obj = object.__new__(ForecastingHorizonV2)
+        new_obj._fhvalues = fhvalues if fhvalues is not None else self._fhvalues.copy()
+        new_obj._is_relative = (
+            is_relative if is_relative is not None else self._is_relative
+        )
+        return new_obj
 
     @property
     def is_relative(self) -> bool:
@@ -132,12 +137,17 @@ class ForecastingHorizonV2:
         -------
         is_relative : bool
         """
-        return self.is_relative
+        return self._is_relative
+
+    @is_relative.setter
+    def is_relative(self, value: bool) -> None:
+        """Set is_relative flag."""
+        self._is_relative = value
 
     @property
     def freq(self) -> str | None:
         """Frequency string, or None."""
-        return self.fhvalues.freq
+        return self._fhvalues.freq
 
     @freq.setter
     def freq(self, obj) -> None:
@@ -154,14 +164,14 @@ class ForecastingHorizonV2:
             If freq is already set and conflicts with new value.
         """
         new_freq = PandasFHConverter.extract_freq(obj)
-        old_freq = self.fhvalues.freq
+        old_freq = self._fhvalues.freq
 
         if old_freq is not None and new_freq is not None and old_freq != new_freq:
             raise ValueError(
                 f"Frequencies do not match: current={old_freq}, new={new_freq}"
             )
         if new_freq is not None:
-            self.fhvalues = self.fhvalues._new(freq=new_freq)
+            self._fhvalues = self._fhvalues._new(freq=new_freq)
 
     # core conversion methods
 
@@ -186,7 +196,7 @@ class ForecastingHorizonV2:
         ForecastingHorizonV2
             Relative representation of forecasting horizon.
         """
-        if self.is_relative:
+        if self._is_relative:
             return self._new()
 
         if cutoff is None:
@@ -214,8 +224,8 @@ class ForecastingHorizonV2:
         # vtype can only be absolute types (PERIOD, DATETIME, or INT) at this point,
         # because if it were a relative type,
         # to_relative would return at the start of the method
-        vtype = self.fhvalues.value_type
-        vals = self.fhvalues.values
+        vtype = self._fhvalues.value_type
+        vals = self._fhvalues.values
 
         # <check>
         # PandasFHConverter methods not yet implemented
@@ -273,7 +283,7 @@ class ForecastingHorizonV2:
         ForecastingHorizonV2
             Absolute representation of forecasting horizon.
         """
-        if not self.is_relative:
+        if not self._is_relative:
             # <check> _new is not yet implemented </check>"
             return self._new()
 
@@ -297,8 +307,8 @@ class ForecastingHorizonV2:
         # vtype can only be relative types (INT or TIMEDELTA) at this point,
         # because if it were an absolute type,
         # to_absolute would return at the start of the method
-        vtype = self.fhvalues.value_type
-        vals = self.fhvalues.values
+        vtype = self._fhvalues.value_type
+        vals = self._fhvalues.values
 
         if vtype == FHValueType.INT:
             if cutoff_type == FHValueType.PERIOD:
@@ -526,22 +536,6 @@ class ForecastingHorizonV2:
         """
         return bool(self._is_out_of_sample(cutoff).all())
 
-        """Whether the forecasting horizon is purely out-of-sample for given cutoff.
-
-        Parameters
-        ----------
-        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
-            Cutoff value used to check if forecasting horizon is purely
-            out-of-sample.
-
-        Returns
-        -------
-        ret : bool
-            True if the forecasting horizon is purely out-of-sample for given
-            cutoff.
-        """
-        return sum(self._is_out_of_sample(cutoff)) == len(self)
-
     def to_in_sample(self, cutoff=None):
         """Return in-sample values of fh.
 
@@ -677,7 +671,7 @@ class ForecastingHorizonV2:
         elif isinstance(y, pd.Index):
             y_index = y
             y = pd.DataFrame(index=y_index)
-        elif y is not None:
+        elif cutoff is None and y is not None:
             y_index = pd.Index(y)
             y = pd.DataFrame(index=y_index)
         else:
@@ -689,10 +683,9 @@ class ForecastingHorizonV2:
 
             def _per_instance_pred(inst_key):
                 """Get absolute FH for a single instance."""
-                if isinstance(inst_key, tuple):
-                    inst_data = y.loc[inst_key]
-                else:
-                    inst_data = y.loc[inst_key]
+                from sktime.datatypes import get_cutoff
+
+                inst_data = y.loc[inst_key]
                 if hasattr(inst_data, "index"):
                     inst_idx = inst_data.index
                 else:
@@ -700,11 +693,12 @@ class ForecastingHorizonV2:
                 # if inst_idx is still a MultiIndex, take the last level
                 if isinstance(inst_idx, pd.MultiIndex):
                     inst_idx = inst_idx.get_level_values(-1)
-                inst_cutoff = inst_idx[[-1]]
+                inst_cutoff = get_cutoff(inst_data)
                 return self.to_absolute_index(inst_cutoff)
 
             if cutoff is not None:
                 # Global cutoff provided: use global absolute FH for all
+                y_inst_idx = y_inst_idx.sort_values()
                 fh_abs_idx = self.to_absolute_index(cutoff)
                 if isinstance(y_inst_idx, pd.MultiIndex) and sort_by_time:
                     fh_list = [x + (t,) for t in fh_abs_idx for x in y_inst_idx]
@@ -738,7 +732,9 @@ class ForecastingHorizonV2:
 
         # Simple (non-MultiIndex) case
         if cutoff is None and y_index is not None:
-            cutoff = y_index[[-1]]
+            from sktime.datatypes import get_cutoff
+
+            cutoff = get_cutoff(y)
 
         fh_abs_idx = self.to_absolute_index(cutoff)
 
@@ -752,10 +748,10 @@ class ForecastingHorizonV2:
 
     def __add__(self, other):
         if isinstance(other, ForecastingHorizonV2):
-            result = self.fhvalues.values + other.fhvalues.values
+            result = self._fhvalues.values + other._fhvalues.values
         else:
-            result = self.fhvalues.values + np.int64(other)
-        fhv = self.fhvalues._new(values=result)
+            result = self._fhvalues.values + np.int64(other)
+        fhv = self._fhvalues._new(values=result)
         return self._new(fhvalues=fhv)
 
     def __radd__(self, other):
@@ -763,10 +759,10 @@ class ForecastingHorizonV2:
 
     def __sub__(self, other):
         if isinstance(other, ForecastingHorizonV2):
-            result = self.fhvalues.values - other.fhvalues.values
+            result = self._fhvalues.values - other._fhvalues.values
         else:
-            result = self.fhvalues.values - np.int64(other)
-        fhv = self.fhvalues._new(values=result)
+            result = self._fhvalues.values - np.int64(other)
+        fhv = self._fhvalues._new(values=result)
         return self._new(fhvalues=fhv)
 
     def __rsub__(self, other):
@@ -777,16 +773,16 @@ class ForecastingHorizonV2:
         # If other is FH, then other minus self
         # would have been handled by other.__sub__
         # and this method would not be called
-        result = np.int64(other) - self.fhvalues.values
-        fhv = self.fhvalues._new(values=result)
+        result = np.int64(other) - self._fhvalues.values
+        fhv = self._fhvalues._new(values=result)
         return self._new(fhvalues=fhv)
 
     def __mul__(self, other):
         if isinstance(other, ForecastingHorizonV2):
-            result = self.fhvalues.values * other.fhvalues.values
+            result = self._fhvalues.values * other._fhvalues.values
         else:
-            result = self.fhvalues.values * np.int64(other)
-        fhv = self.fhvalues._new(values=result)
+            result = self._fhvalues.values * np.int64(other)
+        fhv = self._fhvalues._new(values=result)
         return self._new(fhvalues=fhv)
 
     def __rmul__(self, other):
@@ -815,40 +811,40 @@ class ForecastingHorizonV2:
 
     def __eq__(self, other):
         if isinstance(other, ForecastingHorizonV2):
-            return self.fhvalues.values == other.fhvalues.values
-        return self.fhvalues.values == np.int64(other)
+            return self._fhvalues.values == other._fhvalues.values
+        return self._fhvalues.values == np.int64(other)
 
     def __ne__(self, other):
         if isinstance(other, ForecastingHorizonV2):
-            return self.fhvalues.values != other.fhvalues.values
-        return self.fhvalues.values != np.int64(other)
+            return self._fhvalues.values != other._fhvalues.values
+        return self._fhvalues.values != np.int64(other)
 
     def __lt__(self, other):
         if isinstance(other, ForecastingHorizonV2):
-            return self.fhvalues.values < other.fhvalues.values
-        return self.fhvalues.values < np.int64(other)
+            return self._fhvalues.values < other._fhvalues.values
+        return self._fhvalues.values < np.int64(other)
 
     def __le__(self, other):
         if isinstance(other, ForecastingHorizonV2):
-            return self.fhvalues.values <= other.fhvalues.values
-        return self.fhvalues.values <= np.int64(other)
+            return self._fhvalues.values <= other._fhvalues.values
+        return self._fhvalues.values <= np.int64(other)
 
     def __gt__(self, other):
         if isinstance(other, ForecastingHorizonV2):
-            return self.fhvalues.values > other.fhvalues.values
-        return self.fhvalues.values > np.int64(other)
+            return self._fhvalues.values > other._fhvalues.values
+        return self._fhvalues.values > np.int64(other)
 
     def __ge__(self, other):
         if isinstance(other, ForecastingHorizonV2):
-            return self.fhvalues.values >= other.fhvalues.values
-        return self.fhvalues.values >= np.int64(other)
+            return self._fhvalues.values >= other._fhvalues.values
+        return self._fhvalues.values >= np.int64(other)
 
     # Dunders -> container methods len, getitem, max, min
     def __len__(self):
-        return len(self.fhvalues)
+        return len(self._fhvalues)
 
     def __getitem__(self, key):
-        result = self.fhvalues[key]
+        result = self._fhvalues[key]
         if isinstance(result, FHValues):
             return self._new(fhvalues=result)
         # scalar — return as-is
@@ -856,11 +852,11 @@ class ForecastingHorizonV2:
 
     def max(self):
         """Return the maximum value."""
-        return self.fhvalues.max()
+        return self._fhvalues.max()
 
     def min(self):
         """Return the minimum value."""
-        return self.fhvalues.min()
+        return self._fhvalues.min()
 
     # Below method computes a hash for the ForecastingHorizonV2 instance,
     # which allows it to be used in sets and as dictionary keys.
@@ -888,11 +884,11 @@ class ForecastingHorizonV2:
     # Need to consider this in th context of forecasting horizon usage.
     # </check>
     def __hash__(self):
-        return hash((self.fhvalues, self.is_relative))
+        return hash((self._fhvalues, self._is_relative))
 
     def __repr__(self):
         class_name = type(self).__name__
-        vals = self.fhvalues
+        vals = self._fhvalues
         vtype = vals.value_type.name
         n = len(vals)
         parts = [f"n={n}", f"type={vtype}", f"is_relative={self._is_relative}"]
