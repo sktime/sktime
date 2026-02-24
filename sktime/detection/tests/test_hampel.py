@@ -1,6 +1,6 @@
 """Tests for HampelFilter detector."""
 
-__author__ = ["vyomesh"]
+__author__ = ["Vbhatt03"]
 __all__ = []
 
 import pandas as pd
@@ -92,19 +92,25 @@ def test_short_series():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
-    "window_size,n_sigmas,use_mmad",
+    "window_size,n_sigmas,use_mmad,mmad_window",
     [
-        (5, 3.0, False),  # standard Hampel
-        (7, 2.5, False),  # larger window, tighter threshold
-        (5, 3.0, True),  # mMAD variant
-        (7, 3.0, True),  # mMAD with larger window
-        (9, 2.0, False),  # very strict threshold
+        (5, 3.0, False, None),  # standard Hampel
+        (7, 2.5, False, None),  # larger window, tighter threshold
+        (5, 3.0, True, None),  # mMAD variant with default mmad_window
+        (5, 3.0, True, 7),  # mMAD with custom mmad_window
+        (7, 3.0, True, None),  # mMAD with larger window
+        (9, 2.0, False, None),  # very strict threshold
     ],
 )
-def test_parameter_combinations(window_size, n_sigmas, use_mmad):
+def test_parameter_combinations(window_size, n_sigmas, use_mmad, mmad_window):
     """Test various parameter combinations."""
     X = pd.DataFrame([2, 5, 7, 9, 12, 55, 1, 3, 2, 1] * 3)  # Repeat for longer series
-    model = HampelFilter(window_size=window_size, n_sigmas=n_sigmas, use_mmad=use_mmad)
+    model = HampelFilter(
+        window_size=window_size,
+        n_sigmas=n_sigmas,
+        use_mmad=use_mmad,
+        mmad_window=mmad_window,
+    )
     model.fit(X)
     y = model.predict(X)
 

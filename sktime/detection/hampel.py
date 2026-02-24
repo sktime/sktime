@@ -35,6 +35,19 @@ class HampelFilter(BaseDetector):
     mmad_window : int, optional (default=None)
         Window size used for the mMAD median filter. If None, defaults to
         ``window_size``.
+
+    Examples
+    --------
+    Detect anomalies in a univariate time series::
+        >>> import pandas as pd
+        >>> from sktime.detection.hampel import HampelFilter
+        >>> y = pd.Series([1.0, 1.1, 0.9, 10.0, 1.0, 1.2, 0.8])
+        >>> detector = HampelFilter(window_size=3, n_sigmas=3.0, center=True)
+        >>> detector.fit(y)
+        >>> anomalies = detector.predict(y)
+        >>> anomalies.head()
+           ilocs
+        0      3
     """
 
     _tags = {
@@ -67,14 +80,14 @@ class HampelFilter(BaseDetector):
             raise ValueError("mmad_window must be >= 3")
 
         self.window_size = window_size
-        self.n_sigmas = n_sigmas
         if n_sigmas <= 0:
             raise ValueError("n_sigmas must be > 0")
+        self.n_sigmas = n_sigmas
         self.center = center
         self.use_mmad = use_mmad
-        self.mmad_window = mmad_window
         if center and mmad_window is not None and mmad_window % 2 == 0:
-            mmad_window += 1
+            self.mmad_window = mmad_window + 1
+        else:
             self.mmad_window = mmad_window
         super().__init__()
 
@@ -106,7 +119,20 @@ class HampelFilter(BaseDetector):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator."""
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return. Currently only
+            ``"default"`` is supported.
+
+        Returns
+        -------
+        list of dict
+            A list of parameter dictionaries to create test instances of
+            the estimator.
+        """
         params0 = {"window_size": 7, "n_sigmas": 3.0, "center": True}
         params1 = {"window_size": 9, "n_sigmas": 2.5, "center": False}
         return [params0, params1]
