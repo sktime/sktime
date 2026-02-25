@@ -108,7 +108,7 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         depth: int = 6,
         activation: str | None = None,
         activation_hidden: str = "relu",
-        activation_inception: str = "linear",
+        activation_inception: str | None = None,
         optimizer: str | None | Callable = "Adam",
         optimizer_kwargs: dict | None = None,
         criterion: str | None | Callable = "MSELoss",
@@ -174,9 +174,13 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         model : InceptionTimeNetworkTorch instance
             The constructed InceptionTime network.
         """
-        # n_instances, n_dims, n_timesteps = X.shape
-        X = X.transpose(0, 2, 1)  # to (n_instances, n_timesteps, n_dims)
-        _, self.input_size, _ = X.shape
+        # X arrives in sktime format: (n_instances, n_dims, n_timesteps)
+        # The base class's _build_dataloader transposes it to
+        # (batch, n_timesteps, n_dims) before passing to forward().
+        # But at this point, X has not been transposed.
+        # So input_size = n_dims is correct here
+        _, _, self.input_size = X.shape
+
         return InceptionTimeNetworkTorch(
             input_size=self.input_size,
             num_classes=self.num_classes,

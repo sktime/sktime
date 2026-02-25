@@ -206,11 +206,14 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         model : InceptionTimeNetworkTorch instance
             The constructed InceptionTime network.
         """
-        # n_instances, n_dims, n_timesteps = X.shape
         self.num_classes = len(np.unique(y))
 
-        X = X.transpose(0, 2, 1)
-        _, self.input_size, _ = X.shape
+        # X arrives in sktime format: (n_instances, n_dims, n_timesteps)
+        # The base class's _build_dataloader transposes it to
+        # (batch, n_timesteps, n_dims) before passing to forward().
+        # But at this point, X has not been transposed.
+        # So input_size = n_dims is correct here
+        _, _, self.input_size = X.shape
 
         return InceptionTimeNetworkTorch(
             input_size=self.input_size,
@@ -222,7 +225,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
             depth=self.depth,
             kernel_size=self.kernel_size,
             random_state=self.random_state,
-            activation=self.activation,
+            activation=self._validated_activation,
             activation_hidden=self.activation_hidden,
             activation_inception=self.activation_inception,
         )
