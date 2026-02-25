@@ -89,6 +89,8 @@ class PandasFHConverter:
         # pandas Timedelta and offset objects
         if isinstance(values, pd.Timedelta):
             arr = np.array([values.value], dtype=np.int64)
+            # the above mentioned check would be performed here
+            # and all such subsequent places in the below if-blocks
             freq_str = freq or PandasFHConverter._extract_freq_str(values)
             return FHValues(arr, FHValueType.TIMEDELTA, freq=freq_str)
         if isinstance(values, pd.offsets.BaseOffset):
@@ -469,4 +471,11 @@ class PandasFHConverter:
         """Extract freq string from scalar pandas time objects."""
         if hasattr(obj, "freq") and obj.freq is not None:
             return PandasFHConverter.normalize_freq(str(obj.freq))
+        return None
+
+    @staticmethod
+    def _offset_to_freq_str(offset) -> str | None:
+        """Extract freq string from a pandas offset object."""
+        if hasattr(offset, "freqstr"):
+            return PandasFHConverter.normalize_freq(offset.freqstr)
         return None
