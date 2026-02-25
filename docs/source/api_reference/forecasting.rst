@@ -214,6 +214,18 @@ Wrappers that add prediction intervals to any forecaster.
     EnbPIForecaster
 
 
+In-sample-forecasting
+---------------------
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    InsampleForecaster
+
+
 Calibration and bias adjustment
 -------------------------------
 
@@ -711,6 +723,7 @@ Ensembles and stacking
 
     MAPAForecaster
 
+
 Causal Forecasting
 ------------------
 
@@ -721,6 +734,15 @@ Causal Forecasting
     :template: class.rst
 
     DoubleMLForecaster
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    InsampleForecaster
+
 
 Hierarchical reconciliation
 ---------------------------
