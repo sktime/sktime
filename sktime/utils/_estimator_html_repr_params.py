@@ -8,7 +8,6 @@ import reprlib
 from collections import UserDict
 
 
-
 def _read_params(name, value, non_default_params):
     """Categorize parameters as 'default' or 'user-set' and format values."""
     name = html.escape(name)
