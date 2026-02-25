@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.trend import TrendForecaster
 
 def test_base_raises_error_for_unsupported_weights():
     """Test that forecasters without the sample_weight capability raise an error."""
@@ -50,3 +51,42 @@ def test_base_passes_weights_if_supported():
     assert hasattr(forecaster, "captured_weight_")
     assert forecaster.captured_weight_ is not None
     np.testing.assert_array_equal(forecaster.captured_weight_, weights)
+
+def test_sample_weights_with_panel_data():
+    """Test that sample_weight works with panel (multivariate) time series data."""
+    # Panel data: multiple columns (multivariate)
+    y_panel = pd.DataFrame(
+        {
+            'var1': [1.0, 2.0, 3.0, 4.0],
+            'var2': [5.0, 6.0, 7.0, 8.0]
+        },
+        index=pd.period_range("2020-01-01", periods=4, freq="D")
+    )
+    
+    weights = np.array([0.1, 0.2, 0.3, 0.4])
+    
+    # Use TrendForecaster which supports sample_weight
+    forecaster = TrendForecaster()
+    forecaster.fit(y_panel, sample_weight=weights)
+    
+    # Verify forecaster is fitted
+    assert forecaster._is_fitted
+
+
+def test_sample_weights_with_univariate_long_series():
+    """Test that sample_weight works with longer univariate time series."""
+    # Create longer univariate series
+    y_long = pd.Series(
+        [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
+        index=pd.period_range("2020-01-01", periods=10, freq="D")
+    )
+    
+    # Create varied sample weights
+    weights = np.array([0.05, 0.1, 0.15, 0.2, 0.25, 0.2, 0.15, 0.1, 0.05, 0.05])
+    
+    # Use TrendForecaster which supports sample_weight
+    forecaster = TrendForecaster()
+    forecaster.fit(y_long, sample_weight=weights)
+    
+    # Verify forecaster is fitted
+    assert forecaster._is_fitted
