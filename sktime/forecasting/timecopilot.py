@@ -8,11 +8,12 @@ with time series foundation models for automated forecasting workflows.
 __author__ = ["kushvinth"]
 __all__ = ["TimeCopilotForecaster"]
 
+from unittest.mock import MagicMock
+
 import pandas as pd
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
@@ -23,9 +24,10 @@ class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     automated model selection and forecasting with natural language explanations.
 
     This wrapper integrates TimeCopilot with sktime, allowing users to:
-    - Use sktime forecasters as candidate models for TimeCopilot's selection
-    - Query the forecaster with natural language questions
-    - Access detailed analysis and explanations of forecasts
+
+    * Use sktime forecasters as candidate models for TimeCopilot's selection
+    * Query the forecaster with natural language questions
+    * Access detailed analysis and explanations of forecasts
 
     Parameters
     ----------
@@ -35,23 +37,34 @@ class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         Can be a list of forecasters or list of (name, forecaster) tuples.
     llm : str, default="openai:gpt-4o-mini"
         The LLM model to use for analysis and explanation.
-        Format: "provider:model_name" (e.g., "openai:gpt-4o", "anthropic:claude-3").
+        Uses pydantic-ai model format: ``"provider:model_name"``.
+
+        Supported providers and example values:
+
+        * ``"openai:gpt-4o"`` - OpenAI GPT-4o
+        * ``"openai:gpt-4o-mini"`` - OpenAI GPT-4o-mini (default)
+        * ``"anthropic:claude-3-5-sonnet-latest"`` - Anthropic Claude 3.5 Sonnet
+        * ``"google-gla:gemini-1.5-flash"`` - Google Gemini 1.5 Flash
+
+        See pydantic-ai documentation for full list of supported models:
+        https://ai.pydantic.dev/models/
     query : str or None, default=None
         Natural language question to ask about the forecast.
         The response will be available via ``get_user_query_response()``.
-    freq : str or None, default=None
-        The frequency of the time series data (e.g., 'D', 'M', 'H').
-        If None, will be inferred from the data.
-    seasonality : int or None, default=None
-        The seasonal period of the data.
-        If None, will be inferred based on frequency.
     retries : int, default=3
         Number of retries for LLM API calls.
     verbose : bool, default=False
         Whether to print detailed logs during execution.
     api_key : str or None, default=None
-        API key for the LLM provider. If None, will use environment variable
-        (e.g., OPENAI_API_KEY for OpenAI models).
+        API key for the LLM provider. If None, will use environment variable.
+        The expected environment variable depends on the provider in ``llm``:
+
+        * OpenAI: ``OPENAI_API_KEY``
+        * Anthropic: ``ANTHROPIC_API_KEY``
+        * Google: ``GOOGLE_API_KEY``
+
+        See pydantic-ai documentation for provider-specific configuration:
+        https://ai.pydantic.dev/models/
 
     Attributes
     ----------
@@ -73,6 +86,7 @@ class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     .. [1] Garza, A., & Rosillo, R. (2025). TimeCopilot.
            arXiv preprint arXiv:2509.00616.
     .. [2] https://github.com/TimeCopilot/timecopilot
+    .. [3] https://ai.pydantic.dev/models/ (pydantic-ai model specification)
 
     Examples
     --------
@@ -91,8 +105,8 @@ class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
 
     _tags = {
         # packaging info
-        "authors": ["fkiraly"],
-        "maintainers": ["fkiraly"],
+        "authors": ["kushvinth"],
+        "maintainers": ["kushvinth"],
         "python_dependencies": ["timecopilot"],
         # estimator type
         "y_inner_mtype": "pd.DataFrame",
@@ -102,8 +116,6 @@ class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        # CI and test flags
-        "tests:vm": True,
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
@@ -115,20 +127,18 @@ class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         forecasters=None,
         llm="openai:gpt-4o-mini",
         query=None,
-        freq=None,
-        seasonality=None,
         retries=3,
         verbose=False,
         api_key=None,
+        _mock=False,
     ):
         self.forecasters = forecasters
         self.llm = llm
         self.query = query
-        self.freq = freq
-        self.seasonality = seasonality
         self.retries = retries
         self.verbose = verbose
         self.api_key = api_key
+        self._mock = _mock
 
         super().__init__()
 
@@ -170,6 +180,11 @@ class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         -------
         self : reference to self
         """
+        # Handle mock mode for testing without API key
+        if self._mock:
+            self._fit_mock(y, fh)
+            return self
+
         from timecopilot import TimeCopilot
 
         # Set API key if provided
@@ -181,6 +196,8 @@ class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
                 os.environ["OPENAI_API_KEY"] = self.api_key
             elif self.llm.startswith("anthropic:"):
                 os.environ["ANTHROPIC_API_KEY"] = self.api_key
+            elif self.llm.startswith("google"):
+                os.environ["GOOGLE_API_KEY"] = self.api_key
 
         # Convert y to the format expected by TimeCopilot
         # TimeCopilot expects: unique_id, ds, y columns
@@ -200,13 +217,10 @@ class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         )
 
         # Build kwargs for forecast call
+        # freq and seasonality are inferred by TimeCopilot from the data
         forecast_kwargs = {"df": df}
-        if self.freq is not None:
-            forecast_kwargs["freq"] = self.freq
         if h is not None:
             forecast_kwargs["h"] = h
-        if self.seasonality is not None:
-            forecast_kwargs["seasonality"] = self.seasonality
         if self.query is not None:
             forecast_kwargs["query"] = self.query
 
@@ -225,6 +239,61 @@ class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         self._fcst_df = self.result_.fcst_df
 
         return self
+
+    def _fit_mock(self, y, fh):
+        """Fit using mock data for testing without API key.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.DataFrame
+            Target time series to fit.
+        fh : ForecastingHorizon
+            The forecasting horizon.
+        """
+        import numpy as np
+
+        # Create mock result object
+        mock_result = MagicMock()
+
+        # Generate mock forecast
+        if fh is not None:
+            fh_relative = fh.to_relative(self.cutoff)
+            h = max(fh_relative._values)
+        else:
+            h = 3
+
+        # Use last value as naive forecast for mock
+        if isinstance(y, pd.DataFrame):
+            last_val = y.iloc[-1, 0]
+        else:
+            last_val = y.iloc[-1]
+
+        # Create mock forecast DataFrame
+        mock_fcst = pd.DataFrame(
+            {
+                "unique_id": ["series_0"] * h,
+                "ds": pd.date_range(start=self.cutoff, periods=h + 1, freq="D")[1:],
+                "mock_model": [last_val + np.random.randn() * 0.1 for _ in range(h)],
+            }
+        )
+
+        mock_result.fcst_df = mock_fcst
+        mock_result.output = MagicMock()
+        mock_result.output.user_query_response = "Mock response for testing."
+        mock_result.output.forecast_analysis = "Mock analysis for testing."
+        mock_result.output.reason_for_selection = "Mock selection reason."
+        mock_result.output.selected_model = "mock_model"
+
+        self.result_ = mock_result
+        self._fcst_df = mock_fcst
+
+        # Store fitted forecasters if any were passed
+        if self.forecasters is not None:
+            self.forecasters_ = self._get_estimator_tuples(
+                self.forecasters, clone_ests=True
+            )
+        else:
+            self.forecasters_ = []
 
     def _predict(self, fh, X=None):
         """Return forecasted values.
@@ -466,21 +535,22 @@ class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
         params : dict or list of dict
             Parameters to create testing instances of the class.
         """
-        # For testing, we use minimal configuration
-        # Note: actual testing requires API key or mock LLM
+        # Use _mock=True for testing without API key
         params1 = {
             "llm": "openai:gpt-4o-mini",
             "retries": 1,
+            "_mock": True,
         }
 
         # Test with forecasters list
         from sktime.forecasting.naive import NaiveForecaster
 
         params2 = {
-            "llm": "openai:gpt-4o-mini", ## Could be changed from the decorator
+            "llm": "openai:gpt-4o-mini",
             "forecasters": [NaiveForecaster()],
             "query": "What is the trend?",
             "retries": 1,
+            "_mock": True,
         }
 
         return [params1, params2]
