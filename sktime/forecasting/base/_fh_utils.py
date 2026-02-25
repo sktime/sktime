@@ -240,7 +240,42 @@ class PandasFHConverter:
     # FHValues (internal representation) -> pandas conversion
     @staticmethod
     def to_pandas_index(fhv: "FHValues") -> pd.Index:
-        pass
+        """Convert internal FHValues to pandas Index.
+
+        Parameters
+        ----------
+        fhv : FHValues
+            Internal representation.
+
+        Returns
+        -------
+        pd.Index
+            Pandas Index matching the semantic type.
+        """
+        vtype = fhv.value_type
+        vals = fhv.values  # read-only view, int64
+
+        if vtype == FHValueType.INT:
+            return pd.Index(vals.copy(), dtype=int)
+
+        if vtype == FHValueType.PERIOD:
+            # PeriodIndex from ordinals requires a writable copy
+            return pd.PeriodIndex.from_ordinals(vals.copy(), freq=fhv.freq)
+
+        if vtype == FHValueType.DATETIME:
+            dt_arr = vals.copy().view("datetime64[ns]")
+            idx = pd.DatetimeIndex(dt_arr)
+            if fhv.timezone is not None:
+                idx = idx.tz_localize("UTC").tz_convert(fhv.timezone)
+            return idx
+
+        if vtype == FHValueType.TIMEDELTA:
+            td_arr = vals.copy().view("timedelta64[ns]")
+            return pd.TimedeltaIndex(td_arr)
+
+        # control should never reach here due to FHValueType validation in FHValues
+        # if it does, it indicates a bug in FHValues or a missing case in this function
+        raise ValueError(f"Unknown FHValueType: {vtype}")
 
     # cutoff conversion
     @staticmethod
