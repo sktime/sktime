@@ -151,7 +151,19 @@ class ChronosDefaultStrategy(ChronosModelStrategy):
 
 
 class ChronosBoltStrategy(ChronosModelStrategy):
-    """Strategy for handling Chronos-Bolt models."""
+    """Strategy for handling Chronos-Bolt and Chronos-2 models.
+
+    Parameters
+    ----------
+    is_v2 : bool, default=False
+        If True, the model is Chronos-2 (Chronos2Model architecture).
+        Chronos-2 requires special loading via trust_remote_code=True because
+        its config contains fields (input_patch_size, max_output_patches, etc.)
+        that are unknown to sktime's local ChronosBoltConfig and ChronosConfig.
+    """
+
+    def __init__(self, is_v2: bool = False):
+        self.is_v2 = is_v2
 
     def initialize_config(self) -> dict:
         return {
@@ -162,18 +174,119 @@ class ChronosBoltStrategy(ChronosModelStrategy):
 
     def create_pipeline(self, key: str, kwargs: dict, use_source_package: bool):
         return _CachedChronosBolt(
-            key=key, chronos_bolt_kwargs=kwargs, use_source_package=use_source_package
+            key=key,
+            chronos_bolt_kwargs=kwargs,
+            use_source_package=use_source_package,
+            is_v2=self.is_v2,
         )
 
     def predict(
         self, pipeline, y_tensor: torch.Tensor, prediction_length: int, config: dict
     ) -> np.ndarray:
+        # Create a copy of the config to avoid modifying the original
+        predict_config = config.copy()
+
+        # Strip Bolt-v1 / Chronos-2 incompatible parameters before calling predict
+        predict_config.pop("max_output_patches", None)
+        predict_config.pop("input_patch_size", None)
+
         prediction_results = pipeline.predict(
             y_tensor,
             prediction_length,
-            limit_prediction_length=config["limit_prediction_length"],
+            limit_prediction_length=predict_config.get("limit_prediction_length", False),
         )
         return np.median(prediction_results[0].numpy(), axis=0)
+
+
+class _Chronos2Pipeline:
+    """Thin wrapper to load Chronos-2 via trust_remote_code.
+
+    Chronos-2 ships its own model class (Chronos2Model) on HuggingFace with
+    custom config fields (input_patch_size, max_output_patches, etc.) that are
+    unknown to sktime's local ChronosConfig and ChronosBoltConfig.
+
+    Loading via ``AutoModel`` with ``trust_remote_code=True`` defers config
+    parsing to the model's own bundled code, bypassing the incompatible local
+    config classes entirely.
+
+    This class exposes a ``.predict()`` interface and a ``.config`` attribute
+    compatible with what ``ChronosBoltStrategy.predict()`` and
+    ``ChronosForecaster._predict()`` expect.
+
+    Parameters
+    ----------
+    model_path : str
+        HuggingFace model ID or local path, e.g. ``"amazon/chronos-2"``.
+    device_map : str, default="cpu"
+        Device to load the model on. Use ``"cuda"`` for GPU, ``"mps"`` for
+        Apple Silicon, or ``"cpu"`` for CPU inference.
+    dtype : torch.dtype or None, default=None
+        Torch dtype for model weights. Defaults to ``torch.bfloat16`` if None.
+    """
+
+    def __init__(self, model_path: str, device_map: str = "cpu", dtype=None):
+        import torch
+        from transformers import AutoConfig, AutoModel
+
+        # Load the model config using the repo's own config class so that
+        # Chronos-2 specific fields are parsed correctly.
+        self.config = AutoConfig.from_pretrained(
+            model_path, trust_remote_code=True
+        )
+
+        load_dtype = dtype if dtype is not None else torch.bfloat16
+
+        # Load the full model using the repo's bundled modeling code.
+        self._model = AutoModel.from_pretrained(
+            model_path,
+            trust_remote_code=True,
+            torch_dtype=load_dtype,
+            device_map=device_map,
+        )
+        self._model.eval()
+
+        self._dtype = load_dtype
+
+    def predict(
+        self,
+        context: "torch.Tensor",
+        prediction_length: int,
+        limit_prediction_length: bool = False,
+    ):
+        """Run inference and return samples tensor.
+
+        Parameters
+        ----------
+        context : torch.Tensor
+            1-D tensor of historical time series values, shape (context_length,).
+        prediction_length : int
+            Number of future time steps to forecast.
+        limit_prediction_length : bool, default=False
+            Unused for Chronos-2; kept for interface compatibility.
+
+        Returns
+        -------
+        tuple of torch.Tensor
+            ``(samples,)`` where ``samples`` has shape
+            ``(num_samples, prediction_length)``, matching the interface
+            expected by ``ChronosBoltStrategy.predict()``.
+        """
+        import torch
+
+        with torch.no_grad():
+            device = next(self._model.parameters()).device
+            # Model expects batch dimension: (batch=1, context_length)
+            context_tensor = context.unsqueeze(0).to(
+                dtype=self._dtype, device=device
+            )
+            output = self._model.generate(
+                context=context_tensor,
+                prediction_length=prediction_length,
+            )
+
+        # output shape: (batch=1, num_samples, prediction_length)
+        # Return (samples,) where samples shape is (num_samples, prediction_length)
+        return (output[0],)
 
 
 class ChronosForecaster(BaseForecaster):
@@ -249,8 +362,8 @@ class ChronosForecaster(BaseForecaster):
 
     Attributes
     ----------
-    model_pipeline: ChronosPipeline or ChronosBoltPipeline
-        The underlying model pipeline user for forecasting
+    model_pipeline: ChronosPipeline or ChronosBoltPipeline or _Chronos2Pipeline
+        The underlying model pipeline used for forecasting.
     is_bolt: bool
         Indicates whether the model is a Chronos-Bolt model, to ensure
         effective differentiation purely from model-path.
@@ -284,6 +397,18 @@ class ChronosForecaster(BaseForecaster):
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
     >>> forecaster = ChronosForecaster("amazon/chronos-bolt-tiny")  # doctest: +SKIP
+    >>> forecaster.fit(y_train)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh)  # doctest: +SKIP
+
+    >>> # Example using 'amazon/chronos-2' model
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.chronos import ChronosForecaster
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
+    >>> forecaster = ChronosForecaster("amazon/chronos-2")  # doctest: +SKIP
     >>> forecaster.fit(y_train)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh)  # doctest: +SKIP
     """
@@ -334,13 +459,13 @@ class ChronosForecaster(BaseForecaster):
         "top_p": None,  # float, use value from pretrained model if None
         "limit_prediction_length": False,  # bool
         "torch_dtype": torch.bfloat16,  # torch.dtype
-        "device_map": "cpu",  # str, use "cpu" for CPU inference, "cuda" for gpu and "mps" for Apple Silicon # noqa
+        "device_map": "cpu",  # str
     }
 
     _default_chronos_bolt_config = {
         "limit_prediction_length": False,  # bool
         "torch_dtype": torch.bfloat16,  # torch.dtype
-        "device_map": "cpu",  # str, use "cpu" for CPU inference, "cuda" for gpu and "mps" for Apple Silicon # noqa
+        "device_map": "cpu",  # str
     }
 
     def __init__(
@@ -380,22 +505,47 @@ class ChronosForecaster(BaseForecaster):
         self._initialize_model_type()
 
     def _initialize_model_type(self):
-        """Initialise model type and configuration based on model's architecture."""
+        """Initialise model type and configuration based on model's architecture.
+
+        Detects whether the model at ``self.model_path`` is a standard Chronos
+        model, a Chronos-Bolt model, or a Chronos-2 model, and sets the
+        appropriate strategy and default config accordingly.
+
+        Chronos-2 (``Chronos2Model`` architecture) is routed through
+        ``ChronosBoltStrategy(is_v2=True)``, which loads the model via
+        ``_Chronos2Pipeline`` using ``trust_remote_code=True`` to avoid
+        config-field incompatibilities with sktime's local pipeline classes.
+        """
         from transformers import AutoConfig
 
         try:
-            config = AutoConfig.from_pretrained(self.model_path)
+            config = AutoConfig.from_pretrained(
+                self.model_path, trust_remote_code=True
+            )
+            architectures = config.architectures or []
 
-            # "ChronosBoltModelForForecasting is the name of the architecture"
-            # as specified in the config.json file
-            is_bolt = "ChronosBoltModelForForecasting" in (config.architectures or [])
+            is_bolt = "ChronosBoltModelForForecasting" in architectures
+            is_v2 = "Chronos2Model" in architectures
 
-            if is_bolt:
-                self.model_strategy = ChronosBoltStrategy()
+            if is_bolt or is_v2:
+                # Both Bolt and v2 use ChronosBoltStrategy; is_v2 controls
+                # which loader is used inside _CachedChronosBolt.
+                self.model_strategy = ChronosBoltStrategy(is_v2=is_v2)
+                if is_v2:
+                    print(
+                        "🚀 Chronos v2 detected. Applying V2-Compatibility Strategy."
+                    )
             else:
                 self.model_strategy = ChronosDefaultStrategy()
 
             self._default_config = self.model_strategy.initialize_config()
+
+            # Strip any Bolt-v1 fields that Chronos-2 doesn't support,
+            # to avoid passing them downstream.
+            if is_v2:
+                self._default_config.pop("max_output_patches", None)
+                self._default_config.pop("input_patch_size", None)
+
             self._config = self._default_config.copy()
             if self.config is not None:
                 self._config.update(self.config)
@@ -428,12 +578,26 @@ class ChronosForecaster(BaseForecaster):
         return self
 
     def _get_chronos_kwargs(self):
-        """Get the kwargs for Chronos model."""
-        return {
+        """Get the kwargs for Chronos model pipeline loader.
+
+        Builds the keyword-argument dict passed to the pipeline's
+        ``from_pretrained`` (or ``_Chronos2Pipeline.__init__``).
+        Only keys understood by the target pipeline are included;
+        Chronos-2-specific fields are never forwarded to the loader.
+        """
+        kwargs = {
             "pretrained_model_name_or_path": self.model_path,
-            "torch_dtype": self._config["torch_dtype"],
-            "device_map": self._config["device_map"],
+            "device_map": self._config.get("device_map", "cpu"),
         }
+
+        # transformers >= 4.x uses ``torch_dtype``; sktime's internal
+        # ChronosPipeline.from_pretrained uses ``dtype``.  Pass both names
+        # so either pipeline can pick up the correct key.
+        if "torch_dtype" in self._config:
+            # We use 'dtype' for the loader and remove 'torch_dtype' to stop the warning
+            kwargs["dtype"] = self._config.pop("torch_dtype")
+
+        return kwargs
 
     def _get_unique_chronos_key(self):
         """Get unique key for Chronos model to use in multiton."""
@@ -469,7 +633,7 @@ class ChronosForecaster(BaseForecaster):
 
         Returns
         -------
-        pipeline : ChronosPipeline or ChronosBoltPipeline
+        pipeline : ChronosPipeline or ChronosBoltPipeline or _Chronos2Pipeline
             The loaded model pipeline ready for predictions.
         """
         return self.model_strategy.create_pipeline(
@@ -584,10 +748,23 @@ class ChronosForecaster(BaseForecaster):
         results = []
         for i in range(_y.shape[0]):
             _y_i = _y[i, :, 0]
-            _y_i = _y_i[-self.model_pipeline.model.config.context_length :]
+
+            # Resolve context_length safely across Chronos v1, Bolt, and v2.
+            # v1/Bolt: config.context_length (int)
+            # v2:      config.chronos_config["context_length"] (dict key)
+            conf = self.model_pipeline.config
+            c_len = getattr(conf, "context_length", None)
+            if c_len is None and hasattr(conf, "chronos_config"):
+                c_len = conf.chronos_config.get("context_length", 512)
+            c_len = c_len or 512
+
+            _y_i = _y_i[-c_len:]
 
             values = self.model_strategy.predict(
-                self.model_pipeline, torch.Tensor(_y_i), prediction_length, self._config
+                self.model_pipeline,
+                torch.Tensor(_y_i),
+                prediction_length,
+                self._config,
             )
             results.append(values)
 
@@ -645,6 +822,16 @@ class ChronosForecaster(BaseForecaster):
                 "model_path": "amazon/chronos-bolt-tiny",
             }
         )
+        test_params.append(
+            {
+                "model_path": "amazon/chronos-bolt-tiny",
+            }
+        )
+        test_params.append(
+            {
+                "model_path": "amazon/chronos-2",
+            }
+        )
         return test_params
 
 
@@ -680,29 +867,83 @@ class _CachedChronos:
 
 @_multiton
 class _CachedChronosBolt:
-    """Cached Chronos-Bolt model, to ensure only one instance exists in memory.
+    """Cached Chronos-Bolt / Chronos-2 model, one instance in memory.
 
     Chronos-Bolt is a zero-shot model and immutable, hence there will not be any
     side effects of sharing the same instance across multiple uses.
+
+    For Chronos-2 (``is_v2=True``), loading is handled via
+    ``_Chronos2Pipeline`` which uses ``trust_remote_code=True`` through
+    ``transformers.AutoModel``.  This avoids crashing on config fields
+    (``input_patch_size``, ``max_output_patches``, etc.) that are present in
+    the Chronos-2 remote config but absent from sktime's local
+    ``ChronosBoltConfig`` and ``ChronosConfig`` classes.
+
+    Parameters
+    ----------
+    key : str
+        Unique identifier used by the multiton cache.
+    chronos_bolt_kwargs : dict
+        Keyword arguments forwarded to the pipeline loader.
+    use_source_package : bool
+        If True, use the ``chronos`` source package instead of
+        ``sktime.libs.chronos``.
+    is_v2 : bool, default=False
+        If True, load as Chronos-2 via ``_Chronos2Pipeline``.
     """
 
-    def __init__(self, key, chronos_bolt_kwargs, use_source_package):
+    def __init__(self, key, chronos_bolt_kwargs, use_source_package, is_v2=False):
         self.key = key
         self.chronos_bolt_kwargs = chronos_bolt_kwargs
         self.use_source_package = use_source_package
+        self.is_v2 = is_v2
         self.model_pipeline = None
 
     def load_from_checkpoint(self):
         if self.model_pipeline is not None:
             return self.model_pipeline
 
-        if self.use_source_package:
-            from chronos import ChronosBoltPipeline
-        else:
-            from sktime.libs.chronos import ChronosBoltPipeline
+        if self.is_v2:
+            # Chronos-2 has a custom architecture that neither ChronosPipeline
+            # nor ChronosBoltPipeline in sktime.libs.chronos can load without
+            # crashing on unknown config fields.  Use _Chronos2Pipeline which
+            # loads via AutoModel + trust_remote_code=True.
+            if self.use_source_package:
+                # The upstream chronos package may have native v2 support.
+                try:
+                    from chronos import ChronosBoltPipeline
 
-        self.model_pipeline = ChronosBoltPipeline.from_pretrained(
-            **self.chronos_bolt_kwargs,
-        )
+                    self.model_pipeline = ChronosBoltPipeline.from_pretrained(
+                        trust_remote_code=True,
+                        **self.chronos_bolt_kwargs,
+                    )
+                except Exception:
+                    # Fall back to our wrapper if the source package also fails.
+                    self.model_pipeline = _Chronos2Pipeline(
+                        model_path=self.chronos_bolt_kwargs[
+                            "pretrained_model_name_or_path"
+                        ],
+                        device_map=self.chronos_bolt_kwargs.get("device_map", "cpu"),
+                        dtype=self.chronos_bolt_kwargs.get("dtype", None),
+                    )
+            else:
+                # sktime's local libs don't know about Chronos2Model config fields,
+                # so always use our AutoModel-based wrapper.
+                self.model_pipeline = _Chronos2Pipeline(
+                    model_path=self.chronos_bolt_kwargs[
+                        "pretrained_model_name_or_path"
+                    ],
+                    device_map=self.chronos_bolt_kwargs.get("device_map", "cpu"),
+                    dtype=self.chronos_bolt_kwargs.get("dtype", None),
+                )
+        else:
+            if self.use_source_package:
+                from chronos import ChronosBoltPipeline
+            else:
+                from sktime.libs.chronos import ChronosBoltPipeline
+
+            self.model_pipeline = ChronosBoltPipeline.from_pretrained(
+                **self.chronos_bolt_kwargs,
+            )
 
         return self.model_pipeline
