@@ -55,7 +55,7 @@ class Lag(BaseTransformer):
     freq : frequency descriptor or list of same, optional (default=None)
         If passed, must be scalar, or list of equal length to ``lags`` parameter.
         Elements in ``freq`` correspond to elements in lags.
-        If i-th element of ``freq`` is not None, i-th element of ``lags`` must be int
+        If i-th element of ``freq`` is not None, i-th element of ``lags`` must be int,
         this is called the "corresponding lags element" below
         "frequency descriptor" can be one of the following:
         - time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
@@ -383,7 +383,7 @@ class ReducerTransform(BaseTransformer):
     freq : frequency descriptor or list of same, optional (default=None)
         If passed, must be scalar, or list of equal length to ``lags`` parameter.
         Elements in ``freq`` correspond to elements in lags.
-        If i-th element of ``freq`` is not None, i-th element of ``lags`` must be int
+        If i-th element of ``freq`` is not None, i-th element of ``lags`` must be int,
         this is called the "corresponding lags element" below
         "frequency descriptor" can be one of the following:
         - time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
