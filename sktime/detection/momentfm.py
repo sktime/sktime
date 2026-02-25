@@ -1,5 +1,7 @@
 """Interface for the momentfm anomaly detector."""
 
+import numpy as np
+import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.detection.base import BaseDetector
@@ -159,12 +161,98 @@ class MomentFMDetector(BaseDetector):
         return self
 
     def _predict(self, X):
-        raise NotImplementedError
+        """Detect anomalies by thresholding per-timestep reconstruction error.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Time series to detect anomalies in.
+
+        Returns
+        -------
+        y : pd.Series of int in {0, 1}
+            1 at positions classified as anomalies, 0 elsewhere.
+            Index matches the index of X.
+        """
+        import torch
+
+        X_vals = X.values.astype(np.float32)
+        n_timepoints = len(X)
+
+        dataset = MomentFMDetectorPytorchDataset(X_vals, seq_len=self.seq_len)
+        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=False)
+
+        # accumulate scores per timestep - use mean over overlapping windows
+        score_sum = np.zeros(n_timepoints, dtype=np.float64)
+        count = np.zeros(n_timepoints, dtype=np.int32)
+
+        self.model.eval()
+        self.model.to(self._device)
+
+        with torch.no_grad():
+            for batch in loader:
+                x_enc = batch["x_enc"].to(self._device)
+                input_mask = batch["input_mask"].to(self._device)
+                start_indices = batch["start_idx"].numpy()
+
+                outputs = self.model.detect_anomalies(
+                    x_enc=x_enc,
+                    input_mask=input_mask,
+                    anomaly_criterion=self.anomaly_criterion,
+                )
+                # anomaly_scores: (batch, n_channels, seq_len)
+                # average over channels to get one score per timestep
+                scores = outputs.anomaly_scores.cpu().numpy()
+                scores = scores.mean(axis=1)  # (batch, seq_len)
+
+                for i, start in enumerate(start_indices):
+                    actual_len = int(input_mask[i].sum().item())
+                    end = start + actual_len
+                    score_sum[start:end] += scores[i, :actual_len]
+                    count[start:end] += 1
+
+        count = np.where(count == 0, 1, count)
+        anomaly_scores = score_sum / count
+
+        threshold = np.percentile(anomaly_scores, self.threshold_percentile)
+        labels = (anomaly_scores >= threshold).astype(int)
+
+        if self.to_cpu_after_predict:
+            self.model.to("cpu")
+            empty_cache()
+
+        return pd.Series(labels, index=X.index, dtype="int64", name="labels")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator."""
-        raise NotImplementedError
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance. ``create_test_instance`` uses the first (or only) dict.
+        """
+        params1 = {
+            "to_cpu_after_predict": True,
+            "threshold_percentile": 90,
+            "batch_size": 8,
+        }
+        params2 = {
+            "anomaly_criterion": "mae",
+            "to_cpu_after_predict": True,
+            "threshold_percentile": 95,
+            "batch_size": 16,
+        }
+        return [params1, params2]
 
 
 class MomentFMDetectorPytorchDataset(Dataset):
