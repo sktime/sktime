@@ -384,6 +384,33 @@ class requires_cython(_BaseTag):
     }
 
 
+class r_dependencies(_BaseTag):
+    """R package dependency requirement specifiers for the object (PEP 440).
+
+    - String name: ``"r_dependencies"``
+    - Private tag, developer and framework facing
+    - Values: None, or list of str, each str an R package name
+    - Example: ``["Rcpp"]``
+    - Example 2: ``["Rcpp", "dplyr"]``
+    - Default: no R requirements (``None``)
+
+    Experimental tag for objects that interface to R packages via ``rpy2``.
+
+    Should be set only for objects that interface R packages.
+
+    Currently no inequalities or version specifiers are supported,
+    only package names as strings.
+    """
+
+    _tags = {
+        "tag_name": "r_dependencies",
+        "parent_type": "object",
+        "tag_type": ("list", "str"),
+        "short_descr": "R dependencies of estimator as list of str",  # noqa: E501
+        "user_facing": False,
+    }
+
+
 class tests__core(_BaseTag):
     """Whether tests for this estimator are triggered by framework changes.
 
