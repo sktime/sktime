@@ -110,7 +110,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         self._forecaster_index = forecaster_ind
 
         if not allow_postproc and forecaster_ind != len(estimators) - 1:
-            TypeError(
+            raise TypeError(
                 f"in {self_name}, last estimator must be a forecaster, "
                 f"but found a transformer"
             )

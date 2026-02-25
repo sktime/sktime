@@ -335,6 +335,12 @@ def check_alpha(alpha, name="alpha"):
     elif isinstance(alpha, float):
         alpha = [alpha]  # make iterable
 
+    else:
+        raise TypeError(
+            f"`{name}` must be a float or list of floats, "
+            f"but found: {type(alpha).__name__}"
+        )
+
     # check range
     for a in alpha:
         if not 0 < a < 1:

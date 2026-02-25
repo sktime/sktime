@@ -373,7 +373,11 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         self : Reference to self.
         """
         # check y is not None
-        assert y is not None, "y cannot be None, but found None"
+        if y is None:
+            raise ValueError(
+                "y cannot be None. Pass a time series as pd.Series, pd.DataFrame, "
+                "or np.ndarray. See examples/01_forecasting.ipynb for usage."
+            )
 
         # if fit is called, estimator is reset, including fitted state
         self.reset()
@@ -2467,7 +2471,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         # handle inputs
         self.check_is_fitted()
@@ -2612,7 +2616,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         self.check_is_fitted()
         if y is None:
@@ -2744,7 +2748,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         self.check_is_fitted()
         if y is None:
@@ -2872,7 +2876,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
         self.check_is_fitted()
         if y is None:
             self._global_forecasting = False
@@ -2981,7 +2985,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         self.check_is_fitted()
         if y is None:
