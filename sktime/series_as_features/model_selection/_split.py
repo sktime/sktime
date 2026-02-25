@@ -8,8 +8,10 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
+from sktime.split.base import BaseSplitter
 
-class PresplitFilesCV:
+
+class PresplitFilesCV(BaseSplitter):
     """Cross-validation iterator over split predefined in files.
 
     This class is useful in orchestration where the train and test set is provided in
@@ -63,7 +65,7 @@ class PresplitFilesCV:
             for train, test in self.cv.split(idx, y=y):
                 yield train, test
 
-    def get_n_splits(self):
+    def get_n_splits(self, data=None):
         """Return the number of splits.
 
         Returns
@@ -74,7 +76,7 @@ class PresplitFilesCV:
         return n_splits
 
 
-class SingleSplit:
+class SingleSplit(BaseSplitter):
     """Helper class for orchestration that uses a single split for training and testing.
 
     Wrapper for sklearn.model_selection.train_test_split
@@ -152,6 +154,6 @@ class SingleSplit:
         )
 
     @staticmethod
-    def get_n_splits():
+    def get_n_splits(data=None):
         """Return the number of splits (1)."""
         return 1
