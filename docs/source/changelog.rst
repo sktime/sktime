@@ -71,6 +71,7 @@ Data sets and data loaders
 
 * [ENH] only run ``test_load_fpp3_public`` when ``rdata`` is installed (:pr:`8891`) :user:`noxthot`
 * [ENH] More Dataset Classes for Existing Loaders (:pr:`8894`) :user:`jgyasu`
+* [ENH] Optionally download entire HuggingFace dataset repos in one snapshot to cut benchmark API calls (:issue:`9124`) :user:`jgyasu`
 
 Forecasting
 ^^^^^^^^^^^
