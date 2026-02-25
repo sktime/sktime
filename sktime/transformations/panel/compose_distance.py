@@ -3,6 +3,7 @@
 __author__ = ["fkiraly"]
 __all__ = ["DistanceFeatures"]
 
+import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
@@ -132,25 +133,95 @@ class DistanceFeatures(BaseTransformer):
 
         X_train = self._X
 
+        X_requires_mapping = X.index.nlevels > 2
+        X_train_requires_mapping = X_train.index.nlevels > 2
+
+        if X_requires_mapping:
+            # Convert hierachical index to panel index as distance expects panel data
+            output_idx_names = X.index.names[:-1]
+            new_index, X_mapping = self._map_hier_idx_to_panel_idx(X.index)
+            X = X.set_index(new_index)
+
+        if X_train_requires_mapping:
+            # Convert hierachical index to panel index as distance expects panel data
+            output_col_names = X_train.index.names[:-1]
+            new_index, X_train_mapping = self._map_hier_idx_to_panel_idx(X_train.index)
+            X_train = X_train.set_index(new_index)
+
         X_train_ind = X_train.index.droplevel(-1).unique()
         X_ind = X.index.droplevel(-1).unique()
 
-        def _coerce_to_panel(x):
-            """Coerce hierarchical or pandel x to panel."""
-            nlevels = x.index.nlevels
-            if nlevels > 2:
-                return x.droplevel(list(range(nlevels - 2)))
-            else:
-                return x
-
-        X = _coerce_to_panel(X)
-        X_train = _coerce_to_panel(X_train)
-
         distmat = distance(X, X_train)
-
-        if self.flatten_hierarchy:
-            X_ind = flatten_multiindex(X_ind)
 
         Xt = pd.DataFrame(distmat, columns=X_train_ind, index=X_ind)
 
+        if X_requires_mapping:
+            # Convert the dummy index back to the expected hierachical index
+            new_index = self._map_primitive_panel_idx_to_hier_idx(
+                Xt.index, X_mapping, output_idx_names
+            )
+            if self.flatten_hierarchy and new_index.nlevels > 1:
+                flatten_multiindex(new_index)
+            Xt = Xt.set_index(new_index)
+
+        if X_train_requires_mapping:
+            # Convert the dummy columns back to the expected hierachical columns
+            new_index = self._map_primitive_panel_idx_to_hier_idx(
+                Xt.columns, X_train_mapping, output_col_names
+            )
+            if self.flatten_hierarchy and new_index.nlevels > 1:
+                flatten_multiindex(new_index)
+            Xt.columns = new_index
+
         return Xt
+
+    def _map_hier_idx_to_panel_idx(self, idx):
+        """Map hierarchical index to panel format."""
+        unique_series = idx.droplevel(-1).unique()
+        new_index = np.arange(len(unique_series))
+        # Create a mapping
+        mapping = dict(zip(unique_series, new_index))
+        # Replace levels 0 up to -2 with new index
+        new_index = pd.MultiIndex.from_tuples(
+            [(mapping[x[:-1]], x[-1]) for x in idx.to_list()],
+            names=["temp_index", idx.names[-1]],
+        )
+
+        return new_index, mapping
+
+    def _map_primitive_panel_idx_to_hier_idx(self, idx, idx_mapping, idx_names):
+        """Convert primitive index to hierarchical index."""
+        idx_mapping_inv = {v: k for k, v in idx_mapping.items()}
+
+        new_index = pd.MultiIndex.from_tuples(
+            [idx_mapping_inv[x] for x in idx.to_list()],
+            names=idx_names,
+        )
+
+        return new_index
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        from sktime.dists_kernels.edit_dist import EditDist
+
+        param1 = {}
+        param2 = {"distance": "cityblock", "flatten_hierarchy": True}
+        param3 = {"distance": EditDist.create_test_instance()}
+        return [param1, param2, param3]
