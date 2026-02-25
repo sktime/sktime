@@ -293,6 +293,38 @@ class PandasFHConverter:
     # coerce function, a pandas-aware wrapper around FHValues
     # coercion that can handle pandas types as input
 
+    @staticmethod
+    def normalize_freq(freq_str: str | None) -> str | None:
+        """Normalize frequency string.
+
+        Handles pandas frequency alias changes (e.g. "ME" -> "M").
+
+        Parameters
+        ----------
+        freq_str : str or None
+            Raw frequency string.
+
+        Returns
+        -------
+        str or None
+            Normalized frequency string.
+        """
+        if freq_str is None:
+            return None
+        # <check>
+        # 1. check for unsupported frequencies and raise informative errors
+        # 2. check for completeness of the alias map and add any missing aliases
+        # </check>
+        alias_map = {
+            "ME": "M",
+            "QE": "Q",
+            "YE": "Y",
+            "BQE": "BQ",
+            "BYE": "BY",
+            "SME": "SM",
+        }
+        return alias_map.get(freq_str, freq_str)
+
     # below function is directly moved from ForecastingHorizonV2.get_expected_pred_idx()
     # to avoid pandas imports in ForecastingHorizonV2
     # it may contain some parts/checks which might require adjustments after the move
