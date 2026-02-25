@@ -494,6 +494,22 @@ def test_multioutput_direct_equivalence_tabular_linear_regression(fh):
         y_pred_direct.to_numpy(), y_pred_multioutput.to_numpy(), decimal=2
     )
 
+def test_multioutput_direct_same_index_and_shape():
+    """Ensure multioutput and direct reduction return identical index and shape."""
+    y, X = make_forecasting_problem(make_X=True)
+    fh = [1, 2, 3]
+
+    y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
+
+    estimator = LinearRegression()
+    direct = make_reduction(estimator, strategy="direct")
+    multioutput = make_reduction(estimator, strategy="multioutput")
+
+    y_pred_direct = direct.fit(y_train, X_train, fh=fh).predict(fh, X_test)
+    y_pred_multi = multioutput.fit(y_train, X_train, fh=fh).predict(fh, X_test)
+
+    assert y_pred_direct.shape == y_pred_multi.shape
+    assert y_pred_direct.index.equals(y_pred_multi.index)
 
 # this expected value created by Lovkush Agarwal by running code locally in Mar 2021
 EXPECTED_AIRLINE_LINEAR_RECURSIVE = [
