@@ -145,6 +145,10 @@ class PandasFHConverter:
         if len(values) == 0:
             raise ValueError("Forecasting horizon values must not be empty.")
 
+        # <check>
+        # check for freq mismatch
+        # </check>
+
         # timedelta64 and datetime64 checked before integer as a defensive measure
         # as some numpy versions might consider datetime64 as a subtype of integer,
         # which might cause incorrect classification.
@@ -167,6 +171,94 @@ class PandasFHConverter:
             f"np.ndarray with dtype {values.dtype} is not supported. "
             f"Expected integer, timedelta64, or datetime64 dtype."
         )
+
+    @staticmethod
+    def _list_to_internal(values: list, freq=None) -> FHValues:
+        """Convert list of supported scalar types to FHValues."""
+        from datetime import timedelta as _timedelta
+
+        if len(values) == 0:
+            raise ValueError("Forecasting horizon values must not be empty.")
+
+        # <check>
+        # check for freq mismatch
+        # </check>
+
+        # timedelta-like checked before int
+        # see comment in _ndarray_to_internal for rationale
+
+        # pd.Timedelta, np.timedelta64, and stdlib datetime.timedelta are combined
+        # into a single if-case because they all represent the same concept and
+        # pd.TimedeltaIndex accepts all three, so mixed lists like
+        # [pd.Timedelta("1D"), timedelta(days=2)] work naturally.
+        _timedelta_types = (pd.Timedelta, np.timedelta64, _timedelta)
+        if isinstance(values[0], _timedelta_types):
+            PandasFHConverter._check_list_homogeneity(values, _timedelta_types)
+            idx = pd.TimedeltaIndex(values)
+            arr = idx.asi8.copy()
+            return FHValues(arr, FHValueType.TIMEDELTA, freq=freq)
+
+        # integer values — convert directly to int64 array
+        if isinstance(values[0], (int, np.integer)):
+            PandasFHConverter._check_list_homogeneity(values, (int, np.integer))
+            arr = np.array(values, dtype=np.int64)
+            return FHValues(arr, FHValueType.INT, freq=freq)
+
+        # period values — extract ordinals via PeriodIndex
+        if isinstance(values[0], pd.Period):
+            PandasFHConverter._check_list_homogeneity(values, pd.Period)
+            idx = pd.PeriodIndex(values)
+            arr = idx.asi8.copy()
+            freq_str = freq or PandasFHConverter._freqstr(idx)
+            return FHValues(arr, FHValueType.PERIOD, freq=freq_str)
+
+        # timestamp values — extract nanoseconds via DatetimeIndex
+        if isinstance(values[0], pd.Timestamp):
+            PandasFHConverter._check_list_homogeneity(values, pd.Timestamp)
+            idx = pd.DatetimeIndex(values)
+            arr = idx.asi8.copy()
+            freq_str = freq or PandasFHConverter._freqstr(idx)
+            tz = str(idx.tz) if idx.tz is not None else None
+            return FHValues(arr, FHValueType.DATETIME, freq=freq_str, timezone=tz)
+
+        # offset objects — convert to Timedelta first, then to nanoseconds
+        if isinstance(values[0], pd.offsets.BaseOffset):
+            PandasFHConverter._check_list_homogeneity(values, pd.offsets.BaseOffset)
+            tds = [pd.Timedelta(v) for v in values]
+            idx = pd.TimedeltaIndex(tds)
+            arr = idx.asi8.copy()
+            return FHValues(arr, FHValueType.TIMEDELTA, freq=freq)
+
+        raise TypeError(
+            f"List with element type {type(values[0]).__name__} is not supported."
+        )
+
+    @staticmethod
+    def _check_list_homogeneity(values, expected_types):
+        """Check all list elements match expected types.
+
+        Parameters
+        ----------
+        values : list
+            List of values to check. Must be non-empty.
+        expected_types : type or tuple of types
+            Accepted types for isinstance check.
+
+        Raises
+        ------
+        TypeError
+            If any element does not match expected_types.
+        """
+        # starting from index 1 since the
+        # check for first element's type against expected_types
+        # is done in the caller before this function is called
+        for i, v in enumerate(values[1:], start=1):
+            if not isinstance(v, expected_types):
+                raise TypeError(
+                    f"Element at index 0 is of type {type(values[0]).__name__}, "
+                    f"but element at index {i} is {type(v).__name__}. "
+                    "All list elements must be of the same type."
+                )
 
     # FHValues (internal representation) -> pandas conversion
     @staticmethod
