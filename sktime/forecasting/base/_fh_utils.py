@@ -1,9 +1,9 @@
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Isolated pandas conversion layer for ForecastingHorizonV2.
+"""Isolated pandas conversion layer for ForecastingHorizon.
 
 ALL pandas-specific imports and logic live in this module.
-The core _FHValues and ForecastingHorizonV2 classes should never import pandas directly,
+The core _FHValues and ForecastingHorizon classes should never import pandas directly,
 they go through this converter instead.
 
 This module handles:
@@ -26,7 +26,7 @@ class PandasFHConverter:
     """Static conversion layer between pandas types and FHValues.
 
     This class collects all pandas-coupled logic in one place so that
-    the rest of the ForecastingHorizonV2 code can remain pandas-free.
+    the rest of the ForecastingHorizon code can remain pandas-free.
     """
 
     # input -> FHValues (internal representation) conversion
@@ -380,8 +380,8 @@ class PandasFHConverter:
         }
         return alias_map.get(freq_str, freq_str)
 
-    # below function is directly moved from ForecastingHorizonV2.get_expected_pred_idx()
-    # to avoid pandas imports in ForecastingHorizonV2
+    # below function is directly moved from ForecastingHorizon.get_expected_pred_idx()
+    # to avoid pandas imports in ForecastingHorizon
     # it may contain some parts/checks which might require adjustments after the move
     @staticmethod
     def build_pred_index(fh, y=None, cutoff=None, sort_by_time=False):
@@ -389,11 +389,11 @@ class PandasFHConverter:
 
         This contains all pandas-dependent logic for building prediction
         indices, including MultiIndex/DataFrame handling. Called by
-        ForecastingHorizonV2.get_expected_pred_idx().
+        ForecastingHorizon.get_expected_pred_idx().
 
         Parameters
         ----------
-        fh : ForecastingHorizonV2
+        fh : ForecastingHorizon
             Forecasting horizon instance.
         y : pd.DataFrame, pd.Series, pd.Index, or None (default=None)
             Data to compute fh relative to.

@@ -1,13 +1,13 @@
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-ForecastingHorizonV2: pandas-agnostic forecasting horizon implementation.
+ForecastingHorizon: pandas-agnostic forecasting horizon implementation.
 
 All pandas-specific logic (type conversions, frequency handling, version detection)
 is delegated to the _fh_utils module.
 """
 
-__all__ = ["ForecastingHorizonV2"]
+__all__ = ["ForecastingHorizon"]
 
 import numpy as np
 
@@ -19,7 +19,7 @@ from sktime.forecasting.base._fh_values import FHValues, FHValueType
 # all occurences must be removed/addressed before merging this code
 
 
-class ForecastingHorizonV2:
+class ForecastingHorizon:
     """Forecasting horizon with pandas-decoupled internals.
 
     Parameters
@@ -40,8 +40,8 @@ class ForecastingHorizonV2:
 
     Examples
     --------
-    >>> from sktime.forecasting.base._fh_v2 import ForecastingHorizonV2
-    >>> fh = ForecastingHorizonV2([1, 2, 3])
+    >>> from sktime.forecasting.base._fh_v2 import ForecastingHorizon
+    >>> fh = ForecastingHorizon([1, 2, 3])
     >>> fh.is_relative
     True
     >>> fh.to_numpy()
@@ -108,7 +108,7 @@ class ForecastingHorizonV2:
         # Currently they are not implemented.</check>
 
     def _new(self, fhvalues=None, is_relative=None):
-        """Create a new ForecastingHorizonV2 bypassing __init__ conversion.
+        """Create a new ForecastingHorizon bypassing __init__ conversion.
 
         Parameters
         ----------
@@ -119,10 +119,10 @@ class ForecastingHorizonV2:
 
         Returns
         -------
-        ForecastingHorizonV2
+        ForecastingHorizon
             New instance with replaced attributes.
         """
-        new_obj = object.__new__(ForecastingHorizonV2)
+        new_obj = object.__new__(ForecastingHorizon)
         new_obj._fhvalues = fhvalues if fhvalues is not None else self._fhvalues.copy()
         new_obj._is_relative = (
             is_relative if is_relative is not None else self._is_relative
@@ -192,7 +192,7 @@ class ForecastingHorizonV2:
 
         Returns
         -------
-        ForecastingHorizonV2
+        ForecastingHorizon
             Relative representation of forecasting horizon.
         """
         if self._is_relative:
@@ -240,7 +240,7 @@ class ForecastingHorizonV2:
                     relative_vals = relative_vals // mult
             fhv = FHValues(relative_vals.astype(np.int64), FHValueType.INT, freq=freq)
             return self._new(fhvalues=fhv, is_relative=True)
-            # another place where _new is needed to create a new ForecastingHorizonV2
+            # another place where _new is needed to create a new ForecastingHorizon
             # instance with modified values but same metadata
 
         if vtype == FHValueType.DATETIME:
@@ -279,7 +279,7 @@ class ForecastingHorizonV2:
 
         Returns
         -------
-        ForecastingHorizonV2
+        ForecastingHorizon
             Absolute representation of forecasting horizon.
         """
         if not self._is_relative:
@@ -419,7 +419,7 @@ class ForecastingHorizonV2:
 
         Returns
         -------
-        ForecastingHorizonV2
+        ForecastingHorizon
             Absolute representation as zero-based integer index.
         """
         # get absolute representation
@@ -545,7 +545,7 @@ class ForecastingHorizonV2:
 
         Returns
         -------
-        ForecastingHorizonV2
+        ForecastingHorizon
             In-sample values of forecasting horizon.
         """
         mask = self._is_in_sample(cutoff)
@@ -563,7 +563,7 @@ class ForecastingHorizonV2:
 
         Returns
         -------
-        ForecastingHorizonV2
+        ForecastingHorizon
             Out-of-sample values of forecasting horizon.
         """
         mask = self._is_out_of_sample(cutoff)
@@ -673,7 +673,7 @@ class ForecastingHorizonV2:
     # Dunders -> Arithmatic operators
 
     def __add__(self, other):
-        if isinstance(other, ForecastingHorizonV2):
+        if isinstance(other, ForecastingHorizon):
             result = self._fhvalues.values + other._fhvalues.values
         else:
             result = self._fhvalues.values + np.int64(other)
@@ -684,7 +684,7 @@ class ForecastingHorizonV2:
         return self.__add__(other)
 
     def __sub__(self, other):
-        if isinstance(other, ForecastingHorizonV2):
+        if isinstance(other, ForecastingHorizon):
             result = self._fhvalues.values - other._fhvalues.values
         else:
             result = self._fhvalues.values - np.int64(other)
@@ -704,7 +704,7 @@ class ForecastingHorizonV2:
         return self._new(fhvalues=fhv)
 
     def __mul__(self, other):
-        if isinstance(other, ForecastingHorizonV2):
+        if isinstance(other, ForecastingHorizon):
             result = self._fhvalues.values * other._fhvalues.values
         else:
             result = self._fhvalues.values * np.int64(other)
@@ -736,32 +736,32 @@ class ForecastingHorizonV2:
     # Current implementation is for number 1
 
     def __eq__(self, other):
-        if isinstance(other, ForecastingHorizonV2):
+        if isinstance(other, ForecastingHorizon):
             return self._fhvalues.values == other._fhvalues.values
         return self._fhvalues.values == np.int64(other)
 
     def __ne__(self, other):
-        if isinstance(other, ForecastingHorizonV2):
+        if isinstance(other, ForecastingHorizon):
             return self._fhvalues.values != other._fhvalues.values
         return self._fhvalues.values != np.int64(other)
 
     def __lt__(self, other):
-        if isinstance(other, ForecastingHorizonV2):
+        if isinstance(other, ForecastingHorizon):
             return self._fhvalues.values < other._fhvalues.values
         return self._fhvalues.values < np.int64(other)
 
     def __le__(self, other):
-        if isinstance(other, ForecastingHorizonV2):
+        if isinstance(other, ForecastingHorizon):
             return self._fhvalues.values <= other._fhvalues.values
         return self._fhvalues.values <= np.int64(other)
 
     def __gt__(self, other):
-        if isinstance(other, ForecastingHorizonV2):
+        if isinstance(other, ForecastingHorizon):
             return self._fhvalues.values > other._fhvalues.values
         return self._fhvalues.values > np.int64(other)
 
     def __ge__(self, other):
-        if isinstance(other, ForecastingHorizonV2):
+        if isinstance(other, ForecastingHorizon):
             return self._fhvalues.values >= other._fhvalues.values
         return self._fhvalues.values >= np.int64(other)
 
@@ -784,7 +784,7 @@ class ForecastingHorizonV2:
         """Return the minimum value."""
         return self._fhvalues.min()
 
-    # Below method computes a hash for the ForecastingHorizonV2 instance,
+    # Below method computes a hash for the ForecastingHorizon instance,
     # The hash is computed based on the tuple containing:
     # 1. the internal FHValues instance which itself has a custom __hash__ based
     #    on its int64 array bytes + metadata
@@ -803,7 +803,7 @@ class ForecastingHorizonV2:
     # but have different hashes (different freq or is_relative).
     # To fix, either:
     # Make __eq__ return a single bool comparing all attributes when other is
-    # ForecastingHorizonV2, or
+    # ForecastingHorizon, or
     # Move element-wise comparison to a separate method
     # and keep __eq__ consistent with __hash__.
     # Need to consider this in th context of forecasting horizon usage.
