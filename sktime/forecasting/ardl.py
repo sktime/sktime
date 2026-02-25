@@ -430,6 +430,13 @@ class ARDL(_StatsModelsAdapter):
         # beginning of the training series when passing integers
 
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+
+        # when fh has a single element, start == end, which can cause an
+        # IndexError in statsmodels when start >= len(training data) + 2.
+        # Setting start to 0 lets statsmodels predict the full range;
+        # the result is filtered to valid_indices below.
+        if start == end:
+            start = 0
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute_index(self.cutoff)
