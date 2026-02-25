@@ -250,7 +250,7 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
             "criterion": "CrossEntropyLoss",
             "callbacks": None,
             "criterion_kwargs": None,
-            "optimizer_kwargs": None,
+            "optimizer_kwargs": {"weight_decay": 0.01},
             "callback_kwargs": None,
             "lr": 0.001,
             "verbose": False,
