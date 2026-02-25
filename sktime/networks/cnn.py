@@ -21,27 +21,27 @@ class CNNNetwork(BaseDeepNetwork):
 
     Parameters
     ----------
-    kernel_size : int, default = 7
-        specifying the length of the 1D convolution window
-    avg_pool_size : int, default = 3
-        size of the average pooling windows
-    n_conv_layers : int, default = 2
-        the number of convolutional plus average pooling layers
-    filter_sizes : array of int, shape = (n_conv_layers)
-    activation : string, default = "sigmoid"
-        activation function used for hidden layers;
-        List of available keras activation functions:
+    kernel_size : int, default=7
+        Length of the 1D convolution window.
+    avg_pool_size : int, default=3
+        Size of the average pooling windows.
+    n_conv_layers : int, default=2
+        Number of convolution and average pooling layer blocks.
+    filter_sizes : list of int, optional, default=None
+        Number of convolution filters in each layer.
+        If None, defaults internally to [6, 12].
+    activation : str, default="sigmoid"
+        Activation function applied to convolution layers.
+        List of available Keras activation functions:
         https://keras.io/api/layers/activations/
         Default value of activation will change to "relu"
         in version '0.41.0'.
-    padding : string, default = "auto"
-        Controls padding logic for the convolutional layers,
-        i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
-        - "auto": as per original implementation, ``"same"`` is passed if
-          ``input_shape[0] < 60`` in the input layer, and ``"valid"`` otherwise.
-        - "valid", "same", and other values are passed directly to ``Conv1D``
-    random_state    : int, default = 0
-        seed to any needed random actions
+    padding : str, default="auto"
+        Controls padding logic for convolutional layers.
+        - "auto": uses "same" if input length < 60, otherwise "valid".
+        - Any other value is passed directly to ``Conv1D``.
+    random_state : int, default=0
+        Seed used for any required randomness.
 
     References
     ----------
