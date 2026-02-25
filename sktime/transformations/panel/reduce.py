@@ -95,6 +95,36 @@ class TimeBinner(BaseTransformer):
         Function used to aggregate the values in intervals.
         Should have signature 1D -> float and defaults
         to mean if None
+
+    Examples
+    --------
+    >>> # Example 1: Reduce the number of time points in the data
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.datasets import load_basic_motions
+    >>> from sktime.transformations.panel.reduce import TimeBinner
+    >>> X, y = load_basic_motions(return_X_y=True)
+    >>> idx = pd.interval_range(start=0, end=100, freq=20, closed="left")
+    >>> tb = TimeBinner(idx=idx)
+    >>> Xt = tb.fit_transform(X)
+    >>> Xt.shape
+    (80, 30)
+    >>>
+    >>> # Example 2: Use np.quantile as an aggregation function
+    >>> def q25(x):
+    ...     return np.quantile(x, 0.25)
+    >>> tb = TimeBinner(idx=idx, aggfunc=q25)
+    >>> Xt = tb.fit_transform(X)
+    >>> Xt.iloc[0, 0]
+    np.float64(...)
+    >>>
+    >>> # Example 3: Using a NumPy 3D array with a custom aggregation function
+    >>> X = np.random.randn(5, 1, 50)
+    >>> idx = pd.interval_range(start=0, end=50, freq=10, closed="left")
+    >>> tb = TimeBinner(idx=idx, aggfunc=q25)
+    >>> Xt = tb.fit_transform(X)
+    >>> Xt.shape
+    (5, 5)
     """
 
     _tags = {
