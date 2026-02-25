@@ -120,6 +120,8 @@ class PandasFHConverter:
         # generic pd.Index - convert based on dtype
         if isinstance(values, pd.Index):
             if pd.api.types.is_integer_dtype(values.dtype):
+                # for integer dtype, convert directly to int64 numpy array
+                # using pandas' to_numpy
                 arr = values.to_numpy().astype(np.int64)
                 return FHValues(arr, FHValueType.INT, freq=freq)
             # timedelta-like elements in a generic Index
