@@ -76,7 +76,7 @@ jobs:
 
       - name: install core, test and all soft dependencies
         shell: bash
-        run: uv pip install .[all_extras_pandas2,tests]
+        run: uv pip install .[all_extras,tests]
         env:
           UV_SYSTEM_PYTHON: 1
 

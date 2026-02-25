@@ -96,7 +96,7 @@ jobs:
         run: echo "WHEELNAME=$(ls ./wheelhouse/sktime-*none-any.whl)" >> $env:GITHUB_ENV
 
       - name: Install wheel and extras
-        run: python3 -m pip install "${{ env.WHEELNAME }}[all_extras_pandas2,dev]"
+        run: python3 -m pip install "${{ env.WHEELNAME }}[all_extras,dev]"
 
       - name: Run tests  # explicit commands as windows does not support make
         run: python -m pytest  --ignore sktime/datasets
