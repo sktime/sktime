@@ -34,6 +34,18 @@ Benchmarking Framework v2
     ClassificationBenchmark
 
 
+Simulation
+----------
+
+.. currentmodule:: sktime.benchmarking.simulation
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeSeriesSimulator
+
+
 Storage Backends
 ----------------
 
