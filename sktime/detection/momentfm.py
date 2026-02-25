@@ -167,6 +167,77 @@ class MomentFMDetector(BaseDetector):
         raise NotImplementedError
 
 
+class MomentFMDetectorPytorchDataset(Dataset):
+    """Windowed pytorch dataset for MomentFM anomaly detection.
+
+    Slides a fixed-length window of size ``seq_len`` over the input time
+    series with stride 1, yielding (window_tensor, input_mask, start_idx)
+    triples. The start index is kept so that per-window anomaly scores can
+    be stitched back onto the original series index later.
+
+    Parameters
+    ----------
+    X : np.ndarray of shape (n_timepoints, n_channels)
+        The time series values.
+    seq_len : int
+        Window length. Must be <= 512 for MomentFM.
+    """
+
+    # MomentFM hard-codes its internal sequence length to 512
+    _moment_seq_len = 512
+
+    def __init__(self, X, seq_len=512):
+        import torch
+
+        self.seq_len = min(seq_len, self._moment_seq_len)
+        self.n_timepoints, self.n_channels = X.shape
+
+        # convert to float32 once upfront
+        self.X = torch.tensor(X, dtype=torch.float32)
+
+    def __len__(self):
+        """Return number of windows."""
+        # last window starts at index n_timepoints - seq_len
+        # we also handle the edge case where the series is shorter than seq_len
+        if self.n_timepoints <= self.seq_len:
+            return 1
+        return self.n_timepoints - self.seq_len + 1
+
+    def __getitem__(self, idx):
+        """Return one window as a dict with keys x_enc, input_mask, start."""
+        import torch
+
+        end = idx + self.seq_len
+
+        if end <= self.n_timepoints:
+            window = self.X[idx:end, :]
+            input_mask = torch.ones(self._moment_seq_len)
+            # if seq_len < 512 we need to pad the window
+            if self.seq_len < self._moment_seq_len:
+                pad_len = self._moment_seq_len - self.seq_len
+                padding = torch.zeros(pad_len, self.n_channels)
+                window = torch.cat([window, padding], dim=0)
+                input_mask[self.seq_len :] = 0.0
+        else:
+            # series is shorter than seq_len - pad with zeros
+            window = self.X[idx:, :]
+            actual_len = window.shape[0]
+            pad_len = self._moment_seq_len - actual_len
+            padding = torch.zeros(pad_len, self.n_channels)
+            window = torch.cat([window, padding], dim=0)
+            input_mask = torch.zeros(self._moment_seq_len)
+            input_mask[:actual_len] = 1.0
+
+        # MomentFM expects (n_channels, seq_len) not (seq_len, n_channels)
+        x_enc = window.T
+
+        return {
+            "x_enc": x_enc,
+            "input_mask": input_mask,
+            "start_idx": idx,
+        }
+
+
 def _check_device(device):
     """Resolve device string to a valid torch device.
 
