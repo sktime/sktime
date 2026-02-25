@@ -64,6 +64,17 @@ Time Series Point Anomaly Detection
 
 Point anomaly detectors identify single anomalous indices.
 
+Foundation Models
+^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.momentfm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MomentFMDetector
+
 Window-based Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
