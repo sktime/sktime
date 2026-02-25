@@ -66,7 +66,6 @@ def test_fit_calls_from_pretrained(mock_pipeline_cls):
 
     mock_pipeline_cls.from_pretrained.assert_called_once()
     call_kwargs = mock_pipeline_cls.from_pretrained.call_args
-    # model_kwargs should carry task_name = RECONSTRUCTION
     model_kwargs = call_kwargs[1].get("model_kwargs", {})
     assert "task_name" in model_kwargs
 
@@ -87,7 +86,6 @@ def test_predict_output_shape(mock_pipeline_cls):
     mock_model = MagicMock()
     mock_pipeline_cls.from_pretrained.return_value = mock_model
 
-    # detect_anomalies should return an object with .anomaly_scores
     def fake_detect(x_enc, input_mask, anomaly_criterion="mse"):
         b, c, s = x_enc.shape
         out = MagicMock()
@@ -101,9 +99,7 @@ def test_predict_output_shape(mock_pipeline_cls):
     det = MomentFMDetector(batch_size=64)
     det.model = mock_model
     det._device = "cpu"
-
     result = det._predict(X)
-
     assert isinstance(result, pd.Series)
     assert len(result) == n
     assert result.index.equals(X.index)
@@ -127,7 +123,6 @@ def test_predict_multivariate(mock_pipeline_cls):
     def fake_detect(x_enc, input_mask, anomaly_criterion="mse"):
         b, c, s = x_enc.shape
         out = MagicMock()
-        # simulating higher score at a few positions
         scores = torch.zeros(b, c, s)
         scores[:, :, 10] = 100.0
         out.anomaly_scores = scores
@@ -143,7 +138,6 @@ def test_predict_multivariate(mock_pipeline_cls):
 
     result = det._predict(X)
     assert len(result) == n
-    # at least one anomaly should be flagged
     assert result.sum() >= 1
 
 
@@ -156,6 +150,5 @@ def test_get_test_params():
     assert len(params) == 2
     for p in params:
         assert isinstance(p, dict)
-        # make sure we can actually construct the class with these params
         det = MomentFMDetector(**p)
         assert det is not None

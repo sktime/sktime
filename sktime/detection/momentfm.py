@@ -100,8 +100,6 @@ class MomentFMDetector(BaseDetector):
             "transformers",
         ],
         "python_version": ">= 3.10",
-        # testing configuration
-        # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.momentfm"],
     }
@@ -129,20 +127,7 @@ class MomentFMDetector(BaseDetector):
         super().__init__()
 
     def _fit(self, X, y=None):
-        """Load MomentFM in reconstruction mode.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Time series to fit on. Not used for training - model weights
-            are loaded from the pretrained checkpoint. X is only needed
-            so the base class fit/predict contract is satisfied.
-        y : ignored
-
-        Returns
-        -------
-        self
-        """
+        """Load MomentFM in reconstruction mode."""
         self._pretrained_model_name_or_path = self._config.get(
             "pretrained_model_name_or_path", self.pretrained_model_name_or_path
         )
@@ -182,7 +167,6 @@ class MomentFMDetector(BaseDetector):
         dataset = MomentFMDetectorPytorchDataset(X_vals, seq_len=self.seq_len)
         loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=False)
 
-        # accumulate scores per timestep - use mean over overlapping windows
         score_sum = np.zeros(n_timepoints, dtype=np.float64)
         count = np.zeros(n_timepoints, dtype=np.int32)
 
@@ -200,10 +184,8 @@ class MomentFMDetector(BaseDetector):
                     input_mask=input_mask,
                     anomaly_criterion=self.anomaly_criterion,
                 )
-                # anomaly_scores: (batch, n_channels, seq_len)
-                # average over channels to get one score per timestep
                 scores = outputs.anomaly_scores.cpu().numpy()
-                scores = scores.mean(axis=1)  # (batch, seq_len)
+                scores = scores.mean(axis=1)
 
                 for i, start in enumerate(start_indices):
                     actual_len = int(input_mask[i].sum().item())
@@ -225,22 +207,7 @@ class MomentFMDetector(BaseDetector):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
-
-        Returns
-        -------
-        params : dict or list of dict
-            Parameters to create testing instances of the class.
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
-            instance. ``create_test_instance`` uses the first (or only) dict.
-        """
+        """Return testing parameter settings for the estimator."""
         params1 = {
             "to_cpu_after_predict": True,
             "threshold_percentile": 90,
@@ -258,20 +225,17 @@ class MomentFMDetector(BaseDetector):
 class MomentFMDetectorPytorchDataset(Dataset):
     """Windowed pytorch dataset for MomentFM anomaly detection.
 
-    Slides a fixed-length window of size ``seq_len`` over the input time
-    series with stride 1, yielding (window_tensor, input_mask, start_idx)
-    triples. The start index is kept so that per-window anomaly scores can
-    be stitched back onto the original series index later.
+    Slides a window of size ``seq_len`` over the input time series with
+    stride 1, returning x_enc, input_mask and start_idx per window.
 
     Parameters
     ----------
     X : np.ndarray of shape (n_timepoints, n_channels)
         The time series values.
     seq_len : int
-        Window length. Must be <= 512 for MomentFM.
+        Window length.
     """
 
-    # MomentFM hard-codes its internal sequence length to 512
     _moment_seq_len = 512
 
     def __init__(self, X, seq_len=512):
@@ -279,14 +243,10 @@ class MomentFMDetectorPytorchDataset(Dataset):
 
         self.seq_len = min(seq_len, self._moment_seq_len)
         self.n_timepoints, self.n_channels = X.shape
-
-        # convert to float32 once upfront
         self.X = torch.tensor(X, dtype=torch.float32)
 
     def __len__(self):
         """Return number of windows."""
-        # last window starts at index n_timepoints - seq_len
-        # we also handle the edge case where the series is shorter than seq_len
         if self.n_timepoints <= self.seq_len:
             return 1
         return self.n_timepoints - self.seq_len + 1
@@ -300,14 +260,12 @@ class MomentFMDetectorPytorchDataset(Dataset):
         if end <= self.n_timepoints:
             window = self.X[idx:end, :]
             input_mask = torch.ones(self._moment_seq_len)
-            # if seq_len < 512 we need to pad the window
             if self.seq_len < self._moment_seq_len:
                 pad_len = self._moment_seq_len - self.seq_len
                 padding = torch.zeros(pad_len, self.n_channels)
                 window = torch.cat([window, padding], dim=0)
                 input_mask[self.seq_len :] = 0.0
         else:
-            # series is shorter than seq_len - pad with zeros
             window = self.X[idx:, :]
             actual_len = window.shape[0]
             pad_len = self._moment_seq_len - actual_len
@@ -316,7 +274,6 @@ class MomentFMDetectorPytorchDataset(Dataset):
             input_mask = torch.zeros(self._moment_seq_len)
             input_mask[:actual_len] = 1.0
 
-        # MomentFM expects (n_channels, seq_len) not (seq_len, n_channels)
         x_enc = window.T
 
         return {
@@ -327,11 +284,7 @@ class MomentFMDetectorPytorchDataset(Dataset):
 
 
 def _check_device(device):
-    """Resolve device string to a valid torch device.
-
-    Mirrors the same helper used in MomentFMForecaster and
-    MomentFMClassifier - kept here to avoid a cross-module import.
-    """
+    """Resolve device string to a valid torch device."""
     if device == "auto":
         return device
     mps = False
