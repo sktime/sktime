@@ -1,4 +1,4 @@
-"""Tests for HampelFilter detector."""
+"""Tests for HampelAnomalyDetector."""
 
 __author__ = ["Vbhatt03"]
 __all__ = []
@@ -6,12 +6,12 @@ __all__ = []
 import pandas as pd
 import pytest
 
-from sktime.detection.hampel import HampelFilter
+from sktime.detection.hampel import HampelAnomalyDetector
 from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
@@ -33,35 +33,35 @@ from sktime.tests.test_switch import run_test_for_class
 )
 def test_predict_basic(X, y_expected, window_size, n_sigmas):
     """Test basic prediction with known outliers."""
-    model = HampelFilter(window_size=window_size, n_sigmas=n_sigmas)
+    model = HampelAnomalyDetector(window_size=window_size, n_sigmas=n_sigmas)
     model.fit(X)
     y_actual = model.predict(X)
     pd.testing.assert_frame_equal(y_actual, y_expected)
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_hampel_does_not_mutate_input():
-    """Check that HampelFilter does not modify the input DataFrame."""
+    """Check that HampelAnomalyDetector does not modify the input DataFrame."""
     X = pd.DataFrame([2, 5, 7, 9, 12, 55, 1, 3, 2, 1])
     X_original = X.copy(deep=True)
 
-    model = HampelFilter(window_size=5, n_sigmas=3.0)
+    model = HampelAnomalyDetector(window_size=5, n_sigmas=3.0)
     _ = model.fit_transform(X)
 
     pd.testing.assert_frame_equal(X, X_original)
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_flat_signal():
     """Test with flat signal - should have no outliers."""
     X = pd.DataFrame([5.0] * 30)
-    model = HampelFilter(window_size=5, n_sigmas=3.0)
+    model = HampelAnomalyDetector(window_size=5, n_sigmas=3.0)
     model.fit(X)
     y = model.predict(X)
 
@@ -72,13 +72,13 @@ def test_flat_signal():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_short_series():
     """Test with series shorter than window_size."""
     X = pd.DataFrame([1, 2, 3])
-    model = HampelFilter(window_size=5)
+    model = HampelAnomalyDetector(window_size=5)
     model.fit(X)
     y = model.predict(X)
 
@@ -88,20 +88,20 @@ def test_short_series():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_even_window_size_adjustment():
     """Test window_size adjustment when center=True and even values are passed."""
-    model_centered = HampelFilter(window_size=4, center=True)
-    model_trailing = HampelFilter(window_size=4, center=False)
+    model_centered = HampelAnomalyDetector(window_size=4, center=True)
+    model_trailing = HampelAnomalyDetector(window_size=4, center=False)
 
     assert model_centered.window_size == 5
     assert model_trailing.window_size == 4
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
@@ -118,7 +118,7 @@ def test_even_window_size_adjustment():
 def test_parameter_combinations(window_size, n_sigmas, use_mmad, mmad_window):
     """Test various parameter combinations."""
     X = pd.DataFrame([2, 5, 7, 9, 12, 55, 1, 3, 2, 1] * 3)  # Repeat for longer series
-    model = HampelFilter(
+    model = HampelAnomalyDetector(
         window_size=window_size,
         n_sigmas=n_sigmas,
         use_mmad=use_mmad,
@@ -135,13 +135,13 @@ def test_parameter_combinations(window_size, n_sigmas, use_mmad, mmad_window):
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_transform_dense_output():
     """Test transform method returns dense output (same length as input)."""
     X = pd.DataFrame([2, 5, 7, 9, 12, 55, 1, 3, 2, 1])
-    model = HampelFilter(window_size=5, n_sigmas=3.0)
+    model = HampelAnomalyDetector(window_size=5, n_sigmas=3.0)
     model.fit(X)
     y_dense = model.transform(X)
 
@@ -154,14 +154,14 @@ def test_transform_dense_output():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_center_parameter():
     """Test both symmetric and trailing window modes."""
     X = pd.DataFrame([1, 2, 3, 4, 5, 150, 7, 8, 9, 10])
-    model_centered = HampelFilter(window_size=5, center=True, n_sigmas=3.0)
-    model_trailing = HampelFilter(window_size=5, center=False, n_sigmas=3.0)
+    model_centered = HampelAnomalyDetector(window_size=5, center=True, n_sigmas=3.0)
+    model_trailing = HampelAnomalyDetector(window_size=5, center=False, n_sigmas=3.0)
 
     model_centered.fit(X)
     model_trailing.fit(X)
@@ -178,14 +178,14 @@ def test_center_parameter():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_fit_predict_vs_fit_transform():
     """Test that predict and transform give consistent results."""
     X = pd.DataFrame([2, 5, 7, 9, 12, 55, 1, 3, 2, 1])
-    model1 = HampelFilter(window_size=5, n_sigmas=3.0)
-    model2 = HampelFilter(window_size=5, n_sigmas=3.0)
+    model1 = HampelAnomalyDetector(window_size=5, n_sigmas=3.0)
+    model2 = HampelAnomalyDetector(window_size=5, n_sigmas=3.0)
 
     # fit_predict should return sparse format
     y_predict = model1.fit_predict(X)
@@ -201,7 +201,7 @@ def test_fit_predict_vs_fit_transform():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_mmad_vs_standard():
@@ -210,8 +210,8 @@ def test_mmad_vs_standard():
         [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 200, 15, 16, 17, 18, 19, 20]
     )
 
-    model_standard = HampelFilter(window_size=5, n_sigmas=3.0, use_mmad=False)
-    model_mmad = HampelFilter(window_size=5, n_sigmas=3.0, use_mmad=True)
+    model_standard = HampelAnomalyDetector(window_size=5, n_sigmas=3.0, use_mmad=False)
+    model_mmad = HampelAnomalyDetector(window_size=5, n_sigmas=3.0, use_mmad=True)
 
     model_standard.fit(X)
     model_mmad.fit(X)
@@ -229,13 +229,13 @@ def test_mmad_vs_standard():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_multiple_outliers():
     """Test detection of multiple outliers."""
     X = pd.DataFrame([1, 2, 3, 4, 5, 150, 6, 7, 8, 180, 10, 11, 12])
-    model = HampelFilter(window_size=5, n_sigmas=3.0)
+    model = HampelAnomalyDetector(window_size=5, n_sigmas=3.0)
     model.fit(X)
     y = model.predict(X)
 
@@ -247,7 +247,7 @@ def test_multiple_outliers():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
@@ -257,7 +257,7 @@ def test_multiple_outliers():
 def test_various_window_sizes(window_size):
     """Test with different window sizes."""
     X = pd.DataFrame([2, 5, 7, 9, 12, 55, 1, 3, 2, 1] * 3)
-    model = HampelFilter(window_size=window_size, n_sigmas=3.0)
+    model = HampelAnomalyDetector(window_size=window_size, n_sigmas=3.0)
     model.fit(X)
     y = model.predict(X)
 
@@ -267,15 +267,15 @@ def test_various_window_sizes(window_size):
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_threshold_sensitivity():
     """Test that stricter thresholds detect more outliers."""
     X = pd.DataFrame([2, 5, 7, 9, 12, 55, 1, 3, 2, 1] * 2)
 
-    model_strict = HampelFilter(window_size=5, n_sigmas=2.0)
-    model_lenient = HampelFilter(window_size=5, n_sigmas=4.0)
+    model_strict = HampelAnomalyDetector(window_size=5, n_sigmas=2.0)
+    model_lenient = HampelAnomalyDetector(window_size=5, n_sigmas=4.0)
 
     model_strict.fit(X)
     model_lenient.fit(X)
@@ -288,13 +288,13 @@ def test_threshold_sensitivity():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_single_column_dataframe():
     """Test that single column DataFrames are handled correctly."""
     X = pd.DataFrame({"values": [1, 2, 3, 4, 5, 150, 7, 8, 9, 10]})
-    model = HampelFilter(window_size=5, n_sigmas=3.0)
+    model = HampelAnomalyDetector(window_size=5, n_sigmas=3.0)
     model.fit(X)
     y = model.predict(X)
 
@@ -304,14 +304,14 @@ def test_single_column_dataframe():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_no_outliers():
     """Test with data that has no clear outliers."""
     # Generate gentle random-like variation without extreme outliers
     X = pd.DataFrame([1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7])
-    model = HampelFilter(window_size=5, n_sigmas=3.0)
+    model = HampelAnomalyDetector(window_size=5, n_sigmas=3.0)
     model.fit(X)
     y = model.predict(X)
 
@@ -320,12 +320,12 @@ def test_no_outliers():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_get_test_params():
     """Test that get_test_params returns valid parameters."""
-    params = HampelFilter.get_test_params()
+    params = HampelAnomalyDetector.get_test_params()
 
     assert isinstance(params, list)
     assert len(params) > 0
@@ -333,12 +333,12 @@ def test_get_test_params():
     for param_dict in params:
         assert isinstance(param_dict, dict)
         # Each dict should have valid parameter combinations
-        model = HampelFilter(**param_dict)
+        model = HampelAnomalyDetector(**param_dict)
         assert model is not None
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(HampelFilter),
+    not run_test_for_class(HampelAnomalyDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_non_default_index():
@@ -348,7 +348,7 @@ def test_non_default_index():
         [2, 5, 7, 9, 12, 200, 1, 3, 2, 1],
         index=[100, 101, 102, 103, 104, 105, 106, 107, 108, 109],
     )
-    model = HampelFilter(window_size=5, n_sigmas=3.0)
+    model = HampelAnomalyDetector(window_size=5, n_sigmas=3.0)
     model.fit(X)
     y = model.predict(X)
 
@@ -362,24 +362,24 @@ def test_non_default_index():
 def test_invalid_window_size():
     """Test that window_size < 3 raises ValueError."""
     with pytest.raises(ValueError, match="window_size must be >= 3"):
-        HampelFilter(window_size=2)
+        HampelAnomalyDetector(window_size=2)
 
 
 def test_invalid_n_sigmas():
     """Test that n_sigmas <= 0 raises ValueError."""
     with pytest.raises(ValueError, match="n_sigmas must be > 0"):
-        HampelFilter(n_sigmas=0)
+        HampelAnomalyDetector(n_sigmas=0)
     with pytest.raises(ValueError, match="n_sigmas must be > 0"):
-        HampelFilter(n_sigmas=-1.5)
+        HampelAnomalyDetector(n_sigmas=-1.5)
 
 
 def test_invalid_mmad_window():
     """Test that mmad_window < 3 raises ValueError when use_mmad=True."""
     with pytest.raises(ValueError, match="mmad_window must be >= 3"):
-        HampelFilter(use_mmad=True, mmad_window=2)
+        HampelAnomalyDetector(use_mmad=True, mmad_window=2)
 
 
 def test_mmad_window_without_use_mmad():
     """Test that mmad_window raises ValueError when use_mmad=False."""
     with pytest.raises(ValueError, match="mmad_window requires use_mmad=True"):
-        HampelFilter(use_mmad=False, mmad_window=5)
+        HampelAnomalyDetector(use_mmad=False, mmad_window=5)

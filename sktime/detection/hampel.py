@@ -12,10 +12,10 @@ import pandas as pd
 from sktime.detection.base import BaseDetector
 
 __author__ = ["Vbhatt03"]
-__all__ = ["HampelFilter"]
+__all__ = ["HampelAnomalyDetector"]
 
 
-class HampelFilter(BaseDetector):
+class HampelAnomalyDetector(BaseDetector):
     """Hampel filter for anomaly detection.
 
     Parameters
@@ -43,15 +43,15 @@ class HampelFilter(BaseDetector):
     Detect anomalies in a univariate time series.
 
     >>> import pandas as pd
-    >>> from sktime.detection.hampel import HampelFilter
+    >>> from sktime.detection.hampel import HampelAnomalyDetector
     >>> y = pd.Series([1.0, 1.1, 0.9, 10.0, 1.0, 1.2, 0.8])
-    >>> detector = HampelFilter(window_size=3, n_sigmas=3.0, center=True)
+    >>> detector = HampelAnomalyDetector(window_size=3, n_sigmas=3.0, center=True)
     >>> detector.fit(y)
-    HampelFilter(...)
+    HampelAnomalyDetector(...)
     >>> anomalies = detector.predict(y)
     >>> anomalies
-         ilocs
-     0      3
+        ilocs
+    0      3
     """
 
     _tags = {
@@ -101,7 +101,7 @@ class HampelFilter(BaseDetector):
         if isinstance(X, pd.DataFrame):
             if X.shape[1] != 1:
                 raise ValueError(
-                    "HampelFilter only supports univariate input. "
+                    "HampelAnomalyDetector only supports univariate input. "
                     f"Received a DataFrame with {X.shape[1]} columns."
                 )
             X = X.iloc[:, 0]
@@ -120,8 +120,9 @@ class HampelFilter(BaseDetector):
 
         # extract indices
         mask = outliers.fillna(False)
-        ilocs = np.where(mask)[0].tolist()
-        return pd.DataFrame({"ilocs": ilocs})
+        ilocs = np.where(mask)[0]
+        ilocs_series = pd.Series(ilocs, dtype="int64")
+        return pd.DataFrame({"ilocs": ilocs_series})
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
