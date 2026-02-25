@@ -75,7 +75,7 @@ class TabICLForecaster(BaseForecaster):
     _tags = {
         "authors": "Anamika457",
         "maintainers": "Anamika457",
-        "python_dependencies": "tabicl",
+        "python_dependencies": "tabicl>=2.0.0",
         "scitype:y": "univariate",
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
