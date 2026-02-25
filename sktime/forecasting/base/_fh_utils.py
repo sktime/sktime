@@ -314,6 +314,22 @@ class PandasFHConverter:
         # <check>
         # 1. check for unsupported frequencies and raise informative errors
         # 2. check for completeness of the alias map and add any missing aliases
+        # 3. is there way to leverage pandas frequency parsing/normalization logic
+        #    instead of hardcoding an alias map here?
+        # 4. if we keep the alias map, make it more comprehensive and robust,
+        #    and add tests for it.
+        #    For example, handling both "M" and "ME" for month-end frequencies,
+        #    and ensuring that all common aliases are covered.
+        # 5. whether to handle frequency strings in a case-insensitive manner,
+        #    e.g. treating "m" and "M" as the same frequency,
+        #    and whether to add checks for that.
+        # 6. whether to use pandas.tseries.frequencies.to_offset to validate and
+        #    normalize freq strings, which would leverage pandas'
+        #    internal logic and ensure consistency with pandas behavior.
+        #    one way of achieving 1. and 2. without hardcoding an alias map
+        #    if it succeeds,
+        #    use the resulting offset's name as the normalized freq string.
+        # 7. Make the alias map a frozenset to prevent accidental modifications
         # </check>
         alias_map = {
             "ME": "M",
