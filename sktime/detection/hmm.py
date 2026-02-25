@@ -12,6 +12,7 @@ from scipy.stats import norm
 
 from sktime.detection.base import BaseDetector
 from sktime.detection.utils._arr_to_seg import arr_to_seg
+from sktime.utils.warnings import warn
 
 __author__ = ["miraep8"]
 __all__ = ["HMM"]
@@ -137,7 +138,7 @@ class HMM(BaseDetector):
         # estimator type
         # --------------
         "capability:multivariate": False,
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "task": "segmentation",
         "learning_type": "unsupervised",
         # CI and test flags
@@ -155,6 +156,13 @@ class HMM(BaseDetector):
         self.initial_probs = initial_probs
         self.emission_funcs = emission_funcs
         self.transition_prob_mat = transition_prob_mat
+        self.num_states = len(emission_funcs)
+        self.states = list(range(self.num_states))
+        if self.initial_probs is None:
+            self.init_probs = 1.0 / self.num_states * np.ones(self.num_states)
+        else:
+            self.init_probs = self.initial_probs
+
         super().__init__()
         self._validate_init()
 
@@ -376,7 +384,33 @@ class HMM(BaseDetector):
         self :
             Reference to self.
         """
+        X = X.values.flatten()
+        self.X_hash = hash(tuple(X))
+        self.num_obs_ = len(X)
+        emi_probs = self._make_emission_probs(self.emission_funcs, X)
+        self.trans_prob_, self.trans_id_ = self._calculate_trans_mats(
+            self.init_probs,
+            emi_probs,
+            self.transition_prob_mat,
+            self.num_obs_,
+            self.num_states,
+        )
         return self
+
+    @property
+    def trans_prob(self):
+        """Attribute saved from fit method."""
+        return self.trans_prob_
+
+    @property
+    def trans_id(self):
+        """Attribute saved from fit method."""
+        return self.trans_id_
+
+    @property
+    def num_obs(self):
+        """Attribute saved from fit method."""
+        return self.num_obs_
 
     def _predict(self, X):
         """Determine the most likely seq of hidden states by Viterbi algorithm.
@@ -391,26 +425,16 @@ class HMM(BaseDetector):
         annotated_x : array-like, shape = [num_observations]
             Array of predicted class labels, same size as input.
         """
-        X = X.values.flatten()
-        self.num_states = len(self.emission_funcs)
-        self.states = list(range(self.num_states))
-        self.num_obs = len(X)
-        emi_probs = self._make_emission_probs(self.emission_funcs, X)
-        init_probs = self.initial_probs
-        if self.initial_probs is None:
-            init_probs = 1.0 / self.num_states * np.ones(self.num_states)
-        trans_prob, trans_id = self._calculate_trans_mats(
-            init_probs,
-            emi_probs,
-            self.transition_prob_mat,
-            self.num_obs,
-            self.num_states,
-        )
+        if hash(tuple(X.values.flatten())) != self.X_hash:
+            warn(
+                "The input X to predict is different from the X used in fit. "
+                "HMM was fitted on different observations. "
+                "Consider refitting the model with the new data.",
+                stacklevel=2,
+            )
 
-        self.trans_prob = trans_prob
-        self.trans_id = trans_id
         labels = self._hmm_viterbi_label(
-            self.num_obs, self.states, self.trans_prob, self.trans_id
+            self.num_obs_, self.states, self.trans_prob_, self.trans_id_
         )
         y_seg = arr_to_seg(labels)
         return y_seg
