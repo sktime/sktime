@@ -176,12 +176,11 @@ class ForecastingHorizonV2:
     # core conversion methods
 
     # <check>
-    # to_relative requires cutoff to be specified
-    # but for a drop-in replacement for the old FH,
+    # for a drop-in replacement of the old FH,
     # we want to allow users to call to_relative without cutoff
-    # and use the same default cutoff as the old FH, which is end of training series
-    # so we would need to add logic to determine the default cutoff
-    # when cutoff is not provided
+    # but the old FH also raised an error at `cutoff is None`
+    # why not make it explicit and require cutoff to be passed for
+    # to_relative and to_absolute methods?
     # </check>
     def to_relative(self, cutoff=None):
         """Return relative version of forecasting horizon.
@@ -786,7 +785,6 @@ class ForecastingHorizonV2:
         return self._fhvalues.min()
 
     # Below method computes a hash for the ForecastingHorizonV2 instance,
-    # which allows it to be used in sets and as dictionary keys.
     # The hash is computed based on the tuple containing:
     # 1. the internal FHValues instance which itself has a custom __hash__ based
     #    on its int64 array bytes + metadata
