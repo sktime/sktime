@@ -5,6 +5,7 @@ __authors__ = ["geetu040", "RecreationalMath"]
 __all__ = ["BaseDeepClassifierPytorch"]
 
 import abc
+import warnings
 from collections.abc import Callable
 
 import numpy as np
@@ -320,6 +321,18 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             # nn.CrossEntropyLoss with no activation,
             # and using nn.CrossEntropyLoss is the preferred way
             # because of numerical stability
+            if self.activation is not None:
+                warnings.warn(
+                    f"Activation '{self.activation}' is being overridden to None. "
+                    f"The combination of criterion '{self.criterion}' and activation "
+                    f"'{self.activation}' is functionally equivalent to using "
+                    "CrossEntropyLoss with no activation, which is preferred for "
+                    "numerical stability. CrossEntropyLoss expects raw logits "
+                    "(unactivated outputs) and combines LogSoftmax and NLLLoss "
+                    "in a single, numerically stable operation.",
+                    UserWarning,
+                    stacklevel=2,
+                )
             self._validated_criterion = "crossentropyloss"
             self._validated_activation = None
         else:
