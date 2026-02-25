@@ -1,5 +1,7 @@
 """Tests for BaseDeepClassifierPytorch activation warning behavior."""
 
+__author__ = ["achieveordie"]
+
 import pytest
 
 torch = pytest.importorskip("torch")
@@ -40,6 +42,7 @@ class TestActivationWarning:
 
     def setup_method(self):
         """Set up test data."""
+        np.random.seed(42)
         # Create simple test data
         self.X_train = np.random.random((10, 3, 20))  # 10 samples, 3 dims, 20 timesteps
         self.y_train = np.random.randint(0, 2, 10)   # Binary classification
