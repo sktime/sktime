@@ -12,7 +12,7 @@ from sktime.tests.test_switch import run_test_for_class
 
 @patch("sktime.detection.momentfm.MOMENTPipeline")
 def test_predict_output_shape(mock_pipeline_cls):
-    """_predict returns a 0/1 Series with the same index as X."""
+    """_predict returns a sparse Series of valid iloc anomaly positions."""
     import torch
 
     from sktime.detection.momentfm import MomentFMDetector
@@ -42,9 +42,8 @@ def test_predict_output_shape(mock_pipeline_cls):
     result = det._predict(X)
 
     assert isinstance(result, pd.Series)
-    assert len(result) == n
-    assert result.index.equals(X.index)
-    assert set(result.unique()).issubset({0, 1})
+    assert result.dtype == "int64"
+    assert (result >= 0).all() and (result < n).all()
 
 
 @patch("sktime.detection.momentfm.MOMENTPipeline")
@@ -80,5 +79,5 @@ def test_predict_multivariate(mock_pipeline_cls):
     det._device = "cpu"
 
     result = det._predict(X)
-    assert len(result) == n
-    assert result.sum() >= 1
+    assert isinstance(result, pd.Series)
+    assert len(result) >= 1

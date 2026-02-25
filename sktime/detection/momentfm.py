@@ -155,9 +155,8 @@ class MomentFMDetector(BaseDetector):
 
         Returns
         -------
-        y : pd.Series of int in {0, 1}
-            1 at positions classified as anomalies, 0 elsewhere.
-            Index matches the index of X.
+        y : pd.Series with RangeIndex, dtype int64
+            Sparse format: values are iloc indices of detected anomalies.
         """
         import torch
 
@@ -197,13 +196,13 @@ class MomentFMDetector(BaseDetector):
         anomaly_scores = score_sum / count
 
         threshold = np.percentile(anomaly_scores, self.threshold_percentile)
-        labels = (anomaly_scores >= threshold).astype(int)
+        anomaly_ilocs = np.where(anomaly_scores >= threshold)[0]
 
         if self.to_cpu_after_predict:
             self.model.to("cpu")
             empty_cache()
 
-        return pd.Series(labels, index=X.index, dtype="int64", name="labels")
+        return pd.Series(anomaly_ilocs, dtype="int64")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
