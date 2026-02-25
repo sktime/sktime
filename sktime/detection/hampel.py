@@ -42,14 +42,14 @@ class HampelFilter(BaseDetector):
     --------
     Detect anomalies in a univariate time series.
 
-     >>> import pandas as pd
-     >>> from sktime.detection.hampel import HampelFilter
-     >>> y = pd.Series([1.0, 1.1, 0.9, 10.0, 1.0, 1.2, 0.8])
-     >>> detector = HampelFilter(window_size=3, n_sigmas=3.0, center=True)
-     >>> detector.fit(y)
-     HampelFilter(...)
-     >>> anomalies = detector.predict(y)
-     >>> anomalies
+    >>> import pandas as pd
+    >>> from sktime.detection.hampel import HampelFilter
+    >>> y = pd.Series([1.0, 1.1, 0.9, 10.0, 1.0, 1.2, 0.8])
+    >>> detector = HampelFilter(window_size=3, n_sigmas=3.0, center=True)
+    >>> detector.fit(y)
+    HampelFilter(...)
+    >>> anomalies = detector.predict(y)
+    >>> anomalies
          ilocs
      0      3
     """
