@@ -124,6 +124,38 @@ class PandasFHConverter:
             f"pd.Index, pd.Timedelta, or pd.offsets.BaseOffset."
         )
 
+    @staticmethod
+    def _ndarray_to_internal(values: np.ndarray, freq=None) -> FHValues:
+        """Convert 1-D numpy array (integer, timedelta64, or datetime64) to FHValues."""
+        if values.ndim != 1:
+            raise ValueError(f"Expected 1-D array, got {values.ndim}-D array")
+        # empty array check
+        if len(values) == 0:
+            raise ValueError("Forecasting horizon values must not be empty.")
+
+        # timedelta64 and datetime64 checked before integer as a defensive measure
+        # as some numpy versions might consider datetime64 as a subtype of integer,
+        # which would cause incorrect classification.
+        # This ordering keeps the type checking explicit and
+        # avoids any future dtype hierarchy surprises
+        if np.issubdtype(values.dtype, np.timedelta64):
+            # Convert to ns resolution first, then view as int64
+            arr = values.astype("timedelta64[ns]").view(np.int64).copy()
+            return FHValues(arr, FHValueType.TIMEDELTA, freq=freq)
+
+        if np.issubdtype(values.dtype, np.datetime64):
+            arr = values.astype("datetime64[ns]").view(np.int64).copy()
+            return FHValues(arr, FHValueType.DATETIME, freq=freq)
+
+        if np.issubdtype(values.dtype, np.integer):
+            arr = values.astype(np.int64).copy()
+            return FHValues(arr, FHValueType.INT, freq=freq)
+
+        raise TypeError(
+            f"np.ndarray with dtype {values.dtype} is not supported. "
+            f"Expected integer, timedelta64, or datetime64 dtype."
+        )
+
     # FHValues (internal representation) -> pandas conversion
     @staticmethod
     def to_pandas_index(fhv: "FHValues") -> pd.Index:
