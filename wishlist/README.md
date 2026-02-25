@@ -39,6 +39,7 @@ When adding a new algorithm to the wishlist:
 | Classifier | Time series classification algorithms | [classifier.md](classifier.md) |
 | Clusterer | Time series clustering algorithms | [clusterer.md](clusterer.md) |
 | Detector | Anomaly, outlier, and change point detectors | [detector.md](detector.md) |
+| Distance/Kernel | Pairwise distances and kernels for time series | [dist_kernel.md](dist_kernel.md) |
 | Early Classifier | Early time series classifiers | [early_classifier.md](early_classifier.md) |
 | Forecaster | Time series forecasting algorithms | [forecaster.md](forecaster.md) |
 | Metric | Performance metrics | [metric.md](metric.md) |
