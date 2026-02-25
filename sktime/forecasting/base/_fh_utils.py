@@ -233,33 +233,6 @@ class PandasFHConverter:
             f"List with element type {type(values[0]).__name__} is not supported."
         )
 
-    @staticmethod
-    def _check_list_homogeneity(values, expected_types):
-        """Check all list elements match expected types.
-
-        Parameters
-        ----------
-        values : list
-            List of values to check. Must be non-empty.
-        expected_types : type or tuple of types
-            Accepted types for isinstance check.
-
-        Raises
-        ------
-        TypeError
-            If any element does not match expected_types.
-        """
-        # starting from index 1 since the
-        # check for first element's type against expected_types
-        # is done in the caller before this function is called
-        for i, v in enumerate(values[1:], start=1):
-            if not isinstance(v, expected_types):
-                raise TypeError(
-                    f"Element at index 0 is of type {type(values[0]).__name__}, "
-                    f"but element at index {i} is {type(v).__name__}. "
-                    "All list elements must be of the same type."
-                )
-
     # FHValues (internal representation) -> pandas conversion
     @staticmethod
     def to_pandas_index(fhv: "FHValues") -> pd.Index:
@@ -414,3 +387,38 @@ class PandasFHConverter:
             fh_abs_idx.names = y_index.names
 
         return fh_abs_idx
+
+    # private helper functions
+    @staticmethod
+    def _check_list_homogeneity(values, expected_types):
+        """Check all list elements match expected types.
+
+        Parameters
+        ----------
+        values : list
+            List of values to check. Must be non-empty.
+        expected_types : type or tuple of types
+            Accepted types for isinstance check.
+
+        Raises
+        ------
+        TypeError
+            If any element does not match expected_types.
+        """
+        # starting from index 1 since the
+        # check for first element's type against expected_types
+        # is done in the caller before this function is called
+        for i, v in enumerate(values[1:], start=1):
+            if not isinstance(v, expected_types):
+                raise TypeError(
+                    f"Element at index 0 is of type {type(values[0]).__name__}, "
+                    f"but element at index {i} is {type(v).__name__}. "
+                    "All list elements must be of the same type."
+                )
+
+    @staticmethod
+    def _extract_freq_str(obj) -> str | None:
+        """Extract freq string from scalar pandas time objects."""
+        if hasattr(obj, "freq") and obj.freq is not None:
+            return PandasFHConverter.normalize_freq(str(obj.freq))
+        return None
