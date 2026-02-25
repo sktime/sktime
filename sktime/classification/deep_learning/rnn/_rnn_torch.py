@@ -124,6 +124,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int = 0,
+        device: str = "cpu",
     ):
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
@@ -149,6 +150,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.device = device
 
         # input_size and num_classes to be inferred from the data
         # and will be set in _build_network
@@ -168,6 +170,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
+            device=self.device,
         )
 
     def _build_network(self, X, y):
