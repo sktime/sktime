@@ -65,12 +65,12 @@ Questions and feedback are extremely welcome! We strongly believe in the value o
 ## :dizzy: Features
 Our objective is to enhance the interoperability and usability of the time series analysis ecosystem in its entirety. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.net/en/stable/estimator_overview.html) and __tools for composite model building__,  such as pipelining, ensembling, tuning, and reduction, empowering users to apply algorithms designed for one task to another.
 
-sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD], and [fbprophet], among others.
+sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD], and [prophet], among others.
 
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
 [pyod]: https://pyod.readthedocs.io/en/latest/
-[fbprophet]: https://facebook.github.io/prophet/
+[prophet]: https://facebook.github.io/prophet/
 
 | Module | Status | Links |
 |---|---|---|
@@ -79,7 +79,7 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 | **[Time Series Regression]** | stable | [API Reference](https://www.sktime.net/en/latest/api_reference/regression.html) |
 | **[Transformations]** | stable | [Tutorial](https://github.com/sktime/sktime/blob/main/examples/03_transformers.ipynb) · [API Reference](https://www.sktime.net/en/latest/api_reference/transformations.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/transformer.py)  |
 | **[Detection tasks]** | maturing | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/detection.py) |
-| **[Parameter fitting]** | maturing | [API Reference](https://www.sktime.net/en/latest/api_reference/param_est.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/transformer.py)  |
+| **[Parameter fitting]** | maturing | [API Reference](https://www.sktime.net/en/latest/api_reference/param_est.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/param_est.py)  |
 | **[Time Series Clustering]** | maturing | [API Reference](https://www.sktime.net/en/latest/api_reference/clustering.html) ·  [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/clustering.py) |
 | **[Time Series Distances/Kernels]** | maturing | [Tutorial](https://github.com/sktime/sktime/blob/main/examples/03_transformers.ipynb) · [API Reference](https://www.sktime.net/en/latest/api_reference/dists_kernels.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/dist_kern_panel.py) |
 | **[Time Series Alignment]** | experimental | [API Reference](https://www.sktime.net/en/latest/api_reference/alignment.html) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/alignment.py) |
@@ -94,7 +94,7 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 [time series distances/kernels]: https://github.com/sktime/sktime/tree/main/sktime/dists_kernels
 [time series alignment]: https://github.com/sktime/sktime/tree/main/sktime/alignment
 [transformations]: https://github.com/sktime/sktime/tree/main/sktime/transformations
-[distributions and simulation]: https://github.com/sktime/sktime/tree/main/sktime/proba
+[distributions and simulation]: https://www.sktime.net/en/latest/api_reference.html
 [time series splitters]: https://github.com/sktime/sktime/tree/main/sktime/split
 [parameter fitting]: https://github.com/sktime/sktime/tree/main/sktime/param_est
 
@@ -102,7 +102,7 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 ## :hourglass_flowing_sand: Install sktime
 For troubleshooting and detailed installation instructions, see the [documentation](https://www.sktime.net/en/latest/installation.html).
 
-- **Operating system**: macOS X · Linux · Windows 8.1 or higher
+- **Operating system**: macOS X · Linux · Windows 10 or higher
 - **Python version**: Python 3.10, 3.11, 3.12, and 3.13 (only 64-bit)
 - **Package managers**: [pip] · [conda] (via `conda-forge`)
 
