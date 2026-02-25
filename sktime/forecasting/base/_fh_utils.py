@@ -479,3 +479,10 @@ class PandasFHConverter:
         if hasattr(offset, "freqstr"):
             return PandasFHConverter.normalize_freq(offset.freqstr)
         return None
+
+    @staticmethod
+    def _freqstr(idx) -> str | None:
+        """Extract normalized frequency string from a pandas Index."""
+        if hasattr(idx, "freq") and idx.freq is not None:
+            return PandasFHConverter.normalize_freq(idx.freqstr)
+        return None
