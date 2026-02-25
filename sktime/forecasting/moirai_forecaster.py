@@ -5,13 +5,13 @@ from unittest.mock import patch
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
 
 
-class MOIRAIForecaster(_BaseGlobalForecaster):
+class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """
     Adapter for using MOIRAI Forecasters.
 
@@ -177,7 +177,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 )
                 return MoiraiForecast.load_from_checkpoint(**model_kwargs)
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X=None, fh=None):
         if fh is not None:
             prediction_length = max(fh.to_relative(self.cutoff))
         else:
@@ -226,7 +226,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             self.model = self._instantiate_patched_model(model_kwargs)
             self.model.to(self.map_location)
 
-    def _predict(self, fh, y=None, X=None):
+    def _predict(self, fh, X=None):
         if self.deterministic:
             import torch
 
@@ -249,15 +249,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             _X = self._X.copy()
 
         # Zero shot case with X and fit data as context
-        _use_fit_data_as_context = False
-        if X is not None and y is None:
-            _use_fit_data_as_context = True
-
-        # Override to data in fit as new timeseries is passed
-        elif y is not None:
-            _y = y.copy()
-            if X is not None:
-                _X = X.copy()
+        _use_fit_data_as_context = X is not None
 
         if isinstance(_y, pd.Series):
             target = [_y.name]

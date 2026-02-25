@@ -10,7 +10,11 @@ from typing import Literal
 import numpy as np
 import pandas
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _GlobalForecastingDeprecationMixin,
+)
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
@@ -22,7 +26,7 @@ _SUPPORTED_LOCAL_SCALAR_TYPES = Literal[
 ]
 
 
-class _NeuralForecastAdapter(_BaseGlobalForecaster):
+class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """Base adapter class for NeuralForecast models.
 
     Parameters
@@ -305,8 +309,8 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
     def _fit(
         self: "_NeuralForecastAdapter",
         y: pandas.Series,
-        X: pandas.DataFrame | None,
-        fh: ForecastingHorizon,
+        X: pandas.DataFrame | None = None,
+        fh: ForecastingHorizon | None = None,
     ) -> "_NeuralForecastAdapter":
         """Fit forecaster to training data.
 
@@ -448,8 +452,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
     def _predict(
         self: "_NeuralForecastAdapter",
         fh: ForecastingHorizon | None,
-        X: pandas.DataFrame | None,
-        y: pandas.Series | None = None,
+        X: pandas.DataFrame | None = None,
     ) -> pandas.Series:
         """Forecast time series at future horizon.
 
@@ -469,14 +472,6 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
-            If ``y`` is not passed (not performing global forecasting), ``X`` should
-            only contain the time points to be predicted.
-            If ``y`` is passed (performing global forecasting), ``X`` must contain
-            all historical values and the time points to be predicted.
-        y : sktime time series object, optional (default=None)
-            Historical values of the time series that should be predicted.
-            If not None, global forecasting will be performed.
-            Only pass the historical values not the time points to be predicted.
 
         Returns
         -------
@@ -487,24 +482,11 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         Notes
         -----
         This method does not use ``fh``, the one passed during ``fit`` takes precedence.
-
-        If ``y`` is not None, global forecast will be performed.
-        In global forecast mode,
-        ``X`` should contain all historical values and the time points to be predicted,
-        while ``y`` should only contain historical values
-        not the time points to be predicted.
-
-        If ``y`` is None, non global forecast will be performed.
-        In non global forecast mode,
-        ``X`` should only contain the time points to be predicted,
-        while ``y`` should only contain historical values
-        not the time points to be predicted.
         """
         del fh  # to avoid being detected as unused by ``vulture`` etc.
 
         predict_parameters: dict = {"verbose": self.verbose_predict}
-        if not self._global_forecasting:
-            y = self._y
+        y = self._y
 
         if self.futr_exog_list and X is None:
             raise ValueError("Missing exogeneous data, 'futr_exog_list' is non-empty.")
@@ -523,17 +505,9 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                 predict_data[column] = X[column].to_numpy()
 
             predict_dataset = pandas.DataFrame(data=predict_data)
-            if not self._global_forecasting:
-                predict_parameters["futr_df"] = predict_dataset
-            else:
-                predict_parameters["futr_df"] = predict_dataset[
-                    predict_dataset.ds > self.cutoff[0]
-                ]
-                df = predict_dataset[predict_dataset.ds <= self.cutoff[0]]
-                df[self.target_col] = y.to_numpy().flatten()
-                predict_parameters["df"] = df
+            predict_parameters["futr_df"] = predict_dataset
 
-        if self._global_forecasting and not self.futr_exog_list:
+        if not self.futr_exog_list:
             y_time_index = y.index.get_level_values(-1)
             if isinstance(y_time_index, pandas.PeriodIndex):
                 predict_indices = self._handle_PeriodIndex(y)
@@ -564,10 +538,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         new_index_names = [f"_new_idx_name_{i}" for i in range(len(y.index.names))]
 
         if isinstance(y, pandas.DataFrame):
-            if self._global_forecasting:
-                id_idx = np.array(y.index.to_list())
-            else:
-                id_idx = np.array(y.index.to_list())
+            id_idx = np.array(y.index.to_list())
             id_int = id_idx[:, :-1].sum(axis=1)
             ins = id_idx[:, :-1]
 

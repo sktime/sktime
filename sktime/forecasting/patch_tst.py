@@ -15,7 +15,11 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _GlobalForecastingDeprecationMixin,
+)
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
 
@@ -29,7 +33,7 @@ Trainer = _safe_import("transformers.Trainer")
 TrainingArguments = _safe_import("transformers.TrainingArguments")
 
 
-class PatchTSTForecaster(_BaseGlobalForecaster):
+class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """Interface for the PatchTST forecaster.
 
     This forecaster interfaces the Huggingface library's PatchTST model for
@@ -303,7 +307,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         if self.model_path is None and self.fit_strategy != "full":
             raise ValueError(f"model_path={model_path} requires fit_strategy=='full'")
 
-    def _fit(self, y, fh, X=None):
+    def _fit(self, y, X=None, fh=None):
         """Fits the model.
 
         Parameters
@@ -424,7 +428,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
 
         return self
 
-    def _predict(self, y, X=None, fh=None):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -450,8 +454,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         y_pred : sktime time series object
             pandas DataFrame
         """
-        if y is None:
-            y = self._y
+        y = self._y
         if fh is None:
             fh = self.fh_
         else:
