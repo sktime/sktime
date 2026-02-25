@@ -18,16 +18,6 @@ Wishlist of time series transformation algorithms requested for implementation i
 
 ---
 
-## Feature Extraction
-
-- [ ] **Catch22** - 22 canonical time series features (improvements)
-  - Paper: [catch22: CAnonical Time-series CHaracteristics](https://arxiv.org/abs/1901.10200)
-  - Issue: TBD
-
-- [ ] **TSFRESH Parallel** - Parallel feature extraction improvements
-  - Reference: [tsfresh](https://tsfresh.readthedocs.io/)
-  - Issue: TBD
-
 ## Decomposition
 
 - [ ] **Variational Mode Decomposition (VMD)** - Signal decomposition
@@ -54,19 +44,21 @@ Wishlist of time series transformation algorithms requested for implementation i
 
 ## Preprocessing
 
-- [ ] **Symbolic Aggregate Approximation (SAX) Variants** - Additional SAX methods
-  - Reference: Various implementations
-  - Issue: TBD
-
 - [ ] **Time Series Augmentation** - Data augmentation techniques
   - Reference: [tsaug](https://tsaug.readthedocs.io/)
   - Issue: TBD
 
-## Reconciliation
+---
 
-- [ ] **MinT** - Minimum Trace reconciliation
-  - Paper: [Optimal forecast reconciliation for hierarchical and grouped time series](https://robjhyndman.com/papers/MinT.pdf)
-  - Issue: TBD
+## Already Implemented in sktime
+
+The following algorithms are already available in sktime:
+
+- **Catch22** - `Catch22` in `sktime.transformations.panel.catch22`
+- **TSFresh** - `TSFreshFeatureExtractor`, `TSFreshRelevantFeatureExtractor` in `sktime.transformations.panel.tsfresh`
+- **SAX** - `SAX` in `sktime.transformations.series.sax`, `SAXlegacy` in `sktime.transformations.panel.dictionary_based`
+- **PAA** - `PAA` in `sktime.transformations.series.paa`, `PAAlegacy` in `sktime.transformations.panel.dictionary_based`
+- **MinT/Reconciliation** - `ReconcilerForecaster` in `sktime.forecasting.reconcile` with various reconciliation methods
 
 ---
 

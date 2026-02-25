@@ -20,14 +20,6 @@ Wishlist of time series classification algorithms requested for implementation i
 
 ## Deep Learning
 
-- [ ] **InceptionTime** - Ensemble of Inception-based CNNs for time series classification
-  - Paper: [InceptionTime: Finding AlexNet for Time Series Classification](https://arxiv.org/abs/1909.04939)
-  - Issue: TBD
-
-- [ ] **ROCKET Variants** - Additional ROCKET variants
-  - Paper: [ROCKET: Exceptionally fast and accurate time series classification using random convolutional kernels](https://arxiv.org/abs/1910.13051)
-  - Issue: TBD
-
 - [ ] **H-InceptionTime** - Hierarchical InceptionTime
   - Paper: [H-InceptionTime](https://arxiv.org/abs/2204.07885)
   - Issue: TBD
@@ -59,6 +51,21 @@ Wishlist of time series classification algorithms requested for implementation i
 - [ ] **Moment** - Masked pre-training for time series
   - Paper: [MOMENT: A Family of Open Time-series Foundation Models](https://arxiv.org/abs/2402.03885)
   - Issue: TBD
+
+---
+
+## Already Implemented in sktime
+
+The following algorithms are already available in sktime:
+
+- **InceptionTime** - `InceptionTimeClassifier` in `sktime.classification.deep_learning`
+- **ROCKET** - `RocketClassifier` in `sktime.classification.kernel_based`
+- **MiniRocket** - `MiniRocketClassifier` in `sktime.classification.kernel_based`
+- **MultiRocket** - `MultiRocketClassifier` in `sktime.classification.kernel_based`
+- **HIVE-COTE** - `HIVECOTEV1`, `HIVECOTEV2` in `sktime.classification.hybrid`
+- **BOSS** - `BOSSEnsemble` in `sktime.classification.dictionary_based`
+- **TDE** - `TemporalDictionaryEnsemble` in `sktime.classification.dictionary_based`
+- **TSFresh** - `TSFreshClassifier` in `sktime.classification.feature_based`
 
 ---
 

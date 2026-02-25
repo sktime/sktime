@@ -42,10 +42,6 @@ Wishlist of anomaly, outlier, and change point detection algorithms requested fo
   - Paper: [Bayesian Online Changepoint Detection](https://arxiv.org/abs/0710.3742)
   - Issue: TBD
 
-- [ ] **PELT** - Pruned Exact Linear Time (ruptures interface)
-  - Reference: [ruptures](https://centre-borelli.github.io/ruptures-docs/)
-  - Issue: TBD
-
 - [ ] **KernelCPD** - Kernel Change Point Detection
   - Reference: [ruptures](https://centre-borelli.github.io/ruptures-docs/)
   - Issue: TBD
@@ -56,9 +52,16 @@ Wishlist of anomaly, outlier, and change point detection algorithms requested fo
   - Paper: [Time-Series Anomaly Detection Service at Microsoft](https://arxiv.org/abs/1906.03821)
   - Issue: TBD
 
-- [ ] **Matrix Profile Variants** - Additional matrix profile algorithms
-  - Reference: [STUMPY](https://stumpy.readthedocs.io/)
-  - Issue: TBD
+---
+
+## Already Implemented in sktime
+
+The following algorithms are already available in sktime:
+
+- **PELT** - `PELT` in `sktime.detection.skchange_cp` (via skchange)
+- **Matrix Profile** - `MatrixProfileTransformer` in `sktime.transformations.series.matrix_profile`
+- **ClaSP** - `ClaSPSegmentation` in `sktime.annotation.clasp`
+- **STRAY** - `STRAY` in `sktime.detection.stray`
 
 ---
 

@@ -30,10 +30,6 @@ Wishlist of time series clustering algorithms requested for implementation in sk
 
 ## Shape-Based
 
-- [ ] **k-Shape** - Shape-based time series clustering
-  - Paper: [k-Shape: Efficient and Accurate Clustering of Time Series](https://dl.acm.org/doi/10.1145/2723372.2737793)
-  - Issue: TBD
-
 - [ ] **KSC** - Kernel Spectral Clustering for time series
   - Reference: Various implementations
   - Issue: TBD
@@ -43,6 +39,16 @@ Wishlist of time series clustering algorithms requested for implementation in sk
 - [ ] **TICC** - Toeplitz Inverse Covariance-based Clustering
   - Paper: [TICC: Clustering with Subsequence Invariance](https://arxiv.org/abs/1706.03161)
   - Issue: TBD
+
+---
+
+## Already Implemented in sktime
+
+The following algorithms are already available in sktime:
+
+- **k-Shape** - `TimeSeriesKShapes` in `sktime.clustering.k_shapes`
+- **k-Means (DTW)** - `TimeSeriesKMeans` in `sktime.clustering.k_means`
+- **k-Medoids** - `TimeSeriesKMedoids` in `sktime.clustering.k_medoids`
 
 ---
 
