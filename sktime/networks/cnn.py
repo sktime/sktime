@@ -5,7 +5,7 @@ from sktime.utils.dependencies import _check_dl_dependencies
 from sktime.utils.warnings import warn
 
 
-# TODO (release 0.41.0)
+# TODO (release 0.42.0)
 # change the default value of 'activation' to "relu"
 # update the docstring for activation from "sigmoid" to "relu"
 # and remove the note about the change from the docstring.
@@ -56,7 +56,7 @@ class CNNNetwork(BaseDeepNetwork):
         "python_dependencies": "tensorflow",
     }
 
-    # TODO (release 0.41.0)
+    # TODO (release 0.42.0)
     # Change the default value of 'activation' to "relu"
     def __init__(
         self,
@@ -80,7 +80,7 @@ class CNNNetwork(BaseDeepNetwork):
         else:
             self._filter_sizes = filter_sizes
         self.activation = activation
-        # TODO (release 0.41.0)
+        # TODO (release 0.42.0)
         # After changing the default value of 'activation' to "relu"
         # in the __init__ method signature,
         # Remove the following 'if-else' check
@@ -132,7 +132,7 @@ class CNNNetwork(BaseDeepNetwork):
 
         input_layer = keras.layers.Input(input_shape)
 
-        # TODO (release 0.41.0)
+        # TODO (release 0.42.0)
         # After changing the default value of 'activation' to "relu"
         # in the __init__ method signature,
         # remove the usage of self._activation in the following lines
@@ -146,7 +146,7 @@ class CNNNetwork(BaseDeepNetwork):
         conv = keras.layers.AveragePooling1D(pool_size=self.avg_pool_size)(conv)
 
         for i in range(1, self.n_conv_layers):
-            # TODO (release 0.41.0)
+            # TODO (release 0.42.0)
             # After changing the default value of 'activation' to "relu"
             # in the __init__ method signature,
             # remove the usage of self._activation in the following lines
