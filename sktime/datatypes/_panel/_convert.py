@@ -628,6 +628,8 @@ def from_multi_index_to_3d_numpy(X):
 def from_multi_index_to_3d_numpy_adp(obj, store=None):
     obj = _coerce_df_dtypes(obj)
 
+    obj = _coerce_df_dtypes(obj)
+
     res = from_multi_index_to_3d_numpy(X=obj)
     if isinstance(store, dict):
         store["columns"] = obj.columns
@@ -779,6 +781,8 @@ def from_multi_index_to_nested(
 
 
 def from_multi_index_to_nested_adp(obj, store=None):
+    obj = _coerce_df_dtypes(obj)
+
     obj = _coerce_df_dtypes(obj)
 
     if isinstance(store, dict):
