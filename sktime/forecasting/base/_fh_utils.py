@@ -58,6 +58,18 @@ class PandasFHConverter:
         if isinstance(values, FHValues):
             return values.copy()
 
+        # <check>
+        # check for freq mismatch/incompatibility with values where possible,
+        # and raise informative errors
+        # Example: if freq is provided as "D" but values are datetime64 with
+        # hourly frequency, that should raise an error about freq mismatch.
+        # This is a non-trivial amount of logic to implement.
+        # what needs to be handled explicitly here and what can be deferred to pandas
+        # to raise errors - is under consideration, will revisit after initial
+        # implementation of the main conversion logic.
+        # Current implementation relies on pandas to raise errors
+        # </check>
+
         # integer scalars and ranges: type is known,
         # convert directly to int64 numpy array without needing to inspect contents
         if isinstance(values, (int, np.integer)):
@@ -135,7 +147,7 @@ class PandasFHConverter:
 
         # timedelta64 and datetime64 checked before integer as a defensive measure
         # as some numpy versions might consider datetime64 as a subtype of integer,
-        # which would cause incorrect classification.
+        # which might cause incorrect classification.
         # This ordering keeps the type checking explicit and
         # avoids any future dtype hierarchy surprises
         if np.issubdtype(values.dtype, np.timedelta64):
