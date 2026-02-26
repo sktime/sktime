@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 jobs:
   test_internal_data:
+    if: ${{ github.repository == 'sktime/sktime' }}
     name: onboard
     strategy:
       fail-fast: false
@@ -57,6 +58,7 @@ jobs:
         shell: bash
 
   test_external_data:
+    if: ${{ github.repository == 'sktime/sktime' }}
     name: downloads
     strategy:
       fail-fast: false

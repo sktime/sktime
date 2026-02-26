@@ -346,3 +346,35 @@ def test_windowsummarizer_with_output(
 
     # Checking for duplicate index names
     assert len(set(Xt.index.names)) == len(X.index.names)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_windowsummarizer_bfill_respects_multiindex_groups():
+    """Test that bfill does not fill NaN values across multiindex groups."""
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    y = _make_hierarchical(
+        hierarchy_levels=(1, 3), max_timepoints=10, min_timepoints=10, random_state=42
+    )
+    y_train, y_test = temporal_train_test_split(y=y, test_size=3)
+    y_pred = pd.DataFrame(index=y_test.index)
+
+    window_features = WindowSummarizer(
+        lag_feature={"lag": [1, 2]},
+        truncate="bfill",
+        n_jobs=1,
+    )
+    result = window_features.fit(X=y_train, y=y_train).transform(X=y_pred, y=y_pred)
+
+    groups = result.groupby(level=list(range(result.index.nlevels - 1)))
+    for name, group in groups:
+        lag_1_col = [c for c in result.columns if "lag_1" in c][0]
+        assert pd.isna(group.iloc[1][lag_1_col]), (
+            f"Group {name} row 2 lag_1 should be NaN but got {group.iloc[1][lag_1_col]}"
+        )
+        assert pd.isna(group.iloc[2][lag_1_col]), (
+            f"Group {name} row 3 lag_1 should be NaN but got {group.iloc[2][lag_1_col]}"
+        )

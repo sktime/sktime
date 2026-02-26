@@ -469,7 +469,7 @@ class ARARForecaster(BaseForecaster):
         "authors": ["Akai01"],
         "maintainers": ["Akai01"],
         # estimator type
-        "y_inner_mtype": "pd.Series",
+        "y_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
         "capability:exogenous": False,
@@ -502,7 +502,7 @@ class ARARForecaster(BaseForecaster):
         self : reference to self
         """
         # Convert to numpy array for fitting
-        y_np = y.values
+        y_np = y.values.flatten()
 
         # Fit ARAR model
         self.model_ = _fit_arar(
@@ -523,7 +523,7 @@ class ARARForecaster(BaseForecaster):
 
         Returns
         -------
-        y_pred : pd.Series
+        y_pred : pd.DataFrame
             Point predictions for the forecast horizon.
         """
         # Get the forecast horizon as integer steps
@@ -543,7 +543,8 @@ class ARARForecaster(BaseForecaster):
         index = fh_abs.to_pandas()
 
         # Return as pandas Series
-        return pd.Series(y_pred_values, index=index, name=self._y.name)
+        cols = self._get_varnames()
+        return pd.DataFrame(y_pred_values, index=index, columns=cols)
 
     def _predict_interval(self, fh, X, coverage):
         """Compute prediction intervals.
@@ -574,26 +575,23 @@ class ARARForecaster(BaseForecaster):
 
         # Create index for predictions
         fh_abs = fh.to_absolute(self.cutoff)
-        index = fh_abs.to_pandas()
+        ix = fh_abs.to_pandas()
 
         # Extract intervals for the requested horizon
         # Convert fh_int to numpy array for indexing (0-indexed)
         fh_idx = np.asarray(fh_int) - 1
         pred_int_dict = {}
+        name = self._get_columns()[0]
         for i, cov in enumerate(coverage):
             lower_values = forecast_dict["lower"][fh_idx, i]
             upper_values = forecast_dict["upper"][fh_idx, i]
 
-            pred_int_dict[(cov, "lower")] = pd.Series(
-                lower_values, index=index, name=self._y.name
-            )
-            pred_int_dict[(cov, "upper")] = pd.Series(
-                upper_values, index=index, name=self._y.name
-            )
+            pred_int_dict[(cov, "lower")] = pd.Series(lower_values, index=ix, name=name)
+            pred_int_dict[(cov, "upper")] = pd.Series(upper_values, index=ix, name=name)
 
         # Create MultiIndex DataFrame
         cols = self._get_columns(method="predict_interval", coverage=coverage)
-        index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
+        index = fh.get_expected_pred_idx(cutoff=self.cutoff)
         pred_int = pd.DataFrame(pred_int_dict)
         pred_int.columns = cols
         pred_int.index = index

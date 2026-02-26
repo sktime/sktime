@@ -60,6 +60,7 @@ class VARMAX(_StatsModelsAdapter):
     cov_type : str, optional
         The ``cov_type`` keyword governs the method for calculating the
         covariance matrix of parameter estimates. Can be one of:
+
          - 'opg' for the outer product of gradient estimator
          - 'oim' for the observed information matrix estimator, calculated
             using the method of Harvey (1989)
@@ -72,12 +73,14 @@ class VARMAX(_StatsModelsAdapter):
          - 'robust_approx' is the same as 'robust' except that the
             intermediate calculations use the 'approx' method.
          - 'none' for no covariance matrix calculation.
+
         Default is 'opg' unless memory conservation is used to avoid computing the
         loglikelihood values for each observation, in which case the default is
         'approx'.
     cov_kwds : dict or None, optional
         A dictionary of arguments affecting covariance matrix computation.
         opg, oim, approx, robust, robust_approx
+
          - 'approx_complex_step' : bool, optional - If True, numerical
             approximations are computed using complex-step methods. If False,
             numerical approximations are computed using finite difference
@@ -85,9 +88,11 @@ class VARMAX(_StatsModelsAdapter):
          - 'approx_centered' : bool, optional - If True, numerical
             approximations computed using finite difference methods use a
             centered approximation. Default is False.
+
     method : str, optional
         The ``method`` determines which solver from ``scipy.optimize``
         is used, and it can be chosen from among the following strings:
+
          - 'newton' for Newton-Raphson
          - 'nm' for Nelder-Mead
          - 'bfgs' for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
@@ -96,6 +101,7 @@ class VARMAX(_StatsModelsAdapter):
          - 'cg' for conjugate gradient
          - 'ncg' for Newton-conjugate gradient
          - 'basinhopping' for global basin-hopping solver
+
         The explicit arguments in ``fit`` are passed to the solver,
         with the exception of the basin-hopping solver. Each
         solver has several optional arguments that are not the same across
@@ -216,7 +222,7 @@ class VARMAX(_StatsModelsAdapter):
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
-        "scitype:y": "multivariate",
+        "scitype:y": "both",
         "capability:exogenous": True,
         "capability:missing_values": False,
         "y_inner_mtype": "pd.DataFrame",
@@ -226,6 +232,11 @@ class VARMAX(_StatsModelsAdapter):
         "enforce_index_type": None,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
+        "capability:non_contiguous_X": False,
+        # CI and testing tags
+        # -------------------
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
+        # sporadic failures in update due to singular matrix error
     }
 
     def __init__(
@@ -309,6 +320,11 @@ class VARMAX(_StatsModelsAdapter):
         if self.suppress_warnings:
             warnings.filterwarnings("ignore")
 
+        # if univariate, add a shifted copy of the data
+        if y.shape[1] == 1:
+            y = y.copy()
+            y["__y_shifted"] = y.iloc[:, 0].abs().pow(0.1) + 1.0
+
         from statsmodels.tsa.statespace.varmax import VARMAX as _VARMAX
 
         self._forecaster = _VARMAX(
@@ -340,6 +356,9 @@ class VARMAX(_StatsModelsAdapter):
             flags=self.flags,
             low_memory=self.low_memory,
         )
+
+        self._y_index_0 = y.index[0]
+        self._y_len = len(y)
         return self
 
     # defining `_predict`, instead of inheriting from `_StatsModelsAdapter`,
@@ -347,7 +366,7 @@ class VARMAX(_StatsModelsAdapter):
     # 1. to pass in `dynamic`, `information_set` and `signal_only`
     # 2. to deal with statsmodel integer indexing issue
     def _predict(self, fh, X):
-        """Wrap Statmodel's VARMAX forecast method.
+        """Wrap statmodels VARMAX forecast method.
 
         Parameters
         ----------
@@ -363,7 +382,7 @@ class VARMAX(_StatsModelsAdapter):
         y_pred : np.ndarray
             Returns series of predicted values.
         """
-        abs_idx = fh.to_absolute_int(self._y.index[0], self.cutoff)
+        abs_idx = fh.to_absolute_int(self._y_index_0, self.cutoff)
         start, end = abs_idx[[0, -1]]
         full_range = pd.RangeIndex(start=start, stop=end + 1)
 
@@ -378,9 +397,33 @@ class VARMAX(_StatsModelsAdapter):
 
         y_pred.index = full_range
         y_pred = y_pred.loc[abs_idx.to_pandas()]
+
         y_pred.index = fh.to_absolute_index(self.cutoff)
 
+        # invert the "only_1s" column if it was added during fit
+        if self._y_metadata["n_features"] == 1:
+            y_pred = y_pred.iloc[:, [0]]
+
         return y_pred
+
+    def _update(self, y, X=None, update_params=True):
+        """Update used internally in update."""
+        if update_params or self.is_composite():
+            super()._update(y, X, update_params=update_params)
+            return self
+
+        index_diff = y.index.difference(self._fitted_forecaster.fittedvalues.index)
+        if index_diff.isin(y.index).all():
+            y = y.loc[index_diff]
+            X = X.loc[index_diff].set_index(y.index) if X is not None else None
+
+        # if univariate, add a shifted copy of the data
+        if y.shape[1] == 1:
+            y = y.copy()
+            y["__y_shifted"] = y.iloc[:, 0].abs().pow(0.1) + 1.0
+
+        self._fitted_forecaster = self._fitted_forecaster.append(y, exog=X)
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

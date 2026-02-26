@@ -30,6 +30,8 @@ class TapNetNetwork(BaseDeepNetwork):
         parameters for random permutation
     dropout : float, default = 0.5
         dropout rate, in the range [0, 1)
+    lstm_dropout : float, default = 0.8
+        dropout rate for the LSTM layer, in the range [0, 1)
     dilation : int, default = 1
         dilation value
     padding : str, default = 'same'
@@ -71,6 +73,7 @@ class TapNetNetwork(BaseDeepNetwork):
         random_state=1,
         padding="same",
         activation="leaky_relu",
+        lstm_dropout=0.8,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -87,6 +90,7 @@ class TapNetNetwork(BaseDeepNetwork):
         self.padding = padding
 
         self.dropout = dropout
+        self.lstm_dropout = lstm_dropout
         self.use_lstm = use_lstm
         self.use_cnn = use_cnn
 
@@ -177,7 +181,7 @@ class TapNetNetwork(BaseDeepNetwork):
             x_lstm = keras.layers.LSTM(self.lstm_dim, return_sequences=True)(
                 input_layer
             )
-            x_lstm = keras.layers.Dropout(0.8)(x_lstm)
+            x_lstm = keras.layers.Dropout(self.lstm_dropout)(x_lstm)
 
             if self.use_att:
                 x_lstm = SeqSelfAttention(128, attention_type="multiplicative")(x_lstm)
