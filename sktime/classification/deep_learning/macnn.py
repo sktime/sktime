@@ -38,6 +38,8 @@ class MACNNClassifier(BaseDeepClassifier):
         The output size of Conv1D layers within each MACNN Block.
     reduction : int, optional (default = 16)
         The factor by which the first dense layer of a MACNN Block will be divided by.
+    n_layers : int, optional (default=3)
+        The number of stages (stack of MACNN blocks followed by pooling) in the network.
     loss : str, optional (default="categorical_crossentropy")
         The name of the loss function to be used during training,
         should be supported by keras.
@@ -103,6 +105,7 @@ class MACNNClassifier(BaseDeepClassifier):
         filter_sizes=(64, 128, 256),
         kernel_size=(3, 6, 12),
         reduction=16,
+        n_layers=3,
         loss="categorical_crossentropy",
         activation="sigmoid",
         activation_hidden="relu",
@@ -114,6 +117,8 @@ class MACNNClassifier(BaseDeepClassifier):
         verbose=False,
     ):
         _check_dl_dependencies(severity="error")
+        if n_layers <= 0:
+            raise ValueError("n_layers must be a positive integer >= 1")
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -124,6 +129,7 @@ class MACNNClassifier(BaseDeepClassifier):
         self.filter_sizes = filter_sizes
         self.kernel_size = kernel_size
         self.reduction = reduction
+        self.n_layers = n_layers
         self.loss = loss
         self.activation = activation
         self.activation_hidden = activation_hidden
@@ -146,6 +152,7 @@ class MACNNClassifier(BaseDeepClassifier):
             filter_sizes=self.filter_sizes,
             kernel_size=self.kernel_size,
             reduction=self.reduction,
+            n_layers=self.n_layers,
             random_state=self.random_state,
         )
 
