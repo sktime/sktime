@@ -187,18 +187,6 @@ class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
 
         from timecopilot import TimeCopilot
 
-        # Set API key if provided
-        if self.api_key is not None:
-            import os
-
-            # Determine provider from llm string
-            if self.llm.startswith("openai:"):
-                os.environ["OPENAI_API_KEY"] = self.api_key
-            elif self.llm.startswith("anthropic:"):
-                os.environ["ANTHROPIC_API_KEY"] = self.api_key
-            elif self.llm.startswith("google"):
-                os.environ["GOOGLE_API_KEY"] = self.api_key
-
         # Convert y to the format expected by TimeCopilot
         # TimeCopilot expects: unique_id, ds, y columns
         df = self._convert_to_timecopilot_format(y)
@@ -211,10 +199,14 @@ class TimeCopilotForecaster(_HeterogenousMetaEstimator, BaseForecaster):
             h = None
 
         # Initialize TimeCopilot
-        tc = TimeCopilot(
-            llm=self.llm,
-            retries=self.retries,
-        )
+        tc_kwargs = {
+            "llm": self.llm,
+            "retries": self.retries,
+        }
+        if self.api_key is not None:
+            tc_kwargs["api_key"] = self.api_key
+
+        tc = TimeCopilot(**tc_kwargs)
 
         # Build kwargs for forecast call
         # freq and seasonality are inferred by TimeCopilot from the data
