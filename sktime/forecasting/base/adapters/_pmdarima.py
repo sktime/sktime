@@ -69,7 +69,23 @@ class _PmdArimaAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        import warnings
+
+        from statsmodels.tools.sm_exceptions import ConvergenceWarning
+
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
         if update_params:
+            if X is not None:
+                X = X.loc[y.index]
+            # Refit the model with all data seen so far
+            self._forecaster = self._instantiate_model()
+            self._forecaster.fit(
+                pd.concat([self._y, y]),
+                X=pd.concat([self._X, X])
+                if X is not None and self._X is not None
+                else None,
+            )
+        else:
             if X is not None:
                 X = X.loc[y.index]
             self._forecaster.update(y, X=X)
