@@ -344,8 +344,8 @@ This concludes how to create string identifiers for ``.ts``  format. To learn mo
 `tutorials`_ page.
 
 .. _loading data: https://github.com/sktime/sktime/blob/main/examples/data/loading_data.ipynb
-.. _Basic Motion.ts: https://github.com/alan-turing-institute/sktime/blob/main/sktime/datasets/data/BasicMotions/BasicMotions_TEST.ts
-.. _issue: https://github.com/alan-turing-institute/sktime/issues
+.. _Basic Motion.ts: https://github.com/sktime/sktime/blob/main/sktime/datasets/data/BasicMotions/BasicMotions_TEST.ts
+.. _issue: https://github.com/sktime/sktime/issues
 .. _tsregression: http://tseregression.org/
 .. _timeseriesclassification.com: http://www.timeseriesclassification.com/index.php
 .. _tutorials: https://www.sktime.net/en/stable/tutorials.html
