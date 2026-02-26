@@ -185,7 +185,11 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
         model : MLPNetworkTorch instance
             The constructed MLP network.
         """
-        # n_instances, n_dims, n_timesteps = X.shape
+        # X arrives in sktime format: (n_instances, n_dims, n_timesteps)
+        # The base class's _build_dataloader transposes it to
+        # (batch, n_timesteps, n_dims) before passing to forward().
+        # But at this point, X has not been transposed.
+        # So input_size = n_dims is correct here
         self.input_shape = X.shape
         return MLPNetworkTorch(
             input_shape=self.input_shape,
