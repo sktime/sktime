@@ -7,7 +7,6 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -155,15 +154,12 @@ class Chronos2Forecaster(BaseForecaster):
             Exogenous covariates corresponding to the target series. Should
             have the same index as `y` and columns for each covariate.
         fh : ForecastingHorizon, optional, default=None
-            The forecasting horizon with the time points to predict. If None,
-            it will be inferred from the training data.
+            The forecasting horizon with the time points to predict.
 
         Returns
         -------
         self : returns an instance of self.
         """
-        # Placeholder for actual fitting logic, which would involve loading the
-        # Chronos 2 model and preparing it for forecasting.
         self.model_pipeline = self._load_pipeline()
         return self
 
@@ -195,6 +191,10 @@ class Chronos2Forecaster(BaseForecaster):
         if not hasattr(self, "model_pipeline") or self.model_pipeline is None:
             if hasattr(self, "_is_fitted") and self._is_fitted:
                 self.model_pipeline = self._load_pipeline()
+            else:
+                raise RuntimeError(
+                    "Model pipeline not loaded. Fit the forecaster before predicting."
+                )
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -219,93 +219,49 @@ class Chronos2Forecaster(BaseForecaster):
         """
         self._ensure_model_pipeline_loaded()
         transformers.set_seed(self._seed)
-        if fh is not None:
-            # needs to be integer not np.int64
-            prediction_length = int(max(fh.to_relative(self.cutoff)))
+        # If no past covariates then only y
+        # else concatenate past covariates and y to form the context for prediction
+        if self._X is None:
+            self.context = self._y.copy()
         else:
-            prediction_length = 1
-        _y = self._y.copy()
-        context_length = (
-            self._config["context_length"]
-            or self.model_pipeline.model.chronos_config.context_length
-        )
-        _y = _y.iloc[-context_length:]
-        index_names = _y.index.names
-        target = _y.values.T.astype(float)
-        past_covariates = None
-        if self._X is not None:
-            past_X = self._X.iloc[-context_length:]
-            past_covariates = {
-                col: past_X[col].values.astype(float) for col in past_X.columns
-            }
-        future_covariates = None
+            self.context = pd.concat([self._y, self._X], axis=1)
+        # for predict_df we need to pass the context and future covariates seperately
+
+        # configuring the context
+        # adding id_column if we have multiple timeseries
+        if "id" not in self.context.columns:
+            self.context["id"] = "series_1"
+        # adding timestamp
+        if "timestamp" not in self.context.columns:
+            self.context["timestamp"] = self.context.index
+        # configuring the future covariates
         if X is not None:
-            fh_absolute = fh.to_absolute(self.cutoff)
-            future_X = X.loc[fh_absolute.to_pandas()]
+            if "id" not in X.columns:
+                X["id"] = "series_1"
+            if "timestamp" not in X.columns:
+                X["timestamp"] = X.index
 
-            # Validate alignment
-            if not future_X.index.equals(fh_absolute.to_pandas()):
-                raise ValueError(
-                    "Future X index must exactly match forecasting horizon."
-                )
-
-            if len(future_X) != prediction_length:
-                raise ValueError("Future X length must equal prediction_length.")
-
-            future_covariates = {
-                col: future_X[col].values.astype(float) for col in future_X.columns
-            }
-
-            # Ensure consistency with past covariates if both exist
-            if past_covariates is not None:
-                if not set(future_covariates.keys()).issubset(
-                    set(past_covariates.keys())
-                ):
-                    raise ValueError(
-                        "Future covariate keys must be subset of past covariate keys."
-                    )
-        input = {"target": target}
-        if past_covariates is not None:
-            input["past_covariates"] = past_covariates
-        if future_covariates is not None:
-            input["future_covariates"] = future_covariates
-        inputs = [input]
-        results = self.model_pipeline.predict(
-            inputs,
-            prediction_length=prediction_length,
+        pred_out = self.model_pipeline.predict_df(
+            self.context,
+            future_df=X,
+            prediction_length=len(self._fh),
+            id_column="id",
+            timestamp_column="timestamp",
+            target=self._y.columns.tolist(),
             batch_size=self._config["batch_size"],
             context_length=self._config["context_length"],
             cross_learning=self._config["cross_learning"],
-            limit_prediction_length=self._config["limit_prediction_length"],
-        )
-        pred = results[0]
-        n_variates, n_quantiles, pred_length = pred.shape
-        assert pred_length == prediction_length, "Prediction length mismatch."
-        if n_quantiles > 1:
-            # -> (n_variates, prediction_length)
-            pred = pred.median(dim=1).values
-        else:
-            # -> (n_variates, prediction_length)
-            pred = pred[:, 0, :]
-        pred_np = pred.detach().cpu().numpy().T
-        index = (
-            ForecastingHorizon(range(1, pred_length + 1))
-            .to_absolute(self._cutoff)
-            ._values
         )
 
-        pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
-        pred = pd.DataFrame(
-            pred_np,
-            index=index,
-            columns=self._y.columns,
-        )
-        dateindex = pred.index.get_level_values(-1).map(lambda x: x in pred_out)
-        pred.index.names = index_names
+        # to transfrom the output into same format as the input y
+        pred = pred_out.pivot(
+            index="timestamp", columns="target_name", values="predictions"
+        ).sort_index()
+        # remove the names of index and columns to match the format of input y
+        pred.index.name = None
+        pred.columns.name = None
 
-        y_pred = pred.loc[dateindex]
-
-        return y_pred
+        return pred
 
     def _load_pipeline(self):
         """Load the model pipeline using the multiton pattern.
