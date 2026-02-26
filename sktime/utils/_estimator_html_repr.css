@@ -316,3 +316,39 @@
     color: var(--sklearn-color-background);
     text-decoration: none;
   }
+
+  /* Parameter table */
+  #$id div.sk-estimator-params {
+    padding: 0.2em 0.4em;
+  }
+
+  #$id div.sk-estimator-params summary {
+    font-family: monospace;
+    cursor: pointer;
+    padding: 0.2em 0;
+  }
+
+  #$id table.sk-params-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: monospace;
+    font-size: 0.9em;
+  }
+
+  #$id table.sk-params-table td {
+    padding: 0.15em 0.4em;
+    border: 1px solid rgba(100, 100, 100, 0.2);
+    text-align: left;
+  }
+
+  #$id table.sk-params-table tr.user-set td {
+    color: rgb(200, 80, 0);
+  }
+
+  #$id table.sk-params-table tr.default td {
+    color: var(--sklearn-color-text);
+  }
+
+  #$id table.sk-params-table tr:nth-child(even) {
+    background-color: var(--sklearn-color-level-0);
+  }

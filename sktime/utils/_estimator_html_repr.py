@@ -3,6 +3,8 @@
 
 import html
 import importlib
+import inspect
+import reprlib
 import uuid
 from contextlib import closing
 from inspect import isclass
@@ -62,6 +64,64 @@ class _VisualBlock:
         return self
 
 
+def _get_non_default_params(base_object):
+    """Return the set of parameter names that differ from their __init__ defaults."""
+    try:
+        sig = inspect.signature(base_object.__class__.__init__)
+    except (ValueError, TypeError):
+        return set()
+    defaults = {
+        k: v.default
+        for k, v in sig.parameters.items()
+        if v.default is not inspect.Parameter.empty
+    }
+    params = base_object.get_params(deep=False)
+    non_default = set()
+    for name, val in params.items():
+        if name not in defaults:
+            continue
+        try:
+            if val != defaults[name]:
+                non_default.add(name)
+        except Exception:
+            non_default.add(name)
+    return non_default
+
+
+def _params_html(base_object):
+    """Return an HTML table of parameters for base_object, or empty string."""
+    if not hasattr(base_object, "get_params") or isclass(base_object):
+        return ""
+    params = base_object.get_params(deep=False)
+    if not params:
+        return ""
+
+    non_default = _get_non_default_params(base_object)
+    r = reprlib.Repr()
+    r.maxlist = 2
+    r.maxstring = 50
+
+    rows = []
+    for name, value in params.items():
+        ptype = "user-set" if name in non_default else "default"
+        val_str = html.escape(r.repr(value))
+        rows.append(
+            f'<tr class="{ptype}">'
+            f'<td class="param">{html.escape(name)}</td>'
+            f'<td class="value">{val_str}</td>'
+            "</tr>"
+        )
+
+    rows_html = "\n".join(rows)
+    return (
+        '<div class="sk-estimator-params">'
+        "<details><summary>Parameters</summary>"
+        '<table class="sk-params-table"><tbody>'
+        f"{rows_html}"
+        "</tbody></table></details></div>"
+    )
+
+
 def _write_label_html(
     out,
     name,
@@ -70,6 +130,7 @@ def _write_label_html(
     inner_class="sk-label",
     checked=False,
     doc_link="",
+    params_html="",
 ):
     """Write labeled html with or without a dropdown with named details."""
     out.write(f'<div class={outer_class!r}><div class="{inner_class} sk-toggleable">')
@@ -90,12 +151,13 @@ def _write_label_html(
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
 
+        content = params_html if params_html else f"<pre>{name_details}</pre>"
         out.write(
             '<input class="sk-toggleable__control sk-hidden--visually" '
             f'id={est_id!r} type="checkbox" {checked_str}>'
             f"<label for={est_id!r} class={label_class!r}>{name}{doc_link}</label>"
-            f'<div class="sk-toggleable__content"><pre>{name_details}'
-            "</pre></div>"
+            f'<div class="sk-toggleable__content">{content}'
+            "</div>"
         )
     else:
         out.write(f"<label>{name}</label>")
@@ -155,7 +217,11 @@ def _write_base_object_html(
 
         if base_object_label:
             _write_label_html(
-                out, base_object_label, base_object_label_details, doc_link=doc_link
+                out,
+                base_object_label,
+                base_object_label_details,
+                doc_link=doc_link,
+                params_html=_params_html(base_object),
             )
 
         kind = est_block.kind
@@ -167,7 +233,6 @@ def _write_base_object_html(
                 _write_base_object_html(out, est, name, name_details)
             else:  # parallel
                 out.write('<div class="sk-parallel-item">')
-                # wrap element in a serial visualblock
                 serial_block = _VisualBlock("serial", [est], dash_wrapped=False)
                 _write_base_object_html(out, serial_block, name, name_details)
                 out.write("</div>")  # sk-parallel-item
@@ -182,6 +247,7 @@ def _write_base_object_html(
             inner_class="sk-estimator",
             checked=first_call,
             doc_link=doc_link,
+            params_html=_params_html(base_object),
         )
 
 
