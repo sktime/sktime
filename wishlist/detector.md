@@ -54,15 +54,4 @@ Wishlist of anomaly, outlier, and change point detection algorithms requested fo
 
 ---
 
-## Already Implemented in sktime
-
-The following algorithms are already available in sktime:
-
-- **PELT** - `PELT` in `sktime.detection.skchange_cp` (via skchange)
-- **Matrix Profile** - `MatrixProfileTransformer` in `sktime.transformations.series.matrix_profile`
-- **ClaSP** - `ClaSPSegmentation` in `sktime.annotation.clasp`
-- **STRAY** - `STRAY` in `sktime.detection.stray`
-
----
-
 *Last updated: February 2026*

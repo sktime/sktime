@@ -26,16 +26,4 @@ Wishlist of time series regression algorithms requested for implementation in sk
 
 ---
 
-## Already Implemented in sktime
-
-The following algorithms are already available in sktime:
-
-- **ResNet for TSR** - `ResNetRegressor` in `sktime.regression.deep_learning`
-- **InceptionTime for TSR** - `InceptionTimeRegressor` in `sktime.regression.deep_learning`
-- **ROCKET Regressor** - `RocketRegressor` in `sktime.regression.kernel_based`
-- **FCN Regressor** - `FCNRegressor` in `sktime.regression.deep_learning`
-- **CNN Regressor** - `CNNRegressor` in `sktime.regression.deep_learning`
-
----
-
 *Last updated: February 2026*

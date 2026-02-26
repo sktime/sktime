@@ -50,16 +50,4 @@ Wishlist of time series transformation algorithms requested for implementation i
 
 ---
 
-## Already Implemented in sktime
-
-The following algorithms are already available in sktime:
-
-- **Catch22** - `Catch22` in `sktime.transformations.panel.catch22`
-- **TSFresh** - `TSFreshFeatureExtractor`, `TSFreshRelevantFeatureExtractor` in `sktime.transformations.panel.tsfresh`
-- **SAX** - `SAX` in `sktime.transformations.series.sax`, `SAXlegacy` in `sktime.transformations.panel.dictionary_based`
-- **PAA** - `PAA` in `sktime.transformations.series.paa`, `PAAlegacy` in `sktime.transformations.panel.dictionary_based`
-- **MinT/Reconciliation** - `ReconcilerForecaster` in `sktime.forecasting.reconcile` with various reconciliation methods
-
----
-
 *Last updated: February 2026*

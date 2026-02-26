@@ -46,22 +46,4 @@ Wishlist of time series forecasting algorithms requested for implementation in s
 
 ---
 
-## Already Implemented in sktime
-
-The following algorithms are already available in sktime:
-
-- **TimesFM** - `TimesFMForecaster` in `sktime.forecasting.timesfm_forecaster`
-- **TimeGPT/Nixtla** - Available via `NixtlaForecaster` or API integrations
-- **Chronos** - `ChronosForecaster` in `sktime.forecasting.chronos`
-- **Moirai** - `MOIRAIForecaster` in `sktime.forecasting.moirai_forecaster`
-- **N-BEATS** - `PytorchForecastingNBeats` in `sktime.forecasting.pytorchforecasting`
-- **N-HiTS** - `PytorchForecastingNHiTS` in `sktime.forecasting.pytorchforecasting`
-- **DeepAR** - `PytorchForecastingDeepAR` in `sktime.forecasting.pytorchforecasting`
-- **TFT** - `PytorchForecastingTFT` in `sktime.forecasting.pytorchforecasting`
-- **MSTL** - `MSTL` in `sktime.transformations.series.detrend`
-- **STL** - `STLTransformer` in `sktime.transformations.series.detrend`
-- **Hierarchical Reconciliation** - `ReconcilerForecaster` in `sktime.forecasting.reconcile`
-
----
-
 *Last updated: February 2026*

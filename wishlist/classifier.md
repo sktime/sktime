@@ -54,19 +54,4 @@ Wishlist of time series classification algorithms requested for implementation i
 
 ---
 
-## Already Implemented in sktime
-
-The following algorithms are already available in sktime:
-
-- **InceptionTime** - `InceptionTimeClassifier` in `sktime.classification.deep_learning`
-- **ROCKET** - `RocketClassifier` in `sktime.classification.kernel_based`
-- **MiniRocket** - `MiniRocketClassifier` in `sktime.classification.kernel_based`
-- **MultiRocket** - `MultiRocketClassifier` in `sktime.classification.kernel_based`
-- **HIVE-COTE** - `HIVECOTEV1`, `HIVECOTEV2` in `sktime.classification.hybrid`
-- **BOSS** - `BOSSEnsemble` in `sktime.classification.dictionary_based`
-- **TDE** - `TemporalDictionaryEnsemble` in `sktime.classification.dictionary_based`
-- **TSFresh** - `TSFreshClassifier` in `sktime.classification.feature_based`
-
----
-
 *Last updated: February 2026*

@@ -42,14 +42,4 @@ Wishlist of time series clustering algorithms requested for implementation in sk
 
 ---
 
-## Already Implemented in sktime
-
-The following algorithms are already available in sktime:
-
-- **k-Shape** - `TimeSeriesKShapes` in `sktime.clustering.k_shapes`
-- **k-Means (DTW)** - `TimeSeriesKMeans` in `sktime.clustering.k_means`
-- **k-Medoids** - `TimeSeriesKMedoids` in `sktime.clustering.k_medoids`
-
----
-
 *Last updated: February 2026*
