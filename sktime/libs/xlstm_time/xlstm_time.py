@@ -152,14 +152,22 @@ class mLSTMBlock(nn.Module):
             o_t = torch.sigmoid(self.W_o(x_t))
 
             # Update matrix memory
-            C = f_t.unsqueeze(-1) * C + i_t.unsqueeze(-1) * torch.bmm(
-                v_t.unsqueeze(-1), k_t.unsqueeze(-2)
-            )
+            # Reshape for bmm: (batch * heads, dim, 1) and (batch * heads, 1, dim)
+            v_t_flat = v_t.view(batch_size * self.num_heads, self.head_dim, 1)
+            k_t_flat = k_t.view(batch_size * self.num_heads, 1, self.head_dim)
+            vk_flat = torch.bmm(v_t_flat, k_t_flat)
+            vk = vk_flat.view(batch_size, self.num_heads, self.head_dim, self.head_dim)
+
+            C = f_t.unsqueeze(-1) * C + i_t.unsqueeze(-1) * vk
             n = f_t * n + i_t * k_t
 
             # Compute output
-            h_heads = torch.bmm(C, q_t.unsqueeze(-1)).squeeze(-1) / (
-                n.unsqueeze(-1) + 1e-8
+            # C_flat: (batch * heads, dim, dim)
+            C_flat = C.view(batch_size * self.num_heads, self.head_dim, self.head_dim)
+            q_t_flat = q_t.view(batch_size * self.num_heads, self.head_dim, 1)
+            h_heads_flat = torch.bmm(C_flat, q_t_flat).squeeze(-1)
+            h_heads = h_heads_flat.view(batch_size, self.num_heads, self.head_dim) / (
+                n + 1e-8
             )
             h_concat = h_heads.view(batch_size, -1)
             h = o_t * self.proj(h_concat)

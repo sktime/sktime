@@ -62,11 +62,8 @@ class XLSTMForecaster(BaseForecaster):
         "capability:pred_var": False,
         "requires-fh-in-fit": False,
         "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "pd.Series",
-        "scitype:y": "univariate",
-        "ignores-exogeneous-X": True,
-        "handles-missing-data": False,
-        "requires-positive-X": False,
+        "capability:exogenous": False,
+        "capability:missing_values": False,
     }
 
     def __init__(
@@ -86,7 +83,7 @@ class XLSTMForecaster(BaseForecaster):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.block_types = block_types or ["slstm"] * num_layers
+        self.block_types = block_types
         self.num_heads = num_heads
         self.dropout = dropout
         self.learning_rate = learning_rate
@@ -105,11 +102,23 @@ class XLSTMForecaster(BaseForecaster):
         from sktime.libs.xlstm_time.xlstm_time import xLSTM
 
         y = check_y(y)
+
+        # Keep track if input was a Series for prediction output
+        self._is_series = isinstance(y, pd.Series)
+        if self._is_series:
+            self._series_name = y.name
+            y = y.to_frame()
+
+        self._y_columns = y.columns
+        self._n_outputs = len(self._y_columns)
+
         y_np = y.values.astype(np.float32)
+        if y_np.ndim == 1:
+            y_np = y_np.reshape(-1, 1)
 
         # Normalize the data
-        self.y_mean = np.mean(y_np)
-        self.y_std = np.std(y_np)
+        self.y_mean = np.mean(y_np, axis=0)
+        self.y_std = np.std(y_np, axis=0)
         y_normalized = (y_np - self.y_mean) / (self.y_std + 1e-8)
 
         # Create sequences for training
@@ -121,17 +130,24 @@ class XLSTMForecaster(BaseForecaster):
                 f"{self.sequence_length + 1} observations."
             )
 
-        # Initialize model
         self.device_ = self.device or ("cuda" if torch.cuda.is_available() else "cpu")
 
+        # Resolve block_types if None
+        _block_types = self.block_types
+        if _block_types is None:
+            _block_types = ["slstm"] * self.num_layers
+
+        # Use actual input size from data
+        actual_input_size = y_normalized.shape[1]
+
         self.model = xLSTM(
-            input_size=self.input_size,
+            input_size=actual_input_size,
             hidden_size=self.hidden_size,
             num_layers=self.num_layers,
-            block_types=self.block_types,
+            block_types=_block_types,
             num_heads=self.num_heads,
             dropout=self.dropout,
-            output_size=1,
+            output_size=actual_input_size,
         ).to(self.device_)
 
         # Setup optimizer and loss
@@ -156,7 +172,17 @@ class XLSTMForecaster(BaseForecaster):
 
                 self.optimizer.zero_grad()
                 output = self.model(seq_batch)
-                loss = self.loss_fn(output.squeeze(), target_batch)
+
+                # Output from model is (batch_size, output_size)
+                # target_batch is (batch_size, output_size)
+                if output.shape != target_batch.shape:
+                    if output.ndim > 2:
+                        output = output.squeeze(1)
+                    if output.shape != target_batch.shape:
+                        # Attempt to reshape output to match target
+                        output = output.view(target_batch.shape)
+
+                loss = self.loss_fn(output, target_batch)
                 loss.backward()
                 self.optimizer.step()
 
@@ -164,7 +190,7 @@ class XLSTMForecaster(BaseForecaster):
                 num_batches += 1
 
         # Store the last sequence for prediction
-        self._last_sequence = y_normalized[-self.sequence_length :]
+        self._last_sequence = y_normalized[-self.sequence_length :].copy()
 
         return self
 
@@ -183,34 +209,55 @@ class XLSTMForecaster(BaseForecaster):
 
         # Generate predictions step by step
         for _ in range(len(fh)):
-            # Prepare input
+            if current_sequence.ndim == 1:
+                current_sequence = current_sequence.reshape(-1, 1)
+
+            # Ensure input_seq is 3D: (batch_size=1, sequence_length, features)
             input_seq = torch.tensor(
-                current_sequence.reshape(1, -1, 1), dtype=torch.float32
+                current_sequence.reshape(1, self.sequence_length, self._n_outputs),
+                dtype=torch.float32,
             ).to(self.device_)
 
             with torch.no_grad():
                 next_val = self.model(input_seq)
-                next_val_np = next_val.cpu().numpy().item()
+                # next_val is roughly (batch_size=1, output_size)
+                next_val_np = next_val.cpu().numpy().reshape(self._n_outputs)
 
             y_pred.append(next_val_np)
 
             # Update sequence for next prediction
-            current_sequence = np.roll(current_sequence, -1)
+            current_sequence = np.roll(current_sequence, -1, axis=0)
             current_sequence[-1] = next_val_np
 
         # Denormalize predictions
-        y_pred = np.array(y_pred) * self.y_std + self.y_mean
+        y_pred = np.array(y_pred)
+        y_pred = y_pred * self.y_std + self.y_mean
 
-        # Return as pandas Series with correct index
-        return pd.Series(y_pred, index=absolute_fh.to_pandas(), name="predictions")
+        # Return in correct format (Series or DataFrame)
+        if hasattr(self, "_is_series") and self._is_series:
+            result = pd.Series(
+                y_pred.flatten(), index=absolute_fh.to_pandas(), name=self._series_name
+            )
+        else:
+            result = pd.DataFrame(
+                y_pred, index=absolute_fh.to_pandas(), columns=self._y_columns
+            )
+
+        return result
 
     def _create_sequences(self, data, seq_length):
         """Create sequences for training."""
         sequences = []
         targets = []
 
+        # Ensure data is 2D
+        if data.ndim == 1:
+            data = data.reshape(-1, 1)
+
+        n_features = data.shape[1]
+
         for i in range(len(data) - seq_length):
-            sequences.append(data[i : i + seq_length].reshape(-1, 1))
+            sequences.append(data[i : i + seq_length].reshape(seq_length, n_features))
             targets.append(data[i + seq_length])
 
         return np.array(sequences), np.array(targets)
