@@ -21,6 +21,9 @@ class InceptionTimeNetworkTorch(NNModule):
         Number of expected features in the input.
     num_classes : int
         Number of classes to predict
+    n_conv_layers : int, default=3
+        Number of convolutional branches in each inception module.
+        Make sure base kernel size is divisible by 2^(n_conv_layers-1) to avoid errors.
     n_filters : int, default=32
         Number of filters in the convolution layers
     kernel_size : int, default=40
@@ -79,6 +82,7 @@ class InceptionTimeNetworkTorch(NNModule):
         self,
         input_size: int,
         num_classes: int,
+        n_conv_layers: int = 3,
         n_filters: int = 32,
         kernel_size: int = 40,
         use_residual: bool = True,
@@ -104,6 +108,7 @@ class InceptionTimeNetworkTorch(NNModule):
         self.activation_inception = activation_inception
         self.init_weights = init_weights
         self.random_state = random_state
+        self.n_conv_layers = n_conv_layers
 
         super().__init__()
 
@@ -121,6 +126,7 @@ class InceptionTimeNetworkTorch(NNModule):
         for d in range(self.depth):
             self.inception_modules.append(
                 InceptionModule(
+                    n_conv_layers=self.n_conv_layers,
                     in_channels=current_channels,
                     n_filters=self.n_filters,
                     kernel_size=self.kernel_size,
@@ -262,6 +268,8 @@ class InceptionModule(NNModule):
 
     Parameters
     ----------
+    n_conv_layers: int
+        Number of convolutional branches.
     in_channels : int
         Number of input channels
     n_filters : int
@@ -280,6 +288,7 @@ class InceptionModule(NNModule):
 
     def __init__(
         self,
+        n_conv_layers: int,
         in_channels: int,
         n_filters: int,
         kernel_size: int,
@@ -293,6 +302,7 @@ class InceptionModule(NNModule):
         self.n_filters = n_filters
         self.kernel_size = kernel_size
         self.use_bottleneck = use_bottleneck
+        self.n_conv_layers = n_conv_layers
 
         nnConv1d = _safe_import("torch.nn.Conv1d")
         nnBatchNorm1d = _safe_import("torch.nn.BatchNorm1d")
@@ -308,7 +318,7 @@ class InceptionModule(NNModule):
             self.bottleneck = None
             conv_in_channels = in_channels
 
-        kernel_sizes = [kernel_size // (2**i) for i in range(3)]
+        kernel_sizes = [kernel_size // (2**i) for i in range(n_conv_layers)]
 
         self.conv_list = _safe_import("torch.nn.ModuleList")(
             [

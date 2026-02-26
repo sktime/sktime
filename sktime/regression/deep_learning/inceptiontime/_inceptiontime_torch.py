@@ -19,6 +19,10 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
     ----------
     num_epochs : int, default=1500
         The number of epochs to train the model.
+    n_conv_layers : int, default=3
+        Number of convolutional branches in each inception module.
+        Make sure base kernel size is divisible by 2^(n_conv_layers-1) to avoid errors.
+        This implementation is adapted from [1].
     n_filters : int, default=32
         Number of filters in the convolution layers
     batch_size : int, default=64
@@ -98,8 +102,9 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
 
     def __init__(
         self: "InceptionTimeRegressorTorch",
-        n_filters: int = 32,
         num_epochs: int = 1500,
+        n_conv_layers: int = 3,
+        n_filters: int = 32,
         batch_size: int = 64,
         kernel_size: int = 40,
         use_residual: bool = True,
@@ -120,6 +125,7 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         verbose: bool = False,
         random_state: int | None = None,
     ):
+        self.n_conv_layers = n_conv_layers
         self.n_filters = n_filters
         self.use_residual = use_residual
         self.use_bottleneck = use_bottleneck
@@ -184,6 +190,7 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         return InceptionTimeNetworkTorch(
             input_size=self.input_size,
             num_classes=self.num_classes,
+            n_conv_layers=self.n_conv_layers,
             n_filters=self.n_filters,
             use_residual=self.use_residual,
             use_bottleneck=self.use_bottleneck,
