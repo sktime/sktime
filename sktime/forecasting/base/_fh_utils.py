@@ -31,16 +31,28 @@ class PandasFHConverter:
 
     # input -> FHValues (internal representation) conversion
     @staticmethod
-    def to_internal(values, freq=None) -> FHValues:
-        """Convert user-facing input values to internal FHValues representation.
+    def to_internal(values) -> FHValues:
+        """Convert pandas input values to internal FHValues representation.
+
+        Frequency is inferred from values only. The ``freq`` parameter on
+        ``ForecastingHorizon`` is handled separately by the ``freq`` setter,
+        which is the single gate for all frequency setting and validation.
 
         Parameters
         ----------
-        values : int, list, range, np.ndarray, pd.Index, pd.Timedelta,
-                 pd.offsets.BaseOffset, or FHValues
-            Forecasting horizon values in any supported format.
-        freq : str or None, optional
-            Frequency hint, used when it cannot be inferred from values.
+        values : pandas type or list of pandas scalars
+            Forecasting horizon values in a pandas-specific format.
+            Supported types:
+            - ``pd.PeriodIndex`` : converted to PERIOD ordinals
+            - ``pd.DatetimeIndex`` : converted to DATETIME nanoseconds
+            - ``pd.TimedeltaIndex`` : converted to TIMEDELTA nanoseconds
+            - ``pd.RangeIndex`` : converted to INT
+            - ``pd.Index`` with integer or timedelta64 dtype
+            - ``pd.Timedelta`` : single timedelta scalar
+            - ``pd.offsets.BaseOffset`` : single offset scalar
+            - ``list`` of ``pd.Period``, ``pd.Timestamp``, ``pd.Timedelta``,
+              ``pd.offsets.BaseOffset``, ``np.timedelta64``, or
+              ``datetime.timedelta`` scalars
 
         Returns
         -------
@@ -52,168 +64,86 @@ class PandasFHConverter:
         TypeError
             If ``values`` type is not supported.
         """
-        # if already internal — return a defensive copy to avoid shared mutable state.
-        # Without it, in-place changes to the internal numpy array
-        # through one reference would silently affect the other.
-        if isinstance(values, FHValues):
-            return values.copy()
-
-        # <check>
-        # check for freq mismatch/incompatibility with values where possible,
-        # and raise informative errors
-        # Example: if freq is provided as "D" but values are datetime64 with
-        # hourly frequency, that should raise an error about freq mismatch.
-        # This is a non-trivial amount of logic to implement.
-        # what needs to be handled explicitly here and what can be deferred to pandas
-        # to raise errors - is under consideration, will revisit after initial
-        # implementation of the main conversion logic.
-        # Current implementation relies on pandas to raise errors
-        # </check>
-
-        # integer scalars and ranges: type is known,
-        # convert directly to int64 numpy array without needing to inspect contents
-        if isinstance(values, (int, np.integer)):
-            arr = np.array([int(values)], dtype=np.int64)
-            return FHValues(arr, FHValueType.INT, freq=freq)
-        if isinstance(values, range):
-            arr = np.array(list(values), dtype=np.int64)
-            return FHValues(arr, FHValueType.INT, freq=freq)
-
-        # for np.ndarray and list, we need to inspect the contents
-        # to determine the value type and how to convert to int64 numpy array
-        if isinstance(values, np.ndarray):
-            return PandasFHConverter._ndarray_to_internal(values, freq)
-        if isinstance(values, list):
-            return PandasFHConverter._list_to_internal(values, freq)
-
         # pandas Timedelta and offset objects
         if isinstance(values, pd.Timedelta):
             arr = np.array([values.value], dtype=np.int64)
-            # the above mentioned check would be performed here
-            # and all such subsequent places in the below if-blocks
-            freq_str = freq or PandasFHConverter._extract_freq_str(values)
+            freq_str = PandasFHConverter._extract_freq_str(values)
             return FHValues(arr, FHValueType.TIMEDELTA, freq=freq_str)
         if isinstance(values, pd.offsets.BaseOffset):
             td = pd.Timedelta(values)
             arr = np.array([td.value], dtype=np.int64)
-            freq_str = freq or PandasFHConverter._offset_to_freq_str(values)
+            freq_str = PandasFHConverter._offset_to_freq_str(values)
             return FHValues(arr, FHValueType.TIMEDELTA, freq=freq_str)
 
         # pandas Index types (specific types checked before generic)
         if isinstance(values, pd.PeriodIndex):
             arr = values.asi8.copy()
-            freq_str = freq or PandasFHConverter._freqstr(values)
+            freq_str = PandasFHConverter._freqstr(values)
             return FHValues(arr, FHValueType.PERIOD, freq=freq_str)
         if isinstance(values, pd.DatetimeIndex):
             arr = values.asi8.copy()
-            freq_str = freq or PandasFHConverter._freqstr(values)
+            freq_str = PandasFHConverter._freqstr(values)
             tz = str(values.tz) if values.tz is not None else None
             return FHValues(arr, FHValueType.DATETIME, freq=freq_str, timezone=tz)
         if isinstance(values, pd.TimedeltaIndex):
             arr = values.asi8.copy()
-            freq_str = freq or PandasFHConverter._freqstr(values)
+            freq_str = PandasFHConverter._freqstr(values)
             return FHValues(arr, FHValueType.TIMEDELTA, freq=freq_str)
         if isinstance(values, pd.RangeIndex):
             arr = values.to_numpy().astype(np.int64)
-            return FHValues(arr, FHValueType.INT, freq=freq)
+            return FHValues(arr, FHValueType.INT)
 
         # generic pd.Index - convert based on dtype
         if isinstance(values, pd.Index):
             if pd.api.types.is_integer_dtype(values.dtype):
-                # for integer dtype, convert directly to int64 numpy array
-                # using pandas' to_numpy
                 arr = values.to_numpy().astype(np.int64)
-                return FHValues(arr, FHValueType.INT, freq=freq)
-            # timedelta-like elements in a generic Index
+                return FHValues(arr, FHValueType.INT)
             if pd.api.types.is_timedelta64_dtype(values.dtype):
                 arr = values.to_numpy().view(np.int64).copy()
-                return FHValues(arr, FHValueType.TIMEDELTA, freq=freq)
+                return FHValues(arr, FHValueType.TIMEDELTA)
             raise TypeError(
                 f"pd.Index with dtype {values.dtype} is not supported. "
                 f"Expected integer or timedelta dtype."
             )
 
-        # if no match till this point, the type is not supported
+        # lists of pandas/timedelta scalars
+        if isinstance(values, list):
+            return PandasFHConverter._list_to_internal(values)
+
+        # if no match, the type is not supported
         raise TypeError(
             f"Unsupported type for forecasting horizon values: "
-            f"{type(values).__name__}. Expected int, list, range, np.ndarray, "
-            f"pd.Index, pd.Timedelta, or pd.offsets.BaseOffset."
+            f"{type(values).__name__}. When passing pandas objects, "
+            f"following are expected types: pd.PeriodIndex, "
+            f"pd.DatetimeIndex, pd.TimedeltaIndex, pd.RangeIndex, "
+            f"pd.Index (integer or timedelta dtype), pd.Timedelta, "
+            f"pd.offsets.BaseOffset, or list of pandas scalars."
         )
 
     @staticmethod
-    def _ndarray_to_internal(values: np.ndarray, freq=None) -> FHValues:
-        """Convert 1-D numpy array (integer, timedelta64, or datetime64) to FHValues."""
-        if values.ndim != 1:
-            raise ValueError(f"Expected 1-D array, got {values.ndim}-D array")
-        # empty array check
-        if len(values) == 0:
-            raise ValueError("Forecasting horizon values must not be empty.")
-
-        # <check>
-        # check for freq mismatch
-        # </check>
-
-        # timedelta64 and datetime64 checked before integer as a defensive measure
-        # as some numpy versions might consider datetime64 as a subtype of integer,
-        # which might cause incorrect classification.
-        # This ordering keeps the type checking explicit and
-        # avoids any future dtype hierarchy surprises
-        if np.issubdtype(values.dtype, np.timedelta64):
-            # Convert to ns resolution first, then view as int64
-            arr = values.astype("timedelta64[ns]").view(np.int64).copy()
-            return FHValues(arr, FHValueType.TIMEDELTA, freq=freq)
-
-        if np.issubdtype(values.dtype, np.datetime64):
-            arr = values.astype("datetime64[ns]").view(np.int64).copy()
-            return FHValues(arr, FHValueType.DATETIME, freq=freq)
-
-        if np.issubdtype(values.dtype, np.integer):
-            arr = values.astype(np.int64).copy()
-            return FHValues(arr, FHValueType.INT, freq=freq)
-
-        raise TypeError(
-            f"np.ndarray with dtype {values.dtype} is not supported. "
-            f"Expected integer, timedelta64, or datetime64 dtype."
-        )
-
-    @staticmethod
-    def _list_to_internal(values: list, freq=None) -> FHValues:
+    def _list_to_internal(values: list) -> FHValues:
         """Convert list of supported scalar types to FHValues."""
         from datetime import timedelta as _timedelta
 
         if len(values) == 0:
             raise ValueError("Forecasting horizon values must not be empty.")
 
-        # <check>
-        # check for freq mismatch
-        # </check>
-
-        # timedelta-like checked before int
-        # see comment in _ndarray_to_internal for rationale
-
-        # pd.Timedelta, np.timedelta64, and stdlib datetime.timedelta are combined
-        # into a single if-case because they all represent the same concept and
-        # pd.TimedeltaIndex accepts all three, so mixed lists like
-        # [pd.Timedelta("1D"), timedelta(days=2)] work naturally.
+        # pd.Timedelta, np.timedelta64, and stdlib datetime.timedelta are
+        # combined into a single case because they all represent the same
+        # concept and pd.TimedeltaIndex accepts all three.
         _timedelta_types = (pd.Timedelta, np.timedelta64, _timedelta)
         if isinstance(values[0], _timedelta_types):
             PandasFHConverter._check_list_homogeneity(values, _timedelta_types)
             idx = pd.TimedeltaIndex(values)
             arr = idx.asi8.copy()
-            return FHValues(arr, FHValueType.TIMEDELTA, freq=freq)
-
-        # integer values — convert directly to int64 array
-        if isinstance(values[0], (int, np.integer)):
-            PandasFHConverter._check_list_homogeneity(values, (int, np.integer))
-            arr = np.array(values, dtype=np.int64)
-            return FHValues(arr, FHValueType.INT, freq=freq)
+            return FHValues(arr, FHValueType.TIMEDELTA)
 
         # period values — extract ordinals via PeriodIndex
         if isinstance(values[0], pd.Period):
             PandasFHConverter._check_list_homogeneity(values, pd.Period)
             idx = pd.PeriodIndex(values)
             arr = idx.asi8.copy()
-            freq_str = freq or PandasFHConverter._freqstr(idx)
+            freq_str = PandasFHConverter._freqstr(idx)
             return FHValues(arr, FHValueType.PERIOD, freq=freq_str)
 
         # timestamp values — extract nanoseconds via DatetimeIndex
@@ -221,17 +151,17 @@ class PandasFHConverter:
             PandasFHConverter._check_list_homogeneity(values, pd.Timestamp)
             idx = pd.DatetimeIndex(values)
             arr = idx.asi8.copy()
-            freq_str = freq or PandasFHConverter._freqstr(idx)
+            freq_str = PandasFHConverter._freqstr(idx)
             tz = str(idx.tz) if idx.tz is not None else None
             return FHValues(arr, FHValueType.DATETIME, freq=freq_str, timezone=tz)
 
-        # offset objects — convert to Timedelta first, then to nanoseconds
+        # offset objects — convert to Timedelta first
         if isinstance(values[0], pd.offsets.BaseOffset):
             PandasFHConverter._check_list_homogeneity(values, pd.offsets.BaseOffset)
             tds = [pd.Timedelta(v) for v in values]
             idx = pd.TimedeltaIndex(tds)
             arr = idx.asi8.copy()
-            return FHValues(arr, FHValueType.TIMEDELTA, freq=freq)
+            return FHValues(arr, FHValueType.TIMEDELTA)
 
         raise TypeError(
             f"List with element type {type(values[0]).__name__} is not supported."
@@ -324,13 +254,54 @@ class PandasFHConverter:
 
     # frequency helper functions
 
-    # 1. frequency extraction function,
-    #    to get freq from pandas objects when needed
-    # 2. frequency normalization function,
-    #    to convert pandas freq strings to a canonical form
-    # 3. offset handler
-    # coerce function, a pandas-aware wrapper around FHValues
-    # coercion that can handle pandas types as input
+    # final check pending for this function
+    @staticmethod
+    def extract_freq(obj) -> str | None:
+        """Extract and normalize a frequency string from a pandas object.
+
+        Handles pd.Index, pd.Period, pd.offsets.BaseOffset, strings,
+        and objects with a ``cutoff`` attribute (e.g. sktime forecasters).
+
+        Parameters
+        ----------
+        obj : pd.Index, pd.Period, pd.offsets.BaseOffset, str, or forecaster
+            Object carrying frequency information.
+
+        Returns
+        -------
+        str or None
+            Normalized frequency string, or None if no frequency
+            could be extracted.
+        """
+        if isinstance(obj, str):
+            try:
+                from pandas.tseries.frequencies import to_offset
+
+                offset = to_offset(obj)
+                if offset is not None:
+                    return PandasFHConverter.normalize_freq(str(offset.freqstr))
+            except ValueError:
+                return None
+            return None
+
+        if isinstance(obj, pd.offsets.BaseOffset):
+            return PandasFHConverter.normalize_freq(obj.freqstr)
+
+        if hasattr(obj, "cutoff"):
+            # sktime forecasters: extract freq from cutoff attribute
+            return PandasFHConverter.extract_freq(obj.cutoff)
+
+        if isinstance(obj, pd.Period):
+            return PandasFHConverter.normalize_freq(obj.freqstr)
+
+        if isinstance(obj, (pd.PeriodIndex, pd.DatetimeIndex)):
+            return PandasFHConverter._freqstr(obj)
+
+        if isinstance(obj, pd.Index):
+            # generic pd.Index — no freq attribute
+            return None
+
+        return None
 
     @staticmethod
     def normalize_freq(freq_str: str | None) -> str | None:

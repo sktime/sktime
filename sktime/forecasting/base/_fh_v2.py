@@ -12,7 +12,7 @@ __all__ = ["ForecastingHorizon"]
 import numpy as np
 
 from sktime.forecasting.base._fh_utils import PandasFHConverter
-from sktime.forecasting.base._fh_values import FHValues, FHValueType
+from sktime.forecasting.base._fh_values import FHValues, FHValueType, validate_freq
 
 # <check></check>
 # this is the marker left to mark all delayed checks
@@ -24,8 +24,21 @@ class ForecastingHorizon:
 
     Parameters
     ----------
-    values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
+    values : int, list, np.ndarray, range, pd.Index, pd.Timedelta,
+        pd.offsets.BaseOffset, or FHValues
         Values of forecasting horizon.
+        Supported types without pandas dependency:
+        - ``int`` or ``np.integer`` : single integer step
+        - ``list[int]`` : list of integer steps
+        - ``np.ndarray`` : integer, timedelta64, or datetime64 array
+        - ``range`` : Python range object
+        - ``FHValues`` : pre-constructed internal representation
+        Supported pandas types (delegated to PandasFHConverter):
+        - ``pd.PeriodIndex``, ``pd.DatetimeIndex``, ``pd.TimedeltaIndex``
+        - ``pd.RangeIndex``, ``pd.Index`` (integer or timedelta dtype)
+        - ``pd.Timedelta``, ``pd.offsets.BaseOffset``
+        - ``list[pd.Period]``, ``list[pd.Timestamp]``, ``list[pd.Timedelta]``
+        - ``list[pd.offsets.BaseOffset]``, ``list[np.timedelta64]``
     is_relative : bool, optional (default=None)
         Whether the forecasting horizon is relative to the training cutoff.
         If True, values are relative to end of training series.
@@ -37,9 +50,14 @@ class ForecastingHorizon:
         Note: integer values are compatible with both relative and absolute
         interpretations. For integers, pass ``is_relative=False`` explicitly
         if absolute is intended, as the default inference interprets it as relative.
-    freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
-        Object carrying frequency information on values
-        Ignored unless values lack inferable freq.
+    freq : str, pd.Index, pd.Period, pandas offset, or sktime forecaster,
+        optional (default=None)
+        Frequency information for the horizon values.
+        When values already carry frequency (e.g., pd.PeriodIndex,
+        pd.DatetimeIndex, or pd.TimedeltaIndex), provided ``freq`` must match the
+        values' frequency, otherwise a ValueError is raised.
+        When values do not carry frequency (e.g. int, list, np.ndarray), ``freq``
+        is used directly if provided.
 
     Examples
     --------
@@ -57,20 +75,43 @@ class ForecastingHorizon:
         is_relative: bool | None = None,
         freq=None,
     ):
-        # convert input to internal representation
-        self._fhvalues = PandasFHConverter.to_internal(values, freq)
-        # above conversion would need to be bypassed when input is already in internal
-        # FHValues representation,
-        # for example when creating modified copies internally with the _new constructor
+        # --- convert values to internal FHValues representation ---
+        # canonical path: already internal (used by _new)
+        if isinstance(values, FHValues):
+            self._fhvalues = values
+        # canonical path: plain Python/numpy types — no pandas needed
+        elif isinstance(values, (int, np.integer)):
+            arr = np.array([int(values)], dtype=np.int64)
+            self._fhvalues = FHValues(arr, FHValueType.INT)
+        elif isinstance(values, range):
+            arr = np.array(list(values), dtype=np.int64)
+            self._fhvalues = FHValues(arr, FHValueType.INT)
+        elif isinstance(values, np.ndarray):
+            self._fhvalues = self._ndarray_to_internal(values)
+        elif (
+            isinstance(values, list)
+            and len(values) > 0
+            and isinstance(values[0], (int, np.integer))
+        ):
+            for i, v in enumerate(values[1:], start=1):
+                if not isinstance(v, (int, np.integer)):
+                    raise TypeError(
+                        f"Element at index 0 is of type "
+                        f"{type(values[0]).__name__}, but element at "
+                        f"index {i} is {type(v).__name__}. "
+                        "All list elements must be of the same type."
+                    )
+            arr = np.array(values, dtype=np.int64)
+            self._fhvalues = FHValues(arr, FHValueType.INT)
+        # coerced path: pandas types and non-int lists — delegate to converter
+        else:
+            self._fhvalues = PandasFHConverter.to_internal(values)
 
-        if self._fhvalues.freq is None and freq is not None:
-            # set freq from input if not already set
-            # this stores normalized freq string
-            # not the pandas freq object
-            self._fhvalues.freq = PandasFHConverter.extract_freq(freq)
+        # --- set freq via setter (single gate for validation) ---
+        if freq is not None:
+            self.freq = freq
 
-        # if is_relative is provided, validate compatibility
-        # of passed is_relative with value type
+        # --- determine is_relative ---
         if is_relative is not None:
             if not isinstance(is_relative, bool):
                 raise TypeError("`is_relative` must be a boolean or None")
@@ -85,27 +126,86 @@ class ForecastingHorizon:
                     f"not compatible with `is_relative=False`."
                 )
             self._is_relative = is_relative
-        # determine is_relative if not provided
         else:
-            # Infer from value type
-            vtype = self._fhvalues.value_type
-            if vtype in (FHValueType.TIMEDELTA,):
-                self._is_relative = True
-            elif vtype in (FHValueType.PERIOD, FHValueType.DATETIME):
-                self._is_relative = False
-            elif vtype == FHValueType.INT:
-                # INT can be either relative or absolute
-                # in _fh.py, the default for this case
-                # is set to relative, hence using the same here
-                # if this handling is ok, then this elif can be merged into the
-                # 1st if block above
-                self._is_relative = True
-            else:
-                raise TypeError(f"Cannot infer is_relative for value type {vtype.name}")
-        # <check>
-        # above code assumes fhvalues.is_relative_type and
-        # fhvalues.is_absolute_type to be implemented.
-        # Currently they are not implemented.</check>
+            self._is_relative = self._infer_is_relative(self._fhvalues.value_type)
+
+    @staticmethod
+    def _infer_is_relative(value_type: FHValueType) -> bool:
+        """Infer is_relative from value type.
+
+        Parameters
+        ----------
+        value_type : FHValueType
+            The semantic type of the stored values.
+
+        Returns
+        -------
+        bool
+            Inferred is_relative flag.
+
+        Raises
+        ------
+        TypeError
+            If is_relative cannot be inferred for the given value type.
+        """
+        if value_type == FHValueType.TIMEDELTA:
+            return True
+        elif value_type in (FHValueType.PERIOD, FHValueType.DATETIME):
+            return False
+        elif value_type == FHValueType.INT:
+            # INT can be either relative or absolute;
+            # default to relative for backwards compatibility with _fh.py
+            return True
+        else:
+            raise TypeError(
+                f"Cannot infer is_relative for value type {value_type.name}"
+            )
+
+    @staticmethod
+    def _ndarray_to_internal(values: np.ndarray) -> FHValues:
+        """Convert 1-D numpy array to FHValues, inferring type from dtype.
+
+        Parameters
+        ----------
+        values : np.ndarray
+            1-D numpy array with integer, timedelta64, or datetime64 dtype.
+
+        Returns
+        -------
+        FHValues
+            Internal representation.
+
+        Raises
+        ------
+        ValueError
+            If array is not 1-D or is empty.
+        TypeError
+            If array dtype is not supported.
+        """
+        if values.ndim != 1:
+            raise ValueError(f"Expected 1-D array, got {values.ndim}-D array")
+        if len(values) == 0:
+            raise ValueError("Forecasting horizon values must not be empty.")
+
+        # timedelta64 and datetime64 checked before integer as a defensive
+        # measure — some numpy versions consider datetime64 a subtype of
+        # integer, which would cause incorrect classification.
+        if np.issubdtype(values.dtype, np.timedelta64):
+            arr = values.astype("timedelta64[ns]").view(np.int64).copy()
+            return FHValues(arr, FHValueType.TIMEDELTA)
+
+        if np.issubdtype(values.dtype, np.datetime64):
+            arr = values.astype("datetime64[ns]").view(np.int64).copy()
+            return FHValues(arr, FHValueType.DATETIME)
+
+        if np.issubdtype(values.dtype, np.integer):
+            arr = values.astype(np.int64).copy()
+            return FHValues(arr, FHValueType.INT)
+
+        raise TypeError(
+            f"np.ndarray with dtype {values.dtype} is not supported. "
+            f"Expected integer, timedelta64, or datetime64 dtype."
+        )
 
     def _new(self, fhvalues=None, is_relative=None):
         """Create a new ForecastingHorizon bypassing __init__ conversion.
@@ -153,22 +253,49 @@ class ForecastingHorizon:
     def freq(self, obj) -> None:
         """Set frequency from string, pd.Index, pd.offset, or forecaster.
 
+        For string inputs, the frequency is validated against accepted
+        standard time series frequencies (e.g. ``"M"``, ``"D"``, ``"2h"``).
+        If validation fails, a fallback check via pandas ``to_offset`` is
+        attempted before raising an error.
+
+        For non-string inputs (pd.Index, pd.offsets.BaseOffset, forecaster),
+        frequency is extracted and normalized via PandasFHConverter.
+
+        If the FHValues already carry a frequency (inferred from values),
+        the new frequency must match, otherwise a ValueError is raised.
+
         Parameters
         ----------
         obj : str, pd.Index, pd.offsets.BaseOffset, or forecaster
             Object carrying frequency information.
+            When str, must be a valid frequency mnemonic, optionally
+            with an integer multiplier prefix.
+            Accepted base frequencies: Y, Q, M, W, D, h, min, s, ms, us, ns.
+            Examples: ``"M"``, ``"2D"``, ``"4h"``, ``"15min"``.
 
         Raises
         ------
         ValueError
-            If freq is already set and conflicts with new value.
+            If freq is already set and conflicts with new value, or
+            if a string freq is not a recognized frequency mnemonic.
         """
-        new_freq = PandasFHConverter.extract_freq(obj)
-        old_freq = self._fhvalues.freq
+        if isinstance(obj, str):
+            try:
+                new_freq = validate_freq(obj)
+            except ValueError:
+                # fallback: try pandas to_offset for exotic but valid freqs
+                new_freq = PandasFHConverter.extract_freq(obj)
+                if new_freq is None:
+                    raise
+        elif obj is None:
+            return
+        else:
+            new_freq = PandasFHConverter.extract_freq(obj)
 
+        old_freq = self._fhvalues.freq
         if old_freq is not None and new_freq is not None and old_freq != new_freq:
             raise ValueError(
-                f"Frequencies do not match: current={old_freq}, new={new_freq}"
+                f"Frequencies do not match: current={old_freq!r}, new={new_freq!r}"
             )
         if new_freq is not None:
             self._fhvalues = self._fhvalues._new(freq=new_freq)
