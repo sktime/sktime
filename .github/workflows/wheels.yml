@@ -56,7 +56,7 @@ jobs:
           UV_SYSTEM_PYTHON: 1
 
       - name: Store wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: wheels
           path: wheelhouse/*
