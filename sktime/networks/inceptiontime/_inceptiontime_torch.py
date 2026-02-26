@@ -160,7 +160,7 @@ class InceptionTimeNetworkTorch(NNModule):
 
         Parameters
         ----------
-        X : torch.Tensor of shape (batch_size, n_dims, seq_length)
+        X : torch.Tensor of shape (batch_size, seq_length, n_dims)
             Input tensor containing the time series data.
 
         Returns
@@ -168,6 +168,11 @@ class InceptionTimeNetworkTorch(NNModule):
         out : torch.Tensor of shape (batch_size, num_classes)
             Output tensor containing the class predictions.
         """
+        # InceptionModule and ShotcutLayer uses Conv1d
+        # and Conv1d expects input shape to be channel first
+        # i.e., (batch_size, n_dims, seq_length)
+        X = X.transpose(1, 2)
+
         x = X
         input_res = X
         shortcut_idx = 0

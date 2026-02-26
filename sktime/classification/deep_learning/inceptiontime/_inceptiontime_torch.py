@@ -213,7 +213,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         # (batch, n_timesteps, n_dims) before passing to forward().
         # But at this point, X has not been transposed.
         # So input_size = n_dims is correct here
-        _, _, self.input_size = X.shape
+        _, self.input_size, _ = X.shape
 
         return InceptionTimeNetworkTorch(
             input_size=self.input_size,
