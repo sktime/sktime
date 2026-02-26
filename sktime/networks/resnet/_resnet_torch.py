@@ -54,7 +54,7 @@ class ResNetNetworkTorch(NNModule):
         # packaging info
         # --------------
         "authors": ["amitsubhashchejara"],
-        "python_version": ">=3.9",
+        "python_version": ">= 3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
@@ -65,12 +65,14 @@ class ResNetNetworkTorch(NNModule):
         input_size: int | tuple,
         num_classes: int,
         random_state: int = None,
-        activation: str = "relu",
+        hidden_activation: str = "relu",
+        output_activation: str = "softmax",
     ):
-        super().__init__()
         self.num_classes = num_classes
         self.random_state = random_state
-        self.activation = activation
+        self.hidden_activation = hidden_activation
+        self.output_activation = output_activation
+        super().__init__()
 
         if self.random_state is not None:
             Torch.manual_seed(self.random_state)
@@ -101,7 +103,7 @@ class ResNetNetworkTorch(NNModule):
         for b, _ in enumerate(blocks[:-1]):
             self.blocks.append(
                 ResidualBlock(
-                    *blocks[b : b + 2], in_features, activation=self.activation
+                    *blocks[b : b + 2], in_features, activation=self.hidden_activation
                 )
             )
 
@@ -115,17 +117,18 @@ class ResNetNetworkTorch(NNModule):
         X = Torch.mean(X, dim=2)
         X = X.view(-1, 1, 128)
         X = self.fc1(X)
+        X = getattr(F, self.output_activation)(X)
 
         return X.view(-1, self.num_classes)
 
 
 class ResidualBlock(NNModule):
     def __init__(self, in_maps, out_maps, time_steps, activation="relu"):
-        super().__init__()
         self.in_maps = in_maps
         self.out_maps = out_maps
         self.time_steps = time_steps
         self.activation = getattr(F, activation)
+        super().__init__()
 
         self.conv1 = Conv2d(self.in_maps, self.out_maps, (7, 1), 1, (3, 0))
         self.bn1 = BatchNorm2d(self.out_maps)
