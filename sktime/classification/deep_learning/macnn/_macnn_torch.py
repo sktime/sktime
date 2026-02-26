@@ -183,9 +183,13 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         model : MACNNNetworkTorch instance
             The constructed MACNN network.
         """
-        # n_instances, n_dims, n_timesteps = X.shape
-        self.num_classes = len(np.unique(y))
+        # X arrives in sktime format: (n_instances, n_dims, n_timesteps)
+        # The base class's _build_dataloader transposes it to
+        # (batch, n_timesteps, n_dims) before passing to forward().
+        # But at this point, X has not been transposed.
+        # So input_size = n_dims is correct here
         _, self.input_size, _ = X.shape
+        self.num_classes = len(np.unique(y))
 
         return MACNNNetworkTorch(
             input_size=self.input_size,

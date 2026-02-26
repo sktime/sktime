@@ -193,6 +193,8 @@ class MACNNNetworkTorch(NNModule):
         out : torch.Tensor of shape (batch_size, num_classes)
             Output tensor containing the class predictions.
         """
+        # MACNNBlock uses Conv1d layers that expects
+        # input to be channel first
         X = X.transpose(1, 2)  # (batch, channels, length)
 
         # First stack
