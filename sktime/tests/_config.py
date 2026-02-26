@@ -201,7 +201,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "DummyRegressor",
         "ElasticEnsemble",
         "FeatureSelection",
-        "FreshPRINCE",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
         "HIVECOTEV2",
