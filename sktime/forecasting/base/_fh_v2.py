@@ -27,13 +27,16 @@ class ForecastingHorizon:
     values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
         Values of forecasting horizon.
     is_relative : bool, optional (default=None)
-        If True, a relative ForecastingHorizon is created:
-        values are relative to end of training series.
-        If False, an absolute ForecastingHorizon is created:
-        values are absolute.
-        If None, the flag is determined automatically:
-        relative - if values are of supported relative type
-        absolute - if values are of supported absolute type
+        Whether the forecasting horizon is relative to the training cutoff.
+        If True, values are relative to end of training series.
+        If False, values are absolute.
+        If None, inferred from value type:
+        - int values default to relative (is_relative=True)
+        - timedelta values are always relative
+        - Period and Timestamp values are always absolute
+        Note: integer values are compatible with both relative and absolute
+        interpretations. For integers, pass ``is_relative=False`` explicitly
+        if absolute is intended, as the default inference interprets it as relative.
     freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
         Object carrying frequency information on values
         Ignored unless values lack inferable freq.
@@ -71,20 +74,17 @@ class ForecastingHorizon:
         if is_relative is not None:
             if not isinstance(is_relative, bool):
                 raise TypeError("`is_relative` must be a boolean or None")
-            self._is_relative = is_relative
             if is_relative and not self._fhvalues.is_relative_type():
-                # if is_relative is passed as True,
-                # then values must be of a type that can be relative
                 raise TypeError(
                     f"`values` type {self._fhvalues.value_type.name} is "
                     f"not compatible with `is_relative=True`."
                 )
             if not is_relative and not self._fhvalues.is_absolute_type():
-                # opposite for absolute
                 raise TypeError(
                     f"`values` type {self._fhvalues.value_type.name} is "
                     f"not compatible with `is_relative=False`."
                 )
+            self._is_relative = is_relative
         # determine is_relative if not provided
         else:
             # Infer from value type
@@ -95,7 +95,7 @@ class ForecastingHorizon:
                 self._is_relative = False
             elif vtype == FHValueType.INT:
                 # INT can be either relative or absolute
-                # in line 306 code block in _fh.py, the default for this case
+                # in _fh.py, the default for this case
                 # is set to relative, hence using the same here
                 # if this handling is ok, then this elif can be merged into the
                 # 1st if block above
