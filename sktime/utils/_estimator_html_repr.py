@@ -83,7 +83,7 @@ def _get_non_default_params(base_object):
         try:
             if val != defaults[name]:
                 non_default.add(name)
-        except Exception:
+        except (TypeError, ValueError):
             non_default.add(name)
     return non_default
 
