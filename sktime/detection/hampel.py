@@ -12,10 +12,10 @@ import pandas as pd
 from sktime.detection.base import BaseDetector
 
 __author__ = ["Vbhatt03"]
-__all__ = ["HampelAnomalyDetector"]
+__all__ = ["HampelDetector"]
 
 
-class HampelAnomalyDetector(BaseDetector):
+class HampelDetector(BaseDetector):
     """Hampel filter for anomaly detection.
 
     Parameters
@@ -43,14 +43,14 @@ class HampelAnomalyDetector(BaseDetector):
     Detect anomalies in a univariate time series.
 
     >>> import pandas as pd
-    >>> from sktime.detection.hampel import HampelAnomalyDetector
+    >>> from sktime.detection.hampel import HampelDetector
     >>> y = pd.Series([1.0, 1.1, 0.9, 10.0, 1.0, 1.2, 0.8])
-    >>> detector = HampelAnomalyDetector(window_size=3, n_sigmas=3.0, center=True)
+    >>> detector = HampelDetector(window_size=3, n_sigmas=3.0, center=True)
     >>> detector.fit(y)
-    HampelAnomalyDetector(...)
+    HampelDetector(...)
     >>> anomalies = detector.predict(y)
     >>> anomalies
-        ilocs
+       ilocs
     0      3
     """
 
@@ -101,7 +101,7 @@ class HampelAnomalyDetector(BaseDetector):
         if isinstance(X, pd.DataFrame):
             if X.shape[1] != 1:
                 raise ValueError(
-                    "HampelAnomalyDetector only supports univariate input. "
+                    "HampelDetector only supports univariate input. "
                     f"Received a DataFrame with {X.shape[1]} columns."
                 )
             X = X.iloc[:, 0]
