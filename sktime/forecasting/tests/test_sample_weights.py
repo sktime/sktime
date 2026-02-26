@@ -75,3 +75,19 @@ def test_sample_weights_with_univariate_long_series():
     forecaster.fit(y_long, sample_weight=weights)
 
     assert forecaster._is_fitted
+
+
+def test_sample_weights_with_hierarchical_data():
+    """Test that sample_weight works with hierarchical time series data."""
+    index = pd.MultiIndex.from_product(
+        [["A", "B"], ["x", "y"], pd.period_range("2020-01-01", periods=3, freq="D")],
+        names=["level1", "level2", "time"],
+    )
+    y_hier = pd.DataFrame({"var": np.arange(12.0)}, index=index)
+
+    weights = np.ones(12) * 0.1
+
+    forecaster = TrendForecaster()
+    forecaster.fit(y_hier, sample_weight=weights)
+
+    assert forecaster._is_fitted
