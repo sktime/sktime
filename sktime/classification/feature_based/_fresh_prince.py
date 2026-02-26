@@ -76,7 +76,7 @@ class FreshPRINCE(BaseClassifier):
     >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
-    _tags = {
+   _tags = {
         # packaging info
         # --------------
         "authors": ["MatthewMiddlehurst"],
@@ -89,8 +89,7 @@ class FreshPRINCE(BaseClassifier):
         "capability:train_estimate": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
-        # Testing config moved from _config.py
-        "tests:skip_all": True,  # fails due to #8151 or #8059
+        "tests:skip_all": True,
     }
 
     def __init__(
