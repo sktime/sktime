@@ -24,13 +24,11 @@ class CNNNetworkTorch(NNModule):
         Used to compute the flattened size after conv and pool layers.
     num_classes : int
         Number of output classes (classification) or 1 (regression).
-    n_conv_layers : int, default = 2
-        Number of convolutional plus average pooling layers.
-    kernel_size : int, default = 7
-        Length of the 1D convolution window.
+    kernel_sizes : tuple of int, shape = number of conv layers, default = (7, 7)
+        Lengths of the 1D convolution window per conv layer.
     avg_pool_size : int, default = 3
         Size of the average pooling window.
-    filter_sizes : tuple of int, shape = (n_conv_layers), default = (6, 12)
+    filter_sizes : tuple of int, shape = number of conv layers, default = (6, 12)
         Number of filters per conv layer.
     use_bias : bool, default = True
         Whether to use a bias in fully connected layers.
@@ -69,8 +67,7 @@ class CNNNetworkTorch(NNModule):
         self,
         input_shape,
         num_classes,
-        n_conv_layers=2,
-        kernel_size=7,
+        kernel_sizes=(7, 7),
         avg_pool_size=3,
         filter_sizes=(6, 12),
         use_bias=True,
@@ -82,9 +79,8 @@ class CNNNetworkTorch(NNModule):
     ):
         self.input_shape = input_shape
         self.num_classes = num_classes
-        self.kernel_size = kernel_size
+        self.kernel_sizes = kernel_sizes
         self.avg_pool_size = avg_pool_size
-        self.n_conv_layers = n_conv_layers
         self.filter_sizes = filter_sizes
         self.activation_hidden = activation_hidden
         self.activation = activation
@@ -96,10 +92,16 @@ class CNNNetworkTorch(NNModule):
         super().__init__()
         fs = list(filter_sizes)
         # Extend to match n_conv_layers (same as TF)
+        n_conv_layers = len(kernel_sizes)
         fs = fs[:n_conv_layers] + [fs[-1]] * max(0, n_conv_layers - len(fs))
 
         n_dims = input_shape[0]
         series_length = input_shape[1]
+
+        nnConv1d = _safe_import("torch.nn.Conv1d")
+        nnAvgPool1d = _safe_import("torch.nn.AvgPool1d")
+        nnLinear = _safe_import("torch.nn.Linear")
+        nnFlatten = _safe_import("torch.nn.Flatten")
 
         if padding == "auto":
             padding_use = "same" if series_length < 60 else "valid"
@@ -107,33 +109,20 @@ class CNNNetworkTorch(NNModule):
             padding_use = padding
 
         padding_same = padding_use == "same"
-        if padding_same:
-            pad_value = kernel_size // 2
-        else:
-            pad_value = 0
-
-        self.kernel_size = kernel_size
-        self.avg_pool_size = avg_pool_size
-        self.n_conv_layers = n_conv_layers
-        self.activation_hidden = activation_hidden
-        self.activation = activation
-        self.init_weights = init_weights
-        self.random_state = random_state
-
-        nnConv1d = _safe_import("torch.nn.Conv1d")
-        nnAvgPool1d = _safe_import("torch.nn.AvgPool1d")
-        nnLinear = _safe_import("torch.nn.Linear")
-        nnFlatten = _safe_import("torch.nn.Flatten")
-
         # Build conv + pool blocks
         in_ch = n_dims
         layers = []
         for i in range(n_conv_layers):
+            if padding_same:
+                pad_value = kernel_sizes[i] // 2
+            else:
+                pad_value = 0
+
             layers.append(
                 nnConv1d(
                     in_ch,
                     fs[i],
-                    kernel_size,
+                    kernel_sizes[i],
                     padding=pad_value,
                 )
             )
@@ -146,8 +135,8 @@ class CNNNetworkTorch(NNModule):
 
         # Compute flattened size
         L = series_length
-        for _ in range(n_conv_layers):
-            L_conv = L + 2 * pad_value - kernel_size + 1
+        for i in range(n_conv_layers):
+            L_conv = L + 2 * pad_value - kernel_sizes[i] + 1
             L = L_conv // avg_pool_size
         self._flattened_size = L * fs[-1]
 

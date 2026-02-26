@@ -21,15 +21,13 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
     ----------
     num_epochs : int, default = 2000
         Number of epochs to train the model.
-    n_conv_layers : int, default = 2
-        Number of convolutional plus average pooling layers.
     batch_size : int, default = 16
         Size of each mini-batch.
-    kernel_size : int, default = 7
-        Length of the 1D convolution window.
+    kernel_sizes : tuple of int, shape = number of conv layers, default = (7, 7)
+        Lengths of the 1D convolution window per conv layer.
     avg_pool_size : int, default = 3
         Size of the average pooling window.
-    filter_sizes : tuple of int, shape = (n_conv_layers), default = (6, 12)
+    filter_sizes : tuple of int, shape = number of conv layers, default = (6, 12)
         Number of filters per conv layer.
     padding : str, default = "auto"
         Padding for conv layers. "auto": "same" if series_length < 60 else "valid";
@@ -98,9 +96,8 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         self,
         num_epochs=2000,
         batch_size=16,
-        kernel_size=7,
+        kernel_sizes=(7, 7),
         avg_pool_size=3,
-        n_conv_layers=2,
         filter_sizes=(6, 12),
         padding="auto",
         use_bias=True,
@@ -117,9 +114,8 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         init_weights=None,
         random_state=None,
     ):
-        self.kernel_size = kernel_size
+        self.kernel_sizes = kernel_sizes
         self.avg_pool_size = avg_pool_size
-        self.n_conv_layers = n_conv_layers
         self.filter_sizes = filter_sizes
         self.activation_hidden = activation_hidden
         self.padding = padding
@@ -138,10 +134,10 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         self.init_weights = init_weights
         self.random_state = random_state
 
-        if len(filter_sizes) != n_conv_layers:
+        if len(filter_sizes) != len(kernel_sizes):
             raise ValueError(
                 f"Length of filter_sizes ({len(filter_sizes)}) must match "
-                f"n_conv_layers ({n_conv_layers}) in CNNClassifierTorch."
+                f"length of kernel_sizes ({len(kernel_sizes)}) in CNNClassifierTorch."
             )
 
         super().__init__(
@@ -174,6 +170,11 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         CNNNetworkTorch
             The constructed CNN network.
         """
+        # X arrives in sktime format: (n_instances, n_dims, n_timesteps)
+        # The base class's _build_dataloader transposes it to
+        # (batch, n_timesteps, n_dims) before passing to forward().
+        # But at this point, X has not been transposed.
+        # So input_size = n_dims is correct here
         n_dims = X.shape[1]
         series_length = X.shape[2]
         input_shape = (n_dims, series_length)
@@ -182,9 +183,8 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         return CNNNetworkTorch(
             input_shape=input_shape,
             num_classes=self.n_classes_,
-            kernel_size=self.kernel_size,
+            kernel_sizes=self.kernel_sizes,
             avg_pool_size=self.avg_pool_size,
-            n_conv_layers=self.n_conv_layers,
             filter_sizes=self.filter_sizes,
             activation=self.activation,
             activation_hidden=self.activation_hidden,
@@ -215,14 +215,14 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         params2 = {
             "num_epochs": 12,
             "batch_size": 6,
-            "kernel_size": 2,
-            "filter_sizes": (4,),
-            "n_conv_layers": 1,
+            "kernel_sizes": (2, 2),
+            "filter_sizes": (4, 4),
         }
         params3 = {
-            "num_epochs": 8,
+            "num_epochs": 3,
             "batch_size": 4,
-            "kernel_size": 5,
+            "kernel_sizes": (5,),
+            "filter_sizes": (6,),
             "padding": "same",
             "activation_hidden": "relu",
         }
