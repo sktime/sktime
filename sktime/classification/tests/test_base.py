@@ -550,6 +550,34 @@ def test_deep_estimator_full(optimizer):
     assert full_dummy.__dict__ == deserialized_full.__dict__
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.classification"),
+    reason="skip test if required soft dependency not available",
+)
+def test_pytorch_optimizer_kwargs():
+    """Test that optimizer_kwargs are correctly passed to the optimizer."""
+    from sktime.classification.deep_learning.mlp import MLPClassifierTorch
+    from sktime.datasets import load_unit_test
+
+    X_train, y_train = load_unit_test(split="train")
+
+    clf = MLPClassifierTorch(
+        num_epochs=2,
+        batch_size=4,
+        optimizer="SGD",
+        optimizer_kwargs={"momentum": 0.9, "weight_decay": 0.0001},
+        callbacks=None,
+        hidden_dim=5,
+        n_layers=1,
+        dropout=0.0,
+    )
+    clf.fit(X_train, y_train)
+
+    assert clf._optimizer.param_groups[0]["momentum"] == 0.9
+    assert clf._optimizer.param_groups[0]["weight_decay"] == 0.0001
+
+
 DUMMY_EST_PARAMETERS_FOO = [None, 10.3, "string", {"key": "value"}, lambda x: x**2]
 
 
