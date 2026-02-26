@@ -33,7 +33,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         The number of MACNN Blocks to be stacked.
     filter_sizes : tuple of int, default=(64, 128, 256)
         The filter sizes of Conv1D layers within each MACNN Block.
-    kernel_size : tuple of int, default=(3, 6, 12)
+    kernel_sizes : tuple of int, default=(3, 6, 12)
         The kernel sizes of Conv1D layers within each MACNN Block.
     reduction : int, default=16
         The factor by which the first dense layer of a MACNN Block will be divided by.
@@ -109,7 +109,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         strides: int = 2,
         repeats: int = 2,
         filter_sizes: tuple = (64, 128, 256),
-        kernel_size: tuple = (3, 6, 12),
+        kernel_sizes: tuple = (3, 6, 12),
         reduction: int = 16,
         activation: str | None = None,
         activation_hidden: str = "relu",
@@ -132,7 +132,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         self.strides = strides
         self.repeats = repeats
         self.filter_sizes = filter_sizes
-        self.kernel_size = kernel_size
+        self.kernel_sizes = kernel_sizes
         self.reduction = reduction
         self.activation = activation
         self.activation_hidden = activation_hidden
@@ -199,7 +199,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
             strides=self.strides,
             repeats=self.repeats,
             filter_sizes=self.filter_sizes,
-            kernel_size=self.kernel_size,
+            kernel_sizes=self.kernel_sizes,
             reduction=self.reduction,
             activation=self.activation,
             init_weights=self.init_weights,
@@ -227,7 +227,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
             "strides": 1,
             "repeats": 1,
             "filter_sizes": (32, 64, 128),
-            "kernel_size": (3, 6, 12),
+            "kernel_sizes": (3, 6, 12),
             "reduction": 16,
             "num_epochs": 50,
             "batch_size": 4,
@@ -248,7 +248,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
             "strides": 2,
             "repeats": 2,
             "filter_sizes": (32, 64, 128),
-            "kernel_size": (3, 6, 12),
+            "kernel_sizes": (3, 6, 12),
             "reduction": 8,
             "num_epochs": 50,
             "batch_size": 4,

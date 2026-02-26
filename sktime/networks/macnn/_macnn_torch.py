@@ -37,7 +37,7 @@ class MACNNNetworkTorch(NNModule):
     filter_sizes : tuple of int, default=(64, 128, 256)
         The filter sizes of Conv1D layers within each MACNN Block.
         Length of this tuple determines the number of MACNN stacks.
-    kernel_size : tuple of int, default=(3, 6, 12)
+    kernel_sizes : tuple of int, default=(3, 6, 12)
         The kernel sizes of Conv1D layers within each MACNN Block.
         Length of this tuple determines the number of MACNN stacks.
     reduction : int, default=16
@@ -87,7 +87,7 @@ class MACNNNetworkTorch(NNModule):
         strides: int = 2,
         repeats: int = 2,
         filter_sizes: tuple = (64, 128, 256),
-        kernel_size: tuple = (3, 6, 12),
+        kernel_sizes: tuple = (3, 6, 12),
         reduction: int = 16,
         activation: str | None = None,
         activation_hidden: str = "relu",
@@ -101,7 +101,7 @@ class MACNNNetworkTorch(NNModule):
         self.strides = strides
         self.repeats = repeats
         self.filter_sizes = filter_sizes
-        self.kernel_size = kernel_size
+        self.kernel_sizes = kernel_sizes
         self.reduction = reduction
         self.activation = activation
         self.activation_hidden = activation_hidden
@@ -123,7 +123,7 @@ class MACNNNetworkTorch(NNModule):
             if i == 0:
                 in_ch = self.input_size
             else:
-                in_ch = self.filter_sizes[i - 1] * len(self.kernel_size)
+                in_ch = self.filter_sizes[i - 1] * len(self.kernel_sizes)
 
             self.macnn_stacks.append(
                 self._build_macnn_stack(in_ch, self.filter_sizes[i], repeats)
@@ -140,7 +140,7 @@ class MACNNNetworkTorch(NNModule):
         self.global_avg_pool = nnAdaptiveAvgPool1d(1)
 
         nnLinear = _safe_import("torch.nn.Linear")
-        self.fc = nnLinear(self.filter_sizes[-1] * len(self.kernel_size), num_classes)
+        self.fc = nnLinear(self.filter_sizes[-1] * len(self.kernel_sizes), num_classes)
 
         if self.init_weights is not None:
             self.apply(self._init_weights)
@@ -165,12 +165,12 @@ class MACNNNetworkTorch(NNModule):
         nnSequential = _safe_import("torch.nn.Sequential")
         layers = []
         for i in range(repeats):
-            in_ch = in_channels if i == 0 else filter_size * len(self.kernel_size)
+            in_ch = in_channels if i == 0 else filter_size * len(self.kernel_sizes)
             layers.append(
                 MACNNBlock(
                     in_channels=in_ch,
                     filter_size=filter_size,
-                    kernel_size=self.kernel_size,
+                    kernel_sizes=self.kernel_sizes,
                     reduction=self.reduction,
                     padding=self.padding,
                     activation=self.activation_hidden,
@@ -248,7 +248,7 @@ class MACNNBlock(NNModule):
         self,
         in_channels: int,
         filter_size: int,
-        kernel_size: tuple,
+        kernel_sizes: tuple,
         reduction: int,
         padding: str,
         activation: str,
@@ -256,7 +256,7 @@ class MACNNBlock(NNModule):
         super().__init__()
         self.in_channels = in_channels
         self.filter_size = filter_size
-        self.kernel_size = kernel_size
+        self.kernel_sizes = kernel_sizes
         self.reduction = reduction
         self.padding = padding
         self.activation_str = activation
@@ -272,10 +272,10 @@ class MACNNBlock(NNModule):
         # all kernels MUST produce the same output length.
         # Therefore, we always use padding="same" for Conv1d layers.
         self.convs = nnModuleList()
-        for ks in kernel_size:
+        for ks in self.kernel_sizes:
             self.convs.append(nnConv1d(in_channels, filter_size, ks, padding="same"))
 
-        out_channels = filter_size * len(kernel_size)
+        out_channels = filter_size * len(self.kernel_sizes)
         self.bn = nnBatchNorm1d(out_channels)
 
         self._activation = _instantiate_activation(self.activation_str)
