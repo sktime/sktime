@@ -76,6 +76,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "capability:pretrain": True,
     }
 
     def __init__(
@@ -150,6 +151,162 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             self.individual,
         )._build()
 
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain the neural network on panel data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex or pd.Series
+            Panel data to pretrain on. If MultiIndex DataFrame,
+            should have (instance, time) hierarchy.
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        fh : ForecastingHorizon or int, optional
+            Not used. The network output dimension is always determined by
+            the ``pred_len`` constructor parameter.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self.network = self._build_network(self.pred_len)
+        dataloader = self._build_panel_dataloader(y, self.pred_len)
+
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
+
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+        # Store number of pretrain instances for inspection
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            self.n_pretrain_instances_ = len(y.index.get_level_values(0).unique())
+        else:
+            self.n_pretrain_instances_ = 1
+
+        return self
+
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Update pretrained network with additional panel data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex or pd.Series
+            Additional panel data to train on
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        fh : ForecastingHorizon or int, optional
+            Forecasting horizon. Must match the network's pred_len.
+            If not provided, uses the network's existing pred_len.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        network_fh = self.network.pred_len
+
+        if fh is not None:
+            if hasattr(fh, "__iter__"):
+                fh = list(fh)[-1]
+            else:
+                fh = int(fh)
+            if fh != network_fh:
+                raise ValueError(
+                    f"fh={fh} does not match the network's "
+                    f"pred_len={network_fh}. The network output dimension "
+                    "is fixed at construction time via the pred_len parameter."
+                )
+        else:
+            fh = network_fh
+
+        dataloader = self._build_panel_dataloader(y, fh)
+
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+        # Update pretrain instance count
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            n_new = len(y.index.get_level_values(0).unique())
+            if hasattr(self, "n_pretrain_instances_"):
+                self.n_pretrain_instances_ += n_new
+            else:
+                self.n_pretrain_instances_ = n_new
+
+        return self
+
+    def _fit(self, y, fh, X=None):
+        """Fit the network, preserving pretrained weights if available.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Training data
+        fh : ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        """
+        fh = fh.to_relative(self.cutoff)
+
+        # Validate fh against pretrained network's output dimension
+        if hasattr(self, "network") and self.network is not None:
+            max_fh = max(list(fh))
+            if max_fh > self.network.pred_len:
+                raise ValueError(
+                    f"max(fh)={max_fh} exceeds the network's output dimension "
+                    f"(pred_len={self.network.pred_len}). "
+                    f"The network architecture was fixed during pretraining. "
+                    f"Either use a smaller fh (<= {self.network.pred_len}) "
+                    f"or create a new forecaster with a larger pred_len."
+                )
+
+        # Only build network if not already pretrained
+        if not hasattr(self, "network") or self.network is None:
+            self.network = self._build_network(list(fh)[-1])
+
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
+
+        dataloader = self.build_pytorch_train_dataloader(y)
+        self.network.train()
+
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+    def _build_panel_dataloader(self, y, fh):
+        """Build PyTorch DataLoader for panel/hierarchical data pretraining.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Panel data (2-level MultiIndex) or hierarchical data (3+ level MultiIndex)
+        fh : int
+            Forecasting horizon (prediction length)
+
+        Returns
+        -------
+        dataloader : torch.utils.data.DataLoader
+            DataLoader for panel/hierarchical data
+        """
+        from torch.utils.data import ConcatDataset, DataLoader
+
+        from sktime.forecasting.base.adapters._pytorch import (
+            PyTorchTrainDataset,
+            _get_series_from_panel,
+        )
+
+        all_series = _get_series_from_panel(y)
+
+        datasets = [
+            PyTorchTrainDataset(y=series, seq_len=self.seq_len, fh=fh)
+            for series in all_series
+        ]
+
+        combined_dataset = ConcatDataset(datasets)
+        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -165,10 +322,11 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         -------
         params : dict or list of dict
         """
+        # pred_len >= 3 because pretrain tests use fh=[1,2,3]
         params = [
             {
-                "seq_len": 2,
-                "pred_len": 2,
+                "seq_len": 3,
+                "pred_len": 3,
                 "lr": 0.003,
                 "optimizer": "AdamW",
                 "batch_size": 5,
@@ -178,8 +336,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
                 "individual": True,
             },
             {
-                "seq_len": 2,
-                "pred_len": 1,
+                "seq_len": 3,
+                "pred_len": 3,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
@@ -448,6 +606,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "capability:pretrain": True,
     }
 
     def __init__(
@@ -522,6 +681,162 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             self.individual,
         )._build()
 
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain the neural network on panel data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex or pd.Series
+            Panel data to pretrain on. If MultiIndex DataFrame,
+            should have (instance, time) hierarchy.
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        fh : ForecastingHorizon or int, optional
+            Not used. The network output dimension is always determined by
+            the ``pred_len`` constructor parameter.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self.network = self._build_network(self.pred_len)
+        dataloader = self._build_panel_dataloader(y, self.pred_len)
+
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
+
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+        # Store number of pretrain instances for inspection
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            self.n_pretrain_instances_ = len(y.index.get_level_values(0).unique())
+        else:
+            self.n_pretrain_instances_ = 1
+
+        return self
+
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Update pretrained network with additional panel data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex or pd.Series
+            Additional panel data to train on
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        fh : ForecastingHorizon or int, optional
+            Forecasting horizon. Must match the network's pred_len.
+            If not provided, uses the network's existing pred_len.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        network_fh = self.network.pred_len
+
+        if fh is not None:
+            if hasattr(fh, "__iter__"):
+                fh = list(fh)[-1]
+            else:
+                fh = int(fh)
+            if fh != network_fh:
+                raise ValueError(
+                    f"fh={fh} does not match the network's "
+                    f"pred_len={network_fh}. The network output dimension "
+                    "is fixed at construction time via the pred_len parameter."
+                )
+        else:
+            fh = network_fh
+
+        dataloader = self._build_panel_dataloader(y, fh)
+
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+        # Update pretrain instance count
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            n_new = len(y.index.get_level_values(0).unique())
+            if hasattr(self, "n_pretrain_instances_"):
+                self.n_pretrain_instances_ += n_new
+            else:
+                self.n_pretrain_instances_ = n_new
+
+        return self
+
+    def _fit(self, y, fh, X=None):
+        """Fit the network, preserving pretrained weights if available.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Training data
+        fh : ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional
+            Exogenous data (currently not used)
+        """
+        fh = fh.to_relative(self.cutoff)
+
+        # Validate fh against pretrained network's output dimension
+        if hasattr(self, "network") and self.network is not None:
+            max_fh = max(list(fh))
+            if max_fh > self.network.pred_len:
+                raise ValueError(
+                    f"max(fh)={max_fh} exceeds the network's output dimension "
+                    f"(pred_len={self.network.pred_len}). "
+                    f"The network architecture was fixed during pretraining. "
+                    f"Either use a smaller fh (<= {self.network.pred_len}) "
+                    f"or create a new forecaster with a larger pred_len."
+                )
+
+        # Only build network if not already pretrained
+        if not hasattr(self, "network") or self.network is None:
+            self.network = self._build_network(list(fh)[-1])
+
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
+
+        dataloader = self.build_pytorch_train_dataloader(y)
+        self.network.train()
+
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader)
+
+    def _build_panel_dataloader(self, y, fh):
+        """Build PyTorch DataLoader for panel/hierarchical data pretraining.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Panel data (2-level MultiIndex) or hierarchical data (3+ level MultiIndex)
+        fh : int
+            Forecasting horizon (prediction length)
+
+        Returns
+        -------
+        dataloader : torch.utils.data.DataLoader
+            DataLoader for panel/hierarchical data
+        """
+        from torch.utils.data import ConcatDataset, DataLoader
+
+        from sktime.forecasting.base.adapters._pytorch import (
+            PyTorchTrainDataset,
+            _get_series_from_panel,
+        )
+
+        all_series = _get_series_from_panel(y)
+
+        datasets = [
+            PyTorchTrainDataset(y=series, seq_len=self.seq_len, fh=fh)
+            for series in all_series
+        ]
+
+        combined_dataset = ConcatDataset(datasets)
+        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -537,10 +852,11 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         -------
         params : dict or list of dict
         """
+        # pred_len >= 3 because pretrain tests use fh=[1,2,3]
         params = [
             {
-                "seq_len": 2,
-                "pred_len": 2,
+                "seq_len": 3,
+                "pred_len": 3,
                 "lr": 0.003,
                 "optimizer": "AdamW",
                 "batch_size": 5,
@@ -550,8 +866,8 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
                 "individual": True,
             },
             {
-                "seq_len": 2,
-                "pred_len": 1,
+                "seq_len": 3,
+                "pred_len": 3,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
