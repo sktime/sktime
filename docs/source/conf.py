@@ -614,6 +614,24 @@ def _add_tags_table(app, what, name, obj, options, lines):
     if not tags:
         return
     
+    #filter for user facing tags only
+    try:
+        from sktime.registry import _tags as tag_module
+        user_facing = set()
+        for attr in dir(tag_module):
+            tag_cls = getattr(tag_module, attr)
+            if hasattr(tag_cls, "get_class_tag"):
+                tag_name = tag_cls.get_class_tag("tag_name", None)
+                is_user_facing = tag_cls.get_class_tag("user_facing", False)
+                if tag_name and is_user_facing:
+                    user_facing.add(tag_name)
+        tags = {k: v for k, v in tags.items() if k in user_facing}
+    except Exception:
+        pass
+
+    if not tags:
+        return
+    
     tag_ref_url = "https://www.sktime.net/en/latest/api_reference/tags.html"
 
     lines += ["", ".. rubric:: Tags", "", ".. list-table::", "   :header-rows: 1", "", "   * - Tag", "     - Value",]
