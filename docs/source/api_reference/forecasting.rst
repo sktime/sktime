@@ -487,34 +487,6 @@ Structural time series models
 
     GreykiteForecaster
 
-Pretraining on panel data
--------------------------
-
-Forecasters that support pretraining on panel (global) data before
-fitting to a specific series. Pretraining is initiated via the
-``pretrain`` method, which sets the forecaster state to ``"pretrained"``.
-A subsequent ``fit`` call preserves pretrained weights (fine-tuning).
-
-Forecasters with pretraining support can be listed with
-``all_estimators("forecaster", filter_tags={"capability:pretrain": True})``.
-
-.. currentmodule:: sktime.forecasting.ltsf
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    LTSFLinearForecaster
-    LTSFNLinearForecaster
-
-.. currentmodule:: sktime.forecasting.dummy_global
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    DummyGlobalForecaster
-
 Deep learning based forecasters
 -------------------------------
 
