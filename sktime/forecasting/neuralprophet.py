@@ -97,7 +97,7 @@ class NeuralProphet(BaseForecaster):
     _tags = {
         "authors": ["vedantag17"],
         "maintainers": ["vedantag17"],
-        "python_dependencies": "neuralprophet",
+        "python_dependencies": ["neuralprophet", "setuptools"],
         "capability:exogenous": True,
         "capability:missing_values": True,
         "y_inner_mtype": "pd.Series",
@@ -206,6 +206,11 @@ class NeuralProphet(BaseForecaster):
                 X = X.copy()
                 X = X.reindex(y.index)
 
+            # NeuralProphet requires string column names; coerce integer names
+            X.columns = [
+                f"regressor_{c}" if not isinstance(c, str) else c for c in X.columns
+            ]
+
             for col in X.columns:
                 if X[col].notna().any():
                     self._model.add_future_regressor(col)
@@ -267,6 +272,11 @@ class NeuralProphet(BaseForecaster):
                 X = X.copy()
                 X = X.reindex(fh_index)
 
+            # Coerce integer column names to strings, matching what _fit did
+            X.columns = [
+                f"regressor_{c}" if not isinstance(c, str) else c for c in X.columns
+            ]
+
             mask = future_df["ds"].isin(fh_index)
             for col in self._regressors:
                 if col in X.columns:
@@ -302,7 +312,7 @@ class NeuralProphet(BaseForecaster):
                 "weekly_seasonality": False,
                 "daily_seasonality": False,
                 "epochs": 5,
-                "uncertainty_samples": 10,
+                "uncertainty_samples": 0,
                 "verbose": False,
             },
             {
