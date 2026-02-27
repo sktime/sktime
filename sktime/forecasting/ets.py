@@ -373,6 +373,12 @@ class AutoETS(_StatsModelsAdapter):
                     for warning in caught_warnings
                 ):
                     converged = False
+                elif ConvergenceWarning is None and any(
+                    "converg" in str(getattr(w.category, "__name__", "")).lower()
+                    or "converg" in str(getattr(w.message, "")).lower()
+                    for w in caught_warnings
+                ):
+                    converged = False
                 mle_retvals = getattr(_fitted_forecaster, "mle_retvals", None)
                 if isinstance(mle_retvals, dict) and "converged" in mle_retvals:
                     converged = converged and bool(mle_retvals["converged"])
