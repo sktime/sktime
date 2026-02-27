@@ -3738,7 +3738,10 @@
         "code",
         "doc",
         "design",
-        "bug"
+        "bug",
+        "maintenance",
+        "test",
+        "review"
       ]
     },
     {
