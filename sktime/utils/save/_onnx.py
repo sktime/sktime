@@ -66,11 +66,7 @@ def save_to_onnx(estimator, path=None, initial_types=None, target_opset=None, **
     >>> save_to_onnx(clf, path="my_model")  # saves my_model.onnx  # doctest: +SKIP
     >>> wrapper = load_from_onnx("my_model.onnx")  # doctest: +SKIP
     """
-    _check_soft_dependencies("skl2onnx", "onnx", severity="error")
-
-    from skl2onnx import convert_sklearn
-
-    # check for sktime NotFittedError if it's a sktime estimator
+    # validate input before checking soft deps — gives clearer errors
     from sktime.base import BaseEstimator as SktimeBaseEstimator
 
     if isinstance(estimator, SktimeBaseEstimator):
@@ -85,6 +81,10 @@ def save_to_onnx(estimator, path=None, initial_types=None, target_opset=None, **
             "The estimator must have a 'fit' method and be compatible with "
             "skl2onnx.convert_sklearn."
         )
+
+    _check_soft_dependencies("skl2onnx", "onnx", severity="error")
+
+    from skl2onnx import convert_sklearn
 
     if initial_types is None:
         initial_types = _infer_onnx_initial_types(estimator)
