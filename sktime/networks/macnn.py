@@ -26,7 +26,7 @@ class MACNNNetwork(BaseDeepNetwork):
     filter_sizes : tuple, optional (default=(64, 128, 256))
         The input size of Conv1D layers within each MACNN Block.
         Length of filter_sizes determines number of MACNN stacks each containing
-        repeats MACNN Blocks.
+        ``repeats`` MACNN Blocks.
     kernel_size : tuple, optional (default=(3, 6, 12))
         The output size of Conv1D layers within each MACNN Block.
     reduction : int, optional (default=16)
@@ -132,7 +132,7 @@ class MACNNNetwork(BaseDeepNetwork):
             block it represents the input layer.
         repeats : int
             The number of MACNN Blocks to be used.
-            Corresponds to `repeats` attribute.
+            Corresponds to ``repeats`` attribute.
         kernels : int
             The base output dimension for dense layers, it corresponds
             to elements `filter_sizes` attributes.
