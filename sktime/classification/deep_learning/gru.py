@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 
 
 class GRUClassifier(BaseDeepClassifierPytorch):
@@ -134,7 +134,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
             random_state=random_state,
         )
 
-        self.criterions = {}
 
     def _build_network(self, X, y):
         from sktime.networks.gru import GRU
@@ -352,7 +351,6 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
             random_state=random_state,
         )
 
-        self.criterions = {}
 
     def _build_network(self, X, y):
         from sktime.networks.gru import GRUFCNN
