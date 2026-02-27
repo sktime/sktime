@@ -16,8 +16,10 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
     ----------
     filter_sizes : tuple of int, default = (256, 256, 128)
         Number of convolutional filters in each conv block.
+        If ``use_rp`` is True, the first conv layer is group-specific and all
+        subsequent conv layers share parameters across groups.
     kernel_size : tuple of int, default = (8, 5, 3)
-        Kernel sizes for the convolutional layers.
+        Specifying the length of the 1D convolution window.
     layers : tuple of int, default = (500, 300)
         Size of dense layers in the mapping section.
     dropout : float, default = 0.5
@@ -26,15 +28,21 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
         Dropout rate for the LSTM layer.
     dilation : int, default = 1
         Dilation value.
-    activation : str or None or an instance of activation functions defined in
-        torch.nn, default = None
-        Activation function used in the output layer.
+    activation : str or None, default = None
+        Activation function to use in the output layer.
     activation_hidden : str, default = "leaky_relu"
-        Activation function used in the hidden layers.
+        Activation function to use in the hidden layers.
     use_rp : bool, default = True
         Whether to use random projections.
-    rp_params : tuple of int, default = (-1, 3)
-        Parameters for random projection (rp_group, rp_dim).
+    rp_group : int, default = 3
+        Number of random permutation groups g for random dimension permutation (RDP).
+        Must be a positive integer.
+    rp_alpha : float, default = 2.0
+        Scale factor alpha used to compute the RDP group size:
+        rp_dim = floor(n_dims * rp_alpha / rp_group).
+        If rp_dim becomes 0, RDP is disabled with a warning (RDP requires
+        multivariate inputs).
+        Must be positive.
     use_att : bool, default = True
         Whether to use self attention.
     use_lstm : bool, default = True
@@ -91,7 +99,7 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> reg = TapNetRegressorTorch(n_epochs=20, batch_size=4)  # doctest: +SKIP
+    >>> reg = TapNetRegressorTorch(num_epochs=20, batch_size=4)  # doctest: +SKIP
     >>> reg.fit(X_train, y_train)  # doctest: +SKIP
     TapNetRegressorTorch(...)
     """
@@ -103,6 +111,7 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        "capability:multivariate": True,
     }
 
     def __init__(
@@ -117,7 +126,8 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
         activation: str | None | Callable = None,
         activation_hidden: str = "leaky_relu",
         use_rp: bool = True,
-        rp_params: tuple[int, int] = (-1, 3),
+        rp_group: int = 3,
+        rp_alpha: float = 2.0,
         use_att: bool = True,
         use_lstm: bool = True,
         use_cnn: bool = True,
@@ -146,7 +156,8 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.use_rp = use_rp
-        self.rp_params = rp_params
+        self.rp_group = rp_group
+        self.rp_alpha = rp_alpha
         self.use_att = use_att
         self.use_lstm = use_lstm
         self.use_cnn = use_cnn
@@ -164,27 +175,6 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
-
-        if not isinstance(self.kernel_size, tuple) or not all(
-            isinstance(k, int) for k in self.kernel_size
-        ):
-            raise TypeError("`kernel_size` must be a tuple of ints.")
-        if not isinstance(self.filter_sizes, tuple) or not all(
-            isinstance(f, int) for f in self.filter_sizes
-        ):
-            raise TypeError("`filter_sizes` must be a tuple of ints.")
-        if len(self.kernel_size) != len(self.filter_sizes):
-            raise ValueError(
-                "`kernel_size` and `filter_sizes` must be of the same length."
-            )
-        if len(self.kernel_size) < 3:
-            raise ValueError("`kernel_size` and `filter_sizes` must have length >= 3.")
-        if not isinstance(self.layers, tuple) or len(self.layers) != 2:
-            raise ValueError("`layers` must be a tuple of length 2.")
-        if not all(isinstance(l, int) for l in self.layers):
-            raise TypeError("`layers` must be a tuple of ints.")
-        if not isinstance(self.rp_params, tuple) or len(self.rp_params) != 2:
-            raise ValueError("`rp_params` must be a tuple of length 2.")
 
         self.input_size = None
         self.num_classes = 1  # for regression
@@ -237,7 +227,8 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
             dilation=self.dilation,
             padding=self.padding,
             use_rp=self.use_rp,
-            rp_params=self.rp_params,
+            rp_group=self.rp_group,
+            rp_alpha=self.rp_alpha,
             use_att=self.use_att,
             use_lstm=self.use_lstm,
             use_cnn=self.use_cnn,
@@ -292,7 +283,8 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
         params5 = {
             "num_epochs": 2,
             "use_rp": True,
-            "rp_params": (2, 2),
+            "rp_group": 2,
+            "rp_alpha": 1.0,
             "filter_sizes": (8, 8, 8),
             "layers": (16, 8),
         }

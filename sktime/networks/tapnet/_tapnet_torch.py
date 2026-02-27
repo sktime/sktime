@@ -4,6 +4,7 @@ __authors__ = ["srupat"]
 __all__ = ["TapNetNetworkTorch"]
 
 import math
+import warnings
 
 import numpy as np
 
@@ -34,6 +35,8 @@ class TapNetNetworkTorch(NNModule):
         Size of dense layers in the mapping section.
     filter_sizes : tuple of int, default = (256, 256, 128)
         Number of convolutional filters in each conv block.
+        If ``use_rp`` is True, the first conv layer is group-specific and all
+        subsequent conv layers share parameters across groups.
     dropout : float, default = 0.5
         Dropout rate for the convolutional layers.
     lstm_dropout : float, default = 0.8
@@ -44,8 +47,15 @@ class TapNetNetworkTorch(NNModule):
         Type of padding for convolution layers.
     use_rp : bool, default = True
         Whether to use random projections.
-    rp_params : tuple of int, default = (-1, 3)
-        Parameters for random projection.
+    rp_group : int, default = 3
+        Number of random permutation groups g for random dimension permutation (RDP).
+        Must be a positive integer.
+    rp_alpha : float, default = 2.0
+        Scale factor alpha used to compute the RDP group size:
+        rp_dim = floor(n_dims * rp_alpha / rp_group).
+        If rp_dim becomes 0, RDP is disabled with a warning (RDP requires
+        multivariate inputs).
+        Must be positive.
     use_att : bool, default = True
         Whether to use self attention.
     use_lstm : bool, default = True
@@ -90,7 +100,8 @@ class TapNetNetworkTorch(NNModule):
         dilation: int = 1,
         padding: str = "same",
         use_rp: bool = True,
-        rp_params: tuple[int, int] = (-1, 3),
+        rp_group: int = 3,
+        rp_alpha: float = 2.0,
         use_att: bool = True,
         use_lstm: bool = True,
         use_cnn: bool = True,
@@ -100,6 +111,7 @@ class TapNetNetworkTorch(NNModule):
     ):
         super().__init__()
 
+        self._import_cache = {}
         self.input_size = input_size
         self.num_classes = num_classes
         self.activation = activation
@@ -112,7 +124,8 @@ class TapNetNetworkTorch(NNModule):
         self.dilation = dilation
         self.padding = padding
         self.use_rp = use_rp
-        self.rp_params = rp_params
+        self.rp_group = rp_group
+        self.rp_alpha = rp_alpha
         self.use_att = use_att
         self.use_lstm = use_lstm
         self.use_cnn = use_cnn
@@ -124,22 +137,28 @@ class TapNetNetworkTorch(NNModule):
             isinstance(k, int) for k in self.kernel_size
         ):
             raise TypeError("`kernel_size` must be a tuple of ints.")
+
         if not isinstance(self.filter_sizes, tuple) or not all(
             isinstance(f, int) for f in self.filter_sizes
         ):
             raise TypeError("`filter_sizes` must be a tuple of ints.")
+
         if len(self.kernel_size) != len(self.filter_sizes):
             raise ValueError(
                 "`kernel_size` and `filter_sizes` must be of the same length."
             )
-        if len(self.kernel_size) < 3:
-            raise ValueError("`kernel_size` and `filter_sizes` must have length >= 3.")
-        if not isinstance(self.layers, tuple) or len(self.layers) != 2:
-            raise ValueError("`layers` must be a tuple of length 2.")
-        if not all(isinstance(l, int) for l in self.layers):
+        if len(self.kernel_size) < 1:
+            raise ValueError("`kernel_size` and `filter_sizes` must have length >= 1.")
+
+        if not isinstance(self.layers, tuple) or not all(
+            isinstance(l, int) for l in self.layers
+        ):
             raise TypeError("`layers` must be a tuple of ints.")
-        if not isinstance(self.rp_params, tuple) or len(self.rp_params) != 2:
-            raise ValueError("`rp_params` must be a tuple of length 2.")
+
+        if not isinstance(self.rp_group, int) or self.rp_group < 1:
+            raise ValueError("`rp_group` must be a positive integer.")
+        if not isinstance(self.rp_alpha, (int, float)) or self.rp_alpha <= 0:
+            raise ValueError("`rp_alpha` must be a positive number.")
 
         # Validate input size and infer n_dims
         if isinstance(self.input_size, int):
@@ -160,11 +179,6 @@ class TapNetNetworkTorch(NNModule):
                 f"But found the type to be: {type(self.input_size)}"
             )
         self.n_dims = n_dims
-        if self.n_dims < 2:
-            raise ValueError(
-                "TapNet supports multivariate time series only; "
-                f"found n_dims={self.n_dims}."
-            )
 
         # RNG setup for reproducibility
         if self.random_state is not None:
@@ -180,14 +194,23 @@ class TapNetNetworkTorch(NNModule):
             self._instantiate_output_activation() if self.activation else None
         )
 
-        # Random projection parameters
-        if self.rp_params[0] < 0:
-            dim = self.n_dims
-            self.rp_group = 3
-            self.rp_dim = math.floor(dim * 2 / 3)
+        # Random projection parameters (RDP)
+        if self.use_rp:
+            self.rp_dim = math.floor(self.n_dims * self.rp_alpha / self.rp_group)
+            if self.rp_dim < 1:
+                warnings.warn(
+                    "Disabling random dimension permutation (RDP) because the "
+                    "computed rp_dim is 0. This can happen for univariate data; "
+                    "RDP requires multivariate inputs.",
+                    UserWarning,
+                )
+                self.use_rp = False
+                self.rp_dim = 0
+            else:
+                # rp_dim cannot be greater than n_dims
+                self.rp_dim = min(self.rp_dim, self.n_dims)
         else:
-            self.rp_group, self.rp_dim = self.rp_params
-        self.rp_dim = min(self.rp_dim, self.n_dims)
+            self.rp_dim = 0
 
         # Layers for LSTM
         if self.use_lstm:
@@ -205,20 +228,27 @@ class TapNetNetworkTorch(NNModule):
                     "sktime.libs._torch_self_attention.seq_self_attention.SeqSelfAttentionTorch"
                 )
                 self.lstm_attn = SeqSelfAttentionTorch(
-                    self.lstm_dim, attention_type="multiplicative"
+                    self.lstm_dim,
+                    attention_type="multiplicative",
+                    input_dim=self.lstm_dim,
                 )
 
         # Layers for CNN
         if self.use_cnn:
             if self.use_rp:
-                self.rp_conv = self._make_conv_stack(self.rp_dim)
+                ModuleList = _safe_import("torch.nn.ModuleList")
+                self.rp_conv1 = ModuleList(
+                    [self._make_conv1_block(self.rp_dim) for _ in range(self.rp_group)]
+                )
+                self.rp_conv_shared = self._make_conv_shared_block()
                 if self.use_att:
                     SeqSelfAttentionTorch = _safe_import(
                         "sktime.libs._torch_self_attention.seq_self_attention.SeqSelfAttentionTorch"
                     )
                     self.rp_attn = SeqSelfAttentionTorch(
-                        self.filter_sizes[2],
+                        self.filter_sizes[-1],
                         attention_type="multiplicative",
+                        input_dim=self.filter_sizes[-1],
                     )
                 # Pre-compute RP indices (deterministic if random_state is set)
                 for i in range(self.rp_group):
@@ -230,12 +260,16 @@ class TapNetNetworkTorch(NNModule):
                         torch_tensor(idx, dtype=torch_long),
                     )
             else:
-                self.conv = self._make_conv_stack(self.n_dims)
+                self.conv1 = self._make_conv1_block(self.n_dims)
+                self.conv_shared = self._make_conv_shared_block()
                 if self.use_att:
                     SeqSelfAttentionTorch = _safe_import(
                         "sktime.libs._torch_self_attention.seq_self_attention.SeqSelfAttentionTorch"
                     )
-                    self.cnn_attn = SeqSelfAttentionTorch(self.filter_sizes[2])
+                    self.cnn_attn = SeqSelfAttentionTorch(
+                        self.filter_sizes[-1],
+                        input_dim=self.filter_sizes[-1],
+                    )
 
         if not self.use_lstm and not self.use_cnn:
             raise ValueError("At least one of `use_lstm` or `use_cnn` must be True.")
@@ -243,7 +277,7 @@ class TapNetNetworkTorch(NNModule):
         # Mapping head
         mapping_in = 0
         if self.use_cnn:
-            mapping_in += self.filter_sizes[2] * (self.rp_group if self.use_rp else 1)
+            mapping_in += self.filter_sizes[-1] * (self.rp_group if self.use_rp else 1)
         if self.use_lstm:
             mapping_in += self.lstm_dim
 
@@ -262,14 +296,14 @@ class TapNetNetworkTorch(NNModule):
         if self.init_weights:
             self.apply(self._init_weights)
 
-    def _make_conv_stack(self, in_channels):
-        """Build the 3-layer 1D CNN block in TapNet.
+    def _torch_op(self, import_path):
+        """Lazy import and cache torch ops used in forward pass."""
+        if import_path not in self._import_cache:
+            self._import_cache[import_path] = _safe_import(import_path)
+        return self._import_cache[import_path]
 
-        Notes
-        -----
-        Uses each kernel size (kernel_size) for each layer as mentioned in the original
-        TapNet paper.
-        """
+    def _make_conv1_block(self, in_channels):
+        """Build the first 1D CNN block in TapNet."""
         Sequential = _safe_import("torch.nn.Sequential")
         Conv1d = _safe_import("torch.nn.Conv1d")
         BatchNorm1d = _safe_import("torch.nn.BatchNorm1d")
@@ -283,25 +317,31 @@ class TapNetNetworkTorch(NNModule):
             ),
             BatchNorm1d(self.filter_sizes[0]),
             self._instantiate_hidden_activation(),
-            Conv1d(
-                self.filter_sizes[0],
-                self.filter_sizes[1],
-                kernel_size=self.kernel_size[1],
-                dilation=self.dilation,
-                padding=self.padding,
-            ),
-            BatchNorm1d(self.filter_sizes[1]),
-            self._instantiate_hidden_activation(),
-            Conv1d(
-                self.filter_sizes[1],
-                self.filter_sizes[2],
-                kernel_size=self.kernel_size[2],
-                dilation=self.dilation,
-                padding=self.padding,
-            ),
-            BatchNorm1d(self.filter_sizes[2]),
-            self._instantiate_hidden_activation(),
         )
+
+    def _make_conv_shared_block(self):
+        """Build shared CNN blocks for layers after the first."""
+        if len(self.filter_sizes) < 2:
+            return None
+        Sequential = _safe_import("torch.nn.Sequential")
+        Conv1d = _safe_import("torch.nn.Conv1d")
+        BatchNorm1d = _safe_import("torch.nn.BatchNorm1d")
+        layers = []
+        in_channels = self.filter_sizes[0]
+        for i in range(1, len(self.filter_sizes)):
+            layers.append(
+                Conv1d(
+                    in_channels,
+                    self.filter_sizes[i],
+                    kernel_size=self.kernel_size[i],
+                    dilation=self.dilation,
+                    padding=self.padding,
+                )
+            )
+            layers.append(BatchNorm1d(self.filter_sizes[i]))
+            layers.append(self._instantiate_hidden_activation())
+            in_channels = self.filter_sizes[i]
+        return Sequential(*layers)
 
     def _instantiate_hidden_activation(self):
         """Instantiate the activation function to be applied on the hidden layers.
@@ -399,7 +439,7 @@ class TapNetNetworkTorch(NNModule):
             Input tensor containing the time series data.
         """
         if isinstance(X, np.ndarray):
-            torch_from_numpy = _safe_import("torch.from_numpy")
+            torch_from_numpy = self._torch_op("torch.from_numpy")
             X = torch_from_numpy(X).float()
 
         if self.use_lstm:
@@ -416,23 +456,27 @@ class TapNetNetworkTorch(NNModule):
                 for i in range(self.rp_group):
                     idx = getattr(self, f"rp_idx_{i}")
                     x_proj = x_cnn.index_select(dim=1, index=idx)
-                    x_conv = self.rp_conv(x_proj)
+                    x_conv = self.rp_conv1[i](x_proj)
+                    if self.rp_conv_shared is not None:
+                        x_conv = self.rp_conv_shared(x_conv)
                     if self.use_att:
                         x_conv = self.rp_attn(x_conv.transpose(1, 2))
                         x_conv = x_conv.transpose(1, 2)
                     x_conv = x_conv.mean(dim=2)
                     rp_outs.append(x_conv)
-                torch_cat = _safe_import("torch.cat")
+                torch_cat = self._torch_op("torch.cat")
                 x_cnn = torch_cat(rp_outs, dim=1)  # concatenate all rp group vectors
             else:
-                x_conv = self.conv(x_cnn)
+                x_conv = self.conv1(x_cnn)
+                if self.conv_shared is not None:
+                    x_conv = self.conv_shared(x_conv)
                 if self.use_att:
                     x_conv = self.cnn_attn(x_conv.transpose(1, 2))
                     x_conv = x_conv.transpose(1, 2)
                 x_cnn = x_conv.mean(dim=2)
 
         if self.use_lstm and self.use_cnn:
-            torch_cat = _safe_import("torch.cat")
+            torch_cat = self._torch_op("torch.cat")
             x = torch_cat([x_cnn, x_lstm], dim=1)
         elif self.use_lstm:
             x = x_lstm
