@@ -32,7 +32,7 @@ class TapNetNetworkTorch(NNModule):
     kernel_size : tuple of int, default = (8, 5, 3)
         Specifying the length of the 1D convolution window.
     layers : tuple of int, default = (500, 300)
-        Size of dense layers in the mapping section.
+        Sizes of dense layers in the mapping section. Any length >= 1 is allowed.
     filter_sizes : tuple of int, default = (256, 256, 128)
         Number of convolutional filters in each conv block.
         If ``use_rp`` is True, the first conv layer is group-specific and all
@@ -154,6 +154,8 @@ class TapNetNetworkTorch(NNModule):
             isinstance(l, int) for l in self.layers
         ):
             raise TypeError("`layers` must be a tuple of ints.")
+        if len(self.layers) < 1:
+            raise ValueError("`layers` must have length >= 1.")
 
         if not isinstance(self.rp_group, int) or self.rp_group < 1:
             raise ValueError("`rp_group` must be a positive integer.")
@@ -283,15 +285,21 @@ class TapNetNetworkTorch(NNModule):
 
         Linear = _safe_import("torch.nn.Linear")
         BatchNorm1d = _safe_import("torch.nn.BatchNorm1d")
-        self.fc1 = Linear(mapping_in, self.layers[0])
-        self.bn1 = BatchNorm1d(self.layers[0])
-        self.fc2 = Linear(self.layers[0], self.layers[1])
+        ModuleList = _safe_import("torch.nn.ModuleList")
+        self.fcs = ModuleList()
+        self.bns = ModuleList()
+        in_features = mapping_in
+        for i, hidden_dim in enumerate(self.layers):
+            self.fcs.append(Linear(in_features, hidden_dim))
+            if i < len(self.layers) - 1:
+                self.bns.append(BatchNorm1d(hidden_dim))
+            in_features = hidden_dim
 
         if self.fc_dropout:
             Dropout = _safe_import("torch.nn.Dropout")
             self.out_dropout = Dropout(p=self.fc_dropout)
 
-        self.out = Linear(self.layers[1], self.num_classes)
+        self.out = Linear(in_features, self.num_classes)
 
         if self.init_weights:
             self.apply(self._init_weights)
@@ -483,11 +491,12 @@ class TapNetNetworkTorch(NNModule):
         else:
             x = x_cnn
 
-        x = self.fc1(x)
-        x = self._activation_hidden(x)
-        if x.shape[0] > 1:
-            x = self.bn1(x)
-        x = self.fc2(x)
+        for i, fc in enumerate(self.fcs):
+            x = fc(x)
+            if i < len(self.fcs) - 1:
+                x = self._activation_hidden(x)
+                if x.shape[0] > 1:
+                    x = self.bns[i](x)
         if self.fc_dropout:
             x = self.out_dropout(x)
         x = self.out(x)

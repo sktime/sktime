@@ -21,7 +21,7 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
     kernel_size : tuple of int, default = (8, 5, 3)
         Specifying the length of the 1D convolution window.
     layers : tuple of int, default = (500, 300)
-        Size of dense layers in the mapping section.
+        Sizes of dense layers in the mapping section. Any length >= 1 is allowed.
     dropout : float, default = 0.5
         Dropout rate for the convolutional layers.
     lstm_dropout : float, default = 0.8
