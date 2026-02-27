@@ -603,6 +603,24 @@ def _process_in_page_toc(app, exception):
             # Write back HTML
             f.write(str(soup))
 
+def _add_tags_table(app, what, name, obj, options, lines):
+    """Add tags table to estimator docstrings durind autodoc processing."""
+    if what != "class" or not(hasattr(obj, "get_class_tags")):
+        return
+    try:
+        tags = obj.get_class_tags()
+    except Exception:
+        return
+    if not tags:
+        return
+    
+    tag_ref_url = "https://www.sktime.net/en/latest/api_reference/tags.html"
+
+    lines += ["", ".. rubric:: Tags", "", ".. list-table::", "   :header-rows: 1", "", "   * - Tag", "     - Value",]
+
+    for tag, value in sorted(tags.items()):
+        lines+=[f"   * - `{tag} <{tag_ref_url}>`_", f"     - ``{value}``"]
+    lines.append("")
 
 def setup(app):
     """Set up sphinx builder.
@@ -620,6 +638,7 @@ def setup(app):
 
     app.connect("builder-inited", _make_estimator_overview)
     app.connect("build-finished", _process_in_page_toc)
+    app.connect("autodoc-process-docstring", _add_tags_table)
 
 
 # -- Extension configuration -------------------------------------------------
