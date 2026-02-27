@@ -1,5 +1,7 @@
 """Gated Recurrent Unit (GRU) for time series classification."""
 
+from copy import deepcopy
+
 import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
@@ -329,12 +331,9 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         self.criterion = criterion
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
-        optimizer_kwargs_effective = (
-            {"betas": (0.9, 0.999)} if optimizer == "Adam" else {}
+        self.optimizer_kwargs = (
+            deepcopy(optimizer_kwargs) if optimizer_kwargs is not None else None
         )
-        if optimizer_kwargs is not None:
-            optimizer_kwargs_effective = optimizer_kwargs
-        self.optimizer_kwargs = optimizer_kwargs_effective
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -349,7 +348,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
             criterion=criterion,
             batch_size=batch_size,
             criterion_kwargs=criterion_kwargs,
-            optimizer_kwargs=optimizer_kwargs_effective,
+            optimizer_kwargs=optimizer_kwargs,
             lr=lr,
             verbose=verbose,
             random_state=random_state,
@@ -374,6 +373,64 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
             bidirectional=self.bidirectional,
             conv_layers=self.conv_layers,
             kernel_sizes=self.kernel_sizes,
+        )
+
+    def _instantiate_optimizer(self):
+        """Instantiate optimizer, applying default Adam betas only at creation time."""
+        from sktime.utils.dependencies import _safe_import
+
+        optimizer_kwargs_effective = (
+            {} if self.optimizer_kwargs is None else deepcopy(self.optimizer_kwargs)
+        )
+        is_adam = isinstance(self.optimizer, str) and self.optimizer.lower() == "adam"
+        if (not self.optimizer or is_adam) and "betas" not in optimizer_kwargs_effective:
+            optimizer_kwargs_effective["betas"] = (0.9, 0.999)
+        if not self.optimizer:
+            return _safe_import("torch.optim.Adam")(
+                self.network.parameters(), lr=self.lr, **optimizer_kwargs_effective
+            )
+        if self._all_optimizers is None:
+            self._all_optimizers = {
+                "adadelta": "Adadelta",
+                "adagrad": "Adagrad",
+                "adam": "Adam",
+                "adamw": "AdamW",
+                "sparseadam": "SparseAdam",
+                "adamax": "Adamax",
+                "asgd": "ASGD",
+                "lbfgs": "LBFGS",
+                "nadam": "NAdam",
+                "radam": "RAdam",
+                "rmsprop": "RMSprop",
+                "rprop": "Rprop",
+                "sgd": "SGD",
+            }
+        torch_optim = _safe_import("torch.optim")
+        if torch_optim is not None:
+            Optimizer = torch_optim.Optimizer
+            if isinstance(self.optimizer, Optimizer):
+                return self.optimizer
+        if isinstance(self.optimizer, str):
+            if self.optimizer.lower() in self._all_optimizers:
+                optimizer_class = _safe_import(
+                    f"torch.optim.{self._all_optimizers[self.optimizer.lower()]}"
+                )
+                if optimizer_kwargs_effective:
+                    return optimizer_class(
+                        self.network.parameters(),
+                        lr=self.lr,
+                        **optimizer_kwargs_effective,
+                    )
+                return optimizer_class(self.network.parameters(), lr=self.lr)
+            raise ValueError(
+                f"Unknown optimizer: {self.optimizer}. Please pass one of "
+                f"{', '.join(self._all_optimizers)} for `optimizer`."
+            )
+        raise TypeError(
+            "`optimizer` can either be None, a str or an instance of "
+            "optimizers defined in torch.optim. "
+            "See https://pytorch.org/docs/stable/optim.html#algorithms. "
+            f"But got {type(self.optimizer)} instead."
         )
 
     @classmethod
