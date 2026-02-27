@@ -2,8 +2,9 @@
 
 __author__ = ["rakshitha123"]
 
-__all__ = ["load_tsf_to_dataframe"]
+__all__ = ["load_from_tsf_to_dataframe", "load_tsf_to_dataframe"]
 
+import warnings
 from datetime import datetime
 
 import pandas as pd
@@ -108,8 +109,7 @@ def create_range_index(value_column_name, df):
     return drop_columns, has_time_index
 
 
-# TODO: depreciate this and rename it load_from_tsf_to_dataframe for consistency
-def load_tsf_to_dataframe(
+def load_from_tsf_to_dataframe(
     full_file_path_and_name,
     replace_missing_vals_with="NaN",
     value_column_name="series_value",
@@ -331,3 +331,19 @@ def load_tsf_to_dataframe(
                 )
 
         return loaded_data, metadata
+
+
+def load_tsf_to_dataframe(*args, **kwargs):
+    """Load a .tsf file into a dataframe.
+
+    .. deprecated::
+        `load_tsf_to_dataframe` is deprecated and will be removed in a future
+        version. Use :func:`load_from_tsf_to_dataframe` instead.
+    """
+    warnings.warn(
+        "load_tsf_to_dataframe is deprecated and will be removed in a future version. "
+        "Use load_from_tsf_to_dataframe instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return load_from_tsf_to_dataframe(*args, **kwargs)
