@@ -285,6 +285,11 @@ EXCLUDED_TESTS_BY_TEST = {
         # on higher version, prints np.float64(0.123456)
         # therefore these doctests will fail either on lower or higher versions
         "MedianSquaredScaledError",
+        "InterQuartileRangeError",
+        "KLDivergenceDoubleExponential",
+        "KLDivergenceNormal",
+        "KLDivergenceSingleExponential",
+        "NormalizedMeanSquaredError",
         "GeometricMeanAbsoluteError",
         "MedianRelativeAbsoluteError",
         "MeanSquaredScaledError",
@@ -295,6 +300,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "MedianSquaredError",
         "MeanAbsoluteError",
         "MeanAbsolutePercentageError",
+        "MeanAbsolutePercentageErrorStabilized",
         "MeanAbsoluteScaledError",
         "MedianAbsoluteError",
         "MeanSquaredPercentageError",
@@ -302,6 +308,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "MeanSquaredError",
         "PinballLoss",
         "RelativeLoss",
+        "TheilU2",
         "MeanRelativeAbsoluteError",
     ],
 }
