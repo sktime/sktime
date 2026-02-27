@@ -2,10 +2,7 @@
 
 from sktime.utils.dependencies import _safe_import
 
-torch = _safe_import("torch")
-nn_init = _safe_import("torch.nn.init")
 NNModule = _safe_import("torch.nn.Module")
-nn = _safe_import("torch.nn")
 
 
 class SeqSelfAttentionTorch(NNModule):
@@ -31,6 +28,8 @@ class SeqSelfAttentionTorch(NNModule):
         Activation applied to attention logits.
     attention_regularizer_weight : float, default=0.0
         Weight for the attention regularizer.
+    input_dim : int or None, default=None
+        If provided, build parameters in the constructor.
     """
 
     ATTENTION_TYPE_ADD = "additive"
@@ -47,9 +46,11 @@ class SeqSelfAttentionTorch(NNModule):
         use_attention_bias=True,
         attention_activation=None,
         attention_regularizer_weight=0.0,
+        input_dim=None,
     ):
         """Layer initialization."""
         super().__init__()
+        self._import_cache = {}
         self.units = units
         self.attention_width = attention_width
         self.attention_type = attention_type
@@ -89,22 +90,32 @@ class SeqSelfAttentionTorch(NNModule):
                 "No implementation for attention type : " + attention_type
             )
 
+        if input_dim is not None:
+            self._build(input_dim)
+
+    def _torch_op(self, import_path):
+        """Lazy import and cache torch ops used in forward pass."""
+        if import_path not in self._import_cache:
+            self._import_cache[import_path] = _safe_import(import_path)
+        return self._import_cache[import_path]
+
     def _instantiate_attention_activation(self, activation):
         """Instantiate the attention activation function."""
+        Module = self._torch_op("torch.nn.modules.module.Module")
         if activation is None:
             return None
-        if isinstance(activation, NNModule):
+        if isinstance(activation, Module):
             return activation
         if callable(activation):
             return activation
         if isinstance(activation, str):
             act = activation.lower()
             if act == "tanh":
-                return _safe_import("torch.nn.Tanh")()
+                return self._torch_op("torch.nn.Tanh")()
             if act == "relu":
-                return _safe_import("torch.nn.ReLU")()
+                return self._torch_op("torch.nn.ReLU")()
             if act == "sigmoid":
-                return _safe_import("torch.nn.Sigmoid")()
+                return self._torch_op("torch.nn.Sigmoid")()
             if act in ("linear",):
                 return None
         raise ValueError(
@@ -115,36 +126,48 @@ class SeqSelfAttentionTorch(NNModule):
 
     def _build(self, input_dim):
         """Build the layer parameters."""
+        if self._built:
+            if self._input_dim != int(input_dim):
+                raise ValueError(
+                    "SeqSelfAttentionTorch already built with input_dim="
+                    f"{self._input_dim}, got {input_dim}."
+                )
+            return
         self._input_dim = int(input_dim)
 
+        Parameter = self._torch_op("torch.nn.Parameter")
+        torch_empty = self._torch_op("torch.empty")
+
         if self.attention_type == self.ATTENTION_TYPE_ADD:
-            self.Wt = nn.Parameter(torch.empty(self._input_dim, self.units))
-            self.Wx = nn.Parameter(torch.empty(self._input_dim, self.units))
+            self.Wt = Parameter(torch_empty(self._input_dim, self.units))
+            self.Wx = Parameter(torch_empty(self._input_dim, self.units))
             if self.use_additive_bias:
-                self.bh = nn.Parameter(torch.empty(self.units))
-            self.Wa = nn.Parameter(torch.empty(self.units, 1))
+                self.bh = Parameter(torch_empty(self.units))
+            self.Wa = Parameter(torch_empty(self.units, 1))
             if self.use_attention_bias:
-                self.ba = nn.Parameter(torch.empty(1))
+                self.ba = Parameter(torch_empty(1))
         elif self.attention_type == self.ATTENTION_TYPE_MUL:
-            self.Wa = nn.Parameter(torch.empty(self._input_dim, self._input_dim))
+            self.Wa = Parameter(torch_empty(self._input_dim, self._input_dim))
             if self.use_attention_bias:
-                self.ba = nn.Parameter(torch.empty(1))
+                self.ba = Parameter(torch_empty(1))
 
         self._reset_parameters()
         self._built = True
 
     def _reset_parameters(self):
         """Initialize the layer parameters."""
+        xavier_normal_ = self._torch_op("torch.nn.init.xavier_normal_")
+        zeros_ = self._torch_op("torch.nn.init.zeros_")
         if self.Wt is not None:
-            nn_init.xavier_normal_(self.Wt)
+            xavier_normal_(self.Wt)
         if self.Wx is not None:
-            nn_init.xavier_normal_(self.Wx)
+            xavier_normal_(self.Wx)
         if self.Wa is not None:
-            nn_init.xavier_normal_(self.Wa)
+            xavier_normal_(self.Wa)
         if self.bh is not None:
-            nn_init.zeros_(self.bh)
+            zeros_(self.bh)
         if self.ba is not None:
-            nn_init.zeros_(self.ba)
+            zeros_(self.ba)
 
     def forward(self, x, mask=None):
         """Compute the output of the layer.
@@ -164,6 +187,11 @@ class SeqSelfAttentionTorch(NNModule):
 
         if not self._built:
             self._build(x.shape[-1])
+        elif self._input_dim is not None and x.shape[-1] != self._input_dim:
+            raise ValueError(
+                "Input feature dimension does not match layer input_dim. "
+                f"Expected {self._input_dim}, got {x.shape[-1]}."
+            )
 
         if self.attention_type == self.ATTENTION_TYPE_ADD:
             e = self._call_additive_emission(x)
@@ -181,11 +209,14 @@ class SeqSelfAttentionTorch(NNModule):
 
         self.intensity = e
         e = e - e.max(dim=-1, keepdim=True)[0]
-        a = torch.exp(e)
-        a = a / (a.sum(dim=-1, keepdim=True) + torch.finfo(a.dtype).eps)
+        torch_exp = self._torch_op("torch.exp")
+        torch_finfo = self._torch_op("torch.finfo")
+        a = torch_exp(e)
+        a = a / (a.sum(dim=-1, keepdim=True) + torch_finfo(a.dtype).eps)
         self.attention = a
 
-        v = torch.bmm(a, x)
+        torch_bmm = self._torch_op("torch.bmm")
+        v = torch_bmm(a, x)
         if self.attention_regularizer_weight > 0.0:
             self.attention_regularizer_loss = self._attention_regularizer(a)
         else:
@@ -197,24 +228,30 @@ class SeqSelfAttentionTorch(NNModule):
 
     def _call_additive_emission(self, x):
         # x: (B, T, F)
-        q = torch.matmul(x, self.Wt)  # (B, T, U)
-        k = torch.matmul(x, self.Wx)  # (B, T, U)
+        torch_matmul = self._torch_op("torch.matmul")
+        torch_tanh = self._torch_op("torch.tanh")
+        q = torch_matmul(x, self.Wt)  # (B, T, U)
+        k = torch_matmul(x, self.Wx)  # (B, T, U)
+
+        # For broadcasting
         q = q.unsqueeze(2)  # (B, T, 1, U)
         k = k.unsqueeze(1)  # (B, 1, T, U)
+
         if self.use_additive_bias:
-            h = torch.tanh(q + k + self.bh)
+            h = torch_tanh(q + k + self.bh)
         else:
-            h = torch.tanh(q + k)
+            h = torch_tanh(q + k)
         if self.use_attention_bias:
-            e = torch.matmul(h, self.Wa).squeeze(-1) + self.ba
+            e = torch_matmul(h, self.Wa).squeeze(-1) + self.ba
         else:
-            e = torch.matmul(h, self.Wa).squeeze(-1)
+            e = torch_matmul(h, self.Wa).squeeze(-1)
         return e
 
     def _call_multiplicative_emission(self, x):
         # e_{t, t'} = x_t^T W_a x_{t'}
-        e = torch.matmul(x, self.Wa)  # (B, T, F)
-        e = torch.matmul(e, x.transpose(1, 2))  # (B, T, T)
+        torch_matmul = self._torch_op("torch.matmul")
+        e = torch_matmul(x, self.Wa)  # (B, T, F)
+        e = torch_matmul(e, x.transpose(1, 2))  # (B, T, T)
         if self.use_attention_bias:
             e = e + self.ba
         return e
@@ -222,7 +259,8 @@ class SeqSelfAttentionTorch(NNModule):
     def _apply_attention_width(self, e, seq_len):
         """Apply attention width."""
         # e: (B, T, T)
-        indices = torch.arange(seq_len, device=e.device)
+        torch_arange = self._torch_op("torch.arange")
+        indices = torch_arange(seq_len, device=e.device)
         if self.history_only:
             lower = indices - (self.attention_width - 1)
         else:
@@ -248,8 +286,10 @@ class SeqSelfAttentionTorch(NNModule):
         """Orthogonality regularizer for attention weights."""
         batch_size = attention.shape[0]
         seq_len = attention.shape[-1]
-        eye = torch.eye(seq_len, device=attention.device, dtype=attention.dtype)
-        prod = torch.bmm(attention, attention.transpose(1, 2))
+        torch_eye = self._torch_op("torch.eye")
+        torch_bmm = self._torch_op("torch.bmm")
+        eye = torch_eye(seq_len, device=attention.device, dtype=attention.dtype)
+        prod = torch_bmm(attention, attention.transpose(1, 2))
         reg = (prod - eye).pow(2).sum() / batch_size
         return self.attention_regularizer_weight * reg
 
