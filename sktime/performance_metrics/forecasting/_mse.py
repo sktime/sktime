@@ -222,7 +222,7 @@ class MeanSquaredError(BaseForecastingErrorMetric):
 
         pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
 
-        return self._handle_multioutput(raw_values, multioutput)
+        return self._handle_multioutput(pseudo_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
