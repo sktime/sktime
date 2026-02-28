@@ -402,6 +402,81 @@ class NaiveForecaster(_BaseWindowForecaster):
         y_pred.name = _y.name
         return y_pred
 
+    # ------------------------------------------------------------------
+    # NEW: helper to detect multiseries/panel y
+    # ------------------------------------------------------------------
+    def _is_multiseries_y(self):
+        """Return True if the training series is panel/multiseries.
+
+        For an initial implementation we assume:
+        - self._y is a pd.Series
+        - self._y.index is a MultiIndex with at least 2 levels,
+          e.g. level 0 = instance id, level 1 = time index.
+        """
+        y = getattr(self, "_y", None)
+        idx = getattr(y, "index", None)
+        return isinstance(idx, pd.MultiIndex) and idx.nlevels >= 2
+
+    # ------------------------------------------------------------------
+    # NEW: vectorized multiseries naive predictions for "last"/"mean"
+    # ------------------------------------------------------------------
+    def _predict_multiseries_vectorized(self, fh=None, X=None):
+        """Vectorized naive predictions for multiseries (panel) data.
+
+        Assumes:
+        - self._y is a pd.Series with a MultiIndex index
+          (instance, time) or similar.
+        - strategy in {"last", "mean"}.
+        """
+        if fh is None:
+            raise ValueError("fh must be provided for multiseries prediction.")
+
+        y = self._y
+        cutoff = self.cutoff
+        strategy = self.strategy
+
+        idx = y.index
+        # fall back to numeric level positions if names are missing
+        inst_level = idx.names[0] if idx.names[0] is not None else 0
+        time_level = idx.names[1] if idx.names[1] is not None else 1
+
+        # --- 1. Compute per-instance baseline values (last or mean) ---
+        if strategy == "last":
+            # tail(1) per instance, then drop the time level
+            last_vals = (
+                y.groupby(level=inst_level)
+                .tail(1)
+                .droplevel(time_level)
+            )
+        elif strategy == "mean":
+            last_vals = y.groupby(level=inst_level).mean()
+        else:
+            raise ValueError(
+                "Vectorized multiseries path only supports "
+                "strategy='last' or 'mean'."
+            )
+
+        # --- 2. Build the forecast index for the time dimension ---
+        if not isinstance(fh, ForecastingHorizon):
+            fh = ForecastingHorizon(fh, is_relative=True)
+
+        time_index = fh.to_absolute(cutoff).to_pandas()
+
+        # --- 3. Create MultiIndex for all (instance, forecast_time) combinations ---
+        inst_index = last_vals.index
+        multi_idx = pd.MultiIndex.from_product(
+            [inst_index, time_index],
+            names=[inst_level, time_level],
+        )
+
+        # --- 4. Repeat each instance baseline for all horizons (vectorized) ---
+        n_horizons = len(time_index)
+        vals = np.repeat(last_vals.to_numpy(), n_horizons)
+
+        y_pred = pd.Series(vals, index=multi_idx, name=y.name)
+
+        return y_pred
+
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
@@ -414,6 +489,11 @@ class NaiveForecaster(_BaseWindowForecaster):
         """
         strategy = self.strategy
         NEW_PREDICT = ["last"]
+
+        # Fast path for multiseries/panel data and simple strategies.
+        # This avoids Python-level loops by using groupby + MultiIndex logic.
+        if self._is_multiseries_y() and strategy in ("last", "mean"):
+            return self._predict_multiseries_vectorized(fh=fh, X=X)
 
         if strategy in NEW_PREDICT:
             return self._predict_naive(fh=fh, X=X)
