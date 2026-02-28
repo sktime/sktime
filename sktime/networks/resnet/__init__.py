@@ -1,4 +1,4 @@
-"""ResNet deep learning network structure."""
+"""ResNet deep learning network implemented in TensorFlow & PyTorch backends."""
 
 __all__ = [
     "ResNetNetwork",

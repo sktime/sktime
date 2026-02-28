@@ -3738,17 +3738,10 @@
         "code",
         "doc",
         "design",
-        "bug"
-      ]
-    },
-    {
-      "login": "DCchoudhury15",
-      "name": "Divyanshu Choudhury",
-      "avatar_url": "https://avatars.githubusercontent.com/DCchoudhury15",
-      "profile": "https://github.com/DCchoudhury15",
-      "contributions": [
-        "code",
-        "doc"
+        "bug",
+        "maintenance",
+        "test",
+        "review"
       ]
     },
     {
@@ -3782,6 +3775,15 @@
       "contributions": [
         "code",
         "maintenance"
+      ]
+    },
+    {
+      "login": "DCchoudhury15",
+      "name": "Divyanshu Choudhury",
+      "avatar_url": "https://avatars.githubusercontent.com/u/179561217?v=4",
+      "profile": "https://github.com/DCchoudhury15",
+      "contributions": [
+        "code"
       ]
     }
   ]
