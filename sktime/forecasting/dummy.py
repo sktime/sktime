@@ -23,23 +23,13 @@ class ForecastKnownValues(BaseForecaster):
       e.g., in combination with ReconcilerForecaster for an isolated reconciliation step
 
     When forecasting, uses ``pandas.DataFrame.reindex`` under the hood to obtain
-    predicted
-    values from ``y_known``. Parameters other than ``y_known`` are directly passed
-    on to ``pandas.DataFrame.reindex``.
+    predicted values from ``y_known``.
 
     Parameters
     ----------
     y_known : pd.DataFrame or pd.Series in one of the sktime compatible data formats
         should contain known values that the forecaster will replay in predict
         can also be in a non-pandas sktime data format, will then be coerced to pandas
-    method : str or None, optional, default=None
-        one of {None, 'backfill'/'bfill', 'pad'/'ffill', 'nearest'}
-        method to use for imputing indices at which forecasts are unavailable in y_known
-    fill_value : scalar, optional, default=np.NaN
-        value to use for any missing values (e.g., if ``method`` is None)
-    limit : int, optional, default=None=infinite
-        maximum number of consecutive elements to bfill/ffill if
-        ``method=bfill``/``ffill``
 
     Examples
     --------
@@ -74,11 +64,8 @@ class ForecastKnownValues(BaseForecaster):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, y_known, method=None, fill_value=None, limit=None):
+    def __init__(self, y_known):
         self.y_known = y_known
-        self.method = method
-        self.fill_value = fill_value
-        self.limit = limit
 
         super().__init__()
 
@@ -151,28 +138,18 @@ class ForecastKnownValues(BaseForecaster):
         -------
         y_pred : Point predictions
         """
-        reindex_params = {"method": self.method, "limit": self.limit}
-        if self.fill_value is not None:
-            reindex_params["fill_value"] = self.fill_value
-
         fh_abs = fh.to_absolute_index(self.cutoff)
 
-        try:
-            idx = self._y.index
-            if isinstance(idx, pd.MultiIndex):
-                unique_levels = idx.droplevel(-1).unique()
-                fh_abs = pd.MultiIndex.from_tuples(
-                    ((*level, time) for level in unique_levels for time in fh_abs),
-                    names=idx.names,
-                )
-
-            y_pred = self._y_known.reindex(fh_abs, **reindex_params)
-            y_pred = y_pred.reindex(self._y.columns, axis=1, **reindex_params)
-        # TypeError happens if indices are incompatible types
-        except TypeError:
-            y_pred = pd.DataFrame(
-                self.fill_value, index=fh_abs, columns=self._y.columns
+        idx = self._y.index
+        if isinstance(idx, pd.MultiIndex):
+            unique_levels = idx.droplevel(-1).unique()
+            fh_abs = pd.MultiIndex.from_tuples(
+                ((*level, time) for level in unique_levels for time in fh_abs),
+                names=idx.names,
             )
+
+        y_pred = self._y_known.reindex(fh_abs)
+        y_pred = y_pred.reindex(self._y.columns, axis=1)
 
         return y_pred
 
@@ -201,7 +178,7 @@ class ForecastKnownValues(BaseForecaster):
         y = _make_series(n_columns=1)
         y2 = _make_series(n_columns=2, n_timepoints=15, index_type="int")
 
-        params1 = {"y_known": y, "fill_value": 42}
-        params2 = {"y_known": y2, "method": "ffill", "limit": 3, "fill_value": 42}
+        params1 = {"y_known": y}
+        params2 = {"y_known": y2}
 
         return [params1, params2]
