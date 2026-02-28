@@ -141,6 +141,10 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
     np.float64(0.5668686868686869)
     """
 
+    _tags = {
+        "inner_implements_multilevel": True,
+    }
+
     def __init__(
         self,
         multioutput="uniform_average",
