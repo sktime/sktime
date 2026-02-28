@@ -1,6 +1,5 @@
 """Gated Recurrent Unit (GRU) for time series classification."""
 
-from ast import Import
 from copy import deepcopy
 
 import numpy as np
@@ -386,7 +385,9 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         if not isinstance(optimizer_kwargs_effective, dict):
             optimizer_kwargs_effective = {}
         is_adam = isinstance(self.optimizer, str) and self.optimizer.lower() == "adam"
-        if (not self.optimizer or is_adam) and "betas" not in optimizer_kwargs_effective:
+        if (
+            not self.optimizer or is_adam
+        ) and "betas" not in optimizer_kwargs_effective:
             optimizer_kwargs_effective["betas"] = (0.9, 0.999)
         if not self.optimizer:
             Adam = _safe_import("torch.optim.Adam")
