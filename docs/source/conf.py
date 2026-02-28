@@ -602,19 +602,7 @@ def _process_in_page_toc(app, exception):
         with (Path(app.outdir) / f"{pagename}.html").open("w") as f:
             # Write back HTML
             f.write(str(soup))
-
-def _add_tags_table(app, what, name, obj, options, lines):
-    """Add tags table to estimator docstrings durind autodoc processing."""
-    if what != "class" or not(hasattr(obj, "get_class_tags")):
-        return
-    try:
-        tags = obj.get_class_tags()
-    except Exception:
-        return
-    if not tags:
-        return
-    
-    #filter for user facing tags only
+def _get_user_facing_tags():
     try:
         from sktime.registry import _tags as tag_module
         user_facing = set()
@@ -625,9 +613,23 @@ def _add_tags_table(app, what, name, obj, options, lines):
                 is_user_facing = tag_cls.get_class_tag("user_facing", False)
                 if tag_name and is_user_facing:
                     user_facing.add(tag_name)
-        tags = {k: v for k, v in tags.items() if k in user_facing}
+        return user_facing
     except Exception:
-        pass
+        return set()
+    
+_USER_FACING_TAGS = _get_user_facing_tags()
+
+def _add_tags_table(app, what, name, obj, options, lines):
+    """Add tags table to estimator docstrings durind autodoc processing."""
+    if what != "class" or not(hasattr(obj, "get_class_tags")):
+        return
+    try:
+        tags = obj.get_class_tags()
+    except Exception:
+        return
+    
+    tags = {k: v for k, v in tags.items() if k in _USER_FACING_TAGS}
+
 
     if not tags:
         return
