@@ -400,7 +400,8 @@ def test_plotting_dataframe_with_unused_levels():
     y_pred = forecaster.predict(fh=range(1, 10))
     coverage = 0.9
     y_pred_ints1 = forecaster.predict_interval(coverage=coverage)
-    variable_to_plot = "x1"
+    # pick a non-first variable so retained unused levels would break key selection
+    variable_to_plot = "x2"
     pred_interval = y_pred_ints1[[variable_to_plot]].copy()
 
     matplotlib.use("agg")
