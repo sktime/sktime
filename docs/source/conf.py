@@ -7,6 +7,7 @@ import sys
 import warnings
 from pathlib import Path
 
+from sktime.registry import _tags as tag_module
 from bs4 import BeautifulSoup
 
 import sktime
@@ -604,7 +605,6 @@ def _process_in_page_toc(app, exception):
             f.write(str(soup))
 def _get_user_facing_tags():
     try:
-        from sktime.registry import _tags as tag_module
         user_facing = set()
         for attr in dir(tag_module):
             tag_cls = getattr(tag_module, attr)
