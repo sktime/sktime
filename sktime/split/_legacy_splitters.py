@@ -1,5 +1,10 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Legacy splitter classes moved from series_as_features module.
+
+These classes do not conform to BaseSplitter.
+They are used by the benchmarking orchestration module.
+"""
 
 __author__ = ["mloning"]
 __all__ = ["PresplitFilesCV", "SingleSplit"]
