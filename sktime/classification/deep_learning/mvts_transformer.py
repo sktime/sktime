@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
@@ -58,6 +58,11 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         The optimizer to use. If None, Adam optimizer will be used.
     optimizer_kwargs : dict, optional (default=None)
         Additional keyword arguments to pass to the optimizer.
+    callbacks : None or str or tuple of str, optional (default=None)
+        Learning rate schedulers to use during training.
+        If None, no scheduler is used.
+    callback_kwargs : dict, optional (default=None)
+        Additional keyword arguments to pass to the learning rate scheduler(s).
     lr : float, optional (default=0.001)
         The learning rate for the optimizer.
     verbose : bool, optional (default=True)
@@ -107,6 +112,8 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         criterion_kwargs=None,
         optimizer=None,
         optimizer_kwargs=None,
+        callbacks=None,
+        callback_kwargs=None,
         lr=0.001,
         verbose=True,
         random_state=None,
@@ -138,29 +145,18 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         super().__init__(
             num_epochs=num_epochs,
             batch_size=batch_size,
+            activation=None,
             criterion=criterion,
             criterion_kwargs=criterion_kwargs,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
+            callbacks=None,
+            callback_kwargs=None,
             lr=lr,
             verbose=verbose,
             random_state=random_state,
         )
 
-        from sktime.utils.dependencies import _check_soft_dependencies
-
-        if _check_soft_dependencies("torch"):
-            import torch
-
-            self.criterions = {}
-
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
 
     def _build_network(self, X, y):
         from sktime.networks.mvts_transformer import (
