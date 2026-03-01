@@ -195,7 +195,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "DilationMappingTransformer",
         "DirRecTabularRegressionForecaster",
         "DirRecTimeSeriesRegressionForecaster",
-        "DirectTimeSeriesRegressionForecaster",
         "DistFromAligner",
         "DistanceFeatures",
         "DontUpdate",
