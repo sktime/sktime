@@ -194,7 +194,7 @@ class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {
+        params1 = {
             "n_clusters": 2,
             "init_algorithm": "random",
             "metric": "euclidean",
@@ -204,3 +204,14 @@ class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
             "verbose": False,
             "random_state": 1,
         }
+        params2 = {
+            "n_clusters": 3,
+            "init_algorithm": "kmeans++",
+            "metric": "dwt",
+            "n_init": 1,
+            "max_iter": 1,
+            "tol": 0.0001,
+            "verbose": False,
+            "random_state": 1,
+        }
+        return [params1, params2]

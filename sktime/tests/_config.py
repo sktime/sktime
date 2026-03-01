@@ -256,7 +256,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TSFreshClassifier",
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
-        "TimeSeriesKMedoids",
         "TimeSeriesKernelKMeans",
         "WEASEL",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
