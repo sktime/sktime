@@ -140,7 +140,7 @@ class JSONStorageHandler(BaseStorageHandler):
         results : ResultObject
             The results to save.
         """
-        with open(self.path, "w") as f:
+        with open(self.path, "w", encoding="utf-8") as f:
             json.dump(list(map(lambda x: asdict(x, pd_orient="list"), results)), f)
 
     def _load(self) -> list[ResultObject]:
@@ -152,7 +152,7 @@ class JSONStorageHandler(BaseStorageHandler):
             The loaded results.
         """
         results = []
-        with open(self.path) as f:
+        with open(self.path, encoding="utf-8") as f:
             results_json = json.load(f)
         for row in results_json:
             folds = {}
