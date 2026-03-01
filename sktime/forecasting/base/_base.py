@@ -101,6 +101,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
         "capability:missing_values": False,  # can estimator handle missing data?
+        "capability:sample_weight": False,  # can the estimator handle sample weights?
         "capability:non_contiguous_X": True,  # support non-contiguous X?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
@@ -339,44 +340,40 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
     @property
     def is_fitted(self):
-        """Whether ``fit`` has been called.
+        """Whether `fit` has been called.
 
         Checks if the estimator state is "fitted". Returns True only after
-        a successful call to ``fit()``, not after ``pretrain()``.
+        a successful call to "fit" (), not after "pretrain"().
 
         Returns
         -------
         bool
-            True if the estimator has been fitted, False otherwise.
-        """
-        return self.state == "fitted"
-
-    @property
-    def _is_fitted(self):
-        """Internal fitted state for backward compatibility with skbase.
-
-        Same semantics as ``is_fitted``: returns True only after ``fit()``.
-        For pretrain state checks, use ``self.state`` directly.
-
-        Returns
-        -------
-        bool
-            True if the estimator has been fitted, False otherwise.
+            True if the estimator has been fitted, false otherwise.
         """
         return self._state == "fitted"
 
+    @property
+    def _is_fitted(self):
+        """Whether `fit` has been called.
+
+        ***Internal fitted state for backward compatibility with skbase.
+
+        Same semantics as `is_fitted`: returns True only after `fit`().
+        For pretrain state checks, use `self.state` directly.
+
+        Returns
+        -------
+        bool
+            True if the estimator has been fitted, false otherwise.
+        """
+        return self.is_fitted
+
     @_is_fitted.setter
     def _is_fitted(self, value):
-        """Setter for backward compatibility.
-
-        Parameters
-        ----------
-        value : bool
-            If True, sets state to "fitted". If False, sets state to "new".
-        """
+        """Setter for backward compatibility."""
         if value:
             self._state = "fitted"
-        else:
+        elif self.state == "fitted":
             self._state = "new"
 
     @property
@@ -386,69 +383,75 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         Possible states for forecasters are:
 
         * "new": post-init state
-        * "fitted": if ``fit`` has been called.
-        * "pretrained": if ``pretrain`` has been called. Only available for
-            forecasters that support pretraining.
+        * "fitted": if `fit` has been called.
+        * "pretrained": if `pretrain` has been called. Only available for
+          forecasters that support pretraining.
 
         Returns
         -------
-        str, one of {"new", "fitted", "pretrained"}
+        str, one of "new", "fitted", "pretrained"
             State of the estimator.
         """
         return self._state
 
-    def fit(self, y, X=None, fh=None):
+    def fit(self, y, X=None, fh=None, sample_weight=None):
         """Fit forecaster to training data.
 
-        State change:
-            Changes state to "fitted".
+         State change:
+             Changes state to "fitted".
 
-        Writes to self:
+         Writes to self:
 
-            * Sets fitted model attributes ending in "_", fitted attributes are
-              inspectable via ``get_fitted_params``.
-            * Sets ``self.is_fitted`` flag to ``True``.
-            * Sets ``self.cutoff`` to last index seen in ``y``.
-            * Stores ``fh`` to ``self.fh`` if ``fh`` is passed.
+             * Sets fitted model attributes ending in "_", fitted attributes are
+               inspectable via ``get_fitted_params``.
+             * Sets ``self.is_fitted`` flag to ``True``.
+             * Sets ``self.cutoff`` to last index seen in ``y``.
+             * Stores ``fh`` to ``self.fh`` if ``fh`` is passed.
 
         Parameters
         ----------
-        y : time series in ``sktime`` compatible data container format.
-            Time series to which to fit the forecaster.
+         y : time series in ``sktime`` compatible data container format.
+             Time series to which to fit the forecaster.
 
-            Individual data formats in ``sktime`` are so-called :term:`mtype`
-            specifications, each mtype implements an abstract :term:`scitype`.
+             Individual data formats in ``sktime`` are so-called :term:`mtype`
+             specifications, each mtype implements an abstract :term:`scitype`.
 
-            * ``Series`` scitype = individual time series, vanilla forecasting.
-              ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
+             * ``Series`` scitype = individual time series, vanilla forecasting.
+               ``pd.DataFrame``, ``pd.Series``, or ``np.ndarray`` (1D or 2D)
 
-            * ``Panel`` scitype = collection of time series, global/panel forecasting.
-              ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
-              ``3D np.ndarray`` ``(instance, variable, time)``,
-              ``list`` of ``Series`` typed ``pd.DataFrame``
+             * ``Panel`` scitype = collection of time series, global/panel forecasting.
+               ``pd.DataFrame`` with 2-level row ``MultiIndex`` ``(instance, time)``,
+               ``3D np.ndarray`` ``(instance, variable, time)``,
+               ``list`` of ``Series`` typed ``pd.DataFrame``
 
-            * ``Hierarchical`` scitype = hierarchical collection, for
-              hierarchical forecasting. ``pd.DataFrame`` with 3 or more level row
-              ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
+             * ``Hierarchical`` scitype = hierarchical collection, for
+               hierarchical forecasting. ``pd.DataFrame`` with 3 or more level row
+               ``MultiIndex`` ``(hierarchy_1, ..., hierarchy_n, time)``
 
-            For further details on data format, see glossary on :term:`mtype`.
-            For usage, see forecasting tutorial ``examples/01_forecasting.ipynb``
+             For further details on data format, see glossary on :term:`mtype`.
+             For usage, see forecasting tutorial ``examples/01_forecasting.ipynb``
 
-        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
-            The forecasting horizon encoding the time stamps to forecast at.
-            If ``self.get_tag("requires-fh-in-fit")`` is ``True``,
-            must be passed in ``fit``, not optional
+         fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
+             The forecasting horizon encoding the time stamps to forecast at.
+             If ``self.get_tag("requires-fh-in-fit")`` is ``True``,
+             must be passed in ``fit``, not optional
 
-        X : time series in ``sktime`` compatible format, optional (default=None).
-            Exogeneous time series to fit the model to.
-            Should be of same :term:`scitype` (``Series``, ``Panel``,
-            or ``Hierarchical``) as ``y``.
-            If ``self.get_tag("X-y-must-have-same-index")``,
-            ``X.index`` must contain ``y.index``.
+        X : time series in ``sktime`` compatible format, optional (default=None)
+             Exogeneous time series to fit the model to.
+             Should be of same :term:`scitype` (``Series``, ``Panel``,
+             or ``Hierarchical``) as ``y``.
+             If ``self.get_tag("X-y-must-have-same-index")``,
+             ``X.index`` must contain ``y.index``.
+
+         sample_weight : array-like of shape (n_samples,), optional (default=None)
+             Sample weights for weighted fitting.
+             If None, all samples are weighted equally.
+             Only used if the forecaster supports sample weights
+             (tag ``capability:sample_weight`` is ``True``).
 
         Returns
         -------
-        self : Reference to self.
+         self : Reference to self.
         """
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
@@ -467,16 +470,34 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # check forecasting horizon and coerce to ForecastingHorizon object
         fh = self._check_fh(fh)
 
+        # ═══════════════════════════════════════════════════════════════
+        # SAMPLE WEIGHT HANDLING (New Logic)
+        # ═══════════════════════════════════════════════════════════════
+        fit_kwargs = {}
+        if sample_weight is not None:
+            # Check if this forecaster actually supports weights
+            if not self.get_tag("capability:sample_weight", tag_value_default=False):
+                raise NotImplementedError(
+                    f"{self.__class__.__name__} does not support sample_weight. "
+                    "If you believe this forecaster should support sample weights, "
+                    "please open an issue on sktime."
+                )
+            # If supported, add to kwargs to pass down safely
+            fit_kwargs["sample_weight"] = sample_weight
+        # ═══════════════════════════════════════════════════════════════
+
         # checks and conversions complete, pass to inner fit
         #####################################################
         vectorization_needed = isinstance(y_inner, VectorizedDF)
         self._is_vectorized = vectorization_needed
+
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
-            self._fit(y=y_inner, X=X_inner, fh=fh)
+            # We use **fit_kwargs to safely pass sample_weight ONLY if it exists
+            self._fit(y=y_inner, X=X_inner, fh=fh, **fit_kwargs)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
+            self._vectorize("fit", y=y_inner, X=X_inner, fh=fh, **fit_kwargs)
 
         # this should happen last
         self._state = "fitted"
@@ -516,6 +537,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``fh`` index reference.
+
 
         Returns
         -------
