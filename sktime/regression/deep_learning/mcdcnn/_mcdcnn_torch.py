@@ -185,13 +185,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         model : torch.nn.Module
             The constructed MCDCNN network with output layer.
         """
-        if len(X.shape) != 3:
-            raise ValueError(
-                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
-                f"but got shape {X.shape}. Please ensure your input data is "
-                "properly formatted."
-            )
-
         return MCDCNNNetworkTorch(
             kernel_sizes=self.kernel_sizes,
             pool_size=self.pool_size,

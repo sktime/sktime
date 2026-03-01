@@ -5,6 +5,7 @@ __authors__ = ["geetu040", "RecreationalMath"]
 __all__ = ["BaseDeepClassifierPytorch"]
 
 import abc
+import warnings
 from collections.abc import Callable
 
 import numpy as np
@@ -126,6 +127,20 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self._all_callbacks = None
 
     def _fit(self, X, y):
+        if len(X.shape) != 3:
+            raise ValueError(
+                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
+                f"but got shape {X.shape}. Please ensure your input data is "
+                "properly formatted."
+            )
+
+        if len(np.unique(y)) == 1:
+            warnings.warn(
+                f"The provided data passed to {self.__class__.__name__} contains a "
+                "single label. If this is not intentional, please check.",
+                UserWarning,
+            )
+
         y = self._encode_y(y)
 
         self.network = self._build_network(X, y)
@@ -192,12 +207,12 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
         Sets
         ------
-        self.validated_criterion : str or Callable
+        self._validated_criterion : str or Callable
             The validated criterion to be used in training the neural network.
             This will either be the same as self.criterion, or "crossentropyloss"
             if a functionally equivalent combination of criterion and activation
             function is detected.
-        self.validated_activation : str or Callable or None
+        self._validated_activation : str or Callable or None
             The validated activation function to be used in the output layer.
             This will either be the same as self.activation, or None if a
             functionally equivalent combination is detected.
@@ -601,7 +616,15 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                 y_pred.append(self.network(**inputs).detach())
         y_pred = cat(y_pred, dim=0)
         # (batch_size, num_outputs)
-        y_pred = Fsoftmax(y_pred, dim=-1)
+
+        if self._validated_activation:
+            activation_instance = self.network._instantiate_activation(
+                self.self._validated_activation
+            )
+            y_pred = activation_instance(y_pred)
+        else:
+            y_pred = Fsoftmax(y_pred, dim=-1)
+
         y_pred = y_pred.numpy()
         return y_pred
 
