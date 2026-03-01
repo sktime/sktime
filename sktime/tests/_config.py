@@ -226,7 +226,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "OptionalPassthrough",
         "PAA",
         "PAAlegacy",
-        "PCATransformer",
         "PELT",
         "PaddingTransformer",
         "PlateauFinder",
