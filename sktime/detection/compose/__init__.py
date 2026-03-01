@@ -6,6 +6,7 @@ from sktime.detection.compose._as_transform import (
     AnnotatorAsTransformer,
     DetectorAsTransformer,
 )
+from sktime.detection.compose._ensure_min_length import EnsureMinLengthSegments
 from sktime.detection.compose._pipeline import AnnotatorPipeline, DetectorPipeline
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "AnnotatorPipeline",
     "DetectorAsTransformer",
     "DetectorPipeline",
+    "EnsureMinLengthSegments",
 ]
