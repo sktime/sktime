@@ -27,7 +27,6 @@ jobs:
               - sktime/pipeline/**
               - sktime/proba/**
               - sktime/registry/**
-              - sktime/series_as_features/**
               - sktime/split/**
               - sktime/tests/**
               - sktime/utils/**
