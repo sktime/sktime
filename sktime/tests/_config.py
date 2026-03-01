@@ -238,7 +238,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "RandomSamplesAugmenter",
         "RandomShapeletTransform",
         "RecursiveTabularRegressionForecaster",
-        "RecursiveTimeSeriesRegressionForecaster",
         "SAXlegacy",
         "SFA",
         "SFAFast",
