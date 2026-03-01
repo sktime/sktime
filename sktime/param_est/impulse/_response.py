@@ -72,7 +72,8 @@ class ImpulseResponseFunction(BaseParamFitter):
         argument can be a date string to parse or a datetime type. Default is #start#.
 
     exog : array_like, optional
-        New observations of exogenous regressors for our-of-sample periods, if applicable.
+        New observations of exogenous regressors for our-of-sample periods, if
+        applicable.
 
     transformed : bool, optional
         Whether or not params is already transformed. Default is True.
@@ -92,9 +93,9 @@ class ImpulseResponseFunction(BaseParamFitter):
         Responses for each endogenous variable due to the impulse given by the impulse
         argument. For a time-invariant model, the impulse responses are given for
         steps + 1 elements (this gives the “initial impulse” followed by steps responses
-        for the important cases of VAR and SARIMAX models), while for time-varying models
-        the impulse responses are only given for steps elements (to avoid having to
-        unexpectedly provide updated time-varying matrices).
+        for the important cases of VAR and SARIMAX models), while for time-varying
+        models the impulse responses are only given for steps elements (to avoid having
+        to unexpectedly provide updated time-varying matrices).
 
     Examples (rewrite to new rewrote of self._irf)
     --------
