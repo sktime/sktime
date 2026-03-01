@@ -65,11 +65,11 @@ class ImpulseResponseFunction(BaseParamFitter):
     anchor : int, str, or datetime, optional
         Time point within the sample for the state innovation impulse.
         Type depends on the index of the given endog in the model.
-        Two special cases are the strings ‘start’ and ‘end’, which refer to
+        Two special cases are the strings #start# and #end#, which refer to
         setting the impulse at the first and last points of the sample, respectively.
         Integer values can run from 0 to nobs - 1, or can be negative to apply negative
         indexing. Finally, if a date/time index was provided to the model, then this
-        argument can be a date string to parse or a datetime type. Default is ‘start’.
+        argument can be a date string to parse or a datetime type. Default is #start#.
 
     exog : array_like, optional
         New observations of exogenous regressors for our-of-sample periods, if applicable.
@@ -89,12 +89,12 @@ class ImpulseResponseFunction(BaseParamFitter):
     Attributes
     ----------
     irf_ :  np.ndarray
-        Responses for each endogenous variable due to the impulse given by the impulse argument.
-        For a time-invariant model, the impulse responses are given for steps + 1 elements
-        (this gives the “initial impulse” followed by steps responses for the important
-        cases of VAR and SARIMAX models), while for time-varying models the impulse responses are
-        only given for steps elements (to avoid having to unexpectedly provide updated
-        time-varying matrices).
+        Responses for each endogenous variable due to the impulse given by the impulse
+        argument. For a time-invariant model, the impulse responses are given for
+        steps + 1 elements (this gives the “initial impulse” followed by steps responses
+        for the important cases of VAR and SARIMAX models), while for time-varying models
+        the impulse responses are only given for steps elements (to avoid having to
+        unexpectedly provide updated time-varying matrices).
 
     Examples (rewrite to new rewrote of self._irf)
     --------
@@ -117,12 +117,12 @@ class ImpulseResponseFunction(BaseParamFitter):
     today two different interfaces for impulse responses. The first one is older and
     seems to serve only VAR, VECM and SVAR models. Within the IRAnalysis class is a
     plotting option showing directly the fade-out of the impulse response signal.
-    Since an Impulse Response Function measures the change in a dynamic linear relationship,
-    the concept of cointegration plays again a significant role again.
+    Since an Impulse Response Function measures the change in a dynamic linear
+    relationship, the concept of cointegration plays again a significant role again.
 
     References
     ----------
-    .. [1] Ballarin, G. 2025: Impulse Response Analysis of Structural Nonlinear 
+    .. [1] Ballarin, G. 2025: Impulse Response Analysis of Structural Nonlinear
     Time Series Models, https://arxiv.org/html/2305.19089v5
 
     .. [2] Statsmodels (last visited 15/02/2026):
