@@ -19,6 +19,20 @@ jobs:
         with:
           node-version: 18
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: pip install httpx
+
+      - name: Audit and fix .all-contributorsrc
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPO: sktime/sktime
+        run: python .github/scripts/check_contributors.py
+
       - name: Set up tool
         run: npm install -g all-contributors-cli@6.24.0
 
@@ -31,11 +45,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          if ! git diff --quiet CONTRIBUTORS.md; then
+          if ! git diff --quiet CONTRIBUTORS.md .all-contributorsrc; then
             BRANCH_NAME="update-contributors-$(date +%d-%m-%Y)"
             git checkout -b "$BRANCH_NAME"
-            git add CONTRIBUTORS.md
-            git commit -m "[AUTOMATED] update CONTRIBUTORS.md"
+            git add CONTRIBUTORS.md .all-contributorsrc
+            git commit -m "[AUTOMATED] update CONTRIBUTORS.md and .all-contributorsrc"
 
             git push origin "$BRANCH_NAME"
             gh pr create \
