@@ -497,3 +497,50 @@ def test_neural_forecast_with_auto_freq_on_missing_date_like(
         ValueError, match="(could not interpret freq).*(use a valid offset in index)"
     ):
         model.fit(y, fh=[1, 2, 3])
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([NeuralForecastLSTM]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_hierarchical_predict_no_keyerror() -> None:
+    """Regression test for issue #7691.
+
+    Ensures NeuralForecastLSTM can predict on hierarchical (pd_multiindex_hier)
+    data without raising a KeyError. Previously, the id_int computation in
+    _get_id_idx concatenated instance level strings without a separator, causing
+    potential collisions and KeyError when predicting with hierarchical data
+    (e.g., data produced by sktime's Aggregator).
+    """
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    # Build a small 2-level hierarchical dataset (2 groups x 2 series x 20 timepoints)
+    y = _make_hierarchical(
+        hierarchy_levels=(2, 2),
+        max_timepoints=20,
+        min_timepoints=20,
+        n_columns=1,
+    )
+    # Use integer RangeIndex for time to avoid period/freq handling
+    y.index = y.index.set_levels(
+        range(20),
+        level=-1,
+    )
+    y = y.sort_index()
+
+    y_train = y.loc[y.index.get_level_values(-1) < 16]
+    fh = [1, 2, 3, 4]
+
+    model = NeuralForecastLSTM(
+        freq=1,
+        max_steps=1,
+        trainer_kwargs={"logger": False},
+    )
+
+    # Should not raise KeyError
+    model.fit(y_train, fh=fh)
+    y_pred = model.predict()
+
+    # Check that predictions have the right number of rows
+    # (n_series * n_fh = 4 series * 4 steps = 16 rows)
+    assert len(y_pred) == len(y_train.index.droplevel(-1).unique()) * len(fh)

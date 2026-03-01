@@ -406,20 +406,28 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
         return self
 
+    # Separator used when joining multiple instance-level values into a unique_id
+    # string. Must not appear in any actual index level value.
+    _ID_SEP = "\x00"
+
     def _get_id_idx(self, indices: pandas.Index):
         """Get instance index (id_int) and time index (id_time) from a pandas.Index.
 
         For a single time series, the instance index (id_int) will be a integer 1.
-        For multiIndex, the id_int will be a string concat of all instance levels.
+        For multiIndex, the id_int will be a separator-joined string of all instance
+        levels, making the mapping collision-free and robust to hierarchical data
+        (including ``__total`` aggregated rows added by ``Aggregator``).
         """
         if not isinstance(indices, pandas.MultiIndex):
             id_int = 1
             id_time = indices.to_numpy()
         else:
-            id_idx = indices.to_frame().values
-            # with ("h0":"h0_0", "h1":"h1_1") as instance index,
-            # the id_int would be "h0_1h1_1"
-            id_int = id_idx[:, :-1].sum(axis=1)
+            id_frame = indices.to_frame(index=False)
+            # All columns except the last one are instance-level columns.
+            # Join them with a separator to avoid collisions such as
+            # ("AB", "C") vs ("A", "BC") both mapping to "ABC".
+            instance_cols = id_frame.iloc[:, :-1]
+            id_int = instance_cols.astype(str).agg(self._ID_SEP.join, axis=1)
             id_time = indices.get_level_values(-1)
         return id_int, id_time
 
