@@ -149,3 +149,30 @@ def test_sklearn_imports():
         est_obj = craft(est_spec)
 
         assert est_obj.__class__.__name__ == est_name
+
+
+def test_craft_rejects_non_string():
+    """Check that craft raises TypeError for non-string input."""
+    with pytest.raises(TypeError, match="spec must be a string"):
+        craft(42)
+
+    with pytest.raises(TypeError, match="spec must be a string"):
+        craft(None)
+
+
+@pytest.mark.parametrize(
+    "unsafe_spec",
+    [
+        "__import__('os').system('echo pwned')",
+        "NaiveForecaster().__class__.__subclasses__()",
+        "NaiveForecaster().__class__.__bases__[0].__builtins__",
+        "__globals__",
+    ],
+)
+def test_craft_rejects_unsafe_patterns(unsafe_spec):
+    """Check that craft raises ValueError for specs with unsafe patterns.
+
+    Regression test for https://github.com/sktime/sktime/issues/9430.
+    """
+    with pytest.raises(ValueError, match="Potentially unsafe pattern"):
+        craft(unsafe_spec)
