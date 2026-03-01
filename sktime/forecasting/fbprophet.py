@@ -203,6 +203,10 @@ class Prophet(_ProphetAdapter):
         self._ModelClass = _Prophet
 
     def _instantiate_model(self):
+        kwargs = {}
+        if self.stan_backend is not None:
+            kwargs["stan_backend"] = self.stan_backend
+
         self._forecaster = self._ModelClass(
             growth=self.growth,
             changepoints=self.changepoints,
@@ -219,7 +223,7 @@ class Prophet(_ProphetAdapter):
             mcmc_samples=self.mcmc_samples,
             interval_width=1 - self.alpha,
             uncertainty_samples=self.uncertainty_samples,
-            stan_backend=self.stan_backend,
+            **kwargs,
         )
         return self
 
