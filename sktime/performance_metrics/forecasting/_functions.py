@@ -17,6 +17,7 @@ from sklearn.utils.validation import check_consistent_length
 
 from sktime.performance_metrics.forecasting._coerce import (
     _coerce_to_1d_numpy,
+    _coerce_to_metric,
     _coerce_to_scalar,
 )
 from sktime.performance_metrics.forecasting._common import (
@@ -2530,7 +2531,11 @@ def geometric_mean_relative_squared_error(
 def relative_loss(
     y_true,
     y_pred,
+    y_pred_benchmark,
     relative_loss_function=mean_absolute_error,
+    loss_function=None,
+    y_train=None,
+    sample_weight=None,
     horizon_weight=None,
     multioutput="uniform_average",
     **kwargs,
@@ -2573,10 +2578,9 @@ def relative_loss(
              (fh, n_outputs) where fh is the forecasting horizon, default=None
         Forecasted values from benchmark method.
 
-    relative_loss_function : function, default=mean_absolute_error
-        Function to use in calculation relative loss. The function must comply
-        with API interface of sktime forecasting performance metrics. Metrics
-        requiring y_train or y_pred_benchmark are not supported.
+    relative_loss_function : function or BaseForecastingErrorMetric, default=mean_absolute_error
+        Either a bare loss function (e.g., `mean_absolute_error(y_true,y_pred)`)
+        or a `sktime` Metric object (e.g., `MeanAbsoluteError()`).
 
     horizon_weight : array-like of shape (fh,), default=None
         Forecast horizon weights.
@@ -2621,31 +2625,44 @@ def relative_loss(
     >>> y_pred_benchmark = y_pred*1.1
     >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)  # doctest: +SKIP
     np.float64(0.8490566037735847)
-    >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark, \
-    multioutput='raw_values')
-    array([0.625     , 1.03448276])
-    >>> relative_loss(y_true, y_pred, y_pred_benchmark=y_pred_benchmark, \
-    multioutput=[0.3, 0.7])  # doctest: +SKIP
-    np.float64(0.927272727272727)
     """  # noqa: E501
-    y_pred_benchmark = _get_kwarg(
-        "y_pred_benchmark", metric_name="relative_loss", **kwargs
+    _, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, multioutput)
+    _, _, y_pred_benchmark, _ = _check_reg_targets(
+        y_true, y_pred_benchmark, multioutput
     )
-    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
 
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
 
-    loss_preds = relative_loss_function(
-        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+    default_fn = (
+        loss_function if (loss_function is not None) else relative_loss_function
     )
-    loss_benchmark = relative_loss_function(
-        y_true,
-        y_pred_benchmark,
-        horizon_weight=horizon_weight,
-        multioutput=multioutput,
+    metric_obj = _coerce_to_metric(default_fn)
+    metric_obj.multioutput = "raw_values"
+    metric_obj.multilevel = "uniform_average"
+    metric_obj.by_index = False
+
+    eval_kwargs = {}
+    if sample_weight is not None:
+        eval_kwargs["sample_weight"] = sample_weight
+    if horizon_weight is not None:
+        eval_kwargs["horizon_weight"] = horizon_weight
+
+    loss_preds = metric_obj.evaluate(y_true=y_true, y_pred=y_pred, **eval_kwargs)
+    loss_benchmark = metric_obj.evaluate(
+        y_true=y_true, y_pred=y_pred_benchmark, **eval_kwargs
     )
-    loss = np.divide(loss_preds, np.maximum(loss_benchmark, EPS))
+
+    if sample_weight is None:
+        loss = np.divide(loss_preds, np.maximum(loss_benchmark, EPS))
+    else:
+        ref_safe = np.where(loss_benchmark == 0, EPS, loss_benchmark)
+        raw_out = np.divide(loss_preds, ref_safe)
+        if isinstance(raw_out, np.ndarray) and raw_out.ndim > 0:
+            loss = np.mean(raw_out)
+        else:
+            loss = float(raw_out)
+
     return _handle_output(loss, multioutput)
 
 

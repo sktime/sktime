@@ -7,11 +7,20 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
+import numpy as np
+import pandas as pd
+
+from sktime.performance_metrics.forecasting._base import (
+    BaseForecastingErrorMetricFunc,
+)
+from sktime.performance_metrics.forecasting._coerce import (
+    _coerce_to_metric,
+)
 from sktime.performance_metrics.forecasting._functions import (
     mean_absolute_error,
-    relative_loss,
 )
+
+EPS = np.finfo(np.float64).eps
 
 
 class RelativeLoss(BaseForecastingErrorMetricFunc):
@@ -41,8 +50,11 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    relative_loss_function : function
-        Function to use in calculation relative loss.
+    relative_loss_function : function or BaseForecastingErrorMetric,
+        default=mean_absolute_error
+        Either a bare loss function signature:
+            fn(y_true, y_pred, ..., multioutput=…, multilevel=…, by_index=…)
+        or a sktime forecasting metric object (subclass of BaseForecastingErrorMetric).
 
     multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
         Whether and how to aggregate metric for multivariate (multioutput) data.
@@ -82,6 +94,9 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     --------
     >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import RelativeLoss
+    >>> from sktime.performance_metrics.forecasting import relative_loss
+    >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
+    >>> from sktime.performance_metrics.forecasting import MeanSquaredError
     >>> from sktime.performance_metrics.forecasting import mean_squared_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
@@ -92,18 +107,40 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     >>> relative_mse = RelativeLoss(relative_loss_function=mean_squared_error)
     >>> relative_mse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     np.float64(0.5178095088655261)
+    >>> mae = MeanAbsoluteError()
+    >>> base = mae(y_true, y_pred)
+    >>> ref = mae(y_true, y_pred_benchmark)
+    >>> ratio = base / ref
+    >>> np.isclose(
+    ...     relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark),
+    ...     ratio,
+    ... )
+    np.True_
+    >>> v1 = relative_loss(
+    ...     y_true, y_pred, y_pred_benchmark=y_pred_benchmark,
+    ...     loss_function=MeanSquaredError()
+    ... )
+    >>> v2 = relative_loss(
+    ...     y_true, y_pred, y_pred_benchmark=y_pred_benchmark,
+    ...     relative_loss_function=MeanSquaredError()
+    ... )
+    >>> np.allclose(v1, v2)
+    True
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> relative_mae = RelativeLoss()
     >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     np.float64(0.8490566037735847)
-    >>> relative_mae = RelativeLoss(multioutput='raw_values')
+    >>> relative_mae = RelativeLoss(multioutput="raw_values")
     >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     array([0.625     , 1.03448276])
     >>> relative_mae = RelativeLoss(multioutput=[0.3, 0.7])
     >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     np.float64(0.927272727272727)
+    >>> rel_obj = RelativeLoss(relative_loss_function=MeanAbsoluteError())
+    >>> rel_obj(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    np.float64(0.8490566037735848)
     """
 
     _tags = {
@@ -112,27 +149,164 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         "capability:multivariate": True,
     }
 
-    func = relative_loss
-
     def __init__(
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
-        relative_loss_function=mean_absolute_error,
+        relative_loss_function=None,
         by_index=False,
     ):
-        self.relative_loss_function = relative_loss_function
+        self.relative_loss_function = relative_loss_function or mean_absolute_error
+        # Coerce into a Metric object (either itself, or wrapped
+        # via _CallableForecastingErrorMetric)
+        self._metric_obj = _coerce_to_metric(self.relative_loss_function)
+
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
         )
 
+        self._metric_obj.multioutput = self.multioutput
+        self._metric_obj.multilevel = self.multilevel
+        self._metric_obj.by_index = self.by_index
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Retrieve test parameters."""
-        from sktime.performance_metrics.forecasting import mean_squared_error
+        from sktime.performance_metrics.forecasting import (
+            MeanAbsoluteError,
+            mean_squared_error,
+        )
 
         params1 = {}
         params2 = {"relative_loss_function": mean_squared_error}
-        return [params1, params2]
+        params3 = {"relative_loss_function": MeanAbsoluteError()}
+        params4 = {"multioutput": "raw_values"}
+        params5 = {"multioutput": [0.3, 0.7]}
+        params6 = {
+            "relative_loss_function": MeanAbsoluteError(),
+            "by_index": True,
+        }
+        params7 = {
+            "relative_loss_function": mean_squared_error,
+            "multioutput": "raw_values",
+            "by_index": True,
+        }
+        return [params1, params2, params3, params4, params5, params6, params7]
+
+    def _evaluate(
+        self,
+        y_true,
+        y_pred,
+        y_pred_benchmark,
+        sample_weight=None,
+        horizon_weight=None,
+        **kwargs,
+    ):
+        if y_pred_benchmark is None:
+            raise ValueError("y_pred_benchmark must be passed to RelativeLoss")
+
+        # eval_kwargs = {}
+        # if sample_weight is not None:
+        #     eval_kwargs["sample_weight"] = sample_weight
+        # if horizon_weight is not None:
+        #     eval_kwargs["horizon_weight"] = horizon_weight
+
+        # # _metric_obj is guaranteed to be a BaseForecastingErrorMetric
+        # base = self._metric_obj.evaluate(y_true=y_true, y_pred=y_pred, **eval_kwargs)
+        # ref = self._metric_obj.evaluate(
+        #     y_true=y_true, y_pred=y_pred_benchmark, **eval_kwargs
+        # )
+        # if sample_weight is None:
+        #     with np.errstate(divide="ignore", invalid="ignore"):
+        #         out = np.divide(base, ref)
+        #         return np.where(np.isfinite(out), out, float("inf"))
+        # else:
+        #     ref_safe = np.where(ref == 0, EPS, ref)
+        #     out = np.divide(base, ref_safe)
+        #     if isinstance(out, np.ndarray) and out.ndim > 0:
+        #         return np.mean(out)
+        #     return float(out)
+
+        per_index = self._evaluate_by_index(
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_benchmark=y_pred_benchmark,
+            sample_weight=sample_weight,
+            horizon_weight=horizon_weight,
+            **kwargs,
+        )
+
+        if self.by_index:
+            return per_index
+
+        arr = per_index.values
+        if arr.ndim == 1:
+            return arr.mean()
+        return arr.mean(axis=0)
+
+    def _evaluate_by_index(
+        self,
+        y_true,
+        y_pred,
+        y_pred_benchmark,
+        sample_weight=None,
+        horizon_weight=None,
+        **kwargs,
+    ):
+        if y_pred_benchmark is None:
+            raise ValueError("y_pred_benchmark must be passed to RelativeLoss")
+
+        eval_kwargs = {}
+        if sample_weight is not None:
+            eval_kwargs["sample_weight"] = sample_weight
+        if horizon_weight is not None:
+            eval_kwargs["horizon_weight"] = horizon_weight
+
+        base = self._metric_obj.evaluate_by_index(
+            y_true=y_true, y_pred=y_pred, **eval_kwargs
+        )
+        ref = self._metric_obj.evaluate_by_index(
+            y_true=y_true, y_pred=y_pred_benchmark, **eval_kwargs
+        )
+
+        if sample_weight is None:
+            with np.errstate(divide="ignore", invalid="ignore"):
+                out = np.divide(base, ref)
+                out = np.where(np.isfinite(out), out, float("inf"))
+        else:
+            ref_safe = np.where(ref == 0, EPS, ref)
+            out = np.divide(base, ref_safe)
+
+        # if self.multioutput == "raw_values":
+        #     return pd.DataFrame(out, index=y_true.index, columns=y_true.columns)
+        # else:
+        #     if sample_weight is not None and out.ndim == 2:
+        #         out = np.mean(out, axis=1)
+        #     return pd.Series(out, index=y_true.index)
+
+        arr = np.asarray(out)
+        if arr.ndim == 1:
+            return pd.Series(arr, index=y_true.index)
+
+        if isinstance(self.multioutput, str) and self.multioutput == "raw_values":
+            return pd.DataFrame(out, index=y_true.index, columns=y_true.columns)
+
+        if out.ndim == 2:
+            if isinstance(self.multioutput, str):
+                if self.multioutput == "uniform_average":
+                    weights = None
+                else:
+                    raise ValueError(
+                        f"Unsupported multioutput string: {self.multioutput}"
+                    )
+            else:
+                weights = np.asarray(self.multioutput, dtype=float)
+                if weights.ndim != 1 or weights.shape[0] != out.shape[1]:
+                    raise ValueError(
+                        f"There must be equally many custom weights "
+                        f"({weights.shape[0]}) as outputs ({out.shape[1]})."
+                    )
+            out = np.average(out, axis=1, weights=weights)
+
+        return pd.Series(out, index=y_true.index)
