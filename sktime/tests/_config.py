@@ -195,7 +195,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "DilationMappingTransformer",
         "DirRecTabularRegressionForecaster",
         "DirRecTimeSeriesRegressionForecaster",
-        "DirectTimeSeriesRegressionForecaster",
         "DistFromAligner",
         "DistanceFeatures",
         "DontUpdate",
@@ -226,7 +225,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "OptionalPassthrough",
         "PAA",
         "PAAlegacy",
-        "PCATransformer",
         "PELT",
         "PaddingTransformer",
         "PlateauFinder",
@@ -240,7 +238,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "RandomSamplesAugmenter",
         "RandomShapeletTransform",
         "RecursiveTabularRegressionForecaster",
-        "RecursiveTimeSeriesRegressionForecaster",
         "SAXlegacy",
         "SFA",
         "SFAFast",
@@ -257,8 +254,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TSFreshClassifier",
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
-        "TimeSeriesKMedoids",
-        "TimeSeriesKernelKMeans",
         "WEASEL",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
         # too after adding test parameters to them
