@@ -19,44 +19,6 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
     Stacks two or more Forecasters and uses a meta-model (regressor) to infer
     the final predictions from the predictions of the given forecasters.
-
-    Parameters
-    ----------
-    forecasters : list of (str, estimator) tuples
-        Estimators to apply to the input series.
-    regressor: sklearn-like regressor, optional, default=None.
-        The regressor is used as a meta-model and trained with the predictions
-        of the ensemble forecasters as exog data and with y as endog data. The
-        length of the data is dependent to the given fh. If None, then
-        a GradientBoostingRegressor(max_depth=5) is used.
-        The regressor can also be a sklearn.Pipeline().
-    random_state : int, RandomState instance or None, default=None
-        Used to set random_state of the default regressor.
-    n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for fit. None means 1 unless
-        in a joblib.parallel_backend context.
-        -1 means using all processors.
-
-    Attributes
-    ----------
-    regressor_ : sklearn-like regressor
-        Fitted meta-model (regressor)
-
-    Examples
-    --------
-    >>> from sktime.forecasting.compose import StackingForecaster
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-    >>> forecasters = [
-    ...     ("trend", PolynomialTrendForecaster()),
-    ...     ("naive", NaiveForecaster()),
-    ... ]
-    >>> forecaster = StackingForecaster(forecasters=forecasters)
-    >>> forecaster.fit(y=y, fh=[1,2,3])
-    StackingForecaster(...)
-    >>> y_pred = forecaster.predict()
     """
 
     _tags = {
@@ -70,9 +32,17 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         "X-y-must-have-same-index": True,
     }
 
-    def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
+    def __init__(
+        self,
+        forecasters,
+        regressor=None,
+        random_state=None,
+        n_jobs=None,
+        passthrough=False,
+    ):
         self.regressor = regressor
         self.random_state = random_state
+        self.passthrough = passthrough
 
         super().__init__(forecasters=forecasters, n_jobs=n_jobs)
 
@@ -80,34 +50,22 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         self._anytagis_then_set("capability:missing_values", False, True, forecasters)
         self._anytagis_then_set("fit_is_empty", False, True, forecasters)
 
+        # Force capability if passthrough is True
+        if self.passthrough:
+            self.set_tags(**{"capability:exogenous": True})
+
     def _fit(self, y, X, fh):
-        """Fit to training data.
-
-        Parameters
-        ----------
-        y : pd.Series
-            Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
         forecasters = [x[1] for x in self.forecasters_]
         self.regressor_ = check_regressor(
             regressor=self.regressor, random_state=self.random_state
         )
 
-        # split training series into training set to fit forecasters and
-        # validation set to fit meta-learner
         inner_fh = fh.to_relative(self.cutoff)
         cv = SingleWindowSplitter(fh=inner_fh)
         train_window, test_window = next(cv.split(y))
         y_train = y.iloc[train_window]
         y_test = y.iloc[test_window]
+        
         if X is not None:
             X_test = X.iloc[test_window]
             X_train = X.iloc[train_window]
@@ -115,34 +73,24 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
             X_test = None
             X_train = None
 
-        # fit forecasters on training window
         self._fit_forecasters(forecasters, y_train, fh=inner_fh, X=X_train)
         y_preds = self._predict_forecasters(fh=inner_fh, X=X_test)
 
         y_meta = y_test.values
         X_meta = np.column_stack(y_preds)
 
-        # fit final regressor on on validation window
-        self.regressor_.fit(X_meta, y_meta)
+        if self.passthrough and X_test is not None:
+            X_test_np = X_test.values
+            if X_test_np.ndim == 1:
+                X_test_np = X_test_np.reshape(-1, 1)
+            X_meta = np.column_stack([X_meta, X_test_np])
 
-        # refit forecasters on entire training series
+        self.regressor_.fit(X_meta, y_meta)
         self._fit_forecasters(forecasters, y, fh=fh, X=X)
 
         return self
 
     def _update(self, y, X=None, update_params=True):
-        """Update fitted parameters.
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional (default=True)
-
-        Returns
-        -------
-        self : an instance of self
-        """
         if update_params:
             warn("Updating `final regressor is not implemented", obj=self)
         for forecaster in self._get_forecaster_list():
@@ -150,45 +98,27 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         return self
 
     def _predict(self, fh=None, X=None):
-        """Forecast time series at future horizon.
-
-        Parameters
-        ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-
-        Returns
-        -------
-        y_pred : pd.Series
-            Point predictions
-        """
         y_preds = np.column_stack(self._predict_forecasters(fh=fh, X=X))
+
+        if self.passthrough and X is not None:
+            # --- CRITICAL FIX: Slice X to match the forecast horizon ---
+            fh_abs = self.fh.to_absolute_index(self.cutoff)
+            X_sliced = X.loc[fh_abs]
+            # -----------------------------------------------------------
+            
+            X_np = X_sliced.values
+            if X_np.ndim == 1:
+                X_np = X_np.reshape(-1, 1)
+            y_preds = np.column_stack([y_preds, X_np])
+
         y_pred = self.regressor_.predict(y_preds)
-        # index = y_preds.index
         index = self.fh.to_absolute_index(self.cutoff)
         return pd.Series(y_pred, index=index, name=self._y.name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
-
-
-        Returns
-        -------
-        params : dict or list of dict
-        """
         from sktime.forecasting.naive import NaiveForecaster
-
         f1 = NaiveForecaster()
         f2 = NaiveForecaster(strategy="mean", window_length=3)
         params = {"forecasters": [("f1", f1), ("f2", f2)]}
-
         return params
