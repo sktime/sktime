@@ -74,6 +74,7 @@ Deep learning
     inceptiontime.InceptionTimeClassifier
     lstmfcn.LSTMFCNClassifier
     macnn.MACNNClassifier
+    macnn.MACCNNClassifierTorch
     mcdcnn.MCDCNNClassifier
     mcdcnn.MCDCNNClassifierTorch
     mlp.MLPClassifier
