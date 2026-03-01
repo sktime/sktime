@@ -122,21 +122,14 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
-
-
-        Returns
-        -------
-        params : dict or list of dict
-        """
+        """Return testing parameter settings for the estimator."""
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.online_learning._hedge_expert import HedgeExpert
+        params1 = {"forecasters": [("f1", NaiveForecaster()), ("f2", NaiveForecaster())]}
 
-        FORECASTER = NaiveForecaster()
-        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
-        return params
+        params2 = {
+            "forecasters": [("f1", NaiveForecaster()), ("f2", NaiveForecaster())],
+            "ensemble_algorithm": HedgeExpert(),
+        }
+
+        return [params1, params2]
