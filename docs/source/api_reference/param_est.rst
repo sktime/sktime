@@ -124,3 +124,14 @@ Cointegration
     :template: class.rst
 
     JohansenCointegration
+
+ImpulseResponseFunction
+~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.param_est.impulse
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ImpulseResponseFunction
