@@ -306,51 +306,78 @@ class BaseBenchmark:
         """Register a task to the benchmark."""
         raise NotImplementedError("This method must be implemented by a subclass.")
 
-    def add(self, *args, **kwargs):
-        """Add estimators, tasks, datasets, metrics, CV splitters, or catalogues.
-
-        Supports:
-            - Single estimator or list/dict of estimators
-            - Task components (datasets, metrics, CV splitters)
-            - Full task tuples (dataset, metric, CV splitter)
-            - Catalogues
-        """
+    def add(self, *args):
+        """Add estimators, tasks, datasets, metrics, CV splitters, or catalogues."""
         for obj in args:
-            # catalogue
-            if isinstance(obj, BaseCatalogue):
-                for category in obj.available_categories():
-                    for item in obj.get(category, as_object=True):
-                        self.add(item)
-                continue
+            for item in self._normalize_add_input(obj):
+                self._dispatch_add_item(item)
 
-            # tuple of (dataset, metric, splitter)
-            if isinstance(obj, tuple) and len(obj) == 3:
-                dataset, metric, splitter = obj
-                self._datasets.append(dataset)
-                self._metrics.append(metric)
-                self._cv_splitters.append(splitter)
-                continue
+    def _normalize_add_input(self, obj):
+        """Normalize input into atomic add-items."""
+        # Catalogue: expand recursively
+        if isinstance(obj, BaseCatalogue):
+            for category in obj.available_categories():
+                for item in obj.get(category, as_object=True):
+                    yield from self._normalize_add_input(item)
+            return
 
-            # single object type (estimators or one of the tasks)
+        # Full task tuple: (dataset, metric, splitter)
+        if isinstance(obj, tuple) and len(obj) == 3:
+            dataset, metric, splitter = obj
+            yield dataset
+            yield metric
+            yield splitter
+            return
+
+        # Named estimator or named task component
+        if isinstance(obj, tuple) and len(obj) == 2:
+            name, item = obj
+            yield ("named", name, item)
+            return
+
+        # Single object
+        yield obj
+
+    def _dispatch_add_item(self, item):
+        """Dispatch a normalized add-item to the correct collection."""
+        # Named item (typically estimator from catalogue)
+        if isinstance(item, tuple) and item[0] == "named":
+            _, name, obj = item
             sctype = scitype(obj)
             if sctype in ["classifier", "forecaster"]:
-                self.add_estimator(obj)
-            elif sctype in ["dataset_classification", "dataset_forecasting"]:
-                self._datasets.append(obj)
-            elif sctype in [
-                "metric_forecasting",
-                "metric_tabular",
-                "metric_proba_tabular",
-            ]:
-                self._metrics.append(obj)
-            elif sctype in ["splitter", "splitter_tabular"]:
-                self._cv_splitters.append(obj)
-            elif sctype == "catalogue":
-                self.add(obj)
-            else:
-                raise TypeError(
-                    f"Unrecognized object type: {type(obj)} (scitype: {sctype})"
-                )
+                est_id = name if isinstance(name, str) else None
+                self.add_estimator(obj, estimator_id=est_id)
+                return
+
+            # Named non-estimators: drop name, add normally
+            item = obj
+
+        sctype = scitype(item)
+
+        if sctype in ["classifier", "forecaster"]:
+            self.add_estimator(item)
+
+        elif sctype in ["dataset_classification", "dataset_forecasting"]:
+            self._datasets.append(item)
+
+        elif sctype in [
+            "metric_forecasting",
+            "metric_tabular",
+            "metric_proba_tabular",
+        ]:
+            self._metrics.append(item)
+
+        elif sctype in ["splitter", "splitter_tabular"]:
+            self._cv_splitters.append(item)
+
+        elif sctype == "catalogue":
+            # Safety net: catalogues passed directly
+            self.add(item)
+
+        else:
+            raise TypeError(
+                f"Unrecognized object type: {type(item)} (scitype: {sctype})"
+            )
 
     def register_stored_tasks(self):
         """Register stored tasks from global DATASETS, METRICS, CV_SPLITTERS."""
