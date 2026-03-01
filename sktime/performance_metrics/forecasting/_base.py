@@ -990,7 +990,7 @@ def make_forecasting_scorer(
     ----------
     func : callable
         Callable to convert to a forecasting scorer class.
-        Score function (or loss function) with signature ``func(y, y_pred, **kwargs)``.
+        Score function (or loss function) with signature ``func(y_true, y_pred, **kwargs)``.
 
     name : str, default=None
         Name to use for the forecasting scorer loss class.
