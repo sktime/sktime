@@ -1,0 +1,216 @@
+"""Time Convolutional Neural Network (CNN) for regression in PyTorch."""
+
+__all__ = ["CNNRegressorTorch"]
+
+
+from sktime.networks.cnn import CNNNetworkTorch
+from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
+
+
+class CNNRegressorTorch(BaseDeepRegressorTorch):
+    """Time Convolutional Neural Network (CNN) in PyTorch, as described in [1].
+
+    Zhao et al. 2017 uses sigmoid activation in the hidden layers.
+    To obtain same behaviour as Zhao et al. 2017, set activation_hidden to "sigmoid".
+
+    Adapted from the implementation from Fawaz et. al
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+
+    Parameters
+    ----------
+    num_epochs : int, default = 2000
+        Number of epochs to train the model.
+    batch_size : int, default = 16
+        Size of each mini-batch.
+    kernel_sizes : tuple of int, shape = number of conv layers, default = (7, 7)
+        Lengths of the 1D convolution window per conv layer.
+    avg_pool_size : int, default = 3
+        Size of the average pooling window.
+    filter_sizes : tuple of int, shape = number of conv layers, default = (6, 12)
+        Number of filters per conv layer.
+    use_bias : bool, default = True
+        Whether to use bias in output layer.
+    padding : string, default = "auto"
+        Controls padding logic for the convolutional layers,
+        i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.
+        - "auto": as per original implementation, ``"same"`` is passed if
+          ``input_shape[0] < 60`` in the input layer, and ``"valid"`` otherwise.
+        - "valid", "same", and other values are passed directly to ``Conv1D``
+    activation : str or None, default = None
+        Activation for the output layer.
+    activation_hidden : str, default = "sigmoid"
+        Activation for hidden conv layers: "sigmoid" or "relu".
+    optimizer : str or callable, default = "Adam"
+        Optimizer to use. Same as TF default (Adam).
+    optimizer_kwargs : dict or None, default = None
+        Additional keyword arguments for the optimizer.
+    criterion : str or callable, default = "MSELoss"
+        Loss function (TF uses mean_squared_error).
+    criterion_kwargs : dict or None, default = None
+        Additional keyword arguments for the criterion.
+    callbacks : None or str or tuple of str, default = "ReduceLROnPlateau"
+        Learning rate schedulers as callbacks.
+    callback_kwargs : dict or None, default = None
+        Keyword arguments for callbacks.
+    lr : float, default = 0.01
+        Learning rate (TF CNN uses Adam(lr=0.01)).
+    verbose : bool, default = False
+        Whether to print progress during training.
+    init_weights: str or None, default = None
+        The method to initialize the weights of the conv layers. Supported values are
+        'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
+        for default PyTorch initialization.
+    random_state : int or None, default = None
+        Seed for reproducibility.
+
+    References
+    ----------
+    .. [1] Zhao et al. Convolutional neural networks for time series classification,
+       Journal of Systems Engineering and Electronics, 28(1):2017.
+
+    Examples
+    --------
+    >>> from sktime.regression.deep_learning.cnn import CNNRegressorTorch
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
+    >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
+    >>> reg = CNNRegressorTorch(num_epochs=20, batch_size=4)  # doctest: +SKIP
+    >>> reg.fit(X_train, y_train)  # doctest: +SKIP
+    CNNRegressorTorch(...)
+    """
+
+    _tags = {
+        "authors": ["hfawaz", "AurumnPegasus", "achieveordie", "noxthot"],
+        "maintainers": ["Faakhir30"],
+        "python_version": ">=3.10",
+        "python_dependencies": "torch",
+        "property:randomness": "stochastic",
+        "capability:random_state": True,
+        "tests:vm": True,
+    }
+
+    def __init__(
+        self,
+        num_epochs=2000,
+        batch_size=16,
+        kernel_sizes=(7, 7),
+        avg_pool_size=3,
+        filter_sizes=(6, 12),
+        use_bias=True,
+        padding="auto",
+        activation=None,
+        activation_hidden="sigmoid",
+        optimizer="Adam",
+        optimizer_kwargs=None,
+        criterion="MSELoss",
+        criterion_kwargs=None,
+        callbacks="ReduceLROnPlateau",
+        callback_kwargs=None,
+        lr=0.01,
+        verbose=False,
+        init_weights=None,
+        random_state=None,
+    ):
+        self.kernel_sizes = kernel_sizes
+        self.avg_pool_size = avg_pool_size
+        self.filter_sizes = filter_sizes
+        self.activation_hidden = activation_hidden
+        self.activation = activation
+        self.padding = padding
+        self.use_bias = use_bias
+        self.num_epochs = num_epochs
+        self.batch_size = batch_size
+        self.optimizer = optimizer
+        self.optimizer_kwargs = optimizer_kwargs
+        self.lr = lr
+        self.criterion = criterion
+        self.criterion_kwargs = criterion_kwargs
+        self.callbacks = callbacks
+        self.callback_kwargs = callback_kwargs
+        self.verbose = verbose
+        self.init_weights = init_weights
+        self.random_state = random_state
+
+        if len(filter_sizes) != len(kernel_sizes):
+            raise ValueError(
+                f"Length of filter_sizes ({len(filter_sizes)}) must match "
+                f"length of kernel_sizes ({len(kernel_sizes)}) in CNNRegressorTorch."
+            )
+
+        super().__init__(
+            num_epochs=self.num_epochs,
+            batch_size=self.batch_size,
+            criterion=self.criterion,
+            criterion_kwargs=self.criterion_kwargs,
+            optimizer=self.optimizer,
+            optimizer_kwargs=self.optimizer_kwargs,
+            callbacks=self.callbacks,
+            callback_kwargs=self.callback_kwargs,
+            lr=self.lr,
+            verbose=self.verbose,
+            random_state=self.random_state,
+        )
+
+    def _build_network(self, X):
+        """Build the CNN network.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Training data of shape (n_instances, n_dims, series_length).
+
+        Returns
+        -------
+        CNNNetworkTorch
+            The constructed CNN network.
+        """
+        # X arrives in sktime format: (n_instances, n_dims, n_timesteps)
+        # The base class's _build_dataloader transposes it to
+        # (batch, n_timesteps, n_dims) before passing to forward().
+        # But at this point, X has not been transposed.
+        # So input_size = n_dims is correct here
+        n_dims = X.shape[1]
+        series_length = X.shape[2]
+        input_shape = (n_dims, series_length)
+
+        return CNNNetworkTorch(
+            input_shape=input_shape,
+            num_classes=1,
+            kernel_sizes=self.kernel_sizes,
+            avg_pool_size=self.avg_pool_size,
+            filter_sizes=self.filter_sizes,
+            activation_hidden=self.activation_hidden,
+            use_bias=self.use_bias,
+            activation=self.activation,
+            padding=self.padding,
+            init_weights=self.init_weights,
+            random_state=self.random_state,
+        )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return.
+
+        Returns
+        -------
+        params : dict or list of dict
+            Parameters to create testing instances of the class.
+        """
+        params1 = {
+            "num_epochs": 10,
+            "batch_size": 4,
+            "avg_pool_size": 4,
+            "activation_hidden": "relu",
+        }
+        params2 = {
+            "num_epochs": 12,
+            "batch_size": 6,
+            "kernel_sizes": (2,),
+            "filter_sizes": (4,),
+        }
+        return [params1, params2]

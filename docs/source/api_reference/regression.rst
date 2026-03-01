@@ -62,6 +62,7 @@ Deep learning
     :template: class.rst
 
     cnn.CNNRegressor
+    cnn.CNNRegressorTorch
     cntc.CNTCRegressor
     fcn.FCNRegressor
     inceptiontime.InceptionTimeRegressor
