@@ -98,20 +98,24 @@ class ImpulseResponseFunction(BaseParamFitter):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.impulse import ImpulseResponseFunction
-    >>> from sktime.forecasting.dynamic_factor import DynamicFactor as dynfc
+    >>> from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
     >>> import pandas as pd
     >>> X = load_airline()
     >>> X2 = X.shift(1).bfill()
     >>> df = pd.DataFrame({"X":X, "X2": X2})
-    >>> fitted_model = dynfc(k_factors=1, factor_order=2).fit(df)
-    >>> res = ImpulseResponseFunction(fitted_model).fit(df)
+    >>> fitted_model = skdyn(k_factors=1, factor_order=2).fit(df)
+    >>> sktime_irf = ImpulseResponseFunction(fitted_model, orthogonalized=True)
+    >>> sktime_irf.fit(df)
+    ImpulseResponseFunction(...)
+    >>> print(sktime_irf_est.get_fitted_params()["irf"])
 
     Notes
     -----
-    Parameter and Attribute description taken from statsmodels.Statsmodels has up to today two different interfaces for impulse responses. The first one is older and 
-    seems to serve only VAR, VECM and SVAR models. Within the IRAnalysis class is a plotting option
-    showing directly the fade-out of the impulse response signal. Since an Impulse Response Function measures 
-    the change in a dynamic linear relationship, the concept of cointegration plays again a significant role again.
+    Parameter and Attribute description taken from statsmodels.Statsmodels has up to today two different 
+    interfaces for impulse responses. The first one is older and seems to serve only VAR, VECM and SVAR models. 
+    Within the IRAnalysis class is a plotting option showing directly the fade-out of the impulse response signal. 
+    Since an Impulse Response Function measures the change in a dynamic linear relationship, the concept of 
+    cointegration plays again a significant role again.
 
     References
     ----------
@@ -124,8 +128,8 @@ class ImpulseResponseFunction(BaseParamFitter):
     .. [3] Statsmodels (last visited 15/02/2026):
         https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.dynamic_factor.DynamicFactor.impulse_responses.html
 
-    .. [4] Statsmodels (last visited 15/02/2026):
-        Insert VECM here missing ...
+    .. [4] Statsmodels (last visited 01/03/2026):
+        https://www.statsmodels.org/stable/generated/statsmodels.tsa.vector_ar.irf.IRAnalysis.html
     """
 
     def test():
@@ -167,7 +171,7 @@ class ImpulseResponseFunction(BaseParamFitter):
          
         super().__init__()
 
-    def fit(self, X) -> np.ndarray:
+    def _fit(self, X) -> np.ndarray:
         """Fit estimator for univariate and multivariate orthogonal or cumulative irfs.
 
         Text from statsmodels:
@@ -213,7 +217,8 @@ class ImpulseResponseFunction(BaseParamFitter):
             )
         elif model_name == "DynamicFactor":
             # some models have problem with univariate irf, need warning
-            # to show that results can not be calculated univariate
+            # to show that results can not be calculated univariate, 
+            # should not be a Problem for ARIMA for instance.
 
             if len(X.shape) < 2 or X.shape[1] < 2:
                 warnings.warn(
@@ -241,4 +246,42 @@ class ImpulseResponseFunction(BaseParamFitter):
         self.irf_ = dummy_model.impulse_responses(
             params=fitted_params, steps=self.steps, orthogonalized=self.orthogonalized
         )
+
         return self
+    
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator/test.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {
+            "model": None, 
+            "steps": 1, 
+            "impulse": 0,
+            "orthogonalized": False,
+            "cumulative": False,
+            "anchor": None,
+            "exog": None, 
+            "transformed": True, 
+            "includes_fixed": False,
+            "extend_model":None, 
+            "extend_kwargs":None,
+        }
+
+        return [params1, params2]
