@@ -373,6 +373,16 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     ThetaForecaster
     """
 
+    Examples
+    --------
+    >> from sktime.datasets import load_airline
+    >> from sktime.forecasting.statsforecast import StatsForecastAutoTheta
+    >> y = load_airline()
+    >> forecaster = StatsForecastAutoTheta()
+    >> forecaster.fit(y)
+     StatsForecastAutoTheta(...)
+    >> y_pred = forecaster.predict(fh=[1, 2, 3])
+
     _tags = {
         # packaging info
         # --------------
