@@ -1,7 +1,5 @@
 """Adapter for using MOIRAI-MoE Forecasters."""
 
-from unittest.mock import patch
-
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -92,7 +90,7 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
             "gluonts",
             "torch",
             "einops",
-            "huggingface-hub",
+            "huggingface_hub",
             "hf-xet",
             "lightning",
             "hydra-core",
@@ -158,13 +156,13 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
                 }
             )
 
-    # Apply a patch for redirecting imports to sktime.libs.uni2ts
-    import sktime
-    import sktime.libs.uni2ts  # noqa: F401 - needed so sktime.libs.uni2ts is resolvable
-
-    @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
     def _instantiate_patched_model(self, model_kwargs):
         """Instantiate the model from the vendor package."""
+        import sys
+
+        import sktime.libs.uni2ts as _uni2ts_mod
+
+        sys.modules.setdefault("uni2ts", _uni2ts_mod)
         from sktime.libs.uni2ts.moirai_moe_forecast import MoiraiMoEForecast
 
         if self.checkpoint_path.startswith("Salesforce"):
