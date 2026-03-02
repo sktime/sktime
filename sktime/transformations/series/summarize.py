@@ -5,6 +5,8 @@
 __author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut", "BensHamza"]
 __all__ = ["SummaryTransformer", "WindowSummarizer", "SplitterSummarizer"]
 
+import numbers
+
 import pandas as pd
 
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
@@ -120,6 +122,10 @@ class WindowSummarizer(BaseTransformer):
             None will keep the NAs generated, and would leave it for the user to choose
             an estimator that can correctly deal with observations with missing values,
             "bfill" will fill the NAs by carrying the first observation backwards.
+        min_periods: int, optional (default = None)
+            Minimum number of observations in the window required to have a value.
+            If None, defaults to window_length. By setting it to a lower number, allows
+            partial windows for rolling summarizers.
 
     Attributes
     ----------
@@ -233,11 +239,13 @@ class WindowSummarizer(BaseTransformer):
         n_jobs=-1,
         target_cols=None,
         truncate=None,
+        min_periods=None,
     ):
         self.lag_feature = lag_feature
         self.n_jobs = n_jobs
         self.target_cols = target_cols
         self.truncate = truncate
+        self.min_periods = min_periods
 
         super().__init__()
 
@@ -307,8 +315,32 @@ class WindowSummarizer(BaseTransformer):
         boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
         func_dict["window"] = func_dict["window"].astype("object", copy=False)
         func_dict.loc[lags, "window"] = boost_lag
-        self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
+
+        # Validate min_periods once in fit, not in parallel transform
+        self._min_periods = _coerce_min_periods(self.min_periods)
+        if self._min_periods is not None:
+            for _, row in func_dict.iterrows():
+                summarizer = row["summarizer"]
+                window_length = row["window"][1]
+                if summarizer != "lag":
+                    _get_rolling_min_periods(self._min_periods, window_length)
+
+        # Calculate truncate_start accounting for min_periods
+        # For lag summarizers, use window_length (no partial window support)
+        # For rolling/callable summarizers, use min_periods if set
+        def _calc_truncate(row):
+            lag = row["window"][0]
+            window_length = row["window"][1]
+            if row["summarizer"] == "lag":
+                effective_periods = window_length
+            else:
+                effective_periods = _get_rolling_min_periods(
+                    self._min_periods, window_length
+                )
+            return lag + effective_periods - 1
+
+        self.truncate_start = func_dict.apply(_calc_truncate, axis=1).max()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -341,12 +373,19 @@ class WindowSummarizer(BaseTransformer):
                 hier_levels = list(range(X.index.nlevels - 1))
                 X_grouped = X.groupby(level=hier_levels)[cols]
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X_grouped, **kwargs, bfill=bfill)
+                    delayed(_window_feature)(
+                        X_grouped, **kwargs, bfill=bfill, min_periods=self._min_periods
+                    )
                     for index, kwargs in func_dict.iterrows()
                 )
             else:
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X.loc[:, [cols]], **kwargs, bfill=bfill)
+                    delayed(_window_feature)(
+                        X.loc[:, [cols]],
+                        **kwargs,
+                        bfill=bfill,
+                        min_periods=self._min_periods,
+                    )
                     for _index, kwargs in func_dict.iterrows()
                 )
             Xt = pd.concat(df, axis=1)
@@ -432,7 +471,58 @@ def get_name_list(Z):
     return Z_name
 
 
-def _window_feature(Z, summarizer=None, window=None, bfill=False):
+def _coerce_min_periods(min_periods):
+    """Validate and coerce min_periods to int, if not None."""
+    if min_periods is None:
+        return None
+
+    if isinstance(min_periods, bool) or not isinstance(min_periods, numbers.Real):
+        raise ValueError(
+            f"min_periods must be an integer >= 1 or None, got {min_periods!r}"
+        )
+
+    if not float(min_periods).is_integer():
+        raise ValueError(
+            f"min_periods must be an integer >= 1 or None, got {min_periods!r}"
+        )
+
+    mp = int(min_periods)
+
+    if mp < 1:
+        raise ValueError(f"min_periods must be >= 1, got {mp}")
+
+    return mp
+
+
+def _get_rolling_min_periods(min_periods, window_length):
+    """Get the min_periods value for rolling window operations.
+
+    Validates that min_periods does not exceed window_length and returns
+    the appropriate value to use for rolling operations.
+
+    Parameters
+    ----------
+    min_periods : int or None
+        The minimum number of observations required. If None, defaults to
+        window_length.
+    window_length : int
+        The length of the rolling window.
+
+    Returns
+    -------
+    int
+        The min_periods value to use for rolling operations.
+    """
+    if min_periods is None:
+        return window_length
+    if min_periods > window_length:
+        raise ValueError(
+            f"min_periods ({min_periods}) cannot exceed window_length ({window_length})"
+        )
+    return min_periods
+
+
+def _window_feature(Z, summarizer=None, window=None, bfill=False, min_periods=None):
     """Compute window features and lag.
 
     Apply summarizer passed over a certain window
@@ -459,23 +549,36 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     window: list of integers
         List containing window_length and lag parameters, see WindowSummarizer
         class description for in-depth explanation.
+    min_periods: int, optional, default=None
+        Minimum number of observations in the window required to have a value.
+        If None, defaults to window_length. By setting it to a lower number, allows
+        partial windows for rolling summarizers.
     """
     lag = window[0]
     window_length = window[1]
+
+    mp = _coerce_min_periods(min_periods)
+
     feat: pd.DataFrame = pd.DataFrame()
     if summarizer in pd_rolling:
+        rolling_mp = _get_rolling_min_periods(mp, window_length)
+
         feat = Z.transform(
             lambda x: getattr(
-                x.rolling(window=window_length, min_periods=window_length), summarizer
+                x.rolling(window=window_length, min_periods=rolling_mp), summarizer
             )().shift(lag)
         )
     elif summarizer == "lag":
         feat = Z.transform(lambda x: x.shift(lag))
     elif callable(summarizer):
+        rolling_mp = _get_rolling_min_periods(mp, window_length)
+
         feat = Z.transform(
-            lambda x: x.rolling(window=window_length, min_periods=window_length)
-            .apply(summarizer, raw=True)
-            .shift(lag)
+            lambda x: (
+                x.rolling(window=window_length, min_periods=rolling_mp)
+                .apply(summarizer, raw=True)
+                .shift(lag)
+            )
         )
     else:
         raise ValueError("The provided summarizer is not callable.")
