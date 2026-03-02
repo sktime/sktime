@@ -2,6 +2,7 @@
 
 __author__ = ["benHeid"]
 
+import warnings
 from copy import deepcopy
 
 import numpy as np
@@ -11,6 +12,7 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base.adapters._pytorch import (
     BaseDeepNetworkPyTorch,
     PyTorchTrainDataset,
+    _get_series_from_panel,
 )
 from sktime.forecasting.trend import CurveFitForecaster
 from sktime.networks.cinn import CINNNetwork
@@ -305,7 +307,132 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             num_coupling_layers=self.n_coupling_layers,
         ).build()
 
-    def _run_epoch(self, epoch, data_loader, val_data_loader_nll, early_stopper):
+    def _prepare_pretrain_series_data(self, series):
+        """Prepare dataset from a single series for pretraining.
+
+        Runs the same feature engineering pipeline as _fit (WindowSummarizer,
+        CurveFitForecaster, FourierFeatures) but uses local variables so the
+        fitted transformers are not stored on self.
+
+        Parameters
+        ----------
+        series : pd.Series
+            A single time series.
+
+        Returns
+        -------
+        tuple of (Dataset, int) or None
+            (dataset, n_cond_features) on success, None if the series is too
+            short or curve fitting fails.
+        """
+        if len(series) < self.window_size:
+            warnings.warn(
+                f"Skipping series (length {len(series)}) shorter than "
+                f"window_size ({self.window_size}).",
+                UserWarning,
+                stacklevel=2,
+            )
+            return None
+
+        rolling_mean = WindowSummarizer(
+            lag_feature={
+                self.lag_feature: [[-self.window_size // 2, self.window_size // 2]]
+            },
+            truncate="fill",
+        ).fit_transform(series)
+
+        function = CurveFitForecaster(
+            self._f_statistic,
+            {"p0": self._init_param_f_statistic},
+            normalise_index=True,
+        )
+
+        try:
+            function.fit(rolling_mean.dropna())
+        except Exception:
+            warnings.warn(
+                "Skipping series: CurveFitForecaster failed to converge.",
+                UserWarning,
+                stacklevel=2,
+            )
+            return None
+
+        fourier_features = FourierFeatures(
+            sp_list=self._sp_list, fourier_terms_list=self._fourier_terms_list
+        )
+        fourier_features.fit(series)
+
+        cal_features = fourier_features.transform(series)
+        statistics = function.predict(
+            fh=ForecastingHorizon(series.index, is_relative=False)
+        )
+        cond_data = pd.DataFrame(
+            np.concatenate([cal_features, statistics.to_frame()], axis=-1),
+            index=series.index,
+        )
+        n_cond_features = len(cond_data.columns)
+        dataset = PyTorchTrainDataset(series, 0, fh=self.sample_dim, X=cond_data)
+        return dataset, n_cond_features
+
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain the cINN on panel data.
+
+        Extracts individual series, engineers features per series, combines
+        datasets, and trains the network.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Panel data to pretrain on.
+        X : pd.DataFrame, optional
+            Exogenous data (not used during pretrain).
+        fh : ForecastingHorizon, optional
+            Not used; sample_dim determines the output dimension.
+        """
+        from torch.utils.data import ConcatDataset
+
+        all_series = _get_series_from_panel(y)
+
+        datasets = []
+        n_cond_features = None
+        for series_df in all_series:
+            if isinstance(series_df, pd.DataFrame) and series_df.shape[1] == 1:
+                series = series_df.iloc[:, 0]
+            else:
+                series = series_df
+            result = self._prepare_pretrain_series_data(series)
+            if result is not None:
+                dataset, ncf = result
+                datasets.append(dataset)
+                if n_cond_features is None:
+                    n_cond_features = ncf
+
+        if not datasets:
+            raise RuntimeError(
+                "Pretraining failed: no series could be processed. "
+                "Check window_size and f_statistic parameters."
+            )
+
+        self.n_cond_features = n_cond_features
+        combined_dataset = ConcatDataset(datasets)
+        data_loader = DataLoader(
+            combined_dataset, batch_size=self.batch_size, shuffle=True
+        )
+
+        self.network = self._build_network(None)
+        self.optimizer = self._instantiate_optimizer()
+
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, data_loader)
+
+        self._pretrain_pred_len = self.sample_dim
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            self.n_pretrain_instances_ = len(y.index.get_level_values(0).unique())
+        else:
+            self.n_pretrain_instances_ = 1
+
+        return self
         nll = None
         for i, _input in enumerate(data_loader):
             (c, x) = _input
