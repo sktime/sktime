@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
