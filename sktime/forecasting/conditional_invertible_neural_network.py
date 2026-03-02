@@ -437,6 +437,65 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             self.n_pretrain_instances_ = 1
 
         return self
+
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Continue pretraining with additional panel data.
+
+        Reuses the existing network and creates a fresh optimizer.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Additional panel data to train on.
+        X : pd.DataFrame, optional
+            Exogenous data (not used during pretrain).
+        fh : ForecastingHorizon, optional
+            Not used; sample_dim determines the output dimension.
+        """
+        from torch.utils.data import ConcatDataset
+
+        all_series = _get_series_from_panel(y)
+
+        datasets = []
+        for series_df in all_series:
+            if isinstance(series_df, pd.DataFrame) and series_df.shape[1] == 1:
+                series = series_df.iloc[:, 0]
+            else:
+                series = series_df
+            result = self._prepare_pretrain_series_data(series)
+            if result is not None:
+                dataset, _ = result
+                datasets.append(dataset)
+
+        if not datasets:
+            raise RuntimeError(
+                "Pretraining update failed: no series could be processed. "
+                "Check window_size and f_statistic parameters."
+            )
+
+        combined_dataset = ConcatDataset(datasets)
+        data_loader = DataLoader(
+            combined_dataset, batch_size=self.batch_size, shuffle=True
+        )
+
+        self.optimizer = self._instantiate_optimizer()
+
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, data_loader)
+
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            n_new = len(y.index.get_level_values(0).unique())
+            if hasattr(self, "n_pretrain_instances_"):
+                self.n_pretrain_instances_ += n_new
+            else:
+                self.n_pretrain_instances_ = n_new
+
+        return self
+
+    def _run_epoch(
+        self, epoch, data_loader, val_data_loader_nll=None, early_stopper=None
+    ):
         nll = None
         for i, _input in enumerate(data_loader):
             (c, x) = _input
