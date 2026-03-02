@@ -299,6 +299,10 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         self.z_mean_ = self.z_.mean(axis=0)
         self.z_std_ = self.z_.std()
 
+    def _instantiate_optimizer(self):
+        """Create Adam optimizer for the cINN network."""
+        return torch.optim.Adam(self.network.parameters(), lr=self.lr)
+
     def _build_network(self, fh):
         return CINNNetwork(
             horizon=self.sample_dim,
