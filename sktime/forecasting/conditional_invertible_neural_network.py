@@ -126,6 +126,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         "enforce_index_type": None,
         "capability:missing_values": False,
         "capability:pred_int": False,
+        "capability:pretrain": True,
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run tests on vm in GHA
