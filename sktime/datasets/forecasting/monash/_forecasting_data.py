@@ -131,7 +131,7 @@ class ForecastingData(BaseForecastingDataset):
         freq_map = {
             "yearly": "YS",
             "quarterly": "QS",
-            "monthly": "MS",
+            "monthly": "ms",
             "weekly": "W",
             "daily": "D",
             "hourly": "H",
