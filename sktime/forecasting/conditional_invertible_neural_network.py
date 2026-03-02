@@ -272,7 +272,8 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                 val_dataset_nll, shuffle=False, batch_size=len(val_dataset_nll)
             )
 
-        self.network = self._build_network(None)
+        if not hasattr(self, "network") or self.network is None:
+            self.network = self._build_network(None)
 
         self.optimizer = self._instantiate_optimizer()
         early_stopper = _EarlyStopper(patience=self.patience, min_delta=self.delta)
