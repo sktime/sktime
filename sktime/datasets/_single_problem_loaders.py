@@ -56,7 +56,7 @@ from sktime.datasets._data_io import (
     _reduce_memory_usage,
 )
 from sktime.datasets._dataset_downloader import DatasetDownloader
-from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
+from sktime.datasets._readers_writers.tsf import load_from_tsf_to_dataframe
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -1211,7 +1211,7 @@ def load_unit_test_tsf():
         forecast_horizon,
         contain_missing_values,
         contain_equal_length,
-    ) = load_tsf_to_dataframe(path)
+    ) = load_from_tsf_to_dataframe(path)
 
     return (
         loaded_data,
@@ -1466,7 +1466,7 @@ def load_forecastingdata(
         forecastingdata_downloader.download(download_path=path_to_data_dir)
 
     path_to_file = os.path.join(path_to_data_dir, f"{name}/{name}.tsf")
-    return load_tsf_to_dataframe(
+    return load_from_tsf_to_dataframe(
         path_to_file, replace_missing_vals, value_column_name, return_type
     )
 
