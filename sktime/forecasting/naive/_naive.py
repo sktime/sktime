@@ -725,6 +725,39 @@ class NaiveVariance(BaseForecaster):
 
         return self
 
+    def update(self, y, X=None, update_params=True):
+        """Update the forecaster with new data.
+
+        For NaiveForecaster, updating is inexpensive: we append new observations
+        to the stored training data and (optionally) refresh lightweight derived
+        attributes such as window length and seasonal periodicity.
+
+        Parameters
+        ----------
+        y : sktime-compatible time series container
+        New observations used to update the model.
+        X : pd.DataFrame, optional (default=None)
+        Exogenous variables (ignored by NaiveForecaster but accepted for API
+        compatibility).
+        update_params : bool, optional (default=True)
+        If True, refresh model parameters/state derived from training data.
+        If False, only update the internal data store and cutoff.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        super().update(y=y, X=X, update_params=False)
+
+        if update_params:
+            self._fit(
+                y=self._y,
+                X=getattr(self, "_X", None),
+                fh=getattr(self, "_fh", None),
+            )
+
+        return self
+
     def _predict(self, fh, X):
         return self.forecaster_.predict(fh=fh, X=X)
 
