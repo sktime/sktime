@@ -374,8 +374,8 @@ class BaseDeepRegressorTorch(BaseRegressor):
             or 2D iterable, of shape [n_instances, n_dimensions]
             predicted values
             indices correspond to instance indices in X
-            if self.get_tag("capaility:multioutput") = False, should be 1D
-            if self.get_tag("capaility:multioutput") = True, should be 2D
+            if self.get_tag("capability:multioutput") = False, should be 1D
+            if self.get_tag("capability:multioutput") = True, should be 2D
         """
         cat = _safe_import("torch.cat")
 
