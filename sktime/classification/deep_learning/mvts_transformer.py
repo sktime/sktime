@@ -64,6 +64,12 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         If True, prints progress messages during training.
     random_state : int or None, optional (default=None)
         Seed for the random number generator.
+    device : str, optional (default="cpu")
+        The device to use for training and inference. Options include
+        ``"cpu"``, ``"cuda"``, ``"mps"`` or any valid PyTorch device string.
+        If ``"cuda"`` is specified but not available, a warning is raised
+        and the model falls back to ``"cpu"``.
+        Similarly for ``"mps"``.
 
     Examples
     --------
@@ -110,6 +116,7 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         lr=0.001,
         verbose=True,
         random_state=None,
+        device="cpu",
     ):
         self.d_model = d_model
         self.n_heads = n_heads
@@ -129,6 +136,7 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.device = device
 
         # infer from the data
         self.feat_dim = None
@@ -145,6 +153,7 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
             lr=lr,
             verbose=verbose,
             random_state=random_state,
+            device=device,
         )
 
         from sktime.utils.dependencies import _check_soft_dependencies
