@@ -48,6 +48,7 @@ Percentage errors
     :template: class_with_call.rst
 
     MeanAbsolutePercentageError
+    MeanAbsolutePercentageErrorStabilized
     MedianAbsolutePercentageError
     MeanSquaredPercentageError
     MedianSquaredPercentageError
@@ -77,6 +78,7 @@ Relative errors
     MeanRelativeAbsoluteError
     MedianRelativeAbsoluteError
     RelativeLoss
+    TheilU2
 
 Geometric errors
 ^^^^^^^^^^^^^^^^
@@ -89,6 +91,19 @@ Geometric errors
     GeometricMeanSquaredError
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
+
+Normalized and divergence-based errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    NormalizedMeanSquaredError
+    InterQuartileRangeError
+    KLDivergenceNormal
+    KLDivergenceDoubleExponential
+    KLDivergenceSingleExponential
 
 Under- and over-prediction errors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
