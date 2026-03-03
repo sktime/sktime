@@ -56,19 +56,25 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         batch_size=8,
         in_channels=1,
         individual=False,
+        criterion=None,
         criterion_kwargs=None,
         optimizer=None,
         optimizer_kwargs=None,
         lr=0.001,
+        custom_dataset_train=None,
+        custom_dataset_pred=None,
     ):
         self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.in_channels = in_channels
         self.individual = individual
+        self.criterion = criterion
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
+        self.custom_dataset_train = custom_dataset_train
+        self.custom_dataset_pred = custom_dataset_pred
 
         super().__init__()
 
