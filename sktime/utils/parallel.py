@@ -269,6 +269,10 @@ def _get_parallel_test_fixtures(naming="estimator"):
     if _check_soft_dependencies("dask", severity="none"):
         fixtures.append({"backend": "dask", "backend_params": {}})
         fixtures.append({"backend": "dask", "backend_params": {"scheduler": "sync"}})
+        fixtures.append({"backend": "dask_lazy", "backend_params": {}})
+        fixtures.append(
+            {"backend": "dask_lazy", "backend_params": {"scheduler": "synchronous"}}
+        )
 
     # test ray backend
     if _check_soft_dependencies("ray", severity="none"):
