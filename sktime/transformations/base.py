@@ -103,6 +103,7 @@ class BaseTransformer(BaseEstimator):
     # default tag values - these typically make the "safest" assumption
     _tags = {
         "object_type": "transformer",  # type of object
+        "capability:update": False,  # can the transformer be updated via update?
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

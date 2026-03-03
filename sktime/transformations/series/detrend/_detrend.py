@@ -72,6 +72,7 @@ class Detrender(BaseTransformer):
         # --------------
         "authors": ["mloning", "SveaMeyer13", "KishManani", "fkiraly"],
         "maintainers": ["SveaMeyer13", "KishManani"],
+        "capability:update": True,
         # estimator type
         # --------------
         "scitype:transform-input": "Series",

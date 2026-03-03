@@ -139,6 +139,7 @@ class Lag(BaseTransformer):
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
         "remember_data": True,  # remember all data seen as _X
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -466,6 +467,7 @@ class ReducerTransform(BaseTransformer):
         "capability:unequal_length:removes": False,
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
+        "capability:update": True,
     }
 
     # todo: add any hyper-parameters and components to constructor

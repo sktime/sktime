@@ -126,6 +126,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         "X_inner_mtype": CORE_MTYPES,
         "capability:multivariate": True,
         "capability:categorical_in_X": True,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?

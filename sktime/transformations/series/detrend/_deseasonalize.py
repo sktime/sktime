@@ -69,6 +69,7 @@ class Deseasonalizer(BaseTransformer):
         # --------------
         "authors": ["mloning", "eyalshafran", "aiwalter"],
         "python_dependencies": "statsmodels",
+        "capability:update": True,
         # estimator type
         # --------------
         "scitype:transform-input": "Series",

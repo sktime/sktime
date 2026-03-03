@@ -132,6 +132,7 @@ class ColumnEnsembleTransformer(
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "capability:update": True,
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator

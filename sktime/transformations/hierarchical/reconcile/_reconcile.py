@@ -111,6 +111,7 @@ class Reconciler(BaseTransformer):
         "capability:missing_values": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "capability:update": False,
         "transform-returns-same-time-index": True,
         # CI and test flags
         # -----------------
