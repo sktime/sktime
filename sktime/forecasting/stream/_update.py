@@ -463,6 +463,47 @@ class DontUpdate(_DelegatedForecaster):
     refit_window_lag : difference of sktime indices (int or timedelta), optional
         lag of the data window to refit to, w.r.t. cutoff, in case update calls fit
         default = 0, i.e., refit window ends with and includes cutoff
+
+    Examples
+    --------
+    >>> # Example 1: .update() method will never change parameters:
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.stream import DontUpdate
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_airline()
+    >>> y_train, y_update = y.iloc[:-12], y.iloc[-12:]
+    >>> base_forecaster = NaiveForecaster(strategy="last", sp=12)
+    >>> forecaster = DontUpdate(base_forecaster)
+    >>> forecaster.fit(y_train)
+    DontUpdate(forecaster=NaiveForecaster(sp=12))
+    >>> params_before = forecaster.get_fitted_params()
+    >>> forecaster.update(y_update, update_params=True)
+    DontUpdate(forecaster=NaiveForecaster(sp=12))
+    >>> params_after = forecaster.get_fitted_params()
+    >>> params_before == params_after
+    True
+    >>>
+    >>> # Example 2: Compare to an updating forecaster
+    >>> # An updating estimator
+    >>> updating_forecaster = NaiveForecaster(strategy="last", sp=12)
+    >>> updating_forecaster.fit(y_train)
+    NaiveForecaster(sp=12)
+    >>> params_before = updating_forecaster.get_fitted_params()
+    >>> updating_forecaster.update(y_update, update_params=True)
+    NaiveForecaster(sp=12)
+    >>> params_after = updating_forecaster.get_fitted_params()
+    >>> params_before == params_after
+    False
+    >>> # Same estimator, but wrapped with DontUpdate
+    >>> dont_update_forecaster = DontUpdate(updating_forecaster)
+    >>> dont_update_forecaster.fit(y_train)
+    DontUpdate(...)
+    >>> params_before = dont_update_forecaster.get_fitted_params()
+    >>> dont_update_forecaster.update(y_update, update_params=True)
+    DontUpdate(...)
+    >>> params_after = dont_update_forecaster.get_fitted_params()
+    >>> params_before == params_after
+    True
     """
 
     # attribute for _DelegatedForecaster, which then delegates
