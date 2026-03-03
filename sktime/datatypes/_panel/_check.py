@@ -53,7 +53,10 @@ from sktime.datatypes._series._check import (
     _check_pddataframe_series,
     _index_equally_spaced,
 )
-from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
+from sktime.utils.validation.series import (
+    is_in_valid_or_coercible_index_types,
+    is_integer_index,
+)
 
 VALID_MULTIINDEX_TYPES = (pd.RangeIndex, pd.Index)
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
@@ -548,8 +551,9 @@ def _check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=
         )
         return _ret(False, msg, None, return_metadata)
 
-    # check whether the time index is of valid type
-    if not is_in_valid_index_types(index.levels[-1]):
+    # check whether the time index is of valid type (or coercible, e.g. float)
+    time_level = index.levels[-1]
+    if not is_in_valid_or_coercible_index_types(time_level):
         msg = (
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} or integer index instead."
