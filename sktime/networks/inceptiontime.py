@@ -5,21 +5,45 @@ from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class InceptionTimeNetwork(BaseDeepNetwork):
-    """InceptionTime adapted from the implementation from Fawaz et al.
+    """InceptionTime network.
 
-    https://github.com/hfawaz/InceptionTime/blob/master/classifiers/
-    inception.py
+    Network originally defined in [1]_ and implementation adapted from [2]_.
 
-    Network originally defined in:
+    Parameters
+    ----------
+    n_filters : int, default=32
+        Number of filters in the inception modules.
+    use_residual : bool, default=True
+        Whether to use residual connections.
+    use_bottleneck : bool, default=True
+        Whether to use bottleneck layer.
+    bottleneck_size : int, default=32
+        Size of bottleneck layer.
+    depth : int, default=6
+        Number of inception modules.
+    kernel_size : int, default=40
+        Length of the 1D convolution window.
+    random_state : int, default=0
+        Seed for any needed random actions.
+    activation : str, default="relu"
+        Activation function used for hidden layers.
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
+    activation_inception : str, default="linear"
+        Activation function used inside the inception module.
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
 
-    @article{IsmailFawaz2019inceptionTime, Title                    = {
-    InceptionTime: Finding AlexNet for Time Series Classification}, Author
-                    = {Ismail Fawaz, Hassan and Lucas, Benjamin and
-                    Forestier, Germain and Pelletier, Charlotte and Schmidt,
-                    Daniel F. and Weber, Jonathan and Webb, Geoffrey I. and
-                    Idoumghar, Lhassane and Muller, Pierre-Alain and
-                    Petitjean, François}, journal                  = {
-                    ArXiv}, Year                     = {2019} }
+    References
+    ----------
+    .. [1] @Article{IsmailFawaz2019inceptionTime, Title = {
+       InceptionTime: Finding AlexNet for Time Series Classification}, Author
+       = {Ismail Fawaz, Hassan and Lucas, Benjamin and Forestier, Germain and
+       Pelletier, Charlotte and Schmidt, Daniel F. and Weber, Jonathan and
+       Webb, Geoffrey I. and Idoumghar, Lhassane and Muller, Pierre-Alain and
+       Petitjean, François}, journal = {ArXiv}, Year = {2019} }
+    .. [2] https://github.com/hfawaz/InceptionTime/blob/master/classifiers/
+       inception.py
     """
 
     _tags = {
@@ -39,25 +63,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         activation="relu",
         activation_inception="linear",
     ):
-        """Initialize Inception Time.
-
-        ----------
-        n_filters : int,
-        use_residual : boolean,
-        use_bottleneck : boolean,
-        depth : int
-        kernel_size : int, specifying the length of the 1D convolution window
-        bottleneck_size : int,
-        random_state : int, seed to any needed random actions
-        activation : string, default = "relu"
-            activation function used for hidden layers;
-            List of available keras activation functions:
-            https://keras.io/api/layers/activations/
-        activation_inception : string, default = "linear"
-            activation function used inside the inception module;
-            List of available keras activation functions:
-            https://keras.io/api/layers/activations/
-        """
+        """Initialize InceptionTime network."""
         _check_dl_dependencies(severity="error")
         super().__init__()
 
