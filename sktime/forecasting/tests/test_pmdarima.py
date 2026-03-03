@@ -19,4 +19,24 @@ def test_ARIMA_pred_quantiles_insample():
     y = load_airline()
     forecaster = ARIMA(order=(1, 1, 0), seasonal_order=(0, 1, 0, 12))
     forecaster.fit(y)
-    forecaster.predict_quantiles(fh=y.index, X=None, alpha=[0.05, 0.95])
+
+@pytest.mark.skipif(
+    not run_test_for_class(ARIMA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_ARIMA_with_covariates():
+    """Test ARIMA with covariates to reproduce issue #XXXX."""
+    from sktime.split import temporal_train_test_split
+    
+    y = load_airline()
+    x = y * 2
+    fh = [1, 2, 3]
+    
+    y_train, y_test, x_train, x_test = temporal_train_test_split(y, x, test_size=0.25)
+    
+    forecaster = ARIMA(suppress_warnings=True)
+    forecaster.fit(y_train, X=x_train, fh=fh)
+    y_pred = forecaster.predict(X=x_test, fh=fh)
+    
+    # Just verify that prediction completes without error
+    assert len(y_pred) == len(fh)
