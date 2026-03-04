@@ -2,6 +2,7 @@
 
 __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = [
+    "DISTANCES_SUPPORTED",
     "distance",
     "distance_factory",
     "pairwise_distance",
@@ -31,6 +32,7 @@ __all__ = [
 ]
 
 from sktime.distances._distance import (
+    DISTANCES_SUPPORTED,
     ddtw_alignment_path,
     ddtw_distance,
     distance,
