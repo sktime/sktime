@@ -22,12 +22,18 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
         Number of epochs to train the model.
     batch_size : int, default = 16
         Size of each mini-batch.
-    kernel_sizes : tuple of int, shape = number of conv layers, default = (7, 7)
-        Lengths of the 1D convolution window per conv layer.
+    kernel_sizes : tuple of int, default = (7, 7)
+        A tuple of length equal to the number of conv layers with each entry in
+        the tuple specifies the kernel size for the corresponding convolutional
+        layer. The length of ``kernel_sizes`` must be equal to the length of
+        ``filter_sizes``.
     avg_pool_size : int, default = 3
         Size of the average pooling window.
-    filter_sizes : tuple of int, shape = number of conv layers, default = (6, 12)
-        Number of filters per conv layer.
+    filter_sizes : tuple of int, default = (6, 12)
+        A tuple of length equal to the number of conv layers with each entry in
+        the tuple specifies the filter size for the corresponding convolutional
+        layer. The length of ``filter_sizes`` must be equal to the length of
+        ``kernel_sizes``.
     use_bias : bool, default = True
         Whether to use bias in output layer.
     padding : string, default = "auto"
@@ -39,7 +45,7 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
     activation : str or None, default = None
         Activation for the output layer.
     activation_hidden : str, default = "sigmoid"
-        Activation for hidden conv layers: "sigmoid" or "relu".
+        Activation for hidden conv layers: "sigmoid", "relu" or "tanh".
     optimizer : str or callable, default = "Adam"
         Optimizer to use. Same as TF default (Adam).
     optimizer_kwargs : dict or None, default = None
@@ -80,13 +86,12 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
     """
 
     _tags = {
-        "authors": ["hfawaz", "AurumnPegasus", "achieveordie", "noxthot"],
+        "authors": ["hfawaz", "AurumnPegasus", "achieveordie", "noxthot", "Faakhir30"],
         "maintainers": ["Faakhir30"],
         "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
-        "tests:vm": True,
     }
 
     def __init__(

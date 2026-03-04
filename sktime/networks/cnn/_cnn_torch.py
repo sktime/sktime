@@ -24,12 +24,18 @@ class CNNNetworkTorch(NNModule):
         Used to compute the flattened size after conv and pool layers.
     num_classes : int
         Number of output classes (classification) or 1 (regression).
-    kernel_sizes : tuple of int, shape = number of conv layers, default = (7, 7)
-        Lengths of the 1D convolution window per conv layer.
+    kernel_sizes : tuple of int, default = (7, 7)
+        A tuple of length equal to the number of conv layers with each entry in
+        the tuple specifies the kernel size for the corresponding convolutional
+        layer. The length of ``kernel_sizes`` must be equal to the length of
+        ``filter_sizes``.
     avg_pool_size : int, default = 3
         Size of the average pooling window.
-    filter_sizes : tuple of int, shape = number of conv layers, default = (6, 12)
-        Number of filters per conv layer.
+    filter_sizes : tuple of int, default = (6, 12)
+        A tuple of length equal to the number of conv layers with each entry in
+        the tuple specifies the filter size for the corresponding convolutional
+        layer. The length of ``filter_sizes`` must be equal to the length of
+        ``kernel_sizes``.
     use_bias : bool, default = True
         Whether to use a bias in fully connected layers.
     padding : str, default = "auto"
@@ -40,7 +46,7 @@ class CNNNetworkTorch(NNModule):
         For output layer, use None for regression (linear) or pass from
         classifier/regressor.
     activation_hidden : str, default = "sigmoid"
-        Activation function for hidden conv layers: "sigmoid" or "relu".
+        Activation function for hidden conv layers: "sigmoid", "relu" or "tanh".
     init_weights: str or None, default = None
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
@@ -55,7 +61,14 @@ class CNNNetworkTorch(NNModule):
     """
 
     _tags = {
-        "authors": ["hfawaz", "James-Large", "Withington", "TonyBagnall", "noxthot"],
+        "authors": [
+            "hfawaz",
+            "James-Large",
+            "Withington",
+            "TonyBagnall",
+            "noxthot",
+            "Faakhir30",
+        ],
         "maintainers": ["Faakhir30"],
         "python_version": ">=3.10",
         "python_dependencies": "torch",
@@ -90,62 +103,58 @@ class CNNNetworkTorch(NNModule):
         self.random_state = random_state
 
         super().__init__()
-        fs = list(filter_sizes)
-        # Extend to match n_conv_layers (same as TF)
-        n_conv_layers = len(kernel_sizes)
-        fs = fs[:n_conv_layers] + [fs[-1]] * max(0, n_conv_layers - len(fs))
 
-        n_dims = input_shape[0]
-        series_length = input_shape[1]
+        n_dims = self.input_shape[0]
+        series_length = self.input_shape[1]
 
         nnConv1d = _safe_import("torch.nn.Conv1d")
         nnAvgPool1d = _safe_import("torch.nn.AvgPool1d")
         nnLinear = _safe_import("torch.nn.Linear")
         nnFlatten = _safe_import("torch.nn.Flatten")
 
-        if padding == "auto":
+        if self.padding == "auto":
             padding_use = "same" if series_length < 60 else "valid"
         else:
-            padding_use = padding
+            padding_use = self.padding
 
         padding_same = padding_use == "same"
         # Build conv + pool blocks
         in_ch = n_dims
         layers = []
-        for i in range(n_conv_layers):
+        for i in range(len(self.filter_sizes)):
             if padding_same:
-                pad_value = kernel_sizes[i] // 2
+                pad_value = self.kernel_sizes[i] // 2
             else:
                 pad_value = 0
 
             layers.append(
                 nnConv1d(
                     in_ch,
-                    fs[i],
-                    kernel_sizes[i],
+                    self.filter_sizes[i],
+                    self.kernel_sizes[i],
                     padding=pad_value,
                 )
             )
-            layers.append(self._instantiate_activation(activation_hidden))
-            layers.append(nnAvgPool1d(avg_pool_size))
-            in_ch = fs[i]
+            layers.append(self._instantiate_activation(self.activation_hidden))
+            layers.append(nnAvgPool1d(self.avg_pool_size))
+            in_ch = self.filter_sizes[i]
 
         self.conv_blocks = _safe_import("torch.nn.Sequential")(*layers)
         self.flatten = nnFlatten()
 
         # Compute flattened size
         L = series_length
-        for i in range(n_conv_layers):
-            L_conv = L + 2 * pad_value - kernel_sizes[i] + 1
-            L = L_conv // avg_pool_size
-        self._flattened_size = L * fs[-1]
+        for i in range(len(self.filter_sizes)):
+            L_conv = L + 2 * pad_value - self.kernel_sizes[i] + 1
+            L = L_conv // self.avg_pool_size
+        self._flattened_size = L * self.filter_sizes[-1]
 
-        self.fc = nnLinear(self._flattened_size, num_classes, bias=use_bias)
-        self._out_act = self._instantiate_activation(activation)
+        self.fc = nnLinear(self._flattened_size, self.num_classes, bias=self.use_bias)
+        self._activation = self._instantiate_activation(self.activation)
 
-        if random_state is not None:
+        if self.random_state is not None:
             torch_manual_seed = _safe_import("torch.manual_seed")
-            torch_manual_seed(random_state)
+            torch_manual_seed(self.random_state)
 
         if self.init_weights is not None:
             self.apply(self._init_weights)
@@ -175,8 +184,8 @@ class CNNNetworkTorch(NNModule):
         out = self.conv_blocks(X)
         out = self.flatten(out)
         out = self.fc(out)
-        if self._out_act is not None:
-            out = self._out_act(out)
+        if self._activation is not None:
+            out = self._activation(out)
 
         if self.num_classes == 1:  # (regression)
             out = out.squeeze(1)  # (batch_size,)
@@ -207,12 +216,17 @@ class CNNNetworkTorch(NNModule):
                 module.bias.data.zero_()
 
     def _instantiate_activation(self, activation):
-        """Instantiate the activation function to be applied on the output layer.
+        """Instantiate the activation function given an activation string.
+
+        Parameters
+        ----------
+        activation : str or None
+            The activation function to be instantiated.
 
         Returns
         -------
         activation_function : torch.nn.Module
-            The activation function to be applied on the output layer.
+            The instantiated activation function.
         """
         # support for more activation functions will be added
         if activation is None or activation == "linear":
@@ -224,16 +238,16 @@ class CNNNetworkTorch(NNModule):
                 return _safe_import("torch.nn.Sigmoid")()
             elif activation.lower() == "relu":
                 return _safe_import("torch.nn.ReLU")()
+            elif activation.lower() == "tanh":
+                return _safe_import("torch.nn.Tanh")()
             elif activation.lower() == "softmax":
                 return _safe_import("torch.nn.Softmax")(dim=1)
             elif activation.lower() == "logsoftmax":
                 return _safe_import("torch.nn.LogSoftmax")(dim=1)
-            elif activation.lower() == "logsigmoid":
-                return _safe_import("torch.nn.LogSigmoid")()
             else:
                 raise ValueError(
                     "If `activation` is not None, it must be one of "
-                    "'sigmoid', 'logsigmoid', 'relu', 'softmax' or 'logsoftmax'. "
+                    "'sigmoid', 'relu', 'tanh', 'softmax' or 'logsoftmax'. "
                     f"Found {activation}"
                 )
         else:

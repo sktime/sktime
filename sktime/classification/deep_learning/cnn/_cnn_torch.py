@@ -11,8 +11,9 @@ from sktime.networks.cnn import CNNNetworkTorch
 class CNNClassifierTorch(BaseDeepClassifierPytorch):
     """Time Convolutional Neural Network (CNN) in PyTorch, as described in [1]_.
 
-    Zhao et al. 2017 uses sigmoid activation in the hidden layers.
-    To obtain same behaviour as Zhao et al. 2017, set activation_hidden to "sigmoid".
+    Zhao et al. 2017 uses MSE loss and sigmoid activation in all layers.
+    To obtain same behaviour as Zhao et al. 2017, set activation and criterion to
+    "sigmoid" and "MSE" respectively.
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
@@ -23,12 +24,18 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         Number of epochs to train the model.
     batch_size : int, default = 16
         Size of each mini-batch.
-    kernel_sizes : tuple of int, shape = number of conv layers, default = (7, 7)
-        Lengths of the 1D convolution window per conv layer.
+    kernel_sizes : tuple of int, default = (7, 7)
+        A tuple of length equal to the number of conv layers with each entry in
+        the tuple specifies the kernel size for the corresponding convolutional
+        layer. The length of ``kernel_sizes`` must be equal to the length of
+        ``filter_sizes``.
     avg_pool_size : int, default = 3
         Size of the average pooling window.
-    filter_sizes : tuple of int, shape = number of conv layers, default = (6, 12)
-        Number of filters per conv layer.
+    filter_sizes : tuple of int, default = (6, 12)
+        A tuple of length equal to the number of conv layers with each entry in
+        the tuple specifies the filter size for the corresponding convolutional
+        layer. The length of ``filter_sizes`` must be equal to the length of
+        ``kernel_sizes``.
     padding : str, default = "auto"
         Padding for conv layers. "auto": "same" if series_length < 60 else "valid";
         "valid" or "same" otherwise.
@@ -38,7 +45,7 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         Activation on output layer. None when using CrossEntropyLoss.
     activation_hidden : str, default = "sigmoid"
         Activation for hidden conv layers.
-        Supported activations include 'sigmoid', 'logsigmoid', 'relu',
+        Supported activations include 'sigmoid', 'relu', 'tanh',
         'softmax' or 'logsoftmax'.
     optimizer : str or callable, default = "Adam"
         Optimizer to use. Same as TF default (Adam).
@@ -80,16 +87,12 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
     """
 
     _tags = {
-        "authors": ["hfawaz", "James-Large", "noxthot"],
+        "authors": ["hfawaz", "James-Large", "noxthot", "Faakhir30"],
         "maintainers": ["Faakhir30"],
         "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
-        #
-        # testing configuration
-        # ---------------------
-        "tests:vm": True,  # run in VM due to memory requirement
     }
 
     def __init__(
@@ -178,11 +181,11 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         n_dims = X.shape[1]
         series_length = X.shape[2]
         input_shape = (n_dims, series_length)
-        self.n_classes_ = len(np.unique(y))
+        self.num_classes = len(np.unique(y))
 
         return CNNNetworkTorch(
             input_shape=input_shape,
-            num_classes=self.n_classes_,
+            num_classes=self.num_classes,
             kernel_sizes=self.kernel_sizes,
             avg_pool_size=self.avg_pool_size,
             filter_sizes=self.filter_sizes,
