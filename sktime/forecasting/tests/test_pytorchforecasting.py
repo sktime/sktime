@@ -109,3 +109,60 @@ def test_load_model_from_disk(model_class) -> None:
     index_pred = y_pred.iloc[:max_prediction_length].index.get_level_values(2)
     _assert_correct_pred_time_index(index_pred, cutoff, fh)
     _assert_correct_columns(y_pred, y_test)
+
+
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        PytorchForecastingNHiTS,
+        PytorchForecastingTFT,
+    ],
+)
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [
+            PytorchForecastingNHiTS,
+            PytorchForecastingTFT,
+        ]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_multivariate_y(model_class) -> None:
+    """Test that models can fit and predict with multivariate y (multiple targets)."""
+    data_length = 60
+    data = _make_hierarchical(
+        (3, 20),
+        n_columns=3,
+        max_timepoints=data_length,
+        min_timepoints=data_length,
+    )
+    # use two columns as targets (multivariate y)
+    y = data[["c0", "c1"]]
+    X = data[["c2"]]
+
+    max_prediction_length = 3
+    fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+
+    len_levels = len(y.index.names)
+    y_train = y.groupby(level=list(range(len_levels - 1))).apply(
+        lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
+    )
+    X_train = X.groupby(level=list(range(len_levels - 1))).apply(
+        lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
+    )
+
+    params = model_class.get_test_params()[0]
+    model = model_class(**params)
+    model.fit(y=y_train, X=X_train, fh=fh)
+
+    y_pred = model.predict(fh=fh, X=X, y=y_train)
+
+    # predictions should have the same columns as y
+    assert list(y_pred.columns) == list(y.columns), (
+        f"Expected columns {list(y.columns)}, got {list(y_pred.columns)}"
+    )
+    # predictions should have the right number of rows
+    n_instances = y_train.index.droplevel(-1).nunique()
+    assert len(y_pred) == n_instances * max_prediction_length, (
+        f"Expected {n_instances * max_prediction_length} rows, got {len(y_pred)}"
+    )
