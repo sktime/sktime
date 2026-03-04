@@ -10,9 +10,7 @@ the lower the better.
 import numpy as np
 import sklearn
 from scipy.stats import gmean
-from sklearn.metrics import (
-    explained_variance_score as _explained_variance_score,
-)
+from sklearn.metrics import explained_variance_score as _explained_variance_score
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
