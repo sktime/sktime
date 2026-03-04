@@ -156,6 +156,7 @@ class AttentionRelScalar(_AttentionBase):
         coords = torch_stack(coords).flatten(1)
         relative_coords = coords[:, :, None] - coords[:, None, :]
         relative_coords[1] += self.seq_len - 1
+        relative_coords = relative_coords.permute(1, 2, 0)
         relative_index = relative_coords.sum(-1).flatten().unsqueeze(1)
         self.register_buffer("relative_index", relative_index)
 
