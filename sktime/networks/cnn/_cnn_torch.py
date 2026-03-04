@@ -12,8 +12,9 @@ NNModule = _safe_import("torch.nn.Module")
 class CNNNetworkTorch(NNModule):
     """Establish the network structure for a CNN in PyTorch.
 
-    Zhao et al. 2017 uses sigmoid activation in the hidden layers.
-    To obtain same behaviour as Zhao et al. 2017, set activation_hidden to "sigmoid".
+    Zhao et al. 2017 uses MSE loss and sigmoid activation in all layers.
+    To obtain same behaviour as Zhao et al. 2017, set activation and criterion to
+    "sigmoid" and "MSE" respectively.
 
     Adapted from the implementation used in [1]_.
 

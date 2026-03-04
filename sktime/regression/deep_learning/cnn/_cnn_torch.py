@@ -11,7 +11,6 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
     """Time Convolutional Neural Network (CNN) in PyTorch, as described in [1].
 
     Zhao et al. 2017 uses sigmoid activation in the hidden layers.
-    To obtain same behaviour as Zhao et al. 2017, set activation_hidden to "sigmoid".
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
