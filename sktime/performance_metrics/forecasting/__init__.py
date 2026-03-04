@@ -12,6 +12,7 @@ __author__ = ["mloning", "tch", "RNKuhns", "fkiraly", "aiwalter", "markussagen"]
 
 __all__ = [
     "make_forecasting_scorer",
+    "ExplainedVarianceScore",
     "GeometricMeanAbsoluteError",
     "GeometricMeanSquaredError",
     "GeometricMeanRelativeAbsoluteError",
@@ -35,6 +36,7 @@ __all__ = [
     "MedianSquaredError",
     "MedianSquaredPercentageError",
     "MedianSquaredScaledError",
+    "R2Score",
     "RelativeLoss",
     "mean_absolute_scaled_error",
     "median_absolute_scaled_error",
@@ -59,10 +61,13 @@ __all__ = [
     "relative_loss",
     "MeanSquaredLogError",
     "mean_squared_log_error",
+    "explained_variance_score",
+    "r2_score",
 ]
 
 from sktime.performance_metrics.forecasting._base import make_forecasting_scorer
 from sktime.performance_metrics.forecasting._functions import (
+    explained_variance_score,
     geometric_mean_absolute_error,
     geometric_mean_relative_absolute_error,
     geometric_mean_relative_squared_error,
@@ -84,7 +89,11 @@ from sktime.performance_metrics.forecasting._functions import (
     median_squared_error,
     median_squared_percentage_error,
     median_squared_scaled_error,
+    r2_score,
     relative_loss,
+)
+from sktime.performance_metrics.forecasting._explvariance import (
+    ExplainedVarianceScore,
 )
 from sktime.performance_metrics.forecasting._gmae import GeometricMeanAbsoluteError
 from sktime.performance_metrics.forecasting._gmrelae import (
@@ -116,4 +125,5 @@ from sktime.performance_metrics.forecasting._msep import MeanSquaredErrorPercent
 from sktime.performance_metrics.forecasting._msle import MeanSquaredLogError
 from sktime.performance_metrics.forecasting._mspe import MeanSquaredPercentageError
 from sktime.performance_metrics.forecasting._msse import MeanSquaredScaledError
+from sktime.performance_metrics.forecasting._r2score import R2Score
 from sktime.performance_metrics.forecasting._rell import RelativeLoss
