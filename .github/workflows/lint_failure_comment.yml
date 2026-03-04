@@ -1,7 +1,7 @@
-# This workflow is triggered when the main "Install and test" workflow completes.
-# It checks if the workflow failed during a pull request due to code quality or linting issues.
-# If so, it posts a helpful guide on the pull request to assist the contributor.
-# It includes a check to ensure the bot only comments once per pull request.
+# This workflow posts a helpful message when the linting (code-quality) job fails.
+# It runs after the main CI workflow "Install and test" completes.
+# The comment is only posted if the failure was specifically caused by the
+# "code-quality" job and the run originated from a pull request.
 
 name: Comment on linting failure
 
@@ -13,86 +13,100 @@ on:
 
 permissions:
   pull-requests: write
+  actions: read
 
 jobs:
-  post-lint-help:
+  lint-failure-comment:
+    # Run only if the completed workflow run was triggered by a pull request
+    # and the workflow ended in failure.
+    if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'failure' }}
     runs-on: ubuntu-latest
-    # We only run this job if the triggering workflow is a pull request and it failed.
-    if: ${{ github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.event == 'pull_request' }}
 
     steps:
-      # Step 1: Retrieve the pull request number from the workflow_run payload.
-      - name: Get PR number
-        id: get-pr
-        uses: actions/github-script@v6
+      - name: Detect code-quality failure and locate PR
+        id: check
+        uses: actions/github-script@v7
         with:
-          result-encoding: string
           script: |
-            // Get PR number from the triggering workflow run
-            const prs = context.payload.workflow_run.pull_requests;
-            if (prs && prs.length > 0) {
-              return prs[0].number;
-            }
-            return null;
-
-      # Step 2: Prevent duplicate comments. Check if the bot has already posted the guidance.
-      - name: Check if bot already commented
-        id: check-comment
-        if: steps.get-pr.outputs.result != 'null'
-        uses: actions/github-script@v6
-        with:
-          result-encoding: string
-          script: |
-            const prNumber = parseInt('${{ steps.get-pr.outputs.result }}');
-            const comments = await github.rest.issues.listComments({
+            // Get all jobs from the completed workflow run
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: prNumber,
+              run_id: context.payload.workflow_run.id,
             });
-            // Search for a previous comment made by the bot containing our unique identifier
-            const botComment = comments.data.find(c =>
-              c.user.type === 'Bot' && c.body.includes('<!-- lint-helper-bot -->')
+
+            // Find the code-quality job
+            const codeQualityJob = jobs.data.jobs.find(job =>
+              job.name.includes("code-quality")
             );
-            return botComment ? 'true' : 'false';
 
-      # Step 3: Post the formal guidance comment ONLY if it hasn't been posted yet.
-      - name: Post helpful linting failure comment
-        if: steps.get-pr.outputs.result != 'null' && steps.check-comment.outputs.result == 'false'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const prNumber = parseInt('${{ steps.get-pr.outputs.result }}');
-            await github.rest.issues.createComment({
+            if (!codeQualityJob) {
+              console.log("No code-quality job found in this workflow run.");
+              return;
+            }
+
+            if (codeQualityJob.conclusion !== "failure") {
+              console.log("code-quality job did not fail. No comment needed.");
+              return;
+            }
+
+            console.log("code-quality job failed. Searching for associated PR...");
+
+            // Find the PR associated with the workflow run
+            const pulls = await github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: prNumber,
-
-              body: `<!-- lint-helper-bot -->
-            ## Linting or Formatting Checks Failed
-
-            Thank you for your contribution to sktime. It appears that the automated code quality (linting) checks did not pass for this pull request.
-
-            This is a standard occurrence due to project-specific coding rules. You can easily resolve the issues locally by following these steps:
-
-            **Step 1 — Install the formatting toolkit** (only needed once):
-            \`\`\`bash
-            pip install pre-commit
-            \`\`\`
-
-            **Step 2 — Auto-format and identify remaining issues**:
-            \`\`\`bash
-            pre-commit run --all-files
-            \`\`\`
-            This command will automatically reformat your files where possible and display any issues that require manual correction.
-
-            **Step 3 — Commit and reflect the changes in your pull request**:
-            \`\`\`bash
-            git add .
-            git commit -m "style: apply coding standards"
-            git push
-            \`\`\`
-
-            For detailed instructions and coding rules, please refer to the [sktime coding standards documentation](https://www.sktime.net/en/latest/developer_guide/coding_standards.html).
-
-            If you are still experiencing issues after following these steps, please leave a comment on this pull request. A maintainer will gladly assist you with the resolution.`
+              state: "open",
+              head: `${context.payload.workflow_run.head_repository.owner.login}:${context.payload.workflow_run.head_branch}`
             });
+
+            if (pulls.data.length === 0) {
+              console.log("No open PR found for this branch.");
+              return;
+            }
+
+            const prNumber = pulls.data[0].number;
+            console.log(`PR found: #${prNumber}`);
+
+            core.setOutput("pr_number", prNumber);
+
+      - name: Post helpful linting guidance
+        if: steps.check.outputs.pr_number
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ steps.check.outputs.pr_number }}
+          header: linting-guidance
+          message: |
+            ### ⚠️ Linting / Formatting Checks Failed
+
+            Thank you for your contribution to **sktime**.
+
+            The automated **code-quality (linting)** check did not pass for this pull request.  
+            This usually happens when the code does not fully follow the project's formatting rules.
+
+            You can resolve this locally using the repository’s pre-commit configuration:
+
+            **Step 1 — Install the required formatting tool (one time only):**
+            ```bash
+            pip install pre-commit
+            pre-commit install
+            ```
+
+            **Step 2 — Run the checks and apply automatic fixes:**
+            ```bash
+            pre-commit run --all-files
+            ```
+
+            This command will automatically format your files where possible and show any remaining issues that require manual fixes.
+
+            **Step 3 — Commit the updated files and push again:**
+            ```bash
+            git add .
+            git commit -m "style: apply pre-commit formatting fixes"
+            git push
+            ```
+
+            For more details, please refer to the  
+            **[sktime coding standards guide](https://www.sktime.net/en/latest/developer_guide/coding_standards.html).**
+
+            If anything is unclear or you need assistance, feel free to ask in this pull request — the maintainers will be happy to help.
