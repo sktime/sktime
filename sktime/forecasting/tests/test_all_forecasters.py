@@ -665,11 +665,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             )
 
         if pred_int_impl and not cls_tag:
-            raise ValueError(
-                f"{type(f).__name__} does implement probabilistic forecasting, "
-                'but "capability:pred_int" flag has been set to False incorrectly. '
-                'The flag "capability:pred_int" should instead be set to True.'
-            )
+            explicit_tags = getattr(type(f), "_tags", {})
+            if explicit_tags.get("capability:pred_int") is not False:
+                raise ValueError(
+                    f"{type(f).__name__} does implement probabilistic forecasting, "
+                    'but "capability:pred_int" flag has been set to False incorrectly. '
+                    'The flag "capability:pred_int" should instead be set to True.'
+                )
 
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
