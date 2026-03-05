@@ -141,11 +141,15 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
         sp=1,
         by_index=False,
         eps=None,
+        sample_weight=None,
     ):
         self.sp = sp
         self.eps = eps
         super().__init__(
-            multioutput=multioutput, multilevel=multilevel, by_index=by_index
+            multioutput=multioutput,
+            multilevel=multilevel,
+            by_index=by_index,
+            sample_weight=sample_weight,
         )
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
