@@ -3776,6 +3776,16 @@
         "code",
         "maintenance"
       ]
+    },
+    {
+      "login": "aditi-dsi",
+      "name": "Aditi Bindal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/123075271?s=80&v=4",
+      "profile": "https://github.com/aditi-dsi",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ]
 }
