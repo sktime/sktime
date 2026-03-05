@@ -66,6 +66,14 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         order they are passed. If None, then no learning rate scheduler is used.
     callback_kwargs : dict or None, optional (default=None)
         The keyword arguments to be passed to the callbacks.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
+    metrics_kwargs : dict or None, default = None
+        The keyword arguments to be passed to the metrics.
     lr : float, optional (default=0.01)
         The learning rate to use for the optimizer.
     criterion_kwargs : dict or None, optional (default=None)
@@ -115,11 +123,12 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         activation_hidden="relu",
         use_bias=True,
         callbacks=None,
-        metrics=None,
         optim=None,
         optim_kwargs=None,
         criterion_kwargs=None,
         callback_kwargs=None,
+        metrics=None,
+        metrics_kwargs=None,
         lr=0.01,
         verbose=False,
         random_state=0,
@@ -137,10 +146,11 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.callbacks = callbacks
-        self.metrics = metrics
         self.verbose = verbose
         self.random_state = random_state
         self.callback_kwargs = callback_kwargs
+        self.metrics = metrics
+        self.metrics_kwargs = metrics_kwargs
         self.lr = lr
         self.criterion_kwargs = criterion_kwargs
 
@@ -175,6 +185,8 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             optimizer_kwargs=self.optimizer_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
+            metrics=self.metrics,
+            metrics_kwargs=self.metrics_kwargs,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
