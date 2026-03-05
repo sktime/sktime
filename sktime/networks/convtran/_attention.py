@@ -151,7 +151,11 @@ class AttentionRelScalar(_AttentionBase):
 
         torch_arange = _safe_import("torch.arange")
         torch_meshgrid = _safe_import("torch.meshgrid")
-        coords = torch_meshgrid((torch_arange(1), torch_arange(self.seq_len)))
+        coords = torch_meshgrid(
+            torch_arange(1),
+            torch_arange(self.seq_len),
+            indexing="ij",
+        )
         torch_stack = _safe_import("torch.stack")
         coords = torch_stack(coords).flatten(1)
         relative_coords = coords[:, :, None] - coords[:, None, :]
