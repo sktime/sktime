@@ -238,7 +238,9 @@ def plot_interval(ax, interval_df):
 
     import seaborn as sns
 
-    var_name = interval_df.columns.levels[0][0]
+    # Use the actually present top-level label, not the first category in levels.
+    # After subsetting a MultiIndex frame, unused levels can still be retained.
+    var_name = interval_df.columns.get_level_values(0)[0]
 
     n = len(interval_df.columns.levels[1])
     if n == 1:
