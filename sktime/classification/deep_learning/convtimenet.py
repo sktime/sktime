@@ -3,7 +3,7 @@
 __author__ = ["Tanuj-Taneja1"]
 __all__ = ["ConvTimeNetClassifier"]
 
-from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.classification.deep_learning.base._base_torch import BaseDeepClassifierPytorch
 
 
 class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
@@ -148,10 +148,13 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         super().__init__(
             num_epochs=num_epochs,
             batch_size=batch_size,
+            activation=None,
             criterion=criterion,
             criterion_kwargs=criterion_kwargs,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
+            callbacks=None,
+            callback_kwargs=None,
             lr=lr,
             verbose=verbose,
             random_state=random_state,

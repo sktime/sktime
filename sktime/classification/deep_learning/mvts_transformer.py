@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.classification.deep_learning.base._base_torch import BaseDeepClassifierPytorch
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
@@ -86,6 +86,8 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         # --------------
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
@@ -100,6 +102,7 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         activation="relu",
         norm="BatchNorm",
         freeze=False,
+        device="cpu",
         # base classifier specific
         num_epochs=10,
         batch_size=8,
@@ -127,6 +130,7 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
+        self.device = device
         self.verbose = verbose
         self.random_state = random_state
 
@@ -138,31 +142,34 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         super().__init__(
             num_epochs=num_epochs,
             batch_size=batch_size,
+            activation=None,
             criterion=criterion,
             criterion_kwargs=criterion_kwargs,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
+            callbacks=None,
+            callback_kwargs=None,
             lr=lr,
             verbose=verbose,
             random_state=random_state,
-        )
+        )   
 
         from sktime.utils.dependencies import _check_soft_dependencies
 
         if _check_soft_dependencies("torch"):
             import torch
 
-            self.criterions = {}
+            # self.criterions = {}
 
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+            # self.optimizers = {
+            #     "Adadelta": torch.optim.Adadelta,
+            #     "Adagrad": torch.optim.Adagrad,
+            #     "Adam": torch.optim.Adam,
+            #     "AdamW": torch.optim.AdamW,
+            #     "SGD": torch.optim.SGD,
+            # }
 
-    def _build_network(self, X, y):
+    def _build_network(self, X, y=None):
         from sktime.networks.mvts_transformer import (
             TSTransformerEncoderClassiregressor,
         )
@@ -170,9 +177,10 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         # n_instances, n_dims, n_timestamps
         _, self.feat_dim, self.max_len = X.shape
 
-        self.num_classes = len(np.unique(y))
+        if y is not None:
+            self.num_classes = len(np.unique(y))
 
-        return TSTransformerEncoderClassiregressor(
+        model = TSTransformerEncoderClassiregressor(
             feat_dim=self.feat_dim,
             max_len=self.max_len,
             d_model=self.d_model,
@@ -186,10 +194,11 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
             norm=self.norm,
             freeze=self.freeze,
         )
+        return model.to(self.device)
 
     def _build_dataloader(self, X, y=None):
         dataset = PytorchDataset(X, y)
-        return DataLoader(dataset, self.batch_size)
+        return DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

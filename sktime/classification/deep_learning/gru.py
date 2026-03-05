@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.classification.deep_learning.base._base_torch import BaseDeepClassifierPytorch
 
 
 class GRUClassifier(BaseDeepClassifierPytorch):
@@ -67,7 +67,7 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         "authors": ["fnhirwa"],
         "maintainers": ["fnhirwa"],
         "python_version": ">=3.9",
-        "python_dependencies": "torch",
+        "python_dependencies": ["torch"],
         # estimator type
         # --------------
         # remaining tags handled by BaseDeepClassifierPytorch
@@ -76,6 +76,7 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         # testing configuration
         # ---------------------
         "tests:libs": ["sktime.networks.gru"],
+        "tests:vm": True,
     }
 
     def __init__(
@@ -124,11 +125,14 @@ class GRUClassifier(BaseDeepClassifierPytorch):
 
         super().__init__(
             num_epochs=num_epochs,
-            optimizer=optimizer,
-            criterion=criterion,
             batch_size=batch_size,
+            activation=None,
+            criterion=criterion,
             criterion_kwargs=criterion_kwargs,
+            optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
+            callbacks=None,
+            callback_kwargs=None,
             lr=lr,
             verbose=verbose,
             random_state=random_state,
@@ -281,7 +285,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         "authors": ["NellyElsayed", "fnhirwa"],
         "maintainers": ["fnhirwa"],
         "python_version": ">=3.9",
-        "python_dependencies": "torch",
+        "python_dependencies": ["torch"],
         # estimator type
         # --------------
         # remaining tags handled by BaseDeepClassifierPytorch
@@ -342,11 +346,14 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
 
         super().__init__(
             num_epochs=num_epochs,
-            optimizer=optimizer,
-            criterion=criterion,
             batch_size=batch_size,
+            activation=None,
+            criterion=criterion,
             criterion_kwargs=criterion_kwargs,
-            optimizer_kwargs=optimizer_kwargs,
+            optimizer=optimizer,
+            optimizer_kwargs=self.optimizer_kwargs,
+            callbacks=None,
+            callback_kwargs=None,
             lr=lr,
             verbose=verbose,
             random_state=random_state,
@@ -377,26 +384,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
-            Reserved values for classifiers:
-                "results_comparison" - used for identity testing in some classifiers
-                    should contain parameter settings comparable to "TSC bakeoff"
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
-            instance.
-            ``create_test_instance`` uses the first (or only) dictionary in ``params``
-        """
+        
         params = [
             {
                 "hidden_dim": 256,
