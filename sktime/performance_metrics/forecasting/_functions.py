@@ -52,6 +52,7 @@ __all__ = [
     "median_relative_absolute_error",
     "geometric_mean_relative_absolute_error",
     "geometric_mean_relative_squared_error",
+    "overlay_dx_score",
 ]
 
 EPS = np.finfo(np.float64).eps
@@ -2836,3 +2837,92 @@ def mean_squared_log_error(
             return np.average(msle, weights=None)
 
     return np.average(msle, weights=multioutput)
+
+
+def overlay_dx_score(
+    y_true,
+    y_pred,
+    tolerance_mode="range",
+    max_tolerance_pct=100.0,
+    min_tolerance_pct=0.1,
+    step_pct=0.1,
+    sample_weight=None,
+    multioutput="uniform_average",
+    **kwargs,
+):
+    """Calculate overlay-dx tolerance-sweep alignment score.
+
+    Output is a score in [0, 1] range (higher is better).
+
+    Overlay-dx measures forecast alignment across multiple tolerance levels
+    by computing the area under a tolerance-coverage curve. This provides a
+    single, interpretable metric capturing "how well predictions align with
+    actuals across tolerances."
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array
+        Ground truth target values.
+    y_pred : pd.Series, pd.DataFrame or np.array
+        Predicted values.
+    tolerance_mode : {'range', 'quantile_range', 'absolute', 'relative'}, \
+            default='range'
+        How to define tolerance thresholds. See ``OverlayDX`` class for
+        full details.
+
+        * ``'range'``: global range-based (O(N log N + K)).
+        * ``'quantile_range'``: robust interquantile-range-based (O(N log N + K)).
+        * ``'absolute'``: raw units (O(N log N + K)).
+        * ``'relative'``: per-point ``τ% × |y_true_i|`` (O(N × K)).
+
+    max_tolerance_pct : float, default=100.0
+        Maximum tolerance percentage.
+    min_tolerance_pct : float, default=0.1
+        Minimum tolerance percentage.
+    step_pct : float, default=0.1
+        Step size for tolerance sweep (resolution parameter).
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights. Not currently supported; raises ``NotImplementedError``.
+    multioutput : {'raw_values', 'uniform_average'} or array-like, \
+            default='uniform_average'
+        How to aggregate scores for multivariate data.
+
+    Returns
+    -------
+    score : float or ndarray
+        Overlay-dx score. ``float`` if ``multioutput='uniform_average'``,
+        ``ndarray`` if ``multioutput='raw_values'``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import overlay_dx_score
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> overlay_dx_score(y_true, y_pred)  # doctest: +SKIP
+    0.847
+    >>> overlay_dx_score(y_true, y_pred, tolerance_mode='relative')  # doctest: +SKIP
+    0.712
+
+    See Also
+    --------
+    OverlayDX : Class-based overlay-dx metric with full documentation.
+    """
+    # Import here to avoid circular import
+    from sktime.performance_metrics.forecasting._overlay_dx import OverlayDX
+
+    if sample_weight is not None:
+        raise NotImplementedError(
+            "overlay_dx_score does not support sample_weight. "
+            "Use the metric without weights or implement custom weighting."
+        )
+
+    metric = OverlayDX(
+        tolerance_mode=tolerance_mode,
+        max_tolerance_pct=max_tolerance_pct,
+        min_tolerance_pct=min_tolerance_pct,
+        step_pct=step_pct,
+        multioutput=multioutput,
+    )
+
+    return metric(y_true, y_pred, **kwargs)
