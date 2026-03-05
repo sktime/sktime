@@ -88,7 +88,7 @@ class tAPE(_BasePositionalEncoding):
         torch.Tensor of shape (batch_size, seq_len, d_model)
             Tensor with positional encodings added.
         """
-        x = x + self.pe
+        x = x + self.pe[:, : x.size(1), :]
         return self.dropout(x)
 
 
@@ -156,7 +156,7 @@ class AbsolutePositionalEncoding(_BasePositionalEncoding):
         torch.Tensor of shape (batch_size, seq_len, d_model)
             Tensor with positional encodings added.
         """
-        x = x + self.pe
+        x = x + self.pe[:, : x.size(1), :]
         return self.dropout(x)
 
 
@@ -211,5 +211,5 @@ class LearnablePositionalEncoding(_BasePositionalEncoding):
         torch.Tensor of shape (batch_size, seq_len, d_model)
             Tensor with positional encodings added.
         """
-        x = x + self.pe
+        x = x + self.pe[:, : x.size(1), :]
         return self.dropout(x)

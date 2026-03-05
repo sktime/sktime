@@ -475,10 +475,7 @@ class ConvTranNetworkTorch(NNModule):
         out = out.permute(0, 2, 1)
         out = self.gap(out)
         out = self.flatten(out)
-        out = self.out(out)
-        if self._activation_out is not None:
-            out = self._activation_out(out)
-        return out
+        return self._finalize_output(out)
 
     def _forward_convtran(self, X):
         # (batch, seq_len, n_dims) -> (batch, n_dims, seq_len) for 2D conv
@@ -498,10 +495,7 @@ class ConvTranNetworkTorch(NNModule):
         out = out.permute(0, 2, 1)
         out = self.gap(out)
         out = self.flatten(out)
-        out = self.out(out)
-        if self._activation_out is not None:
-            out = self._activation_out(out)
-        return out
+        return self._finalize_output(out)
 
     def _forward_causal_convtran(self, X):
         # (batch, seq_len, n_dims) -> (batch, n_dims, seq_len) for 1D conv
@@ -521,9 +515,14 @@ class ConvTranNetworkTorch(NNModule):
         out = out.permute(0, 2, 1)
         out = self.gap(out)
         out = self.flatten(out)
+        return self._finalize_output(out)
+
+    def _finalize_output(self, out):
         out = self.out(out)
         if self._activation_out is not None:
             out = self._activation_out(out)
+        if self.num_classes == 1:
+            out = out.squeeze(-1)
         return out
 
 
