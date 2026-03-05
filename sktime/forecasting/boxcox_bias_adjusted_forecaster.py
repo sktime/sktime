@@ -44,6 +44,22 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     -----
     This forecaster applies only to univariate, non-hierarchical inner forecasters.
 
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.boxcox_bias_adjusted_forecaster import (
+    ...     BoxCoxBiasAdjustedForecaster,
+    ... )
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_airline()
+    >>> # Define the forecasting horizon
+    >>> fh = [1, 2, 3]
+    >>> # wrap a forecaster with Box-Cox bias adjustment
+    >>> forecaster = BoxCoxBiasAdjustedForecaster(NaiveForecaster())
+    >>> forecaster.fit(y, fh=fh)
+    BoxCoxBiasAdjustedForecaster(...)
+    >>> y_pred = forecaster.predict()
+
     References
     ----------
     .. [1] Hyndman, R.J., & Athanasopoulos, G. (2018) "Forecasting:
