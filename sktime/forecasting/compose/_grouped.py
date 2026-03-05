@@ -1,6 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositors for performing forecasting by group."""
 
+import types
+
 import pandas as pd
 
 from sktime.base._meta import _HeterogenousMetaEstimator
@@ -323,9 +325,9 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         # Finally, dynamically adding implementation of probabilistic
         # functions depending on the tags set.
         if self.get_tags()["capability:pred_int"]:
-            self._predict_interval = _predict_interval
-            self._predict_var = _predict_var
-            self._predict_proba = _predict_proba
+            self._predict_interval = types.MethodType(_predict_interval, self)
+            self._predict_var = types.MethodType(_predict_var, self)
+            self._predict_proba = types.MethodType(_predict_proba, self)
 
     @property
     def _steps(self):
