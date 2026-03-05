@@ -1,13 +1,14 @@
 """Overlay-dx: tolerance-sweep alignment score for point forecasting."""
 
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
 __author__ = ["Utkarshkarki"]
 __all__ = ["OverlayDX"]
 
 import numpy as np
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
+
+# NumPy 2.0 compat: np.trapz was renamed to np.trapezoid in NumPy 2.0 and removed.
+_trapezoid = getattr(np, "trapezoid", getattr(np, "trapz", None))
 
 
 class OverlayDX(BaseForecastingErrorMetric):
@@ -43,14 +44,14 @@ class OverlayDX(BaseForecastingErrorMetric):
           For pre-normalized/scaled data where tolerance values are meaningful
           in absolute terms.
 
-        * ``'relative'``: ``tolerance_{τ,i} = (τ% × |y_true_i|)``
+        * ``'relative'``: ``tolerance_{τ,i} = (τ% x |y_true_i|)``
           **Per-point** relative tolerance. Each data point has its own tolerance
           proportional to its true value. Useful for comparing forecasts across
           series with different scales, or when percentage-based accuracy
           matters (e.g., finance, growth metrics, economics).
 
           .. note::
-             ``'relative'`` mode uses an O(N×K) pointwise comparison algorithm
+             ``'relative'`` mode uses an O(N x K) pointwise comparison algorithm
              and cannot reuse the O(N log N + K) sorted-array approach of other
              modes. For large N and K this may be slower. See Notes section.
 
@@ -114,7 +115,7 @@ class OverlayDX(BaseForecastingErrorMetric):
       (max_tol - min_tol) / step_pct. Errors are sorted once; coverage at each
       threshold is found via binary search (``np.searchsorted``).
 
-    * ``'relative'``: O(N × K). Per-point tolerances break the sorted-array
+    * ``'relative'``: O(N x K). Per-point tolerances break the sorted array
       invariant, requiring a full pass over all N points for each of K
       thresholds. For large datasets or many tolerance steps, consider
       increasing ``step_pct`` to reduce K.
@@ -144,9 +145,7 @@ class OverlayDX(BaseForecastingErrorMetric):
     * ``'absolute'``: NOT scale-invariant (fixed tolerance in raw units).
     * ``'relative'``: scale-invariant (tolerance scales with ``|y_true_i|``).
 
-    **by_index Not Supported**: overlay_dx is non-decomposable (coverage is
-    a global property).
-
+    **by_index Not Supported**: overlay_dx is non-decomposable 
     See Also
     --------
     MeanAbsolutePercentageError : Percentage-based error metric.
@@ -159,7 +158,7 @@ class OverlayDX(BaseForecastingErrorMetric):
         "requires-y-train": False,
         "requires-y-pred-benchmark": False,
         "capability:multivariate": True,
-        "lower_is_better": False,  # SCORE: higher is better
+        "lower_is_better": False,  
         "inner_implements_multilevel": False,
         "reserved_params": ["multioutput", "multilevel"],
     }
@@ -226,7 +225,7 @@ class OverlayDX(BaseForecastingErrorMetric):
 
         * Non-relative modes: O(N log N + K) via sorted errors +
           ``np.searchsorted``.
-        * Relative mode: O(N × K) via per-point pointwise comparison.
+        * Relative mode: O(N x K) via per-point pointwise comparison.
 
         Parameters
         ----------
@@ -298,17 +297,16 @@ class OverlayDX(BaseForecastingErrorMetric):
         if self.tolerance_mode == "relative":
             return self._compute_overlay_dx_relative(y_true, abs_errors)
 
-        # --- Global-tolerance modes: O(N log N + K) ---
         value_range = self._compute_value_range(y_true, n)
 
         if value_range is not None and value_range < np.finfo(np.float64).eps:
-            # Constant series
+    
             if np.allclose(abs_errors, 0, atol=np.finfo(np.float64).eps):
                 return 1.0
             else:
                 return 0.0
 
-        # Sort errors once – O(N log N)
+
         sorted_errors = np.sort(abs_errors)
 
         tolerances = np.arange(
@@ -321,18 +319,17 @@ class OverlayDX(BaseForecastingErrorMetric):
             tolerances, y_true, value_range
         )
 
-        # Coverage at each threshold via binary search – O(K log N)
+     
         indices = np.searchsorted(sorted_errors, abs_tolerances, side="right")
         coverage_pct = (indices / n) * 100.0
 
         auc = _trapezoid(coverage_pct, tolerances)
         max_area = (self.max_tolerance_pct - self.min_tolerance_pct) * 100.0
-        # Clamp to [0, 1]: trapezoid rule can overshoot by a tiny epsilon
-        # when coverage is 100% at every grid point (e.g. perfect prediction).
+
         return float(np.clip(auc / max_area, 0.0, 1.0))
 
     def _compute_overlay_dx_relative(self, y_true, abs_errors):
-        """Compute overlay_dx using per-point relative tolerances – O(N × K).
+        """Compute overlay_dx using per-point relative tolerances - O(N x K).
 
         For each tolerance threshold τ, the per-point tolerance is:
 
@@ -350,7 +347,7 @@ class OverlayDX(BaseForecastingErrorMetric):
         Because tolerances differ per point, the sorted-array invariant of the
         global modes is broken; we must check all N points for every threshold.
 
-        **Complexity**: O(N × K), where K = len(tolerances).
+        **Complexity**: O(N x K), where K = len(tolerances).
 
         Parameters
         ----------
@@ -370,7 +367,7 @@ class OverlayDX(BaseForecastingErrorMetric):
         point i contributes to coverage only when its absolute error is
         exactly 0.
         """
-        abs_y_true = np.abs(y_true)  # (N,)
+        abs_y_true = np.abs(y_true)  
 
         tolerances = np.arange(
             self.min_tolerance_pct,
@@ -379,9 +376,6 @@ class OverlayDX(BaseForecastingErrorMetric):
         )
 
         coverage_pct = np.empty(len(tolerances))
-
-        # Vectorised inner loop: broadcast (K,) tolerances against (N,) arrays
-        # shape: (K, 1) * (1, N) → (K, N) – check all N points at all K thresholds
         tol_fractions = (tolerances / 100.0)[:, np.newaxis]  # (K, 1)
         tol_matrix = tol_fractions * abs_y_true[np.newaxis, :]  # (K, N)
         covered_matrix = abs_errors[np.newaxis, :] <= tol_matrix  # (K, N) bool
@@ -389,8 +383,6 @@ class OverlayDX(BaseForecastingErrorMetric):
 
         auc = _trapezoid(coverage_pct, tolerances)
         max_area = (self.max_tolerance_pct - self.min_tolerance_pct) * 100.0
-        # Clamp to [0, 1]: trapezoid rule can overshoot by a tiny epsilon
-        # when coverage is 100% at every grid point (e.g. perfect prediction).
         return float(np.clip(auc / max_area, 0.0, 1.0))
 
     def _compute_value_range(self, y_true, n):
@@ -449,13 +441,12 @@ class OverlayDX(BaseForecastingErrorMetric):
             Absolute tolerance values, same shape as ``pct_tolerances``.
         """
         if self.tolerance_mode in ("range", "quantile_range"):
-            # tolerance = (pct × range) / 2
-            # The division by 2 ensures 100% tolerance = ±50% of range,
-            # mirroring common visual "band" interpretations.
+            # tolerance = (pct × range) / 2 --- The division by 2 ensures 100% tolerance = ±50% of range,
+   
             return (pct_tolerances / 100.0) * value_range / 2.0
 
         elif self.tolerance_mode == "absolute":
-            # pct values are treated as raw absolute tolerances
+        
             return pct_tolerances
 
         else:
@@ -475,7 +466,7 @@ class OverlayDX(BaseForecastingErrorMetric):
         params : list of dict
             Parameters to create testing instances of the class.
         """
-        params1 = {}  # default: range mode, fine step
+        params1 = {}  
         params2 = {"tolerance_mode": "quantile_range", "step_pct": 1.0}
         params3 = {"tolerance_mode": "absolute", "max_tolerance_pct": 10.0}
         params4 = {"tolerance_mode": "relative", "step_pct": 1.0}
