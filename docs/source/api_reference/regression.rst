@@ -75,6 +75,7 @@ Deep learning
     rnn.SimpleRNNRegressor
     rnn.SimpleRNNRegressorTorch
     tapnet.TapNetRegressor
+    convtran.ConvTranRegressorTorch
 
 Distance-based
 --------------
