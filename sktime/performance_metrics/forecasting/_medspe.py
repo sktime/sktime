@@ -7,13 +7,12 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
-from sktime.performance_metrics.forecasting._functions import (
-    median_squared_percentage_error,
-)
+import numpy as np
+
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 
 
-class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
+class MedianSquaredPercentageError(BaseForecastingErrorMetric):
     """Median squared percentage error (MdSPE), or RMdSPE, or symmetric MdSPE, RMDsPE.
 
     If ``square_root`` is False then calculates MdSPE and if ``square_root`` is True
@@ -129,8 +128,6 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
     np.float64(0.7428571428571428)
     """
 
-    func = median_squared_percentage_error
-
     def __init__(
         self,
         multioutput="uniform_average",
@@ -150,6 +147,58 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
             multilevel=multilevel,
             by_index=by_index,
         )
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs.
+
+        private _evaluate containing core logic, called from evaluate
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : float or np.ndarray
+            Calculated metric, possibly averaged by variable given ``multioutput``.
+
+            * float if ``multioutput="uniform_average" or array-like,
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              i-th entry is the, metric calculated for i-th variable
+        """
+        multioutput = self.multioutput
+        symmetric = self.symmetric
+        relative_to = self.relative_to
+        eps = self.eps
+
+        if eps is None:
+            eps = np.finfo(np.float64).eps
+
+        if symmetric:
+            denominator = np.maximum(np.abs(y_true) + np.abs(y_pred), eps) / 2
+        elif relative_to == "y_pred":
+            denominator = np.maximum(np.abs(y_pred), eps)
+        else:
+            denominator = np.maximum(np.abs(y_true), eps)
+
+        percentage_errors = (y_true - y_pred) / denominator
+
+        raw_values = percentage_errors**2
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+        mdspe = raw_values.median()
+
+        if self.square_root:
+            mdspe = mdspe.pow(0.5)
+
+        return self._handle_multioutput(mdspe, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
