@@ -68,6 +68,7 @@ Deep learning
     convtimenet.ConvTimeNetClassifier
     cnn.CNNClassifier
     cntc.CNTCClassifier
+    cntc.CNTCClassifierTorch
     fcn.FCNClassifier
     gru.GRUClassifier
     gru.GRUFCNNClassifier
