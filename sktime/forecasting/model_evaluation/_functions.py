@@ -116,54 +116,6 @@ def _get_column_order_and_datatype(
     return metrics_metadata.copy()
 
 
-# should we remove _split since this is no longer being used?
-def _split(
-    y,
-    X,
-    train,
-    test,
-    freq=None,
-):
-    # split data according to cv
-    y_train, y_test = y.iloc[train], y.iloc[test]
-    X_train, X_test = None, None
-
-    if X is not None:
-        # For X_test, we select the full range of test/train values.
-        # for those transformers that change the size of input.
-        test_plus_train = np.append(train, test)
-        X_train, X_test = (
-            X.iloc[train].sort_index(),
-            X.iloc[test_plus_train].sort_index(),
-        )  # Defensive sort
-
-    # Defensive assignment of freq
-    if freq is not None:
-        try:
-            if y_train.index.nlevels == 1:
-                y_train.index.freq = freq
-                y_test.index.freq = freq
-            else:
-                # See: https://github.com/pandas-dev/pandas/issues/33647
-                y_train.index.levels[-1].freq = freq
-                y_test.index.levels[-1].freq = freq
-        except AttributeError:  # Can't set attribute for range or period index
-            pass
-
-        if X is not None:
-            try:
-                if X.index.nlevels == 1:
-                    X_train.index.freq = freq
-                    X_test.index.freq = freq
-                else:
-                    X_train.index.levels[-1].freq = freq
-                    X_test.index.levels[-1].freq = freq
-            except AttributeError:  # Can't set attribute for range or period index
-                pass
-
-    return y_train, y_test, X_train, X_test
-
-
 def _select_fh_from_y(y):
     # create forecasting horizon
     # if cv object has fh, we use that
@@ -205,6 +157,7 @@ def _evaluate_window(x, meta):
     return_model = meta["return_model"]
     error_score = meta["error_score"]
     cutoff_dtype = meta["cutoff_dtype"]
+    score_by_index = meta["score_by_index"]
 
     # set default result values in case estimator fitting fails
     score = error_score
@@ -275,10 +228,15 @@ def _evaluate_window(x, meta):
                     y_pred = y_preds_cache[y_pred_key][0]
 
                 # evaluate metrics
-                if global_mode:
-                    score = metric(y_true, y_pred, y_train=y_train)
+                if score_by_index:
+                    score_func = metric.evaluate_by_index
                 else:
-                    score = metric(y_test, y_pred, y_train=y_train)
+                    score_func = metric
+
+                if global_mode:
+                    score = score_func(y_true, y_pred, y_train=y_train)
+                else:
+                    score = score_func(y_test, y_pred, y_train=y_train)
                 temp_result[result_key] = [score]
 
         # get cutoff
@@ -422,6 +380,7 @@ def evaluate(
     return_model: bool = False,
     cv_global=None,
     cv_global_temporal=None,
+    score_by_index: bool = False,
 ):
     r"""Evaluate forecaster using timeseries cross-validation.
 
@@ -613,6 +572,12 @@ def evaluate(
             cv is applied on the test set of the combined application of
             cv_global and cv_global_temporal.
 
+        score_by_index : bool, default=False
+            If True, call metric.evaluate_by_index(y_true, y_pred, ...) instead of
+            the metric object directly. This allows metrics that implement
+            `evaluate_by_index` to return per-index (e.g., per-forecast-horizon)
+            evaluations.
+
     Returns
     -------
     results : pd.DataFrame or dask.dataframe.DataFrame
@@ -754,6 +719,7 @@ def evaluate(
         "error_score": error_score,
         "cutoff_dtype": cutoff_dtype,
         "global_mode": cv_global is not None,
+        "score_by_index": score_by_index,
     }
 
     def gen_y_X_train_test(y, X, cv, cv_X):
