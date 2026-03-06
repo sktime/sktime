@@ -171,8 +171,9 @@ class TapNetNetwork(BaseDeepNetwork):
         input_layer = keras.layers.Input(input_shape)
 
         if self.rp_params[0] < 0:
-            dim = input_shape[0]
-            self.rp_params = [3, math.floor(dim * 2 / 3)]
+            dim = input_shape[1]
+            rp_dim = max(1, math.floor(dim * 2 / 3))
+            self.rp_params = [3, rp_dim]
         self.rp_group, self.rp_dim = self.rp_params
 
         if self.use_lstm:
@@ -192,7 +193,33 @@ class TapNetNetwork(BaseDeepNetwork):
             # Convolutional Network
             # input ts: # N * C * L
             if self.use_rp:
-                self.conv_1_models = keras.Sequential()
+                conv_1 = keras.layers.Conv1D(
+                    self.filter_sizes[0],
+                    kernel_size=self.kernel_size[0],
+                    dilation_rate=self.dilation,
+                    strides=1,
+                    padding=self.padding,
+                )
+                bn_1 = keras.layers.BatchNormalization()
+                act_1 = keras.layers.Activation(self.activation)
+                conv_2 = keras.layers.Conv1D(
+                    self.filter_sizes[1],
+                    kernel_size=self.kernel_size[1],
+                    dilation_rate=self.dilation,
+                    strides=1,
+                    padding=self.padding,
+                )
+                bn_2 = keras.layers.BatchNormalization()
+                act_2 = keras.layers.Activation(self.activation)
+                conv_3 = keras.layers.Conv1D(
+                    self.filter_sizes[2],
+                    kernel_size=self.kernel_size[2],
+                    dilation_rate=self.dilation,
+                    strides=1,
+                    padding=self.padding,
+                )
+                bn_3 = keras.layers.BatchNormalization()
+                act_3 = keras.layers.Activation(self.activation)
 
                 for i in range(self.rp_group):
                     self.idx = np.random.permutation(input_shape[1])[0 : self.rp_dim]
@@ -201,36 +228,17 @@ class TapNetNetwork(BaseDeepNetwork):
                     )(input_layer)
                     # x_conv = x
                     # x_conv = self.conv_1_models[i](x[:, self.idx[i], :])
-                    x_conv = keras.layers.Conv1D(
-                        self.filter_sizes[0],
-                        kernel_size=self.kernel_size[0],
-                        dilation_rate=self.dilation,
-                        strides=1,
-                        padding=self.padding,
-                    )(channel)  # N * C * L
+                    x_conv = conv_1(channel)  # N * C * L
+                    x_conv = bn_1(x_conv)
+                    x_conv = act_1(x_conv)
 
-                    x_conv = keras.layers.BatchNormalization()(x_conv)
-                    x_conv = keras.layers.Activation(self.activation)(x_conv)
+                    x_conv = conv_2(x_conv)
+                    x_conv = bn_2(x_conv)
+                    x_conv = act_2(x_conv)
 
-                    x_conv = keras.layers.Conv1D(
-                        self.filter_sizes[1],
-                        kernel_size=self.kernel_size[0],
-                        dilation_rate=self.dilation,
-                        strides=1,
-                        padding=self.padding,
-                    )(x_conv)
-                    x_conv = keras.layers.BatchNormalization()(x_conv)
-                    x_conv = keras.layers.Activation(self.activation)(x_conv)
-
-                    x_conv = keras.layers.Conv1D(
-                        self.filter_sizes[2],
-                        kernel_size=self.kernel_size[0],
-                        dilation_rate=self.dilation,
-                        strides=1,
-                        padding=self.padding,
-                    )(x_conv)
-                    x_conv = keras.layers.BatchNormalization()(x_conv)
-                    x_conv = keras.layers.Activation(self.activation)(x_conv)
+                    x_conv = conv_3(x_conv)
+                    x_conv = bn_3(x_conv)
+                    x_conv = act_3(x_conv)
                     if self.use_att:
                         x_conv = SeqSelfAttention(128, attention_type="multiplicative")(
                             x_conv
@@ -260,7 +268,7 @@ class TapNetNetwork(BaseDeepNetwork):
 
                 x_conv = keras.layers.Conv1D(
                     self.filter_sizes[1],
-                    kernel_size=self.kernel_size[0],
+                    kernel_size=self.kernel_size[1],
                     dilation_rate=self.dilation,
                     strides=1,
                     padding=self.padding,
@@ -270,7 +278,7 @@ class TapNetNetwork(BaseDeepNetwork):
 
                 x_conv = keras.layers.Conv1D(
                     self.filter_sizes[2],
-                    kernel_size=self.kernel_size[0],
+                    kernel_size=self.kernel_size[2],
                     dilation_rate=self.dilation,
                     strides=1,
                     padding=self.padding,
