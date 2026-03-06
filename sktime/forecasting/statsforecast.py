@@ -371,6 +371,16 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     See Also
     --------
     ThetaForecaster
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastAutoTheta
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastAutoTheta(season_length=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    StatsForecastAutoTheta(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -486,6 +496,16 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     See Also
     --------
     AutoETS
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastAutoETS
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastAutoETS(season_length=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    StatsForecastAutoETS(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -593,6 +613,16 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     References
     ----------
     .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autoces
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastAutoCES
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastAutoCES(season_length=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    StatsForecastAutoCES(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -704,6 +734,16 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
     References
     ----------
     .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autotbats
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastAutoTBATS
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastAutoTBATS(seasonal_periods=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    StatsForecastAutoTBATS(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
