@@ -36,6 +36,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8", "ciaran-g
 
 __all__ = ["BaseForecaster", "_BaseGlobalForecaster"]
 
+from contextlib import contextmanager
 from copy import deepcopy
 from itertools import product
 
@@ -2722,22 +2723,45 @@ class _GlobalForecastingDeprecationMixin:
 
     # TODO 0.43.0: Remove this mixin class entirely
 
+    @contextmanager
+    def _temporary_y_swap(self, X, y):
+        """Temporarily replace self._y and cutoff with passed y data.
+
+        Preserves old global forecasting behavior during the deprecation period,
+        so that _predict sees the passed y instead of the fit-time y.
+        """
+        old_y = self._y
+        old_cutoff = self._cutoff
+        _, y_inner = self._check_X_y(X=X, y=y)
+        self._y = y_inner
+        self._set_cutoff_from_y(y_inner)
+        try:
+            yield
+        finally:
+            self._y = old_y
+            self._cutoff = old_cutoff
+
+    def _warn_y_deprecated(self, method_name):
+        from sktime.utils.warnings import warn
+
+        warn(
+            f"In {self.__class__.__name__}.{method_name}(), the 'y' parameter "
+            "is deprecated and will be removed in sktime version 0.43.0. "
+            "Global forecasting now uses the data passed to fit(). "
+            "To retain current behavior, pass your data to fit() instead.",
+            category=FutureWarning,
+            obj=self,
+        )
+
     def predict(self, fh=None, X=None, y=None):
         """Forecast time series at future horizon.
 
         Wraps ``BaseForecaster.predict()`` with deprecation warning for ``y``.
         """
         if y is not None:
-            from sktime.utils.warnings import warn
-
-            warn(
-                f"In {self.__class__.__name__}.predict(), the 'y' parameter is "
-                "deprecated and will be removed in sktime version 0.43.0. "
-                "Global forecasting now uses the data passed to fit(). "
-                "To retain current behavior, pass your data to fit() instead.",
-                category=FutureWarning,
-                obj=self,
-            )
+            self._warn_y_deprecated("predict")
+            with self._temporary_y_swap(X, y):
+                return super().predict(fh=fh, X=X)
         return super().predict(fh=fh, X=X)
 
     def predict_interval(self, fh=None, X=None, coverage=0.90, y=None):
@@ -2746,16 +2770,9 @@ class _GlobalForecastingDeprecationMixin:
         Wraps ``BaseForecaster.predict_interval()`` with deprecation warning.
         """
         if y is not None:
-            from sktime.utils.warnings import warn
-
-            warn(
-                f"In {self.__class__.__name__}.predict_interval(), the 'y' parameter "
-                "is deprecated and will be removed in sktime version 0.43.0. "
-                "Global forecasting now uses the data passed to fit(). "
-                "To retain current behavior, pass your data to fit() instead.",
-                category=FutureWarning,
-                obj=self,
-            )
+            self._warn_y_deprecated("predict_interval")
+            with self._temporary_y_swap(X, y):
+                return super().predict_interval(fh=fh, X=X, coverage=coverage)
         return super().predict_interval(fh=fh, X=X, coverage=coverage)
 
     def predict_quantiles(self, fh=None, X=None, alpha=None, y=None):
@@ -2764,16 +2781,9 @@ class _GlobalForecastingDeprecationMixin:
         Wraps ``BaseForecaster.predict_quantiles()`` with deprecation warning.
         """
         if y is not None:
-            from sktime.utils.warnings import warn
-
-            warn(
-                f"In {self.__class__.__name__}.predict_quantiles(), the 'y' parameter "
-                "is deprecated and will be removed in sktime version 0.43.0. "
-                "Global forecasting now uses the data passed to fit(). "
-                "To retain current behavior, pass your data to fit() instead.",
-                category=FutureWarning,
-                obj=self,
-            )
+            self._warn_y_deprecated("predict_quantiles")
+            with self._temporary_y_swap(X, y):
+                return super().predict_quantiles(fh=fh, X=X, alpha=alpha)
         return super().predict_quantiles(fh=fh, X=X, alpha=alpha)
 
     def predict_var(self, fh=None, X=None, cov=False, y=None):
@@ -2782,16 +2792,9 @@ class _GlobalForecastingDeprecationMixin:
         Wraps ``BaseForecaster.predict_var()`` with deprecation warning.
         """
         if y is not None:
-            from sktime.utils.warnings import warn
-
-            warn(
-                f"In {self.__class__.__name__}.predict_var(), the 'y' parameter "
-                "is deprecated and will be removed in sktime version 0.43.0. "
-                "Global forecasting now uses the data passed to fit(). "
-                "To retain current behavior, pass your data to fit() instead.",
-                category=FutureWarning,
-                obj=self,
-            )
+            self._warn_y_deprecated("predict_var")
+            with self._temporary_y_swap(X, y):
+                return super().predict_var(fh=fh, X=X, cov=cov)
         return super().predict_var(fh=fh, X=X, cov=cov)
 
 
