@@ -66,7 +66,9 @@ def test_all_estimators_by_scitype(estimator_scitype, return_names):
 
     assert isinstance(estimators, list)
     # there should be at least one estimator returned
-    assert len(estimators) > 0
+    # global_forecaster is deprecated with no concrete implementations
+    if estimator_scitype != "global_forecaster":
+        assert len(estimators) > 0
 
     # checks return type specification (see docstring)
     if return_names:
