@@ -126,3 +126,37 @@ def test_store_load_results_empty_training(tmp_path, storage_handler, file_exten
     assert results[0].folds[0].ground_truth is None
     assert results[0].folds[0].predictions is None
     assert results[0].folds[0].train_data is None
+
+
+def test_json_storage_handler_unicode(tmp_path):
+    """Test that JSONStorageHandler correctly handles unicode characters.
+
+    Regression test for https://github.com/sktime/sktime/issues/9431.
+    Without explicit encoding="utf-8", this can fail on Windows where
+    the default encoding may not support unicode characters.
+    """
+    handler = JSONStorageHandler(tmp_path / "results_unicode.json")
+
+    unicode_results = [
+        ResultObject(
+            model_id="modèle_réseau_neuronal",
+            task_id="validación_cruzada",
+            folds={
+                0: FoldResults(
+                    scores={"précision": 0.95, "données_f1": 0.88},
+                    ground_truth=None,
+                    predictions=None,
+                    train_data=None,
+                )
+            },
+        )
+    ]
+
+    handler.save(unicode_results)
+    results = handler.load()
+
+    assert len(results) == 1
+    assert results[0].model_id == "modèle_réseau_neuronal"
+    assert results[0].task_id == "validación_cruzada"
+    assert results[0].folds[0].scores["précision"] == 0.95
+    assert results[0].folds[0].scores["données_f1"] == 0.88
