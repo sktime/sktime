@@ -1,4 +1,4 @@
-"""Multi Layer Perceptron (MLP) (minus the final output layer)."""
+"""Multi Layer Perceptron (MLP) (minus the final output layer) in TensorFlow."""
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
@@ -20,6 +20,12 @@ class MLPNetwork(BaseDeepNetwork):
         activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
+    dropout : float or tuple, default=(0.1, 0.2, 0.2, 0.3)
+        The dropout rate for the hidden layers.
+        If float, the same rate is used for all layers.
+        If tuple, it must have length equal to number of hidden layers in the MLP,
+        each element specifying the dropout rate for the corresponding hidden layer.
+        Current implementation of the MLP has 4 hidden layers.
 
     References
     ----------
@@ -36,14 +42,11 @@ class MLPNetwork(BaseDeepNetwork):
         "python_dependencies": "tensorflow",
     }
 
-    def __init__(
-        self,
-        random_state=0,
-        activation="relu",
-    ):
+    def __init__(self, random_state=0, activation="relu", dropout=(0.1, 0.2, 0.2, 0.3)):
         _check_dl_dependencies(severity="error")
         self.activation = activation
         self.random_state = random_state
+        self.dropout = dropout
         super().__init__()
 
     def build_network(self, input_shape, **kwargs):
@@ -59,21 +62,40 @@ class MLPNetwork(BaseDeepNetwork):
         input_layer : a keras layer
         output_layer : a keras layer
         """
+        if isinstance(self.dropout, float):
+            _dropout = (self.dropout,) * 4
+        elif isinstance(self.dropout, tuple):
+            if len(self.dropout) != 4:
+                raise ValueError(
+                    "If `dropout` is a tuple, it must have length equal to the "
+                    "number of hidden layers in the MLP, where each element "
+                    "specifies the rate for the corresponding layer. "
+                    "The current implementation of the MLP has 4 hidden layers, "
+                    f"hence the tuple must be of length 4. "
+                    f"Found length of dropout to be: {len(self.dropout)}."
+                )
+            _dropout = self.dropout
+        else:
+            raise TypeError(
+                "`dropout` should either be of type float or tuple. "
+                f"But found the type to be: {type(self.dropout)}"
+            )
+
         from tensorflow import keras
 
         # flattened because multivariate should be on same axis
         input_layer = keras.layers.Input(input_shape)
         input_layer_flattened = keras.layers.Flatten()(input_layer)
 
-        layer_1 = keras.layers.Dropout(0.1)(input_layer_flattened)
+        layer_1 = keras.layers.Dropout(_dropout[0])(input_layer_flattened)
         layer_1 = keras.layers.Dense(500, activation=self.activation)(layer_1)
 
-        layer_2 = keras.layers.Dropout(0.2)(layer_1)
+        layer_2 = keras.layers.Dropout(_dropout[1])(layer_1)
         layer_2 = keras.layers.Dense(500, activation=self.activation)(layer_2)
 
-        layer_3 = keras.layers.Dropout(0.2)(layer_2)
+        layer_3 = keras.layers.Dropout(_dropout[2])(layer_2)
         layer_3 = keras.layers.Dense(500, activation=self.activation)(layer_3)
 
-        output_layer = keras.layers.Dropout(0.3)(layer_3)
+        output_layer = keras.layers.Dropout(_dropout[3])(layer_3)
 
         return input_layer, output_layer

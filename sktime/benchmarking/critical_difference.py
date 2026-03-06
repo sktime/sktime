@@ -5,11 +5,8 @@ __author__ = ["SveaMeyer13"]
 import math
 
 import numpy as np
-from scipy.stats import distributions, find_repeats, rankdata
 
 from sktime.utils.dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("matplotlib", severity="warning")
 
 
 def _check_friedman(n_strategies, n_datasets, ranked_data, alpha):
@@ -32,6 +29,20 @@ def _check_friedman(n_strategies, n_datasets, ranked_data, alpha):
       Indicates whether strategies differ significantly in terms of performance
       (according to Friedman test).
     """
+    from scipy.stats import distributions
+
+    # scipy's find_repeats is deprecated from scipy 1.17 onwards
+    if _check_soft_dependencies("scipy<1.17", severity="none"):
+        from scipy.stats._stats_py import find_repeats
+
+    else:
+        # using np.unique_counts instead of scipy's find_repeats
+        def find_repeats(arr):
+            values, counts = np.unique(arr, return_counts=True)
+            replist = values[counts > 1]
+            repnum = counts[counts > 1]
+            return replist, repnum
+
     if n_strategies < 3:
         raise ValueError(
             "At least 3 sets of measurements must be given for Friedmann test, "
@@ -115,6 +126,7 @@ def plot_critical_difference(
     _check_soft_dependencies("matplotlib")
 
     import matplotlib.pyplot as plt
+    from scipy.stats import rankdata
 
     # Helper Functions
     def _nth(lst, n):

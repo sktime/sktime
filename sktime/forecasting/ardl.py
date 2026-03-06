@@ -214,10 +214,7 @@ class ARDL(_StatsModelsAdapter):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_predict_time_index_with_X"],
-        # known failure in case of non-contiguous X, see issue #8787
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(

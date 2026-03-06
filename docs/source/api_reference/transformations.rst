@@ -315,6 +315,15 @@ These transformers extract larger collections of features.
     TSFreshRelevantFeatureExtractor
     TSFreshFeatureExtractor
 
+.. currentmodule:: sktime.transformations.panel.tsfeatures
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSFeaturesTransformer
+    TSFeaturesWideTransformer
+
 .. currentmodule:: sktime.transformations.panel.catch22
 
 .. autosummary::
@@ -330,6 +339,14 @@ These transformers extract larger collections of features.
     :template: class.rst
 
     Catch22Wrapper
+
+.. currentmodule:: sktime.transformations.series.tsfel
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSFELTransformer
 
 Series-to-series transformers
 -----------------------------
@@ -948,3 +965,27 @@ efficient and should be preferred:
     NonNegativeOptimalReconciler
     OptimalReconciler
     TopdownReconciler
+
+
+Domain Specific Transformations
+-------------------------------
+
+These transformers are designed for specific domains and inputs.
+They compute features that are related to a domain of application.
+
+Energy, weather and climate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClearSky
+
+.. currentmodule:: sktime.transformations.series.degree_day
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DegreeDayFeatures
