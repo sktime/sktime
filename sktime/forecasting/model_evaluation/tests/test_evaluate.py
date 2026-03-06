@@ -623,3 +623,63 @@ def test_evaluate_hierarchical_unequal_X_y():
     expected_cols = np.array([1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6])
     output_metrics = res.loc[:, "test_MeanAbsolutePercentageError"].values
     _assert_array_almost_equal(output_metrics, expected_cols)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_evaluate_by_index_metric():
+    """Tests that when a metric with by_index=True is passed to evaluate,
+    the result DataFrame contains pd.Series (per-time-point scores)
+    instead of aggregated scores.
+
+    This addresses issue #9039
+    """
+    from sktime.datasets import load_airline
+
+    y = load_airline()[:24]
+
+    forecaster = NaiveForecaster(strategy="mean", sp=3)
+    cv = ExpandingWindowSplitter(initial_window=12, step_length=6, fh=[1, 2, 3])
+
+    # Test 1: Default metric (by_index=False) -- should return scalar
+    metric_default = MeanAbsolutePercentageError(symmetric=True, by_index=False)
+    results_default = evaluate(
+        forecaster=forecaster, y=y, cv=cv, scoring=metric_default
+    )
+
+    assert isinstance(results_default, pd.DataFrame)
+    for score in results_default["test_MeanAbsolutePercentageError"]:
+        assert isinstance(score, (float, np.number)), (
+            f"Expected scalar score with by_index=False, got {type(score)}"
+        )
+
+    # Test 2: Metric with by_index=True -- should return Series
+    metric_by_index = MeanAbsolutePercentageError(symmetric=True, by_index=True)
+    results_by_index = evaluate(
+        forecaster=forecaster, y=y, cv=cv, scoring=metric_by_index
+    )
+
+    assert isinstance(results_by_index, pd.DataFrame)
+    for score in results_by_index["test_MeanAbsolutePercentageError"]:
+        assert isinstance(score, pd.Series), (
+            f"Expected pd.Series with by_index=True, got {type(score)}"
+        )
+        assert len(score) == 3, (
+            f"Expected Series of length 3 (fh=[1,2,3]), got {len(score)}"
+        )
+
+    # Test 3: List of metrics with mixed by_index settings
+    metric_scalar = MeanAbsolutePercentageError(symmetric=True, by_index=False)
+    metric_series = MeanAbsoluteError(by_index=True)
+    results_mixed = evaluate(
+        forecaster=forecaster, y=y, cv=cv, scoring=[metric_scalar, metric_series]
+    )
+
+    assert isinstance(results_mixed, pd.DataFrame)
+    for score in results_mixed["test_MeanAbsolutePercentageError"]:
+        assert isinstance(score, (float, np.number))
+    for score in results_mixed["test_MeanAbsoluteError"]:
+        assert isinstance(score, pd.Series)
+        assert len(score) == 3
