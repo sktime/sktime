@@ -177,7 +177,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
     }
 
@@ -302,7 +302,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "encoder_n_layers": self.encoder_n_layers,
             "encoder_hidden_size": self.encoder_hidden_size,
@@ -569,7 +571,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
     }
 
@@ -691,7 +693,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "encoder_n_layers": self.encoder_n_layers,
             "encoder_hidden_size": self.encoder_hidden_size,
@@ -958,7 +962,7 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
     }
 
@@ -1081,7 +1085,9 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "encoder_n_layers": self.encoder_n_layers,
             "encoder_hidden_size": self.encoder_hidden_size,
@@ -1358,7 +1364,7 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
     }
 
@@ -1484,7 +1490,9 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "cell_type": self.cell_type,
             "dilations": self._dilations,
@@ -1756,7 +1764,7 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
     }
 
@@ -1882,7 +1890,9 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "kernel_size": self.kernel_size,
             "dilations": self._dilations,

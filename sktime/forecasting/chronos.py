@@ -305,6 +305,7 @@ class ChronosForecaster(BaseForecaster):
         "python_dependencies": ["torch", "transformers", "accelerate"],
         # estimator type
         # --------------
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
