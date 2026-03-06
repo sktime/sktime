@@ -167,4 +167,6 @@ class ClaSPTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"window_length": 5}
+        params1 = {"window_length": 5}
+        params2 = {"window_length": 10, "scoring_metric": "F1"}
+        return [params1, params2]
