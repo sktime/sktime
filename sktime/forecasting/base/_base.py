@@ -1907,15 +1907,11 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
             req_vec_because_rows = y_scitype not in y_inner_scitype
             req_vec_because_cols = (
-                scitype_y == "univariate"
-                and not y_metadata["is_univariate"]
+                scitype_y == "univariate" and not y_metadata["is_univariate"]
             )
             requires_vectorization = req_vec_because_rows or req_vec_because_cols
 
-            if (
-                scitype_y == "multivariate"
-                and y_metadata["is_univariate"]
-            ):
+            if scitype_y == "multivariate" and y_metadata["is_univariate"]:
                 raise ValueError(
                     f"Unsupported input data type in {type(self).__name__}, "
                     "this forecaster accepts only strictly multivariate data. "
