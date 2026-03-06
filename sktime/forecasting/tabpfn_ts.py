@@ -56,7 +56,7 @@ class TabPFNTSForecaster(BaseForecaster):
         "authors": ["liam-sbhoo", "Infonioknight"],
         # liam-sbhoo is from Prior Labs
         "maintainers": ["Infonioknight"],
-        "python_dependencies": ["tabpfn-time-series"],
+        "python_dependencies": ["tabpfn_time_series"],
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
         "capability:pred_int": False,
@@ -90,7 +90,7 @@ class TabPFNTSForecaster(BaseForecaster):
         self : TabPFNTSForecaster
             Reference to the fitted forecaster.
         """
-        _check_soft_dependencies("tabpfn-time-series")
+        _check_soft_dependencies("tabpfn_time_series")
         from tabpfn_time_series import TabPFNMode, TabPFNTSPipeline
 
         self.model_pipeline = TabPFNTSPipeline(tabpfn_mode=TabPFNMode[self.tabpfn_mode])
@@ -126,6 +126,9 @@ class TabPFNTSForecaster(BaseForecaster):
         context_df = context_df.reset_index()
         context_df = context_df.rename(columns={context_df.columns[0]: "timestamp"})
 
+        if isinstance(context_df["timestamp"].dtype, pd.PeriodDtype):
+            context_df["timestamp"] = context_df["timestamp"].dt.to_timestamp()
+
         if X is None:
             pred_df = self.model_pipeline.predict_df(
                 context_df=context_df,
@@ -134,6 +137,9 @@ class TabPFNTSForecaster(BaseForecaster):
         else:
             future_df = X.copy().reset_index()
             future_df = future_df.rename(columns={future_df.columns[0]: "timestamp"})
+
+            if isinstance(future_df["timestamp"].dtype, pd.PeriodDtype):
+                future_df["timestamp"] = future_df["timestamp"].dt.to_timestamp()
 
             pred_df = self.model_pipeline.predict_df(
                 context_df=context_df,
