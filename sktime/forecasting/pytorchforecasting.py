@@ -123,7 +123,6 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_all": True,
     }
 
     def __init__(
@@ -174,6 +173,35 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     ": self.allowed_encoder_known_variable_names,
             }
         )
+
+    def _predict_quantiles(self, fh, X, alpha, y=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and default _predict_interval
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        alpha : list of float
+            A list of probabilities at which quantile forecasts are computed.
+        y : time series in sktime compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+        """
+        return self._predict_quantiles_inner(fh=fh, X=X, alpha=alpha, y=y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -447,28 +475,6 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
             keyword arguments for the underlying algorithm class
         """
         return {}
-
-    @classmethod
-    def _implementation_counts(cls) -> dict:
-        """Functions need at least n overrides to be counted as implemented.
-
-        A function needs to be specified only if n!=1.
-
-        Returns
-        -------
-        dict
-            key is function name, and the value is n.
-        """
-        implementation_counts = super()._implementation_counts()
-        implementation_counts.update(
-            {
-                "_predict_proba": 3,
-                "_predict_var": 3,
-                "_predict_interval": 3,
-                "_predict_quantiles": 3,
-            }
-        )
-        return implementation_counts
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -754,6 +760,35 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
             }
         )
 
+    def _predict_quantiles(self, fh, X, alpha, y=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and default _predict_interval
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        alpha : list of float
+            A list of probabilities at which quantile forecasts are computed.
+        y : time series in sktime compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+        """
+        return self._predict_quantiles_inner(fh=fh, X=X, alpha=alpha, y=y)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -1038,6 +1073,35 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 "pooling_sizes": [1] * stacks,
             }
         return {}
+
+    def _predict_quantiles(self, fh, X, alpha, y=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and default _predict_interval
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        alpha : list of float
+            A list of probabilities at which quantile forecasts are computed.
+        y : time series in sktime compatible format, optional (default=None)
+            Historical values of the time series that should be predicted.
+            If not None, global forecasting will be performed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+        """
+        return self._predict_quantiles_inner(fh=fh, X=X, alpha=alpha, y=y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
