@@ -84,6 +84,8 @@ class Deseasonalizer(BaseTransformer):
         "transform-returns-same-time-index": True,
         "capability:categorical_in_X": False,
         "capability:multivariate": False,
+        #update flag
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
