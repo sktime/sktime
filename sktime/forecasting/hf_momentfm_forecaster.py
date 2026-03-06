@@ -5,7 +5,11 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _GlobalForecastingDeprecationMixin,
+)
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
 
@@ -14,7 +18,7 @@ empty_cache = _safe_import("torch.cuda.empty_cache")
 Dataset = _safe_import("torch.utils.data.Dataset")
 
 
-class MomentFMForecaster(_BaseGlobalForecaster):
+class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """
     Interface for forecasting with the deep learning time series model momentfm.
 
@@ -215,7 +219,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._moment_seq_len = 512
         self.return_model_to_cpu = return_model_to_cpu
 
-    def _fit(self, fh, y, X=None):
+    def _fit(self, y, X=None, fh=None):
         """Assumes y is a single or multivariate time series."""
         from accelerate import Accelerator
         from torch.optim import Adam
@@ -374,15 +378,13 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         return self
 
-    def _predict(self, y, X=None, fh=None):
+    def _predict(self, fh, X=None):
         """Predict method to forecast timesteps into the future.
 
         fh should not be passed here and
         must be the same length as the one used to fit the model.
         """
-        # use y values from fit if y is None in predict
-        if y is None:
-            y = self._y
+        y = self._y
 
         index = self._fh.to_absolute_index(self.cutoff)
         from torch import from_numpy
