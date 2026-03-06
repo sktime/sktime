@@ -55,6 +55,7 @@ EXCLUDE_ESTIMATORS = [
     "ShapeletLearningClassifierTslearn",
     # models with large weights
     "MomentFMForecaster",
+    "MoiraiMoEForecaster",
     # Large datasets
     "M5Dataset",
     # Test estimators
