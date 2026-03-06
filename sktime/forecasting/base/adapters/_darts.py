@@ -632,6 +632,47 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
         return endogenous_quantile_predictions.loc[abs_idx]
 
 
+def _check_index_is_continuous(index):
+    """Check whether a time index is continuous (no gaps).
+
+    Parameters
+    ----------
+    index : pd.DatetimeIndex or pd.PeriodIndex
+        Index to check for continuity.
+
+    Returns
+    -------
+    bool
+        True if the index is continuous, False if there are gaps.
+    str or None
+        The first missing timestamp as a string, or None if the index is continuous.
+    """
+    if isinstance(index, pd.PeriodIndex):
+        freq = index.freq
+        if freq is None:
+            return True, None
+        expected = pd.period_range(start=index[0], end=index[-1], freq=freq)
+        missing = expected.difference(index)
+        if len(missing) > 0:
+            return False, str(missing[0])
+        return True, None
+
+    if isinstance(index, pd.DatetimeIndex):
+        freq = index.freq
+        if freq is None:
+            inferred = pd.infer_freq(index)
+            if inferred is None:
+                return False, None
+            freq = inferred
+        expected = pd.date_range(start=index[0], end=index[-1], freq=freq)
+        missing = expected.difference(index)
+        if len(missing) > 0:
+            return False, str(missing[0])
+        return True, None
+
+    return True, None
+
+
 def _handle_input_index(dataset: pd.DataFrame) -> pd.DataFrame:
     """Convert input dataset index to the compatible type for ``darts``.
 
@@ -644,12 +685,34 @@ def _handle_input_index(dataset: pd.DataFrame) -> pd.DataFrame:
     -------
     pandas.DataFrame
         converted dataset
+
+    Raises
+    ------
+    ValueError
+        If the index has gaps (is non-continuous), since darts requires a
+        continuous time index without missing timestamps.
     """
     if isinstance(dataset.index, pd.RangeIndex):
         return dataset
     dataset_copy = dataset.copy(deep=True)
 
-    if isinstance(dataset_copy.index, (pd.DatetimeIndex, pd.RangeIndex)):
+    if isinstance(dataset_copy.index, (pd.DatetimeIndex, pd.PeriodIndex)):
+        is_continuous, first_missing = _check_index_is_continuous(dataset_copy.index)
+        if not is_continuous:
+            hint = (
+                f" The first missing timestamp is: {first_missing}."
+                if first_missing is not None
+                else ""
+            )
+            raise ValueError(
+                "The time index passed to the Darts model adapter contains gaps "
+                "(non-continuous index). Darts requires a continuous time index "
+                f"without missing timestamps.{hint} "
+                "Please fill in the missing time steps before fitting, or consider "
+                "using a different forecaster that supports non-continuous indices."
+            )
+
+    if isinstance(dataset_copy.index, pd.DatetimeIndex):
         dataset_copy.index = pd.date_range(
             start=dataset_copy.index[0],
             periods=len(dataset_copy),
