@@ -3,6 +3,8 @@
 
 import html
 import importlib
+import inspect
+import reprlib
 import uuid
 from contextlib import closing
 from inspect import isclass
@@ -62,6 +64,69 @@ class _VisualBlock:
         return self
 
 
+def _get_non_default_params(base_object):
+    """Return the set of parameter names that differ from their __init__ defaults."""
+    try:
+        sig = inspect.signature(base_object.__class__.__init__)
+    except (ValueError, TypeError):
+        return set()
+    defaults = {
+        k: v.default
+        for k, v in sig.parameters.items()
+        if v.default is not inspect.Parameter.empty
+    }
+    params = base_object.get_params(deep=False)
+    non_default = set()
+    for name, val in params.items():
+        if name not in defaults:
+            non_default.add(name)
+            continue
+        try:
+            if val != defaults[name]:
+                non_default.add(name)
+        except (TypeError, ValueError):
+            non_default.add(name)
+    return non_default
+
+
+def _params_html(base_object):
+    """Return an HTML table of parameters for base_object, or empty string."""
+    if not hasattr(base_object, "get_params") or isclass(base_object):
+        return ""
+    params = base_object.get_params(deep=False)
+    if not params:
+        return ""
+
+    non_default = _get_non_default_params(base_object)
+    r = reprlib.Repr()
+    r.maxlist = 2
+    r.maxtuple = 1
+    r.maxstring = 50
+
+    rows = []
+    for name, value in params.items():
+        ptype = "user-set" if name in non_default else "default"
+        val_str = html.escape(r.repr(value))
+        rows.append(
+            f'<tr class="{ptype}">'
+            f'<td><i class="copy-paste-icon"'
+            f" onclick=\"copyToClipboard('{html.escape(name)}',"
+            f' this.parentElement.nextElementSibling)"></i></td>'
+            f'<td class="param">{html.escape(name)}&nbsp;</td>'
+            f'<td class="value">{val_str}</td>'
+            "</tr>"
+        )
+
+    rows_html = "\n".join(rows)
+    return (
+        '<div class="estimator-table">'
+        "<details><summary>Parameters</summary>"
+        '<table class="parameters-table"><tbody>'
+        f"{rows_html}"
+        "</tbody></table></details></div>"
+    )
+
+
 def _write_label_html(
     out,
     name,
@@ -70,6 +135,9 @@ def _write_label_html(
     inner_class="sk-label",
     checked=False,
     doc_link="",
+    params_html="",
+    is_fitted_icon="",
+    param_prefix="",
 ):
     """Write labeled html with or without a dropdown with named details."""
     out.write(f'<div class={outer_class!r}><div class="{inner_class} sk-toggleable">')
@@ -77,8 +145,6 @@ def _write_label_html(
 
     if name_details is not None:
         name_details = html.escape(str(name_details))
-        label_class = "sk-toggleable__label sk-toggleable__label-arrow"
-
         checked_str = "checked" if checked else ""
         est_id = uuid.uuid4()
         if doc_link:
@@ -90,13 +156,33 @@ def _write_label_html(
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
 
-        out.write(
-            '<input class="sk-toggleable__control sk-hidden--visually" '
-            f'id={est_id!r} type="checkbox" {checked_str}>'
-            f"<label for={est_id!r} class={label_class!r}>{name}{doc_link}</label>"
-            f'<div class="sk-toggleable__content"><pre>{name_details}'
-            "</pre></div>"
+        name_div = f"<div><div>{name}</div></div>"
+        links_div = (
+            f"<div>{doc_link}{is_fitted_icon}</div>"
+            if doc_link or is_fitted_icon
+            else ""
         )
+
+        label_html = (
+            f'<label for="{est_id}" class="sk-toggleable__label '
+            f'sk-toggleable__label-arrow">{name_div}{links_div}</label>'
+        )
+
+        fmt_str = (
+            f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}" '
+            f'type="checkbox" {checked_str}>{label_html}<div '
+            f'class="sk-toggleable__content" '
+            f'data-param-prefix="{html.escape(param_prefix)}">'
+        )
+
+        if params_html:
+            fmt_str += f"{params_html}</div>"
+        elif name_details and ("Pipeline" not in name):
+            fmt_str += f"<pre>{name_details}</pre></div>"
+        else:
+            fmt_str += "</div>"
+
+        out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")
     out.write("</div></div>")  # outer_class inner_class
@@ -138,9 +224,17 @@ def _get_visual_block(base_object):
 
 
 def _write_base_object_html(
-    out, base_object, base_object_label, base_object_label_details, first_call=False
+    out,
+    base_object,
+    base_object_label,
+    base_object_label_details,
+    first_call=False,
+    is_fitted_icon="",
+    param_prefix="",
 ):
     """Write BaseObject to html in serial, parallel, or by itself (single)."""
+    if not first_call:
+        is_fitted_icon = ""
     est_block = _get_visual_block(base_object)
 
     if hasattr(base_object, "_get_doc_link"):
@@ -155,7 +249,13 @@ def _write_base_object_html(
 
         if base_object_label:
             _write_label_html(
-                out, base_object_label, base_object_label_details, doc_link=doc_link
+                out,
+                base_object_label,
+                base_object_label_details,
+                doc_link=doc_link,
+                params_html=_params_html(base_object),
+                is_fitted_icon=is_fitted_icon,
+                param_prefix=param_prefix,
             )
 
         kind = est_block.kind
@@ -163,13 +263,23 @@ def _write_base_object_html(
         est_infos = zip(est_block.estimators, est_block.names, est_block.name_details)
 
         for est, name, name_details in est_infos:
+            if param_prefix and hasattr(name, "split"):
+                new_prefix = f"{param_prefix}{name.split(':')[0]}__"
+            elif hasattr(name, "split"):
+                new_prefix = f"{name.split(':')[0]}__" if name else ""
+            else:
+                new_prefix = param_prefix
+
             if kind == "serial":
-                _write_base_object_html(out, est, name, name_details)
+                _write_base_object_html(
+                    out, est, name, name_details, param_prefix=new_prefix
+                )
             else:  # parallel
                 out.write('<div class="sk-parallel-item">')
-                # wrap element in a serial visualblock
                 serial_block = _VisualBlock("serial", [est], dash_wrapped=False)
-                _write_base_object_html(out, serial_block, name, name_details)
+                _write_base_object_html(
+                    out, serial_block, name, name_details, param_prefix=new_prefix
+                )
                 out.write("</div>")  # sk-parallel-item
 
         out.write("</div></div>")
@@ -182,6 +292,9 @@ def _write_base_object_html(
             inner_class="sk-estimator",
             checked=first_call,
             doc_link=doc_link,
+            params_html=_params_html(base_object),
+            is_fitted_icon=is_fitted_icon,
+            param_prefix=param_prefix,
         )
 
 
@@ -231,14 +344,51 @@ def _object_html_repr(base_object):
             "</div>"
             '<div class="sk-container" hidden>'
         )
+        is_fitted_icon = (
+            '<span class="sk-estimator-doc-link">i<span>Not fitted</span></span>'
+        )
         _write_base_object_html(
             out,
             base_object,
             base_object.__class__.__name__,
             base_object_str,
             first_call=True,
+            is_fitted_icon=is_fitted_icon,
         )
-        out.write("</div></div>")
+        copy_script = (
+            "<script>"
+            "function copyToClipboard(text, element) {"
+            "  var toggleableContent = element.closest('.sk-toggleable__content');"
+            "  var paramPrefix = toggleableContent"
+            "    ? toggleableContent.dataset.paramPrefix : '';"
+            "  var fullParamName = paramPrefix ? paramPrefix + text : text;"
+            "  var originalStyle = element.style;"
+            "  var computedStyle = window.getComputedStyle(element);"
+            "  var originalWidth = computedStyle.width;"
+            "  var originalHTML = element.innerHTML.replace('Copied!', '');"
+            "  navigator.clipboard.writeText(fullParamName)"
+            "    .then(function() {"
+            "      element.style.width = originalWidth;"
+            "      element.style.color = 'green';"
+            "      element.innerHTML = 'Copied!';"
+            "      setTimeout(function() {"
+            "        element.innerHTML = originalHTML;"
+            "        element.style = originalStyle;"
+            "      }, 2000);"
+            "    })"
+            "    .catch(function(err) {"
+            "      element.style.color = 'red';"
+            "      element.innerHTML = 'Failed!';"
+            "      setTimeout(function() {"
+            "        element.innerHTML = originalHTML;"
+            "        element.style = originalStyle;"
+            "      }, 2000);"
+            "    });"
+            "  return false;"
+            "}"
+            "</script>"
+        )
+        out.write(f"</div></div>{copy_script}")
 
         html_output = out.getvalue()
         return html_output
