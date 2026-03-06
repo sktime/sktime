@@ -377,7 +377,9 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.statsforecast import StatsForecastAutoTheta
     >>> y = load_airline()
-    >>> forecaster = StatsForecastAutoTheta(season_length=12)  # doctest: +SKIP
+    >>> forecaster = StatsForecastAutoTheta(  # doctest: +SKIP
+    ...     season_length=12, decomposition_type="additive", model="OTM"
+    ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     StatsForecastAutoTheta(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
@@ -502,7 +504,9 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.statsforecast import StatsForecastAutoETS
     >>> y = load_airline()
-    >>> forecaster = StatsForecastAutoETS(season_length=12)  # doctest: +SKIP
+    >>> forecaster = StatsForecastAutoETS(  # doctest: +SKIP
+    ...     season_length=12, model="AAN", damped=True
+    ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     StatsForecastAutoETS(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
@@ -619,7 +623,9 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.statsforecast import StatsForecastAutoCES
     >>> y = load_airline()
-    >>> forecaster = StatsForecastAutoCES(season_length=12)  # doctest: +SKIP
+    >>> forecaster = StatsForecastAutoCES(  # doctest: +SKIP
+    ...     season_length=12, model="S"
+    ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     StatsForecastAutoCES(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
@@ -740,7 +746,9 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.statsforecast import StatsForecastAutoTBATS
     >>> y = load_airline()
-    >>> forecaster = StatsForecastAutoTBATS(seasonal_periods=12)  # doctest: +SKIP
+    >>> forecaster = StatsForecastAutoTBATS(  # doctest: +SKIP
+    ...     seasonal_periods=12, use_trend=True, use_arma_errors=False
+    ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     StatsForecastAutoTBATS(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
