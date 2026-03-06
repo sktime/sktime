@@ -55,6 +55,7 @@ class TabPFNTSForecaster(BaseForecaster):
     _tags = {
         "authors": ["liam-sbhoo", "Infonioknight"],
         # liam-sbhoo is from Prior Labs
+        "maintainers": ["Infonioknight"],
         "python_dependencies": ["tabpfn-time-series"],
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
