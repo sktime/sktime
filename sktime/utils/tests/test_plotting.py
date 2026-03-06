@@ -259,6 +259,52 @@ def test_plot_series_interval():
     plot_series(y[:-3], y[-3:], pred, pred_interval=interval)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(plot_series)
+    or not _check_soft_dependencies("matplotlib", severity="none"),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_plot_series_interval_multivariate():
+    """Test plot_series with pred_interval subset of multivariate time series.
+
+    Regression test for https://github.com/sktime/sktime/issues/9523.
+    plot_series raised KeyError when plotting a single-variable subset of
+    a multivariate predict_interval DataFrame, because MultiIndex.levels
+    retains stale levels after subsetting.
+    """
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    matplotlib.use("agg")
+
+    # Create a simple multivariate DataFrame
+    idx = pd.RangeIndex(start=0, stop=10)
+    y = pd.DataFrame({"A": np.arange(10), "B": np.arange(10, 20)}, index=idx)
+
+    # Build a fake multivariate prediction interval DataFrame
+    # with two variables and one coverage level
+    arrays = [
+        ["A", "A", "B", "B"],
+        [0.9, 0.9, 0.9, 0.9],
+        ["lower", "upper", "lower", "upper"],
+    ]
+    columns = pd.MultiIndex.from_arrays(arrays)
+    fh_idx = pd.RangeIndex(start=10, stop=13)
+    interval_data = np.array(
+        [[9, 11, 19, 21], [10, 12, 20, 22], [11, 13, 21, 23]], dtype=float
+    )
+    interval_df = pd.DataFrame(interval_data, index=fh_idx, columns=columns)
+
+    # Subset to a single variable — this triggers the bug
+    # because .columns.levels retains both "A" and "B"
+    interval_subset = interval_df[["A"]]
+
+    # This should not raise KeyError
+    fig, ax = plt.subplots()
+    plot_series(y["A"], pred_interval=interval_subset, labels=["Train"])
+    plt.close()
+
+
 # Generically test whether plots only accepting univariate input run
 @pytest.mark.skipif(
     not run_test_for_class(univariate_plots)
