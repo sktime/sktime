@@ -204,9 +204,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         dataset : torch.utils.data.Dataset
             Training dataset
         """
-        return PyTorchTrainDataset(
-            y=y, seq_len=self._get_seq_len(), fh=pred_len
-        )
+        return PyTorchTrainDataset(y=y, seq_len=self._get_seq_len(), fh=pred_len)
 
     def _build_panel_dataloader(self, y, all_series, pred_len):
         """Build PyTorch DataLoader for panel/hierarchical data pretraining.
