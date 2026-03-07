@@ -5,7 +5,7 @@ from sktime.performance_metrics.detection.utils import _count_windowed_matches
 class WindowedF1Score(BaseDetectionMetric):
     """F1-score for event detection, using a margin-based match criterion.
 
-    This score computes an iloc-based F1-score with margin of errog
+    This score computes an iloc-based F1-score with margin of error.
 
     A true event is considered a match if there is a predicted
     event within a margin of error, as specified by the ``margin`` parameter.
@@ -13,6 +13,14 @@ class WindowedF1Score(BaseDetectionMetric):
     The margin is applied in ``iloc`` units, i.e., the absolute difference between
     the true and predicted iloc must be less or equal than the margin to be considered
     a match.
+
+    Matching is greedy and one-to-one: each predicted event can be matched to at
+    most one ground-truth event, and each ground-truth event can be matched to at
+    most one predicted event. If multiple predicted events fall within the margin
+    of a single ground-truth event, only the first (closest in sorted order) is
+    counted as a true positive; the rest count as false positives. Likewise, if a
+    single predicted event lies within the margin of multiple ground-truth events,
+    it is matched to only the first ground-truth event encountered.
 
     The default value of 0 results in only exact matches being counted.
 
