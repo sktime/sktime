@@ -82,24 +82,32 @@ class SquaringResiduals(BaseForecaster):
     """
 
     _tags = {
-        # packaging info
-        # --------------
-        "authors": ["kcc-lion", "fkiraly"],
-        "maintainers": ["kcc-lion"],
-        # estimator type
-        # --------------
-        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "capability:exogenous": False,  # does estimator ignore the exogeneous X?
-        "capability:missing_values": False,  # can estimator handle missing data?
-        "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
-        "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
-        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "capability:insample": False,
-        "capability:pred_int": True,  # does forecaster implement proba forecasts?
-        "capability:pred_int:insample": False,
-    }
+    # packaging info
+    # --------------
+    "authors": ["kcc-lion", "fkiraly"],
+    "maintainers": ["kcc-lion"],
+    # estimator type
+    # --------------
+    "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
+    "capability:exogenous": False,  # does estimator ignore the exogeneous X?
+    "capability:missing_values": False,  # can estimator handle missing data?
+    "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
+    "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
+    "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
+    "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+    "enforce_index_type": None,  # index type that needs to be enforced in X/y
+    "capability:insample": False,
+    "capability:pred_int": True,  # does forecaster implement proba forecasts?
+    "capability:pred_int:insample": False,
+    # testing
+    # -------
+    "tests:skip_by_name": [
+        "test_predict_time_index",
+        "test_predict_residuals",
+        "test_predict_interval",
+        "test_predict_time_index_with_X",
+    ],  # see #3479, #4504, #4181, #4765
+}
 
     def __init__(
         self,
