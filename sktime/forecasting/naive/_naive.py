@@ -4,9 +4,9 @@
 
 Key optimizations over the original:
 1. Parallel sliding residuals computation via joblib (speed)
-2. Sparse residuals storage via dict-of-dicts instead of dense T×T matrix (memory)
+2. Sparse residuals storage via dict-of-dicts instead of dense TxT matrix (memory)
 3. Pre-conversion of pd.Series to numpy arrays before the loop (speed)
-4. Chunked index iteration so each worker gets a balanced slice (speed)
+4. Chunked index iteration so each worker gets a balanced slice (speed).
 """
 
 __all__ = ["NaiveForecaster", "NaiveVariance"]
@@ -352,7 +352,7 @@ def _fit_predict_single_window(forecaster, y_values, y_index, id_pos, verbose):
 
     Why return a dict instead of a full array?
     ------------------------------------------
-    For T=500,000 the full T×T matrix would need ~2TB of RAM.
+    For T=500,000 the full TxT matrix would need ~2TB of RAM.
     By storing only the residuals that were actually computed per row
     (at most T - id_pos values per row), total storage is O(T²/2) in the
     worst case but in practice much smaller because early windows produce
@@ -399,13 +399,13 @@ def _build_sparse_residuals(results, y_index):
 
     Memory comparison vs original dense pd.DataFrame
     -------------------------------------------------
-    Original : T × T floats = T² × 8 bytes
-      T=50,000  →  20 GB
-      T=500,000 →  2 TB   ← completely infeasible
+    Original : T x T floats = T² x 8 bytes
+      T=50,000  ->  20 GB
+      T=500,000 ->  2 TB   <- completely infeasible
 
     Sparse dict : stores only filled cells.
     Typical fill rate is ~1/T of cells per row (each row only fills
-    the future steps), so actual storage ≈ T × avg_future_steps × 8 bytes.
+    the future steps), so actual storage ≈ T x avg_future_steps x 8 bytes.
       T=50,000,  avg_future=100  →  ~40 MB   ✓
       T=500,000, avg_future=100  →  ~400 MB  ✓
     """
@@ -423,10 +423,10 @@ class NaiveVariance(BaseForecaster):
     ----------------------------------------
     1. ``_compute_sliding_residuals`` now runs in **parallel** using joblib.
        Each window fit is independent, so we get near-linear speedup with cores.
-       On a machine with 8 cores, expect ~6–7× faster residual computation.
+       On a machine with 8 cores, expect ~6-7x faster residual computation.
 
     2. The internal residuals matrix is stored as a **sparse dict-of-dicts**
-       instead of a dense T×T pd.DataFrame. For T=500,000 this reduces memory
+       instead of a dense TxT pd.DataFrame. For T=500,000 this reduces memory
        from ~2 TB to a few hundred MB.
 
     3. Raw numpy arrays are extracted from the pd.Series **once** before the
@@ -614,8 +614,7 @@ class NaiveVariance(BaseForecaster):
             return diag
 
         all_labels = sorted(
-            set(all_row_labels)
-            | set(lbl for d in sparse_matrix.values() for lbl in d)
+            set(all_row_labels) | {lbl for d in sparse_matrix.values() for lbl in d}
         )
         label_to_pos = {lbl: pos for pos, lbl in enumerate(all_labels)}
 
@@ -637,7 +636,7 @@ class NaiveVariance(BaseForecaster):
         Original code:
             for id in y_index:          # sequential loop, no parallelism
                 forecaster.fit(...)      # fit from scratch each time
-                residuals_matrix.loc[id] = ...  # writes to dense T×T DataFrame
+                residuals_matrix.loc[id] = ...  # writes to dense TxT DataFrame
 
         Optimized code:
             1. Extract numpy array ONCE before loop (avoids pandas overhead per step).
@@ -664,7 +663,7 @@ class NaiveVariance(BaseForecaster):
         iter_positions = range(initial_window, len(y))
 
         n_jobs = self.n_jobs if self.n_jobs != 0 else 1
-        effective_cores = cpu_count() if n_jobs == -1 else n_jobs
+        # effective_cores = cpu_count() if n_jobs == -1 else n_jobs
 
         results = Parallel(n_jobs=n_jobs, backend="loky", verbose=0)(
             delayed(_fit_predict_single_window)(
