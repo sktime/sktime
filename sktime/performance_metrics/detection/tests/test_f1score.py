@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from sktime.performance_metrics.detection._f1score import WindowedF1Score
+from sktime.performance_metrics.detection import WindowedF1Score
 from sktime.tests.test_switch import run_test_for_class
 
 
