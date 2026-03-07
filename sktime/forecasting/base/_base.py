@@ -1107,6 +1107,15 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         >>> forecaster.state
         'pretrained'
         """
+
+        if check_is_scitype(y, "Series"):
+            raise TypeError(
+                f"{type(self).__name__}.pretrain requires Panel or Hierarchical data "
+                "(multiple time series instances), but a single Series was passed. "
+                "Use fit() for fitting on a single series, or pass panel data "
+                "(e.g., pd.DataFrame with MultiIndex) to pretrain()."
+            )
+
         # pretrain always requires panel data, independent of what fit/predict
         # support via y_inner_mtype. Pass expanded mtypes directly to _check_X_y
         # to decouple pretrain's data requirements from the tag.
@@ -1120,15 +1129,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         X_inner, y_inner = self._check_X_y(
             X=X, y=y, y_inner_mtype=pretrain_y_mtypes, scitype_y="both"
         )
-
-        y_scitype = self._y_metadata.get("scitype", None)
-        if y_scitype == "Series":
-            raise TypeError(
-                f"{type(self).__name__}.pretrain requires Panel or Hierarchical data "
-                "(multiple time series instances), but a single Series was passed. "
-                "Use fit() for fitting on a single series, or pass panel data "
-                "(e.g., pd.DataFrame with MultiIndex) to pretrain()."
-            )
 
         # pretrain does not support vectorization - global learning requires
         # the forecaster to handle panel data directly
