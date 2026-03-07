@@ -121,7 +121,7 @@ class TestWindowedRecall:
         y_pred = pd.DataFrame({"ilocs": [2]})
         metric = WindowedRecall(margin=0)
         result = metric(y_true, y_pred)
-        assert abs(result - 1.0 / 3.0) < 1e-9
+        assert result == pytest.approx(1 / 3)
 
     def test_margin_match(self):
         """Test recall with margin allowing near-matches."""
