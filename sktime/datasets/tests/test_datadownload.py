@@ -18,9 +18,11 @@ from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.datatypes import check_is_mtype, check_raise
 from sktime.utils.dependencies import _check_soft_dependencies
 
-# test tsf download only on a random uniform subsample of datasets
+# test tsf download only on a subsample of datasets
+# use a deterministic subsample to keep test collection identical across
+# pytest-xdist workers
 N_TSF_SUBSAMPLE = 3
-TSF_SUBSAMPLE = np.random.choice(tsf_all_datasets, N_TSF_SUBSAMPLE)
+TSF_SUBSAMPLE = sorted(tsf_all_datasets)[:N_TSF_SUBSAMPLE]
 TSF_SUBSAMPLE_SMALL = [
     "wind_4_seconds_dataset",
     "m4_hourly_dataset",
