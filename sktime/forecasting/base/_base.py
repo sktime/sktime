@@ -1107,7 +1107,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         >>> forecaster.state
         'pretrained'
         """
-
         if check_is_scitype(y, "Series"):
             raise TypeError(
                 f"{type(self).__name__}.pretrain requires Panel or Hierarchical data "
