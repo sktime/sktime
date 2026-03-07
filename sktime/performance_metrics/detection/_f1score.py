@@ -17,10 +17,12 @@ class WindowedF1Score(BaseDetectionMetric):
     Matching is greedy and one-to-one: each predicted event can be matched to at
     most one ground-truth event, and each ground-truth event can be matched to at
     most one predicted event. If multiple predicted events fall within the margin
-    of a single ground-truth event, only the first (closest in sorted order) is
+    of a single ground-truth event, only the first predicted event encountered in
+    the scan (i.e., the one with the smallest iloc within the matching window) is
     counted as a true positive; the rest count as false positives. Likewise, if a
     single predicted event lies within the margin of multiple ground-truth events,
-    it is matched to only the first ground-truth event encountered.
+    it is matched to only the first ground-truth event encountered in the scan
+    within the matching window.
 
     The default value of 0 results in only exact matches being counted.
 
