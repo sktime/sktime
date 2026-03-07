@@ -93,36 +93,35 @@ class KinematicFeatures(BaseTransformer):
             self._features = features
 
         self.remember_data = remember_data
-        allowed=["none","last","all"]
+        allowed = ["none", "last", "all"]
         if remember_data not in allowed:
-           raise ValueError(
-                f'remember_data must be one of {allowed},got{remember_data}'
-              )
+            raise ValueError(
+                f"remember_data must be one of {allowed},got{remember_data}"
+            )
 
         super().__init__()
 
-    def _fit(self, X,y=None ):
-        """store history depending on the remember_data."""
-        if self.remember_data =="all":
-            self._history=X.copy()
-        elif self.remember_data =='last':
-            self._history=X.tail(2).copy()
+    def _fit(self, X, y=None):
+        """Store history depending on the remember_data."""
+        if self.remember_data == "all":
+            self._history = X.copy()
+        elif self.remember_data == "last":
+            self._history = X.tail(2).copy()
         else:
             self._history = None
         return self
 
-    def _update(self, X,y=None):
-        if not hasattr(self,"_history") or self._history is None:
+    def _update(self, X, y=None):
+        if not hasattr(self, "_history") or self._history is None:
             self._history = X.tail(2).copy()
             return self
 
-        if self.remember_data =="all":
-            self._history=pd.concat([self._history,X])
-        elif self.remember_data == 'last':
-             self._history = pd.concat([self._history,X]).tail(2)
-        
-        return self 
+        if self.remember_data == "all":
+            self._history = pd.concat([self._history, X])
+        elif self.remember_data == "last":
+            self._history = pd.concat([self._history, X]).tail(2)
 
+        return self
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -141,16 +140,19 @@ class KinematicFeatures(BaseTransformer):
         """
         features = self._features
         res = pd.DataFrame()
-        #prepend history
-        if hasattr(self,'_history') and self.remember_data != 'none' and self._history is not None:
-           X_full = pd.concat([self._history, X])
-           X_full = X_full[~X_full.index.duplicated(keep="last")]
+        # prepend history
+        if (
+            hasattr(self, "_history")
+            and self.remember_data != "none"
+            and self._history is not None
+        ):
+            X_full = pd.concat([self._history, X])
+            X_full = X_full[~X_full.index.duplicated(keep="last")]
         else:
             X_full = X
-       
+
         orig_index = X.index
-        X=X_full
-  
+        X = X_full
 
         def prepend_cols(df, prefix):
             df.columns = [f"{prefix}__{col}" for col in df.columns]
@@ -202,10 +204,10 @@ class KinematicFeatures(BaseTransformer):
             curv_arr = np.abs(curv_arr) ** 0.5
             curv_frame = pd.DataFrame(curv_arr, columns=["curv"], index=X.index)
             res = pd.concat([res, curv_frame], axis=1)
-       
+
         # returns new rows only
         res = res.loc[orig_index]
-       
+
         return res
 
     @classmethod
@@ -228,6 +230,6 @@ class KinematicFeatures(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {"remember_data":"none"}
-        params2 = {"features": ["v", "a"],"remember_data":"last"}
+        params1 = {"remember_data": "none"}
+        params2 = {"features": ["v", "a"], "remember_data": "last"}
         return [params1, params2]
