@@ -129,6 +129,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
 
         # Use first series as reference for network dimensions
         self._y = all_series[0]
+        self._y_len = len(all_series[0])
 
         self.network = self._build_network(pred_len)
         dataloader = self._build_panel_dataloader(y, all_series, pred_len)
