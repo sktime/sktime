@@ -38,9 +38,6 @@ class FCNNetworkTorch(NNModule):
         Supported: ``"kaiming_uniform"``, ``"kaiming_normal"``,
         ``"xavier_uniform"``, ``"xavier_normal"``, or ``None`` for default
         PyTorch initialization.
-        The TensorFlow FCN does not set any explicit initializer
-        (it relies on Keras defaults), so ``None`` is used here to let
-        PyTorch use its own defaults as well.
     random_state : int, default = 0
         Seed for reproducibility.
 
@@ -79,8 +76,6 @@ class FCNNetworkTorch(NNModule):
         nnBatchNorm1d = _safe_import("torch.nn.BatchNorm1d")
         nnModuleList = _safe_import("torch.nn.ModuleList")
 
-        # Build convolutional blocks dynamically based on filter_sizes length.
-        # Each block: Conv1d -> BatchNorm1d -> activation_hidden
         n_layers = len(self.filter_sizes)
         self.conv_layers = nnModuleList()
         self.bn_layers = nnModuleList()
@@ -98,25 +93,20 @@ class FCNNetworkTorch(NNModule):
             self.bn_layers.append(nnBatchNorm1d(self.filter_sizes[i]))
             in_channels = self.filter_sizes[i]
 
-        # Global Average Pooling collapses the time dimension
         nnAdaptiveAvgPool1d = _safe_import("torch.nn.AdaptiveAvgPool1d")
         self.gap = nnAdaptiveAvgPool1d(1)
 
-        # Fully connected output layer
         nnLinear = _safe_import("torch.nn.Linear")
         self.fc = nnLinear(
             in_features=self.filter_sizes[-1],
             out_features=self.num_classes,
         )
 
-        # Hidden activation (used inside conv blocks)
         self._hidden_activation = self._get_hidden_activation()
 
-        # Output activation (used after FC layer)
         if self.activation:
             self._output_activation = self._instantiate_activation()
 
-        # Weight initialization only applied when init_weights is not None
         if self.init_weights is not None:
             self.apply(self._init_weights)
 
@@ -137,21 +127,16 @@ class FCNNetworkTorch(NNModule):
             torchFrom_numpy = _safe_import("torch.from_numpy")
             X = torchFrom_numpy(X).float()
 
-        # Conv1d expects (batch, channels, length) format
-        x = X.transpose(1, 2)  # (batch, n_dims, seq_length)
+        x = X.transpose(1, 2)
 
-        # Pass through each conv block: Conv1d -> BatchNorm -> activation
         for conv, bn in zip(self.conv_layers, self.bn_layers):
             x = conv(x)
             x = bn(x)
             x = self._hidden_activation(x)
 
-        # Global Average Pooling
-        # (batch, filter_sizes[-1], seq_length) -> (batch, filter_sizes[-1], 1)
         x = self.gap(x)
-        x = x.squeeze(-1) 
+        x = x.squeeze(-1)
 
-        # Fully connected output layer
         out = self.fc(x)
 
         if self.activation:

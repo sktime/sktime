@@ -12,7 +12,7 @@ from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
 class FCNRegressorTorch(BaseDeepRegressorTorch):
     """Fully Convolutional Network (FCN) in PyTorch for time series regression.
 
-    Adapted from the TensorFlow implementation from Fawaz et. al [1]_.
+    Adapted from the TensorFlow FCN implementation in sktime.
 
     Parameters
     ----------
@@ -54,10 +54,6 @@ class FCNRegressorTorch(BaseDeepRegressorTorch):
         Currently only learning rate schedulers are supported as callbacks.
         If more than one scheduler is passed, they are applied sequentially in the
         order they are passed. If None, then no learning rate scheduler is used.
-        Note: Since PyTorch learning rate schedulers need to be initialized with
-        the optimizer object, we only accept the class name (str) of the scheduler here
-        and do not accept an instance of the scheduler. As that can lead to errors
-        and unexpected behavior.
         List of available learning rate schedulers:
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
     callback_kwargs : dict or None, default = None
@@ -81,8 +77,6 @@ class FCNRegressorTorch(BaseDeepRegressorTorch):
     """
 
     _tags = {
-        # packaging info
-        # --------------
         "authors": ["kajal-jotwani"],
         "maintainers": ["kajal-jotwani"],
         "python_dependencies": "torch",
@@ -92,13 +86,11 @@ class FCNRegressorTorch(BaseDeepRegressorTorch):
 
     def __init__(
         self: "FCNRegressorTorch",
-        # model specific
         filter_sizes: tuple = (128, 256, 128),
         kernel_sizes: tuple = (8, 5, 3),
         activation_hidden: str = "relu",
         activation: str | None | Callable = None,
         init_weights: str | None = "kaiming_uniform",
-        # base regressor specific
         num_epochs: int = 2000,
         batch_size: int = 16,
         optimizer: str | None | Callable = "Adam",
@@ -127,11 +119,8 @@ class FCNRegressorTorch(BaseDeepRegressorTorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
-
-        # input_size to be inferred from the data
-        # and will be set in _build_network
         self.input_size = None
-        self.num_classes = 1  # because regression
+        self.num_classes = 1
 
         super().__init__(
             num_epochs=self.num_epochs,
@@ -160,11 +149,6 @@ class FCNRegressorTorch(BaseDeepRegressorTorch):
         model : FCNNetworkTorch instance
             The constructed FCN network.
         """
-        # X arrives in sktime format: (n_instances, n_dims, n_timesteps)
-        # The base class's _build_dataloader transposes it to
-        # (batch, n_timesteps, n_dims) before passing to forward().
-        # But at this point, X has not been transposed.
-        # So input_size = n_dims is correct here.
         _, self.input_size, _ = X.shape
 
         return FCNNetworkTorch(

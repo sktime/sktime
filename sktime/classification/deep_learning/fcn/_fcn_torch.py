@@ -14,7 +14,7 @@ from sktime.networks.fcn import FCNNetworkTorch
 class FCNClassifierTorch(BaseDeepClassifierPytorch):
     """Fully Convolutional Network (FCN) in PyTorch for time series classification.
 
-    Adapted from the TensorFlow implementation from Fawaz et. al [1]_.
+    Adapted from the TensorFlow FCN implementation in sktime.
 
     Parameters
     ----------
@@ -56,10 +56,6 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
         Currently only learning rate schedulers are supported as callbacks.
         If more than one scheduler is passed, they are applied sequentially in the
         order they are passed. If None, then no learning rate scheduler is used.
-        Note: Since PyTorch learning rate schedulers need to be initialized with
-        the optimizer object, we only accept the class name (str) of the scheduler here
-        and do not accept an instance of the scheduler. As that can lead to errors
-        and unexpected behavior.
         List of available learning rate schedulers:
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
     callback_kwargs : dict or None, default = None
@@ -83,8 +79,6 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
     """
 
     _tags = {
-        # packaging info
-        # --------------
         "authors": ["kajal-jotwani"],
         "maintainers": ["kajal-jotwani"],
         "python_version": ">=3.10",
@@ -95,13 +89,11 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
 
     def __init__(
         self: "FCNClassifierTorch",
-        # model specific
         filter_sizes: tuple = (128, 256, 128),
         kernel_sizes: tuple = (8, 5, 3),
         activation_hidden: str = "relu",
         activation: str | None | Callable = None,
         init_weights: str | None = "kaiming_uniform",
-        # base classifier specific
         num_epochs: int = 2000,
         batch_size: int = 16,
         optimizer: str | None | Callable = "Adam",
@@ -130,9 +122,6 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
-
-        # input_size and num_classes to be inferred from the data
-        # and will be set in _build_network
         self.input_size = None
         self.num_classes = None
 
@@ -167,12 +156,6 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
             The constructed FCN network.
         """
         self.num_classes = len(np.unique(y))
-
-        # X arrives in sktime format: (n_instances, n_dims, n_timesteps)
-        # The base class's _build_dataloader transposes it to
-        # (batch, n_timesteps, n_dims) before passing to forward().
-        # But at this point, X has not been transposed.
-        # So input_size = n_dims is correct here.
         _, self.input_size, _ = X.shape
 
         return FCNNetworkTorch(
@@ -238,7 +221,7 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
             "callbacks": None,
             "lr": 0.01,
             "random_state": 42,
-        }  # functionally equivalent to params2 for binary classification
+        }
         params4 = {
             "filter_sizes": (32, 64, 32),
             "kernel_sizes": (4, 3, 2),
@@ -250,7 +233,7 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
             "callbacks": None,
             "lr": 0.01,
             "random_state": 0,
-        }  # functionally equivalent to params2 for binary classification
+        }
         params5 = {
             "filter_sizes": (32, 64, 32),
             "kernel_sizes": (4, 3, 2),
@@ -262,5 +245,5 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
             "callbacks": None,
             "lr": 0.01,
             "random_state": 0,
-        }  # functionally equivalent to params2 for multi-class classification
+        }
         return [params1, params2, params3, params4, params5]

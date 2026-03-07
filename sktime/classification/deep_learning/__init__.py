@@ -26,7 +26,7 @@ from sktime.classification.deep_learning.cntc import CNTCClassifier
 from sktime.classification.deep_learning.convtimenet import ConvTimeNetClassifier
 from sktime.classification.deep_learning.fcn import (
     FCNClassifier,
-    FCNClassifierTorch
+    FCNClassifierTorch,
 )
 from sktime.classification.deep_learning.gru import (
     GRUClassifier,
