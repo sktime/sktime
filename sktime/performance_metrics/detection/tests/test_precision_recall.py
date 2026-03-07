@@ -56,11 +56,14 @@ class TestWindowedPrecision:
         assert metric(y_true, y_pred) == pytest.approx(1 / 3)
 
     def test_boundary_at_margin(self):
-        """Test that abs(diff) == margin counts as a match."""
+        """Test that abs(diff) == margin counts as a match (both sides)."""
         y_true = pd.DataFrame({"ilocs": [10]})
         y_pred = pd.DataFrame({"ilocs": [15]})
         metric = WindowedPrecision(margin=5)
         assert metric(y_true, y_pred) == 1.0
+        # Also test the left boundary: y_pred exactly y_true - margin.
+        y_pred_left = pd.DataFrame({"ilocs": [5]})
+        assert metric(y_true, y_pred_left) == 1.0
 
     def test_boundary_beyond_margin(self):
         """Test that abs(diff) > margin does not count as a match."""
@@ -128,9 +131,16 @@ class TestWindowedRecall:
         assert metric(y_true, y_pred) == 1.0
 
     def test_boundary_at_margin(self):
-        """Test that abs(diff) == margin counts as a match."""
+        """Test that abs(diff) == margin counts as a match (right boundary)."""
         y_true = pd.DataFrame({"ilocs": [10]})
         y_pred = pd.DataFrame({"ilocs": [15]})
+        metric = WindowedRecall(margin=5)
+        assert metric(y_true, y_pred) == 1.0
+
+    def test_left_boundary_at_margin(self):
+        """Test that abs(diff) == margin counts as a match (left boundary)."""
+        y_true = pd.DataFrame({"ilocs": [10]})
+        y_pred = pd.DataFrame({"ilocs": [5]})
         metric = WindowedRecall(margin=5)
         assert metric(y_true, y_pred) == 1.0
 
