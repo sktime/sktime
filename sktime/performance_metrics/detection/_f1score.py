@@ -1,7 +1,5 @@
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
-from sktime.performance_metrics.detection.utils._matching import (
-    _count_windowed_matches,
-)
+from sktime.performance_metrics.detection.utils import _count_windowed_matches
 
 
 class WindowedF1Score(BaseDetectionMetric):
