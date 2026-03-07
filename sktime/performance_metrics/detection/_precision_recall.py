@@ -1,11 +1,7 @@
 """Windowed Precision and Recall metrics for detection tasks."""
 
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
-from sktime.performance_metrics.detection.utils._matching import (
-    _count_windowed_matches,
-)
-
-
+from sktime.performance_metrics.detection.utils import _count_windowed_matches
 class WindowedPrecision(BaseDetectionMetric):
     """Precision for event detection, using a margin-based match criterion.
 
