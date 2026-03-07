@@ -42,7 +42,7 @@ def _count_windowed_matches(targets, candidates, margin):
         # If current candidate is within margin, it's a match
         if (
             cand_index < len(candidates)
-            and abs(candidates[cand_index] - target) <= margin
+            and candidates[cand_index] <= target + margin
         ):
             matched_count += 1
             # ensure one-to-one matching
