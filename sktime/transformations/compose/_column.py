@@ -559,7 +559,7 @@ class ColumnwiseTransformer(BaseTransformer):
 
         return X
 
-    def update(self, X, y=None, update_params=True):
+    def _update(self, X, y=None, update_params=True):
         """Update parameters.
 
         Update the parameters of the estimator with new data

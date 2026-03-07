@@ -10,7 +10,7 @@ import numbers
 import os
 import types
 from copy import deepcopy
-from inspect import getfullargspec, isclass, signature
+from inspect import getfullargspec, getsource, isclass, signature
 from tempfile import TemporaryDirectory
 
 import numpy as np
@@ -1049,6 +1049,52 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             assert hasattr(estimator, "transform")
         if hasattr(estimator, "predict_proba"):
             assert hasattr(estimator, "predict")
+
+    def test_no_public_interface_override(self, estimator_class):
+        """Test that concrete estimators do not override public interface methods.
+
+        Concrete estimators should only implement the private methods (_fit,
+        _predict, _transform, etc.). The public methods handle input validation
+        and state management in the base class and must not be overridden.
+
+        See issue #1424.
+        """
+        public_methods = {
+            "fit",
+            "predict",
+            "transform",
+            "inverse_transform",
+            "fit_transform",
+            "predict_proba",
+            "predict_interval",
+            "predict_quantiles",
+            "predict_var",
+            "update",
+            "score",
+            "get_fitted_params",
+        }
+
+        base_defined = set()
+        for base in estimator_class.__mro__[1:]:
+            for name in public_methods:
+                if name in base.__dict__:
+                    method = base.__dict__[name]
+                    try:
+                        src = getsource(method)
+                        is_placeholder = (
+                            "raise NotImplementedError" in src and src.count("\n") < 8
+                        )
+                    except (OSError, TypeError):
+                        is_placeholder = False
+                    if not is_placeholder:
+                        base_defined.add(name)
+
+        overridden = [m for m in base_defined if m in estimator_class.__dict__]
+
+        assert len(overridden) == 0, (
+            f"{estimator_class.__name__} overrides public method(s) {overridden}. "
+            "Override the private counterparts (_fit, _predict, etc.) instead."
+        )
 
     def test_no_cross_test_side_effects_part1(self, estimator_instance):
         """Test that there are no side effects across tests, through estimator state."""
