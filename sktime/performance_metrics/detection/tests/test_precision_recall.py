@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from sktime.performance_metrics.detection._precision_recall import (
+from sktime.performance_metrics.detection import (
     WindowedPrecision,
     WindowedRecall,
 )
@@ -49,10 +49,12 @@ class TestWindowedPrecision:
         """Test precision when multiple predictions fall within margin of one gt."""
         y_true = pd.DataFrame({"ilocs": [10]})
         # All predictions lie within margin=1 of the single ground-truth event at 10.
-        # Only one prediction should be counted as a true positive; the others as false positives.
+        # Only one prediction should be counted as a true positive;
+        # the others as false positives.
         y_pred = pd.DataFrame({"ilocs": [9, 10, 11]})
         metric = WindowedPrecision(margin=1)
         assert metric(y_true, y_pred) == pytest.approx(1 / 3)
+
     def test_boundary_at_margin(self):
         """Test that abs(diff) == margin counts as a match."""
         y_true = pd.DataFrame({"ilocs": [10]})
@@ -159,3 +161,13 @@ class TestWindowedRecall:
         y_pred = pd.DataFrame({"ilocs": [2, 5]})
         metric = WindowedRecall(margin=0)
         assert metric(y_true, y_pred) == 0.0
+
+    def test_multiple_gt_within_margin_single_prediction(self):
+        """Ensure one prediction cannot match multiple ground-truth events."""
+        y_true = pd.DataFrame({"ilocs": [10, 11]})
+        y_pred = pd.DataFrame({"ilocs": [10]})
+
+        metric = WindowedRecall(margin=1)
+
+        # only one GT should be matched
+        assert metric(y_true, y_pred) == pytest.approx(1 / 2)

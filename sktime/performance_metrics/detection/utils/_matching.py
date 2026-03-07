@@ -35,5 +35,7 @@ def _count_windowed_matches(targets, candidates, margin):
             and abs(candidates[cand_index] - target) <= margin
         ):
             matched_count += 1
+            # ensure one-to-one matching
+            cand_index += 1
 
     return matched_count
