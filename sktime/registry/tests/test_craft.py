@@ -65,7 +65,9 @@ return ForecastingGridSearchCV(
 """
 
 dunder_spec_no_deps = "Imputer() * NaiveForecaster()"
-dunder_spec_with_deps = "Detrender(ExponentialSmoothing(sp=12)) * Prophet()"
+dunder_spec_with_deps = (
+    "Detrender(ExponentialSmoothing(sp=12)) * LTSFLinearForecaster()"
+)
 
 specs = [simple_spec, pipe_spec_no_deps, dunder_spec_no_deps]
 
@@ -102,7 +104,7 @@ def test_deps(spec):
     assert deps(pipe_spec_with_deps) == ["statsmodels"]
 
     # example with two dependencies, should be identified, order does not matter
-    expected_deps = {"statsmodels", "prophet"}
+    expected_deps = {"statsmodels", "torch"}
     assert set(deps(dunder_spec_with_deps)) == expected_deps
 
 

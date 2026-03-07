@@ -25,6 +25,7 @@ class _ProphetAdapter(BaseForecaster):
         "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
         "python_dependencies": "prophet",
+        "tests:vm": True,  # all estimators depending on prophet are tested in VM
     }
 
     def _convert_int_to_date(self, y):
