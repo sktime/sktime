@@ -91,6 +91,18 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
 
         self._y_len = len(y)
 
+        # Validate fh against pretrained network's output dimension
+        if hasattr(self, "network") and self.network is not None:
+            max_fh = max(list(fh))
+            if max_fh > self.network.pred_len:
+                raise ValueError(
+                    f"max(fh)={max_fh} exceeds the network's output dimension "
+                    f"(pred_len={self.network.pred_len}). "
+                    f"The network architecture was fixed during pretraining. "
+                    f"Either use a smaller fh (<= {self.network.pred_len}) "
+                    f"or create a new forecaster with a larger pred_len."
+                )
+
         if not hasattr(self, "network") or self.network is None:
             self.network = self._build_network(list(fh)[-1])
 
@@ -397,7 +409,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
             dataset = PyTorchTrainDataset(
                 y=y,
                 seq_len=self.network.seq_len,
-                fh=self._fh.to_relative(self.cutoff)._values[-1],
+                fh=self.network.pred_len,
             )
 
         return DataLoader(dataset, self.batch_size, shuffle=True)
