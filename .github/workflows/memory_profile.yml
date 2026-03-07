@@ -1,0 +1,90 @@
+name: Memory profiling
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_path:
+        description: "pytest path to profile (default: sktime, excluding datasets)"
+        required: false
+        default: "sktime"
+      python_version:
+        description: "Python version"
+        required: false
+        default: "3.11"
+  schedule:
+    - cron: "0 3 * * 1"
+
+jobs:
+  memory-profile:
+    name: memory profile (py${{ github.event.inputs.python_version || '3.11' }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ github.event.inputs.python_version || '3.11' }}
+
+      - name: Install sktime with dev and memory-profile dependencies
+        run: uv pip install ".[dev,memory_profile]"
+        env:
+          UV_SYSTEM_PYTHON: 1
+
+      - name: Show installed packages
+        run: uv pip list
+
+      - name: Run pytest with tracemalloc memory profiling
+        run: |
+          python -m pytest \
+            ${{ github.event.inputs.test_path || 'sktime' }} \
+            --ignore sktime/datasets \
+            --memory_profile True \
+            --matrixdesign False \
+            --only_changed_modules False \
+            --timeout 600 \
+            --durations 20 \
+            -n auto \
+            -q \
+            -p no:randomly \
+            2>&1 | tee pytest_memory_output.txt || true
+
+      - name: Run pytest with pytest-memray
+        run: |
+          python -m pytest \
+            ${{ github.event.inputs.test_path || 'sktime' }} \
+            --ignore sktime/datasets \
+            --memray \
+            --most-allocations 30 \
+            --matrixdesign False \
+            --only_changed_modules False \
+            --timeout 600 \
+            -n 1 \
+            -q \
+            -p no:randomly \
+            2>&1 | tee pytest_memray_output.txt || true
+
+      - name: Show top memory consumers
+        run: |
+          if [ -f memory_profile_report.txt ]; then
+            head -n 35 memory_profile_report.txt
+          else
+            echo "memory_profile_report.txt not found"
+          fi
+
+      - name: Upload memory profile artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-profile-py${{ github.event.inputs.python_version || '3.11' }}
+          path: |
+            memory_profile_report.txt
+            pytest_memory_output.txt
+            pytest_memray_output.txt
+          retention-days: 30
