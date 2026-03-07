@@ -290,7 +290,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             ):
                 break
         if val_data_loader_nll is not None:
-            self.network = early_stopper._best_model
+            self.network.load_state_dict(early_stopper._best_model.state_dict())
         dataset = self._prepare_data(y, X if X is not None else None)
         X, y = next(iter(DataLoader(dataset, shuffle=False, batch_size=len(dataset))))
 
