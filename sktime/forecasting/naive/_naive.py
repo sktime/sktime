@@ -1,26 +1,17 @@
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements simple forecasts based on naive assumptions
-
-Key optimizations over the original:
-1. Parallel sliding residuals computation via joblib (speed)
-2. Sparse residuals storage via dict-of-dicts instead of dense TxT matrix (memory)
-3. Pre-conversion of pd.Series to numpy arrays before the loop (speed)
-4. Chunked index iteration so each worker gets a balanced slice (speed).
-"""
 
 __all__ = ["NaiveForecaster", "NaiveVariance"]
 
 import math
-from collections import defaultdict
 
+# from collections import defaultdict
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed, cpu_count
+from joblib import Parallel, delayed
 from scipy.stats import norm
 
 from sktime.datatypes._convert import convert, convert_to
-from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
@@ -47,8 +38,16 @@ class NaiveForecaster(_BaseWindowForecaster):
     """
 
     _tags = {
-        "authors": ["mloning", "piyush1729", "sri1419", "Flix6x",
-                    "aiwalter", "IlyasMoutawwakil", "fkiraly", "bethrice44"],
+        "authors": [
+            "mloning",
+            "piyush1729",
+            "sri1419",
+            "Flix6x",
+            "aiwalter",
+            "IlyasMoutawwakil",
+            "fkiraly",
+            "bethrice44",
+        ],
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
@@ -85,8 +84,10 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         elif self.strategy == "drift":
             if sp != 1:
-                warn("For the `drift` strategy, the `sp` value will be ignored.",
-                     obj=self)
+                warn(
+                    "For the `drift` strategy, the `sp` value will be ignored.",
+                    obj=self,
+                )
             self.window_length_ = check_window_length(self.window_length, n_timepoints)
             if self.window_length is None:
                 self.window_length_ = len(y)
@@ -109,8 +110,9 @@ class NaiveForecaster(_BaseWindowForecaster):
             )
         return self
 
-    def _predict_last_window(self, fh, X=None, return_pred_int=False,
-                              alpha=DEFAULT_ALPHA):
+    def _predict_last_window(
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
         last_window, _ = self._get_last_window()
         fh = fh.to_relative(self.cutoff)
         strategy = self.strategy
@@ -292,15 +294,16 @@ class NaiveForecaster(_BaseWindowForecaster):
             return np.sqrt(np.maximum(x, 1))
 
         partial_se_formulas = {
-            "last": (sqrt_flr if sp == 1
-                     else lambda h: sqrt_flr(np.floor((h - 1) / sp) + 1)),
+            "last": (
+                sqrt_flr if sp == 1 else lambda h: sqrt_flr(np.floor((h - 1) / sp) + 1)
+            ),
             "mean": lambda h: np.repeat(sqrt_flr(1 + (1 / window_length)), len(h)),
             "drift": lambda h: sqrt_flr(h * (1 + (h / (T - 1)))),
         }
 
         fh_periods = np.array(fh.to_relative(self.cutoff))
         marginal_se = se_res * partial_se_formulas[self.strategy](fh_periods)
-        marginal_vars = marginal_se ** 2
+        marginal_vars = marginal_se**2
 
         fh_idx = fh.to_absolute_index(self.cutoff)
         if cov:
@@ -494,8 +497,7 @@ class NaiveVariance(BaseForecaster):
 
         if self.fh_early_:
             self.residuals_matrix_ = self._compute_sliding_residuals(
-                y=y, X=X, forecaster=self.forecaster,
-                initial_window=self.initial_window
+                y=y, X=X, forecaster=self.forecaster, initial_window=self.initial_window
             )
         return self
 
@@ -509,7 +511,9 @@ class NaiveVariance(BaseForecaster):
 
         if update_params and self._fh is not None and len(self._y) > prev_len:
             self.residuals_matrix_ = self._compute_sliding_residuals(
-                y=self._y, X=self._X, forecaster=self.forecaster,
+                y=self._y,
+                X=self._X,
+                forecaster=self.forecaster,
                 initial_window=self.initial_window,
             )
         return self
@@ -522,7 +526,7 @@ class NaiveVariance(BaseForecaster):
         pred_var.index = y_pred.index
 
         z_scores = norm.ppf(alpha)
-        errors = [pred_var ** 0.5 * z for z in z_scores]
+        errors = [pred_var**0.5 * z for z in z_scores]
 
         var_names = self._get_varnames()
         var_name = var_names[0]
@@ -547,7 +551,9 @@ class NaiveVariance(BaseForecaster):
             residuals_matrix = self.residuals_matrix_
         else:
             residuals_matrix = self._compute_sliding_residuals(
-                y=self._y, X=self._X, forecaster=self.forecaster,
+                y=self._y,
+                X=self._X,
+                forecaster=self.forecaster,
                 initial_window=self.initial_window,
             )
 
@@ -571,8 +577,9 @@ class NaiveVariance(BaseForecaster):
                     covariance[i, j] = covariance[j, i] = np.nanmean(
                         i_residuals[:max_r] * j_residuals[:max_r]
                     )
-            pred_var = pd.DataFrame(covariance, index=fh_absolute_ix,
-                                    columns=fh_absolute_ix)
+            pred_var = pd.DataFrame(
+                covariance, index=fh_absolute_ix, columns=fh_absolute_ix
+            )
         else:
             variance = [
                 np.nanmean(
@@ -606,7 +613,6 @@ class NaiveVariance(BaseForecaster):
         diag = []
         for row_label, col_dict in sparse_matrix.items():
             for col_label, val in col_dict.items():
-
                 pass
         diag = []
         all_row_labels = list(sparse_matrix.keys())
@@ -683,9 +689,9 @@ class NaiveVariance(BaseForecaster):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         from sktime.forecasting.naive import NaiveForecaster
+
         FORECASTER = NaiveForecaster()
         return [
             {"forecaster": FORECASTER},
             {"forecaster": FORECASTER, "initial_window": 2},
         ]
-
