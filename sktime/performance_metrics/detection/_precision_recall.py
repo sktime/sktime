@@ -2,6 +2,8 @@
 
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
 from sktime.performance_metrics.detection.utils import _count_windowed_matches
+
+
 class WindowedPrecision(BaseDetectionMetric):
     """Precision for event detection, using a margin-based match criterion.
 
@@ -11,6 +13,10 @@ class WindowedPrecision(BaseDetectionMetric):
 
     Precision = TP / (TP + FP), i.e., of all predicted events,
     what fraction are close to a true event.
+    Matching between predicted and ground-truth events is performed using a
+    greedy one-to-one strategy: each predicted event can match at most one
+    ground-truth event and vice versa. If multiple predictions fall within
+    the margin of the same ground-truth event, only one is counted as a true positive.
 
     Parameters
     ----------
@@ -100,6 +106,10 @@ class WindowedRecall(BaseDetectionMetric):
 
     Recall = TP / (TP + FN), i.e., of all true events,
     what fraction were detected.
+
+    Matching between predicted and ground-truth events is performed using a
+    greedy one-to-one strategy: each predicted event can match at most one
+    ground-truth event and vice versa.
 
     Parameters
     ----------
