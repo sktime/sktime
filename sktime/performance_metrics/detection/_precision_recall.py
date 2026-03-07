@@ -74,7 +74,7 @@ class WindowedPrecision(BaseDetectionMetric):
         if len(gt) == 0:
             return 0.0
 
-        matched_count = _count_windowed_matches(pred, gt, margin)
+        matched_count = _count_windowed_matches(gt, pred, margin)
         return matched_count / len(pred)
 
     @classmethod
