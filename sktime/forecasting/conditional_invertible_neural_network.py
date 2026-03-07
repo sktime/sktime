@@ -400,16 +400,17 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         datasets = []
         n_cond_features = None
         for series_df in all_series:
-            if isinstance(series_df, pd.DataFrame) and series_df.shape[1] == 1:
-                series = series_df.iloc[:, 0]
+            if isinstance(series_df, pd.DataFrame):
+                cols = [series_df.iloc[:, i] for i in range(series_df.shape[1])]
             else:
-                series = series_df
-            result = self._prepare_pretrain_series_data(series)
-            if result is not None:
-                dataset, ncf = result
-                datasets.append(dataset)
-                if n_cond_features is None:
-                    n_cond_features = ncf
+                cols = [series_df]
+            for series in cols:
+                result = self._prepare_pretrain_series_data(series)
+                if result is not None:
+                    dataset, ncf = result
+                    datasets.append(dataset)
+                    if n_cond_features is None:
+                        n_cond_features = ncf
 
         if not datasets:
             raise RuntimeError(
@@ -458,14 +459,15 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
 
         datasets = []
         for series_df in all_series:
-            if isinstance(series_df, pd.DataFrame) and series_df.shape[1] == 1:
-                series = series_df.iloc[:, 0]
+            if isinstance(series_df, pd.DataFrame):
+                cols = [series_df.iloc[:, i] for i in range(series_df.shape[1])]
             else:
-                series = series_df
-            result = self._prepare_pretrain_series_data(series)
-            if result is not None:
-                dataset, _ = result
-                datasets.append(dataset)
+                cols = [series_df]
+            for series in cols:
+                result = self._prepare_pretrain_series_data(series)
+                if result is not None:
+                    dataset, _ = result
+                    datasets.append(dataset)
 
         if not datasets:
             raise RuntimeError(
