@@ -313,7 +313,7 @@ class ClaSPSegmentation(BaseDetector):
         profile = pd.Series(self.profiles[0])
         return profile
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns

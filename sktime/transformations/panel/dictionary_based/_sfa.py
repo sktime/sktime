@@ -198,7 +198,7 @@ class SFA(BaseTransformer):
         if not return_pandas_data_series:
             self.set_config(**{"output_conversion": "off"})
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Calculate word breakpoints using MCB or IGB.
 
         Parameters
@@ -257,10 +257,7 @@ class SFA(BaseTransformer):
 
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
-
-        self._is_fitted = True
         self._is_vectorized = False
-        return self
 
     def _transform(self, X, y=None):
         """Transform data into SFA words.

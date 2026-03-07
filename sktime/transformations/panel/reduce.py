@@ -56,7 +56,7 @@ class Tabularizer(BaseTransformer):
         Xt = convert_to(X, to_type="numpyflat", as_scitype="Panel")
         return Xt
 
-    def inverse_transform(self, X, y=None):
+    def _inverse_transform(self, X, y=None):
         """Transform tabular pandas dataframe into nested dataframe.
 
         Parameters
