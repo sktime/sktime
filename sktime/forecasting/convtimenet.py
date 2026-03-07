@@ -339,7 +339,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         dataset = _pytorch.PyTorchTrainDataset(
             y=y,
             seq_len=self.network.seq_len,
-            fh=self._fh.to_relative(self.cutoff)._values[-1],
+            fh=self.network.pred_len,
         )
 
         # Check if we need to drop the last batch to avoid single sample
