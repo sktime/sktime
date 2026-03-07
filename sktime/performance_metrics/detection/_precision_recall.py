@@ -1,6 +1,9 @@
 """Windowed Precision and Recall metrics for detection tasks."""
 
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
+from sktime.performance_metrics.detection.utils._matching import (
+    _count_windowed_matches,
+)
 
 
 class WindowedPrecision(BaseDetectionMetric):
@@ -22,9 +25,7 @@ class WindowedPrecision(BaseDetectionMetric):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.performance_metrics.detection._precision_recall import (
-    ...     WindowedPrecision,
-    ... )
+    >>> from sktime.performance_metrics.detection import WindowedPrecision
     >>> y_true = pd.DataFrame({"ilocs": [2, 5, 8]})
     >>> y_pred = pd.DataFrame({"ilocs": [2, 4, 9]})
     >>> metric = WindowedPrecision(margin=1)
@@ -73,18 +74,7 @@ class WindowedPrecision(BaseDetectionMetric):
         if len(gt) == 0:
             return 0.0
 
-        # Count predicted events that match at least one ground truth event
-        matched_count = 0
-        gt_index = 0
-
-        for pred_bkpt in pred:
-            # Advance gt_index while gt < (pred - margin)
-            while gt_index < len(gt) and gt[gt_index] < pred_bkpt - margin:
-                gt_index += 1
-            # If current gt is within margin, it's a match
-            if gt_index < len(gt) and abs(gt[gt_index] - pred_bkpt) <= margin:
-                matched_count += 1
-
+        matched_count = _count_windowed_matches(pred, gt, margin)
         return matched_count / len(pred)
 
     @classmethod
@@ -124,9 +114,7 @@ class WindowedRecall(BaseDetectionMetric):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.performance_metrics.detection._precision_recall import (
-    ...     WindowedRecall,
-    ... )
+    >>> from sktime.performance_metrics.detection import WindowedRecall
     >>> y_true = pd.DataFrame({"ilocs": [2, 5, 8]})
     >>> y_pred = pd.DataFrame({"ilocs": [2, 4, 9]})
     >>> metric = WindowedRecall(margin=1)
@@ -175,18 +163,7 @@ class WindowedRecall(BaseDetectionMetric):
         if len(pred) == 0:
             return 0.0
 
-        # Count ground truth events that are matched by at least one prediction
-        matched_count = 0
-        pred_index = 0
-
-        for true_bkpt in gt:
-            # Advance pred_index while pred < (true - margin)
-            while pred_index < len(pred) and pred[pred_index] < true_bkpt - margin:
-                pred_index += 1
-            # If current pred is within margin, it's a match
-            if pred_index < len(pred) and abs(pred[pred_index] - true_bkpt) <= margin:
-                matched_count += 1
-
+        matched_count = _count_windowed_matches(gt, pred, margin)
         return matched_count / len(gt)
 
     @classmethod

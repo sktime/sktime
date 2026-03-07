@@ -1,4 +1,7 @@
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
+from sktime.performance_metrics.detection.utils._matching import (
+    _count_windowed_matches,
+)
 
 
 class WindowedF1Score(BaseDetectionMetric):
@@ -50,34 +53,19 @@ class WindowedF1Score(BaseDetectionMetric):
         float
             F1 score, i.e., 2 * precision * recall / (precision + recall).
         """
-        # Convert breakpoints to sorted Python lists
-        # We assume the DataFrame has a column 'ilocs' with integer or float index positions  # noqa: E501
         gt = sorted(y_true["ilocs"].values)
         pred = sorted(y_pred["ilocs"].values)
 
         # Handle edge cases
         if len(gt) == 0 and len(pred) == 0:
-            return 1.0  # No breakpoints to detect, so consider it perfect by convention
+            return 1.0
         if len(gt) == 0:
-            return 0.0  # ground truth is empty but predictions exist => precision = 0 => F1=0  # noqa: E501
+            return 0.0
         if len(pred) == 0:
-            return 0.0  # predictions are empty but ground truth exists => recall = 0 => F1=0  # noqa: E501
-
-        # Count how many ground-truth breakpoints are matched
-        matched_count = 0
-        pred_index = 0
+            return 0.0
 
         margin = self.margin
-
-        for true_bkpt in gt:
-            # Advance pred_index while predicted < (true - margin)
-            while pred_index < len(pred) and pred[pred_index] <= true_bkpt - margin:
-                pred_index += 1
-
-            # If current predicted is within margin, count it as matched
-            if pred_index < len(pred) and abs(pred[pred_index] - true_bkpt) <= margin:
-                matched_count += 1
-                # optional: pred_index += 1 to avoid double-matching the same prediction
+        matched_count = _count_windowed_matches(gt, pred, margin)
 
         # Compute precision and recall
         precision = matched_count / len(pred)
