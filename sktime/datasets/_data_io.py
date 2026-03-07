@@ -293,7 +293,7 @@ def _load_provided_dataset(
             abspath, return_data_type="nested_univ", y_dtype=y_dtype
         )
 
-        X = pd.concat([X_train, X_test])
+        X = pd.concat([X_train, X_test], ignore_index=True)
         X = X.reset_index(drop=True)
         y = np.concatenate([y_train, y_test])
 

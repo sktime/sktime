@@ -73,3 +73,12 @@ def test_load_numpy2d_multivariate_raises(loader):
     """Test that multivariate and/or unequal length raise the correct error."""
     with pytest.raises(ValueError, match="attempting to load into a numpy2d"):
         X, y = loader(return_type="numpy2d")
+
+
+def test_arrow_head_index_unique():
+    """ArrowHead combined train+test loader should return a unique index."""
+    from sktime.datasets import load_arrow_head
+
+    X, y = load_arrow_head(return_X_y=True)
+
+    assert X.index.is_unique
