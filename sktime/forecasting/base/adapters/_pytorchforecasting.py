@@ -519,6 +519,14 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         data = pd.concat([data, time_idx], axis=1)
         # reset multi index to normal columns
         data = data.reset_index(level=list(range(self._index_len)))
+        # Ensure max_prediction_length is an integer to avoid TypeErrors with 
+        # pandas Timedelta arithmetic in modern versions of pandas.
+        if isinstance(max_prediction_length, (pd.Timedelta, np.timedelta64)):
+            max_prediction_length = len(self._fh)
+        elif not isinstance(max_prediction_length, (int, np.integer)):
+            # Fallback for unexpected types to ensure integer arithmetic
+            max_prediction_length = len(self._fh)
+
         training_cutoff = data["_auto_time_idx"].max() - max_prediction_length
         # add a constant column as group id if data only contains only one timeseries
         if self._index_len == 1:
