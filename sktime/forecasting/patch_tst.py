@@ -1,8 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Adapter for using the huggingface PatchTST for forecasting.
-
-Trigger CI to reproduce transformers v5 incompatibility, see issue #XXXX.
-"""
+"""Adapter for using the huggingface PatchTST for forecasting."""
 
 __author__ = [
     "julian-fong",
