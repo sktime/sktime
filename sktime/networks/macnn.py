@@ -57,7 +57,6 @@ class MACNNNetwork(BaseDeepNetwork):
         activation="relu",
     ):
         _check_dl_dependencies(severity="error")
-        _check_dl_dependencies(severity="error")
         super().__init__()
 
         self.activation = activation
