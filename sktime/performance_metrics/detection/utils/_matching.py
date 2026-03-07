@@ -23,7 +23,7 @@ def _count_windowed_matches(targets, candidates, margin):
         Sorted list of target iloc positions (ascending).
     candidates : list of int or float
         Sorted list of candidate iloc positions (ascending).
-    margin : int
+    margin : int or float
         Maximum absolute iloc difference for a match.
 
     Returns
