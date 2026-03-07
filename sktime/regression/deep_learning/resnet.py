@@ -43,6 +43,9 @@ class ResNetRegressor(BaseDeepRegressor):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
+    n_filters : tuple of int, default = (64, 128, 128)
+        Number of filters per residual block. Length of the tuple
+        determines the number of residual blocks.
 
     References
     ----------
@@ -83,6 +86,7 @@ class ResNetRegressor(BaseDeepRegressor):
         activation_hidden="relu",
         use_bias=True,
         optimizer=None,
+        n_filters=(64, 128, 128),
     ):
         _check_dl_dependencies(severity="error")
 
@@ -97,13 +101,15 @@ class ResNetRegressor(BaseDeepRegressor):
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
+        self.n_filters = n_filters
 
         super().__init__()
 
         self.history = None
         self._network = ResNetNetwork(
-            activation_hidden=self.activation_hidden,
+            activation=self.activation_hidden,
             random_state=random_state,
+            n_filters=self.n_filters,
         )
 
     def build_model(self, input_shape, **kwargs):
