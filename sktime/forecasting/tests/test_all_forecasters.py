@@ -1184,6 +1184,157 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         pretrained_params = estimator_instance.get_pretrained_params()
         assert len(pretrained_params) > 0, "Expected pretrained attributes to be set"
 
+    def test_pretrain_predict_without_fit(self, estimator_instance, n_columns):
+        """Test that predict() after pretrain() without fit() raises error.
+
+        Pretrained state is not fitted state. Users who forget to call fit()
+        after pretrain() should get a clear NotFittedError, not a crash.
+        """
+        if not estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,),
+            min_timepoints=10,
+            max_timepoints=10,
+            n_columns=n_columns,
+        )
+        estimator_instance.pretrain(y_panel)
+        assert estimator_instance.state == "pretrained"
+
+        with pytest.raises(NotFittedError):
+            estimator_instance.predict(fh=[1, 2, 3])
+
+    def test_pretrain_fitted_params_separation(self, estimator_instance, n_columns):
+        """Test that get_fitted_params excludes pretrained attributes.
+
+        Pretrained params and fitted params are distinct namespaces.
+        After pretrain + fit, get_fitted_params() must not contain any keys
+        that belong to the pretrained namespace.
+        """
+        if not estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,),
+            min_timepoints=10,
+            max_timepoints=10,
+            n_columns=n_columns,
+        )
+        estimator_instance.pretrain(y_panel)
+
+        pretrained_keys = set(estimator_instance.get_pretrained_params().keys())
+        assert len(pretrained_keys) > 0, "Expected pretrained params after pretrain()"
+
+        y_series = _make_series(n_columns=n_columns)
+        estimator_instance.fit(y_series, fh=[1, 2, 3])
+
+        fitted_keys = set(estimator_instance.get_fitted_params().keys())
+
+        overlap = pretrained_keys & fitted_keys
+        assert overlap == set(), (
+            f"get_fitted_params() contains pretrained attributes: {overlap}. "
+            f"Pretrained keys: {pretrained_keys}, fitted keys: {fitted_keys}"
+        )
+
+    def test_pretrain_clone_preserves_state(self, estimator_instance, n_columns):
+        """Test that clone() preserves pretrained state.
+
+        The clone plugin is used in cross-validation and grid search.
+        After pretrain + clone, the clone must retain pretrained attributes
+        and state, but must not be in fitted state.
+        """
+        if not estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,),
+            min_timepoints=10,
+            max_timepoints=10,
+            n_columns=n_columns,
+        )
+        estimator_instance.pretrain(y_panel)
+
+        pretrained_params_orig = estimator_instance.get_pretrained_params()
+        assert len(pretrained_params_orig) > 0
+
+        cloned = estimator_instance.clone()
+
+        # clone must be in pretrained state
+        assert cloned.state == "pretrained", (
+            f"Cloned forecaster state should be 'pretrained', got '{cloned.state}'"
+        )
+
+        # clone must have all pretrained attributes
+        pretrained_params_cloned = cloned.get_pretrained_params()
+        for key in pretrained_params_orig:
+            assert key in pretrained_params_cloned, (
+                f"Pretrained attribute '{key}' missing after clone(). "
+                f"Original keys: {list(pretrained_params_orig.keys())}, "
+                f"cloned keys: {list(pretrained_params_cloned.keys())}"
+            )
+
+        # clone must still be usable: fit + predict should work
+        y_series = _make_series(n_columns=n_columns, n_timepoints=20)
+        fh = ForecastingHorizon([1, 2, 3])
+        cloned.fit(y_series, fh=fh)
+        assert cloned.state == "fitted"
+
+        y_pred = cloned.predict()
+        assert len(y_pred) == 3
+
+    def test_pretrain_network_preserved_by_fit(self, estimator_instance, n_columns):
+        """Test that fit() does not rebuild the network after pretrain().
+
+        For PyTorch-based forecasters, the pretrained network object must
+        survive fit(). If _fit rebuilds the network unconditionally,
+        pretrained weights are lost and pretraining becomes a no-op.
+
+        Non-neural forecasters (no ``network`` attribute) are skipped.
+        """
+        if not estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(5,),
+            min_timepoints=15,
+            max_timepoints=15,
+            n_columns=n_columns,
+        )
+        estimator_instance.pretrain(y_panel)
+
+        # Only test forecasters that have a network attribute (PyTorch-based)
+        if not hasattr(estimator_instance, "network"):
+            return None
+
+        net_id_before = id(estimator_instance.network)
+
+        y_series = _make_series(n_columns=n_columns, n_timepoints=20)
+        estimator_instance.fit(y_series, fh=[1, 2, 3])
+
+        net_id_after = id(estimator_instance.network)
+        assert net_id_before == net_id_after, (
+            f"{estimator_instance.__class__.__name__}._fit() rebuilt the network "
+            f"after pretrain(), destroying pretrained weights. "
+            f"The network object must be preserved when pretrained."
+        )
+
 
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
     """Module level tests for all global forecasters."""
