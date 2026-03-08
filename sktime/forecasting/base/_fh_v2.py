@@ -35,7 +35,15 @@ __all__ = ["ForecastingHorizon"]
 import numpy as np
 
 from sktime.forecasting.base._fh_utils import PandasFHConverter
-from sktime.forecasting.base._fh_values import FHValues, FHValueType, validate_freq
+from sktime.forecasting.base._fh_values import (
+    FHValues,
+    FHValueType,
+)  # remove this later
+from sktime.forecasting.base._freq_mnemonic import validate_freq
+
+# sentinel for distinguishing "not provided" from None in clone()
+_UNSET = object()
+
 
 # <check></check>
 # this is the marker left to mark all delayed checks
@@ -43,19 +51,27 @@ from sktime.forecasting.base._fh_values import FHValues, FHValueType, validate_f
 
 
 class ForecastingHorizon:
-    """Forecasting horizon with pandas-decoupled internals.
+    """Represents the time points to forecast, relative or absolute.
+
+    A forecasting horizon specifies which future (or past) time points a
+    forecaster should predict. It accepts a wide range of input types:
+    plain integers, pandas PeriodIndex, DatetimeIndex, TimedeltaIndex, etc.
+    and normalizes them internally to a sorted, deduplicated int64 numpy
+    array of integer steps (period ordinals for absolute, step counts for
+    relative). Temporal inputs that cannot be immediately converted to
+    integer steps (e.g. freq-less TimedeltaIndex) are stored as raw
+    nanoseconds and converted when frequency information becomes available.
 
     Parameters
     ----------
     values : int, list, np.ndarray, range, pd.Index, pd.Timedelta,
-        pd.offsets.BaseOffset, or FHValues
+        pd.offsets.BaseOffset
         Values of forecasting horizon.
         Supported types without pandas dependency:
         - ``int`` or ``np.integer`` : single integer step
         - ``list[int]`` : list of integer steps
-        - ``np.ndarray`` : integer, timedelta64, or datetime64 array
+        - ``np.ndarray`` : integer or timedelta64 array
         - ``range`` : Python range object
-        - ``FHValues`` : pre-constructed internal representation
         Supported pandas types (delegated to PandasFHConverter):
         - ``pd.PeriodIndex``, ``pd.DatetimeIndex``, ``pd.TimedeltaIndex``
         - ``pd.RangeIndex``, ``pd.Index`` (integer or timedelta dtype)
@@ -72,15 +88,20 @@ class ForecastingHorizon:
         - Period and Timestamp values are always absolute
         Note: integer values are compatible with both relative and absolute
         interpretations. For integers, pass ``is_relative=False`` explicitly
-        if absolute is intended, as the default inference interprets it as relative.
+        if absolute is intended, as the default inference interprets it as
+        relative.
     freq : str, pd.Index, pd.Period, pandas offset, or sktime forecaster,
         optional (default=None)
         Frequency information for the horizon values.
-        When values already carry frequency (e.g., pd.PeriodIndex,
-        pd.DatetimeIndex, or pd.TimedeltaIndex), provided ``freq`` must match the
-        values' frequency, otherwise a ValueError is raised.
-        When values do not carry frequency (e.g. int, list, np.ndarray), ``freq``
-        is used directly if provided.
+        When values already carry frequency (e.g. ``pd.PeriodIndex``,
+        ``pd.DatetimeIndex`` with freq, or ``pd.TimedeltaIndex`` with freq),
+        provided ``freq`` must match the values' frequency, otherwise a
+        ValueError is raised.
+        When values do not carry frequency (e.g. int, list, np.ndarray,
+        or freq-less ``pd.TimedeltaIndex``), ``freq`` is used directly if
+        provided. For freq-less ``pd.TimedeltaIndex``, values are stored as
+        raw nanoseconds until freq is assigned (via this parameter or later
+        through the ``freq`` setter).
 
     Examples
     --------
