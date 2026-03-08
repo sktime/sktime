@@ -21,6 +21,10 @@ class ResNetNetwork(BaseDeepNetwork):
     n_filters : tuple of int, optional (default = (64, 128, 128))
         Number of filters for each residual block. The length of the tuple
         determines the number of residual blocks.
+    kernel_sizes : tuple of int, default = (8, 5, 3)
+        Kernel sizes for the three conv layers in each residual block.
+    padding : str, default = "same"
+        Padding type for all conv layers.
 
     References
     ----------
@@ -40,12 +44,21 @@ class ResNetNetwork(BaseDeepNetwork):
         "python_dependencies": ["tensorflow"],
     }
 
-    def __init__(self, random_state=0, activation="relu", n_filters=(64, 128, 128)):
+    def __init__(
+        self,
+        random_state=0,
+        activation="relu",
+        n_filters=(64, 128, 128),
+        kernel_sizes=(8, 5, 3),
+        padding="same",
+    ):
         _check_dl_dependencies(severity="error")
         super().__init__()
         self.random_state = random_state
         self.activation = activation
         self.n_filters = n_filters
+        self.kernel_sizes = kernel_sizes
+        self.padding = padding
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
@@ -70,21 +83,21 @@ class ResNetNetwork(BaseDeepNetwork):
         # stack residual blocks; number of blocks = len(self.n_filters)
         for filters in self.n_filters:
 
-            # conv block: 3 conv layers with decreasing kernel sizes
+            # conv block: 3 conv layers with kernel sizes from self.kernel_sizes
             conv_x = keras.layers.Conv1D(
-                filters=filters, kernel_size=8, padding="same"
+                filters=filters, kernel_size=self.kernel_sizes[0], padding=self.padding
             )(x)
             conv_x = keras.layers.BatchNormalization()(conv_x)
             conv_x = keras.layers.Activation(self.activation)(conv_x)
 
             conv_y = keras.layers.Conv1D(
-                filters=filters, kernel_size=5, padding="same"
+                filters=filters, kernel_size=self.kernel_sizes[1], padding=self.padding
             )(conv_x)
             conv_y = keras.layers.BatchNormalization()(conv_y)
             conv_y = keras.layers.Activation(self.activation)(conv_y)
 
             conv_z = keras.layers.Conv1D(
-                filters=filters, kernel_size=3, padding="same"
+                filters=filters, kernel_size=self.kernel_sizes[2], padding=self.padding
             )(conv_y)
             conv_z = keras.layers.BatchNormalization()(conv_z)
 
@@ -93,7 +106,7 @@ class ResNetNetwork(BaseDeepNetwork):
                 shortcut = keras.layers.BatchNormalization()(x)
             else:
                 shortcut = keras.layers.Conv1D(
-                    filters=filters, kernel_size=1, padding="same"
+                    filters=filters, kernel_size=1, padding=self.padding
                 )(x)
                 shortcut = keras.layers.BatchNormalization()(shortcut)
 

@@ -46,6 +46,10 @@ class ResNetRegressor(BaseDeepRegressor):
     n_filters : tuple of int, default = (64, 128, 128)
         Number of filters per residual block. Length of the tuple
         determines the number of residual blocks.
+    kernel_sizes : tuple of int, default = (8, 5, 3)
+        Kernel sizes for the three conv layers in each residual block.
+    padding : str, default = "same"
+        Padding type for all conv layers.
 
     References
     ----------
@@ -87,6 +91,8 @@ class ResNetRegressor(BaseDeepRegressor):
         use_bias=True,
         optimizer=None,
         n_filters=(64, 128, 128),
+        kernel_sizes=(8, 5, 3),
+        padding="same",
     ):
         _check_dl_dependencies(severity="error")
 
@@ -102,6 +108,8 @@ class ResNetRegressor(BaseDeepRegressor):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.n_filters = n_filters
+        self.kernel_sizes = kernel_sizes
+        self.padding = padding
 
         super().__init__()
 
@@ -110,6 +118,8 @@ class ResNetRegressor(BaseDeepRegressor):
             activation=self.activation_hidden,
             random_state=random_state,
             n_filters=self.n_filters,
+            kernel_sizes=self.kernel_sizes,
+            padding=self.padding,
         )
 
     def build_model(self, input_shape, **kwargs):
