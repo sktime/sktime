@@ -48,7 +48,7 @@ def test_irf_on_varmax():
     reason="skip test if required soft dependencies not available",
 )
 def test_additional_irfparams_on_varmax():
-    """Test add. parameters of the ImpulseResponseFunction with airline data on VARMAX."""
+    """Test more ImpulseResponseFunction parameters with airline data on VARMAX."""
     from sktime.forecasting.varmax import VARMAX as skmax
 
     # Convergence and estimation warnings happen regularly in statsmodels too.
@@ -136,7 +136,7 @@ def test_irf_on_dynamic():
     reason="skip test if required soft dependencies not available",
 )
 def test_additional_irfparams_on_dyn():
-    """Test add. parameters of the ImpulseResponseFunctions with airline data on DynFac."""
+    """Test more ImpulseResponseFunction parameters with airline data on DynFac."""
     from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
 
     X = load_airline()
