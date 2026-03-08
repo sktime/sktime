@@ -73,6 +73,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         "capability:multioutput": False,
         "capability:random_state": True,
         "property:randomness": "stochastic",
+        "tests:vm": True,
+        "estimator_type": "classifier",
     }
 
     def __init__(
