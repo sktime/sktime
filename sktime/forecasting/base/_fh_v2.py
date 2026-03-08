@@ -3,8 +3,31 @@
 """
 ForecastingHorizon: pandas-agnostic forecasting horizon implementation.
 
-All pandas-specific logic (type conversions, frequency handling, version detection)
-is delegated to the _fh_utils module.
+Architecture: ForecastingHorizon stores only {_values, _is_relative, _freq,
+_values_are_nanos}. All temporal inputs are normalized to integer steps
+(period ordinals) at construction.
+This means that all internal arithmetic is pure integer math,
+and the only place where pandas logic is needed is in the conversion of inputs to
+this internal representation (PandasFHConverter).
+This design allows ForecastingHorizon to be pandas-free,
+while still supporting all the same input types and frequencies as before.
+All pandas-specific logic is delegated to the _fh_utils module.
+
+Internal state of ForecastingHorizon consists of the following attributes:
+
+``_values``: int64 numpy array — integer steps (period ordinals for
+  absolute, step counts for relative), or raw nanoseconds when
+  ``_values_are_nanos`` is True. Read-only after construction.
+
+``_is_relative``: bool — whether values are relative to training cutoff.
+
+``_freq``: str or None — frequency mnemonic (e.g. ``"M"``, ``"D"``).
+  None for plain integer horizons or when freq has not yet been assigned.
+  The ``freq`` setter is the only deliberate mutation point on the object.
+
+``_values_are_nanos``: bool — True when values are raw nanoseconds
+  pending conversion to integer steps (e.g. freq-less TimedeltaIndex input).
+  Set to False once freq is assigned via the ``freq`` setter.
 """
 
 __all__ = ["ForecastingHorizon"]
