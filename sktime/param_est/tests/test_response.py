@@ -71,7 +71,6 @@ def test_additional_irfparams_on_varmax():
     assert actual == expected
 
 
-
 @pytest.mark.skipif(
     not _check_estimator_deps(ImpulseResponseFunction, severity="none"),
     reason="skip test if required soft dependencies not available",

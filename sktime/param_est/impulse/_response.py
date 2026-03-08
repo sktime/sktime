@@ -84,8 +84,15 @@ class ImpulseResponseFunction(BaseParamFitter):
         to the free parameters. Default is False.
 
 
-    extend_model=None, missing ...####################
-    extend_kwargs=None, missing ...########################
+    extend_model : None
+        Used in Statsmodels for a special handling of matrix terms that are time-varying
+        but irrelevant for impulse response functions. Thus not integrated for this purpose.
+        For more Info see MLEModel class in statsmodels mlemodel.py and the functions: 
+        get_prediction(), _get_extension_time_varying_matrices(), simulate(). Datatype not
+        shown in statsmodels, looks like bool.
+
+    extend_kwargs : None, Used with extend_model. Datatype not shown in statsmodels, 
+        looks like bool.
 
     Attributes
     ----------
