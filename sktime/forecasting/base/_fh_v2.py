@@ -41,9 +41,6 @@ from sktime.forecasting.base._fh_values import (
 )  # remove this later
 from sktime.forecasting.base._freq_mnemonic import validate_freq
 
-# sentinel for distinguishing "not provided" from None in clone()
-_UNSET = object()
-
 # <check></check>
 # this is the marker left to mark all delayed checks
 # all occurences must be removed/addressed before merging this code
@@ -112,7 +109,7 @@ class ForecastingHorizon:
     >>> fh.is_relative
     True
     >>> fh.to_numpy()
-    numpy.ndarray([1, 2, 3])
+    array([1, 2, 3])
     """
 
     def __init__(
@@ -122,47 +119,26 @@ class ForecastingHorizon:
         freq=None,
     ):
         # convert values to internal representation
-        # canonical path: plain Python/numpy types — no pandas needed
-        if isinstance(values, (int, np.integer)):
-            self._values = np.array([int(values)], dtype=np.int64)
-            self._freq = None
-            self._values_are_nanos = False
-            inferred_is_relative = True
-        elif isinstance(values, range):
-            self._values = np.array(list(values), dtype=np.int64)
-            self._freq = None
-            self._values_are_nanos = False
-            inferred_is_relative = True
-        elif isinstance(values, np.ndarray):
-            self._init_from_ndarray(values)
-            inferred_is_relative = True  # int and np.timedelta64 default to relative
-        elif (
+        # both paths return (values, is_relative, freq, values_are_nanos)
+        if isinstance(values, (int, np.integer, range, np.ndarray)) or (
             isinstance(values, list)
             and len(values) > 0
             and isinstance(values[0], (int, np.integer))
         ):
-            for i, v in enumerate(values[1:], start=1):
-                if not isinstance(v, (int, np.integer)):
-                    raise TypeError(
-                        f"Element at index 0 is of type "
-                        f"{type(values[0]).__name__}, but element at "
-                        f"index {i} is {type(v).__name__}. "
-                        "All list elements must be of the same type."
-                    )
-            self._values = np.array(values, dtype=np.int64)
-            self._freq = None
-            self._values_are_nanos = False
-            inferred_is_relative = True
+            # canonical path: plain Python/numpy types — no pandas needed
+            vals, inferred_is_relative, freq_val, nanos_flag = self._coerce_canonical(
+                values
+            )
         # coerced path: pandas types and non-int lists — delegate to converter
         else:
-            vals, is_rel, freq_val, nanos_flag = PandasFHConverter.to_internal(values)
-            self._values = vals
-            self._freq = freq_val
-            self._values_are_nanos = nanos_flag
-            inferred_is_relative = is_rel
+            vals, inferred_is_relative, freq_val, nanos_flag = (
+                PandasFHConverter.to_internal(values)
+            )
 
-        # sort and deduplicate values
-        self._values = np.unique(self._values)
+        # sort, deduplicate, and store
+        self._values = np.unique(vals)
+        self._freq = freq_val
+        self._values_are_nanos = nanos_flag
 
         # handle empty arrays
         if len(self._values) == 0:
@@ -180,6 +156,64 @@ class ForecastingHorizon:
 
         # lock values array against accidental mutation
         self._values.flags.writeable = False
+
+    @staticmethod
+    def _coerce_canonical(values):
+        """Coerce canonical (non-pandas) values to internal representation.
+
+        Handles int, np.integer, range, np.ndarray, and list[int].
+
+        Parameters
+        ----------
+        values : int, np.integer, range, np.ndarray, or list[int]
+            Input values.
+
+        Returns
+        -------
+        tuple of (np.ndarray, bool, str or None, bool)
+            (values_array, inferred_is_relative, freq, values_are_nanos)
+            Same order as PandasFHConverter.to_internal.
+        """
+        inferred_is_relative = True
+        freq = None
+        values_are_nanos = False
+
+        if isinstance(values, (int, np.integer)):
+            arr = np.array([int(values)], dtype=np.int64)
+            return arr, inferred_is_relative, freq, values_are_nanos
+
+        if isinstance(values, range):
+            arr = np.array(list(values), dtype=np.int64)
+            return arr, inferred_is_relative, freq, values_are_nanos
+
+        if isinstance(values, np.ndarray):
+            if values.ndim != 1:
+                raise ValueError(f"Expected 1-D array, got {values.ndim}-D array")
+            if len(values) == 0:
+                raise ValueError("Forecasting horizon values must not be empty.")
+            if np.issubdtype(values.dtype, np.timedelta64):
+                arr = values.astype("timedelta64[ns]").view(np.int64).copy()
+                values_are_nanos = True
+                return arr, inferred_is_relative, freq, values_are_nanos
+            if np.issubdtype(values.dtype, np.integer):
+                arr = values.astype(np.int64).copy()
+                return arr, inferred_is_relative, freq, values_are_nanos
+            raise TypeError(
+                f"np.ndarray with dtype {values.dtype} is not supported. "
+                f"Expected integer or timedelta64 dtype."
+            )
+
+        # list[int]
+        for i, v in enumerate(values[1:], start=1):
+            if not isinstance(v, (int, np.integer)):
+                raise TypeError(
+                    f"Element at index 0 is of type "
+                    f"{type(values[0]).__name__}, but element at "
+                    f"index {i} is {type(v).__name__}. "
+                    "All list elements must be of the same type."
+                )
+        arr = np.array(values, dtype=np.int64)
+        return arr, inferred_is_relative, freq, values_are_nanos
 
     @staticmethod
     def _resolve_is_relative(is_relative, inferred_is_relative, values):
@@ -227,37 +261,6 @@ class ForecastingHorizon:
                 )
 
         return is_relative
-
-    def _init_from_ndarray(self, values: np.ndarray):
-        """Initialize from a numpy array, inferring type from dtype.
-
-        Parameters
-        ----------
-        values : np.ndarray
-            1-D numpy array with integer or timedelta64 dtype.
-        """
-        if values.ndim != 1:
-            raise ValueError(f"Expected 1-D array, got {values.ndim}-D array")
-        if len(values) == 0:
-            raise ValueError("Forecasting horizon values must not be empty.")
-
-        if np.issubdtype(values.dtype, np.timedelta64):
-            # store as nanoseconds, pending conversion when freq arrives
-            self._values = values.astype("timedelta64[ns]").view(np.int64).copy()
-            self._freq = None
-            self._values_are_nanos = True
-            return
-
-        if np.issubdtype(values.dtype, np.integer):
-            self._values = values.astype(np.int64).copy()
-            self._freq = None
-            self._values_are_nanos = False
-            return
-
-        raise TypeError(
-            f"np.ndarray with dtype {values.dtype} is not supported. "
-            f"Expected integer or timedelta64 dtype."
-        )
 
     def _new(self, fhvalues=None, is_relative=None):
         """Create a new ForecastingHorizon bypassing __init__ conversion.
