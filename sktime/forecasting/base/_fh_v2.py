@@ -119,19 +119,21 @@ class ForecastingHorizon:
         is_relative: bool | None = None,
         freq=None,
     ):
-        # --- convert values to internal FHValues representation ---
-        # canonical path: already internal (used by _new)
-        if isinstance(values, FHValues):
-            self._fhvalues = values
+        # convert values to internal representation
         # canonical path: plain Python/numpy types — no pandas needed
-        elif isinstance(values, (int, np.integer)):
-            arr = np.array([int(values)], dtype=np.int64)
-            self._fhvalues = FHValues(arr, FHValueType.INT)
+        if isinstance(values, (int, np.integer)):
+            self._values = np.array([int(values)], dtype=np.int64)
+            self._freq = None
+            self._values_are_nanos = False
+            inferred_is_relative = True
         elif isinstance(values, range):
-            arr = np.array(list(values), dtype=np.int64)
-            self._fhvalues = FHValues(arr, FHValueType.INT)
+            self._values = np.array(list(values), dtype=np.int64)
+            self._freq = None
+            self._values_are_nanos = False
+            inferred_is_relative = True
         elif isinstance(values, np.ndarray):
-            self._fhvalues = self._ndarray_to_internal(values)
+            self._init_from_ndarray(values)
+            inferred_is_relative = True  # int and np.timedelta64 default to relative
         elif (
             isinstance(values, list)
             and len(values) > 0
@@ -145,33 +147,51 @@ class ForecastingHorizon:
                         f"index {i} is {type(v).__name__}. "
                         "All list elements must be of the same type."
                     )
-            arr = np.array(values, dtype=np.int64)
-            self._fhvalues = FHValues(arr, FHValueType.INT)
+            self._values = np.array(values, dtype=np.int64)
+            self._freq = None
+            self._values_are_nanos = False
+            inferred_is_relative = True
         # coerced path: pandas types and non-int lists — delegate to converter
         else:
-            self._fhvalues = PandasFHConverter.to_internal(values)
+            vals, is_rel, freq_val, nanos_flag = PandasFHConverter.to_internal(values)
+            self._values = vals
+            self._freq = freq_val
+            self._values_are_nanos = nanos_flag
+            inferred_is_relative = is_rel
 
-        # --- set freq via setter (single gate for validation) ---
+        # sort and deduplicate values
+        self._values = np.unique(self._values)
+
+        # handle empty arrays
+        if len(self._values) == 0:
+            self._freq = None
+            self._values_are_nanos = False
+
+        # set freq via setter (single gate for validation)
         if freq is not None:
             self.freq = freq
 
-        # --- determine is_relative ---
+        # determine is_relative
         if is_relative is not None:
             if not isinstance(is_relative, bool):
                 raise TypeError("`is_relative` must be a boolean or None")
-            if is_relative and not self._fhvalues.is_relative_type():
-                raise TypeError(
-                    f"`values` type {self._fhvalues.value_type.name} is "
-                    f"not compatible with `is_relative=True`."
-                )
-            if not is_relative and not self._fhvalues.is_absolute_type():
-                raise TypeError(
-                    f"`values` type {self._fhvalues.value_type.name} is "
-                    f"not compatible with `is_relative=False`."
-                )
+            if inferred_is_relative is not None and is_relative != inferred_is_relative:
+                # integers are compatible with both relative and absolute,
+                # so only raise when the type strictly implies one interpretation
+                # (e.g. PeriodIndex is always absolute, TimedeltaIndex always relative)
+                if not isinstance(values, (int, np.integer, list, range, np.ndarray)):
+                    raise ValueError(
+                        f"Conflict between inferred is_relative={inferred_is_relative} "
+                        f"and provided is_relative={is_relative}. Please resolve the "
+                        "conflict by providing a consistent `is_relative` value or "
+                        "adjusting the input `values`."
+                    )
             self._is_relative = is_relative
         else:
-            self._is_relative = self._infer_is_relative(self._fhvalues.value_type)
+            self._is_relative = inferred_is_relative
+
+        # lock values array against accidental mutation
+        self._values.flags.writeable = False
 
     @staticmethod
     def _infer_is_relative(value_type: FHValueType) -> bool:
