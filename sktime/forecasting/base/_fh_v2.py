@@ -356,6 +356,11 @@ class ForecastingHorizon:
 
         old_freq = self._freq
 
+        if old_freq is not None and old_freq != new_freq:
+            raise ValueError(
+                f"Frequencies do not match: current={old_freq!r}, new={new_freq!r}"
+            )
+
         # if values are nanos, convert to steps using the new freq
         if self._values_are_nanos:
             new_values = PandasFHConverter.nanos_to_steps(self._values, new_freq)
@@ -365,11 +370,6 @@ class ForecastingHorizon:
             self._freq = new_freq
             return
 
-        # normal path: first assignment or confirmation
-        if old_freq is not None and old_freq != new_freq:
-            raise ValueError(
-                f"Frequencies do not match: current={old_freq!r}, new={new_freq!r}"
-            )
         self._freq = new_freq
 
     # core conversion methods
