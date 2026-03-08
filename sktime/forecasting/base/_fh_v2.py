@@ -287,9 +287,8 @@ class ForecastingHorizon:
             New instance.
         """
         obj = object.__new__(cls)
-        assert len(values) == 0 or np.all(np.diff(values) > 0), (
-            "_create expects sorted, unique values"
-        )
+        if len(values) > 0 and not np.all(np.diff(values) > 0):
+            raise ValueError("_create expects sorted, unique values")
         obj._values = values
         obj._values.flags.writeable = False
         obj._is_relative = is_relative
@@ -315,31 +314,23 @@ class ForecastingHorizon:
     @property
     def freq(self) -> str | None:
         """Frequency string, or None."""
-        return self._fhvalues.freq
+        return self.freq
 
     @freq.setter
     def freq(self, obj) -> None:
         """Set frequency from string, pd.Index, pd.offset, or forecaster.
 
-        For string inputs, the frequency is validated against accepted
-        standard time series frequencies (e.g. ``"M"``, ``"D"``, ``"2h"``).
-        If validation fails, a fallback check via pandas ``to_offset`` is
-        attempted before raising an error.
+        If the FH has _values_are_nanos=True (freq-less TimedeltaIndex),
+        setting freq triggers conversion of nanosecond values to integer
+        steps.
 
-        For non-string inputs (pd.Index, pd.offsets.BaseOffset, forecaster),
-        frequency is extracted and normalized via PandasFHConverter.
-
-        If the FHValues already carry a frequency (inferred from values),
-        the new frequency must match, otherwise a ValueError is raised.
+        If the FH already carries a frequency, the new frequency must match,
+        otherwise a ValueError is raised.
 
         Parameters
         ----------
         obj : str, pd.Index, pd.offsets.BaseOffset, or forecaster
             Object carrying frequency information.
-            When str, must be a valid frequency mnemonic, optionally
-            with an integer multiplier prefix.
-            Accepted base frequencies: Y, Q, M, W, D, h, min, s, ms, us, ns.
-            Examples: ``"M"``, ``"2D"``, ``"4h"``, ``"15min"``.
 
         Raises
         ------
@@ -360,13 +351,26 @@ class ForecastingHorizon:
         else:
             new_freq = PandasFHConverter.extract_freq(obj)
 
-        old_freq = self._fhvalues.freq
-        if old_freq is not None and new_freq is not None and old_freq != new_freq:
+        if new_freq is None:
+            return
+
+        old_freq = self._freq
+
+        # if values are nanos, convert to steps using the new freq
+        if self._values_are_nanos:
+            new_values = PandasFHConverter.nanos_to_steps(self._values, new_freq)
+            new_values.flags.writeable = False
+            self._values = new_values
+            self._values_are_nanos = False
+            self._freq = new_freq
+            return
+
+        # normal path: first assignment or confirmation
+        if old_freq is not None and old_freq != new_freq:
             raise ValueError(
                 f"Frequencies do not match: current={old_freq!r}, new={new_freq!r}"
             )
-        if new_freq is not None:
-            self._fhvalues = self._fhvalues._new(freq=new_freq)
+        self._freq = new_freq
 
     # core conversion methods
 
