@@ -44,10 +44,59 @@ from sktime.forecasting.base._freq_mnemonic import validate_freq
 # sentinel for distinguishing "not provided" from None in clone()
 _UNSET = object()
 
-
 # <check></check>
 # this is the marker left to mark all delayed checks
 # all occurences must be removed/addressed before merging this code
+
+# types whose is_relative is compatible with both True and False
+_RELATIVE_NEUTRAL_TYPES = (int, np.integer, list, range, np.ndarray)
+
+
+def _resolve_is_relative(is_relative, inferred_is_relative, values):
+    """Resolve is_relative from user-provided and inferred values.
+
+    Parameters
+    ----------
+    is_relative : bool or None
+        User-provided is_relative flag.
+    inferred_is_relative : bool
+        is_relative inferred from the type of values.
+    values : object
+        Original values passed to ForecastingHorizon.__init__.
+
+    Returns
+    -------
+    bool
+        Resolved is_relative value.
+
+    Raises
+    ------
+    TypeError
+        If is_relative is not a boolean or None.
+    ValueError
+        If is_relative conflicts with the inferred value and the input
+        type strictly implies one interpretation (e.g. PeriodIndex is always
+        absolute, TimedeltaIndex is always relative).
+    """
+    if is_relative is None:
+        return inferred_is_relative
+
+    if not isinstance(is_relative, bool):
+        raise TypeError("`is_relative` must be a boolean or None")
+
+    if inferred_is_relative is not None and is_relative != inferred_is_relative:
+        # integers are compatible with both relative and absolute,
+        # so only raise when the type strictly implies one interpretation
+        # (e.g. PeriodIndex is always absolute, TimedeltaIndex always relative)
+        if not isinstance(values, _RELATIVE_NEUTRAL_TYPES):
+            raise ValueError(
+                f"Conflict between inferred is_relative={inferred_is_relative} "
+                f"and provided is_relative={is_relative}. Please resolve the "
+                "conflict by providing a consistent `is_relative` value or "
+                "adjusting the input `values`."
+            )
+
+    return is_relative
 
 
 class ForecastingHorizon:
@@ -172,23 +221,9 @@ class ForecastingHorizon:
             self.freq = freq
 
         # determine is_relative
-        if is_relative is not None:
-            if not isinstance(is_relative, bool):
-                raise TypeError("`is_relative` must be a boolean or None")
-            if inferred_is_relative is not None and is_relative != inferred_is_relative:
-                # integers are compatible with both relative and absolute,
-                # so only raise when the type strictly implies one interpretation
-                # (e.g. PeriodIndex is always absolute, TimedeltaIndex always relative)
-                if not isinstance(values, (int, np.integer, list, range, np.ndarray)):
-                    raise ValueError(
-                        f"Conflict between inferred is_relative={inferred_is_relative} "
-                        f"and provided is_relative={is_relative}. Please resolve the "
-                        "conflict by providing a consistent `is_relative` value or "
-                        "adjusting the input `values`."
-                    )
-            self._is_relative = is_relative
-        else:
-            self._is_relative = inferred_is_relative
+        self._is_relative = _resolve_is_relative(
+            is_relative, inferred_is_relative, values
+        )
 
         # lock values array against accidental mutation
         self._values.flags.writeable = False
