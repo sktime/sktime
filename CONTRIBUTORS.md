@@ -472,6 +472,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <tr>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/vollmersj"><img src="https://avatars2.githubusercontent.com/u/12613127?v=4?s=100" width="100px;" alt="vollmersj"/><br /><sub><b>vollmersj</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=vollmersj" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/xiaobenbenecho"><img src="https://avatars.githubusercontent.com/u/17461849?v=4?s=100" width="100px;" alt="xiaobenbenecho"/><br /><sub><b>xiaobenbenecho</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=xiaobenbenecho" title="Code">💻</a></td>
+      <td align="center" valign="top" width="11.11%"><a href="https://github.com/AranavMahalpure"><img src="https://avatars.githubusercontent.com/u/17461849?v=4?s=100" width="100px;" alt="AranavMahalpure"/><br /><sub><b>AranavMahalpure</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=AranavMahalpure" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
