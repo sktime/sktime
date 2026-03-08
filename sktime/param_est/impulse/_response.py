@@ -84,8 +84,8 @@ class ImpulseResponseFunction(BaseParamFitter):
         to the free parameters. Default is False.
 
 
-    extend_model=None, missing ...
-    extend_kwargs=None, missing ...
+    extend_model=None, missing ...####################
+    extend_kwargs=None, missing ...########################
 
     Attributes
     ----------
@@ -97,7 +97,7 @@ class ImpulseResponseFunction(BaseParamFitter):
         models the impulse responses are only given for steps elements (to avoid having
         to unexpectedly provide updated time-varying matrices).
 
-    Examples (rewrite to new rewrote of self._irf)
+    Examples
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.impulse import ImpulseResponseFunction
@@ -127,16 +127,13 @@ class ImpulseResponseFunction(BaseParamFitter):
     Time Series Models, https://arxiv.org/html/2305.19089v5
 
     .. [2] Statsmodels (last visited 15/02/2026):
-        https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.
-        varmax.VARMAX.impulse_responses.html
+        https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.varmax.VARMAX.impulse_responses.html
 
     .. [3] Statsmodels (last visited 15/02/2026):
-        https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.
-        dynamic_factor.DynamicFactor.impulse_responses.html
+        https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.dynamic_factor.DynamicFactor.impulse_responses.html
 
     .. [4] Statsmodels (last visited 01/03/2026):
-        https://www.statsmodels.org/stable/generated/statsmodels.tsa.vector_ar.
-        irf.IRAnalysis.html
+        https://www.statsmodels.org/stable/generated/statsmodels.tsa.vector_ar.irf.IRAnalysis.html
     """
 
     def test():
