@@ -129,8 +129,8 @@ class ForecastingHorizon:
             vals, inferred_is_relative, freq_val, nanos_flag = self._coerce_canonical(
                 values
             )
-        # coerced path: pandas types and non-int lists — delegate to converter
         else:
+            # coerced path: pandas types and non-int lists — delegate to converter
             vals, inferred_is_relative, freq_val, nanos_flag = (
                 PandasFHConverter.to_internal(values)
             )
