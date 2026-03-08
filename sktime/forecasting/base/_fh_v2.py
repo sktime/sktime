@@ -262,27 +262,40 @@ class ForecastingHorizon:
 
         return is_relative
 
-    def _new(self, fhvalues=None, is_relative=None):
-        """Create a new ForecastingHorizon bypassing __init__ conversion.
+    @classmethod
+    def _create(cls, values, is_relative, freq=None, values_are_nanos=False):
+        """Construct a ForecastingHorizon without coercion or validation.
+
+        Fast-path constructor for internal use. Creates a new instance
+        directly from pre-computed attributes, bypassing ``__init__``.
+        Values must already be sorted and deduplicated.
 
         Parameters
         ----------
-        fhvalues : FHValues, optional
-            New FHValues instance. If None, copies current.
-        is_relative : bool, optional
-            New is_relative flag. If None, uses current.
+        values : np.ndarray
+            Sorted, deduplicated int64 array of values.
+        is_relative : bool
+            Whether the horizon is relative.
+        freq : str or None, optional
+            Frequency string.
+        values_are_nanos : bool, optional (default=False)
+            Whether values are raw nanoseconds.
 
         Returns
         -------
         ForecastingHorizon
-            New instance with replaced attributes.
+            New instance.
         """
-        new_obj = object.__new__(ForecastingHorizon)
-        new_obj._fhvalues = fhvalues if fhvalues is not None else self._fhvalues.copy()
-        new_obj._is_relative = (
-            is_relative if is_relative is not None else self._is_relative
+        obj = object.__new__(cls)
+        assert len(values) == 0 or np.all(np.diff(values) > 0), (
+            "_create expects sorted, unique values"
         )
-        return new_obj
+        obj._values = values
+        obj._values.flags.writeable = False
+        obj._is_relative = is_relative
+        obj._freq = freq
+        obj._values_are_nanos = values_are_nanos
+        return obj
 
     @property
     def is_relative(self) -> bool:
