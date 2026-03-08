@@ -1,12 +1,12 @@
-from sktime.param_est.impulse import ImpulseResponseFunction
-import numpy as np
-from sktime.datasets import load_airline
-import pandas as pd
-from statsmodels.tsa.statespace.varmax import VARMAX as statsmax
-from sktime.forecasting.varmax import VARMAX as skmax
-
-from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor as statsdyn
-from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
+#from sktime.param_est.impulse import ImpulseResponseFunction
+#import numpy as np
+#from sktime.datasets import load_airline
+#import pandas as pd
+#from statsmodels.tsa.statespace.varmax import VARMAX as statsmax
+#from sktime.forecasting.varmax import VARMAX as skmax
+#
+#from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor as statsdyn
+#from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
 
 
 #X = load_airline()
@@ -50,25 +50,25 @@ from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
 #
 #print(np.round(sktime_res2.get_fitted_params()["irf"].sum()))
 
-print("#####################")
-
-np.random.seed(42)
-    
-X1 = load_airline().values.astype(float)
-X1_stationary = np.diff(np.log(X1))
-noise = np.random.normal(scale=0.05, size=len(X1_stationary))
-X2_stationary = 0.6 * X1_stationary + 0.4 * np.roll(X1_stationary, 1) + noise
-
-df = pd.DataFrame({"X1": X1_stationary[1:], "X2": X2_stationary[1:]})
-df.index = pd.date_range("1949-02-01", periods=len(df), freq="MS")
-
-sk_model = skmax(order=(1, 2), trend ="c").fit(df)
-sk_res = ImpulseResponseFunction(sk_model, cumulative=True, steps= 4)
-sk_res.fit(df)
-
-actual = np.round(sk_res.get_fitted_params()["irf"].sum())
-expected = 1.0
-print(actual)
+#print("#####################")
+#
+#np.random.seed(42)
+#    
+#X1 = load_airline().values.astype(float)
+#X1_stationary = np.diff(np.log(X1))
+#noise = np.random.normal(scale=0.05, size=len(X1_stationary))
+#X2_stationary = 0.6 * X1_stationary + 0.4 * np.roll(X1_stationary, 1) + noise
+#
+#df = pd.DataFrame({"X1": X1_stationary[1:], "X2": X2_stationary[1:]})
+#df.index = pd.date_range("1949-02-01", periods=len(df), freq="MS")
+#
+#sk_model = skmax(order=(1, 2), trend ="c").fit(df)
+#sk_res = ImpulseResponseFunction(sk_model, cumulative=True, steps= 4)
+#sk_res.fit(df)
+#
+#actual = np.round(sk_res.get_fitted_params()["irf"].sum())
+#expected = 1.0
+#print(actual)
 
 
 
