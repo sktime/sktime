@@ -52,53 +52,6 @@ _UNSET = object()
 _RELATIVE_NEUTRAL_TYPES = (int, np.integer, list, range, np.ndarray)
 
 
-def _resolve_is_relative(is_relative, inferred_is_relative, values):
-    """Resolve is_relative from user-provided and inferred values.
-
-    Parameters
-    ----------
-    is_relative : bool or None
-        User-provided is_relative flag.
-    inferred_is_relative : bool
-        is_relative inferred from the type of values.
-    values : object
-        Original values passed to ForecastingHorizon.__init__.
-
-    Returns
-    -------
-    bool
-        Resolved is_relative value.
-
-    Raises
-    ------
-    TypeError
-        If is_relative is not a boolean or None.
-    ValueError
-        If is_relative conflicts with the inferred value and the input
-        type strictly implies one interpretation (e.g. PeriodIndex is always
-        absolute, TimedeltaIndex is always relative).
-    """
-    if is_relative is None:
-        return inferred_is_relative
-
-    if not isinstance(is_relative, bool):
-        raise TypeError("`is_relative` must be a boolean or None")
-
-    if inferred_is_relative is not None and is_relative != inferred_is_relative:
-        # integers are compatible with both relative and absolute,
-        # so only raise when the type strictly implies one interpretation
-        # (e.g. PeriodIndex is always absolute, TimedeltaIndex always relative)
-        if not isinstance(values, _RELATIVE_NEUTRAL_TYPES):
-            raise ValueError(
-                f"Conflict between inferred is_relative={inferred_is_relative} "
-                f"and provided is_relative={is_relative}. Please resolve the "
-                "conflict by providing a consistent `is_relative` value or "
-                "adjusting the input `values`."
-            )
-
-    return is_relative
-
-
 class ForecastingHorizon:
     """Represents the time points to forecast, relative or absolute.
 
@@ -221,7 +174,7 @@ class ForecastingHorizon:
             self.freq = freq
 
         # determine is_relative
-        self._is_relative = _resolve_is_relative(
+        self._is_relative = ForecastingHorizon._resolve_is_relative(
             is_relative, inferred_is_relative, values
         )
 
@@ -229,81 +182,81 @@ class ForecastingHorizon:
         self._values.flags.writeable = False
 
     @staticmethod
-    def _infer_is_relative(value_type: FHValueType) -> bool:
-        """Infer is_relative from value type.
+    def _resolve_is_relative(is_relative, inferred_is_relative, values):
+        """Resolve is_relative from user-provided and inferred values.
 
         Parameters
         ----------
-        value_type : FHValueType
-            The semantic type of the stored values.
+        is_relative : bool or None
+            User-provided is_relative flag.
+        inferred_is_relative : bool
+            is_relative inferred from the type of values.
+        values : object
+            Original values passed to ForecastingHorizon.__init__.
 
         Returns
         -------
         bool
-            Inferred is_relative flag.
+            Resolved is_relative value.
 
         Raises
         ------
         TypeError
-            If is_relative cannot be inferred for the given value type.
+            If is_relative is not a boolean or None.
+        ValueError
+            If is_relative conflicts with the inferred value and the input
+            type strictly implies one interpretation (e.g. PeriodIndex is always
+            absolute, TimedeltaIndex is always relative).
         """
-        if value_type == FHValueType.TIMEDELTA:
-            return True
-        elif value_type in (FHValueType.PERIOD, FHValueType.DATETIME):
-            return False
-        elif value_type == FHValueType.INT:
-            # INT can be either relative or absolute;
-            # default to relative for backwards compatibility with _fh.py
-            return True
-        else:
-            raise TypeError(
-                f"Cannot infer is_relative for value type {value_type.name}"
-            )
+        if is_relative is None:
+            return inferred_is_relative
 
-    @staticmethod
-    def _ndarray_to_internal(values: np.ndarray) -> FHValues:
-        """Convert 1-D numpy array to FHValues, inferring type from dtype.
+        if not isinstance(is_relative, bool):
+            raise TypeError("`is_relative` must be a boolean or None")
+
+        if inferred_is_relative is not None and is_relative != inferred_is_relative:
+            # integers are compatible with both relative and absolute,
+            # so only raise when the type strictly implies one interpretation
+            # (e.g. PeriodIndex is always absolute, TimedeltaIndex always relative)
+            if not isinstance(values, _RELATIVE_NEUTRAL_TYPES):
+                raise ValueError(
+                    f"Conflict between inferred is_relative={inferred_is_relative} "
+                    f"and provided is_relative={is_relative}. Please resolve the "
+                    "conflict by providing a consistent `is_relative` value or "
+                    "adjusting the input `values`."
+                )
+
+        return is_relative
+
+    def _init_from_ndarray(self, values: np.ndarray):
+        """Initialize from a numpy array, inferring type from dtype.
 
         Parameters
         ----------
         values : np.ndarray
-            1-D numpy array with integer, timedelta64, or datetime64 dtype.
-
-        Returns
-        -------
-        FHValues
-            Internal representation.
-
-        Raises
-        ------
-        ValueError
-            If array is not 1-D or is empty.
-        TypeError
-            If array dtype is not supported.
+            1-D numpy array with integer or timedelta64 dtype.
         """
         if values.ndim != 1:
             raise ValueError(f"Expected 1-D array, got {values.ndim}-D array")
         if len(values) == 0:
             raise ValueError("Forecasting horizon values must not be empty.")
 
-        # timedelta64 and datetime64 checked before integer as a defensive
-        # measure — some numpy versions consider datetime64 a subtype of
-        # integer, which would cause incorrect classification.
         if np.issubdtype(values.dtype, np.timedelta64):
-            arr = values.astype("timedelta64[ns]").view(np.int64).copy()
-            return FHValues(arr, FHValueType.TIMEDELTA)
-
-        if np.issubdtype(values.dtype, np.datetime64):
-            arr = values.astype("datetime64[ns]").view(np.int64).copy()
-            return FHValues(arr, FHValueType.DATETIME)
+            # store as nanoseconds, pending conversion when freq arrives
+            self._values = values.astype("timedelta64[ns]").view(np.int64).copy()
+            self._freq = None
+            self._values_are_nanos = True
+            return
 
         if np.issubdtype(values.dtype, np.integer):
-            arr = values.astype(np.int64).copy()
-            return FHValues(arr, FHValueType.INT)
+            self._values = values.astype(np.int64).copy()
+            self._freq = None
+            self._values_are_nanos = False
+            return
 
         raise TypeError(
             f"np.ndarray with dtype {values.dtype} is not supported. "
-            f"Expected integer, timedelta64, or datetime64 dtype."
+            f"Expected integer or timedelta64 dtype."
         )
 
     def _new(self, fhvalues=None, is_relative=None):
