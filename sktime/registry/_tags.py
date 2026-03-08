@@ -835,6 +835,39 @@ class fit_is_empty(_BaseTag):
     }
 
 
+class estimator__composite(_BaseTag):
+    """Property: Whether the estimator is a composite estimator.
+
+    - String name: ``"estimator:composite"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``False``
+    - Default: ``False``
+
+    A composite estimator is one that contains other estimators as parameters,
+    such as pipelines, ensembles, or meta-estimators.
+
+    Composite estimators are often tagged with all possible capability values
+    (since at least one parameter combination may enable a capability), which
+    means they appear in many capability-based searches even when the user is
+    looking for concrete algorithms.
+
+    If the tag is ``True``, the estimator is composite and wraps other estimators.
+    If the tag is ``False``, the estimator is a concrete algorithm.
+
+    This tag can be used with ``all_estimators`` via ``filter_tags`` or the
+    ``skip_composites`` argument to exclude composite estimators from search results.
+    """
+
+    _tags = {
+        "tag_name": "estimator:composite",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "is the estimator a composite (wraps other estimators)?",
+        "user_facing": True,
+    }
+
+
 class property__randomness(_BaseTag):
     """Property: Degree of randomness vs determinism of the estimator.
 
