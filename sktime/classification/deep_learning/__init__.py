@@ -12,6 +12,7 @@ __all__ = [
     "MLPClassifier",
     "MVTSTransformerClassifier",
     "ResNetClassifier",
+    "ResNetClassifierTorch",
     "SimpleRNNClassifier",
     "SimpleRNNClassifierTorch",
     "TapNetClassifier",
@@ -39,7 +40,10 @@ from sktime.classification.deep_learning.mlp import MLPClassifier
 from sktime.classification.deep_learning.mvts_transformer import (
     MVTSTransformerClassifier,
 )
-from sktime.classification.deep_learning.resnet import ResNetClassifier
+from sktime.classification.deep_learning.resnet import (
+    ResNetClassifier,
+    ResNetClassifierTorch,
+)
 from sktime.classification.deep_learning.rnn import (
     SimpleRNNClassifier,
     SimpleRNNClassifierTorch,
