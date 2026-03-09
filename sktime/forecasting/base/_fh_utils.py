@@ -170,13 +170,56 @@ class PandasFHConverter:
         )
 
     @staticmethod
-    def _list_to_internal(values: list) -> FHValues:
-        """Convert list of supported scalar types to FHValues."""
+    def _list_to_internal(values: list) -> tuple:
+        """Convert list of pandas/temporal scalar types to internal tuple.
+
+        Dispatches on the type of the first element. All elements must be
+        of the same type (enforced via ``_check_list_homogeneity``).
+
+        Supported element types and their conversion:
+
+        - ``pd.Timedelta``, ``np.timedelta64``, ``datetime.timedelta``:
+        Converted to ``pd.TimedeltaIndex``. If freq is inferrable,
+        normalized to integer steps; otherwise stored as nanoseconds
+        with ``values_are_nanos=True``.
+        - ``pd.Period``: Converted to ``pd.PeriodIndex``, ordinals
+        extracted via ``.asi8``. Always absolute.
+        - ``pd.Timestamp``: Converted to ``pd.DatetimeIndex``, then to
+        ``pd.PeriodIndex`` via ``.to_period(freq)``. Freq must be
+        inferrable, otherwise raises. Always absolute.
+        - ``pd.offsets.BaseOffset``: Each offset is converted to
+        ``pd.Timedelta``, then follows the timedelta path.
+
+        Note: ``list[int]`` is not handled here — it is handled by
+        ``ForecastingHorizon._coerce_canonical`` before reaching the
+        converter.
+
+        Parameters
+        ----------
+        values : list
+            Non-empty list of homogeneous pandas/temporal scalars.
+
+        Returns
+        -------
+        tuple of (np.ndarray, bool, str or None, bool)
+            (values, is_relative, freq, values_are_nanos).
+            Same format as ``to_internal``.
+
+        Raises
+        ------
+        ValueError
+            If ``values`` is empty, or if list of Timestamps has no
+            inferrable freq.
+        TypeError
+            If element type is not supported, or if list elements are
+            not homogeneous.
+        """
         from datetime import timedelta as _timedelta
 
         if len(values) == 0:
             raise ValueError("Forecasting horizon values must not be empty.")
 
+        # timedelta types -> TimedeltaIndex path
         # pd.Timedelta, np.timedelta64, and stdlib datetime.timedelta are
         # combined into a single case because they all represent the same
         # concept and pd.TimedeltaIndex accepts all three.
@@ -184,33 +227,46 @@ class PandasFHConverter:
         if isinstance(values[0], _timedelta_types):
             PandasFHConverter._check_list_homogeneity(values, _timedelta_types)
             idx = pd.TimedeltaIndex(values)
-            arr = idx.asi8.copy()
-            return FHValues(arr, FHValueType.TIMEDELTA)
+            freq_str = PandasFHConverter._freqstr(idx)
+            if freq_str is not None:
+                steps = PandasFHConverter._timedelta_to_steps(idx.asi8.copy(), freq_str)
+                return (steps, True, freq_str, False)
+            else:
+                return (idx.asi8.copy(), True, None, True)
 
-        # period values — extract ordinals via PeriodIndex
+        # period values -> ordinals via PeriodIndex
         if isinstance(values[0], pd.Period):
             PandasFHConverter._check_list_homogeneity(values, pd.Period)
             idx = pd.PeriodIndex(values)
             arr = idx.asi8.copy()
             freq_str = PandasFHConverter._freqstr(idx)
-            return FHValues(arr, FHValueType.PERIOD, freq=freq_str)
+            return (arr, False, freq_str, False)
 
-        # timestamp values — extract nanoseconds via DatetimeIndex
+        # timestamp values -> ordinals via DatetimeIndex -> PeriodIndex
         if isinstance(values[0], pd.Timestamp):
             PandasFHConverter._check_list_homogeneity(values, pd.Timestamp)
             idx = pd.DatetimeIndex(values)
-            arr = idx.asi8.copy()
             freq_str = PandasFHConverter._freqstr(idx)
-            tz = str(idx.tz) if idx.tz is not None else None
-            return FHValues(arr, FHValueType.DATETIME, freq=freq_str, timezone=tz)
+            if freq_str is None:
+                raise ValueError(
+                    "List of Timestamps without inferrable freq is not "
+                    "supported. Provide freq explicitly via "
+                    "ForecastingHorizon(values, freq=...)."
+                )
+            arr = idx.to_period(freq_str).asi8.copy()
+            return (arr, False, freq_str, False)
 
-        # offset objects — convert to Timedelta first
+        # offset objects -> timedelta path
         if isinstance(values[0], pd.offsets.BaseOffset):
             PandasFHConverter._check_list_homogeneity(values, pd.offsets.BaseOffset)
             tds = [pd.Timedelta(v) for v in values]
             idx = pd.TimedeltaIndex(tds)
-            arr = idx.asi8.copy()
-            return FHValues(arr, FHValueType.TIMEDELTA)
+            freq_str = PandasFHConverter._freqstr(idx)
+            if freq_str is not None:
+                steps = PandasFHConverter._timedelta_to_steps(idx.asi8.copy(), freq_str)
+                return (steps, True, freq_str, False)
+            else:
+                return (idx.asi8.copy(), True, None, True)
 
         raise TypeError(
             f"List with element type {type(values[0]).__name__} is not supported."
