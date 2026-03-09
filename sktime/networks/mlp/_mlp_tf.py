@@ -23,14 +23,19 @@ class MLPNetwork(BaseDeepNetwork):
     dropout : float or tuple, default=(0.1, 0.2, 0.2, 0.3)
         The dropout rate for the hidden layers.
         If float, the same rate is used for all layers.
-        If tuple, length must equal n_layers + 1, where the first
-        n_layers elements correspond to dropout before each hidden
-        Dense layer, and the last element is the trailing dropout
-        after the final hidden layer.
+        If tuple, length must equal n_layers + 1,
+        where the first n_layers elements correspond
+        to dropout applied before each hidden Dense layer,
+        and the last element corresponds to the dropout
+        applied after the final hidden layer (before the output layer).
     n_layers : int, default=3
         Number of hidden Dense layers in the MLP.
     hidden_dim : int, default=500
         Number of units in each hidden Dense layer.
+        If int, the same number of units is used for all hidden layers.
+        If list or tuple, length must equal n_layers, with each element
+        specifying the number of units for the corresponding hidden layer.
+
 
     References
     ----------
@@ -56,6 +61,33 @@ class MLPNetwork(BaseDeepNetwork):
         hidden_dim=500,
     ):
         _check_dl_dependencies(severity="error")
+        # Validate dropout length against n_layers at init time
+        if isinstance(dropout, tuple):
+            if len(dropout) != n_layers + 1:
+                raise ValueError(
+                    "If `dropout` is a tuple, its length must"
+                    " equal n_layers + 1. "
+                    f"Got len(dropout)={len(dropout)} but n_layers={n_layers},"
+                    f"so expected length {n_layers + 1}."
+                )
+        elif not isinstance(dropout, float):
+            raise TypeError(
+                "`dropout` should either be of type float or tuple. "
+                f"But found the type to be: {type(dropout)}"
+            )
+        # Validate hidden_dim length against n_layers at init time
+        if isinstance(hidden_dim, (list, tuple)):
+            if len(hidden_dim) != n_layers:
+                raise ValueError(
+                    "If `hidden_dim` is a list or tuple, its length must equal "
+                    f"n_layers. Got len(hidden_dim)={len(hidden_dim)} but "
+                    f"n_layers={n_layers}."
+                )
+        elif not isinstance(hidden_dim, int):
+            raise TypeError(
+                "`hidden_dim` should be an int or a list/tuple of ints. "
+                f"But found the type to be: {type(hidden_dim)}"
+            )
         self.activation = activation
         self.random_state = random_state
         self.dropout = dropout
@@ -82,16 +114,36 @@ class MLPNetwork(BaseDeepNetwork):
             if len(self.dropout) != self.n_layers + 1:
                 raise ValueError(
                     "If `dropout` is a tuple, it must have length equal to the "
-                    "number of hidden layers in the MLP, where each element "
-                    "specifies the rate for the corresponding layer. "
-                    f"tuple must be of length n_layers + 1 = {self.n_layers + 1}. "
-                    f"Found length of dropout to be: {len(self.dropout)}."
+                    "number of hidden layers+1(n_layers +1) in the MLP,"
+                    " where each element corresponds to all hidden Dense"
+                    "layer till final hidden layer(before output layer)."
+                    f"Got len(dropout)={len(self.dropout)} but n_layers="
+                    f"{self.n_layers}, so expected length {self.n_layers + 1}."
                 )
             _dropout = self.dropout
         else:
             raise TypeError(
                 "`dropout` should either be of type float or tuple. "
                 f"But found the type to be: {type(self.dropout)}"
+            )
+
+        # Resolve hidden_dim into a list of length n_layers
+        if isinstance(self.hidden_dim, int):
+            _hidden_dims = [self.hidden_dim] * self.n_layers
+        elif isinstance(self.hidden_dim, (list, tuple)):
+            if len(self.hidden_dim) != self.n_layers:
+                raise ValueError(
+                    "If `hidden_dim` is a list or tuple, it must have length "
+                    "equal to n_layers, with each element specifying the number "
+                    "of units for the corresponding hidden Dense layer. "
+                    f"Got len(hidden_dim)={len(self.hidden_dim)} but n_layers="
+                    f"{self.n_layers}, so expected length {self.n_layers}."
+                )
+            _hidden_dims = list(self.hidden_dim)
+        else:
+            raise TypeError(
+                "`hidden_dim` should be an int or a list/tuple of ints. "
+                f"But found the type to be: {type(self.hidden_dim)}"
             )
 
         from tensorflow import keras
@@ -103,7 +155,7 @@ class MLPNetwork(BaseDeepNetwork):
         x = input_layer_flattened
         for i in range(self.n_layers):
             x = keras.layers.Dropout(_dropout[i])(x)
-            x = keras.layers.Dense(self.hidden_dim, activation=self.activation)(x)
+            x = keras.layers.Dense(_hidden_dims[i], activation=self.activation)(x)
 
         output_layer = keras.layers.Dropout(_dropout[self.n_layers])(x)
         return input_layer, output_layer

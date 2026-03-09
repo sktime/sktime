@@ -50,13 +50,17 @@ class MLPClassifier(BaseDeepClassifier):
         The dropout rate for the hidden layers.
         If float, the same rate is used for all layers.
         If tuple, length must equal n_layers + 1, where the first
-        n_layers elements correspond to dropout before each hidden
-        Dense layer, and the last element is the trailing dropout
-        after the final hidden layer.
+        n_layers elements correspond to dropout applied before each hidden Dense layer,
+        and the last element corresponds to the dropout applied after the final
+        hidden layer (before the output layer).
     n_layers : int, default=3
         Number of hidden Dense layers in the MLP.
     hidden_dim : int, default=500
         Number of units in each hidden Dense layer.
+        If int, the same number of units is used for all hidden layers.
+        If list or tuple, length must equal n_layers, with each element
+        specifying the number of units for the corresponding hidden layer.
+
 
 
     References
@@ -248,7 +252,7 @@ class MLPClassifier(BaseDeepClassifier):
             "n_epochs": 12,
             "batch_size": 6,
             "use_bias": True,
-            "dropout": (0.1, 0.4, 0.6, 0.1, 0.4),
+            "dropout": 0.1,
             "n_layers": 4,
             "hidden_dim": 256,
         }
