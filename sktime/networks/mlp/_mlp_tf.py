@@ -23,9 +23,14 @@ class MLPNetwork(BaseDeepNetwork):
     dropout : float or tuple, default=(0.1, 0.2, 0.2, 0.3)
         The dropout rate for the hidden layers.
         If float, the same rate is used for all layers.
-        If tuple, it must have length equal to number of hidden layers in the MLP,
-        each element specifying the dropout rate for the corresponding hidden layer.
-        Current implementation of the MLP has 4 hidden layers.
+        If tuple, length must equal n_layers + 1, where the first
+        n_layers elements correspond to dropout before each hidden
+        Dense layer, and the last element is the trailing dropout
+        after the final hidden layer.
+    n_layers : int, default=3
+        Number of hidden Dense layers in the MLP.
+    hidden_dim : int, default=500
+        Number of units in each hidden Dense layer.
 
     References
     ----------
@@ -42,11 +47,20 @@ class MLPNetwork(BaseDeepNetwork):
         "python_dependencies": "tensorflow",
     }
 
-    def __init__(self, random_state=0, activation="relu", dropout=(0.1, 0.2, 0.2, 0.3)):
+    def __init__(
+        self,
+        random_state=0,
+        activation="relu",
+        dropout=(0.1, 0.2, 0.2, 0.3),
+        n_layers=3,
+        hidden_dim=500,
+    ):
         _check_dl_dependencies(severity="error")
         self.activation = activation
         self.random_state = random_state
         self.dropout = dropout
+        self.n_layers = n_layers
+        self.hidden_dim = hidden_dim
         super().__init__()
 
     def build_network(self, input_shape, **kwargs):
@@ -63,15 +77,14 @@ class MLPNetwork(BaseDeepNetwork):
         output_layer : a keras layer
         """
         if isinstance(self.dropout, float):
-            _dropout = (self.dropout,) * 4
+            _dropout = (self.dropout,) * (self.n_layers + 1)
         elif isinstance(self.dropout, tuple):
-            if len(self.dropout) != 4:
+            if len(self.dropout) != self.n_layers + 1:
                 raise ValueError(
                     "If `dropout` is a tuple, it must have length equal to the "
                     "number of hidden layers in the MLP, where each element "
                     "specifies the rate for the corresponding layer. "
-                    "The current implementation of the MLP has 4 hidden layers, "
-                    f"hence the tuple must be of length 4. "
+                    f"tuple must be of length n_layers + 1 = {self.n_layers + 1}. "
                     f"Found length of dropout to be: {len(self.dropout)}."
                 )
             _dropout = self.dropout
@@ -87,15 +100,10 @@ class MLPNetwork(BaseDeepNetwork):
         input_layer = keras.layers.Input(input_shape)
         input_layer_flattened = keras.layers.Flatten()(input_layer)
 
-        layer_1 = keras.layers.Dropout(_dropout[0])(input_layer_flattened)
-        layer_1 = keras.layers.Dense(500, activation=self.activation)(layer_1)
+        x = input_layer_flattened
+        for i in range(self.n_layers):
+            x = keras.layers.Dropout(_dropout[i])(x)
+            x = keras.layers.Dense(self.hidden_dim, activation=self.activation)(x)
 
-        layer_2 = keras.layers.Dropout(_dropout[1])(layer_1)
-        layer_2 = keras.layers.Dense(500, activation=self.activation)(layer_2)
-
-        layer_3 = keras.layers.Dropout(_dropout[2])(layer_2)
-        layer_3 = keras.layers.Dense(500, activation=self.activation)(layer_3)
-
-        output_layer = keras.layers.Dropout(_dropout[3])(layer_3)
-
+        output_layer = keras.layers.Dropout(_dropout[self.n_layers])(x)
         return input_layer, output_layer
