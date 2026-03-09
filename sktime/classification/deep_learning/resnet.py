@@ -49,7 +49,8 @@ class ResNetClassifier(BaseDeepClassifier):
         Number of filters per residual block. Length determines number of
         blocks.
     kernel_sizes : tuple of int, default = (8, 5, 3)
-        Kernel sizes for the three conv layers in each residual block.
+        Kernel sizes for conv layers in each residual block. The length
+        of the tuple determines the number of conv layers per block.
     padding : str, default = "same"
         Padding type for all conv layers.
 
