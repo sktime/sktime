@@ -22,7 +22,8 @@ class ResNetNetwork(BaseDeepNetwork):
         Number of filters for each residual block. The length of the tuple
         determines the number of residual blocks.
     kernel_sizes : tuple of int, default = (8, 5, 3)
-        Kernel sizes for the three conv layers in each residual block.
+        Kernel sizes for conv layers in each residual block. The length
+        of the tuple determines the number of conv layers per block.
     padding : str, default = "same"
         Padding type for all conv layers.
 
@@ -83,23 +84,14 @@ class ResNetNetwork(BaseDeepNetwork):
         # stack residual blocks; number of blocks = len(self.n_filters)
         for filters in self.n_filters:
 
-            # conv block: 3 conv layers with kernel sizes from self.kernel_sizes
-            conv_x = keras.layers.Conv1D(
-                filters=filters, kernel_size=self.kernel_sizes[0], padding=self.padding
-            )(x)
-            conv_x = keras.layers.BatchNormalization()(conv_x)
-            conv_x = keras.layers.Activation(self.activation)(conv_x)
-
-            conv_y = keras.layers.Conv1D(
-                filters=filters, kernel_size=self.kernel_sizes[1], padding=self.padding
-            )(conv_x)
-            conv_y = keras.layers.BatchNormalization()(conv_y)
-            conv_y = keras.layers.Activation(self.activation)(conv_y)
-
-            conv_z = keras.layers.Conv1D(
-                filters=filters, kernel_size=self.kernel_sizes[2], padding=self.padding
-            )(conv_y)
-            conv_z = keras.layers.BatchNormalization()(conv_z)
+            out = x
+            for i, kernel_size in enumerate(self.kernel_sizes):
+                out = keras.layers.Conv1D(
+                    filters=filters, kernel_size=kernel_size, padding=self.padding
+                )(out)
+                out = keras.layers.BatchNormalization()(out)
+                if i < len(self.kernel_sizes) - 1:
+                    out = keras.layers.Activation(self.activation)(out)
 
             # shortcut: expand channels if filter count changed, else batch norm only
             if int(x.shape[-1]) == filters:
@@ -110,7 +102,7 @@ class ResNetNetwork(BaseDeepNetwork):
                 )(x)
                 shortcut = keras.layers.BatchNormalization()(shortcut)
 
-            x = keras.layers.add([shortcut, conv_z])
+            x = keras.layers.add([shortcut, out])
             x = keras.layers.Activation(self.activation)(x)
 
         # global average pooling
