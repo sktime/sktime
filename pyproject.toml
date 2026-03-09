@@ -108,6 +108,7 @@ all_extras = [
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
   'xarray; python_version < "3.13"',
+  'tabpfn-time-series',
 ]
 
 # all soft dependencies compatible with pandas 2
@@ -186,6 +187,7 @@ forecasting = [
   "skpro>=2,<2.12.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
+  "tabpfn-time-series",
 ]
 networks = [
   'tensorflow<2.20,>=2.15; python_version < "3.13"',

@@ -1,29 +1,42 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""TabPFN Forecaster for sktime.
-
-Wraps the TabPFN-TS pipeline as an sktime-compatible univariate forecaster.
-Soft dependencies: tabpfn_time_series.
-"""
+"""TabPFN Forecaster for sktime."""
 
 __author__ = ["lucifer4073"]
 __all__ = ["TabPFNForecaster"]
 
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.singleton import _multiton
+
+if _check_soft_dependencies("tabpfn_time_series", severity="none"):
+    from tabpfn_time_series import (
+        TABPFN_DEFAULT_CONFIG,
+        TabPFNMode,
+    )
+    from tabpfn_time_series import (
+        TabPFNTSPipeline as _TabPFNTSPipeline,
+    )
+else:
+
+    class TabPFNMode:  # type: ignore[no-redef]
+        """Stub for ``TabPFNMode`` when ``tabpfn_time_series`` is not installed."""
+
+        CLIENT = "client"
+        LOCAL = "local"
+
+    TABPFN_DEFAULT_CONFIG = {}  # type: ignore[assignment]
+
+    class _TabPFNTSPipeline:  # type: ignore[no-redef]
+        """Stub for ``TabPFNTSPipeline`` when ``tabpfn_time_series``is not installed."""
 
 
 class TabPFNForecaster(BaseForecaster):
     """TabPFN-based zero-shot forecaster for univariate time series.
 
     Wraps ``TabPFNTSPipeline`` from the ``tabpfn_time_series`` package as an
-    sktime-compatible forecaster.  The underlying model is a transformer
-    pre-trained on synthetic time series; no training data is required to fit
-    a useful prior -- fitting merely stores the context series.
-
-    TabPFN can run inference either against the hosted cloud API
-    (``tabpfn_mode="client"``) or against a locally-loaded checkpoint
-    (``tabpfn_mode="local"``).
+    sktime-compatible forecaster.
 
     Parameters
     ----------
@@ -31,21 +44,18 @@ class TabPFNForecaster(BaseForecaster):
         Maximum number of historical observations passed to TabPFN as context.
         Longer contexts improve accuracy but increase memory and compute cost.
         Must be a positive integer.
-    tabpfn_mode : str, default="client"
+    tabpfn_mode : str, default="local"
         Inference backend.  ``"client"`` routes predictions through the
         TabPFN cloud API; ``"local"`` runs inference on the local machine
         using a downloaded model checkpoint.
     tabpfn_output_selection : str, default="median"
         Determines which probabilistic output is returned as the point
         forecast.  Supported values are ``"median"`` and ``"mean"``.
-    ignore_future_covariates_if_missing : bool, default=False
-        If ``True``, covariates present in the context but absent from the
-        prediction horizon are silently ignored rather than raising an error.
 
     Attributes
     ----------
     _pipeline_ : TabPFNTSPipeline
-        Fitted pipeline instance, available after ``fit``.
+        Shared (cached) pipeline instance, available after ``fit``.
     _y_context : pd.Series
         Copy of the training series ``y``, stored for use during prediction.
     _X_context : pd.DataFrame or None
@@ -65,14 +75,11 @@ class TabPFNForecaster(BaseForecaster):
     Only univariate forecasting is supported (``scitype:y = "univariate"``).
     In-sample predictions are not supported (``capability:insample = False``).
 
-    Index types ``pd.PeriodIndex`` and ``pd.DatetimeIndex`` are both handled
-    transparently.  The returned prediction index always matches the type of
-    the training index.
-
     References
     ----------
-    .. [1] Müller, S. et al., "TabPFN: A Transformer That Solves Small
-       Tabular Classification Problems in a Second", ICLR 2023.
+    .. [1] https://github.com/PriorLabs/tabpfn-time-series
+    .. [2] Hoo, L.S.B. et al., "TabPFN-TS: Zero-shot Time Series
+       Forecasting with TabPFNv2", arXiv preprint arXiv:2501.02945, 2025.
 
     Examples
     --------
@@ -91,33 +98,91 @@ class TabPFNForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
+        "capability__pred_int": False,
+        "capability__pred_int__insample": False,
+        "capability__categorical_in_X": True,
+        "capability__pretrain": True,
         "capability:missing_values": True,
         "capability:insample": False,
+        "property__randomness": "probabilistic",
         "python_dependencies": ["tabpfn_time_series"],
-        "authors": ["sktime-contributor"],
+        "authors": ["lucifer4073"],
+        "maintainers": ["lucifer4073"],
+        "python_version": ">=3.10",
+        "tests:skip_by_name": [
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+        ],
     }
 
     def __init__(
         self,
         max_context_length: int = 4096,
-        tabpfn_mode: str = "client",
+        tabpfn_mode: str = "local",
         tabpfn_output_selection: str = "median",
-        ignore_future_covariates_if_missing: bool = False,
     ):
         self.max_context_length = max_context_length
         self.tabpfn_mode = tabpfn_mode
         self.tabpfn_output_selection = tabpfn_output_selection
-        self.ignore_future_covariates_if_missing = ignore_future_covariates_if_missing
 
         super().__init__()
 
+    def _get_pipeline_kwargs(self) -> dict:
+        """Return the kwargs that fully characterise the ``TabPFNTSPipeline``.
+
+        Returns
+        -------
+        dict
+            Keyword arguments used both to construct the pipeline and to
+            derive the multiton cache key.
+        """
+        return {
+            "max_context_length": self.max_context_length,
+            "tabpfn_mode": self.tabpfn_mode,
+            "tabpfn_output_selection": self.tabpfn_output_selection,
+        }
+
+    def _get_unique_key(self) -> str:
+        """Derive a stable string key for the multiton cache.
+
+        Returns
+        -------
+        str
+            Sorted, stringified representation of ``_get_pipeline_kwargs()``.
+        """
+        return str(sorted(self._get_pipeline_kwargs().items()))
+
+    def _load_pipeline(self) -> _TabPFNTSPipeline:
+        """Obtain the shared ``TabPFNTSPipeline`` from the multiton cache.
+
+        Returns
+        -------
+        _TabPFNTSPipeline
+            A ready-to-use pipeline instance.
+        """
+        return _CachedTabPFN(
+            key=self._get_unique_key(),
+            pipeline_kwargs=self._get_pipeline_kwargs(),
+        ).load_pipeline()
+
+    def _ensure_pipeline_loaded(self):
+        """Re-acquire the pipeline if it was lost (e.g., after unpickling)."""
+        if not hasattr(self, "_pipeline_") or self._pipeline_ is None:
+            if getattr(self, "_is_fitted", False):
+                self._pipeline_ = self._load_pipeline()
+
+    def __getstate__(self):
+        """Return a pickleable state dict."""
+        state = self.__dict__.copy()
+        state["_pipeline_"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore instance state and mark pipeline for lazy re-loading."""
+        self.__dict__.update(state)
+
     def _make_context_df(self, y: pd.Series, X: "pd.DataFrame | None") -> pd.DataFrame:
         """Build the flat context DataFrame expected by ``predict_df``.
-
-        Combines the target series and optional covariates into a single
-        DataFrame with columns ``timestamp``, ``target``, and any covariate
-        columns.  The ``item_id`` column is omitted; ``predict_df`` inserts a
-        dummy value for single-series inputs automatically.
 
         Parameters
         ----------
@@ -144,11 +209,6 @@ class TabPFNForecaster(BaseForecaster):
 
     def _make_future_df(self, fh_abs, X: "pd.DataFrame | None") -> pd.DataFrame:
         """Build the flat future DataFrame expected by ``predict_df``.
-
-        Creates a DataFrame covering the requested prediction horizon with
-        optional covariate values.  The ``target`` column is intentionally
-        omitted; ``_preprocess_future`` inside the pipeline inserts NaN
-        values as placeholders.
 
         Parameters
         ----------
@@ -178,15 +238,10 @@ class TabPFNForecaster(BaseForecaster):
     def _get_freq(self):
         """Safely infer the time-series frequency from the context index.
 
-        Handles ``pd.PeriodIndex``, ``pd.DatetimeIndex``, and plain
-        ``pd.Index`` without raising.  For ``pd.DatetimeIndex`` where
-        ``freq`` is ``None``, ``pd.infer_freq`` is used as a fallback.
-
         Returns
         -------
         freq : offset alias str, pd.DateOffset, or None
-            The inferred frequency, or ``None`` if it cannot be determined
-            (e.g. for integer or object indices).
+            The inferred frequency, or ``None`` if it cannot be determined.
         """
         idx = self._y_context.index
         if isinstance(idx, pd.PeriodIndex):
@@ -197,10 +252,6 @@ class TabPFNForecaster(BaseForecaster):
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecaster to training data.
-
-        Instantiates the ``TabPFNTSPipeline`` and stores the training series
-        and covariates for use during prediction.  TabPFN is a zero-shot
-        model, so no gradient updates or parameter estimation occur here.
 
         Parameters
         ----------
@@ -216,23 +267,7 @@ class TabPFNForecaster(BaseForecaster):
         self : TabPFNForecaster
             Reference to the fitted forecaster instance.
         """
-        from tabpfn_time_series import (
-            TABPFN_DEFAULT_CONFIG,
-            TabPFNMode,
-            TabPFNTSPipeline,
-        )
-
-        mode_map = {
-            "client": TabPFNMode.CLIENT,
-            "local": TabPFNMode.LOCAL,
-        }
-
-        self._pipeline_ = TabPFNTSPipeline(
-            max_context_length=self.max_context_length,
-            tabpfn_mode=mode_map.get(self.tabpfn_mode, TabPFNMode.CLIENT),
-            tabpfn_output_selection=self.tabpfn_output_selection,
-            tabpfn_model_config=TABPFN_DEFAULT_CONFIG,
-        )
+        self._pipeline_ = self._load_pipeline()
 
         self._y_context = y.copy()
         self._X_context = X.copy() if X is not None else None
@@ -241,11 +276,6 @@ class TabPFNForecaster(BaseForecaster):
 
     def _predict(self, fh, X=None):
         """Generate point forecasts for the requested horizon.
-
-        Converts the stored context and the requested horizon to the flat
-        DataFrame format required by ``TabPFNTSPipeline.predict_df``, calls
-        the pipeline, and reformats the output to a ``pd.Series`` with the
-        same index type and name as the training series.
 
         Parameters
         ----------
@@ -260,6 +290,8 @@ class TabPFNForecaster(BaseForecaster):
             Predicted values indexed by the absolute forecasting horizon.
             The series name matches the name of the training series ``y``.
         """
+        self._ensure_pipeline_loaded()
+
         fh_abs = fh.to_absolute(self.cutoff)
 
         context_df = self._make_context_df(self._y_context, self._X_context)
@@ -290,8 +322,7 @@ class TabPFNForecaster(BaseForecaster):
         Parameters
         ----------
         parameter_set : str, default="default"
-            Name of the parameter set to return.  Currently only
-            ``"default"`` is supported.
+            Name of the parameter set to return.
 
         Returns
         -------
@@ -304,19 +335,78 @@ class TabPFNForecaster(BaseForecaster):
                 "max_context_length": 512,
                 "tabpfn_mode": "local",
                 "tabpfn_output_selection": "median",
-                "ignore_future_covariates_if_missing": False,
             },
             {
                 "max_context_length": 2048,
                 "tabpfn_mode": "local",
                 "tabpfn_output_selection": "median",
-                "ignore_future_covariates_if_missing": True,
             },
             {
                 "max_context_length": 4096,
                 "tabpfn_mode": "local",
                 "tabpfn_output_selection": "mean",
-                "ignore_future_covariates_if_missing": False,
             },
         ]
         return params_list
+
+
+@_multiton
+class _CachedTabPFN:
+    """Cached ``TabPFNTSPipeline``, ensuring one instance per unique configuration."""
+
+    def __init__(self, key: str, pipeline_kwargs: dict):
+        self.key = key
+        self.pipeline_kwargs = pipeline_kwargs
+        self._pipeline = None
+
+    def load_pipeline(self):
+        """Return the shared pipeline, constructing it on first call.
+
+        Returns
+        -------
+        TabPFNTSPipeline
+            A fully initialised ``TabPFNTSPipeline`` ready for ``predict_df``.
+        """
+        if self._pipeline is not None:
+            return self._pipeline
+
+        from tabpfn_time_series import (
+            TABPFN_DEFAULT_CONFIG,
+            TabPFNMode,
+            TabPFNTSPipeline,
+        )
+
+        mode_map = {
+            "client": TabPFNMode.CLIENT,
+            "local": TabPFNMode.LOCAL,
+        }
+
+        tabpfn_mode_str = self.pipeline_kwargs["tabpfn_mode"]
+
+        if tabpfn_mode_str not in mode_map:
+            raise ValueError(
+                f"tabpfn_mode must be 'local' or 'client', got '{tabpfn_mode_str}'"
+            )
+
+        allowed_output_selections = {"median", "mean"}
+        tabpfn_output_selection = self.pipeline_kwargs["tabpfn_output_selection"]
+        max_context_length = self.pipeline_kwargs["max_context_length"]
+
+        if tabpfn_output_selection not in allowed_output_selections:
+            raise ValueError(
+                f"Invalid `tabpfn_output_selection`: {tabpfn_output_selection!r}. "
+                f"Supported values are {sorted(allowed_output_selections)}."
+            )
+        if not isinstance(max_context_length, int) or max_context_length <= 0:
+            raise ValueError(
+                f"max_context_length must be a positive integer, "
+                f"but got {max_context_length!r}."
+            )
+
+        self._pipeline = TabPFNTSPipeline(
+            max_context_length=max_context_length,
+            tabpfn_mode=mode_map.get(tabpfn_mode_str, TabPFNMode.LOCAL),
+            tabpfn_output_selection=tabpfn_output_selection,
+            tabpfn_model_config=TABPFN_DEFAULT_CONFIG,
+        )
+        return self._pipeline
