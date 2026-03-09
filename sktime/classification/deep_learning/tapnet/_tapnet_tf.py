@@ -1,4 +1,4 @@
-"""Time Convolutional Neural Network (CNN) for classification."""
+"""Time CNN for classification."""
 
 __all__ = [
     "TapNetClassifier",
@@ -17,7 +17,6 @@ class TapNetClassifier(BaseDeepClassifier):
     """Time series attentional prototype network (TapNet), as described in [1]_.
 
     Parameters
-    ----------
     filter_sizes : array of int, default = (256, 256, 128)
         sets the kernel size argument for each convolutional block.
         Controls number of convolutional filters
@@ -66,12 +65,10 @@ class TapNetClassifier(BaseDeepClassifier):
         seed for random
 
     Attributes
-    ----------
     n_classes      : int
         number of classes extracted from the data
 
     References
-    ----------
     .. [1] Zhang et al. Tapnet: Multivariate time series classification with
     attentional prototypical network,
     Proceedings of the AAAI Conference on Artificial Intelligence
@@ -90,7 +87,6 @@ class TapNetClassifier(BaseDeepClassifier):
 
     _tags = {
         # packaging info
-        # --------------
         "authors": ["jnrusson1", "TonyBagnall", "achieveordie", "noxthot"],
         "maintainers": ["jnrusson1", "achieveordie"],
         "python_dependencies": "tensorflow",
@@ -193,14 +189,12 @@ class TapNetClassifier(BaseDeepClassifier):
         happen in fit.
 
         Parameters
-        ----------
         input_shape     : tuple
             The shape of the data fed into the input layer, should be (m, d)
         n_classes       : int
             The number of classes, which becomes the size of the output layer
 
         Returns
-        -------
         output: a compiled Keras model
         """
         import tensorflow as tf
@@ -238,14 +232,12 @@ class TapNetClassifier(BaseDeepClassifier):
         """Fit the classifier on the training set (X, y).
 
         Parameters
-        ----------
         X   : np.ndarray of shape = (n_instances(n), n_dimensions(d), series_length(m))
             Input training samples
         y   : np.ndarray of shape n
             Input training class labels
 
         Returns
-        -------
         self: object
         """
         y_onehot = self._convert_y_to_keras(y)
@@ -273,8 +265,7 @@ class TapNetClassifier(BaseDeepClassifier):
         """Return testing parameter settings for the estimator.
 
         Parameters
-        ----------
-        parameter_set : str, default="default"
+\        parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
@@ -283,7 +274,6 @@ class TapNetClassifier(BaseDeepClassifier):
             probabilities to compare against.
 
         Returns
-        -------
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
