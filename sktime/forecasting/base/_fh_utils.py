@@ -208,23 +208,72 @@ class PandasFHConverter:
         raise ValueError(f"Unknown FHValueType: {vtype}")
 
     # cutoff conversion
+
+    # self note: below method added after vignette exploration
     @staticmethod
-    def cutoff_to_internal(cutoff, freq=None):
-        """Convert cutoff to internal representation.
+    def cutoff_to_steps(cutoff, freq=None):
+        """Convert cutoff to an integer step value (period ordinal).
 
         Parameters
         ----------
         cutoff : pd.Period, pd.Timestamp, int, pd.Index, or np.integer
             Cutoff value. If pd.Index, the last element is used.
+            For ``pd.Period``, if ``freq`` is provided and differs from
+            the Period's own freq, the Period is converted via
+            ``asfreq(freq)`` to produce the correct ordinal.
+            For ``pd.Timestamp`` (including tz-aware), the timestamp is
+            converted to a Period via ``to_period(freq)``. Timezone is
+            handled correctly by pandas.
         freq : str or None
-            Frequency hint.
+            Frequency string. Required for ``pd.Timestamp`` cutoff.
+            Used for ``pd.Period`` cutoff to ensure the ordinal matches
+            the FH's frequency coordinate system.
 
         Returns
         -------
-        tuple of (np.int64, FHValueType, str or None, str or None)
-            (value, value_type, freq, timezone)
+        np.int64
+            Cutoff as integer step (period ordinal for temporal types).
+
+        Raises
+        ------
+        ValueError
+            If cutoff is a Timestamp and freq is not provided.
+        TypeError
+            If cutoff type is not supported.
         """
-        pass
+        # unwrap pd.Index to scalar
+        if isinstance(cutoff, pd.Index):
+            if len(cutoff) == 0:
+                raise ValueError("Cutoff index is empty.")
+            scalar = cutoff[-1]
+            # extract freq from index if not provided
+            if freq is None and hasattr(cutoff, "freq") and cutoff.freq is not None:
+                freq = PandasFHConverter._freqstr(cutoff)
+            return PandasFHConverter.cutoff_to_steps(scalar, freq=freq)
+
+        if isinstance(cutoff, pd.Period):
+            cutoff_freq = PandasFHConverter.normalize_freq(cutoff.freqstr)
+            if freq is not None and cutoff_freq != freq:
+                cutoff = cutoff.asfreq(freq)
+            return np.int64(cutoff.ordinal)
+
+        if isinstance(cutoff, pd.Timestamp):
+            if freq is None:
+                raise ValueError(
+                    "freq is required to convert Timestamp cutoff to "
+                    "integer steps. Provide freq on the ForecastingHorizon "
+                    "or use a PeriodIndex cutoff."
+                )
+            period = cutoff.to_period(freq)
+            return np.int64(period.ordinal)
+
+        if isinstance(cutoff, (int, np.integer)):
+            return np.int64(cutoff)
+
+        raise TypeError(
+            f"Unsupported cutoff type: {type(cutoff).__name__}. "
+            f"Expected pd.Period, pd.Timestamp, int, or pd.Index."
+        )
 
     @staticmethod
     def cutoff_to_pandas(cutoff_internal):
