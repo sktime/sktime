@@ -259,19 +259,28 @@ class PandasFHConverter:
     def extract_freq(obj) -> str | None:
         """Extract and normalize a frequency string from a pandas object.
 
-        Handles pd.Index, pd.Period, pd.offsets.BaseOffset, strings,
-        and objects with a ``cutoff`` attribute (e.g. sktime forecasters).
+         Handles pd.Index, pd.Period, pd.offsets.BaseOffset, strings,
+         and objects with a ``cutoff`` attribute (e.g. sktime forecasters).
 
         Parameters
         ----------
-        obj : pd.Index, pd.Period, pd.offsets.BaseOffset, str, or forecaster
-            Object carrying frequency information.
+        obj : str, pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex,
+             pd.Index, pd.Period, pd.Timestamp, pd.offsets.BaseOffset,
+             or forecaster
+             Object carrying frequency information.
+             Types that always carry freq (``pd.Period``,
+             ``pd.offsets.BaseOffset``) always return a string.
+             Types that may carry freq (``pd.PeriodIndex``,
+             ``pd.DatetimeIndex``, ``pd.TimedeltaIndex``) return a
+             string only if ``.freq`` is set.
+             Types that never carry freq (``pd.Timestamp``, integer
+             ``pd.Index``, ``pd.RangeIndex``) always return None.
 
         Returns
         -------
-        str or None
-            Normalized frequency string, or None if no frequency
-            could be extracted.
+         str or None
+             Normalized frequency string, or None if no frequency
+             could be extracted.
         """
         if isinstance(obj, str):
             try:
@@ -294,7 +303,7 @@ class PandasFHConverter:
         if isinstance(obj, pd.Period):
             return PandasFHConverter.normalize_freq(obj.freqstr)
 
-        if isinstance(obj, (pd.PeriodIndex, pd.DatetimeIndex)):
+        if isinstance(obj, (pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex)):
             return PandasFHConverter._freqstr(obj)
 
         if isinstance(obj, pd.Index):
@@ -330,16 +339,13 @@ class PandasFHConverter:
         #    and add tests for it.
         #    For example, handling both "M" and "ME" for month-end frequencies,
         #    and ensuring that all common aliases are covered.
-        # 5. whether to handle frequency strings in a case-insensitive manner,
-        #    e.g. treating "m" and "M" as the same frequency,
-        #    and whether to add checks for that.
-        # 6. whether to use pandas.tseries.frequencies.to_offset to validate and
+        # 5. whether to use pandas.tseries.frequencies.to_offset to validate and
         #    normalize freq strings, which would leverage pandas'
         #    internal logic and ensure consistency with pandas behavior.
         #    one way of achieving 1. and 2. without hardcoding an alias map
         #    if it succeeds,
         #    use the resulting offset's name as the normalized freq string.
-        # 7. Make the alias map a frozenset to prevent accidental modifications
+        # 6. Make the alias map a frozenset to prevent accidental modifications
         # </check>
         alias_map = {
             "ME": "M",

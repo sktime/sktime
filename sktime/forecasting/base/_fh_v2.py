@@ -329,8 +329,16 @@ class ForecastingHorizon:
 
         Parameters
         ----------
-        obj : str, pd.Index, pd.offsets.BaseOffset, or forecaster
+        obj : str, pd.Index, pd.Period, pd.Timestamp,
+            pd.offsets.BaseOffset, or forecaster
             Object carrying frequency information.
+            Frequency is extracted via ``PandasFHConverter.extract_freq``.
+            Types that always carry freq (``pd.Period``, ``pd.PeriodIndex``,
+            ``pd.offsets.BaseOffset``) will set the frequency.
+            Types that may or may not carry freq (``pd.DatetimeIndex``,
+            ``pd.TimedeltaIndex``) will set freq only if present.
+            Types that never carry freq (``pd.Timestamp``, integer
+            ``pd.Index``) are silently ignored (no-op).
 
         Raises
         ------
