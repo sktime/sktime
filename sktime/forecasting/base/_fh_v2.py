@@ -481,7 +481,7 @@ class ForecastingHorizon:
         """
         return PandasFHConverter.to_pandas_index(self._fhvalues)
 
-    def to_numpy(self, **kwargs) -> np.ndarray:
+    def to_numpy(self) -> np.ndarray:
         """Return forecasting horizon values as numpy array.
 
         Returns
@@ -489,7 +489,7 @@ class ForecastingHorizon:
         np.ndarray
             Numpy array of int64 values.
         """
-        return self._fhvalues.values.copy()
+        return self._values.copy()
 
     def to_absolute_index(self, cutoff=None):
         """Return absolute values as pandas Index.
