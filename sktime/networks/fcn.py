@@ -14,12 +14,20 @@ class FCNNetwork(BaseDeepNetwork):
 
     Parameters
     ----------
-    random_states : int, default = 0
+    random_state : int, default = 0
         seed to any needed random actions
     activation : string, default = "relu"
         activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
+    n_layers : int, default = 3
+        number of convolutional layers in the network.
+    filter_sizes : list or tuple of int, default = [128, 256, 128]
+        number of filters for each convolutional layer.
+        must have length equal to n_layers.
+    kernel_sizes : list or tuple of int, default = [8, 5, 3]
+        kernel size for each convolutional layer.
+        must have length equal to n_layers.
 
     References
     ----------
@@ -45,11 +53,42 @@ class FCNNetwork(BaseDeepNetwork):
         self,
         random_state=0,
         activation="relu",
+        n_layers=3,
+        filter_sizes=None,
+        kernel_sizes=None,
     ):
         super().__init__()
         _check_dl_dependencies(severity="error")
         self.random_state = random_state
         self.activation = activation
+        self.n_layers = n_layers
+        self.filter_sizes = (
+            filter_sizes if filter_sizes is not None else [128, 256, 128]
+        )
+        self.kernel_sizes = kernel_sizes if kernel_sizes is not None else [8, 5, 3]
+
+        if not isinstance(self.filter_sizes, (list, tuple)):
+            raise ValueError(
+                f"filter_sizes must be a list or tuple ,"
+                f"but got type {type(self.filter_sizes)}."
+            )
+        if not isinstance(self.kernel_sizes, (list, tuple)):
+            raise ValueError(
+                f"kernel_sizes must be a list or tuple ,"
+                f"but got type {type(self.kernel_sizes)}."
+            )
+        # filter_sizes length check
+        if len(self.filter_sizes) != self.n_layers:
+            raise ValueError(
+                f"filter_sizes must have length equal to n_layers={self.n_layers} ,"
+                f"but got length {len(self.filter_sizes)}."
+            )
+        # Kernel_sizes length check
+        if len(self.kernel_sizes) != self.n_layers:
+            raise ValueError(
+                f"kernel_sizes must have length equal to n_layers={self.n_layers}, "
+                f"but got length {len(self.kernel_sizes)}."
+            )
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
@@ -68,22 +107,17 @@ class FCNNetwork(BaseDeepNetwork):
 
         input_layer = keras.layers.Input(input_shape)
 
-        conv1 = keras.layers.Conv1D(filters=128, kernel_size=8, padding="same")(
-            input_layer
-        )
-        conv1 = keras.layers.BatchNormalization()(conv1)
-        conv1 = keras.layers.Activation(activation=self.activation)(conv1)
+        x = input_layer
+        for i in range(self.n_layers):
+            x = keras.layers.Conv1D(
+                filters=self.filter_sizes[i],
+                kernel_size=self.kernel_sizes[i],
+                padding="same",
+            )(x)
+            x = keras.layers.BatchNormalization()(x)
+            x = keras.layers.Activation(activation=self.activation)(x)
 
-        conv2 = keras.layers.Conv1D(filters=256, kernel_size=5, padding="same")(conv1)
-        conv2 = keras.layers.BatchNormalization()(conv2)
-        conv2 = keras.layers.Activation(activation=self.activation)(conv2)
-
-        conv3 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv2)
-        conv3 = keras.layers.BatchNormalization()(conv3)
-        conv3 = keras.layers.Activation(activation=self.activation)(conv3)
-
-        gap_layer = keras.layers.GlobalAveragePooling1D()(conv3)
-
+        gap_layer = keras.layers.GlobalAveragePooling1D()(x)
         return input_layer, gap_layer
 
     @classmethod
@@ -109,5 +143,19 @@ class FCNNetwork(BaseDeepNetwork):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
-        params2 = {"random_state": 42}
-        return [params1, params2]
+        params2 = {
+            "random_state": 42,
+            "n_layers": 2,
+            "filter_sizes": [64, 128],
+            "kernel_sizes": [5, 3],
+        }
+
+        # for tuple checking
+        params3 = {
+            "random_state": 1,
+            "n_layers": 2,
+            "filter_sizes": (64, 128),
+            "kernel_sizes": (5, 3),
+        }
+
+        return [params1, params2, params3]
