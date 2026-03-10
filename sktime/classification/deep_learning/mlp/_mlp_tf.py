@@ -55,7 +55,7 @@ class MLPClassifier(BaseDeepClassifier):
         hidden layer (before the output layer).
     n_layers : int, default=3
         Number of hidden Dense layers in the MLP.
-    hidden_dim : int, default=500
+    hidden_dim : int or tuple, default=500
         Number of units in each hidden Dense layer.
         If int, the same number of units is used for all hidden layers.
         If list or tuple, length must equal n_layers, with each element
