@@ -30,7 +30,7 @@ class MLPNetwork(BaseDeepNetwork):
         applied after the final hidden layer (before the output layer).
     n_layers : int, default=3
         Number of hidden Dense layers in the MLP.
-    hidden_dim : int, default=500
+    hidden_dim : int or tuple, default=500
         Number of units in each hidden Dense layer.
         If int, the same number of units is used for all hidden layers.
         If list or tuple, length must equal n_layers, with each element
@@ -110,41 +110,13 @@ class MLPNetwork(BaseDeepNetwork):
         """
         if isinstance(self.dropout, float):
             _dropout = (self.dropout,) * (self.n_layers + 1)
-        elif isinstance(self.dropout, tuple):
-            if len(self.dropout) != self.n_layers + 1:
-                raise ValueError(
-                    "If `dropout` is a tuple, it must have length equal to the "
-                    "number of hidden layers+1(n_layers +1) in the MLP,"
-                    " where each element corresponds to all hidden Dense"
-                    "layer till final hidden layer(before output layer)."
-                    f"Got len(dropout)={len(self.dropout)} but n_layers="
-                    f"{self.n_layers}, so expected length {self.n_layers + 1}."
-                )
-            _dropout = self.dropout
         else:
-            raise TypeError(
-                "`dropout` should either be of type float or tuple. "
-                f"But found the type to be: {type(self.dropout)}"
-            )
+            _dropout = self.dropout
 
-        # Resolve hidden_dim into a list of length n_layers
-        if isinstance(self.hidden_dim, int):
-            _hidden_dims = [self.hidden_dim] * self.n_layers
-        elif isinstance(self.hidden_dim, (list, tuple)):
-            if len(self.hidden_dim) != self.n_layers:
-                raise ValueError(
-                    "If `hidden_dim` is a list or tuple, it must have length "
-                    "equal to n_layers, with each element specifying the number "
-                    "of units for the corresponding hidden Dense layer. "
-                    f"Got len(hidden_dim)={len(self.hidden_dim)} but n_layers="
-                    f"{self.n_layers}, so expected length {self.n_layers}."
-                )
+        if isinstance(self.hidden_dim, (list, tuple)):
             _hidden_dims = list(self.hidden_dim)
         else:
-            raise TypeError(
-                "`hidden_dim` should be an int or a list/tuple of ints. "
-                f"But found the type to be: {type(self.hidden_dim)}"
-            )
+            _hidden_dims = [self.hidden_dim] * self.n_layers
 
         from tensorflow import keras
 
