@@ -772,7 +772,19 @@ class ForecastingHorizon:
         -------
         bool
         """
-        return self._fhvalues.is_contiguous()
+        if len(self._values) <= 1:
+            return True
+        if self._values_are_nanos:
+            # for nanos, check uniform spacing
+            diffs = np.diff(self._values)
+            return bool(np.all(diffs == diffs[0]))
+        # for absolute FH with multi-step freq, ordinals have diffs of mult
+        if not self._is_relative and self._freq is not None:
+            mult = PandasFHConverter.freq_multiplier(self._freq)
+        else:
+            mult = 1
+        expected_len = int(self._values[-1] - self._values[0]) // mult + 1
+        return len(self._values) == expected_len
 
     def get_expected_pred_idx(self, y=None, cutoff=None, sort_by_time=False):
         """Construct expected prediction output index.
@@ -800,44 +812,57 @@ class ForecastingHorizon:
 
     # Dunders -> Arithmatic operators
 
-    def __add__(self, other):
+    @staticmethod
+    def _check_scalar(other):
         if isinstance(other, ForecastingHorizon):
-            result = self._fhvalues.values + other._fhvalues.values
+            raise TypeError(
+                "Arithmetic between two ForecastingHorizon objects is not "
+                "supported. Use scalar operands (int, np.integer)."
+            )
+        return np.int64(other)
+
+    def __add__(self, other):
+        scalar = self._check_scalar(other)
+        if not self._is_relative and self._freq is not None:
+            mult = PandasFHConverter.freq_multiplier(self._freq)
+            result = self._values + scalar * mult
         else:
-            result = self._fhvalues.values + np.int64(other)
-        fhv = self._fhvalues._new(values=result)
-        return self._new(fhvalues=fhv)
+            result = self._values + scalar
+        return self._create(
+            result, self._is_relative, self._freq, self._values_are_nanos
+        )
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __sub__(self, other):
-        if isinstance(other, ForecastingHorizon):
-            result = self._fhvalues.values - other._fhvalues.values
+        scalar = self._check_scalar(other)
+        if not self._is_relative and self._freq is not None:
+            mult = PandasFHConverter.freq_multiplier(self._freq)
+            result = self._values - scalar * mult
         else:
-            result = self._fhvalues.values - np.int64(other)
-        fhv = self._fhvalues._new(values=result)
-        return self._new(fhvalues=fhv)
+            result = self._values - scalar
+        return self._create(
+            result, self._is_relative, self._freq, self._values_are_nanos
+        )
 
     def __rsub__(self, other):
-        # not checking if other is FH here
-        # because __rsub__ is mostly called
-        # when other does not support the operation with FH,
-        # in which case we want to treat other as a scalar.
-        # If other is FH, then other minus self
-        # would have been handled by other.__sub__
-        # and this method would not be called
-        result = np.int64(other) - self._fhvalues.values
-        fhv = self._fhvalues._new(values=result)
-        return self._new(fhvalues=fhv)
+        raise NotImplementedError
 
     def __mul__(self, other):
-        if isinstance(other, ForecastingHorizon):
-            result = self._fhvalues.values * other._fhvalues.values
-        else:
-            result = self._fhvalues.values * np.int64(other)
-        fhv = self._fhvalues._new(values=result)
-        return self._new(fhvalues=fhv)
+        if not self._is_relative and self._freq is not None:
+            raise TypeError(
+                "Multiplication is not supported for absolute "
+                "ForecastingHorizon with frequency."
+            )
+        scalar = self._check_scalar(other)
+        result = self._values * scalar
+        # negative scalar reverses order
+        if scalar < 0:
+            result = np.unique(result)
+        return self._create(
+            result, self._is_relative, self._freq, self._values_are_nanos
+        )
 
     def __rmul__(self, other):
         return self.__mul__(other)
