@@ -813,9 +813,6 @@ class ForecastingHorizon:
             result, self._is_relative, self._freq, self._values_are_nanos
         )
 
-    def __rsub__(self, other):
-        raise NotImplementedError
-
     def __mul__(self, other):
         if not self._is_relative and self._freq is not None:
             raise TypeError(
@@ -857,33 +854,34 @@ class ForecastingHorizon:
 
     def __eq__(self, other):
         if isinstance(other, ForecastingHorizon):
-            return self._fhvalues.values == other._fhvalues.values
-        return self._fhvalues.values == np.int64(other)
+            return (
+                np.array_equal(self._values, other._values)
+                and self._is_relative == other._is_relative
+                and self._freq == other._freq
+                and self._values_are_nanos == other._values_are_nanos
+            )
+        return self._values == np.int64(other)
 
     def __ne__(self, other):
         if isinstance(other, ForecastingHorizon):
-            return self._fhvalues.values != other._fhvalues.values
-        return self._fhvalues.values != np.int64(other)
+            return not self.__eq__(other)
+        return self._values != np.int64(other)
 
     def __lt__(self, other):
-        if isinstance(other, ForecastingHorizon):
-            return self._fhvalues.values < other._fhvalues.values
-        return self._fhvalues.values < np.int64(other)
+        self._check_scalar(other)
+        return self._values < np.int64(other)
 
     def __le__(self, other):
-        if isinstance(other, ForecastingHorizon):
-            return self._fhvalues.values <= other._fhvalues.values
-        return self._fhvalues.values <= np.int64(other)
+        self._check_scalar(other)
+        return self._values <= np.int64(other)
 
     def __gt__(self, other):
-        if isinstance(other, ForecastingHorizon):
-            return self._fhvalues.values > other._fhvalues.values
-        return self._fhvalues.values > np.int64(other)
+        self._check_scalar(other)
+        return self._values > np.int64(other)
 
     def __ge__(self, other):
-        if isinstance(other, ForecastingHorizon):
-            return self._fhvalues.values >= other._fhvalues.values
-        return self._fhvalues.values >= np.int64(other)
+        self._check_scalar(other)
+        return self._values >= np.int64(other)
 
     # Dunders -> container methods len, getitem, max, min
     def __len__(self):
