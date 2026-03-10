@@ -25,23 +25,44 @@ from sktime.utils.validation import (
 class ExpandingWindowSplitter(BaseWindowSplitter):
     r"""Expanding window splitter.
 
-    Split time series repeatedly into an growing training set and a fixed-size test set.
+    Split time series repeatedly into a growing training set and a fixed-size test set.
 
-    Test window is defined by forecasting horizons
+    The training windows start at the first time index and expand by ``step_length``
+    at each fold, starting with an initial window of size ``initial_window``.
+
+    If the time points in the data are :math:`(t_1, t_2, \ldots, t_N)`, the training
+    window for the :math:`n`-th split consists of all indices in the interval
+
+    .. math:: [t_1,\; t_{W + (n-1) \cdot s}]
+
+    where :math:`W` is the ``initial_window`` length and :math:`s` is the
+    ``step_length``.
+
+    The test windows are defined by forecasting horizons
     relative to the end of the training window.
-    It will contain as many indices
+    The test window will contain as many indices
     as there are forecasting horizons provided to the ``fh`` argument.
-    For a forecasating horizon :math:`(h_1,\ldots,h_H)`, the training window will
-    consist of the indices :math:`(k_n+h_1,\ldots,k_n+h_H)`.
+
+    For a forecasting horizon :math:`(h_1,\ldots,h_H)`, the test indices for the
+    :math:`n`-th split will consist of the indices :math:`(k_n+h_1,\ldots,k_n+h_H)`,
+    where :math:`k_n = t_{W + (n-1) \cdot s}` is the end of the :math:`n`-th
+    training window.
+
+    The number of splits is determined by the total length of the time series,
+    up until the last test window that lies within the observed time indices,
+    i.e., the largest integer :math:`n` such that :math:`k_n + h_H \leq t_N`.
+
+    All indices are positional (``iloc``) indices, not label-based (``loc``),
+    and apply to both regular and irregular time indices.
 
     For example for ``initial_window = 5``, ``step_length = 1`` and ``fh = [1, 2, 3]``
     here is a representation of the folds::
 
-    |-----------------------|
-    | * * * * * x x x - - - |
-    | * * * * * * x x x - - |
-    | * * * * * * * x x x - |
-    | * * * * * * * * x x x |
+        |-----------------------|
+        | * * * * * x x x - - - |
+        | * * * * * * x x x - - |
+        | * * * * * * * x x x - |
+        | * * * * * * * * x x x |
 
 
     ``*`` = training fold.
@@ -51,11 +72,16 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     Parameters
     ----------
     fh : int, list or np.array, optional (default=1)
-        Forecasting horizon
+        Forecasting horizon, determines the test window. Should be relative.
+        The test window is determined by applying the forecasting horizon ``fh``
+        to the end of the training window.
     initial_window : int or timedelta or pd.DateOffset, optional (default=10)
-        Window length of initial training fold. If =0, initial training fold is empty.
+        Window length of the initial (first) training fold.
+        At each subsequent fold, the training window expands by ``step_length``.
+        If ``initial_window = 0``, the initial training fold is empty.
     step_length : int or timedelta or pd.DateOffset, optional (default=1)
-        Step length between windows
+        Step length between training windows, i.e., the amount by which
+        the training window expands at each fold.
 
     Examples
     --------
