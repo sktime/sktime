@@ -560,6 +560,35 @@ class PandasFHConverter:
 
     # frequency helper functions
 
+    @staticmethod
+    def freq_multiplier(freq: str | None) -> int:
+        """Return the step multiplier for a frequency string.
+
+        For multi-step frequencies like ``"2D"`` or ``"3M"``, period ordinals
+        have diffs equal to the multiplier per period. This method extracts
+        that multiplier from the frequency string via ``to_offset(freq).n``.
+
+        Used at conversion boundaries (``to_relative``, ``to_absolute``,
+        ``to_absolute_int``, arithmetic, ``_is_contiguous``) to convert
+        between ordinal diffs and step counts.
+
+        Parameters
+        ----------
+        freq : str or None
+            Frequency string. If None, returns 1 (no scaling).
+
+        Returns
+        -------
+        int
+            The multiplier ``n`` from the offset. 1 for simple frequencies
+            (``"D"``, ``"M"``), >1 for multi-step (``"2D"``, ``"3M"``).
+        """
+        if freq is None:
+            return 1
+        from pandas.tseries.frequencies import to_offset
+
+        return to_offset(freq).n
+
     # final check pending for this function
     @staticmethod
     def extract_freq(obj) -> str | None:

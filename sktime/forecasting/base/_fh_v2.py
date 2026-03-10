@@ -424,7 +424,20 @@ class ForecastingHorizon:
             )
 
         cutoff_step = PandasFHConverter.cutoff_to_steps(cutoff, freq=self._freq)
-        relative_vals = self._values - cutoff_step
+        ordinal_diffs = self._values - cutoff_step
+
+        mult = PandasFHConverter.freq_multiplier(self._freq)
+        if mult != 1:
+            remainder = ordinal_diffs % mult
+            if np.any(remainder != 0):
+                raise ValueError(
+                    f"FH values and cutoff are not on the same period grid "
+                    f"for freq={self._freq!r}. Ordinal differences are not "
+                    f"evenly divisible by the frequency multiplier {mult}."
+                )
+            relative_vals = ordinal_diffs // mult
+        else:
+            relative_vals = ordinal_diffs
 
         return self._create(
             values=relative_vals.astype(np.int64),
@@ -476,7 +489,8 @@ class ForecastingHorizon:
             freq = self._freq
 
         cutoff_step = PandasFHConverter.cutoff_to_steps(cutoff, freq=freq)
-        absolute_vals = cutoff_step + values
+        mult = PandasFHConverter.freq_multiplier(freq)
+        absolute_vals = cutoff_step + values * mult
 
         return self._create(
             values=absolute_vals.astype(np.int64),
@@ -572,76 +586,40 @@ class ForecastingHorizon:
         ForecastingHorizon
             Absolute representation as zero-based integer index.
         """
-        # get absolute representation
         absolute = self.to_absolute(cutoff)
-        abs_vals = absolute._fhvalues.values
-        abs_type = absolute._fhvalues.value_type
-        abs_freq = absolute._fhvalues.freq
+        freq = absolute._freq
 
-        # convert start to internal
-        start_val, start_type, start_freq, _ = PandasFHConverter.cutoff_to_internal(
-            start, freq=self.freq
-        )
+        # safeguard: if self already has freq, it must match absolute's freq.
+        # They can only differ if to_absolute introduced a new freq (bug).
+        # self._freq is None is fine — means freq came from cutoff via nanos path.
+        if self._freq is not None and self._freq != freq:
+            raise ValueError(
+                f"Frequency mismatch after to_absolute: "
+                f"self._freq={self._freq!r}, absolute._freq={freq!r}. "
+                f"This should not happen — please report as a bug."
+            )
 
-        # compute zero-based integers
-        if abs_type == FHValueType.PERIOD:
-            integers = abs_vals - start_val
-            # check for frequency mismatch between FH freq, cutoff freq, and start freq
-            freq = None
-            for candidate in (abs_freq, self.freq, start_freq):
-                if candidate is not None:
-                    if freq is None:
-                        freq = candidate
-                    elif candidate != freq:
-                        # below error message may need better wording
-                        # the idea is to flag any mismatch between the three freqs
-                        raise ValueError(
-                            f"Frequency mismatch in to_absolute_int: "
-                            f"abs_freq={abs_freq}, self.freq={self.freq}, "
-                            f"start_freq={start_freq}. All must agree."
-                        )
-            # <check> Can the freq be ever None here? If so, how to handle? </check>
-            # divide by freq multiplier for multi-step freqs
-            if freq is not None:
-                mult = PandasFHConverter.freq_multiplier(freq)
-                if mult != 1:
-                    integers = integers // mult
-            else:
-                # <check>
-                # no freq available
-                # raw ordinal differences may be incorrect for multi-step frequencies
-                # but we have no way to normalize without freq information
-                # should this be flagged as a warning? or an error? or just left as is?
-                # </check>
-                pass
-        elif abs_type == FHValueType.DATETIME:
-            nanos_diff = abs_vals - start_val
-            # check for frequency mismatch between FH freq, cutoff freq, and start freq
-            freq = None
-            for candidate in (abs_freq, self.freq, start_freq):
-                if candidate is not None:
-                    if freq is None:
-                        freq = candidate
-                    elif candidate != freq:
-                        # below error message may need better wording
-                        # the idea is to flag any mismatch between the three freqs
-                        raise ValueError(
-                            f"Frequency mismatch in to_absolute_int: "
-                            f"abs_freq={abs_freq}, self.freq={self.freq}, "
-                            f"start_freq={start_freq}. All must agree."
-                        )
-            if freq is not None:
-                integers = PandasFHConverter.nanos_to_steps(
-                    nanos_diff, freq, ref_nanos=start_val
+        start_step = PandasFHConverter.cutoff_to_steps(start, freq=freq)
+        ordinal_diffs = absolute._values - start_step
+
+        mult = PandasFHConverter.freq_multiplier(freq)
+        if mult != 1:
+            remainder = ordinal_diffs % mult
+            if np.any(remainder != 0):
+                raise ValueError(
+                    f"Start value and FH values are not on the same period "
+                    f"grid for freq={freq!r}. Ordinal differences are not "
+                    f"evenly divisible by the frequency multiplier {mult}."
                 )
-            else:
-                # fall back to raw nanos difference
-                integers = nanos_diff
+            integers = ordinal_diffs // mult
         else:
-            integers = abs_vals - start_val
+            integers = ordinal_diffs
 
-        fhv = FHValues(integers.astype(np.int64), FHValueType.INT, freq=self.freq)
-        return self._new(fhvalues=fhv, is_relative=False)
+        return self._create(
+            values=integers.astype(np.int64),
+            is_relative=False,
+            freq=freq,
+        )
 
     # In-sample and out-of-sample methods
 
