@@ -48,7 +48,7 @@ class TabPFNTSForecaster(BaseForecaster):
     >>> y = load_airline()
     >>> fh = ForecastingHorizon([1,2,3], is_relative=True)
     >>> f = TabPFNTSForecaster(tabpfn_mode="LOCAL")
-    >>> f.fit(y)
+    >>> _ = f.fit(y)
     >>> y_pred = f.predict(fh)
     """
 
@@ -63,6 +63,7 @@ class TabPFNTSForecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "requires-fh-in-fit": False,
         "capability:exogenous": True,
+        "capability:insample": False,
         "capability:global_forecasting": False,
     }
 
@@ -93,7 +94,10 @@ class TabPFNTSForecaster(BaseForecaster):
         _check_soft_dependencies("tabpfn_time_series")
         from tabpfn_time_series import TabPFNMode, TabPFNTSPipeline
 
-        self.model_pipeline = TabPFNTSPipeline(tabpfn_mode=TabPFNMode[self.tabpfn_mode])
+        self.model_pipeline_ = TabPFNTSPipeline(
+            tabpfn_mode=TabPFNMode[self.tabpfn_mode]
+        )
+
         return self
 
     def _predict(self, fh, X=None):
@@ -115,13 +119,16 @@ class TabPFNTSForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Point forecasts indexed by the forecasting horizon.
         """
-        prediction_length = int(max(fh.to_relative(self.cutoff))) if fh else 1
+        fh_rel = fh.to_relative(self.cutoff)
+        prediction_length = int(fh_rel.max())
 
-        context_df = pd.DataFrame(self._y).copy()
-        context_df.columns = ["target"]
-
-        if self._X is not None:
-            context_df = context_df.join(self._X)
+        if isinstance(self._y, pd.Series):
+            context_df = self._y.to_frame(name="target")
+            y_name = self._y.name if self._y.name is not None else "target"
+        else:
+            context_df = pd.DataFrame(self._y).copy()
+            context_df.columns = ["target"]
+            y_name = self._y.columns[0]
 
         context_df = context_df.reset_index()
         context_df = context_df.rename(columns={context_df.columns[0]: "timestamp"})
@@ -130,7 +137,7 @@ class TabPFNTSForecaster(BaseForecaster):
             context_df["timestamp"] = context_df["timestamp"].dt.to_timestamp()
 
         if X is None:
-            pred_df = self.model_pipeline.predict_df(
+            pred_df = self.model_pipeline_.predict_df(
                 context_df=context_df,
                 prediction_length=prediction_length,
             )
@@ -141,17 +148,21 @@ class TabPFNTSForecaster(BaseForecaster):
             if isinstance(future_df["timestamp"].dtype, pd.PeriodDtype):
                 future_df["timestamp"] = future_df["timestamp"].dt.to_timestamp()
 
-            pred_df = self.model_pipeline.predict_df(
+            pred_df = self.model_pipeline_.predict_df(
                 context_df=context_df,
                 future_df=future_df,
             )
 
         point_pred = pred_df["0.5"] if "0.5" in pred_df.columns else pred_df[0.5]
+        if X is None:
+            point_pred = point_pred.iloc[fh_rel - 1]
+        else:
+            point_pred = point_pred.iloc[list(range(len(fh_rel)))]
 
         fh_abs = fh.to_absolute(self.cutoff)
         point_pred.index = fh_abs.to_pandas()
 
-        return point_pred.to_frame(name=self._y.columns[0])
+        return point_pred.to_frame(name=y_name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -167,4 +178,7 @@ class TabPFNTSForecaster(BaseForecaster):
         params : list of dict
             Parameter settings used to create test instances of the estimator.
         """
-        return [{"tabpfn_mode": "LOCAL"}]
+        return [
+            {"tabpfn_mode": "LOCAL"},
+            {"tabpfn_mode": "CLIENT"},
+        ]
