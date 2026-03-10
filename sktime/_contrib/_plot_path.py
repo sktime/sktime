@@ -146,7 +146,7 @@ def _plot_alignment(x, y, metric, dist_kwargs: dict = None, title: str = ""):
                 "--",
                 color="#818587",
             )
-        except:
+        except Exception:
             continue
     plt.legend()
     plt.title(title)
