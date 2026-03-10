@@ -454,6 +454,11 @@ class ForecastingHorizon:
                 self._values_are_nanos,
             )
 
+        if cutoff is None:
+            raise ValueError(
+                "`cutoff` must be provided to convert relative FH to absolute."
+            )
+
         if self._values_are_nanos:
             # attempt to extract freq from cutoff for deferred conversion
             cutoff_freq = PandasFHConverter.extract_freq(cutoff)
