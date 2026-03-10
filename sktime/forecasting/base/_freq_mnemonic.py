@@ -6,8 +6,8 @@ This module is pandas-free. It defines the accepted frequency base strings
 (e.g. ``"M"``, ``"D"``, ``"h"``, etc) and provides validation for frequency strings
 with optional integer multipliers (e.g. ``"2D"``, ``"15min"``).
 
-Used by both ``_fh_v2`` (ForecastingHorizon) & ``_fh_utils`` (PandasFHConverter)
-as a shared dependency to avoid circular imports.
+Kept in a separate file to avoid circular imports because it is used by both ``_fh_v2``
+(ForecastingHorizon) & ``_fh_utils`` (PandasFHConverter) as a shared dependency.
 """
 
 __all__ = ["VALID_FREQ_BASES", "validate_freq"]

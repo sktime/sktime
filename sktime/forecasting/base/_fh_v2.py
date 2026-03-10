@@ -482,12 +482,19 @@ class ForecastingHorizon:
     def to_pandas(self):
         """Return forecasting horizon values as pd.Index.
 
+        Output type depends on state:
+        - values_are_nanos=True: TimedeltaIndex
+        - is_relative=False and freq is not None: PeriodIndex
+        - otherwise: plain integer Index
+
         Returns
         -------
         pd.Index
             Pandas Index containing the forecasting horizon values.
         """
-        return PandasFHConverter.to_pandas_index(self._fhvalues)
+        return PandasFHConverter.to_pandas_index(
+            self._values, self._is_relative, self._freq, self._values_are_nanos
+        )
 
     def to_numpy(self) -> np.ndarray:
         """Return forecasting horizon values as numpy array.
