@@ -24,8 +24,6 @@ class ResNetNetwork(BaseDeepNetwork):
     kernel_sizes : tuple of int, default = (8, 5, 3)
         Kernel sizes for conv layers in each residual block. The length
         of the tuple determines the number of conv layers per block.
-    padding : str, default = "same"
-        Padding type for all conv layers.
 
     References
     ----------
@@ -51,7 +49,6 @@ class ResNetNetwork(BaseDeepNetwork):
         activation="relu",
         n_filters=(64, 128, 128),
         kernel_sizes=(8, 5, 3),
-        padding="same",
     ):
         _check_dl_dependencies(severity="error")
         super().__init__()
@@ -59,7 +56,6 @@ class ResNetNetwork(BaseDeepNetwork):
         self.activation = activation
         self.n_filters = n_filters
         self.kernel_sizes = kernel_sizes
-        self.padding = padding
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
@@ -87,7 +83,7 @@ class ResNetNetwork(BaseDeepNetwork):
             out = x
             for i, kernel_size in enumerate(self.kernel_sizes):
                 out = keras.layers.Conv1D(
-                    filters=filters, kernel_size=kernel_size, padding=self.padding
+                    filters=filters, kernel_size=kernel_size, padding="same"
                 )(out)
                 out = keras.layers.BatchNormalization()(out)
                 if i < len(self.kernel_sizes) - 1:
@@ -98,7 +94,7 @@ class ResNetNetwork(BaseDeepNetwork):
                 shortcut = keras.layers.BatchNormalization()(x)
             else:
                 shortcut = keras.layers.Conv1D(
-                    filters=filters, kernel_size=1, padding=self.padding
+                    filters=filters, kernel_size=1, padding="same"
                 )(x)
                 shortcut = keras.layers.BatchNormalization()(shortcut)
 
