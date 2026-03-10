@@ -71,9 +71,9 @@ def is_module_changed(module_str):
     except ImportError:
         # if the file cannot be found, we consider it changed
         return True
-    cmd = f"git diff remotes/origin/main -- {module_file_path}"
+    cmd = ["git", "diff", "remotes/origin/main", "--", module_file_path]
     try:
-        output = subprocess.check_output(cmd, shell=True, text=True, encoding="utf-8")
+        output = subprocess.check_output(cmd, shell=False, text=True, encoding="utf-8")  # noqa: S603
         return bool(output)
     except subprocess.CalledProcessError:
         return True
@@ -113,11 +113,11 @@ def get_changed_lines(file_path, only_indented=True):
     -------
     list of str : changed or added lines on current branch
     """
-    cmd = f"git diff remotes/origin/main -- {file_path}"
+    cmd = ["git", "diff", "remotes/origin/main", "--", file_path]
 
     try:
         # Run 'git diff' command to get the changes in the specified file
-        result = subprocess.check_output(cmd, shell=True, text=True)
+        result = subprocess.check_output(cmd, shell=False, text=True)  # noqa: S603
 
         # if only indented lines are requested, add space to start_chars
         start_chars = "+"
