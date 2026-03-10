@@ -557,11 +557,9 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False, min_periods=No
     lag = window[0]
     window_length = window[1]
 
-    mp = _coerce_min_periods(min_periods)
-
     feat: pd.DataFrame = pd.DataFrame()
     if summarizer in pd_rolling:
-        rolling_mp = _get_rolling_min_periods(mp, window_length)
+        rolling_mp = _get_rolling_min_periods(min_periods, window_length)
 
         feat = Z.transform(
             lambda x: getattr(
@@ -571,7 +569,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False, min_periods=No
     elif summarizer == "lag":
         feat = Z.transform(lambda x: x.shift(lag))
     elif callable(summarizer):
-        rolling_mp = _get_rolling_min_periods(mp, window_length)
+        rolling_mp = _get_rolling_min_periods(min_periods, window_length)
 
         feat = Z.transform(
             lambda x: (
