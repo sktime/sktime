@@ -336,6 +336,64 @@ class PandasFHConverter:
 
         return pd.Index(values.copy(), dtype=int)
 
+    # this function handles conversion of period ordinals back to DatetimeIndex when
+    # cutoff is datetime-based and involves timezone handling for DST-aware timezones.
+    # Should be reviewed carefully to ensure correctness,
+    # especially around DST boundaries and the potential loss of
+    # original UTC offset information due to the period-ordinal round-trip.
+    # tests for this should also be included in the test suite
+    # to cover edge cases around DST transitions.
+    @staticmethod
+    def steps_to_datetime(values, freq, tz=None):
+        """Convert integer step values (period ordinals) to DatetimeIndex.
+
+        Used by ``to_absolute_index`` when the cutoff is a datetime
+        type, to reconstruct DatetimeIndex output from period ordinals.
+
+        Conversion path: ordinals -> PeriodIndex -> DatetimeIndex via
+        ``to_timestamp()``, which returns the **start** of each period
+        (e.g. ``Period("2020-01", "M")`` -> ``Timestamp("2020-01-01")``).
+
+        If ``tz`` is provided, the tz-naive DatetimeIndex is first
+        localized to UTC (which has no DST transitions), then
+        converted to the target timezone via ``tz_convert``. This
+        avoids ``AmbiguousTimeError`` / ``NonExistentTimeError`` that
+        would occur with direct ``tz_localize`` for DST-aware
+        timezones at DST boundaries. The trade-off is that for
+        timestamps at DST boundaries, the reconstructed UTC offset
+        may differ from the original by up to 1 hour, since the
+        period-ordinal round-trip loses the original offset.
+
+        Parameters
+        ----------
+        values : np.ndarray
+            Int64 period ordinals.
+        freq : str
+            Frequency string. Must not be None.
+        tz : str or None
+            Timezone to localize the output DatetimeIndex.
+            None produces a tz-naive DatetimeIndex.
+
+        Returns
+        -------
+        pd.DatetimeIndex
+            DatetimeIndex reconstructed from ordinals.
+
+        Raises
+        ------
+        ValueError
+            If ``freq`` is None (from ``PeriodIndex.from_ordinals``).
+        """
+        period_idx = pd.PeriodIndex.from_ordinals(values.copy(), freq=freq)
+        dt_idx = period_idx.to_timestamp()
+        if tz is not None:
+            # localize to UTC first (no DST ambiguity), then convert
+            # to target tz. Direct tz_localize(tz) would raise
+            # AmbiguousTimeError/NonExistentTimeError for timestamps
+            # at DST boundaries in DST-aware timezones.
+            dt_idx = dt_idx.tz_localize("UTC").tz_convert(tz)
+        return dt_idx
+
     # cutoff conversion
 
     # self note: below method added after vignette exploration
