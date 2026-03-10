@@ -35,9 +35,6 @@ __all__ = ["ForecastingHorizon"]
 import numpy as np
 
 from sktime.forecasting.base._fh_utils import PandasFHConverter
-from sktime.forecasting.base._fh_values import (
-    FHValues,
-)  # remove this later
 from sktime.forecasting.base._freq_mnemonic import validate_freq
 
 # <check></check>
@@ -885,22 +882,23 @@ class ForecastingHorizon:
 
     # Dunders -> container methods len, getitem, max, min
     def __len__(self):
-        return len(self._fhvalues)
+        return len(self._values)
 
     def __getitem__(self, key):
-        result = self._fhvalues[key]
-        if isinstance(result, FHValues):
-            return self._new(fhvalues=result)
-        # scalar — return as-is
+        result = self._values[key]
+        if isinstance(result, np.ndarray):
+            return self._create(
+                result, self._is_relative, self._freq, self._values_are_nanos
+            )
         return result
 
     def max(self):
         """Return the maximum value."""
-        return self._fhvalues.max()
+        return self._values.max() if len(self._values) > 0 else None
 
     def min(self):
         """Return the minimum value."""
-        return self._fhvalues.min()
+        return self._values.min() if len(self._values) > 0 else None
 
     # Below method computes a hash for the ForecastingHorizon instance,
     # The hash is computed based on the tuple containing:
@@ -927,23 +925,28 @@ class ForecastingHorizon:
     # Need to consider this in th context of forecasting horizon usage.
     # </check>
     def __hash__(self):
-        return hash((self._fhvalues, self._is_relative))
+        return hash(
+            (
+                self._values.tobytes(),
+                self._is_relative,
+                self._freq,
+                self._values_are_nanos,
+            )
+        )
 
     def __repr__(self):
         class_name = type(self).__name__
-        vals = self._fhvalues
-        vtype = vals.value_type.name
-        n = len(vals)
-        parts = [f"n={n}", f"type={vtype}", f"is_relative={self._is_relative}"]
-        if vals.freq is not None:
-            parts.append(f"freq={vals.freq!r}")
-        # if less than 6 values, show all values in repr,
-        # otherwise show 1st and last 3 only
+        n = len(self._values)
+        parts = [f"n={n}", f"is_relative={self._is_relative}"]
+        if self._freq is not None:
+            parts.append(f"freq={self._freq!r}")
+        if self._values_are_nanos:
+            parts.append("values_are_nanos=True")
         if n <= 6:
-            parts.append(f"values={vals.values.tolist()}")
+            parts.append(f"values={self._values.tolist()}")
         else:
-            head = vals.values[:3].tolist()
-            tail = vals.values[-3:].tolist()
+            head = self._values[:3].tolist()
+            tail = self._values[-3:].tolist()
             parts.append(
                 f"values=[{head[0]}, {head[1]}, {head[2]}, ..., "
                 f"{tail[0]}, {tail[1]}, {tail[2]}]"
