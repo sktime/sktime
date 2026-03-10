@@ -309,9 +309,9 @@ class PandasFHConverter:
             (values_are_nanos), or integer step counts (all other).
         is_relative : bool
             Whether values are relative to a training cutoff. Only
-            affects output type when ``freq`` is also set: absolute
-            with freq produces PeriodIndex, relative with freq
-            produces integer Index.
+            affects output type when ``freq`` is also set:
+            - absolute with freq produces PeriodIndex,
+            - relative with freq produces integer Index.
         freq : str or None
             Frequency string (e.g. ``"M"``, ``"D"``). Required to
             reconstruct PeriodIndex for absolute values. Ignored for
@@ -514,26 +514,49 @@ class PandasFHConverter:
         return None
 
     @staticmethod
-    def steps_to_nanos(steps: np.ndarray, freq: str, ref_nanos=None) -> np.ndarray:
-        """Convert integer steps to int64 nanosecond offsets.
+    def nanos_to_steps(nanos: np.ndarray, freq: str) -> np.ndarray:
+        """Convert nanosecond values to integer steps using freq.
 
         Parameters
         ----------
-        steps : np.ndarray of int64
-            Integer step counts.
+        nanos : np.ndarray of int64
+            Nanosecond values.
         freq : str
-            Frequency string (e.g. "D", "h", "M").
-        ref_nanos : int or np.int64 or None, default=None
-            Reference point as nanoseconds since Unix epoch.
-            Used to correctly compute offsets for variable-length periods
-            (months, years). If None, uses 2000-01-01 as reference.
+            Frequency string (must be a fixed-length frequency like
+            "D", "h", "s", not variable-length like "M", "Y").
 
         Returns
         -------
         np.ndarray of int64
-            Nanosecond offsets corresponding to each step.
+            Integer steps.
+
+        Raises
+        ------
+        ValueError
+            If freq is a variable-length frequency (M, Q, Y) that cannot
+            be converted to a fixed nanosecond count, or if nanos are not
+            evenly divisible by the freq.
         """
-        pass
+        from pandas.tseries.frequencies import to_offset
+
+        offset = to_offset(freq)
+        try:
+            freq_nanos = offset.nanos
+        except ValueError:
+            raise ValueError(
+                f"Cannot convert nanosecond timedeltas to steps with "
+                f"non-fixed frequency {freq!r}. Variable-length frequencies "
+                f"like 'M', 'Q', 'Y' do not have a fixed nanosecond count."
+            )
+
+        remainder = nanos % freq_nanos
+        if np.any(remainder != 0):
+            raise ValueError(
+                f"Timedelta values are not evenly divisible by frequency "
+                f"{freq!r}. This means the timedeltas do not represent "
+                f"integer multiples of the frequency."
+            )
+        return (nanos // freq_nanos).astype(np.int64)
 
     # frequency helper functions
 
@@ -548,16 +571,15 @@ class PandasFHConverter:
         Parameters
         ----------
         obj : str, pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex,
-             pd.Index, pd.Period, pd.Timestamp, pd.offsets.BaseOffset,
-             or forecaster
-             Object carrying frequency information.
-             Types that always carry freq (``pd.Period``,
-             ``pd.offsets.BaseOffset``) always return a string.
-             Types that may carry freq (``pd.PeriodIndex``,
-             ``pd.DatetimeIndex``, ``pd.TimedeltaIndex``) return a
-             string only if ``.freq`` is set.
-             Types that never carry freq (``pd.Timestamp``, integer
-             ``pd.Index``, ``pd.RangeIndex``) always return None.
+            pd.Index, pd.Period, pd.Timestamp, pd.offsets.BaseOffset,
+            or forecaster
+            Object carrying frequency information.
+            Types that always carry freq (``pd.Period``, ``pd.offsets.BaseOffset``)
+            always return a string.
+            Types that may carry freq (``pd.PeriodIndex``, ``pd.DatetimeIndex``,
+            ``pd.TimedeltaIndex``) return a string only if ``.freq`` is set.
+            Types that never carry freq (``pd.Timestamp``, integer ``pd.Index``,
+            ``pd.RangeIndex``) always return None.
 
         Returns
         -------
