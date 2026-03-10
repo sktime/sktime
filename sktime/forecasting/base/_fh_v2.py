@@ -629,7 +629,7 @@ class ForecastingHorizon:
         In-sample values have relative representation <= 0.
         """
         relative = self.to_relative(cutoff)
-        return relative._fhvalues.values <= 0
+        return relative._values <= 0
 
     def _is_out_of_sample(self, cutoff=None) -> np.ndarray:
         """Return boolean array indicating out-of-sample values."""
@@ -677,9 +677,12 @@ class ForecastingHorizon:
             In-sample values of forecasting horizon.
         """
         mask = self._is_in_sample(cutoff)
-        filtered_vals = self._fhvalues.values[mask]
-        fhv = self._fhvalues._new(values=filtered_vals)
-        return self._new(fhvalues=fhv)
+        return self._create(
+            self._values[mask],
+            self._is_relative,
+            self._freq,
+            self._values_are_nanos,
+        )
 
     def to_out_of_sample(self, cutoff=None):
         """Return out-of-sample values of fh.
@@ -695,9 +698,12 @@ class ForecastingHorizon:
             Out-of-sample values of forecasting horizon.
         """
         mask = self._is_out_of_sample(cutoff)
-        filtered_vals = self._fhvalues.values[mask]
-        fhv = self._fhvalues._new(values=filtered_vals)
-        return self._new(fhvalues=fhv)
+        return self._create(
+            self._values[mask],
+            self._is_relative,
+            self._freq,
+            self._values_are_nanos,
+        )
 
     # indexer method
     # <check> partial implementation, supports relative integer FH
