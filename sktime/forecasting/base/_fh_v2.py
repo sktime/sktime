@@ -482,15 +482,28 @@ class ForecastingHorizon:
     def to_pandas(self):
         """Return forecasting horizon values as pd.Index.
 
-        Output type depends on state:
-        - values_are_nanos=True: TimedeltaIndex
-        - is_relative=False and freq is not None: PeriodIndex
-        - otherwise: plain integer Index
+        Output type depends on the internal state of the FH:
+
+        - ``values_are_nanos=True``: ``pd.TimedeltaIndex`` (raw
+        nanoseconds from a freq-less TimedeltaIndex input).
+        - ``is_relative=False`` and ``freq is not None``:
+        ``pd.PeriodIndex`` (absolute period ordinals reconstructed
+        with freq).
+        - All other cases: plain ``pd.Index`` with integer dtype.
+        This covers relative FH (with or without freq) and absolute
+        integer FH without freq.
+
+        Note: relative FH that originated from a TimedeltaIndex (with
+        freq) is returned as integer Index, not TimedeltaIndex,
+        because the original input type is not preserved after
+        normalization to integer steps. For DatetimeIndex reconstruction
+        and cutoff-aware absolute output, use ``to_absolute_index``
+        with a cutoff.
 
         Returns
         -------
-        pd.Index
-            Pandas Index containing the forecasting horizon values.
+        pd.TimedeltaIndex, pd.PeriodIndex, or pd.Index
+            Pandas Index matching the semantic state of the FH.
         """
         return PandasFHConverter.to_pandas_index(
             self._values, self._is_relative, self._freq, self._values_are_nanos

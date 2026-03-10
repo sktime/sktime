@@ -19,7 +19,7 @@ ___all__ = ["PandasFHConverter"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._fh_values import FHValues, FHValueType
+from sktime.forecasting.base._fh_values import FHValues
 
 
 class PandasFHConverter:
@@ -272,45 +272,69 @@ class PandasFHConverter:
             f"List with element type {type(values[0]).__name__} is not supported."
         )
 
-    # FHValues (internal representation) -> pandas conversion
     @staticmethod
-    def to_pandas_index(fhv: "FHValues") -> pd.Index:
-        """Convert internal FHValues to pandas Index.
+    def to_pandas_index(
+        values: np.ndarray,
+        is_relative: bool,
+        freq: str | None = None,
+        values_are_nanos: bool = False,
+    ) -> pd.Index:
+        """Convert internal FH state to a pandas Index.
+
+        Reconstructs a pandas Index from the four internal attributes
+        of a ForecastingHorizon. The output type depends on the state:
+
+        - ``values_are_nanos=True``: returns ``pd.TimedeltaIndex``.
+        Values are raw nanoseconds from a freq-less TimedeltaIndex
+        that hasn't been converted to integer steps yet.
+        - ``is_relative=False`` and ``freq is not None``: returns
+        ``pd.PeriodIndex``. Values are period ordinals, and freq is
+        needed to reconstruct the periods.
+        - All other cases: returns plain ``pd.Index`` with integer
+        dtype. This covers relative integer FH (with or without
+        freq), and absolute integer FH without freq.
+
+        Note: relative FH that originated from a TimedeltaIndex (with
+        freq) is normalized to integer steps at construction and will
+        be returned as plain integer Index, not TimedeltaIndex. The
+        original input type is not preserved. This is by design —
+        output type reconstruction for prediction indices is handled
+        by ``to_absolute_index`` using cutoff context.
 
         Parameters
         ----------
-        fhv : FHValues
-            Internal representation.
+        values : np.ndarray
+            Int64 numpy array of horizon values. Contains period
+            ordinals (absolute with freq), raw nanoseconds
+            (values_are_nanos), or integer step counts (all other).
+        is_relative : bool
+            Whether values are relative to a training cutoff. Only
+            affects output type when ``freq`` is also set: absolute
+            with freq produces PeriodIndex, relative with freq
+            produces integer Index.
+        freq : str or None
+            Frequency string (e.g. ``"M"``, ``"D"``). Required to
+            reconstruct PeriodIndex for absolute values. Ignored for
+            relative values and nanos.
+        values_are_nanos : bool
+            If True, values are raw nanoseconds pending freq
+            assignment. Takes precedence over all other parameters
+            for determining output type. Should only be True when
+            ``freq`` is None.
 
         Returns
         -------
-        pd.Index
-            Pandas Index matching the semantic type.
+        pd.TimedeltaIndex, pd.PeriodIndex, or pd.Index
+            Pandas Index matching the semantic state of the FH.
         """
-        vtype = fhv.value_type
-        vals = fhv.values  # read-only view, int64
-
-        if vtype == FHValueType.INT:
-            return pd.Index(vals.copy(), dtype=int)
-
-        if vtype == FHValueType.PERIOD:
-            # PeriodIndex from ordinals requires a writable copy
-            return pd.PeriodIndex.from_ordinals(vals.copy(), freq=fhv.freq)
-
-        if vtype == FHValueType.DATETIME:
-            dt_arr = vals.copy().view("datetime64[ns]")
-            idx = pd.DatetimeIndex(dt_arr)
-            if fhv.timezone is not None:
-                idx = idx.tz_localize("UTC").tz_convert(fhv.timezone)
-            return idx
-
-        if vtype == FHValueType.TIMEDELTA:
-            td_arr = vals.copy().view("timedelta64[ns]")
+        if values_are_nanos:
+            td_arr = values.copy().view("timedelta64[ns]")
             return pd.TimedeltaIndex(td_arr)
 
-        # control should never reach here due to FHValueType validation in FHValues
-        # if it does, it indicates a bug in FHValues or a missing case in this function
-        raise ValueError(f"Unknown FHValueType: {vtype}")
+        if not is_relative and freq is not None:
+            return pd.PeriodIndex.from_ordinals(values.copy(), freq=freq)
+
+        return pd.Index(values.copy(), dtype=int)
 
     # cutoff conversion
 
