@@ -405,6 +405,31 @@ class PandasFHConverter:
         )
 
     @staticmethod
+    def cutoff_is_dti_ts(cutoff) -> bool:
+        """Check if cutoff is a datetime-based type.
+
+        Returns True for ``pd.DatetimeIndex`` and ``pd.Timestamp``.
+        Used by ``to_absolute_index`` to decide whether to produce
+        DatetimeIndex output.
+
+        Parameters
+        ----------
+        cutoff : pd.DatetimeIndex, pd.Timestamp, or other
+            Cutoff value to check.
+
+        Returns
+        -------
+        bool
+            True if cutoff is ``pd.DatetimeIndex`` or
+            ``pd.Timestamp``, False otherwise.
+        """
+        if isinstance(cutoff, pd.DatetimeIndex):
+            return True
+        if isinstance(cutoff, pd.Timestamp):
+            return True
+        return False
+
+    @staticmethod
     def cutoff_to_pandas(cutoff_internal):
         pass
 
