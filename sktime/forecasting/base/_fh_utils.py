@@ -430,8 +430,30 @@ class PandasFHConverter:
         return False
 
     @staticmethod
-    def cutoff_to_pandas(cutoff_internal):
-        pass
+    def cutoff_tz(cutoff) -> str | None:
+        """Extract timezone from cutoff, if present.
+
+        Checks ``pd.DatetimeIndex`` and ``pd.Timestamp`` for a ``.tz``
+        attribute. All other types return None.
+
+        Parameters
+        ----------
+        cutoff : pd.DatetimeIndex, pd.Timestamp, or other
+            Cutoff value. Only ``pd.DatetimeIndex`` and
+            ``pd.Timestamp`` with a non-None ``.tz`` will return a
+            timezone string.  All other types return None.
+
+        Returns
+        -------
+        str or None
+            Timezone string (e.g. ``"UTC"``, ``"US/Eastern"``), or
+            None if cutoff has no timezone or is not a datetime type.
+        """
+        if isinstance(cutoff, pd.DatetimeIndex) and cutoff.tz is not None:
+            return str(cutoff.tz)
+        if isinstance(cutoff, pd.Timestamp) and cutoff.tz is not None:
+            return str(cutoff.tz)
+        return None
 
     @staticmethod
     def steps_to_nanos(steps: np.ndarray, freq: str, ref_nanos=None) -> np.ndarray:
