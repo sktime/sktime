@@ -19,8 +19,6 @@ ___all__ = ["PandasFHConverter"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._fh_values import FHValues
-
 
 class PandasFHConverter:
     """Static conversion layer between pandas types and ForecastingHorizon.
@@ -33,8 +31,8 @@ class PandasFHConverter:
     # input -> internal representation conversion
 
     @staticmethod
-    def to_internal(values) -> FHValues:
-        """Convert pandas input values to internal FHValues representation.
+    def to_internal(values) -> tuple:
+        """Convert pandas input values to internal representation.
 
         All temporal inputs are normalized to integer steps:
         - PeriodIndex: .asi8 gives period ordinals (already integer steps)
