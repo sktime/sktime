@@ -44,19 +44,6 @@ def instantiate_activation(activation):
     - Output layer activations: sigmoid, softmax, logsoftmax, logsigmoid, relu
     - Hidden layer activations: relu, leakyrelu, elu, prelu, gelu, selu, rrelu,
       celu, tanh, hardtanh (plus all output layer activations)
-
-    Examples
-    --------
-    >>> # Using string activation names
-    >>> act = instantiate_activation("relu")
-    >>> act = instantiate_activation("sigmoid")
-
-    >>> # Using a pre-instantiated module
-    >>> import torch.nn as nn
-    >>> act = instantiate_activation(nn.ReLU())
-
-    >>> # No activation (None)
-    >>> act = instantiate_activation(None)
     """
     # Handle None
     if activation is None:
