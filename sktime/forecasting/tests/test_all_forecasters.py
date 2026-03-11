@@ -784,7 +784,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         np.testing.assert_array_equal(y_pred.index, expected_index)
 
-
     def test__y_and_cutoff(self, estimator_instance, n_columns):
         """Check cutoff and _y."""
         # check _y and cutoff is None after construction
