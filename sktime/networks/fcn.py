@@ -20,10 +20,10 @@ class FCNNetwork(BaseDeepNetwork):
         activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
-    filter_sizes : list or tuple of int, default = [128, 256, 128]
+    filter_sizes : list or tuple of int, default = (128, 256, 128)
         number of filters for each convolutional layer.
         must have length equal to kernel_sizes.
-    kernel_sizes : list or tuple of int, default = [8, 5, 3]
+    kernel_sizes : list or tuple of int, default = (8, 5, 3)
         kernel size for each convolutional layer.
         must have length equal to filter_sizes.
 
@@ -51,17 +51,15 @@ class FCNNetwork(BaseDeepNetwork):
         self,
         random_state=0,
         activation="relu",
-        filter_sizes=None,
-        kernel_sizes=None,
+        filter_sizes=(128, 256, 128),
+        kernel_sizes=(8, 5, 3),
     ):
         super().__init__()
         _check_dl_dependencies(severity="error")
         self.random_state = random_state
         self.activation = activation
-        self.filter_sizes = (
-            filter_sizes if filter_sizes is not None else [128, 256, 128]
-        )
-        self.kernel_sizes = kernel_sizes if kernel_sizes is not None else [8, 5, 3]
+        self.filter_sizes = filter_sizes
+        self.kernel_sizes = kernel_sizes
 
         # type check for filter_sizes
         if not isinstance(self.filter_sizes, (list, tuple)):

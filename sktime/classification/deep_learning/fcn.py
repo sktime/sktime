@@ -45,10 +45,10 @@ class FCNClassifier(BaseDeepClassifier):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
-    filter_sizes : list or tuple of int , default = [128,256,128]
+    filter_sizes : list or tuple of int , default = (128,256,128)
         number of filters for each convolutional layer.
         must have length equal to kernel_sizes.
-    kernel_sizes : list or tuple of int , default = [8,5,3]
+    kernel_sizes : list or tuple of int , default = (8,5,3)
         kernel size for each convolutional layer.
         must have length equal to filter_sizes.
 
@@ -93,8 +93,8 @@ class FCNClassifier(BaseDeepClassifier):
         activation_hidden="relu",
         use_bias=True,
         optimizer=None,
-        filter_sizes=None,
-        kernel_sizes=None,
+        filter_sizes=(128, 256, 128),
+        kernel_sizes=(8, 5, 3),
     ):
         _check_dl_dependencies(severity="error")
 
