@@ -59,7 +59,7 @@ class TabPFNTSForecaster(BaseForecaster):
         "python_dependencies": ["tabpfn_time_series"],
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
-        "capability:pred_int": False,
+        "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "requires-fh-in-fit": False,
         "capability:exogenous": True,
@@ -100,6 +100,127 @@ class TabPFNTSForecaster(BaseForecaster):
 
         return self
 
+    def _run_pipeline(self, fh, X=None, alpha=None):
+        """Run the TabPFN-TS pipeline and return raw forecast output.
+
+        This helper constructs the TabPFN-TS input format from the stored
+        training target series and optional exogenous variables, executes
+        the underlying TabPFN-TS pipeline, and post-processes the result
+        to align predictions with the requested forecasting horizon.
+
+        The returned dataframe contains the point forecast column
+        ("target") as well as quantile forecasts when requested or when
+        produced by the underlying model by default.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            Forecasting horizon specifying the time points to predict.
+        X : pd.DataFrame, optional (default=None)
+            Future values of exogenous variables aligned with ``fh``.
+        alpha : list of float, optional (default=None)
+            Quantile levels to request from the TabPFN-TS pipeline.
+            If ``None``, the pipeline uses its default quantile configuration.
+
+        Returns
+        -------
+        pred_df : pd.DataFrame
+            DataFrame containing the raw predictions produced by the
+            TabPFN-TS pipeline. The index corresponds to the forecasting
+            horizon, and the columns include the point forecast ("target")
+            and any quantile forecasts returned by the model.
+        """
+        fh_rel = fh.to_relative(self.cutoff)
+        prediction_length = int(fh_rel.max())
+
+        context_df = self._y.copy()
+        context_df = context_df.rename(columns={context_df.columns[0]: "target"})
+
+        context_df = context_df.reset_index()
+        context_df.rename(columns={context_df.columns[0]: "timestamp"}, inplace=True)
+
+        if isinstance(context_df["timestamp"].dtype, pd.PeriodDtype):
+            context_df["timestamp"] = context_df["timestamp"].dt.to_timestamp()
+
+        predict_kwargs = {}
+        if alpha is not None:
+            predict_kwargs["quantiles"] = alpha
+
+        if X is None:
+            pred_df = self.model_pipeline_.predict_df(
+                context_df=context_df,
+                prediction_length=prediction_length,
+                **predict_kwargs,
+            )
+        else:
+            future_df = X.copy().reset_index()
+            future_df.rename(columns={future_df.columns[0]: "timestamp"}, inplace=True)
+
+            if isinstance(future_df["timestamp"].dtype, pd.PeriodDtype):
+                future_df["timestamp"] = future_df["timestamp"].dt.to_timestamp()
+
+            pred_df = self.model_pipeline_.predict_df(
+                context_df=context_df, future_df=future_df, **predict_kwargs
+            )
+
+        fh_idx = fh_rel.to_numpy() - 1
+        if X is None:
+            pred_df = pred_df.iloc[fh_idx]
+        else:
+            pred_df = pred_df.iloc[list(range(len(fh_rel)))]
+
+        fh_abs = fh.to_absolute(self.cutoff)
+        pred_df.index = fh_abs.to_pandas()
+
+        return pred_df
+
+    def _predict_quantiles(self, alpha=None, **kwargs):
+        """Compute quantile forecasts for the requested forecasting horizon.
+
+        This method calls the TabPFN-TS pipeline via ``_run_pipeline`` and
+        extracts the quantile forecast columns. The output is reformatted
+        to comply with the ``sktime`` probabilistic forecasting interface,
+        where columns follow a hierarchical MultiIndex structure with
+        variable names at the first level and quantile levels at the second.
+
+        Parameters
+        ----------
+        alpha : list of float, optional (default=None)
+            Quantile levels at which forecasts are computed. If ``None``,
+            the default quantiles returned by the TabPFN-TS pipeline are used.
+        **kwargs : dict
+            Additional keyword arguments passed internally by ``sktime``.
+            Expected keys include:
+
+            * ``fh`` : ForecastingHorizon
+                Forecasting horizon specifying the time points to predict.
+            * ``X`` : pd.DataFrame, optional
+                Future exogenous variables aligned with ``fh``.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Quantile forecasts with a MultiIndex column structure where:
+
+            * Level 0 contains the target variable name.
+            * Level 1 contains the quantile levels.
+
+            The row index corresponds to the forecasting horizon.
+        """
+        fh = kwargs["fh"]
+        X = kwargs.get("X", None)
+
+        pred_df = self._run_pipeline(fh, X, alpha)
+        y_name = self._y.columns[0]
+
+        quantile_cols = [c for c in pred_df.columns if c != "target"]
+        quantiles = [float(q) for q in quantile_cols]
+
+        pred_df = pred_df[quantile_cols]
+        pred_df.columns = pd.MultiIndex.from_product([[y_name], quantiles])
+
+        return pred_df
+
     def _predict(self, fh, X=None):
         """Forecast time series for a given forecasting horizon.
 
@@ -119,50 +240,11 @@ class TabPFNTSForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Point forecasts indexed by the forecasting horizon.
         """
-        fh_rel = fh.to_relative(self.cutoff)
-        prediction_length = int(fh_rel.max())
+        y_name = self._y.columns[0]
 
-        if isinstance(self._y, pd.Series):
-            context_df = self._y.to_frame(name="target")
-            y_name = self._y.name if self._y.name is not None else "target"
-        else:
-            context_df = pd.DataFrame(self._y).copy()
-            context_df.columns = ["target"]
-            y_name = self._y.columns[0]
-
-        context_df = context_df.reset_index()
-        context_df = context_df.rename(columns={context_df.columns[0]: "timestamp"})
-
-        if isinstance(context_df["timestamp"].dtype, pd.PeriodDtype):
-            context_df["timestamp"] = context_df["timestamp"].dt.to_timestamp()
-
-        if X is None:
-            pred_df = self.model_pipeline_.predict_df(
-                context_df=context_df,
-                prediction_length=prediction_length,
-            )
-        else:
-            future_df = X.copy().reset_index()
-            future_df = future_df.rename(columns={future_df.columns[0]: "timestamp"})
-
-            if isinstance(future_df["timestamp"].dtype, pd.PeriodDtype):
-                future_df["timestamp"] = future_df["timestamp"].dt.to_timestamp()
-
-            pred_df = self.model_pipeline_.predict_df(
-                context_df=context_df,
-                future_df=future_df,
-            )
-
-        point_pred = pred_df["0.5"] if "0.5" in pred_df.columns else pred_df[0.5]
-        if X is None:
-            point_pred = point_pred.iloc[fh_rel - 1]
-        else:
-            point_pred = point_pred.iloc[list(range(len(fh_rel)))]
-
-        fh_abs = fh.to_absolute(self.cutoff)
-        point_pred.index = fh_abs.to_pandas()
-
-        return point_pred.to_frame(name=y_name)
+        pred_df = self._run_pipeline(fh, X)
+        point_pred = pred_df["target"].to_frame(name=y_name)
+        return point_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
