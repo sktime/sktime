@@ -193,6 +193,7 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
             activation_hidden=self.activation_hidden,
             use_bias=self.use_bias,
             padding=self.padding,
+            init_weights=self.init_weights,
             random_state=self.random_state,
         )
 
