@@ -118,6 +118,11 @@ class CNNNetworkTorch(NNModule):
         else:
             padding_use = self.padding
 
+        if padding_use not in ("same", "valid"):
+            raise ValueError(
+                f"padding must be 'auto', 'same', or 'valid', got {padding_use}"
+            )
+
         padding_same = padding_use == "same"
         # Build conv + pool blocks
         in_ch = n_dims
@@ -146,6 +151,10 @@ class CNNNetworkTorch(NNModule):
         # Compute flattened size
         L = series_length
         for i in range(len(self.filter_sizes)):
+            if padding_same:
+                pad_value = self.kernel_sizes[i] // 2
+            else:
+                pad_value = 0
             L_conv = L + 2 * pad_value - self.kernel_sizes[i] + 1
             L = L_conv // self.avg_pool_size
         self._flattened_size = L * self.filter_sizes[-1]

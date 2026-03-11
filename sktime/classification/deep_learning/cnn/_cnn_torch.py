@@ -13,7 +13,7 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
 
     Zhao et al. 2017 uses MSE loss and sigmoid activation in all layers.
     To obtain same behaviour as Zhao et al. 2017, set activation and criterion to
-    "sigmoid" and "MSE" respectively.
+    "sigmoid" and "MSELoss" respectively.
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
@@ -189,7 +189,7 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
             kernel_sizes=self.kernel_sizes,
             avg_pool_size=self.avg_pool_size,
             filter_sizes=self.filter_sizes,
-            activation=self.activation,
+            activation=self._validated_activation,
             activation_hidden=self.activation_hidden,
             use_bias=self.use_bias,
             padding=self.padding,
