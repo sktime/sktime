@@ -5,11 +5,11 @@ import pytest
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.utils import instantiate_activation
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.sktime.tests.test_switch import run_test_for_class
 
 pytestmark = pytest.mark.skipif(
-    not _check_soft_dependencies("torch", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_for_class(BaseDeepClassifierPytorch, severity="none"),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 
 from torch import cat, flatten, from_numpy, no_grad
