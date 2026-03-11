@@ -5,7 +5,7 @@ import pytest
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.utils import instantiate_activation
-from sktime.sktime.tests.test_switch import run_test_for_class
+from sktime.tests.test_switch import run_test_for_class
 
 pytestmark = pytest.mark.skipif(
     not run_test_for_class(BaseDeepClassifierPytorch, severity="none"),
