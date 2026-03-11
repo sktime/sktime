@@ -20,14 +20,12 @@ class FCNNetwork(BaseDeepNetwork):
         activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
-    n_layers : int, default = 3
-        number of convolutional layers in the network.
     filter_sizes : list or tuple of int, default = [128, 256, 128]
         number of filters for each convolutional layer.
-        must have length equal to n_layers.
+        must have length equal to kernel_sizes.
     kernel_sizes : list or tuple of int, default = [8, 5, 3]
         kernel size for each convolutional layer.
-        must have length equal to n_layers.
+        must have length equal to filter_sizes.
 
     References
     ----------
@@ -53,7 +51,6 @@ class FCNNetwork(BaseDeepNetwork):
         self,
         random_state=0,
         activation="relu",
-        n_layers=3,
         filter_sizes=None,
         kernel_sizes=None,
     ):
@@ -61,33 +58,27 @@ class FCNNetwork(BaseDeepNetwork):
         _check_dl_dependencies(severity="error")
         self.random_state = random_state
         self.activation = activation
-        self.n_layers = n_layers
         self.filter_sizes = (
             filter_sizes if filter_sizes is not None else [128, 256, 128]
         )
         self.kernel_sizes = kernel_sizes if kernel_sizes is not None else [8, 5, 3]
 
+        # type check for filter_sizes
         if not isinstance(self.filter_sizes, (list, tuple)):
             raise ValueError(
                 f"filter_sizes must be a list or tuple ,"
                 f"but got type {type(self.filter_sizes)}."
             )
+        # type check for kernel_sizes
         if not isinstance(self.kernel_sizes, (list, tuple)):
             raise ValueError(
                 f"kernel_sizes must be a list or tuple ,"
                 f"but got type {type(self.kernel_sizes)}."
             )
-        # filter_sizes length check
-        if len(self.filter_sizes) != self.n_layers:
+        if len(self.filter_sizes) != len(self.kernel_sizes):
             raise ValueError(
-                f"filter_sizes must have length equal to n_layers={self.n_layers} ,"
-                f"but got length {len(self.filter_sizes)}."
-            )
-        # Kernel_sizes length check
-        if len(self.kernel_sizes) != self.n_layers:
-            raise ValueError(
-                f"kernel_sizes must have length equal to n_layers={self.n_layers}, "
-                f"but got length {len(self.kernel_sizes)}."
+                f"filter_sizes and kernel_sizes must have the same length ,"
+                f"but got {len(self.filter_sizes)} and {len(self.kernel_sizes)}."
             )
 
     def build_network(self, input_shape, **kwargs):
@@ -108,7 +99,7 @@ class FCNNetwork(BaseDeepNetwork):
         input_layer = keras.layers.Input(input_shape)
 
         x = input_layer
-        for i in range(self.n_layers):
+        for i in range(len(self.filter_sizes)):
             x = keras.layers.Conv1D(
                 filters=self.filter_sizes[i],
                 kernel_size=self.kernel_sizes[i],
@@ -145,7 +136,6 @@ class FCNNetwork(BaseDeepNetwork):
         params1 = {}
         params2 = {
             "random_state": 42,
-            "n_layers": 2,
             "filter_sizes": [64, 128],
             "kernel_sizes": [5, 3],
         }
@@ -153,7 +143,6 @@ class FCNNetwork(BaseDeepNetwork):
         # for tuple checking
         params3 = {
             "random_state": 1,
-            "n_layers": 2,
             "filter_sizes": (64, 128),
             "kernel_sizes": (5, 3),
         }

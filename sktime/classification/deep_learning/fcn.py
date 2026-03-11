@@ -45,14 +45,12 @@ class FCNClassifier(BaseDeepClassifier):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
-    n_layers : int , default = 3
-        number of convolutional layers in the network.
     filter_sizes : list or tuple of int , default = [128,256,128]
         number of filters for each convolutional layer.
-        must have length equal to n_layers.
+        must have length equal to kernel_sizes.
     kernel_sizes : list or tuple of int , default = [8,5,3]
         kernel size for each convolutional layer.
-        must have length equal to n_layers.
+        must have length equal to filter_sizes.
 
 
     References
@@ -95,7 +93,6 @@ class FCNClassifier(BaseDeepClassifier):
         activation_hidden="relu",
         use_bias=True,
         optimizer=None,
-        n_layers=3,
         filter_sizes=None,
         kernel_sizes=None,
     ):
@@ -113,7 +110,6 @@ class FCNClassifier(BaseDeepClassifier):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
-        self.n_layers = n_layers
         self.filter_sizes = filter_sizes
         self.kernel_sizes = kernel_sizes
 
@@ -122,7 +118,6 @@ class FCNClassifier(BaseDeepClassifier):
         self._network = FCNNetwork(
             activation=self.activation_hidden,
             random_state=self.random_state,
-            n_layers=self.n_layers,
             filter_sizes=self.filter_sizes,
             kernel_sizes=self.kernel_sizes,
         )
@@ -243,7 +238,6 @@ class FCNClassifier(BaseDeepClassifier):
             "n_epochs": 12,
             "batch_size": 6,
             "use_bias": True,
-            "n_layers": 2,
             "filter_sizes": [64, 128],
             "kernel_sizes": [5, 3],
         }
@@ -253,7 +247,6 @@ class FCNClassifier(BaseDeepClassifier):
             "n_epochs": 8,
             "batch_size": 4,
             "use_bias": False,
-            "n_layers": 2,
             "filter_sizes": (64, 128),
             "kernel_sizes": (5, 3),
         }
