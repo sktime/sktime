@@ -207,7 +207,7 @@ class PandasFHConverter:
         - DatetimeIndex without freq: raises ValueError (freq required)
         - TimedeltaIndex with freq: timedelta / freq_timedelta gives steps
         - TimedeltaIndex without freq: stores nanoseconds with
-          values_are_nanos=True (deferred conversion)
+        values_are_nanos=True (deferred conversion)
 
         The converter infers is_relative from the input type as per the below rules
         and sends back the infered_is_relative:
@@ -232,8 +232,8 @@ class PandasFHConverter:
             - ``pd.Timedelta`` : single timedelta scalar
             - ``pd.offsets.BaseOffset`` : single offset scalar
             - ``list`` of ``pd.Period``, ``pd.Timestamp``, ``pd.Timedelta``,
-              ``pd.offsets.BaseOffset``, ``np.timedelta64``, or
-              ``datetime.timedelta`` scalars
+            ``pd.offsets.BaseOffset``, ``np.timedelta64``, or
+            ``datetime.timedelta`` scalars
 
         Returns
         -------
@@ -766,8 +766,7 @@ class PandasFHConverter:
         ----------
         obj : str, pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex,
             pd.Index, pd.Period, pd.Timestamp, pd.offsets.BaseOffset,
-            or forecaster
-            Object carrying frequency information.
+            or forecaster object carrying frequency information.
             Types that always carry freq (``pd.Period``, ``pd.offsets.BaseOffset``)
             always return a string.
             Types that may carry freq (``pd.PeriodIndex``, ``pd.DatetimeIndex``,
@@ -808,9 +807,7 @@ class PandasFHConverter:
         if isinstance(obj, (pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex)):
             return PandasFHConverter._freqstr(obj)
 
-        if isinstance(obj, pd.Index):
-            # generic pd.Index — no freq attribute
-            return None
+        # generic pd.Index, no freq attribute: return None
 
         return None
 
