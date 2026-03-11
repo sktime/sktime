@@ -8,7 +8,7 @@ from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
 from sktime.tests.test_switch import run_test_for_class
 
 pytestmark = pytest.mark.skipif(
-    not run_test_for_class(BaseDeepRegressorTorch, severity="none"),
+    not run_test_for_class(BaseDeepRegressorTorch),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 

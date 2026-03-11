@@ -8,7 +8,7 @@ from sktime.networks.utils import instantiate_activation
 from sktime.tests.test_switch import run_test_for_class
 
 pytestmark = pytest.mark.skipif(
-    not run_test_for_class(BaseDeepClassifierPytorch, severity="none"),
+    not run_test_for_class(BaseDeepClassifierPytorch),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 
