@@ -59,14 +59,14 @@ _ALIAS_TO_CANONICAL = dict(_ALIAS_TO_CANONICAL_STATIC)
 for _base in VALID_FREQ_BASES:
     _ALIAS_TO_CANONICAL.setdefault(_base, _base)
 
-# pandas offset type → our canonical base. Populated by _register_freq.
+# pandas offset type -> our canonical base. Populated by _register_freq.
 _OFFSET_TYPE_TO_CANONICAL = {}
 
-# Our canonical base → pandas's currently preferred base string.
+# Our canonical base -> pandas's currently preferred base string.
 # Populated by _bootstrap_pandas_prefs.
 _CANONICAL_TO_PANDAS = {}
 
-# Full freq string cache: any freq string → pandas-accepted freq string.
+# Full freq string cache: any freq string -> pandas-accepted freq string.
 _RESOLVE_CACHE = {}
 
 
@@ -129,8 +129,8 @@ def _normalize_freq(freq_str):
 
     Parses the freq string, maps the base to canonical via
     ``_ALIAS_TO_CANONICAL``, reconstructs with original multiplier
-    and suffix. Handles multiplied (``"2ME"`` → ``"2M"``) and
-    anchored (``"QE-DEC"`` → ``"Q-DEC"``) forms.
+    and suffix. Handles multiplied (``"2ME"`` -> ``"2M"``) and
+    anchored (``"QE-DEC"`` -> ``"Q-DEC"``) forms.
 
     For unknown bases, attempts dynamic discovery via
     ``_register_freq``.
@@ -704,7 +704,7 @@ class PandasFHConverter:
         """
         from pandas.tseries.frequencies import to_offset
 
-        offset = to_offset(freq)
+        offset = to_offset(_resolve_pandas_freq(freq))
         try:
             freq_nanos = offset.nanos
         except ValueError:
@@ -752,7 +752,7 @@ class PandasFHConverter:
             return 1
         from pandas.tseries.frequencies import to_offset
 
-        return to_offset(freq).n
+        return to_offset(_resolve_pandas_freq(freq)).n
 
     # final check pending for this function
     @staticmethod
@@ -785,7 +785,10 @@ class PandasFHConverter:
             try:
                 from pandas.tseries.frequencies import to_offset
 
-                offset = to_offset(obj)
+                resolved = _resolve_pandas_freq(obj)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", FutureWarning)
+                    offset = to_offset(resolved)
                 if offset is not None:
                     return PandasFHConverter.normalize_freq(str(offset.freqstr))
             except ValueError:
@@ -813,9 +816,12 @@ class PandasFHConverter:
 
     @staticmethod
     def normalize_freq(freq_str: str | None) -> str | None:
-        """Normalize frequency string.
+        """Normalize frequency string to our canonical form.
 
-        Handles pandas frequency alias changes (e.g. "ME" -> "M").
+        Maps any known pandas alias to our canonical name using
+        the dynamic resolution system. Handles multiplied
+        (``"2ME"`` → ``"2M"``) and anchored (``"QE-DEC"`` →
+        ``"Q-DEC"``) forms.
 
         Parameters
         ----------
@@ -827,8 +833,10 @@ class PandasFHConverter:
         str or None
             Normalized frequency string.
         """
-        if freq_str is None:
-            return None
+        return _normalize_freq(freq_str)
+        """
+        Old code with hardcoded alias map,
+        kept for reference pending final check of the new dynamic system:
         # <check>
         # 1. check for unsupported frequencies and raise informative errors
         # 2. check for completeness of the alias map and add any missing aliases
@@ -854,7 +862,7 @@ class PandasFHConverter:
             "BYE": "BY",
             "SME": "SM",
         }
-        return alias_map.get(freq_str, freq_str)
+        return alias_map.get(freq_str, freq_str)"""
 
     # below function is directly moved from ForecastingHorizon.get_expected_pred_idx()
     # to avoid pandas imports in ForecastingHorizon
@@ -978,6 +986,34 @@ class PandasFHConverter:
                     f"but element at index {i} is {type(v).__name__}. "
                     "All list elements must be of the same type."
                 )
+
+    @staticmethod
+    def _timedelta_to_steps(nanos: np.ndarray, freq: str) -> np.ndarray:
+        """Convert timedelta nanoseconds to integer steps using freq.
+
+        Parameters
+        ----------
+        nanos : np.ndarray of int64
+            Nanosecond values from TimedeltaIndex.asi8.
+        freq : str
+            Frequency string.
+
+        Returns
+        -------
+        np.ndarray of int64
+            Integer step counts.
+        """
+        from pandas.tseries.frequencies import to_offset
+
+        offset = to_offset(_resolve_pandas_freq(freq))
+        try:
+            freq_nanos = offset.nanos
+        except ValueError:
+            raise ValueError(
+                f"Cannot convert timedelta to integer steps with "
+                f"non-fixed frequency {freq!r}."
+            )
+        return (nanos // freq_nanos).astype(np.int64)
 
     @staticmethod
     def _extract_freq_str(obj) -> str | None:
