@@ -100,6 +100,22 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         # estimator type handled by parent class
     }
 
+    # Allowed values used by the base class activation validation hook.
+    _supported_activation = (
+        "sigmoid",
+        "relu",
+        "softmax",
+        "logsoftmax",
+        "logsigmoid",
+    )
+    _supported_activation_hidden = (
+        "sigmoid",
+        "relu",
+        "softmax",
+        "logsoftmax",
+        "logsigmoid",
+    )
+
     def __init__(
         self,
         n_epochs=120,

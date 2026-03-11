@@ -94,6 +94,22 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         # estimator type handled by parent class
     }
 
+    # Allowed values used by the base class activation validation hook.
+    _supported_activation = (
+        "sigmoid",
+        "logsigmoid",
+        "relu",
+        "softmax",
+        "logsoftmax",
+    )
+    _supported_activation_hidden = (
+        "sigmoid",
+        "logsigmoid",
+        "relu",
+        "softmax",
+        "logsoftmax",
+    )
+
     def __init__(
         self: "MCDCNNRegressorTorch",
         n_epochs=120,

@@ -109,9 +109,11 @@ class MCDCNNNetworkTorch(NNModule):
         # Dense layer created lazily (depends on input length)
         self.fc = None
 
-        self._activation_hidden = self._instantiate_activation(activation_hidden)
+        from sktime.networks.utils import instantiate_activation
+
+        self._activation_hidden = instantiate_activation(activation_hidden)
         if self.activation:
-            self._activation = self._instantiate_activation(activation)
+            self._activation = instantiate_activation(activation)
 
     def forward(self, X):
         """Forward pass of the MCDCNNNetworkTorch.
@@ -165,36 +167,3 @@ class MCDCNNNetworkTorch(NNModule):
             return x.squeeze(-1)
 
         return x
-
-    def _instantiate_activation(self, activation):
-        """Instantiate the activation function to be applied on the output layer.
-
-        Returns
-        -------
-        activation_function : torch.nn.Module
-            The activation function to be applied on the output layer.
-        """
-        if isinstance(activation, NNModule):
-            return activation
-        elif isinstance(activation, str):
-            if activation.lower() == "sigmoid":
-                return _safe_import("torch.nn.Sigmoid")()
-            elif activation.lower() == "relu":
-                return _safe_import("torch.nn.ReLU")()
-            elif activation.lower() == "softmax":
-                return _safe_import("torch.nn.Softmax")(dim=1)
-            elif activation.lower() == "logsoftmax":
-                return _safe_import("torch.nn.LogSoftmax")(dim=1)
-            elif activation.lower() == "logsigmoid":
-                return _safe_import("torch.nn.LogSigmoid")()
-            else:
-                raise ValueError(
-                    "If `activation` is not None, it must be one of "
-                    "'sigmoid', 'logsigmoid', 'softmax' or 'logsoftmax'. "
-                    f"Found {activation}"
-                )
-        else:
-            raise TypeError(
-                "`activation` should either be of type str or torch.nn.Module. "
-                f"But found the type to be: {type(activation)}"
-            )
