@@ -118,7 +118,20 @@ def test_series_without_panel_level():
     assert y_pred.index.nlevels == 1
 
 
-def test_groupby_category_probabilistic_binding():
+@pytest.mark.parametrize(
+    "method_name",
+    [
+        "predict_interval",
+        "predict_var",
+        pytest.param(
+            "predict_proba",
+            marks=pytest.mark.xfail(
+                reason="skpro distribution concatenation is pending"
+            ),
+        ),
+    ],
+)
+def test_groupby_category_probabilistic_binding(method_name):
     """Test if GroupbyCategoryForecaster binds probabilistic functions correctly."""
     from sktime.datasets import load_airline
     from sktime.forecasting.naive import NaiveVariance
@@ -135,6 +148,7 @@ def test_groupby_category_probabilistic_binding():
     )
 
     gf.fit(y=y, fh=[1, 2, 3])
-    preds = gf.predict_interval()
+    predict_method = getattr(gf, method_name)
+    preds = predict_method()
 
     assert isinstance(preds, pd.DataFrame)
