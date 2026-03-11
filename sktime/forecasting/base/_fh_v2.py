@@ -310,7 +310,7 @@ class ForecastingHorizon:
     @property
     def freq(self) -> str | None:
         """Frequency string, or None."""
-        return self.freq
+        return self._freq
 
     @freq.setter
     def freq(self, obj) -> None:

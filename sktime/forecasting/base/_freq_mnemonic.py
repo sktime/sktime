@@ -111,6 +111,7 @@ def _parse_freq(freq_str):
 
     Examples
     --------
+    >>> from sktime.forecasting.base._freq_mnemonic import _parse_freq
     >>> _parse_freq("2D")
     ('2', 'D', '')
     >>> _parse_freq("M")
@@ -155,6 +156,7 @@ def validate_freq(freq_str):
 
     Examples
     --------
+    >>> from sktime.forecasting.base._freq_mnemonic import validate_freq
     >>> validate_freq("M")
     'M'
     >>> validate_freq("ME")
