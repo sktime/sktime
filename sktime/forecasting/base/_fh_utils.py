@@ -16,8 +16,175 @@ The converter handles:
 
 ___all__ = ["PandasFHConverter"]
 
+import warnings
+
 import numpy as np
 import pandas as pd
+
+from sktime.forecasting.base._freq_mnemonic import (
+    _ALIAS_TO_CANONICAL_STATIC,
+    _FREQ_GROUPS,
+    VALID_FREQ_BASES,
+    _parse_freq,
+)
+
+# Frequency resolution system
+#
+# Note: pandas has TWO freq string APIs with DIFFERENT preferences:
+#
+# - Period-context APIs (.to_period, PeriodIndex.from_ordinals, .asfreq):
+#   Want the OLD form: "M", "Q", "Y", etc.
+#   Reject the new form: PeriodIndex.from_ordinals(v, freq="ME") raises.
+#
+# - Offset-context APIs (to_offset):
+#  Want the NEW form: "ME", "QE", "YE", etc.
+#  Emit FutureWarning on old form: to_offset("M") warns.
+#
+# Our canonical freq strings (VALID_FREQ_BASES: "M", "D", "h", etc.)
+# align with Period-context APIs, so those calls can use canonical directly.
+# Only Offset-context calls (to_offset) need _resolve_pandas_freq wrapping.
+#
+# Three auto-populated caches that bridge our canonical freq names
+# and pandas's changing aliases. The offset TYPE (MonthEnd, Day, etc.)
+# is the stable anchor — pandas changes string aliases but not the
+# offset class hierarchy.
+#
+# When pandas renames "M" -> "ME" -> "MO" (hypothetical), the offset
+# type stays MonthEnd, and our canonical stays "M". The caches
+# auto-discover what pandas currently prefers via to_offset().
+
+# Any freq base string -> our canonical base
+# seeded statically from _FREQ_GROUPS, extended dynamically.
+_ALIAS_TO_CANONICAL = dict(_ALIAS_TO_CANONICAL_STATIC)
+for _base in VALID_FREQ_BASES:
+    _ALIAS_TO_CANONICAL.setdefault(_base, _base)
+
+# pandas offset type → our canonical base. Populated by _register_freq.
+_OFFSET_TYPE_TO_CANONICAL = {}
+
+# Our canonical base → pandas's currently preferred base string.
+# Populated by _bootstrap_pandas_prefs.
+_CANONICAL_TO_PANDAS = {}
+
+# Full freq string cache: any freq string → pandas-accepted freq string.
+_RESOLVE_CACHE = {}
+
+
+def _register_freq(base_str):
+    """Discover offset type and pandas preferred form for a base string.
+
+    Calls ``to_offset()`` with FutureWarning suppressed. Populates
+    ``_OFFSET_TYPE_TO_CANONICAL`` and ``_CANONICAL_TO_PANDAS``.
+
+    Parameters
+    ----------
+    base_str : str
+        A frequency base string (without multiplier or suffix).
+    """
+    from pandas.tseries.frequencies import to_offset
+
+    canonical = _ALIAS_TO_CANONICAL.get(base_str, base_str)
+    if canonical in _CANONICAL_TO_PANDAS:
+        return  # already have preferred form for this canonical
+
+    # Collect all aliases to try (canonical first, then known aliases)
+    aliases_to_try = {canonical}
+    for group in _FREQ_GROUPS:
+        if canonical in group or base_str in group:
+            aliases_to_try.update(group)
+            break
+    aliases_to_try = [canonical] + sorted(aliases_to_try - {canonical})
+
+    for alias in aliases_to_try:
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", FutureWarning)
+                offset = to_offset(alias)
+        except ValueError:
+            continue
+
+        offset_type = type(offset)
+        pref_base = _parse_freq(offset.freqstr)[1]
+
+        _OFFSET_TYPE_TO_CANONICAL[offset_type] = canonical
+        _CANONICAL_TO_PANDAS[canonical] = pref_base
+        _ALIAS_TO_CANONICAL.setdefault(pref_base, canonical)
+        return
+
+
+def _bootstrap_pandas_prefs():
+    """Pre-populate caches by discovering pandas preferences for all bases."""
+    all_canonicals = set(_ALIAS_TO_CANONICAL.values())
+    for canonical in all_canonicals:
+        if canonical not in _CANONICAL_TO_PANDAS:
+            _register_freq(canonical)
+
+
+# Run bootstrap at module load
+_bootstrap_pandas_prefs()
+
+
+def _normalize_freq(freq_str):
+    """Normalize freq string to our canonical form.
+
+    Parses the freq string, maps the base to canonical via
+    ``_ALIAS_TO_CANONICAL``, reconstructs with original multiplier
+    and suffix. Handles multiplied (``"2ME"`` → ``"2M"``) and
+    anchored (``"QE-DEC"`` → ``"Q-DEC"``) forms.
+
+    For unknown bases, attempts dynamic discovery via
+    ``_register_freq``.
+
+    Parameters
+    ----------
+    freq_str : str or None
+        Frequency string to normalize.
+
+    Returns
+    -------
+    str or None
+        Normalized frequency string, or None if input is None.
+    """
+    if freq_str is None:
+        return None
+    mult, base, suffix = _parse_freq(freq_str)
+    if base not in _ALIAS_TO_CANONICAL:
+        _register_freq(base)
+    canonical_base = _ALIAS_TO_CANONICAL.get(base, base)
+    return f"{mult}{canonical_base}{suffix}"
+
+
+def _resolve_pandas_freq(freq_str):
+    """Resolve freq string to a form pandas currently accepts.
+
+    Normalizes to canonical, then maps to pandas preferred form.
+    Handles multiplied and anchored forms.
+
+    Parameters
+    ----------
+    freq_str : str or None
+        Frequency string (canonical or alias).
+
+    Returns
+    -------
+    str or None
+        Pandas-accepted frequency string, or None if input is None.
+    """
+    if freq_str is None:
+        return None
+    if freq_str in _RESOLVE_CACHE:
+        return _RESOLVE_CACHE[freq_str]
+
+    mult, base, suffix = _parse_freq(freq_str)
+    canonical_base = _ALIAS_TO_CANONICAL.get(base, base)
+
+    if canonical_base not in _CANONICAL_TO_PANDAS:
+        _register_freq(canonical_base)
+
+    pandas_base = _CANONICAL_TO_PANDAS.get(canonical_base, canonical_base)
+    resolved = f"{mult}{pandas_base}{suffix}"
+    _RESOLVE_CACHE[freq_str] = resolved
+    return resolved
 
 
 class PandasFHConverter:
