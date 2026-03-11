@@ -44,21 +44,17 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         If True, then the RNN is bidirectional.
     num_epochs : int, default = 100
         The number of epochs to train the model.
+    batch_size : int, default = 1
+        The size of each mini-batch during training.
     optimizer : case insensitive str or None or an instance of optimizers
         defined in torch.optim, default = "RMSprop"
         The optimizer to use for training the model. List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
-    optimizer_kwargs : dict or None, default = None
-        Additional keyword arguments to pass to the optimizer.
-    batch_size : int, default = 1
-        The size of each mini-batch during training.
     criterion : case insensitive str or None or an instance of a loss function
         defined in PyTorch, default = "CrossEntropyLoss"
         The loss function to be used in training the neural network.
         List of available loss functions:
         https://pytorch.org/docs/stable/nn.html#loss-functions
-    criterion_kwargs : dict or None, default = None
-        Additional keyword arguments to pass to the loss function.
     callbacks : None or str or a tuple of str, default = "ReduceLROnPlateau"
         Currently only learning rate schedulers are supported as callbacks.
         If more than one scheduler is passed, they are applied sequentially in the
@@ -69,6 +65,10 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         and unexpected behavior.
         List of available learning rate schedulers:
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+    optimizer_kwargs : dict or None, default = None
+        Additional keyword arguments to pass to the optimizer.
+    criterion_kwargs : dict or None, default = None
+        Additional keyword arguments to pass to the loss function.
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
     lr : float, default = 0.001
