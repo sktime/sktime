@@ -1,5 +1,7 @@
 """Multi Channel Deep Convolutional Neural Classifier (MCDCNN)."""
 
+import warnings
+
 import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
@@ -18,13 +20,14 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         The number of epochs to train the model.
     batch_size : int, optional (default=16)
         The number of samples per gradient update.
-    kernel_size : int, optional (default=5)
-        The size of kernel in Conv1D layer.
+    kernel_sizes : tuple, optional (default=(5, 5))
+        The size of kernels in Conv1D layers.
     pool_size : int, optional (default=2)
         The size of kernel in (Max) Pool layer.
     filter_sizes : tuple, optional (default=(8, 8))
         The sizes of filter for Conv1D layer corresponding
         to each Conv1D in the block.
+        Number of conv layers is determined by the length of this tuple.
     dense_units : int, optional (default=732)
         The number of output units of the final Dense
         layer of this Network. This is NOT the final layer
@@ -101,7 +104,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         self,
         n_epochs=120,
         batch_size=16,
-        kernel_size=5,
+        kernel_sizes=(5, 5),
         pool_size=2,
         filter_sizes=(8, 8),
         dense_units=732,
@@ -123,7 +126,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
     ):
         self.n_epochs = n_epochs
         self.batch_size = batch_size
-        self.kernel_size = kernel_size
+        self.kernel_sizes = kernel_sizes
         self.pool_size = pool_size
         self.filter_sizes = filter_sizes
         self.dense_units = dense_units
@@ -154,6 +157,13 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             self.optimizer = "SGD"
             if self.optimizer_kwargs is None:
                 self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
+
+        if len(self.filter_sizes) != len(self.kernel_sizes):
+            raise ValueError(
+                f"Length of `filter_sizes` {len(self.filter_sizes)} must match "
+                f"the number of convolutional layers determined by the length of tuple "
+                f"`kernel_sizes` {len(self.kernel_sizes)}."
+            )
 
         super().__init__(
             num_epochs=self.n_epochs,
@@ -192,11 +202,18 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
                 "properly formatted."
             )
 
+        if len(np.unique(y)) == 1:
+            warnings.warn(
+                "The provided data passed to MCDCNNClassifierTorch contains a "
+                "single label. If this is not intentional, please check.",
+                UserWarning,
+            )
+
         self.num_classes = len(np.unique(y))
 
         return MCDCNNNetworkTorch(
             num_classes=self.num_classes,
-            kernel_size=self.kernel_size,
+            kernel_sizes=self.kernel_sizes,
             pool_size=self.pool_size,
             filter_sizes=self.filter_sizes,
             dense_units=self.dense_units,
@@ -231,9 +248,9 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         params2 = {
             "n_epochs": 1,
             "batch_size": 4,
-            "kernel_size": 3,
+            "kernel_sizes": (3,),
             "pool_size": 3,
-            "filter_sizes": (6, 12),
+            "filter_sizes": (6,),
             "dense_units": 21,
             "conv_padding": "valid",
             "pool_padding": "valid",
@@ -245,7 +262,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         params3 = {
             "n_epochs": 2,
             "batch_size": 2,
-            "kernel_size": 7,
+            "kernel_sizes": (7, 7),
             "pool_size": 2,
             "filter_sizes": (8, 8),
             "dense_units": 1,
