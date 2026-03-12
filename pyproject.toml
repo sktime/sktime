@@ -367,6 +367,70 @@ sktime = [
 [tool.setuptools.packages.find]
 exclude = ["tests", "tests.*"]
 
+[tool.uv]
+conflicts = [
+  [
+    { extra = "dependencies_lowest" },
+    { extra = "dependencies_lower" },
+  ],
+  [
+    { extra = "dependencies_lowest" },
+    { extra = "all_extras" },
+  ],
+  [
+    { extra = "dependencies_lowest" },
+    { extra = "all_extras_pandas2" },
+  ],
+  [
+    { extra = "dl" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "forecasting" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "notebooks" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "pandas1" },
+    { extra = "dependencies_lower" },
+  ],
+  [
+    { extra = "dependencies_2024" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "classification" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "networks" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "regression" },
+    { extra = "dependencies_lowest" },
+  ],
+  [
+    { extra = "dependencies_2024" },
+    { extra = "dependencies_lower" },
+  ],
+  [
+    { extra = "notebooks" },
+    { extra = "dependencies_2024" },
+  ],
+  [
+    { extra = "numpy1" },
+    { extra = "dependencies_2024" },
+  ],
+  [
+    { extra = "pandas1" },
+    { extra = "dependencies_2024" },
+  ],
+]
+
 [tool.ruff]
 line-length = 88
 exclude = [".git", "sktime/_contrib/*", "examples/blog_posts/*"]
