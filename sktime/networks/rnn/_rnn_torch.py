@@ -152,7 +152,7 @@ class RNNNetworkTorch(NNModule):
 
         Returns
         -------
-        out : torch.Tensor of shape (batch_size, hidden_size)
+        out : torch.Tensor of shape (batch_size, num_classes)
             Output tensor containing the hidden states for each sequence.
         """
         if isinstance(X, np.ndarray):
