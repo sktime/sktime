@@ -17,8 +17,10 @@ class RNNNetworkTorch(NNModule):
 
     Parameters
     ----------
-    input_size : int
-        Number of expected features in the input
+    input_size : int or tuple of length 3
+        if int, number of expected features in the input.
+        if tuple, format should be (n_instances, n_dims, series_length)
+        where n_dims is used as feature size.
     num_classes : int
         Number of classes for classification, typically 1 for single-target regression.
         This parameter controls number of output units.
