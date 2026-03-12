@@ -12,7 +12,7 @@ from sktime.utils.dependencies import _check_soft_dependencies
     reason="skip test if required soft dependency not available",
 )
 def test_rnn_network_accepts_module_output_activation():
-    """RNN should accept torch.nn.Module activation in output layer."""
+    """RNN should accept torch.nn.Module activations in output layer."""
     import torch
 
     from sktime.networks.rnn import RNNNetworkTorch
