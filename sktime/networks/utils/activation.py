@@ -12,7 +12,7 @@ from sktime.utils.dependencies import _safe_import
 NNModule = _safe_import("torch.nn.Module")
 
 
-def instantiate_activation(activation):
+def instantiate_activation(activation, activation_kwargs={}):
     """Instantiate an activation function from a string or return module as-is.
 
     This utility function supports backward compatibility across all network
@@ -25,6 +25,9 @@ def instantiate_activation(activation):
         - If str: activation name (case-insensitive)
         - If torch.nn.Module: returned as-is
         - If None: returns None
+    activation_kwargs : dict, optional
+        Additional keyword arguments to pass when instantiating the activation function.
+        This is only applicable if `activation` is a string. Ignored otherwise.
 
     Returns
     -------
@@ -45,15 +48,12 @@ def instantiate_activation(activation):
     - Hidden layer activations: relu, leakyrelu, elu, prelu, gelu, selu, rrelu,
       celu, tanh, hardtanh (plus all output layer activations)
     """
-    # Handle None
     if activation is None:
         return None
 
-    # If it's already a module, return it as-is
     if isinstance(activation, NNModule):
         return activation
 
-    # Must be a string at this point
     if not isinstance(activation, str):
         raise TypeError(
             f"`activation` should be of type str, torch.nn.Module, or None. "
@@ -62,19 +62,15 @@ def instantiate_activation(activation):
 
     act_lower = activation.lower()
 
-    # Define activation mapping with parameters
     activation_map = {
-        # Common activations (output and hidden layers)
-        "relu": ("torch.nn.ReLU", {}),
+        "relu": ("torch.nn.ReLU", {}),  # activation_name: (module_path, default_kwargs)
         "sigmoid": ("torch.nn.Sigmoid", {}),
         "tanh": ("torch.nn.Tanh", {}),
-        # Output layer specific activations
         "softmax": ("torch.nn.Softmax", {"dim": 1}),
         "logsoftmax": ("torch.nn.LogSoftmax", {"dim": 1}),
         "logsigmoid": ("torch.nn.LogSigmoid", {}),
-        # Hidden layer specific activations
         "leakyrelu": ("torch.nn.LeakyReLU", {}),
-        "leaky_relu": ("torch.nn.LeakyReLU", {}),  # Support underscore variant
+        "leaky_relu": ("torch.nn.LeakyReLU", {}),
         "elu": ("torch.nn.ELU", {}),
         "prelu": ("torch.nn.PReLU", {}),
         "gelu": ("torch.nn.GELU", {}),
@@ -93,4 +89,6 @@ def instantiate_activation(activation):
 
     module_path, kwargs = activation_map[act_lower]
     activation_class = _safe_import(module_path)
-    return activation_class(**kwargs)
+    if not activation_kwargs:
+        activation_kwargs = kwargs
+    return activation_class(**activation_kwargs)
