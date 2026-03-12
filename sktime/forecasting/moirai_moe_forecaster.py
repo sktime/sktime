@@ -91,6 +91,7 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
             "torch",
             "einops",
             "huggingface_hub",
+            "safetensors",
             "hf-xet",
             "lightning",
             "hydra-core",
@@ -366,6 +367,11 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
             {
                 "deterministic": True,
                 "checkpoint_path": "Salesforce/moirai-moe-1.0-R-small",
+            },
+            {
+                "deterministic": False,
+                "checkpoint_path": "Salesforce/moirai-moe-1.0-R-small",
+                "context_length": 100,
             },
         ]
 
