@@ -1,6 +1,7 @@
 """FCN time series classifiers.
 
-This subpackage provides FCN based time series classifiers implemented in TensorFlow and PyTorch backends.
+This subpackage provides FCN based time series classifiers implemented
+in TensorFlow and PyTorch backends.
 """
 
 __all__ = [
