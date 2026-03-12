@@ -20,7 +20,8 @@ class RNNNetworkTorch(NNModule):
     input_size : int
         Number of expected features in the input
     num_classes : int
-        Number of classes to predict
+        Number of classes for classification, typically 1 for single-target regression.
+        This parameter controls number of output units.
     hidden_dim : int, default = 6
         Number of features in the hidden state
     n_layers : int, default = 1
