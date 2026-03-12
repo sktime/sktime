@@ -168,6 +168,14 @@ Naive forecasters
 
     ForecastKnownValues
 
+.. currentmodule:: sktime.forecasting.dummy_global
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyGlobalForecaster
+
 Prediction intervals
 --------------------
 
