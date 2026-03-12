@@ -211,8 +211,8 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
-            Reserved values for classifiers:
-                "results_comparison" - used for identity testing in some classifiers
+            Reserved values for regressors:
+                "results_comparison" - used for identity testing in some regressors
                     should contain parameter settings comparable to "TSC bakeoff"
 
         Returns
