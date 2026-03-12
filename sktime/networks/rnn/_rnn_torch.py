@@ -56,7 +56,7 @@ class RNNNetworkTorch(NNModule):
     bidirectional : bool, default = False
         If True, then the RNN is bidirectional.
     random_state   : int, default = 0
-        Seed to ensure reproducibility.
+        Seed to ensure reproducibility
     """
 
     _tags = {
