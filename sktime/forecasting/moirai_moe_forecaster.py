@@ -309,6 +309,17 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
         if self._is_range_index:
             pred_df.index = self.handle_range_index(pred_df.index)
 
+        if _use_fit_data_as_context and not self._is_range_index:
+            if not isinstance(pred_df.index, pd.MultiIndex):
+                raw_freq = pd.infer_freq(pred_df.index[:3])
+                if raw_freq is not None:
+                    full_idx = pd.date_range(
+                        pred_df.index[0], pred_df.index[-1], freq=raw_freq
+                    )
+                    if len(full_idx) > len(pred_df):
+                        pred_df = pred_df.reindex(full_idx, fill_value=0)
+                        future_length = int(max(fh._values))
+
         _is_hierarchical = False
         if pred_df.index.nlevels >= 3:
             pred_df = self._convert_hierarchical_to_panel(pred_df)
@@ -369,7 +380,7 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
                 "checkpoint_path": "Salesforce/moirai-moe-1.0-R-small",
             },
             {
-                "deterministic": False,
+                "deterministic": True,
                 "checkpoint_path": "Salesforce/moirai-moe-1.0-R-small",
                 "context_length": 100,
             },
@@ -457,6 +468,7 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
                 target=target,
                 feat_dynamic_real=dynamic_features,
                 future_length=forecast_horizon,
+                freq=self.infer_freq(df.index),
             )
 
         return dataset, df_config
@@ -465,7 +477,18 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
         """Infer frequency of the index."""
         if isinstance(index, pd.PeriodIndex):
             return index.freq
-        return pd.infer_freq(index[:3])
+        freq = pd.infer_freq(index[:3])
+        _offset_to_period = {
+            "MS": "M",
+            "ME": "M",
+            "QS": "Q",
+            "QE": "Q",
+            "YS": "Y",
+            "AS": "Y",
+            "YE": "Y",
+            "AE": "Y",
+        }
+        return _offset_to_period.get(freq, freq)
 
     def return_time_index(self, df):
         """Return the time index, given any type of index."""
