@@ -274,6 +274,15 @@ dl = [
   'tqdm',
   'hydra-core; python_version < "3.13"',
 ]
+onnx = [
+  'onnx>=1.12; python_version < "3.13"',
+  'onnxruntime>=1.13; python_version < "3.13"',
+  'skl2onnx>=1.14; python_version < "3.13"',
+]
+pmml = [
+  'pypmml>=0.9.16; python_version < "3.13"',
+  'sklearn2pmml>=0.90; python_version < "3.13"',  # requires Java
+]
 mlflow = [
   "mlflow<4.0",
 ]
