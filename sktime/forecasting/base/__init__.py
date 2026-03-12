@@ -8,4 +8,4 @@ __all__ = [
 ]
 
 from sktime.forecasting.base._base import BaseForecaster, _BaseGlobalForecaster
-from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base._fh_v2 import ForecastingHorizon
