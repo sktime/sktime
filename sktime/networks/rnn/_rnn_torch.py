@@ -46,8 +46,10 @@ class RNNNetworkTorch(NNModule):
         Adapted from:
         https://www.kaggle.com/code/junkoda/pytorch-lstm-with-tensorflow-like-initialization
     dropout : float, default = 0.0
-        If non-zero, introduces a Dropout layer on the outputs of each RNN layer except
-        the fully connected output layer, with dropout probability equal to dropout.
+        This parameter controls dropout rate for RNN cells.
+        If non-zero, applies dropout to the outputs of each RNN layer except the last.
+        In PyTorch, this is effective only when n_layers > 1; for n_layers == 1,
+        the recurrent dropout argument is ignored (and PyTorch emits a warning).
     fc_dropout : float, default = 0.0
         If non-zero, introduces a Dropout layer on the outputs of the fully
         connected output layer, with dropout probability equal to fc_dropout.
