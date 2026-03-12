@@ -29,7 +29,7 @@ class ResNetBlock(nn.Module):
         out += residual
         return self.relu(out)
 
-# 2. THE BRAIN: Connects to sktime
+# 2. THE BRAIN: Connects to sktime and handles training
 class ResNetClassifier(BaseDeepClassifier):
     def __init__(self, n_epochs=100, batch_size=40, random_state=None):
         self.n_epochs = n_epochs
@@ -38,7 +38,7 @@ class ResNetClassifier(BaseDeepClassifier):
         super(ResNetClassifier, self).__init__()
 
     def _build_model(self, input_shape):
-        # input_shape is (channels, length)
+        # We stack 3 ResNet blocks
         self.model = nn.Sequential(
             ResNetBlock(input_shape[0], 64),
             ResNetBlock(64, 128),
@@ -48,6 +48,30 @@ class ResNetClassifier(BaseDeepClassifier):
             nn.Linear(128, getattr(self, "n_classes_", 2))
         )
         return self.model
+
+    def _fit(self, X, y):
+        """The Training Loop: This makes the model learn."""
+        input_shape = (X.shape[1], X.shape[2]) 
+        model = self._build_model(input_shape)
+        
+        # Standard PyTorch optimizer and loss function
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+        criterion = nn.CrossEntropyLoss()
+        
+        model.train()
+        for epoch in range(self.n_epochs):
+            # Convert training data to Torch tensors
+            inputs = torch.from_numpy(X).float()
+            labels = torch.from_numpy(y).long()
+            
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            
+        self.model_ = model
+        return self
 
 # 3. THE TEST: Verification
 if __name__ == "__main__":
