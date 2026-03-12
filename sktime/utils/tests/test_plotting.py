@@ -299,9 +299,12 @@ def test_plot_series_interval_multivariate():
     # because .columns.levels retains both "A" and "B"
     interval_subset = interval_df[["A"]]
 
+    # Build matching point forecasts for the same fh index as pred_interval.
+    y_pred = pd.Series([10.0, 11.0, 12.0], index=fh_idx)
+
     # This should not raise KeyError
     fig, ax = plt.subplots()
-    plot_series(y["A"], pred_interval=interval_subset, labels=["Train"])
+    plot_series(y["A"], y_pred, pred_interval=interval_subset, labels=["Train", "Pred"])
     plt.close()
 
 
