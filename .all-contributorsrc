@@ -3776,6 +3776,24 @@
         "code",
         "maintenance"
       ]
+    },
+    {
+      "login": "bernardoferreira-png",
+      "name": "Bernardo Ferreira",
+      "avatar_url": "https://github.com/bernardoferreira-png.png?size=100",
+      "profile": "https://github.com/bernardoferreira-png",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "codervinitjangir",
+      "name": "Vinit Jangir",
+      "avatar_url": "https://github.com/codervinitjangir.png?size=100",
+      "profile": "https://github.com/codervinitjangir",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }
