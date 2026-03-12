@@ -74,7 +74,7 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
     verbose : bool, default = False
         Whether to print progress information during training.
     random_state : int, default = 0
-        Seed to ensure reproducibility.
+        Seed for reproducibility.
 
     Examples
     --------
