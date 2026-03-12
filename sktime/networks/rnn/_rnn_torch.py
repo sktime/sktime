@@ -3,6 +3,8 @@
 __authors__ = ["RecreationalMath"]
 __all__ = ["RNNNetworkTorch"]
 
+from collections.abc import Callable
+
 import numpy as np
 
 # from sktime.networks.base import BaseDeepNetwork
@@ -72,7 +74,7 @@ class RNNNetworkTorch(NNModule):
         num_classes: int,
         hidden_dim: int = 6,
         n_layers: int = 1,
-        activation: str | None | NNModule = None,
+        activation: str | None | Callable = None,
         activation_hidden: str = "relu",
         bias: bool = False,
         init_weights: bool = True,
