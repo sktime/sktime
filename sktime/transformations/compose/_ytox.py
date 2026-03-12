@@ -1,35 +1,42 @@
-"""Use endogeneous as exogeneous features transformer."""
+"""Use endogeneous as exogenous features transformer."""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "avishkarsonni"]
 __all__ = ["YtoX"]
 
 from sktime.transformations.base import BaseTransformer
 
 
 class YtoX(BaseTransformer):
-    """Create exogeneous features which are a copy of the endogenous data.
+    """Create exogenous features from a copy of the endogenous data.
 
-    Replaces exogeneous features (``X``) by endogeneous data (``y``).
+    Replaces exogenous features (``X``) with the endogenous data (``y``), optionally
+    applying a transformer to ``y`` before using it as exogenous data.
 
     To *add* instead of *replace*, use ``FeatureUnion``.
 
     Common use cases include:
 
-    * creating exogeneous variables from transformed endogenous variables
-    * creating exogeneous data from index, if no exogeneous data is available
+    * creating exogenous variables from transformed endogenous variables
+    * creating exogenous data from the index, if no exogenous data is available
     * manual construction of reduction strategies, in combination with ``YfromX``
 
     Parameters
     ----------
     subset_index : boolean, optional, default=False
-        if True, subsets the output of ``transform`` to ``X.index``,
-        i.e., outputs ``y.loc[X.index]``
+        If True, subsets the output of ``transform`` to ``X.index``,
+        i.e., outputs ``y.loc[X.index]``.
+
+    transformer : sktime transformer, optional, default=None
+        If provided, will be applied to the endogenous data (``y``)
+        before moving it to the exogenous data.
+        If a general callable, it can be a function or a class with methods.
+        If a class is used, it must implement the necessary methods to transform ``y``
 
     Examples
     --------
-    Use case: creating exogenous data from index, if no exogenous data is available.
+    Use case: creating exogenous data from index if no exogenous data is available.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.compose import YtoX
@@ -42,7 +49,6 @@ class YtoX(BaseTransformer):
     >>>
     >>> # create a pipeline with Fourier features and ARIMA
     >>> pipe = ForecastingPipeline(
-    ...     [
     ...             YtoX(),
     ...             FourierFeatures(sp_list=[24, 24 * 7], fourier_terms_list=[10, 5]),
     ...             ARIMA(order=(1, 1, 1))  # doctest: +SKIP,
@@ -52,7 +58,7 @@ class YtoX(BaseTransformer):
     >>> # fit and forecast, using Fourier features as exogenous data
     >>> pred = pipe.fit_predict(y, fh=[1, 2, 3, 4, 5])  # doctest: +SKIP
 
-    Use case: using lagged endogenous variables as exogeneous data.
+    Use case: using lagged endogenous variables as exogenous data.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.compose import YtoX
@@ -63,10 +69,10 @@ class YtoX(BaseTransformer):
     >>> # data with no exogenous features
     >>> y = load_airline()
     >>>
-    >>> # create the pipeline
+    >>> # create the pipeline with lagged endogenous data as exogenous data
     >>> lagged_y_trafo = YtoX() * Lag(1, index_out="original") * Imputer()
     >>>
-    >>> # we need to specify index_out="original" as otherwise ARIMA gets 1 and 2 ahead
+    >>> # specify index_out="original" so ARIMA gets a 1-step-ahead forecast
     >>> # use lagged_y_trafo to generate X
     >>> forecaster = lagged_y_trafo ** SARIMAX()  # doctest: +SKIP
     >>>
@@ -74,7 +80,7 @@ class YtoX(BaseTransformer):
     >>> forecaster.fit(y, fh=[1])  # doctest: +SKIP
     >>> y_pred = forecaster.predict()  # doctest: +SKIP
 
-    Use case: using summarized endogenous variables as exogeneous data.
+    Use case: using summarized endogenous variables as exogenous data.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.summarize import WindowSummarizer
@@ -107,8 +113,7 @@ class YtoX(BaseTransformer):
     >>> # create the pipeline
     >>> pipe = ForecastingPipeline(
     ...     steps=[
-    ...         ("ytox", YtoX()),
-    ...         ("summarizer", WindowSummarizer(**kwargs)),
+    ...         ("summary_features", YtoX(transformer=WindowSummarizer(**kwargs))),
     ...         ("forecaster", forecaster),
     ...     ]
     ... )  # doctest: +SKIP
@@ -118,7 +123,7 @@ class YtoX(BaseTransformer):
     """
 
     _tags = {
-        "authors": ["fkiraly"],
+        "authors": ["fkiraly", "avishkarsonni"],
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": False,
         "capability:multivariate": True,
@@ -133,10 +138,34 @@ class YtoX(BaseTransformer):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, subset_index=False):
+    def __init__(self, subset_index=False, transformer=None):
         self.subset_index = subset_index
-
+        self.transformer = transformer
         super().__init__()
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing core logic, called from fit
+
+        Parameters
+        ----------
+        X : time series or panel in one of the pd.DataFrame formats
+            Data to be fitted
+        y : time series or panel in one of the pd.DataFrame formats
+            Additional data, e.g., labels for fitting
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if self.transformer is not None:
+            if hasattr(self.transformer, "clone"):
+                self.transformer_ = self.transformer.clone()
+            else:
+                self.transformer_ = self.transformer
+            self.transformer_.fit(y)
+        return self
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -155,9 +184,15 @@ class YtoX(BaseTransformer):
         y, as a transformed version of X
         """
         if self.subset_index:
-            return y.loc[X.index.intersection(y.index)]
+            y_transformed = y.loc[X.index.intersection(y.index)]
         else:
-            return y
+            y_transformed = y
+
+        # Apply the transformer if provided
+        if self.transformer is not None:
+            y_transformed = self.transformer_.transform(y_transformed)
+
+        return y_transformed
 
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
@@ -181,21 +216,29 @@ class YtoX(BaseTransformer):
         else:
             return y
 
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
 
-        Parameters
-        ----------
-        parameter_set : str, default="default"
+@classmethod
+def get_test_params(cls, parameter_set="default"):
+    """Return testing parameter settings for the estimator.
+
+    Parameters
+    ----------
+    parameter_set : str, default="default"
         Name of the set of test parameters to return, for use in tests. If no
         special parameters are defined for a value, will return ``"default"`` set.
 
-        Returns
-        -------
-        params : list of dict
-        Parameters to create testing instances of the class.
-        """
-        param1 = {"subset_index": False}
-        param2 = {"subset_index": True}
-        return [param1, param2]
+    Returns
+    -------
+    params : list of dict
+        Parameters to create testing instances of YtoX
+        Each dict can be used to construct a test instance, i.e.,
+        ``YtoX(**params[i])`` creates a valid test instance.
+        ``create_test_instance`` uses the first dictionary in ``params``
+
+    """
+    from sktime.transformations.series.exponent import ExponentTransformer
+
+    return [
+        {"subset_index": False, "transformer": ExponentTransformer(power=2)},
+        {},
+    ]
