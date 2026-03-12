@@ -3,6 +3,8 @@
 import numpy as np
 import pytest
 
+pytest.importorskip("torch", reason="test requires torch to be installed")
+
 from sktime.networks.utils import instantiate_activation
 from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
 from sktime.tests.test_switch import run_test_for_class

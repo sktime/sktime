@@ -3,6 +3,8 @@
 import numpy as np
 import pytest
 
+pytest.importorskip("torch", reason="test requires torch to be installed")
+
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.utils import instantiate_activation
 from sktime.tests.test_switch import run_test_for_class
