@@ -11,6 +11,7 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.singleton import _multiton
 
 
 class TabPFNTSForecaster(BaseForecaster):
@@ -32,6 +33,13 @@ class TabPFNTSForecaster(BaseForecaster):
 
         * "CLIENT" - use the hosted TabPFN inference service
         * "LOCAL" - run inference locally
+    max_context_length : int, default=4096
+        Maximum number of historical timesteps used as context.
+        Longer contexts may improve accuracy at the cost of compute.
+
+    tabpfn_output_selection : str, default="median"
+        Method to aggregate TabPFN ensemble predictions.
+        Supported values are ``"mean"``, ``"median"``, and ``"mode"``.
 
     References
     ----------
@@ -67,8 +75,15 @@ class TabPFNTSForecaster(BaseForecaster):
         "capability:global_forecasting": False,
     }
 
-    def __init__(self, tabpfn_mode="CLIENT"):
+    def __init__(
+        self,
+        tabpfn_mode="CLIENT",
+        max_context_length=4096,
+        tabpfn_output_selection="median",
+    ):
         self.tabpfn_mode = tabpfn_mode
+        self.max_context_length = max_context_length
+        self.tabpfn_output_selection = tabpfn_output_selection
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
@@ -92,13 +107,13 @@ class TabPFNTSForecaster(BaseForecaster):
             Reference to the fitted forecaster.
         """
         _check_soft_dependencies("tabpfn_time_series")
-        from tabpfn_time_series import TabPFNMode, TabPFNTSPipeline
-
-        self.model_pipeline_ = TabPFNTSPipeline(
-            tabpfn_mode=TabPFNMode[self.tabpfn_mode]
+        cached_model = _CachedTabPFNTS(
+            (self.tabpfn_mode, self.max_context_length, self.tabpfn_output_selection),
+            self.tabpfn_mode,
+            self.max_context_length,
+            self.tabpfn_output_selection,
         )
-
-        return self
+        self.model_pipeline_ = cached_model.load_pipeline()
 
     def _run_pipeline(self, fh, X=None, alpha=None):
         """Run the TabPFN-TS pipeline and return raw forecast output.
@@ -263,4 +278,40 @@ class TabPFNTSForecaster(BaseForecaster):
         return [
             {"tabpfn_mode": "LOCAL"},
             {"tabpfn_mode": "CLIENT"},
+            {
+                "tabpfn_mode": "LOCAL",
+                "max_context_length": 512,
+                "tabpfn_output_selection": "median",
+            },
         ]
+
+
+@_multiton
+class _CachedTabPFNTS:
+    """Cached TabPFN-TS model, to ensure only one instance exists in memory.
+
+    This is a zero shot model and immutable, hence there will not be
+    any side effects of sharing the same instance across multiple uses.
+    Plus, there are very minimal config parameters, which makes this simple.
+    """
+
+    def __init__(self, key, tabpfn_mode, max_context_length, tabpfn_output_selection):
+        self.key = key
+        self.tabpfn_mode = tabpfn_mode
+        self.max_context_length = max_context_length
+        self.tabpfn_output_selection = tabpfn_output_selection
+        self.model_pipeline = None
+
+    def load_pipeline(self):
+        if self.model_pipeline is not None:
+            return self.model_pipeline
+
+        from tabpfn_time_series import TabPFNMode, TabPFNTSPipeline
+
+        self.model_pipeline = TabPFNTSPipeline(
+            tabpfn_mode=TabPFNMode[self.tabpfn_mode],
+            max_context_length=self.max_context_length,
+            tabpfn_output_selection=self.tabpfn_output_selection,
+        )
+
+        return self.model_pipeline
