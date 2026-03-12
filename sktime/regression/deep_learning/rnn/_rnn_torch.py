@@ -82,7 +82,7 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> reg = SimpleRNNRegressorTorch(n_epochs=50,batch_size=2) # doctest: +SKIP
+    >>> reg = SimpleRNNRegressorTorch(num_epochs=50,batch_size=2) # doctest: +SKIP
     >>> reg.fit(X_train, y_train) # doctest: +SKIP
     SimpleRNNRegressorTorch(...)
     """

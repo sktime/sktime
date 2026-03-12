@@ -84,7 +84,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> clf = SimpleRNNClassifierTorch(n_epochs=50,batch_size=2) # doctest: +SKIP
+    >>> clf = SimpleRNNClassifierTorch(num_epochs=50,batch_size=2) # doctest: +SKIP
     >>> clf.fit(X_train, y_train) # doctest: +SKIP
     SimpleRNNClassifierTorch(...)
     """
