@@ -9,6 +9,7 @@ import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.rnn import RNNNetworkTorch
+from sktime.utils.dependencies import _safe_import
 
 
 class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
@@ -320,4 +321,10 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "verbose": False,
             "random_state": 0,
         }  # functionally equivalent to params2 for multi-class classification
-        return [params1, params2, params3, params4, params5]
+        params6 = {
+            "activation": _safe_import("torch.nn.Sigmoid()"),
+            "criterion": "KLDivLoss",  # keeps activation path
+            "callbacks": None,
+            "num_epochs": 1,
+        }
+        return [params1, params2, params3, params4, params5, params6]
