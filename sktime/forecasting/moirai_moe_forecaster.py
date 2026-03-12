@@ -53,7 +53,7 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
     >>> import pandas as pd
     >>> import numpy as np
     >>> moirai_moe_forecaster = MoiraiMoEForecaster(
-    ...     checkpoint_path=f"sktime/moirai-moe-1.0-R-small"
+    ...     checkpoint_path="Salesforce/moirai-moe-1.0-R-small"
     ... )
     >>> y = np.random.normal(0, 1, (30, 2))
     >>> X = y * 2 + np.random.normal(0, 1, (30,1))
@@ -61,7 +61,7 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
     >>> y = pd.DataFrame(y, index=index)
     >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)
     >>> moirai_moe_forecaster.fit(y, X=X)
-    MoiraiMoEForecaster(checkpoint_path='sktime/moirai-moe-1.0-R-small')
+    MoiraiMoEForecaster(checkpoint_path='Salesforce/moirai-moe-1.0-R-small')
     >>> X_test = pd.DataFrame(np.random.normal(0, 1, (10, 2)),
     ...                      columns=["x1", "x2"],
     ...                      index=pd.date_range("2020-01-31", periods=10, freq="D"),
@@ -363,10 +363,6 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
         return [
-            {
-                "deterministic": True,
-                "checkpoint_path": "sktime/moirai-moe-1.0-R-small",
-            },
             {
                 "deterministic": True,
                 "checkpoint_path": "Salesforce/moirai-moe-1.0-R-small",
