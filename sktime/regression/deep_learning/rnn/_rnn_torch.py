@@ -7,7 +7,6 @@ from collections.abc import Callable
 
 from sktime.networks.rnn import RNNNetworkTorch
 from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
-from sktime.utils.dependencies._safe_import import _safe_import
 
 
 class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
@@ -248,5 +247,4 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
             "verbose": False,
             "random_state": 0,
         }
-        params3 = {"criterion": _safe_import("torch.nn.MSELoss")}
-        return [params1, params2, params3]
+        return [params1, params2]
