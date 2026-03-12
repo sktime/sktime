@@ -57,7 +57,12 @@ class XLSTMForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["muslehal", "vedantag17"],
         "python_dependencies": "torch>=2.0.0",
+        # estimator type
+        # --------------
         "capability:pred_int": False,
         "capability:pred_var": False,
         "requires-fh-in-fit": False,
@@ -66,7 +71,9 @@ class XLSTMForecaster(BaseForecaster):
         "scitype:y": "univariate",
         "ignores-exogeneous-X": True,
         "handles-missing-data": False,
-        "requires-positive-X": False,
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
     }
 
     def __init__(
