@@ -5,7 +5,6 @@ __all__ = ["RNNNetworkTorch"]
 
 import numpy as np
 
-# from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _safe_import
 
 # handling soft dependencies for Torch modules
