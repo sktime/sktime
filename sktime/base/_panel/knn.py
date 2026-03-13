@@ -177,12 +177,17 @@ class _BaseKnnTimeSeriesEstimator:
         X = self._check_convert_X_for_predict(X)
 
         # self._X should be the stored _X
-        dist_mat = self._dist_adapt._distance(X, self._X)
+        if self.algorithm == "brute":
+            dist_mat = self._dist_adapt._distance(X, self._X)
 
-        result = self.knn_estimator_.kneighbors(
-            dist_mat, n_neighbors=n_neighbors, return_distance=return_distance
-        )
-
+            result = self.knn_estimator_.kneighbors(
+                dist_mat, n_neighbors=n_neighbors, return_distance=return_distance
+            )
+        else:
+            X_reshaped = self._dist_adapt._convert_X_to_sklearn(X)
+            result = self.knn_estimator_.kneighbors(
+                X_reshaped, n_neighbors=n_neighbors, return_distance=return_distance
+            )
         # result is either dist, or (dist, ind) pair, depending on return_distance
         return result
 
