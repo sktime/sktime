@@ -75,6 +75,19 @@ Window-based Anomaly Detection
 
     SubLOF
 
+Foundation Model-based Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Anomaly detection using foundational models.
+
+.. currentmodule:: sktime.detection.momentfm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MomentFMAnomalyDetector
+
 Reduction to Tabular Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
