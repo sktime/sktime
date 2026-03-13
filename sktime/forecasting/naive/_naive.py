@@ -209,9 +209,11 @@ class NaiveForecaster(_BaseWindowForecaster):
                     f"the `window_length`: {self.window_length} "
                     f"value must be greater than one."
                 )
-
+        elif self.strategy == "rolling_mean":
+            if self.window_length_ is None:
+                self.window_length_ = self.window_length
         else:
-            allowed_strategies = ("last", "mean", "drift")
+            allowed_strategies = ("last", "mean", "drift", "rolling_mean")
             raise ValueError(
                 f"Unknown strategy: {self.strategy}. Expected "
                 f"one of: {allowed_strategies}."
@@ -274,6 +276,25 @@ class NaiveForecaster(_BaseWindowForecaster):
 
                 # tile prediction according to seasonal periodicity
                 y_pred = self._tile_seasonal_prediction(y_pred, fh)
+
+
+        elif strategy == "rolling_mean":
+            if sp == 1:
+                current_window = last_window.copy()
+                preds = []
+                for _ in range(len(fh)):
+                    pred = np.nanmean(current_window)
+                    preds.append(pred)
+                    # update the current window
+                    current_window = np.append(current_window[1:], pred)
+                return np.array(preds)
+            else:
+                raise NotImplementedError("rolling_mean currently only supports sp=1")
+
+
+
+
+
 
         elif strategy == "drift":
             if self.window_length_ != 1:
