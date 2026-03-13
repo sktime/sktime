@@ -312,7 +312,6 @@ class ARDL(_StatsModelsAdapter):
                 )
         return inner_order, inner_auto_ardl
 
-    # todo: implement this, mandatory
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -491,8 +490,7 @@ class ARDL(_StatsModelsAdapter):
             mtype_last_seen = self._y_mtype_last_seen
             # refit with updated data, not only passed data
             self.fit(y=self._y, X=self._X, fh=self._fh)
-            # todo: should probably be self._fit, not self.fit
-            # but looping to self.fit for now to avoid interface break
+
             self._y_mtype_last_seen = mtype_last_seen
 
         # if update_params=False, and there are no components, do nothing
