@@ -3776,6 +3776,25 @@
         "code",
         "maintenance"
       ]
+    },
+    {
+      "login": "Spandan-Mishra",
+      "name": "Spandan Mishra",
+      "avatar_url": "https://avatars.githubusercontent.com/u/143828642?v=4",
+      "profile": "https://github.com/Spandan-Mishra",
+      "contributions": [
+        "code",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "gun29may",
+      "name": "Gunmay Jhingran",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142904972?v=4",
+      "profile": "https://github.com/gun29may",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }
