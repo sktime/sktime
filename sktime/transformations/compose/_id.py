@@ -23,7 +23,11 @@ class Id(BaseTransformer):
     >>> y = load_airline()
     >>> transformer = Id()
     >>> y_t = transformer.fit_transform(y)
+    >>> y.equals(y_t)
+    True
     >>> y_inv = transformer.inverse_transform(y_t)
+    >>> y.equals(y_inv)
+    True
     """
 
     _tags = {
