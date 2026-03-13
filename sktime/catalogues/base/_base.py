@@ -34,8 +34,9 @@ class BaseCatalogue(BaseObject):
 
         Returns
         -------
-        list[str]
-            list of item names/ids
+        list[str] or list[tuple[str, str]]
+            List of item specification strings, or list of tuples where the
+            first element is the name/ID and the second is the specification string.
         """
         pass
 
@@ -56,8 +57,9 @@ class BaseCatalogue(BaseObject):
 
         Returns
         -------
-        list[str] or list[Any]
-            List of specification names (default) or object instances.
+        list[str] or list[Any] or list[tuple[str, Any]]
+            List of specification names (default), object instances, or
+            tuples of (name, object instance) if the catalogue entry was a tuple.
         """
         names_dict = self._get()
 
@@ -76,7 +78,7 @@ class BaseCatalogue(BaseObject):
         if not as_object:
             return [
                 item
-                if isinstance(item, str)
+                if isinstance(item, (str, tuple))
                 else (item.__name__ if callable(item) else type(item).__name__)
                 for item in items
             ]
@@ -90,6 +92,10 @@ class BaseCatalogue(BaseObject):
             for item in items:
                 if isinstance(item, str):
                     processed.append(craft(item))
+                elif isinstance(item, tuple) and len(item) == 2:
+                    # Handle tuple of (name, spec_string)
+                    name, spec = item
+                    processed.append((name, craft(spec)))
                 else:
                     processed.append(item)
             self._cached_objects[object_type] = processed

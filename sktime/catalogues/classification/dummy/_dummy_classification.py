@@ -29,7 +29,7 @@ class DummyClassificationCatalogue(BaseCatalogue):
         ]
 
         classifiers = [
-            "DummyClassifier()",
+            ("Dummy", "DummyClassifier()"),
         ]
 
         metrics = [accuracy_score]
