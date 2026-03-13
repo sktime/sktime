@@ -8,6 +8,8 @@ __all__ = ["_HeterogenousEnsembleForecaster"]
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.registry import is_scitype
+from sktime.utils.parallel import parallelize
+from sktime.utils.warnings import warn
 
 
 class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster):
@@ -25,9 +27,23 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_fitted_attr = "forecasters_"
 
-    def __init__(self, forecasters, n_jobs=None, fc_alt=None):
+    def __init__(
+        self, forecasters, n_jobs=None, fc_alt=None, backend=None, backend_params=None
+    ):
+        if n_jobs is not None:
+            warn(
+                "The parameter `n_jobs` is deprecated and will be removed in "
+                "future versions. To keep the current behavior and to silence this "
+                "warninng, set `backend_params='joblib'` instead.",
+                FutureWarning,
+                stacklevel=2,
+            )
+            # backend_params = "joblib"
+
         if forecasters is not None:
             self.forecasters = forecasters
+        self.backend = None
+        self.backend_params = backend_params
         self.n_jobs = n_jobs
         super().__init__()
 
@@ -108,19 +124,21 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
         list of references to fitted forecasters
             in same order as forecasters
         """
-        from joblib import Parallel, delayed
 
-        def _fit_forecaster(forecaster, y, X, fh):
+        def _fit_forecaster(forecaster, meta):
             """Fit single forecaster."""
             return forecaster.fit(y, X, fh)
 
         if forecasters is None:
             forecasters = self._get_forecaster_list()
 
-        fitted_fcst = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_forecaster)(forecaster.clone(), y, X, fh)
-            for forecaster in forecasters
+        fitted_fcst = parallelize(
+            fun=_fit_forecaster,
+            iter=forecasters,
+            backend=self.backend,
+            backend_params=self.backend_params,
         )
+
         fcst_names = self._get_forecaster_names()
         self.forecasters_ = list(zip(fcst_names, fitted_fcst))
 
