@@ -11,8 +11,11 @@ import pandas as pd
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.utils.singleton import _multiton
+from sktime.utils.warnings import warn
 
 
+# TODO 0.35.0: remove this class with the
+# pytorch based class in https://github.com/sktime/sktime/pull/7155
 class TimesFMForecaster(_BaseGlobalForecaster):
     """TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
 
@@ -247,6 +250,28 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         # Set environment variables for JAX backend based on CPU, GPU, or TPU
         os.environ["JAX_PLATFORM_NAME"] = backend
         os.environ["JAX_PLATFORMS"] = backend
+
+        # Deprecation warning for the repo_id default change
+        warn(
+            f"{self.__class__.__name__}: "
+            f"The 'timesfm' implementation in sktime fork will "
+            "switch to a pytorch-based from jax-based in release 0.35.0. "
+            "As a result, the default value for the 'repo_id' "
+            f"parameter will change from '{repo_id}' "
+            "to 'google/timesfm-1.0-200m-pytorch'.",
+            DeprecationWarning,
+        )
+
+        # Deprecation warning for the changing dependencies
+        warn(
+            f"{self.__class__.__name__}: "
+            "The dependencies for 'timesfm' will change in sktime 0.35.0. "
+            "Currently required dependencies: "
+            f"{', '.join(self.get_class_tag('python_dependencies'))}. "
+            "From release 0.35.0, these will be replaced with: "
+            "'huggingface-hub' and 'torch'. ",
+            DeprecationWarning,
+        )
 
         super().__init__()
 
