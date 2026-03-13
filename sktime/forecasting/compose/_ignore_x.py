@@ -35,10 +35,10 @@ class IgnoreX(_DelegatedForecaster):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = IgnoreX(NaiveForecaster())
-    >>> forecaster.fit(y=y, fh=[1, 2, 3])
-    IgnoreX(...)
-    >>> y_pred = forecaster.predict()
+    >>> X = y.to_frame(name="exog")
+    >>> forecaster = IgnoreX(NaiveForecaster(), ignore_x=True)
+    >>> _ = forecaster.fit(y=y, X=X, fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(X=X)
     """
 
     # attribute for _DelegatedForecaster, which then delegates
