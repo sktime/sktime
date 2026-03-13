@@ -15,6 +15,7 @@ class _TslearnAdapter:
     _tags = {
         "X_inner_mtype": "numpy3D",
         "python_dependencies": ["tslearn"],
+        "tests:vm": True,  # tslearn based estimators are tested in their own VM
     }
 
     # defines the name of the attribute containing the tslearn estimator
