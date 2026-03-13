@@ -7,7 +7,6 @@ from sktime.classification.deep_learning.base import BaseDeepClassifier
 class ResNetBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
-        # kernel=7, padding=3 keeps the length the same (50 -> 50)
         self.conv1 = nn.Conv1d(in_channels, out_channels, kernel_size=7, padding=3)
         self.bn1 = nn.BatchNorm1d(out_channels)
         self.relu = nn.ReLU()
@@ -26,7 +25,6 @@ class ResNetBlock(nn.Module):
         residual = self.shortcut(x)
         out = self.relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
-        # This addition now works because dimensions match perfectly
         out += residual
         return self.relu(out)
 
@@ -39,8 +37,8 @@ class ResNetClassifier(BaseDeepClassifier):
         super(ResNetClassifier, self).__init__()
 
     def _build_model(self, input_shape):
-        # We stack 3 ResNet blocks
-        self.model = nn.Sequential(
+        # input_shape is (channels, length)
+        model = nn.Sequential(
             ResNetBlock(input_shape[0], 64),
             ResNetBlock(64, 128),
             ResNetBlock(128, 128),
@@ -48,45 +46,38 @@ class ResNetClassifier(BaseDeepClassifier):
             nn.Flatten(),
             nn.Linear(128, getattr(self, "n_classes_", 2))
         )
-        return self.model
+        return model
 
     def _fit(self, X, y):
-        """The Training Loop: This makes the model learn."""
+        """The Training Loop."""
+        # X shape: (n_instances, n_channels, n_timepoints)
         input_shape = (X.shape[1], X.shape[2]) 
-        model = self._build_model(input_shape)
+        self.model_ = self._build_model(input_shape)
         
-        # Standard PyTorch optimizer and loss function
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(self.model_.parameters(), lr=0.001)
         criterion = nn.CrossEntropyLoss()
         
-        model.train()
+        self.model_.train()
         for epoch in range(self.n_epochs):
-            # Convert training data to Torch tensors
             inputs = torch.from_numpy(X).float()
             labels = torch.from_numpy(y).long()
             
             optimizer.zero_grad()
-            outputs = model(inputs)
+            outputs = self.model_(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
             
-        self.model_ = model
         return self
 
-# 3. THE TEST: Verification
-if __name__ == "__main__":
-    clf = ResNetClassifier(n_epochs=1)
-    clf.n_classes_ = 3 
-    
-    # Test with 50 time steps
-    dummy_input = torch.randn(1, 1, 50) 
-    torch_model = clf._build_model(input_shape=(1, 50))
-    
-    # Try forward pass
-    output = torch_model(dummy_input)
-    
-    print("\n" + "⭐"*15)
-    print("✅ ABSOLUTE SUCCESS!")
-    print(f"✅ Input: 50 steps -> Output: {output.shape}")
-    print("⭐"*15 + "\n")
+    def _predict(self, X):
+        """Predict labels for sequences in X."""
+        self.model_.eval()
+        inputs = torch.from_numpy(X).float()
+        
+        with torch.no_grad():
+            # Crucial: Call the model directly, not .predict()
+            outputs = self.model_(inputs)
+            predictions = torch.argmax(outputs, dim=1)
+            
+        return predictions.numpy()
