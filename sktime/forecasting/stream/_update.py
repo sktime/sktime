@@ -463,6 +463,22 @@ class DontUpdate(_DelegatedForecaster):
     refit_window_lag : difference of sktime indices (int or timedelta), optional
         lag of the data window to refit to, w.r.t. cutoff, in case update calls fit
         default = 0, i.e., refit window ends with and includes cutoff
+
+    Examples
+    --------
+    >>> from sktime.forecasting.trend import TrendForecaster
+    >>> from sktime.forecasting.stream import DontUpdate
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> y0 = y.iloc[:-12]
+    >>> y1 = y.iloc[-12:]
+    >>> inner = TrendForecaster()
+    >>> forecaster = DontUpdate(inner)
+    >>> forecaster.fit(y0, fh=[1, 2, 3])
+    DontUpdate(...)
+    >>> # calling update will not change model parameters
+    >>> forecaster.update(y1)
+    DontUpdate(...)
     """
 
     # attribute for _DelegatedForecaster, which then delegates
