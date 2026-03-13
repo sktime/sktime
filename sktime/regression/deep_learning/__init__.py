@@ -3,6 +3,7 @@
 __all__ = [
     "CNNRegressor",
     "CNTCRegressor",
+    "CNTCRegressorTorch",
     "FCNRegressor",
     "InceptionTimeRegressor",
     "InceptionTimeRegressorTorch",
@@ -18,7 +19,7 @@ __all__ = [
 ]
 
 from sktime.regression.deep_learning.cnn import CNNRegressor
-from sktime.regression.deep_learning.cntc import CNTCRegressor
+from sktime.regression.deep_learning.cntc import CNTCRegressor, CNTCRegressorTorch
 from sktime.regression.deep_learning.fcn import FCNRegressor
 from sktime.regression.deep_learning.inceptiontime import (
     InceptionTimeRegressor,

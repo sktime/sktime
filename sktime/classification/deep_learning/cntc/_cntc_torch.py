@@ -29,12 +29,12 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
     Parameters
     ----------
     kernel_sizes : tuple of int, length n_conv_layers, default=(1, 1)
-        Kernel size for each Conv1D layer (first and second conv block).
+        Kernel size for each Conv1D layer.
     rnn_layer : int, default=64
         Hidden size of the SimpleRNN used in the CCNN arm.
     lstm_layer : int, default=8
         Hidden size of the LSTM used in the CLSTM arm.
-    evg_pool_size : int, default=1
+    avg_pool_size : int, default=1
         Kernel size of the MaxPool1D layer applied after merging all arms.
         The original paper uses 1 (no-op pooling).
     n_conv_layers : int, default=2
@@ -50,12 +50,18 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
     activation_attention : str, default='sigmoid'
         Activation function name applied inside the self-attention score
         computation. Must be a valid attribute of torch.nn.functional.
-    dropout : float or tuple of 7 floats, default=(0.8, 0.8, 0.7, 0.8, 0.6, 0.5, 0.8)
+    dropout : float or dict or tuple or None, default=None
         Dropout rate(s) applied in the network. If a single float, the same
-        rate is applied everywhere. If a tuple, values correspond to:
-        (conv1_dropout, rnn_dropout, conv2_dropout, lstm_dropout,
-         pool_dropout, attention_dropout, mlp_dropout)
-        where mlp_dropout is shared across both MLP hidden layers.
+        rate is applied everywhere. If a dict, it specifies dropout rates
+        for individual network components. For the two-conv architecture as
+        specified in the paper 7-tuple value dropout is supported.
+
+        Valid keys include: 'conv', 'rnn', 'lstm', 'pool', 'attention', 'mlp'.
+        - The 'conv' key can map to a single float (applied to all conv layers)
+        or a sequence of floats of length `n_conv_layers`.
+        - Unspecified keys will inherit the default CNTC dropout profile.
+
+        Example: {'conv': [0.8, 0.7], 'rnn': 0.8, 'mlp': 0.8}
     init_weights: str, default="xavier_uniform"
         Weight initialization method for all layers. Must be a valid method in
         torch.nn.init, e.g. 'xavier_uniform', 'kaiming_normal', etc.
@@ -123,7 +129,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
     ...     init_weights="xavier_uniform",
     ...     random_state=42,
     ... )
-    >>> clf.fit(X_train, y_train, epochs=1)  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     CNTCClassifierTorch(...)
     """
 
@@ -132,7 +138,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
         # --------------
         "authors": __authors__,
         "maintainers": ["fnhirwa"],
-        "python_version": ">=3.9",
+        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
@@ -144,23 +150,23 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
         kernel_sizes: tuple = (1, 1),
         rnn_layer: int = 64,
         lstm_layer: int = 8,
-        evg_pool_size: int = 1,
+        avg_pool_size: int = 1,
         n_conv_layers: int = 2,
         filter_sizes: tuple = (16, 8),
         dense_size: int = 64,
         hidden_activation: str = "relu",
         activation_attention: str = "sigmoid",
-        dropout: float | tuple = (0.8, 0.8, 0.7, 0.8, 0.6, 0.5, 0.8),
+        dropout: float | dict | tuple | None = None,
         init_weights: str | None = "xavier_uniform",
         random_state: int = 0,
         # training parameters
         num_epochs: int = 100,
-        batch_size: int = 1,
         optimizer: str | None | Callable = "RMSprop",
-        criterion: str | None | Callable = "CrossEntropyLoss",
-        callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
         optimizer_kwargs: dict | None = None,
+        batch_size: int = 1,
+        criterion: str | None | Callable = "CrossEntropyLoss",
         criterion_kwargs: dict | None = None,
+        callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
         callback_kwargs: dict | None = None,
         lr: float = 0.001,
         verbose: bool = False,
@@ -168,7 +174,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
         self.kernel_sizes = kernel_sizes
         self.rnn_layer = rnn_layer
         self.lstm_layer = lstm_layer
-        self.evg_pool_size = evg_pool_size
+        self.avg_pool_size = avg_pool_size
         self.n_conv_layers = n_conv_layers
         self.filter_sizes = filter_sizes
         self.dense_size = dense_size
@@ -215,7 +221,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
         -------
         X3 : np.ndarray, shape (B, n_dims, T)
         """
-        B, n_dims, T = X.shape
+        _, _, T = X.shape
         X3 = np.zeros_like(X)
         for t in range(T):
             start = max(0, t - 2)  # window=3
@@ -303,7 +309,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             kernel_sizes=self.kernel_sizes,
             rnn_layer=self.rnn_layer,
             lstm_layer=self.lstm_layer,
-            evg_pool_size=self.evg_pool_size,
+            avg_pool_size=self.avg_pool_size,
             n_conv_layers=self.n_conv_layers,
             filter_sizes=self.filter_sizes,
             dense_size=self.dense_size,
@@ -364,7 +370,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             "kernel_sizes": (3, 3),
             "rnn_layer": 16,
             "lstm_layer": 4,
-            "evg_pool_size": 2,
+            "avg_pool_size": 2,
             "n_conv_layers": 2,
             "filter_sizes": (8, 4),
             "dense_size": 32,
@@ -390,7 +396,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             "kernel_sizes": (1, 1),
             "rnn_layer": 32,
             "lstm_layer": 8,
-            "evg_pool_size": 1,
+            "avg_pool_size": 1,
             "n_conv_layers": 2,
             "filter_sizes": (16, 8),
             "dense_size": 64,
@@ -411,18 +417,25 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             "random_state": 0,
         }
 
-        # Per-layer dropout tuple + learning rate scheduler
+        # Custom conv stack + component-wise dropout + scheduler
         params4 = {
-            "kernel_sizes": (1, 1),
+            "kernel_sizes": (1, 1, 1),
             "rnn_layer": 64,
             "lstm_layer": 8,
-            "evg_pool_size": 1,
-            "n_conv_layers": 2,
-            "filter_sizes": (16, 8),
+            "avg_pool_size": 1,
+            "n_conv_layers": 3,
+            "filter_sizes": (16, 8, 4),
             "dense_size": 64,
             "hidden_activation": "relu",
             "activation_attention": "sigmoid",
-            "dropout": (0.8, 0.8, 0.7, 0.8, 0.6, 0.5, 0.8),  # per-layer
+            "dropout": {
+                "conv": [0.8, 0.7, 0.6],
+                "rnn": 0.8,
+                "lstm": 0.8,
+                "pool": 0.6,
+                "attention": 0.5,
+                "mlp": 0.8,
+            },
             "init_weights": "xavier_uniform",
             "num_epochs": 1,
             "batch_size": 2,
@@ -442,7 +455,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             "kernel_sizes": (1, 1),
             "rnn_layer": 64,
             "lstm_layer": 8,
-            "evg_pool_size": 1,
+            "avg_pool_size": 1,
             "n_conv_layers": 2,
             "filter_sizes": (16, 8),
             "dense_size": 64,
