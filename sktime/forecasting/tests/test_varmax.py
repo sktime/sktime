@@ -14,7 +14,6 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.dependencies import _check_soft_dependencies
 
 
-@pytest.mark.skip(reason="undiagnosed failure, see #6260")
 @pytest.mark.skipif(
     not run_test_for_class(VARMAX),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -43,13 +42,14 @@ def test_VARMAX_against_statsmodels():
     train, _ = temporal_train_test_split(df.astype("float64"))
     y = train[["A", "B"]]
 
-    sktime_model = VARMAX()
+    # Use low_memory=True to reduce memory consumption in CI, see #6260
+    sktime_model = VARMAX(low_memory=True, maxiter=20)
     fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])
     sktime_model.fit(y)
     y_pred = sktime_model.predict(fh=fh)
 
     stats = _VARMAX(y)
-    stats_fit = stats.fit()
+    stats_fit = stats.fit(low_memory=True, maxiter=20)
     start, end = len(train) + fh[0] - 1, len(train) + fh[-1] - 1
     y_pred_stats = stats_fit.predict(start=start, end=end)
     y_pred_stats = y_pred_stats.loc[fh.to_absolute_index(train.index[-1])]
@@ -57,7 +57,6 @@ def test_VARMAX_against_statsmodels():
     assert_allclose(y_pred, y_pred_stats)
 
 
-@pytest.mark.skip(reason="undiagnosed failure, see #6260")
 @pytest.mark.skipif(
     not run_test_for_class(VARMAX),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -89,12 +88,13 @@ def test_VARMAX_against_statsmodels_with_exog():
     fh = ForecastingHorizon([1, 2, 3, 4, 5, 6])
     assert len(fh) == len(X_test)
 
-    sktime_model = VARMAX()
+    # Use low_memory=True to reduce memory consumption in CI, see #6260
+    sktime_model = VARMAX(low_memory=True, maxiter=20)
     sktime_model.fit(y_train, X=X_train)
     y_pred = sktime_model.predict(fh=fh, X=X_test)
 
     stats = _VARMAX(y_train, exog=X_train)
-    stats_fit = stats.fit()
+    stats_fit = stats.fit(low_memory=True, maxiter=20)
     start, end = len(train) + fh[0] - 1, len(train) + fh[-1] - 1
     y_pred_stats = stats_fit.predict(start=start, end=end, exog=X_test)
     y_pred_stats = y_pred_stats.loc[fh.to_absolute_index(train.index[-1])]
