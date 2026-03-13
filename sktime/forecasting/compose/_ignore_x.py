@@ -28,6 +28,17 @@ class IgnoreX(_DelegatedForecaster):
     ----------
     forecaster_ : clone of forecaster
         The fitted forecaster.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.compose import IgnoreX
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecaster = IgnoreX(NaiveForecaster())
+    >>> forecaster.fit(y=y, fh=[1, 2, 3])
+    IgnoreX(...)
+    >>> y_pred = forecaster.predict()
     """
 
     # attribute for _DelegatedForecaster, which then delegates
