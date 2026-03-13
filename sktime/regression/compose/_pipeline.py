@@ -57,6 +57,9 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     transformers : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
         these are "blueprint" transformers, states do not change when `fit` is called
+    memory : str, joblib.Memory, or None, default=None
+        Cache directory or Memory instance to cache transformer ``fit_transform``
+        results. If None, no caching is performed.
 
     Attributes
     ----------
@@ -106,11 +109,12 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
     # no default tag values - these are set dynamically below
 
-    def __init__(self, regressor, transformers):
+    def __init__(self, regressor, transformers, memory=None):
         self.regressor = regressor
         self.regressor_ = regressor.clone()
         self.transformers = transformers
-        self.transformers_ = TransformerPipeline(transformers)
+        self.memory = memory
+        self.transformers_ = TransformerPipeline(transformers, memory=memory)
 
         super().__init__()
 
@@ -187,6 +191,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             new_pipeline = RegressorPipeline(
                 regressor=self.regressor,
                 transformers=trafo_pipeline.steps,
+                memory=self.memory,
             )
             return new_pipeline
         else:
@@ -408,13 +413,14 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
     # no default tag values - these are set dynamically below
 
-    def __init__(self, regressor, transformers):
+    def __init__(self, regressor, transformers, memory=None):
         from sklearn.base import clone
 
         self.regressor = regressor
         self.regressor_ = clone(regressor)
         self.transformers = transformers
-        self.transformers_ = TransformerPipeline(transformers)
+        self.memory = memory
+        self.transformers_ = TransformerPipeline(transformers, memory=memory)
 
         super().__init__()
 
@@ -481,6 +487,7 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             new_pipeline = SklearnRegressorPipeline(
                 regressor=self.regressor,
                 transformers=trafo_pipeline.steps,
+                memory=self.memory,
             )
             return new_pipeline
         else:
