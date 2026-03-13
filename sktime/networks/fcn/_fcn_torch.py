@@ -23,12 +23,17 @@ class FCNNetworkTorch(NNModule):
     filter_sizes : tuple of int, default = (128, 256, 128)
         Number of filters for each convolutional layer. The number of
         convolutional blocks is inferred from the length of this tuple.
+        Must be a non-empty tuple.
     kernel_sizes : tuple of int, default = (8, 5, 3)
         Kernel size for each convolutional layer. Must have the same length
-        as ``filter_sizes``.
-    activation_hidden : str, default = "relu"
+        as ``filter_sizes`` and be non-empty.
+    activation_hidden : str or None or an instance of activation functions defined in
+        torch.nn, default = "relu"
         Activation function applied after each BatchNorm layer in the
-        convolutional blocks. Supported: ``"relu"``, ``"tanh"``, ``"sigmoid"``.
+        convolutional blocks.
+        If str, supported values are ``"relu"``, ``"tanh"``, ``"sigmoid"``.
+        If not str, must be an instantiated ``torch.nn.Module`` activation.
+        If ``None``, no activation is applied (identity).
     activation : str or None, default = None
         Activation function used in the fully connected output layer.
         Supported: ``"sigmoid"``, ``"softmax"``, ``"logsoftmax"``,
@@ -49,11 +54,15 @@ class FCNNetworkTorch(NNModule):
         num_classes: int,
         filter_sizes: tuple = (128, 256, 128),
         kernel_sizes: tuple = (8, 5, 3),
-        activation_hidden: str = "relu",
+        activation_hidden="relu",  # str, torch.nn.Module instance, or None
         activation: str | None = None,
         init_weights: str | None = None,
         random_state: int = 0,
     ):
+        if len(filter_sizes) == 0 or len(kernel_sizes) == 0:
+            raise ValueError(
+                "`filter_sizes` and `kernel_sizes` must be non-empty tuples."
+            )
         if len(filter_sizes) != len(kernel_sizes):
             raise ValueError(
                 "The length of `filter_sizes` must equal the length of "
@@ -132,7 +141,8 @@ class FCNNetworkTorch(NNModule):
         for conv, bn in zip(self.conv_layers, self.bn_layers):
             x = conv(x)
             x = bn(x)
-            x = self._hidden_activation(x)
+            if self._hidden_activation is not None:
+                x = self._hidden_activation(x)
 
         x = self.gap(x)
         x = x.squeeze(-1)
@@ -149,20 +159,33 @@ class FCNNetworkTorch(NNModule):
 
         Returns
         -------
-        activation : torch.nn.Module
-            The activation function instance.
+        activation : torch.nn.Module or None
+            The activation function instance, or ``None`` if no activation.
         """
-        activation_name = self.activation_hidden.lower()
-        if activation_name == "relu":
-            return _safe_import("torch.nn.ReLU")()
-        elif activation_name == "tanh":
-            return _safe_import("torch.nn.Tanh")()
-        elif activation_name == "sigmoid":
-            return _safe_import("torch.nn.Sigmoid")()
+        act = self.activation_hidden
+
+        if act is None:
+            return None
+        elif isinstance(act, NNModule):
+            return act
+        elif isinstance(act, str):
+            activation_name = act.lower()
+            if activation_name == "relu":
+                return _safe_import("torch.nn.ReLU")()
+            elif activation_name == "tanh":
+                return _safe_import("torch.nn.Tanh")()
+            elif activation_name == "sigmoid":
+                return _safe_import("torch.nn.Sigmoid")()
+            else:
+                raise ValueError(
+                    f"Unsupported hidden activation: {self.activation_hidden}. "
+                    "Supported string values: 'relu', 'tanh', 'sigmoid'."
+                )
         else:
-            raise ValueError(
-                f"Unsupported hidden activation: {self.activation_hidden}. "
-                "Supported values: 'relu', 'tanh', 'sigmoid'."
+            raise TypeError(
+                "`activation_hidden` must be a str, an instantiated "
+                "``torch.nn.Module``, or ``None``. "
+                f"Got type: {type(act)}"
             )
 
     def _instantiate_activation(self):

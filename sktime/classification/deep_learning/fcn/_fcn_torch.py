@@ -24,9 +24,13 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
     kernel_sizes : tuple of int, default = (8, 5, 3)
         Kernel size for each convolutional layer. Must have the same length
         as ``filter_sizes``.
-    activation_hidden : str, default = "relu"
+    activation_hidden : str or None or an instance of activation functions defined in
+        torch.nn, default = "relu"
         Activation function applied after each BatchNorm layer in the
         convolutional blocks.
+        If str, supported values are ``"relu"``, ``"tanh"``, ``"sigmoid"``.
+        If not str, must be an instantiated ``torch.nn.Module`` activation.
+        If ``None``, no activation is applied (identity).
     activation : str or None or an instance of activation functions defined in
         torch.nn, default = None
         Activation function used in the fully connected output layer.
@@ -91,7 +95,7 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
         self: "FCNClassifierTorch",
         filter_sizes: tuple = (128, 256, 128),
         kernel_sizes: tuple = (8, 5, 3),
-        activation_hidden: str = "relu",
+        activation_hidden="relu",  # str, torch.nn.Module instance, or None
         activation: str | None | Callable = None,
         init_weights: str | None = "kaiming_uniform",
         num_epochs: int = 2000,
