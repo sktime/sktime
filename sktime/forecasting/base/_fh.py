@@ -411,11 +411,11 @@ class ForecastingHorizon:
                     f"Current: {freq_from_self}, from update: {freq_from_obj}."
                 )
         elif freq_from_obj is not None:  # only freq_from_obj is not None
-            if freq_from_obj == "ME":
+            if freq_from_obj in ("ME", "MS"):
                 freq_from_obj = "M"
             self._freq = freq_from_obj
         else:
-            if freq_from_obj == "ME":
+            if freq_from_obj in ("ME", "MS"):
                 freq_from_obj = "M"
             # leave self._freq as freq_from_self, or set to None if does not exist yet
             self._freq = freq_from_self

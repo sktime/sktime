@@ -1071,3 +1071,33 @@ def test_timestamp_format_to_absolute():
     fh = ForecastingHorizon([1, 2, 3], freq="D")
     y_pred_idx = fh.to_absolute_index(cutoff)
     assert "12:00:00" in str(y_pred_idx)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pandas>=2.1.0", severity="none"),
+    reason="MS frequency requires pandas>=2.1.0",
+)
+def test_ms_frequency_coercion():
+    """Test that MS (MonthStart) frequency is coerced to M for period conversion.
+
+    Failure case in bug #7610.
+    """
+    # Create data with MS (MonthStart) frequency
+    y = pd.Series(
+        [1, 2, 3, 4, 5],
+        index=pd.date_range("2020-01-01", periods=5, freq="MS"),
+    )
+
+    # Create ForecastingHorizon and set freq from MS index
+    fh = ForecastingHorizon([1, 2, 3])
+    fh.freq = y.index
+
+    # The freq should be stored as "M" (not "MS") to work with to_period()
+    # This is because pandas Period does not support "MS" frequency
+    assert fh.freq == "M", f"Expected 'M' but got '{fh.freq}'"
+
+    # Verify to_absolute works (this would fail without the fix)
+    cutoff = y.index[[-1]]
+    cutoff.freq = y.index.freq
+    fh_absolute = fh.to_absolute(cutoff)
+    assert len(fh_absolute) == 3
