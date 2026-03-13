@@ -101,7 +101,10 @@ EXCLUDED_TESTS = {
     "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # ColumnTransformer still needs to be refactored, see #2537
-    "ColumnTransformer": ["test_methods_do_not_change_state"],
+    "ColumnTransformer": [
+        "test_methods_do_not_change_state",
+        "test_no_public_interface_override",  # legacy sklearn adapter, see #2537
+    ],
     # Early classifiers intentionally retain information from previous predict calls
     #   for #1.
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
@@ -169,6 +172,14 @@ EXCLUDED_TESTS = {
     "ARLagOrderSelector": [
         "test_doctest_examples",  # doctest fails, see #8129
     ],
+    # sklearn forest MRO conflict, public methods needed to dispatch correctly
+    "TimeSeriesForestClassifier": ["test_no_public_interface_override"],
+    "TimeSeriesForestRegressor": ["test_no_public_interface_override"],
+    "ComposableTimeSeriesForestClassifier": ["test_no_public_interface_override"],
+    "ComposableTimeSeriesForestRegressor": ["test_no_public_interface_override"],
+    # single-pass fit+transform optimization, see #1424
+    "SupervisedIntervals": ["test_no_public_interface_override"],
+    "TSFreshRelevantFeatureExtractor": ["test_no_public_interface_override"],
 }
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
