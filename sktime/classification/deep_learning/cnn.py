@@ -24,7 +24,7 @@ class CNNClassifier(BaseDeepClassifier):
     Zhao et al. 2017 uses sigmoid activation in the hidden layers.
     To obtain same behaviour as Zhao et al. 2017, set activation_hidden to "sigmoid".
 
-    Adapted from the implementation from Fawaz et. al
+    Adapted from the implementation from Fawaz et al.
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
 
     Parameters
@@ -44,14 +44,14 @@ class CNNClassifier(BaseDeepClassifier):
         whether to output extra information
     loss : string, default="categorical_crossentropy"
         fit parameter for the keras model
-    metrics : list of strings, default=["accuracy"],
+    metrics : list of strings, default=["accuracy"]
     random_state : int or None, default=None
         Seed for random number generation.
-    activation : string or a tf callable, default="softmax"
+    activation : string or tf callable, default="softmax"
         Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
-    activation_hidden : string or a tf callable, default="sigmoid"
+    activation_hidden : string or tf callable, default="sigmoid"
         Activation function used in the hidden layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
@@ -71,7 +71,7 @@ class CNNClassifier(BaseDeepClassifier):
 
     References
     ----------
-    .. [1] Zhao et. al, Convolutional neural networks for time series classification,
+    .. [1] Zhao et al., Convolutional neural networks for time series classification,
     Journal of Systems Engineering and Electronics, 28(1):2017.
 
     Examples
@@ -80,7 +80,7 @@ class CNNClassifier(BaseDeepClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> cnn = CNNClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
+    >>> cnn = CNNClassifier(n_epochs=20, batch_size=4)  # doctest: +SKIP
     >>> cnn.fit(X_train, y_train)  # doctest: +SKIP
     CNNClassifier(...)
     """
