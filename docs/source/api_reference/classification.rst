@@ -81,6 +81,7 @@ Deep learning
     mlp.MLPClassifier
     mvts_transformer.MVTSTransformerClassifier
     resnet.ResNetClassifier
+    resnet.ResNetClassifierTorch
     rnn.SimpleRNNClassifier
     rnn.SimpleRNNClassifierTorch
     tapnet.TapNetClassifier
