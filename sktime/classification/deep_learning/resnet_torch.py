@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import numpy as np
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 
 # 1. THE MATH: ResNetBlock with perfectly aligned dimensions
