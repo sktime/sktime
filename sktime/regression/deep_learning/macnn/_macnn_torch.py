@@ -91,7 +91,7 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jnrusson1", "noxthot"],
+        "authors": ["jnrusson1", "noxthot", "Faakhir30"],
         "maintainers": ["Faakhir30"],
         "python_version": ">=3.10",
         "python_dependencies": "torch",

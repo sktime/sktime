@@ -93,7 +93,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jnrusson1", "noxthot"],
+        "authors": ["jnrusson1", "noxthot", "Faakhir30"],
         "maintainers": ["Faakhir30"],
         "python_version": ">=3.10",
         "python_dependencies": "torch",
@@ -201,7 +201,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
             filter_sizes=self.filter_sizes,
             kernel_sizes=self.kernel_sizes,
             reduction=self.reduction,
-            activation=self.activation,
+            activation=self._validated_activation,
             init_weights=self.init_weights,
             random_state=self.random_state,
         )

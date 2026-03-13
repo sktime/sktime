@@ -70,7 +70,7 @@ class MACNNNetworkTorch(NNModule):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jnrusson1", "noxthot"],
+        "authors": ["jnrusson1", "noxthot", "Faakhir30"],
         "maintainers": ["Faakhir30"],
         "python_version": ">=3.10",
         "python_dependencies": "torch",
@@ -126,7 +126,7 @@ class MACNNNetworkTorch(NNModule):
                 in_ch = self.filter_sizes[i - 1] * len(self.kernel_sizes)
 
             self.macnn_stacks.append(
-                self._build_macnn_stack(in_ch, self.filter_sizes[i], repeats)
+                self._build_macnn_stack(in_ch, self.filter_sizes[i], self.repeats)
             )
 
         pool_pad = 0
@@ -140,7 +140,9 @@ class MACNNNetworkTorch(NNModule):
         self.global_avg_pool = nnAdaptiveAvgPool1d(1)
 
         nnLinear = _safe_import("torch.nn.Linear")
-        self.fc = nnLinear(self.filter_sizes[-1] * len(self.kernel_sizes), num_classes)
+        self.fc = nnLinear(
+            self.filter_sizes[-1] * len(self.kernel_sizes), self.num_classes
+        )
 
         if self.init_weights is not None:
             self.apply(self._init_weights)
