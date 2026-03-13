@@ -7,8 +7,11 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
+
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
 from sktime.performance_metrics.forecasting._functions import (
+    EPS,
     mean_absolute_error,
     relative_loss,
 )
@@ -127,6 +130,71 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
             multilevel=multilevel,
             by_index=by_index,
         )
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred_benchmark : pandas.DataFrame
+            Benchmark predictions to compare y_pred to.
+            With RangeIndex, integer index, or DatetimeIndex.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point.
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
+        """
+        multioutput = self.multioutput
+        relative_loss_function = self.relative_loss_function
+
+        # Get y_pred_benchmark from kwargs
+        y_pred_benchmark = kwargs.get("y_pred_benchmark")
+        if y_pred_benchmark is None:
+            raise ValueError("y_pred_benchmark is required for RelativeLoss")
+
+        # Create instances of the loss function for evaluate_by_index calls
+        # Must use raw_values to get point-wise evaluations
+        loss_func = relative_loss_function(multioutput="raw_values")
+
+        # Remove y_pred_benchmark from kwargs for loss function calls
+        kwargs_for_func = {k: v for k, v in kwargs.items() if k != "y_pred_benchmark"}
+
+        # Get point-wise loss for predictions
+        loss_by_index_preds = loss_func.evaluate_by_index(
+            y_true, y_pred, **kwargs_for_func
+        )
+
+        # Get point-wise loss for benchmark
+        loss_by_index_benchmark = loss_func.evaluate_by_index(
+            y_true, y_pred_benchmark, **kwargs_for_func
+        )
+
+        # Compute relative loss point-wise
+        relative_loss_by_index = loss_by_index_preds / np.maximum(
+            loss_by_index_benchmark, EPS
+        )
+
+        # Handle multioutput aggregation
+        return self._handle_multioutput(relative_loss_by_index, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
