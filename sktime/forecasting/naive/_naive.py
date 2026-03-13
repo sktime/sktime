@@ -144,16 +144,43 @@ class NaiveForecaster(_BaseWindowForecaster):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, strategy="last", window_length=None, sp=1):
+    def __init__(self, strategy="last", window_length=None, sp=1, memory_mode="full"):
+        """Create a NaiveForecaster.
+
+        Parameters
+        ----------
+        strategy : {"last", "mean", "drift"}, default="last"
+            Strategy used to make forecasts.
+        window_length : int or None, default=None
+            Window length to use in the ``mean`` strategy. If None, entire training
+            series will be used.
+        sp : int, or None, default=1
+            Seasonal periodicity to use in the seasonal forecasting. None=1.
+        memory_mode : {"full", "minimal"}, default="full"
+            Controls how much historical data is retained internally.
+
+            * "full": current behaviour, keep full training history as needed.
+            * "minimal": (prototype) flag for reduced-memory operation. Behaviour
+              is currently equivalent to "full" until minimal-mode logic is
+              implemented.
+        """
         super().__init__()
         self.strategy = strategy
         self.sp = sp
         self.window_length = window_length
+        self.memory_mode = memory_mode
+
+        # basic validation to make misuse obvious
+        if self.memory_mode not in ("full", "minimal"):
+            raise ValueError(
+                f"memory_mode must be 'full' or 'minimal', got: {self.memory_mode!r}"
+            )
 
         # Override tag for handling missing data
         # todo: remove if GH1367 is fixed
         if self.strategy in ("last", "mean"):
             self.set_tags(**{"capability:missing_values": True})
+
 
     def _fit(self, y, X, fh):
         """Fit to training data.
