@@ -44,7 +44,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
         Number of output filters for each Conv1D block.
     dense_size : int, default=64
         Number of units in each of the two MLP hidden layers.
-    hidden_activation : str, default='relu'
+    activation_hidden : str, default='relu'
         Activation function name for hidden layers (excluding attention).
         Must be a valid attribute of torch.nn.functional, e.g. 'relu', 'tanh'.
     activation_attention : str, default='sigmoid'
@@ -119,11 +119,11 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
     ...     kernel_sizes=(3, 3),
     ...     rnn_layer=16,
     ...     lstm_layer=8,
-    ...     evg_pool_size=2,
+    ...     avg_pool_size=2,
     ...     n_conv_layers=2,
     ...     filter_sizes=(16, 8),
     ...     dense_size=32,
-    ...     hidden_activation="relu",
+    ...     activation_hidden="relu",
     ...     activation_attention="sigmoid",
     ...     dropout=0.5,
     ...     init_weights="xavier_uniform",
@@ -154,7 +154,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
         n_conv_layers: int = 2,
         filter_sizes: tuple = (16, 8),
         dense_size: int = 64,
-        hidden_activation: str = "relu",
+        activation_hidden: str = "relu",
         activation_attention: str = "sigmoid",
         dropout: float | dict | tuple | None = None,
         init_weights: str | None = "xavier_uniform",
@@ -178,7 +178,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
         self.n_conv_layers = n_conv_layers
         self.filter_sizes = filter_sizes
         self.dense_size = dense_size
-        self.hidden_activation = hidden_activation
+        self.activation_hidden = activation_hidden
         self.activation_attention = activation_attention
         self.dropout = dropout
         self.init_weights = init_weights
@@ -313,7 +313,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             n_conv_layers=self.n_conv_layers,
             filter_sizes=self.filter_sizes,
             dense_size=self.dense_size,
-            activation=self.hidden_activation,
+            activation=self.activation_hidden,
             activation_attention=self.activation_attention,
             dropout=self.dropout,
             init_weights=self.init_weights,
@@ -374,7 +374,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             "n_conv_layers": 2,
             "filter_sizes": (8, 4),
             "dense_size": 32,
-            "hidden_activation": "relu",
+            "activation_hidden": "relu",
             "activation_attention": "sigmoid",
             "dropout": 0.5,
             "init_weights": "xavier_uniform",
@@ -400,7 +400,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             "n_conv_layers": 2,
             "filter_sizes": (16, 8),
             "dense_size": 64,
-            "hidden_activation": "tanh",
+            "activation_hidden": "tanh",
             "activation_attention": "sigmoid",
             "dropout": 0.3,
             "init_weights": "kaiming_normal",
@@ -426,7 +426,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             "n_conv_layers": 3,
             "filter_sizes": (16, 8, 4),
             "dense_size": 64,
-            "hidden_activation": "relu",
+            "activation_hidden": "relu",
             "activation_attention": "sigmoid",
             "dropout": {
                 "conv": [0.8, 0.7, 0.6],
@@ -459,7 +459,7 @@ class CNTCClassifierTorch(BaseDeepClassifierPytorch):
             "n_conv_layers": 2,
             "filter_sizes": (16, 8),
             "dense_size": 64,
-            "hidden_activation": "relu",
+            "activation_hidden": "relu",
             "activation_attention": "sigmoid",
             "dropout": 0.0,  # no dropout
             "init_weights": None,  # use PyTorch defaults

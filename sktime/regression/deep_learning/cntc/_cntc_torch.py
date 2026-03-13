@@ -235,7 +235,7 @@ class CNTCRegressorTorch(BaseDeepRegressorTorch):
         tensor_X3 = torch.from_numpy(X3.transpose(0, 2, 1)).float()
 
         if y is not None:
-            tensor_y = torch.from_numpy(y).float()
+            tensor_y = torch.from_numpy(y).float().unsqueeze(-1)  # [B] -> [B, 1]
             dataset = _CNTCDataset(tensor_X1, tensor_X3, tensor_y)
         else:
             dataset = _CNTCDataset(tensor_X1, tensor_X3)
@@ -253,7 +253,7 @@ class CNTCRegressorTorch(BaseDeepRegressorTorch):
         if y is None:
             dataset = TensorDataset(tensor_X1, tensor_X3)
         else:
-            tensor_y = torch.from_numpy(y).float()
+            tensor_y = torch.from_numpy(y).float().unsqueeze(-1)  # [B] -> [B, 1]
             dataset = TensorDataset(tensor_X1, tensor_X3, tensor_y)
 
         return DataLoader(dataset, batch_size=self.batch_size, shuffle=training)
@@ -261,6 +261,7 @@ class CNTCRegressorTorch(BaseDeepRegressorTorch):
     def _training_step(self, batch):
         """Perform a single training step."""
         x1_batch, x3_batch, y_batch = batch
+        # both y_pred and y_batch are [B, 1]
         y_pred = self.network(x1=x1_batch, x3=x3_batch)
         loss = self._criterion(y_pred, y_batch)
         return loss

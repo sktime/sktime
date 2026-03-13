@@ -235,7 +235,7 @@ class CNTCNetworkTorch(NNModule):
 
             if key == "conv":
                 if isinstance(value, (int, float)):
-                    rate = cls._validate_dropout_rate("conv", value)
+                    rate = cls._check_dropout("conv", value)
                     normalized["conv"] = [rate] * n_conv_layers
                 elif isinstance(value, (list, tuple)):
                     if len(value) != n_conv_layers:
@@ -244,7 +244,7 @@ class CNTCNetworkTorch(NNModule):
                             f"{n_conv_layers}, got {len(value)}"
                         )
                     normalized["conv"] = [
-                        cls._validate_dropout_rate(f"conv[{i}]", rate)
+                        cls._check_dropout(f"conv[{i}]", rate)
                         for i, rate in enumerate(value)
                     ]
                 else:
@@ -252,7 +252,7 @@ class CNTCNetworkTorch(NNModule):
                         "Dropout for 'conv' must be a float or a list/tuple of floats"
                     )
             else:
-                normalized[key] = cls._validate_dropout_rate(key, value)
+                normalized[key] = cls._check_dropout(key, value)
 
         return normalized
 
@@ -278,14 +278,16 @@ class CNTCNetworkTorch(NNModule):
         if n_conv_layers < 1:
             raise ValueError("n_conv_layers must be at least 1")
 
-        assert len(kernel_sizes) == n_conv_layers, (
-            f"len(kernel_sizes)={len(kernel_sizes)}"
-            f" must equal n_conv_layers={n_conv_layers}"
-        )
-        assert len(filter_sizes) == n_conv_layers, (
-            f"len(filter_sizes)={len(filter_sizes)}"
-            f" must equal n_conv_layers={n_conv_layers}"
-        )
+        if len(kernel_sizes) != n_conv_layers:
+            raise ValueError(
+                f"len(kernel_sizes)={len(kernel_sizes)} "
+                f"must equal n_conv_layers={n_conv_layers}"
+            )
+        if len(filter_sizes) != n_conv_layers:
+            raise ValueError(
+                f"len(filter_sizes)={len(filter_sizes)} "
+                f"must equal n_conv_layers={n_conv_layers}"
+            )
 
         self.in_channels = in_channels
         self.n_classes = n_classes
@@ -304,6 +306,8 @@ class CNTCNetworkTorch(NNModule):
         self.dropout = self._map_dropout(dropout, n_conv_layers)
 
         self._act = getattr(torchF, activation)
+        rnn_nonlinearity = "tanh" if activation == "tanh" else "relu"
+        self.rnn_nonlinearity = rnn_nonlinearity
 
         torch.manual_seed(random_state)
 
@@ -316,7 +320,9 @@ class CNTCNetworkTorch(NNModule):
         self.dense1 = nn.Linear(filter_sizes[0], in_channels)
 
         # arm 2: SimpleRNN context
-        self.rnn = nn.RNN(in_channels, rnn_layer, batch_first=True, nonlinearity="relu")
+        self.rnn = nn.RNN(
+            in_channels, rnn_layer, batch_first=True, nonlinearity=self.rnn_nonlinearity
+        )
         self.bn_rnn = nn.BatchNorm1d(rnn_layer)
         self.drop_rnn = nn.Dropout(self.dropout["rnn"])
 
