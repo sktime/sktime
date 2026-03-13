@@ -48,7 +48,7 @@ Beyond basic NumPy docstring formatting conventions, developers should focus on:
 .. note::
 
     In many cases a parameter, attribute return object, or error may be described in many docstrings across sktime. To avoid confusion, developers should
-    make sure their docstrings are as similar as possible to existing docstring descriptions of the the same parameter, attribute, return object
+    make sure their docstrings are as similar as possible to existing docstring descriptions of the same parameter, attribute, return object
     or error.
 
 Accordingly, sktime estimators and most other public code artifcations should generally include the following NumPy docstring convention sections:
@@ -100,7 +100,7 @@ See Also
 ~~~~~~~~
 
 This section should reference other ``sktime`` code artifacts related to the code artifact being documented by the docstring. Developers should use
-judgement in determining related code artifacts. For example, rather than listin all other performance metrics, a percentage error based performance metric
+judgement in determining related code artifacts. For example, rather than listing all other performance metrics, a percentage error based performance metric
 might only list other percentage error based performance metrics.  Likewise, a distance based classifier might list other distance based classifiers but
 not include other types of time series classifiers.
 
