@@ -261,3 +261,42 @@ def test_scitype_inference(estimator_scitype):
     assert inferred_scitype == estimator_scitype, (
         "one of scitype, _check_estimator_types is incorrect, these should be inverses"
     )
+
+
+def test_all_estimators_skip_composites():
+    """Test that skip_composites=True excludes composite estimators."""
+    from sktime.forecasting.compose import TransformedTargetForecaster
+
+    COMPOSITE_EXAMPLE = "TransformedTargetForecaster"
+    NON_COMPOSITE_EXAMPLE = "NaiveForecaster"
+
+    assert TransformedTargetForecaster.get_class_tag("estimator:composite") is True
+
+    res_all = all_estimators("forecaster", return_names=True)
+    names_all = [name for name, _ in res_all]
+    assert COMPOSITE_EXAMPLE in names_all
+    assert NON_COMPOSITE_EXAMPLE in names_all
+
+    res_no_comp = all_estimators("forecaster", return_names=True, skip_composites=True)
+    names_no_comp = [name for name, _ in res_no_comp]
+    assert COMPOSITE_EXAMPLE not in names_no_comp
+    assert NON_COMPOSITE_EXAMPLE in names_no_comp
+
+    for _, est in res_no_comp:
+        assert est.get_class_tag("estimator:composite") is False
+
+
+def test_estimator_composite_tag_default():
+    """Test that estimator:composite tag defaults to False on BaseObject."""
+    from sktime.base import BaseObject
+
+    assert BaseObject.get_class_tag("estimator:composite") is False
+
+
+def test_estimator_composite_tag_on_meta():
+    """Test that _HeterogenousMetaEstimator sets estimator:composite to True."""
+    from sktime.base import _HeterogenousMetaEstimator
+    from sktime.forecasting.compose import EnsembleForecaster, TransformedTargetForecaster
+
+    assert TransformedTargetForecaster.get_class_tag("estimator:composite") is True
+    assert EnsembleForecaster.get_class_tag("estimator:composite") is True

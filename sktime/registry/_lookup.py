@@ -39,6 +39,7 @@ def all_estimators(
     as_dataframe=False,
     return_tags=None,
     suppress_import_stdout=True,
+    skip_composites=False,
 ):
     """List all estimators or objects in sktime, by scitype or tag.
 
@@ -119,6 +120,18 @@ def all_estimators(
 
     suppress_import_stdout : bool, optional. Default=True
         whether to suppress stdout printout upon import.
+
+    skip_composites : bool, optional (default=False)
+        Whether to exclude composite estimators from the results.
+        Composite estimators are those that wrap other estimators, such as
+        pipelines, ensembles, and meta-estimators. They are tagged with
+        ``"estimator:composite": True``.
+
+        If ``True``, composite estimators are excluded from the results.
+        If ``False`` (default), all estimators including composites are returned.
+
+        This is a convenience shorthand for passing
+        ``filter_tags={"estimator:composite": False}``.
 
     Returns
     -------
@@ -215,6 +228,15 @@ def all_estimators(
             obj_field = estimator_types
 
         filter_tags["object_type"] = obj_field
+
+    if skip_composites:
+        if filter_tags is None:
+            filter_tags = {}
+        elif isinstance(filter_tags, str):
+            filter_tags = {filter_tags: True}
+        else:
+            filter_tags = filter_tags.copy()
+        filter_tags["estimator:composite"] = False
 
     result = all_objects(
         object_types=BaseObject,
