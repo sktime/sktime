@@ -886,7 +886,10 @@ class BaseTransformer(BaseEstimator):
 
         # update memory of X, if remember_data tag is set to True
         if self.get_tag("remember_data", False):
-            self._X = update_data(None, X_new=X_inner)
+            if hasattr(self, "_X"):
+                self._X = update_data(self._X, X_new=X_inner)
+            else:
+                self._X = update_data(None, X_new=X_inner)
 
         # skip everything if update_params is False
         # skip everything if fit_is_empty is True
