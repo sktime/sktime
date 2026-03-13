@@ -19,6 +19,7 @@ import math
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
+from collections.abc import Callable
 
 from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._utilities import get_slice
@@ -65,7 +66,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
     Parameters
     ----------
-    strategy : {"last", "mean", "drift"}, default="last"
+    strategy : {"last", "mean", "drift", "rolling"}, default="last"
         Strategy used to make forecasts:
 
         * "last":   (robust against NaN values)
@@ -85,6 +86,10 @@ class NaiveForecaster(_BaseWindowForecaster):
                     forecast by fitting a line between the
                     first and last point of the window and
                     extrapolating it into the future.
+        * "rolling":
+                    forecast the aggregation of the last
+                    `window_length` observations using `aggfunc`.
+                    Currently only supported for non-seasonal data (sp=1).
 
     sp : int, or None, default=1
         Seasonal periodicity to use in the seasonal forecasting. None=1.
@@ -92,6 +97,11 @@ class NaiveForecaster(_BaseWindowForecaster):
     window_length : int or None, default=None
         Window length to use in the ``mean`` strategy. If None, entire training
             series will be used.
+
+    aggfunc : {"mean", "median"} or callable, default="mean"
+        Aggregation function used by the ``rolling`` strategy. When a callable is
+        supplied it must accept a 1D ``numpy`` array (after removing missing values)
+        and return a scalar.
 
     References
     ----------
@@ -144,15 +154,16 @@ class NaiveForecaster(_BaseWindowForecaster):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, strategy="last", window_length=None, sp=1):
+    def __init__(self, strategy="last", window_length=None, sp=1, aggfunc="mean"):
         super().__init__()
         self.strategy = strategy
         self.sp = sp
         self.window_length = window_length
+        self.aggfunc = aggfunc
 
         # Override tag for handling missing data
         # todo: remove if GH1367 is fixed
-        if self.strategy in ("last", "mean"):
+        if self.strategy in ("last", "mean", "rolling"):
             self.set_tags(**{"capability:missing_values": True})
 
     def _fit(self, y, X, fh):
@@ -176,6 +187,8 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         n_timepoints = y.shape[0]
 
+        self._aggfunc_ = None
+
         if self.strategy in ("last", "mean"):
             # check window length is greater than sp for seasonal mean or seasonal last
             if self.window_length is not None and sp != 1:
@@ -191,6 +204,20 @@ class NaiveForecaster(_BaseWindowForecaster):
             #  if not given, set default window length
             if self.window_length is None:
                 self.window_length_ = len(y)
+
+        elif self.strategy == "rolling":
+            if sp not in (1, None):
+                raise ValueError(
+                    "The `rolling` strategy currently supports only `sp=1`. "
+                    "Seasonal rolling averages are planned for a future release."
+                )
+            if self.window_length is None:
+                raise ValueError(
+                    "For the `rolling` strategy, a finite `window_length` must be set."
+                )
+            self.window_length_ = check_window_length(self.window_length, n_timepoints)
+            self.sp_ = 1
+            self._aggfunc_ = self._resolve_aggfunc()
 
         elif self.strategy == "drift":
             if sp != 1:
@@ -211,7 +238,7 @@ class NaiveForecaster(_BaseWindowForecaster):
                 )
 
         else:
-            allowed_strategies = ("last", "mean", "drift")
+            allowed_strategies = ("last", "mean", "drift", "rolling")
             raise ValueError(
                 f"Unknown strategy: {self.strategy}. Expected "
                 f"one of: {allowed_strategies}."
@@ -275,6 +302,10 @@ class NaiveForecaster(_BaseWindowForecaster):
                 # tile prediction according to seasonal periodicity
                 y_pred = self._tile_seasonal_prediction(y_pred, fh)
 
+        elif strategy == "rolling":
+            aggregated_value = self._apply_aggfunc(last_window.astype(float))
+            y_pred = np.repeat(aggregated_value, len(fh))
+
         elif strategy == "drift":
             if self.window_length_ != 1:
                 if np.any(np.isnan(last_window[[0, -1]])):
@@ -298,6 +329,73 @@ class NaiveForecaster(_BaseWindowForecaster):
             raise ValueError(f"unknown strategy {strategy} provided to NaiveForecaster")
 
         return y_pred
+
+    def _resolve_aggfunc(self):
+        """Resolve `aggfunc` parameter to a callable."""
+        aggfunc = self.aggfunc
+        if aggfunc is None:
+            aggfunc = "mean"
+
+        if isinstance(aggfunc, str):
+            valid = {"mean": np.mean, "median": np.median}
+            if aggfunc not in valid:
+                raise ValueError(
+                    "`aggfunc` must be either 'mean', 'median', or a callable. "
+                    f"Got: {aggfunc}."
+                )
+            return valid[aggfunc]
+
+        if isinstance(aggfunc, Callable):
+            return aggfunc
+
+        raise TypeError(
+            "`aggfunc` must be a string in {'mean', 'median'} or a callable "
+            f"returning a scalar, but found type: {type(aggfunc)}."
+        )
+
+    def _apply_aggfunc(self, values):
+        """Apply resolved aggregation function to 1D array, ignoring NaNs."""
+        if self.strategy != "rolling":
+            raise RuntimeError("_apply_aggfunc is only defined for rolling strategy.")
+
+        if self._aggfunc_ is None:
+            raise RuntimeError("Aggregation function has not been resolved during fit.")
+
+        arr = np.asarray(values, dtype=float)
+        arr = arr[~np.isnan(arr)]
+
+        if len(arr) == 0:
+            return np.nan
+
+        result = self._aggfunc_(arr)
+
+        if np.isscalar(result):
+            return float(result)
+
+        result_array = np.asarray(result).squeeze()
+        if result_array.size != 1:
+            raise ValueError(
+                "`aggfunc` must return a scalar when used with strategy='rolling'."
+            )
+
+        return float(result_array.item())
+
+    def _compute_rolling_fitted(self, y):
+        """Compute rolling fitted values for the rolling strategy."""
+        if self.strategy != "rolling":
+            raise RuntimeError(
+                "_compute_rolling_fitted is only defined for rolling strategy."
+            )
+
+        values = y.to_numpy(dtype=float)
+        fitted = np.full_like(values, np.nan, dtype=float)
+
+        for end_idx in range(self.window_length_ - 1, len(values)):
+            start_idx = end_idx - self.window_length_ + 1
+            window = values[start_idx : end_idx + 1]
+            fitted[end_idx] = self._apply_aggfunc(window)
+
+        return pd.Series(fitted, index=y.index)
 
     def _reshape_last_window_for_sp(self, last_window):
         """Reshape the 1D last window into a 2D last window, prepended with NaN values.
@@ -560,6 +658,9 @@ class NaiveForecaster(_BaseWindowForecaster):
                 else:
                     # Compute rolling means
                     y_pred = y.rolling(self.window_length).mean()
+                y_res = y - y_pred
+        elif self.strategy == "rolling":
+            y_pred = self._compute_rolling_fitted(y)
             y_res = y - y_pred
         else:
             # Slope equation from:
@@ -577,6 +678,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         se_res = np.sqrt(mse_res)
 
         window_length = self.window_length or T
+        rolling_window_length = getattr(self, "window_length_", window_length)
 
         def sqrt_flr(x):
             """Square root of x, floored at 1 - to deal with in-sample predictions."""
@@ -589,6 +691,9 @@ class NaiveForecaster(_BaseWindowForecaster):
                 sqrt_flr if sp == 1 else lambda h: sqrt_flr(np.floor((h - 1) / sp) + 1)
             ),
             "mean": lambda h: np.repeat(sqrt_flr(1 + (1 / window_length)), len(h)),
+            "rolling": lambda h: np.repeat(
+                sqrt_flr(1 + (1 / rolling_window_length)), len(h)
+            ),
             "drift": lambda h: sqrt_flr(h * (1 + (h / (T - 1)))),
         }
 
@@ -633,6 +738,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             {"strategy": "drift"},
             {"strategy": "last"},
             {"strategy": "mean", "window_length": 5},
+            {"strategy": "rolling", "window_length": 4, "aggfunc": "median"},
         ]
 
         return params_list
