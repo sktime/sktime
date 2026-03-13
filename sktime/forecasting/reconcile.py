@@ -17,6 +17,7 @@ from sktime.transformations.hierarchical.reconcile import (
     BottomUpReconciler,
     NonNegativeOptimalReconciler,
     OptimalReconciler,
+    SmoothReconciler,
     TopdownReconciler,
 )
 from sktime.transformations.hierarchical.reconcile._utils import _loc_series_idxs
@@ -41,7 +42,7 @@ class ReconcilerForecaster(BaseForecaster):
     forecaster : estimator
         Estimator to generate base forecasts which are then reconciled
     method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str", \
-            "bu", "td_fcst"}, default="mint_shrink"
+            "bu", "td_fcst", "smooth"}, default="mint_shrink"
         The reconciliation approach applied to the forecasts based on:
 
             * ``"mint_cov"`` - sample covariance
@@ -51,6 +52,8 @@ class ReconcilerForecaster(BaseForecaster):
             * ``"wls_str"`` - weighted least squares (structural)
             * ``"bu"`` - bottom-up
             * ``"td_fcst"`` - top down based on forecast proportions
+            * ``"smooth"`` - smooth forecast reconciliation (Ando 2024) [2]_,
+              integrates MinT with Hodrick-Prescott filter for smooth forecasts
 
     return_totals : bool
         Whether the predictions returned by ``predict`` and predict-like methods
@@ -71,6 +74,10 @@ class ReconcilerForecaster(BaseForecaster):
     References
     ----------
     .. [1] https://otexts.com/fpp3/hierarchical.html
+    .. [2] Ando, S. (2024). Smooth Forecast Reconciliation. IMF Working Paper
+       WP/24/57. International Monetary Fund.
+       https://www.imf.org/en/Publications/WP/Issues/2024/03/22/
+       Smooth-Forecast-Reconciliation-546654
 
     Examples
     --------
@@ -138,6 +145,7 @@ class ReconcilerForecaster(BaseForecaster):
         ),
         "td_fcst": (TopdownReconciler, {"method": "td_fcst"}),
         "td_share": (TopdownReconciler, {"method": "td_share"}),
+        "smooth": (SmoothReconciler, {}),
     }
 
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + list(
