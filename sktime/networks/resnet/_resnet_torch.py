@@ -271,8 +271,7 @@ class ResNetNetworkTorch(NNModule):
                 )
         else:
             raise TypeError(
-                f"`activation` must be str or torch.nn.Module, "
-                f"got {type(activation)}"
+                f"`activation` must be str or torch.nn.Module, got {type(activation)}"
             )
 
     @classmethod
