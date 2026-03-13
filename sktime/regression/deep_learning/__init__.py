@@ -6,6 +6,7 @@ __all__ = [
     "FCNRegressor",
     "FCNRegressorTorch",
     "InceptionTimeRegressor",
+    "InceptionTimeRegressorTorch",
     "LSTMFCNRegressor",
     "MACNNRegressor",
     "MCDCNNRegressor",
@@ -23,7 +24,10 @@ from sktime.regression.deep_learning.fcn import (
     FCNRegressor,
     FCNRegressorTorch,
 )
-from sktime.regression.deep_learning.inceptiontime import InceptionTimeRegressor
+from sktime.regression.deep_learning.inceptiontime import (
+    InceptionTimeRegressor,
+    InceptionTimeRegressorTorch,
+)
 from sktime.regression.deep_learning.lstmfcn import LSTMFCNRegressor
 from sktime.regression.deep_learning.macnn import MACNNRegressor
 from sktime.regression.deep_learning.mcdcnn import (
