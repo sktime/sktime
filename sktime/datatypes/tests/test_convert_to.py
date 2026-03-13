@@ -126,3 +126,34 @@ def test_convert_to_mtype_list_different_scitype():
     assert deep_equals(converted_off_0, exp_fixt_off_0), msg
     assert deep_equals(converted_on_1, exp_fixt_on_1), msg
     assert deep_equals(converted_off_1, exp_fixt_off_1), msg
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.deep_equals"]),
+    reason="Test only if sktime.datatypes or utils.deep_equals has been changed",
+)
+def test_convert_to_hierarchical_with_invalid_time_level():
+    """Test convert_to succeeds when Hierarchical time level not in VALID_INDEX_TYPES.
+
+    Regression test for bug where float (or other invalid) time level caused
+    infer_mtype to fail. Coercion normalizes the last index level so conversion
+    succeeds.
+    """
+    import pandas as pd
+
+    idx = pd.MultiIndex.from_product(
+        [["A", "B"], ["x", "y"], [0.0, 1.0, 2.0]],
+        names=["level_0", "level_1", "time"],
+    )
+    X = pd.DataFrame({"y": [1.0, 2.0, 3.0] * 4}, index=idx)
+
+    converted = convert_to(X, to_type="pd_multiindex_hier", as_scitype="Hierarchical")
+
+    assert isinstance(converted, pd.DataFrame), "convert_to should return DataFrame"
+    assert converted.index.nlevels >= 3, "result should be hierarchical (3+ levels)"
+    # Time level should now be valid (e.g. integer)
+    from sktime.utils.validation.series import is_in_valid_index_types
+
+    assert is_in_valid_index_types(converted.index.levels[-1]), (
+        "time level should be coerced to valid index type"
+    )
