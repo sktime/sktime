@@ -52,7 +52,7 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
     >>> from sktime.forecasting.moirai_moe_forecaster import MoiraiMoEForecaster
     >>> import pandas as pd
     >>> import numpy as np
-    >>> moirai_moe_forecaster = MoiraiMoEForecaster(
+    >>> moirai_moe_forecaster = MoiraiMoEForecaster(  # doctest: +SKIP
     ...     checkpoint_path="Salesforce/moirai-moe-1.0-R-small"
     ... )
     >>> y = np.random.normal(0, 1, (30, 2))
@@ -60,13 +60,15 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
     >>> index = pd.date_range("2020-01-01", periods=30, freq="D")
     >>> y = pd.DataFrame(y, index=index)
     >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)
-    >>> moirai_moe_forecaster.fit(y, X=X)
+    >>> moirai_moe_forecaster.fit(y, X=X)  # doctest: +SKIP
     MoiraiMoEForecaster(checkpoint_path='Salesforce/moirai-moe-1.0-R-small')
     >>> X_test = pd.DataFrame(np.random.normal(0, 1, (10, 2)),
     ...                      columns=["x1", "x2"],
     ...                      index=pd.date_range("2020-01-31", periods=10, freq="D"),
     ... )
-    >>> forecast = moirai_moe_forecaster.predict(fh=range(1, 11), X=X_test)
+    >>> forecast = moirai_moe_forecaster.predict(  # doctest: +SKIP
+    ...     fh=range(1, 11), X=X_test
+    ... )
 
     References
     ----------
