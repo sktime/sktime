@@ -26,7 +26,7 @@ class DummyForecastingCatalogue(BaseCatalogue):
         ]
 
         forecasters = [
-            "NaiveForecaster()",
+            ("Naive", "NaiveForecaster()"),
         ]
 
         metrics = ["MeanAbsoluteError()", "MeanAbsolutePercentageError()"]
