@@ -17,58 +17,65 @@ class TapNetClassifier(BaseDeepClassifier):
     """Time series attentional prototype network (TapNet), as described in [1]_.
 
     Parameters
-    filter_sizes : array of int, default = (256, 256, 128)
-        sets the kernel size argument for each convolutional block.
-        Controls number of convolutional filters
-        and number of neurons in attention dense layers.
-    kernel_sizes : array of int, default = (8, 5, 3)
-        controls the size of the convolutional kernels
-    layers : array of int, default = (500, 300)
-        size of dense layers
-    reduction : int, default = 16
-        divides the number of dense neurons in the first layer of the attention block.
+    ----------
     n_epochs : int, default = 2000
         number of epochs to train the model
     batch_size : int, default = 16
         number of samples per update
-    callbacks : list of keras.callbacks.Callback, optional (default=None)
-        List of Keras callbacks to apply during model training.
     dropout : float, default = 0.5
         dropout rate, in the range [0, 1)
-    lstm_dropout : float, default = 0.8
-        dropout rate for the LSTM layer, in the range [0, 1)
+    filter_sizes : array of int, default = (256, 256, 128)
+        sets the kernel size argument for each convolutional block.
+        Controls number of convolutional filters
+        and number of neurons in attention dense layers.
+    kernel_size : array of int, default = (8, 5, 3)
+        controls the size of the convolutional kernels
     dilation : int, default = 1
         dilation value
+    layers : array of int, default = (500, 300)
+        size of dense layers
+    use_rp : bool, default = True
+        whether to use random projections
+    rp_params : tuple, default = (-1, 3)
+        parameters for random projection
     activation : str, default = "sigmoid"
         activation function for the last output layer
         List of available activation functions: https://keras.io/api/layers/activations/
     activation_hidden : str, default = "leaky_relu"
         activation function for the hidden layers
         List of available activation functions: https://keras.io/api/layers/activations/
-    loss : str, default = "binary_crossentropy"
-        loss function for the classifier
-    optimizer : str or None, default = "Adam(lr=0.01)"
-        gradient updating function for the classifier
     use_bias : bool, default = True
         whether to use bias in the output dense layer
-    use_rp : bool, default = True
-        whether to use random projections
     use_att : bool, default = True
         whether to use self attention
     use_lstm : bool, default = True
         whether to use an LSTM layer
     use_cnn : bool, default = True
         whether to use a CNN layer
-    verbose : bool, default = False
-        whether to output extra information
     random_state : int or None, default = None
         seed for random
+    padding : str, default = "same"
+        padding for the convolutional layers
+    loss : str, default = "binary_crossentropy"
+        loss function for the classifier
+    optimizer : str or None, default = "Adam(lr=0.01)"
+        gradient updating function for the classifier
+    metrics : list of str or None, default = None
+        metrics to evaluate the model
+    callbacks : list of keras.callbacks.Callback, optional (default=None)
+        List of Keras callbacks to apply during model training.
+    verbose : bool, default = False
+        whether to output extra information
+    lstm_dropout : float, default = 0.8
+        dropout rate for the LSTM layer, in the range [0, 1)
 
     Attributes
+    ----------
     n_classes      : int
         number of classes extracted from the data
 
     References
+    ----------
     .. [1] Zhang et al. Tapnet: Multivariate time series classification with
     attentional prototypical network,
     Proceedings of the AAAI Conference on Artificial Intelligence
@@ -136,7 +143,6 @@ class TapNetClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self.kernel_size = kernel_size
         self.layers = layers
-        self.rp_params = rp_params
         self.filter_sizes = filter_sizes
         self.activation = activation
         self.activation_hidden = activation_hidden
@@ -189,12 +195,14 @@ class TapNetClassifier(BaseDeepClassifier):
         happen in fit.
 
         Parameters
+        ----------
         input_shape     : tuple
             The shape of the data fed into the input layer, should be (m, d)
         n_classes       : int
             The number of classes, which becomes the size of the output layer
 
         Returns
+        -------
         output: a compiled Keras model
         """
         import tensorflow as tf
@@ -232,12 +240,14 @@ class TapNetClassifier(BaseDeepClassifier):
         """Fit the classifier on the training set (X, y).
 
         Parameters
+        ----------
         X   : np.ndarray of shape = (n_instances(n), n_dimensions(d), series_length(m))
             Input training samples
         y   : np.ndarray of shape n
             Input training class labels
 
         Returns
+        -------
         self: object
         """
         y_onehot = self._convert_y_to_keras(y)
@@ -265,21 +275,25 @@ class TapNetClassifier(BaseDeepClassifier):
         """Return testing parameter settings for the estimator.
 
         Parameters
-\        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return ``"default"`` set.
-            For classifiers, a "default" set of parameters should be provided for
-            general testing, and a "results_comparison" set for comparing against
-            previously recorded results if the general set does not produce suitable
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests.
+            If no special parameters are defined for a value, will return
+            ``"default"`` set. For classifiers, a ``"default"`` set of
+            parameters should be provided for general testing, and a
+            ``"results_comparison"`` set for comparing against previously
+            recorded results if the general set does not produce suitable
             probabilities to compare against.
 
         Returns
+        -------
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
-            instance.
-            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
+            Each dict are parameters to construct an "interesting" test
+            instance, i.e., ``MyClass(**params)`` or
+            ``MyClass(**params[i])`` creates a valid test instance.
+            ``create_test_instance`` uses the first (or only) dictionary in
+            ``params``.
         """
         from sktime.utils.dependencies import _check_soft_dependencies
 

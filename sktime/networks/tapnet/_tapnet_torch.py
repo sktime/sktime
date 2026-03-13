@@ -25,6 +25,7 @@ class _SeqSelfAttentionTorch(NNModule):
     used in the original TapNet.
 
     Parameters
+    ----------
     feature_dim : int
         The dimension of input features (last axis of input tensor).
     units : int, default=32
@@ -73,10 +74,12 @@ class _SeqSelfAttentionTorch(NNModule):
         """Forward pass through self-attention.
 
         Parameters
+        ----------
         inputs : torch.Tensor of shape (batch_size, seq_length, feature_dim)
             Input tensor.
 
         Returns
+        -------
         v : torch.Tensor of shape (batch_size, seq_length, feature_dim)
             Attention-weighted output.
         """
@@ -99,10 +102,12 @@ class _SeqSelfAttentionTorch(NNModule):
         """Compute additive attention scores.
 
         Parameters
+        ----------
         inputs : torch.Tensor of shape (batch_size, seq_length, feature_dim)
         torchTanh : callable
 
         Returns
+        -------
         e : torch.Tensor of shape (batch_size, seq_length, seq_length)
         """
         # q: (batch, seq, units), k: (batch, seq, units)
@@ -118,10 +123,12 @@ class _SeqSelfAttentionTorch(NNModule):
         """Compute multiplicative attention scores.
 
         Parameters
+        ----------
         inputs : torch.Tensor of shape (batch_size, seq_length, feature_dim)
         torchBmm : callable
 
         Returns
+        -------
         e : torch.Tensor of shape (batch_size, seq_length, seq_length)
         """
         # e = inputs @ Wa @ inputs^T
@@ -138,6 +145,7 @@ class TapNetNetworkTorch(NNModule):
     Adapted from the TensorFlow/Keras implementation in [1]_.
 
     Parameters
+    ----------
     n_channels : int
         Number of input channels (dimensions) of the time series.
     series_length : int
@@ -180,6 +188,7 @@ class TapNetNetworkTorch(NNModule):
         Whether to use bias in the output dense layer.
 
     References
+    ----------
     .. [1] Zhang et al. Tapnet: Multivariate time series classification with
     attentional prototypical network,
     Proceedings of the AAAI Conference on Artificial Intelligence
@@ -280,7 +289,7 @@ class TapNetNetworkTorch(NNModule):
                 )
             self.lstm_gap = nnAdaptiveAvgPool1d(1)
 
-        #  CNN branch 
+        #  CNN branch
         if self.use_cnn:
             if self.use_rp:
                 # Generate random projection indices for each group
@@ -359,7 +368,7 @@ class TapNetNetworkTorch(NNModule):
                     )
                 self.cnn_gap_single = nnAdaptiveAvgPool1d(1)
 
-        #  Mapping / Dense layers 
+        #  Mapping / Dense layers
         # Compute combined feature dimension
         combined_dim = 0
         if self.use_cnn:
@@ -374,7 +383,7 @@ class TapNetNetworkTorch(NNModule):
         self.bn_fc = nnBatchNorm1d(self.layers_sizes[0])
         self.fc2 = nnLinear(self.layers_sizes[0], self.layers_sizes[1])
 
-        # Output layer 
+        # Output layer
         self.output_layer = nnLinear(
             self.layers_sizes[1], self.num_classes, bias=self.use_bias
         )
@@ -389,10 +398,12 @@ class TapNetNetworkTorch(NNModule):
         """Compute padding size for 'same' padding with dilation.
 
         Parameters
+        ----------
         kernel_size : int
             Size of the convolutional kernel.
 
         Returns
+        -------
         pad : int or str
             Padding value.
         """
@@ -410,10 +421,12 @@ class TapNetNetworkTorch(NNModule):
         """Get activation function by name.
 
         Parameters
+        ----------
         name : str
             Name of activation function.
 
         Returns
+        -------
         activation : callable
             Activation function.
         """
@@ -432,10 +445,12 @@ class TapNetNetworkTorch(NNModule):
         """Get output activation function by name.
 
         Parameters
+        ----------
         name : str
             Name of activation function.
 
         Returns
+        -------
         activation : callable
             Activation function module.
         """
@@ -471,12 +486,14 @@ class TapNetNetworkTorch(NNModule):
         """Forward pass through TapNet.
 
         Parameters
+        ----------
         X : torch.Tensor of shape (batch_size, series_length, n_channels)
             Input time series data.
             Note: The base class PytorchDataset transposes from
             (batch, n_dims, series_length) to (batch, series_length, n_dims).
 
         Returns
+        -------
         out : torch.Tensor
             Output tensor of shape (batch_size, num_classes).
         """
@@ -486,12 +503,12 @@ class TapNetNetworkTorch(NNModule):
 
         features = []
 
-        #LSTM branch  
+        # LSTM branch
         if self.use_lstm:
             x_lstm = self._forward_lstm(X)
             features.append(x_lstm)
 
-        # CNN branch 
+        # CNN branch
         if self.use_cnn:
             x_cnn = self._forward_cnn(X, torchCat, torchTensor, torchLong)
             features.append(x_cnn)
@@ -502,13 +519,13 @@ class TapNetNetworkTorch(NNModule):
         else:
             x = features[0]
 
-        #  Mapping section 
+        #  Mapping section
         x = self.fc1(x)
         x = self._activation(x)
         x = self.bn_fc(x)
         x = self.fc2(x)
 
-        #  Output layer 
+        #  Output layer
         x = self.output_layer(x)
         if self._output_activation is not None:
             x = self._output_activation(x)
@@ -523,9 +540,11 @@ class TapNetNetworkTorch(NNModule):
         """Process LSTM branch.
 
         Parameters
+        ----------
         X : torch.Tensor of shape (batch_size, series_length, n_channels)
 
         Returns
+        -------
         x_lstm : torch.Tensor of shape (batch_size, lstm_dim)
         """
         # LSTM input: (batch, seq_len, input_size)
@@ -547,12 +566,14 @@ class TapNetNetworkTorch(NNModule):
         """Process CNN branch.
 
         Parameters
+        ----------
         X : torch.Tensor of shape (batch_size, series_length, n_channels)
         torchCat : callable
         torchTensor : callable
         torchLong : torch dtype
 
         Returns
+        -------
         x_cnn : torch.Tensor of shape (batch_size, feature_dim)
         """
         if self.use_rp:

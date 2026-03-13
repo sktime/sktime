@@ -18,6 +18,7 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
     multivariate time series encoding, and attentional prototype learning.
 
     Parameters
+    ----------
     filter_sizes : tuple of int, default = (256, 256, 128)
         Number of convolutional filters in each convolutional block.
     kernel_size : tuple of int, default = (8, 5, 3)
@@ -76,6 +77,7 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
     or class based self attention.
 
     Examples
+    --------
     >>> from sktime.regression.deep_learning.tapnet import TapNetRegressorTorch
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
@@ -173,10 +175,12 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
         """Build the TapNet network for regression.
 
         Parameters
+        ----------
         X : np.ndarray of shape (n_instances, n_dims, series_length)
             Input training data.
 
         Returns
+        -------
         network : TapNetNetworkTorch
             The constructed TapNet network.
         """
@@ -216,11 +220,13 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
         """Return testing parameter settings for the estimator.
 
         Parameters
+        ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
+        -------
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
         """
