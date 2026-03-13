@@ -1,4 +1,4 @@
-"""Time Convolutional Neural Network (CNN) for classification."""
+"""Time Convolutional Neural Network (CNN) for regression."""
 
 __all__ = ["TapNetRegressor"]
 
