@@ -45,29 +45,29 @@ class Lag(BaseTransformer):
 
     Parameters
     ----------
-    lags : lag offset, or list of lag offsets, optional, default=0 (identity transform)
-        a "lag offset" can be one of the following:
-        int - number of periods to shift/lag
-        time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
-            time delta offset to shift/lag
-            requires time index of transformed data to be time-like (not int)
-        str - time rule from pandas.tseries module, e.g., "EOM"
-    freq : frequency descriptor of list of frequency descriptors, optional, default=None
-        if passed, must be scalar, or list of equal length to ``lags`` parameter
-        elements in ``freq`` correspond to elements in lags
-        if i-th element of ``freq`` is not None, i-th element of ``lags`` must be int
-            this is called the "corresponding lags element" below
+    lags : lag offset, or list of lag offsets, optional (default=0)
+        (identity transform) a "lag offset" can be one of the following:
+        - int: number of periods to shift/lag
+        - time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
+        time delta offset to shift/lag
+        requires time index of transformed data to be time-like (not int)
+        - str: time rule from pandas.tseries module, e.g., "EOM"
+    freq : frequency descriptor or list of same, optional (default=None)
+        If passed, must be scalar, or list of equal length to ``lags`` parameter.
+        Elements in ``freq`` correspond to elements in lags.
+        If i-th element of ``freq`` is not None, i-th element of ``lags`` must be int,
+        this is called the "corresponding lags element" below
         "frequency descriptor" can be one of the following:
-        time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
-            multiplied to corresponding ``lags`` element when shifting
-        str - offset from pd.tseries module, e.g., "D", "M", or time rule, e.g., "EOM"
-    index_out : str, optional, one of "shift", "original", "extend", default="extend"
+        - time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
+        multiplied to corresponding ``lags`` element when shifting
+        - str: offset from pd.tseries module, e.g., "D", "M", or time rule, e.g., "EOM"
+    index_out : str, one of "shift", "original", "extend", optional (default="extend")
         determines set of output indices in lagged time series
-        "shift" - only shifted indices are retained.
-            Will not create NA for single lag, but can create NA for multiple lags.
-        "original" - only original indices are retained. Will usually create NA.
-        "extend" - both original indices and shifted indices are retained.
-            Will usually create NA, possibly many, if shifted/original do not intersect.
+        - "shift": only shifted indices are retained.
+        Will not create NA for single lag, but can create NA for multiple lags.
+        - "original": only original indices are retained. Will usually create NA.
+        - "extend": both original indices and shifted indices are retained.
+        Will usually create NA, possibly many, if shifted/original do not intersect.
     flatten_transform_index : bool, optional (default=True)
         if True, columns of return DataFrame are flat, by "lagname__variablename"
         if False, columns are MultiIndex (lagname, variablename)
@@ -373,44 +373,38 @@ class ReducerTransform(BaseTransformer):
     ----------
     window_length : int, optional, default=0
         window length used in the reduction algorithm
-
-    lags : lag offset, or list of lag offsets, optional, default=0 (identity transform)
-        a "lag offset" can be one of the following:
-        int - number of periods to shift/lag
-        time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
-            time delta offset to shift/lag
-            requires time index of transformed data to be time-like (not int)
-        str - time rule from pandas.tseries module, e.g., "EOM"
-
-    freq : frequency descriptor of list of frequency descriptors, optional, default=None
-        if passed, must be scalar, or list of equal length to ``lags`` parameter
-        elements in ``freq`` correspond to elements in lags
-        if i-th element of ``freq`` is not None, i-th element of ``lags`` must be int
-            this is called the "corresponding lags element" below
+    lags : lag offset, or list of lag offsets, optional (default=0)
+        (identity transform) a "lag offset" can be one of the following:
+        - int: number of periods to shift/lag
+        - time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
+        time delta offset to shift/lag
+        requires time index of transformed data to be time-like (not int)
+        - str: time rule from pandas.tseries module, e.g., "EOM"
+    freq : frequency descriptor or list of same, optional (default=None)
+        If passed, must be scalar, or list of equal length to ``lags`` parameter.
+        Elements in ``freq`` correspond to elements in lags.
+        If i-th element of ``freq`` is not None, i-th element of ``lags`` must be int,
+        this is called the "corresponding lags element" below
         "frequency descriptor" can be one of the following:
-        time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
-            multiplied to corresponding ``lags`` element when shifting
-        str - offset from pd.tseries module, e.g., "D", "M", or time rule, e.g., "EOM"
+        - time-like: ``DateOffset``, ``tseries.offsets``, or ``timedelta``
+        multiplied to corresponding ``lags`` element when shifting
+        - str: offset from pd.tseries module, e.g., "D", "M", or time rule, e.g., "EOM"
     shifted_vars : None
     shifted_vars_lag : 0
-    shifted_vars_freq :
-
+    shifted_vars_freq : None
     transformers : sktime series-to-series transformer, or list thereof
         Additional transformations applied to ``y``.
         These are added to the lags, as separate columns in the output,
         and not applied to the lagged data.
-
-    impute_method : str, None, or sktime transformation, optional
+    impute_method : str, None, or sktime transformation, optional (default="bfill")
         Imputation method to use for missing values in the lagged data
-
-        * default="bfill"
-        * if str, admissible strings are of ``Imputer.method`` parameter, see there.
-          To pass further parameters, pass the ``Imputer`` transformer directly,
-          as described below.
-        * if sktime transformer, this transformer is applied to the lagged data.
-          This needs to be a transformer that removes missing data, and can be
-          an ``Imputer``.
-        * if None, no imputation is done when applying ``Lag`` transformer
+        - if str, admissible strings are of ``Imputer.method`` parameter, see there.
+        - To pass further parameters, pass the ``Imputer`` transformer directly,
+        as described below.
+        if sktime transformer, this transformer is applied to the lagged data.
+        This needs to be a transformer that removes missing data, and can be
+        an ``Imputer``.
+        if None, no imputation is done when applying ``Lag`` transformer
 
     Examples
     --------
