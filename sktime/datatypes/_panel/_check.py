@@ -1405,34 +1405,48 @@ class PanelGluontsList(ScitypePanel):
 
 
 class PanelGluontsPandas(ScitypePanel):
-    """Data type: polars.DataFrame based specification of panel of time series.
+    """Data type: gluonts PandasDataset specification of panel of time series.
+
+    Name: ``"gluonts_PandasDataset_panel"``
+
+    Short description:
+
+    A ``gluonts.dataset.pandas.PandasDataset`` object interpreted as a panel,
+    where each item corresponds to one time series instance and is backed by
+    a pandas ``DataFrame`` indexed by time.
+
+    Long description:
+
+    The ``"gluonts_PandasDataset_panel"`` :term:`mtype` is a concrete
+    specification that implements the ``Panel`` :term:`scitype`, i.e., a
+    collection of time series.
 
     Parameters
     ----------
     is_univariate: bool
-        True iff table has one variable
+        True iff table has one variable.
     is_equally_spaced : bool
-        True iff series index is equally spaced
+        True iff each series index is equally spaced.
     is_equal_length: bool
-        True iff all series in panel are of equal length
+        True iff all series in panel are of equal length.
     is_empty: bool
-        True iff table has no variables or no instances
+        True iff table has no variables or no instances.
     is_one_series: bool
-        True iff there is only one series in the panel of time series
+        True iff there is only one series in the panel of time series.
     has_nans: bool
-        True iff the table contains NaN values
+        True iff the table contains NaN values.
     n_instances: int
-        number of instances in the panel of time series
+        Number of instances in the panel of time series.
     n_features: int
-        number of variables in table
+        Number of variables in table.
     feature_names: list of int or object
-        names of variables in table
+        Names of variables in table.
     dtypekind_dfip: list of DtypeKind enum
-        list of DtypeKind enum values for each feature in the panel,
-        following the data frame interface protocol
+        List of DtypeKind enum values for each feature in the panel,
+        following the data frame interface protocol.
     feature_kind: list of str
-        list of feature kind strings for each feature in the panel,
-        coerced to FLOAT or CATEGORICAL type
+        List of feature kind strings for each feature in the panel,
+        coerced to FLOAT or CATEGORICAL type.
     """
 
     _tags = {
