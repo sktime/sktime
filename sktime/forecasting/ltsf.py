@@ -420,6 +420,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "capability:pretrain": True,
     }
 
     def __init__(
@@ -974,6 +975,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["geetu040"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "capability:pretrain": True,
     }
 
     def __init__(
@@ -1194,6 +1196,45 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             activation=self.activation,
             c_out=self.c_out,
         )._build()
+
+    def _build_panel_dataloader(self, y, all_series, pred_len):
+        """Build PyTorch DataLoader for panel/hierarchical data pretraining.
+
+        Overrides base class to use PytorchFormerDataset instead of PyTorchTrainDataset.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Panel data (not used directly, but available for subclass overrides)
+        all_series : list of pd.DataFrame
+            Pre-extracted series from panel data
+        pred_len : int
+            Prediction length (uses self._pred_len set by _build_network)
+
+        Returns
+        -------
+        dataloader : torch.utils.data.DataLoader
+            DataLoader for panel/hierarchical data
+        """
+        from torch.utils.data import ConcatDataset, DataLoader
+
+        from sktime.networks.ltsf.data.dataset import PytorchFormerDataset
+
+        datasets = [
+            PytorchFormerDataset(
+                y=series,
+                seq_len=self.seq_len,
+                context_len=self.context_len,
+                pred_len=self._pred_len,  # Set by _build_network
+                freq=self.freq,
+                temporal_encoding=self._temporal_encoding,  # Set by _build_network
+                temporal_encoding_type=self.temporal_encoding_type,
+            )
+            for series in all_series
+        ]
+
+        combined_dataset = ConcatDataset(datasets)
+        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

@@ -17,6 +17,11 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         Length of the input sequence.
         Ensure seq_len is divisible by 2^num_levels.
 
+    pred_len : int, optional
+        Length of prediction (forecast horizon). Required for pretraining if fh
+        is not passed to pretrain(). If None, will be determined from fh during
+        fit() or pretrain().
+
     num_epochs : int, default=16
         Number of epochs to train the model.
 
@@ -126,11 +131,13 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["Sohaib-Ahmed21"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "capability:pretrain": True,
     }
 
     def __init__(
         self,
         seq_len,
+        pred_len=None,
         *,
         num_epochs=16,
         batch_size=8,
@@ -155,6 +162,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         RIN=False,
     ):
         self.seq_len = seq_len
+        self.pred_len = pred_len
         self.criterion = criterion
         self.optimizer = optimizer
         self.criterion_kwargs = criterion_kwargs
@@ -246,6 +254,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         params = [
             {
                 "seq_len": 8,
+                "pred_len": 3,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
@@ -253,6 +262,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
             },
             {
                 "seq_len": 16,
+                "pred_len": 4,
                 "lr": 0.001,
                 "optimizer": "Adam",
                 "batch_size": 4,
