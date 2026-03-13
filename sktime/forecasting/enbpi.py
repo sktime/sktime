@@ -80,7 +80,7 @@ class EnbPIForecaster(BaseForecaster):
     Examples
     --------
     >>> import numpy as np
-    >>> from tsbootstrap import MovingBlockBootstrap
+    >>> from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
     >>> from sktime.forecasting.enbpi import EnbPIForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
@@ -89,8 +89,11 @@ class EnbPIForecaster(BaseForecaster):
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> y = load_airline()
     >>> forecaster = Differencer(lags=[1]) * Deseasonalizer(sp=12) * EnbPIForecaster(
-    ...    forecaster=NaiveForecaster(sp=12),
-    ...    bootstrap_transformer=MovingBlockBootstrap(n_bootstraps=10))
+    ... forecaster=NaiveForecaster(sp=12),
+    ... bootstrap_transformer=MovingBlockBootstrapTransformer(
+    ... n_series=10, return_indices=True
+    ... ),
+    ... )
     >>> fh = ForecastingHorizon(np.arange(1, 13))
     >>> forecaster.fit(y, fh=fh)
     TransformedTargetForecaster(...)
