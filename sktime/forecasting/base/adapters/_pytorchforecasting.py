@@ -73,7 +73,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             "pd_multiindex_hier",
             "pd.DataFrame",
         ],
-        "scitype:y": "univariate",
+        "scitype:y": "both",
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "capability:missing_values": False,
@@ -189,7 +189,8 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         Parameters
         ----------
         y : sktime time series object
-            guaranteed to have a single column/variable
+            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+            Time series to fit to.
         fh : guaranteed to be ForecastingHorizon
             The forecasting horizon with the steps ahead to to predict.
         X : sktime time series object, optional (default=None)
@@ -281,8 +282,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         Returns
         -------
         y_pred : sktime time series object
-            guaranteed to have a single column/variable
-            Point predictions
+            Point predictions. Has the same number of columns as y passed to fit.
 
         Notes
         -----
@@ -466,11 +466,13 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         # might not the same order
         # store the target column names and index names (probably [None])
         # will be renamed !
-        self._target_name = y.columns[-1]
+        self._target_names = y.columns.tolist()
+        self._n_targets = len(self._target_names)
+        self._target_name = self._target_names[-1]
         self._index_names = y.index.names
         self._index_len = len(self._index_names)
         # store X, y column names (probably None or not str type)
-        # The target column and the index will be renamed
+        # The target columns and the index will be renamed
         # before being passed to the underlying model
         # because those names could be None or non-string type.
         if X is not None:
@@ -486,14 +488,18 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         y.index.rename(rename_input, inplace=True)
         if X is not None:
             X.index.rename(rename_input, inplace=True)
-        # rename X, y columns names to make sure they are all str type
+        # rename X columns to make sure they are all str type
         if X is not None:
             self._new_X_columns = [
                 "_X_column_" + str(i) for i in range(len(self._X_columns))
             ]
             X.columns = self._new_X_columns
-        self._new_target_name = "_target_column"
-        y.columns = [self._new_target_name]
+        # rename target columns to safe internal names
+        self._new_target_names = [
+            "_target_column_" + str(i) for i in range(self._n_targets)
+        ]
+        self._new_target_name = self._new_target_names[-1]
+        y.columns = self._new_target_names
         # combine X and y
         if X is not None:
             # only numeric columns
@@ -504,9 +510,10 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         else:
             time_varying_known_reals = []
             data = deepcopy(y)
-        # if fh is not continuous, there will be NaN after extend_y in prediect
+        # if fh is not continuous, there will be NaN after extend_y in predict
         data = data.copy()
-        data["_target_column"] = data["_target_column"].fillna(0)
+        for col in self._new_target_names:
+            data[col] = data[col].fillna(0)
         # add integer time_idx column as pytorch-forecasting requires
         if self._index_len > 1:
             time_idx = (
@@ -534,18 +541,22 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 + ["_auto_time_idx"]
             )
         ][data["_auto_time_idx"] > training_cutoff]
-        # infer time_idx column, target column and instances from data
+        # for multivariate, pytorch-forecasting expects a list of target columns
+        target_param = (
+            self._new_target_names if self._n_targets > 1 else self._new_target_names[0]
+        )
+        # infer time_idx column, target column(s) and instances from data
         _dataset_params = {
             "data": data[data["_auto_time_idx"] <= training_cutoff],
             "time_idx": "_auto_time_idx",
-            "target": self._new_target_name,
+            "target": target_param,
             "group_ids": (
                 self._new_index_names[0:-1]
                 if self._index_len > 1
                 else ["_auto_group_id"]
             ),
             "time_varying_known_reals": time_varying_known_reals,
-            "time_varying_unknown_reals": [self._new_target_name],
+            "time_varying_unknown_reals": self._new_target_names,
         }
         _dataset_params.update(dataset_params)
         # overwrite max_prediction_length
@@ -558,7 +569,22 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
 
     def _predictions_to_dataframe(self, predictions, max_prediction_length, alpha=None):
         # output is the actual predictions points but without index
-        output = predictions.output.cpu().numpy()
+        # for multivariate, pytorch-forecasting returns a tuple of tensors (one per
+        # target), each shaped (n_series, horizon, out_size). For point forecasts
+        # out_size=1, for quantile forecasts it equals the number of quantiles.
+        raw_output = predictions.output
+        if isinstance(raw_output, (list, tuple)):
+            arrays = []
+            for t in raw_output:
+                arr = t.cpu().numpy()
+                if arr.ndim == 3 and arr.shape[-1] == 1:
+                    arr = arr[..., 0]
+                arrays.append(arr)
+            output = np.stack(arrays, axis=-1)
+        else:
+            output = raw_output.cpu().numpy()
+            if output.ndim == 2:
+                output = output[..., np.newaxis]
         # index will be combined with output
         index = predictions.index
         # in pytorch-forecasting predictions, the first index is the time_idx
@@ -609,28 +635,37 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         else:
             rename_input = self._index_names
         data.index.rename(rename_input, inplace=True)
-        # add the target column at the end
+
+        n_rows = output.shape[0] * max_prediction_length
+        n_targets = output.shape[2]
+
+        # add the target column(s) at the end
         if alpha is not None:
-            quantiles = output.reshape((-1, len(alpha)))
-            quantiles = pd.DataFrame(
-                data=quantiles,
-                index=data.index,
-            )
+            quantiles = output.reshape((n_rows, -1))
+            quantiles = pd.DataFrame(data=quantiles, index=data.index)
             data = pd.concat([data, quantiles], axis=1)
-            data.columns = [
-                [self._target_name if self._target_name is not None else 0]
-                * len(alpha),
-                alpha,
-            ]
-        else:
-            data[self._target_name] = output.flatten()
-        # # set target name back to original input in fit
-        # data.columns = [self._target_name]
-        # convert back to pd.series if needed
-        if self._convert_to_series and alpha is None:
-            data = pd.Series(
-                data=data[self._target_name], index=data.index, name=self._target_name
+            target_col = (
+                self._target_names[-1]
+                if self._target_names[-1] is not None
+                else 0
             )
+            data.columns = pd.MultiIndex.from_arrays(
+                [[target_col] * len(alpha), alpha]
+            )
+        else:
+            flat_output = output.reshape((n_rows, n_targets))
+            target_df = pd.DataFrame(
+                flat_output,
+                index=data.index,
+                columns=self._target_names,
+            )
+            data = pd.concat([data, target_df], axis=1)
+            if self._convert_to_series and n_targets == 1:
+                data = pd.Series(
+                    data=data[self._target_names[0]],
+                    index=data.index,
+                    name=self._target_names[0],
+                )
         return data
 
     def _dummy_X(self, X, y):
