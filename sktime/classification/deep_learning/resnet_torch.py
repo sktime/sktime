@@ -1,7 +1,10 @@
+"""PyTorch implementation of ResNet for Time Series Classification."""
+
 import torch
 import torch.nn as nn
-import numpy as np
+
 from sktime.classification.deep_learning.base import BaseDeepClassifier
+
 
 # 1. THE MATH: ResNetBlock with perfectly aligned dimensions
 class ResNetBlock(nn.Module):
@@ -10,15 +13,15 @@ class ResNetBlock(nn.Module):
         self.conv1 = nn.Conv1d(in_channels, out_channels, kernel_size=7, padding=3)
         self.bn1 = nn.BatchNorm1d(out_channels)
         self.relu = nn.ReLU()
-        
+
         self.conv2 = nn.Conv1d(out_channels, out_channels, kernel_size=5, padding=2)
         self.bn2 = nn.BatchNorm1d(out_channels)
-        
+
         self.shortcut = nn.Sequential()
         if in_channels != out_channels:
             self.shortcut = nn.Sequential(
                 nn.Conv1d(in_channels, out_channels, kernel_size=1),
-                nn.BatchNorm1d(out_channels)
+                nn.BatchNorm1d(out_channels),
             )
 
     def forward(self, x):
@@ -28,7 +31,15 @@ class ResNetBlock(nn.Module):
         out += residual
         return self.relu(out)
 
+
 # 2. THE BRAIN: Connects to sktime and handles training
+"""Residual Neural Network (ResNet) for classification.
+
+    This is a PyTorch implementation of the ResNet architecture for
+    time series classification.
+    """
+
+
 class ResNetClassifier(BaseDeepClassifier):
     def __init__(self, n_epochs=100, batch_size=40, random_state=None):
         self.n_epochs = n_epochs
@@ -44,23 +55,37 @@ class ResNetClassifier(BaseDeepClassifier):
             ResNetBlock(128, 128),
             nn.AdaptiveAvgPool1d(1),
             nn.Flatten(),
-            nn.Linear(128, getattr(self, "n_classes_", 2))
+            nn.Linear(128, getattr(self, "n_classes_", 2)),
         )
         return model
 
     def _fit(self, X, y):
-        """The Training Loop."""
-        # X shape: (n_instances, n_channels, n_timepoints)
+        """Fit the classifier with hardware acceleration and seeding."""
+        # 1. Setup Device (CPU, CUDA, or MPS for Mac)
+        if torch.backends.mps.is_available():
+            self.device_ = torch.device("mps")
+        elif torch.cuda.is_available():
+            self.device_ = torch.device("cuda")
+        else:
+            self.device_ = torch.device("cpu")
+
+        # 2. Reproducibility
+        if self.random_state is not None:
+            torch.manual_seed(self.random_state)
+            np.random.seed(self.random_state)
+
         input_shape = (X.shape[1], X.shape[2]) 
         self.model_ = self._build_model(input_shape)
+        self.model_.to(self.device_) # Move model to GPU
         
         optimizer = torch.optim.Adam(self.model_.parameters(), lr=0.001)
         criterion = nn.CrossEntropyLoss()
         
         self.model_.train()
         for epoch in range(self.n_epochs):
-            inputs = torch.from_numpy(X).float()
-            labels = torch.from_numpy(y).long()
+            # Move data to the same device as the model
+            inputs = torch.from_numpy(X).float().to(self.device_)
+            labels = torch.from_numpy(y).long().to(self.device_)
             
             optimizer.zero_grad()
             outputs = self.model_(inputs)
@@ -71,13 +96,12 @@ class ResNetClassifier(BaseDeepClassifier):
         return self
 
     def _predict(self, X):
-        """Predict labels for sequences in X."""
+        """Predict labels with hardware acceleration."""
         self.model_.eval()
-        inputs = torch.from_numpy(X).float()
+        inputs = torch.from_numpy(X).float().to(self.device_)
         
         with torch.no_grad():
-            # Crucial: Call the model directly, not .predict()
             outputs = self.model_(inputs)
             predictions = torch.argmax(outputs, dim=1)
             
-        return predictions.numpy()
+        return predictions.cpu().numpy() # Move back to CPU for sktime
