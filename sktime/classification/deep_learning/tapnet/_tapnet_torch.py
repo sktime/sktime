@@ -15,6 +15,7 @@ class TapNetClassifierTorch(BaseDeepClassifierPytorch):
     """Time series attentional prototype network (TapNet) in PyTorch, as in [1]_.
 
     Parameters
+    ----------
     filter_sizes : tuple of int, default = (256, 256, 128)
         Number of convolutional filters in each convolutional block.
     kernel_size : tuple of int, default = (8, 5, 3)
@@ -71,11 +72,12 @@ class TapNetClassifierTorch(BaseDeepClassifierPytorch):
         Seed for reproducibility.
 
     Attributes
+    ----------
     n_classes_ : int
         Number of classes, extracted from the data.
 
     Examples
-
+    --------
     >>> from sktime.classification.deep_learning.tapnet import TapNetClassifierTorch
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
@@ -177,12 +179,14 @@ class TapNetClassifierTorch(BaseDeepClassifierPytorch):
         """Build the TapNet network.
 
         Parameters
+        ----------
         X : np.ndarray of shape (n_instances, n_dims, series_length)
             Input training data.
         y : np.ndarray of shape (n_instances,)
             Target labels.
 
         Returns
+        -------
         network : TapNetNetworkTorch
             The constructed TapNet network.
         """
@@ -223,13 +227,13 @@ class TapNetClassifierTorch(BaseDeepClassifierPytorch):
         """Return testing parameter settings for the estimator.
 
         Parameters
-
+        ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
-
+        -------
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
         """
