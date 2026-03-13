@@ -70,15 +70,36 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         "X-y-must-have-same-index": True,
     }
 
-    def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
+    def __init__(
+        self,
+        forecasters,
+        regressor=None,
+        random_state=None,
+        n_jobs=None,
+        use_exogenous_in_regressor: bool = False,
+    ):
         self.regressor = regressor
         self.random_state = random_state
+        self.use_exogenous_in_regressor = use_exogenous_in_regressor
 
         super().__init__(forecasters=forecasters, n_jobs=n_jobs)
 
         self._anytagis_then_set("capability:exogenous", True, False, forecasters)
         self._anytagis_then_set("capability:missing_values", False, True, forecasters)
         self._anytagis_then_set("fit_is_empty", False, True, forecasters)
+
+        if self.use_exogenous_in_regressor:
+            # ensure X is passed through even if some base forecasters ignore X,
+            # so that the meta-regressor can make use of exogenous variables
+            self.set_tags(**{"capability:exogenous": True})
+
+    def fit(self, y, X=None, fh=None):
+        """Fit forecaster to training data."""
+        if self.use_exogenous_in_regressor and X is None:
+            raise ValueError(
+                "X must be provided when use_exogenous_in_regressor is True during fit"
+            )
+        return super().fit(y=y, X=X, fh=fh)
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -90,7 +111,8 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
+            Exogenous variables. Used by meta-regressor if
+            ``use_exogenous_in_regressor=True``.
 
         Returns
         -------
@@ -119,8 +141,13 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y_train, fh=inner_fh, X=X_train)
         y_preds = self._predict_forecasters(fh=inner_fh, X=X_test)
 
+        # base meta-features from stacked base forecasts
+        y_stack = np.column_stack(y_preds)
         y_meta = y_test.values
-        X_meta = np.column_stack(y_preds)
+        if self.use_exogenous_in_regressor and X_test is not None:
+            X_meta = np.column_stack([y_stack, X_test.to_numpy()])
+        else:
+            X_meta = y_stack
 
         # fit final regressor on on validation window
         self.regressor_.fit(X_meta, y_meta)
@@ -165,7 +192,18 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
             Point predictions
         """
         y_preds = np.column_stack(self._predict_forecasters(fh=fh, X=X))
-        y_pred = self.regressor_.predict(y_preds)
+
+        if self.use_exogenous_in_regressor and X is None:
+            raise ValueError(
+                "X must be provided when use_exogenous_in_regressor is True "
+                "during predict"
+            )
+        elif self.use_exogenous_in_regressor:
+            meta_features = np.column_stack([y_preds, X.to_numpy()])
+        else:
+            meta_features = y_preds
+
+        y_pred = self.regressor_.predict(meta_features)
         # index = y_preds.index
         index = self.fh.to_absolute_index(self.cutoff)
         return pd.Series(y_pred, index=index, name=self._y.name)
