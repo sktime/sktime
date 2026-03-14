@@ -50,25 +50,49 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         "capability:exogenous": False,
     }
 
+    _all_optimizers = {
+        "adadelta": "Adadelta",
+        "adagrad": "Adagrad",
+        "adam": "Adam",
+        "adamw": "AdamW",
+        "asgd": "ASGD",
+        "rmsprop": "RMSprop",
+        "rprop": "Rprop",
+        "sgd": "SGD",
+    }
+
+    _all_criterions = {
+        "mseloss": "MSELoss",
+        "l1loss": "L1Loss",
+        "smoothl1loss": "SmoothL1Loss",
+        "huberloss": "HuberLoss",
+    }
+
     def __init__(
         self,
         num_epochs=16,
         batch_size=8,
         in_channels=1,
         individual=False,
+        criterion="MSELoss",
         criterion_kwargs=None,
-        optimizer=None,
+        optimizer="Adam",
         optimizer_kwargs=None,
         lr=0.001,
+        custom_dataset_train=None,
+        custom_dataset_pred=None,
     ):
         self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.in_channels = in_channels
         self.individual = individual
+        self.criterion = criterion
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
+        self.custom_dataset_train = custom_dataset_train
+        self.custom_dataset_pred = custom_dataset_pred
 
         super().__init__()
 
@@ -107,35 +131,43 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
             self._optimizer.step()
 
     def _instantiate_optimizer(self):
-        if self.optimizer:
-            if self.optimizer in self.optimizers.keys():
-                if self.optimizer_kwargs:
-                    return self.optimizers[self.optimizer](
-                        self.network.parameters(), lr=self.lr, **self.optimizer_kwargs
-                    )
-                else:
-                    return self.optimizers[self.optimizer](
-                        self.network.parameters(), lr=self.lr
-                    )
+        if isinstance(self.optimizer, str):
+            opt_key = self.optimizer.lower()
+            if opt_key in self._all_optimizers:
+                opt_class = getattr(torch.optim, self._all_optimizers[opt_key])
+                kwargs = self.optimizer_kwargs if self.optimizer_kwargs else {}
+                return opt_class(self.network.parameters(), lr=self.lr, **kwargs)
             else:
                 raise TypeError(
-                    f"Please pass one of {self.optimizers.keys()} for `optimizer`."
+                    f"Unknown optimizer: {self.optimizer}. "
+                    f"Please pass one of {list(self._all_optimizers.keys())}."
                 )
+        elif self.optimizer is not None:
+            if isinstance(self.optimizer, type):
+                kwargs = self.optimizer_kwargs if self.optimizer_kwargs else {}
+                return self.optimizer(self.network.parameters(), lr=self.lr, **kwargs)
+            return self.optimizer
         else:
             # default optimizer
             return torch.optim.Adam(self.network.parameters(), lr=self.lr)
 
     def _instantiate_criterion(self):
-        if self.criterion:
-            if self.criterion in self.criterions.keys():
-                if self.criterion_kwargs:
-                    return self.criterions[self.criterion](**self.criterion_kwargs)
-                else:
-                    return self.criterions[self.criterion]()
+        if isinstance(self.criterion, str):
+            crit_key = self.criterion.lower()
+            if crit_key in self._all_criterions:
+                crit_class = getattr(torch.nn, self._all_criterions[crit_key])
+                kwargs = self.criterion_kwargs if self.criterion_kwargs else {}
+                return crit_class(**kwargs)
             else:
                 raise TypeError(
-                    f"Please pass one of {self.criterions.keys()} for `criterion`."
+                    f"Unknown criterion: {self.criterion}. "
+                    f"Please pass one of {list(self._all_criterions.keys())}."
                 )
+        elif self.criterion is not None:
+            if isinstance(self.criterion, type):
+                kwargs = self.criterion_kwargs if self.criterion_kwargs else {}
+                return self.criterion(**kwargs)
+            return self.criterion
         else:
             # default criterion
             return torch.nn.MSELoss()
@@ -205,8 +237,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
             if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
                 self.custom_dataset_pred.build_dataset
             ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
+                self.custom_dataset_pred.build_dataset(y)
+                dataset = self.custom_dataset_pred
             else:
                 raise NotImplementedError(
                     "Custom Dataset `build_dataset` method is not available. Please"
