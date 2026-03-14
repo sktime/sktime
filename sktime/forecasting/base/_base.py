@@ -913,7 +913,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
-
+        
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
@@ -1301,13 +1301,20 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 obj=self,
             )
             return self
+        
+
+    
 
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
-
+    
         # update internal X/y with the new X/y
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
+        # if checks/coercions resulted in empty data, we exit without updating
+        if self.get_tag("fit_is_empty", False):
+            
+            return self
 
         # checks and conversions complete, pass to inner fit
         if not self._is_vectorized:
