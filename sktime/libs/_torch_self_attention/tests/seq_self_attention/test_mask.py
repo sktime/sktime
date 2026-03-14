@@ -17,13 +17,15 @@ class TestMask(TestMaskShapeTorch):
     def test_return_attention(self):
         from sktime.libs._torch_self_attention import SeqSelfAttentionTorch
 
-        attention = SeqSelfAttentionTorch(return_attention=True, attention_width=3)
+        attention = SeqSelfAttentionTorch(
+            input_dim=8, return_attention=True, attention_width=3
+        )
         self.check_mask_shape(attention)
 
     def test_padded_pairs_zeroed(self):
         from sktime.libs._torch_self_attention import SeqSelfAttentionTorch
 
-        attention = SeqSelfAttentionTorch(return_attention=True)
+        attention = SeqSelfAttentionTorch(input_dim=8, return_attention=True)
         sentences, input_data, mask = self.get_input_data()
         torch_tensor = _safe_import("torch.tensor")
         x = torch_tensor(input_data)
@@ -31,6 +33,7 @@ class TestMask(TestMaskShapeTorch):
         _, a = attention(x, mask=m)
         max_len = input_data.shape[1]
         for i, sentence in enumerate(sentences):
-            for j in range(len(sentence), max_len):
-                for k in range(len(sentence), max_len):
+            valid_len = len(sentence)
+            for j in range(valid_len):
+                for k in range(valid_len, max_len):
                     assert a[i, j, k].item() < 1e-6

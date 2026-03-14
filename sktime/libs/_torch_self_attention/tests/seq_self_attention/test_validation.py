@@ -11,6 +11,12 @@ pytestmark = pytest.mark.skipif(
 
 
 class TestValidation:
+    def test_input_dim_required(self):
+        from sktime.libs._torch_self_attention import SeqSelfAttentionTorch
+
+        with pytest.raises(TypeError):
+            SeqSelfAttentionTorch(return_attention=False)
+
     def test_output_shape(self):
         from sktime.libs._torch_self_attention import SeqSelfAttentionTorch
 

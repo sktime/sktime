@@ -6,30 +6,54 @@ NNModule = _safe_import("torch.nn.Module")
 
 
 class SeqSelfAttentionTorch(NNModule):
-    """Sequential self-attention layer.
+    """Sequential self-attention layer for temporal feature refinement.
+
+    The layer consumes a batch of sequences with shape ``(batch, time,
+    features)`` and computes pairwise attention scores between time steps.
+
+    Two attention scoring mechanisms are supported:
+
+    - ``"additive"`` computes Bahdanau-style scores using learned projections.
+    - ``"multiplicative"`` computes bilinear scores directly in feature space.
+
+    Optional local-attention and causal-attention modes can restrict which time
+    steps contribute to each output position.
 
     Parameters
     ----------
+    input_dim : int
+        Feature dimension of the expected input. This parameter is **required** so
+        that all learnable weights are materialized and registered during
+        construction.
     units : int, default=32
-        Dimension of the vectors used to calculate attention weights.
+        Hidden dimension used when ``attention_type="additive"``. Larger values
+        increase the capacity of the attention scorer.
     attention_width : int or None, default=None
-        Width of local attention.
+        Size of the local attention window. If ``None``, every time step may
+        attend to every other time step. When set, attention is restricted to a
+        fixed-width neighborhood around each position.
     attention_type : str, default="additive"
-        "additive" or "multiplicative".
+        Attention scoring function to use. Must be ``"additive"`` or
+        ``"multiplicative"``.
     return_attention : bool, default=False
-        Whether to return attention weights.
+        If ``True``, :meth:`forward` returns a tuple containing the transformed
+        sequence and the attention weights.
     history_only : bool, default=False
-        Only use historical pieces of data.
+        If ``True``, each time step may only attend to itself and earlier time
+        steps. When enabled without an explicit ``attention_width``, the layer
+        behaves like global causal attention.
     use_additive_bias : bool, default=True
-        Whether to use bias in additive mode.
+        Whether to include a bias term in the hidden projection used by
+        additive attention.
     use_attention_bias : bool, default=True
-        Whether to use bias for attention weights.
+        Whether to include a bias term in the final attention logits.
     attention_activation : str or callable or torch.nn.Module or None, default=None
-        Activation applied to attention logits.
+        Optional non-linearity applied to the attention logits before masking
+        and softmax normalization. String shortcuts ``"tanh"``, ``"relu"``,
+        ``"sigmoid"``, and ``"linear"`` are supported.
     attention_regularizer_weight : float, default=0.0
-        Weight for the attention regularizer.
-    input_dim : int or None, default=None
-        If provided, build parameters in the constructor.
+        Weight of an orthogonality-inspired penalty applied to the attention
+        matrix. Set to ``0.0`` to disable the regularizer.
     """
 
     ATTENTION_TYPE_ADD = "additive"
@@ -37,6 +61,7 @@ class SeqSelfAttentionTorch(NNModule):
 
     def __init__(
         self,
+        input_dim,
         units=32,
         attention_width=None,
         attention_type=ATTENTION_TYPE_ADD,
@@ -46,11 +71,10 @@ class SeqSelfAttentionTorch(NNModule):
         use_attention_bias=True,
         attention_activation=None,
         attention_regularizer_weight=0.0,
-        input_dim=None,
     ):
-        """Layer initialization."""
         super().__init__()
         self._import_cache = {}
+        self._input_dim = int(input_dim)
         self.units = units
         self.attention_width = attention_width
         self.attention_type = attention_type
@@ -67,7 +91,6 @@ class SeqSelfAttentionTorch(NNModule):
         )
 
         self._built = False
-        self._input_dim = None
 
         # For inspection/debugging
         self.intensity = None
@@ -90,17 +113,45 @@ class SeqSelfAttentionTorch(NNModule):
                 "No implementation for attention type : " + attention_type
             )
 
-        if input_dim is not None:
-            self._build(input_dim)
+        self._build(self._input_dim)
 
     def _torch_op(self, import_path):
-        """Lazy import and cache torch ops used in forward pass."""
+        """Return a lazily imported PyTorch object.
+
+        Parameters
+        ----------
+        import_path : str
+            Fully qualified import path understood by :func:`_safe_import`.
+
+        Returns
+        -------
+        object
+            Imported function or class cached for reuse.
+        """
         if import_path not in self._import_cache:
             self._import_cache[import_path] = _safe_import(import_path)
         return self._import_cache[import_path]
 
     def _instantiate_attention_activation(self, activation):
-        """Instantiate the attention activation function."""
+        """Normalize the configured attention activation.
+
+        Parameters
+        ----------
+        activation : str, callable, torch.nn.Module, or None
+            User-provided activation specification.
+
+        Returns
+        -------
+        callable or torch.nn.Module or None
+            Instantiated activation object, callable, or ``None`` when the
+            attention logits should remain linear.
+
+        Raises
+        ------
+        ValueError
+            If ``activation`` is not one of the supported string aliases and is
+            not callable.
+        """
         Module = self._torch_op("torch.nn.modules.module.Module")
         if activation is None:
             return None
@@ -125,7 +176,19 @@ class SeqSelfAttentionTorch(NNModule):
         )
 
     def _build(self, input_dim):
-        """Build the layer parameters."""
+        """Create learnable parameters for a given input feature dimension.
+
+        Parameters
+        ----------
+        input_dim : int
+            Number of features in the last dimension of the input tensor.
+
+        Raises
+        ------
+        ValueError
+            If the layer has already been built for a different input
+            dimensionality.
+        """
         if self._built:
             if self._input_dim != int(input_dim):
                 raise ValueError(
@@ -155,7 +218,11 @@ class SeqSelfAttentionTorch(NNModule):
         self._built = True
 
     def _reset_parameters(self):
-        """Initialize the layer parameters."""
+        """Initialize learnable parameters with standard PyTorch defaults.
+
+        Weight matrices use Xavier normal initialization and bias vectors are
+        initialized to zero.
+        """
         xavier_normal_ = self._torch_op("torch.nn.init.xavier_normal_")
         zeros_ = self._torch_op("torch.nn.init.zeros_")
         if self.Wt is not None:
@@ -170,14 +237,29 @@ class SeqSelfAttentionTorch(NNModule):
             zeros_(self.ba)
 
     def forward(self, x, mask=None):
-        """Compute the output of the layer.
+        """Apply sequential self-attention to an input batch.
 
         Parameters
         ----------
         x : torch.Tensor, shape (batch, time, features)
-            Input sequence.
-        mask : torch.Tensor or None
-            Optional mask of shape (batch, time), where 1 indicates valid steps.
+            Input batch of temporal feature vectors.
+        mask : torch.Tensor or None, default=None
+            Optional validity mask with shape ``(batch, time)`` or
+            ``(batch, time, 1)``. Entries with value 1 mark valid time steps;
+            entries with value 0 suppress attention involving padded positions.
+
+        Returns
+        -------
+        torch.Tensor or tuple[torch.Tensor, torch.Tensor]
+            Attention-weighted sequence with shape ``(batch, time, features)``.
+            If ``return_attention=True``, the method additionally returns the
+            normalized attention matrix with shape ``(batch, time, time)``.
+
+        Raises
+        ------
+        ValueError
+            If ``x`` is not three-dimensional or if its feature dimension does
+            not match ``input_dim`` provided during construction.
         """
         if x.dim() != 3:
             raise ValueError(
@@ -185,9 +267,7 @@ class SeqSelfAttentionTorch(NNModule):
                 f"Found {tuple(x.shape)}"
             )
 
-        if not self._built:
-            self._build(x.shape[-1])
-        elif self._input_dim is not None and x.shape[-1] != self._input_dim:
+        if x.shape[-1] != self._input_dim:
             raise ValueError(
                 "Input feature dimension does not match layer input_dim. "
                 f"Expected {self._input_dim}, got {x.shape[-1]}."
@@ -227,6 +307,18 @@ class SeqSelfAttentionTorch(NNModule):
         return v
 
     def _call_additive_emission(self, x):
+        """Compute additive attention logits for every pair of time steps.
+
+        Parameters
+        ----------
+        x : torch.Tensor, shape (batch, time, features)
+            Input sequence batch.
+
+        Returns
+        -------
+        torch.Tensor, shape (batch, time, time)
+            Unnormalized pairwise attention logits.
+        """
         # x: (B, T, F)
         torch_matmul = self._torch_op("torch.matmul")
         torch_tanh = self._torch_op("torch.tanh")
@@ -248,6 +340,19 @@ class SeqSelfAttentionTorch(NNModule):
         return e
 
     def _call_multiplicative_emission(self, x):
+        """Compute multiplicative attention logits for a sequence batch.
+
+        Parameters
+        ----------
+        x : torch.Tensor, shape (batch, time, features)
+            Input sequence batch.
+
+        Returns
+        -------
+        torch.Tensor, shape (batch, time, time)
+            Unnormalized bilinear attention logits where
+            ``e[t, t'] = x_t^T W_a x_t'``.
+        """
         # e_{t, t'} = x_t^T W_a x_{t'}
         torch_matmul = self._torch_op("torch.matmul")
         e = torch_matmul(x, self.Wa)  # (B, T, F)
@@ -257,7 +362,21 @@ class SeqSelfAttentionTorch(NNModule):
         return e
 
     def _apply_attention_width(self, e, seq_len):
-        """Apply attention width."""
+        """Restrict attention scores to a local temporal window.
+
+        Parameters
+        ----------
+        e : torch.Tensor, shape (batch, time, time)
+            Attention logits before softmax normalization.
+        seq_len : int
+            Number of time steps in the sequence.
+
+        Returns
+        -------
+        torch.Tensor, shape (batch, time, time)
+            Attention logits with out-of-window entries shifted by a large
+            negative value so that their softmax contribution is negligible.
+        """
         # e: (B, T, T)
         torch_arange = self._torch_op("torch.arange")
         indices = torch_arange(seq_len, device=e.device)
@@ -273,17 +392,45 @@ class SeqSelfAttentionTorch(NNModule):
         return e
 
     def _apply_mask(self, e, mask):
-        """Apply mask to attention logits."""
+        """Mask attention logits corresponding to padded sequence positions.
+
+        Parameters
+        ----------
+        e : torch.Tensor, shape (batch, time, time)
+            Attention logits before softmax normalization.
+        mask : torch.Tensor
+            Validity mask with shape ``(batch, time)`` or ``(batch, time, 1)``.
+
+        Returns
+        -------
+        torch.Tensor, shape (batch, time, time)
+            Attention logits with padded positions strongly down-weighted.
+        """
         # mask: (B, T)
         if mask.dim() == 3:
             mask = mask.squeeze(-1)
         mask = mask.to(dtype=e.dtype)
-        mask = mask.unsqueeze(-1)
-        e = e - 10000.0 * ((1.0 - mask) * (1.0 - mask.transpose(1, 2)))
+        valid_pairs = mask.unsqueeze(-1) * mask.unsqueeze(1)
+        e = e - 10000.0 * (1.0 - valid_pairs)
         return e
 
     def _attention_regularizer(self, attention):
-        """Orthogonality regularizer for attention weights."""
+        """Compute the optional regularization loss for attention weights.
+
+        The penalty encourages attention matrices to be close to orthogonal by
+        comparing ``attention @ attention.T`` to the identity matrix.
+
+        Parameters
+        ----------
+        attention : torch.Tensor, shape (batch, time, time)
+            Normalized attention matrix.
+
+        Returns
+        -------
+        torch.Tensor
+            Scalar regularization term scaled by
+            ``attention_regularizer_weight``.
+        """
         batch_size = attention.shape[0]
         seq_len = attention.shape[-1]
         torch_eye = self._torch_op("torch.eye")
@@ -295,5 +442,11 @@ class SeqSelfAttentionTorch(NNModule):
 
     @staticmethod
     def get_custom_objects():
-        """Return the custom objects of the layer."""
+        """Return the custom object mapping for serialization helpers.
+
+        Returns
+        -------
+        dict[str, type]
+            Mapping from the public layer name to its implementing class.
+        """
         return {"SeqSelfAttentionTorch": SeqSelfAttentionTorch}

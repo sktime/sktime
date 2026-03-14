@@ -15,6 +15,7 @@ class TestLoss:
         from sktime.libs._torch_self_attention import SeqSelfAttentionTorch
 
         attention = SeqSelfAttentionTorch(
+            input_dim=8,
             return_attention=False,
             attention_type=SeqSelfAttentionTorch.ATTENTION_TYPE_MUL,
             attention_regularizer_weight=1e-4,

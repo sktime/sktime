@@ -18,6 +18,7 @@ class TestMul(TestMaskShapeTorch):
         from sktime.libs._torch_self_attention import SeqSelfAttentionTorch
 
         attention = SeqSelfAttentionTorch(
+            input_dim=8,
             return_attention=True,
             attention_width=15,
             attention_type=SeqSelfAttentionTorch.ATTENTION_TYPE_MUL,
@@ -28,4 +29,6 @@ class TestMul(TestMaskShapeTorch):
         from sktime.libs._torch_self_attention import SeqSelfAttentionTorch
 
         with pytest.raises(NotImplementedError):
-            SeqSelfAttentionTorch(return_attention=True, attention_type="random")
+            SeqSelfAttentionTorch(
+                input_dim=8, return_attention=True, attention_type="random"
+            )

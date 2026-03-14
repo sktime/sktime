@@ -18,6 +18,7 @@ class TestHistory(TestMaskShapeTorch):
         from sktime.libs._torch_self_attention import SeqSelfAttentionTorch
 
         attention = SeqSelfAttentionTorch(
+            input_dim=8,
             return_attention=True,
             attention_width=3,
             history_only=True,
@@ -27,5 +28,7 @@ class TestHistory(TestMaskShapeTorch):
     def test_infinite_history(self):
         from sktime.libs._torch_self_attention import SeqSelfAttentionTorch
 
-        attention = SeqSelfAttentionTorch(return_attention=True, history_only=True)
+        attention = SeqSelfAttentionTorch(
+            input_dim=8, return_attention=True, history_only=True
+        )
         self.check_mask_shape(attention)
