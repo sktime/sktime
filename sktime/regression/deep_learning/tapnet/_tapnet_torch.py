@@ -28,8 +28,9 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
         Dropout rate for the LSTM layer.
     dilation : int, default = 1
         Dilation value.
-    activation : str or None, default = None
-        Activation function to use in the output layer.
+    activation : str or None or callable, default = None
+        Activation function to use in the output layer. If callable, it must
+        accept and return a torch tensor.
     activation_hidden : str, default = "leaky_relu"
         Activation function to use in the hidden layers.
     use_rp : bool, default = True

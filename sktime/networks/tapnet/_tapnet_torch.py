@@ -5,6 +5,7 @@ __all__ = ["TapNetNetworkTorch"]
 
 import math
 import warnings
+from collections.abc import Callable
 
 import numpy as np
 
@@ -25,8 +26,9 @@ class TapNetNetworkTorch(NNModule):
         and in format (n_instances, n_dims, series_length).
     num_classes : int
         Number of outputs.
-    activation : str or None, default=None
-        Activation function to use in the output layer.
+    activation : str or None or callable, default=None
+        Activation function to use in the output layer. If callable, it must
+        accept and return a torch tensor.
     activation_hidden : str, default="leaky_relu"
         Activation function to use in the hidden layers.
     kernel_size : tuple of int, default = (8, 5, 3)
@@ -90,7 +92,7 @@ class TapNetNetworkTorch(NNModule):
         self,
         input_size: int | tuple[int, ...],
         num_classes: int,
-        activation: str | None = None,
+        activation: str | Callable | None = None,
         activation_hidden: str = "leaky_relu",
         kernel_size: tuple[int, ...] = (8, 5, 3),
         layers: tuple[int, ...] = (500, 300),
@@ -193,7 +195,9 @@ class TapNetNetworkTorch(NNModule):
         # Activations
         self._activation_hidden = self._instantiate_hidden_activation()
         self._activation_out = (
-            self._instantiate_output_activation() if self.activation else None
+            self._instantiate_output_activation()
+            if self.activation is not None
+            else None
         )
 
         # Random projection parameters (RDP)
@@ -315,7 +319,7 @@ class TapNetNetworkTorch(NNModule):
         Sequential = _safe_import("torch.nn.Sequential")
         Conv1d = _safe_import("torch.nn.Conv1d")
         BatchNorm1d = _safe_import("torch.nn.BatchNorm1d")
-        return Sequential(
+        layers = [
             Conv1d(
                 in_channels,
                 self.filter_sizes[0],
@@ -325,7 +329,11 @@ class TapNetNetworkTorch(NNModule):
             ),
             BatchNorm1d(self.filter_sizes[0]),
             self._instantiate_hidden_activation(),
-        )
+        ]
+        if self.dropout > 0.0:
+            Dropout = _safe_import("torch.nn.Dropout")
+            layers.append(Dropout(p=self.dropout))
+        return Sequential(*layers)
 
     def _make_conv_shared_block(self):
         """Build shared CNN blocks for layers after the first."""
@@ -348,6 +356,9 @@ class TapNetNetworkTorch(NNModule):
             )
             layers.append(BatchNorm1d(self.filter_sizes[i]))
             layers.append(self._instantiate_hidden_activation())
+            if self.dropout > 0.0:
+                Dropout = _safe_import("torch.nn.Dropout")
+                layers.append(Dropout(p=self.dropout))
             in_channels = self.filter_sizes[i]
         return Sequential(*layers)
 
@@ -384,14 +395,16 @@ class TapNetNetworkTorch(NNModule):
 
         Returns
         -------
-        activation_function : torch.nn.Module
+        activation_function : torch.nn.Module or callable
             The activation function to be applied on the output layer.
         """
+        if callable(self.activation):
+            return self.activation
         if isinstance(self.activation, NNModule):
             return self.activation
         if not isinstance(self.activation, str):
             raise TypeError(
-                "`activation` should be a str or torch.nn.Module. "
+                "`activation` should be a str, callable, or torch.nn.Module. "
                 f"Found {type(self.activation)}"
             )
 
@@ -407,7 +420,8 @@ class TapNetNetworkTorch(NNModule):
 
         raise ValueError(
             "Unsupported activation. Supported: "
-            "'sigmoid', 'softmax', 'logsoftmax', 'logsigmoid'. "
+            "'sigmoid', 'softmax', 'logsoftmax', 'logsigmoid', callable, "
+            "or torch.nn.Module. "
             f"Found {self.activation}"
         )
 
