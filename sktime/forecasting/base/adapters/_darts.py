@@ -270,7 +270,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         """
         del fh  # avoid being detected as unused by ``vulture`` like tools
         endogenous_actuals = self.convert_dataframe_to_timeseries(y)
-        darts_future_covariates, darts_past_covariates = self.convert_exogenous_dataset(X)
+        known_exogenous, unknown_exogenous = self.convert_exogenous_dataset(X)
         # single-target variable for univariate prediction
         if endogenous_actuals.width > 1 and self.get_tag("scitype:y") == "univariate":
             raise ValueError(
@@ -280,8 +280,8 @@ class _DartsRegressionAdapter(BaseForecaster):
         self._forecaster = self._create_forecaster()
         self._forecaster.fit(
             endogenous_actuals,
-            past_covariates=darts_past_covariates,
-            future_covariates=darts_future_covariates,
+            past_covariates=unknown_exogenous,
+            future_covariates=known_exogenous,
         )
 
         return self
@@ -333,14 +333,14 @@ class _DartsRegressionAdapter(BaseForecaster):
                 stacklevel=2,
             )
         self.check_is_fitted()
-        darts_future_covariates, darts_past_covariates = self.convert_exogenous_dataset(X)
+        known_exogenous, unknown_exogenous = self.convert_exogenous_dataset(X)
         absolute_fh = fh.to_absolute(self.cutoff)
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
 
         endogenous_point_predictions = self._forecaster.predict(
             maximum_forecast_horizon,
-            past_covariates=darts_past_covariates,
-            future_covariates=darts_future_covariates,
+            past_covariates=unknown_exogenous,
+            future_covariates=known_exogenous,
             num_samples=1,
         )
         expected_index = fh.get_expected_pred_idx(self.cutoff)
@@ -605,14 +605,14 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
                 obj=self,
                 stacklevel=2,
             )
-        darts_future_covariates, darts_past_covariates = self.convert_exogenous_dataset(X)
+        known_exogenous, unknown_exogenous = self.convert_exogenous_dataset(X)
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
         absolute_fh = fh.to_absolute(self.cutoff)
 
         endogenous_quantile_predictions = self._forecaster.predict(
             maximum_forecast_horizon,
-            past_covariates=darts_past_covariates,
-            future_covariates=darts_future_covariates,
+            past_covariates=unknown_exogenous,
+            future_covariates=known_exogenous,
             num_samples=self.num_samples,
         )
         endogenous_quantile_predictions = _get_darts_quantiles(
