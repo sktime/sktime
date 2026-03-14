@@ -607,6 +607,14 @@ Pre-trained and foundation models
 
     MOIRAIForecaster
 
+
+.. currentmodule:: sktime.forecasting.moirai2_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Moirai2Forecaster
 .. currentmodule:: sktime.forecasting.hf_momentfm_forecaster
 
 .. autosummary::
