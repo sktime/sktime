@@ -70,7 +70,7 @@ class InceptionTimeNetworkTorch(NNModule):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "JamesLarge", "Withington", "noxthot"],
+        "authors": ["hfawaz", "JamesLarge", "Withington", "noxthot", "Faakhir30"],
         "maintainers": ["Faakhir30"],
         "python_version": ">=3.10",
         "python_dependencies": "torch",
@@ -156,7 +156,7 @@ class InceptionTimeNetworkTorch(NNModule):
         self.global_avg_pool = nnAdaptiveAvgPool1d(1)
 
         nnLinear = _safe_import("torch.nn.Linear")
-        self.fc = nnLinear(current_channels, num_classes)
+        self.fc = nnLinear(current_channels, self.num_classes)
 
         if self.init_weights is not None:
             self.apply(self._init_weights)
