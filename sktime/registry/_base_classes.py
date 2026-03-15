@@ -50,7 +50,13 @@ class _BaseScitypeOfObject(BaseObject):
 
 
 class object(_BaseScitypeOfObject):
-    """Universal type for all objects."""
+    """Universal type for all objects in sktime.
+
+    All objects in sktime, including estimators, datasets, and metrics,
+    inherit from the base class documented here.
+
+    Base class: :class:`sktime.base.BaseObject`
+    """
 
     _tags = {
         "scitype_name": "object",
@@ -71,7 +77,13 @@ class object(_BaseScitypeOfObject):
 
 
 class estimator(_BaseScitypeOfObject):
-    """Estimator objects, i.e., objects with fit method."""
+    """Estimator objects, i.e., objects with fit method.
+
+    Estimators are objects that can be "fitted" to data. They implement
+    a ``fit`` method and store the results of the fitting process.
+
+    Base class: :class:`sktime.base.BaseEstimator`
+    """
 
     _tags = {
         "scitype_name": "estimator",
@@ -93,7 +105,13 @@ class estimator(_BaseScitypeOfObject):
 
 
 class aligner(_BaseScitypeOfObject):
-    """Time series aligner or sequence aligner."""
+    """Time series aligner or sequence aligner.
+
+    Aligners are objects that can align two or more time series or sequences,
+    typically by finding a mapping between their time indices or elements.
+
+    Base class: :class:`sktime.alignment.base.BaseAligner`
+    """
 
     _tags = {
         "scitype_name": "aligner",
@@ -115,7 +133,13 @@ class aligner(_BaseScitypeOfObject):
 
 
 class classifier(_BaseScitypeOfObject):
-    """Time series classifier."""
+    """Time series classifier.
+
+    Classifiers are estimators that can predict a categorical target
+    from one or more time series.
+
+    Base class: :class:`sktime.classification.base.BaseClassifier`
+    """
 
     _tags = {
         "scitype_name": "classifier",
@@ -137,7 +161,13 @@ class classifier(_BaseScitypeOfObject):
 
 
 class clusterer(_BaseScitypeOfObject):
-    """Time series clusterer."""
+    """Time series clusterer.
+
+    Clusterers are estimators that can group one or more time series
+    into clusters based on some measure of similarity.
+
+    Base class: :class:`sktime.clustering.base.BaseClusterer`
+    """
 
     _tags = {
         "scitype_name": "clusterer",
@@ -183,7 +213,13 @@ class early_classifier(_BaseScitypeOfObject):
 
 
 class forecaster(_BaseScitypeOfObject):
-    """Time series forecaster."""
+    """Time series forecaster.
+
+    Forecasters are estimators that can predict future values of a
+    time series from its past values and potentially other information.
+
+    Base class: :class:`sktime.forecasting.base.BaseForecaster`
+    """
 
     _tags = {
         "scitype_name": "forecaster",
@@ -351,7 +387,13 @@ class param_est(_BaseScitypeOfObject):
 
 
 class regressor(_BaseScitypeOfObject):
-    """Time series regressor."""
+    """Time series regressor.
+
+    Regressors are estimators that can predict a continuous target
+    from one or more time series.
+
+    Base class: :class:`sktime.regression.base.BaseRegressor`
+    """
 
     _tags = {
         "scitype_name": "regressor",
@@ -373,7 +415,13 @@ class regressor(_BaseScitypeOfObject):
 
 
 class detector(_BaseScitypeOfObject):
-    """Detector of anomalies, outliers, or change points."""
+    """Detector of anomalies, outliers, or change points.
+
+    Detectors are estimators that can identify unusual patterns,
+    outliers, or structural changes in one or more time series.
+
+    Base class: :class:`sktime.detection.base.BaseDetector`
+    """
 
     _tags = {
         "scitype_name": "detector",
@@ -417,7 +465,14 @@ class splitter(_BaseScitypeOfObject):
 
 
 class transformer(_BaseScitypeOfObject):
-    """Time series transformer."""
+    """Time series transformer.
+
+    Transformers are estimators that can transform one or more time series
+    into a different representation, such as a feature vector or another
+    time series.
+
+    Base class: :class:`sktime.transformations.base.BaseTransformer`
+    """
 
     _tags = {
         "scitype_name": "transformer",
