@@ -1,7 +1,8 @@
-from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
-import torch
-import torch.nn as nn
 import pandas as pd
+import torch.nn as nn
+
+from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
+
 
 class DummyModel(nn.Module):
     def __init__(self, seq_len=1, pred_len=1):
@@ -12,6 +13,7 @@ class DummyModel(nn.Module):
 
     def forward(self, x):
         return self.linear(x)
+
 
 class Forecaster(BaseDeepNetworkPyTorch):
     def __init__(self, model, num_epochs=16, batch_size=8, lr=0.001):
@@ -24,6 +26,7 @@ class Forecaster(BaseDeepNetworkPyTorch):
 
     def _build_network(self, fh):
         return self.model
+
 
 model = DummyModel(seq_len=5, pred_len=3)
 forecaster = Forecaster(model=model)
