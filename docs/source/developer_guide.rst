@@ -36,6 +36,7 @@ If you're already familiar with scikit-learn, you may still learn something new 
    developer_guide/continuous_integration
    developer_guide/coding_standards
    developer_guide/add_estimators
+   developer_guide/llm_prompts
    developer_guide/add_dataset
    developer_guide/deprecation
    developer_guide/dependencies
