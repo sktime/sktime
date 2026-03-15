@@ -25,6 +25,7 @@ __all__ = [
     "DirRecTimeSeriesRegressionForecaster",
     "DirectReductionForecaster",
     "RecursiveReductionForecaster",
+    "GlobalReductionForecaster",
     "YfromX",
 ]
 
@@ -2703,6 +2704,441 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         }
 
         return [params1, params2, params3, params4, params5, params6]
+
+
+class GlobalReductionForecaster(BaseForecaster, _ReducerMixin):
+    """Unified Direct-Recursive reduction forecaster with optional row normalization.
+
+    Combines Direct and Recursive reduction strategies into a single estimator.
+    The number of direct models is controlled by ``n_direct_forecasters``:
+
+    * ``n_direct_forecasters=None`` or ``n_direct_forecasters=len(fh)`` -
+      one model per fh step (pure Direct; equivalent to
+      ``DirectReductionForecaster`` with ``X_treatment="shifted"``).
+    * ``n_direct_forecasters=1`` - one step-ahead model applied recursively
+      (pure Recursive; equivalent to ``RecursiveReductionForecaster``).
+    * Intermediate values create a DirRec (Direct-Recursive) hybrid strategy:
+      the first ``n_direct_forecasters`` fh steps are predicted directly
+      (one model each), while remaining steps are predicted recursively
+      using the last fitted direct model.
+
+    Optionally supports row-wise normalization, inspired by Reversible Instance
+    Normalization (RevIN, Kim et al. ICLR 2022), which normalizes each window
+    row by its absolute mean before fitting and inverse-transforms predictions.
+
+    Algorithm details:
+
+    In ``fit``, given endogeneous time series ``y``:
+
+    * Build lag features ``X_tab[t]`` = [y(t), y(t-1), ..., y(t-w+1)]
+      using a ``ReducerTransform`` with ``window_length`` lags.
+    * Optionally apply row-wise normalization: divide each row by
+      ``|mean(X_tab[t])|`` (for ``normalization="mean"``).
+    * Fit ``n_direct_forecasters`` individual ``estimator`` clones,
+      the ``i``-th clone trained to predict ``y(t + fh[i])`` from
+      ``X_tab[t]`` (and its normalized version if normalization is enabled).
+
+    In ``predict``, at cutoff ``c``, via a running-history approach:
+
+    * **Direct phase** (fh steps 1 .. ``n_direct_forecasters``):
+      predict ``y(c + fh[i])`` using ``estimator_i.predict(X[c])``
+      where features come from the lag window ending at ``c``.
+    * **Recursive phase** (all integer steps from ``fh[n_direct-1]+1``
+      to ``max(fh)``):
+      extend the running history with each new prediction, then use
+      the last direct model on the updated window to predict the next step.
+      Only steps present in the requested ``fh`` are included in the output.
+
+    Predictions are inverse-normalized (multiplied by the row-norm factor)
+    after each estimator call.
+
+    Parameters
+    ----------
+    estimator : sklearn regressor, must be compatible with sklearn interface
+        Tabular regression algorithm used in reduction.
+    window_length : int, optional, default=10
+        Number of lagged time steps to use as features.
+    n_direct_forecasters : int or None, optional, default=None
+        Number of direct models to fit.
+
+        * ``None``: one per fh step (pure Direct).
+        * ``1``: one step-ahead model applied recursively (pure Recursive).
+        * ``k`` (1 < k < len(fh)): DirRec hybrid - first k fh steps predicted
+          directly, remainder predicted recursively with the last model.
+
+        If greater than ``len(fh)`` it is silently clamped to ``len(fh)``.
+    normalization : str or None, optional, default=None
+        Row-wise normalization applied to each window row before fitting,
+        inversely applied to predictions.
+
+        * ``None``: no normalization.
+        * ``"mean"``: divide each row by the absolute value of its mean.
+    impute_method : str, None, or sktime transformation, optional
+        Imputation method for missing values in the lagged features.
+        Default is ``"bfill"``.
+        Passed through to the internal ``ReducerTransform``.
+    pooling : str, one of ["local", "global", "panel"], optional, default="local"
+        Level at which data are pooled to fit the supervised model.
+
+        * ``"local"``: one model per lowest hierarchy level (default).
+        * ``"global"``: single model across all hierarchy levels.
+        * ``"panel"``: one model per second-lowest hierarchy level.
+
+    Examples
+    --------
+    Pure Direct reduction (no recursion):
+
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sktime.forecasting.compose import GlobalReductionForecaster
+    >>> forecaster = GlobalReductionForecaster(
+    ...     estimator=LinearRegression(), window_length=3
+    ... )
+
+    Pure Recursive reduction:
+
+    >>> forecaster = GlobalReductionForecaster(
+    ...     estimator=LinearRegression(), window_length=3, n_direct_forecasters=1
+    ... )
+
+    DirRec hybrid with row-wise mean normalization (RevIN-style):
+
+    >>> forecaster = GlobalReductionForecaster(
+    ...     estimator=LinearRegression(),
+    ...     window_length=3,
+    ...     n_direct_forecasters=2,
+    ...     normalization="mean",
+    ... )
+    """
+
+    _tags = {
+        "authors": ["felipeangelimvieira", "fkiraly"],
+        "maintainers": "felipeangelimvieira",
+        "requires-fh-in-fit": True,
+        "capability:exogenous": False,
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "tests:libs": ["sktime.transformations.series.lag"],
+    }
+
+    def __init__(
+        self,
+        estimator,
+        window_length=10,
+        n_direct_forecasters=None,
+        normalization=None,
+        impute_method="bfill",
+        pooling="local",
+    ):
+        self.estimator = estimator
+        self.window_length = window_length
+        self.n_direct_forecasters = n_direct_forecasters
+        self.normalization = normalization
+        self.impute_method = impute_method
+        self.pooling = pooling
+        self._lags = list(range(window_length))
+        super().__init__()
+
+        if pooling not in ("local", "global", "panel"):
+            raise ValueError(
+                "pooling in GlobalReductionForecaster must be one of"
+                ' "local", "global", "panel", '
+                f"but found: {pooling}"
+            )
+
+        if normalization not in (None, "mean"):
+            raise ValueError(
+                "normalization in GlobalReductionForecaster must be None or"
+                f' "mean", but found: {normalization}'
+            )
+
+        if pooling == "local":
+            mtypes = "pd.DataFrame"
+        elif pooling == "global":
+            mtypes = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+        else:  # panel
+            mtypes = ["pd.DataFrame", "pd-multiindex"]
+
+        self.set_tags(**{"X_inner_mtype": mtypes, "y_inner_mtype": mtypes})
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _row_norm_scale(self, X_np):
+        """Return per-row normalization scale (absolute mean).
+
+        Parameters
+        ----------
+        X_np : np.ndarray, shape (n_samples, n_features)
+
+        Returns
+        -------
+        scale : np.ndarray, shape (n_samples,)
+            Factor by which to divide rows.  Zero rows are protected (scale=1).
+        """
+        scale = np.abs(X_np).mean(axis=1)
+        scale = np.where(scale == 0, 1.0, scale)
+        return scale
+
+    def _apply_norm(self, X_np):
+        """Normalize X rows; return (X_normalized, scale)."""
+        if self.normalization == "mean":
+            scale = self._row_norm_scale(X_np)
+            return X_np / scale[:, None], scale
+        return X_np, np.ones(X_np.shape[0])
+
+    # ------------------------------------------------------------------
+    # fit / predict
+    # ------------------------------------------------------------------
+
+    def _fit(self, y, X, fh):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+        X : pd.DataFrame, ignored (exogenous not supported)
+        fh : ForecastingHorizon
+
+        Returns
+        -------
+        self
+        """
+        from sktime.transformations.series.lag import Lag, ReducerTransform
+
+        lags = self._lags
+        fh_rel = fh.to_relative(self.cutoff)
+        y_lags = list(fh_rel)  # positive integers, e.g. [1, 2, 3]
+        y_lags_neg = [-h for h in y_lags]  # e.g. [-1, -2, -3]
+
+        # Determine how many direct models to fit.
+        n_direct = self.n_direct_forecasters
+        if n_direct is None:
+            n_direct = len(fh)
+        n_direct = min(n_direct, len(fh))
+        self.n_direct_ = n_direct
+        # Store fh info needed later for recursive prediction.
+        self._fh_rel_fit = y_lags
+
+        # Single ReducerTransform - creates lag features [y(t), y(t-1), ...]
+        lagger = ReducerTransform(lags=lags, impute_method=self.impute_method)
+        Xtt = lagger.fit_transform(X=y)
+        self.lagger_ = lagger
+
+        self.estimators_ = []
+
+        for i in range(n_direct):
+            lag_neg = y_lags_neg[i]  # negative lag for the target shift
+
+            # Build single-step target y(t + fh[i])
+            t_lag = Lag(lags=lag_neg, index_out="original", keep_column_names=True)
+            yt = t_lag.fit_transform(X=y)
+
+            Xtt_notna = _get_notna_idx(Xtt)
+            yt_notna = _get_notna_idx(yt)
+            notna_idx = Xtt_notna.intersection(yt_notna)
+
+            if len(notna_idx) == 0:
+                # Fallback: store training mean as a dummy predictor.
+                self.estimators_.append(y.mean())
+                continue
+
+            X_train = prep_skl_df(Xtt.loc[notna_idx]).to_numpy()
+            y_train = prep_skl_df(yt.loc[notna_idx]).to_numpy()
+
+            X_norm, scale = self._apply_norm(X_train)
+            y_norm = y_train / scale[:, None]
+
+            estimator = clone(self.estimator)
+            # Flatten target to 1-D when univariate (sklearn convention).
+            y_fit = y_norm.ravel() if y_norm.shape[1] == 1 else y_norm
+            estimator.fit(X_norm, y_fit)
+            self.estimators_.append(estimator)
+
+        return self
+
+    def _predict(self, fh=None, X=None):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon or None
+        X : pd.DataFrame, ignored
+
+        Returns
+        -------
+        y_pred : pd.DataFrame
+        """
+        fh_oos = fh.to_out_of_sample(self.cutoff)
+        fh_ins = fh.to_in_sample(self.cutoff)
+
+        results = []
+        if len(fh_ins) > 0:
+            results.append(self._predict_in_sample(fh_ins))
+        if len(fh_oos) > 0:
+            results.append(self._predict_out_of_sample(fh_oos))
+
+        y_pred = pd.concat(results, axis=0)
+        if isinstance(y_pred.index, pd.MultiIndex):
+            y_pred = y_pred.sort_index()
+        return y_pred
+
+    def _predict_single_row(self, Xtt_np, estimator, y_cols):
+        """Apply estimator to one feature row; return (n_rows, n_cols) array."""
+        if isinstance(estimator, pd.Series):
+            return np.array(estimator.values).reshape(1, len(y_cols))
+        y_pred = estimator.predict(Xtt_np)
+        if y_pred.ndim == 1:
+            y_pred = y_pred.reshape(Xtt_np.shape[0], len(y_cols))
+        return y_pred
+
+    def _predict_out_of_sample(self, fh):
+        """Predict out-of-sample using direct + recursive DirRec logic."""
+        from sktime.transformations.series.lag import Lag as _Lag
+
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_cols = self._y.columns
+        n_direct = self.n_direct_
+
+        fh_rel = fh.to_relative(self.cutoff)
+        fh_abs = fh.to_absolute(self.cutoff)
+        y_lags = list(fh_rel)  # requested positive steps, e.g. [1, 2, 5]
+
+        # Running history: grows with each new prediction.
+        y_running = self._y.copy()
+        y_pred_dict = {}  # absolute index value → pd.DataFrame row
+
+        # ----------------------------------------------------------------
+        # Direct phase: first n_direct fh steps, one model each.
+        # ----------------------------------------------------------------
+        for i in range(min(n_direct, len(y_lags))):
+            lag = y_lags[i]  # positive fh step, e.g. 1
+            predict_idx = list(fh_abs)[i]
+
+            Xt = self.lagger_.transform(X=y_running)
+            lag_plus = _Lag(lag, index_out="extend", keep_column_names=True)
+            Xtt = lag_plus.fit_transform(Xt)
+            Xtt_row = slice_at_ix(Xtt, predict_idx)
+            Xtt_np = prep_skl_df(Xtt_row).to_numpy()
+
+            Xtt_norm, scale = self._apply_norm(Xtt_np)
+            y_pred_np = self._predict_single_row(Xtt_norm, self.estimators_[i], y_cols)
+            y_pred_np = y_pred_np * scale[:, None]
+
+            pred_idx = self._get_expected_pred_idx(fh=[predict_idx])
+            pred_row = pd.DataFrame(y_pred_np, columns=y_cols, index=pred_idx)
+            y_pred_dict[predict_idx] = pred_row
+            y_running = y_running.combine_first(pred_row)
+
+        # ----------------------------------------------------------------
+        # Recursive phase: any fh steps beyond n_direct.
+        # We step one-by-one from fh[n_direct-1]+1 up to max(fh),
+        # using the last direct model at every step.
+        # ----------------------------------------------------------------
+        if n_direct < len(y_lags):
+            last_direct_step = y_lags[n_direct - 1]  # e.g. fh[n_direct-1]
+            max_fh_step = y_lags[-1]  # furthest requested step
+            last_estimator = self.estimators_[n_direct - 1]
+            requested_set = set(y_lags)  # only store steps we actually need
+
+            for h in range(last_direct_step + 1, max_fh_step + 1):
+                # Build the absolute prediction index for this step.
+                fh_h = ForecastingHorizon([h], is_relative=True, freq=self._cutoff)
+                predict_idx_h = fh_h.to_absolute_index(self.cutoff)[0]
+
+                Xt = self.lagger_.transform(X=y_running)
+                lag_plus = _Lag(h, index_out="extend", keep_column_names=True)
+                Xtt = lag_plus.fit_transform(Xt)
+                Xtt_row = slice_at_ix(Xtt, predict_idx_h)
+                Xtt_np = prep_skl_df(Xtt_row).to_numpy()
+
+                Xtt_norm, scale = self._apply_norm(Xtt_np)
+                y_pred_np = self._predict_single_row(Xtt_norm, last_estimator, y_cols)
+                y_pred_np = y_pred_np * scale[:, None]
+
+                pred_idx_h = self._get_expected_pred_idx(fh=[predict_idx_h])
+                pred_row = pd.DataFrame(y_pred_np, columns=y_cols, index=pred_idx_h)
+                # Always update running history (needed for window at next step).
+                y_running = y_running.combine_first(pred_row)
+
+                if h in requested_set:
+                    y_pred_dict[predict_idx_h] = pred_row
+
+        # Assemble final output in fh order.
+        y_pred = pd.concat(list(y_pred_dict.values()), axis=0).sort_index()
+        y_pred = y_pred.loc[fh_idx]
+        return y_pred
+
+    def _predict_in_sample(self, fh):
+        """Predict in-sample using the first direct model."""
+        from sktime.transformations.series.lag import Lag as _Lag
+
+        y_cols = self._y.columns
+        estimator = self.estimators_[0]
+
+        fh_rel = fh.to_relative(self.cutoff)
+        fh_abs = fh.to_absolute(self.cutoff)
+        y_lags = list(fh_rel)  # could be negative (in-sample)
+
+        y_pred_list = []
+        for lag, predict_idx in zip(y_lags, fh_abs):
+            Xt = self.lagger_.transform(X=self._y)
+            lag_plus = _Lag(lag, index_out="extend", keep_column_names=True)
+            Xtt = lag_plus.fit_transform(Xt)
+            Xtt_row = slice_at_ix(Xtt, predict_idx)
+            Xtt_np = prep_skl_df(Xtt_row).to_numpy()
+
+            Xtt_norm, scale = self._apply_norm(Xtt_np)
+            y_pred_np = self._predict_single_row(Xtt_norm, estimator, y_cols)
+            y_pred_np = y_pred_np * scale[:, None]
+
+            pred_idx = self._get_expected_pred_idx(fh=[predict_idx])
+            y_pred_list.append(pd.DataFrame(y_pred_np, columns=y_cols, index=pred_idx))
+
+        return pd.concat(y_pred_list, axis=0)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the parameter set to return. If no special set is defined,
+            returns ``"default"`` parameters.
+
+        Returns
+        -------
+        params : list of dict
+            Each dict is a valid set of constructor parameters.
+        """
+        from sklearn.linear_model import LinearRegression
+
+        est = LinearRegression()
+
+        # Pure Direct (n_direct_forecasters=None → one model per fh step).
+        params1 = {
+            "estimator": est,
+            "window_length": 3,
+            "n_direct_forecasters": None,
+            "pooling": "global",
+        }
+        # Pure Recursive (n_direct_forecasters=1).
+        params2 = {
+            "estimator": est,
+            "window_length": 3,
+            "n_direct_forecasters": 1,
+            "pooling": "global",
+        }
+        # DirRec hybrid with row-wise mean normalization.
+        params3 = {
+            "estimator": est,
+            "window_length": 3,
+            "n_direct_forecasters": 2,
+            "normalization": "mean",
+            "pooling": "global",
+        }
+        return [params1, params2, params3]
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
