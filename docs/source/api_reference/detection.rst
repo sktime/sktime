@@ -46,6 +46,17 @@ Change Point Detection
         pelt.PELT
         seeded_binseg.SeededBinarySegmentation
 
+Statistical Process Control (Native)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ewma.EWMA
+
 Naive Baselines
 ^^^^^^^^^^^^^^^
 
