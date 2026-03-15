@@ -56,7 +56,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
     verbose : bool, default = True
         Whether to output extra information.
     random_state : int or None, default = None
-        Seed to ensure reproducibility.
+        Seed for reproducibility.
     """
 
     _tags = {

@@ -5,7 +5,6 @@ __all__ = ["RNNNetworkTorch"]
 
 import numpy as np
 
-# from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _safe_import
 
 # handling soft dependencies for Torch modules
@@ -17,10 +16,13 @@ class RNNNetworkTorch(NNModule):
 
     Parameters
     ----------
-    input_size : int
-        Number of expected features in the input
+    input_size : int or tuple of length 3
+        if int, number of expected features in the input.
+        if tuple, format should be (n_instances, n_dims, series_length)
+        where n_dims is used as feature size.
     num_classes : int
-        Number of classes to predict
+        Number of classes for classification, typically 1 for single-target regression.
+        This parameter controls number of output units.
     hidden_dim : int, default = 6
         Number of features in the hidden state
     n_layers : int, default = 1
@@ -43,15 +45,17 @@ class RNNNetworkTorch(NNModule):
         Adapted from:
         https://www.kaggle.com/code/junkoda/pytorch-lstm-with-tensorflow-like-initialization
     dropout : float, default = 0.0
-        If non-zero, introduces a Dropout layer on the outputs of each RNN layer except
-        the fully connected output layer, with dropout probability equal to dropout.
+        This parameter controls dropout rate for RNN cells.
+        If non-zero, applies dropout to the outputs of each RNN layer except the last.
+        In PyTorch, this is effective only when n_layers > 1; for n_layers == 1,
+        the recurrent dropout argument is ignored (and PyTorch emits a warning).
     fc_dropout : float, default = 0.0
         If non-zero, introduces a Dropout layer on the outputs of the fully
         connected output layer, with dropout probability equal to fc_dropout.
     bidirectional : bool, default = False
         If True, then the RNN is bidirectional.
     random_state   : int, default = 0
-        Seed to ensure reproducibility.
+        Seed to ensure reproducibility
     """
 
     _tags = {
@@ -149,7 +153,7 @@ class RNNNetworkTorch(NNModule):
 
         Returns
         -------
-        out : torch.Tensor of shape (batch_size, hidden_size)
+        out : torch.Tensor of shape (batch_size, num_classes)
             Output tensor containing the hidden states for each sequence.
         """
         if isinstance(X, np.ndarray):
