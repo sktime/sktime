@@ -231,10 +231,9 @@ def test_darts_covariate_routing():
     call_kwargs = mock_darts_model.fit.call_args.kwargs
 
     # use version-safe method to convert TimeSeries back to DataFrame
-    darts_ge_035 = (
-        _check_soft_dependencies("darts>=0.35", severity="none")
-        or _check_soft_dependencies("u8darts>=0.35", severity="none")
-    )
+    darts_ge_035 = _check_soft_dependencies(
+        "darts>=0.35", severity="none"
+    ) or _check_soft_dependencies("u8darts>=0.35", severity="none")
     to_df = "to_dataframe" if darts_ge_035 else "pd_dataframe"
 
     past_cols = getattr(call_kwargs["past_covariates"], to_df)().columns.tolist()
