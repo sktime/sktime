@@ -254,15 +254,6 @@ class FlowStateModel(nn.Module):
            Forecasting. https://arxiv.org/abs/2508.05287
     """
 
-    _tags = {
-        "authors": ["FlyingDragon112"],
-        "maintainers": ["FlyingDragon112"],
-        "fit_is_empty": False,
-        "capability:update": False,
-        "capability:exogenous": False,
-        "python_dependencies": ["torch"],
-    }
-
     def __init__(self, input_dim, hidden_dim, layers, horizon):
         super().__init__()
 
@@ -351,6 +342,10 @@ class GraniteFlowStateForecaster(_pytorch.BaseDeepNetworkPyTorch):
     _tags = {
         "authors": ["FlyingDragon112"],
         "maintainers": ["FlyingDragon112"],
+        "fit_is_empty": False,
+        "capability:update": False,
+        "capability:exogenous": False,
+        "python_dependencies": ["torch"],
     }
 
     def __init__(
