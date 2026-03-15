@@ -260,6 +260,7 @@ class FlowStateModel(nn.Module):
         "fit_is_empty": False,
         "capability:update": False,
         "capability:exogenous": False,
+        "python_dependencies": ["torch"],
     }
 
     def __init__(self, input_dim, hidden_dim, layers, horizon):
