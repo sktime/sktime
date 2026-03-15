@@ -1,7 +1,5 @@
 """Multi Channel Deep Convolutional Neural Classifier (MCDCNN)."""
 
-import warnings
-
 import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
@@ -195,20 +193,6 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         model : torch.nn.Module
             The constructed MCDCNN network with output layer.
         """
-        if len(X.shape) != 3:
-            raise ValueError(
-                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
-                f"but got shape {X.shape}. Please ensure your input data is "
-                "properly formatted."
-            )
-
-        if len(np.unique(y)) == 1:
-            warnings.warn(
-                "The provided data passed to MCDCNNClassifierTorch contains a "
-                "single label. If this is not intentional, please check.",
-                UserWarning,
-            )
-
         self.num_classes = len(np.unique(y))
 
         return MCDCNNNetworkTorch(
