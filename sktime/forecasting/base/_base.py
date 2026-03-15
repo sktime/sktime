@@ -2215,6 +2215,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         # B. no fh is passed
         if fh is None:
+            if self._fh is not None:
+                fh = self._fh
+
             # A. strategy fitted (call of predict or similar)
             if self.is_fitted:
                 # in case C. fh is optional in fit:
@@ -2262,17 +2265,22 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             # - fh is mandatory in fit, i.e., fh in predict must be same if passed
             # - fh already passed, and estimator is fitted
             # - fh that was passed in fit is not the same as seen in predict
-            # note that elif means: optfh == False, and self.is_fitted == True
-            elif self._fh and not np.array_equal(fh, self._fh):
-                # raise error if existing fh and new one don't match
-                raise ValueError(
-                    "A different forecasting horizon `fh` has been "
-                    "provided from "
-                    "the one seen already in `fit`, in this instance of "
-                    f"{self.__class__.__name__}. "
-                    "If you want to change the forecasting "
-                    "horizon, please re-fit the forecaster. " + msg
-                )
+            # Note: we only check the out-of-sample part of the horizon, and only
+            # if the new fh contains out-of-sample points.
+            elif self._fh is not None:
+                fh_oos = fh.to_out_of_sample(self.cutoff)
+                if len(fh_oos) > 0:
+                    self_fh_oos = self._fh.to_out_of_sample(self.cutoff)
+                    if not np.array_equal(fh_oos, self_fh_oos):
+                        # raise error if existing fh and new one don't match
+                        raise ValueError(
+                            "A different forecasting horizon `fh` has been "
+                            "provided from "
+                            "the one seen already in `fit`, in this instance of "
+                            f"{self.__class__.__name__}. "
+                            "If you want to change the forecasting "
+                            "horizon, please re-fit the forecaster. " + msg
+                        )
             # if existing one and new match, ignore new one
         in_sample_pred = (
             self.get_tag("capability:insample")
@@ -2281,8 +2289,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         )
         if (
             not in_sample_pred
-            and self._fh is not None
-            and not self._fh.is_all_out_of_sample(self._cutoff)
+            and fh is not None
+            and not fh.is_all_out_of_sample(self._cutoff)
         ):
             msg = (
                 f"{self.__class__.__name__} "
@@ -2292,7 +2300,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             )
             raise NotImplementedError(msg)
 
-        return self._fh
+        return fh
 
     def _vectorize(self, methodname, **kwargs):
         """Vectorized/iterated loop over method of BaseForecaster.
