@@ -15,6 +15,7 @@ import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.utils.validation import is_int
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
@@ -30,7 +31,10 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         for example: {"lstm_layers": 3, "hidden_continuous_size": 10} for TFT model
     dataset_params : Dict[str, Any] (default=None)
         parameters to initialize `TimeSeriesDataSet` [1]_ from `pandas.DataFrame`
-        max_prediction_length will be overwrite according to fh
+        By default, `max_prediction_length` is inferred from `fh` passed to ``fit``.
+        If `max_prediction_length` is explicitly passed here (or
+        `prediction_length` is passed via `model_params`), it is used instead and
+        must be at least as large as the maximum step in `fh`.
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
         will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : Dict[str, Any] (default=None)
@@ -173,6 +177,64 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         random_log_dir = os.getcwd() + "/lightning_logs/" + str(abs(random_num))
         return random_log_dir
 
+    @staticmethod
+    def _coerce_positive_int(value: Any, param_name: str) -> int:
+        """Cast input to positive integer."""
+        if not is_int(value):
+            raise TypeError(
+                f"`{param_name}` must be a positive integer, but found {value!r}."
+            )
+
+        value_int = int(value)
+
+        if value_int < 1:
+            raise ValueError(
+                f"`{param_name}` must be a positive integer, but found {value!r}."
+            )
+
+        return value_int
+
+    def _resolve_prediction_length(self, fh: ForecastingHorizon) -> int:
+        """Resolve prediction length used to build pytorch-forecasting datasets."""
+        fh_max_prediction_length = self._coerce_positive_int(
+            np.max(fh.to_relative(self.cutoff)), "maximum step in `fh`"
+        )
+
+        if "max_prediction_length" in self._dataset_params:
+            model_prediction_length = self._coerce_positive_int(
+                self._dataset_params["max_prediction_length"],
+                "dataset_params['max_prediction_length']",
+            )
+        elif "prediction_length" in self._model_params:
+            model_prediction_length = self._coerce_positive_int(
+                self._model_params["prediction_length"],
+                "model_params['prediction_length']",
+            )
+        else:
+            model_prediction_length = fh_max_prediction_length
+
+        if fh_max_prediction_length > model_prediction_length:
+            raise ValueError(
+                "The maximum step in `fh` must be less than or equal to the model "
+                "prediction length, but found "
+                f"{fh_max_prediction_length} > {model_prediction_length}. "
+                "Set a larger `model_params['prediction_length']` or "
+                "`dataset_params['max_prediction_length']`."
+            )
+
+        return model_prediction_length
+
+    def _sync_context_length_with_dataset_params(self):
+        """Map model context_length to dataset max_encoder_length if not set."""
+        if "max_encoder_length" in self._dataset_params:
+            return
+
+        if "context_length" in self._model_params:
+            self._dataset_params["max_encoder_length"] = self._coerce_positive_int(
+                self._model_params["context_length"],
+                "model_params['context_length']",
+            )
+
     def _fit(
         self: "_PytorchForecastingAdapter",
         y: pd.DataFrame,
@@ -201,13 +263,15 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         self : _PytorchForecastingAdapter
             reference to self
         """
-        self._max_prediction_length = np.max(fh.to_relative(self.cutoff))
         if not fh.is_all_out_of_sample(self.cutoff):
             raise NotImplementedError(
                 f"No in sample predict support, but found fh with in sample index: {fh}"
             )
+        self._sync_context_length_with_dataset_params()
+        self._max_prediction_length = self._resolve_prediction_length(fh)
         # check if dummy X is needed
-        # only the TFT model need X to fit, probably a bug in pytorch-forecasting
+        # only the TFT model needs X to fit, probably due to a bug in
+        # pytorch-forecasting
         X = self._dummy_X(X, y)
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
