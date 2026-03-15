@@ -19,9 +19,11 @@ __all__ = [
     "GRUClassifier",
     "GRUFCNNClassifier",
     "ConvTimeNetClassifier",
+    "CNNClassifierTorch",
 ]
 
 from sktime.classification.deep_learning.cnn import CNNClassifier
+from sktime.classification.deep_learning.cnn_torch import CNNClassifierTorch
 from sktime.classification.deep_learning.cntc import CNTCClassifier
 from sktime.classification.deep_learning.convtimenet import ConvTimeNetClassifier
 from sktime.classification.deep_learning.fcn import FCNClassifier
