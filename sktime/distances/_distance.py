@@ -2399,7 +2399,8 @@ _METRIC_INFOS = [
 _METRICS = {info.canonical_name: info for info in _METRIC_INFOS}
 _METRIC_ALIAS = {alias: info for info in _METRIC_INFOS for alias in info.aka}
 _METRIC_CALLABLES = {info.canonical_name: info.dist_func for info in _METRIC_INFOS}
-_METRICS_NAMES = list(_METRICS.keys())
+DISTANCES_SUPPORTED = list(_METRICS.keys())
+_METRICS_NAMES = DISTANCES_SUPPORTED
 
 ALL_DISTANCES = (
     ddtw_distance,
