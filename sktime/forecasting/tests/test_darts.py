@@ -191,3 +191,57 @@ def test_darts_regression_with_weather_dataset(model):
     assert isinstance(pred_sktime, pd.Series)
 
     np.testing.assert_allclose(pred_sktime.to_numpy(), darts_pred.to_numpy(), rtol=1e-4)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DartsLinearRegressionModel),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_darts_covariate_routing():
+    """Regression test.
+
+    Verifies that past and future covariates are routed to the correct
+    arguments in the underlying Darts model's fit and predict calls.
+    """
+    from unittest.mock import MagicMock, patch
+
+    n = 30
+    index = pd.date_range("2020-01-01", periods=n, freq="ME")
+    y = pd.Series(np.random.randn(n), index=index, name="target")
+    X = pd.DataFrame(
+        {
+            "past_feature": np.random.randn(n),
+            "future_feature": np.random.randn(n),
+        },
+        index=index,
+    )
+
+    model = DartsLinearRegressionModel(
+        lags=2,
+        lags_past_covariates=2,
+        lags_future_covariates=(1, 1),
+        past_covariates=["past_feature"],
+    )
+
+    # intercept what actually reaches Darts' fit
+    mock_darts_model = MagicMock()
+    with patch.object(model, "_create_forecaster", return_value=mock_darts_model):
+        model.fit(y, X=X)
+
+    call_kwargs = mock_darts_model.fit.call_args.kwargs
+
+    # use version-safe method to convert TimeSeries back to DataFrame
+    darts_ge_035 = _check_soft_dependencies(
+        "darts>=0.35", severity="none"
+    ) or _check_soft_dependencies("u8darts>=0.35", severity="none")
+    to_df = "to_dataframe" if darts_ge_035 else "pd_dataframe"
+
+    past_cols = getattr(call_kwargs["past_covariates"], to_df)().columns.tolist()
+    future_cols = getattr(call_kwargs["future_covariates"], to_df)().columns.tolist()
+
+    assert past_cols == ["past_feature"], (
+        f"past_feature must reach Darts' past_covariates, got: {past_cols}"
+    )
+    assert future_cols == ["future_feature"], (
+        f"future_feature must reach Darts' future_covariates, got: {future_cols}"
+    )
