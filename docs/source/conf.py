@@ -10,6 +10,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 
 import sktime
+from sktime.registry import _tags as tag_module
 
 # -- Path setup --------------------------------------------------------------
 
@@ -604,6 +605,56 @@ def _process_in_page_toc(app, exception):
             f.write(str(soup))
 
 
+def _get_user_facing_tags():
+    try:
+        user_facing = set()
+        for attr in dir(tag_module):
+            tag_cls = getattr(tag_module, attr)
+            if hasattr(tag_cls, "get_class_tag"):
+                tag_name = tag_cls.get_class_tag("tag_name", None)
+                is_user_facing = tag_cls.get_class_tag("user_facing", False)
+                if tag_name and is_user_facing:
+                    user_facing.add(tag_name)
+        return user_facing
+    except Exception:
+        return set()
+
+
+_USER_FACING_TAGS = _get_user_facing_tags()
+
+
+def _add_tags_table(app, what, name, obj, options, lines):
+    """Add tags table to estimator docstrings durind autodoc processing."""
+    if what != "class" or not (hasattr(obj, "get_class_tags")):
+        return
+    try:
+        tags = obj.get_class_tags()
+    except Exception:
+        return
+
+    tags = {k: v for k, v in tags.items() if k in _USER_FACING_TAGS}
+
+    if not tags:
+        return
+
+    tag_ref_url = "https://www.sktime.net/en/latest/api_reference/tags.html"
+
+    lines += [
+        "",
+        ".. rubric:: Tags",
+        "",
+        ".. list-table::",
+        "   :header-rows: 1",
+        "",
+        "   * - Tag",
+        "     - Value",
+    ]
+
+    for tag, value in sorted(tags.items()):
+        lines += [f"   * - `{tag} <{tag_ref_url}>`_", f"     - ``{value}``"]
+    lines.append("")
+
+
 def setup(app):
     """Set up sphinx builder.
 
@@ -620,6 +671,7 @@ def setup(app):
 
     app.connect("builder-inited", _make_estimator_overview)
     app.connect("build-finished", _process_in_page_toc)
+    app.connect("autodoc-process-docstring", _add_tags_table)
 
 
 # -- Extension configuration -------------------------------------------------
