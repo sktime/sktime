@@ -94,7 +94,12 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         broadcasting: bool = False,
     ) -> None:
         self.model_params = model_params
-        self.dataset_params = dataset_params
+        # deepcopy dataset_params to prevent mutation of user-provided objects
+        # like GroupNormalizer, whose constructor modifies its own arguments
+        # see https://github.com/sktime/sktime/issues/9366
+        self.dataset_params = (
+            deepcopy(dataset_params) if dataset_params else dataset_params
+        )
         self.trainer_params = trainer_params
         self.train_to_dataloader_params = train_to_dataloader_params
         self.validation_to_dataloader_params = validation_to_dataloader_params
@@ -460,6 +465,11 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         max_prediction_length,
     ):
         from pytorch_forecasting.data import TimeSeriesDataSet
+
+        # Deep copy dataset_params to prevent mutation of user-provided objects
+        # like GroupNormalizer, whose constructor modifies its own arguments
+        # see https://github.com/sktime/sktime/issues/9366
+        dataset_params = deepcopy(dataset_params)
 
         # X, y must have same index or X is None
         # assert X is None or (X.index == y.index).all()
