@@ -623,6 +623,14 @@ Pre-trained and foundation models
 
     PatchTSTForecaster
 
+.. currentmodule:: sktime.forecasting.tabpfn_ts
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TabPFNTSForecaster
+
 .. currentmodule:: sktime.forecasting.time_llm
 
 .. autosummary::
