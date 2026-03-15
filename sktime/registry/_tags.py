@@ -3579,6 +3579,12 @@ ESTIMATOR_TAG_REGISTER = [
         "can the classifier set n_jobs to use multiple threads?",
     ),
     (
+        "capability:update",
+        "transformer",
+        "bool",
+        "can the transformer be updated with new data?",
+    ),
+    (
         "classifier_type",
         "classifier",
         (
