@@ -135,7 +135,9 @@ class RNNNetworkTorch(NNModule):
         )
         # to handle the case when num_classes = 1 for regression
         if self.activation:
-            self._activation = self._instantiate_activation()
+            from sktime.networks.utils import instantiate_activation
+
+            self._activation = instantiate_activation(self.activation)
         if self.init_weights:
             self.apply(self._init_weights)
 
@@ -197,40 +199,6 @@ class RNNNetworkTorch(NNModule):
                 nnInitOrthogonal_(param.data)
             elif "bias" in name:
                 param.data.fill_(0)
-
-    def _instantiate_activation(self):
-        """Instantiate the activation function to be applied on the output layer.
-
-        Returns
-        -------
-        activation_function : torch.nn.Module
-            The activation function to be applied on the output layer.
-        """
-        # support for more activation functions will be added
-        # based on requirements of SimpleRNNRegressorTorch once it is implemented
-        # currently only used in SimpleRNNClassifierTorch
-        if isinstance(self.activation, NNModule):
-            return self.activation
-        elif isinstance(self.activation, str):
-            if self.activation.lower() == "sigmoid":
-                return _safe_import("torch.nn.Sigmoid")()
-            elif self.activation.lower() == "softmax":
-                return _safe_import("torch.nn.Softmax")(dim=1)
-            elif self.activation.lower() == "logsoftmax":
-                return _safe_import("torch.nn.LogSoftmax")(dim=1)
-            elif self.activation.lower() == "logsigmoid":
-                return _safe_import("torch.nn.LogSigmoid")()
-            else:
-                raise ValueError(
-                    "If `activation` is not None, it must be one of "
-                    "'sigmoid', 'logsigmoid', 'softmax' or 'logsoftmax'. "
-                    f"Found {self.activation}"
-                )
-        else:
-            raise TypeError(
-                "`activation` should either be of type str or torch.nn.Module. "
-                f"But found the type to be: {type(self.activation)}"
-            )
 
     def get_sequence_vector_from_hidden(self, h_n):
         """

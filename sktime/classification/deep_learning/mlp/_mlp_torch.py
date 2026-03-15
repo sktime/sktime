@@ -113,6 +113,26 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         "capability:random_state": True,
     }
 
+    # Allowed values used by the base class activation validation hook.
+    _supported_activation = (
+        "sigmoid",
+        "softmax",
+        "logsoftmax",
+        "logsigmoid",
+    )
+    _supported_activation_hidden = (
+        "relu",
+        "leakyrelu",
+        "elu",
+        "prelu",
+        "gelu",
+        "selu",
+        "rrelu",
+        "celu",
+        "tanh",
+        "hardtanh",
+    )
+
     def __init__(
         self: "MLPClassifierTorch",
         # model architecture parameters

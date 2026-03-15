@@ -18,6 +18,17 @@ ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
 class BaseDeepRegressorTorch(BaseRegressor):
     """Abstract base class for the PyTorch neural network regressors.
 
+    Notes
+    -----
+        Subclasses can opt into estimator-level activation validation by defining:
+
+        - ``_validate_activation_vars``: iterable of attribute names to validate
+        - ``_supported_<attribute_name>``: iterable of allowed string values for each
+            attribute listed in ``_validate_activation_vars``
+
+        This allows future estimators to validate any number of activation-related
+        parameters without adding new base-class arguments.
+
     Parameters
     ----------
     num_epochs : int, default = 16
@@ -72,6 +83,12 @@ class BaseDeepRegressorTorch(BaseRegressor):
         "tests:vm": True,
     }
 
+    # Subclasses may extend this list with additional activation-related attribute
+    # names. For each name ``foo`` in this list, the base class will look for the
+    # estimator attribute ``foo`` and an allowed-values attribute named
+    # ``_supported_foo``.
+    _validate_activation_vars = ["activation", "activation_hidden"]
+
     def __init__(
         self: "BaseDeepRegressorTorch",
         num_epochs: int = 16,
@@ -104,6 +121,8 @@ class BaseDeepRegressorTorch(BaseRegressor):
         if self.random_state is not None:
             torchManual_seed = _safe_import("torch.manual_seed")
             torchManual_seed(self.random_state)
+
+        self._validate_supported_activations()
 
         # optimizers, criterions, callbacks will be instantiated in
         # _instantiate_optimizer, _instantiate_criterion & _instantiate_callbacks
@@ -150,6 +169,43 @@ class BaseDeepRegressorTorch(BaseRegressor):
         # print loss for the epoch, if verbose is True
         if self.verbose:
             print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
+
+    def _validate_supported_activations(self):
+        """Validate subclass-declared activation attributes against supported values.
+
+        Attribute names listed in ``self._validate_activation_vars`` are checked one by
+        one. For each attribute name ``var``, if the estimator also defines a
+        ``self._supported_<var>`` attribute, string values are validated against that
+        allowed set.
+        """
+        NNModule = _safe_import("torch.nn.modules.module.Module")
+
+        def _validate_one(name, value, supported):
+            if value is None:
+                return
+            if isinstance(value, str):
+                if supported is None:
+                    return
+                supported_set = {option.lower() for option in supported}
+                if value.lower() not in supported_set:
+                    raise ValueError(
+                        f"`{name}` must be one of {sorted(supported_set)}. "
+                        f"Found {value}"
+                    )
+                return
+            if isinstance(value, NNModule):
+                return
+            raise TypeError(
+                f"`{name}` can either be None, a str or an instance of a valid "
+                f"PyTorch activation function. But got {type(value)} instead."
+            )
+
+        if not self._validate_activation_vars:
+            return
+        for var in self._validate_activation_vars:
+            value = getattr(self, var, None)
+            supported = getattr(self, f"_supported_{var}", None)
+            _validate_one(var, value, supported)
 
     def _instantiate_schedulers(self):
         """Instantiate the schedulers to be used during training.

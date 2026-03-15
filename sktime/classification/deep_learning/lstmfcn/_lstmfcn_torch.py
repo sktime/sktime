@@ -102,6 +102,26 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
         "capability:random_state": True,
     }
 
+    # Allowed values used by the base class activation validation hook.
+    _supported_activation = (
+        "relu",
+        "tanh",
+        "sigmoid",
+        "leaky_relu",
+        "elu",
+        "selu",
+        "gelu",
+    )
+    _supported_activation_hidden = (
+        "relu",
+        "tanh",
+        "sigmoid",
+        "leaky_relu",
+        "elu",
+        "selu",
+        "gelu",
+    )
+
     def __init__(
         self: "LSTMFCNClassifierTorch",
         # model specific

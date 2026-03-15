@@ -143,9 +143,11 @@ class LSTMFCNNetworkTorch(NNModule):
         nnAdaptiveAvgPool1d = _safe_import("torch.nn.AdaptiveAvgPool1d")
         self.global_avg_pool = nnAdaptiveAvgPool1d(1)
 
-        self._activation_hidden = self._instantiate_activation(self.activation_hidden)
+        from sktime.networks.utils import instantiate_activation
+
+        self._activation_hidden = instantiate_activation(self.activation_hidden)
         if self.activation is not None:
-            self._activation = self._instantiate_activation(self.activation)
+            self._activation = instantiate_activation(self.activation)
 
         # Output layer (concatenated LSTM + CNN outputs)
         # LSTM outputs lstm_size, CNN outputs filter_sizes[-1]
@@ -239,46 +241,3 @@ class LSTMFCNNetworkTorch(NNModule):
 
             if module.bias is not None:
                 module.bias.data.zero_()
-
-    def _instantiate_activation(self, activation):
-        """Instantiate the activation function for CNN layers.
-
-        Parameters
-        ----------
-        activation : str
-            Activation function to instantiate.
-
-        Returns
-        -------
-        activation_function : torch.nn.Module
-            The activation function to be applied in the CNN arm.
-        """
-        if isinstance(activation, NNModule):
-            return activation
-        elif isinstance(activation, str):
-            act = activation.lower()
-            if act == "relu":
-                return _safe_import("torch.nn.ReLU")()
-            elif act == "tanh":
-                return _safe_import("torch.nn.Tanh")()
-            elif act == "sigmoid":
-                return _safe_import("torch.nn.Sigmoid")()
-            elif act == "leaky_relu":
-                return _safe_import("torch.nn.LeakyReLU")()
-            elif act == "elu":
-                return _safe_import("torch.nn.ELU")()
-            elif act == "selu":
-                return _safe_import("torch.nn.SELU")()
-            elif act == "gelu":
-                return _safe_import("torch.nn.GELU")()
-            else:
-                raise ValueError(
-                    "If `activation` is a string, it must be one of "
-                    "'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', or 'gelu'."
-                    f"Found {activation}"
-                )
-        else:
-            raise TypeError(
-                "`activation` should either be of type str or torch.nn.Module. "
-                f"But found the type to be: {type(activation)}"
-            )

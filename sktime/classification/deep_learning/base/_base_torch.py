@@ -76,6 +76,16 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         "tests:vm": True,
     }
 
+    # _validate_activation_vars is an iterable of attribute names of activations
+    # to validate Subclasses can control estimator-level activation validation by
+    # overriding this variable. This class expects `_supported_<attribute_name>`
+    # as an iterable of allowed string values for each attribute listed in
+    # `_validate_activation_vars`
+    # For example, if a subclass sets `_validate_activation_vars = ("activation_foo",)`,
+    # then the base class will look for `_supported_activation_foo` attribute and will
+    # ensure that `activation_foo` attribute is one of its supported values.
+    _validate_activation_vars = ("activation", "activation_hidden")
+
     def __init__(
         self: "BaseDeepClassifierPytorch",
         num_epochs: int = 16,
@@ -115,6 +125,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
         # validate activation function w.r.t. criterion specified
         self._validate_activation_criterion()
+
+        self._validate_supported_activations()
         # post this function call,
         # self._validated_criterion and self._validated_activation are used
         # and self.criterion and self.activation are ignored
@@ -167,6 +179,52 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         if self.verbose:
             print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
 
+    def _validate_supported_activations(self):
+        """Validate subclass-declared activation attributes against supported values.
+
+        This method implements a generic validation hook for subclasses.
+        Attribute names listed in ``self._validate_activation_vars`` are checked one by
+        one. For each attribute name ``var``, if the estimator also defines a
+        ``self._supported_<var>`` attribute, string values are validated against that
+        allowed set.
+
+        Notes
+        -----
+        For ``activation``, validation is performed against
+        ``self._validated_activation`` when available, since output-layer activation
+        may be normalized by ``_validate_activation_criterion()``.
+        """
+        NNModule = _safe_import("torch.nn.modules.module.Module")
+
+        def _validate_one(name, value, supported):
+            if value is None:
+                return
+            if isinstance(value, str):
+                if supported is None:
+                    return
+                supported_set = {option.lower() for option in supported}
+                if value.lower() not in supported_set:
+                    raise ValueError(
+                        f"`{name}` must be one of {sorted(supported_set)}. "
+                        f"Found {value}"
+                    )
+                return
+            if isinstance(value, NNModule):
+                return
+            raise TypeError(
+                f"`{name}` can either be None, a str or an instance of a valid "
+                f"PyTorch activation function. But got {type(value)} instead."
+            )
+
+        if not self._validate_activation_vars:
+            return
+        for var in self._validate_activation_vars:
+            value = getattr(self, var, None)
+            if var == "activation":
+                value = getattr(self, "_validated_activation", None)
+            supported = getattr(self, f"_supported_{var}", None)
+            _validate_one(var, value, supported)
+
     def _validate_activation_criterion(self):
         """Validate activation function in the output layer w.r.t. criterion specified.
 
@@ -193,12 +251,12 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
         Sets
         ------
-        self.validated_criterion : str or Callable
+        self._validated_criterion : str or Callable
             The validated criterion to be used in training the neural network.
             This will either be the same as self.criterion, or "crossentropyloss"
             if a functionally equivalent combination of criterion and activation
             function is detected.
-        self.validated_activation : str or Callable or None
+        self._validated_activation : str or Callable or None
             The validated activation function to be used in the output layer.
             This will either be the same as self.activation, or None if a
             functionally equivalent combination is detected.
@@ -602,7 +660,13 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                 y_pred.append(self.network(**inputs).detach())
         y_pred = cat(y_pred, dim=0)
         # (batch_size, num_outputs)
-        y_pred = Fsoftmax(y_pred, dim=-1)
+
+        # if we had self._validated_activation, then it has already been applied
+        # in forward pass of the network. If not, we apply softmax here to convert
+        # logits to probabilities.
+        if self._validated_activation is None:
+            y_pred = Fsoftmax(y_pred, dim=-1)
+
         y_pred = y_pred.numpy()
         return y_pred
 

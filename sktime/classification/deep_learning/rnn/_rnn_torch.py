@@ -100,6 +100,15 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         "capability:random_state": True,
     }
 
+    # Allowed values used by the base class activation validation hook.
+    _supported_activation = (
+        "sigmoid",
+        "softmax",
+        "logsoftmax",
+        "logsigmoid",
+    )
+    _supported_activation_hidden = ("tanh", "relu")
+
     def __init__(
         self: "SimpleRNNClassifierTorch",
         # model specific
