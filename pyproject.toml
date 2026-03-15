@@ -355,6 +355,7 @@ requires = [
 [tool.setuptools.package-data]
 sktime = [
   "utils/_estimator_html_repr.css",
+  "utils/_estimator_html_repr.js",
   "*.csv",
   "*.csv.gz",
   "*.arff",
