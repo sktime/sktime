@@ -242,6 +242,10 @@ tests = [
   "pytest-timeout>=2.1,<2.5",
   "pytest-xdist>=3.3,<3.9",
 ]
+# memory profiling for CI/CD diagnostics - install via pip install sktime[memory_profile]
+memory_profile = [
+  "pytest-memray>=1.5.0,<2.0; sys_platform == 'linux'",
+]
 
 # CI related soft dependency sets - not for users of sktime, only for developers
 # these are for special uses and may be changed or removed at any time
