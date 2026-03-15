@@ -177,7 +177,11 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         self.patience = patience
         self.delta = delta
         self.val_split = val_split
-        super().__init__(num_epochs, batch_size, lr=lr)
+        super().__init__(
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            lr=lr,
+        )
 
     def _fit(self, y, fh, X=None):
         """Fit forecaster to training data.

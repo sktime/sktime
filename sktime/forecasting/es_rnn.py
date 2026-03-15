@@ -158,7 +158,17 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         custom_dataset_train=None,
         custom_dataset_pred=None,
     ) -> None:
-        super().__init__()
+        super().__init__(
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            criterion=criterion,
+            criterion_kwargs=criterion_kwargs,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            lr=lr,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
+        )
         self.hidden_size = hidden_size
         self.num_layer = num_layer
         self.seasonality_type = seasonality_type
@@ -246,8 +256,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
                 self.custom_dataset_pred.build_dataset
             ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
+                self.custom_dataset_pred.build_dataset(y)
+                dataset = self.custom_dataset_pred
             else:
                 raise NotImplementedError(
                     "Custom Dataset `build_dataset` method is not available. Please"
