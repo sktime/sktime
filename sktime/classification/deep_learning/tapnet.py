@@ -22,12 +22,10 @@ class TapNetClassifier(BaseDeepClassifier):
         sets the kernel size argument for each convolutional block.
         Controls number of convolutional filters
         and number of neurons in attention dense layers.
-    kernel_sizes : array of int, default = (8, 5, 3)
+    kernel_size : array of int, default = (8, 5, 3)
         controls the size of the convolutional kernels
     layers : array of int, default = (500, 300)
         size of dense layers
-    reduction : int, default = 16
-        divides the number of dense neurons in the first layer of the attention block.
     n_epochs : int, default = 2000
         number of epochs to train the model
     batch_size : int, default = 16
@@ -40,10 +38,10 @@ class TapNetClassifier(BaseDeepClassifier):
         dropout rate for the LSTM layer, in the range [0, 1)
     dilation : int, default = 1
         dilation value
-    activation : str, default = "sigmoid"
+    activation : str or callable, default = "sigmoid"
         activation function for the last output layer
         List of available activation functions: https://keras.io/api/layers/activations/
-    activation_hidden : str, default = "leaky_relu"
+    activation_hidden : str or callable, default = "leaky_relu"
         activation function for the hidden layers
         List of available activation functions: https://keras.io/api/layers/activations/
     loss : str, default = "binary_crossentropy"
@@ -54,6 +52,10 @@ class TapNetClassifier(BaseDeepClassifier):
         whether to use bias in the output dense layer
     use_rp : bool, default = True
         whether to use random projections
+    rp_group : int, default = 3
+        number of random permutation groups
+    rp_alpha : float, default = 2.0
+        scale factor used to compute the random permutation group size
     use_att : bool, default = True
         whether to use self attention
     use_lstm : bool, default = True
@@ -64,6 +66,8 @@ class TapNetClassifier(BaseDeepClassifier):
         whether to output extra information
     random_state : int or None, default = None
         seed for random
+    fc_dropout : float, default = 0.0
+        dropout rate before the output layer
 
     Attributes
     ----------
@@ -118,7 +122,8 @@ class TapNetClassifier(BaseDeepClassifier):
         dilation=1,
         layers=(500, 300),
         use_rp=True,
-        rp_params=(-1, 3),
+        rp_group=3,
+        rp_alpha=2.0,
         activation="sigmoid",
         activation_hidden="leaky_relu",
         use_bias=True,
@@ -133,6 +138,7 @@ class TapNetClassifier(BaseDeepClassifier):
         callbacks=None,
         verbose=False,
         lstm_dropout=0.8,
+        fc_dropout=0.0,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -140,7 +146,6 @@ class TapNetClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self.kernel_size = kernel_size
         self.layers = layers
-        self.rp_params = rp_params
         self.filter_sizes = filter_sizes
         self.activation = activation
         self.activation_hidden = activation_hidden
@@ -161,27 +166,30 @@ class TapNetClassifier(BaseDeepClassifier):
         self.use_lstm = use_lstm
         self.use_cnn = use_cnn
 
-        # parameters for random projection
         self.use_rp = use_rp
-        self.rp_params = rp_params
+        self.rp_group = rp_group
+        self.rp_alpha = rp_alpha
+        self.fc_dropout = fc_dropout
 
         super().__init__()
 
         self._network = TapNetNetwork(
-            activation=self.activation_hidden,
+            activation_hidden=self.activation_hidden,
             dropout=self.dropout,
             filter_sizes=self.filter_sizes,
             kernel_size=self.kernel_size,
             dilation=self.dilation,
             layers=self.layers,
             use_rp=self.use_rp,
-            rp_params=self.rp_params,
+            rp_group=self.rp_group,
+            rp_alpha=self.rp_alpha,
             use_att=self.use_att,
             use_lstm=self.use_lstm,
             use_cnn=self.use_cnn,
             random_state=self.random_state,
             padding=self.padding,
             lstm_dropout=self.lstm_dropout,
+            fc_dropout=self.fc_dropout,
         )
 
     def build_model(self, input_shape, n_classes, **kwargs):

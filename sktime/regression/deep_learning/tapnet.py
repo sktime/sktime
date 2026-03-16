@@ -1,4 +1,4 @@
-"""Time Convolutional Neural Network (CNN) for classification."""
+"""Time Convolutional Neural Network (CNN) for regression."""
 
 __all__ = ["TapNetRegressor"]
 
@@ -41,10 +41,10 @@ class TapNetRegressor(BaseDeepRegressor):
         dropout rate for the LSTM layer, in the range [0, 1)
     dilation : int, default = 1
         dilation value
-    activation : str, default = "linear"
+    activation : str or callable, default = "linear"
         activation function for the last output layer
         List of available activation functions: https://keras.io/api/layers/activations/
-    activation_hidden : str, default = "leaky_relu"
+    activation_hidden : str or callable, default = "leaky_relu"
         activation function for the hidden layers
         List of available activation functions: https://keras.io/api/layers/activations/
     loss : str, default = "mean_squared_error"
@@ -55,6 +55,10 @@ class TapNetRegressor(BaseDeepRegressor):
         whether to use bias in the output dense layer
     use_rp : bool, default = True
         whether to use random projections
+    rp_group : int, default = 3
+        number of random permutation groups
+    rp_alpha : float, default = 2.0
+        scale factor used to compute the random permutation group size
     use_att : bool, default = True
         whether to use self attention
     use_lstm : bool, default = True
@@ -65,6 +69,8 @@ class TapNetRegressor(BaseDeepRegressor):
         whether to output extra information
     random_state : int or None, default = None
         seed for random
+    fc_dropout : float, default = 0.0
+        dropout rate before the output layer
 
     References
     ----------
@@ -101,7 +107,8 @@ class TapNetRegressor(BaseDeepRegressor):
         use_rp=True,
         activation="linear",
         activation_hidden="leaky_relu",
-        rp_params=(-1, 3),
+        rp_group=3,
+        rp_alpha=2.0,
         use_bias=True,
         use_att=True,
         use_lstm=True,
@@ -114,6 +121,7 @@ class TapNetRegressor(BaseDeepRegressor):
         callbacks=None,
         verbose=False,
         lstm_dropout=0.8,
+        fc_dropout=0.0,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -121,7 +129,6 @@ class TapNetRegressor(BaseDeepRegressor):
         self.random_state = random_state
         self.kernel_size = kernel_size
         self.layers = layers
-        self.rp_params = rp_params
         self.filter_sizes = filter_sizes
         self.activation = activation
         self.activation_hidden = activation_hidden
@@ -142,27 +149,30 @@ class TapNetRegressor(BaseDeepRegressor):
         self.use_lstm = use_lstm
         self.use_cnn = use_cnn
 
-        # parameters for random projection
         self.use_rp = use_rp
-        self.rp_params = rp_params
+        self.rp_group = rp_group
+        self.rp_alpha = rp_alpha
+        self.fc_dropout = fc_dropout
 
         super().__init__()
 
         self._network = TapNetNetwork(
-            activation=self.activation_hidden,
+            activation_hidden=self.activation_hidden,
             dropout=self.dropout,
             filter_sizes=self.filter_sizes,
             kernel_size=self.kernel_size,
             dilation=self.dilation,
             layers=self.layers,
             use_rp=self.use_rp,
-            rp_params=self.rp_params,
+            rp_group=self.rp_group,
+            rp_alpha=self.rp_alpha,
             use_att=self.use_att,
             use_lstm=self.use_lstm,
             use_cnn=self.use_cnn,
             random_state=self.random_state,
             padding=self.padding,
             lstm_dropout=self.lstm_dropout,
+            fc_dropout=self.fc_dropout,
         )
 
     def build_model(self, input_shape, **kwargs):
