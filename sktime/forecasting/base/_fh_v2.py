@@ -63,24 +63,30 @@ class ForecastingHorizon:
         pd.offsets.BaseOffset
         Values of forecasting horizon.
         Supported types without pandas dependency:
-        - ``int`` or ``np.integer`` : single integer step
-        - ``list[int]`` : list of integer steps
-        - ``np.ndarray`` : integer or timedelta64 array
-        - ``range`` : Python range object
+
+        - ``int`` or ``np.integer``: single integer, coerced to ``range(1, values + 1)``
+        - ``list[int]``: list of integer steps
+        - ``np.ndarray``: integer or timedelta64 array
+        - ``range``: Python range object
+
         Supported pandas types (delegated to PandasFHConverter):
+
         - ``pd.PeriodIndex``, ``pd.DatetimeIndex``, ``pd.TimedeltaIndex``
         - ``pd.RangeIndex``, ``pd.Index`` (integer or timedelta dtype)
         - ``pd.Timedelta``, ``pd.offsets.BaseOffset``
         - ``list[pd.Period]``, ``list[pd.Timestamp]``, ``list[pd.Timedelta]``
         - ``list[pd.offsets.BaseOffset]``, ``list[np.timedelta64]``
+
     is_relative : bool, optional (default=None)
         Whether the forecasting horizon is relative to the training cutoff.
         If True, values are relative to end of training series.
         If False, values are absolute.
         If None, inferred from value type:
+
         - int values default to relative (is_relative=True)
         - timedelta values are always relative
         - Period and Timestamp values are always absolute
+
         Note: integer values are compatible with both relative and absolute
         interpretations. For integers, pass ``is_relative=False`` explicitly
         if absolute is intended, as the default inference interprets it as
