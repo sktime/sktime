@@ -238,15 +238,16 @@ def plot_interval(ax, interval_df):
 
     import seaborn as sns
 
-    var_name = interval_df.columns.levels[0][0]
+    idx = interval_df.columns.remove_unused_levels()
+    var_name = idx.levels[0][0]
 
-    n = len(interval_df.columns.levels[1])
+    n = len(idx.levels[1])
     if n == 1:
         colors = [ax.get_lines()[-1].get_c()]
     else:
         colors = sns.color_palette("colorblind", n_colors=n)
 
-    for i, cov in enumerate(interval_df.columns.levels[1]):
+    for i, cov in enumerate(idx.levels[1]):
         ax.fill_between(
             interval_df.index,
             interval_df[var_name][cov]["lower"].astype("float64").to_numpy(),
