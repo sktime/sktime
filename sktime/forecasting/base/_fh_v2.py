@@ -159,7 +159,14 @@ class ForecastingHorizon:
             )
 
         # sort, deduplicate, and store
-        self._values = np.unique(vals)
+        # reject if duplicates found
+        sorted_vals = np.unique(vals)
+        if len(sorted_vals) != len(vals):
+            raise ValueError(
+                "Forecasting horizon values must be unique. "
+                f"Found duplicates in: {vals!r}"
+            )
+        self._values = sorted_vals
         self._values_are_nanos = nanos_flag
 
         # handle empty arrays
