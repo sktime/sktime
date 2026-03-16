@@ -170,8 +170,8 @@ class MyTimeSeriesClassifier(BaseClassifier):
             1D iterable, of shape [n_instances]
             or 2D iterable, of shape [n_instances, n_dimensions]
             class labels for fitting
-            if self.get_tag("capaility:multioutput") = False, guaranteed to be 1D
-            if self.get_tag("capaility:multioutput") = True, guaranteed to be 2D
+            if self.get_tag("capability:multioutput") = False, guaranteed to be 1D
+            if self.get_tag("capability:multioutput") = True, guaranteed to be 2D
 
         Returns
         -------
@@ -212,8 +212,8 @@ class MyTimeSeriesClassifier(BaseClassifier):
             or 2D iterable, of shape [n_instances, n_dimensions]
             predicted class labels
             indices correspond to instance indices in X
-            if self.get_tag("capaility:multioutput") = False, should be 1D
-            if self.get_tag("capaility:multioutput") = True, should be 2D
+            if self.get_tag("capability:multioutput") = False, should be 1D
+            if self.get_tag("capability:multioutput") = True, should be 2D
         """
 
         # implement here
