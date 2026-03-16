@@ -30,12 +30,17 @@ pending conversion to integer steps (e.g. freq-less TimedeltaIndex input).
 Set to False once freq is assigned via the ``freq`` setter.
 """
 
-__all__ = ["ForecastingHorizon"]
+__all__ = ["ForecastingHorizon", "VALID_FORECASTING_HORIZON_TYPES"]
 
 import numpy as np
 
-from sktime.forecasting.base._fh_utils import PandasFHConverter
+from sktime.forecasting.base._fh_utils import (
+    _PANDAS_FH_INPUT_TYPES,
+    PandasFHConverter,
+)
 from sktime.forecasting.base._freq_mnemonic import validate_freq
+
+VALID_FORECASTING_HORIZON_TYPES = int | list | np.ndarray | _PANDAS_FH_INPUT_TYPES
 
 # <check></check>
 # this is the marker left to mark all delayed checks

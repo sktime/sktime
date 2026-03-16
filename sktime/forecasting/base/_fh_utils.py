@@ -14,12 +14,14 @@ The converter handles:
 - Converting cutoff values to integer steps
 """
 
-___all__ = ["PandasFHConverter"]
+___all__ = ["PandasFHConverter", "_PANDAS_FH_INPUT_TYPES"]
 
 import warnings
 
 import numpy as np
 import pandas as pd
+
+_PANDAS_FH_INPUT_TYPES = pd.Index
 
 from sktime.forecasting.base._freq_mnemonic import (
     _ALIAS_TO_CANONICAL_STATIC,
