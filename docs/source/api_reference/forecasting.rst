@@ -168,6 +168,14 @@ Naive forecasters
 
     ForecastKnownValues
 
+.. currentmodule:: sktime.forecasting.dummy_global
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyGlobalForecaster
+
 Prediction intervals
 --------------------
 
@@ -494,12 +502,14 @@ Deep learning based forecasters
     LTSFTransformerForecaster
 
 .. currentmodule:: sktime.forecasting.neuralprophet
+.. currentmodule:: sktime.forecasting.xlstm
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
     NeuralProphet
+    XLSTMForecaster
 
 .. currentmodule:: sktime.forecasting.scinet
 
