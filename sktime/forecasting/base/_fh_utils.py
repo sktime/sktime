@@ -251,7 +251,7 @@ class PandasFHConverter:
         if isinstance(values, pd.Timedelta):
             freq_str = PandasFHConverter._extract_freq_str(values)
             if freq_str is not None:
-                steps = PandasFHConverter._timedelta_to_steps(
+                steps = PandasFHConverter.nanos_to_steps(
                     np.array([values.value], dtype=np.int64), freq_str
                 )
                 return (steps, True, freq_str, False)
@@ -264,7 +264,7 @@ class PandasFHConverter:
             td = pd.Timedelta(values)
             freq_str = PandasFHConverter._offset_to_freq_str(values)
             if freq_str is not None:
-                steps = PandasFHConverter._timedelta_to_steps(
+                steps = PandasFHConverter.nanos_to_steps(
                     np.array([td.value], dtype=np.int64), freq_str
                 )
                 return (steps, True, freq_str, False)
@@ -295,9 +295,7 @@ class PandasFHConverter:
         if isinstance(values, pd.TimedeltaIndex):
             freq_str = PandasFHConverter._freqstr(values)
             if freq_str is not None:
-                steps = PandasFHConverter._timedelta_to_steps(
-                    values.asi8.copy(), freq_str
-                )
+                steps = PandasFHConverter.nanos_to_steps(values.asi8.copy(), freq_str)
                 return (steps, True, freq_str, False)
             else:
                 arr = values.asi8.copy()
@@ -394,7 +392,7 @@ class PandasFHConverter:
             idx = pd.TimedeltaIndex(values)
             freq_str = PandasFHConverter._freqstr(idx)
             if freq_str is not None:
-                steps = PandasFHConverter._timedelta_to_steps(idx.asi8.copy(), freq_str)
+                steps = PandasFHConverter.nanos_to_steps(idx.asi8.copy(), freq_str)
                 return (steps, True, freq_str, False)
             else:
                 return (idx.asi8.copy(), True, None, True)
@@ -428,7 +426,7 @@ class PandasFHConverter:
             idx = pd.TimedeltaIndex(tds)
             freq_str = PandasFHConverter._freqstr(idx)
             if freq_str is not None:
-                steps = PandasFHConverter._timedelta_to_steps(idx.asi8.copy(), freq_str)
+                steps = PandasFHConverter.nanos_to_steps(idx.asi8.copy(), freq_str)
                 return (steps, True, freq_str, False)
             else:
                 return (idx.asi8.copy(), True, None, True)
@@ -983,34 +981,6 @@ class PandasFHConverter:
                     f"but element at index {i} is {type(v).__name__}. "
                     "All list elements must be of the same type."
                 )
-
-    @staticmethod
-    def _timedelta_to_steps(nanos: np.ndarray, freq: str) -> np.ndarray:
-        """Convert timedelta nanoseconds to integer steps using freq.
-
-        Parameters
-        ----------
-        nanos : np.ndarray of int64
-            Nanosecond values from TimedeltaIndex.asi8.
-        freq : str
-            Frequency string.
-
-        Returns
-        -------
-        np.ndarray of int64
-            Integer step counts.
-        """
-        from pandas.tseries.frequencies import to_offset
-
-        offset = to_offset(_resolve_pandas_freq(freq))
-        try:
-            freq_nanos = offset.nanos
-        except ValueError:
-            raise ValueError(
-                f"Cannot convert timedelta to integer steps with "
-                f"non-fixed frequency {freq!r}."
-            )
-        return (nanos // freq_nanos).astype(np.int64)
 
     @staticmethod
     def _extract_freq_str(obj) -> str | None:
