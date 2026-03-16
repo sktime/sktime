@@ -11,8 +11,6 @@ from sktime.datatypes import check_is_scitype, convert, convert_to
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._coerce import _coerce_to_scalar
 
-# TODO: Rework tests now
-
 
 class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
     """Base class for probabilistic forecasting error metrics in sktime.
