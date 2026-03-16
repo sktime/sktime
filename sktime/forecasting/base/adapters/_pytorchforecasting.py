@@ -42,6 +42,12 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
+        Mutually exclusive with ``model``.
+    model: pytorch-forecasting model instance (default=None)
+        a pre-initialized pytorch-forecasting model to use directly without training.
+        When provided, ``fit`` will skip training and use this model for prediction.
+        Mutually exclusive with ``model_path``.
+        The model must be compatible with the data passed to ``fit`` and ``predict``.
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
@@ -90,15 +96,21 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         validation_to_dataloader_params: dict[str, Any] | None = None,
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
+        model: Any | None = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
+        if model is not None and model_path is not None:
+            raise ValueError(
+                "Only one of 'model' or 'model_path' can be provided, not both."
+            )
         self.model_params = model_params
         self.dataset_params = dataset_params
         self.trainer_params = trainer_params
         self.train_to_dataloader_params = train_to_dataloader_params
         self.validation_to_dataloader_params = validation_to_dataloader_params
         self.model_path = model_path
+        self.model = model
         self._model_params = deepcopy(model_params) if model_params is not None else {}
         self._dataset_params = (
             deepcopy(dataset_params) if dataset_params is not None else {}
@@ -216,7 +228,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
         )
-        if self.model_path is None:
+        if self.model_path is None and self.model is None:
             # instantiate forecaster and trainer
             self._forecaster, self._trainer = self._instantiate_model(training)
             # convert dataset to dataloader
@@ -240,6 +252,9 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 )
             else:
                 self.best_model = self._forecaster
+        elif self.model is not None:
+            # use the pre-initialized model directly, no training needed
+            self.best_model = self.model
         else:
             # load model from disk
             self.best_model = self.algorithm_class.load_from_checkpoint(self.model_path)
