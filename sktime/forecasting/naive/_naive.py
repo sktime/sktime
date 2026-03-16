@@ -690,12 +690,12 @@ class NaiveVariance(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X):
-        return super()._predict(fh=fh, X=X)
+    def _predict(self, fh, X=None):
+        return self.forecaster_.predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
         self.forecaster_.update(y, X, update_params=update_params)
-        if update_params and self._fh is not None:
+        if update_params and self.fh_early_:
             self.residuals_matrix_ = self._compute_sliding_residuals(
                 y=self._y,
                 X=self._X,
@@ -783,7 +783,7 @@ class NaiveVariance(BaseForecaster):
                 initial_window=self.initial_window,
             )
 
-        fh_relative = fh.to_relative(self.cutoff)
+        fh_relative = fh.to_relative(self.cutoff).to_numpy()
         fh_absolute = fh.to_absolute(self.cutoff)
         fh_absolute_ix = fh_absolute.to_pandas()
 
@@ -792,7 +792,7 @@ class NaiveVariance(BaseForecaster):
             covariance = np.zeros(shape=(len(fh), fh_size))
             for i in range(fh_size):
                 i_residuals = np.diagonal(residuals_matrix, offset=fh_relative[i])
-                for j in range(i, fh_size):  # since the matrix is symmetric
+                for j in range(i, fh_size):
                     j_residuals = np.diagonal(residuals_matrix, offset=fh_relative[j])
                     max_residuals = min(len(j_residuals), len(i_residuals))
                     covariance[i, j] = covariance[j, i] = np.nanmean(
@@ -808,11 +808,9 @@ class NaiveVariance(BaseForecaster):
                 np.nanmean(np.diagonal(residuals_matrix, offset=offset) ** 2)
                 for offset in fh_relative
             ]
-            if hasattr(self._y, "columns"):
-                columns = self._y.columns
-                pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute_ix)
-            else:
-                pred_var = pd.DataFrame(variance, index=fh_absolute_ix)
+
+            var_names = self._get_varnames()
+            pred_var = pd.DataFrame(variance, columns=var_names, index=fh_absolute_ix)
 
         return pred_var
 
@@ -842,27 +840,20 @@ class NaiveVariance(BaseForecaster):
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
 
         for id in y_index:
-            forecaster = forecaster.clone()
-            y_train = get_slice(y, start=None, end=id)  # subset on which we fit
-            y_test = get_slice(y, start=id, end=None)  # subset on which we predict
+            forecaster_clone = forecaster.clone()
+            y_train = get_slice(y, start=None, end=id)
+            y_test = get_slice(y, start=id, end=None)
             try:
-                forecaster.fit(y_train, fh=y_test.index)
-            except ValueError:
+                forecaster_clone.fit(y_train, fh=y_test.index)
+                pred_res = forecaster_clone.predict_residuals(y_test, X)
+                residuals_matrix.loc[id, pred_res.index] = pred_res.values
+            except (ValueError, IndexError):
                 if self.verbose:
                     warn(
-                        f"Couldn't fit the model on "
-                        f"time series window length {len(y_train)}.\n",
+                        f"Couldn't fit or predict on window ending at {id}.\n",
                         obj=self,
                     )
                 continue
-            try:
-                residuals_matrix.loc[id] = forecaster.predict_residuals(y_test, X)
-            except IndexError:
-                warn(
-                    f"Couldn't predict after fitting on time series of length "
-                    f"{len(y_train)}.\n",
-                    obj=self,
-                )
 
         return residuals_matrix
 
