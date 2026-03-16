@@ -238,26 +238,30 @@ def plot_interval(ax, interval_df):
 
     import seaborn as sns
 
-    # Handle MultiIndex columns safely
-    if hasattr(interval_df.columns, 'remove_unused_levels'):
-        idx = interval_df.columns.remove_unused_levels()
-    else:
-        idx = interval_df.columns
+    # Ensure columns are a pandas MultiIndex as returned by `predict_interval`
+    import pandas as pd
+    idx = interval_df.columns
+    if not isinstance(idx, pd.MultiIndex):
+        raise TypeError(
+            "plot_interval expects `interval_df` with MultiIndex columns, "
+            "as returned by `predict_interval`. "
+            f"Got columns of type: {type(idx).__name__}."
+        )
     
-    # Extract variable name - handle both MultiIndex and regular Index
-    if hasattr(idx, 'levels'):
-        var_name = idx.levels[0][0]
-    else:
-        var_name = idx[0] if len(idx) > 0 else 'value'
-
-    # Handle coverage levels safely
-    if hasattr(idx, 'levels') and len(idx.levels) > 1:
-        coverage_levels = idx.levels[1]
-        n = len(coverage_levels)
-    else:
-        # Fallback for non-MultiIndex - assume single coverage level
-        coverage_levels = [0.95]  # Default coverage level
-        n = 1
+    # Remove unused levels to handle subsetted DataFrames
+    idx = idx.remove_unused_levels()
+    
+    # Extract variable name and coverage levels from MultiIndex columns
+    if len(idx.levels) < 2:
+        raise ValueError(
+            "interval_df must have MultiIndex columns with a coverage level "
+            "as the second level for interval plotting. Received MultiIndex "
+            f"with only {len(idx.levels)} level(s)."
+        )
+    
+    var_name = idx.levels[0][0]
+    coverage_levels = idx.levels[1]
+    n = len(coverage_levels)
     
     if n == 1:
         colors = [ax.get_lines()[-1].get_c()]
@@ -265,18 +269,8 @@ def plot_interval(ax, interval_df):
         colors = sns.color_palette("colorblind", n_colors=n)
 
     for i, cov in enumerate(coverage_levels):
-        # Handle column access for both MultiIndex and regular Index
-        if hasattr(idx, 'levels') and len(idx.levels) > 1:
-            lower_col = interval_df[var_name][cov]["lower"]
-            upper_col = interval_df[var_name][cov]["upper"]
-        else:
-            # For non-MultiIndex, assume columns are named directly
-            if "lower" in interval_df.columns and "upper" in interval_df.columns:
-                lower_col = interval_df["lower"]
-                upper_col = interval_df["upper"]
-            else:
-                # Skip if we can't find appropriate columns
-                continue
+        lower_col = interval_df[var_name][cov]["lower"]
+        upper_col = interval_df[var_name][cov]["upper"]
         
         ax.fill_between(
             interval_df.index,
