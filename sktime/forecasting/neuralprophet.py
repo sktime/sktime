@@ -217,7 +217,7 @@ class NeuralProphet(BaseForecaster):
                     self._regressors.append(col)
 
             if self._regressors:
-                df = df.join(X[self._regressors], how="left")
+                df = df.join(X[self._regressors].reset_index(drop=True), how="left")
         # Store training dataframe for future predictions
         self._training_df = df.copy()
 
