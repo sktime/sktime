@@ -3,7 +3,7 @@
 from functools import partial
 
 import numpy as np
-
+import warnings
 # found module but no type hints or library stubs
 from scipy.special import binom  # type: ignore
 
@@ -148,8 +148,12 @@ def fdiff(
     a = _combine_pre_append(a, prepend, append, axis)
 
     if mode == "full":
-        mode = "same"
-        raise DeprecationWarning("mode 'full' was renamed to 'same'.")
+        warnings.warn(
+            "mode 'full' was renamed to 'same'.",
+            DeprecationWarning,
+            stacklevel=2,
+    )
+    mode = "same"
 
     if a.ndim == 0:
         raise ValueError("diff requires input that is at least one dimensional")
