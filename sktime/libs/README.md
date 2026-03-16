@@ -23,9 +23,6 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 
 # private vendor forks in `sktime`
 
-* `granite_ttm` - a package implementing TinyTimeMixer.
-  Unofficial fork of package which is not available on pypi.
-
 * `momentfm` - a package implementing the `momentfm` library, unofficial fork
   maintained since April 2025.
 
