@@ -148,12 +148,23 @@ class ForecastingHorizon:
             return
 
         # canonical path: plain Python/numpy types: no pandas needed
-        if isinstance(values, (int, np.integer, range, np.ndarray)) or (
-            isinstance(values, list)
-            and len(values) > 0
-            and isinstance(values[0], (int, np.integer))
+        # `np.timedelta64` is a subclass of `np.integer`,
+        # without exclusion it enters the int path instead of the converter path.
+        # Empty lists `[]` also need special handling to avoid downstream errors
+        if (
+            isinstance(values, (int, np.integer, range, np.ndarray))
+            and not isinstance(values, np.timedelta64)
+            or (
+                isinstance(values, list)
+                and (
+                    len(values) == 0
+                    or (
+                        isinstance(values[0], (int, np.integer))
+                        and not isinstance(values[0], np.timedelta64)
+                    )
+                )
+            )
         ):
-            # canonical path: plain Python/numpy types — no pandas needed
             vals, inferred_is_relative, freq_val, nanos_flag = self._coerce_canonical(
                 values
             )
@@ -220,7 +231,12 @@ class ForecastingHorizon:
 
         if isinstance(values, (int, np.integer)):
             n = int(values)
-            arr = np.arange(1, n + 1, dtype=np.int64)
+            # if positive, create range(1, n+1)
+            if n > 0:
+                arr = np.arange(1, n + 1, dtype=np.int64)
+            # if negative, create array with a single value n
+            else:
+                arr = np.array([n], dtype=np.int64)
             return arr, inferred_is_relative, freq, values_are_nanos
 
         if isinstance(values, range):
@@ -244,7 +260,11 @@ class ForecastingHorizon:
                 f"Expected integer or timedelta64 dtype."
             )
 
-        # list[int]
+        # list[int] or empty list
+        if len(values) == 0:
+            arr = np.array([], dtype=np.int64)
+            return arr, inferred_is_relative, freq, values_are_nanos
+
         for i, v in enumerate(values[1:], start=1):
             if not isinstance(v, (int, np.integer)):
                 raise TypeError(
