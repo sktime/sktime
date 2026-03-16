@@ -238,20 +238,50 @@ def plot_interval(ax, interval_df):
 
     import seaborn as sns
 
-    idx = interval_df.columns.remove_unused_levels()
-    var_name = idx.levels[0][0]
+    # Handle MultiIndex columns safely
+    if hasattr(interval_df.columns, 'remove_unused_levels'):
+        idx = interval_df.columns.remove_unused_levels()
+    else:
+        idx = interval_df.columns
+    
+    # Extract variable name - handle both MultiIndex and regular Index
+    if hasattr(idx, 'levels'):
+        var_name = idx.levels[0][0]
+    else:
+        var_name = idx[0] if len(idx) > 0 else 'value'
 
-    n = len(idx.levels[1])
+    # Handle coverage levels safely
+    if hasattr(idx, 'levels') and len(idx.levels) > 1:
+        coverage_levels = idx.levels[1]
+        n = len(coverage_levels)
+    else:
+        # Fallback for non-MultiIndex - assume single coverage level
+        coverage_levels = [0.95]  # Default coverage level
+        n = 1
+    
     if n == 1:
         colors = [ax.get_lines()[-1].get_c()]
     else:
         colors = sns.color_palette("colorblind", n_colors=n)
 
-    for i, cov in enumerate(idx.levels[1]):
+    for i, cov in enumerate(coverage_levels):
+        # Handle column access for both MultiIndex and regular Index
+        if hasattr(idx, 'levels') and len(idx.levels) > 1:
+            lower_col = interval_df[var_name][cov]["lower"]
+            upper_col = interval_df[var_name][cov]["upper"]
+        else:
+            # For non-MultiIndex, assume columns are named directly
+            if "lower" in interval_df.columns and "upper" in interval_df.columns:
+                lower_col = interval_df["lower"]
+                upper_col = interval_df["upper"]
+            else:
+                # Skip if we can't find appropriate columns
+                continue
+        
         ax.fill_between(
             interval_df.index,
-            interval_df[var_name][cov]["lower"].astype("float64").to_numpy(),
-            interval_df[var_name][cov]["upper"].astype("float64").to_numpy(),
+            lower_col.astype("float64").to_numpy(),
+            upper_col.astype("float64").to_numpy(),
             alpha=0.2,
             color=colors[i],
             label=f"{int(cov * 100)}% prediction interval",
