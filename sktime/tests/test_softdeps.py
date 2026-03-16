@@ -326,7 +326,7 @@ def test_est_fit_without_modulenotfound(estimator):
         ) from e
 
 
-@patch("sktime.utils.dependencies._dependencies.sys")
+@patch("skbase.utils.dependencies._dependencies.sys")
 @pytest.mark.parametrize(
     "mock_release_version, prereleases, expect_exception",
     [
