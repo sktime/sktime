@@ -146,6 +146,12 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from ``predict``.
 
+    use_source_package : bool, default=False
+        Deprecated since sktime 0.40.1, will be removed in 1.0.0.
+        Previously controlled whether to load from ``tsfm_public`` directly
+        or from the sktime-vendored copy. The ``granite-tsfm`` PyPI package is
+        now the only supported source, so this parameter will have no effect.
+
     fit_strategy : str, default="minimal"
         Strategy to use for fitting (fine-tuning) the model. This can be one of
         the following:
@@ -293,6 +299,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         callbacks=None,
         broadcasting=False,
         fit_strategy="minimal",
+        use_source_package=False,
     ):
         super().__init__()
         self.model_path = model_path
@@ -306,6 +313,19 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self.callbacks = callbacks
         self.broadcasting = broadcasting
         self.fit_strategy = fit_strategy
+        self.use_source_package = use_source_package
+
+        if use_source_package is not None:
+            warn(
+                "The use_source_package parameter of TinyTimeMixerForecaster is "
+                "deprecated since sktime 0.40.1 and will be removed in 0.42.0. "
+                "The granite-tsfm PyPI package is now the only supported source; "
+                "the parameter has no effect. "
+                "Please remove use_source_package from your code.",
+                category=DeprecationWarning,
+                obj=self,
+            )
+        # TODO 1.0.0: remove use_source_package parameter entirely
 
         if self.broadcasting:
             self.set_tags(
