@@ -123,7 +123,7 @@ class ARDL(_StatsModelsAdapter):
         or only if smaller order lags must be included if larger order
         lags are.  If ``True``, the number of model considered is of the
         order 2**(maxlag + k * maxorder) assuming maxorder is an int. This
-        can be very large unless k and maxorder are bot relatively small.
+        can be very large unless k and maxorder are both relatively small.
         If False, the number of model considered is of the order
         maxlag*maxorder**k which may also be substantial when k and maxorder
         are large.

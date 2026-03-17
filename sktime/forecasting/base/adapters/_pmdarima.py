@@ -162,7 +162,7 @@ class _PmdArimaAdapter(BaseForecaster):
             if end < start:
                 # since we might have forced `start` to surpass `end`
                 end = diff_order
-            # get rid of unforcastable points
+            # get rid of unforecastable points
             fh_abs = fh_abs[fh_idx >= diff_order]
             # reindex accordingly
             fh_idx = fh_idx[fh_idx >= diff_order] - diff_order
