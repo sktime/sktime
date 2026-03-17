@@ -115,8 +115,19 @@ class _StatsModelsAdapter(BaseForecaster):
         """
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
-        start, end = fh.to_absolute_int(self._y_first_index, self.cutoff)[[0, -1]]
-        fh_int = fh.to_absolute_int(self._y_first_index, self.cutoff) - self._y_len
+
+        # start, end = fh.to_absolute_int(self._y_first_index, self.cutoff)[[0, -1]]
+        # above line changed to below line after forecasting horizon v2 rework
+        # with following reasoning:
+        # New FH is not a pd.Index subclass
+        # so direct [[0, -1]] indexing on an FH object doesn't return scalar ints.
+        # Must extract the numpy array first
+        abs_int = fh.to_absolute_int(self._y_first_index, self.cutoff)._values
+        start, end = abs_int[[0, -1]]
+
+        # fh_int = fh.to_absolute_int(self._y_first_index, self.cutoff) - self._y_len
+        # for same reason as above, this line is changed to below line
+        fh_int = abs_int - self._y_len
 
         # bug fix for evaluate function as test_plus_train indices are passed
         # statsmodels exog must contain test indices only.
@@ -207,8 +218,19 @@ class _StatsModelsAdapter(BaseForecaster):
         if not implements_interval_adapter and implements_quantiles:
             return BaseForecaster._predict_interval(self, fh, X=X, coverage=coverage)
 
-        start, end = fh.to_absolute_int(self._y_first_index, self.cutoff)[[0, -1]]
-        fh_int = fh.to_absolute_int(self._y_first_index, self.cutoff) - self._y_len
+        # start, end = fh.to_absolute_int(self._y_first_index, self.cutoff)[[0, -1]]
+        # above line changed to below line after forecasting horizon v2 rework
+        # with following reasoning:
+        # New FH is not a pd.Index subclass
+        # so direct [[0, -1]] indexing on an FH object doesn't return scalar ints.
+        # Must extract the numpy array first
+        abs_int = fh.to_absolute_int(self._y_first_index, self.cutoff)._values
+        start, end = abs_int[[0, -1]]
+
+        # fh_int = fh.to_absolute_int(self._y_first_index, self.cutoff) - self._y_len
+        # for same reason as above, this line is changed to below line
+        fh_int = abs_int - self._y_len
+
         # if fh > 1 steps ahead of cutoff
         fh_int = fh_int - fh_int[0]
 
