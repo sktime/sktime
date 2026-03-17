@@ -169,7 +169,14 @@ class ForecastingHorizon:
                 values
             )
         else:
-            # coerced path: pandas types and non-int lists — delegate to converter
+            # coerced path: pandas types and non-int lists — delegate to converter.
+            # Passed freq is only used when DatatimeIndex type is passed without freq
+            # attribute, as a fallback to extract freq from the provided freq parameter
+            # in all other cases, freq is extracted from the values themselves
+            # if present.
+            # Mismatch between extracted freq and passed freq is done later in this
+            # constructor after coercion,
+            # to allow the converter to handle pandas alias normalization first.
             vals, inferred_is_relative, freq_val, nanos_flag = (
                 PandasFHConverter.to_internal(values, freq)
             )
@@ -192,13 +199,12 @@ class ForecastingHorizon:
 
         # set freq via setter (single gate for validation and nanos conversion)
         self._freq = None
-        if freq_val is not None and freq is not None and freq_val != freq:
-            raise ValueError(
-                f"Frequencies do not match: inferred={freq_val!r}, provided={freq!r}"
-            )
-        effective_freq = freq if freq is not None else freq_val
-        if effective_freq is not None:
-            self.freq = effective_freq
+        if freq_val is not None:
+            self.freq = freq_val
+            # setter normalizes string and sets _freq, raises ValueError on mismatch
+        if freq is not None:
+            self.freq = freq
+            # setter normalizes, checks mismatch with existing _freq
 
         # determine is_relative
         self._is_relative = ForecastingHorizon._resolve_is_relative(
