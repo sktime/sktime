@@ -148,6 +148,19 @@ Direct and recursive - 3rd party
     DartsLinearRegressionModel
     DartsXGBModel
 
+Probabilistic reduction forecasters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Meta-algorithms that wrap probabilistic tabular regressors (e.g., from ``skpro``)
+to produce probabilistic forecasts via reduction.
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MCRecursiveProbaReductionForecaster
 
 Naive forecasters
 -----------------
