@@ -9,7 +9,7 @@ import pandas as pd
 
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
+from sktime.forecasting.base._fh_v2 import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.validation import (
     all_inputs_are_iloc_like,
     all_inputs_are_time_like,

@@ -8,7 +8,7 @@ __author__ = ["mloning", "SveaMeyer13", "KishManani", "fkiraly"]
 import pandas as pd
 
 from sktime.datatypes import update_data
-from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base._fh_v2 import ForecastingHorizon
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.base import BaseTransformer
 
