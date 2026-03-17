@@ -296,7 +296,9 @@ class TotoForecaster(BaseForecaster):
         else:
             all_predictions = forecast.mean.cpu().squeeze(0).numpy().T
 
-        pred_index = fh.to_absolute(self._cutoff)._values
+        # pred_index = fh.to_absolute(self._cutoff)._values
+        # above line changed to below after the Forecasting horizon v2 rework
+        pred_index = fh.to_absolute_index(self._cutoff)
         relative_indices = fh.to_relative(self._cutoff) - 1
         selected_predictions = all_predictions[relative_indices]
 
@@ -356,7 +358,9 @@ class TotoForecaster(BaseForecaster):
         )
         var_names = self._y.columns
         cols_idx = pd.MultiIndex.from_product([var_names, alpha])
-        pred_index = fh.to_absolute(self._cutoff)._values
+        # pred_index = fh.to_absolute(self._cutoff)._values
+        # above line changed to below after the Forecasting horizon v2 rework
+        pred_index = fh.to_absolute_index(self._cutoff)
         relative_indices = fh.to_relative(self._cutoff) - 1
 
         pred_quantiles = pd.DataFrame(index=pred_index, columns=cols_idx)

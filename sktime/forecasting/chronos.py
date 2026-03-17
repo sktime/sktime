@@ -593,10 +593,14 @@ class ChronosForecaster(BaseForecaster):
 
         pred = np.stack(results, axis=1)
 
-        index = (
-            ForecastingHorizon(range(1, pred.shape[0] + 1))
-            .to_absolute(self._cutoff)
-            ._values
+        # index = (
+        #     ForecastingHorizon(range(1, pred.shape[0] + 1))
+        #     .to_absolute(self._cutoff)
+        #     ._values
+        # )
+        # above line changed to below after the Forecasting horizon v2 rework
+        index = ForecastingHorizon(range(1, pred.shape[0] + 1)).to_absolute_index(
+            self._cutoff
         )
         pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
 
