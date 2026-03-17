@@ -3795,6 +3795,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "Gautam-Bharadwaj",
+      "name": "Gautam Bharadwaj",
+      "avatar_url": "https://avatars.githubusercontent.com/u/120354774?v=4",
+      "profile": "https://github.com/Gautam-Bharadwaj",
+      "contributions": [
+        "maintenance"
+      ]
     }
   ]
 }
