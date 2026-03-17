@@ -428,6 +428,72 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
         return pred_dist
 
+    def _get_exog_at_time(
+        self, X_pool, predict_time, target_index, exog_cols, fallback
+    ):
+        """Get exogenous features aligned to ``target_index`` at ``predict_time``.
+
+        Parameters
+        ----------
+        X_pool : pd.DataFrame
+            Pooled exogenous data.
+        predict_time : object
+            Time point to retrieve exogenous features for.
+        target_index : pd.Index or pd.MultiIndex
+            Target row index to align the exogenous frame to.
+        exog_cols : pd.Index
+            Exogenous column schema.
+        fallback : pd.DataFrame or None
+            Last known aligned exogenous frame used for fallback.
+
+        Returns
+        -------
+        X_aligned : pd.DataFrame or None
+            Exogenous features aligned to ``target_index``.
+        fallback : pd.DataFrame or None
+            Updated fallback exogenous frame.
+        """
+        try:
+            X_at_idx = slice_at_ix(X_pool, predict_time)
+            if len(X_at_idx) == 0:
+                raise KeyError(predict_time)
+            X_at_idx = _align_X_index(X_at_idx, target_index)
+            X_at_idx = _align_X_columns(X_at_idx, exog_cols)
+            if fallback is not None:
+                X_at_idx = X_at_idx.fillna(fallback)
+            return X_at_idx, X_at_idx.copy()
+        except (KeyError, IndexError):
+            return fallback, fallback
+
+    def _build_lag_feature_template(self):
+        """Build lagged feature template for the first prediction step.
+
+        Returns
+        -------
+        Xtt_template : pd.DataFrame
+            Lagged feature frame at the first prediction step.
+        x_template_index : pd.Index or pd.MultiIndex
+            Row index for the feature template.
+        first_predict_idx : object
+            Time index value of the first prediction step.
+        """
+        from sktime.transformations.series.lag import Lag
+
+        Xt_initial = self.lagger_y_to_X_.transform(self._y)
+        lag_plus_init = Lag(lags=1, index_out="extend")
+        if isinstance(self.impute_method, str):
+            from sktime.transformations.series.impute import Imputer
+
+            lag_plus_init = lag_plus_init * Imputer(method=self.impute_method)
+
+        Xtt_initial = lag_plus_init.fit_transform(Xt_initial)
+        y_plus_one_init = lag_plus_init.fit_transform(self._y)
+
+        first_predict_idx = y_plus_one_init.iloc[[-1]].index.get_level_values(-1)[0]
+        Xtt_template = slice_at_ix(Xtt_initial, first_predict_idx)
+
+        return Xtt_template, Xtt_template.index, first_predict_idx
+
     def _generate_mc_trajectories(self, fh, X_pool):
         """Generate MC trajectories for recursive probabilistic prediction.
 
@@ -447,10 +513,9 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         fh_time_idx : pd.Index
             The time index for the forecasting horizon (without instance levels).
         """
-        from sktime.transformations.series.lag import Lag
-
         n_samples = self.n_samples
         y_cols = self._y.columns
+        n_y_cols = len(y_cols)
 
         rng = np.random.default_rng(self.random_state)
 
@@ -459,8 +524,12 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         horizon_to_idx = {h: i for i, h in enumerate(y_lags_rel)}
         max_horizon = max(y_lags_rel)
         n_horizons = len(y_lags_rel)
+        fh_abs = fh.to_absolute(self.cutoff)
+        all_fh = ForecastingHorizon(
+            list(range(1, max_horizon + 1)), is_relative=True, freq=self._cutoff
+        )
+        all_abs_times = all_fh.to_absolute_index(self._cutoff)
 
-        lagger_y_to_X = self.lagger_y_to_X_
         estimator = self.estimator_
 
         y_index = self._y.index
@@ -471,24 +540,13 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         else:
             instance_idx = [None]
 
-        n_y_cols = len(y_cols)
         trajectories = {
             inst: np.zeros((n_samples, n_horizons, n_y_cols)) for inst in instance_idx
         }
 
-        # Build initial feature template from lagged data
-        Xt_initial = lagger_y_to_X.transform(self._y)
-        lag_plus_init = Lag(lags=1, index_out="extend")
-        if isinstance(self.impute_method, str):
-            from sktime.transformations.series.impute import Imputer
-
-            lag_plus_init = lag_plus_init * Imputer(method=self.impute_method)
-        Xtt_initial = lag_plus_init.fit_transform(Xt_initial)
-        y_plus_one_init = lag_plus_init.fit_transform(self._y)
-
-        first_predict_idx = y_plus_one_init.iloc[[-1]].index.get_level_values(-1)[0]
-        Xtt_template = slice_at_ix(Xtt_initial, first_predict_idx)
-        x_template_index = Xtt_template.index
+        Xtt_template, x_template_index, first_predict_idx = (
+            self._build_lag_feature_template()
+        )
 
         X_fallback_df = None
         exog_cols = None
@@ -497,20 +555,16 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             exog_cols = pd.Index(X_pool.columns).drop_duplicates()
             X_fallback_df = _get_last_X_for_index(X_pool, x_template_index)
             X_fallback_df = _align_X_columns(X_fallback_df, exog_cols)
-            try:
-                X_at_idx = slice_at_ix(X_pool, first_predict_idx)
-                if len(X_at_idx) == 0:
-                    raise KeyError(first_predict_idx)
-                X_at_idx = _align_X_index(X_at_idx, x_template_index)
-                X_at_idx = _align_X_columns(X_at_idx, exog_cols)
-                X_at_idx = X_at_idx.fillna(X_fallback_df)
-            except (KeyError, IndexError):
-                X_at_idx = X_fallback_df
+            X_at_idx, X_fallback_df = self._get_exog_at_time(
+                X_pool=X_pool,
+                predict_time=first_predict_idx,
+                target_index=x_template_index,
+                exog_cols=exog_cols,
+                fallback=X_fallback_df,
+            )
+            if X_at_idx is not None:
+                Xtt_template = pd.concat([X_at_idx, Xtt_template], axis=1)
 
-            X_fallback_df = X_at_idx.copy()
-            Xtt_template = pd.concat([X_at_idx, Xtt_template], axis=1)
-
-        feature_cols = Xtt_template.columns.tolist()
         n_instances = len(Xtt_template) if is_hierarchical else 1
 
         # Initialize feature arrays: shape (n_samples, n_instances, n_features)
@@ -520,31 +574,20 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         sample_features = np.tile(initial_features, (n_samples, 1, 1))
 
         # Precompute exogenous features for each horizon step
-        fh_abs = fh.to_absolute(self.cutoff)
         X_features_by_step = {}
         if X_pool is not None:
             for step_idx in range(max_horizon):
-                horizon = step_idx + 1
-                fh_step = ForecastingHorizon(
-                    [horizon], is_relative=True, freq=self._cutoff
+                X_at_idx, X_fallback_df = self._get_exog_at_time(
+                    X_pool=X_pool,
+                    predict_time=all_abs_times[step_idx],
+                    target_index=x_template_index,
+                    exog_cols=exog_cols,
+                    fallback=X_fallback_df,
                 )
-                fh_step_abs = fh_step.to_absolute_index(self._cutoff)
-                predict_time = fh_step_abs[0]
-                try:
-                    X_at_idx = slice_at_ix(X_pool, predict_time)
-                    if len(X_at_idx) == 0:
-                        raise KeyError(predict_time)
-                    X_at_idx = _align_X_index(X_at_idx, x_template_index)
-                    X_at_idx = _align_X_columns(X_at_idx, exog_cols)
-                    if X_fallback_df is not None:
-                        X_at_idx = X_at_idx.fillna(X_fallback_df)
+                if X_at_idx is not None:
                     X_features_by_step[step_idx] = prep_skl_df(X_at_idx).values
-                    X_fallback_df = X_at_idx
-                except (KeyError, IndexError):
-                    if X_fallback_df is not None:
-                        X_features_by_step[step_idx] = prep_skl_df(X_fallback_df).values
 
-        n_lag_features = Xt_initial.shape[1]
+        n_lag_features = self.window_length * n_y_cols
         n_exog_features = len(exog_cols) if X_pool is not None else 0
         sample_supports_random_state = None
 
@@ -594,12 +637,15 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 else:
                     trajectories[None][:, traj_idx, :] = sampled_values[:, 0, :]
 
-            # Shift lag features and insert new sampled values at lag_0
+            # Feature layout in sample_features (axis=-1):
+            # [:n_exog_features] are exogenous columns, followed by the lag block.
+            # The lag block contains n_y_cols columns per lag, ordered from lag_0
+            # onward. Shift that block right by one step and write the newly
+            # sampled values into the lag_0 slot.
             window_length = self.window_length
             start_idx = n_exog_features
             lag_end_idx = start_idx + n_lag_features
 
-            # Shift lag block one step to the right and write new values into lag_0.
             if window_length > 1:
                 sample_features[:, :, start_idx + n_y_cols : lag_end_idx] = (
                     sample_features[:, :, start_idx : lag_end_idx - n_y_cols]
