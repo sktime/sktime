@@ -1012,3 +1012,53 @@ class PandasFHConverter:
         if hasattr(idx, "freq") and idx.freq is not None:
             return PandasFHConverter.normalize_freq(idx.freqstr)
         return None
+
+
+def _check_cutoff(cutoff, index):
+    """Check if the cutoff is valid based on time index of forecasting horizon.
+
+    Validates that the cutoff is
+    compatible with the time index of the forecasting horizon.
+
+    Parameters
+    ----------
+    cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+        Cutoff value is required to convert a relative forecasting
+        horizon to an absolute one and vice versa.
+    index : pd.PeriodIndex or pd.DataTimeIndex
+        Forecasting horizon time index that the cutoff value will be checked
+        against.
+    """
+    # copied from old _fh.py
+    # in order to serve import needs of `sktime/forecasting/compose/reduce.py`
+    if cutoff is None:
+        raise ValueError("`cutoff` must be given, but found none.")
+    if isinstance(index, pd.PeriodIndex):
+        assert isinstance(cutoff, (pd.Period, pd.PeriodIndex))
+        assert index.freqstr == cutoff.freqstr
+
+    if isinstance(index, pd.DatetimeIndex):
+        assert isinstance(cutoff, (pd.Timestamp, pd.DatetimeIndex))
+
+
+def _index_range(relative, cutoff):
+    """Return Index Range relative to cutoff."""
+    # copied from old _fh.py
+    # in order to serve import needs of `sktime/forecasting/compose/reduce.py`
+    _check_cutoff(cutoff, relative)
+    is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
+
+    if is_timestamp:
+        # coerce to pd.Period for reliable arithmetic operations and
+        # computations of time deltas
+        cutoff = cutoff.to_period(cutoff.freqstr)
+
+    if isinstance(cutoff, pd.Index):
+        cutoff = cutoff[[0] * len(relative)]
+
+    absolute = cutoff + relative
+
+    if is_timestamp:
+        # coerce back to DatetimeIndex after operation
+        absolute = absolute.to_timestamp(cutoff.freqstr)
+    return absolute
