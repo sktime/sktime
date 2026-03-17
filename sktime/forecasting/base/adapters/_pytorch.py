@@ -137,7 +137,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         for x, _ in dataloader:
             y_pred.append(self.network(x).detach())
         y_pred = cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
-        y_pred = y_pred[fh._values.values - 1]
+        y_pred = y_pred[fh._values - 1]
         y_pred = pd.DataFrame(
             y_pred, columns=self._y.columns, index=fh.to_absolute_index(self.cutoff)
         )

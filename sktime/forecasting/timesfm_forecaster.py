@@ -257,10 +257,10 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             )
         elif fh is not None and self.horizon_len is not None:
             fh = fh.to_relative(self.cutoff)
-            self._horizon_len = max(self.horizon_len, *fh._values.values)
+            self._horizon_len = max(self.horizon_len, *fh._values)
         elif fh is not None:
             fh = fh.to_relative(self.cutoff)
-            self._horizon_len = max(*fh._values.values)
+            self._horizon_len = max(*fh._values)
         else:
             self._horizon_len = self.horizon_len
 
@@ -310,7 +310,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        if max(fh._values.values) > self._horizon_len:
+        if max(fh._values) > self._horizon_len:
             raise ValueError(
                 f"Error in {self.__class__.__name__}, the forecast horizon exceeds the"
                 f" specified horizon_len of {self._horizon_len}. Change the horizon_len"
