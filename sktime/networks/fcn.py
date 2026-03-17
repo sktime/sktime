@@ -14,7 +14,7 @@ class FCNNetwork(BaseDeepNetwork):
 
     Parameters
     ----------
-    random_states : int, default = 0
+    random_state : int, default = 0
         seed to any needed random actions
     activation : string, default = "relu"
         activation function used for hidden layers;
