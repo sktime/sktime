@@ -138,6 +138,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
             y_pred.append(self.network(x).detach())
         y_pred = cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
         y_pred = y_pred[fh._values - 1]
+        # fh._values.values changed to fh._values in above line
+        # after Forecasting horizon v2 rework
         y_pred = pd.DataFrame(
             y_pred, columns=self._y.columns, index=fh.to_absolute_index(self.cutoff)
         )
