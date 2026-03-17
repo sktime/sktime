@@ -52,23 +52,21 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
 
     def __init__(
         self,
-        num_epochs=16,
-        batch_size=8,
-        in_channels=1,
-        individual=False,
-        criterion=None,
-        criterion_kwargs=None,
-        optimizer=None,
-        optimizer_kwargs=None,
-        lr=0.001,
-        custom_dataset_train=None,
-        custom_dataset_pred=None,
+        num_epochs,
+        batch_size,
+        in_channels,
+        individual,
+        criterion_kwargs,
+        optimizer,
+        optimizer_kwargs,
+        lr,
+        custom_dataset_train,
+        custom_dataset_pred,
     ):
         self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.in_channels = in_channels
         self.individual = individual
-        self.criterion = criterion
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs

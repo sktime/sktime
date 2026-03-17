@@ -124,7 +124,6 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             batch_size=batch_size,
             optimizer=optimizer,
             lr=lr,
-            criterion=criterion,
         )
 
         self.window_length = window_length
