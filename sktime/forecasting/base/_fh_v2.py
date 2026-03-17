@@ -236,6 +236,7 @@ class ForecastingHorizon:
         values_are_nanos = False
 
         if isinstance(values, (int, np.integer)):
+            # processing depends on the sign of the integer
             n = int(values)
             # if positive, create range(1, n+1)
             if n > 0:
