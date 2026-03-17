@@ -647,8 +647,23 @@ class AutoTS(BaseForecaster):
         #     transformed_fh_cutoff = cutoff.index.to_period()[-1]
         # elif isinstance(self._fh._values, pd.DatetimeIndex):
         #     transformed_fh_cutoff = cutoff.index[-1]
-        # temporal FH (was PeriodIndex or DatetimeIndex) —> use period cutoff
+
+        # above code is replaced with below single if statement after
+        # forecasting horizon was refactored and moved away from
+        # using pandas index types for internal representation.
+        # Now the frequency of the forecasting horizon is used to determine
+        # how to transform the cutoff.
+        # The collapse merges the old PeriodIndex and DatetimeIndex branches.
+        # The old DatetimeIndex branch returned a pd.Timestamp,
+        # the new code returns a pd.Period for the same case.
+        # This is safe because the result is only used as input
+        # to to_relative(cutoff) (lines 380, 637, 704).
+        # to_relative calls PandasFHConverter.cutoff_to_steps(cutoff, freq=self._freq)
+        # which accepts both pd.Period and pd.Timestamp, it converts either to a
+        # period ordinal. So the downstream behaviour is identical.
+
         if self._fh._freq is not None:
+            # temporal FH (was PeriodIndex or DatetimeIndex) —> use period cutoff
             transformed_fh_cutoff = cutoff.index.to_period()[-1]
         else:
             transformed_fh_cutoff = len(cutoff.index)
