@@ -200,19 +200,22 @@ class PandasFHConverter:
     # input -> internal representation conversion
 
     @staticmethod
-    def to_internal(values) -> tuple:
+    def to_internal(values, freq=None) -> tuple:
         """Convert pandas input values to internal representation.
 
         All temporal inputs are normalized to integer steps:
+
         - PeriodIndex: .asi8 gives period ordinals (already integer steps)
         - DatetimeIndex with freq: .to_period(freq).asi8 gives ordinals
-        - DatetimeIndex without freq: raises ValueError (freq required)
+        - DatetimeIndex without freq: uses user-provided ``freq`` fallback if provided,
+        otherwise raises ValueError
         - TimedeltaIndex with freq: timedelta / freq_timedelta gives steps
         - TimedeltaIndex without freq: stores nanoseconds with
         values_are_nanos=True (deferred conversion)
 
         The converter infers is_relative from the input type as per the below rules
         and sends back the infered_is_relative:
+
         - PeriodIndex, DatetimeIndex -> absolute (is_relative=False)
         - TimedeltaIndex -> relative (is_relative=True)
         - RangeIndex, integer Index -> relative (is_relative=True)
@@ -236,6 +239,9 @@ class PandasFHConverter:
             - ``list`` of ``pd.Period``, ``pd.Timestamp``, ``pd.Timedelta``,
             ``pd.offsets.BaseOffset``, ``np.timedelta64``, or
             ``datetime.timedelta`` scalars
+        freq : str, pd.Period, pd.Index, or None, default=None
+            Optional fallback frequency. Used when ``values`` is a
+            DatetimeIndex without freq. Extracted via ``extract_freq``.
 
         Returns
         -------
@@ -247,7 +253,7 @@ class PandasFHConverter:
         TypeError
             If ``values`` type is not supported.
         ValueError
-            If DatetimeIndex is provided without freq.
+            If DatetimeIndex is provided without freq and no fallback.
         """
         # pandas Timedelta scalar
         if isinstance(values, pd.Timedelta):
@@ -283,6 +289,8 @@ class PandasFHConverter:
         # DatetimeIndex -> convert to period ordinals
         if isinstance(values, pd.DatetimeIndex):
             freq_str = PandasFHConverter._freqstr(values)
+            if freq_str is None and freq is not None:
+                freq_str = PandasFHConverter.extract_freq(freq)
             if freq_str is None:
                 raise ValueError(
                     "DatetimeIndex without freq is not supported. "
@@ -757,10 +765,10 @@ class PandasFHConverter:
     # final check pending for this function
     @staticmethod
     def extract_freq(obj) -> str | None:
-        """Extract and normalize a frequency string from a pandas object.
+        """Extract and normalize a frequency string from a pandas object or a string.
 
-         Handles pd.Index, pd.Period, pd.offsets.BaseOffset, strings,
-         and objects with a ``cutoff`` attribute (e.g. sktime forecasters).
+        Handles pd.Index, pd.Period, pd.offsets.BaseOffset, strings,
+        and objects with a ``cutoff`` attribute (e.g. sktime forecasters).
 
         Parameters
         ----------

@@ -171,7 +171,7 @@ class ForecastingHorizon:
         else:
             # coerced path: pandas types and non-int lists — delegate to converter
             vals, inferred_is_relative, freq_val, nanos_flag = (
-                PandasFHConverter.to_internal(values)
+                PandasFHConverter.to_internal(values, freq)
             )
 
         # sort, deduplicate, and store
