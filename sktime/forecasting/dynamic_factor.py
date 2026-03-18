@@ -497,50 +497,22 @@ class DynamicFactor(_StatsModelsAdapter):
         bartlett_confint=False,
         acf_kwargs=None,
     ):
-        """Diagnostic plots for standardized residuals of one endogenous variable.
+        """Diagnostic plots for standardized residuals of one endogenous variable."""
 
-        Parameters
-        ----------
-        variable : int , optional
-            Index of the endogenous variable for which the diagnostic
-            plots should be created. Default is 0.
-        lags : int , optional
-            Number of lags to include in the correlogram. Default is 10.
-        fig : Figure , optional
-            If given, subplots are created in this figure instead of in
-            a new figure. Note that the 2x2 grid will be created in the
-            provided figure using fig.add_subplot().
-        figsize : tuple , optional
-            If a figure is created, this argument allows specifying a size.
-            The tuple is (width, height).
-        auto_ylims : bool , optional
-            If True, adjusts automatically the y-axis limits to ACF values.
-        bartlett_confint : bool , default = True
-            Confidence intervals for ACF values are generally placed at 2
-            standard errors around r_k. The formula used for standard error
-            depends upon the situation. If the autocorrelations are being
-            used to test for randomness of residuals as part of the ARIMA routine,
-            the standard errors are determined assuming the residuals are white noise.
-            The approximate formula for any lag is that standard error
-            of each r_k = 1/sqrt(N).For the ACF of raw data, the standard error at
-            a lag k is found as if the right model was an MA(k-1).
-            This allows the possible interpretation that if all autocorrelations
-            past a certain lag are within the limits,
-            the model might be an MA of order defined by
-            the last significant autocorrelation.
-            In this case, a moving average model is assumed for the data
-            and the standard errors for the confidence intervals should be generated
-             using Bartlett's formula.
-        acf_kwargs : dict , optional
-            Optional dictionary of keyword arguments that are directly
-            passed on to the correlogram Matplotlib plot produced by plot_acf().
+        # ensure endogenous variable names are strings
+        try:
+            model_data = self._fitted_forecaster.model.data
 
-        Returns
-        -------
-        Figure
-            Figure instance with diagnostic plots.
-        """
-        self._fitted_forecaster.plot_diagonistics(
+            if hasattr(model_data, "ynames"):
+                if isinstance(model_data.ynames, list):
+                    model_data.ynames = [str(name) for name in model_data.ynames]
+                else:
+                    model_data.ynames = str(model_data.ynames)
+
+        except Exception:
+            pass
+
+        return self._fitted_forecaster.plot_diagnostics(
             variable=variable,
             lags=lags,
             fig=fig,
