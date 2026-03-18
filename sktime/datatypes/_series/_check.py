@@ -46,9 +46,13 @@ from sktime.datatypes._dtypekind import (
     _pandas_dtype_to_kind,
 )
 from sktime.datatypes._series._base import ScitypeSeries
-from sktime.utils.validation.series import is_in_valid_index_types
+from sktime.utils.validation.series import (
+    is_in_valid_index_types,
+    is_in_valid_or_coercible_index_types,
+)
 
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
+
 
 # whether the checks insist on freq attribute is set
 FREQ_SET_CHECK = False
@@ -182,8 +186,8 @@ def _check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must have unique column indices, but found {obj.columns}"
         return ret(False, msg, None, return_metadata)
 
-    # check whether the time index is of valid type
-    if not is_in_valid_index_types(index):
+    # check whether the time index is of valid type (or coercible, e.g. float)
+    if not is_in_valid_or_coercible_index_types(index):
         msg = (
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} or integer index instead."
@@ -328,8 +332,8 @@ class SeriesPdSeries(ScitypeSeries):
             dtype_kind = _get_series_dtypekind(obj, "pd.Series")
             metadata["feature_kind"] = _get_feature_kind(dtype_kind)
 
-        # check whether the time index is of valid type
-        if not is_in_valid_index_types(index):
+        # check whether the time index is of valid type (or coercible, e.g. float)
+        if not is_in_valid_or_coercible_index_types(index):
             msg = (
                 f"{type(index)} is not supported for {var_name}, use "
                 f"one of {VALID_INDEX_TYPES} or integer index instead."
