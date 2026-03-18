@@ -139,6 +139,9 @@ class MLPNetworkTorch(NNModule):
         layers.append(nnFlatten())
 
         prev_dim = in_features
+
+        from sktime.networks.utils import instantiate_activation
+
         # defining the hidden layers
         nnLinear = _safe_import("torch.nn.Linear")
         nnDropout = _safe_import("torch.nn.Dropout")
@@ -156,7 +159,7 @@ class MLPNetworkTorch(NNModule):
                 )
             )
             if self.activation_hidden:
-                layers.append(self._instantiate_activation(layer="hidden"))
+                layers.append(instantiate_activation(self.activation_hidden))
             prev_dim = self.hidden_dim
 
         # defining the model
@@ -171,7 +174,7 @@ class MLPNetworkTorch(NNModule):
             out_features=self.num_classes,
         )
         if self.activation:
-            self._activation = self._instantiate_activation(layer="output")
+            self._activation = instantiate_activation(self.activation)
 
     def forward(self, X):
         """Forward pass through the network.
@@ -199,77 +202,3 @@ class MLPNetworkTorch(NNModule):
         if self.activation:
             out = self._activation(out)
         return out
-
-    def _instantiate_activation(self, layer):
-        """Instantiate the activation function to be applied within the MLP.
-
-        Parameters
-        ----------
-        layer : str
-            The name of the layer for which to instantiate the activation function.
-            Can be either 'output' or 'hidden'.
-
-        Returns
-        -------
-        activation_function : torch.nn.Module
-            The activation function to be applied on the output layer.
-        """
-        if layer == "hidden":
-            if isinstance(self.activation_hidden, NNModule):
-                return self.activation_hidden
-            elif isinstance(self.activation_hidden, str):
-                if self.activation_hidden.lower() == "relu":
-                    return _safe_import("torch.nn.ReLU")()
-                elif self.activation_hidden.lower() == "leakyrelu":
-                    return _safe_import("torch.nn.LeakyReLU")()
-                elif self.activation_hidden.lower() == "elu":
-                    return _safe_import("torch.nn.ELU")()
-                elif self.activation_hidden.lower() == "prelu":
-                    return _safe_import("torch.nn.PReLU")()
-                elif self.activation_hidden.lower() == "gelu":
-                    return _safe_import("torch.nn.GELU")()
-                elif self.activation_hidden.lower() == "selu":
-                    return _safe_import("torch.nn.SELU")()
-                elif self.activation_hidden.lower() == "rrelu":
-                    return _safe_import("torch.nn.RReLU")()
-                elif self.activation_hidden.lower() == "celu":
-                    return _safe_import("torch.nn.CELU")()
-                elif self.activation_hidden.lower() == "tanh":
-                    return _safe_import("torch.nn.Tanh")()
-                elif self.activation_hidden.lower() == "hardtanh":
-                    return _safe_import("torch.nn.Hardtanh")()
-                else:
-                    raise ValueError(
-                        "If `activation_hidden` is not None, it must be one of "
-                        "'relu', 'leakyrelu', 'elu', 'prelu', 'gelu', 'selu', "
-                        "'rrelu', 'celu', 'tanh', 'hardtanh'. "
-                        f"But found {self.activation_hidden}"
-                    )
-            else:
-                raise TypeError(
-                    "`activation_hidden` should either be of type torch.nn.Module or"
-                    f" str. But found the type to be: {type(self.activation_hidden)}"
-                )
-        elif layer == "output":
-            if isinstance(self.activation, NNModule):
-                return self.activation
-            elif isinstance(self.activation, str):
-                if self.activation.lower() == "sigmoid":
-                    return _safe_import("torch.nn.Sigmoid")()
-                elif self.activation.lower() == "softmax":
-                    return _safe_import("torch.nn.Softmax")(dim=1)
-                elif self.activation.lower() == "logsoftmax":
-                    return _safe_import("torch.nn.LogSoftmax")(dim=1)
-                elif self.activation.lower() == "logsigmoid":
-                    return _safe_import("torch.nn.LogSigmoid")()
-                else:
-                    raise ValueError(
-                        "If `activation` is not None, it must be one of "
-                        "'sigmoid', 'logsigmoid', 'softmax' or 'logsoftmax'. "
-                        f"Found {self.activation}"
-                    )
-            else:
-                raise TypeError(
-                    "`activation` should either be of type str or torch.nn.Module. "
-                    f"But found the type to be: {type(self.activation)}"
-                )
