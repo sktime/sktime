@@ -70,6 +70,11 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
     ...     fh=range(1, 11), X=X_test
     ... )
 
+    Notes
+    -----
+    Requires Python < 3.14. GluonTS uses Pydantic V1, which is incompatible
+    with Python 3.14+ (PEP 649/749 lazy annotation evaluation).
+
     References
     ----------
     .. [1] https://huggingface.co/collections/Salesforce/moirai-moe-67c8b4d6196e0d0a2e15de37
@@ -87,6 +92,7 @@ class MoiraiMoEForecaster(_BaseGlobalForecaster):
         ],
         # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
         "maintainers": ["priyanshuharshbodhi1"],
+        # gluonts uses pydantic v1, incompatible with Python 3.14+ (PEP 649/749)
         "python_version": "<3.14",
         "python_dependencies": [
             "gluonts",
