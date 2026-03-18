@@ -22,7 +22,10 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         for example: {"lstm_layers": 3, "hidden_continuous_size": 10}
     dataset_params : dict[str, Any] (default=None)
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
-        max_prediction_length will be overwrite according to fh
+        By default, `max_prediction_length` is inferred from `fh` passed to ``fit``.
+        If explicitly set in `dataset_params` (or via
+        `model_params['prediction_length']`), it must be at least as large
+        as the maximum step in `fh`.
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
         will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : dict[str, Any] (default=None)
@@ -310,7 +313,10 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         for example: {"num_blocks": [5, 5], "widths": [128, 1024]}
     dataset_params : dict[str, Any] (default=None)
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
-        max_prediction_length will be overwrite according to fh
+        By default, `max_prediction_length` is inferred from `fh` passed to ``fit``.
+        If explicitly set in `dataset_params` (or via
+        `model_params['prediction_length']`), it must be at least as large
+        as the maximum step in `fh`.
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
         will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : dict[str, Any] (default=None)
@@ -601,7 +607,10 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         for example: {"cell_type": "GRU", "rnn_layers": 3}
     dataset_params : dict[str, Any] (default=None)
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
-        max_prediction_length will be overwrite according to fh
+        By default, `max_prediction_length` is inferred from `fh` passed to ``fit``.
+        If explicitly set in `dataset_params` (or via
+        `model_params['prediction_length']`), it must be at least as large
+        as the maximum step in `fh`.
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
         will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : dict[str, Any] (default=None)
@@ -882,7 +891,10 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         for example: {"interpolation_mode": "nearest", "activation": "Tanh"}
     dataset_params : dict[str, Any] (default=None)
         parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
-        max_prediction_length will be overwrite according to fh
+        By default, `max_prediction_length` is inferred from `fh` passed to ``fit``.
+        If explicitly set in `dataset_params` (or via
+        `model_params['prediction_length']`), it must be at least as large
+        as the maximum step in `fh`.
         time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
         will be inferred from data, so you do not have to pass them
     train_to_dataloader_params : dict[str, Any] (default=None)
