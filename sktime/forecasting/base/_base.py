@@ -148,6 +148,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
+        # Performance optimization flag for vectorized inner loops.
+        # When True, _check_X_y skips expensive validation (check_is_scitype,
+        # metadata checks, etc.) because the data originates from VectorizedDF
+        # slicing which guarantees correct mtype. This flag is NEVER set by
+        # user code — only internally by _vectorize() on cloned estimators.
+        self._skip_input_check = False
+
         super().__init__()
         _check_estimator_deps(self)
         self._state = "new"
@@ -397,7 +404,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         return self._state
 
-    def fit(self, y, X=None, fh=None):
+    def fit(self, y, X=None, fh=None, _skip_input_check=False):
         """Fit forecaster to training data.
 
         State change:
@@ -446,6 +453,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``y.index``.
 
+        _skip_input_check : bool, default=False
+            Private parameter, not part of public API.
+            If True, skips redundant input validation. Used internally by
+            _vectorize() to avoid re-validating data that was already
+            validated at the outer level and sliced by VectorizedDF.
+
         Returns
         -------
         self : Reference to self.
@@ -456,6 +469,11 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # if fit is called, estimator is reset, including fitted state
         if not self._state == "pretrained":
             self.reset()
+
+        # Restore _skip_input_check after reset() since reset() re-runs
+        # __init__ which sets _skip_input_check=False. This flag is passed
+        # by _vectorize() to skip redundant validation in inner loops.
+        self._skip_input_check = _skip_input_check
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -525,7 +543,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             ``Series``, ``Panel``, ``Hierarchical`` scitype, same format (see above)
         """
         # handle inputs
-        self.check_is_fitted()
+        # Skip fitted-state check when called from vectorized inner loop;
+        # the outer predict() already verified the fitted state.
+        if not self._skip_input_check:
+            self.check_is_fitted()
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
@@ -541,12 +562,17 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             y_pred = self._vectorize("predict", X=X_inner, fh=fh)
 
         # convert to output mtype, identical with last y mtype seen
-        y_out = convert_to(
-            y_pred,
-            self._y_metadata["mtype"],
-            store=self._converter_store_y,
-            store_behaviour="freeze",
-        )
+        # Skip conversion in vectorized inner loop - the outer _vectorize
+        # handles output reconstruction, and _y_metadata may not be set.
+        if not self._skip_input_check:
+            y_out = convert_to(
+                y_pred,
+                self._y_metadata["mtype"],
+                store=self._converter_store_y,
+                store_behaviour="freeze",
+            )
+        else:
+            y_out = y_pred
 
         return y_out
 
@@ -717,7 +743,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 "think this estimator should have the capability, please open "
                 "an issue on sktime."
             )
-        self.check_is_fitted()
+        if not self._skip_input_check:
+            self.check_is_fitted()
 
         # input checks and conversions
 
@@ -813,7 +840,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 "think this estimator should have the capability, please open "
                 "an issue on sktime."
             )
-        self.check_is_fitted()
+        if not self._skip_input_check:
+            self.check_is_fitted()
 
         # input checks and conversions
 
@@ -912,7 +940,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 "think this estimator should have the capability, please open "
                 "an issue on sktime."
             )
-        self.check_is_fitted()
+        if not self._skip_input_check:
+            self.check_is_fitted()
 
         # input checks and conversions
 
@@ -1232,7 +1261,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         return params
 
-    def update(self, y, X=None, update_params=True):
+    def update(self, y, X=None, update_params=True, _skip_input_check=False):
         """Update cutoff value and, optionally, fitted parameters.
 
         If no estimator-specific update method has been implemented,
@@ -1289,11 +1318,23 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             If ``False``, only the cutoff is updated, model parameters
             (e.g., coefficients) are not updated.
 
+        _skip_input_check : bool, default=False
+            Private parameter, not part of public API.
+            If True, skips redundant input validation. Used internally by
+            _vectorize() to avoid re-validating data that was already
+            validated at the outer level and sliced by VectorizedDF.
+
         Returns
         -------
         self : reference to self
         """
-        self.check_is_fitted()
+        # Skip fitted-state check when called from vectorized inner loop;
+        # the outer update() already verified the fitted state.
+        # Set the flag from the kwarg (not from self, since update doesn't
+        # call reset but we receive it from _vectorize for consistency).
+        self._skip_input_check = _skip_input_check
+        if not self._skip_input_check:
+            self.check_is_fitted()
 
         if y is None or (hasattr(y, "__len__") and len(y) == 0):
             warn(
@@ -1531,7 +1572,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             )
             return self.predict(fh=fh, X=X)
 
-        self.check_is_fitted()
+        if not self._skip_input_check:
+            self.check_is_fitted()
 
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -1804,6 +1846,37 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         if X is None and y is None:
             return None, None
+
+        # Performance optimization: skip redundant validation in vectorized
+        # inner loops. When _skip_input_check is True, data comes from
+        # VectorizedDF slicing, which guarantees correct mtype/scitype.
+        # We still perform lightweight type conversion (typically a no-op)
+        # and set minimal metadata required by inner methods.
+        if self._skip_input_check:
+            y_inner_mtype = _coerce_to_list(
+                y_inner_mtype or self.get_tag("y_inner_mtype")
+            )
+            X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
+            y_inner = (
+                convert_to(y, to_type=y_inner_mtype) if y is not None else None
+            )
+            X_inner = (
+                convert_to(X, to_type=X_inner_mtype) if X is not None else None
+            )
+
+            # Set minimal metadata needed by inner methods (e.g., _update
+            # accesses _y_mtype_last_seen, predict accesses _y_metadata).
+            # Use the target mtype since convert_to already ensures data
+            # is in this type — avoids a separate mtype detection call.
+            if y is not None:
+                y_mtype = y_inner_mtype[0]
+                self._y_mtype_last_seen = y_mtype
+                if not hasattr(self, "_y_metadata") or self._y_metadata is None:
+                    self._y_metadata = {"mtype": y_mtype}
+                else:
+                    self._y_metadata["mtype"] = y_mtype
+
+            return X_inner, y_inner
 
         def _most_complex_scitype(scitypes, smaller_equal_than=None):
             """Return most complex scitype in a list of str."""
@@ -2294,6 +2367,23 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         return self._fh
 
+    def _set_skip_input_check_on_forecasters(self, value):
+        """Set _skip_input_check on all vectorized inner forecasters.
+
+        This is used to enable/disable redundant validation skipping
+        in the inner loop of vectorized operations.
+
+        Parameters
+        ----------
+        value : bool
+            If True, inner forecasters skip input validation.
+            If False, inner forecasters perform full input validation.
+        """
+        if hasattr(self, "forecasters_"):
+            for col in self.forecasters_.columns:
+                for idx in self.forecasters_.index:
+                    self.forecasters_.loc[idx, col]._skip_input_check = value
+
     def _vectorize(self, methodname, **kwargs):
         """Vectorized/iterated loop over method of BaseForecaster.
 
@@ -2333,6 +2423,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             else:
                 forecasters_ = self.forecasters_
 
+            # Pass _skip_input_check=True through kwargs so inner fit()/update()
+            # calls skip redundant validation. For fit(), this is necessary
+            # because reset() wipes any flag set on clones. For update(),
+            # it provides a clean kwarg-based mechanism.
+            # Safe because the outer fit()/update() already validated data.
+            kwargs["_skip_input_check"] = True
+
             self.forecasters_ = y.vectorize_est(
                 forecasters_,
                 method=methodname,
@@ -2340,6 +2437,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 backend_params=self.get_config()["backend:parallel:params"],
                 **kwargs,
             )
+
+            # Unset skip flag after vectorized call to avoid persisting
+            # the temporary optimization state on stored forecasters.
+            self._set_skip_input_check_on_forecasters(False)
             return self
 
         # predict-like methods: return as list, then run through reconstruct
@@ -2347,6 +2448,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         elif methodname in PREDICT_METHODS:
             if methodname == "update_predict_single":
                 self._yvec = y
+
+            # Set skip flag on stored forecasters before vectorized predict call.
+            # Safe because the outer predict method already validated inputs.
+            self._set_skip_input_check_on_forecasters(True)
 
             y_preds = self._yvec.vectorize_est(
                 self.forecasters_,
@@ -2356,6 +2461,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 backend_params=self.get_config()["backend:parallel:params"],
                 **kwargs,
             )
+
+            # Unset skip flag after vectorized call.
+            self._set_skip_input_check_on_forecasters(False)
 
             # if we vectorize over columns,
             #   we need to replace top column level with variable names - part 1
