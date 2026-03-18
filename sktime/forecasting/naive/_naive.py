@@ -213,8 +213,9 @@ class NaiveForecaster(_BaseWindowForecaster):
         else:
             allowed_strategies = ("last", "mean", "drift")
             raise ValueError(
-                f"Unknown strategy: {self.strategy}. Expected "
-                f"one of: {allowed_strategies}."
+                f"Unknown strategy: '{self.strategy}'. "
+                f"Valid options are {allowed_strategies}. "
+                f"Please choose one of these."
             )
 
         # check window length
