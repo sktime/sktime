@@ -23,9 +23,19 @@ class MLPNetwork(BaseDeepNetwork):
     dropout : float or tuple, default=(0.1, 0.2, 0.2, 0.3)
         The dropout rate for the hidden layers.
         If float, the same rate is used for all layers.
-        If tuple, it must have length equal to number of hidden layers in the MLP,
-        each element specifying the dropout rate for the corresponding hidden layer.
-        Current implementation of the MLP has 4 hidden layers.
+        If tuple, length must equal n_layers + 1,
+        where the first n_layers elements correspond
+        to dropout applied before each hidden Dense layer,
+        and the last element corresponds to the dropout
+        applied after the final hidden layer (before the output layer).
+    n_layers : int, default=3
+        Number of hidden Dense layers in the MLP.
+    hidden_dim : int or tuple, default=500
+        Number of units in each hidden Dense layer.
+        If int, the same number of units is used for all hidden layers.
+        If list or tuple, length must equal n_layers, with each element
+        specifying the number of units for the corresponding hidden layer.
+
 
     References
     ----------
@@ -42,11 +52,47 @@ class MLPNetwork(BaseDeepNetwork):
         "python_dependencies": "tensorflow",
     }
 
-    def __init__(self, random_state=0, activation="relu", dropout=(0.1, 0.2, 0.2, 0.3)):
+    def __init__(
+        self,
+        random_state=0,
+        activation="relu",
+        dropout=(0.1, 0.2, 0.2, 0.3),
+        n_layers=3,
+        hidden_dim=500,
+    ):
         _check_dl_dependencies(severity="error")
+        # Validate dropout length against n_layers at init time
+        if isinstance(dropout, tuple):
+            if len(dropout) != n_layers + 1:
+                raise ValueError(
+                    "If `dropout` is a tuple, its length must"
+                    " equal n_layers + 1. "
+                    f"Got len(dropout)={len(dropout)} but n_layers={n_layers},"
+                    f"so expected length {n_layers + 1}."
+                )
+        elif not isinstance(dropout, float):
+            raise TypeError(
+                "`dropout` should either be of type float or tuple. "
+                f"But found the type to be: {type(dropout)}"
+            )
+        # Validate hidden_dim length against n_layers at init time
+        if isinstance(hidden_dim, (list, tuple)):
+            if len(hidden_dim) != n_layers:
+                raise ValueError(
+                    "If `hidden_dim` is a list or tuple, its length must equal "
+                    f"n_layers. Got len(hidden_dim)={len(hidden_dim)} but "
+                    f"n_layers={n_layers}."
+                )
+        elif not isinstance(hidden_dim, int):
+            raise TypeError(
+                "`hidden_dim` should be an int or a list/tuple of ints. "
+                f"But found the type to be: {type(hidden_dim)}"
+            )
         self.activation = activation
         self.random_state = random_state
         self.dropout = dropout
+        self.n_layers = n_layers
+        self.hidden_dim = hidden_dim
         super().__init__()
 
     def build_network(self, input_shape, **kwargs):
@@ -63,23 +109,14 @@ class MLPNetwork(BaseDeepNetwork):
         output_layer : a keras layer
         """
         if isinstance(self.dropout, float):
-            _dropout = (self.dropout,) * 4
-        elif isinstance(self.dropout, tuple):
-            if len(self.dropout) != 4:
-                raise ValueError(
-                    "If `dropout` is a tuple, it must have length equal to the "
-                    "number of hidden layers in the MLP, where each element "
-                    "specifies the rate for the corresponding layer. "
-                    "The current implementation of the MLP has 4 hidden layers, "
-                    f"hence the tuple must be of length 4. "
-                    f"Found length of dropout to be: {len(self.dropout)}."
-                )
-            _dropout = self.dropout
+            _dropout = (self.dropout,) * (self.n_layers + 1)
         else:
-            raise TypeError(
-                "`dropout` should either be of type float or tuple. "
-                f"But found the type to be: {type(self.dropout)}"
-            )
+            _dropout = self.dropout
+
+        if isinstance(self.hidden_dim, (list, tuple)):
+            _hidden_dims = list(self.hidden_dim)
+        else:
+            _hidden_dims = [self.hidden_dim] * self.n_layers
 
         from tensorflow import keras
 
@@ -87,15 +124,10 @@ class MLPNetwork(BaseDeepNetwork):
         input_layer = keras.layers.Input(input_shape)
         input_layer_flattened = keras.layers.Flatten()(input_layer)
 
-        layer_1 = keras.layers.Dropout(_dropout[0])(input_layer_flattened)
-        layer_1 = keras.layers.Dense(500, activation=self.activation)(layer_1)
+        x = input_layer_flattened
+        for i in range(self.n_layers):
+            x = keras.layers.Dropout(_dropout[i])(x)
+            x = keras.layers.Dense(_hidden_dims[i], activation=self.activation)(x)
 
-        layer_2 = keras.layers.Dropout(_dropout[1])(layer_1)
-        layer_2 = keras.layers.Dense(500, activation=self.activation)(layer_2)
-
-        layer_3 = keras.layers.Dropout(_dropout[2])(layer_2)
-        layer_3 = keras.layers.Dense(500, activation=self.activation)(layer_3)
-
-        output_layer = keras.layers.Dropout(_dropout[3])(layer_3)
-
+        output_layer = keras.layers.Dropout(_dropout[self.n_layers])(x)
         return input_layer, output_layer
