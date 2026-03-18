@@ -82,7 +82,7 @@ all_extras = [
   'dash!=2.9.0; python_version < "3.13"',
   'dask<2025.2.1,>2024.8.2; extra == "dataframe" and python_version < "3.13"',
   'dtw-python; python_version < "3.13"',
-  'gluonts>=0.9; python_version < "3.13"',
+  'gluonts>=0.9; python_version < "3.14"',
   'h5py; python_version < "3.12"',
   'hmmlearn>=0.2.7; python_version < "3.11"',
   'holidays; python_version < "3.13"',
