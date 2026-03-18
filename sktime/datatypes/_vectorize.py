@@ -100,11 +100,54 @@ class VectorizedDF:
 
         self.converter_store = dict()
 
+        # --- Requirement 1: detect polars input ---
+        try:
+            import polars as pl
+
+            if isinstance(X, (pl.DataFrame, pl.LazyFrame)):
+                self.is_polars = True
+                self.is_lazy = isinstance(X, pl.LazyFrame)
+            else:
+                self.is_polars = False
+                self.is_lazy = False
+        except ImportError:
+            self.is_polars = False
+            self.is_lazy = False
+
         X_multiindex = self._init_conversion(X)
-        self.X_mi_columns = X_multiindex.columns
-        self.X_mi_index = X_multiindex.index
+
+        if self.is_polars:
+            # FIX 1: moved get_mi_cols call inside the try block so a
+            # missing adapter raises a clear ImportError instead of a
+            # silent pass followed by an uninformative NameError.
+            try:
+                from sktime.datatypes._adapter.polars import get_mi_cols
+                self.X_index_cols = get_mi_cols(X_multiindex)
+            except ImportError:
+                raise ImportError(
+                    "sktime polars adapter not found. "
+                    "Ensure sktime is installed with polars support."
+                )
+
+            if self.is_lazy:
+                schema = X_multiindex.collect_schema()
+                all_cols = schema.names()
+            else:
+                all_cols = X_multiindex.columns
+
+            self.X_mi_columns = [c for c in all_cols if c not in self.X_index_cols]
+            self.X_mi_index = None
+        else:
+            self.X_mi_columns = X_multiindex.columns
+            self.X_mi_index = X_multiindex.index
+
         if remember_data:
             self.X_multiindex = X_multiindex
+
+        # FIX 3: initialise cache for lazy iteration keys so reconstruct()
+        # can use the same key order as items() without a second .collect()
+        self._lazy_yielded_keys = []
+
         self.iter_indices = self._init_iter_indices()
 
         self.shape = self._iter_shape()
@@ -152,7 +195,10 @@ class VectorizedDF:
         )
 
     def _init_conversion(self, X):
-        """Convert X to a pandas multiindex format."""
+        """Convert X to a pandas multiindex format or keep as polars."""
+        # --- Requirement 2: skip pandas coercion for polars ---
+        if getattr(self, "is_polars", False):
+            return X
         is_scitype = self.is_scitype
         return self._coerce_to_df(X, is_scitype, store=self.converter_store)
 
@@ -161,6 +207,38 @@ class VectorizedDF:
         iterate_as = self.iterate_as
         is_scitype = self.is_scitype
         iterate_cols = self.iterate_cols
+
+        # --- Requirement 3: polars init_iter_indices ---
+        if getattr(self, "is_polars", False):
+            iter_levels = self._iter_levels(iterate_as)
+
+            if not iter_levels:
+                row_ix = None
+            elif self.is_lazy:
+                # Lazy path: do NOT call .collect() at init time.
+                # Store the group column names for deferred iteration.
+                self._lazy_group_cols = [
+                    self.X_index_cols[i] for i in iter_levels
+                ]
+                row_ix = None
+            else:
+                # Eager path: use partition_by to get unique group keys
+                # without calling .collect()
+                group_cols = [self.X_index_cols[i] for i in iter_levels]
+                X_unique = self.X_multiindex.select(group_cols).unique()
+                row_ix = [
+                    tuple(row.values()) if len(row) > 1
+                    else list(row.values())[0]
+                    for row in X_unique.iter_rows(named=True)
+                ]
+
+            if iterate_cols:
+                col_ix = self.X_mi_columns
+            else:
+                col_ix = None
+            return row_ix, col_ix
+
+        # --- pandas path (unchanged) ---
         X_ix = self.X_mi_index
 
         if iterate_as == is_scitype:
@@ -201,7 +279,24 @@ class VectorizedDF:
         return self.iter_indices
 
     def __len__(self):
-        """Return number of indices to iterate over."""
+        """Return number of indices to iterate over.
+
+        Raises
+        ------
+        TypeError
+            If called on a lazy Polars VectorizedDF where the group count
+            is unknown without triggering .collect().
+        """
+        # FIX 2: lazy frames cannot know their group count at init time
+        # without calling .collect(). Raise a clear TypeError so callers
+        # are never silently given a wrong value.
+        if getattr(self, "is_lazy", False):
+            raise TypeError(
+                "len() is not supported for lazy Polars VectorizedDF because "
+                "the number of groups cannot be determined without materializing "
+                "the LazyFrame. Call .collect() on your LazyFrame first, then "
+                "pass the resulting DataFrame to VectorizedDF."
+            )
         return np.prod(self.shape)
 
     def __iter__(self):
@@ -264,22 +359,74 @@ class VectorizedDF:
 
         def _iter_cols(inst, group_name=None):
             if iterate_cols:
-                for col in inst.columns:
-                    yield group_name, col, _enforce_index_freq(inst[[col]])
+                if getattr(self, "is_polars", False):
+                    # FIX 4: group_cols were already dropped from inst
+                    # before _iter_cols is called, so X_index_cols no
+                    # longer exist on inst. Select only the data column.
+                    for col in self.X_mi_columns:
+                        yield group_name, col, inst.select([col])
+                else:
+                    for col in inst.columns:
+                        yield group_name, col, _enforce_index_freq(inst[[col]])
             else:
-                yield group_name, None, _enforce_index_freq(inst)
+                if getattr(self, "is_polars", False):
+                    yield group_name, None, inst
+                else:
+                    yield group_name, None, _enforce_index_freq(inst)
 
         iter_levels = self._iter_levels(iterate_as)
-        is_self_iter = len(iter_levels) == self.X_mi_index.nlevels
+
+        if getattr(self, "is_polars", False):
+            is_self_iter = len(iter_levels) == len(self.X_index_cols)
+        else:
+            is_self_iter = len(iter_levels) == self.X_mi_index.nlevels
 
         if is_self_iter:
             yield from _iter_cols(self.X_multiindex)
         else:
-            if isinstance(iter_levels, (list, tuple)) and len(iter_levels) == 1:
-                # single level, groupby expects scalar
-                iter_levels = iter_levels[0]
-            for name, group in self.X_multiindex.groupby(level=iter_levels, sort=False):
-                yield from _iter_cols(group.droplevel(iter_levels), group_name=name)
+            # --- Requirement 5: polars iteration paths ---
+            if getattr(self, "is_polars", False):
+                group_cols = [self.X_index_cols[i] for i in iter_levels]
+
+                if self.is_lazy:
+                    # Lazy path: call .collect() exactly ONCE on the full
+                    # frame, partition, re-lazify each slice, and cache
+                    # keys in self._lazy_yielded_keys in the exact order
+                    # slices are produced so reconstruct() never needs
+                    # to re-collect independently.
+                    self._lazy_yielded_keys = []
+                    collected = self.X_multiindex.collect()
+                    partitions = collected.partition_by(
+                        group_cols, as_dict=True
+                    )
+                    for key, group in partitions.items():
+                        # cache raw key before normalising
+                        self._lazy_yielded_keys.append(key)
+                        group = group.drop(group_cols).lazy()
+                        if isinstance(key, tuple) and len(key) == 1:
+                            key = key[0]
+                        yield from _iter_cols(group, group_name=key)
+                else:
+                    # Eager path: use partition_by natively
+                    partitions = self.X_multiindex.partition_by(
+                        group_cols, as_dict=True
+                    )
+                    for key, group in partitions.items():
+                        group = group.drop(group_cols)
+                        if isinstance(key, tuple) and len(key) == 1:
+                            key = key[0]
+                        yield from _iter_cols(group, group_name=key)
+            else:
+                # --- pandas path (unchanged) ---
+                if isinstance(iter_levels, (list, tuple)) and len(iter_levels) == 1:
+                    # single level, groupby expects scalar
+                    iter_levels = iter_levels[0]
+                for name, group in self.X_multiindex.groupby(
+                    level=iter_levels, sort=False
+                ):
+                    yield from _iter_cols(
+                        group.droplevel(iter_levels), group_name=name
+                    )
 
     def _iter_levels(self, iterate_as):
         """Get the levels to group by for iteration using iterate_as.
@@ -301,6 +448,8 @@ class VectorizedDF:
                 iter_levels = 2
             elif iterate_as == "Series":
                 iter_levels = 1
+        if getattr(self, "is_polars", False):
+            return list(range(len(self.X_index_cols) - iter_levels))
         return list(range(self.X_mi_index.nlevels - iter_levels))
 
     def _iter_shape(self, iterate_as=None, iterate_cols=None):
@@ -313,7 +462,8 @@ class VectorizedDF:
 
         Returns
         -------
-        A tuple of the number of groups and columns to iterate over
+        A tuple of the number of groups and columns to iterate over.
+        For lazy Polars frames, the group count is -1 (unknown until collected).
         """
         if iterate_as is None:
             iterate_as = self.iterate_as
@@ -322,10 +472,34 @@ class VectorizedDF:
             iterate_cols = self.iterate_cols
 
         iter_levels = self._iter_levels(iterate_as)
-        is_self_iter = len(iter_levels) == self.X_mi_index.nlevels
+
+        # --- Requirement 4: polars iter_shape ---
+        if getattr(self, "is_polars", False):
+            is_self_iter = len(iter_levels) == len(self.X_index_cols)
+            if is_self_iter:
+                ngroups = 1
+            elif self.is_lazy:
+                # FIX 2: do NOT call .collect() here. The exact group
+                # count is unknowable without materializing the frame.
+                # Return -1 as a sentinel. __len__ raises a clear
+                # TypeError for lazy frames so callers are never given
+                # a silently wrong count.
+                ngroups = -1
+            else:
+                # Eager path: .unique().height, no .collect() needed
+                group_cols = [self.X_index_cols[i] for i in iter_levels]
+                ngroups = self.X_multiindex.select(group_cols).unique().height
+        else:
+            # --- pandas path (unchanged) ---
+            is_self_iter = len(iter_levels) == self.X_mi_index.nlevels
+            ngroups = (
+                1
+                if is_self_iter
+                else self.X_multiindex.groupby(level=iter_levels).ngroups
+            )
 
         return (
-            1 if is_self_iter else self.X_multiindex.groupby(level=iter_levels).ngroups,
+            ngroups,
             len(self.X_mi_columns) if iterate_cols else 1,
         )
 
@@ -377,6 +551,168 @@ class VectorizedDF:
                 (pd-muliindex mtype for Panel, or pd_multiindex_hier for Hierarchical)
             if convert_back=True, will have same format and mtype as X input to __init__
         """
+
+        # --- Requirement 6: polars reconstruct ---
+        if getattr(self, "is_polars", False):
+            try:
+                import polars as pl
+            except ImportError:
+                raise ImportError(
+                    "polars is required for polars data containers"
+                )
+
+            def _get_cols(x):
+                """Get column names from a polars DataFrame or LazyFrame."""
+                if hasattr(x, "collect_schema"):
+                    return x.collect_schema().names()
+                return x.columns
+
+            def _force_flat_polars(df_list):
+                force_flat = len(df_list) > 1 and any(
+                    len(_get_cols(x)) > 1 for x in df_list
+                )
+                all_col_idx = [
+                    ix for df in df_list for ix in _get_cols(df)
+                ]
+                force_flat = force_flat or len(set(all_col_idx)) != len(
+                    all_col_idx
+                )
+                return force_flat
+
+            row_ix, col_ix = self.get_iter_indices()
+            force_flat = False
+            iter_levels = self._iter_levels(self.iterate_as)
+            group_cols = [self.X_index_cols[i] for i in iter_levels]
+
+            if row_ix is None and col_ix is None:
+                X_mi_reconstructed = df_list[0]
+            elif col_ix is None:
+                if self.is_lazy:
+                    # FIX 3: use self._lazy_yielded_keys which were cached
+                    # by items() in the exact same order as the slices were
+                    # produced. Never re-collect here — a second .collect()
+                    # may return keys in a different order, attaching them
+                    # to the wrong slices.
+                    keys = self._lazy_yielded_keys
+                else:
+                    keys = row_ix
+
+                new_df_list = []
+                for idx, df in enumerate(df_list):
+                    row_val = keys[idx]
+                    if not isinstance(row_val, tuple):
+                        row_val = (row_val,)
+                    df_with_keys = df
+                    for col_name, val in zip(group_cols, row_val):
+                        if col_name not in _get_cols(df_with_keys):
+                            df_with_keys = df_with_keys.with_columns(
+                                pl.lit(val).alias(col_name)
+                            )
+                    cols = _get_cols(df_with_keys)
+                    ordered = group_cols + [
+                        c for c in cols if c not in group_cols
+                    ]
+                    df_with_keys = df_with_keys.select(ordered)
+                    new_df_list.append(df_with_keys)
+                X_mi_reconstructed = pl.concat(
+                    new_df_list, how="vertical"
+                )
+            elif row_ix is None:
+                force_flat = _force_flat_polars(df_list)
+                if col_multiindex in ["flat", "multiindex"] or force_flat:
+                    new_df_list = []
+                    for idx, df in enumerate(df_list):
+                        c_ix = col_ix[idx]
+                        if isinstance(c_ix, tuple):
+                            c_ix = "__".join([str(c) for c in c_ix])
+                        cols = _get_cols(df)
+                        rename_dict = {
+                            c: f"{c_ix}__{c}"
+                            for c in cols
+                            if c not in group_cols
+                        }
+                        df = df.rename(rename_dict)
+                        new_df_list.append(df)
+                    X_mi_reconstructed = pl.concat(
+                        new_df_list, how="horizontal"
+                    )
+                else:
+                    X_mi_reconstructed = pl.concat(
+                        df_list, how="horizontal"
+                    )
+            else:
+                # both row_ix and col_ix are not None
+                col_concats = []
+                row_n = len(row_ix)
+                col_n = len(col_ix)
+                for i in range(row_n):
+                    ith_col_block = df_list[i * col_n : (i + 1) * col_n]
+                    force_flat = force_flat or _force_flat_polars(
+                        ith_col_block
+                    )
+
+                    new_col_block = []
+                    for idx, df in enumerate(ith_col_block):
+                        if col_multiindex in ["flat", "multiindex"] or force_flat:
+                            c_ix = col_ix[idx]
+                            if isinstance(c_ix, tuple):
+                                c_ix = "__".join([str(c) for c in c_ix])
+                            cols = _get_cols(df)
+                            rename_dict = {
+                                c: f"{c_ix}__{c}"
+                                for c in cols
+                                if c not in group_cols
+                            }
+                            df = df.rename(rename_dict)
+                        new_col_block.append(df)
+
+                    col_concat = pl.concat(new_col_block, how="horizontal")
+
+                    row_val = row_ix[i]
+                    if not isinstance(row_val, tuple):
+                        row_val = (row_val,)
+
+                    for col_name, val in zip(group_cols, row_val):
+                        if col_name not in _get_cols(col_concat):
+                            col_concat = col_concat.with_columns(
+                                pl.lit(val).alias(col_name)
+                            )
+
+                    cols = _get_cols(col_concat)
+                    ordered = group_cols + [
+                        c for c in cols if c not in group_cols
+                    ]
+                    col_concat = col_concat.select(ordered)
+                    col_concats.append(col_concat)
+
+                X_mi_reconstructed = pl.concat(
+                    col_concats, how="vertical"
+                )
+
+            if not convert_back:
+                return X_mi_reconstructed
+            else:
+                X_orig_mtype = self.X_orig_mtype
+                is_scitype = self.is_scitype
+                if X_orig_mtype is None:
+                    X_orig_mtype = mtype(self.X, as_scitype=self.is_scitype)
+
+                # --- Requirement 6: lazy convert_back returns .lazy() ---
+                if self.is_lazy:
+                    # Ensure we return a LazyFrame for lazy inputs
+                    if not isinstance(X_mi_reconstructed, pl.LazyFrame):
+                        X_mi_reconstructed = X_mi_reconstructed.lazy()
+                    return X_mi_reconstructed
+
+                X_reconstructed_orig_format = convert_to(
+                    X_mi_reconstructed,
+                    to_type=X_orig_mtype,
+                    as_scitype=is_scitype,
+                    store=self.converter_store,
+                )
+                return X_reconstructed_orig_format
+
+        # === pandas path below (unchanged) ===
 
         def coerce_to_df(x):
             if not isinstance(x, pd.DataFrame):
