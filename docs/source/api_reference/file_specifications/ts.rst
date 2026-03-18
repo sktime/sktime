@@ -203,7 +203,7 @@ This section provides full set of instructions to create a format specification 
 for your dataset that is compatible with ``sktime``.
 
 Remember that this begins with the assumption that you have the dataset readily available in
-expected `format <https://github.com/alan-turing-institute/sktime/blob/main/examples/loading_data.ipynb>`_.
+expected `format <https://github.com/sktime/sktime/blob/main/examples/data/loading_data.ipynb>`_.
 
 Few points to keep in mind while creating the dataset:
 
@@ -343,9 +343,9 @@ The sample dataset that we will use for this is as shown
 This concludes how to create string identifiers for ``.ts``  format. To learn more about ``sktime``, visit
 `tutorials`_ page.
 
-.. _loading data: https://github.com/alan-turing-institute/sktime/blob/main/examples/loading_data.ipynb
-.. _Basic Motion.ts: https://github.com/alan-turing-institute/sktime/blob/main/sktime/datasets/data/BasicMotions/BasicMotions_TEST.ts
-.. _issue: https://github.com/alan-turing-institute/sktime/issues
+.. _loading data: https://github.com/sktime/sktime/blob/main/examples/data/loading_data.ipynb
+.. _Basic Motion.ts: https://github.com/sktime/sktime/blob/main/sktime/datasets/data/BasicMotions/BasicMotions_TEST.ts
+.. _issue: https://github.com/sktime/sktime/issues
 .. _tsregression: http://tseregression.org/
 .. _timeseriesclassification.com: http://www.timeseriesclassification.com/index.php
 .. _tutorials: https://www.sktime.net/en/stable/tutorials.html
