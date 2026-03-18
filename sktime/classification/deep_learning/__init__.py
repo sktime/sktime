@@ -2,6 +2,7 @@
 
 __all__ = [
     "CNNClassifier",
+    "CNNClassifierTorch",
     "CNTCClassifier",
     "FCNClassifier",
     "InceptionTimeClassifier",
@@ -21,7 +22,10 @@ __all__ = [
     "ConvTimeNetClassifier",
 ]
 
-from sktime.classification.deep_learning.cnn import CNNClassifier
+from sktime.classification.deep_learning.cnn import (
+    CNNClassifier,
+    CNNClassifierTorch,
+)
 from sktime.classification.deep_learning.cntc import CNTCClassifier
 from sktime.classification.deep_learning.convtimenet import ConvTimeNetClassifier
 from sktime.classification.deep_learning.fcn import FCNClassifier
