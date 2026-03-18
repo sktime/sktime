@@ -226,6 +226,31 @@ class NaiveForecaster(_BaseWindowForecaster):
             )
 
         return self
+    
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Time series with which to update the forecaster.
+        X : pd.DataFrame, default=None
+            Exogenous variables (ignored by NaiveForecaster).
+        update_params : bool, default=True
+            Whether model parameters should be updated.
+
+        Returns
+        -------
+        self : reference to self.
+        """
+        if update_params:
+            # When window_length is None, _fit sets window_length_ = len(y),
+            # meaning "use all available data". After update, self._y has grown,
+            # so window_length_ must grow to match.
+            if self.window_length is None:
+                self.window_length_ = len(self._y)
+
+        return self
 
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
