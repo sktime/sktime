@@ -1013,9 +1013,9 @@ def test_tz_preserved():
     Failure case in issue #5584.
     """
     cutoff = pd.Timestamp("2020-01-01", tz="utc")
-    fh_absolute = ForecastingHorizon(range(100), freq="h").to_absolute(cutoff)
+    fh_absolute_idx = ForecastingHorizon(range(100), freq="h").to_absolute_index(cutoff)
 
-    assert fh_absolute[0].tz == cutoff.tz
+    assert fh_absolute_idx[0].tz == cutoff.tz
 
 
 # the "XE" frequencies are not supported by pandas 1 or 2.0.X
