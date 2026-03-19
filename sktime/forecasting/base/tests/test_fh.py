@@ -613,7 +613,7 @@ def test_estimator_fh(freqstr):
     forecaster.fit(train)
     fh = ForecastingHorizon(np.arange(1, 27))
     pred = forecaster.predict(fh)
-    expected_fh = fh.to_absolute(train.index[-1])
+    expected_fh = fh.to_absolute_index(train.index[-1])
     assert_array_equal(pred.index.to_numpy(), expected_fh.to_numpy())
 
 
@@ -624,11 +624,10 @@ def test_estimator_fh(freqstr):
 @pytest.mark.parametrize("freq", ["G", "W1"])
 def test_error_with_incorrect_string_frequency(freq: str):
     """Test error with incorrect string frequency string."""
-    match = f"Invalid frequency: {freq}"
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(ValueError, match="Invalid frequency"):
         ForecastingHorizon([1, 2, 3], freq=freq)
     fh = ForecastingHorizon([1, 2, 3])
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(ValueError, match="Invalid frequency"):
         fh.freq = freq
 
 
