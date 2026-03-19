@@ -104,6 +104,7 @@ all_extras = [
   "skpro>=2,<2.12.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels>=0.12.1; python_version < "3.13"',
+  'tabpfn-time-series>=1.0.8; python_version < "3.13"',
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
@@ -137,6 +138,7 @@ all_extras_pandas2 = [
   "skpro>=2,<2.12.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels>=0.12.1; python_version < "3.13"',
+  'tabpfn-time-series>=1.0.8; python_version < "3.13"',
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
   'tsfresh>=0.17; python_version < "3.12"',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.11"',
@@ -186,6 +188,7 @@ forecasting = [
   "skpro>=2,<2.12.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
+  'tabpfn-time-series>=1.0.8; python_version < "3.13"',
 ]
 networks = [
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
