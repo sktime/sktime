@@ -1,12 +1,16 @@
-"""MLP (Multi-Layer Perceptron) Classifier for Time Series Classification.
-
-This subpackage provides Multi-Layer Perceptron (MLP) based time series
-classifier in TensorFlow and PyTorch backends.
-"""
+"""MLP (Multi-Layer Perceptron) classifier for time series classification in PyTorch."""
 
 __all__ = [
     "MLPClassifier",
     "MLPClassifierTorch",
 ]
-from sktime.classification.deep_learning.mlp._mlp_tf import MLPClassifier
+
 from sktime.classification.deep_learning.mlp._mlp_torch import MLPClassifierTorch
+
+
+class MLPClassifier(MLPClassifierTorch):
+    """PyTorch implementation of ``MLPClassifier``.
+
+    This class keeps the legacy estimator name while using the
+    ``MLPClassifierTorch`` backend.
+    """
