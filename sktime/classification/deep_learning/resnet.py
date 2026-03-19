@@ -45,6 +45,12 @@ class ResNetClassifier(BaseDeepClassifier):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
+    n_filters : tuple of int, default = (64, 128, 128)
+        Number of filters per residual block. Length determines number of
+        blocks.
+    kernel_sizes : tuple of int, default = (8, 5, 3)
+        Kernel sizes for conv layers in each residual block. The length
+        of the tuple determines the number of conv layers per block.
 
     References
     ----------
@@ -92,6 +98,8 @@ class ResNetClassifier(BaseDeepClassifier):
         activation_hidden="relu",
         use_bias=True,
         optimizer=None,
+        n_filters=(64, 128, 128),
+        kernel_sizes=(8, 5, 3),
     ):
         _check_dl_dependencies(severity="error")
 
@@ -106,6 +114,8 @@ class ResNetClassifier(BaseDeepClassifier):
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
+        self.n_filters = n_filters
+        self.kernel_sizes = kernel_sizes
 
         super().__init__()
 
@@ -113,6 +123,8 @@ class ResNetClassifier(BaseDeepClassifier):
         self._network = ResNetNetwork(
             activation=activation_hidden,
             random_state=random_state,
+            n_filters=self.n_filters,
+            kernel_sizes=self.kernel_sizes,
         )
 
     def build_model(self, input_shape, n_classes, **kwargs):
