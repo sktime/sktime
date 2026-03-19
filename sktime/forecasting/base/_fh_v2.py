@@ -822,7 +822,7 @@ class ForecastingHorizon:
             indexer_vals.astype(np.int64), is_relative=True
         )
 
-    def _is_contiguous(self) -> bool:
+    def is_contiguous(self) -> bool:
         """Check if forecasting horizon values form a contiguous sequence.
 
         Returns

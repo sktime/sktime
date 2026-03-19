@@ -426,7 +426,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
         if fh is not None:
             _config["prediction_length"] = max(
-                *(fh.to_relative(self._cutoff)._values),
+                fh.to_relative(self._cutoff).max(),
                 _config["prediction_length"],
             )
 

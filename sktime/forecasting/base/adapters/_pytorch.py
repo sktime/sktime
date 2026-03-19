@@ -169,7 +169,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
             dataset = PyTorchTrainDataset(
                 y=y,
                 seq_len=self.network.seq_len,
-                fh=self._fh.to_relative(self.cutoff)._values[-1],
+                fh=self._fh.to_relative(self.cutoff).max(),
             )
 
         return DataLoader(dataset, self.batch_size, shuffle=True)

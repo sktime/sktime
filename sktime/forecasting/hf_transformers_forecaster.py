@@ -242,7 +242,7 @@ class HFTransformersForecaster(BaseForecaster):
 
             if fh is not None:
                 _config["prediction_length"] = max(
-                    *(fh.to_relative(self._cutoff)._values + 1),
+                    fh.to_relative(self._cutoff).max() + 1,
                     _config.get("prediction_length", 0),
                 )
 

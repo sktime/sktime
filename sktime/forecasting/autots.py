@@ -377,7 +377,7 @@ class AutoTS(BaseForecaster):
         ).forecast.values
 
         cutoff = self._fh_cutoff_transformation(y_date)
-        values = values[self._fh.to_relative(cutoff)._values - 1]
+        values = values[self._fh.to_relative(cutoff).to_numpy() - 1]
 
         # convert back to original index
         row_idx: pd.Index = self._fh.to_absolute_index(self.cutoff)
@@ -634,7 +634,7 @@ class AutoTS(BaseForecaster):
 
     def _get_forecast_length(self):
         cutoff = self._fh_cutoff_transformation(self._y_date)
-        fh_length = max(self._fh.to_relative(cutoff)._values)
+        fh_length = self._fh.to_relative(cutoff).max()
         if fh_length <= 0:
             raise ValueError(
                 "The relative length to the training data of "
@@ -717,7 +717,7 @@ class AutoTS(BaseForecaster):
 
         cutoff = self._fh_cutoff_transformation(y_date)
         # _fh keys are 1-based relative indices, adjust to 0-based
-        relative_fh_idx = self._fh.to_relative(cutoff)._values - 1
+        relative_fh_idx = self._fh.to_relative(cutoff).to_numpy() - 1
 
         var_names = y_date.columns
         row_idx = self._fh.to_absolute_index(self.cutoff)
