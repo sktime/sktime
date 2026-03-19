@@ -106,7 +106,7 @@ def _fh_equals_plugin(x, y, return_msg=False, deep_equals=None):
         return ret(False, ".is_relative")
 
     # recurse through values of x, y
-    is_equal, msg = deep_equals(x._values, y._values, return_msg=True)
+    is_equal, msg = deep_equals(x.to_numpy(), y.to_numpy(), return_msg=True)
     if not is_equal:
         return ret(False, ".values" + msg)
 
