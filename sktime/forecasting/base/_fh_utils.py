@@ -700,6 +700,40 @@ class PandasFHConverter:
         return None
 
     @staticmethod
+    def cutoff_sub_period_offset(cutoff, freq):
+        """Compute sub-period offset of a datetime cutoff within its period.
+
+        For a cutoff at ``2025-03-02 12:00:00`` with ``freq="D"``, the
+        period start is midnight, so the offset is ``Timedelta("12h")``.
+        For a cutoff exactly on a period boundary the offset is zero.
+
+        Used by ``to_absolute_index`` to preserve sub-period precision
+        that would otherwise be lost in the period-ordinal round-trip.
+        Refer issue #5186.
+
+        Parameters
+        ----------
+        cutoff : pd.DatetimeIndex or pd.Timestamp
+            Datetime cutoff. If ``pd.DatetimeIndex``, the last element
+            is used.
+        freq : str
+            Frequency string for the period grid.
+
+        Returns
+        -------
+        pd.Timedelta
+            Offset within the period (>= 0). Zero when the cutoff
+            falls exactly on a period boundary.
+        """
+        cutoff_ts = cutoff[-1] if isinstance(cutoff, pd.Index) else cutoff
+        if cutoff_ts.tzinfo is not None:
+            cutoff_naive = cutoff_ts.tz_localize(None)
+        else:
+            cutoff_naive = cutoff_ts
+        period_start = cutoff_naive.to_period(freq).to_timestamp()
+        return cutoff_naive - period_start
+
+    @staticmethod
     def nanos_to_steps(nanos: np.ndarray, freq: str) -> np.ndarray:
         """Convert nanosecond values to integer steps using freq.
 

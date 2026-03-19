@@ -647,17 +647,9 @@ class ForecastingHorizon:
         if cutoff is not None and PandasFHConverter.cutoff_is_dti_ts(cutoff):
             tz = PandasFHConverter.cutoff_tz(cutoff)
 
-            # Compute sub-period offset to preserve cutoff's position within
-            # its period. E.g., cutoff at 12:00 with freq="D" → offset=12h.
-            # Without this, the period round-trip truncates to period start
-            # (midnight for daily freq). Refer issue #5186.
-            cutoff_ts = cutoff[-1]
-            if cutoff_ts.tzinfo is not None:
-                cutoff_naive = cutoff_ts.tz_localize(None)
-            else:
-                cutoff_naive = cutoff_ts
-            period_start = cutoff_naive.to_period(abs_fh._freq).to_timestamp()
-            sub_period_offset = cutoff_naive - period_start
+            sub_period_offset = PandasFHConverter.cutoff_sub_period_offset(
+                cutoff, abs_fh._freq
+            )
 
             return PandasFHConverter.steps_to_datetime(
                 abs_fh._values,
