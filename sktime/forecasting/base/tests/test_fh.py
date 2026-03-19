@@ -16,7 +16,6 @@ from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import (
-    _check_freq,
     _extract_freq_from_cutoff,
 )
 from sktime.forecasting.base._fh_utils import PandasFHConverter
@@ -860,10 +859,10 @@ def test_auto_arima_case_with_naive():
 )
 def test_extract_freq_from_inputs() -> None:
     """Test extract frequency from inputs."""
-    assert _check_freq(None) is None
+    assert PandasFHConverter.extract_freq(None) is None
     cutoff = pd.Period("2020", freq="D")
-    assert _check_freq(cutoff) == "D"
-    assert _check_freq("D") == "D"
+    assert PandasFHConverter.extract_freq(cutoff) == "D"
+    assert PandasFHConverter.extract_freq("D") == "D"
 
 
 @pytest.mark.skipif(
