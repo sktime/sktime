@@ -226,6 +226,33 @@ class NaiveForecaster(_BaseWindowForecaster):
             )
 
         return self
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters with new data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            New time series to update with.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        update_params : bool, optional (default=True)
+            If True, update internal state with new data.
+            If False, only update the cutoff index.
+
+        Returns
+        -------
+        self : reference to self.
+        """
+        if update_params:
+            # update the internal time series by appending new data
+            self._y = pd.concat([self._y, y])
+            self._y = self._y[~self._y.index.duplicated(keep="last")]
+
+            # update window_length_ only if user did not pass a fixed window_length
+            if self.window_length is None:
+                self.window_length_ = len(self._y)
+
+        return self
 
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -922,3 +949,4 @@ class NaiveVariance(BaseForecaster):
         params2 = {"forecaster": FORECASTER, "initial_window": 2}
 
         return [params1, params2]
+
