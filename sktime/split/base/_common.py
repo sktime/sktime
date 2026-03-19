@@ -99,12 +99,16 @@ def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
     n_timepoints = y_index.shape[0]
     assert isinstance(y_index, pd.Index)
 
+    # Use to_pandas() to get values in the right form (int, Period, Timedelta).
+    # The new FH stores internal ordinals; to_pandas() converts to user-facing types.
+    fh_pd = fh.to_pandas()
+
     # For purely in-sample forecasting horizons, the last split point is the end of the
     # training data.
     # Otherwise, the last point must ensure that the last horizon is within the data.
-    null = 0 if array_is_int(fh) else pd.Timedelta(0)
-    fh_offset = null if fh.is_all_in_sample() else fh[-1]
-    if array_is_int(fh):
+    null = 0 if array_is_int(fh_pd) else pd.Timedelta(0)
+    fh_offset = null if fh.is_all_in_sample() else fh_pd[-1]
+    if array_is_int(fh_pd):
         return n_timepoints - fh_offset - 1
     return y_index.get_loc(y_index[-1] - fh_offset)
 
