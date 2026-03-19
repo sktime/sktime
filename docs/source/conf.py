@@ -49,7 +49,7 @@ extensions = [
     "numpydoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.linkcode",  # link to GitHub source code via linkcode_resolve()
-    "nbsphinx",  # integrates example notebooks
+                              # integrates example notebooks
     "sphinx_gallery.load_style",
     "myst_parser",
     "sphinx_copybutton",
