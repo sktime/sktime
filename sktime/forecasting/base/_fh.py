@@ -969,7 +969,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
                         absolute = cutoff + (relative * freq)
                     else:
                         absolute = cutoff + relative
-                
+
                     # Timedeltas must strictly be relative in sktime
                     return fh._new(absolute, is_relative=True, freq=fh.freq)
                 else:

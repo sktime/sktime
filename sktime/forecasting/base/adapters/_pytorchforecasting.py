@@ -519,7 +519,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         data = pd.concat([data, time_idx], axis=1)
         # reset multi index to normal columns
         data = data.reset_index(level=list(range(self._index_len)))
-        # Ensure max_prediction_length is an integer to avoid TypeErrors with 
+        # Ensure max_prediction_length is an integer to avoid TypeErrors with
         # pandas Timedelta arithmetic in modern versions of pandas.
         if isinstance(max_prediction_length, (pd.Timedelta, np.timedelta64)):
             max_prediction_length = len(self._fh)

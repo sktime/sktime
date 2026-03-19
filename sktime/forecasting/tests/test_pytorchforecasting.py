@@ -3,8 +3,8 @@
 
 import os
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytest
 from sklearn.model_selection import train_test_split
 
@@ -115,8 +115,8 @@ def test_load_model_from_disk(model_class) -> None:
 
 def test_pytorch_deepar_timedelta_index():
     """Test that PytorchForecastingDeepAR fits with a Timedelta index.
-    
-    This tests the adapter behavior with Timedelta, ensuring that no TypeError 
+
+    This tests the adapter behavior with Timedelta, ensuring that no TypeError
     is raised during arithmetic operations with pandas.Timedelta.
     """
     # Skip test if soft dependency is not installed
@@ -132,7 +132,7 @@ def test_pytorch_deepar_timedelta_index():
     # Initialize the model with minimal parameters for a fast test execution
     model = PytorchForecastingDeepAR(
         dataset_params={"max_encoder_length": 2, "min_encoder_length": 1},
-        trainer_params={"max_epochs": 1, "accelerator": "cpu"}
+        trainer_params={"max_epochs": 1, "accelerator": "cpu"},
     )
 
     fh = ForecastingHorizon([1, 2], is_relative=True)
