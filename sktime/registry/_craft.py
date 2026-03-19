@@ -45,7 +45,7 @@ def _extract_class_names(spec):
 
     # we need to exclude expressions that look like classes per the regex
     # but aren't
-    EXCLUDE_LIST = ["True", "False"]
+    EXCLUDE_LIST = ["True", "False", "None"]
     cls_name_list = [x for x in cls_name_list if x not in EXCLUDE_LIST]
 
     return cls_name_list
