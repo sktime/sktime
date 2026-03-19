@@ -439,16 +439,23 @@ class ForecastingHorizon:
                 f"Frequencies do not match: current={old_freq!r}, new={new_freq!r}"
             )
 
-        # if values are nanos, convert to steps using the new freq
         if self._values_are_nanos:
-            new_values = PandasFHConverter.nanos_to_steps(self._values, new_freq)
-            new_values.flags.writeable = False
-            self._values = new_values
-            self._values_are_nanos = False
-            self._freq = new_freq
+            self._resolve_deferred_nanos(new_freq)
             return
 
         self._freq = new_freq
+
+    def _resolve_deferred_nanos(self, freq):
+        """Convert raw nanosecond values to integer steps using freq.
+
+        Called when freq is first assigned to an FH whose values were stored
+        as raw nanoseconds (e.g. freq-less TimedeltaIndex input).
+        """
+        new_values = PandasFHConverter.nanos_to_steps(self._values, freq)
+        new_values.flags.writeable = False
+        self._values = new_values
+        self._values_are_nanos = False
+        self._freq = freq
 
     # core conversion methods
 
