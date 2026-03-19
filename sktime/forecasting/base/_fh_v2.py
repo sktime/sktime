@@ -981,13 +981,25 @@ class ForecastingHorizon:
             )
         return result
 
-    def max(self):
-        """Return the maximum value."""
-        return self._values.max() if len(self._values) > 0 else None
+    def max(self, **kwargs):
+        """Return the maximum value.
 
-    def min(self):
-        """Return the minimum value."""
-        return self._values.min() if len(self._values) > 0 else None
+        ``**kwargs`` are passed through to the underlying numpy array's
+        ``max`` so that ``np.max(fh)`` works via numpy's dispatch protocol.
+        """
+        if len(self._values) == 0:
+            return None
+        return self._values.max(**kwargs)
+
+    def min(self, **kwargs):
+        """Return the minimum value.
+
+        ``**kwargs`` are passed through to the underlying numpy array's
+        ``min`` so that ``np.min(fh)`` works via numpy's dispatch protocol.
+        """
+        if len(self._values) == 0:
+            return None
+        return self._values.min(**kwargs)
 
     # Below method computes a hash for the ForecastingHorizon instance,
     # The hash is computed based on the tuple containing:
