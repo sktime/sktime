@@ -240,7 +240,9 @@ def test_fh_method_dunders():
     expected_methods = [
         "__sub__",
         "__add__",
+        "__radd__",
         "__mul__",
+        "__rmul__",
         "__gt__",
         "__ge__",
         "__ne__",

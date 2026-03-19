@@ -859,8 +859,6 @@ class ForecastingHorizon:
             sort_by_time=sort_by_time,
         )
 
-    # Dunders -> Arithmatic operators
-
     @staticmethod
     def _check_scalar(other):
         if isinstance(other, ForecastingHorizon):
@@ -869,6 +867,8 @@ class ForecastingHorizon:
                 "supported. Use scalar operands (int, np.integer)."
             )
         return np.int64(other)
+
+    # Dunders -> Arithmatic operators
 
     def __add__(self, other):
         scalar = self._check_scalar(other)
