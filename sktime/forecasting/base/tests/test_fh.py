@@ -16,7 +16,6 @@ from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import (
-    DELEGATED_METHODS,
     _check_freq,
     _extract_freq_from_cutoff,
 )
@@ -235,11 +234,26 @@ def test_fh(index_type, fh_type, is_relative, steps):
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-def test_fh_method_delegation():
-    """Test ForecastingHorizon delegated methods."""
-    fh = ForecastingHorizon(1)
-    for method in DELEGATED_METHODS:
-        assert hasattr(fh, method)
+def test_fh_method_dunders():
+    """Test ForecastingHorizon has expected dunder methods."""
+    fh = ForecastingHorizon([1, 2, 3])
+    expected_methods = [
+        "__sub__",
+        "__add__",
+        "__mul__",
+        "__gt__",
+        "__ge__",
+        "__ne__",
+        "__lt__",
+        "__eq__",
+        "__le__",
+        "__len__",
+        "__repr__",
+        "__hash__",
+        "__getitem__",
+    ]
+    for method in expected_methods:
+        assert hasattr(fh, method), f"Missing method: {method}"
 
 
 BAD_INPUT_ARGS = (
