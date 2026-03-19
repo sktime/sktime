@@ -122,7 +122,7 @@ class _StatsModelsAdapter(BaseForecaster):
         # New FH is not a pd.Index subclass
         # so direct [[0, -1]] indexing on an FH object doesn't return scalar ints.
         # Must extract the numpy array first
-        abs_int = fh.to_absolute_int(self._y_first_index, self.cutoff)._values
+        abs_int = fh.to_absolute_int(self._y_first_index, self.cutoff).to_numpy()
         start, end = abs_int[[0, -1]]
 
         # fh_int = fh.to_absolute_int(self._y_first_index, self.cutoff) - self._y_len
@@ -224,7 +224,7 @@ class _StatsModelsAdapter(BaseForecaster):
         # New FH is not a pd.Index subclass
         # so direct [[0, -1]] indexing on an FH object doesn't return scalar ints.
         # Must extract the numpy array first
-        abs_int = fh.to_absolute_int(self._y_first_index, self.cutoff)._values
+        abs_int = fh.to_absolute_int(self._y_first_index, self.cutoff).to_numpy()
         start, end = abs_int[[0, -1]]
 
         # fh_int = fh.to_absolute_int(self._y_first_index, self.cutoff) - self._y_len
