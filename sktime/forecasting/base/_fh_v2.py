@@ -125,10 +125,10 @@ class ForecastingHorizon:
         is_relative: bool | None = None,
         freq=None,
     ):
-        # if values is already an FH, use _create directly
+        # if values is already an FH, use clone directly
         if isinstance(values, ForecastingHorizon):
             src = values
-            copy = self._create(
+            copy = self.clone(
                 src._values.copy(),
                 src._is_relative,
                 src._freq,
@@ -151,6 +151,8 @@ class ForecastingHorizon:
         # `np.timedelta64` is a subclass of `np.integer`,
         # without exclusion it enters the int path instead of the converter path.
         # Empty lists `[]` also need special handling to avoid downstream errors
+        # hence these two are skipped in this path and sent to the converter
+        # for consistent handling of edge cases.
         if (
             isinstance(values, (int, np.integer, range, np.ndarray))
             and not isinstance(values, np.timedelta64)
@@ -170,6 +172,9 @@ class ForecastingHorizon:
             )
         else:
             # coerced path: pandas types and non-int lists — delegate to converter.
+            vals, inferred_is_relative, freq_val, nanos_flag = (
+                PandasFHConverter.to_internal(values, freq, is_relative=is_relative)
+            )
             # Passed freq is only used when DatatimeIndex type is passed without freq
             # attribute, as a fallback to extract freq from the provided freq parameter
             # in all other cases, freq is extracted from the values themselves
@@ -177,9 +182,6 @@ class ForecastingHorizon:
             # Mismatch between extracted freq and passed freq is done later in this
             # constructor after coercion,
             # to allow the converter to handle pandas alias normalization first.
-            vals, inferred_is_relative, freq_val, nanos_flag = (
-                PandasFHConverter.to_internal(values, freq, is_relative=is_relative)
-            )
 
         # sort, deduplicate, and store
         # reject if duplicates found
@@ -331,7 +333,7 @@ class ForecastingHorizon:
         return is_relative
 
     @classmethod
-    def _create(cls, values, is_relative, freq=None, values_are_nanos=False):
+    def clone(cls, values, is_relative, freq=None, values_are_nanos=False):
         """Construct a ForecastingHorizon without coercion or validation.
 
         Fast-path constructor for internal use. Creates a new instance
@@ -356,7 +358,7 @@ class ForecastingHorizon:
         """
         obj = object.__new__(cls)
         if len(values) > 0 and not np.all(np.diff(values) > 0):
-            raise ValueError("_create expects sorted, unique values")
+            raise ValueError("clone expects sorted, unique values")
         obj._values = values
         obj._values.flags.writeable = False
         obj._is_relative = is_relative
@@ -473,7 +475,7 @@ class ForecastingHorizon:
             Relative representation of forecasting horizon.
         """
         if self._is_relative:
-            return self._create(
+            return self.clone(
                 self._values.copy(),
                 self._is_relative,
                 self._freq,
@@ -507,7 +509,7 @@ class ForecastingHorizon:
         else:
             relative_vals = ordinal_diffs
 
-        return self._create(
+        return self.clone(
             values=relative_vals.astype(np.int64),
             is_relative=True,
             freq=self._freq,
@@ -528,7 +530,7 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon.
         """
         if not self._is_relative:
-            return self._create(
+            return self.clone(
                 self._values.copy(),
                 self._is_relative,
                 self._freq,
@@ -569,7 +571,7 @@ class ForecastingHorizon:
         mult = PandasFHConverter.freq_multiplier(freq)
         absolute_vals = cutoff_step + values * mult
 
-        return self._create(
+        return self.clone(
             values=absolute_vals.astype(np.int64),
             is_relative=False,
             freq=freq,
@@ -700,7 +702,7 @@ class ForecastingHorizon:
         else:
             integers = ordinal_diffs
 
-        return self._create(
+        return self.clone(
             values=integers.astype(np.int64),
             is_relative=False,
             freq=None,  # integer indices, not period ordinals
@@ -762,7 +764,7 @@ class ForecastingHorizon:
             In-sample values of forecasting horizon.
         """
         mask = self._is_in_sample(cutoff)
-        return self._create(
+        return self.clone(
             self._values[mask],
             self._is_relative,
             self._freq,
@@ -783,7 +785,7 @@ class ForecastingHorizon:
             Out-of-sample values of forecasting horizon.
         """
         mask = self._is_out_of_sample(cutoff)
-        return self._create(
+        return self.clone(
             self._values[mask],
             self._is_relative,
             self._freq,
@@ -881,9 +883,7 @@ class ForecastingHorizon:
             result = self._values + scalar * mult
         else:
             result = self._values + scalar
-        return self._create(
-            result, self._is_relative, self._freq, self._values_are_nanos
-        )
+        return self.clone(result, self._is_relative, self._freq, self._values_are_nanos)
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -895,9 +895,7 @@ class ForecastingHorizon:
             result = self._values - scalar * mult
         else:
             result = self._values - scalar
-        return self._create(
-            result, self._is_relative, self._freq, self._values_are_nanos
-        )
+        return self.clone(result, self._is_relative, self._freq, self._values_are_nanos)
 
     def __mul__(self, other):
         if not self._is_relative and self._freq is not None:
@@ -907,9 +905,7 @@ class ForecastingHorizon:
             )
         scalar = self._check_scalar(other)
         result = np.unique(self._values * scalar)
-        return self._create(
-            result, self._is_relative, self._freq, self._values_are_nanos
-        )
+        return self.clone(result, self._is_relative, self._freq, self._values_are_nanos)
 
     def __rmul__(self, other):
         return self.__mul__(other)
@@ -973,7 +969,7 @@ class ForecastingHorizon:
     def __getitem__(self, key):
         result = self._values[key]
         if isinstance(result, np.ndarray):
-            return self._create(
+            return self.clone(
                 result, self._is_relative, self._freq, self._values_are_nanos
             )
         return result
