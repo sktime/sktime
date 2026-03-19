@@ -1079,6 +1079,9 @@ def test_pandas22_freq_roundtrip(ts):
     fh = ForecastingHorizon([0], is_relative=True)
     fh.to_absolute(f.cutoff)
     fh.to_absolute(f.cutoff).to_relative(f.cutoff)
+    # to_absolute_index exercises the pandas freq path (PeriodIndex.to_timestamp)
+    # which is where the original bug #6572 crash occurred
+    fh.to_absolute_index(f.cutoff)
 
 
 def test_timestamp_format_to_absolute():
