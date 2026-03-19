@@ -580,6 +580,14 @@ Deep learning based forecasters
 
     ESRNNForecaster
 
+.. currentmodule:: sktime.forecasting.flowstate
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    GraniteFlowStateForecaster
+
 Pre-trained and foundation models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
