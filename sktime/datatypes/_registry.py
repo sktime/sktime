@@ -204,6 +204,7 @@ MTYPE_SOFT_DEPS_SERIES = {
     "xr.DataArray": "xarray",
     "dask_series": "dask",
     "pl.DataFrame": "polars",
+    "pl.LazyFrame": "polars",
     "gluonts_ListDataset_series": "gluonts",
     "gluonts_PandasDataset_series": "gluonts",
 }
@@ -214,11 +215,13 @@ MTYPE_SOFT_DEPS_PANEL = {
     "gluonts_ListDataset_panel": "gluonts",
     "gluonts_PandasDataset_panel": "gluonts",
     "polars_panel": "polars",
+    "lazy_polars_panel": "polars",
 }
 
 MTYPE_SOFT_DEPS_HIERARCHICAL = {
     "dask_hierarchical": "dask",
     "polars_hierarchical": "polars",
+    "lazy_polars_hierarchical": "polars",
 }
 
 MTYPE_SOFT_DEPS = {}
