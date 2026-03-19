@@ -910,7 +910,7 @@ def test_regular_spaced_fh_of_different_periodicity():
 def test_standard_range_in_fh():
     """Test using most common ``range`` without start/step."""
     standard_range = ForecastingHorizon(values=range(1, 5 + 1))
-    assert (standard_range == ForecastingHorizon(values=[1, 2, 3, 4, 5])).all()
+    assert standard_range == ForecastingHorizon(values=[1, 2, 3, 4, 5])
 
 
 @pytest.mark.skipif(
@@ -920,7 +920,7 @@ def test_standard_range_in_fh():
 def test_range_with_positive_step_in_fh():
     """Test using ``range`` with positive step."""
     range_with_positive_step = ForecastingHorizon(values=range(0, 5, 2))
-    assert (range_with_positive_step == ForecastingHorizon(values=[0, 2, 4])).all()
+    assert range_with_positive_step == ForecastingHorizon(values=[0, 2, 4])
 
 
 @pytest.mark.skipif(
@@ -930,7 +930,7 @@ def test_range_with_positive_step_in_fh():
 def test_range_with_negative_step_in_fh():
     """Test using ``range`` with negative step."""
     range_with_negative_step = ForecastingHorizon(values=range(3, -5, -2))
-    assert (range_with_negative_step == ForecastingHorizon(values=[3, 1, -1, -3])).all()
+    assert range_with_negative_step == ForecastingHorizon(values=[3, 1, -1, -3])
 
 
 @pytest.mark.skipif(
@@ -940,7 +940,7 @@ def test_range_with_negative_step_in_fh():
 def test_range_sorting_in_fh():
     """Test that ``range`` is independent of order."""
     standard_range = ForecastingHorizon(values=range(5))
-    assert (standard_range == ForecastingHorizon(values=[0, 3, 4, 1, 2])).all()
+    assert standard_range == ForecastingHorizon(values=[0, 3, 4, 1, 2])
 
 
 @pytest.mark.skipif(
@@ -950,7 +950,7 @@ def test_range_sorting_in_fh():
 def test_empty_range_in_fh():
     """Test when ``range`` has zero length."""
     empty_range = ForecastingHorizon(values=range(-5))
-    assert (empty_range == ForecastingHorizon(values=[])).all()
+    assert empty_range == ForecastingHorizon(values=[])
 
 
 @pytest.mark.skipif(

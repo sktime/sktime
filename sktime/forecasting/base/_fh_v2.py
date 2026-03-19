@@ -917,7 +917,7 @@ class ForecastingHorizon:
     #   compare only raw int64 arrays elementwise
     #   and return a boolean array,
     #   fh == 3 → array([False, False, True])
-    # 2.Object identity/equality (Python-style):
+    # 2. Object identity/equality (Python-style):
     #   "are these two FH objects the same?"
     #   compare the entire FHValues instances,
     #   which would take into account the value type,
