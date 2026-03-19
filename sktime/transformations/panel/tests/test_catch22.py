@@ -1450,3 +1450,34 @@ def test_feature_names():
     ]
     assert feature_names == expected_feature_names
     assert feature_names == FEATURE_NAMES
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Catch22),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_catch22_noncontiguous_column_indices():
+    """Test for bug #5394: Catch22 with non-contiguous DataFrame column indices."""
+    import pandas as pd
+
+    # Create DataFrame with non-contiguous integer column indices
+    df = pd.DataFrame(
+        {
+            3: [1.0, 2.0, 3.0, 4.0, 5.0],
+            5: [2.0, 3.0, 4.0, 5.0, 6.0],
+            8: [3.0, 4.0, 5.0, 6.0, 7.0],
+        }
+    )
+
+    # This should not raise a KeyError
+    ext = Catch22(
+        features=["DN_HistogramMode_5"]
+    )  # Use a single feature to speed up test
+
+    # The main test: this should not raise a KeyError when trying to access columns
+    result = ext._transform_single_feature(df, 0)  # feature 0
+
+    # Check that result has expected shape - should be one value per column
+    assert len(result) == len(df.columns), (
+        f"Expected {len(df.columns)} results, got {len(result)}"
+    )
