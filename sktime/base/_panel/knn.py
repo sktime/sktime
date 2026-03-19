@@ -5,21 +5,7 @@ __all__ = ["_BaseKnnTimeSeriesEstimator"]
 
 import numpy as np
 
-# add new distance string codes here
-DISTANCES_SUPPORTED = [
-    "euclidean",
-    # Euclidean will default to the base class distance
-    "squared",
-    "dtw",
-    "ddtw",
-    "wdtw",
-    "wddtw",
-    "lcss",
-    "edr",
-    "erp",
-    "msm",
-    "twe",
-]
+from sktime.distances import DISTANCES_SUPPORTED
 
 
 class _BaseKnnTimeSeriesEstimator:

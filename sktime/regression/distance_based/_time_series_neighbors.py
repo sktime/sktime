@@ -16,20 +16,6 @@ from sklearn.neighbors import KNeighborsRegressor
 from sktime.base._panel.knn import _BaseKnnTimeSeriesEstimator
 from sktime.regression.base import BaseRegressor
 
-# add new distance string codes here
-DISTANCES_SUPPORTED = [
-    "euclidean",
-    # Euclidean will default to the base class distance
-    "dtw",
-    "ddtw",
-    "wdtw",
-    "wddtw",
-    "lcss",
-    "edr",
-    "erp",
-    "msm",
-]
-
 
 class KNeighborsTimeSeriesRegressor(_BaseKnnTimeSeriesEstimator, BaseRegressor):
     """K-nearest neighbours Time Series Regressor.
