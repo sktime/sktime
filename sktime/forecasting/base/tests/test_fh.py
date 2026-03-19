@@ -453,7 +453,7 @@ def test_to_absolute_freq(freqstr):
     fh = ForecastingHorizon([1, 2, 3])
 
     abs_fh = fh.to_absolute(cutoff)
-    assert abs_fh._values.freqstr == _get_expected_freqstr(freqstr)
+    assert abs_fh.to_pandas().freqstr == _get_expected_freqstr(freqstr)
 
 
 @pytest.mark.skipif(
@@ -471,7 +471,7 @@ def test_absolute_to_absolute_with_integer_horizon(freqstr):
 
     converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
-    fh_freqstr = converted_abs_fh._values.freqstr
+    fh_freqstr = converted_abs_fh.to_pandas().freqstr
     assert fh_freqstr == _get_expected_freqstr(freqstr)
 
 
@@ -494,7 +494,7 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
     converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
 
-    assert converted_abs_fh._values.freqstr == _get_expected_freqstr(freqstr)
+    assert converted_abs_fh.to_pandas().freqstr == _get_expected_freqstr(freqstr)
 
 
 @pytest.mark.skipif(
@@ -588,14 +588,14 @@ def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
 
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
 def test_to_absolute_with_multiple_freq(freq: str):
-    """Test to_absolute with multiple freq"""
+    """Test to_absolute with multiple freq."""
     fh = ForecastingHorizon([0, 1, 2, 3, 4], is_relative=True)
     start = "2024-09-26 17:24"
     cutoff = pd.PeriodIndex([start], freq=freq)
     absolute = fh.to_absolute(cutoff)
     date_range = pd.date_range(start=start, freq=freq, periods=5)
     period_index = date_range.to_period(freq)
-    assert_array_equal(period_index.to_numpy(), absolute.to_numpy())
+    assert_array_equal(period_index, absolute.to_pandas())
 
 
 @pytest.mark.skipif(
