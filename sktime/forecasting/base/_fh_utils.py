@@ -242,6 +242,17 @@ class PandasFHConverter:
         freq : str, pd.Period, pd.Index, or None, default=None
             Optional fallback frequency. Used when ``values`` is a
             DatetimeIndex without freq. Extracted via ``extract_freq``.
+        is_relative : bool or None, default=None
+            User-supplied relativity flag, passed through from the
+            ``ForecastingHorizon`` constructor. Only consulted for
+            ``pd.RangeIndex`` and ``pd.Index`` with integer dtype, since
+            these types are ambiguous (compatible with both relative and
+            absolute). For these two cases, if provided, the value is
+            returned as the inferred is_relative; if None, defaults to True.
+            All other input types (``pd.PeriodIndex``, ``pd.DatetimeIndex``,
+            ``pd.TimedeltaIndex``, ``pd.Index`` with timedelta dtype, scalar
+            and list inputs) have unambiguous semantics and ignore this
+            parameter entirely.
 
         Returns
         -------
