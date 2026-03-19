@@ -257,13 +257,13 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             )
         elif fh is not None and self.horizon_len is not None:
             fh = fh.to_relative(self.cutoff)
-            self._horizon_len = max(self.horizon_len, *fh._values)
-            # fh._values.values changed to fh._values in above line
+            self._horizon_len = max(self.horizon_len, fh.max())
+            # *fh._values.values changed to fh.max() in above line
             # after Forecasting horizon v2 rework
         elif fh is not None:
             fh = fh.to_relative(self.cutoff)
-            self._horizon_len = max(*fh._values)
-            # fh._values.values changed to fh._values in above line
+            self._horizon_len = fh.max()
+            # max(*fh._values.values) changed to fh.max() in above line
             # after Forecasting horizon v2 rework
         else:
             self._horizon_len = self.horizon_len
@@ -314,8 +314,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        if max(fh._values) > self._horizon_len:
-            # fh._values.values changed to fh._values in above line
+        if fh.max() > self._horizon_len:
+            # max(fh._values.values) changed to fh.max() in above line
             # after Forecasting horizon v2 rework
             raise ValueError(
                 f"Error in {self.__class__.__name__}, the forecast horizon exceeds the"

@@ -120,7 +120,10 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        if max(fh._values) > self.network.pred_len or min(fh._values) < 0:
+        # if max(fh._values) > self.network.pred_len or min(fh._values) < 0:
+        # above line changed to below line to use the public API of fh
+        # instead of accessing the private attribute _values
+        if fh.max() > self.network.pred_len or fh.min < 0:
             raise ValueError(
                 f"fh of {fh} passed to {self.__class__.__name__} is not "
                 "within `pred_len`. Please use a fh that aligns with the `pred_len` of "
@@ -137,8 +140,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         for x, _ in dataloader:
             y_pred.append(self.network(x).detach())
         y_pred = cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
-        y_pred = y_pred[fh._values - 1]
-        # fh._values.values changed to fh._values in above line
+        y_pred = y_pred[fh.to_numpy - 1]
+        # fh._values.values changed to fh.to_numpy in above line
         # after Forecasting horizon v2 rework
         y_pred = pd.DataFrame(
             y_pred, columns=self._y.columns, index=fh.to_absolute_index(self.cutoff)

@@ -662,7 +662,7 @@ class AutoTS(BaseForecaster):
         # which accepts both pd.Period and pd.Timestamp, it converts either to a
         # period ordinal. So the downstream behaviour is identical.
 
-        if self._fh._freq is not None:
+        if self._fh.freq is not None:
             # temporal FH (was PeriodIndex or DatetimeIndex) —> use period cutoff
             transformed_fh_cutoff = cutoff.index.to_period()[-1]
         else:
