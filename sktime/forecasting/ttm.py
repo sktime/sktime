@@ -146,7 +146,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from ``predict``.
 
-    use_source_package : bool, default=False
+    use_source_package : bool, default=None
         Deprecated since sktime 0.40.1, will be removed in 1.0.0.
         Previously controlled whether to load from ``tsfm_public`` directly
         or from the sktime-vendored copy. The ``granite-tsfm`` PyPI package is
@@ -299,7 +299,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         callbacks=None,
         broadcasting=False,
         fit_strategy="minimal",
-        use_source_package=False,
+        use_source_package=None,
     ):
         super().__init__()
         self.model_path = model_path
