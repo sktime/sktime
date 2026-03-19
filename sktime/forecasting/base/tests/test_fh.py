@@ -1085,7 +1085,13 @@ def test_pandas22_freq_roundtrip(ts):
 
 
 def test_timestamp_format_to_absolute():
+    """Test sub-period offset preservation in to_absolute_index.
+
+    Failure case in bug #5186.
+    """
     cutoff = pd.Timestamp("2025-03-02 12:00:00")
     fh = ForecastingHorizon([1, 2, 3], freq="D")
     y_pred_idx = fh.to_absolute_index(cutoff)
+    assert isinstance(y_pred_idx, pd.DatetimeIndex)
+    assert len(y_pred_idx) == 3
     assert "12:00:00" in str(y_pred_idx)

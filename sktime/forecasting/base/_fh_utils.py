@@ -517,7 +517,7 @@ class PandasFHConverter:
     # tests for this should also be included in the test suite
     # to cover edge cases around DST transitions.
     @staticmethod
-    def steps_to_datetime(values, freq, tz=None):
+    def steps_to_datetime(values, freq, tz=None, sub_period_offset=None):
         """Convert integer step values (period ordinals) to DatetimeIndex.
 
         Used by ``to_absolute_index`` when the cutoff is a datetime
@@ -526,6 +526,12 @@ class PandasFHConverter:
         Conversion path: ordinals -> PeriodIndex -> DatetimeIndex via
         ``to_timestamp()``, which returns the **start** of each period
         (e.g. ``Period("2020-01", "M")`` -> ``Timestamp("2020-01-01")``).
+
+        If ``sub_period_offset`` is provided, it is added to the
+        tz-naive DatetimeIndex before timezone handling. This preserves
+        sub-period precision from the cutoff (e.g. a cutoff at 12:00
+        with daily freq produces timestamps at 12:00, not midnight).
+        Refer issue #5186.
 
         If ``tz`` is provided, the tz-naive DatetimeIndex is first
         localized to UTC (which has no DST transitions), then
@@ -546,6 +552,11 @@ class PandasFHConverter:
         tz : str or None
             Timezone to localize the output DatetimeIndex.
             None produces a tz-naive DatetimeIndex.
+        sub_period_offset : pd.Timedelta or None
+            Offset within a period to add to the reconstructed
+            timestamps. Computed from the cutoff's position within
+            its period (e.g. 12 hours for a cutoff at noon with
+            daily freq). Applied before timezone handling.
 
         Returns
         -------
@@ -559,6 +570,8 @@ class PandasFHConverter:
         """
         period_idx = pd.PeriodIndex.from_ordinals(values.copy(), freq=freq)
         dt_idx = period_idx.to_timestamp()
+        if sub_period_offset is not None and sub_period_offset > pd.Timedelta(0):
+            dt_idx = dt_idx + sub_period_offset
         if tz is not None:
             # localize to UTC first (no DST ambiguity), then convert
             # to target tz. Direct tz_localize(tz) would raise
