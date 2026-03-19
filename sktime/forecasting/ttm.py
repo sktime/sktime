@@ -146,15 +146,11 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from ``predict``.
 
-    use_source_package : bool, default=False
-        If True, the model and configuration will be loaded directly from the source
-        package ``tsfm_public.models.tinytimemixer``. This is useful if you
-        want to bypass the local version of the package or when working in an
-        environment where the latest updates from the source package are needed.
-        If False, the model and configuration will be loaded from the local
-        version of package maintained in sktime because of model's unavailability
-        on pypi.
-        To install the source package, follow the instructions here [4]_.
+    use_source_package : bool, default=None
+        Deprecated since sktime 0.40.1, will be removed in 1.0.0.
+        Previously controlled whether to load from ``tsfm_public`` directly
+        or from the sktime-vendored copy. The ``granite-tsfm`` PyPI package is
+        now the only supported source, so this parameter will have no effect.
 
     fit_strategy : str, default="minimal"
         Strategy to use for fitting (fine-tuning) the model. This can be one of
@@ -258,7 +254,12 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "authors": ["ajati", "wgifford", "vijaye12", "geetu040"],
         # ajati, wgifford, vijaye12 for ibm-granite code
         "maintainers": ["geetu040"],
-        "python_dependencies": ["transformers", "torch", "accelerate>=0.26.0"],
+        "python_dependencies": [
+            "transformers",
+            "torch",
+            "accelerate>=0.26.0",
+            "granite-tsfm",
+        ],
         # estimator type
         # --------------
         "X_inner_mtype": [
@@ -284,7 +285,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,
-        "tests:libs": ["sktime.libs.granite_ttm"],
+        "tests:libs": ["granite-tsfm"],
     }
 
     def __init__(
@@ -297,8 +298,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         compute_metrics=None,
         callbacks=None,
         broadcasting=False,
-        use_source_package=False,
         fit_strategy="minimal",
+        use_source_package=None,
     ):
         super().__init__()
         self.model_path = model_path
@@ -311,8 +312,20 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
         self.broadcasting = broadcasting
-        self.use_source_package = use_source_package
         self.fit_strategy = fit_strategy
+        self.use_source_package = use_source_package
+
+        if use_source_package is not None:
+            warn(
+                "The use_source_package parameter of TinyTimeMixerForecaster is "
+                "deprecated since sktime 0.40.1 and will be removed in 0.42.0. "
+                "The granite-tsfm PyPI package is now the only supported source; "
+                "the parameter has no effect. "
+                "Please remove use_source_package from your code.",
+                category=DeprecationWarning,
+                obj=self,
+            )
+        # TODO 1.0.0: remove use_source_package parameter entirely
 
         if self.broadcasting:
             self.set_tags(
@@ -355,16 +368,11 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         """
         from transformers import Trainer, TrainingArguments
 
-        if self.use_source_package:
-            from tsfm_public.models.tinytimemixer import (
-                TinyTimeMixerConfig,
-                TinyTimeMixerForPrediction,
-            )
-        elif _check_soft_dependencies("torch", severity="error"):
-            from sktime.libs.granite_ttm import (
-                TinyTimeMixerConfig,
-                TinyTimeMixerForPrediction,
-            )
+        _check_soft_dependencies("granite-tsfm", severity="error")
+        from tsfm_public.models.tinytimemixer import (
+            TinyTimeMixerConfig,
+            TinyTimeMixerForPrediction,
+        )
 
         # Initialize to self.config, then adjust accordingly
         config = self.config
@@ -373,7 +381,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 raise ValueError(
                     "Invalid configuration: 'model_path' is set to None."
                     "This requires 'fit_strategy' to be 'full'."
-                    "Please set 'fit_strategy' to 'full' or provide a valid model path."
+                    "Set 'fit_strategy' to 'full', or provide a valid model path."
                 )
             # Load tinytimemixer config
             config = TinyTimeMixerConfig()
@@ -442,8 +450,15 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 ignore_mismatched_sizes=True,
             )
         else:
+            if self.fit_strategy in ("zero-shot", "minimal"):
+                raise ValueError(
+                    "Invalid configuration: 'model_path' is set to None."
+                    " This requires 'fit_strategy' to be 'full'."
+                    "Please set 'fit_strategy' to 'full' or provide a valid model path."
+                )
             # Initialize model with default config
             self.model = TinyTimeMixerForPrediction(config=config)
+            info = {"mismatched_keys": []}
 
         if self.fit_strategy == "zero-shot":
             if len(info["mismatched_keys"]) > 0:
@@ -567,15 +582,15 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         # hist.shape: (batch_size, n_timestamps, n_cols)
 
         # truncate or pad to match sequence length
-        past_values, observed_mask = _pad_truncate(
+        past_values, past_observed_mask = _pad_truncate(
             hist, self.model.config.context_length
         )
 
         past_values = (
             torch.tensor(past_values).to(self.model.dtype).to(self.model.device)
         )
-        observed_mask = (
-            torch.tensor(observed_mask).to(self.model.dtype).to(self.model.device)
+        past_observed_mask = (
+            torch.tensor(past_observed_mask).to(self.model.dtype).to(self.model.device)
         )
 
         # Handle exogenous variables if provided
@@ -603,7 +618,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         self.model.eval()
         outputs = self.model(
             past_values=past_values,
-            observed_mask=observed_mask,
+            past_observed_mask=past_observed_mask,
             future_values=future_values,
         )
         pred = outputs.prediction_outputs.detach().cpu().numpy()
@@ -847,11 +862,11 @@ class PyTorchDataset(Dataset):
                 :,
             ]
 
-        observed_mask = np.ones_like(past_values)
+        past_observed_mask = np.ones_like(past_values)
 
         result = {
             "past_values": tensor(past_values).float(),
-            "observed_mask": tensor(observed_mask).float(),
+            "past_observed_mask": tensor(past_observed_mask).float(),
             "future_values": tensor(future_values).float(),
         }
 
@@ -898,8 +913,8 @@ class PyTorchDataset(Dataset):
                     :,
                 ]
 
-            # Concatenate past and future exogenous for the full sequence
-            full_exog = np.concatenate([past_exog, future_exog], axis=0)
-            result["exogenous_values"] = tensor(full_exog).float()
+            # tsfm_public's forward() has no dedicated exogenous parameter,
+            # so exogenous variables cannot be passed via the Trainer batch.
+            # Exogenous support during inference is handled in _predict instead.
 
         return result
