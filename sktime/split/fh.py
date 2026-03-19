@@ -58,6 +58,12 @@ class ForecastingHorizonSplitter(BaseSplitter):
         fh = check_fh(self.fh, freq=y)
         idx = fh.to_pandas()
 
+        # align idx type with y type for comparison
+        if isinstance(y, pd.DatetimeIndex) and isinstance(idx, pd.PeriodIndex):
+            idx = idx.to_timestamp()
+        elif isinstance(y, pd.PeriodIndex) and isinstance(idx, pd.DatetimeIndex):
+            idx = idx.to_period(y.freq)
+
         if fh.is_relative:
             min_step, max_step = idx.min(), idx.max()
             steps = fh.to_indexer()
