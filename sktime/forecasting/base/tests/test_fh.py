@@ -163,9 +163,14 @@ def test_fh(index_type, fh_type, is_relative, steps):
     # generate fh
     fh = _make_fh(cutoff_idx, steps, fh_type, is_relative)
     # update frequency of the forecasting horizon
+    freq_for_test = infer_freq(y)
     fh.freq = infer_freq(y)
-    if fh_type == "int":
+    if fh_type in ("int", "timedelta"):
+        # new FH normalizes timedelta to integer steps
         assert is_integer_index(fh.to_pandas())
+    elif fh_type == "datetime":
+        # new FH normalizes datetime to PeriodIndex
+        assert isinstance(fh.to_pandas(), pd.PeriodIndex)
     else:
         assert isinstance(fh.to_pandas(), INDEX_TYPE_LOOKUP.get(fh_type))
 
@@ -182,14 +187,16 @@ def test_fh(index_type, fh_type, is_relative, steps):
         fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
         fh_indexer = fh_relative - 1
     else:
-        fh_relative = steps.sort_values()
-        fh_absolute = (cutoff + steps).sort_values()
-        fh_indexer = None
+        fh_relative_td = steps.sort_values()
+        fh_absolute = (cutoff + fh_relative_td).sort_values()
+        # new FH normalizes timedelta to integer steps
+        fh_relative = pd.Index(
+            _coerce_duration_to_int(fh_relative_td, freq=freq_for_test),
+            dtype="int64",
+        )
+        fh_indexer = fh_relative - 1
 
-    if steps.dtype in int_types:
-        null = 0
-    else:
-        null = pd.Timedelta(0)
+    null = 0
     fh_oos = fh.to_pandas()[fh_relative > null]
     is_oos = len(fh_oos) == len(fh)
     fh_ins = fh.to_pandas()[fh_relative <= null]
@@ -204,12 +211,8 @@ def test_fh(index_type, fh_type, is_relative, steps):
     _assert_index_equal(fh_relative, fh.to_relative(cutoff).to_pandas())
     assert fh.to_relative(cutoff).is_relative
 
-    if steps.dtype in int_types:
-        # check index-like representation
-        _assert_index_equal(fh_indexer, fh.to_indexer(cutoff))
-    else:
-        with pytest.raises(NotImplementedError):
-            fh.to_indexer(cutoff)
+    # check index-like representation
+    _assert_index_equal(fh_indexer, fh.to_indexer(cutoff))
 
     # check in-sample representation
     # we only compare the numpy array here because the expected solution is
