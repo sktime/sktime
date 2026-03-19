@@ -1054,6 +1054,9 @@ def test_pandas22_freq(freq):
 
     fh.to_absolute(cutoff)  # failure 1
     fh.to_absolute(cutoff).to_relative(cutoff)  # failure 2
+    # to_absolute_index exercises the pandas freq path (PeriodIndex.to_timestamp)
+    # which is where the original bug #6499 crash occurred
+    fh.to_absolute_index(cutoff)  # failure 3
 
 
 @pytest.mark.skipif(
