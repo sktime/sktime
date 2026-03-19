@@ -178,7 +178,7 @@ class ForecastingHorizon:
             # constructor after coercion,
             # to allow the converter to handle pandas alias normalization first.
             vals, inferred_is_relative, freq_val, nanos_flag = (
-                PandasFHConverter.to_internal(values, freq)
+                PandasFHConverter.to_internal(values, freq, is_relative=is_relative)
             )
 
         # sort, deduplicate, and store
@@ -321,10 +321,6 @@ class ForecastingHorizon:
             # so only raise when the type strictly implies one interpretation
             # (e.g. PeriodIndex is always absolute, TimedeltaIndex always relative)
             if not isinstance(values, _RELATIVE_NEUTRAL_TYPES):
-                # <check>
-                # what about pd.RangeIndex and pd.Index with integer dtype?
-                # They are also compatible with both interpretations.
-                # </check>
                 raise ValueError(
                     f"Conflict between inferred is_relative={inferred_is_relative} "
                     f"and provided is_relative={is_relative}. Please resolve the "

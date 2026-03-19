@@ -200,7 +200,7 @@ class PandasFHConverter:
     # input -> internal representation conversion
 
     @staticmethod
-    def to_internal(values, freq=None) -> tuple:
+    def to_internal(values, freq=None, is_relative=None) -> tuple:
         """Convert pandas input values to internal representation.
 
         All temporal inputs are normalized to integer steps:
@@ -314,13 +314,15 @@ class PandasFHConverter:
         # RangeIndex -> plain integers
         if isinstance(values, pd.RangeIndex):
             arr = values.to_numpy().astype(np.int64)
-            return (arr, True, None, False)
+            is_rel = is_relative if is_relative is not None else True
+            return (arr, is_rel, None, False)
 
         # generic pd.Index
         if isinstance(values, pd.Index):
             if pd.api.types.is_integer_dtype(values.dtype):
                 arr = values.to_numpy().astype(np.int64)
-                return (arr, True, None, False)
+                is_rel = is_relative if is_relative is not None else True
+                return (arr, is_rel, None, False)
             if pd.api.types.is_timedelta64_dtype(values.dtype):
                 arr = values.to_numpy().view(np.int64).copy()
                 return (arr, True, None, True)
