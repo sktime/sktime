@@ -200,13 +200,13 @@ class ForecastingHorizon:
             self._values_are_nanos = False
 
         # set freq via setter (single gate for validation and nanos conversion)
+        # freq_val: freq extracted from the input values (e.g. PeriodIndex.freq)
+        # freq: freq explicitly passed by the user
+        # setter handles None by returning immediately, so both calls are safe.
+        # if both are non-None and disagree, the setter raises ValueError.
         self._freq = None
-        if freq_val is not None:
-            self.freq = freq_val
-            # setter normalizes string and sets _freq, raises ValueError on mismatch
-        if freq is not None:
-            self.freq = freq
-            # setter normalizes, checks mismatch with existing _freq
+        self.freq = freq_val
+        self.freq = freq
 
         # determine is_relative
         self._is_relative = ForecastingHorizon._resolve_is_relative(
