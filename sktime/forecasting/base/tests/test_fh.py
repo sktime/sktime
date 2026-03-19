@@ -19,6 +19,7 @@ from sktime.forecasting.base._fh import (
     _check_freq,
     _extract_freq_from_cutoff,
 )
+from sktime.forecasting.base._fh_utils import PandasFHConverter
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
@@ -432,17 +433,12 @@ FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 
 
 def _get_expected_freqstr(freqstr):
-    # special case for 10min, T is being deprecated and replaced by min
-    if _check_soft_dependencies("pandas<2.2.0", severity="none"):
-        if freqstr == "10min":
-            return "10T"
-        return freqstr
-    # on more recent pandas versions, >=2.2.0
-    if freqstr == "H":
-        return "h"
-    if freqstr == "M":
-        return "ME"
-    return freqstr
+    """Get expected canonical frequency string for the new FH.
+
+    The new FH stores canonical freq strings that align with Period-context
+    APIs. PeriodIndex.freqstr returns the same canonical form.
+    """
+    return PandasFHConverter.normalize_freq(freqstr)
 
 
 @pytest.mark.skipif(
