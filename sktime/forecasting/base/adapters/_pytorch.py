@@ -52,14 +52,16 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
 
     def __init__(
         self,
-        num_epochs=16,
-        batch_size=8,
-        in_channels=1,
-        individual=False,
-        criterion_kwargs=None,
-        optimizer=None,
-        optimizer_kwargs=None,
-        lr=0.001,
+        num_epochs,
+        batch_size,
+        in_channels,
+        individual,
+        criterion_kwargs,
+        optimizer,
+        optimizer_kwargs,
+        lr,
+        custom_dataset_train,
+        custom_dataset_pred,
     ):
         self.num_epochs = num_epochs
         self.batch_size = batch_size
@@ -69,6 +71,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
+        self.custom_dataset_train = custom_dataset_train
+        self.custom_dataset_pred = custom_dataset_pred
 
         super().__init__()
 
@@ -205,8 +209,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
             if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
                 self.custom_dataset_pred.build_dataset
             ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
+                self.custom_dataset_pred.build_dataset(y)
+                dataset = self.custom_dataset_pred
             else:
                 raise NotImplementedError(
                     "Custom Dataset `build_dataset` method is not available. Please"

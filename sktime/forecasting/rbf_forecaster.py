@@ -119,7 +119,12 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         activation="relu",
         dropout_rate=0.1,
     ):
-        super().__init__()
+        super().__init__(
+            num_epochs=epochs,
+            batch_size=batch_size,
+            optimizer=optimizer,
+            lr=lr,
+        )
 
         self.window_length = window_length
         self.hidden_size = hidden_size

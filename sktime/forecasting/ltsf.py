@@ -119,6 +119,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
         )
 
         from sktime.utils.dependencies import _check_soft_dependencies
@@ -462,6 +464,8 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
         )
 
         from sktime.utils.dependencies import _check_soft_dependencies
@@ -649,6 +653,8 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
         )
 
         from sktime.utils.dependencies import _check_soft_dependencies
@@ -1042,10 +1048,13 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             batch_size=batch_size,
             in_channels=in_channels,
             individual=individual,
+            criterion=criterion,
             criterion_kwargs=criterion_kwargs,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
         )
 
         from sktime.utils.dependencies import _check_soft_dependencies
@@ -1107,8 +1116,8 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
                 self.custom_dataset_pred.build_dataset
             ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
+                self.custom_dataset_pred.build_dataset(y)
+                dataset = self.custom_dataset_pred
             else:
                 raise NotImplementedError(
                     "Custom Dataset `build_dataset` method is not available. Please"

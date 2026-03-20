@@ -184,6 +184,8 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
         )
 
         from sktime.utils.dependencies import _check_soft_dependencies
