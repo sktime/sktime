@@ -33,7 +33,6 @@ EXCLUDE_ESTIMATORS = [
     "HIVECOTEV1",
     "HIVECOTEV2",
     "RandomIntervalSpectralEnsemble",
-    "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
