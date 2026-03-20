@@ -20,27 +20,51 @@ class CAPA(BaseDetector):
 
     Parameters
     ----------
-    collective_saving : BaseSaving or BaseCost, optional (default=L2Cost(0.0))
-        The saving function to use for collective anomaly detection.
-        If a ``BaseCost`` is given, the saving function is constructed from the cost.
-        The cost must have a fixed parameter that represents the baseline cost.
-    point_saving : BaseSaving or BaseCost, optional (default=L2Cost(0.0))
-        The saving function to use for point anomaly detection. Only savings with a
+    segment_saving : BaseIntervalScorer, optional, default=L2Saving()
+        The saving to use for segment anomaly detection.
+        If a cost is given, the saving is constructed from the cost. The
+        cost must have a fixed parameter that represents the baseline cost.
+        If a penalised saving is given, it must be constructed from `PenalisedScore`.
+    segment_penalty : np.ndarray or float, optional, default=None
+        The penalty to use for segment anomaly detection. If the segment penalty is
+        penalised (`segment_penalty.get_tag("is_penalised")`) the penalty will
+        be ignored. The different types of penalties are as follows:
+
+        * ``float``: A constant penalty applied to the sum of scores across all
+          variables in the data.
+        * ``np.ndarray``: A penalty array of the same length as the number of
+          columns in the data, where element ``i`` of the array is the penalty for
+          ``i+1`` variables being affected by an anomaly. The penalty array
+          must be positive and increasing (not strictly). A penalised score with a
+          linear penalty array is faster to evaluate than a nonlinear penalty array.
+        * ``None``: A default constant penalty is created in `predict` based on the
+          fitted score using the `make_chi2_penalty` function.
+
+    point_saving : BaseIntervalScorer, optional, default=L2Saving()
+        The saving to use for point anomaly detection. Only savings with a
         minimum size of 1 are permitted.
-        If a ``BaseCost`` is given, the saving function is constructed from the cost.
-        The cost must have a fixed parameter that represents the baseline cost.
-    collective_penalty_scale : float, optional (default=2.0)
-        Scaling factor for the collective penalty.
-    point_penalty_scale : float, optional (default=2.0)
-        Scaling factor for the point penalty.
-    min_segment_length : int, optional (default=2)
-        Minimum length of a segment.
-    max_segment_length : int, optional (default=1000)
+        If a cost is given, the saving is constructed from the cost. The
+        cost must have a fixed parameter that represents the baseline cost.
+        If a penalised saving is given, it must be constructed from `PenalisedScore`.
+    point_penalty : np.ndarray or float, optional, default=None
+        The penalty to use for point anomaly detection. See the documentation for
+        `segment_penalty` for details. For ``None`` input, the default is set using the
+        `make_linear_chi2_penalty` function.
+    min_segment_length : int, optional, default=2
+        Minimum length of a segment. This may be overridden by the `min_size` of the
+        fitted `segment_saving`.
+    max_segment_length : int, optional, default=1000
         Maximum length of a segment.
-    ignore_point_anomalies : bool, optional (default=False)
-        If True, detected point anomalies are not returned by `predict`. I.e., only
-        collective anomalies are returned. If False, point anomalies are included in the
-        output as collective anomalies of length 1.
+    ignore_point_anomalies : bool, optional, default=False
+        If ``True``, detected point anomalies are not returned by `predict`. I.e., only
+        segment anomalies are returned. If ``False``, point anomalies are included in
+        the output as segment anomalies of length 1.
+    find_affected_components : bool, optional, default=False
+        If ``True``, the affected components for each segment anomaly are returned in
+        the `"icolumns"` key of the `predict` output.
+        Only relevant for multivariate data in combination with a penalty array.
+        The affected components are sorted from the highest to lowest evidence
+        of an anomaly being present in the variable.
 
     See Also
     --------
@@ -77,7 +101,7 @@ class CAPA(BaseDetector):
         # --------------
         "authors": ["Tveten"],
         "maintainers": ["Tveten"],
-        "python_dependencies": "skchange>=0.6.0",
+        "python_dependencies": "skchange>=0.14.3",
         # estimator type
         # --------------
         "task": "segmentation",
@@ -89,19 +113,21 @@ class CAPA(BaseDetector):
 
     def __init__(
         self,
-        collective_saving=None,
+        segment_saving=None,
+        segment_penalty=None,
         point_saving=None,
-        collective_penalty_scale: float = 2.0,
-        point_penalty_scale: float = 2.0,
+        point_penalty=None,
         min_segment_length: int = 2,
         max_segment_length: int = 1000,
         ignore_point_anomalies: bool = False,
+        find_affected_components = False,
     ):
-        self.collective_saving = collective_saving
-        self.point_saving = point_saving
-        self.collective_penalty_scale = collective_penalty_scale
-        self.point_penalty_scale = point_penalty_scale
-        self.min_segment_length = min_segment_length
-        self.max_segment_length = max_segment_length
-        self.ignore_point_anomalies = ignore_point_anomalies
+        self.segment_saving=segment_saving
+        self.segment_penalty=segment_penalty
+        self.point_saving=point_saving
+        self.point_penalty=point_penalty
+        self.min_segment_length=min_segment_length
+        self.max_segment_length=max_segment_length
+        self.ignore_point_anomalies=ignore_point_anomalies
+        self.find_affected_components=find_affected_components
         super().__init__()
