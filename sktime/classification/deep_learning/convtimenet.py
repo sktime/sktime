@@ -3,7 +3,7 @@
 __author__ = ["Tanuj-Taneja1"]
 __all__ = ["ConvTimeNetClassifier"]
 
-from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
+from sktime.classification.deep_learning.base._base_torch import BaseDeepClassifierPytorch
 
 
 class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
@@ -46,14 +46,26 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         The number of epochs to train the model.
     batch_size : int, optional (default=8)
         The size of each mini-batch during training.
-    criterion : callable, optional (default=None)
+    activation : str or None or torch.nn activation instance, optional (default=None)
+        Activation function for the output layer. If None (default), no activation is
+        applied in the output layer. This is the correct setting when using
+        CrossEntropyLoss (the default criterion), as it already incorporates softmax.
+    criterion : str or None or torch.nn loss instance, optional (default=None)
         The loss function to use. If None, CrossEntropyLoss will be used.
     criterion_kwargs : dict, optional (default=None)
         Additional keyword arguments to pass to the loss function.
-    optimizer : str, optional (default=None)
-        The optimizer to use. If None, Adam will be used.
+    optimizer : str or None or torch.optim instance, optional (default=None)
+        The optimizer to use. If None, Adam will be used. Accepts case-insensitive
+        strings of any optimizer in ``torch.optim`` (e.g. ``"adam"``, ``"sgd"``),
+        or a pre-constructed optimizer instance.
     optimizer_kwargs : dict, optional (default=None)
         Additional keyword arguments to pass to the optimizer.
+    callbacks : None or str or tuple of str, optional (default=None)
+        Learning rate scheduler callbacks. Pass a string name (case-insensitive) of
+        any scheduler in ``torch.optim.lr_scheduler``, e.g. ``"StepLR"``. If more
+        than one scheduler is needed, pass them as a tuple. None means no scheduler.
+    callback_kwargs : dict, optional (default=None)
+        Additional keyword arguments to pass to the callbacks (schedulers).
     lr : float, optional (default=0.001)
         The learning rate to use for the optimizer.
     verbose : bool, optional (default=False)
@@ -125,10 +137,13 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         device="cpu",
         num_epochs=16,
         batch_size=8,
+        activation=None,
         criterion=None,
         criterion_kwargs=None,
         optimizer=None,
         optimizer_kwargs=None,
+        callbacks=None,
+        callback_kwargs=None,
         lr=0.001,
         verbose=False,
         random_state=None,
@@ -138,20 +153,20 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         self.patch_stride = patch_stride
         self.dropout = dropout
         self.d_ff = d_ff
-        # Ensure dw_ks is a list
-        if isinstance(dw_ks, int):
-            self.dw_ks = [dw_ks]
-        else:
-            self.dw_ks = dw_ks
+        # Store the raw user value so get_params()/clone() round-trips work correctly.
+        self.dw_ks = dw_ks
         self.device = device
 
         super().__init__(
             num_epochs=num_epochs,
             batch_size=batch_size,
+            activation=activation,
             criterion=criterion,
             criterion_kwargs=criterion_kwargs,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
+            callbacks=callbacks,
+            callback_kwargs=callback_kwargs,
             lr=lr,
             verbose=verbose,
             random_state=random_state,
@@ -164,6 +179,10 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         self.enc_in = X.shape[1]
         self.seq_len = X.shape[2]
 
+        # Coerce dw_ks to list here (not in __init__) so that get_params()/clone()
+        # returns the original user-supplied value (int or list).
+        dw_ks = [self.dw_ks] if isinstance(self.dw_ks, int) else self.dw_ks
+
         model = ConvTimeNet._ConvTimeNet(
             enc_in=self.enc_in,
             d_model=self.d_model,
@@ -173,7 +192,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             n_classes=self.n_classes,
             dropout=self.dropout,
             d_ff=self.d_ff,
-            dw_ks=self.dw_ks,
+            dw_ks=dw_ks,
             device=self.device,
         )
         return model.to(self.device)
@@ -208,7 +227,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             "dw_ks": [3],
             "d_ff": 16,
             "batch_size": 2,
-            "optimizer": "Adam",
+            "optimizer": "adam",
             "lr": 1e-3,
             "device": "cpu",
             "verbose": False,
@@ -224,7 +243,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             "dw_ks": [5, 7],
             "d_ff": 64,
             "batch_size": 4,
-            "optimizer": "Adam",
+            "optimizer": "adam",
             "lr": 5e-4,
             "device": "cpu",
             "verbose": False,
@@ -240,7 +259,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             "dw_ks": [7, 13, 19],  # very large depthwise kernels
             "d_ff": 128,
             "batch_size": 8,
-            "optimizer": "SGD",  # different optimizer
+            "optimizer": "sgd",  # different optimizer
             "lr": 1e-2,
             "device": "cpu",
             "verbose": False,
