@@ -117,9 +117,6 @@ EXCLUDED_TESTS = {
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
     "SAXlegacy": ["test_fit_transform_output"],
-    "DynamicFactor": [
-        "test_predict_time_index_in_sample_full",  # refer to #4765
-    ],
     "ARIMA": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
