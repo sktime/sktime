@@ -235,13 +235,16 @@ class BaseWindowSplitter(BaseSplitter):
             train = self._get_train_window(
                 y=y, train_start=train_start, split_point=split_point
             )
+            # Below line added after ForecastingHorizon v2 rework.
+            # Resolve deferred nanos (freq-less TimedeltaIndex input) to
+            # integer steps using y's frequency.  After this, to_pandas()
+            # returns an integer pd.Index and array_is_int is True.
+            fh.freq = y
             fh_pd = fh.to_pandas()
             if array_is_int(fh_pd):
                 test = split_point + fh_pd.to_numpy() - 1
             else:
-                test = np.argwhere(
-                    y.isin(y[max(0, split_point - 1)] + fh_pd.to_pandas())
-                ).flatten()
+                test = np.argwhere(y.isin(y[max(0, split_point - 1)] + fh_pd)).flatten()
                 if split_point == 0:
                     test -= 1
             yield train, test
