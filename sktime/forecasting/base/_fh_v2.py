@@ -986,9 +986,21 @@ class ForecastingHorizon:
 
         ``**kwargs`` are passed through to the underlying numpy array's
         ``max`` so that ``np.max(fh)`` works via numpy's dispatch protocol.
+
+        Raises
+        ------
+        ValueError
+            If values are raw nanoseconds (freq not yet set). Set freq
+            via ``fh.freq = ...`` to convert to step counts first.
         """
         if len(self._values) == 0:
             return None
+        if self._values_are_nanos:
+            raise ValueError(
+                "Cannot compute max: values are raw nanoseconds because "
+                "freq has not been set yet. Set freq via `fh.freq = ...` "
+                "to convert to integer step counts first."
+            )
         return self._values.max(**kwargs)
 
     def min(self, **kwargs):
@@ -996,9 +1008,21 @@ class ForecastingHorizon:
 
         ``**kwargs`` are passed through to the underlying numpy array's
         ``min`` so that ``np.min(fh)`` works via numpy's dispatch protocol.
+
+        Raises
+        ------
+        ValueError
+            If values are raw nanoseconds (freq not yet set). Set freq
+            via ``fh.freq = ...`` to convert to step counts first.
         """
         if len(self._values) == 0:
             return None
+        if self._values_are_nanos:
+            raise ValueError(
+                "Cannot compute min: values are raw nanoseconds because "
+                "freq has not been set yet. Set freq via `fh.freq = ...` "
+                "to convert to integer step counts first."
+            )
         return self._values.min(**kwargs)
 
     # Below method computes a hash for the ForecastingHorizon instance,
