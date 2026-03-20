@@ -623,3 +623,20 @@ def test_evaluate_hierarchical_unequal_X_y():
     expected_cols = np.array([1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6])
     output_metrics = res.loc[:, "test_MeanAbsolutePercentageError"].values
     _assert_array_almost_equal(output_metrics, expected_cols)
+
+
+def test_evaluate_fh_mismatch_multioutput_gridsearch():
+    """Test fix for #7360."""
+    from sklearn.linear_model import LinearRegression
+
+    from sktime.forecasting.compose import make_reduction
+    from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    from sktime.split import ExpandingWindowSplitter
+
+    y = _make_series(n_timepoints=30, n_columns=1)
+    forecaster = make_reduction(LinearRegression(), strategy="multioutput")
+    cv = ExpandingWindowSplitter(initial_window=10, fh=[1, 2, 3])
+    grid = ForecastingGridSearchCV(
+        forecaster=forecaster, cv=cv, param_grid={"window_length": [3, 5]}
+    )
+    grid.fit(y, fh=[1, 2, 3])
