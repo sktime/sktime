@@ -97,13 +97,14 @@ class CircularBinarySegmentation(BaseDetector):
         "capability:multivariate": True,
         "fit_is_empty": False,
     }
+
     def __init__(
         self,
         anomaly_score=None,
         penalty=None,
         min_segment_length: int = 5,
         max_interval_length: int = 1000,
-        growth_factor : float = 1.5,
+        growth_factor: float = 1.5,
     ):
         self.anomaly_score = anomaly_score
         self.penalty = penalty  # Just holds the input value.

@@ -120,14 +120,14 @@ class CAPA(BaseDetector):
         min_segment_length: int = 2,
         max_segment_length: int = 1000,
         ignore_point_anomalies: bool = False,
-        find_affected_components = False,
+        find_affected_components=False,
     ):
-        self.segment_saving=segment_saving
-        self.segment_penalty=segment_penalty
-        self.point_saving=point_saving
-        self.point_penalty=point_penalty
-        self.min_segment_length=min_segment_length
-        self.max_segment_length=max_segment_length
-        self.ignore_point_anomalies=ignore_point_anomalies
-        self.find_affected_components=find_affected_components
+        self.segment_saving = segment_saving
+        self.segment_penalty = segment_penalty
+        self.point_saving = point_saving
+        self.point_penalty = point_penalty
+        self.min_segment_length = min_segment_length
+        self.max_segment_length = max_segment_length
+        self.ignore_point_anomalies = ignore_point_anomalies
+        self.find_affected_components = find_affected_components
         super().__init__()

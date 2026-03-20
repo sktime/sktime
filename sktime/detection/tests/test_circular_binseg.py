@@ -2,15 +2,14 @@
 
 __author__ = ["CloseChoice"]
 __all__ = []
-import pytest
-
 import numpy as np
 import pandas as pd
-from sktime.detection.skchange_aseg import CircularBinarySegmentation
+import pytest
 from skchange.costs import L1Cost
 from skchange.datasets import generate_anomalous_data
+
+from sktime.detection.skchange_aseg import CircularBinarySegmentation
 from sktime.tests.test_switch import run_test_for_class
-from skchange.costs import L1Cost
 
 
 @pytest.mark.skipif(
@@ -21,7 +20,7 @@ def test_circular_binseg_with_params():
     """Test that the interface to skchange works correctly for all parameters."""
     detector = CircularBinarySegmentation(
         anomaly_score=L1Cost(1),
-        penalty=1.,
+        penalty=1.0,
         min_segment_length=5,
         max_interval_length=1000,
         growth_factor=1.5,
