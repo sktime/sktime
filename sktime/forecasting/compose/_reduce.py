@@ -1189,10 +1189,27 @@ class _DirRecReducer(_Reducer):
         -------
         y_pred = pd.Series or pd.DataFrame
         """
-        # Exogenous variables are not yet support for the dirrec strategy.
+        # Exogenous variables are not yet supported for the dirrec strategy.
         # todo: implement this. For now, we escape.
         if X is not None:
             X = None
+
+        # Validate that predict fh is a subset of the fh used at fit time.
+        # DirRec trains one model per horizon step so cannot predict
+        # horizons it was not trained on.
+        fh_relative = fh.to_relative(self.cutoff)
+        fit_fh_relative = self.fh.to_relative(self.cutoff)
+        fit_fh_set = set(fit_fh_relative._values.tolist())
+        pred_fh_set = set(fh_relative._values.tolist())
+        if not pred_fh_set.issubset(fit_fh_set):
+            raise ValueError(
+                "DirRec strategy requires that the forecasting horizon at "
+                "predict time is a subset of the horizon used at fit time. "
+                f"Fit fh (relative): {sorted(fit_fh_set)}, "
+                f"predict fh (relative): {sorted(pred_fh_set)}. "
+                "Fix: re-fit the forecaster with a fh that covers all "
+                "required future steps, e.g. fh=[1, 2, 3, 4, 5, 6]."
+            )
 
         # Get last window of available data.
         y_last, X_last = self._get_last_window()
@@ -1551,8 +1568,19 @@ def make_reduction(
           this will result in a probabilistic forecaster
 
     strategy : str, optional (default="recursive")
-        The strategy to generate forecasts. Must be one of "direct", "recursive" or
-        "multioutput".
+        The strategy to generate forecasts. Must be one of "direct", "recursive",
+        "multioutput", or "dirrec".
+
+        - "recursive" : single model trained for 1-step ahead, applied iteratively
+          for multi-step forecasts. Does NOT require ``fh`` at ``fit`` time.
+        - "direct" : one model per forecasting horizon step, trained independently.
+          Requires ``fh`` at ``fit`` time. Supports exogenous variables X.
+        - "multioutput" : single multi-output model predicting all horizon steps
+          simultaneously. Requires ``fh`` at ``fit`` time.
+        - "dirrec" : hybrid of direct and recursive. One model per horizon step,
+          where each model uses predictions of the previous step as lag features.
+          Requires ``fh`` at ``fit`` time. Does NOT support exogenous variables X.
+          The ``fh`` used at ``predict`` must be a subset of ``fh`` used at ``fit``.
 
     window_length : int, optional (default=10)
         Window length used in sliding window transformation.
@@ -1593,6 +1621,60 @@ def make_reduction(
 
     Examples
     --------
+    Example 1 - strategy="dirrec", 3-way train/test/predict split, no exogenous X.
+
+    Since "dirrec" requires the same fh at fit and predict time, we fit once
+    with the full fh covering both test region [1,2,3] and predict region [4,5,6].
+    Exogenous X is not supported for "dirrec".
+
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sklearn.linear_model import Ridge
+    >>> from sktime.forecasting.compose import make_reduction
+    >>> y = pd.Series(
+    ...     np.arange(50, dtype=float),
+    ...     index=pd.period_range("2020-01", periods=50, freq="M"),
+    ... )
+    >>> y_train = y.iloc[:38]
+    >>> y_test  = y.iloc[38:41]
+    >>> fht = [1, 2, 3]
+    >>> fha = [1, 2, 3, 4, 5, 6]
+    >>> >>> forecaster = make_reduction(Ridge(), strategy="dirrec", window_length=5)
+    >>> forecaster.fit(y_train, fh=fha)
+    DirRecTabularRegressionForecaster(...)
+    >>> y_pred_all = forecaster.predict()
+    >>> y_pred_test    = y_pred_all.iloc[:3]
+    >>> y_pred_future  = y_pred_all.iloc[3:]
+
+    Example 2 - strategy="direct", 3-way split, with exogenous X.
+
+    "direct" supports exogenous variables and requires fh at fit time.
+    We fit with full fh=[1..6] to cover both test and predict regions.
+
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sklearn.linear_model import Ridge
+    >>> from sktime.forecasting.compose import make_reduction
+    >>> y = pd.Series(
+    ...     np.arange(50, dtype=float),
+    ...     index=pd.period_range("2020-01", periods=50, freq="M"),
+    ... )
+    >>> X = pd.DataFrame(
+    ...     {"feat": np.arange(50, dtype=float)},
+    ...     index=pd.period_range("2020-01", periods=50, freq="M"),
+    ... )
+    >>> y_train, X_train = y.iloc[:38], X.iloc[:38]
+    >>> y_test,  X_test  = y.iloc[38:41], X.iloc[38:41]
+    >>> X_future = X.iloc[41:44]
+    >>> fha = [1, 2, 3, 4, 5, 6]
+    >>> forecaster2 = make_reduction(Ridge(), strategy="direct", window_length=5)
+    >>> forecaster2.fit(y_train, X=X_train, fh=fha)
+    DirectTabularRegressionForecaster(...)
+    >>> score2 = forecaster2.score(y_test, X=X_test, fh=[1, 2, 3])
+    >>> y_pred2 = forecaster2.predict(fh=[4, 5, 6], X=pd.concat([X_test, X_future]))
+
+    Example 3 - strategy="recursive", original example.
+
     >>> from sktime.forecasting.compose import make_reduction
     >>> from sktime.datasets import load_airline
     >>> from sklearn.ensemble import GradientBoostingRegressor
@@ -1601,7 +1683,7 @@ def make_reduction(
     >>> forecaster = make_reduction(regressor, window_length=15, strategy="recursive")
     >>> forecaster.fit(y)
     RecursiveTabularRegressionForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
 
     References
     ----------
