@@ -93,6 +93,11 @@ class RNNNetworkTorch(NNModule):
         self.bidirectional = bidirectional
         super().__init__()
 
+        # set random seed for torch
+        if self.random_state is not None:
+            torchManual_seed = _safe_import("torch.manual_seed")
+            torchManual_seed(self.random_state)
+
         # Checking input dimensions
         if isinstance(self.input_size, int):
             in_features = self.input_size
