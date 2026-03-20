@@ -59,7 +59,7 @@ class SlopeTransformer(BaseTransformer):
         params : list of dicts
         """
         params1 = {}
-        params2 = {"num_intervals" : 3}
+        params2 = {"num_intervals": 3}
         return [params1, params2]
 
     def _transform(self, X, y=None):
