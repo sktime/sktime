@@ -152,6 +152,8 @@ class RBFNetwork(nn.Module):
     ):
         super().__init__()
         self.mode = mode
+        self.pred_len = output_size
+        self.seq_len = input_size
 
         self.rbf_layer = RBFLayer(
             in_features=input_size,

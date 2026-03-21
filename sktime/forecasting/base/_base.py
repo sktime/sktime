@@ -1107,6 +1107,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         >>> forecaster.state
         'pretrained'
         """
+        if check_is_scitype(y, "Series"):
+            raise TypeError(
+                f"{type(self).__name__}.pretrain requires Panel or Hierarchical data "
+                "(multiple time series instances), but a single Series was passed. "
+                "Use fit() for fitting on a single series, or pass panel data "
+                "(e.g., pd.DataFrame with MultiIndex) to pretrain()."
+            )
+
         # pretrain always requires panel data, independent of what fit/predict
         # support via y_inner_mtype. Pass expanded mtypes directly to _check_X_y
         # to decouple pretrain's data requirements from the tag.
@@ -1114,16 +1122,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         orig_y_mtypes = _coerce_to_list(self.get_tag("y_inner_mtype"))
         pretrain_y_mtypes = list(set(orig_y_mtypes + _PRETRAIN_MTYPES))
 
-        X_inner, y_inner = self._check_X_y(X=X, y=y, y_inner_mtype=pretrain_y_mtypes)
-
-        y_scitype = self._y_metadata.get("scitype", None)
-        if y_scitype == "Series":
-            raise TypeError(
-                f"{type(self).__name__}.pretrain requires Panel or Hierarchical data "
-                "(multiple time series instances), but a single Series was passed. "
-                "Use fit() for fitting on a single series, or pass panel data "
-                "(e.g., pd.DataFrame with MultiIndex) to pretrain()."
-            )
+        # pretrain accepts multivariate panel data even for univariate forecasters,
+        # because _pretrain can split columns into separate univariate series.
+        # Pass scitype_y="both" to prevent column vectorization.
+        X_inner, y_inner = self._check_X_y(
+            X=X, y=y, y_inner_mtype=pretrain_y_mtypes, scitype_y="both"
+        )
 
         # pretrain does not support vectorization - global learning requires
         # the forecaster to handle panel data directly
@@ -1759,7 +1763,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         return fitted_params
 
-    def _check_X_y(self, X=None, y=None, y_inner_mtype=None):
+    def _check_X_y(self, X=None, y=None, y_inner_mtype=None, scitype_y=None):
         """Check and coerce X/y for fit/predict/update functions.
 
         Parameters
@@ -1841,6 +1845,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
         else:
             y_inner_mtype = _coerce_to_list(y_inner_mtype)
+        if scitype_y is None:
+            scitype_y = self.get_tag("scitype:y")
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
         y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
         X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
@@ -1858,7 +1864,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         if y is not None:
             # request only required metadata from checks
             y_metadata_required = ["n_features", "feature_names", "feature_kind"]
-            if self.get_tag("scitype:y") != "both":
+            if scitype_y != "both":
                 y_metadata_required += ["is_univariate"]
             if not self.get_tag("capability:missing_values"):
                 y_metadata_required += ["has_nans"]
@@ -1900,15 +1906,11 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
             req_vec_because_rows = y_scitype not in y_inner_scitype
             req_vec_because_cols = (
-                self.get_tag("scitype:y") == "univariate"
-                and not y_metadata["is_univariate"]
+                scitype_y == "univariate" and not y_metadata["is_univariate"]
             )
             requires_vectorization = req_vec_because_rows or req_vec_because_cols
 
-            if (
-                self.get_tag("scitype:y") == "multivariate"
-                and y_metadata["is_univariate"]
-            ):
+            if scitype_y == "multivariate" and y_metadata["is_univariate"]:
                 raise ValueError(
                     f"Unsupported input data type in {type(self).__name__}, "
                     "this forecaster accepts only strictly multivariate data. "
