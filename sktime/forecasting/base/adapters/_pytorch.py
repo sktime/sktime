@@ -264,12 +264,12 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         pred_len : int
             Prediction length to use for pretraining
         """
-        if fh is not None:
-            if hasattr(fh, "__iter__"):
-                return list(fh)[-1]
-            return fh
-        elif hasattr(self, "pred_len") and self.pred_len is not None:
-            return self.pred_len
+        if hasattr(self, "pred_len") and self.pred_len is not None:
+            return int(self.pred_len)
+        elif fh is not None:
+            if isinstance(fh, (int, float)):
+                return int(fh)
+            return int(list(fh)[-1])
         else:
             raise ValueError(
                 "pred_len must be specified either in constructor or via fh parameter "
