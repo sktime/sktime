@@ -14,6 +14,7 @@
 #  limitations under the License.
 
 import math
+import sys
 from contextlib import contextmanager
 from copy import deepcopy
 
@@ -40,25 +41,27 @@ if _check_soft_dependencies("torch", severity="none"):
 if _check_soft_dependencies("einops", severity="none"):
     from einops import rearrange, reduce, repeat
 
-Input = _safe_import("gluonts.model.Input")
-InputSpec = _safe_import("gluonts.model.InputSpec")
-
-PyTorchPredictor = _safe_import("gluonts.torch.PyTorchPredictor")
-QuantileForecastGenerator = _safe_import(
-    "gluonts.model.forecast_generator.QuantileForecastGenerator"
-)
-
-AddObservedValuesIndicator = _safe_import(
-    "gluonts.transform.AddObservedValuesIndicator"
-)
-AsNumpyArray = _safe_import("gluonts.transform.AsNumpyArray")
-CausalMeanValueImputation = _safe_import(
-    "gluonts.transform.CausalMeanValueImputation"
-)
-ExpandDimArray = _safe_import("gluonts.transform.ExpandDimArray")
-TestSplitSampler = _safe_import("gluonts.transform.TestSplitSampler")
-
-TFTInstanceSplitter = _safe_import("gluonts.transform.split.TFTInstanceSplitter")
+if sys.version_info < (3, 14):
+    Input = _safe_import("gluonts.model.Input")
+    InputSpec = _safe_import("gluonts.model.InputSpec")
+    PyTorchPredictor = _safe_import("gluonts.torch.PyTorchPredictor")
+    QuantileForecastGenerator = _safe_import(
+        "gluonts.model.forecast_generator.QuantileForecastGenerator"
+    )
+    AddObservedValuesIndicator = _safe_import(
+        "gluonts.transform.AddObservedValuesIndicator"
+    )
+    AsNumpyArray = _safe_import("gluonts.transform.AsNumpyArray")
+    CausalMeanValueImputation = _safe_import(
+        "gluonts.transform.CausalMeanValueImputation"
+    )
+    ExpandDimArray = _safe_import("gluonts.transform.ExpandDimArray")
+    TestSplitSampler = _safe_import("gluonts.transform.TestSplitSampler")
+    TFTInstanceSplitter = _safe_import("gluonts.transform.split.TFTInstanceSplitter")
+else:
+    Input = InputSpec = PyTorchPredictor = QuantileForecastGenerator = None
+    AddObservedValuesIndicator = AsNumpyArray = CausalMeanValueImputation = None
+    ExpandDimArray = TestSplitSampler = TFTInstanceSplitter = None
 
 
 class CausalMeanImputation:
