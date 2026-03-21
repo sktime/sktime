@@ -3795,6 +3795,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "Amith71965",
+      "name": "Amith Yadav",
+      "avatar_url": "https://avatars.githubusercontent.com/Amith71965",
+      "profile": "https://github.com/Amith71965",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ]
 }
