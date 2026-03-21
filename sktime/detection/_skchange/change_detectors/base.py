@@ -84,7 +84,7 @@ class BaseChangeDetector(BaseDetector):
             * ``"ilocs"`` - integer locations of the change points.
         """
         is_changepoint = y_dense["labels"].diff().abs() > 0
-        changepoints = y_dense.index[is_changepoint]
+        changepoints = np.flatnonzero(is_changepoint.to_numpy())
         return BaseChangeDetector._format_sparse_output_ilocs(changepoints)
 
     @staticmethod

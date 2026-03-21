@@ -17,7 +17,13 @@ SAVINGS = [
 ]
 ANOMALY_SCORES = SAVINGS + LOCAL_ANOMALY_SCORES
 
-__all__ = ANOMALY_SCORES + [
-    to_local_anomaly_score,
-    to_saving,
+__all__ = [
+    "Saving",
+    "L2Saving",
+    "LocalAnomalyScore",
+    "to_local_anomaly_score",
+    "to_saving",
+    "SAVINGS",
+    "LOCAL_ANOMALY_SCORES",
+    "ANOMALY_SCORES",
 ]

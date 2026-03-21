@@ -14,14 +14,14 @@ class BaseCost(BaseIntervalScorer):
     If the cost supports fixed parameters, that is indicated by the
     `supports_fixed_param` tag. By default, this is set to `False`.
     If the cost supports fixed parameters, the `param` attribute can be set
-    in the constructor, and the fixed `param` paramaters will then used when
+    in the constructor, and the fixed `param` parameters will then be used when
     evaluating the cost. The type of `param` is specific to each concrete cost.
 
     Parameters
     ----------
     param : None, optional (default=None)
         If ``None``, the cost is evaluated with parameters
-        that minimize the cost.  If ```param`` is not ``None``,
+        that minimize the cost.  If ``param`` is not ``None``,
         the cost is evaluated at that fixed parameter.
         The parameter type is specific to each concrete cost.
     """

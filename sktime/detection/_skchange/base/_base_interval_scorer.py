@@ -166,7 +166,9 @@ class BaseIntervalScorer(BaseEstimator):
         self.check_is_fitted()
         cuts = as_2d_array(cuts, vector_as_column=False)
         cuts = self._check_cuts(cuts)
-        values = self._evaluate(cuts)
+        values = np.asarray(self._evaluate(cuts))
+        if values.ndim == 1:
+            values = values.reshape(-1, 1)
         return values
 
     def _evaluate(self, cuts: np.ndarray) -> np.ndarray:

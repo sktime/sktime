@@ -26,4 +26,4 @@ COSTS = [
     RankCost,
 ]
 
-__all__ = COSTS
+__all__ = [cls.__name__ for cls in COSTS] + ["COSTS"]

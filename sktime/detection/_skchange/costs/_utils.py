@@ -31,20 +31,20 @@ def check_mean(mean: MeanType, X: np.ndarray) -> np.ndarray:
     return mean
 
 
-def check_non_negative_parameter(scale: MeanType, X: np.ndarray) -> np.ndarray:
-    """Check if the fixed scale parameter is valid.
+def check_positive_parameter(scale: MeanType, X: np.ndarray) -> np.ndarray:
+    """Check if the fixed scale-like parameter is valid and strictly positive.
 
     Parameters
     ----------
-    scale(s) : np.ndarray or numbers.Number
-        Fixed scale(s) for the cost calculation.
+    scale : np.ndarray or numbers.Number
+        Fixed scale-like parameter(s) for the cost calculation.
     X : np.ndarray
         2d input data.
 
     Returns
     -------
-    scale(s) : np.ndarray
-        Fixed scales for cost calculation.
+    scale : np.ndarray
+        Fixed scale-like parameter(s) for cost calculation.
     """
     scale = (
         np.array([scale]) if isinstance(scale, numbers.Number) else np.asarray(scale)
@@ -56,6 +56,16 @@ def check_non_negative_parameter(scale: MeanType, X: np.ndarray) -> np.ndarray:
     if np.any(scale <= 0.0):
         raise ValueError("Parameter must be positive.")
     return scale
+
+
+def check_non_negative_parameter(scale: MeanType, X: np.ndarray) -> np.ndarray:
+    """Backward-compatible alias for ``check_positive_parameter``.
+
+    Note
+    ----
+    Despite the historical name, this helper enforces strictly positive values.
+    """
+    return check_positive_parameter(scale, X)
 
 
 def check_var(var: VarType, X: np.ndarray) -> np.ndarray:

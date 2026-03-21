@@ -11,4 +11,10 @@ COLLECTIVE_ANOMALY_DETECTORS = [
 ]
 ANOMALY_DETECTORS = COLLECTIVE_ANOMALY_DETECTORS
 
-__all__ = ANOMALY_DETECTORS
+__all__ = [
+    "CAPA",
+    "CircularBinarySegmentation",
+    "StatThresholdAnomaliser",
+    "COLLECTIVE_ANOMALY_DETECTORS",
+    "ANOMALY_DETECTORS",
+]

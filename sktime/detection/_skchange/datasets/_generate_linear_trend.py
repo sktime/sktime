@@ -20,7 +20,7 @@ def generate_continuous_piecewise_linear_data(
     n_samples: int = 100,
     intercept: float = 0.0,
     noise_std: float = 1.0,
-    seed: int | None = None,
+    seed: int | np.random.Generator | None = None,
     return_params: bool = False,
 ) -> pd.DataFrame | tuple[pd.DataFrame, dict]:
     """Generate a continuous piecewise linear signal with noise.
@@ -98,20 +98,22 @@ def generate_continuous_piecewise_linear_data(
     signal = np.zeros(n_samples)
     change_points = np.cumsum(lengths)[:-1]  # The last point is the end of the data.
 
-    # First segment
-    signal[: change_points[0]] = intercept + slopes[0] * time[: change_points[0]]
-    current_value = signal[change_points[0] - 1]
+    if len(change_points) == 0:
+        signal[:] = intercept + slopes[0] * time
+    else:
+        # First segment
+        signal[: change_points[0]] = intercept + slopes[0] * time[: change_points[0]]
+        current_value = signal[change_points[0] - 1]
 
-    # Middle segments
-    for i in range(len(change_points) - 1):
-        start_idx = change_points[i]
-        end_idx = change_points[i + 1]
-        segment_time = time[start_idx:end_idx] - time[start_idx]
-        signal[start_idx:end_idx] = current_value + slopes[i + 1] * segment_time
-        current_value = signal[end_idx - 1]
+        # Middle segments
+        for i in range(len(change_points) - 1):
+            start_idx = change_points[i]
+            end_idx = change_points[i + 1]
+            segment_time = time[start_idx:end_idx] - time[start_idx]
+            signal[start_idx:end_idx] = current_value + slopes[i + 1] * segment_time
+            current_value = signal[end_idx - 1]
 
-    # Last segment
-    if len(change_points) > 0:
+        # Last segment
         last_start = change_points[-1]
         segment_time = time[last_start:] - time[last_start]
         signal[last_start:] = current_value + slopes[-1] * segment_time
@@ -174,20 +176,22 @@ def generate_continuous_piecewise_linear_signal(
     time = np.arange(n_samples)
     signal = np.zeros(n_samples)
 
-    # First segment
-    signal[: change_points[0]] = intercept + slopes[0] * time[: change_points[0]]
-    current_value = signal[change_points[0] - 1]
+    if len(change_points) == 0:
+        signal[:] = intercept + slopes[0] * time
+    else:
+        # First segment
+        signal[: change_points[0]] = intercept + slopes[0] * time[: change_points[0]]
+        current_value = signal[change_points[0] - 1]
 
-    # Middle segments
-    for i in range(len(change_points) - 1):
-        start_idx = change_points[i]
-        end_idx = change_points[i + 1]
-        segment_time = time[start_idx:end_idx] - time[start_idx]
-        signal[start_idx:end_idx] = current_value + slopes[i + 1] * segment_time
-        current_value = signal[end_idx - 1]
+        # Middle segments
+        for i in range(len(change_points) - 1):
+            start_idx = change_points[i]
+            end_idx = change_points[i + 1]
+            segment_time = time[start_idx:end_idx] - time[start_idx]
+            signal[start_idx:end_idx] = current_value + slopes[i + 1] * segment_time
+            current_value = signal[end_idx - 1]
 
-    # Last segment
-    if len(change_points) > 0:
+        # Last segment
         last_start = change_points[-1]
         segment_time = time[last_start:] - time[last_start]
         signal[last_start:] = current_value + slopes[-1] * segment_time
