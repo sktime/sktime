@@ -38,6 +38,9 @@ if _check_soft_dependencies("torch", severity="none"):
 
     from .moirai2_module import Moirai2Module
 
+else:
+    Moirai2Module = None
+
 if _check_soft_dependencies("einops", severity="none"):
     from einops import rearrange, reduce, repeat
 
