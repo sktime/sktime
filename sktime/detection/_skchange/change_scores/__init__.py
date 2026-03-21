@@ -23,4 +23,4 @@ CHANGE_SCORES = [
     RankScore,
 ]
 
-__all__ = CHANGE_SCORES + [to_change_score]
+__all__ = [cls.__name__ for cls in CHANGE_SCORES] + ["to_change_score", "CHANGE_SCORES"]

@@ -9,4 +9,12 @@ from .base import BaseChangeDetector
 BASE_CHANGE_DETECTORS = [BaseChangeDetector]
 CHANGE_DETECTORS = [CROPS, MovingWindow, PELT, SeededBinarySegmentation]
 
-__all__ = BASE_CHANGE_DETECTORS + CHANGE_DETECTORS
+__all__ = [
+    "BaseChangeDetector",
+    "CROPS",
+    "MovingWindow",
+    "PELT",
+    "SeededBinarySegmentation",
+    "BASE_CHANGE_DETECTORS",
+    "CHANGE_DETECTORS",
+]

@@ -11,7 +11,7 @@ from ..costs._utils import (
     MeanType,
     VarType,
     check_mean,
-    check_non_negative_parameter,
+    check_positive_parameter,
 )
 from ..utils.numba import njit
 from ..utils.numba.stats import col_median
@@ -234,7 +234,7 @@ class LaplaceCost(BaseCost):
         if not isinstance(param, tuple) or len(param) != 2:
             raise ValueError("Fixed Laplace parameters must be (location, scale).")
         means = check_mean(param[0], X)
-        scales = check_non_negative_parameter(param[1], X)
+        scales = check_positive_parameter(param[1], X)
         return means, scales
 
     @property

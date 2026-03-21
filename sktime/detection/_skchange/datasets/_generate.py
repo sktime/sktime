@@ -34,7 +34,7 @@ def _check_distributions(
     Returns
     -------
     list[scipy.stats.rv_continuous | scipy.stats.rv_discrete]
-        List of distributions for each segment, where each distribution is guarnteed
+        List of distributions for each segment, where each distribution is guaranteed
         to have a `rvs(size: int, random_state: int | None)` method that returns
         a numpy array or scalar of the same size, and the output size is either
         1 or `p`.
