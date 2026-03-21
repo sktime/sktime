@@ -18,26 +18,26 @@ def dba(
 ) -> np.ndarray:
     """Compute the dtw barycenter average of time series.
 
-    This implements the'petitjean' version (original) DBA algorithm [1]_.
+    This implements the 'petitjean' version (original) DBA algorithm [1]_.
 
     Parameters
     ----------
     X : np.ndarray (3d array of shape (n, m, p) where n is number of instances, m
-                    is the dimensions and p is the timepoints))
+                    is the dimensions and p is the timepoints)
         Time series instances compute average from.
-    max_iters: int, defaults = 30
+    max_iters: int, default=30
         Maximum number iterations for dba to update over.
-    tol : float (default: 1e-5)
+    tol : float (default=1e-5)
         Tolerance to use for early stopping: if the decrease in cost is lower
         than this value, the Expectation-Maximization procedure stops.
-    averaging_distance_metric: str, defaults = 'dtw'
+    averaging_distance_metric: str, default='dtw'
         String that is the distance metric to derive the distance alignment path.
-    medoids_distance_metric: str, defaults = 'euclidean'
+    medoids_distance_metric: str, default='euclidean'
         String that is the distance metric to use with medoids
     precomputed_medoids_pairwise_distance: np.ndarray (of shape (len(X), len(X)),
-                defulats = None
+                default=None
         Precomputed medoids pairwise.
-    verbose: bool, defaults = False
+    verbose: bool, default=False
         Boolean that controls the verbosity.
 
     Returns
