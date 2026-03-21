@@ -184,9 +184,9 @@ class ClaSPSegmentation(BaseDetector):
 
     Parameters
     ----------
-    period_length :         int, default = 10
+    period_length : int, default = 10
         size of window for sliding, based on the period length of the data
-    n_cps :                 int, default = 1
+    n_cps :  int, default = 1
         the number of change points to search
     exclusion_radius : int
         Exclusion Radius for change points to be non-trivial matches
@@ -224,7 +224,7 @@ class ClaSPSegmentation(BaseDetector):
         "task": "change_point_detection",
         "learning_type": "unsupervised",
         "capability:multivariate": False,
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "python_dependencies": "numba",
         "X_inner_mtype": "pd.Series",
         # CI and test flags
@@ -242,24 +242,26 @@ class ClaSPSegmentation(BaseDetector):
 
         super().__init__()
 
-    def _fit(self, X, Y=None):
+    def _fit(self, X, y=None):
         """Do nothing, as there is no need to fit a model for ClaSP.
 
         Parameters
         ----------
         X : pd.DataFrame
             Training data to fit model to (time series).
-        Y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+        y : pd.Series, optional
+            Ignored, present for API consistency by convention.
 
         Returns
         -------
         self : True
         """
-        return True
+        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
+        self.profiles_ = self.profiles
+        return self
 
     def _predict(self, X):
-        """Create annotations on test/deployment data.
+        """Detect on test/deployment data.
 
         Parameters
         ----------
@@ -268,10 +270,9 @@ class ClaSPSegmentation(BaseDetector):
 
         Returns
         -------
-        Y : pd.Series or an IntervalSeries
+        y : pd.Series or an IntervalSeries
             Change points in sequence X.
         """
-        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
         return pd.Series(self.found_cps)
 
     def _predict_scores(self, X):
@@ -284,14 +285,10 @@ class ClaSPSegmentation(BaseDetector):
 
         Returns
         -------
-        Y : pd.Series
+        y : pd.Series
             Sparse scores for found change points in sequence X.
         """
-        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
-
-        # Scores of the Change Points
-        scores = pd.Series(self.scores)
-        return scores
+        return pd.Series(self.scores)
 
     def _transform_scores(self, X):
         """Return scores in ClaSP's profile for each annotation.
@@ -303,11 +300,9 @@ class ClaSPSegmentation(BaseDetector):
 
         Returns
         -------
-        Y : pd.Series
+        y : pd.Series
             Dense scores for found change points in sequence X.
         """
-        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
-
         # ClaSP creates multiple profiles. Hard to map. Thus, we return the main
         # (first) one
         profile = pd.Series(self.profiles[0])
