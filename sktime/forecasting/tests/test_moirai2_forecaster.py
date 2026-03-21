@@ -5,17 +5,17 @@ __author__ = ["priyanshuharshbodhi1"]
 import pandas as pd
 import pytest
 
+from sktime.forecasting.moirai2_forecaster import Moirai2Forecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
 
 @pytest.mark.skipif(
-    not run_test_for_class("Moirai2Forecaster"),
+    not run_test_for_class(Moirai2Forecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_moirai2_panel_predict():
     """Test Moirai2Forecaster fit/predict on panel data without exogenous."""
-    from sktime.forecasting.moirai2_forecaster import Moirai2Forecaster
 
     data = _make_hierarchical(
         (3, 1), n_columns=1, max_timepoints=20, min_timepoints=20
@@ -36,12 +36,11 @@ def test_moirai2_panel_predict():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class("Moirai2Forecaster"),
+    not run_test_for_class(Moirai2Forecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_moirai2_panel_predict_with_X():
     """Test Moirai2Forecaster fit/predict on panel data with exogenous features."""
-    from sktime.forecasting.moirai2_forecaster import Moirai2Forecaster
 
     data = _make_hierarchical(
         (3, 1), n_columns=2, max_timepoints=20, min_timepoints=20
