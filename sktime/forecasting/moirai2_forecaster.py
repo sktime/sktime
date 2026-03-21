@@ -2,6 +2,7 @@
 
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
+from unittest.mock import patch
 
 from sktime.forecasting.base import _BaseGlobalForecaster
 
@@ -80,7 +81,7 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
             "gluonts",
             "torch",
             "einops",
-            "huggingface_hub",
+            "huggingface-hub",
             "hf-xet",
             "lightning",
             "hydra-core",
@@ -143,27 +144,25 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
 
     def _instantiate_patched_model(self, model_kwargs):
         """Instantiate the model from the local sktime uni2ts copy."""
-        import sys
-
         import sktime.libs.uni2ts as _uni2ts_mod
 
-        sys.modules.setdefault("uni2ts", _uni2ts_mod)
-        from sktime.libs.uni2ts.moirai2_forecast import Moirai2Forecast
+        with patch.dict("sys.modules", {"uni2ts": _uni2ts_mod}):
+            from sktime.libs.uni2ts.moirai2_forecast import Moirai2Forecast
 
-        if self.checkpoint_path.startswith("Salesforce"):
-            from sktime.libs.uni2ts.moirai2_module import Moirai2Module
+            if self.checkpoint_path.startswith("Salesforce"):
+                from sktime.libs.uni2ts.moirai2_module import Moirai2Module
 
-            model_kwargs["module"] = Moirai2Module.from_pretrained(
-                self.checkpoint_path
-            )
-            return Moirai2Forecast(**model_kwargs)
-        else:
-            from huggingface_hub import hf_hub_download
+                model_kwargs["module"] = Moirai2Module.from_pretrained(
+                    self.checkpoint_path
+                )
+                return Moirai2Forecast(**model_kwargs)
+            else:
+                from huggingface_hub import hf_hub_download
 
-            model_kwargs["checkpoint_path"] = hf_hub_download(
-                repo_id=self.checkpoint_path, filename="model.ckpt"
-            )
-            return Moirai2Forecast.load_from_checkpoint(**model_kwargs)
+                model_kwargs["checkpoint_path"] = hf_hub_download(
+                    repo_id=self.checkpoint_path, filename="model.ckpt"
+                )
+                return Moirai2Forecast.load_from_checkpoint(**model_kwargs)
 
     def _fit(self, y, X, fh):
         if fh is not None:
@@ -241,7 +240,7 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
 
         if isinstance(_y, pd.Series):
             target = [_y.name]
-            _y, _is_converted_to_df = self._series_to_df(_y)
+            _y, _ = self._series_to_df(_y)
         else:
             target = _y.columns
 
