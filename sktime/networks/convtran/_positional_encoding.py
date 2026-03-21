@@ -211,5 +211,11 @@ class LearnablePositionalEncoding(_BasePositionalEncoding):
         torch.Tensor of shape (batch_size, seq_len, d_model)
             Tensor with positional encodings added.
         """
-        x = x + self.pe[:, : x.size(1), :]
+        if x.size(1) > self.max_len:
+            raise ValueError(
+                "Input sequence length exceeds the maximum supported by "
+                "LearnablePositionalEncoding. "
+                f"Got seq_len={x.size(1)} and max_len={self.max_len}."
+            )
+        x = x + self.pe[: x.size(1), :].unsqueeze(0)
         return self.dropout(x)
