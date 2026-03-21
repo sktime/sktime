@@ -2,7 +2,6 @@
 
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
-from unittest.mock import patch
 
 from sktime.forecasting.base import _BaseGlobalForecaster
 
@@ -144,25 +143,27 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
 
     def _instantiate_patched_model(self, model_kwargs):
         """Instantiate the model from the local sktime uni2ts copy."""
+        import sys
+
         import sktime.libs.uni2ts as _uni2ts_mod
 
-        with patch.dict("sys.modules", {"uni2ts": _uni2ts_mod}):
-            from sktime.libs.uni2ts.moirai2_forecast import Moirai2Forecast
+        sys.modules.setdefault("uni2ts", _uni2ts_mod)
+        from sktime.libs.uni2ts.moirai2_forecast import Moirai2Forecast
 
-            if self.checkpoint_path.startswith("Salesforce"):
-                from sktime.libs.uni2ts.moirai2_module import Moirai2Module
+        if self.checkpoint_path.startswith("Salesforce"):
+            from sktime.libs.uni2ts.moirai2_module import Moirai2Module
 
-                model_kwargs["module"] = Moirai2Module.from_pretrained(
-                    self.checkpoint_path
-                )
-                return Moirai2Forecast(**model_kwargs)
-            else:
-                from huggingface_hub import hf_hub_download
+            model_kwargs["module"] = Moirai2Module.from_pretrained(
+                self.checkpoint_path
+            )
+            return Moirai2Forecast(**model_kwargs)
+        else:
+            from huggingface_hub import hf_hub_download
 
-                model_kwargs["checkpoint_path"] = hf_hub_download(
-                    repo_id=self.checkpoint_path, filename="model.ckpt"
-                )
-                return Moirai2Forecast.load_from_checkpoint(**model_kwargs)
+            model_kwargs["checkpoint_path"] = hf_hub_download(
+                repo_id=self.checkpoint_path, filename="model.ckpt"
+            )
+            return Moirai2Forecast.load_from_checkpoint(**model_kwargs)
 
     def _fit(self, y, X, fh):
         if fh is not None:
@@ -426,6 +427,7 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
                 target=ds_target,
                 feat_dynamic_real=dynamic_features,
                 future_length=forecast_horizon,
+                freq=self.infer_freq(df.index),
             )
 
         return dataset, df_config
@@ -434,7 +436,18 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
         """Infer frequency of the index."""
         if isinstance(index, pd.PeriodIndex):
             return index.freq
-        return pd.infer_freq(index[:3])
+        freq = pd.infer_freq(index[:3])
+        _offset_to_period = {
+            "MS": "M",
+            "ME": "M",
+            "QS": "Q",
+            "QE": "Q",
+            "YS": "Y",
+            "AS": "Y",
+            "YE": "Y",
+            "AE": "Y",
+        }
+        return _offset_to_period.get(freq, freq)
 
     def return_time_index(self, df):
         """Return the time index, given any type of index."""
