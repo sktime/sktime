@@ -36,6 +36,12 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         Stride length for patch creation.
     dropout : float, optional (default=0)
         Dropout rate to apply to layers.
+    fc_dropout : float, optional (default=0.0)
+        Dropout rate to apply to the fully connected layer.
+    patch_dropout : float, optional (default=0.1)
+        Dropout rate to apply to the deformable patch layer.
+    pos_dropout : float, optional (default=0.1)
+        Dropout rate to apply to the positional encoding layer.
     d_ff : int, optional (default=128)
         Dimension of feedforward network.
     dw_ks : int or list, optional (default=3)
@@ -120,6 +126,9 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         patch_size,
         patch_stride,
         dropout=0,
+        fc_dropout=0.0,
+        patch_dropout=0.1,
+        pos_dropout=0.1,
         d_ff=128,
         dw_ks=3,
         device="cpu",
@@ -137,6 +146,9 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         self.patch_size = patch_size
         self.patch_stride = patch_stride
         self.dropout = dropout
+        self.fc_dropout = fc_dropout
+        self.patch_dropout = patch_dropout
+        self.pos_dropout = pos_dropout
         self.d_ff = d_ff
         # Ensure dw_ks is a list
         if isinstance(dw_ks, int):
@@ -172,6 +184,9 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             patch_stride=self.patch_stride,
             n_classes=self.n_classes,
             dropout=self.dropout,
+            fc_dropout=self.fc_dropout,
+            patch_dropout=self.patch_dropout,
+            pos_dropout=self.pos_dropout,
             d_ff=self.d_ff,
             dw_ks=self.dw_ks,
             device=self.device,
@@ -213,6 +228,8 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             "device": "cpu",
             "verbose": False,
             "dropout": 0.0,
+            "fc_dropout": 0.1,
+            "patch_dropout": 0.2,
             "num_epochs": 1,
             "random_state": 0,
         }
