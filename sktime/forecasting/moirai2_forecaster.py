@@ -52,8 +52,8 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
     >>> forecaster = Moirai2Forecaster(  # doctest: +SKIP
     ...     checkpoint_path="Salesforce/moirai-2.0-R-small"
     ... )
-    >>> y = np.random.normal(0, 1, (30, 2))
-    >>> index = pd.date_range("2020-01-01", periods=30, freq="D")
+    >>> y = np.random.normal(0, 1, (30, 2))  # doctest: +SKIP
+    >>> index = pd.date_range("2020-01-01", periods=30, freq="D")  # doctest: +SKIP
     >>> y = pd.DataFrame(y, index=index)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     Moirai2Forecaster(checkpoint_path='Salesforce/moirai-2.0-R-small')
