@@ -4,9 +4,14 @@ __author__ = ["miraep8", "fkiraly", "klam-data", "pyyim", "mgorlin"]
 __all__ = []
 
 import pandas as pd
+import pytest
 
 from sktime.detection._datatypes._check import _is_valid_detection
+from sktime.detection._skchange.anomaly_scores import L2Saving
+from sktime.detection.dummy import DummyRegularChangePoints
+from sktime.detection.skchange_aseg import MVCAPA, StatThresholdAnomaliser
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.detection import make_detection_problem
 from sktime.utils.validation.detection import check_learning_type, check_task
 
@@ -117,3 +122,56 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
         """Check the learning_type and task tags are valid."""
         check_task(estimator_class.get_class_tag("task"))
         check_learning_type(estimator_class.get_class_tag("learning_type"))
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(MVCAPA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_mvcapa_accepts_legacy_collective_args():
+    """MVCAPA accepts legacy collective_* constructor arguments."""
+    estimator = MVCAPA(
+        collective_saving=L2Saving(),
+        collective_penalty="combined",
+        point_penalty="sparse",
+    )
+    X = make_detection_problem(
+        n_timepoints=50,
+        estimator_type=estimator.get_tag("distribution_type"),
+    )
+    y_pred = estimator.fit_predict(X)
+    assert _is_valid_detection(y_pred, type="segments"), y_pred
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(MVCAPA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_mvcapa_accepts_segment_args():
+    """MVCAPA accepts CAPA-style segment_* arguments for compatibility."""
+    estimator = MVCAPA(
+        segment_saving=L2Saving(),
+        segment_penalty=1.0,
+        find_affected_components=True,
+    )
+    X = make_detection_problem(
+        n_timepoints=50,
+        estimator_type=estimator.get_tag("distribution_type"),
+    )
+    y_pred = estimator.fit_predict(X)
+    assert _is_valid_detection(y_pred, type="segments"), y_pred
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(StatThresholdAnomaliser),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_statthresholdanomaliser_smoke():
+    """StatThresholdAnomaliser wrapper runs with a simple change detector."""
+    estimator = StatThresholdAnomaliser(change_detector=DummyRegularChangePoints())
+    X = make_detection_problem(
+        n_timepoints=50,
+        estimator_type=estimator.get_tag("distribution_type"),
+    )
+    y_pred = estimator.fit_predict(X)
+    assert _is_valid_detection(y_pred, type="segments"), y_pred
