@@ -1,5 +1,6 @@
 """Adapter for using MOIRAI Forecasters."""
 
+import sys
 from unittest.mock import patch
 
 import pandas as pd
@@ -153,7 +154,9 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             )
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
-    if _check_soft_dependencies(["lightning", "huggingface-hub"], severity="none"):
+    if sys.version_info < (3, 14) and _check_soft_dependencies(
+        ["lightning", "huggingface-hub"], severity="none"
+    ):
         import sktime
         from sktime.libs.uni2ts.forecast import MoiraiForecast
 
