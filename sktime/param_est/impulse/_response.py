@@ -213,6 +213,18 @@ class ImpulseResponseFunction(BaseParamFitter):
             "DynamicFactor": DynamicFactor,
         }
 
+        model = self.model
+        if hasattr(model, "is_fitted") and not model.is_fitted:
+            if isinstance(X, np.ndarray):
+                if X.ndim == 1:
+                    X_fit = pd.Series(X)
+                else:
+                    X_fit = pd.DataFrame(X)
+            else:
+                X_fit = X
+
+        model = model.clone().fit(X_fit)
+
         model_name = self.model.__class__.__name__
         ImportedModel = MODEL_MAPPING[model_name]
 
@@ -286,18 +298,14 @@ class ImpulseResponseFunction(BaseParamFitter):
         from sktime.utils.dependencies import _check_soft_dependencies
 
         if _check_soft_dependencies("statsmodels", severity="none"):
-            from sktime.datasets import load_airline
             from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
 
-            X = load_airline()
-            X2 = X.shift(1).bfill()
-            df = pd.DataFrame({"X": X, "X2": X2})
-            fitted_model = skdyn(k_factors=1, factor_order=2).fit(df)
+            model = skdyn(k_factors=1, factor_order=2)
         else:
-            fitted_model = None
+            model = None
 
         params1 = {
-            "model": fitted_model,
+            "model": model,
             "steps": 1,
             "impulse": 0,
             "orthogonalized": True,
@@ -310,7 +318,7 @@ class ImpulseResponseFunction(BaseParamFitter):
             "extend_kwargs": None,
         }
         params2 = {
-            "model": fitted_model,
+            "model": model,
             "steps": 1,
             "impulse": 0,
             "orthogonalized": False,
