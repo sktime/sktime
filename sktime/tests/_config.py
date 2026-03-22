@@ -213,7 +213,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MovingWindow",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
-        "OnlineEnsembleForecaster",
         "OptionalPassthrough",
         "PAA",
         "PAAlegacy",
