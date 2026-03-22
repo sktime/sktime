@@ -6,6 +6,7 @@ all = ["ImpulseResponseFunction"]
 import warnings
 
 import numpy as np
+import pandas as pd
 from statsmodels.tsa.api import VECM
 from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor
 from statsmodels.tsa.statespace.varmax import VARMAX
@@ -149,7 +150,7 @@ class ImpulseResponseFunction(BaseParamFitter):
         "X_inner_mtype": "np.ndarray",  # no support of pl.DataFrame
         "capability:missing_values": False,
         "capability:multivariate": True,
-        "capability:pairwise": True,
+        "capability:pairwise": False,
         "authors": "OldPatrick",
         "python_dependencies": "statsmodels",
     }
@@ -183,7 +184,7 @@ class ImpulseResponseFunction(BaseParamFitter):
 
         super().__init__()
 
-    def _fit(self, X, y=None) -> np.ndarray:
+    def _fit(self, X):
         """Fit estimator for univariate and multivariate orthogonal or cumulative irfs.
 
         Text from statsmodels:
@@ -218,26 +219,23 @@ class ImpulseResponseFunction(BaseParamFitter):
         dummy_data = np.zeros((10, k_vars))
         dummy_model = None
 
+        # some models have problem with univariate irf, need warning
+        # to show that results can not be calculated univariate,
+        # should not be a Problem for ARIMA for instance.
+        if len(X.shape) < 2 or X.shape[1] < 2:
+            warnings.warn(
+                f"Check if your estimator supports univariate IRF:"
+                f"Got shape {X.shape}."
+            )
+
         if model_name == "VARMAX":
+                           
             p = sm_wrapper.model.k_ar
             q = sm_wrapper.model.k_ma
             trend_type = sm_wrapper.model.trend
             dummy_model = ImportedModel(dummy_data, order=(p, q), trend=trend_type)
             
         elif model_name == "DynamicFactor":
-            # some models have problem with univariate irf, need warning
-            # to show that results can not be calculated univariate,
-            # should not be a Problem for ARIMA for instance.
-
-            if len(X.shape) < 2 or X.shape[1] < 2:
-                warnings.warn(
-                    f"IRF test: Input requires at least 2 variables."
-                    f"Expected shape (n, 2), but got shape {X.shape}."
-                    f"Fit your model with at least two variables."
-                    f"Copying Variable found in X."
-                )
-                self.irf_ = None
-                return self
 
             k_factors = sm_wrapper.model.k_factors
             factor_order = sm_wrapper.model.factor_order
@@ -283,9 +281,7 @@ class ImpulseResponseFunction(BaseParamFitter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-
         from sktime.datasets import load_airline
-        from sktime.param_est.impulse import ImpulseResponseFunction
         from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
         import pandas as pd
         X = load_airline()
@@ -293,7 +289,19 @@ class ImpulseResponseFunction(BaseParamFitter):
         df = pd.DataFrame({"X":X, "X2": X2})
         fitted_model = skdyn(k_factors=1, factor_order=2).fit(df)
 
-        params1 = {}
+        params1 = {
+            "model": fitted_model,
+            "steps": 1,
+            "impulse": 0,
+            "orthogonalized": True,
+            "cumulative": True,
+            "anchor": None,
+            "exog": None,
+            "transformed": True,
+            "includes_fixed": False,
+            "extend_model": None,
+            "extend_kwargs": None,
+        }
         params2 = {
             "model": fitted_model,
             "steps": 1,

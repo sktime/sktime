@@ -80,6 +80,10 @@ from sktime.param_est.impulse import ImpulseResponseFunction
 check_estimator(ImpulseResponseFunction)
 
 
+params = ImpulseResponseFunction.get_test_params()
+print('Success:', params)
+
+
 
 
 
