@@ -151,7 +151,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         # if max(fh._values) > self.network.pred_len or min(fh._values) < 0:
         # above line changed to below line to use the public API of fh
         # instead of accessing the private attribute _values
-        if fh.max() > self.network.pred_len or fh.min < 0:
+        if fh.max() > self.network.pred_len or fh.min() < 0:
             raise ValueError(
                 f"fh of {fh} passed to {self.__class__.__name__} is not "
                 "within `pred_len`. Please use a fh that aligns with the `pred_len` of "
