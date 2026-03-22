@@ -238,19 +238,44 @@ def plot_interval(ax, interval_df):
 
     import seaborn as sns
 
-    var_name = interval_df.columns.levels[0][0]
-
-    n = len(interval_df.columns.levels[1])
+    # Ensure columns are a pandas MultiIndex as returned by `predict_interval`
+    import pandas as pd
+    idx = interval_df.columns
+    if not isinstance(idx, pd.MultiIndex):
+        raise TypeError(
+            "plot_interval expects `interval_df` with MultiIndex columns, "
+            "as returned by `predict_interval`. "
+            f"Got columns of type: {type(idx).__name__}."
+        )
+    
+    # Remove unused levels to handle subsetted DataFrames
+    idx = idx.remove_unused_levels()
+    
+    # Extract variable name and coverage levels from MultiIndex columns
+    if len(idx.levels) < 2:
+        raise ValueError(
+            "interval_df must have MultiIndex columns with a coverage level "
+            "as the second level for interval plotting. Received MultiIndex "
+            f"with only {len(idx.levels)} level(s)."
+        )
+    
+    var_name = idx.levels[0][0]
+    coverage_levels = idx.levels[1]
+    n = len(coverage_levels)
+    
     if n == 1:
         colors = [ax.get_lines()[-1].get_c()]
     else:
         colors = sns.color_palette("colorblind", n_colors=n)
 
-    for i, cov in enumerate(interval_df.columns.levels[1]):
+    for i, cov in enumerate(coverage_levels):
+        lower_col = interval_df[var_name][cov]["lower"]
+        upper_col = interval_df[var_name][cov]["upper"]
+        
         ax.fill_between(
             interval_df.index,
-            interval_df[var_name][cov]["lower"].astype("float64").to_numpy(),
-            interval_df[var_name][cov]["upper"].astype("float64").to_numpy(),
+            lower_col.astype("float64").to_numpy(),
+            upper_col.astype("float64").to_numpy(),
             alpha=0.2,
             color=colors[i],
             label=f"{int(cov * 100)}% prediction interval",
