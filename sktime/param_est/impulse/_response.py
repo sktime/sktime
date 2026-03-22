@@ -290,21 +290,7 @@ class ImpulseResponseFunction(BaseParamFitter):
             df = pd.DataFrame({"X": X, "X2": X2})
             fitted_model = skdyn(k_factors=1, factor_order=2).fit(df)
         else:
-            return [
-                {
-                    "model": None,
-                    "steps": 1,
-                    "impulse": 0,
-                    "orthogonalized": True,
-                    "cumulative": True,
-                    "anchor": None,
-                    "exog": None,
-                    "transformed": True,
-                    "includes_fixed": False,
-                    "extend_model": None,
-                    "extend_kwargs": None,
-                }
-            ]
+            fitted_model = "some_model"
 
         params1 = {
             "model": fitted_model,
