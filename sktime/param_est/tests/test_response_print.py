@@ -82,12 +82,12 @@
 # print(actual)
 
 
-# from sktime.utils.tests.test_check_estimator import check_estimator
-
-# from sktime.param_est.impulse import ImpulseResponseFunction
-
-# check_estimator(ImpulseResponseFunction)
-
-
-# params = ImpulseResponseFunction.get_test_params()
-# print('Success:', params)
+#from sktime.utils.tests.test_check_estimator import check_estimator
+#
+#from sktime.param_est.impulse import ImpulseResponseFunction
+#
+#check_estimator(ImpulseResponseFunction)
+#
+#
+#params = ImpulseResponseFunction.get_test_params()
+#print('Success:', params)

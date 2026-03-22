@@ -7,17 +7,9 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.api import VECM
-from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor
-from statsmodels.tsa.statespace.varmax import VARMAX
+
 
 from sktime.param_est.base import BaseParamFitter
-
-MODEL_MAPPING = {
-    "VARMAX": VARMAX,
-    "VECM": VECM,
-    "DynamicFactor": DynamicFactor,
-}
 
 
 class ImpulseResponseFunction(BaseParamFitter):
@@ -208,6 +200,16 @@ class ImpulseResponseFunction(BaseParamFitter):
         -------
         self : reference to self
         """
+        from statsmodels.tsa.api import VECM
+        from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor
+        from statsmodels.tsa.statespace.varmax import VARMAX
+
+        MODEL_MAPPING = {
+            "VARMAX": VARMAX,
+            "VECM": VECM,
+            "DynamicFactor": DynamicFactor,
+        }
+
         model_name = self.model.__class__.__name__
         ImportedModel = MODEL_MAPPING[model_name]
 
