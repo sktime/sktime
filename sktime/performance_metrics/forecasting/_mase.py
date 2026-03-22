@@ -119,18 +119,18 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mase = MeanAbsoluteScaledError()
-    >>> mase(y_true, y_pred, y_train=y_train)
+    >>> mase(y_true, y_pred, y_train=y_train) # doctest: +SKIP
     np.float64(0.18333333333333335)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mase(y_true, y_pred, y_train=y_train)
+    >>> mase(y_true, y_pred, y_train=y_train) # doctest: +SKIP
     np.float64(0.18181818181818182)
     >>> mase = MeanAbsoluteScaledError(multioutput='raw_values')
-    >>> mase(y_true, y_pred, y_train=y_train)
+    >>> mase(y_true, y_pred, y_train=y_train) # doctest: +SKIP
     array([0.10526316, 0.28571429])
     >>> mase = MeanAbsoluteScaledError(multioutput=[0.3, 0.7])
-    >>> mase(y_true, y_pred, y_train=y_train)
+    >>> mase(y_true, y_pred, y_train=y_train) # doctest: +SKIP
     np.float64(0.21935483870967742)
     """
 

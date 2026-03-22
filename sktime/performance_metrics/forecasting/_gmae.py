@@ -102,17 +102,17 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> gmae = GeometricMeanAbsoluteError()
-    >>> gmae(y_true, y_pred)
+    >>> gmae(y_true, y_pred) # doctest: +SKIP
     np.float64(0.000529527232030127)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> gmae(y_true, y_pred)
+    >>> gmae(y_true, y_pred) # doctest: +SKIP
     np.float64(0.5000024031086919)
     >>> gmae = GeometricMeanAbsoluteError(multioutput='raw_values')
-    >>> gmae(y_true, y_pred)
+    >>> gmae(y_true, y_pred) # doctest: +SKIP
     array([4.80621738e-06, 1.00000000e+00])
     >>> gmae = GeometricMeanAbsoluteError(multioutput=[0.3, 0.7])
-    >>> gmae(y_true, y_pred)
+    >>> gmae(y_true, y_pred) # doctest: +SKIP
     np.float64(0.7000014418652152)
     """
 

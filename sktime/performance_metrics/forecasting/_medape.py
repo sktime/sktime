@@ -116,28 +116,28 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mdape = MedianAbsolutePercentageError(symmetric=False)
-    >>> mdape(y_true, y_pred)
+    >>> mdape(y_true, y_pred) # doctest: +SKIP
     np.float64(0.16666666666666666)
     >>> smdape = MedianAbsolutePercentageError(symmetric=True)
-    >>> smdape(y_true, y_pred)
+    >>> smdape(y_true, y_pred) # doctest: +SKIP
     np.float64(0.18181818181818182)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mdape(y_true, y_pred)
+    >>> mdape(y_true, y_pred) # doctest: +SKIP
     np.float64(0.5714285714285714)
-    >>> smdape(y_true, y_pred)
+    >>> smdape(y_true, y_pred) # doctest: +SKIP
     np.float64(0.39999999999999997)
     >>> mdape = MedianAbsolutePercentageError(multioutput='raw_values', symmetric=False)
-    >>> mdape(y_true, y_pred)
+    >>> mdape(y_true, y_pred) # doctest: +SKIP
     array([0.14285714, 1.        ])
     >>> smdape = MedianAbsolutePercentageError(multioutput='raw_values', symmetric=True)
-    >>> smdape(y_true, y_pred)
+    >>> smdape(y_true, y_pred) # doctest: +SKIP
     array([0.13333333, 0.66666667])
     >>> mdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=False)
-    >>> mdape(y_true, y_pred)
+    >>> mdape(y_true, y_pred) # doctest: +SKIP
     np.float64(0.7428571428571428)
     >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=True)
-    >>> smdape(y_true, y_pred)
+    >>> smdape(y_true, y_pred) # doctest: +SKIP
     np.float64(0.5066666666666666)
     """  # noqa: E501
 

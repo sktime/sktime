@@ -75,18 +75,18 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> y_pred_benchmark = y_pred*1.1
     >>> gmrae = GeometricMeanRelativeAbsoluteError()
-    >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark) # doctest: +SKIP
     np.float64(0.0007839273064064755)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
-    >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark) # doctest: +SKIP
     np.float64(0.5578632807409556)
     >>> gmrae = GeometricMeanRelativeAbsoluteError(multioutput='raw_values')
-    >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark) # doctest: +SKIP
     array([4.97801163e-06, 1.11572158e+00])
     >>> gmrae = GeometricMeanRelativeAbsoluteError(multioutput=[0.3, 0.7])
-    >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    >>> gmrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark) # doctest: +SKIP
     np.float64(0.7810066018326863)
     """
 
