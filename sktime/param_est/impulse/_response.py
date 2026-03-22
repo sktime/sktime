@@ -87,12 +87,12 @@ class ImpulseResponseFunction(BaseParamFitter):
 
     extend_model : None
         Used in Statsmodels for a special handling of matrix terms that are time-varying
-        but irrelevant for impulse response functions. Thus not integrated for this purpose.
-        For more Info see MLEModel class in statsmodels mlemodel.py and the functions: 
-        get_prediction(), _get_extension_time_varying_matrices(), simulate(). Datatype not
-        shown in statsmodels, looks like bool.
+        but irrelevant for impulse response functions. Thus not integrated for this
+        purpose.For more Info see MLEModel class in statsmodels mlemodel.py and the
+        functions: get_prediction(), _get_extension_time_varying_matrices(), simulate().
+        Datatype not shown in statsmodels, looks like bool.
 
-    extend_kwargs : None, Used with extend_model. Datatype not shown in statsmodels, 
+    extend_kwargs : None, Used with extend_model. Datatype not shown in statsmodels,
         looks like bool.
 
     Attributes
@@ -224,19 +224,16 @@ class ImpulseResponseFunction(BaseParamFitter):
         # should not be a Problem for ARIMA for instance.
         if len(X.shape) < 2 or X.shape[1] < 2:
             warnings.warn(
-                f"Check if your estimator supports univariate IRF:"
-                f"Got shape {X.shape}."
+                f"Check if your estimator supports univariate IRF:Got shape {X.shape}."
             )
 
         if model_name == "VARMAX":
-                           
             p = sm_wrapper.model.k_ar
             q = sm_wrapper.model.k_ma
             trend_type = sm_wrapper.model.trend
             dummy_model = ImportedModel(dummy_data, order=(p, q), trend=trend_type)
-            
-        elif model_name == "DynamicFactor":
 
+        elif model_name == "DynamicFactor":
             k_factors = sm_wrapper.model.k_factors
             factor_order = sm_wrapper.model.factor_order
             error_order = sm_wrapper.model.error_order
@@ -249,7 +246,7 @@ class ImpulseResponseFunction(BaseParamFitter):
                 enforce_stationarity=False,
             )
         elif model_name == "VECM":
-            raise NotImplementedError("VECM IRF not yet implemented")   
+            raise NotImplementedError("VECM IRF not yet implemented")
         else:
             raise ValueError(f"Unknown model type: {model_name}")
 
@@ -283,10 +280,10 @@ class ImpulseResponseFunction(BaseParamFitter):
         """
         from sktime.datasets import load_airline
         from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
-        import pandas as pd
+
         X = load_airline()
         X2 = X.shift(1).bfill()
-        df = pd.DataFrame({"X":X, "X2": X2})
+        df = pd.DataFrame({"X": X, "X2": X2})
         fitted_model = skdyn(k_factors=1, factor_order=2).fit(df)
 
         params1 = {
