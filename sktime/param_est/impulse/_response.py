@@ -291,34 +291,34 @@ class ImpulseResponseFunction(BaseParamFitter):
             X2 = X.shift(1).bfill()
             df = pd.DataFrame({"X": X, "X2": X2})
             fitted_model = skdyn(k_factors=1, factor_order=2).fit(df)
+        else:
+            fitted_model=None
 
-            params1 = {
-                "model": fitted_model,
-                "steps": 1,
-                "impulse": 0,
-                "orthogonalized": True,
-                "cumulative": True,
-                "anchor": None,
-                "exog": None,
-                "transformed": True,
-                "includes_fixed": False,
-                "extend_model": None,
-                "extend_kwargs": None,
-            }
-            params2 = {
-                "model": fitted_model,
-                "steps": 1,
-                "impulse": 0,
-                "orthogonalized": False,
-                "cumulative": False,
-                "anchor": None,
-                "exog": None,
-                "transformed": True,
-                "includes_fixed": False,
-                "extend_model": None,
-                "extend_kwargs": None,
-            }
+        params1 = {
+            "model": fitted_model,
+            "steps": 1,
+            "impulse": 0,
+            "orthogonalized": True,
+            "cumulative": True,
+            "anchor": None,
+            "exog": None,
+            "transformed": True,
+            "includes_fixed": False,
+            "extend_model": None,
+            "extend_kwargs": None,
+        }
+        params2 = {
+            "model": fitted_model,
+            "steps": 1,
+            "impulse": 0,
+            "orthogonalized": False,
+            "cumulative": False,
+            "anchor": None,
+            "exog": None,
+            "transformed": True,
+            "includes_fixed": False,
+            "extend_model": None,
+            "extend_kwargs": None,
+        }
 
-            params.extend([params1, params2])
-
-        return params
+        return [params1, params2]
