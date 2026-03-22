@@ -279,39 +279,42 @@ class ImpulseResponseFunction(BaseParamFitter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.datasets import load_airline
-        from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
+        from sktime.utils.dependencies import _check_soft_dependencies
 
-        X = load_airline()
-        X2 = X.shift(1).bfill()
-        df = pd.DataFrame({"X": X, "X2": X2})
-        fitted_model = skdyn(k_factors=1, factor_order=2).fit(df)
+        if _check_soft_dependencies("statsmodels", severity="none"):
+            from sktime.datasets import load_airline
+            from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
 
-        params1 = {
-            "model": fitted_model,
-            "steps": 1,
-            "impulse": 0,
-            "orthogonalized": True,
-            "cumulative": True,
-            "anchor": None,
-            "exog": None,
-            "transformed": True,
-            "includes_fixed": False,
-            "extend_model": None,
-            "extend_kwargs": None,
-        }
-        params2 = {
-            "model": fitted_model,
-            "steps": 1,
-            "impulse": 0,
-            "orthogonalized": False,
-            "cumulative": False,
-            "anchor": None,
-            "exog": None,
-            "transformed": True,
-            "includes_fixed": False,
-            "extend_model": None,
-            "extend_kwargs": None,
-        }
+            X = load_airline()
+            X2 = X.shift(1).bfill()
+            df = pd.DataFrame({"X": X, "X2": X2})
+            fitted_model = skdyn(k_factors=1, factor_order=2).fit(df)
+
+            params1 = {
+                "model": fitted_model,
+                "steps": 1,
+                "impulse": 0,
+                "orthogonalized": True,
+                "cumulative": True,
+                "anchor": None,
+                "exog": None,
+                "transformed": True,
+                "includes_fixed": False,
+                "extend_model": None,
+                "extend_kwargs": None,
+            }
+            params2 = {
+                "model": fitted_model,
+                "steps": 1,
+                "impulse": 0,
+                "orthogonalized": False,
+                "cumulative": False,
+                "anchor": None,
+                "exog": None,
+                "transformed": True,
+                "includes_fixed": False,
+                "extend_model": None,
+                "extend_kwargs": None,
+            }
 
         return [params1, params2]
