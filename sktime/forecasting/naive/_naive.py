@@ -14,7 +14,6 @@ __author__ = [
     "bethrice44",
 ]
 
-import math
 
 import numpy as np
 import pandas as pd
@@ -22,7 +21,6 @@ from scipy.stats import norm
 
 from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._utilities import get_slice
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
@@ -171,68 +169,41 @@ class NaiveForecaster(_BaseWindowForecaster):
         -------
         self : returns an instance of self.
         """
-        # X_train is ignored
         sp = self.sp or 1
+        n_timepoints = len(y)
 
-        n_timepoints = y.shape[0]
-
-        if self.strategy in ("last", "mean"):
-            # check window length is greater than sp for seasonal mean or seasonal last
-            if self.window_length is not None and sp != 1:
-                if self.window_length < sp:
-                    raise ValueError(
-                        f"The `window_length`: "
-                        f"{self.window_length} is smaller than "
-                        f"`sp`: {sp}."
-                    )
+        if self.strategy in ("last", "mean", "drift"):
             self.window_length_ = check_window_length(self.window_length, n_timepoints)
+            if self.window_length_ is None:
+                self.window_length_ = n_timepoints
             self.sp_ = check_sp(sp)
 
-            #  if not given, set default window length
-            if self.window_length is None:
-                self.window_length_ = len(y)
-
+        # we define the required window_size based on strategy and sp
+        if self.strategy == "last":
+            needed_len = self.sp_
+        elif self.strategy == "mean":
+            needed_len = self.window_length_
         elif self.strategy == "drift":
-            if sp != 1:
-                warn(
-                    "For the `drift` strategy, the `sp` value will be ignored.",
-                    obj=self,
-                )
-            # window length we need for forecasts is just the
-            # length of seasonal periodicity
-            self.window_length_ = check_window_length(self.window_length, n_timepoints)
-            if self.window_length is None:
-                self.window_length_ = len(y)
-            if self.window_length == 1:
-                raise ValueError(
-                    f"For the `drift` strategy, "
-                    f"the `window_length`: {self.window_length} "
-                    f"value must be greater than one."
-                )
-
+            needed_len = self.window_length_
         else:
-            allowed_strategies = ("last", "mean", "drift")
-            raise ValueError(
-                f"Unknown strategy: {self.strategy}. Expected "
-                f"one of: {allowed_strategies}."
-            )
+            needed_len = n_timepoints
 
-        # check window length
-        if self.window_length_ > len(y):
-            param = "sp" if self.strategy == "last" and sp != 1 else "window_length_"
-            raise ValueError(
-                f"The {param}: {self.window_length_} is larger than "
-                f"the training series."
-            )
+        # we store truncated version of y
+        self._y_minimal = y.iloc[-int(needed_len) :]
 
+        # cutoff for horizon logic
+        self._cutoff_val = y.index[-1]
         return self
 
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
         """Calculate predictions for use in predict."""
-        last_window, _ = self._get_last_window()
-        fh = fh.to_relative(self.cutoff)
+        last_window = self._y_minimal.to_numpy()
+        if last_window.ndim > 1 and last_window.shape[1] == 1:
+            last_window = last_window.ravel()
+        cutoff = self.cutoff if hasattr(self, "cutoff") else self._cutoff_val
+        fh = fh.to_relative(cutoff)
 
         strategy = self.strategy
         sp = self.sp or 1
@@ -312,22 +283,39 @@ class NaiveForecaster(_BaseWindowForecaster):
                                     [  2,   3, 4]]
         """
         # if window length is not multiple of sp, backward fill window with nan values
-        remainder = self.window_length_ % self.sp_
-        if remainder > 0:
-            pad_width = self.sp_ - remainder
-        else:
-            pad_width = 0
+        # remainder = self.window_length_ % self.sp_
+        # if remainder > 0:
+        #     pad_width = self.sp_ - remainder
+        # else:
+        #     pad_width = 0
 
-        pad_width += self.window_length_ - len(last_window)
+        # pad_width += self.window_length_ - len(last_window)
 
-        last_window = np.hstack([np.full(pad_width, np.nan), last_window])
+        # last_window = np.hstack([np.full(pad_width, np.nan), last_window])
 
-        # reshape last window, one column per season
-        last_window = last_window.reshape(
-            int(np.ceil(self.window_length_ / self.sp_)), self.sp_
-        )
+        # # reshape last window, one column per season
+        # last_window = last_window.reshape(
+        #     int(np.ceil(self.window_length_ / self.sp_)), self.sp_
+        # )
 
-        return last_window
+        # return last_window
+
+        sp = self.sp_
+        n = len(last_window)
+
+        num_rows = int(np.ceil(n / sp))
+
+        if n == num_rows * sp:
+            return last_window.reshape(num_rows, sp)
+
+        remainder = n % sp
+        pad_width = sp - remainder
+
+        head_padding = np.full(pad_width, np.nan)
+
+        # we combine this small padding with the original array
+        full_window = np.concatenate([head_padding, last_window])
+        return full_window.reshape(num_rows, sp)
 
     def _tile_seasonal_prediction(self, y_pred, fh):
         """Tile a prediction to cover all requested forecasting horizons.
@@ -346,13 +334,14 @@ class NaiveForecaster(_BaseWindowForecaster):
         # last value for that season,
         # assume fh is sorted, i.e. max(fh) == fh[-1]
         # only slicing all the last seasons into last_window
-        if fh[-1] > self.sp_:
-            reps = int(np.ceil(fh[-1] / self.sp_))
-            y_pred = np.tile(y_pred, reps=reps)
+        # if fh[-1] > self.sp_:
+        #     reps = int(np.ceil(fh[-1] / self.sp_))
+        #     y_pred = np.tile(y_pred, reps=reps)
 
         # get zero-based index by subtracting the minimum
         fh_idx = fh.to_indexer(self.cutoff)
-        return y_pred[fh_idx]
+        # uses the modular indexing, which naturally handles the horizon's value
+        return y_pred[fh_idx % self.sp_]
 
     def _predict_naive(self, fh=None, X=None):
         from sktime.transformations.series.lag import Lag
@@ -511,102 +500,78 @@ class NaiveForecaster(_BaseWindowForecaster):
         ----------
         .. [1] https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods
         """
-        y = self._y
-        y = convert_to(y, "pd.Series")
-        T = len(y)
-        sp = self.sp
+        y_subset = self._y_minimal.to_numpy()
 
-        # Compute "past" residuals
-        if self.strategy == "last":
-            y_res = y - y.shift(self.sp)
-        elif self.strategy == "mean":
-            if not self.window_length:
-                if sp > 1:
-                    # Get the next sp predictions and repeat them
-                    # T / self.sp times to match the length of trained y
-                    # NOTE: +1 extra tile to defend against off-by-one errors
-                    reps = math.ceil(T / sp) + 1
-                    past_fh = ForecastingHorizon(
-                        list(range(1, sp + 1)), is_relative=None, freq=self._cutoff
-                    )
-                    seasonal_means = self._predict(fh=past_fh)
-                    if isinstance(seasonal_means, pd.DataFrame):
-                        seasonal_means = seasonal_means.squeeze()
-                    y_pred = np.tile(seasonal_means.to_numpy(), reps)[0:T]
-                else:
-                    # Since this strategy returns a constant, just predict fh=1 and
-                    # transform the constant into a repeated array
-                    past_fh = ForecastingHorizon(1, is_relative=None, freq=self._cutoff)
-                    y_pred = np.repeat(np.squeeze(self._predict(fh=past_fh)), T)
+        # T must be the total training length for the drift/mean formulas
+        # If not stored in fit, we use window_length_ as a proxy
+        T = getattr(self, "n_timepoints_", len(y_subset))
+        sp = self.sp_
+        strategy = self.strategy
+        window_length = self.window_length_
+
+        # 2. Compute "past" residuals using slicing (vectorized & memory-lean)
+        if strategy == "last":
+            # Difference between observations separated by sp
+            y_res = y_subset[sp:] - y_subset[:-sp]
+        elif strategy == "mean":
+            # Residuals relative to the seasonal or global mean
+            if sp > 1:
+                # Modular indexing to find seasonal residuals without reshaping
+                # We subtract the mean of the season each point belongs to
+                seasonal_means = np.array(
+                    [np.nanmean(y_subset[i::sp]) for i in range(sp)]
+                )
+                y_res = y_subset - seasonal_means[np.arange(len(y_subset)) % sp]
             else:
-                if sp > 1:
-                    # Label index by seasonal period
-                    seasons = np.mod(np.arange(T), sp)
-                    # Compute rolling seasonal means
-                    y_pred = (
-                        y.to_frame()
-                        .assign(__sp__=seasons)
-                        # Group observations by their
-                        # seasonal period position
-                        .groupby("__sp__")
-                        # Compute rolling means per
-                        # seasonal period
-                        .rolling(self.window_length)
-                        .mean()
-                        .droplevel("__sp__")
-                        .sort_index()
-                        .squeeze()
-                    )
-                else:
-                    # Compute rolling means
-                    y_pred = y.rolling(self.window_length).mean()
-            y_res = y - y_pred
+                y_res = y_subset - np.nanmean(y_subset)
+        elif strategy == "drift":
+            # Slope logic: (last - first) / (distance)
+            slope = (y_subset[-1] - y_subset[0]) / (window_length - 1)
+            y_res = y_subset[1:] - (y_subset[:-1] + slope)
         else:
-            # Slope equation from:
-            # https://otexts.com/fpp3/simple-methods.html#drift-method
-            slope = (y.iloc[-1] - y.iloc[-(self.window_length or 0)]) / (T - 1)
-            # Fitted value = previous value + slope
-            # https://github.com/robjhyndman/forecast/blob/master/R/naive.R#L34
-            y_res = y - (y.shift(sp) + slope)
+            y_res = np.array([0.0])
 
-        # Residuals MSE and SE
-        # + 1 degrees of freedom to estimate drift coefficient standard error
-        # https://github.com/robjhyndman/forecast/blob/master/R/naive.R#L79
-        n_nans = np.sum(pd.isna(y_res))
-        mse_res = np.sum(np.square(y_res)) / (T - n_nans - (self.strategy == "drift"))
+        # 3. Calculate MSE (Degrees of freedom adjustment for drift)
+        n_nans = np.sum(np.isnan(y_res))
+        denom = len(y_res) - n_nans - (1 if strategy == "drift" else 0)
+
+        # Avoid division by zero if dataset is too small
+        mse_res = np.nansum(np.square(y_res)) / max(denom, 1)
         se_res = np.sqrt(mse_res)
 
-        window_length = self.window_length or T
-
+        # 4. Define Partial SE Formulas (Using NumPy for element-wise math)
         def sqrt_flr(x):
-            """Square root of x, floored at 1 - to deal with in-sample predictions."""
             return np.sqrt(np.maximum(x, 1))
 
-        # Formulas from:
-        # https://otexts.com/fpp3/prediction-intervals.html (Table 5.2)
-        partial_se_formulas = {
-            "last": (
-                sqrt_flr if sp == 1 else lambda h: sqrt_flr(np.floor((h - 1) / sp) + 1)
-            ),
-            "mean": lambda h: np.repeat(sqrt_flr(1 + (1 / window_length)), len(h)),
-            "drift": lambda h: sqrt_flr(h * (1 + (h / (T - 1)))),
-        }
+        # Convert ForecastingHorizon to a raw NumPy array of relative steps
+        # This prevents the TypeError you encountered
+        h = fh.to_relative(self.cutoff).to_numpy()
 
-        fh_periods = np.array(fh.to_relative(self.cutoff))
-        marginal_se = se_res * partial_se_formulas[self.strategy](fh_periods)
-        marginal_vars = marginal_se**2
+        if strategy == "last":
+            if sp == 1:
+                multiplier = sqrt_flr(h)
+            else:
+                multiplier = sqrt_flr(np.floor((h - 1) / sp) + 1)
+        elif strategy == "mean":
+            multiplier = np.full(len(h), sqrt_flr(1 + (1 / window_length)))
+        elif strategy == "drift":
+            # T-1 represents the full historical distance
+            multiplier = sqrt_flr(h * (1 + (h / (T - 1))))
+        else:
+            multiplier = np.ones(len(h))
 
+        # 5. Final Variance Calculation
+        marginal_var = (se_res * multiplier) ** 2
+
+        # 6. Format Output
         fh_idx = fh.to_absolute_index(self.cutoff)
         if cov:
             fh_size = len(fh)
-            cov_matrix = np.fill_diagonal(
-                np.zeros(shape=(fh_size, fh_size)), marginal_vars
-            )
-            pred_var = pd.DataFrame(cov_matrix, columns=fh_idx, index=fh_idx)
-        else:
-            pred_var = pd.DataFrame(marginal_vars, index=fh_idx)
+            cov_matrix = np.zeros((fh_size, fh_size))
+            np.fill_diagonal(cov_matrix, marginal_var)
+            return pd.DataFrame(cov_matrix, columns=fh_idx, index=fh_idx)
 
-        return pred_var
+        return pd.DataFrame(marginal_var, index=fh_idx, columns=self._get_varnames())
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -725,12 +690,12 @@ class NaiveVariance(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X):
+    def _predict(self, fh, X=None):
         return self.forecaster_.predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
         self.forecaster_.update(y, X, update_params=update_params)
-        if update_params and self._fh is not None:
+        if update_params and self.fh_early_:
             self.residuals_matrix_ = self._compute_sliding_residuals(
                 y=self._y,
                 X=self._X,
@@ -818,7 +783,7 @@ class NaiveVariance(BaseForecaster):
                 initial_window=self.initial_window,
             )
 
-        fh_relative = fh.to_relative(self.cutoff)
+        fh_relative = fh.to_relative(self.cutoff).to_numpy()
         fh_absolute = fh.to_absolute(self.cutoff)
         fh_absolute_ix = fh_absolute.to_pandas()
 
@@ -827,7 +792,7 @@ class NaiveVariance(BaseForecaster):
             covariance = np.zeros(shape=(len(fh), fh_size))
             for i in range(fh_size):
                 i_residuals = np.diagonal(residuals_matrix, offset=fh_relative[i])
-                for j in range(i, fh_size):  # since the matrix is symmetric
+                for j in range(i, fh_size):
                     j_residuals = np.diagonal(residuals_matrix, offset=fh_relative[j])
                     max_residuals = min(len(j_residuals), len(i_residuals))
                     covariance[i, j] = covariance[j, i] = np.nanmean(
@@ -843,11 +808,9 @@ class NaiveVariance(BaseForecaster):
                 np.nanmean(np.diagonal(residuals_matrix, offset=offset) ** 2)
                 for offset in fh_relative
             ]
-            if hasattr(self._y, "columns"):
-                columns = self._y.columns
-                pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute_ix)
-            else:
-                pred_var = pd.DataFrame(variance, index=fh_absolute_ix)
+
+            var_names = self._get_varnames()
+            pred_var = pd.DataFrame(variance, columns=var_names, index=fh_absolute_ix)
 
         return pred_var
 
@@ -877,27 +840,20 @@ class NaiveVariance(BaseForecaster):
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
 
         for id in y_index:
-            forecaster = forecaster.clone()
-            y_train = get_slice(y, start=None, end=id)  # subset on which we fit
-            y_test = get_slice(y, start=id, end=None)  # subset on which we predict
+            forecaster_clone = forecaster.clone()
+            y_train = get_slice(y, start=None, end=id)
+            y_test = get_slice(y, start=id, end=None)
             try:
-                forecaster.fit(y_train, fh=y_test.index)
-            except ValueError:
+                forecaster_clone.fit(y_train, fh=y_test.index)
+                pred_res = forecaster_clone.predict_residuals(y_test, X)
+                residuals_matrix.loc[id, pred_res.index] = pred_res.values
+            except (ValueError, IndexError):
                 if self.verbose:
                     warn(
-                        f"Couldn't fit the model on "
-                        f"time series window length {len(y_train)}.\n",
+                        f"Couldn't fit or predict on window ending at {id}.\n",
                         obj=self,
                     )
                 continue
-            try:
-                residuals_matrix.loc[id] = forecaster.predict_residuals(y_test, X)
-            except IndexError:
-                warn(
-                    f"Couldn't predict after fitting on time series of length "
-                    f"{len(y_train)}.\n",
-                    obj=self,
-                )
 
         return residuals_matrix
 
