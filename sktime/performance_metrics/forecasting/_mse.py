@@ -104,26 +104,26 @@ class MeanSquaredError(BaseForecastingErrorMetric):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mse = MeanSquaredError()
-    >>> mse(y_true, y_pred)
+    >>> mse(y_true, y_pred) # doctest: +SKIP
     np.float64(0.4125)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mse(y_true, y_pred)
+    >>> mse(y_true, y_pred) # doctest: +SKIP
     np.float64(0.7083333333333334)
     >>> rmse = MeanSquaredError(square_root=True)
-    >>> rmse(y_true, y_pred)
+    >>> rmse(y_true, y_pred) # doctest: +SKIP
     np.float64(0.8227486121839513)
     >>> rmse = MeanSquaredError(multioutput='raw_values')
-    >>> rmse(y_true, y_pred)
+    >>> rmse(y_true, y_pred) # doctest: +SKIP
     array([0.41666667, 1.        ])
     >>> rmse = MeanSquaredError(multioutput='raw_values', square_root=True)
-    >>> rmse(y_true, y_pred)
+    >>> rmse(y_true, y_pred) # doctest: +SKIP
     array([0.64549722, 1.        ])
     >>> rmse = MeanSquaredError(multioutput=[0.3, 0.7])
-    >>> rmse(y_true, y_pred)
+    >>> rmse(y_true, y_pred) # doctest: +SKIP
     np.float64(0.825)
     >>> rmse = MeanSquaredError(multioutput=[0.3, 0.7], square_root=True)
-    >>> rmse(y_true, y_pred)
+    >>> rmse(y_true, y_pred) # doctest: +SKIP
     np.float64(0.8936491673103708)
     """  # noqa: E501
 

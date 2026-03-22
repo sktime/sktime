@@ -269,32 +269,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "TSBootstrapAdapter",
         "ThetaModularForecaster",
         "WeightedEnsembleClassifier",
-    ],
-    "test_doctest_examples": [
-        # between-versions inconsistency how doctest handles np.float64.
-        # on lower version, prints 0.123456
-        # on higher version, prints np.float64(0.123456)
-        # therefore these doctests will fail either on lower or higher versions
-        "MedianSquaredScaledError",
-        "GeometricMeanAbsoluteError",
-        "MedianRelativeAbsoluteError",
-        "MeanSquaredScaledError",
-        "GeometricMeanRelativeAbsoluteError",
-        "GeometricMeanRelativeSquaredError",
-        "MedianSquaredPercentageError",
-        "MedianAbsoluteScaledError",
-        "MedianSquaredError",
-        "MeanAbsoluteError",
-        "MeanAbsolutePercentageError",
-        "MeanAbsoluteScaledError",
-        "MedianAbsoluteError",
-        "MeanSquaredPercentageError",
-        "MedianAbsolutePercentageError",
-        "MeanSquaredError",
-        "PinballLoss",
-        "RelativeLoss",
-        "MeanRelativeAbsoluteError",
-    ],
+    ]
 }
 
 # estimators that have 2 test params only when their soft dependency is installed

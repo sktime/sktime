@@ -494,10 +494,10 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     ...     ('Quantiles', 0.95): [3.75, 0, 3, 12, 1.875],
     ... })
     >>> pl = PinballLoss()
-    >>> pl(y_true, y_pred)
+    >>> pl(y_true, y_pred) # doctest: +SKIP
     np.float64(0.1791666666666667)
     >>> pl = PinballLoss(score_average=False)
-    >>> pl(y_true, y_pred).to_numpy()
+    >>> pl(y_true, y_pred).to_numpy() # doctest: +SKIP
     array([0.16625, 0.275  , 0.09625])
     >>> y_true = pd.DataFrame({
     ...     "Quantiles1": [3, -0.5, 2, 7, 2],
@@ -512,10 +512,10 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     ...     ('Quantiles2', 0.95): [7.5, 2, 6, 24, 3.75],
     ... })
     >>> pl = PinballLoss(multioutput='raw_values')
-    >>> pl(y_true, y_pred).to_numpy()
+    >>> pl(y_true, y_pred).to_numpy() # doctest: +SKIP
     array([0.16233333, 0.465     ])
     >>> pl = PinballLoss(multioutput=np.array([0.3, 0.7]))
-    >>> pl(y_true, y_pred)
+    >>> pl(y_true, y_pred) # doctest: +SKIP
     np.float64(0.3742000000000001)
     """  # noqa: E501
 
