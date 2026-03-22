@@ -175,6 +175,10 @@ class ImpulseResponseFunction(BaseParamFitter):
 
         super().__init__()
 
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        _check_soft_dependencies("statsmodels", severity="error", obj=self)
+
     def _fit(self, X):
         """Fit estimator for univariate and multivariate orthogonal or cumulative irfs.
 
@@ -290,7 +294,7 @@ class ImpulseResponseFunction(BaseParamFitter):
             df = pd.DataFrame({"X": X, "X2": X2})
             fitted_model = skdyn(k_factors=1, factor_order=2).fit(df)
         else:
-            fitted_model = "some_model"
+            fitted_model = None
 
         params1 = {
             "model": fitted_model,
