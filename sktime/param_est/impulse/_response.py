@@ -8,7 +8,6 @@ import warnings
 import numpy as np
 import pandas as pd
 
-
 from sktime.param_est.base import BaseParamFitter
 
 
