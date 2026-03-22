@@ -160,6 +160,7 @@ class ImpulseResponseFunction(BaseParamFitter):
         extend_model=None,
         extend_kwargs=None,
     ):
+        self.model = model  # needs a previously fitted model
         self.steps = steps
         self.impulse = impulse
         self.orthogonalized = orthogonalized
@@ -171,11 +172,6 @@ class ImpulseResponseFunction(BaseParamFitter):
 
         self.extend_model = extend_model
         self.extend_kwargs = extend_kwargs
-
-        if self.model is None:
-            raise ValueError("Choose a model to fit an IRF.")
-
-        self.model = model  # needs a previously fitted model
 
         super().__init__()
 
