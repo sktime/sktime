@@ -275,7 +275,6 @@ EXCLUDED_TESTS_BY_TEST = {
         # on lower version, prints 0.123456
         # on higher version, prints np.float64(0.123456)
         # therefore these doctests will fail either on lower or higher versions
-        "MedianSquaredScaledError",
         "GeometricMeanAbsoluteError",
         "MedianRelativeAbsoluteError",
         "MeanSquaredScaledError",

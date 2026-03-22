@@ -94,18 +94,18 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> rmdsse = MedianSquaredScaledError(square_root=True)
-    >>> rmdsse(y_true, y_pred, y_train=y_train)
+    >>> rmdsse(y_true, y_pred, y_train=y_train) # doctest: +SKIP
     np.float64(0.16666666666666666)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> rmdsse(y_true, y_pred, y_train=y_train)
+    >>> rmdsse(y_true, y_pred, y_train=y_train) # doctest: +SKIP
     np.float64(0.1472819539849714)
     >>> rmdsse = MedianSquaredScaledError(multioutput='raw_values', square_root=True)
-    >>> rmdsse(y_true, y_pred, y_train=y_train)
+    >>> rmdsse(y_true, y_pred, y_train=y_train) # doctest: +SKIP
     array([0.08687445, 0.20203051])
     >>> rmdsse = MedianSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
-    >>> rmdsse(y_true, y_pred, y_train=y_train)
+    >>> rmdsse(y_true, y_pred, y_train=y_train) # doctest: +SKIP
     np.float64(0.16914781383660782)
     """
 
