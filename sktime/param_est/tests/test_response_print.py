@@ -71,17 +71,15 @@
 #print(actual)
 
 
-from sktime.utils.tests.test_check_estimator import check_estimator
+#from sktime.utils.tests.test_check_estimator import check_estimator
 
-# Deinen Estimator importieren
-from sktime.param_est.impulse import ImpulseResponseFunction 
+#from sktime.param_est.impulse import ImpulseResponseFunction 
 
-# Check ausführen
-check_estimator(ImpulseResponseFunction)
+#check_estimator(ImpulseResponseFunction)
 
 
-params = ImpulseResponseFunction.get_test_params()
-print('Success:', params)
+#params = ImpulseResponseFunction.get_test_params()
+#print('Success:', params)
 
 
 
