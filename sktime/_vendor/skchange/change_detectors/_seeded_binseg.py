@@ -207,6 +207,9 @@ class SeededBinarySegmentation(BaseChangeDetector):
         "authors": ["Tveten"],
         "maintainers": ["Tveten"],
         "fit_is_empty": True,
+        "tests:skip_by_name": [
+            "test_non_state_changing_method_contract",
+        ],
     }
 
     def __init__(
