@@ -1860,24 +1860,18 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             # if input_conv is a known mtype string, use it as the assumed
             # source type for more efficient conversion via convert()
             if input_conv != "off" and y is not None:
-                y_inner = convert(
-                    y, from_type=input_conv, to_type=y_inner_mtype[0]
-                )
+                y_inner = convert(y, from_type=input_conv, to_type=y_inner_mtype[0])
             elif y is not None:
                 y_inner = convert_to(y, to_type=y_inner_mtype)
             else:
                 y_inner = None
 
-            X_inner = (
-                convert_to(X, to_type=X_inner_mtype) if X is not None else None
-            )
+            X_inner = convert_to(X, to_type=X_inner_mtype) if X is not None else None
 
             # set minimal metadata needed by inner methods
             # (_update accesses _y_mtype_last_seen, predict accesses _y_metadata)
             if y is not None:
-                assumed_mtype = (
-                    input_conv if input_conv != "off" else y_inner_mtype[0]
-                )
+                assumed_mtype = input_conv if input_conv != "off" else y_inner_mtype[0]
                 self._y_mtype_last_seen = assumed_mtype
                 if not hasattr(self, "_y_metadata") or self._y_metadata is None:
                     self._y_metadata = {"mtype": assumed_mtype}
