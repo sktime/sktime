@@ -90,10 +90,10 @@ class _StatsModelsAdapter(BaseForecaster):
                 index_diff = y.index.difference(
                     self._fitted_forecaster.fittedvalues.index
                 )
-                if index_diff.isin(y.index).all():
-                    y = y.loc[index_diff]
-                    X = X.loc[index_diff].set_index(y.index) if X is not None else None
-
+                if len(index_diff) == 0:
+                    return self
+                y = y.loc[index_diff]
+                X = X.loc[index_diff] if X is not None else None
                 self._fitted_forecaster = self._fitted_forecaster.append(y, exog=X)
 
     def _predict(self, fh, X):
@@ -275,3 +275,4 @@ def _coerce_int_to_range_index(y, X=None):
     if X is not None:
         X.index = new_index
     return y, X
+
