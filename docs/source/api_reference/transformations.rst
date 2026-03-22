@@ -965,3 +965,27 @@ efficient and should be preferred:
     NonNegativeOptimalReconciler
     OptimalReconciler
     TopdownReconciler
+
+
+Domain Specific Transformations
+-------------------------------
+
+These transformers are designed for specific domains and inputs.
+They compute features that are related to a domain of application.
+
+Energy, weather and climate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClearSky
+
+.. currentmodule:: sktime.transformations.series.degree_day
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DegreeDayFeatures

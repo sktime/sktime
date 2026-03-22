@@ -1,4 +1,4 @@
-"""Multi Layer Perceptron (MLP) (minus the final output layer)."""
+"""Multi Layer Perceptron (MLP) (minus the final output layer) in TensorFlow."""
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
