@@ -17,7 +17,7 @@ class SignatureTransformer(BaseTransformer):
     """Transformation class from the signature method.
 
     Follows the methodology laid out in the paper:
-        "A Generalised Signature Method for Multivariate Time Series"
+    "A Generalised Signature Method for Multivariate Time Series"
 
     Parameters
     ----------
@@ -77,6 +77,7 @@ class SignatureTransformer(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?#
         "fit_is_empty": False,
+        "capability:categorical_in_X": False,  # can estimator handle categorical data?
         # testing configuration
         # ---------------------
         "tests:libs": ["sktime.transformations.panel.signature_based"],
