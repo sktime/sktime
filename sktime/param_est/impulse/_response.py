@@ -281,6 +281,8 @@ class ImpulseResponseFunction(BaseParamFitter):
         """
         from sktime.utils.dependencies import _check_soft_dependencies
 
+        params = []
+
         if _check_soft_dependencies("statsmodels", severity="none"):
             from sktime.datasets import load_airline
             from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
@@ -317,4 +319,6 @@ class ImpulseResponseFunction(BaseParamFitter):
                 "extend_kwargs": None,
             }
 
-        return [params1, params2]
+            params.extend([params1, params2])
+
+        return params
