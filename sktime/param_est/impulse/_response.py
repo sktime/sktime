@@ -281,8 +281,6 @@ class ImpulseResponseFunction(BaseParamFitter):
         """
         from sktime.utils.dependencies import _check_soft_dependencies
 
-        params = []
-
         if _check_soft_dependencies("statsmodels", severity="none"):
             from sktime.datasets import load_airline
             from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
@@ -292,7 +290,7 @@ class ImpulseResponseFunction(BaseParamFitter):
             df = pd.DataFrame({"X": X, "X2": X2})
             fitted_model = skdyn(k_factors=1, factor_order=2).fit(df)
         else:
-            fitted_model=None
+            fitted_model = None
 
         params1 = {
             "model": fitted_model,
