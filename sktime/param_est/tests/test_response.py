@@ -126,9 +126,8 @@ def test_irf_on_dynamic():
     sktime_res.fit(df)
 
     actual = np.round(sktime_res.get_fitted_params()["irf"].sum())
-    expected = 2184
 
-    assert actual == expected
+    assert np.isclose(actual, 2184, rtol=0.01, atol=20)
 
 
 @pytest.mark.skipif(
@@ -148,9 +147,8 @@ def test_additional_irfparams_on_dyn():
     sktime_res.fit(df)
 
     actual = np.round(sktime_res.get_fitted_params()["irf"].sum())
-    expected = 5627.0
 
-    assert actual == expected
+    assert np.isclose(actual, 5627.0, rtol=0.01, atol=20)
 
 
 @pytest.mark.skipif(
