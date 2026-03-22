@@ -117,7 +117,9 @@ class ImpulseResponseFunction(BaseParamFitter):
     >>> sktime_irf = ImpulseResponseFunction(fitted_model, orthogonalized=True)
     >>> sktime_irf.fit(df)
     ImpulseResponseFunction(...)
-    >>> print(sktime_irf_est.get_fitted_params()["irf"])
+    >>> print(sktime_irf.get_fitted_params()["irf"])
+    [[1414.75907225 1401.6016836 ]
+     [  -1.45858745   -1.44502246]]
 
     Notes
     -----
@@ -143,15 +145,14 @@ class ImpulseResponseFunction(BaseParamFitter):
         https://www.statsmodels.org/stable/generated/statsmodels.tsa.vector_ar.irf.IRAnalysis.html
     """
 
-    def test():
-        _tags = {
-            "X_inner_mtype": "np.ndarray",  # no support of pl.DataFrame
-            "capability:missing_values": False,
-            "capability:multivariate": True,
-            "capability:pairwise": True,
-            "authors": "OldPatrick",
-            "python_dependencies": "statsmodels",
-        }
+    _tags = {
+        "X_inner_mtype": "np.ndarray",  # no support of pl.DataFrame
+        "capability:missing_values": False,
+        "capability:multivariate": True,
+        "capability:pairwise": True,
+        "authors": "OldPatrick",
+        "python_dependencies": "statsmodels",
+    }
 
     def __init__(
         self,
@@ -182,7 +183,7 @@ class ImpulseResponseFunction(BaseParamFitter):
 
         super().__init__()
 
-    def _fit(self, X) -> np.ndarray:
+    def _fit(self, X, y=None) -> np.ndarray:
         """Fit estimator for univariate and multivariate orthogonal or cumulative irfs.
 
         Text from statsmodels:
@@ -215,13 +216,14 @@ class ImpulseResponseFunction(BaseParamFitter):
         fitted_params = sm_wrapper.params
 
         dummy_data = np.zeros((10, k_vars))
+        dummy_model = None
 
         if model_name == "VARMAX":
             p = sm_wrapper.model.k_ar
             q = sm_wrapper.model.k_ma
             trend_type = sm_wrapper.model.trend
-
             dummy_model = ImportedModel(dummy_data, order=(p, q), trend=trend_type)
+            
         elif model_name == "DynamicFactor":
             # some models have problem with univariate irf, need warning
             # to show that results can not be calculated univariate,
@@ -232,9 +234,10 @@ class ImpulseResponseFunction(BaseParamFitter):
                     f"IRF test: Input requires at least 2 variables."
                     f"Expected shape (n, 2), but got shape {X.shape}."
                     f"Fit your model with at least two variables."
+                    f"Copying Variable found in X."
                 )
-
-                return None
+                self.irf_ = None
+                return self
 
             k_factors = sm_wrapper.model.k_factors
             factor_order = sm_wrapper.model.factor_order
@@ -248,11 +251,15 @@ class ImpulseResponseFunction(BaseParamFitter):
                 enforce_stationarity=False,
             )
         elif model_name == "VECM":
-            pass
+            raise NotImplementedError("VECM IRF not yet implemented")   
+        else:
+            raise ValueError(f"Unknown model type: {model_name}")
 
-        self.irf_ = dummy_model.impulse_responses(
+        irf_result = dummy_model.impulse_responses(
             params=fitted_params, steps=self.steps, orthogonalized=self.orthogonalized
         )
+
+        self.irf_ = irf_result
 
         return self
 
@@ -276,9 +283,19 @@ class ImpulseResponseFunction(BaseParamFitter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+
+        from sktime.datasets import load_airline
+        from sktime.param_est.impulse import ImpulseResponseFunction
+        from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
+        import pandas as pd
+        X = load_airline()
+        X2 = X.shift(1).bfill()
+        df = pd.DataFrame({"X":X, "X2": X2})
+        fitted_model = skdyn(k_factors=1, factor_order=2).fit(df)
+
         params1 = {}
         params2 = {
-            "model": None,
+            "model": fitted_model,
             "steps": 1,
             "impulse": 0,
             "orthogonalized": False,
