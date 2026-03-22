@@ -194,13 +194,3 @@ def test_irf_on_vecm():
 def test_irf_vecm_against_statsmodels():
     """Compare sktime irf VECM wrapper against statsmodels irf"""
     pass
-
-
-print(
-    test_irf_on_dynamic(),
-    test_additional_irfparams_on_dyn(),
-    test_irf_dyn_against_statsmodels(),
-    test_irf_on_varmax(),
-    test_additional_irfparams_on_varmax(),
-    test_irf_vmax_against_statsmodels(),
-)
