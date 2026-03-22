@@ -5,7 +5,9 @@ from sktime._vendor.skchange.base import BaseIntervalScorer
 from sktime._vendor.skchange.change_scores import CHANGE_SCORES, to_change_score
 from sktime._vendor.skchange.compose.penalised_score import PenalisedScore
 from sktime._vendor.skchange.costs import COSTS
-from sktime._vendor.skchange.costs.tests.test_all_costs import create_fixed_cost_test_instance
+from sktime._vendor.skchange.costs.tests.test_all_costs import (
+    create_fixed_cost_test_instance,
+)
 from sktime._vendor.skchange.datasets import generate_alternating_data
 from sktime._vendor.skchange.tests.test_all_interval_scorers import skip_if_no_test_data
 

@@ -136,9 +136,9 @@ def test_rank_cost_on_changing_mv_normal():
     no_prune_pelt_cpd.fit(changing_mv_gaussian_data)
     no_prune_pelt_change_points = no_prune_pelt_cpd.predict(changing_mv_gaussian_data)
 
-    assert len(no_prune_pelt_change_points) == len(
-        pruning_pelt_change_points
-    ), "Pruned and unpruned PELT change points do not match."
+    assert len(no_prune_pelt_change_points) == len(pruning_pelt_change_points), (
+        "Pruned and unpruned PELT change points do not match."
+    )
     assert (
         no_prune_pelt_change_points["ilocs"] == pruning_pelt_change_points["ilocs"]
     ).all(), "Pruned and unpruned PELT change points do not match."
@@ -153,9 +153,9 @@ def test_rank_cost_on_changing_mv_normal():
     crops_detector.fit(changing_mv_gaussian_data)
 
     pred_crops_change_points = crops_detector.predict(changing_mv_gaussian_data)
-    assert len(pred_crops_change_points) == len(
-        expected_change_points
-    ), "CROPS change points do not match expected change points"
+    assert len(pred_crops_change_points) == len(expected_change_points), (
+        "CROPS change points do not match expected change points"
+    )
     assert (
         np.abs(pred_crops_change_points.ilocs - expected_change_points) < 5
     ).all(), "CROPS change points do not match expected change points"
@@ -198,9 +198,9 @@ def test_change_score_distribution():
     chi2_at_n_variables_df = chi2(df=n_variables)
     for j, cut_point in enumerate(cut_points):
         res = kstest(change_score_samples[:, j], chi2_at_n_variables_df.cdf)
-        assert (
-            res.pvalue > 0.01
-        ), f"KS test failed for cut at {cut_point}: p={res.pvalue}"
+        assert res.pvalue > 0.01, (
+            f"KS test failed for cut at {cut_point}: p={res.pvalue}"
+        )
 
 
 def test_split_RankCost_relation(

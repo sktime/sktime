@@ -3,12 +3,12 @@
 import numpy as np
 import pandas as pd
 import pytest
-from sktime.tests.test_all_estimators import VALID_ESTIMATOR_TAGS
 
 from sktime._vendor.skchange.anomaly_detectors import ANOMALY_DETECTORS
 from sktime._vendor.skchange.base import BaseDetector
 from sktime._vendor.skchange.change_detectors import CHANGE_DETECTORS
 from sktime._vendor.skchange.datasets import generate_anomalous_data
+from sktime.tests.test_all_estimators import VALID_ESTIMATOR_TAGS
 
 ALL_DETECTORS = ANOMALY_DETECTORS + CHANGE_DETECTORS
 VALID_DETECTOR_TAGS = list(VALID_ESTIMATOR_TAGS) + [

@@ -13,7 +13,7 @@ def check_interval_scorer(
     """Check if the given scorer is a valid interval scorer."""
     if not isinstance(scorer, BaseIntervalScorer):
         raise ValueError(
-            f"`{arg_name}` must be a BaseIntervalScorer. " f"Got {type(scorer)}."
+            f"`{arg_name}` must be a BaseIntervalScorer. Got {type(scorer)}."
         )
     task = scorer.get_tag("task")
     if required_tasks and task not in required_tasks:

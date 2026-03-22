@@ -10,7 +10,9 @@ from sktime._vendor.skchange.anomaly_scores import (
 from sktime._vendor.skchange.change_scores import CUSUM
 from sktime._vendor.skchange.costs import COSTS, L2Cost
 from sktime._vendor.skchange.costs.base import BaseCost
-from sktime._vendor.skchange.costs.tests.test_all_costs import create_fixed_cost_test_instance
+from sktime._vendor.skchange.costs.tests.test_all_costs import (
+    create_fixed_cost_test_instance,
+)
 from sktime._vendor.skchange.tests.test_all_interval_scorers import skip_if_no_test_data
 
 

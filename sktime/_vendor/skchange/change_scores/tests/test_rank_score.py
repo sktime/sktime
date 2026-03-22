@@ -199,9 +199,9 @@ def test_change_score_distribution():
     chi2_at_n_variables_df = chi2(df=n_variables)
     for j, cut_point in enumerate(cut_points):
         res = kstest(change_score_samples[:, j], chi2_at_n_variables_df.cdf)
-        assert (
-            res.pvalue > 0.05
-        ), f"KS test failed at p=0.05 for cut at {cut_point}: p={res.pvalue}"
+        assert res.pvalue > 0.05, (
+            f"KS test failed at p=0.05 for cut at {cut_point}: p={res.pvalue}"
+        )
 
 
 def test_empty_cuts_returns_empty_scores():

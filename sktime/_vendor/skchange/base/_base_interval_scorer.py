@@ -21,11 +21,11 @@ __all__ = ["BaseIntervalScorer"]
 import numpy as np
 import pandas as pd
 from numpy.typing import ArrayLike
-from sktime.base import BaseEstimator
-from sktime.utils.validation.series import check_series
 
 from sktime._vendor.skchange.utils.validation.cuts import check_cuts_array
 from sktime._vendor.skchange.utils.validation.data import as_2d_array
+from sktime.base import BaseEstimator
+from sktime.utils.validation.series import check_series
 
 
 class BaseIntervalScorer(BaseEstimator):

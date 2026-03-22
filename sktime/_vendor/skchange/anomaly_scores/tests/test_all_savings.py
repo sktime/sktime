@@ -4,7 +4,9 @@ import pytest
 from sktime._vendor.skchange.anomaly_scores import SAVINGS, to_saving
 from sktime._vendor.skchange.compose.penalised_score import PenalisedScore
 from sktime._vendor.skchange.costs import COSTS
-from sktime._vendor.skchange.costs.tests.test_all_costs import create_fixed_cost_test_instance
+from sktime._vendor.skchange.costs.tests.test_all_costs import (
+    create_fixed_cost_test_instance,
+)
 from sktime._vendor.skchange.datasets import generate_alternating_data
 from sktime._vendor.skchange.tests.test_all_interval_scorers import skip_if_no_test_data
 

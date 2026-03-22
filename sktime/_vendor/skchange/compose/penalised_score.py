@@ -1,7 +1,7 @@
 """Penalised interval scorer."""
 
 import copy
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -157,7 +157,7 @@ class PenalisedScore(BaseIntervalScorer):
         self,
         score: BaseIntervalScorer,
         penalty: np.ndarray | float | None = None,
-        make_default_penalty: Optional[Callable] = None,
+        make_default_penalty: Callable | None = None,
     ):
         self.score = score
         self.penalty = penalty

@@ -1,14 +1,17 @@
 import numpy as np
 import pandas as pd
 import pytest
-from sktime.tests.test_all_estimators import VALID_ESTIMATOR_TAGS
 
 from sktime._vendor.skchange.anomaly_scores import ANOMALY_SCORES
 from sktime._vendor.skchange.base import BaseIntervalScorer
 from sktime._vendor.skchange.change_scores import CHANGE_SCORES
 from sktime._vendor.skchange.compose.penalised_score import PenalisedScore
 from sktime._vendor.skchange.costs import COSTS
-from sktime._vendor.skchange.datasets import generate_alternating_data, generate_anomalous_data
+from sktime._vendor.skchange.datasets import (
+    generate_alternating_data,
+    generate_anomalous_data,
+)
+from sktime.tests.test_all_estimators import VALID_ESTIMATOR_TAGS
 
 INTERVAL_SCORERS = COSTS + CHANGE_SCORES + ANOMALY_SCORES + [PenalisedScore]
 VALID_SCORER_TAGS = list(VALID_ESTIMATOR_TAGS) + [

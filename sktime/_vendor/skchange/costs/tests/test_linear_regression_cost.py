@@ -253,9 +253,9 @@ def test_linear_regression_cost_with_pelt():
     # Assert that the detected changepoint is close to the actual changepoint (100)
     assert len(result) == 1, "Expected exactly one changepoint"
     detected_cp = result.iloc[0].item()
-    assert (
-        abs(detected_cp - 100) <= 1
-    ), f"Detected changepoint {detected_cp} not close to actual (100)"
+    assert abs(detected_cp - 100) <= 1, (
+        f"Detected changepoint {detected_cp} not close to actual (100)"
+    )
 
     # Additional test: verify the coefficients differ between segments
     segment1 = df.iloc[:detected_cp]
@@ -269,9 +269,9 @@ def test_linear_regression_cost_with_pelt():
     )
 
     # Verify the coefficients are indeed different between segments
-    assert not np.allclose(
-        lr1.coef_, lr2.coef_, rtol=0.3
-    ), "Coefficients should be different between segments"
+    assert not np.allclose(lr1.coef_, lr2.coef_, rtol=0.3), (
+        "Coefficients should be different between segments"
+    )
 
 
 def test_check_data_column():
@@ -395,9 +395,9 @@ def test_linear_regression_cost_underdetermined_system():
     costs = cost.evaluate(cuts=np.column_stack((starts, ends)))
 
     # For an overdetermined system, the residuals are not necessarily zero.
-    assert np.isclose(
-        costs[0, 0], scikit_residual
-    ), "Cost should be close to scikit_residuals for an underdetermined system"
-    assert np.isclose(
-        costs[0, 0], residuals_np_lstsq
-    ), "Cost should close to numpy residuals for an underdetermined system"
+    assert np.isclose(costs[0, 0], scikit_residual), (
+        "Cost should be close to scikit_residuals for an underdetermined system"
+    )
+    assert np.isclose(costs[0, 0], residuals_np_lstsq), (
+        "Cost should close to numpy residuals for an underdetermined system"
+    )

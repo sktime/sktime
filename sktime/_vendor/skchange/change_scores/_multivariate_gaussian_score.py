@@ -78,9 +78,9 @@ def likelihood_ratio_expected_value(
     assert 0 < k < n, "Cut point `k` must be within the sequence length `n`."
     assert p > 0, "Dimension `p` must be a positive integer."
     assert k > p, "Cut point `k` must be larger than the dimension `p`."
-    assert (
-        n - k > p
-    ), "Run length after cut point `n - k` must be larger than dimension `p`."
+    assert n - k > p, (
+        "Run length after cut point `n - k` must be larger than dimension `p`."
+    )
 
     g_k_n = p * (
         np.log(2)

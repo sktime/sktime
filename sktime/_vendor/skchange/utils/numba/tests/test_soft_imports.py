@@ -31,7 +31,8 @@ def temp_env_and_modules(remove_module_prefix: str, env_vars: dict = None):
 def test_setting_wrong_env_variable_raises():
     with (
         temp_env_and_modules(
-            remove_module_prefix="sktime._vendor.skchange", env_vars={"NUMBA_CACHE": "invalid_value"}
+            remove_module_prefix="sktime._vendor.skchange",
+            env_vars={"NUMBA_CACHE": "invalid_value"},
         ),
         pytest.raises(ValueError),
     ):

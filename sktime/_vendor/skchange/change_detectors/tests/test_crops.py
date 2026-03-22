@@ -50,9 +50,9 @@ def test_pelt_crops():
     no_pruning_change_detector.fit(dataset)
     no_pruning_changepoints = no_pruning_change_detector.predict(dataset.values)
 
-    assert np.all(
-        pruning_change_points == no_pruning_changepoints
-    ), f"Expected {no_pruning_changepoints}, got {pruning_change_points}"
+    assert np.all(pruning_change_points == no_pruning_changepoints), (
+        f"Expected {no_pruning_changepoints}, got {pruning_change_points}"
+    )
     # Check that the results are as expected:
     assert len(pruning_change_points) == 1
 
@@ -190,9 +190,9 @@ def test_retrieve_change_points_2():
     specific_change_points = change_point_detector.change_points_lookup[2]
 
     # Check that the results are as expected:
-    assert np.array_equal(
-        specific_change_points, np.array([88, 176])
-    ), f"Expected [88, 176], got {specific_change_points}"
+    assert np.array_equal(specific_change_points, np.array([88, 176])), (
+        f"Expected [88, 176], got {specific_change_points}"
+    )
 
 
 def test_non_aggregated_cost_raises():

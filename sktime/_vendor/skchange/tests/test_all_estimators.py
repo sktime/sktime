@@ -4,8 +4,6 @@ from inspect import _empty, signature
 
 import pytest
 from skbase.base import BaseObject
-from sktime.base import BaseEstimator
-from sktime.utils.estimator_checks import check_estimator, parametrize_with_checks
 
 from sktime._vendor.skchange.anomaly_detectors import ANOMALY_DETECTORS
 from sktime._vendor.skchange.anomaly_scores import ANOMALY_SCORES
@@ -13,6 +11,8 @@ from sktime._vendor.skchange.change_detectors import CHANGE_DETECTORS
 from sktime._vendor.skchange.change_scores import CHANGE_SCORES
 from sktime._vendor.skchange.compose.penalised_score import PenalisedScore
 from sktime._vendor.skchange.costs import COSTS
+from sktime.base import BaseEstimator
+from sktime.utils.estimator_checks import check_estimator, parametrize_with_checks
 
 DETECTORS = ANOMALY_DETECTORS + CHANGE_DETECTORS
 INTERVAL_EVALUATORS = COSTS + CHANGE_SCORES + ANOMALY_SCORES + [PenalisedScore]
@@ -58,8 +58,7 @@ def test_estimator_tags(estimator_class: type[BaseEstimator]):
     if hasattr(Estimator, "_tags"):
         tags = Estimator._tags
         msg = (
-            f"_tags attribute of {estimator_class} must be dict, "
-            f"but found {type(tags)}"
+            f"_tags attribute of {estimator_class} must be dict, but found {type(tags)}"
         )
         assert isinstance(tags, dict), msg
         assert len(tags) > 0, f"_tags dict of class {estimator_class} is empty"

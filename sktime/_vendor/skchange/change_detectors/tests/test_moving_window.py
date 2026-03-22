@@ -6,7 +6,11 @@ import pytest
 from sktime._vendor.skchange.anomaly_scores import LocalAnomalyScore
 from sktime._vendor.skchange.base import BaseIntervalScorer
 from sktime._vendor.skchange.change_detectors import MovingWindow
-from sktime._vendor.skchange.change_scores import CHANGE_SCORES, ContinuousLinearTrendScore, RankScore
+from sktime._vendor.skchange.change_scores import (
+    CHANGE_SCORES,
+    ContinuousLinearTrendScore,
+    RankScore,
+)
 from sktime._vendor.skchange.costs import COSTS, RankCost
 from sktime._vendor.skchange.datasets import generate_alternating_data
 from sktime._vendor.skchange.tests.test_all_interval_scorers import skip_if_no_test_data

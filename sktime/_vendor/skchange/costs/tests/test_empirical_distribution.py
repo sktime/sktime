@@ -15,7 +15,9 @@ from sktime._vendor.skchange.costs._empirical_distribution_cost import (
     numpy_fixed_cdf_cost_cached_edf,
 )
 from sktime._vendor.skchange.utils.numba import njit, numba_available
-from sktime._vendor.skchange.utils.numba.general import compute_finite_difference_derivatives
+from sktime._vendor.skchange.utils.numba.general import (
+    compute_finite_difference_derivatives,
+)
 
 
 @njit
@@ -417,9 +419,9 @@ def test_fixed_cdf_empirical_distribution_cost_vs_direct_cost():
     np.testing.assert_equal(direct_cost, fixed_cdf_cost)
     np.testing.assert_equal(direct_cost, fixed_cdf_cost_cached)
 
-    assert (
-        direct_cost != fixed_nudged_cdf_cost_cached
-    ), "Direct cost should not equal the nudged fixed CDF cost."
+    assert direct_cost != fixed_nudged_cdf_cost_cached, (
+        "Direct cost should not equal the nudged fixed CDF cost."
+    )
     np.testing.assert_equal(
         fixed_nudged_cdf_cost_cached, fixed_nudged_cdf_cost_cached_numba
     )
@@ -609,9 +611,9 @@ def test_approximate_vs_direct_cost_on_longer_data(tolerance: float, n_samples: 
     relative_differences = np.abs(
         (one_change_approx_costs - one_change_direct_costs) / one_change_direct_costs
     )
-    assert np.all(
-        relative_differences < tolerance
-    ), f"Relative differences exceed {tolerance * 100}%: {relative_differences}"
+    assert np.all(relative_differences < tolerance), (
+        f"Relative differences exceed {tolerance * 100}%: {relative_differences}"
+    )
 
     single_segment_approx_cost = approximate_mle_edf_cost(
         xs[:, 0],
@@ -631,12 +633,12 @@ def test_approximate_vs_direct_cost_on_longer_data(tolerance: float, n_samples: 
         f"{single_segment_relative_difference}"
     )
 
-    assert (
-        single_segment_approx_cost - np.sum(one_change_approx_costs) > 0
-    ), "Approximate cost for no change should be greater than for two segments."
-    assert (
-        single_segment_direct_cost - np.sum(one_change_direct_costs) > 0
-    ), "Direct cost for no change should be greater than for two segments."
+    assert single_segment_approx_cost - np.sum(one_change_approx_costs) > 0, (
+        "Approximate cost for no change should be greater than for two segments."
+    )
+    assert single_segment_direct_cost - np.sum(one_change_direct_costs) > 0, (
+        "Direct cost for no change should be greater than for two segments."
+    )
 
 
 @pytest.mark.parametrize(
@@ -722,9 +724,9 @@ def test_direct_vs_approximation_runtime(n_samples=10_000):
     direct_cost_eval_time = end_time - start_time
     total_direct_cost = np.sum(direct_cost)
 
-    assert (
-        direct_cost_eval_time < 6.0e-2
-    ), "Direct evaluation time should be less than 0.06 seconds."
+    assert direct_cost_eval_time < 6.0e-2, (
+        "Direct evaluation time should be less than 0.06 seconds."
+    )
 
     # Approximate evaluation:
     # - Call once in case of JIT compilation overhead:
@@ -745,9 +747,9 @@ def test_direct_vs_approximation_runtime(n_samples=10_000):
     approximate_cost_eval_time = end_time - start_time
     total_approx_cost = np.sum(approx_cost)
 
-    assert (
-        approximate_cost_eval_time < 1.0e-2
-    ), "Approximate evaluation time should be less than 0.01 sec."
+    assert approximate_cost_eval_time < 1.0e-2, (
+        "Approximate evaluation time should be less than 0.01 sec."
+    )
 
     # Pre-caching the approximation:
     # - Call once in case of JIT compilation overhead:
@@ -794,19 +796,19 @@ def test_direct_vs_approximation_runtime(n_samples=10_000):
         max_cache_creation_time = 5.0e-1
         max_pre_cached_eval_time = 5.0e-2
 
-    assert (
-        cache_creation_time < max_cache_creation_time
-    ), f"Cache creation should take less than {max_cache_creation_time:.2e} seconds."
-    assert (
-        pre_cached_eval_time < max_pre_cached_eval_time
-    ), f"Pre-cached eval. should take less than {max_pre_cached_eval_time:.2e} sec."
+    assert cache_creation_time < max_cache_creation_time, (
+        f"Cache creation should take less than {max_cache_creation_time:.2e} seconds."
+    )
+    assert pre_cached_eval_time < max_pre_cached_eval_time, (
+        f"Pre-cached eval. should take less than {max_pre_cached_eval_time:.2e} sec."
+    )
 
-    assert np.isclose(
-        total_pre_cached_cost, total_approx_cost, rtol=1.0e-4
-    ), "Pre-cached approximate cost does not match approximate cost within tolerance."
-    assert np.isclose(
-        total_direct_cost, total_pre_cached_cost, rtol=5.0e-2
-    ), "Approximate cost does not match direct cost within tolerance."
+    assert np.isclose(total_pre_cached_cost, total_approx_cost, rtol=1.0e-4), (
+        "Pre-cached approximate cost does not match approximate cost within tolerance."
+    )
+    assert np.isclose(total_direct_cost, total_pre_cached_cost, rtol=5.0e-2), (
+        "Approximate cost does not match direct cost within tolerance."
+    )
 
 
 def test_make_fixed_cdf_cost_quantile_weights_raises_value_error():
@@ -830,12 +832,12 @@ def test_empirical_distribution_cost_default_num_quantiles():
 
     # Verify the default number of approximation quantiles
     expected_num_quantiles = int(np.ceil(4 * np.log(n_samples)))
-    assert (
-        cost.min_size == expected_num_quantiles
-    ), f"Expected min_size to be {expected_num_quantiles}, but got {cost.min_size}."
-    assert (
-        cost.num_quantiles_ == expected_num_quantiles
-    ), f"Expected {expected_num_quantiles} quantiles, but got {cost.num_quantiles_}."
+    assert cost.min_size == expected_num_quantiles, (
+        f"Expected min_size to be {expected_num_quantiles}, but got {cost.min_size}."
+    )
+    assert cost.num_quantiles_ == expected_num_quantiles, (
+        f"Expected {expected_num_quantiles} quantiles, but got {cost.num_quantiles_}."
+    )
 
 
 def test_min_size_is_num_approximation_quantiles():
@@ -844,9 +846,10 @@ def test_min_size_is_num_approximation_quantiles():
     cost = EmpiricalDistributionCost(
         param=None, num_approximation_quantiles=num_approximation_quantiles
     )
-    assert (
-        cost.min_size == num_approximation_quantiles
-    ), f"Expected min_size to be {num_approximation_quantiles}, but got {cost.min_size}"
+    assert cost.min_size == num_approximation_quantiles, (
+        f"Expected min_size to be {num_approximation_quantiles}, "
+        f"but got {cost.min_size}"
+    )
 
 
 def test_empirical_distribution_cost_check_fixed_param_errors():

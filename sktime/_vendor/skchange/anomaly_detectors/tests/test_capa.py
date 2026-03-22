@@ -18,7 +18,9 @@ from sktime._vendor.skchange.costs import (
     MultivariateGaussianCost,
 )
 from sktime._vendor.skchange.costs.base import BaseCost
-from sktime._vendor.skchange.costs.tests.test_all_costs import find_fixed_param_combination
+from sktime._vendor.skchange.costs.tests.test_all_costs import (
+    find_fixed_param_combination,
+)
 from sktime._vendor.skchange.datasets import generate_alternating_data
 from sktime._vendor.skchange.penalties import make_nonlinear_chi2_penalty
 from sktime._vendor.skchange.tests.test_all_interval_scorers import skip_if_no_test_data

@@ -430,9 +430,9 @@ class CROPS(BaseChangeDetector):
                 )
             )
             optimal_num_change_points, optimal_penalty = (
-                self.change_points_metadata.sort_values(
-                    by="bic_value"
-                )[["num_change_points", "penalty"]].iloc[0]
+                self.change_points_metadata.sort_values(by="bic_value")[
+                    ["num_change_points", "penalty"]
+                ].iloc[0]
             )
 
         self.optimal_penalty = optimal_penalty

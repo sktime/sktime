@@ -48,6 +48,7 @@ __all__ = ["BaseDetector"]
 
 import numpy as np
 import pandas as pd
+
 from sktime.detection.base import BaseDetector as _BaseDetector
 
 

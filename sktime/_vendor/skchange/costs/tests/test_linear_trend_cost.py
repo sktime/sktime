@@ -117,12 +117,12 @@ def test_fit_linear_trend():
 
     # Test fit_linear_trend:
     slope, intercept = fit_linear_trend(time_steps, values)
-    assert np.isclose(
-        slope, true_slope, rtol=0.1
-    ), f"Expected slope ~{true_slope}, got {slope}"
-    assert np.isclose(
-        intercept, true_intercept, rtol=0.1
-    ), f"Expected intercept ~{true_intercept}, got {intercept}"
+    assert np.isclose(slope, true_slope, rtol=0.1), (
+        f"Expected slope ~{true_slope}, got {slope}"
+    )
+    assert np.isclose(intercept, true_intercept, rtol=0.1), (
+        f"Expected intercept ~{true_intercept}, got {intercept}"
+    )
 
     # Create evenly spaced data for fit_indexed_linear_trend:
     evenly_spaced_values = (
@@ -133,12 +133,12 @@ def test_fit_linear_trend():
     slope_idx, intercept_idx = fit_indexed_linear_trend(evenly_spaced_values)
 
     # Test fit_indexed_linear_trend:
-    assert np.isclose(
-        slope_idx, true_slope, rtol=0.1
-    ), f"Expected slope ~{true_slope}, got {slope_idx}"
-    assert np.isclose(
-        intercept_idx, true_intercept, rtol=0.1
-    ), f"Expected intercept ~{true_intercept}, got {intercept_idx}"
+    assert np.isclose(slope_idx, true_slope, rtol=0.1), (
+        f"Expected slope ~{true_slope}, got {slope_idx}"
+    )
+    assert np.isclose(intercept_idx, true_intercept, rtol=0.1), (
+        f"Expected intercept ~{true_intercept}, got {intercept_idx}"
+    )
 
 
 def test_linear_trend_cost_evaluate():
@@ -253,9 +253,9 @@ def test_linear_trend_cost_with_pelt():
     # Get the changepoint closest to the true one
     cp_idx = result["ilocs"][0]
     # Allow some tolerance
-    assert (
-        abs(cp_idx - 100) <= 1
-    ), f"Detected changepoint {cp_idx} too far from actual (100)"
+    assert abs(cp_idx - 100) <= 1, (
+        f"Detected changepoint {cp_idx} too far from actual (100)"
+    )
 
     # Create a DataFrame with named columns for testing string column names
     df = pd.DataFrame({"time": time_steps, "value": y})
@@ -267,9 +267,9 @@ def test_linear_trend_cost_with_pelt():
 
     # Should get similar results
     cp_idx_df = result_df["ilocs"][0]
-    assert (
-        abs(cp_idx_df - 100) <= 1
-    ), f"Detected changepoint with DataFrame {cp_idx_df} too far from actual (100)"
+    assert abs(cp_idx_df - 100) <= 1, (
+        f"Detected changepoint with DataFrame {cp_idx_df} too far from actual (100)"
+    )
 
 
 def test_linear_trend_cost_default_time():
@@ -306,9 +306,9 @@ def test_linear_trend_cost_default_time():
 
     # Sum of costs from split segments should be lower than full interval
     # (or very close, since the trend is consistent)
-    assert (
-        costs_split[0, 0] + costs_split[1, 0] <= costs[0, 0]
-    ), "Costs should be lower when split into segments"
+    assert costs_split[0, 0] + costs_split[1, 0] <= costs[0, 0], (
+        "Costs should be lower when split into segments"
+    )
 
 
 def test_get_model_size():
@@ -434,9 +434,9 @@ def test_linear_trend_cost_as_saving():
         None,
     )
 
-    assert (
-        len(first_anomaly_cols) == 1 and first_anomaly_cols[0] == 0
-    ), "First column should be affected in first anomaly"
+    assert len(first_anomaly_cols) == 1 and first_anomaly_cols[0] == 0, (
+        "First column should be affected in first anomaly"
+    )
 
     # Second anomaly should affect both columns
     second_anomaly_cols = next(
@@ -448,6 +448,6 @@ def test_linear_trend_cost_as_saving():
         None,
     )
 
-    assert {0, 1} == set(
-        second_anomaly_cols
-    ), "Both columns should be affected in second anomaly"
+    assert {0, 1} == set(second_anomaly_cols), (
+        "Both columns should be affected in second anomaly"
+    )
