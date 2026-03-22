@@ -223,7 +223,7 @@ class ImpulseResponseFunction(BaseParamFitter):
             else:
                 X_fit = X
 
-        model = model.clone().fit(X_fit)
+            model = model.clone().fit(X_fit)
 
         model_name = self.model.__class__.__name__
         ImportedModel = MODEL_MAPPING[model_name]
