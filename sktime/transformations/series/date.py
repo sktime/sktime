@@ -403,7 +403,7 @@ def _calendar_dummies(x, funcs):
         cd = getattr(date_sequence, funcs)
     cd = pd.DataFrame(cd)
     cd = cd.rename(columns={cd.columns[0]: funcs})
-    cd[funcs] = np.int64(cd[funcs])
+    cd[funcs] = cd[funcs].astype("int64")
     return cd
 
 
