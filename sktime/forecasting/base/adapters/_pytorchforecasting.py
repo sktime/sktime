@@ -528,16 +528,19 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 time_index = y_index.levels[-1]
             else:
                 time_index = y_index
-                
+
             freq = getattr(time_index, "freq", None)
             if freq is None:
                 freq = getattr(time_index, "inferred_freq", None)
             if freq is None:
                 freq = pd.infer_freq(time_index)
-            
+
             if freq is None:
-                raise ValueError("Could not infer frequency from the time series index to convert Timedelta.")
-            
+                raise ValueError(
+                    "Could not infer frequency from the time series "
+                    "index to convert Timedelta."
+                )
+
             max_prediction_length = int(max_prediction_length / pd.to_timedelta(freq))
 
         training_cutoff = data["_auto_time_idx"].max() - max_prediction_length
