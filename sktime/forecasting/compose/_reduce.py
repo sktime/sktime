@@ -1791,7 +1791,9 @@ def slice_at_ix(df, ix):
         all index levels are retained in the return, none are dropped
         CAVEAT: index is sorted by last (-1 st) level if ix is iterable
     """
-    if isinstance(ix, (list, pd.Index, ForecastingHorizon)):
+    if isinstance(ix, ForecastingHorizon):
+        ix = ix.to_pandas()
+    if isinstance(ix, (list, pd.Index)):
         return pd.concat([slice_at_ix(df, x) for x in ix])
     if isinstance(df.index, pd.MultiIndex):
         return df.xs(ix, level=-1, axis=0, drop_level=False)
@@ -2195,9 +2197,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         lagger_y_to_X = self.lagger_y_to_X_
 
         fh_rel = fh.to_relative(self.cutoff)
-        fh_abs = fh.to_absolute(self.cutoff)
         y_lags = list(fh_rel)
-        y_abs = list(fh_abs)
+        y_abs = list(fh.to_absolute_index(self.cutoff))
 
         y_pred_list = []
 
@@ -2603,7 +2604,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         lagger_y_to_X = self.lagger_y_to_X_
 
-        fh_abs = fh.to_absolute(self.cutoff)
+        fh_abs_idx = fh.to_absolute_index(self.cutoff)
         y = self._y
 
         Xt = lagger_y_to_X.transform(y)
@@ -2615,10 +2616,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         Xtt = lag_plus.fit_transform(Xt)
 
-        Xtt_predrows = slice_at_ix(Xtt, fh_abs)
+        Xtt_predrows = slice_at_ix(Xtt, fh_abs_idx)
         if X_pool is not None:
             Xtt_predrows = pd.concat(
-                [slice_at_ix(X_pool, fh_abs), Xtt_predrows], axis=1
+                [slice_at_ix(X_pool, fh_abs_idx), Xtt_predrows], axis=1
             )
 
         Xtt_predrows = prep_skl_df(Xtt_predrows)
