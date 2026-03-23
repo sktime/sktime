@@ -153,9 +153,7 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
         if self.checkpoint_path.startswith("Salesforce"):
             from sktime.libs.uni2ts.moirai2_module import Moirai2Module
 
-            model_kwargs["module"] = Moirai2Module.from_pretrained(
-                self.checkpoint_path
-            )
+            model_kwargs["module"] = Moirai2Module.from_pretrained(self.checkpoint_path)
             return Moirai2Forecast(**model_kwargs)
         else:
             from huggingface_hub import hf_hub_download
@@ -255,9 +253,7 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
         feat_dynamic_real = None
 
         if _X is not None:
-            feat_dynamic_real = [
-                f"feat_dynamic_real_{i}" for i in range(_X.shape[1])
-            ]
+            feat_dynamic_real = [f"feat_dynamic_real_{i}" for i in range(_X.shape[1])]
             _X.columns = feat_dynamic_real
 
         pred_df = pd.concat([_y, _X], axis=1)

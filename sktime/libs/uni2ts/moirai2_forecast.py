@@ -119,9 +119,9 @@ class Moirai2Forecast(L.LightningModule):
         module_kwargs: dict | None = None,
         module: Moirai2Module | None = None,
     ):
-        assert (module is not None) or (
-            module_kwargs is not None
-        ), "if module is not provided, module_kwargs is required"
+        assert (module is not None) or (module_kwargs is not None), (
+            "if module is not provided, module_kwargs is required"
+        )
         if module_kwargs and "attn_dropout_p" in module_kwargs:
             module_kwargs["attn_dropout_p"] = 0
         if module_kwargs and "dropout_p" in module_kwargs:
@@ -181,9 +181,7 @@ class Moirai2Forecast(L.LightningModule):
             batch_size=batch_size,
             prediction_length=self.hparams.prediction_length,
             input_transform=self.get_default_transform() + instance_splitter,
-            forecast_generator=QuantileForecastGenerator(
-                self.module.quantile_levels
-            ),
+            forecast_generator=QuantileForecastGenerator(self.module.quantile_levels),
             device=device,
         )
 
@@ -460,8 +458,7 @@ class Moirai2Forecast(L.LightningModule):
                 )
                 quantile_prediction[..., adjusted_assign_index, :, :] = rearrange(
                     quantile_prediction_next_step,
-                    "num_quantiles ... patch_size"
-                    " -> ... num_quantiles patch_size",
+                    "num_quantiles ... patch_size -> ... num_quantiles patch_size",
                 )
 
                 expand_target[..., adjusted_assign_index, :] = rearrange(
@@ -559,9 +556,7 @@ class Moirai2Forecast(L.LightningModule):
             [
                 torch.nn.functional.pad(
                     rearrange(
-                        self._patched_seq_pad(
-                            patch_size, past_target, -2, left=True
-                        ),
+                        self._patched_seq_pad(patch_size, past_target, -2, left=True),
                         "... (seq patch) dim -> ... (dim seq) patch",
                         patch=patch_size,
                     ),
