@@ -308,10 +308,18 @@ class BaseForecastingErrorMetric(BaseMetric):
         )
 
         requires_vectorization = isinstance(y_true_inner, VectorizedDF)
-        if not requires_vectorization:
-            # pass to inner function
-            out_df = self._evaluate(y_true=y_true_inner, y_pred=y_pred_inner, **kwargs)
+        can_handle_vector = self.get_tag("inner_implements_multilevel", False)
+
+        if not requires_vectorization or can_handle_vector:
+            # If it's a VectorizedDF, extract the raw underlying X (DataFrame)
+            y_true_raw = y_true_inner.X if requires_vectorization else y_true_inner
+            y_pred_raw = y_pred_inner.X if requires_vectorization else y_pred_inner
+            # Pass the raw data to the fast inner function
+            out_df = self._evaluate(y_true=y_true_raw, y_pred=y_pred_raw, **kwargs)
         else:
+            # Fallback to legacy looping
+            # logic for metrics that do not
+            # implement vectorization
             out_df = self._evaluate_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
@@ -371,11 +379,54 @@ class BaseForecastingErrorMetric(BaseMetric):
         """
         # multioutput = self.multioutput
         # multilevel = self.multilevel
+        kwargs.pop("multioutput", None)
+        multioutput = self.multioutput
+
         try:
+            is_vectorized = self.get_tag("inner_implements_multilevel", False)
+            n_levels = y_true.index.nlevels
+
+            if is_vectorized and n_levels > 1:
+                index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
+
+                if self.multilevel == "uniform_average_time":
+                    res = index_df.mean(axis=0)
+                    if isinstance(res, (pd.Series, pd.DataFrame)):
+                        return self._handle_multioutput(res, multioutput)
+                    return res
+
+                level_to_group = list(range(n_levels - 1))
+                per_instance = index_df.groupby(level=level_to_group).mean()
+
+                if self.multilevel == "raw_values":
+                    if isinstance(per_instance, pd.Series):
+                        per_instance = per_instance.to_frame()
+                    return per_instance
+
+                res = per_instance.mean(axis=0)
+                if isinstance(res, (pd.Series, pd.DataFrame)):
+                    return self._handle_multioutput(res, multioutput)
+                return res
+
             index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
-            return index_df.mean(axis=0)
+
+            if self.multilevel == "raw_values" and n_levels > 1:
+                level_to_group = list(range(n_levels - 1))
+                per_instance = index_df.groupby(level=level_to_group).mean()
+                if isinstance(per_instance, pd.Series):
+                    per_instance = per_instance.to_frame()
+                return per_instance
+
+            res = index_df.mean(axis=0)
+            if isinstance(res, (pd.Series, pd.DataFrame)):
+                return self._handle_multioutput(res, multioutput)
+
+            return res
+
         except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+            raise RecursionError(
+                "Must implement one of _evaluate or _evaluate_by_index"
+            )
 
     def _evaluate_vectorized(self, y_true, y_pred, **kwargs):
         """Vectorized version of _evaluate.
