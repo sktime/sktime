@@ -28,7 +28,6 @@ import pandas as pd
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.utils.adapters._safe_call import _method_has_arg
-from sktime.utils.validation.series import check_series
 
 
 class BaseDetector(BaseEstimator):
@@ -753,7 +752,7 @@ class BaseDetector(BaseEstimator):
             * If ``task`` is ``"segmentation"``, the values are segmentation labels.
         """
         self.check_is_fitted()
-        X = check_series(X)
+        X = self._check_X(X)
 
         task = self.get_tag("task")
         if task in ["anomaly_detection", "change_point_detection"]:
@@ -799,7 +798,7 @@ class BaseDetector(BaseEstimator):
             The ``"labels"`` are potential labels for the points of interest.
         """
         self.check_is_fitted()
-        X = check_series(X)
+        X = self._check_X(X)
 
         task = self.get_tag("task")
         if task in ["anomaly_detection", "change_point_detection"]:
