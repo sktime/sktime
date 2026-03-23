@@ -392,7 +392,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     def _prepare_data(self, yz, X, z=None):
         cal_features = self.fourier_features.transform(yz)
         statistics = self.function.predict(
-            fh=ForecastingHorizon(yz.index, is_relative=False)
+            fh=ForecastingHorizon(yz.index, is_relative=False, freq=self._cutoff)
         )
         to_concatenate = (
             [X, cal_features, statistics.to_frame()]
