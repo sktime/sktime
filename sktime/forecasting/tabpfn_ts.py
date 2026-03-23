@@ -276,8 +276,7 @@ class TabPFNTSForecaster(BaseForecaster):
             Parameter settings used to create test instances of the estimator.
         """
         return [
-            {"tabpfn_mode": "LOCAL"},
-            {"tabpfn_mode": "CLIENT"},
+            {"tabpfn_mode": "LOCAL"},  # CLIENT requires auth
             {
                 "tabpfn_mode": "LOCAL",
                 "max_context_length": 512,
