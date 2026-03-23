@@ -13,11 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from __future__ import annotations
+
 import math
 import sys
 from contextlib import contextmanager
 from copy import deepcopy
-from typing import Any
 
 import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -28,7 +29,7 @@ if _check_soft_dependencies("lightning", severity="none"):
     import lightning as L
 
 else:
-    # Create Dummy class
+
     class L:
         class LightningModule:
             pass
@@ -37,7 +38,10 @@ else:
 if _check_soft_dependencies("torch", severity="none"):
     import torch
 
-    from .moirai_module import MoiraiModule
+    from .moirai2_module import Moirai2Module
+
+else:
+    Moirai2Module = None
 
 if _check_soft_dependencies("einops", severity="none"):
     from einops import rearrange, reduce, repeat
@@ -46,52 +50,65 @@ if sys.version_info < (3, 14):
     Input = _safe_import("gluonts.model.Input")
     InputSpec = _safe_import("gluonts.model.InputSpec")
     PyTorchPredictor = _safe_import("gluonts.torch.PyTorchPredictor")
+    QuantileForecastGenerator = _safe_import(
+        "gluonts.model.forecast_generator.QuantileForecastGenerator"
+    )
     AddObservedValuesIndicator = _safe_import(
         "gluonts.transform.AddObservedValuesIndicator"
     )
     AsNumpyArray = _safe_import("gluonts.transform.AsNumpyArray")
+    CausalMeanValueImputation = _safe_import(
+        "gluonts.transform.CausalMeanValueImputation"
+    )
     ExpandDimArray = _safe_import("gluonts.transform.ExpandDimArray")
     TestSplitSampler = _safe_import("gluonts.transform.TestSplitSampler")
     TFTInstanceSplitter = _safe_import("gluonts.transform.split.TFTInstanceSplitter")
 else:
-    Input = InputSpec = PyTorchPredictor = None
-    AddObservedValuesIndicator = AsNumpyArray = ExpandDimArray = None
-    TestSplitSampler = TFTInstanceSplitter = None
+    Input = InputSpec = PyTorchPredictor = QuantileForecastGenerator = None
+    AddObservedValuesIndicator = AsNumpyArray = CausalMeanValueImputation = None
+    ExpandDimArray = TestSplitSampler = TFTInstanceSplitter = None
 
 
-from sktime.libs.uni2ts.common.torch_util import safe_div
-from sktime.libs.uni2ts.loss.packed import PackedNLLLoss as _PackedNLLLoss
+class CausalMeanImputation:
+    """Replace NaNs with causal running mean, with last-value backfill."""
+
+    value = 0.0
+
+    def __call__(self, x):
+        mask = np.isnan(x).T
+
+        # last-value backfill first
+        x_t = x.T
+        if x_t.ndim == 1:
+            x_t = x_t[np.newaxis, :]
+        for row in x_t:
+            if np.isnan(row[0]):
+                row[0] = self.value
+            for i in range(1, len(row)):
+                if np.isnan(row[i]):
+                    row[i] = row[i - 1]
+        x = x_t.T if x.ndim > 1 else x_t.squeeze(0)
+        mask[0] = False
+        x = x.T if x.ndim > 1 else x
+
+        if x.ndim == 1:
+            adjusted = np.concatenate((np.array([0.0]), x[:-1]))
+            cumsum = np.cumsum(adjusted)
+            indices = np.arange(len(x), dtype=float)
+            indices[0] = 1.0
+            ar_res = cumsum / indices
+            x[mask.ravel()] = ar_res[mask.ravel()]
+        else:
+            adjusted = np.vstack((np.zeros((1, x.shape[1])), x[:-1, :]))
+            cumsum = np.cumsum(adjusted, axis=0)
+            indices = np.arange(len(x), dtype=float).reshape(-1, 1)
+            indices[0] = 1.0
+            ar_res = cumsum / indices
+            x[mask] = ar_res[mask]
+        return x.T if x.ndim > 1 else x
 
 
-class SampleNLLLoss(_PackedNLLLoss):
-    def reduce_loss(
-        self,
-        loss,
-        prediction_mask,
-        observed_mask,
-        sample_id,
-        variate_id,
-    ):
-        id_mask = torch.logical_and(
-            torch.eq(sample_id.unsqueeze(-1), sample_id.unsqueeze(-2)),
-            torch.eq(variate_id.unsqueeze(-1), variate_id.unsqueeze(-2)),
-        )
-        mask = prediction_mask.unsqueeze(-1) * observed_mask
-        tobs = reduce(
-            id_mask
-            * reduce(
-                mask,
-                "... seq dim -> ... 1 seq",
-                "sum",
-            ),
-            "... seq1 seq2 -> ... seq1 1",
-            "sum",
-        )
-        loss = safe_div(loss, tobs)
-        return (loss * mask).sum(dim=(-1, -2))
-
-
-class MoiraiForecast(L.LightningModule):
+class Moirai2Forecast(L.LightningModule):
     def __init__(
         self,
         prediction_length: int,
@@ -99,29 +116,30 @@ class MoiraiForecast(L.LightningModule):
         feat_dynamic_real_dim: int,
         past_feat_dynamic_real_dim: int,
         context_length: int,
-        module_kwargs: dict[str, Any] | None = None,
-        module=None,
-        patch_size="auto",
-        num_samples: int = 100,
+        module_kwargs: dict | None = None,
+        module: Moirai2Module | None = None,
     ):
         assert (module is not None) or (module_kwargs is not None), (
             "if module is not provided, module_kwargs is required"
         )
+        if module_kwargs and "attn_dropout_p" in module_kwargs:
+            module_kwargs["attn_dropout_p"] = 0
+        if module_kwargs and "dropout_p" in module_kwargs:
+            module_kwargs["dropout_p"] = 0
+
         super().__init__()
         self.save_hyperparameters(ignore=["module"])
-        self.module = MoiraiModule(**module_kwargs) if module is None else module
-        self.per_sample_loss_func = SampleNLLLoss()
+        self.module = Moirai2Module(**module_kwargs) if module is None else module
+        self.module.eval()
 
     @contextmanager
     def hparams_context(
         self,
-        prediction_length: int | None = None,
-        target_dim: int | None = None,
-        feat_dynamic_real_dim: int | None = None,
-        past_feat_dynamic_real_dim: int | None = None,
-        context_length: int | None = None,
-        patch_size=None,
-        num_samples: int | None = None,
+        prediction_length=None,
+        target_dim=None,
+        feat_dynamic_real_dim=None,
+        past_feat_dynamic_real_dim=None,
+        context_length=None,
     ):
         kwargs = {
             "prediction_length": prediction_length,
@@ -129,8 +147,6 @@ class MoiraiForecast(L.LightningModule):
             "feat_dynamic_real_dim": feat_dynamic_real_dim,
             "past_feat_dynamic_real_dim": past_feat_dynamic_real_dim,
             "context_length": context_length,
-            "patch_size": patch_size,
-            "num_samples": num_samples,
         }
         old_hparams = deepcopy(self.hparams)
         for kw, arg in kwargs.items():
@@ -142,11 +158,7 @@ class MoiraiForecast(L.LightningModule):
         for kw in kwargs:
             self.hparams[kw] = old_hparams[kw]
 
-    def create_predictor(
-        self,
-        batch_size: int,
-        device: str = "auto",
-    ):
+    def create_predictor(self, batch_size: int, device: str = "auto"):
         ts_fields = []
         if self.hparams.feat_dynamic_real_dim > 0:
             ts_fields.append("feat_dynamic_real")
@@ -169,25 +181,18 @@ class MoiraiForecast(L.LightningModule):
             batch_size=batch_size,
             prediction_length=self.hparams.prediction_length,
             input_transform=self.get_default_transform() + instance_splitter,
+            forecast_generator=QuantileForecastGenerator(self.module.quantile_levels),
             device=device,
         )
 
-    def describe_inputs(self, batch_size: int = 1):
+    def describe_inputs(self, batch_size=1):
         data = {
             "past_target": Input(
-                shape=(
-                    batch_size,
-                    self.past_length,
-                    self.hparams.target_dim,
-                ),
+                shape=(batch_size, self.past_length, self.hparams.target_dim),
                 dtype=torch.float,
             ),
             "past_observed_target": Input(
-                shape=(
-                    batch_size,
-                    self.past_length,
-                    self.hparams.target_dim,
-                ),
+                shape=(batch_size, self.past_length, self.hparams.target_dim),
                 dtype=torch.bool,
             ),
             "past_is_pad": Input(
@@ -232,30 +237,25 @@ class MoiraiForecast(L.LightningModule):
         return InputSpec(data=data, zeros_fn=torch.zeros)
 
     @property
-    def prediction_input_names(self) -> list[str]:
+    def prediction_input_names(self):
         return list(self.describe_inputs())
 
     @property
     def training_input_names(self):
-        return self.prediction_input_names + ["future_target", "future_observed_values"]
+        return self.prediction_input_names + [
+            "future_target",
+            "future_observed_values",
+        ]
 
     @property
     def past_length(self) -> int:
-        return (
-            self.hparams.context_length + self.hparams.prediction_length
-            if self.hparams.patch_size == "auto"
-            else self.hparams.context_length
-        )
+        return self.hparams.context_length
 
     def context_token_length(self, patch_size: int) -> int:
         return math.ceil(self.hparams.context_length / patch_size)
 
     def prediction_token_length(self, patch_size) -> int:
         return math.ceil(self.hparams.prediction_length / patch_size)
-
-    @property
-    def max_patch_size(self) -> int:
-        return max(self.module.patch_sizes)
 
     def forward(
         self,
@@ -266,115 +266,7 @@ class MoiraiForecast(L.LightningModule):
         observed_feat_dynamic_real=None,
         past_feat_dynamic_real=None,
         past_observed_feat_dynamic_real=None,
-        num_samples: int | None = None,
     ):
-        if self.hparams.patch_size == "auto":
-            val_loss = []
-            preds = []
-            for patch_size in self.module.patch_sizes:
-                val_loss.append(
-                    self._val_loss(
-                        patch_size=patch_size,
-                        target=past_target[..., : self.past_length, :],
-                        observed_target=past_observed_target[
-                            ..., : self.past_length, :
-                        ],
-                        is_pad=past_is_pad[..., : self.past_length],
-                        feat_dynamic_real=(
-                            feat_dynamic_real[..., : self.past_length, :]
-                            if feat_dynamic_real is not None
-                            else None
-                        ),
-                        observed_feat_dynamic_real=(
-                            observed_feat_dynamic_real[..., : self.past_length, :]
-                            if observed_feat_dynamic_real is not None
-                            else None
-                        ),
-                        past_feat_dynamic_real=(
-                            past_feat_dynamic_real[
-                                ..., : self.hparams.context_length, :
-                            ]
-                            if past_feat_dynamic_real is not None
-                            else None
-                        ),
-                        past_observed_feat_dynamic_real=(
-                            past_observed_feat_dynamic_real[
-                                ..., : self.hparams.context_length, :
-                            ]
-                            if past_observed_feat_dynamic_real is not None
-                            else None
-                        ),
-                    )
-                )
-                distr = self._get_distr(
-                    patch_size,
-                    past_target[..., -self.hparams.context_length :, :],
-                    past_observed_target[..., -self.hparams.context_length :, :],
-                    past_is_pad[..., -self.hparams.context_length :],
-                    (
-                        feat_dynamic_real[..., -self.past_length :, :]
-                        if feat_dynamic_real is not None
-                        else None
-                    ),
-                    (
-                        observed_feat_dynamic_real[..., -self.past_length :, :]
-                        if observed_feat_dynamic_real is not None
-                        else None
-                    ),
-                    (
-                        past_feat_dynamic_real[..., -self.hparams.context_length :, :]
-                        if past_feat_dynamic_real is not None
-                        else None
-                    ),
-                    (
-                        past_observed_feat_dynamic_real[
-                            ..., -self.hparams.context_length :, :
-                        ]
-                        if past_observed_feat_dynamic_real is not None
-                        else None
-                    ),
-                )
-                preds.append(
-                    self._format_preds(
-                        patch_size,
-                        distr.sample(
-                            torch.Size((num_samples or self.hparams.num_samples,))
-                        ),
-                        past_target.shape[-1],
-                    )
-                )
-            val_loss = torch.stack(val_loss)
-            preds = torch.stack(preds)
-            idx = val_loss.argmin(dim=0)
-            return preds[idx, torch.arange(len(idx), device=idx.device)]
-        else:
-            distr = self._get_distr(
-                self.hparams.patch_size,
-                past_target,
-                past_observed_target,
-                past_is_pad,
-                feat_dynamic_real,
-                observed_feat_dynamic_real,
-                past_feat_dynamic_real,
-                past_observed_feat_dynamic_real,
-            )
-            preds = distr.sample(torch.Size((num_samples or self.hparams.num_samples,)))
-            return self._format_preds(
-                self.hparams.patch_size, preds, past_target.shape[-1]
-            )
-
-    def _val_loss(
-        self,
-        patch_size: int,
-        target,
-        observed_target,
-        is_pad,
-        feat_dynamic_real=None,
-        observed_feat_dynamic_real=None,
-        past_feat_dynamic_real=None,
-        past_observed_feat_dynamic_real=None,
-    ):
-        # convert format
         (
             target,
             observed_mask,
@@ -383,61 +275,7 @@ class MoiraiForecast(L.LightningModule):
             variate_id,
             prediction_mask,
         ) = self._convert(
-            patch_size,
-            past_target=target[..., : self.hparams.context_length, :],
-            past_observed_target=observed_target[..., : self.hparams.context_length, :],
-            past_is_pad=is_pad[..., : self.hparams.context_length],
-            future_target=target[..., self.hparams.context_length :, :],
-            future_observed_target=observed_target[
-                ..., self.hparams.context_length :, :
-            ],
-            future_is_pad=is_pad[..., self.hparams.context_length :],
-            feat_dynamic_real=feat_dynamic_real,
-            observed_feat_dynamic_real=observed_feat_dynamic_real,
-            past_feat_dynamic_real=past_feat_dynamic_real,
-            past_observed_feat_dynamic_real=past_observed_feat_dynamic_real,
-        )
-        # get predictions
-        distr = self.module(
-            target,
-            observed_mask,
-            sample_id,
-            time_id,
-            variate_id,
-            prediction_mask,
-            torch.ones_like(time_id, dtype=torch.long) * patch_size,
-        )
-        val_loss = self.per_sample_loss_func(
-            pred=distr,
-            target=target,
-            prediction_mask=prediction_mask,
-            observed_mask=observed_mask,
-            sample_id=sample_id,
-            variate_id=variate_id,
-        )
-        return val_loss
-
-    def _get_distr(
-        self,
-        patch_size: int,
-        past_target,
-        past_observed_target,
-        past_is_pad,
-        feat_dynamic_real=None,
-        observed_feat_dynamic_real=None,
-        past_feat_dynamic_real=None,
-        past_observed_feat_dynamic_real=None,
-    ):
-        # convert format
-        (
-            target,
-            observed_mask,
-            sample_id,
-            time_id,
-            variate_id,
-            prediction_mask,
-        ) = self._convert(
-            patch_size,
+            self.module.patch_size,
             past_target,
             past_observed_target,
             past_is_pad,
@@ -447,26 +285,204 @@ class MoiraiForecast(L.LightningModule):
             past_observed_feat_dynamic_real=past_observed_feat_dynamic_real,
         )
 
-        # get predictions
-        distr = self.module(
+        per_var_context_token = self.context_token_length(self.module.patch_size)
+        total_context_token = self.hparams.target_dim * per_var_context_token
+        per_var_predict_token = self.prediction_token_length(self.module.patch_size)
+        total_predict_token = self.hparams.target_dim * per_var_predict_token
+
+        pred_index = torch.arange(
+            start=per_var_context_token - 1,
+            end=total_context_token,
+            step=per_var_context_token,
+        )
+        assign_index = torch.arange(
+            start=total_context_token,
+            end=total_context_token + total_predict_token,
+            step=per_var_predict_token,
+        )
+        quantile_prediction = repeat(
+            target,
+            "... patch_size -> ... num_quantiles patch_size",
+            num_quantiles=len(self.module.quantile_levels),
+            patch_size=self.module.patch_size,
+        ).clone()
+
+        preds = self.module(
             target,
             observed_mask,
             sample_id,
             time_id,
             variate_id,
             prediction_mask,
-            torch.ones_like(time_id, dtype=torch.long) * patch_size,
+            training_mode=False,
         )
-        return distr
+
+        def structure_multi_predict(
+            per_var_predict_token,
+            pred_index,
+            assign_index,
+            preds,
+        ):
+            preds = rearrange(
+                preds,
+                "... (predict_token num_quantiles patch_size)"
+                " -> ... predict_token num_quantiles patch_size",
+                predict_token=self.module.num_predict_token,
+                num_quantiles=self.module.num_quantiles,
+                patch_size=self.module.patch_size,
+            )
+            preds = rearrange(
+                preds[..., pred_index, :per_var_predict_token, :, :],
+                "... pred_index predict_token num_quantiles patch_size"
+                " -> ... (pred_index predict_token) num_quantiles patch_size",
+            )
+            adjusted_assign_index = torch.cat(
+                [
+                    torch.arange(start=idx, end=idx + per_var_predict_token)
+                    for idx in assign_index
+                ]
+            )
+            return preds, adjusted_assign_index
+
+        if per_var_predict_token <= self.module.num_predict_token:
+            preds, adjusted_assign_index = structure_multi_predict(
+                per_var_predict_token,
+                pred_index,
+                assign_index,
+                preds,
+            )
+            quantile_prediction[..., adjusted_assign_index, :, :] = preds
+            preds_out = self._format_preds(
+                self.module.num_quantiles,
+                self.module.patch_size,
+                quantile_prediction,
+                self.hparams.target_dim,
+            )
+            return (preds_out,), None, None
+        else:
+            expand_target = repeat(
+                target,
+                "batch_size ...  -> batch_size num_quantiles ...",
+                num_quantiles=len(self.module.quantile_levels),
+                batch_size=target.shape[0],
+            ).clone()
+            expand_prediction_mask = repeat(
+                prediction_mask,
+                "batch_size ...  -> batch_size num_quantiles ...",
+                num_quantiles=len(self.module.quantile_levels),
+                batch_size=target.shape[0],
+            ).clone()
+            expand_observed_mask = repeat(
+                observed_mask,
+                "batch_size ...  -> batch_size num_quantiles ...",
+                num_quantiles=len(self.module.quantile_levels),
+                batch_size=target.shape[0],
+            ).clone()
+            expand_sample_id = repeat(
+                sample_id,
+                "batch_size ...  -> batch_size num_quantiles ...",
+                num_quantiles=len(self.module.quantile_levels),
+                batch_size=target.shape[0],
+            ).clone()
+            expand_time_id = repeat(
+                time_id,
+                "batch_size ...  -> batch_size num_quantiles ...",
+                num_quantiles=len(self.module.quantile_levels),
+                batch_size=target.shape[0],
+            ).clone()
+            expand_variate_id = repeat(
+                variate_id,
+                "batch_size ...  -> batch_size num_quantiles ...",
+                num_quantiles=len(self.module.quantile_levels),
+                batch_size=target.shape[0],
+            ).clone()
+
+            preds, adjusted_assign_index = structure_multi_predict(
+                self.module.num_predict_token,
+                pred_index,
+                assign_index,
+                preds,
+            )
+            quantile_prediction[..., adjusted_assign_index, :, :] = preds
+
+            expand_target[..., adjusted_assign_index, :] = rearrange(
+                preds,
+                "... predict_token num_quantiles patch_size"
+                " -> ... num_quantiles predict_token patch_size",
+                num_quantiles=self.module.num_quantiles,
+                patch_size=self.module.patch_size,
+                predict_token=self.module.num_predict_token,
+            )
+            expand_prediction_mask[..., adjusted_assign_index] = False
+
+            remain_step = per_var_predict_token - self.module.num_predict_token
+            while remain_step > 0:
+                preds = self.module(
+                    expand_target,
+                    expand_observed_mask,
+                    expand_sample_id,
+                    expand_time_id,
+                    expand_variate_id,
+                    expand_prediction_mask,
+                    training_mode=False,
+                )
+
+                pred_index = assign_index + self.module.num_predict_token - 1
+                assign_index = pred_index + 1
+                preds, adjusted_assign_index = structure_multi_predict(
+                    (
+                        self.module.num_predict_token
+                        if remain_step - self.module.num_predict_token > 0
+                        else remain_step
+                    ),
+                    pred_index,
+                    assign_index,
+                    preds,
+                )
+                quantile_prediction_next_step = rearrange(
+                    preds,
+                    "... num_quantiles_prev pred_index num_quantiles patch_size"
+                    " -> ... pred_index (num_quantiles_prev num_quantiles)"
+                    " patch_size",
+                    num_quantiles=self.module.num_quantiles,
+                    patch_size=self.module.patch_size,
+                )
+                quantile_prediction_next_step = torch.quantile(
+                    quantile_prediction_next_step,
+                    torch.tensor(
+                        self.module.quantile_levels,
+                        device=self.device,
+                        dtype=torch.float32,
+                    ),
+                    dim=-2,
+                )
+                quantile_prediction[..., adjusted_assign_index, :, :] = rearrange(
+                    quantile_prediction_next_step,
+                    "num_quantiles ... patch_size -> ... num_quantiles patch_size",
+                )
+
+                expand_target[..., adjusted_assign_index, :] = rearrange(
+                    quantile_prediction_next_step,
+                    "num_quantiles batch_size predict_token patch_size"
+                    " -> batch_size num_quantiles predict_token patch_size",
+                    num_quantiles=self.module.num_quantiles,
+                    patch_size=self.module.patch_size,
+                    predict_token=len(adjusted_assign_index),
+                )
+                expand_prediction_mask[..., adjusted_assign_index] = False
+
+                remain_step -= self.module.num_predict_token
+
+            preds_out = self._format_preds(
+                self.module.num_quantiles,
+                self.module.patch_size,
+                quantile_prediction,
+                self.hparams.target_dim,
+            )
+            return (preds_out,), None, None
 
     @staticmethod
-    def _patched_seq_pad(
-        patch_size: int,
-        x,
-        dim: int,
-        left: bool = True,
-        value: float | None = None,
-    ):
+    def _patched_seq_pad(patch_size, x, dim, left=True, value=None):
         if dim >= 0:
             dim = -x.ndim + dim
         pad_length = -x.size(dim) % patch_size
@@ -477,18 +493,16 @@ class MoiraiForecast(L.LightningModule):
         pad = (0, 0) * (abs(dim) - 1) + pad
         return torch.nn.functional.pad(x, pad, value=value)
 
-    def _generate_time_id(
-        self,
-        patch_size: int,
-        past_observed_target,
-    ):
+    def _generate_time_id(self, patch_size, past_observed_target):
         past_seq_id = reduce(
             self._patched_seq_pad(patch_size, past_observed_target, -2, left=True),
             "... (seq patch) dim -> ... seq",
             "max",
             patch=patch_size,
         )
-        past_seq_id = torch.clamp(past_seq_id.cumsum(dim=-1) - 1, min=0)
+        past_seq_id = torch.clamp(
+            past_seq_id.cummax(dim=-1).values.cumsum(dim=-1) - 1, min=0
+        )
         batch_shape = " ".join(map(str, past_observed_target.shape[:-2]))
         future_seq_id = (
             repeat(
@@ -505,7 +519,7 @@ class MoiraiForecast(L.LightningModule):
 
     def _convert(
         self,
-        patch_size: int,
+        patch_size,
         past_target,
         past_observed_target,
         past_is_pad,
@@ -534,11 +548,7 @@ class MoiraiForecast(L.LightningModule):
 
         if future_target is None:
             future_target = torch.zeros(
-                batch_shape
-                + (
-                    self.hparams.prediction_length,
-                    past_target.shape[-1],
-                ),
+                batch_shape + (self.hparams.prediction_length, past_target.shape[-1]),
                 dtype=past_target.dtype,
                 device=device,
             )
@@ -550,7 +560,7 @@ class MoiraiForecast(L.LightningModule):
                         "... (seq patch) dim -> ... (dim seq) patch",
                         patch=patch_size,
                     ),
-                    (0, self.max_patch_size - patch_size),
+                    (0, 0),
                 ),
                 torch.nn.functional.pad(
                     rearrange(
@@ -560,17 +570,14 @@ class MoiraiForecast(L.LightningModule):
                         "... (seq patch) dim -> ... (dim seq) patch",
                         patch=patch_size,
                     ),
-                    (0, self.max_patch_size - patch_size),
+                    (0, 0),
                 ),
             ]
         )
         if future_observed_target is None:
             future_observed_target = torch.ones(
                 batch_shape
-                + (
-                    self.hparams.prediction_length,
-                    past_observed_target.shape[-1],
-                ),
+                + (self.hparams.prediction_length, past_observed_target.shape[-1]),
                 dtype=torch.bool,
                 device=device,
             )
@@ -584,7 +591,7 @@ class MoiraiForecast(L.LightningModule):
                         "... (seq patch) dim -> ... (dim seq) patch",
                         patch=patch_size,
                     ),
-                    (0, self.max_patch_size - patch_size),
+                    (0, 0),
                 ),
                 torch.nn.functional.pad(
                     rearrange(
@@ -594,7 +601,7 @@ class MoiraiForecast(L.LightningModule):
                         "... (seq patch) dim -> ... (dim seq) patch",
                         patch=patch_size,
                     ),
-                    (0, self.max_patch_size - patch_size),
+                    (0, 0),
                 ),
             ]
         )
@@ -680,8 +687,8 @@ class MoiraiForecast(L.LightningModule):
         if feat_dynamic_real is not None:
             if observed_feat_dynamic_real is None:
                 raise ValueError(
-                    "observed_feat_dynamic_real must be provided if "
-                    "feat_dynamic_real is provided"
+                    "observed_feat_dynamic_real must be provided "
+                    "if feat_dynamic_real is provided"
                 )
 
             target.extend(
@@ -699,7 +706,7 @@ class MoiraiForecast(L.LightningModule):
                             "... (seq patch) dim -> ... (dim seq) patch",
                             patch=patch_size,
                         ),
-                        (0, self.max_patch_size - patch_size),
+                        (0, 0),
                     ),
                     torch.nn.functional.pad(
                         rearrange(
@@ -714,7 +721,7 @@ class MoiraiForecast(L.LightningModule):
                             "... (seq patch) dim -> ... (dim seq) patch",
                             patch=patch_size,
                         ),
-                        (0, self.max_patch_size - patch_size),
+                        (0, 0),
                     ),
                 ]
             )
@@ -733,7 +740,7 @@ class MoiraiForecast(L.LightningModule):
                             "... (seq patch) dim -> ... (dim seq) patch",
                             patch=patch_size,
                         ),
-                        (0, self.max_patch_size - patch_size),
+                        (0, 0),
                     ),
                     torch.nn.functional.pad(
                         rearrange(
@@ -748,7 +755,7 @@ class MoiraiForecast(L.LightningModule):
                             "... (seq patch) dim -> ... (dim seq) patch",
                             patch=patch_size,
                         ),
-                        (0, self.max_patch_size - patch_size),
+                        (0, 0),
                     ),
                 ]
             )
@@ -827,8 +834,8 @@ class MoiraiForecast(L.LightningModule):
         if past_feat_dynamic_real is not None:
             if past_observed_feat_dynamic_real is None:
                 raise ValueError(
-                    "past_observed_feat_dynamic_real must be provided if "
-                    "past_feat_dynamic_real is provided"
+                    "past_observed_feat_dynamic_real must be provided "
+                    "if past_feat_dynamic_real is provided"
                 )
             target.append(
                 torch.nn.functional.pad(
@@ -839,19 +846,22 @@ class MoiraiForecast(L.LightningModule):
                         "... (seq patch) dim -> ... (dim seq) patch",
                         patch=patch_size,
                     ),
-                    (0, self.max_patch_size - patch_size),
+                    (0, 0),
                 )
             )
             observed_mask.append(
                 torch.nn.functional.pad(
                     rearrange(
                         self._patched_seq_pad(
-                            patch_size, past_observed_feat_dynamic_real, -2, left=True
+                            patch_size,
+                            past_observed_feat_dynamic_real,
+                            -2,
+                            left=True,
                         ),
                         "... (seq patch) dim -> ... (dim seq) patch",
                         patch=patch_size,
                     ),
-                    (0, self.max_patch_size - patch_size),
+                    (0, 0),
                 )
             )
             sample_id.append(
@@ -909,20 +919,15 @@ class MoiraiForecast(L.LightningModule):
             prediction_mask,
         )
 
-    def _format_preds(
-        self,
-        patch_size: int,
-        preds,
-        target_dim: int,
-    ):
+    def _format_preds(self, num_quantiles, patch_size, preds, target_dim):
         start = target_dim * self.context_token_length(patch_size)
         end = start + target_dim * self.prediction_token_length(patch_size)
-        preds = preds[..., start:end, :patch_size]
+        preds = preds[..., start:end, :num_quantiles, :patch_size]
         preds = rearrange(
             preds,
-            "sample ... (dim seq) patch -> ... sample (seq patch) dim",
+            "... (dim seq) num_quantiles patch -> ... (seq patch) num_quantiles dim",
             dim=target_dim,
-        )[..., : self.hparams.prediction_length, :]
+        )[..., : self.hparams.prediction_length, :, :]
         return preds.squeeze(-1)
 
     def get_default_transform(self):
@@ -932,12 +937,20 @@ class MoiraiForecast(L.LightningModule):
             dtype=np.float32,
         )
         if self.hparams.target_dim == 1:
+            transform += AddObservedValuesIndicator(
+                target_field="target",
+                output_field="observed_target",
+                imputation_method=CausalMeanValueImputation(),
+                dtype=bool,
+            )
             transform += ExpandDimArray(field="target", axis=0)
-        transform += AddObservedValuesIndicator(
-            target_field="target",
-            output_field="observed_target",
-            dtype=bool,
-        )
+            transform += ExpandDimArray(field="observed_target", axis=0)
+        else:
+            transform += AddObservedValuesIndicator(
+                target_field="target",
+                output_field="observed_target",
+                dtype=bool,
+            )
 
         if self.hparams.feat_dynamic_real_dim > 0:
             transform += AsNumpyArray(
