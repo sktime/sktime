@@ -357,8 +357,12 @@ class Imputer(BaseTransformer):
         for col in X.columns:
             if _has_missing_values(X[col]):
                 # define fh based on index of missing values
+                # Boolean filtering drops the freq attribute from the
+                # index, so pass freq explicitly from the full index.
                 na_index = X[col].index[X[col].isna()]
-                fh = ForecastingHorizon(values=na_index, is_relative=False)
+                fh = ForecastingHorizon(
+                    values=na_index, is_relative=False, freq=X[col].index
+                )
 
                 # fill NaN before fitting with ffill and backfill (heuristic)
 
