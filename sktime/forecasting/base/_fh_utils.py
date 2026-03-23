@@ -302,6 +302,31 @@ class PandasFHConverter:
             freq_str = PandasFHConverter._freqstr(values)
             if freq_str is None and freq is not None:
                 freq_str = PandasFHConverter.extract_freq(freq)
+            elif freq_str is not None and freq is not None:
+                # Sparse DatetimeIndex (e.g. 2 elements from fh=[2,5] on daily
+                # data) can have pandas-inferred freq that is a multiple of the
+                # true data freq (e.g. '3D' vs 'D'). When an explicit freq is
+                # provided and shares the same base and the inferred freq is an
+                # exact multiple, prefer the explicit (narrower) freq.
+                explicit_freq = PandasFHConverter.extract_freq(freq)
+                if explicit_freq is not None and freq_str != explicit_freq:
+                    _, inf_base, inf_sfx = _parse_freq(freq_str)
+                    _, exp_base, exp_sfx = _parse_freq(explicit_freq)
+                    inf_mult = PandasFHConverter.freq_multiplier(freq_str)
+                    exp_mult = PandasFHConverter.freq_multiplier(explicit_freq)
+                    if (
+                        inf_base == exp_base
+                        and inf_sfx == exp_sfx
+                        and inf_mult % exp_mult == 0
+                    ):
+                        freq_str = explicit_freq
+                    else:
+                        raise ValueError(
+                            f"DatetimeIndex freq {freq_str!r} conflicts with "
+                            f"explicit freq {explicit_freq!r} and cannot be "
+                            f"resolved (different base or non-divisible "
+                            f"multiple)."
+                        )
             if freq_str is None:
                 raise ValueError(
                     "DatetimeIndex without freq is not supported. "
