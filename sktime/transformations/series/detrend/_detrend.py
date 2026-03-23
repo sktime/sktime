@@ -138,7 +138,9 @@ class Detrender(BaseTransformer):
             time_index = X.index
         else:
             time_index = X.index.get_level_values(-1).unique()
-        return ForecastingHorizon(time_index, is_relative=False)
+        return ForecastingHorizon(
+            time_index, is_relative=False, freq=time_index.inferred_freq
+        )
 
     def _get_fitted_forecaster(self, X, y, fh):
         """Obtain fitted forecaster from self."""
