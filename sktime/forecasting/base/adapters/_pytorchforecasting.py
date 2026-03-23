@@ -519,6 +519,30 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         data = pd.concat([data, time_idx], axis=1)
         # reset multi index to normal columns
         data = data.reset_index(level=list(range(self._index_len)))
+        # Ensure max_prediction_length is an integer to avoid TypeErrors
+        # with pandas Timedelta arithmetic in modern versions of pandas.
+        if isinstance(max_prediction_length, (pd.Timedelta, np.timedelta64)):
+            # Handle both simple Index and MultiIndex
+            y_index = self._y.index
+            if isinstance(y_index, pd.MultiIndex):
+                time_index = y_index.levels[-1]
+            else:
+                time_index = y_index
+
+            freq = getattr(time_index, "freq", None)
+            if freq is None:
+                freq = getattr(time_index, "inferred_freq", None)
+            if freq is None:
+                freq = pd.infer_freq(time_index)
+
+            if freq is None:
+                raise ValueError(
+                    "Could not infer frequency from the time series "
+                    "index to convert Timedelta."
+                )
+
+            max_prediction_length = int(max_prediction_length / pd.to_timedelta(freq))
+
         training_cutoff = data["_auto_time_idx"].max() - max_prediction_length
         # add a constant column as group id if data only contains only one timeseries
         if self._index_len == 1:

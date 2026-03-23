@@ -3,6 +3,8 @@
 
 import os
 
+import numpy as np
+import pandas as pd
 import pytest
 from sklearn.model_selection import train_test_split
 
@@ -109,3 +111,34 @@ def test_load_model_from_disk(model_class) -> None:
     index_pred = y_pred.iloc[:max_prediction_length].index.get_level_values(2)
     _assert_correct_pred_time_index(index_pred, cutoff, fh)
     _assert_correct_columns(y_pred, y_test)
+
+
+def test_pytorch_deepar_timedelta_index():
+    """Test that PytorchForecastingDeepAR fits with a Timedelta index.
+
+    This tests the adapter behavior with Timedelta, ensuring that no TypeError
+    is raised during arithmetic operations with pandas.Timedelta.
+    """
+    # Skip test if soft dependency is not installed
+    pytest.importorskip("pytorch_forecasting")
+
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
+
+    # Create mock data with a Timedelta index
+    idx = pd.to_timedelta(np.arange(15), unit="D")
+    y = pd.Series(np.random.randn(15), index=idx)
+
+    # Initialize the model with minimal parameters for a fast test execution
+    model = PytorchForecastingDeepAR(
+        dataset_params={"max_encoder_length": 2, "min_encoder_length": 1},
+        trainer_params={"max_epochs": 1, "accelerator": "cpu"},
+    )
+
+    fh = ForecastingHorizon([1, 2], is_relative=True)
+
+    # Fit the model; this should complete without raising a TypeError
+    model.fit(y=y, fh=fh)
+
+    # Verify that the model was successfully fitted
+    assert model.is_fitted, "Model failed to fit with a Timedelta index."
