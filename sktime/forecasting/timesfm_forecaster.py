@@ -257,10 +257,14 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             )
         elif fh is not None and self.horizon_len is not None:
             fh = fh.to_relative(self.cutoff)
-            self._horizon_len = max(self.horizon_len, *fh._values.values)
+            self._horizon_len = max(self.horizon_len, fh.max())
+            # *fh._values.values changed to fh.max() in above line
+            # after Forecasting horizon v2 rework
         elif fh is not None:
             fh = fh.to_relative(self.cutoff)
-            self._horizon_len = max(*fh._values.values)
+            self._horizon_len = fh.max()
+            # max(*fh._values.values) changed to fh.max() in above line
+            # after Forecasting horizon v2 rework
         else:
             self._horizon_len = self.horizon_len
 
@@ -310,7 +314,9 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        if max(fh._values.values) > self._horizon_len:
+        if fh.max() > self._horizon_len:
+            # max(fh._values.values) changed to fh.max() in above line
+            # after Forecasting horizon v2 rework
             raise ValueError(
                 f"Error in {self.__class__.__name__}, the forecast horizon exceeds the"
                 f" specified horizon_len of {self._horizon_len}. Change the horizon_len"
@@ -337,10 +343,17 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             ins = np.array(list(np.unique(_y.index.droplevel(-1)).repeat(n_timestamps)))
             ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
 
+            # idx = (
+            #     ForecastingHorizon(range(1, n_timestamps + 1), freq=self.fh.freq)
+            #     .to_absolute(self._cutoff)
+            #     ._values.tolist()
+            #     * pred.shape[0]
+            # )
+            # above line changed to below line after Forecasting horizon v2 rework
             idx = (
                 ForecastingHorizon(range(1, n_timestamps + 1), freq=self.fh.freq)
-                .to_absolute(self._cutoff)
-                ._values.tolist()
+                .to_absolute_index(self._cutoff)
+                .tolist()
                 * pred.shape[0]
             )
             index = pd.MultiIndex.from_arrays(
@@ -354,10 +367,14 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 columns=_y.columns,
             )
         else:
-            index = (
-                ForecastingHorizon(range(1, n_timestamps + 1))
-                .to_absolute(self._cutoff)
-                ._values
+            # index = (
+            #     ForecastingHorizon(range(1, n_timestamps + 1))
+            #     .to_absolute(self._cutoff)
+            #     ._values
+            # )
+            # above line changed to below line after Forecasting horizon v2 rework
+            index = ForecastingHorizon(range(1, n_timestamps + 1)).to_absolute_index(
+                self._cutoff
             )
             pred = pd.Series(
                 # batch_size * num_timestamps

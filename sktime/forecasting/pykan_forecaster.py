@@ -132,7 +132,7 @@ class PyKANForecaster(BaseForecaster):
         """
         from kan import KAN
 
-        output_size = max(fh.to_relative(self.cutoff)._values)
+        output_size = fh.to_relative(self.cutoff).max()
         if X is not None:
             y_train, y_test, X_train, X_test = temporal_train_test_split(
                 y, X=X, test_size=(self.val_size)
@@ -244,7 +244,7 @@ class PyKANForecaster(BaseForecaster):
             )
 
         prediction = model(input_).detach().numpy().reshape((-1,))
-        index = list(fh.to_absolute(self.cutoff))
+        index = fh.to_absolute_index(self.cutoff)
         return pd.Series(
             prediction[fh.to_relative(self._cutoff) - 1], index=index, name=self._y.name
         )

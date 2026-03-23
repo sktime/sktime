@@ -239,7 +239,12 @@ class TiRexForecaster(BaseForecaster):
 
         yhat = forecast.reshape(-1)[: len(fh)]
 
-        index = fh.to_absolute(self.cutoff).to_pandas()
+        # index = fh.to_absolute(self.cutoff).to_pandas()
+        # above line changed to below line after forecasting horizon v2 rework
+        # In the new FH, `to_pandas()` returns a `PeriodIndex` for absolute FH,
+        # which may not match the cutoff's type (e.g., DatetimeIndex cutoff).
+        # `to_absolute_index(cutoff)` returns an Index matching the cutoff type.
+        index = fh.to_absolute_index(self.cutoff)
 
         return pd.Series(
             yhat, index=index, name=(y.name if hasattr(y, "name") else None)

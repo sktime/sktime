@@ -377,7 +377,7 @@ class AutoTS(BaseForecaster):
         ).forecast.values
 
         cutoff = self._fh_cutoff_transformation(y_date)
-        values = values[self._fh.to_relative(cutoff)._values - 1]
+        values = values[self._fh.to_relative(cutoff).to_numpy() - 1]
 
         # convert back to original index
         row_idx: pd.Index = self._fh.to_absolute_index(self.cutoff)
@@ -634,7 +634,7 @@ class AutoTS(BaseForecaster):
 
     def _get_forecast_length(self):
         cutoff = self._fh_cutoff_transformation(self._y_date)
-        fh_length = max(self._fh.to_relative(cutoff)._values)
+        fh_length = self._fh.to_relative(cutoff).max()
         if fh_length <= 0:
             raise ValueError(
                 "The relative length to the training data of "
@@ -643,11 +643,28 @@ class AutoTS(BaseForecaster):
         return fh_length
 
     def _fh_cutoff_transformation(self, cutoff):
-        if isinstance(self._fh._values, (pd.Period, pd.PeriodIndex)):
-            transformed_fh_cutoff = cutoff.index.to_period()[-1]
-        elif isinstance(self._fh._values, pd.DatetimeIndex):
-            transformed_fh_cutoff = cutoff.index[-1]
+        # if isinstance(self._fh._values, (pd.Period, pd.PeriodIndex)):
+        #     transformed_fh_cutoff = cutoff.index.to_period()[-1]
+        # elif isinstance(self._fh._values, pd.DatetimeIndex):
+        #     transformed_fh_cutoff = cutoff.index[-1]
 
+        # above code is replaced with below single if statement after
+        # forecasting horizon was refactored and moved away from
+        # using pandas index types for internal representation.
+        # Now the frequency of the forecasting horizon is used to determine
+        # how to transform the cutoff.
+        # The collapse merges the old PeriodIndex and DatetimeIndex branches.
+        # The old DatetimeIndex branch returned a pd.Timestamp,
+        # the new code returns a pd.Period for the same case.
+        # This is safe because the result is only used as input
+        # to to_relative(cutoff) (lines 380, 637, 704).
+        # to_relative calls PandasFHConverter.cutoff_to_steps(cutoff, freq=self._freq)
+        # which accepts both pd.Period and pd.Timestamp, it converts either to a
+        # period ordinal. So the downstream behaviour is identical.
+
+        if self._fh.freq is not None:
+            # temporal FH (was PeriodIndex or DatetimeIndex) —> use period cutoff
+            transformed_fh_cutoff = cutoff.index.to_period()[-1]
         else:
             transformed_fh_cutoff = len(cutoff.index)
         return transformed_fh_cutoff
@@ -700,7 +717,7 @@ class AutoTS(BaseForecaster):
 
         cutoff = self._fh_cutoff_transformation(y_date)
         # _fh keys are 1-based relative indices, adjust to 0-based
-        relative_fh_idx = self._fh.to_relative(cutoff)._values - 1
+        relative_fh_idx = self._fh.to_relative(cutoff).to_numpy() - 1
 
         var_names = y_date.columns
         row_idx = self._fh.to_absolute_index(self.cutoff)

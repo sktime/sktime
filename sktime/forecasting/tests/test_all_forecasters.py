@@ -15,7 +15,7 @@ from sktime.datatypes import check_is_mtype
 from sktime.datatypes._utilities import get_cutoff
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
-from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base._fh_v2 import ForecastingHorizon
 from sktime.forecasting.tests._config import (
     TEST_ALPHAS,
     TEST_FHS,
@@ -420,7 +420,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         cutoff = get_cutoff(y.iloc[: len(y) // 2], return_index=True)
         fh = _make_fh(cutoff, fh_int_oos, fh_type, is_relative)
 
-        if not fh._is_contiguous() and not estimator_instance.get_tag(
+        if not fh.is_contiguous() and not estimator_instance.get_tag(
             "capability:non_contiguous_X"
         ):
             return None

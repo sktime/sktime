@@ -335,7 +335,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
             _config["num_input_channels"] = len(y.columns)
             if fh is not None:
                 _config["prediction_length"] = max(
-                    *(fh.to_relative(self._cutoff)._values + 1),
+                    fh.to_relative(self._cutoff).max() + 1,
                     _config["prediction_length"],
                 )
 
@@ -479,10 +479,17 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
             ins = np.array(list(np.unique(y.index.droplevel(-1)).repeat(pred.shape[1])))
             ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
 
+            # idx = (
+            #     ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
+            #     .to_absolute(self._cutoff)
+            #     ._values.tolist()
+            #     * pred.shape[0]
+            # )
+            # above line changed to below after Forecasting Horizon v2 rework
             idx = (
                 ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
-                .to_absolute(self._cutoff)
-                ._values.tolist()
+                .to_absolute_index(self._cutoff)
+                .tolist()
                 * pred.shape[0]
             )
             index = pd.MultiIndex.from_arrays(
@@ -490,10 +497,14 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
                 names=y.index.names,
             )
         else:
-            index = (
-                ForecastingHorizon(range(1, pred.shape[1] + 1))
-                .to_absolute(self._cutoff)
-                ._values
+            # index = (
+            #     ForecastingHorizon(range(1, pred.shape[1] + 1))
+            #     .to_absolute(self._cutoff)
+            #     ._values
+            # )
+            # above line changed to below after Forecasting Horizon v2 rework
+            index = ForecastingHorizon(range(1, pred.shape[1] + 1)).to_absolute_index(
+                self._cutoff
             )
 
         df_pred = pd.DataFrame(

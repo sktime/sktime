@@ -242,7 +242,7 @@ class HFTransformersForecaster(BaseForecaster):
 
             if fh is not None:
                 _config["prediction_length"] = max(
-                    *(fh.to_relative(self._cutoff)._values + 1),
+                    fh.to_relative(self._cutoff).max() + 1,
                     _config.get("prediction_length", 0),
                 )
 
@@ -408,13 +408,17 @@ class HFTransformersForecaster(BaseForecaster):
 
         pred = pd.Series(
             pred.reshape((-1,)),
-            index=ForecastingHorizon(range(len(pred)))
-            .to_absolute(self._cutoff)
-            ._values,
+            # index=ForecastingHorizon(range(len(pred)))
+            # .to_absolute(self._cutoff)
+            # ._values,
+            # above line changed to below line after Forecasting horizon v2 rework
+            index=ForecastingHorizon(range(len(pred))).to_absolute_index(self._cutoff),
             # columns=self._y.columns
             name=self._y.name,
         )
-        return pred.loc[fh.to_absolute(self.cutoff)._values]
+        # return pred.loc[fh.to_absolute(self.cutoff)._values]
+        # above line changed to below line after Forecasting horizon v2 rework
+        return pred.loc[fh.to_absolute_index(self.cutoff)]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

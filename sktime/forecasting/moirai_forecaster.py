@@ -236,9 +236,9 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        self.model.hparams.prediction_length = max(fh._values)
+        self.model.hparams.prediction_length = fh.max()
 
-        if min(fh._values) < 0:
+        if fh.min() < 0:
             raise NotImplementedError(
                 "The MORAI adapter is not supporting insample predictions."
             )

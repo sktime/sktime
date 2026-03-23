@@ -56,7 +56,7 @@ from sktime.datatypes import (
 )
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._clone_plugin import _PretrainedCloner
-from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base._fh_v2 import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X

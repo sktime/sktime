@@ -15,11 +15,7 @@ from sktime.datasets import load_airline
 from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.base._fh import (
-    DELEGATED_METHODS,
-    _check_freq,
-    _extract_freq_from_cutoff,
-)
+from sktime.forecasting.base._fh_utils import PandasFHConverter
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
@@ -163,9 +159,14 @@ def test_fh(index_type, fh_type, is_relative, steps):
     # generate fh
     fh = _make_fh(cutoff_idx, steps, fh_type, is_relative)
     # update frequency of the forecasting horizon
+    freq_for_test = infer_freq(y)
     fh.freq = infer_freq(y)
-    if fh_type == "int":
+    if fh_type in ("int", "timedelta"):
+        # new FH normalizes timedelta to integer steps
         assert is_integer_index(fh.to_pandas())
+    elif fh_type == "datetime":
+        # new FH normalizes datetime to PeriodIndex
+        assert isinstance(fh.to_pandas(), pd.PeriodIndex)
     else:
         assert isinstance(fh.to_pandas(), INDEX_TYPE_LOOKUP.get(fh_type))
 
@@ -182,14 +183,16 @@ def test_fh(index_type, fh_type, is_relative, steps):
         fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
         fh_indexer = fh_relative - 1
     else:
-        fh_relative = steps.sort_values()
-        fh_absolute = (cutoff + steps).sort_values()
-        fh_indexer = None
+        fh_relative_td = steps.sort_values()
+        fh_absolute = (cutoff + fh_relative_td).sort_values()
+        # new FH normalizes timedelta to integer steps
+        fh_relative = pd.Index(
+            _coerce_duration_to_int(fh_relative_td, freq=freq_for_test),
+            dtype="int64",
+        )
+        fh_indexer = fh_relative - 1
 
-    if steps.dtype in int_types:
-        null = 0
-    else:
-        null = pd.Timedelta(0)
+    null = 0
     fh_oos = fh.to_pandas()[fh_relative > null]
     is_oos = len(fh_oos) == len(fh)
     fh_ins = fh.to_pandas()[fh_relative <= null]
@@ -204,12 +207,8 @@ def test_fh(index_type, fh_type, is_relative, steps):
     _assert_index_equal(fh_relative, fh.to_relative(cutoff).to_pandas())
     assert fh.to_relative(cutoff).is_relative
 
-    if steps.dtype in int_types:
-        # check index-like representation
-        _assert_index_equal(fh_indexer, fh.to_indexer(cutoff))
-    else:
-        with pytest.raises(NotImplementedError):
-            fh.to_indexer(cutoff)
+    # check index-like representation
+    _assert_index_equal(fh_indexer, fh.to_indexer(cutoff))
 
     # check in-sample representation
     # we only compare the numpy array here because the expected solution is
@@ -232,11 +231,28 @@ def test_fh(index_type, fh_type, is_relative, steps):
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-def test_fh_method_delegation():
-    """Test ForecastingHorizon delegated methods."""
-    fh = ForecastingHorizon(1)
-    for method in DELEGATED_METHODS:
-        assert hasattr(fh, method)
+def test_fh_method_dunders():
+    """Test ForecastingHorizon has expected dunder methods."""
+    fh = ForecastingHorizon([1, 2, 3])
+    expected_methods = [
+        "__sub__",
+        "__add__",
+        "__radd__",
+        "__mul__",
+        "__rmul__",
+        "__gt__",
+        "__ge__",
+        "__ne__",
+        "__lt__",
+        "__eq__",
+        "__le__",
+        "__len__",
+        "__repr__",
+        "__hash__",
+        "__getitem__",
+    ]
+    for method in expected_methods:
+        assert hasattr(fh, method), f"Missing method: {method}"
 
 
 BAD_INPUT_ARGS = (
@@ -413,17 +429,12 @@ FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 
 
 def _get_expected_freqstr(freqstr):
-    # special case for 10min, T is being deprecated and replaced by min
-    if _check_soft_dependencies("pandas<2.2.0", severity="none"):
-        if freqstr == "10min":
-            return "10T"
-        return freqstr
-    # on more recent pandas versions, >=2.2.0
-    if freqstr == "H":
-        return "h"
-    if freqstr == "M":
-        return "ME"
-    return freqstr
+    """Get expected canonical frequency string for the new FH.
+
+    The new FH stores canonical freq strings that align with Period-context
+    APIs. PeriodIndex.freqstr returns the same canonical form.
+    """
+    return PandasFHConverter.normalize_freq(freqstr)
 
 
 @pytest.mark.skipif(
@@ -438,7 +449,7 @@ def test_to_absolute_freq(freqstr):
     fh = ForecastingHorizon([1, 2, 3])
 
     abs_fh = fh.to_absolute(cutoff)
-    assert abs_fh._values.freqstr == _get_expected_freqstr(freqstr)
+    assert abs_fh.to_pandas().freqstr == _get_expected_freqstr(freqstr)
 
 
 @pytest.mark.skipif(
@@ -456,7 +467,7 @@ def test_absolute_to_absolute_with_integer_horizon(freqstr):
 
     converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
-    fh_freqstr = converted_abs_fh._values.freqstr
+    fh_freqstr = converted_abs_fh.to_pandas().freqstr
     assert fh_freqstr == _get_expected_freqstr(freqstr)
 
 
@@ -479,7 +490,7 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
     converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
 
-    assert converted_abs_fh._values.freqstr == _get_expected_freqstr(freqstr)
+    assert converted_abs_fh.to_pandas().freqstr == _get_expected_freqstr(freqstr)
 
 
 @pytest.mark.skipif(
@@ -573,14 +584,14 @@ def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
 
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
 def test_to_absolute_with_multiple_freq(freq: str):
-    """Test to_absolute with multiple freq"""
+    """Test to_absolute with multiple freq."""
     fh = ForecastingHorizon([0, 1, 2, 3, 4], is_relative=True)
     start = "2024-09-26 17:24"
     cutoff = pd.PeriodIndex([start], freq=freq)
     absolute = fh.to_absolute(cutoff)
     date_range = pd.date_range(start=start, freq=freq, periods=5)
     period_index = date_range.to_period(freq)
-    assert_array_equal(period_index.to_numpy(), absolute.to_numpy())
+    assert_array_equal(period_index, absolute.to_pandas())
 
 
 @pytest.mark.skipif(
@@ -598,7 +609,7 @@ def test_estimator_fh(freqstr):
     forecaster.fit(train)
     fh = ForecastingHorizon(np.arange(1, 27))
     pred = forecaster.predict(fh)
-    expected_fh = fh.to_absolute(train.index[-1])
+    expected_fh = fh.to_absolute_index(train.index[-1])
     assert_array_equal(pred.index.to_numpy(), expected_fh.to_numpy())
 
 
@@ -609,11 +620,10 @@ def test_estimator_fh(freqstr):
 @pytest.mark.parametrize("freq", ["G", "W1"])
 def test_error_with_incorrect_string_frequency(freq: str):
     """Test error with incorrect string frequency string."""
-    match = f"Invalid frequency: {freq}"
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(ValueError, match="Invalid frequency"):
         ForecastingHorizon([1, 2, 3], freq=freq)
     fh = ForecastingHorizon([1, 2, 3])
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(ValueError, match="Invalid frequency"):
         fh.freq = freq
 
 
@@ -846,10 +856,10 @@ def test_auto_arima_case_with_naive():
 )
 def test_extract_freq_from_inputs() -> None:
     """Test extract frequency from inputs."""
-    assert _check_freq(None) is None
+    assert PandasFHConverter.extract_freq(None) is None
     cutoff = pd.Period("2020", freq="D")
-    assert _check_freq(cutoff) == "D"
-    assert _check_freq("D") == "D"
+    assert PandasFHConverter.extract_freq(cutoff) == "D"
+    assert PandasFHConverter.extract_freq("D") == "D"
 
 
 @pytest.mark.skipif(
@@ -859,7 +869,9 @@ def test_extract_freq_from_inputs() -> None:
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
 def test_extract_freq_from_cutoff(freq: str) -> None:
     """Test extract frequency from cutoff."""
-    assert _extract_freq_from_cutoff(pd.Period("2020", freq=freq)) == freq
+    result = PandasFHConverter.extract_freq(pd.Period("2020", freq=freq))
+    expected = PandasFHConverter.normalize_freq(freq)
+    assert result == expected
 
 
 @pytest.mark.skipif(
@@ -869,7 +881,7 @@ def test_extract_freq_from_cutoff(freq: str) -> None:
 @pytest.mark.parametrize("x", [1, pd.Timestamp("2020")])
 def test_extract_freq_from_cutoff_with_wrong_input(x) -> None:
     """Test extract frequency from cutoff with wrong input."""
-    assert _extract_freq_from_cutoff(x) is None
+    assert PandasFHConverter.extract_freq(x) is None
 
 
 @pytest.mark.skipif(
@@ -898,7 +910,7 @@ def test_regular_spaced_fh_of_different_periodicity():
 def test_standard_range_in_fh():
     """Test using most common ``range`` without start/step."""
     standard_range = ForecastingHorizon(values=range(1, 5 + 1))
-    assert (standard_range == ForecastingHorizon(values=[1, 2, 3, 4, 5])).all()
+    assert standard_range == ForecastingHorizon(values=[1, 2, 3, 4, 5])
 
 
 @pytest.mark.skipif(
@@ -908,7 +920,7 @@ def test_standard_range_in_fh():
 def test_range_with_positive_step_in_fh():
     """Test using ``range`` with positive step."""
     range_with_positive_step = ForecastingHorizon(values=range(0, 5, 2))
-    assert (range_with_positive_step == ForecastingHorizon(values=[0, 2, 4])).all()
+    assert range_with_positive_step == ForecastingHorizon(values=[0, 2, 4])
 
 
 @pytest.mark.skipif(
@@ -918,7 +930,7 @@ def test_range_with_positive_step_in_fh():
 def test_range_with_negative_step_in_fh():
     """Test using ``range`` with negative step."""
     range_with_negative_step = ForecastingHorizon(values=range(3, -5, -2))
-    assert (range_with_negative_step == ForecastingHorizon(values=[3, 1, -1, -3])).all()
+    assert range_with_negative_step == ForecastingHorizon(values=[3, 1, -1, -3])
 
 
 @pytest.mark.skipif(
@@ -928,7 +940,7 @@ def test_range_with_negative_step_in_fh():
 def test_range_sorting_in_fh():
     """Test that ``range`` is independent of order."""
     standard_range = ForecastingHorizon(values=range(5))
-    assert (standard_range == ForecastingHorizon(values=[0, 3, 4, 1, 2])).all()
+    assert standard_range == ForecastingHorizon(values=[0, 3, 4, 1, 2])
 
 
 @pytest.mark.skipif(
@@ -938,7 +950,7 @@ def test_range_sorting_in_fh():
 def test_empty_range_in_fh():
     """Test when ``range`` has zero length."""
     empty_range = ForecastingHorizon(values=range(-5))
-    assert (empty_range == ForecastingHorizon(values=[])).all()
+    assert empty_range == ForecastingHorizon(values=[])
 
 
 @pytest.mark.skipif(
@@ -1001,9 +1013,9 @@ def test_tz_preserved():
     Failure case in issue #5584.
     """
     cutoff = pd.Timestamp("2020-01-01", tz="utc")
-    fh_absolute = ForecastingHorizon(range(100), freq="h").to_absolute(cutoff)
+    fh_absolute_idx = ForecastingHorizon(range(100), freq="h").to_absolute_index(cutoff)
 
-    assert fh_absolute[0].tz == cutoff.tz
+    assert fh_absolute_idx[0].tz == cutoff.tz
 
 
 # the "XE" frequencies are not supported by pandas 1 or 2.0.X
@@ -1042,6 +1054,9 @@ def test_pandas22_freq(freq):
 
     fh.to_absolute(cutoff)  # failure 1
     fh.to_absolute(cutoff).to_relative(cutoff)  # failure 2
+    # to_absolute_index exercises the pandas freq path (PeriodIndex.to_timestamp)
+    # which is where the original bug #6499 crash occurred
+    fh.to_absolute_index(cutoff)  # failure 3
 
 
 @pytest.mark.skipif(
@@ -1064,10 +1079,19 @@ def test_pandas22_freq_roundtrip(ts):
     fh = ForecastingHorizon([0], is_relative=True)
     fh.to_absolute(f.cutoff)
     fh.to_absolute(f.cutoff).to_relative(f.cutoff)
+    # to_absolute_index exercises the pandas freq path (PeriodIndex.to_timestamp)
+    # which is where the original bug #6572 crash occurred
+    fh.to_absolute_index(f.cutoff)
 
 
 def test_timestamp_format_to_absolute():
+    """Test sub-period offset preservation in to_absolute_index.
+
+    Failure case in bug #5186.
+    """
     cutoff = pd.Timestamp("2025-03-02 12:00:00")
     fh = ForecastingHorizon([1, 2, 3], freq="D")
     y_pred_idx = fh.to_absolute_index(cutoff)
+    assert isinstance(y_pred_idx, pd.DatetimeIndex)
+    assert len(y_pred_idx) == 3
     assert "12:00:00" in str(y_pred_idx)
