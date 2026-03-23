@@ -976,6 +976,14 @@ class ForecastingHorizon:
     def __getitem__(self, key):
         result = self._values[key]
         if isinstance(result, np.ndarray):
+            if isinstance(key, (list, np.ndarray)):
+                # fancy indexing: return raw numpy array rather than a
+                # ForecastingHorizon. Fancy indexing can produce duplicates
+                # (e.g. fh[[0, -1]] on a single-element FH gives [60, 60])
+                # which would violate the FH uniqueness invariant.
+                # This behaviour of returning duplicates is same as the old FH,
+                # which also returned duplicates wrapped in a pd.Index.
+                return result
             return self.clone(
                 result, self._is_relative, self._freq, self._values_are_nanos
             )
