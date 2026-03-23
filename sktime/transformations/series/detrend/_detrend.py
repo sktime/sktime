@@ -141,6 +141,8 @@ class Detrender(BaseTransformer):
         freq = getattr(time_index, "inferred_freq", None)
         if freq is None:
             freq = getattr(time_index, "freq", None)
+        if freq is None:
+            freq = getattr(self.forecaster_, "cutoff", None)
         return ForecastingHorizon(time_index, is_relative=False, freq=freq)
 
     def _get_fitted_forecaster(self, X, y, fh):
