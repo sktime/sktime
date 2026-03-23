@@ -5,8 +5,9 @@ import time
 
 import numpy as np
 import pytest
-import ruptures as rpt
-from ruptures.base import BaseCost as rpt_BaseCost
+
+rpt = pytest.importorskip("ruptures")
+from ruptures.base import BaseCost as rpt_BaseCost  # noqa: E402
 
 from sktime._vendor.skchange.change_detectors._crops import evaluate_segmentation
 from sktime._vendor.skchange.change_detectors._pelt import (
