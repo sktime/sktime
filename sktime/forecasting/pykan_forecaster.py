@@ -244,7 +244,7 @@ class PyKANForecaster(BaseForecaster):
             )
 
         prediction = model(input_).detach().numpy().reshape((-1,))
-        index = list(fh.to_absolute(self.cutoff))
+        index = fh.to_absolute_index(self.cutoff)
         return pd.Series(
             prediction[fh.to_relative(self._cutoff) - 1], index=index, name=self._y.name
         )
