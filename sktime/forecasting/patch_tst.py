@@ -335,7 +335,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
             _config["num_input_channels"] = len(y.columns)
             if fh is not None:
                 _config["prediction_length"] = max(
-                    int(fh.to_relative(self._cutoff).max()) + 1,
+                    fh.to_relative(self._cutoff).max() + 1,
                     _config["prediction_length"],
                 )
 

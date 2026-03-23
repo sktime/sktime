@@ -1009,7 +1009,7 @@ class ForecastingHorizon:
                 "freq has not been set yet. Set freq via `fh.freq = ...` "
                 "to convert to integer step counts first."
             )
-        return self._values.max(**kwargs)
+        return int(self._values.max(**kwargs))
 
     def min(self, **kwargs):
         """Return the minimum value.
@@ -1031,7 +1031,7 @@ class ForecastingHorizon:
                 "freq has not been set yet. Set freq via `fh.freq = ...` "
                 "to convert to integer step counts first."
             )
-        return self._values.min(**kwargs)
+        return int(self._values.min(**kwargs))
 
     # Below method computes a hash for the ForecastingHorizon instance,
     # The hash is computed based on the tuple containing:
