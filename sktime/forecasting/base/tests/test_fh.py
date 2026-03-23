@@ -1071,16 +1071,3 @@ def test_timestamp_format_to_absolute():
     fh = ForecastingHorizon([1, 2, 3], freq="D")
     y_pred_idx = fh.to_absolute_index(cutoff)
     assert "12:00:00" in str(y_pred_idx)
-
-
-def test_fh_to_absolute_timedelta():
-    """Test that to_absolute works correctly with Timedelta cutoffs."""
-    from sktime.forecasting.base import ForecastingHorizon
-
-    fh = ForecastingHorizon([1, 2], is_relative=True)
-    cutoff = pd.Timedelta(days=100)
-    abs_fh = fh.to_absolute(cutoff)
-
-    assert abs_fh[0] == pd.Timedelta(days=101)
-    assert abs_fh[1] == pd.Timedelta(days=102)
-    assert abs_fh.is_relative is True
