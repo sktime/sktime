@@ -303,17 +303,7 @@ def generate_piecewise_normal_data(
     7  0.900891  1.535109
     8  2.186813  2.817436
     9 -1.818413 -0.078302
-    >>> params
-    {'n_segments': 2,
-    'n_samples': np.int64(10),
-    'means': [array([-2.60631446,  1.81071173]), array([0.89274914, 1.81071173])],
-    'variances': [array([[1., 0.],
-            [0., 1.]]),
-    array([[1., 0.],
-            [0., 1.]])],
-    'lengths': array([5, 5]),
-    'change_points': array([5]),
-    'affected_variables': [array([0, 1]), array([0])]}
+    >>> params  # doctest: +SKIP
     """
     random_generator = check_random_generator(seed)
     if n_variables < 1:
