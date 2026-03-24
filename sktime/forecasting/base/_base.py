@@ -115,6 +115,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
     # configs and default config values
     # see set_config documentation for details
     _config = {
+        "known_y_mtype": None,
+        "known_X_mtype": None,
         "backend:parallel": None,  # parallelization backend for broadcasting
         #  {None, "dask", "loky", "multiprocessing", "threading"}
         #  None: no parallelization
@@ -1802,8 +1804,74 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         _y_metadata : dict with str keys, metadata from checking y
         _converter_store_y : dict, metadata from conversion for back-conversion
         """
+
         if X is None and y is None:
             return None, None
+        
+
+
+        #No need for heavy computations if the mtype is known, it means that the data had passed through _check_X_y before
+        config = self.get_config()
+        known_y_mtype = config.get("known_y_mtype")
+        known_X_mtype = config.get("known_X_mtype")
+        
+        #Doing the conversion/coersion part before hand if mtype is known
+        if known_y_mtype is not None:
+            import pandas as pd
+            from sktime.datatypes import convert
+
+            if y_inner_mtype is None:
+                y_inner_mtype = self.get_tag("y_inner_mtype")
+            X_inner_mtype = self.get_tag("X_inner_mtype")
+
+            # Dynamically detect pandas mtype and feature names to bypass slow discovery
+            if isinstance(y, pd.Series):
+                actual_y_mtype = "pd.Series"
+                feature_names = [y.name] if y.name is not None else [0]
+            elif isinstance(y, pd.DataFrame):
+                actual_y_mtype = "pd.DataFrame"
+                feature_names = y.columns.tolist()
+            else:
+                actual_y_mtype = known_y_mtype
+                feature_names = [0]
+
+            y_inner = convert(
+                y,
+                from_type=actual_y_mtype,
+                to_type=y_inner_mtype,
+                as_scitype="Series",
+                store=self._converter_store_y,
+                store_behaviour="reset",
+            )
+
+            if X is not None and known_X_mtype is not None:
+                if isinstance(X, pd.Series):
+                    actual_X_mtype = "pd.Series"
+                elif isinstance(X, pd.DataFrame):
+                    actual_X_mtype = "pd.DataFrame"
+                else:
+                    actual_X_mtype = known_X_mtype
+
+                X_inner = convert(
+                    X,
+                    from_type=actual_X_mtype,
+                    to_type=X_inner_mtype,
+                    as_scitype="Series"
+                )
+            else:
+                X_inner = None
+            # Set complete metadata passport so predictions compile perfectly
+            self._y_metadata = {
+                "mtype": actual_y_mtype,
+                "scitype": "Series",
+                "feature_names": feature_names,
+                "is_univariate": len(feature_names) == 1,
+            }
+            self._y_mtype_last_seen = actual_y_mtype
+
+            return X_inner, y_inner
+
+
 
         def _most_complex_scitype(scitypes, smaller_equal_than=None):
             """Return most complex scitype in a list of str."""
@@ -1999,10 +2067,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         #   y_inner_scitype are same as X_inner_scitype
         #   y_inner_scitype always includes "less index" scitypes
 
-        # convert X & y to supported inner type, if necessary
-        #####################################################
-
-        # convert X and y to a supported internal mtype
+        # convert X & y to a supported internal mtype
         #  it X/y mtype is already supported, no conversion takes place
         #  if X/y is None, then no conversion takes place (returns None)
         #  if vectorization is required, we wrap in Vect
@@ -2322,8 +2387,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             self._yvec = y
 
             if methodname == "fit":
+                est_template = self.clone().set_config(
+                    known_y_mtype="pd.DataFrame",
+                    known_X_mtype="pd.DataFrame"
+                )
                 forecasters_ = y.vectorize_est(
-                    self,
+                    est_template,
                     method="clone",
                     rowname_default="forecasters",
                     colname_default="forecasters",
