@@ -150,6 +150,7 @@ class TabPFNTSForecaster(BaseForecaster):
 
         context_df = self._y.copy()
         context_df = context_df.rename(columns={context_df.columns[0]: "target"})
+        context_df = context_df.iloc[-self.max_context_length :]
 
         context_df = context_df.reset_index()
         context_df.rename(columns={context_df.columns[0]: "timestamp"}, inplace=True)
