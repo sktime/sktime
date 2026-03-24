@@ -2067,7 +2067,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         #   y_inner_scitype are same as X_inner_scitype
         #   y_inner_scitype always includes "less index" scitypes
 
-        # convert X & y to a supported internal mtype
+        # convert X & y to supported inner type, if necessary
+        #####################################################
+
+        # convert X and y to a supported internal mtype
         #  it X/y mtype is already supported, no conversion takes place
         #  if X/y is None, then no conversion takes place (returns None)
         #  if vectorization is required, we wrap in Vect
@@ -2388,9 +2391,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
             if methodname == "fit":
                 est_template = self.clone().set_config(
-                    known_y_mtype="pd.DataFrame",
+                    known_y_mtype="pd.DataFrame", 
                     known_X_mtype="pd.DataFrame"
                 )
+                #passing these dummy values acts as a switch earlier when the known_mtypes were None we ran the complete _check_X_y() 
+                #now since we have provided some value only the convert/coerce part of _check_X_y() runs 
+                #the actual mtype is determined there this is just a dummy value which acts as the switch
                 forecasters_ = y.vectorize_est(
                     est_template,
                     method="clone",
