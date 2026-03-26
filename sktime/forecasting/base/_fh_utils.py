@@ -607,9 +607,18 @@ class PandasFHConverter:
             If ``freq`` is None (from ``PeriodIndex.from_ordinals``).
         """
         period_idx = pd.PeriodIndex.from_ordinals(values.copy(), freq=freq)
-        dt_idx = period_idx.to_timestamp()
-        if sub_period_offset is not None and sub_period_offset > pd.Timedelta(0):
-            dt_idx = dt_idx + sub_period_offset
+        if sub_period_offset == "period_end":
+            # variable-length freq (M, Q, Y) with cutoff at period end:
+            # use to_timestamp(how="end") and floor to day precision,
+            # since a fixed timedelta offset would be wrong across periods
+            # of different lengths (e.g., a June 30th cutoff gives a 29-day
+            # offset from June 1, but July 1 + 29 days = July 30th, not
+            # the correct month-end July 31st)
+            dt_idx = period_idx.to_timestamp(how="end").floor("D")
+        else:
+            dt_idx = period_idx.to_timestamp()
+            if sub_period_offset is not None and sub_period_offset > pd.Timedelta(0):
+                dt_idx = dt_idx + sub_period_offset
         if tz is not None:
             # localize to UTC first (no DST ambiguity), then convert
             # to target tz. Direct tz_localize(tz) would raise
@@ -749,6 +758,12 @@ class PandasFHConverter:
         that would otherwise be lost in the period-ordinal round-trip.
         Refer issue #5186.
 
+        For variable-length frequencies (M, Q, Y), a fixed timedelta
+        offset cannot correctly reconstruct dates across periods of
+        different lengths. When the cutoff is at period end, the string
+        ``"period_end"`` is returned instead of a timedelta, signaling
+        ``steps_to_datetime`` to use ``to_timestamp(how="end")``.
+
         Parameters
         ----------
         cutoff : pd.DatetimeIndex or pd.Timestamp
@@ -759,16 +774,22 @@ class PandasFHConverter:
 
         Returns
         -------
-        pd.Timedelta
+        pd.Timedelta or str
             Offset within the period (>= 0). Zero when the cutoff
-            falls exactly on a period boundary.
+            falls exactly on a period boundary. The string
+            ``"period_end"`` when the cutoff is at the end of a
+            variable-length period.
         """
         cutoff_ts = cutoff[-1] if isinstance(cutoff, pd.Index) else cutoff
         if cutoff_ts.tzinfo is not None:
             cutoff_naive = cutoff_ts.tz_localize(None)
         else:
             cutoff_naive = cutoff_ts
-        period_start = cutoff_naive.to_period(freq).to_timestamp()
+        period = cutoff_naive.to_period(freq)
+        period_start = period.to_timestamp()
+        period_end = period.to_timestamp(how="end").floor("D")
+        if cutoff_naive.floor("D") == period_end:
+            return "period_end"
         return cutoff_naive - period_start
 
     @staticmethod
