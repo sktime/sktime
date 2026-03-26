@@ -1025,8 +1025,10 @@ class _RecursiveReducer(_Reducer):
             for i in range(fh_max):
                 # Generate predictions.
                 y_pred_vector = self.estimator_.predict(X_last)
+                # use slice index_range[i:i+1] instead of [index_range[i]]
+                # to preserve freq on the resulting single-element DatetimeIndex
                 y_pred_curr = _create_fcst_df(
-                    [index_range[i]], self._y, fill=y_pred_vector
+                    index_range[i : i + 1], self._y, fill=y_pred_vector
                 )
                 y_pred.update(y_pred_curr)
 

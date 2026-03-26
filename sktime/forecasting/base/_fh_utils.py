@@ -1144,6 +1144,9 @@ def _index_range(relative, cutoff):
     absolute = cutoff + relative
 
     if is_timestamp:
-        # coerce back to DatetimeIndex after operation
+        # coerce back to DatetimeIndex after operation, preserving freq
+        # so downstream ForecastingHorizon construction doesn't fail
         absolute = absolute.to_timestamp(cutoff.freqstr)
+        if absolute.freq is None:
+            absolute.freq = cutoff.freqstr
     return absolute
