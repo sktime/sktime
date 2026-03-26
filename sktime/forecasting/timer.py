@@ -162,9 +162,8 @@ class TimerForecaster(BaseForecaster):
                 input_tensor, max_new_tokens=max_h
             )
 
-        # output shape: (batch_size, seq_len + max_h)
-        # extract only the generated tokens
-        forecast_values = output[0, len(context) :].cpu().numpy()
+        # output shape: (batch_size, max_h) -- Timer returns only the forecast
+        forecast_values = output[0].cpu().numpy()
 
         # Select only the requested horizon indices
         fh_idx = np.array(fh_relative) - 1  # convert to 0-indexed
