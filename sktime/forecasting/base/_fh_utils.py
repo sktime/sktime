@@ -610,10 +610,10 @@ class PandasFHConverter:
         if sub_period_offset == "period_end":
             # variable-length freq (M, Q, Y) with cutoff at period end:
             # use to_timestamp(how="end") and floor to day precision,
-            # since a fixed timedelta offset would be wrong across periods
-            # of different lengths (e.g., a June 30th cutoff gives a 29-day
-            # offset from June 1, but July 1 + 29 days = July 30th, not
-            # the correct month-end July 31st)
+            # since variable-length periods have different durations
+            # (e.g., 30 days in June vs 31 in July), so a fixed
+            # timedelta offset from one period's end would land on
+            # the wrong day in other periods
             dt_idx = period_idx.to_timestamp(how="end").floor("D")
         else:
             dt_idx = period_idx.to_timestamp()
@@ -797,9 +797,21 @@ class PandasFHConverter:
             cutoff_naive = cutoff_ts
         period = cutoff_naive.to_period(freq)
         period_start = period.to_timestamp()
-        period_end = period.to_timestamp(how="end").floor("D")
-        if cutoff_naive.floor("D") == period_end:
-            return "period_end"
+        period_end = period.to_timestamp(how="end")
+        # check if cutoff is at or near period end (within 1 day) AND
+        # freq is variable-length (M, Q, Y). Variable-length periods
+        # have different durations (e.g., 30 days in June vs 31 in July),
+        # so a fixed timedelta offset computed from one period's end
+        # position would land on the wrong day in other periods.
+        # For fixed-length freqs (D, h, min, s), the offset is constant
+        # across all periods, so it's always correct.
+        if (period_end - cutoff_naive) < pd.Timedelta(days=1):
+            try:
+                from pandas.tseries.frequencies import to_offset
+
+                to_offset(_resolve_pandas_freq(freq)).nanos
+            except ValueError:
+                return "period_end"
         return cutoff_naive - period_start
 
     @staticmethod
