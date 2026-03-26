@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.singleton import _multiton
 
 
 class TimerForecaster(BaseForecaster):
@@ -31,6 +32,9 @@ class TimerForecaster(BaseForecaster):
     Timer uses autoregressive generation on continuous time series tokens.
     The model is pre-trained on the Unified Time Series Dataset (UTSD)
     covering diverse domains and temporal patterns.
+
+    The model is cached using the multiton pattern to avoid reloading
+    weights when multiple forecaster instances share the same model.
 
     Parameters
     ----------
@@ -68,8 +72,6 @@ class TimerForecaster(BaseForecaster):
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
-    # todo: consider adding _multiton caching pattern (as in ChronosForecaster)
-    #  to avoid reloading the model when multiple instances share the same weights.
     _tags = {
         "scitype:y": "univariate",
         "y_inner_mtype": "pd.Series",
@@ -92,6 +94,33 @@ class TimerForecaster(BaseForecaster):
 
         super().__init__()
 
+    def _get_unique_key(self):
+        """Get unique key for Timer model to use in multiton cache."""
+        return str(sorted({
+            "model_name": self.model_name,
+            "device": self.device,
+        }.items()))
+
+    def _load_model(self):
+        """Load model via multiton cache."""
+        cached = _CachedTimer(
+            key=self._get_unique_key(),
+            model_name=self.model_name,
+            device=self.device,
+        )
+        return cached.load()
+
+    def __getstate__(self):
+        """Return state for pickling, excluding unpickleable model."""
+        state = self.__dict__.copy()
+        if "model_" in state:
+            state["model_"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state, model will be reloaded on next use."""
+        self.__dict__.update(state)
+
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -112,17 +141,8 @@ class TimerForecaster(BaseForecaster):
         -------
         self
         """
-        import torch
-        from transformers import AutoModelForCausalLM
-
         self._y_train = y.values.astype(np.float32)
-
-        self.model_ = AutoModelForCausalLM.from_pretrained(
-            self.model_name,
-            trust_remote_code=True,
-        )
-        self.model_.to(self.device)
-        self.model_.eval()
+        self.model_ = self._load_model()
 
         return self
 
@@ -145,6 +165,10 @@ class TimerForecaster(BaseForecaster):
             Forecasted values indexed by the forecasting horizon.
         """
         import torch
+
+        # Reload model if it was lost during pickling
+        if self.model_ is None:
+            self.model_ = self._load_model()
 
         fh_relative = fh.to_relative(self.cutoff)
         max_h = max(fh_relative)
@@ -203,3 +227,34 @@ class TimerForecaster(BaseForecaster):
             "device": "cpu",
         }
         return [params1]
+
+
+@_multiton
+class _CachedTimer:
+    """Cached Timer model to ensure only one instance exists in memory.
+
+    Timer is a zero-shot model and immutable during inference, so there
+    are no side effects from sharing the same instance across multiple uses.
+    """
+
+    def __init__(self, key, model_name, device):
+        self.key = key
+        self.model_name = model_name
+        self.device = device
+        self._model = None
+
+    def load(self):
+        """Load or return cached Timer model."""
+        if self._model is not None:
+            return self._model
+
+        from transformers import AutoModelForCausalLM
+
+        self._model = AutoModelForCausalLM.from_pretrained(
+            self.model_name,
+            trust_remote_code=True,
+        )
+        self._model.to(self.device)
+        self._model.eval()
+
+        return self._model
