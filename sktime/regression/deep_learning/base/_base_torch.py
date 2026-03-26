@@ -39,18 +39,18 @@ class BaseDeepRegressorTorch(BaseRegressor):
         https://pytorch.org/docs/stable/optim.html#algorithms
     optimizer_kwargs : dict, default = None
         The keyword arguments to be passed to the optimizer.
-    callbacks : None or str or a tuple of str, default = None
-        Currently only learning rate schedulers are supported as callbacks.
-        If more than one scheduler is passed, they are applied sequentially in the
-        order they are passed. If None, then no learning rate scheduler is used.
-        Note: Since PyTorch learning rate schedulers need to be initialized with
-        the optimizer object, we only accept the class name (str) of the scheduler here
-        and do not accept an instance of the scheduler. As that can lead to errors
-        and unexpected behavior.
+    callbacks : None, str, tuple of str, or list of pytorch_lightning.callbacks.Callback
+        Callbacks to be used during training.
+        - If a string or tuple of strings, they are interpreted as names of PyTorch
+        learning rate schedulers (e.g., 'ReduceLROnPlateau').
+        - If a list of Lightning callback objects, they will be used as generic
+        callbacks (e.g., EarlyStopping, ModelCheckpoint).
+        - Mixed use (both strings and Lightning callbacks) is allowed.
         List of available learning rate schedulers:
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
     callback_kwargs : dict or None, default = None
-        The keyword arguments to be passed to the callbacks.
+        Keyword arguments to pass when instantiating learning rate schedulers.
+        Ignored for Lightning callbacks.
     lr : float, default = 0.001
         The learning rate to be used in the optimizer.
     verbose : bool, default = True
@@ -62,7 +62,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
     _tags = {
         "authors": ["geetu040", "RecreationalMath"],
         "maintainers": ["geetu040", "RecreationalMath"],
-        "python_dependencies": ["torch"],
+        "python_dependencies": ["torch", "pytorch_lightning"],
         "X_inner_mtype": "numpy3D",
         "y_inner_mtype": "numpy1D",
         "capability:multivariate": True,
@@ -120,12 +120,36 @@ class BaseDeepRegressorTorch(BaseRegressor):
         self._optimizer = self._instantiate_optimizer()
         # instantiate callbacks (learning rate schedulers)
         self._schedulers = self._instantiate_schedulers()
+        # instantiate generic Lightning callbacks
+        self._lightning_callbacks = self._instantiate_lightning_callbacks()
         # build dataloader
         dataloader = self._build_dataloader(X, y)
 
+        # Call on_train_start for Lightning callbacks
+        if self._lightning_callbacks:
+            class TrainerProxy:
+                def __init__(self, model, optimizer):
+                    self.model = model
+                    self.optimizer = optimizer
+                    self.current_epoch = 0
+            self._trainer_proxy = TrainerProxy(self.network, self._optimizer)
+            for cb in self._lightning_callbacks:
+                cb.on_train_start(self._trainer_proxy)
+
         self.network.train()
         for epoch in range(self.num_epochs):
-            self._run_epoch(epoch, dataloader)
+            if self._lightning_callbacks:
+                self._trainer_proxy.current_epoch = epoch
+                for cb in self._lightning_callbacks:
+                    cb.on_epoch_start(self._trainer_proxy)
+            epoch_loss = self._run_epoch(epoch, dataloader)
+            if self._lightning_callbacks:
+                for cb in self._lightning_callbacks:
+                    cb.on_epoch_end(self._trainer_proxy, logs={"loss": epoch_loss})
+
+        if self._lightning_callbacks:
+            for cb in self._lightning_callbacks:
+                cb.on_train_end(self._trainer_proxy)
 
     def _run_epoch(self, epoch, dataloader):
         losses = []
@@ -150,6 +174,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         # print loss for the epoch, if verbose is True
         if self.verbose:
             print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
+        return epoch_loss
 
     def _instantiate_schedulers(self):
         """Instantiate the schedulers to be used during training.
@@ -198,16 +223,18 @@ class BaseDeepRegressorTorch(BaseRegressor):
                 "cosineannealingwarmrestarts": "CosineAnnealingWarmRestarts",
             }
         schedulers = []
+        # Only process items that are strings (LR scheduler names)
         for scheduler in self._callbacks:
             if isinstance(scheduler, str):
-                if scheduler.lower() in self._all_callbacks:
+                scheduler_lower = scheduler.lower()
+                if scheduler_lower in self._all_callbacks:
                     scheduler_class = _safe_import(
-                        f"torch.optim.lr_scheduler.{self._all_callbacks[scheduler.lower()]}"  # noqa: E501
-                    )
+                        f"torch.optim.lr_scheduler.{self._all_callbacks[scheduler_lower]}"
+                        )
                     if self.callback_kwargs:
                         schedulers.append(
                             scheduler_class(self._optimizer, **self.callback_kwargs)
-                        )
+                            )
                     else:
                         schedulers.append(scheduler_class(self._optimizer))
                 else:
@@ -217,14 +244,39 @@ class BaseDeepRegressorTorch(BaseRegressor):
                         "as a callback. Currently only learning rate schedulers are "
                         "supported as callbacks."
                     )
+                # non‑string items (Lightning callbacks) are ignored here
+            return schedulers
+
+    def _instantiate_lightning_callbacks(self):
+        """Instantiate generic callbacks from the callbacks parameter.
+
+        Returns
+        -------
+        list of callbacks that implement the Lightning callback interface
+        """
+        if self.callbacks is None:
+            return []
+
+        # Convert to list if needed
+        if not isinstance(self.callbacks, (list, tuple)):
+            cb_list = [self.callbacks]
+        else:
+            cb_list = list(self.callbacks)
+
+        lightning_callbacks = []
+        for cb in cb_list:
+            if isinstance(cb, str):
+                # This is a learning rate scheduler name handled by _instantiate_schedulers
+                continue
+            elif hasattr(cb, "on_train_start") and hasattr(cb, "on_epoch_end"):
+                # Assume it's a Lightning callback
+                lightning_callbacks.append(cb)
             else:
                 raise TypeError(
-                    "Callbacks can either be None, a str or a tuple of str representing"
-                    " a learning rate scheduler defined in PyTorch. "
-                    "As currently only learning rate schedulers are "
-                    f"supported as callbacks. But got {type(scheduler)} instead."
+                    f"Unsupported callback type: {type(cb)}. "
+                    "Only strings (LR schedulers) and Lightning callback objects are allowed."
                 )
-        return schedulers
+        return lightning_callbacks
 
     def _instantiate_optimizer(self):
         # if no optimizer is passed, use Adam as default
