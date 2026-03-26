@@ -785,8 +785,7 @@ class NaiveVariance(BaseForecaster):
         for a, error in zip(alpha, errors):
             pred_quantiles[(var_name, a)] = y_pred + error
 
-        fh_absolute = fh.to_absolute(self.cutoff)
-        pred_quantiles.index = fh_absolute.to_pandas()
+        pred_quantiles.index = fh.to_absolute_index(self.cutoff)
 
         return pred_quantiles
 
@@ -824,8 +823,7 @@ class NaiveVariance(BaseForecaster):
             )
 
         fh_relative = fh.to_relative(self.cutoff)
-        fh_absolute = fh.to_absolute(self.cutoff)
-        fh_absolute_ix = fh_absolute.to_pandas()
+        fh_absolute_ix = fh.to_absolute_index(self.cutoff)
 
         if cov:
             fh_size = len(fh)
