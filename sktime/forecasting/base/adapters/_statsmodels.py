@@ -90,7 +90,7 @@ class _StatsModelsAdapter(BaseForecaster):
                 index_diff = y.index.difference(
                     self._fitted_forecaster.fittedvalues.index
                 )
-                if len(index_diff) == 0:
+                if index_diff.empty:
                     return self
                 y = y.loc[index_diff]
                 X = X.loc[index_diff] if X is not None else None
