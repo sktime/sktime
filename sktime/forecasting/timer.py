@@ -68,6 +68,8 @@ class TimerForecaster(BaseForecaster):
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
+    # todo: consider adding _multiton caching pattern (as in ChronosForecaster)
+    #  to avoid reloading the model when multiple instances share the same weights.
     _tags = {
         "scitype:y": "univariate",
         "y_inner_mtype": "pd.Series",
