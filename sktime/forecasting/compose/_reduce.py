@@ -702,21 +702,24 @@ class _DirectReducer(_Reducer):
 
         if self.pooling == "global":
             fh_abs = fh.to_absolute_index(self.cutoff)
+            _cutoff_freq = getattr(self._cutoff, "freqstr", None)
             y_preds = []
 
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_last, **kwargs)
                 # use slice fh_abs[i:i+1] instead of [fh_abs[i]] to
                 # preserve freq on single-element DatetimeIndex
+                td = fh_abs[i : i + 1]
+                if hasattr(td, "freq") and td.freq is None and _cutoff_freq:
+                    try:
+                        td.freq = _cutoff_freq
+                    except ValueError:
+                        pass
                 if est_type == "regressor":
-                    y_pred_i = _create_fcst_df(
-                        fh_abs[i : i + 1], self._y, fill=y_pred_est
-                    )
+                    y_pred_i = _create_fcst_df(td, self._y, fill=y_pred_est)
                 else:  # est_type == "regressor_proba"
                     y_pred_v = _coerce_to_numpy(y_pred_est)
-                    y_pred_i = _create_fcst_df(
-                        fh_abs[i : i + 1], y_pred_est, fill=y_pred_v
-                    )
+                    y_pred_i = _create_fcst_df(td, y_pred_est, fill=y_pred_v)
                 y_preds.append(y_pred_i)
             y_pred = pool_preds(y_preds)
 
@@ -749,6 +752,11 @@ class _DirectReducer(_Reducer):
             else:  # est_type == "regressor_proba"
                 y_preds = []
 
+            # extract cutoff freq for constructing freq-bearing single-element
+            # DatetimeIndex slices, since y_pred_est (sklearn output) has no
+            # time index for _create_fcst_df to extract freq from
+            _cutoff_freq = getattr(self._cutoff, "freqstr", None)
+
             # Iterate over estimators/forecast horizon
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_pred, **kwargs)
@@ -756,9 +764,13 @@ class _DirectReducer(_Reducer):
                     y_pred[i] = y_pred_est[0]
                 else:  # est_type == "regressor_proba"
                     y_pred_v = _coerce_to_numpy(y_pred_est)
-                    y_pred_i = _create_fcst_df(
-                        fh_abs_idx[i : i + 1], y_pred_est, fill=y_pred_v
-                    )
+                    td = fh_abs_idx[i : i + 1]
+                    if hasattr(td, "freq") and td.freq is None and _cutoff_freq:
+                        try:
+                            td.freq = _cutoff_freq
+                        except ValueError:
+                            pass
+                    y_pred_i = _create_fcst_df(td, y_pred_est, fill=y_pred_v)
                     y_preds.append(y_pred_i)
 
             if est_type != "regressor":
