@@ -467,7 +467,7 @@ class _Reducer(_BaseWindowForecaster):
         # contains the value the window is summarized to.
 
         if self._X is not None:
-            X = _create_fcst_df([index_range[-1]], self._X)
+            X = _create_fcst_df(index_range[-1:], self._X)
             X.update(self._X)
             if X_update is not None:
                 X.update(X_update)
@@ -706,15 +706,22 @@ class _DirectReducer(_Reducer):
 
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_last, **kwargs)
+                # use slice fh_abs[i:i+1] instead of [fh_abs[i]] to
+                # preserve freq on single-element DatetimeIndex
                 if est_type == "regressor":
-                    y_pred_i = _create_fcst_df([fh_abs[i]], self._y, fill=y_pred_est)
+                    y_pred_i = _create_fcst_df(
+                        fh_abs[i : i + 1], self._y, fill=y_pred_est
+                    )
                 else:  # est_type == "regressor_proba"
                     y_pred_v = _coerce_to_numpy(y_pred_est)
-                    y_pred_i = _create_fcst_df([fh_abs[i]], y_pred_est, fill=y_pred_v)
+                    y_pred_i = _create_fcst_df(
+                        fh_abs[i : i + 1], y_pred_est, fill=y_pred_v
+                    )
                 y_preds.append(y_pred_i)
             y_pred = pool_preds(y_preds)
 
         else:
+            fh_abs_idx = fh.to_absolute_index(self.cutoff)
             # Pre-allocate arrays.
             if self._X is None:
                 n_columns = 1
@@ -749,7 +756,9 @@ class _DirectReducer(_Reducer):
                     y_pred[i] = y_pred_est[0]
                 else:  # est_type == "regressor_proba"
                     y_pred_v = _coerce_to_numpy(y_pred_est)
-                    y_pred_i = _create_fcst_df([fh[i]], y_pred_est, fill=y_pred_v)
+                    y_pred_i = _create_fcst_df(
+                        fh_abs_idx[i : i + 1], y_pred_est, fill=y_pred_v
+                    )
                     y_preds.append(y_pred_i)
 
             if est_type != "regressor":
@@ -1754,7 +1763,19 @@ def _create_fcst_df(target_date, origin_df, fill=None):
     """
     if not isinstance(target_date, ForecastingHorizon):
         ix = pd.Index(target_date)
-        fh = ForecastingHorizon(ix, is_relative=False)
+        # ix may be a freq-less DatetimeIndex (e.g., single-element result
+        # from to_timestamp, or from _index_range). Try multiple freq
+        # sources: ix itself, then origin_df's time index (.freq or
+        # .inferred_freq).
+        freq = getattr(ix, "freq", None)
+        if freq is None:
+            oidx = origin_df.index
+            if isinstance(oidx, pd.MultiIndex):
+                oidx = oidx.get_level_values(-1).unique()
+            freq = getattr(oidx, "freq", None)
+            if freq is None:
+                freq = getattr(oidx, "inferred_freq", None)
+        fh = ForecastingHorizon(ix, is_relative=False, freq=freq)
     else:
         fh = target_date.to_absolute()
 

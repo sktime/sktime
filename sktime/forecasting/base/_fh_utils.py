@@ -619,6 +619,16 @@ class PandasFHConverter:
             dt_idx = period_idx.to_timestamp()
             if sub_period_offset is not None and sub_period_offset > pd.Timedelta(0):
                 dt_idx = dt_idx + sub_period_offset
+        # pandas can't infer freq from a single timestamp, so
+        # to_timestamp() returns freq=None for 1-element PeriodIndex
+        # (both the default and how="end" branches above). Restore
+        # freq from the source PeriodIndex so downstream FH
+        # construction doesn't reject the DatetimeIndex as freq-less.
+        if len(dt_idx) == 1 and dt_idx.freq is None:
+            try:
+                dt_idx.freq = period_idx.freqstr
+            except ValueError:
+                pass  # freq doesn't conform after sub_period_offset
         if tz is not None:
             # localize to UTC first (no DST ambiguity), then convert
             # to target tz. Direct tz_localize(tz) would raise
