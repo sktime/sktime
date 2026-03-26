@@ -114,6 +114,8 @@ class SingleWindowSplitter(BaseSplitter):
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
         fh = _check_fh(self.fh)
+        # resolve deferred nanos so array_is_int(fh) and fh.to_numpy() are correct
+        fh.freq = y
         train_end = _get_end(y_index=y, fh=fh)
         training_window = _get_train_window_via_endpoint(y, train_end, window_length)
         if array_is_int(fh):
@@ -164,6 +166,8 @@ class SingleWindowSplitter(BaseSplitter):
             )
         fh = _check_fh(self.fh)
         y = get_index_for_series(y)
+        # resolve deferred nanos after y is converted to Index
+        fh.freq = y
         end = _get_end(y_index=y, fh=fh)
         return np.array([end])
 

@@ -95,7 +95,15 @@ def _check_cutoffs_fh_y(
         if ``cutoffs`` and ``fh`` type combination is not supported
     """
     max_cutoff = np.max(cutoffs)
-    max_fh = fh.max()
+    # compute max_fh in a way that works for all documented fh types:
+    # ForecastingHorizon (including nanos-mode), int, timedelta, list, ndarray.
+    # For ForecastingHorizon, fh.to_pandas() preserves the semantic type
+    # (TimedeltaIndex for nanos, integer Index otherwise) so is_timedelta
+    # checks work correctly. For raw types, np.max handles them directly.
+    if hasattr(fh, "to_pandas"):
+        max_fh = fh.to_pandas()[-1]
+    else:
+        max_fh = np.max(fh)
 
     msg = "`fh` is incompatible with given `cutoffs` and `y`."
     if is_int(x=max_cutoff) and is_int(x=max_fh):
@@ -174,9 +182,15 @@ class CutoffSplitter(BaseSplitter):
         _check_cutoffs_and_y(cutoffs=cutoffs, y=y)
         _check_cutoffs_fh_y(cutoffs=cutoffs, fh=fh, y=y)
 
+        # use fh.to_pandas() for split loop arithmetic: returns TimedeltaIndex
+        # for nanos-mode FH (correct for datetime cutoff arithmetic) and
+        # integer Index for resolved FH (correct for integer cutoff arithmetic).
+        # fh.to_numpy() would return raw nanos or integers that can't be added
+        # to Timestamps directly.
+        fh_pd = fh.to_pandas()
         for cutoff in cutoffs:
             training_window = _get_train_window_via_endpoint(y, cutoff, window_length)
-            test_window = cutoff + fh.to_numpy()
+            test_window = cutoff + fh_pd.to_numpy()
             if is_datetime(x=cutoff):
                 test_window = y.get_indexer(test_window[test_window >= y.min()])
             yield training_window, test_window

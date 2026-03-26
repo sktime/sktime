@@ -142,6 +142,12 @@ class BaseWindowSplitter(BaseSplitter):
             y=y, fh=fh, window_length=window_length, initial_window=initial_window
         )
 
+        # resolve deferred nanos (freq-less Timedelta input) to integer steps
+        # using y's frequency, before split methods use fh.to_numpy(), fh[-1],
+        # or array_is_int(fh). Must be AFTER _check_window_lengths which works
+        # correctly with unresolved nanos via fh.to_pandas() -> TimedeltaIndex.
+        fh.freq = y
+
         if self._initial_window is not None:
             yield self._split_for_initial_window(y)
 
@@ -161,6 +167,9 @@ class BaseWindowSplitter(BaseSplitter):
             Integer indices of the train/test windows
         """
         fh = _check_fh(self.fh)
+        # resolve deferred nanos so fh.to_numpy() returns integer steps,
+        # not raw nanoseconds, for correct test window index arithmetic
+        fh.freq = y
         if not self.start_with_window:
             raise ValueError(
                 "`start_with_window` must be True if `initial_window` is given"
@@ -235,11 +244,6 @@ class BaseWindowSplitter(BaseSplitter):
             train = self._get_train_window(
                 y=y, train_start=train_start, split_point=split_point
             )
-            # Below line added after ForecastingHorizon v2 rework.
-            # Resolve deferred nanos (freq-less TimedeltaIndex input) to
-            # integer steps using y's frequency.  After this, to_pandas()
-            # returns an integer pd.Index and array_is_int is True.
-            fh.freq = y
             fh_pd = fh.to_pandas()
             if array_is_int(fh_pd):
                 test = split_point + fh_pd.to_numpy() - 1
@@ -363,6 +367,8 @@ class BaseWindowSplitter(BaseSplitter):
             )
         y = get_index_for_series(y)
         fh = _check_fh(self.fh)
+        # resolve deferred nanos so _get_start and _get_end see integer steps
+        fh.freq = y
         step_length = check_step_length(self.step_length)
 
         if self._initial_window is None:
