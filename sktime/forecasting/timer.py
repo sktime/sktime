@@ -79,7 +79,7 @@ class TimerForecaster(BaseForecaster):
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "python_dependencies": ["transformers>=4.40", "torch"],
+        "python_dependencies": ["transformers>=4.40,<4.45", "torch"],
     }
 
     def __init__(
@@ -144,6 +144,14 @@ class TimerForecaster(BaseForecaster):
         self._y_train = y.values.astype(np.float32)
         self.model_ = self._load_model()
 
+        # Timer requires at least input_token_len observations
+        min_len = self.model_.config.input_token_len
+        if len(self._y_train) < min_len:
+            raise ValueError(
+                f"Timer requires at least {min_len} observations, "
+                f"got {len(self._y_train)}."
+            )
+
         return self
 
     def _predict(self, fh, X=None):
@@ -177,6 +185,11 @@ class TimerForecaster(BaseForecaster):
         context = self._y_train
         if len(context) > self.context_length:
             context = context[-self.context_length :]
+
+        # Timer requires input length to be a multiple of input_token_len
+        token_len = self.model_.config.input_token_len
+        usable_len = (len(context) // token_len) * token_len
+        context = context[-usable_len:]
 
         # Timer expects shape (batch_size, seq_len)
         input_tensor = torch.tensor(
@@ -223,7 +236,7 @@ class TimerForecaster(BaseForecaster):
         """
         params1 = {
             "model_name": "thuml/timer-base-84m",
-            "context_length": 512,
+            "context_length": 960,
             "device": "cpu",
         }
         return [params1]
@@ -254,7 +267,10 @@ class _CachedTimer:
             self.model_name,
             trust_remote_code=True,
         )
+
         self._model.to(self.device)
         self._model.eval()
 
         return self._model
+
+
