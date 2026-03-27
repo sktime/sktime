@@ -281,8 +281,7 @@ class ConformalIntervals(BaseForecaster):
     def _predict_interval_series(self, fh, coverage, y_pred):
         """Compute prediction intervals predict_interval for series scitype."""
         fh_relative = fh.to_relative(self.cutoff)
-        fh_absolute = fh.to_absolute(self.cutoff)
-        fh_absolute_idx = fh_absolute.to_pandas()
+        fh_absolute_idx = fh.to_absolute_index(self.cutoff)
 
         if self.fh_early_:
             residuals_matrix = self.residuals_matrix_
