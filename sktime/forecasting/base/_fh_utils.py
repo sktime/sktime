@@ -24,13 +24,45 @@ import pandas as pd
 _PANDAS_FH_INPUT_TYPES = pd.Index
 
 
+# Detect once at import: old pandas (< 2.2) rejects "Y-DEC" in period
+# context but accepts "A-DEC". On modern pandas both work.
+_PERIOD_NEEDS_OLD_YEARLY = False
+try:
+    pd.Period("2000", freq="Y-DEC")
+except ValueError:
+    _PERIOD_NEEDS_OLD_YEARLY = True
+
+# The set of yearly bases that need A-substitution on old pandas.
+_YEARLY_BASES = {"Y", "YE", "YS", "A", "AE", "AS"}
+
+
+def _resolve_freq_for_period(freq):
+    """Resolve freq string to a form accepted by pandas period-context APIs.
+
+    Period-context APIs (``to_period``, ``PeriodIndex``, ``Period``) on older
+    pandas (< 2.2) reject anchored yearly forms like ``"Y-DEC"`` but accept
+    ``"A-DEC"``. This function substitutes the base on old pandas.
+    No-op on modern pandas.
+    """
+    if freq is None or not _PERIOD_NEEDS_OLD_YEARLY:
+        return freq
+    mult, base, suffix = _parse_freq(freq)
+    if base in _YEARLY_BASES and suffix:
+        return f"{mult}A{suffix}"
+    return freq
+
+
 def _period_index_from_ordinals(ordinals, freq):
     """Construct PeriodIndex from integer ordinals, compatible with all pandas versions.
 
     ``PeriodIndex.from_ordinals`` was added in pandas ~2.2. Older versions
     (e.g., 2.0.2 used in test-deps-2023) only support the ``ordinal`` keyword
     in the ``PeriodIndex`` constructor.
+
+    Freq is resolved via ``_resolve_freq_for_period`` so that canonical freq
+    strings like ``"Y-DEC"`` are mapped to ``"A-DEC"`` on older pandas.
     """
+    freq = _resolve_freq_for_period(freq)
     if hasattr(pd.PeriodIndex, "from_ordinals"):
         return pd.PeriodIndex.from_ordinals(ordinals, freq=freq)
     # fallback for pandas < 2.2
@@ -348,7 +380,7 @@ class PandasFHConverter:
                     "ForecastingHorizon(values, freq=...) or use a "
                     "DatetimeIndex with freq set."
                 )
-            arr = values.to_period(freq_str).asi8.copy()
+            arr = values.to_period(_resolve_freq_for_period(freq_str)).asi8.copy()
             return (arr, False, freq_str, False)
 
         # TimedeltaIndex -> steps (with freq) or nanos (without freq)
@@ -478,7 +510,7 @@ class PandasFHConverter:
                     "supported. Provide freq explicitly via "
                     "ForecastingHorizon(values, freq=...)."
                 )
-            arr = idx.to_period(freq_str).asi8.copy()
+            arr = idx.to_period(_resolve_freq_for_period(freq_str)).asi8.copy()
             return (arr, False, freq_str, False)
 
         # offset objects -> timedelta path
@@ -708,7 +740,7 @@ class PandasFHConverter:
                     "integer steps. Provide freq on the ForecastingHorizon "
                     "or use a PeriodIndex cutoff."
                 )
-            period = cutoff.to_period(freq)
+            period = cutoff.to_period(_resolve_freq_for_period(freq))
             return np.int64(period.ordinal)
 
         if isinstance(cutoff, (int, np.integer)):
@@ -809,7 +841,7 @@ class PandasFHConverter:
             cutoff_naive = cutoff_ts.tz_localize(None)
         else:
             cutoff_naive = cutoff_ts
-        period = cutoff_naive.to_period(freq)
+        period = cutoff_naive.to_period(_resolve_freq_for_period(freq))
         period_start = period.to_timestamp()
         period_end = period.to_timestamp(how="end")
         # check if cutoff is at or near period end (within 1 day) AND
