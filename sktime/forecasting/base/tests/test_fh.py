@@ -436,6 +436,11 @@ def _get_expected_freqstr(freqstr):
     on old pandas vs 'h' on new pandas). This function returns what
     PeriodIndex.freqstr would actually produce for the given freq, by
     constructing a test PeriodIndex and reading its freqstr.
+
+    Note: this checks that FH produces a correct PeriodIndex for the given
+    freq, but does not verify that the freqstr matches our internal canonical
+    form. That is a weaker assertion than checking against canonical directly,
+    but is necessary for cross-pandas-version compatibility.
     """
     import numpy as np
 
