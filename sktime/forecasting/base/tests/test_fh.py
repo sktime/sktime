@@ -429,12 +429,20 @@ FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 
 
 def _get_expected_freqstr(freqstr):
-    """Get expected canonical frequency string for the new FH.
+    """Get expected PeriodIndex.freqstr for a given input frequency.
 
-    The new FH stores canonical freq strings that align with Period-context
-    APIs. PeriodIndex.freqstr returns the same canonical form.
+    FH v2 stores canonical freq strings internally, but PeriodIndex.freqstr
+    may return different aliases depending on the pandas version (e.g., 'H'
+    on old pandas vs 'h' on new pandas). This function returns what
+    PeriodIndex.freqstr would actually produce for the given freq, by
+    constructing a test PeriodIndex and reading its freqstr.
     """
-    return PandasFHConverter.normalize_freq(freqstr)
+    import numpy as np
+
+    from sktime.forecasting.base._fh_utils import _period_index_from_ordinals
+
+    pi = _period_index_from_ordinals(np.array([1]), freq=freqstr)
+    return pi.freqstr
 
 
 @pytest.mark.skipif(
