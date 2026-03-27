@@ -23,6 +23,20 @@ import pandas as pd
 
 _PANDAS_FH_INPUT_TYPES = pd.Index
 
+
+def _period_index_from_ordinals(ordinals, freq):
+    """Construct PeriodIndex from integer ordinals, compatible with all pandas versions.
+
+    ``PeriodIndex.from_ordinals`` was added in pandas ~2.2. Older versions
+    (e.g., 2.0.2 used in test-deps-2023) only support the ``ordinal`` keyword
+    in the ``PeriodIndex`` constructor.
+    """
+    if hasattr(pd.PeriodIndex, "from_ordinals"):
+        return pd.PeriodIndex.from_ordinals(ordinals, freq=freq)
+    # fallback for pandas < 2.2
+    return pd.PeriodIndex(ordinal=ordinals, freq=freq)
+
+
 from sktime.forecasting.base._freq_mnemonic import (
     _ALIAS_TO_CANONICAL_STATIC,
     _FREQ_GROUPS,
@@ -543,7 +557,7 @@ class PandasFHConverter:
             return pd.TimedeltaIndex(td_arr)
 
         if not is_relative and freq is not None:
-            return pd.PeriodIndex.from_ordinals(values.copy(), freq=freq)
+            return _period_index_from_ordinals(values.copy(), freq=freq)
 
         return pd.Index(values.copy(), dtype=int)
 
@@ -604,9 +618,9 @@ class PandasFHConverter:
         Raises
         ------
         ValueError
-            If ``freq`` is None (from ``PeriodIndex.from_ordinals``).
+            If ``freq`` is None.
         """
-        period_idx = pd.PeriodIndex.from_ordinals(values.copy(), freq=freq)
+        period_idx = _period_index_from_ordinals(values.copy(), freq=freq)
         if sub_period_offset == "period_end":
             # variable-length freq (M, Q, Y) with cutoff at period end:
             # use to_timestamp(how="end") and floor to day precision,
