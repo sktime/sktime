@@ -86,7 +86,7 @@ class _DummyDeepClassifierPytorch(BaseDeepClassifierPytorch):
         import torch.nn as nn
 
         n_channels, series_length = X.shape[1:]
-        n_classes = len(set(y))
+        n_classes = len(np.unique(y))
 
         class Net(nn.Module):
             def __init__(self):
@@ -642,3 +642,5 @@ def test_pytorch_deep_estimator_dummy():
     
     assert clf.is_fitted
     assert len(y_pred) == len(y)
+    assert y_pred.ndim == 1
+    assert set(y_pred).issubset(set(y))
