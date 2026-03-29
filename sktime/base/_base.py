@@ -493,7 +493,7 @@ class TagAliaserMixin(_TagAliaserMixin):
             if old_tag_present:
                 # negate if new tag was queried and tag is in FLIPPED_TAGS
                 # todo 1.0.0 - remove this special case
-                if new_tag_queried and old_tag_name in self.FLIPPED_TAGS:
+                if new_tag_queried and old_tag_name in cls.FLIPPED_TAGS:
                     return not old_tag_val
                 # todo 1.1.0 - remove this special case
                 if new_tag_queried and old_tag_name == "scitype:y":
