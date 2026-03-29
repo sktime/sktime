@@ -255,9 +255,6 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         # ajati, wgifford, vijaye12 for ibm-granite code
         "maintainers": ["geetu040"],
         "python_dependencies": [
-            "transformers",
-            "torch",
-            "accelerate>=0.26.0",
             "granite-tsfm",
         ],
         # estimator type
@@ -318,14 +315,14 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         if use_source_package is not None:
             warn(
                 "The use_source_package parameter of TinyTimeMixerForecaster is "
-                "deprecated since sktime 0.40.1 and will be removed in 0.42.0. "
+                "deprecated since sktime 0.40.1 and will be removed in 1.1.0. "
                 "The granite-tsfm PyPI package is now the only supported source; "
                 "the parameter has no effect. "
                 "Please remove use_source_package from your code.",
                 category=DeprecationWarning,
                 obj=self,
             )
-        # TODO 1.0.0: remove use_source_package parameter entirely
+        # TODO 1.1.0: remove use_source_package parameter entirely
 
         if self.broadcasting:
             self.set_tags(
@@ -450,15 +447,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 ignore_mismatched_sizes=True,
             )
         else:
-            if self.fit_strategy in ("zero-shot", "minimal"):
-                raise ValueError(
-                    "Invalid configuration: 'model_path' is set to None."
-                    " This requires 'fit_strategy' to be 'full'."
-                    "Please set 'fit_strategy' to 'full' or provide a valid model path."
-                )
-            # Initialize model with default config
             self.model = TinyTimeMixerForPrediction(config=config)
-            info = {"mismatched_keys": []}
 
         if self.fit_strategy == "zero-shot":
             if len(info["mismatched_keys"]) > 0:
@@ -913,8 +902,8 @@ class PyTorchDataset(Dataset):
                     :,
                 ]
 
-            # tsfm_public's forward() has no dedicated exogenous parameter,
-            # so exogenous variables cannot be passed via the Trainer batch.
-            # Exogenous support during inference is handled in _predict instead.
+            # Concatenate past and future exogenous for the full sequence
+            full_exog = np.concatenate([past_exog, future_exog], axis=0)
+            result["exogenous_values"] = tensor(full_exog).float()
 
         return result
