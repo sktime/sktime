@@ -199,7 +199,7 @@ class ImpulseResponseFunction(BaseParamFitter):
         -------
         self : reference to self
         """
-        from statsmodels.tsa.api import VECM, VAR
+        from statsmodels.tsa.api import VAR, VECM
         from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor
         from statsmodels.tsa.statespace.varmax import VARMAX
 
@@ -207,14 +207,13 @@ class ImpulseResponseFunction(BaseParamFitter):
             "DynamicFactor": DynamicFactor,
             "VARMAX": VARMAX,
             # IRFANALYSIS Methods from here
-            "VAR": VAR,  
+            "VAR": VAR,
             "VECM": VECM,
-            
         }
 
         model_name = self.model.__class__.__name__
         sm_wrapper = self.model._fitted_forecaster
-     
+
         if len(X.shape) < 2 or X.shape[1] < 2:
             # some models have problem with univariate d,ata need warning
             # to show that results can not be calculated univariate,
@@ -240,7 +239,7 @@ class ImpulseResponseFunction(BaseParamFitter):
 
             self.irf_ = irf_slice[:, :, self.impulse]
             return self
-        
+
         ImportedModel = MODEL_MAPPING[model_name]
         k_vars = sm_wrapper.model.k_endog
         fitted_params = sm_wrapper.params
@@ -265,16 +264,16 @@ class ImpulseResponseFunction(BaseParamFitter):
                 error_order=error_order,
                 enforce_stationarity=False,
             )
-        
+
         else:
             raise ValueError(f"Unknown model type: {model_name}")
 
         irf_result = dummy_model.impulse_responses(
-            params=fitted_params, 
-            steps=self.steps, 
+            params=fitted_params,
+            steps=self.steps,
             orthogonalized=self.orthogonalized,
-            cumulative = self.cumulative,
-            impulse = self.impulse
+            cumulative=self.cumulative,
+            impulse=self.impulse,
         )
 
         self.irf_ = irf_result
