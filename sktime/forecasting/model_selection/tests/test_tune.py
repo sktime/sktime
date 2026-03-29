@@ -352,7 +352,7 @@ def optuna_param_grids():
 
 
 def optuna_samplers():
-    if not _check_soft_dependencies("optuna", severity="none")
+    if not _check_soft_dependencies("optuna", severity="none"):
         return [None]
     else:
         import optuna
