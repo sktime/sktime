@@ -554,9 +554,14 @@ class MAPAForecaster(BaseForecaster):
         forecasts = np.vstack(forecasts)
         final_forecast = self._combine_forecasts(forecasts)
 
+        # initially, index was passed as index=fh.to_absolute(self.cutoff).to_pandas()
+        # it was changed after forecasting horizon v2 rework.
+        # In the new FH, `to_pandas()` returns a `PeriodIndex` for absolute FH,
+        # which may not match the cutoff's type (e.g., DatetimeIndex cutoff).
+        # `to_absolute_index(cutoff)` returns an Index matching the cutoff type.
         result = pd.DataFrame(
             final_forecast.reshape(-1, len(self._y_cols)),
-            index=fh.to_absolute(self.cutoff).to_pandas(),
+            index=fh.to_absolute_index(self.cutoff),
             columns=self._y_cols,
         )
 

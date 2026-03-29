@@ -57,7 +57,8 @@ def _check_window_lengths(
         if type of the input is not supported
     """
     n_timepoints = y.shape[0]
-    fh_max = fh[-1]
+    fh_pd = fh.to_pandas()
+    fh_max = fh_pd[-1]
 
     error_msg_for_incompatible_window_length = (
         f"The `window_length` and the forecasting horizon are incompatible "
@@ -141,6 +142,12 @@ class BaseWindowSplitter(BaseSplitter):
             y=y, fh=fh, window_length=window_length, initial_window=initial_window
         )
 
+        # resolve deferred nanos (freq-less Timedelta input) to integer steps
+        # using y's frequency, before split methods use fh.to_numpy(), fh[-1],
+        # or array_is_int(fh). Must be AFTER _check_window_lengths which works
+        # correctly with unresolved nanos via fh.to_pandas() -> TimedeltaIndex.
+        fh.freq = y
+
         if self._initial_window is not None:
             yield self._split_for_initial_window(y)
 
@@ -160,6 +167,9 @@ class BaseWindowSplitter(BaseSplitter):
             Integer indices of the train/test windows
         """
         fh = _check_fh(self.fh)
+        # resolve deferred nanos so fh.to_numpy() returns integer steps,
+        # not raw nanoseconds, for correct test window index arithmetic
+        fh.freq = y
         if not self.start_with_window:
             raise ValueError(
                 "`start_with_window` must be True if `initial_window` is given"
@@ -234,12 +244,11 @@ class BaseWindowSplitter(BaseSplitter):
             train = self._get_train_window(
                 y=y, train_start=train_start, split_point=split_point
             )
-            if array_is_int(fh):
-                test = split_point + fh.to_numpy() - 1
+            fh_pd = fh.to_pandas()
+            if array_is_int(fh_pd):
+                test = split_point + fh_pd.to_numpy() - 1
             else:
-                test = np.argwhere(
-                    y.isin(y[max(0, split_point - 1)] + fh.to_pandas())
-                ).flatten()
+                test = np.argwhere(y.isin(y[max(0, split_point - 1)] + fh_pd)).flatten()
                 if split_point == 0:
                     test -= 1
             yield train, test
@@ -284,7 +293,8 @@ class BaseWindowSplitter(BaseSplitter):
         # For in-sample forecasting horizons, the first split must ensure that
         # in-sample test set is still within the data.
         if not fh.is_all_out_of_sample():
-            fh_min = abs(fh[0])
+            fh_pd = fh.to_pandas()
+            fh_min = abs(fh_pd[0])
             if is_int(fh_min):
                 start = fh_min + 1 if fh_min >= start else start
             else:
@@ -357,6 +367,8 @@ class BaseWindowSplitter(BaseSplitter):
             )
         y = get_index_for_series(y)
         fh = _check_fh(self.fh)
+        # resolve deferred nanos so _get_start and _get_end see integer steps
+        fh.freq = y
         step_length = check_step_length(self.step_length)
 
         if self._initial_window is None:

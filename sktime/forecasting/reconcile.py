@@ -212,7 +212,9 @@ class ReconcilerForecaster(BaseForecaster):
         self.forecaster_.fit(y=y, X=X, fh=fh)
         # bug in self.forecaster_.predict_residuals() for heir data
         fh_resid = ForecastingHorizon(
-            y.index.get_level_values(-1).unique(), is_relative=False
+            y.index.get_level_values(-1).unique(),
+            is_relative=False,
+            freq=self._cutoff,
         )
         self.residuals_ = y - self.forecaster_.predict(fh=fh_resid, X=X)
 
@@ -308,7 +310,9 @@ class ReconcilerForecaster(BaseForecaster):
         # update self.residuals_
         # bug in self.forecaster_.predict_residuals() for heir data
         fh_resid = ForecastingHorizon(
-            y.index.get_level_values(-1).unique(), is_relative=False
+            y.index.get_level_values(-1).unique(),
+            is_relative=False,
+            freq=self._cutoff,
         )
         update_residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
         self.residuals_ = pd.concat([self.residuals_, update_residuals], axis=0)

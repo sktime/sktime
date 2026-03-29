@@ -66,7 +66,9 @@ def test_pred_errors_against_y_test(fh):
 
     intervals = f.predict_interval(fh=fh, coverage=0.9)
 
-    y_test = y_test.iloc[check_fh(fh) - 1]
+    # FH v2 subtraction returns a ForecastingHorizon, not an array;
+    # convert to numpy for iloc indexing
+    y_test = y_test.iloc[check_fh(fh).to_numpy() - 1]
 
     # Performance should be good enough that all point forecasts lie within the
     # prediction intervals.

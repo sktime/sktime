@@ -35,7 +35,7 @@ from sklearn.multioutput import MultiOutputRegressor
 
 from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.forecasting.base._fh import _index_range
+from sktime.forecasting.base._fh_utils import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
@@ -467,7 +467,7 @@ class _Reducer(_BaseWindowForecaster):
         # contains the value the window is summarized to.
 
         if self._X is not None:
-            X = _create_fcst_df([index_range[-1]], self._X)
+            X = _create_fcst_df(index_range[-1:], self._X)
             X.update(self._X)
             if X_update is not None:
                 X.update(X_update)
@@ -702,19 +702,29 @@ class _DirectReducer(_Reducer):
 
         if self.pooling == "global":
             fh_abs = fh.to_absolute_index(self.cutoff)
+            _cutoff_freq = getattr(self._cutoff, "freqstr", None)
             y_preds = []
 
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_last, **kwargs)
+                # use slice fh_abs[i:i+1] instead of [fh_abs[i]] to
+                # preserve freq on single-element DatetimeIndex
+                td = fh_abs[i : i + 1]
+                if hasattr(td, "freq") and td.freq is None and _cutoff_freq:
+                    try:
+                        td.freq = _cutoff_freq
+                    except ValueError:
+                        pass
                 if est_type == "regressor":
-                    y_pred_i = _create_fcst_df([fh_abs[i]], self._y, fill=y_pred_est)
+                    y_pred_i = _create_fcst_df(td, self._y, fill=y_pred_est)
                 else:  # est_type == "regressor_proba"
                     y_pred_v = _coerce_to_numpy(y_pred_est)
-                    y_pred_i = _create_fcst_df([fh_abs[i]], y_pred_est, fill=y_pred_v)
+                    y_pred_i = _create_fcst_df(td, y_pred_est, fill=y_pred_v)
                 y_preds.append(y_pred_i)
             y_pred = pool_preds(y_preds)
 
         else:
+            fh_abs_idx = fh.to_absolute_index(self.cutoff)
             # Pre-allocate arrays.
             if self._X is None:
                 n_columns = 1
@@ -742,6 +752,11 @@ class _DirectReducer(_Reducer):
             else:  # est_type == "regressor_proba"
                 y_preds = []
 
+            # extract cutoff freq for constructing freq-bearing single-element
+            # DatetimeIndex slices, since y_pred_est (sklearn output) has no
+            # time index for _create_fcst_df to extract freq from
+            _cutoff_freq = getattr(self._cutoff, "freqstr", None)
+
             # Iterate over estimators/forecast horizon
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_pred, **kwargs)
@@ -749,7 +764,13 @@ class _DirectReducer(_Reducer):
                     y_pred[i] = y_pred_est[0]
                 else:  # est_type == "regressor_proba"
                     y_pred_v = _coerce_to_numpy(y_pred_est)
-                    y_pred_i = _create_fcst_df([fh[i]], y_pred_est, fill=y_pred_v)
+                    td = fh_abs_idx[i : i + 1]
+                    if hasattr(td, "freq") and td.freq is None and _cutoff_freq:
+                        try:
+                            td.freq = _cutoff_freq
+                        except ValueError:
+                            pass
+                    y_pred_i = _create_fcst_df(td, y_pred_est, fill=y_pred_v)
                     y_preds.append(y_pred_i)
 
             if est_type != "regressor":
@@ -1025,8 +1046,10 @@ class _RecursiveReducer(_Reducer):
             for i in range(fh_max):
                 # Generate predictions.
                 y_pred_vector = self.estimator_.predict(X_last)
+                # use slice index_range[i:i+1] instead of [index_range[i]]
+                # to preserve freq on the resulting single-element DatetimeIndex
                 y_pred_curr = _create_fcst_df(
-                    [index_range[i]], self._y, fill=y_pred_vector
+                    index_range[i : i + 1], self._y, fill=y_pred_vector
                 )
                 y_pred.update(y_pred_curr)
 
@@ -1752,7 +1775,19 @@ def _create_fcst_df(target_date, origin_df, fill=None):
     """
     if not isinstance(target_date, ForecastingHorizon):
         ix = pd.Index(target_date)
-        fh = ForecastingHorizon(ix, is_relative=False)
+        # ix may be a freq-less DatetimeIndex (e.g., single-element result
+        # from to_timestamp, or from _index_range). Try multiple freq
+        # sources: ix itself, then origin_df's time index (.freq or
+        # .inferred_freq).
+        freq = getattr(ix, "freq", None)
+        if freq is None:
+            oidx = origin_df.index
+            if isinstance(oidx, pd.MultiIndex):
+                oidx = oidx.get_level_values(-1).unique()
+            freq = getattr(oidx, "freq", None)
+            if freq is None:
+                freq = getattr(oidx, "inferred_freq", None)
+        fh = ForecastingHorizon(ix, is_relative=False, freq=freq)
     else:
         fh = target_date.to_absolute()
 
@@ -1791,7 +1826,9 @@ def slice_at_ix(df, ix):
         all index levels are retained in the return, none are dropped
         CAVEAT: index is sorted by last (-1 st) level if ix is iterable
     """
-    if isinstance(ix, (list, pd.Index, ForecastingHorizon)):
+    if isinstance(ix, ForecastingHorizon):
+        ix = ix.to_pandas()
+    if isinstance(ix, (list, pd.Index)):
         return pd.concat([slice_at_ix(df, x) for x in ix])
     if isinstance(df.index, pd.MultiIndex):
         return df.xs(ix, level=-1, axis=0, drop_level=False)
@@ -2195,9 +2232,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         lagger_y_to_X = self.lagger_y_to_X_
 
         fh_rel = fh.to_relative(self.cutoff)
-        fh_abs = fh.to_absolute(self.cutoff)
         y_lags = list(fh_rel)
-        y_abs = list(fh_abs)
+        y_abs = list(fh.to_absolute_index(self.cutoff))
 
         y_pred_list = []
 
@@ -2603,7 +2639,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         lagger_y_to_X = self.lagger_y_to_X_
 
-        fh_abs = fh.to_absolute(self.cutoff)
+        fh_abs_idx = fh.to_absolute_index(self.cutoff)
         y = self._y
 
         Xt = lagger_y_to_X.transform(y)
@@ -2615,10 +2651,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         Xtt = lag_plus.fit_transform(Xt)
 
-        Xtt_predrows = slice_at_ix(Xtt, fh_abs)
+        Xtt_predrows = slice_at_ix(Xtt, fh_abs_idx)
         if X_pool is not None:
             Xtt_predrows = pd.concat(
-                [slice_at_ix(X_pool, fh_abs), Xtt_predrows], axis=1
+                [slice_at_ix(X_pool, fh_abs_idx), Xtt_predrows], axis=1
             )
 
         Xtt_predrows = prep_skl_df(Xtt_predrows)

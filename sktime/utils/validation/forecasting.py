@@ -367,6 +367,12 @@ def check_cutoffs(cutoffs: VALID_CUTOFF_TYPES) -> np.ndarray:
         If cutoffs is not a instance of np.array or pd.Index
         If cutoffs array is empty.
     """
+    # ForecastingHorizon v2 is not a pd.Index subclass, so convert to ndarray.
+    # Import here to avoid circular import (forecasting.base -> utils.validation).
+    from sktime.forecasting.base import ForecastingHorizon
+
+    if isinstance(cutoffs, ForecastingHorizon):
+        cutoffs = cutoffs.to_numpy()
     if not isinstance(cutoffs, VALID_CUTOFF_TYPES):
         raise ValueError(
             f"`cutoffs` must be a np.array or pd.Index, but found: {type(cutoffs)}"

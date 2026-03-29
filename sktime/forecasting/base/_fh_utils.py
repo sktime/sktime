@@ -14,12 +14,60 @@ The converter handles:
 - Converting cutoff values to integer steps
 """
 
-___all__ = ["PandasFHConverter"]
+___all__ = ["PandasFHConverter", "_PANDAS_FH_INPUT_TYPES"]
 
 import warnings
 
 import numpy as np
 import pandas as pd
+
+_PANDAS_FH_INPUT_TYPES = pd.Index
+
+
+# Detect once at import: old pandas (< 2.2) rejects "Y-DEC" in period
+# context but accepts "A-DEC". On modern pandas both work.
+_PERIOD_NEEDS_OLD_YEARLY = False
+try:
+    pd.Period("2000", freq="Y-DEC")
+except ValueError:
+    _PERIOD_NEEDS_OLD_YEARLY = True
+
+# The set of yearly bases that need A-substitution on old pandas.
+_YEARLY_BASES = {"Y", "YE", "YS", "A", "AE", "AS"}
+
+
+def _resolve_freq_for_period(freq):
+    """Resolve freq string to a form accepted by pandas period-context APIs.
+
+    Period-context APIs (``to_period``, ``PeriodIndex``, ``Period``) on older
+    pandas (< 2.2) reject anchored yearly forms like ``"Y-DEC"`` but accept
+    ``"A-DEC"``. This function substitutes the base on old pandas.
+    No-op on modern pandas.
+    """
+    if freq is None or not _PERIOD_NEEDS_OLD_YEARLY:
+        return freq
+    mult, base, suffix = _parse_freq(freq)
+    if base in _YEARLY_BASES and suffix:
+        return f"{mult}A{suffix}"
+    return freq
+
+
+def _period_index_from_ordinals(ordinals, freq):
+    """Construct PeriodIndex from integer ordinals, compatible with all pandas versions.
+
+    ``PeriodIndex.from_ordinals`` was added in pandas ~2.2. Older versions
+    (e.g., 2.0.2 used in test-deps-2023) only support the ``ordinal`` keyword
+    in the ``PeriodIndex`` constructor.
+
+    Freq is resolved via ``_resolve_freq_for_period`` so that canonical freq
+    strings like ``"Y-DEC"`` are mapped to ``"A-DEC"`` on older pandas.
+    """
+    freq = _resolve_freq_for_period(freq)
+    if hasattr(pd.PeriodIndex, "from_ordinals"):
+        return pd.PeriodIndex.from_ordinals(ordinals, freq=freq)
+    # fallback for pandas < 2.2
+    return pd.PeriodIndex(ordinal=ordinals, freq=freq)
+
 
 from sktime.forecasting.base._freq_mnemonic import (
     _ALIAS_TO_CANONICAL_STATIC,
@@ -198,19 +246,22 @@ class PandasFHConverter:
     # input -> internal representation conversion
 
     @staticmethod
-    def to_internal(values) -> tuple:
+    def to_internal(values, freq=None, is_relative=None) -> tuple:
         """Convert pandas input values to internal representation.
 
         All temporal inputs are normalized to integer steps:
+
         - PeriodIndex: .asi8 gives period ordinals (already integer steps)
         - DatetimeIndex with freq: .to_period(freq).asi8 gives ordinals
-        - DatetimeIndex without freq: raises ValueError (freq required)
+        - DatetimeIndex without freq: uses user-provided ``freq`` fallback if provided,
+        otherwise raises ValueError
         - TimedeltaIndex with freq: timedelta / freq_timedelta gives steps
         - TimedeltaIndex without freq: stores nanoseconds with
         values_are_nanos=True (deferred conversion)
 
         The converter infers is_relative from the input type as per the below rules
         and sends back the infered_is_relative:
+
         - PeriodIndex, DatetimeIndex -> absolute (is_relative=False)
         - TimedeltaIndex -> relative (is_relative=True)
         - RangeIndex, integer Index -> relative (is_relative=True)
@@ -234,6 +285,20 @@ class PandasFHConverter:
             - ``list`` of ``pd.Period``, ``pd.Timestamp``, ``pd.Timedelta``,
             ``pd.offsets.BaseOffset``, ``np.timedelta64``, or
             ``datetime.timedelta`` scalars
+        freq : str, pd.Period, pd.Index, or None, default=None
+            Optional fallback frequency. Used when ``values`` is a
+            DatetimeIndex without freq. Extracted via ``extract_freq``.
+        is_relative : bool or None, default=None
+            User-supplied relativity flag, passed through from the
+            ``ForecastingHorizon`` constructor. Only consulted for
+            ``pd.RangeIndex`` and ``pd.Index`` with integer dtype, since
+            these types are ambiguous (compatible with both relative and
+            absolute). For these two cases, if provided, the value is
+            returned as the inferred is_relative; if None, defaults to True.
+            All other input types (``pd.PeriodIndex``, ``pd.DatetimeIndex``,
+            ``pd.TimedeltaIndex``, ``pd.Index`` with timedelta dtype, scalar
+            and list inputs) have unambiguous semantics and ignore this
+            parameter entirely.
 
         Returns
         -------
@@ -245,13 +310,13 @@ class PandasFHConverter:
         TypeError
             If ``values`` type is not supported.
         ValueError
-            If DatetimeIndex is provided without freq.
+            If DatetimeIndex is provided without freq and no fallback.
         """
         # pandas Timedelta scalar
         if isinstance(values, pd.Timedelta):
             freq_str = PandasFHConverter._extract_freq_str(values)
             if freq_str is not None:
-                steps = PandasFHConverter._timedelta_to_steps(
+                steps = PandasFHConverter.nanos_to_steps(
                     np.array([values.value], dtype=np.int64), freq_str
                 )
                 return (steps, True, freq_str, False)
@@ -264,7 +329,7 @@ class PandasFHConverter:
             td = pd.Timedelta(values)
             freq_str = PandasFHConverter._offset_to_freq_str(values)
             if freq_str is not None:
-                steps = PandasFHConverter._timedelta_to_steps(
+                steps = PandasFHConverter.nanos_to_steps(
                     np.array([td.value], dtype=np.int64), freq_str
                 )
                 return (steps, True, freq_str, False)
@@ -281,6 +346,33 @@ class PandasFHConverter:
         # DatetimeIndex -> convert to period ordinals
         if isinstance(values, pd.DatetimeIndex):
             freq_str = PandasFHConverter._freqstr(values)
+            if freq_str is None and freq is not None:
+                freq_str = PandasFHConverter.extract_freq(freq)
+            elif freq_str is not None and freq is not None:
+                # Sparse DatetimeIndex (e.g. 2 elements from fh=[2,5] on daily
+                # data) can have pandas-inferred freq that is a multiple of the
+                # true data freq (e.g. '3D' vs 'D'). When an explicit freq is
+                # provided and shares the same base and the inferred freq is an
+                # exact multiple, prefer the explicit (narrower) freq.
+                explicit_freq = PandasFHConverter.extract_freq(freq)
+                if explicit_freq is not None and freq_str != explicit_freq:
+                    _, inf_base, inf_sfx = _parse_freq(freq_str)
+                    _, exp_base, exp_sfx = _parse_freq(explicit_freq)
+                    inf_mult = PandasFHConverter.freq_multiplier(freq_str)
+                    exp_mult = PandasFHConverter.freq_multiplier(explicit_freq)
+                    if (
+                        inf_base == exp_base
+                        and inf_sfx == exp_sfx
+                        and inf_mult % exp_mult == 0
+                    ):
+                        freq_str = explicit_freq
+                    else:
+                        raise ValueError(
+                            f"DatetimeIndex freq {freq_str!r} conflicts with "
+                            f"explicit freq {explicit_freq!r} and cannot be "
+                            f"resolved (different base or non-divisible "
+                            f"multiple)."
+                        )
             if freq_str is None:
                 raise ValueError(
                     "DatetimeIndex without freq is not supported. "
@@ -288,16 +380,14 @@ class PandasFHConverter:
                     "ForecastingHorizon(values, freq=...) or use a "
                     "DatetimeIndex with freq set."
                 )
-            arr = values.to_period(freq_str).asi8.copy()
+            arr = values.to_period(_resolve_freq_for_period(freq_str)).asi8.copy()
             return (arr, False, freq_str, False)
 
         # TimedeltaIndex -> steps (with freq) or nanos (without freq)
         if isinstance(values, pd.TimedeltaIndex):
             freq_str = PandasFHConverter._freqstr(values)
             if freq_str is not None:
-                steps = PandasFHConverter._timedelta_to_steps(
-                    values.asi8.copy(), freq_str
-                )
+                steps = PandasFHConverter.nanos_to_steps(values.asi8.copy(), freq_str)
                 return (steps, True, freq_str, False)
             else:
                 arr = values.asi8.copy()
@@ -306,13 +396,15 @@ class PandasFHConverter:
         # RangeIndex -> plain integers
         if isinstance(values, pd.RangeIndex):
             arr = values.to_numpy().astype(np.int64)
-            return (arr, True, None, False)
+            is_rel = is_relative if is_relative is not None else True
+            return (arr, is_rel, None, False)
 
         # generic pd.Index
         if isinstance(values, pd.Index):
             if pd.api.types.is_integer_dtype(values.dtype):
                 arr = values.to_numpy().astype(np.int64)
-                return (arr, True, None, False)
+                is_rel = is_relative if is_relative is not None else True
+                return (arr, is_rel, None, False)
             if pd.api.types.is_timedelta64_dtype(values.dtype):
                 arr = values.to_numpy().view(np.int64).copy()
                 return (arr, True, None, True)
@@ -394,7 +486,7 @@ class PandasFHConverter:
             idx = pd.TimedeltaIndex(values)
             freq_str = PandasFHConverter._freqstr(idx)
             if freq_str is not None:
-                steps = PandasFHConverter._timedelta_to_steps(idx.asi8.copy(), freq_str)
+                steps = PandasFHConverter.nanos_to_steps(idx.asi8.copy(), freq_str)
                 return (steps, True, freq_str, False)
             else:
                 return (idx.asi8.copy(), True, None, True)
@@ -418,7 +510,7 @@ class PandasFHConverter:
                     "supported. Provide freq explicitly via "
                     "ForecastingHorizon(values, freq=...)."
                 )
-            arr = idx.to_period(freq_str).asi8.copy()
+            arr = idx.to_period(_resolve_freq_for_period(freq_str)).asi8.copy()
             return (arr, False, freq_str, False)
 
         # offset objects -> timedelta path
@@ -428,7 +520,7 @@ class PandasFHConverter:
             idx = pd.TimedeltaIndex(tds)
             freq_str = PandasFHConverter._freqstr(idx)
             if freq_str is not None:
-                steps = PandasFHConverter._timedelta_to_steps(idx.asi8.copy(), freq_str)
+                steps = PandasFHConverter.nanos_to_steps(idx.asi8.copy(), freq_str)
                 return (steps, True, freq_str, False)
             else:
                 return (idx.asi8.copy(), True, None, True)
@@ -497,7 +589,7 @@ class PandasFHConverter:
             return pd.TimedeltaIndex(td_arr)
 
         if not is_relative and freq is not None:
-            return pd.PeriodIndex.from_ordinals(values.copy(), freq=freq)
+            return _period_index_from_ordinals(values.copy(), freq=freq)
 
         return pd.Index(values.copy(), dtype=int)
 
@@ -509,7 +601,7 @@ class PandasFHConverter:
     # tests for this should also be included in the test suite
     # to cover edge cases around DST transitions.
     @staticmethod
-    def steps_to_datetime(values, freq, tz=None):
+    def steps_to_datetime(values, freq, tz=None, sub_period_offset=None):
         """Convert integer step values (period ordinals) to DatetimeIndex.
 
         Used by ``to_absolute_index`` when the cutoff is a datetime
@@ -518,6 +610,12 @@ class PandasFHConverter:
         Conversion path: ordinals -> PeriodIndex -> DatetimeIndex via
         ``to_timestamp()``, which returns the **start** of each period
         (e.g. ``Period("2020-01", "M")`` -> ``Timestamp("2020-01-01")``).
+
+        If ``sub_period_offset`` is provided, it is added to the
+        tz-naive DatetimeIndex before timezone handling. This preserves
+        sub-period precision from the cutoff (e.g. a cutoff at 12:00
+        with daily freq produces timestamps at 12:00, not midnight).
+        Refer issue #5186.
 
         If ``tz`` is provided, the tz-naive DatetimeIndex is first
         localized to UTC (which has no DST transitions), then
@@ -538,6 +636,11 @@ class PandasFHConverter:
         tz : str or None
             Timezone to localize the output DatetimeIndex.
             None produces a tz-naive DatetimeIndex.
+        sub_period_offset : pd.Timedelta or None
+            Offset within a period to add to the reconstructed
+            timestamps. Computed from the cutoff's position within
+            its period (e.g. 12 hours for a cutoff at noon with
+            daily freq). Applied before timezone handling.
 
         Returns
         -------
@@ -547,10 +650,31 @@ class PandasFHConverter:
         Raises
         ------
         ValueError
-            If ``freq`` is None (from ``PeriodIndex.from_ordinals``).
+            If ``freq`` is None.
         """
-        period_idx = pd.PeriodIndex.from_ordinals(values.copy(), freq=freq)
-        dt_idx = period_idx.to_timestamp()
+        period_idx = _period_index_from_ordinals(values.copy(), freq=freq)
+        if sub_period_offset == "period_end":
+            # variable-length freq (M, Q, Y) with cutoff at period end:
+            # use to_timestamp(how="end") and floor to day precision,
+            # since variable-length periods have different durations
+            # (e.g., 30 days in June vs 31 in July), so a fixed
+            # timedelta offset from one period's end would land on
+            # the wrong day in other periods
+            dt_idx = period_idx.to_timestamp(how="end").floor("D")
+        else:
+            dt_idx = period_idx.to_timestamp()
+            if sub_period_offset is not None and sub_period_offset > pd.Timedelta(0):
+                dt_idx = dt_idx + sub_period_offset
+        # pandas can't infer freq from a single timestamp, so
+        # to_timestamp() returns freq=None for 1-element PeriodIndex
+        # (both the default and how="end" branches above). Restore
+        # freq from the source PeriodIndex so downstream FH
+        # construction doesn't reject the DatetimeIndex as freq-less.
+        if len(dt_idx) == 1 and dt_idx.freq is None:
+            try:
+                dt_idx.freq = period_idx.freqstr
+            except ValueError:
+                pass  # freq doesn't conform after sub_period_offset
         if tz is not None:
             # localize to UTC first (no DST ambiguity), then convert
             # to target tz. Direct tz_localize(tz) would raise
@@ -616,7 +740,7 @@ class PandasFHConverter:
                     "integer steps. Provide freq on the ForecastingHorizon "
                     "or use a PeriodIndex cutoff."
                 )
-            period = cutoff.to_period(freq)
+            period = cutoff.to_period(_resolve_freq_for_period(freq))
             return np.int64(period.ordinal)
 
         if isinstance(cutoff, (int, np.integer)):
@@ -677,6 +801,64 @@ class PandasFHConverter:
         if isinstance(cutoff, pd.Timestamp) and cutoff.tz is not None:
             return str(cutoff.tz)
         return None
+
+    @staticmethod
+    def cutoff_sub_period_offset(cutoff, freq):
+        """Compute sub-period offset of a datetime cutoff within its period.
+
+        For a cutoff at ``2025-03-02 12:00:00`` with ``freq="D"``, the
+        period start is midnight, so the offset is ``Timedelta("12h")``.
+        For a cutoff exactly on a period boundary the offset is zero.
+
+        Used by ``to_absolute_index`` to preserve sub-period precision
+        that would otherwise be lost in the period-ordinal round-trip.
+        Refer issue #5186.
+
+        For variable-length frequencies (M, Q, Y), a fixed timedelta
+        offset cannot correctly reconstruct dates across periods of
+        different lengths. When the cutoff is at period end, the string
+        ``"period_end"`` is returned instead of a timedelta, signaling
+        ``steps_to_datetime`` to use ``to_timestamp(how="end")``.
+
+        Parameters
+        ----------
+        cutoff : pd.DatetimeIndex or pd.Timestamp
+            Datetime cutoff. If ``pd.DatetimeIndex``, the last element
+            is used.
+        freq : str
+            Frequency string for the period grid.
+
+        Returns
+        -------
+        pd.Timedelta or str
+            Offset within the period (>= 0). Zero when the cutoff
+            falls exactly on a period boundary. The string
+            ``"period_end"`` when the cutoff is at the end of a
+            variable-length period.
+        """
+        cutoff_ts = cutoff[-1] if isinstance(cutoff, pd.Index) else cutoff
+        if cutoff_ts.tzinfo is not None:
+            cutoff_naive = cutoff_ts.tz_localize(None)
+        else:
+            cutoff_naive = cutoff_ts
+        period = cutoff_naive.to_period(_resolve_freq_for_period(freq))
+        period_start = period.to_timestamp()
+        period_end = period.to_timestamp(how="end")
+        # check if cutoff is at or near period end (within 1 day) AND
+        # freq is variable-length (M, Q, Y). Variable-length periods
+        # have different durations (e.g., 30 days in June vs 31 in July),
+        # so a fixed timedelta offset computed from one period's end
+        # position would land on the wrong day in other periods.
+        # For fixed-length freqs (D, h, min, s), the offset is constant
+        # across all periods, so it's always correct.
+        if (period_end - cutoff_naive) < pd.Timedelta(days=1):
+            try:
+                from pandas.tseries.frequencies import to_offset
+
+                to_offset(_resolve_pandas_freq(freq)).nanos
+            except ValueError:
+                return "period_end"
+        return cutoff_naive - period_start
 
     @staticmethod
     def nanos_to_steps(nanos: np.ndarray, freq: str) -> np.ndarray:
@@ -757,10 +939,10 @@ class PandasFHConverter:
     # final check pending for this function
     @staticmethod
     def extract_freq(obj) -> str | None:
-        """Extract and normalize a frequency string from a pandas object.
+        """Extract and normalize a frequency string from a pandas object or a string.
 
-         Handles pd.Index, pd.Period, pd.offsets.BaseOffset, strings,
-         and objects with a ``cutoff`` attribute (e.g. sktime forecasters).
+        Handles pd.Index, pd.Period, pd.offsets.BaseOffset, strings,
+        and objects with a ``cutoff`` attribute (e.g. sktime forecasters).
 
         Parameters
         ----------
@@ -985,34 +1167,6 @@ class PandasFHConverter:
                 )
 
     @staticmethod
-    def _timedelta_to_steps(nanos: np.ndarray, freq: str) -> np.ndarray:
-        """Convert timedelta nanoseconds to integer steps using freq.
-
-        Parameters
-        ----------
-        nanos : np.ndarray of int64
-            Nanosecond values from TimedeltaIndex.asi8.
-        freq : str
-            Frequency string.
-
-        Returns
-        -------
-        np.ndarray of int64
-            Integer step counts.
-        """
-        from pandas.tseries.frequencies import to_offset
-
-        offset = to_offset(_resolve_pandas_freq(freq))
-        try:
-            freq_nanos = offset.nanos
-        except ValueError:
-            raise ValueError(
-                f"Cannot convert timedelta to integer steps with "
-                f"non-fixed frequency {freq!r}."
-            )
-        return (nanos // freq_nanos).astype(np.int64)
-
-    @staticmethod
     def _extract_freq_str(obj) -> str | None:
         """Extract freq string from scalar pandas time objects."""
         if hasattr(obj, "freq") and obj.freq is not None:
@@ -1032,3 +1186,56 @@ class PandasFHConverter:
         if hasattr(idx, "freq") and idx.freq is not None:
             return PandasFHConverter.normalize_freq(idx.freqstr)
         return None
+
+
+def _check_cutoff(cutoff, index):
+    """Check if the cutoff is valid based on time index of forecasting horizon.
+
+    Validates that the cutoff is
+    compatible with the time index of the forecasting horizon.
+
+    Parameters
+    ----------
+    cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+        Cutoff value is required to convert a relative forecasting
+        horizon to an absolute one and vice versa.
+    index : pd.PeriodIndex or pd.DataTimeIndex
+        Forecasting horizon time index that the cutoff value will be checked
+        against.
+    """
+    # copied from old _fh.py
+    # in order to serve import needs of `sktime/forecasting/compose/reduce.py`
+    if cutoff is None:
+        raise ValueError("`cutoff` must be given, but found none.")
+    if isinstance(index, pd.PeriodIndex):
+        assert isinstance(cutoff, (pd.Period, pd.PeriodIndex))
+        assert index.freqstr == cutoff.freqstr
+
+    if isinstance(index, pd.DatetimeIndex):
+        assert isinstance(cutoff, (pd.Timestamp, pd.DatetimeIndex))
+
+
+def _index_range(relative, cutoff):
+    """Return Index Range relative to cutoff."""
+    # copied from old _fh.py
+    # in order to serve import needs of `sktime/forecasting/compose/reduce.py`
+    _check_cutoff(cutoff, relative)
+    is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
+
+    if is_timestamp:
+        # coerce to pd.Period for reliable arithmetic operations and
+        # computations of time deltas
+        cutoff = cutoff.to_period(cutoff.freqstr)
+
+    if isinstance(cutoff, pd.Index):
+        cutoff = cutoff[[0] * len(relative)]
+
+    absolute = cutoff + relative
+
+    if is_timestamp:
+        # coerce back to DatetimeIndex after operation, preserving freq
+        # so downstream ForecastingHorizon construction doesn't fail
+        absolute = absolute.to_timestamp(cutoff.freqstr)
+        if absolute.freq is None:
+            absolute.freq = cutoff.freqstr
+    return absolute

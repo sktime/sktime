@@ -22,5 +22,5 @@ empty_input = (np.array([], dtype=int), [], pd.Index([], dtype=int))
 @pytest.mark.parametrize("arg", empty_input)
 def test_check_fh_empty_input(arg):
     """Test that fh validation throws an error with empty container."""
-    with raises(ValueError, match="`fh` must not be empty"):
+    with raises(ValueError, match="must not be empty"):
         check_fh(arg)

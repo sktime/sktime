@@ -206,7 +206,7 @@ class EnbPIForecaster(BaseForecaster):
 
         return pd.DataFrame(
             self._aggregation_function(np.stack(preds, axis=0), axis=0),
-            index=list(fh.to_absolute(self.cutoff)),
+            index=fh.to_absolute_index(self.cutoff),
             columns=self._y.columns,
         )
 

@@ -234,6 +234,17 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     for different combinations of the period and seasonal periodicity. The time series
     contains perfectly cyclic data, so switching between the "mean" and "last"
     strategies should not make a difference.
+
+    Modified for FH v2: this test originally constructed FH from a freq-less
+    DatetimeIndex (test_data.index with freq=None) to verify that forecasters
+    handle freq-less forecast indices. FH v2 no longer supports freq-less
+    DatetimeIndex (it requires freq to convert to internal period ordinals),
+    so this test no longer validates that scenario. Instead, freq is now
+    provided from train_data.index at FH construction, and the test validates
+    that the forecaster produces correct predictions when forecast dates are
+    known and freq comes from training context. Forecast freq metadata is not
+    compared (check_freq=False) since test_data.index.freq is deliberately
+    None while the forecast output carries freq from the fitted model.
     """
     # given <window_length> hours of data with a seasonal periodicity of <sp> hours
     freq = pd.Timedelta("1H")
@@ -256,7 +267,8 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     train_data = data[:window_length]
     test_data = data[window_length:]
 
-    # Forecast data does not retain the original frequency
+    # Simulate real-world forecast indices that lack freq metadata.
+    # Freq is passed separately via train_data.index at FH construction.
     test_data.index.freq = None
 
     # For example, for n=2, window_length=4, sp=3:
@@ -275,8 +287,11 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     # 2021-06-01 07:00:00    2.0  # (value of 6 hours earlier)
     # dtype: float64
 
-    # forecast the next <(n-1) x window_length> hours with periodicity of <sp> hours
-    fh = ForecastingHorizon(test_data.index, is_relative=False)
+    # forecast the next <(n-1) x window_length> hours with periodicity of <sp> hours.
+    # test_data.index has freq=None (stripped above), so pass freq from
+    # train_data which retains the original freq. FH v2 requires freq to
+    # convert DatetimeIndex to period ordinals.
+    fh = ForecastingHorizon(test_data.index, is_relative=False, freq=train_data.index)
     model = NaiveForecaster(strategy=strategy, sp=sp)
     model.fit(train_data)
     forecast_data = model.predict(fh)
@@ -285,13 +300,16 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     assert model.get_tag("capability:missing_values")
 
     if sp < window_length:
-        # We expect a perfect forecast given our perfectly cyclic data
-        pd.testing.assert_series_equal(forecast_data, test_data)
+        # We expect a perfect forecast given our perfectly cyclic data.
+        # check_freq=False because test_data.index.freq was set to None
+        # above to simulate real-world forecast indices, while the
+        # forecast output carries freq from the fitted model's cutoff.
+        pd.testing.assert_series_equal(forecast_data, test_data, check_freq=False)
     else:
         # We expect a few forecasts yield NaN values
         for i in range(1 + len(test_data) // sp):
             test_data[i * sp : i * sp + sp - window_length] = np.nan
-        pd.testing.assert_series_equal(forecast_data, test_data)
+        pd.testing.assert_series_equal(forecast_data, test_data, check_freq=False)
 
 
 @pytest.mark.skipif(

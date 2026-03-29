@@ -281,8 +281,7 @@ class ConformalIntervals(BaseForecaster):
     def _predict_interval_series(self, fh, coverage, y_pred):
         """Compute prediction intervals predict_interval for series scitype."""
         fh_relative = fh.to_relative(self.cutoff)
-        fh_absolute = fh.to_absolute(self.cutoff)
-        fh_absolute_idx = fh_absolute.to_pandas()
+        fh_absolute_idx = fh.to_absolute_index(self.cutoff)
 
         if self.fh_early_:
             residuals_matrix = self.residuals_matrix_
@@ -301,7 +300,10 @@ class ConformalIntervals(BaseForecaster):
 
         cols = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(index=fh_absolute_idx, columns=cols)
-        for fh_ind, offset in zip(fh_absolute, fh_relative):
+        # iterate over fh_absolute_idx (pandas Index) not fh_absolute (FH),
+        # because FH v2 iteration yields raw int64 ordinals which don't match
+        # the PeriodIndex/DatetimeIndex used in pred_int.index
+        for fh_ind, offset in zip(fh_absolute_idx, fh_relative):
             resids = np.diagonal(residuals_matrix, offset=offset)
             resids = resids[~np.isnan(resids)]
             if len(resids) < 1:

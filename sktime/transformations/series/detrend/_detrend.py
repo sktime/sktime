@@ -8,7 +8,7 @@ __author__ = ["mloning", "SveaMeyer13", "KishManani", "fkiraly"]
 import pandas as pd
 
 from sktime.datatypes import update_data
-from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base._fh_v2 import ForecastingHorizon
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.base import BaseTransformer
 
@@ -138,7 +138,12 @@ class Detrender(BaseTransformer):
             time_index = X.index
         else:
             time_index = X.index.get_level_values(-1).unique()
-        return ForecastingHorizon(time_index, is_relative=False)
+        freq = getattr(time_index, "inferred_freq", None)
+        if freq is None:
+            freq = getattr(time_index, "freq", None)
+        if freq is None:
+            freq = getattr(self.forecaster_, "cutoff", None)
+        return ForecastingHorizon(time_index, is_relative=False, freq=freq)
 
     def _get_fitted_forecaster(self, X, y, fh):
         """Obtain fitted forecaster from self."""

@@ -64,12 +64,18 @@ VALID_FREQ_BASES = frozenset(
 # Only needs a manual update when pandas introduces an entirely new
 # alias string AND removes all existing aliases in the group (highlu-unlikely).
 _FREQ_GROUPS = [
-    {"Y", "YE", "A", "AE"},  # yearly
-    {"Q", "QE"},  # quarterly
-    {"M", "ME"},  # monthly
-    {"SM", "SME"},  # semi-monthly
-    {"BQ", "BQE"},  # business quarterly
-    {"BY", "BYE"},  # business yearly
+    {"Y", "YE", "A", "AE", "YS", "AS"},  # yearly (end and start)
+    {"Q", "QE", "QS"},  # quarterly (end and start)
+    {"M", "ME", "MS"},  # monthly (end and start)
+    {"h", "H"},  # hourly ("H" deprecated in pandas 2.2+)
+    {"min", "T"},  # minutely ("T" deprecated in pandas 2.2+)
+    {"s", "S"},  # secondly ("S" deprecated in pandas 2.2+)
+    {"ms", "L"},  # millisecondly ("L" deprecated in pandas 2.2+)
+    {"us", "U"},  # microsecondly ("U" deprecated in pandas 2.2+)
+    {"ns", "N"},  # nanosecondly ("N" deprecated in pandas 2.2+)
+    {"SM", "SME", "SMS"},  # semi-monthly (end and start)
+    {"BQ", "BQE", "BQS"},  # business quarterly (end and start)
+    {"BY", "BYE", "BYS"},  # business yearly (end and start)
 ]
 
 # Static alias -> canonical mapping built from _FREQ_GROUPS.

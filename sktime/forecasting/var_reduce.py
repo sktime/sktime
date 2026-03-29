@@ -329,7 +329,7 @@ class VARReduce(BaseForecaster):
             # Create a new `fh` object with only in-sample values
             # and use it to filter previously-created in-sample predictions
             fh_insample = fh_int.to_in_sample(cutoff=self.cutoff)
-            insample_index = fh_insample.to_absolute_index(cutoff=self.cutoff)
+            insample_index = fh_insample.to_absolute_index(self.cutoff)
             y_pred_insample = self._y_pred_insample.loc[insample_index]
 
         # ---- outsample forecasts ----
@@ -359,14 +359,14 @@ class VARReduce(BaseForecaster):
                 range(1, fh_int[-1] + 1), is_relative=True, freq=fh.freq
             )
             fh_outsample_all = fh_outsample_all.to_absolute(cutoff=self.cutoff)
-            y_pred_outsample.index = fh_outsample_all.to_absolute_index()
+            y_pred_outsample.index = fh_outsample_all.to_absolute_index(self.cutoff)
 
             # Create a new `fh` object with only the required outsample indices
             fh_outsample = fh_int.to_out_of_sample(cutoff=self.cutoff)
             fh_outsample = fh_outsample.to_absolute(cutoff=self.cutoff)
 
             # Use it to filter the previously generated outsample forecasts
-            outsample_index = fh_outsample.to_absolute_index()
+            outsample_index = fh_outsample.to_absolute_index(self.cutoff)
             y_pred_outsample = y_pred_outsample.loc[outsample_index]
 
         # Concatenate filtered y_pred_insample and y_pred_outsample
