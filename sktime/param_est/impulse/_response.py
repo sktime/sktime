@@ -199,34 +199,53 @@ class ImpulseResponseFunction(BaseParamFitter):
         -------
         self : reference to self
         """
-        from statsmodels.tsa.api import VECM
+        from statsmodels.tsa.api import VECM, VAR
         from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor
         from statsmodels.tsa.statespace.varmax import VARMAX
 
         MODEL_MAPPING = {
-            "VARMAX": VARMAX,
-            "VECM": VECM,
             "DynamicFactor": DynamicFactor,
+            "VARMAX": VARMAX,
+            # IRFANALYSIS Methods from here
+            "VAR": VAR,  
+            "VECM": VECM,
+            
         }
 
         model_name = self.model.__class__.__name__
-        ImportedModel = MODEL_MAPPING[model_name]
-
         sm_wrapper = self.model._fitted_forecaster
-
-        k_vars = sm_wrapper.model.k_endog
-        fitted_params = sm_wrapper.params
-
-        dummy_data = np.zeros((10, k_vars))
-        dummy_model = None
-
-        # some models have problem with univariate irf, need warning
-        # to show that results can not be calculated univariate,
-        # should not be a Problem for ARIMA for instance.
+     
         if len(X.shape) < 2 or X.shape[1] < 2:
+            # some models have problem with univariate d,ata need warning
+            # to show that results can not be calculated univariate,
+            # should not be a Problem for ARIMA for instance.
             warnings.warn(
                 f"Check if your estimator supports univariate IRF:Got shape {X.shape}."
             )
+
+        if model_name == "VECM" or model_name == "VAR":
+            # VECM/VAR has IRF Analsis object. This object has normally
+            # more results available, inluding plots, here we limit the
+            # reults in order to have a unified return.
+            irf_result = sm_wrapper.irf(periods=self.steps)
+
+            if self.orthogonalized and self.cumulative:
+                irf_slice = irf_result.orth_cum_effects
+            elif self.orthogonalized:
+                irf_slice = irf_result.orth_irfs
+            elif self.cumulative:
+                irf_slice = irf_result.cum_effects
+            else:
+                irf_slice = irf_result.irfs
+
+            self.irf_ = irf_slice[:, :, self.impulse]
+            return self
+        
+        ImportedModel = MODEL_MAPPING[model_name]
+        k_vars = sm_wrapper.model.k_endog
+        fitted_params = sm_wrapper.params
+        dummy_data = np.zeros((10, k_vars))
+        dummy_model = None
 
         if model_name == "VARMAX":
             p = sm_wrapper.model.k_ar
@@ -246,13 +265,16 @@ class ImpulseResponseFunction(BaseParamFitter):
                 error_order=error_order,
                 enforce_stationarity=False,
             )
-        elif model_name == "VECM":
-            raise NotImplementedError("VECM IRF not yet implemented")
+        
         else:
             raise ValueError(f"Unknown model type: {model_name}")
 
         irf_result = dummy_model.impulse_responses(
-            params=fitted_params, steps=self.steps, orthogonalized=self.orthogonalized
+            params=fitted_params, 
+            steps=self.steps, 
+            orthogonalized=self.orthogonalized,
+            cumulative = self.cumulative,
+            impulse = self.impulse
         )
 
         self.irf_ = irf_result
