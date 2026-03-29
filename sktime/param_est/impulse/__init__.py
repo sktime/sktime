@@ -18,7 +18,7 @@ given the estimator exists in the library):
 - SARIMAX
 - SimulationSmoother
 - UnobservedComponents
-- VAR
+- VAR (x)
 - VARMAX (x)
 - VECM (x)
 """

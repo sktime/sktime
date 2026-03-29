@@ -314,7 +314,3 @@ def test_irf_vecm_against_statsmodels():
     sktime_res.fit(df)
 
     np.testing.assert_array_equal(stats_res, sktime_res.get_fitted_params()["irf"])
-
-
-print(test_irf_on_vecm(), test_additional_irfparams_on_vecm(), test_irf_vecm_against_statsmodels())
-print(test_irf_on_var(), test_additional_irfparams_on_var(), test_irf_var_against_statsmodels())
