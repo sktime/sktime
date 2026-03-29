@@ -125,7 +125,7 @@ class ConformalIntervals(BaseForecaster):
         "python_dependencies": ["joblib"],
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,
