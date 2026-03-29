@@ -127,3 +127,25 @@ def test_imports():
 def test_deps_with_disjunction():
     """Check that deps retrieves the correct requirement set for disjunctions."""
     assert set(deps("DartsXGBModel")) == {"xgboost", "u8darts>=0.29"}
+
+
+def test_sklearn_imports():
+    """Check that sklearn estimators can be crafted."""
+    from sktime.registry._lookup_sklearn import _all_sklearn_estimators
+
+    sklearn_estimators = dict(_all_sklearn_estimators())
+
+    from sklearn.ensemble import RandomForestRegressor
+
+    assert craft("RandomForestRegressor()").__class__ == RandomForestRegressor
+    rf_instance = craft("RandomForestRegressor(n_estimators=10)")
+    assert isinstance(rf_instance, RandomForestRegressor)
+    assert craft("RandomForestRegressor(n_estimators=10)").n_estimators == 10
+
+    for est_name in ["StandardScaler", "KNeighborsClassifier", "RandomForestRegressor"]:
+        assert est_name in sklearn_estimators.keys()
+
+        est_spec = f"{est_name}()"
+        est_obj = craft(est_spec)
+
+        assert est_obj.__class__.__name__ == est_name

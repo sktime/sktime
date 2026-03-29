@@ -70,6 +70,12 @@ class _WindowSignatureTransform(BaseTransformer):
         depth = self.sig_depth
         data = np.swapaxes(X, 1, 2)
 
+        if self.rescaling == "post" and self.sig_tfm == "logsignature":
+            raise NotImplementedError(
+                "rescaling='post' is not supported for sig_tfm='logsignature'. "
+                "Set rescaling=None."
+            )
+
         # Path rescaling
         if self.rescaling == "pre":
             data = _rescale_path(data, depth)

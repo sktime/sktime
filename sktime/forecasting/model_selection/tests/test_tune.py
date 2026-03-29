@@ -360,12 +360,15 @@ def optuna_samplers():
     else:
         import optuna
 
-        return [
+        samplers = [
             None,
             optuna.samplers.NSGAIISampler(seed=42),
             optuna.samplers.QMCSampler(seed=42),
             # optuna.samplers.CmaEsSampler(seed=42),
         ]
+        if hasattr(optuna.samplers, "CmaEsSampler"):
+            samplers.append(optuna.samplers.CmaEsSampler(seed=42))
+        return samplers
 
 
 forecasters_optuna_test = {
