@@ -36,6 +36,7 @@ For a list of object and estimator tags, see :ref:`tags_ref`.
     api_reference/base
     api_reference/exceptions
     api_reference/tags
+    api_reference/estimator_types
     api_reference/pipeline
     api_reference/benchmarking
     api_reference/catalogues
