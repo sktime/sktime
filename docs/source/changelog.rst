@@ -17,6 +17,74 @@ available on GitHub.
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 1.0.0 - 2026-03-30
+--------------------------
+
+Major release with some breaking API improvements. Users and developers should consult
+the changelog below for API changes.
+
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+* capability tags for exogenous variables and multivariate data
+  (``capability:exogenous``, ``capability:multivariate``) replace the
+  ``ignores-exogeneous-X`` and ``univariate-only`` tags, respectively.
+  The old tags have been removed after a deprecation period.
+
+* the capability tag for multivariate data for forecasters,
+  ``scitype:y`` is now also replaced by ``capability:multivariate``.
+  Until 1.1.0, an warning will be raised when accessing the old tag ``scitype:y``,
+  from 1.1.0 onwards, an exception will be raised.
+
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+On-board libraries
+^^^^^^^^^^^^^^^^^^
+
+* The ``sktime.libs.pykalman`` module is deprecated.
+  It will redierct to the ``pykalman`` package from 0.42.0
+  onwards, and will be removed entirely in version 1.0.0.
+  Users of ``pykalman`` based estimators in ``sktime`` can continue to use them,
+  and the estimator API itself will not change. However, users will need
+  to install ``pykalman`` separately, as it is no longer included in ``sktime``.
+  Users of the ``sktime.libs.pykalman`` fork should migrate their imports
+  to the ``pykalman`` package distributed via PyPI before ``sktime`` 1.0.0.
+  The ``pykalman`` package is now maintained by the ``sktime`` team.
+
+Estimator Tags
+^^^^^^^^^^^^^^
+
+* The ``ignores-exogeneous-X`` tag for forecasters is replaced
+  by ``capability:exogenous``.
+  The logic of the tag is flipped, i.e., if ``capability:exogenous=True``,
+  the estimator can handle exogenous variables.
+  Until 1.0.0, the old tag can still be used, but will emit a warning.
+  Users and maintainers of third party estimators should update their
+  code and estimators to use the new tag.
+
+* the ``univariate-only`` tag present in multiple estimator types is
+  renamed to ``capability:multivariate``,
+  with boolean flip. If ``capability:multivariate=True``, the estimator
+  can handle multivariate data. Until 1.0.0, the old tag can still be used,
+  but will emit a warning. Users and maintainers of third party estimators
+  should update their code and estimators to use the new tag.
+
+* the ``scitype:y`` tag present in forecasters is also
+  renamed to ``capability:multivariate``.
+  If ``capability:multivariate=True``, the estimator
+  can handle multivariate data, if ``False``, it cannot.
+  Values of the old tag map as follows onto the new tag:
+  ``"univariate"`` maps onto ``False``, ``"multivariate"`` and ``"both"``
+  map onto ``True``.
+  Until 1.1.0, the old tag, ``scitype:y``, can still be used,
+  but will emit a warning. From 1.1.0 onwards, an exception will be raised.
+  Users and maintainers of third party estimators
+  should update their code and estimators to use the new tag.
+
+
 Version 0.40.1 - 2025-11-24
 ---------------------------
 
