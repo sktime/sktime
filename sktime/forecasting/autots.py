@@ -322,9 +322,12 @@ class AutoTS(BaseForecaster):
         Parameters
         ----------
         y : pd.DataFrame
-            if self.get_tag("capability:multivariate")==False:
-            guaranteed to have a single column
-            if self.get_tag("capability:multivariate")==True: no restrictions apply
+            Time series to fit.
+
+            - if ``self.get_tag("capability:multivariate") == False``:
+              guaranteed to have a single column
+            - if ``self.get_tag("capability:multivariate") == True``:
+              no restrictions apply
         X : pd.DataFrame, optional (default=None)
             Exogeneous time series to fit to.
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
