@@ -1124,9 +1124,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         # pretrain accepts multivariate panel data even for univariate forecasters,
         # because _pretrain can split columns into separate univariate series.
-        # Pass scitype_y="both" to prevent column vectorization.
+        # Pass multivariate=True to prevent column vectorization.
         X_inner, y_inner = self._check_X_y(
-            X=X, y=y, y_inner_mtype=pretrain_y_mtypes, scitype_y="both"
+            X=X, y=y, y_inner_mtype=pretrain_y_mtypes, multivariate=True
         )
 
         # pretrain does not support vectorization - global learning requires
