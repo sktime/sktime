@@ -44,15 +44,11 @@ Deprecations and removals
 On-board libraries
 ^^^^^^^^^^^^^^^^^^
 
-* The ``sktime.libs.pykalman`` module is deprecated.
-  It will redierct to the ``pykalman`` package from 0.42.0
-  onwards, and will be removed entirely in version 1.0.0.
+* The ``sktime.libs.pykalman`` module has been removed in favour of the ``pykalman``
+  package, also maintained by GC.OS and the ``sktime`` team.
   Users of ``pykalman`` based estimators in ``sktime`` can continue to use them,
   and the estimator API itself will not change. However, users will need
   to install ``pykalman`` separately, as it is no longer included in ``sktime``.
-  Users of the ``sktime.libs.pykalman`` fork should migrate their imports
-  to the ``pykalman`` package distributed via PyPI before ``sktime`` 1.0.0.
-  The ``pykalman`` package is now maintained by the ``sktime`` team.
 
 Estimator Tags
 ^^^^^^^^^^^^^^
@@ -422,7 +418,7 @@ On-board libraries
 ^^^^^^^^^^^^^^^^^^
 
 * The ``sktime.libs.pykalman`` module is deprecated.
-  It will redierct to the ``pykalman`` package from 0.42.0
+  It will redirect to the ``pykalman`` package from 0.42.0
   onwards, and will be removed entirely in version 1.0.0.
   Users of ``pykalman`` based estimators in ``sktime`` can continue to use them,
   and the estimator API itself will not change. However, users will need
