@@ -173,7 +173,7 @@ class _DelegatedForecaster(BaseForecaster):
         ----------
         y : sktime time series object
             guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series with which to update the forecaster (new incremental training data).
+            Time series with which to update the forecaster.
 
             * if self.get_tag("capability:multivariate")==False:
               guaranteed to be univariate (e.g., single-column for DataFrame)
