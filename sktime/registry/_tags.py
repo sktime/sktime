@@ -3567,7 +3567,7 @@ ESTIMATOR_TAG_REGISTER = [
         # or the base scitype of the target data
         ["param_est", "metric"],
         "str",
-        "which series type does the forecaster support? multivariate means >1 vars",
+        "what scitype of y does the object support? must be scitype string",
     ),
     (
         "scitype:instancewise",
