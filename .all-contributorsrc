@@ -3795,6 +3795,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "CloseChoice",
+      "name": "Tobias Pitters",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31857876?v=4",
+      "profile": "https://github.com/CloseChoice",
+      "contributions": [
+        "bug",
+        "test",
+      ]
     }
   ]
 }
