@@ -57,15 +57,14 @@ Estimator Tags
   by ``capability:exogenous``.
   The logic of the tag is flipped, i.e., if ``capability:exogenous=True``,
   the estimator can handle exogenous variables.
-  Until 1.0.0, the old tag can still be used, but will emit a warning.
   Users and maintainers of third party estimators should update their
   code and estimators to use the new tag.
 
 * the ``univariate-only`` tag present in multiple estimator types is
   renamed to ``capability:multivariate``,
   with boolean flip. If ``capability:multivariate=True``, the estimator
-  can handle multivariate data. Until 1.0.0, the old tag can still be used,
-  but will emit a warning. Users and maintainers of third party estimators
+  can handle multivariate data.
+  Users and maintainers of third party estimators
   should update their code and estimators to use the new tag.
 
 * the ``scitype:y`` tag present in forecasters is also
