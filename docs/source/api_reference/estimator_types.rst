@@ -29,15 +29,14 @@ Retrieving estimator types programmatically
 List of estimator and object types
 -----------------------------------
 
-.. currentmodule:: sktime.registry._base_classes
-
+.. currentmodule:: sktime.registry
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
     :nosignatures:
 
-    object
-    estimator
+    BaseObject
+    BaseEstimator
     forecaster
     global_forecaster
     classifier
