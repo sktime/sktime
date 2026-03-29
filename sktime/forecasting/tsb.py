@@ -112,6 +112,52 @@ class TSB(BaseForecaster):
                 f[t + 1] = d[t + 1] * p[t + 1]
 
         self._f = f
+        self._last_d = d[-1]
+        self._last_p = p[-1]
+        self._last_f = f[-1]
+
+        return self
+    
+    def _update(self, y, X=None, update_params=True):
+        """Update TSB model with new observations.
+
+        Parameters
+        ----------
+        y : pd.Series
+            New observations to update the model with.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables, ignored.
+        update_params : bool, optional (default=True)
+            If True, updates the smoothing state with new observations.
+            If False, no update is performed.
+
+        Returns
+        -------
+        self : reference to self.
+        """
+        if not update_params:
+            return self
+
+        alpha = self.alpha
+        beta = self.beta
+        y_new = y.to_numpy().flatten()
+        n_timepoints = len(y_new)
+
+        d = self._last_d
+        p = self._last_p
+
+        f_last = self._f[-1]
+        for t in range(0, n_timepoints):
+            if y_new[t] > 0:
+                d = alpha * y_new[t] + (1 - alpha) * d
+                p = beta * 1 + (1 - beta) * p
+            else:
+                p = (1 - beta) * p
+            f_last = d * p
+
+        self._last_d = d
+        self._last_p = p
+        self._f = np.append(self._f, f_last)
 
         return self
 
