@@ -234,7 +234,7 @@ class BaseDetector(_BaseDetector):
         Examples
         --------
         >>> import pandas as pd
-        >>> from skchange.base import BaseDetector
+        >>> from sktime.detection._skchange.base import BaseDetector
         >>> change_points = pd.Series([1, 2, 5])
         >>> BaseDetector.change_points_to_segments(change_points, 0, 7)
             ilocs  labels
@@ -292,7 +292,7 @@ class BaseDetector(_BaseDetector):
         Examples
         --------
         >>> import pandas as pd
-        >>> from skchange.base import BaseDetector
+        >>> from sktime.detection._skchange.base import BaseDetector
         >>> segments = pd.DataFrame({
         ...     "labels": [0, 1, 2],
         ...     "ilocs": pd.IntervalIndex.from_breaks([2, 5, 7, 9], closed="left")

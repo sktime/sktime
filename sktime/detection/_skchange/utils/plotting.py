@@ -1,8 +1,15 @@
+from __future__ import annotations
+
 """Plotting utilities."""
 
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
+
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+except ModuleNotFoundError:
+    px = None
+    go = None
 
 from ..anomaly_detectors.base import BaseSegmentAnomalyDetector
 from ..change_detectors.base import BaseChangeDetector
@@ -39,6 +46,12 @@ def _plot_time_series(
     plotly.graph_objects.Figure
         A Plotly figure with the time series plotted.
     """
+    if px is None:
+        raise ModuleNotFoundError(
+            "plotly is required for plotting utilities. "
+            "Install with `pip install plotly`."
+        )
+
     index_name = df.index.name if df.index.name is not None else "index"
     long_df = (
         df.stack()
@@ -144,6 +157,12 @@ def plot_detections(
     plotly.graph_objects.Figure
         A Plotly figure with the time series and highlighed detected events in red.
     """
+    if go is None:
+        raise ModuleNotFoundError(
+            "plotly is required for plotting utilities. "
+            "Install with `pip install plotly`."
+        )
+
     df = df.copy()
 
     n_vars = df.shape[1]
@@ -238,6 +257,12 @@ def plot_scatter_segmentation(
         A Plotly figure with the time series and segments highlighted by different
         colors.
     """
+    if px is None:
+        raise ModuleNotFoundError(
+            "plotly is required for plotting utilities. "
+            "Install with `pip install plotly`."
+        )
+
     df = df.copy()
     original_columns = df.columns.tolist()
     if len(original_columns) < 2:

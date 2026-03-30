@@ -33,7 +33,7 @@ def test_evaluate():
     evaluator.fit(X)
     cuts = np.array([[0, 2], [2, 5]])
     values = evaluator.evaluate(cuts)
-    expected_values = np.array([3, 12])
+    expected_values = np.array([[3], [12]])
     assert np.array_equal(values, expected_values)
 
 

@@ -330,9 +330,9 @@ class MovingWindow(BaseChangeDetector):
             min_length_name="2*max(bandwidth)",
         )
 
-        self.fitted_score: BaseIntervalScorer = self._penalised_score.clone()
-        self.fitted_score.fit(X)
-        scores = transform_multiple_moving_window(self.fitted_score, self._bandwidth)
+        fitted_score: BaseIntervalScorer = self._penalised_score.clone()
+        fitted_score.fit(X)
+        scores = transform_multiple_moving_window(fitted_score, self._bandwidth)
         formatted_scores = pd.DataFrame(
             scores,
             index=X.index,
@@ -361,21 +361,21 @@ class MovingWindow(BaseChangeDetector):
         scores : pd.Series
             The detection scores obtained by the `transform_scores` method.
         """
-        self.scores: pd.DataFrame = self.transform_scores(X)
+        scores = self.transform_scores(X)
 
         if self.selection_method == "detection_length":
             min_detection_length = int(self.min_detection_fraction * self.bandwidth)
             changepoints = select_changepoints_by_detection_length(
-                self.scores.values.reshape(-1), min_detection_length
+                scores.values.reshape(-1), min_detection_length
             )
         elif self.selection_method == "local_optimum" and len(self._bandwidth) == 1:
             local_optimum_bandwidth = int(self.local_optimum_fraction * self.bandwidth)
             changepoints = select_changepoints_by_local_optimum(
-                self.scores.values.reshape(-1), local_optimum_bandwidth
+                scores.values.reshape(-1), local_optimum_bandwidth
             )
         else:
             changepoints = select_changepoints_by_bottom_up(
-                self.scores.values, self._bandwidth, self.local_optimum_fraction
+                scores.values, self._bandwidth, self.local_optimum_fraction
             )
 
         return self._format_sparse_output(changepoints)

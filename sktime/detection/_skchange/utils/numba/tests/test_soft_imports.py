@@ -31,7 +31,8 @@ def temp_env_and_modules(remove_module_prefix: str, env_vars: dict = None):
 def test_setting_wrong_env_variable_raises():
     with (
         temp_env_and_modules(
-            remove_module_prefix="skchange", env_vars={"NUMBA_CACHE": "invalid_value"}
+            remove_module_prefix="sktime.detection._skchange",
+            env_vars={"NUMBA_CACHE": "invalid_value"},
         ),
         pytest.raises(ValueError),
     ):
@@ -40,7 +41,8 @@ def test_setting_wrong_env_variable_raises():
 
 def test_setting_truthy_env_variable_does_not_raise():
     with temp_env_and_modules(
-        remove_module_prefix="skchange", env_vars={"NUMBA_FASTMATH": "1"}
+        remove_module_prefix="sktime.detection._skchange",
+        env_vars={"NUMBA_FASTMATH": "1"},
     ):
         import sktime.detection._skchange.utils.numba  # noqa: F401, I001
 
@@ -49,7 +51,8 @@ def test_setting_truthy_env_variable_does_not_raise():
 
 def test_setting_falsy_env_variable_does_not_raise():
     with temp_env_and_modules(
-        remove_module_prefix="skchange", env_vars={"NUMBA_FASTMATH": "0"}
+        remove_module_prefix="sktime.detection._skchange",
+        env_vars={"NUMBA_FASTMATH": "0"},
     ):
         import sktime.detection._skchange.utils.numba  # noqa: F401, I001
 

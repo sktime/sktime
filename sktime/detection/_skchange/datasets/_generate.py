@@ -157,7 +157,7 @@ def generate_piecewise_data(
     Examples
     --------
     >>> # Example 1: Two normal segments
-    >>> from skchange.datasets import generate_piecewise_data
+    >>> from sktime.detection._skchange.datasets import generate_piecewise_data
     >>> from scipy.stats import norm
     >>> generate_piecewise_data(
     ...     distributions=[norm(0, 1), norm(10, 0.1)],

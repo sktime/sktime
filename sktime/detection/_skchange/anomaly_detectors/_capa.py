@@ -9,7 +9,11 @@ import pandas as pd
 from ..anomaly_scores import L2Saving, to_saving
 from ..base import BaseIntervalScorer
 from ..compose.penalised_score import PenalisedScore
-from ..penalties import make_chi2_penalty, make_linear_chi2_penalty
+from ..penalties import (
+    make_chi2_penalty,
+    make_linear_chi2_penalty,
+    make_nonlinear_chi2_penalty,
+)
 from ..utils.numba import njit
 from ..utils.validation.data import check_data
 from ..utils.validation.interval_scorer import check_interval_scorer
@@ -139,6 +143,16 @@ def _make_linear_chi2_penalty_from_score(score: BaseIntervalScorer) -> np.ndarra
     n = score.n_samples
     p = score.n_variables
     return make_linear_chi2_penalty(score.get_model_size(p), n, p)
+
+
+def _make_nonlinear_chi2_penalty_from_score_for_tests(
+    score: BaseIntervalScorer,
+) -> np.ndarray:
+    """Construct nonlinear chi2 penalty for test params with picklable callable."""
+    score.check_is_fitted()
+    n = score.n_samples
+    p = score.n_variables
+    return make_nonlinear_chi2_penalty(score.get_model_size(p), n, p)
 
 
 def _check_capa_penalised_score(score: BaseIntervalScorer, name: str, caller_name: str):
@@ -347,28 +361,27 @@ class CAPA(BaseSegmentAnomalyDetector):
             min_length_name="min_segment_length",
         )
 
-        self.fitted_segment_saving: BaseIntervalScorer = (
+        fitted_segment_saving: BaseIntervalScorer = (
             self._segment_penalised_saving.clone().fit(X)
         )
-        self.fitted_point_saving: BaseIntervalScorer = (
+        fitted_point_saving: BaseIntervalScorer = (
             self._point_penalised_saving.clone().fit(X)
         )
 
         min_segment_length = max(
-            self.min_segment_length, self.fitted_segment_saving.min_size
+            self.min_segment_length, fitted_segment_saving.min_size
         )
         check_smaller_than(
             self.max_segment_length, min_segment_length, "min_segment_length"
         )
         check_larger_than(min_segment_length, X.shape[0], "X.shape[0]")
         opt_savings, segment_anomalies, point_anomalies = run_capa(
-            segment_penalised_saving=self.fitted_segment_saving,
-            point_penalised_saving=self.fitted_point_saving,
+            segment_penalised_saving=fitted_segment_saving,
+            point_penalised_saving=fitted_point_saving,
             min_segment_length=min_segment_length,
             max_segment_length=self.max_segment_length,
             find_affected_components=self.find_affected_components,
         )
-        self.scores = pd.Series(opt_savings, index=X.index, name="score")
 
         anomalies = segment_anomalies
         if not self.ignore_point_anomalies:
@@ -395,8 +408,35 @@ class CAPA(BaseSegmentAnomalyDetector):
         The CAPA scores are the cumulative optimal savings, so the scores are increasing
         and are not per observation scores.
         """
-        self.predict(X)
-        return self.scores
+        X = check_data(
+            X,
+            min_length=self.min_segment_length,
+            min_length_name="min_segment_length",
+        )
+
+        fitted_segment_saving: BaseIntervalScorer = (
+            self._segment_penalised_saving.clone().fit(X)
+        )
+        fitted_point_saving: BaseIntervalScorer = (
+            self._point_penalised_saving.clone().fit(X)
+        )
+
+        min_segment_length = max(
+            self.min_segment_length, fitted_segment_saving.min_size
+        )
+        check_smaller_than(
+            self.max_segment_length, min_segment_length, "min_segment_length"
+        )
+        check_larger_than(min_segment_length, X.shape[0], "X.shape[0]")
+
+        opt_savings, _, _ = run_capa(
+            segment_penalised_saving=fitted_segment_saving,
+            point_penalised_saving=fitted_point_saving,
+            min_segment_length=min_segment_length,
+            max_segment_length=self.max_segment_length,
+            find_affected_components=self.find_affected_components,
+        )
+        return pd.Series(opt_savings, index=X.index, name="score")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -418,24 +458,14 @@ class CAPA(BaseSegmentAnomalyDetector):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.detection._skchange.anomaly_scores import L2Saving
-        from sktime.detection._skchange.base import BaseIntervalScorer
         from sktime.detection._skchange.compose.penalised_score import PenalisedScore
         from sktime.detection._skchange.costs import L2Cost
-        from sktime.detection._skchange.penalties import make_nonlinear_chi2_penalty
-
-        def _make_nonlinear_chi2_penalty_from_score(
-            score: BaseIntervalScorer,
-        ) -> np.ndarray:
-            score.check_is_fitted()
-            n = score.n_samples
-            p = score.n_variables
-            return make_nonlinear_chi2_penalty(score.get_model_size(p), n, p)
 
         params = [
             {
                 "segment_saving": PenalisedScore(
                     L2Saving(),
-                    make_default_penalty=_make_nonlinear_chi2_penalty_from_score,
+                    make_default_penalty=_make_nonlinear_chi2_penalty_from_score_for_tests,
                 ),
                 "min_segment_length": 5,
                 "max_segment_length": 100,
