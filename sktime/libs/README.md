@@ -39,6 +39,8 @@ This folder contains libraries directly distributed with, and maintained by, `sk
  the package with minimal dependencies and code specific to the forecaster.
  Official package available at [pypi](https://pypi.org/project/uni2ts/).
 
+ * `xlstm_time` - fork of the [repository of the same name](https://github.com/muslehal/xLSTMTime), implementing the xLSTM forecaster, by `mushlehal`.
+
 
 # Snippets from other libraries
 
