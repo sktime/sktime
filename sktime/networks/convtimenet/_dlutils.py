@@ -50,12 +50,13 @@ class PositionalEncoding(nn.Module):  # static PE
         )
         pe += torch.sin(position * div_term)
         pe += torch.cos(position * div_term)
-        pe = pe.unsqueeze(0).transpose(0, 1)
+        pe = pe.unsqueeze(0)
         self.register_buffer("pe", pe)
 
-    def forward(self, x, seqlen=10, pos=0):  # (bs, seq_len, feats)
-        idx = 0 if x.shape[0] == seqlen else 1
-        x = x + self.pe[pos : pos + x.size(idx), :]
+    def forward(self, x, pos=0):  # (bs, d_model, seq_len)
+        # x: (bs, d_model, seq_len)
+        # self.pe: (1, max_len, d_model)
+        x = x + self.pe[:, pos : pos + x.size(2), :].transpose(1, 2)
         return self.dropout(x)
 
 
@@ -265,6 +266,7 @@ class DeformablePatch(nn.Module):
         seq_len,
         patch_size,
         stride,
+        dropout=0.1,
         padding_tp=None,
         norm="batch",
         act="gelu",
@@ -289,7 +291,7 @@ class DeformablePatch(nn.Module):
         self.patch_size = patch_size
         self.in_feats, self.out_feats = in_feats, out_feats
 
-        self.dropout = nn.Dropout(0.1)
+        self.dropout = nn.Dropout(dropout)
         self.new_len = seq_len + n_padding
 
         # offset predictor

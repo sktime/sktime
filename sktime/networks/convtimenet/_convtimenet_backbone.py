@@ -271,12 +271,13 @@ class ConvTimeNet_backbone(nn.Module):
         layers = []
         if pooling_tp == "cat":
             layers = [get_activation_fn(act), self.flatten]
-            if fc_dropout:
-                layers += [nn.Dropout(fc_dropout)]
         elif pooling_tp == "mean":
             layers = [nn.AdaptiveAvgPool1d(1), self.flatten]
         elif pooling_tp == "max":
             layers = [nn.AdaptiveMaxPool1d(1), self.flatten]
+
+        if fc_dropout > 0:
+            layers += [nn.Dropout(fc_dropout)]
 
         layers += [nn.Linear(nf, c_out)]
 

@@ -31,10 +31,18 @@ class ConvTimeNet:
             n_classes: int,
             dropout: float,
             d_ff: int,
-            dw_ks: list[int],
+            dw_ks: list,
+            fc_dropout: float = 0.0,
+            patch_dropout: float = 0.1,
+            pos_dropout: float = 0.1,
             device: str = "cpu",
         ):
             super().__init__()
+
+            # store for inspection in tests
+            self.fc_dropout = fc_dropout
+            self.patch_dropout = patch_dropout
+            self.pos_dropout = pos_dropout
 
             #  DePatch Embedding
             self.depatchEmbedding = DeformablePatch(
@@ -43,19 +51,16 @@ class ConvTimeNet:
                 stride=patch_stride,
                 in_feats=enc_in,
                 out_feats=d_model,
+                dropout=patch_dropout,
             )
 
             # 🧠 ConvTimeNet Backbone
             new_len = self.depatchEmbedding.new_len
-            c_in = d_model
-            c_out = n_classes
             block_num = len(dw_ks)
-            enable_res_param = True
-            re_param = True
 
             self.main_net = ConvTimeNet_backbone(
-                c_in=c_in,
-                c_out=c_out,
+                c_in=d_model,
+                c_out=n_classes,
                 seq_len=new_len,
                 n_layers=block_num,
                 d_model=d_model,
@@ -63,12 +68,12 @@ class ConvTimeNet:
                 dropout=dropout,
                 act="gelu",
                 pooling_tp="max",
-                fc_dropout=0.0,
-                enable_res_param=enable_res_param,
+                fc_dropout=fc_dropout,
+                enable_res_param=True,
                 dw_ks=dw_ks,
                 norm="batch",
                 use_embed=False,
-                re_param=re_param,
+                re_param=True,
                 device=device,
             )
 
@@ -97,7 +102,10 @@ class ConvTimeNet:
         n_classes: int,
         dropout: float,
         d_ff: int,
-        dw_ks: list[int],
+        dw_ks: list,
+        fc_dropout: float = 0.0,
+        patch_dropout: float = 0.1,
+        pos_dropout: float = 0.1,
         device: str = "cpu",
     ):
         # Store params for later use
@@ -111,6 +119,9 @@ class ConvTimeNet:
             dropout=dropout,
             d_ff=d_ff,
             dw_ks=dw_ks,
+            fc_dropout=fc_dropout,
+            patch_dropout=patch_dropout,
+            pos_dropout=pos_dropout,
             device=device,
         )
         self.model = None
