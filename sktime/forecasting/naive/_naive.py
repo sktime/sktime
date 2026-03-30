@@ -139,6 +139,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         "scitype:y": "univariate",
         "capability:pred_var": True,
         "capability:pred_int": True,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -224,6 +225,28 @@ class NaiveForecaster(_BaseWindowForecaster):
                 f"The {param}: {self.window_length_} is larger than "
                 f"the training series."
             )
+
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters to new data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            New time series points. By the time this is called, ``self._y``
+            already contains the full concatenated series.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        update_params : bool, optional (default=True)
+            If False, only the cutoff is advanced; fitted attributes are kept.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if update_params and self.window_length is None:
+            self.window_length_ = len(self._y)
 
         return self
 

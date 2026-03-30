@@ -483,3 +483,36 @@ def test_insample_with_numpy_input():
     forecaster.fit(y)
     y_pred = forecaster.predict(np.arange(0, 10))
     assert len(y_pred) == 10
+
+
+# Tests for NaiveForecaster._update
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("strategy", ["last", "mean", "drift"])
+def test_update_predict_equals_refit(strategy):
+    """Test that fit+update gives the same predictions as a full refit."""
+    f = NaiveForecaster(strategy=strategy)
+    f.fit(y_train)
+    f.update(y_test, update_params=True)
+    y_pred_update = f.predict(fh=[1, 2, 3])
+
+    f2 = NaiveForecaster(strategy=strategy)
+    f2.fit(s)
+    y_pred_refit = f2.predict(fh=[1, 2, 3])
+
+    np.testing.assert_array_almost_equal(y_pred_update, y_pred_refit)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("strategy", ["last", "mean", "drift"])
+def test_update_params_false_window_length_unchanged(strategy):
+    """Test that window_length_ is unchanged after update when update_params=False."""
+    f = NaiveForecaster(strategy=strategy)
+    f.fit(y_train)
+    f.update(y_test, update_params=False)
+    assert f.window_length_ == n_train
