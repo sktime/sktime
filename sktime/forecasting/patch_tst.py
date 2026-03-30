@@ -250,7 +250,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
@@ -268,7 +268,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
             "Jayant Kalagnanam",
         ],
         "maintainers": ["julian-fong"],
-        "python_dependencies": ["transformers", "torch", "accelerate"],
+        "python_dependencies": ["transformers<4.41.0", "torch", "accelerate"],
         "capability:global_forecasting": True,
         "tests:vm": True,
     }
