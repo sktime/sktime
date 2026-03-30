@@ -3,10 +3,13 @@
 
 from unittest.mock import MagicMock
 
+import pandas as pd
 import pytest
 
 from sktime.datasets import load_longley
 from sktime.forecasting.compose import IgnoreX
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 
 
@@ -37,3 +40,24 @@ def test_ignoreX(ignore_x):
         assert all_calls_X_none
     else:
         assert not any_calls_X_none
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(IgnoreX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_ignoreX_predict_with_longer_X():
+    """Test predict accepts longer X when ignore_x=True by ignoring X."""
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
+
+    # Add one extra row so predict receives X longer than fh.
+    X_extra = X_test.iloc[[-1]].copy()
+    X_extra.index = pd.Index([X_test.index[-1] + 1])
+    X_test_longer = pd.concat([X_test, X_extra])
+
+    igx = IgnoreX(forecaster=NaiveForecaster(), ignore_x=True)
+    igx.fit(y=y_train, X=X_train, fh=y_test.index)
+    y_pred = igx.predict(X=X_test_longer)
+
+    assert len(y_pred) == len(y_test)
