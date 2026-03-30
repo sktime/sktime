@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests simple forecasts based on naive assumptions."""
 
-__author__ = ["mloning", "Piyush1729", "Flix6x"]
+__author__ = ["mloning", "Piyush1729", "Flix6x", "RayanDas06"]
 
 import numpy as np
 import pandas as pd
