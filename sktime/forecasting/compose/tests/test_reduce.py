@@ -254,7 +254,7 @@ def test_linear_extrapolation_endogenous_only(
     not run_test_module_changed(["sktime.forecasting", "sktime.split"]),
     reason="run test only if forecasting or split module has changed",
 )
-@pytest.mark.parametrize("fh", [1, 3, 5])
+@pytest.mark.parametrize("fh", [[1], [3], [5]])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 @pytest.mark.parametrize("strategy", STRATEGIES)
 @pytest.mark.parametrize("scitype", ["time-series-regressor", "tabular-regressor"])
@@ -266,6 +266,13 @@ def test_dummy_regressor_mean_prediction_endogenous_only(
     The DummyRegressor ignores the input feature data X, hence we can use it for testing
     reduction from forecasting to both tabular and time series regression. The
     DummyRegressor also supports the 'multioutput' strategy.
+
+    Note: fh is parametrized as [1], [3], [5] (single-element lists) rather than
+    bare integers 1, 3, 5. FH v2 expands a bare integer n to [1, 2, ..., n],
+    which would create multi-step forecasting horizons where each step's
+    DummyRegressor sees a different target slice (giving different means per
+    step). Single-element lists preserve the original test intent of predicting
+    a single step ahead.
     """
     y = make_forecasting_problem()
     fh = check_fh(fh)
