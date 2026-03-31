@@ -463,21 +463,21 @@ def evaluate(
     In case of global evaluation (cv_global is not None):
 
     The test folds are denoted by :math:`y_{train, 1}, y_{hist, 1}, y_{true, 1},
-    \dots, y_{train, K}`, y_{hist, K}, y_{true, K}`.
+    \dots, y_{train, K}, y_{hist, K}, y_{true, K}`.
     :math:`y_{train, i}, y_{test, i}`` are produced by the generator
     ``cv_global.split_series(y)``. Whereby :math:`y_{train, i}, y_{test, i}`
     are different time series.
     :math:`y_{test, i}` is further split into :math:`y_{hist, i}, y_{true, i}` by
     the generator ``cv.split_series(y_test)``.
     Denote by :math:`X_{train, 1}, X_{hist, 1}, X_{true, 1}, \dots, X_{train, K},
-    X_{hist, K}, X_{true, K}` the train/test folds are produced analogue by
+    X_{hist, K}, X_{true, K}` the train/test folds are produced analogously by
     ``cv_global.split_series(X)`` and ``cv.split_series(X_test)``.
 
     1. Initialize the counter to ``i = 1``
-    2. Fit the ``forecaster`` to :math:`y_{train, i}`, :math:`X_{train, 1i`,
+    2. Fit the ``forecaster`` to :math:`y_{train, i}`, :math:`X_{train, i}`,
        with ``fh`` set to the absolute indices of :math:`y_{true, i}`.
     3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
-        data :math:`X_{true, i}` and the historical values :math:`y{hist, i}`.
+        data :math:`X_{true, i}` and the historical values :math:`y_{hist, i}`.
         Predictions are made using either ``predict``,
         ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
     4. Compute the ``scoring`` function on ``y_pred`` versus :math:`y_{true, i}`
