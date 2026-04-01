@@ -26,9 +26,9 @@ each tuple corresponds to an mtype, elements as follows:
 
 ---
 
-MTYPE_SOFT_DEPS - dict with str keys and values
+generate_mtype_soft_deps(scitype: str = None) - function returning dict
 
-keys are mtypes with soft dependencies, values are str or list of str
+returns dictionary mapping mtypes with soft dependencies to values (str or list of str)
 strings in values are names of soft dependency packages required for the mtype
 
 ---
@@ -200,38 +200,69 @@ def generate_mtype_list(scitype=None, soft_deps="all"):
     return [x[0] for x in generate_mtype_register(scitype=scitype, soft_deps=soft_deps)]
 
 
-MTYPE_SOFT_DEPS_SERIES = {
-    "xr.DataArray": "xarray",
-    "dask_series": "dask",
-    "pl.DataFrame": "polars",
-    "gluonts_ListDataset_series": "gluonts",
-    "gluonts_PandasDataset_series": "gluonts",
-}
+def generate_mtype_soft_deps(scitype=None):
+    """Generate mtype python dependencies using lookup.
 
-MTYPE_SOFT_DEPS_PANEL = {
-    "xr.DataArray": "xarray",
-    "dask_panel": "dask",
-    "gluonts_ListDataset_panel": "gluonts",
-    "gluonts_PandasDataset_panel": "gluonts",
-    "polars_panel": "polars",
-}
+    Parameters
+    ----------
+    scitype : str or None, optional, default = None
+        optional scitype to restrict the mtypes to
 
-MTYPE_SOFT_DEPS_HIERARCHICAL = {
-    "dask_hierarchical": "dask",
-    "polars_hierarchical": "polars",
-}
+        * if None, dependencies for all mtypes are returned
+        * if str, must be a valid scitype string; only dependencies for mtypes
+          belonging to that scitype are returned
 
-MTYPE_SOFT_DEPS = {}
-MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_SERIES)
-MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_PANEL)
-MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_HIERARCHICAL)
+    Returns
+    -------
+    soft_deps : dict
+        dictionary mapping mtypes to their soft dependencies
+        keys : str - name of the mtype as used throughout sktime
+        values : str or list of str - names of soft dependency packages required
+    """
+    return _generate_mtype_soft_deps_subset(scitype=scitype)
+
+
+@lru_cache(maxsize=256)
+def _generate_mtype_soft_deps_subset(scitype=None):
+    """Generate mtype soft dependencies filtered by scitype, cached function."""
+    full_soft_deps = _generate_mtype_soft_deps()
+    filtered_list = []
+    if scitype is None:
+        filtered_list = full_soft_deps.copy()
+    else:
+        filtered_list = [x for x in full_soft_deps if x[1] == scitype]
+
+    deps_dict = {}
+
+    for mtype, _, soft_deps in filtered_list:
+        deps_dict[mtype] = soft_deps
+
+    return deps_dict
+
+
+@lru_cache(maxsize=2)
+def _generate_mtype_soft_deps():
+    """Generate mtype soft dependencies, cached function."""
+    classes = _generate_mtype_cls_list(soft_deps="all")
+    deps_list = []
+
+    for cls in classes:
+        soft_deps = cls.get_class_tag("python_dependencies", None)
+
+        if soft_deps is not None:
+            mtype = cls.get_class_tag("name")
+            scitype = cls.get_class_tag("scitype")
+            deps_list.append((mtype, scitype, soft_deps))
+
+    return deps_list
+
 
 # mtypes to exclude in checking since they are ambiguous and rare
 AMBIGUOUS_MTYPES = ["numpyflat", "alignment_loc", "pd-long", "pd-wide"]
 
 
 __all__ = [
-    "MTYPE_SOFT_DEPS",
+    "generate_mtype_soft_deps",
     "SCITYPE_REGISTER",
 ]
 
@@ -363,6 +394,7 @@ def scitype_to_mtype(scitype: str, softdeps: str = "exclude"):
     if softdeps not in ["exclude", "present"]:
         return mtypes
 
+    MTYPE_SOFT_DEPS = generate_mtype_soft_deps()
     if softdeps == "exclude":
         # subset to mtypes that require no soft deps
         mtypes = [m for m in mtypes if m not in MTYPE_SOFT_DEPS.keys()]
