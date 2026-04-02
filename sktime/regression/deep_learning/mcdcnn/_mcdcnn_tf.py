@@ -8,6 +8,7 @@ from sklearn.utils import check_random_state
 from sktime.networks.mcdcnn import MCDCNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.dependencies import _check_dl_dependencies
+from warnings import warn
 
 
 class MCDCNNRegressor(BaseDeepRegressor):
@@ -106,6 +107,7 @@ class MCDCNNRegressor(BaseDeepRegressor):
         optimizer=None,
         verbose=False,
         random_state=0,
+        kernel_size=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -126,6 +128,16 @@ class MCDCNNRegressor(BaseDeepRegressor):
         self.optimizer = optimizer
         self.verbose = verbose
         self.random_state = random_state
+        self.kernel_size = kernel_size
+
+        if self.kernel_size is not None:
+            warn(
+                "In MCDCNNRegressor, parameter `kernel_size` is deprecated and will "
+                "be removed in a future release. Please use `kernel_sizes` instead.",
+                FutureWarning,
+                stacklevel=2,
+            )
+            self.kernel_sizes = self.kernel_size
 
         super().__init__()
 

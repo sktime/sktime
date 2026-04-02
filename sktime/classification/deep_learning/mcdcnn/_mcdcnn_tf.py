@@ -8,6 +8,7 @@ from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.mcdcnn import MCDCNNNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
+from warnings import warn
 
 
 class MCDCNNClassifier(BaseDeepClassifier):
@@ -107,6 +108,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         optimizer=None,
         verbose=False,
         random_state=0,
+        kernel_size=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -127,6 +129,16 @@ class MCDCNNClassifier(BaseDeepClassifier):
         self.optimizer = optimizer
         self.verbose = verbose
         self.random_state = random_state
+        self.kernel_size = kernel_size
+
+        if self.kernel_size is not None:
+            warn(
+                "In MCDCNNClassifier, parameter `kernel_size` is deprecated and will "
+                "be removed in a future release. Please use `kernel_sizes` instead.",
+                FutureWarning,
+                stacklevel=2,
+            )
+            self.kernel_sizes = self.kernel_size
 
         super().__init__()
 
