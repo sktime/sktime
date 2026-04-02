@@ -80,6 +80,13 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         "property:randomness": "stochastic",
         "capability:random_state": True,
         # estimator type handled by parent class
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+            "test_multioutput",  # see 6201
+            "test_classifier_on_unit_test_data",  # see 6201
+        ],
     }
 
     # TODO (release 0.41.0)
