@@ -3795,6 +3795,15 @@
       "contributions": [
         "doc"
       ]
-    }
+    },
+    {
+    "login": "RishiGoswami-code",
+    "name": "Chandan Giri",
+    "avatar_url": "https://avatars.githubusercontent.com/u/187612844?v=4&size=64",
+    "profile": "https://github.com/RishiGoswami-code",
+    "contributions": ["code",
+      "doc"
+      ]
+    },
   ]
 }
