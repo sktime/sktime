@@ -34,7 +34,7 @@ Core interface changes
 
 * the capability tag for multivariate data for forecasters,
   ``scitype:y`` is now also replaced by ``capability:multivariate``.
-  Until 1.1.0, an warning will be raised when accessing the old tag ``scitype:y``,
+  Until 1.1.0, a warning will be raised when accessing the old tag ``scitype:y``,
   from 1.1.0 onwards, an exception will be raised.
 
 
