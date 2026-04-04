@@ -96,10 +96,14 @@ class TimerForecaster(BaseForecaster):
 
     def _get_unique_key(self):
         """Get unique key for Timer model to use in multiton cache."""
-        return str(sorted({
-            "model_name": self.model_name,
-            "device": self.device,
-        }.items()))
+        return str(
+            sorted(
+                {
+                    "model_name": self.model_name,
+                    "device": self.device,
+                }.items()
+            )
+        )
 
     def _load_model(self):
         """Load model via multiton cache."""
@@ -197,9 +201,7 @@ class TimerForecaster(BaseForecaster):
         ).unsqueeze(0)
 
         with torch.no_grad():
-            output = self.model_.generate(
-                input_tensor, max_new_tokens=max_h
-            )
+            output = self.model_.generate(input_tensor, max_new_tokens=max_h)
 
         # output shape: (batch_size, max_h) -- Timer returns only the forecast
         forecast_values = output[0].cpu().numpy()
@@ -272,5 +274,3 @@ class _CachedTimer:
         self._model.eval()
 
         return self._model
-
-
