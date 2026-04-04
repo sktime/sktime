@@ -156,6 +156,11 @@ class GaussianHMM(BaseHMMLearn):
         self :
             Reference to self.
         """
+
+        # Intercept missing dependency before the import
+        from sktime.utils.dependencies import _check_soft_dependencies
+        _check_soft_dependencies("hmmlearn", severity="error")
+
         # import inside _fit to avoid hard dependency.
         from hmmlearn.hmm import GaussianHMM as _GaussianHMM
 
