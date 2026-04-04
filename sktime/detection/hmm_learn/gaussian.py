@@ -5,6 +5,7 @@ Please see the original library
 """
 
 from sktime.detection.hmm_learn import BaseHMMLearn
+from sktime.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["miraep8"]
 __all__ = ["GaussianHMM"]
@@ -158,7 +159,6 @@ class GaussianHMM(BaseHMMLearn):
         """
 
         # Intercept missing dependency before the import
-        from sktime.utils.dependencies import _check_soft_dependencies
         _check_soft_dependencies("hmmlearn", severity="error")
 
         # import inside _fit to avoid hard dependency.
