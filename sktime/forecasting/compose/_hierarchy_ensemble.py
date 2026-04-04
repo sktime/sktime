@@ -360,7 +360,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     nodes = mi
                 else:
                     # For nlevels = 2, 'nodes' is pd.Index object (L286)
-                    nodes = pd.concat([nodes, mi])
+                    nodes = nodes.union(mi, sort=False)
             else:
                 node_l = []
                 for i in range(len(node)):
