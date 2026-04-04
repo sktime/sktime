@@ -96,8 +96,8 @@ class AlignerNaive(BaseAligner):
                 vals = np.round(vals).astype("int64")
             else:
                 raise ValueError(
-                    f"Invalid strategy '{strategy}'. Expected one of: "
-                    "'start', 'end', or 'start-end'."
+                    f"Invalid strategy '{strategy}' passed to AlignerNaive. "
+                    "Expected one of: 'start', 'end', or 'start-end'."
                 )
 
             align = align + [pd.DataFrame({col: vals})]
