@@ -1,17 +1,80 @@
 .. _estimator_types_ref:
 
-Estimator and object types
-==========================
+===============
+Estimator types
+===============
+
+This section lists the various object types (scitypes) available in ``sktime``.
 
 ``sktime`` supports unified interfaces for different types of algorithms and objects.
 These are internally referred to as *scitypes*, with strict string identifiers
 such as ``"forecaster"``, ``"classifier"``, ``"detector"``, etc.
 
-Each scitype has a corresponding base class that defines its interface.
-Users can retrieve estimators of a given type using :func:`sktime.registry.all_estimators`,
-and can inspect or filter by type using the ``object_type`` tag.
+Each object type corresponds to a specific unified interface and base class.
+Every object in ``sktime`` has one or more scitypes, which can be inspected
+via its ``"object_type"`` tag.
 
 For a list of all tags, see :ref:`tags_ref`.
+
+.. currentmodule:: sktime.registry._base_classes
+
+AI algorithms
+-------------
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+    :nosignatures:
+
+    aligner
+    classifier
+    clusterer
+    detector
+    forecaster
+    param_est
+    regressor
+    transformer
+    transformer_pairwise
+    transformer_pairwise_panel
+
+Data handling
+-------------
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+    :nosignatures:
+
+    catalogue
+    dataset
+    dataset_classification
+    dataset_forecasting
+    dataset_regression
+    splitter
+
+Evaluation and metrics
+----------------------
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+    :nosignatures:
+
+    metric
+    metric_detection
+    metric_forecasting
+    metric_forecasting_proba
+
+General types
+-------------
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+    :nosignatures:
+
+    object
+    estimator
 
 Retrieving estimator types programmatically
 -------------------------------------------
@@ -25,39 +88,3 @@ Retrieving estimator types programmatically
     get_obj_scitype_list
     get_base_class_register
     get_base_class_lookup
-
-List of estimator and object types
------------------------------------
-
-.. currentmodule:: sktime.registry._base_classes
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-    :nosignatures:
-
-    object
-    estimator
-    forecaster
-    global_forecaster
-    classifier
-    early_classifier
-    regressor
-    clusterer
-    transformer
-    transformer_pairwise
-    transformer_pairwise_panel
-    detector
-    metric
-    metric_forecasting
-    metric_forecasting_proba
-    metric_detection
-    param_est
-    aligner
-    splitter
-    network
-    dataset
-    dataset_classification
-    dataset_forecasting
-    dataset_regression
-    catalogue
-    reconciler
