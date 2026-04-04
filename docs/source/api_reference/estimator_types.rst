@@ -45,7 +45,6 @@ Data handling
     :template: class.rst
     :nosignatures:
 
-    catalogue
     dataset
     dataset_classification
     dataset_forecasting
@@ -64,6 +63,16 @@ Evaluation and metrics
     metric_detection
     metric_forecasting
     metric_forecasting_proba
+
+Catalogues and collections
+--------------------------
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+    :nosignatures:
+
+    catalogue
 
 General types
 -------------
