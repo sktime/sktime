@@ -63,6 +63,10 @@ class BasePairwiseTransformer(BaseEstimator):
     def __init__(self):
         super().__init__()
 
+        from sktime.utils.dependencies import _check_estimator_deps
+
+        _check_estimator_deps(self)
+
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
 
@@ -200,6 +204,10 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
     def __init__(self):
         super().__init__()
+
+        from sktime.utils.dependencies import _check_estimator_deps
+
+        _check_estimator_deps(self)
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.

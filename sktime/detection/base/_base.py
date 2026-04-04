@@ -98,6 +98,10 @@ class BaseDetector(BaseEstimator):
 
         super().__init__()
 
+        from sktime.utils.dependencies import _check_estimator_deps
+
+        _check_estimator_deps(self)
+
         self.set_tags(**{"task": task, "learning_type": learning_type})
 
     def __rmul__(self, other):
