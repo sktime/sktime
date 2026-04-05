@@ -96,8 +96,8 @@ class ScitypeHierarchical(BaseDatatype):
 
     _tags = {
         "scitype": "Hierarchical",
-        "name": None,
-        "name_python": None,
+        "name": None,  # any string
+        "name_python": None,  # lower_snake_case
         "name_aliases": [],
         "description": "hierarchical panel of time series with 3 or more levels",
         "python_version": None,

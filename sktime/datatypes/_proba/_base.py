@@ -21,8 +21,8 @@ class ScitypeProba(BaseDatatype):
 
     _tags = {
         "scitype": "Proba",
-        "name": None,
-        "name_python": None,
+        "name": None,  # any string
+        "name_python": None,  # lower_snake_case
         "name_aliases": [],
         "description": (
             "probability distribution or distribution statistics, return types"
