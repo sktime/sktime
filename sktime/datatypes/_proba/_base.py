@@ -24,7 +24,9 @@ class ScitypeProba(BaseDatatype):
         "name": None,
         "name_python": None,
         "name_aliases": [],
-        "description": "probability distribution or distribution statistics, return types",
+        "description": (
+            "probability distribution or distribution statistics, return types"
+        ),
         "python_version": None,
         "python_dependencies": None,
     }

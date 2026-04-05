@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 
 from sktime.datatypes._check import AMBIGUOUS_MTYPES, check_is_mtype
-from sktime.datatypes._registry import generate_mtype_register, generate_scitype_list
 from sktime.datatypes._examples import get_examples
+from sktime.datatypes._registry import generate_mtype_register, generate_scitype_list
 from sktime.datatypes._vectorize import VectorizedDF, _enforce_index_freq
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.deep_equals import deep_equals
