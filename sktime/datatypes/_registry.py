@@ -158,10 +158,11 @@ def generate_scitype_register():
         1 : string - plain English description of the scitype
     """
     classes = _generate_scitype_cls_list()
-    return [
+    register = [
         (cls.get_class_tag("scitype"), cls.get_class_tag("description"))
         for cls in classes
     ]
+    return sorted(register, key=lambda x: x[0])
 
 
 def generate_scitype_list():
@@ -288,6 +289,9 @@ AMBIGUOUS_MTYPES = ["numpyflat", "alignment_loc", "pd-long", "pd-wide"]
 
 __all__ = [
     "AMBIGUOUS_MTYPES",
+    "MTYPE_SOFT_DEPS",  # noqa: F822
+    "SCITYPE_LIST",  # noqa: F822
+    "SCITYPE_REGISTER",  # noqa: F822
     "generate_mtype_cls_list",
     "generate_mtype_list",
     "generate_mtype_register",
