@@ -39,19 +39,16 @@ NORMALIZE_ALIAS_MAP = {
     "MS": "MS",
     "BME": "BM",
     "BMS": "BMS",
-
     # Quarter
     "QE": "Q",
     "QS": "QS",
     "BQE": "BQ",
     "BQS": "BQS",
-
     # Year
     "YE": "A",
     "YS": "AS",
     "BYE": "BA",
     "BYS": "BAS",
-
     # Semi-month
     "SME": "SM",
     "SMS": "SMS",
