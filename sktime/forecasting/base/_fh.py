@@ -192,7 +192,9 @@ def _check_freq(obj):
     elif isinstance(obj, (pd.Period, pd.Index)):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
-        offset = _normalize_freq_from_obj(obj)
+        with _suppress_pd22_warning():
+            offset = to_offset(obj)
+        # offset = _normalize_freq_from_obj(obj)
         return offset
     else:
         return None
@@ -452,7 +454,7 @@ class ForecastingHorizon:
         else:
             freq_from_self = None
 
-        freq_from_obj = _normalize_freq_from_obj(freq_from_obj)
+        # freq_from_obj = _normalize_freq_from_obj(freq_from_obj)
 
         if freq_from_self is not None and freq_from_obj is not None:
             with _suppress_pd22_warning():
@@ -461,6 +463,7 @@ class ForecastingHorizon:
                 self._freq = freq_from_obj
                 # update to new freq, even if discrepant
         elif freq_from_obj is not None:  # only freq_from_obj is not None
+            freq_from_obj = _normalize_freq_from_obj(freq_from_obj)
             self._freq = freq_from_obj
         else:
             freq_from_self = _normalize_freq_from_obj(freq_from_self)
