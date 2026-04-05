@@ -458,10 +458,8 @@ class ForecastingHorizon:
             with _suppress_pd22_warning():
                 freqs_unequal = freq_from_self != freq_from_obj
             if freqs_unequal:
-                raise ValueError(
-                    "Frequencies from two sources do not coincide: "
-                    f"Current: {freq_from_self}, from update: {freq_from_obj}."
-                )
+                self._freq = freq_from_obj
+                # update to new freq, even if discrepant
         elif freq_from_obj is not None:  # only freq_from_obj is not None
             self._freq = freq_from_obj
         else:
