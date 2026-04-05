@@ -80,7 +80,11 @@ class TimerForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:insample": False,
-        "python_dependencies": ["transformers>=4.40,<4.45", "torch"],
+        "python_dependencies": [
+            "transformers>=4.40,<4.45",
+            "torch",
+        ],
+        "tests:vm": True,
     }
 
     def __init__(
