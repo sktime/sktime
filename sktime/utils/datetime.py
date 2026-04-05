@@ -70,10 +70,99 @@ def _get_intervals_count_and_unit(freq: str) -> tuple[int, str]:
     if freq is None:
         raise ValueError("frequency is missing")
     else:
+        freq = _decode_legacy_pandas_aliases(freq)
         with _suppress_pd22_warning():
             offset = pd.tseries.frequencies.to_offset(freq)
         count, unit = offset.n, offset.base.freqstr
         return count, unit
+
+
+def _decode_legacy_pandas_aliases(freqstr):
+    """Decode legacy pandas frequency aliases to pandas 2+ frequency strings.
+
+    Returns only strings usable in to_offset on pandas 3+
+    (e.g. "M" -> "ME", "Q" -> "QE", etc.).
+    If the input string is not a legacy alias, it is returned unchanged.
+
+    Parameters
+    ----------
+    freqstr : str
+        Frequency string, possibly using legacy pandas frequency aliases
+
+    Returns
+    -------
+    str
+        Frequency string with legacy pandas frequency aliases decoded
+        to pandas 2+ frequency strings
+    """
+    legacy_to_modern = {
+        # annual / yearly
+        "A": "YE",
+        "ANN": "YE",
+        "Y": "YE",
+        "YEAR": "YE",
+        "YEARLY": "YE",
+        "ANNUAL": "YE",
+        "ANNUALLY": "YE",
+        "YR": "YE",
+        # quarter / quarterly
+        "Q": "QE",
+        "QTR": "QE",
+        "QUARTER": "QE",
+        "QUARTERLY": "QE",
+        # monthly
+        "M": "ME",
+        "MTH": "ME",
+        "MONTH": "ME",
+        "MONTHLY": "ME",
+        # business month end
+        "BM": "BME",
+        "BUS-MONTH": "BME",
+        # weekly
+        "W": "W-SUN",
+        "WK": "W-SUN",
+        "WEEK": "W-SUN",
+        "WEEKLY": "W-SUN",
+        # business day
+        "B": "B",
+        "BUS": "B",
+        # daily
+        "D": "D",
+        "DAY": "D",
+        "DLY": "D",
+        "DAILY": "D",
+        # hourly
+        "H": "H",
+        "HR": "H",
+        "HOUR": "H",
+        "HOURLY": "H",
+        # minutes
+        "T": "T",
+        "MIN": "T",
+        "MINUTE": "T",
+        "MINUTELY": "T",
+        # seconds
+        "S": "S",
+        "SEC": "S",
+        "SECOND": "S",
+        "SECONDLY": "S",
+        # milliseconds
+        "L": "L",
+        "MS": "L",
+        "MILLISECOND": "L",
+        "MILLISECONDLY": "L",
+        # microseconds
+        "U": "U",
+        "US": "U",
+        "MICROSECOND": "U",
+        "MICROSECONDLY": "U",
+        # nanoseconds
+        "N": "N",
+        "NS": "N",
+        "NANOSECOND": "N",
+        "NANOSECONDLY": "N",
+    }
+    return legacy_to_modern.get(freqstr, freqstr)
 
 
 def _get_freq(x):
