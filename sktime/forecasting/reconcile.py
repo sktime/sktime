@@ -381,7 +381,7 @@ class ReconcilerForecaster(BaseForecaster):
             # diag matrix of variances
             diag_mat = np.diag(np.diag(cov_mat.values))
             var_d = pd.DataFrame(diag_mat, index=cov_mat.index, columns=cov_mat.columns)
-            
+
             # get correlation from covariance above
             cor_mat = resid.corr()
             nobs = len(resid)
