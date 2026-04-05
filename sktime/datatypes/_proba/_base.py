@@ -20,10 +20,11 @@ class ScitypeProba(BaseDatatype):
     """
 
     _tags = {
-        "scitype": "Alignment",
-        "name": None,  # any string
-        "name_python": None,  # lower_snake_case
+        "scitype": "Proba",
+        "name": None,
+        "name_python": None,
         "name_aliases": [],
+        "description": "probability distribution or distribution statistics, return types",
         "python_version": None,
         "python_dependencies": None,
     }

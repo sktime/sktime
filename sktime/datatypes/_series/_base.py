@@ -64,9 +64,10 @@ class ScitypeSeries(BaseDatatype):
 
     _tags = {
         "scitype": "Series",
-        "name": None,  # any string
-        "name_python": None,  # lower_snake_case
+        "name": None,
+        "name_python": None,
         "name_aliases": [],
+        "description": "uni- or multivariate time series",
         "python_version": None,
         "python_dependencies": None,
     }
