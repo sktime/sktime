@@ -11,7 +11,7 @@ import pandas as pd
 from sktime.detection._anomaly_scores._from_cost import to_local_anomaly_score
 from sktime.detection._compose import PenalisedScore
 from sktime.detection._costs._l2_cost import L2Cost
-from sktime.detection._formatters import format_anomaly_points
+from sktime.detection._formatters import format_segments
 from sktime.detection._penalties import make_bic_penalty
 from sktime.detection._seeded_binseg import make_seeded_intervals
 from sktime.detection._utils import (
@@ -225,7 +225,7 @@ class CircularBinarySegmentation(BaseDetector):
         "capability:missing_values": False,
         "capability:multivariate": True,
         "fit_is_empty": True,
-        "task": "anomaly_detection",
+        "task": "segmentation",
         "learning_type": "unsupervised",
     }
 
@@ -292,8 +292,8 @@ class CircularBinarySegmentation(BaseDetector):
         Returns
         -------
         pd.DataFrame
-            ``"ilocs"`` column with integer point indices of anomalous
-            time points.
+            ``"ilocs"`` column with ``pd.Interval`` objects representing
+            anomalous segments (left-closed).
         """
         X_checked = check_data(
             X,
@@ -310,7 +310,11 @@ class CircularBinarySegmentation(BaseDetector):
             growth_factor=self.growth_factor,
         )
 
-        return format_anomaly_points(anomalies)
+        if not anomalies:
+            return format_segments(np.array([]), np.array([]))
+        anom_starts = np.array([a[0] for a in anomalies])
+        anom_ends = np.array([a[1] for a in anomalies])
+        return format_segments(anom_starts, anom_ends)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

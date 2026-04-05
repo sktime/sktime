@@ -8,7 +8,7 @@ __all__ = ["StatThresholdAnomaliser"]
 import numpy as np
 import pandas as pd
 
-from sktime.detection._formatters import format_anomaly_points
+from sktime.detection._formatters import format_segments
 from sktime.detection.base import BaseDetector
 
 
@@ -53,7 +53,7 @@ class StatThresholdAnomaliser(BaseDetector):
         "capability:missing_values": False,
         "capability:multivariate": False,
         "fit_is_empty": True,
-        "task": "anomaly_detection",
+        "task": "segmentation",
         "learning_type": "unsupervised",
     }
 
@@ -91,8 +91,8 @@ class StatThresholdAnomaliser(BaseDetector):
         Returns
         -------
         pd.DataFrame
-            ``"ilocs"`` column with integer point indices of anomalous
-            time points.
+            ``"ilocs"`` column with ``pd.Interval`` objects representing
+            anomalous segments (left-closed).
         """
         detector = self.change_detector.clone()
         detector.fit(X)
@@ -105,7 +105,11 @@ class StatThresholdAnomaliser(BaseDetector):
             if segment_stat < self.stat_lower or segment_stat > self.stat_upper:
                 anomalies.append((int(segment.index[0]), int(segment.index[-1] + 1)))
 
-        return format_anomaly_points(anomalies)
+        if not anomalies:
+            return format_segments(np.array([]), np.array([]))
+        anom_starts = np.array([a[0] for a in anomalies])
+        anom_ends = np.array([a[1] for a in anomalies])
+        return format_segments(anom_starts, anom_ends)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

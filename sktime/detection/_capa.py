@@ -10,7 +10,7 @@ import numpy as np
 from sktime.detection._anomaly_scores._from_cost import to_saving
 from sktime.detection._anomaly_scores._l2_saving import L2Saving
 from sktime.detection._compose import PenalisedScore
-from sktime.detection._formatters import format_anomaly_points
+from sktime.detection._formatters import format_segments
 from sktime.detection._penalties import (
     make_bic_penalty,
     make_chi2_penalty,
@@ -277,7 +277,7 @@ class CAPA(BaseDetector):
         "capability:missing_values": False,
         "capability:multivariate": True,
         "fit_is_empty": True,
-        "task": "anomaly_detection",
+        "task": "segmentation",
         "learning_type": "unsupervised",
     }
 
@@ -369,8 +369,8 @@ class CAPA(BaseDetector):
         Returns
         -------
         pd.DataFrame
-            ``"ilocs"`` column with integer point indices of anomalous
-            time points.
+            ``"ilocs"`` column with ``pd.Interval`` objects representing
+            anomalous segments (left-closed).
         """
         X_checked = check_data(
             X,
@@ -421,9 +421,12 @@ class CAPA(BaseDetector):
         # (start,end,cols) tuples).
         anomalies = sorted(anomalies)
 
-        # Extract (start, end) pairs for formatting
-        anomaly_pairs = [(a[0], a[1]) for a in anomalies]
-        return format_anomaly_points(anomaly_pairs)
+        # Extract segment boundaries for formatting
+        if not anomalies:
+            return format_segments(np.array([]), np.array([]))
+        anom_starts = np.array([a[0] for a in anomalies])
+        anom_ends = np.array([a[1] for a in anomalies])
+        return format_segments(anom_starts, anom_ends)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
