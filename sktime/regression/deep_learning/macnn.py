@@ -21,6 +21,9 @@ class MACNNRegressor(BaseDeepRegressor):
     padding : str, optional (default="same")
         The type of padding to be provided in MACNN Blocks. Accepts
         all the string values that keras.layers supports.
+        Note: For Conv1D layers within MACNN Blocks, padding is always set to "same"
+        to ensure consistent output lengths for multi-scale convolutions.
+        This parameter only affects the pooling layers between MACNN Blocks.
     pool_size : int, optional (default=3)
         A single value representing pooling windows which are applied
         between two MACNN Blocks.
@@ -244,6 +247,7 @@ class MACNNRegressor(BaseDeepRegressor):
             "n_epochs": 5,
             "batch_size": 3,
             "filter_sizes": (2, 4, 8),
+            "padding": "valid",
             "repeats": 1,
         }
 
@@ -253,6 +257,7 @@ class MACNNRegressor(BaseDeepRegressor):
             "reduction": 8,
             "repeats": 1,
             "random_state": 1,
+            "padding": "same",
         }
 
         return [params1, params2]

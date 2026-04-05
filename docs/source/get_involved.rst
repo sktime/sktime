@@ -14,7 +14,7 @@ Get Involved
    get_involved/governance
 
 ``sktime`` is an open, community-driven project, seeking to provide opportunities to all.
-Therefore, we invite and wamly welcome any kind of contribution (not just code).
+Therefore, we invite and warmly welcome any kind of contribution (not just code).
 If you'd like to talk to someone for advice, or encounter any obstacles along the way,
 don't hesitate to reach out to us on Discord or GitHub.
 We greatly appreciate your support and look forward to collaborating with you!
