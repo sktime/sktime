@@ -73,7 +73,7 @@ class TimerForecaster(BaseForecaster):
     """
 
     _tags = {
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
@@ -242,7 +242,12 @@ class TimerForecaster(BaseForecaster):
             "context_length": 960,
             "device": "cpu",
         }
-        return [params1]
+        params2 = {
+            "model_name": "thuml/timer-base-84m",
+            "context_length": 1920,
+            "device": "cpu",
+        }
+        return [params1, params2]
 
 
 @_multiton
