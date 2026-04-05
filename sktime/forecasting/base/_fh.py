@@ -5,8 +5,8 @@
 __author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
 __all__ = ["ForecastingHorizon"]
 
-from functools import lru_cache
 import re
+from functools import lru_cache
 
 import numpy as np
 import pandas as pd
