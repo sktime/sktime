@@ -1,35 +1,43 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Registry of mtypes and scitypes.
 
-Note for extenders: new mtypes for an existing scitypes
+Note for extenders: new mtypes for an existing scitype
     should be entered in the _registry in the module with name _[scitype].
-When adding a new scitype, add it in SCITYPE_REGISTER here.
+When adding a new scitype, add a new Scitype class in datatypes/_[scitype]/_base.py.
 
 This module exports the following:
 
 ---
 
-SCITYPE_REGISTER - list of tuples
+generate_scitype_register - function returning list of tuples
 
-each tuple corresponds to an mtype tag, elements as follows:
+each tuple corresponds to a scitype tag, elements as follows:
     0 : string - name of the scitype as used throughout sktime and in datatypes
     1 : string - plain English description of the scitype
 
 ---
 
-MTYPE_REGISTER - list of tuples
+generate_mtype_register - function returning list of tuples
 
 each tuple corresponds to an mtype, elements as follows:
     0 : string - name of the mtype as used throughout sktime and in datatypes
-    1 : string - name of the scitype the mtype is for, must be in SCITYPE_REGISTER
-    2 : string - plain English description of the scitype
+    1 : string - name of the scitype the mtype is for
+    2 : string - plain English description of the mtype
 
 ---
 
-MTYPE_SOFT_DEPS - dict with str keys and values
+generate_mtype_soft_deps - function returning dict with str keys and values
 
 keys are mtypes with soft dependencies, values are str or list of str
 strings in values are names of soft dependency packages required for the mtype
+
+---
+
+SCITYPE_REGISTER - backwards compatible alias, lazy, same as generate_scitype_register()
+
+SCITYPE_LIST - backwards compatible alias, lazy, list of scitype name strings
+
+MTYPE_SOFT_DEPS - backwards compatible alias, lazy, same as generate_mtype_soft_deps()
 
 ---
 
@@ -43,12 +51,9 @@ from functools import lru_cache
 
 def _only_core_deps(cls):
     """Return True if the class has only core dependencies."""
-    # dependencies implied by the core requirements
-    # that may appear in the classes as python_dependencies tag
-    # it is assumed that only simple dependency strings, no version requirements appear
     DEPS_PRESENT_IN_ENV = ["numpy", "pandas"]
 
-    deps_tag = cls.get_tag("python_dependencies")
+    deps_tag = cls.get_class_tag("python_dependencies")
 
     if deps_tag is None:
         return True
@@ -64,7 +69,7 @@ def generate_mtype_cls_list(soft_deps="present"):
 
     Parameters
     ----------
-    softdeps : str, optional, default = "present"
+    soft_deps : str, optional, default = "present"
         how inclusion in relation to presence of soft dependencies is handled
 
         * "exclude" = only classes that do not require soft dependencies are returned
@@ -76,7 +81,7 @@ def generate_mtype_cls_list(soft_deps="present"):
     Returns
     -------
     classes : list of classes
-        all classes that are mtypes, i.e. subclasses of BaseDatatype
+        all classes that are mtypes, i.e., subclasses of BaseDatatype
         and not starting with "Base" or "Scitype"
     """
     if soft_deps not in ["exclude", "present", "all"]:
@@ -102,14 +107,67 @@ def _generate_mtype_cls_list(soft_deps="present"):
     classes = [x for x in classes if not x.__name__.startswith("Base")]
     classes = [x for x in classes if not x.__name__.startswith("Scitype")]
 
-    # subset only to data types with soft dependencies present
     if soft_deps == "present":
         classes = [x for x in classes if _check_estimator_deps(x, severity="none")]
     elif soft_deps == "exclude":
         classes = [x for x in classes if _only_core_deps(x)]
-    # elif soft_deps=="all", no filtering happens
 
     return classes
+
+
+@lru_cache(maxsize=1)
+def _generate_scitype_cls_list():
+    """Generate list of Scitype classes using lookup, cached function."""
+    from sktime.datatypes._base import BaseDatatype
+    from sktime.utils.retrieval import _all_classes
+
+    classes = _all_classes("sktime.datatypes")
+    classes = [x[1] for x in classes]
+    classes = [x for x in classes if issubclass(x, BaseDatatype)]
+    classes = [x for x in classes if x.__name__.startswith("Scitype")]
+    return classes
+
+
+def generate_scitype_cls_list():
+    """Generate list of Scitype abstract base classes using lookup.
+
+    Returns
+    -------
+    classes : list of classes
+        all Scitype abstract base classes, i.e., subclasses of BaseDatatype
+        starting with "Scitype"
+    """
+    return _generate_scitype_cls_list().copy()
+
+
+def generate_scitype_register():
+    """Generate scitype register using lookup.
+
+    Returns
+    -------
+    register : list of tuples
+        each tuple corresponds to a scitype, elements as follows:
+
+        0 : string - name of the scitype as used throughout sktime and in datatypes
+
+        1 : string - plain English description of the scitype
+    """
+    classes = _generate_scitype_cls_list()
+    return [
+        (cls.get_class_tag("scitype"), cls.get_class_tag("description"))
+        for cls in classes
+    ]
+
+
+def generate_scitype_list():
+    """Generate list of scitype name strings using lookup.
+
+    Returns
+    -------
+    scitype_list : list of str
+        list of scitype name strings
+    """
+    return [x[0] for x in generate_scitype_register()]
 
 
 def generate_mtype_register(scitype=None, soft_deps="all"):
@@ -117,13 +175,13 @@ def generate_mtype_register(scitype=None, soft_deps="all"):
 
     Parameters
     ----------
-    scitype str or None, optional, default = None
+    scitype : str or None, optional, default = None
         optional scitype to restrict the mtypes to
 
         * if None, all mtypes are returned
         * if str, must be scitype string, only mtypes for the scitype are returned
 
-    softdeps : str, optional, default = "all"
+    soft_deps : str, optional, default = "all"
         how inclusion in relation to presence of soft dependencies is handled
 
         * "exclude" = only classes that do not require soft dependencies are returned
@@ -139,9 +197,9 @@ def generate_mtype_register(scitype=None, soft_deps="all"):
 
         0 : string - name of the mtype as used throughout sktime and in datatypes
 
-        1 : string - name of the scitype the mtype is for, must be in SCITYPE_REGISTER
+        1 : string - name of the scitype the mtype is for
 
-        2 : string - plain English description of the scitype
+        2 : string - plain English description of the mtype
     """
     return _generate_mtype_register_subset(scitype=scitype, soft_deps=soft_deps)
 
@@ -162,7 +220,6 @@ def _generate_mtype_register(soft_deps="all"):
     classes = _generate_mtype_cls_list(soft_deps=soft_deps)
 
     def to_tuple(cls):
-        """Return tuple of mtype register elements."""
         mtype = cls.get_class_tag("name")
         scitype = cls.get_class_tag("scitype")
         desc = cls.get_class_tag("description")
@@ -177,13 +234,13 @@ def generate_mtype_list(scitype=None, soft_deps="all"):
 
     Parameters
     ----------
-    scitype str or None, optional, default = None
+    scitype : str or None, optional, default = None
         optional scitype to restrict the mtypes to
 
         * if None, all mtypes are returned
         * if str, must be scitype string, only mtypes for the scitype are returned
 
-    softdeps : str, optional, default = "all"
+    soft_deps : str, optional, default = "all"
         how inclusion in relation to presence of soft dependencies is handled
 
         * "exclude" = only classes that do not require soft dependencies are returned
@@ -194,58 +251,59 @@ def generate_mtype_list(scitype=None, soft_deps="all"):
 
     Returns
     -------
-    register : list of string
+    register : list of str
         entries are name of the mtype as used throughout sktime and in datatypes
     """
     return [x[0] for x in generate_mtype_register(scitype=scitype, soft_deps=soft_deps)]
 
 
-MTYPE_SOFT_DEPS_SERIES = {
-    "xr.DataArray": "xarray",
-    "dask_series": "dask",
-    "pl.DataFrame": "polars",
-    "gluonts_ListDataset_series": "gluonts",
-    "gluonts_PandasDataset_series": "gluonts",
-}
+def generate_mtype_soft_deps():
+    """Generate mtype soft dependencies dict using lookup.
 
-MTYPE_SOFT_DEPS_PANEL = {
-    "xr.DataArray": "xarray",
-    "dask_panel": "dask",
-    "gluonts_ListDataset_panel": "gluonts",
-    "gluonts_PandasDataset_panel": "gluonts",
-    "polars_panel": "polars",
-}
+    Returns
+    -------
+    soft_deps : dict with str keys and str or list of str values
+        keys are mtype names that require soft dependencies
+        values are soft dependency package names required for the mtype
+    """
+    classes = _generate_mtype_cls_list(soft_deps="all")
+    result = {}
+    for cls in classes:
+        if not _only_core_deps(cls):
+            mtype_name = cls.get_class_tag("name")
+            deps = cls.get_class_tag("python_dependencies")
+            result[mtype_name] = deps
+    return result
 
-MTYPE_SOFT_DEPS_HIERARCHICAL = {
-    "dask_hierarchical": "dask",
-    "polars_hierarchical": "polars",
-}
 
-MTYPE_SOFT_DEPS = {}
-MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_SERIES)
-MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_PANEL)
-MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_HIERARCHICAL)
-
-# mtypes to exclude in checking since they are ambiguous and rare
 AMBIGUOUS_MTYPES = ["numpyflat", "alignment_loc", "pd-long", "pd-wide"]
 
 
 __all__ = [
+    "AMBIGUOUS_MTYPES",
     "MTYPE_SOFT_DEPS",
+    "SCITYPE_LIST",
     "SCITYPE_REGISTER",
+    "generate_mtype_cls_list",
+    "generate_mtype_list",
+    "generate_mtype_register",
+    "generate_mtype_soft_deps",
+    "generate_scitype_cls_list",
+    "generate_scitype_list",
+    "generate_scitype_register",
+    "mtype_to_scitype",
+    "scitype_to_mtype",
 ]
 
 
-SCITYPE_REGISTER = [
-    ("Series", "uni- or multivariate time series"),
-    ("Panel", "panel of uni- or multivariate time series"),
-    ("Hierarchical", "hierarchical panel of time series with 3 or more levels"),
-    ("Alignment", "series or sequence alignment"),
-    ("Table", "data table with primitive column types"),
-    ("Proba", "probability distribution or distribution statistics, return types"),
-]
-
-SCITYPE_LIST = [x[0] for x in SCITYPE_REGISTER]
+def __getattr__(name):
+    if name == "SCITYPE_REGISTER":
+        return generate_scitype_register()
+    if name == "SCITYPE_LIST":
+        return generate_scitype_list()
+    if name == "MTYPE_SOFT_DEPS":
+        return generate_mtype_soft_deps()
+    raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
 def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
@@ -267,7 +325,7 @@ def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
     return_unique : bool, default=False
         if True, makes return unique
     coerce_to_list : bool, default=False
-        if True, coerces rerturn to list, even if one-element
+        if True, coerces return to list, even if one-element
 
     Raises
     ------
@@ -276,17 +334,14 @@ def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
         (this should not happen in general, it means there is a bug)
     ValueError, if there is no scitype for the/some mtype string
     """
-    # handle the "None" case first
     if mtype is None or mtype == "None":
         return None
-    # recurse if mtype is a list
     if isinstance(mtype, list):
         scitype_list = [mtype_to_scitype(x) for x in mtype]
         if return_unique:
             scitype_list = list(set(scitype_list))
         return scitype_list
 
-    # checking for type. Checking str is enough, recursion above will do the rest.
     if not isinstance(mtype, str):
         raise TypeError(
             "mtype must be str, or list of str, nested list/str object, or None"
@@ -336,48 +391,24 @@ def scitype_to_mtype(scitype: str, softdeps: str = "exclude"):
     RuntimeError, if there is no mtype for the/some scitype string (this must be a bug)
     """
     msg = "scitype argument must be str or list of str"
-    # handle the "None" case first
     if scitype is None or scitype == "None":
         raise TypeError(msg)
-    # recurse if mtype is a list
     if isinstance(scitype, list):
         scitype_list = [y for x in scitype for y in scitype_to_mtype(x)]
         return scitype_list
 
-    # checking for type. Checking str is enough, recursion above will do the rest.
     if not isinstance(scitype, str):
         raise TypeError(msg)
 
-    # now we know scitype is a string, check if it is in the register
-    if scitype not in SCITYPE_LIST:
+    if scitype not in generate_scitype_list():
         raise ValueError(
             f'"{scitype}" is not a valid scitype string, see datatypes.SCITYPE_REGISTER'
         )
 
-    mtypes = [k[0] for k in generate_mtype_register() if k[1] == scitype]
+    soft_deps_arg = softdeps if softdeps in ["exclude", "present"] else "all"
+    mtypes = [k[0] for k in generate_mtype_register(scitype=scitype, soft_deps=soft_deps_arg)]
 
     if len(mtypes) == 0:
-        # if there are no mtypes, this must have been reached by mistake/bug
         raise RuntimeError("no mtypes defined for scitype " + scitype)
 
-    if softdeps not in ["exclude", "present"]:
-        return mtypes
-
-    if softdeps == "exclude":
-        # subset to mtypes that require no soft deps
-        mtypes = [m for m in mtypes if m not in MTYPE_SOFT_DEPS.keys()]
-        return mtypes
-
-    if softdeps == "present":
-        from skbase.utils.dependencies import _check_soft_dependencies
-
-        def present(x):
-            """Return True if x has satisfied soft dependency or has no soft dep."""
-            if x not in MTYPE_SOFT_DEPS.keys():
-                return True
-            else:
-                return _check_soft_dependencies(MTYPE_SOFT_DEPS[x], severity="none")
-
-        # return only mtypes with soft dependencies present (or requiring none)
-        mtypes = [m for m in mtypes if present(m)]
-        return mtypes
+    return mtypes
