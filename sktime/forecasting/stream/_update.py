@@ -475,6 +475,7 @@ class DontUpdate(_DelegatedForecaster):
     >>> forecaster.update(y1)
     DontUpdate(...)
     """
+
     _delegate_name = "forecaster_"
 
     _tags = {
