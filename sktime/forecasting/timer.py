@@ -79,6 +79,7 @@ class TimerForecaster(BaseForecaster):
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        "capability:insample": False,
         "python_dependencies": ["transformers>=4.40,<4.45", "torch"],
     }
 
