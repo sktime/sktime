@@ -33,6 +33,30 @@ from sktime.utils.warnings import _suppress_pd22_warning
 
 VALID_FORECASTING_HORIZON_TYPES = int | list | np.ndarray | pd.Index
 
+NORMALIZE_ALIAS_MAP = {
+    # Month
+    "ME": "M",
+    "MS": "MS",
+    "BME": "BM",
+    "BMS": "BMS",
+
+    # Quarter
+    "QE": "Q",
+    "QS": "QS",
+    "BQE": "BQ",
+    "BQS": "BQS",
+
+    # Year
+    "YE": "A",
+    "YS": "AS",
+    "BYE": "BA",
+    "BYS": "BAS",
+
+    # Semi-month
+    "SME": "SM",
+    "SMS": "SMS",
+}
+
 DELEGATED_METHODS = (
     "__sub__",
     "__add__",
@@ -184,40 +208,23 @@ def _normalize_freq_from_obj(freq):
     else:
         freqstr = freq
 
-    if freq is None:
+    if freqstr is None:
         return None
 
-    NORMALIZE_ALIAS_MAP = {
-        # Month
-        "ME": "M",
-        "MS": "MS",
-        "BME": "BM",
-        "BMS": "BMS",
+    # handling strings with numbers at the beginning, e.g., "2M", "3Q", etc
+    if isinstance(freqstr, str) and freqstr.startswith(tuple("0123456789")):
+        match = re.fullmatch(r"(\d+)?(.+)", freqstr)
 
-        # Quarter
-        "QE": "Q",
-        "QS": "QS",
-        "BQE": "BQ",
-        "BQS": "BQS",
+        mult, base = match.groups()
 
-        # Year
-        "YE": "A",
-        "YS": "AS",
-        "BYE": "BA",
-        "BYS": "BAS",
+        # normalizes "ME" to "M", "MS" to "MS", "BME" to "BM", "BMS" to "BMS", etc
+        base = NORMALIZE_ALIAS_MAP.get(base, base)
 
-        # Semi-month
-        "SME": "SM",
-        "SMS": "SMS",
-    }
+        return f"{mult}{base}" if mult else base
 
-    match = re.fullmatch(r"(\d+)?(.+)", freqstr)
-
-    mult, base = match.groups()
-
-    base = NORMALIZE_ALIAS_MAP.get(base, base)       
-
-    return f"{mult}{base}" if mult else base
+    # base case, handling strings without numbers at the beginning, e.g., "M", "Q", etc
+    # normalizes "ME" to "M", "MS" to "MS", "BME" to "BM", "BMS" to "BMS", etc
+    return NORMALIZE_ALIAS_MAP.get(freqstr, freqstr)
 
 
 def _extract_freq_from_cutoff(x) -> str | None:
