@@ -200,6 +200,9 @@ def _check_freq(obj):
 
 def _normalize_freq_from_obj(freq):
     """Normalize frequency from obj, for use in freq setter."""
+    if not isinstance(freq, str):
+        return freq
+
     if hasattr(freq, "freqstr"):
         freqstr = freq.freqstr
     else:
