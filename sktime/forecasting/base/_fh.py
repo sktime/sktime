@@ -6,6 +6,7 @@ __author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
+import re
 
 import numpy as np
 import pandas as pd
@@ -170,11 +171,53 @@ def _check_freq(obj):
     elif isinstance(obj, (pd.Period, pd.Index)):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
-        with _suppress_pd22_warning():
-            offset = to_offset(obj)
+        offset = _normalize_freq_from_obj(obj)
         return offset
     else:
         return None
+
+
+def _normalize_freq_from_obj(freq):
+    """Normalize frequency from obj, for use in freq setter."""
+    if hasattr(freq, "freqstr"):
+        freqstr = freq.freqstr
+    else:
+        freqstr = freq
+
+    if freq is None:
+        return None
+
+    NORMALIZE_ALIAS_MAP = {
+        # Month
+        "ME": "M",
+        "MS": "MS",
+        "BME": "BM",
+        "BMS": "BMS",
+
+        # Quarter
+        "QE": "Q",
+        "QS": "QS",
+        "BQE": "BQ",
+        "BQS": "BQS",
+
+        # Year
+        "YE": "A",
+        "YS": "AS",
+        "BYE": "BA",
+        "BYS": "BAS",
+
+        # Semi-month
+        "SME": "SM",
+        "SMS": "SMS",
+    }
+
+    match = re.fullmatch(r"(\d+)?(.+)", freqstr)
+
+    mult, base = match.groups()
+
+    base = NORMALIZE_ALIAS_MAP.get(base, base)       
+
+    return f"{mult}{base}" if mult else base
 
 
 def _extract_freq_from_cutoff(x) -> str | None:
@@ -402,6 +445,8 @@ class ForecastingHorizon:
         else:
             freq_from_self = None
 
+        freq_from_obj = _normalize_freq_from_obj(freq_from_obj)
+
         if freq_from_self is not None and freq_from_obj is not None:
             with _suppress_pd22_warning():
                 freqs_unequal = freq_from_self != freq_from_obj
@@ -411,12 +456,9 @@ class ForecastingHorizon:
                     f"Current: {freq_from_self}, from update: {freq_from_obj}."
                 )
         elif freq_from_obj is not None:  # only freq_from_obj is not None
-            if freq_from_obj == "ME":
-                freq_from_obj = "M"
             self._freq = freq_from_obj
         else:
-            if freq_from_obj == "ME":
-                freq_from_obj = "M"
+            freq_from_self = _normalize_freq_from_obj(freq_from_self)
             # leave self._freq as freq_from_self, or set to None if does not exist yet
             self._freq = freq_from_self
 
