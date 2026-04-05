@@ -281,9 +281,6 @@ AMBIGUOUS_MTYPES = ["numpyflat", "alignment_loc", "pd-long", "pd-wide"]
 
 __all__ = [
     "AMBIGUOUS_MTYPES",
-    "MTYPE_SOFT_DEPS",
-    "SCITYPE_LIST",
-    "SCITYPE_REGISTER",
     "generate_mtype_cls_list",
     "generate_mtype_list",
     "generate_mtype_register",
@@ -406,7 +403,9 @@ def scitype_to_mtype(scitype: str, softdeps: str = "exclude"):
         )
 
     soft_deps_arg = softdeps if softdeps in ["exclude", "present"] else "all"
-    mtypes = [k[0] for k in generate_mtype_register(scitype=scitype, soft_deps=soft_deps_arg)]
+    mtypes = [
+        k[0] for k in generate_mtype_register(scitype=scitype, soft_deps=soft_deps_arg)
+    ]
 
     if len(mtypes) == 0:
         raise RuntimeError("no mtypes defined for scitype " + scitype)
