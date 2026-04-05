@@ -33,7 +33,7 @@ def _get_all_mtypes_for_scitype(scitype):
     mtypes : list of str - list of mtypes for scitype
     """
     if scitype not in generate_scitype_list():
-        raise RuntimeError(scitype + " is not a valid scitype")
+        raise RuntimeError(scitype + " is not in the SCITYPE_REGISTER")
     mtypes = [key[0] for key in generate_mtype_register() if key[1] == scitype]
     mtypes = [mtype for mtype in mtypes if mtype not in AMBIGUOUS_MTYPES]
 

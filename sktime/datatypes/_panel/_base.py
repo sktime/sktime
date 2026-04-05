@@ -74,8 +74,8 @@ class ScitypePanel(BaseDatatype):
 
     _tags = {
         "scitype": "Panel",
-        "name": None,
-        "name_python": None,
+        "name": None,  # any string
+        "name_python": None,  # lower_snake_case
         "name_aliases": [],
         "description": "panel of uni- or multivariate time series",
         "python_version": None,
