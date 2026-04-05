@@ -17,9 +17,10 @@ class ScitypeAlignment(BaseDatatype):
 
     _tags = {
         "scitype": "Alignment",
-        "name": None,  # any string
-        "name_python": None,  # lower_snake_case
+        "name": None,
+        "name_python": None,
         "name_aliases": [],
+        "description": "series or sequence alignment",
         "python_version": None,
         "python_dependencies": None,
     }
