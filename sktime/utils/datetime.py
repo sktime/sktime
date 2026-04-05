@@ -70,9 +70,9 @@ def _get_intervals_count_and_unit(freq: str) -> tuple[int, str]:
     if freq is None:
         raise ValueError("frequency is missing")
     else:
-        freq = _decode_legacy_pandas_aliases(freq)
+        # freq = _decode_legacy_pandas_aliases(freq)
         with _suppress_pd22_warning():
-            offset = pd.tseries.frequencies.to_offset(freq)
+            offset = pd.to_offset(freq)
         count, unit = offset.n, offset.base.freqstr
         return count, unit
 
