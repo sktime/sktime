@@ -15,7 +15,6 @@ from ._rank_cost import RankCost
 COSTS = [
     EmpiricalDistributionCost,
     MultivariateGaussianCost,
-    MultivariateTCost,
     GaussianCost,
     LaplaceCost,
     L1Cost,
@@ -25,5 +24,10 @@ COSTS = [
     PoissonCost,
     RankCost,
 ]
+
+# MultivariateTCost is too resource-intensive for parametrised CI tests
+# (causes worker crashes on arm64/macOS). Tested separately in
+# costs/tests/test_multivariate_t_cost.py.
+COSTS_ALL = COSTS + [MultivariateTCost]
 
 __all__ = COSTS
