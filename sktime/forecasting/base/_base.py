@@ -96,7 +96,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # estimator type
         # --------------
         "object_type": "forecaster",  # type of object
-        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
+        "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
@@ -1108,6 +1108,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         >>> forecaster.state
         'pretrained'
         """
+        if check_is_scitype(y, "Series"):
+            raise TypeError(
+                f"{type(self).__name__}.pretrain requires Panel or Hierarchical data "
+                "(multiple time series instances), but a single Series was passed. "
+                "Use fit() for fitting on a single series, or pass panel data "
+                "(e.g., pd.DataFrame with MultiIndex) to pretrain()."
+            )
+
         # pretrain always requires panel data, independent of what fit/predict
         # support via y_inner_mtype. Pass expanded mtypes directly to _check_X_y
         # to decouple pretrain's data requirements from the tag.
@@ -1115,16 +1123,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         orig_y_mtypes = _coerce_to_list(self.get_tag("y_inner_mtype"))
         pretrain_y_mtypes = list(set(orig_y_mtypes + _PRETRAIN_MTYPES))
 
-        X_inner, y_inner = self._check_X_y(X=X, y=y, y_inner_mtype=pretrain_y_mtypes)
-
-        y_scitype = self._y_metadata.get("scitype", None)
-        if y_scitype == "Series":
-            raise TypeError(
-                f"{type(self).__name__}.pretrain requires Panel or Hierarchical data "
-                "(multiple time series instances), but a single Series was passed. "
-                "Use fit() for fitting on a single series, or pass panel data "
-                "(e.g., pd.DataFrame with MultiIndex) to pretrain()."
-            )
+        # pretrain accepts multivariate panel data even for univariate forecasters,
+        # because _pretrain can split columns into separate univariate series.
+        # Pass multivariate=True to prevent column vectorization.
+        X_inner, y_inner = self._check_X_y(
+            X=X, y=y, y_inner_mtype=pretrain_y_mtypes, multivariate=True
+        )
 
         # pretrain does not support vectorization - global learning requires
         # the forecaster to handle panel data directly
@@ -1760,7 +1764,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         return fitted_params
 
-    def _check_X_y(self, X=None, y=None, y_inner_mtype=None):
+    def _check_X_y(self, X=None, y=None, y_inner_mtype=None, multivariate=None):
         """Check and coerce X/y for fit/predict/update functions.
 
         Parameters
@@ -1787,14 +1791,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             Case 2: self.get_tag("X_inner_mtype") does not support scitype of X, then
                 VectorizedDF of X, iterated as the most complex supported scitype
             Case 3: None if X was None
+        multivariate : None, True or False
+            if not-None, overrides the capability tag "capability:multivariate"
+            in internal behaviour.
+            Overridden currently from: the ``pretrain`` method.
 
         Raises
         ------
         TypeError if y or X is not one of the permissible Series mtypes
-        TypeError if y is not compatible with self.get_tag("scitype:y")
-            if tag value is "univariate", y must be univariate
-            if tag value is "multivariate", y must be bi- or higher-variate
-            if tag value is "both", y can be either
         TypeError if self.get_tag("X-y-must-have-same-index") is True
             and the index set of X is not a super-set of the index set of y
 
@@ -1842,6 +1846,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
         else:
             y_inner_mtype = _coerce_to_list(y_inner_mtype)
+        if multivariate is None:
+            multivariate = self.get_tag("capability:multivariate")
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
         y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
         X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
@@ -1859,7 +1865,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         if y is not None:
             # request only required metadata from checks
             y_metadata_required = ["n_features", "feature_names", "feature_kind"]
-            if self.get_tag("scitype:y") != "both":
+
+            if not multivariate:
                 y_metadata_required += ["is_univariate"]
             if not self.get_tag("capability:missing_values"):
                 y_metadata_required += ["has_nans"]
@@ -1900,21 +1907,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             self._y_mtype_last_seen = y_metadata["mtype"]
 
             req_vec_because_rows = y_scitype not in y_inner_scitype
-            req_vec_because_cols = (
-                self.get_tag("scitype:y") == "univariate"
-                and not y_metadata["is_univariate"]
-            )
+            req_vec_because_cols = not multivariate and not y_metadata["is_univariate"]
             requires_vectorization = req_vec_because_rows or req_vec_because_cols
-
-            if (
-                self.get_tag("scitype:y") == "multivariate"
-                and y_metadata["is_univariate"]
-            ):
-                raise ValueError(
-                    f"Unsupported input data type in {type(self).__name__}, "
-                    "this forecaster accepts only strictly multivariate data. "
-                    "y must have two or more variables, but found only one."
-                )
 
             _check_missing(y_metadata, "y")
 
@@ -2380,13 +2374,15 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
@@ -2467,13 +2463,15 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -2549,8 +2547,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         Parameters
         ----------
         y : time series in sktime compatible data container format
-                Time series to which to fit the forecaster in the update.
+            Time series to which to fit the forecaster in the update.
             y can be in one of the following formats, must be same scitype as in fit:
+
             Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
                 for vanilla forecasting, one time series
             Panel scitype: pd.DataFrame with 2-level row MultiIndex,
@@ -2558,15 +2557,11 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 for global or panel forecasting
             Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
                 for hierarchical forecasting
-            Number of columns admissible depend on the "scitype:y" tag:
-                if self.get_tag("scitype:y")=="univariate":
-                    y must have a single column/variable
-                if self.get_tag("scitype:y")=="multivariate":
-                    y must have 2 or more columns
-                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+
             For further details:
                 on usage, see forecasting tutorial examples/01_forecasting.ipynb
                 on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+
         cv : temporal cross-validation generator, optional (default=None)
         X : time series in sktime compatible format, optional (default=None)
                 Exogeneous time series for updating and forecasting

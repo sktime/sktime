@@ -470,7 +470,7 @@ class ARARForecaster(BaseForecaster):
         "maintainers": ["Akai01"],
         # estimator type
         "y_inner_mtype": "pd.DataFrame",
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "requires-fh-in-fit": False,
         "capability:exogenous": False,
         "capability:missing_values": False,
