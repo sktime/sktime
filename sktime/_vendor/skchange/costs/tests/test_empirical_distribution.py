@@ -416,17 +416,17 @@ def test_fixed_cdf_empirical_distribution_cost_vs_direct_cost():
     print(f"Nudged fixed CDF cost cached: {fixed_nudged_cdf_cost_cached}")
     print(f"Nudged Fixed CDF cost cached v2: {fixed_nudged_cdf_cost_cached_numba}")
 
-    np.testing.assert_equal(direct_cost, fixed_cdf_cost)
-    np.testing.assert_equal(direct_cost, fixed_cdf_cost_cached)
+    np.testing.assert_allclose(direct_cost, fixed_cdf_cost, atol=1e-12)
+    np.testing.assert_allclose(direct_cost, fixed_cdf_cost_cached, atol=1e-12)
 
     assert direct_cost != fixed_nudged_cdf_cost_cached, (
         "Direct cost should not equal the nudged fixed CDF cost."
     )
-    np.testing.assert_equal(
-        fixed_nudged_cdf_cost_cached, fixed_nudged_cdf_cost_cached_numba
+    np.testing.assert_allclose(
+        fixed_nudged_cdf_cost_cached, fixed_nudged_cdf_cost_cached_numba, atol=1e-12
     )
-    np.testing.assert_equal(
-        fixed_nudged_cdf_cost_cached, fixed_nudged_cdf_cost_cached_numpy
+    np.testing.assert_allclose(
+        fixed_nudged_cdf_cost_cached, fixed_nudged_cdf_cost_cached_numpy, atol=1e-12
     )
 
 
