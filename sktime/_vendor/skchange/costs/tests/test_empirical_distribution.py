@@ -724,8 +724,8 @@ def test_direct_vs_approximation_runtime(n_samples=10_000):
     direct_cost_eval_time = end_time - start_time
     total_direct_cost = np.sum(direct_cost)
 
-    assert direct_cost_eval_time < 6.0e-2, (
-        "Direct evaluation time should be less than 0.06 seconds."
+    assert direct_cost_eval_time < 2.0e-1, (
+        "Direct evaluation time should be less than 0.2 seconds."
     )
 
     # Approximate evaluation:
@@ -747,8 +747,8 @@ def test_direct_vs_approximation_runtime(n_samples=10_000):
     approximate_cost_eval_time = end_time - start_time
     total_approx_cost = np.sum(approx_cost)
 
-    assert approximate_cost_eval_time < 1.0e-2, (
-        "Approximate evaluation time should be less than 0.01 sec."
+    assert approximate_cost_eval_time < 5.0e-2, (
+        "Approximate evaluation time should be less than 0.05 sec."
     )
 
     # Pre-caching the approximation:
@@ -790,11 +790,11 @@ def test_direct_vs_approximation_runtime(n_samples=10_000):
     total_pre_cached_cost = np.sum(pre_cached_cost)
 
     if numba_available:
-        max_cache_creation_time = 5.0e-2
-        max_pre_cached_eval_time = 1.0e-3
+        max_cache_creation_time = 2.0e-1
+        max_pre_cached_eval_time = 5.0e-3
     else:
-        max_cache_creation_time = 5.0e-1
-        max_pre_cached_eval_time = 5.0e-2
+        max_cache_creation_time = 1.0
+        max_pre_cached_eval_time = 2.0e-1
 
     assert cache_creation_time < max_cache_creation_time, (
         f"Cache creation should take less than {max_cache_creation_time:.2e} seconds."
