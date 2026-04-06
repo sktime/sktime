@@ -210,7 +210,7 @@ class BaseSegmentAnomalyDetector(BaseDetector):
         y_dense = y_dense["labels"].reset_index(drop=True)
 
         y_anomaly = y_dense.loc[y_dense.values > 0]
-        anomaly_locations_diff = y_anomaly.index.diff()
+        anomaly_locations_diff = pd.Series(y_anomaly.index).diff()
 
         first_anomaly_start = y_anomaly.index[:1].to_numpy()
         anomaly_starts = y_anomaly.index[anomaly_locations_diff > 1]
