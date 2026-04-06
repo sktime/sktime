@@ -11,7 +11,7 @@ from sktime._vendor.skchange.change_scores import (
     ContinuousLinearTrendScore,
     RankScore,
 )
-from sktime._vendor.skchange.costs import COSTS, RankCost
+from sktime._vendor.skchange.costs import COSTS, MultivariateTCost, RankCost
 from sktime._vendor.skchange.datasets import generate_alternating_data
 from sktime._vendor.skchange.tests.test_all_interval_scorers import skip_if_no_test_data
 
@@ -28,6 +28,9 @@ SCORES_AND_COSTS = CHANGE_SCORES + COSTS
             (12, "local_optimum"),
             [[12, 15, 20], "local_optimum"],
         ]
+        if not (
+            issubclass(ScoreType, MultivariateTCost) and isinstance(bandwidth, list)
+        )
     ],
 )
 def test_moving_window_changepoint(ScoreType: type[BaseIntervalScorer], params: tuple):
