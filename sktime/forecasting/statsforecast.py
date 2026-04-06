@@ -407,6 +407,10 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
 
         super().__init__()
 
+        # multiplicative decomposition cannot handle negative data
+        if self.decomposition_type == "multiplicative":
+            self.set_tags(**{"capability:supports-negative-data": False})
+
     def _get_statsforecast_class(self):
         """Get the class of the statsforecast forecaster."""
         from statsforecast.models import AutoTheta
@@ -523,6 +527,11 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         self.phi = phi
 
         super().__init__()
+
+        # if model has multiplicative components, it cannot handle negative data
+        # M = multiplicative, Z = auto-selection (can be multiplicative)
+        if "M" in self.model or "Z" in self.model:
+            self.set_tags(**{"capability:supports-negative-data": False})
 
     def _get_statsforecast_class(self):
         """Create underlying forecaster instance."""
@@ -898,12 +907,16 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             **{"capability:pred_int": False, "capability:pred_int:insample": False}
         )
 
+        # if trend_forecaster is multiplicative, then this is as well
         from sklearn.base import clone
 
         if trend_forecaster:
             self._trend_forecaster = clone(trend_forecaster)
         else:
             self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
+
+        if not self._trend_forecaster.get_tag("capability:supports-negative-data", True):
+            self.set_tags(**{"capability:supports-negative-data": False})
 
         # checks if trend_forecaster is already wrapped with
         # StatsForecastBackAdapter

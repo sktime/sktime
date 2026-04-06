@@ -680,6 +680,33 @@ class capability__missing_values(_BaseTag):
     }
 
 
+class capability__supports_negative_data(_BaseTag):
+    """Capability: the estimator can handle negative values in input data.
+
+    - String name: ``"capability:supports-negative-data"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    If the tag is ``True``, the estimator can handle negative values
+    in input data, e.g., in ``y`` or ``X``.
+
+    If the tag is ``False``, the estimator cannot handle negative values
+    in input data, and will raise an error if negative data is encountered.
+    This typically applies to estimators with multiplicative components
+    or logarithmic transformations that require strictly positive data.
+    """
+
+    _tags = {
+        "tag_name": "capability:supports-negative-data",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "can the estimator handle negative values in inputs?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
 class capability__feature_importance(_BaseTag):
     """Capability: the estimator can provide feature importance.
 

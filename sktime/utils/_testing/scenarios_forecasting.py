@@ -71,6 +71,11 @@ class ForecasterTestScenario(TestScenario, BaseObject):
         if scenario_is_hierarchical and not obj_is_hierarchical:
             return False
 
+        # skip scenarios with negative values for estimators that don't support them
+        has_neg = self.get_tag("has-negative-data", False)
+        if has_neg and not get_tag(obj, "capability:supports-negative-data"):
+            return False
+
         return True
 
     def get_args(self, key, obj=None, deepcopy_args=True):
@@ -290,9 +295,39 @@ class ForecasterFitPredictHierarchicalSimple(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
+class ForecasterFitPredictUnivariateNoXNegative(ForecasterTestScenario):
+    """Fit/predict only, univariate y, no X, with negative values.
+
+    This scenario is used to test estimators that can handle negative values,
+    and to verify that those which cannot are correctly skipped.
+    """
+
+    _tags = {
+        "univariate_y": True,
+        "fh_passed_in_fit": True,
+        "has-negative-data": True,
+        "is_enabled": True,
+    }
+
+    @property
+    def args(self):
+        return {
+            "fit": {
+                "y": _make_series(
+                    n_timepoints=20, random_state=RAND_SEED, all_positive=False
+                ),
+                "fh": 1,
+            },
+            "predict": {"fh": 1},
+        }
+
+    default_method_sequence = ["fit", "predict"]
+
+
 forecasting_scenarios_simple = [
     ForecasterFitPredictUnivariateNoX,
     ForecasterFitPredictMultivariateWithX,
+    ForecasterFitPredictUnivariateNoXNegative,
 ]
 
 forecasting_scenarios_extended = [
@@ -305,6 +340,7 @@ forecasting_scenarios_extended = [
     ForecasterFitPredictMultivariateWithX,
     ForecasterFitPredictPanelSimple,
     ForecasterFitPredictHierarchicalSimple,
+    ForecasterFitPredictUnivariateNoXNegative,
 ]
 
 scenarios_forecasting = forecasting_scenarios_extended

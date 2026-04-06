@@ -89,6 +89,11 @@ class ClassifierTestScenario(TestScenario, BaseObject):
         if is_unequal_length and not get_tag(obj, "capability:unequal_length"):
             return False
 
+        # skip scenarios with negative values for estimators that don't support them
+        has_neg = self.get_tag("has-negative-data", False)
+        if has_neg and not get_tag(obj, "capability:supports-negative-data"):
+            return False
+
         return True
 
 
