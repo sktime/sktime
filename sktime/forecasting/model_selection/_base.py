@@ -16,7 +16,7 @@ from sktime.utils.warnings import warn
 class BaseGridSearch(_DelegatedForecaster):
     _tags = {
         "authors": ["mloning", "fkiraly", "aiwalter"],
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,
@@ -68,7 +68,7 @@ class BaseGridSearch(_DelegatedForecaster):
         # this ensures univariate broadcasting over variables
         # if tune_by_variable is True
         if tune_by_variable:
-            self.set_tags(**{"scitype:y": "univariate"})
+            self.set_tags(**{"capability:multivariate": False})
 
         # todo 1.0.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
@@ -307,13 +307,15 @@ class BaseGridSearch(_DelegatedForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
