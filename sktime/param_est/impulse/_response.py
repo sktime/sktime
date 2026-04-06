@@ -94,7 +94,19 @@ class ImpulseResponseFunction(BaseParamFitter):
         steps + 1 elements (this gives the “initial impulse” followed by steps responses
         for the important cases of VAR and SARIMAX models), while for time-varying
         models the impulse responses are only given for steps elements (to avoid having
-        to unexpectedly provide updated time-varying matrices).
+        to unexpectedly provide updated time-varying matrices). The output from the
+        example may be read as follows: (i) Rows show the response variable or the
+        variable affected. (ii) Columns show the impulse variable, the variable
+        receiving the shock. The t=0, reflects the first dimension, so the immediate
+        impact due to change of the impact variable. Impulse Response of statsmodels
+        only shows the response for t=0 in this manner. So in the example variable 1
+        (X, column 0) receives in t=0 a shock it jumps by 1414 (row 0) and variable 2
+        (row 1) by -1.45.If variable 2 (X2, column 1) receives a shock in t=0
+        variable 1 jumps by 1401 and variable 2 by -1.45. When orthogonalized=True we
+        speak of one std shock, when False of a one unit shock. This explanation holds
+        true for alllinear multivariate time-series. If cumulative=True cumulates
+        effects up to period t for all responses. If cumulative = False and forecast
+        horizon is t=0, then the cumulative = False and True equals.
 
     Examples
     --------
