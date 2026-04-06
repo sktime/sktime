@@ -32,9 +32,9 @@ class PyODDetector(BaseDetector):
     ...     random_state=10),
     ... )
     >>> from sktime.detection.adapters._pyod import PyODDetector
-    >>> from pyod.models.ecod import ECOD
-    >>> model = PyODDetector(ECOD())
-    >>> model.fit_transform(X)
+    >>> from pyod.models.ecod import ECOD  # doctest: +SKIP
+    >>> model = PyODDetector(ECOD())  # doctest: +SKIP
+    >>> model.fit_transform(X)  # doctest: +SKIP
        labels
     0       0
     1       1

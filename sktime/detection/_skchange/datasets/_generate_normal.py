@@ -303,16 +303,9 @@ def generate_piecewise_normal_data(
     7  0.900891  1.535109
     8  2.186813  2.817436
     9 -1.818413 -0.078302
-        >>> sorted(params.keys())
-        [
-        ...     'affected_variables',
-        ...     'change_points',
-        ...     'lengths',
-        ...     'means',
-        ...     'n_samples',
-        ...     'n_segments',
-        ...     'variances',
-        ... ]
+        >>> sorted(params.keys())  # doctest: +NORMALIZE_WHITESPACE
+        ['affected_variables', 'change_points', 'lengths', 'means',
+         'n_samples', 'n_segments', 'variances']
         >>> params['n_segments']
         2
         >>> params['change_points']

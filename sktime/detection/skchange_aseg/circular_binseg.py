@@ -6,4 +6,78 @@ from sktime.detection._skchange.anomaly_detectors import (
 
 
 class CircularBinarySegmentation(_CircularBinarySegmentation):
-    """Circular binary segmentation algorithm for anomalous segment detection."""
+    """Circular binary segmentation algorithm for multiple segment anomaly detection.
+
+    Binary segmentation type changepoint detection algorithms recursively split the data
+    into two segments, and test whether the two segments are different. Circular binary
+    segmentation [1]_ is a variant of binary segmentation where the statistical test
+    (anomaly score) is applied to compare the data behaviour of an inner interval subset
+    with the surrounding data contained in an outer interval.
+    In other words, the null hypothesis within each outer interval is that the data
+    is stationary, while the alternative hypothesis is that there is a segment
+    anomaly within the outer interval.
+
+    Parameters
+    ----------
+    anomaly_score : BaseIntervalScorer, optional, default=L2Cost()
+        The local anomaly score to use for anomaly detection. If a cost is given, it is
+        converted to a local anomaly score using the `LocalAnomalyScore` class.
+    penalty : np.ndarray or float, optional, default=None
+        The penalty to use for anomaly detection. If the penalty is
+        penalised (`anomaly_score.get_tag("is_penalised")`) the penalty will
+        be ignored. The different types of penalties are as follows:
+
+        * ``float``: A constant penalty applied to the sum of scores across all
+            variables in the data.
+        * ``np.ndarray``: A penalty array of the same length as the number of
+            columns in the data, where element ``i`` of the array is the penalty for
+            ``i+1`` variables being affected by an anomaly. The penalty array
+            must be positive and increasing (not strictly). A penalised score with a
+            linear penalty array is faster to evaluate than a nonlinear penalty array.
+        * ``None``: A default penalty is created in `predict` based on the fitted
+            score using the `make_bic_penalty` function.
+
+    min_segment_length : int, default=5
+        Minimum length between two changepoints. Must be greater than or equal to 1.
+    max_interval_length : int, default=100
+        The maximum length of an interval to estimate a changepoint in. Must be greater
+        than or equal to ``2 * min_segment_length``.
+    growth_factor : float, default=1.5
+        The growth factor for the seeded intervals. Intervals grow in size according to
+        ``interval_len=max(interval_len + 1, np.floor(growth_factor * interval_len))```,
+        starting at ``interval_len=min_interval_length``. It also governs the amount
+        of overlap between intervals of the same length, as the start of each interval
+        is shifted by a factor of ``1 + 1 / growth_factor``. Must be a float in
+        ``(1, 2]``.
+
+    References
+    ----------
+    .. [1] Olshen, A. B., Venkatraman, E. S., Lucito, R., & Wigler, M. (2004). Circular
+    binary segmentation for the analysis of array-based DNA copy number data.
+    Biostatistics, 5(4), 557-572.
+
+    Examples
+    --------
+    >>> from sktime.detection._skchange.anomaly_detectors import (
+    ...     CircularBinarySegmentation,
+    ... )
+    >>> from sktime.detection._skchange.datasets import generate_piecewise_normal_data
+    >>> df = generate_piecewise_normal_data(
+    ...     means=[0, 10, 0, 20, 0],
+    ...     lengths=[20, 10, 20, 5, 20],
+    ...     seed=2,
+    ... )
+    >>> detector = CircularBinarySegmentation()
+    >>> detector.fit_predict(df)
+          ilocs  labels
+    0  [20, 30)       1
+    1  [50, 55)       2
+
+    Notes
+    -----
+    Using costs to generate local anomaly scores will be significantly slower than using
+    anomaly scores that are implemented directly. This is because the local anomaly
+    score requires evaluating the cost at disjoint subsets of the data
+    (before and after an anomaly), which is not a natural operation for costs
+    implemented as interval evaluators.
+    """

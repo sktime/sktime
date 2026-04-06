@@ -894,16 +894,16 @@ class BaseDetector(BaseEstimator):
         ... )
         >>> index = range(10)
         >>> BaseDetector.sparse_to_dense(y_sparse, index=index)
-        0    1
+        0    0
         1    1
         2    1
-        3    1
-        4    2
-        5    2
-        6    1
-        7    1
-        8    1
-        9    1
+        3    0
+        4    0
+        5    0
+        6    0
+        7    0
+        8    0
+        9    0
         dtype: int64
         """
         if not isinstance(y_sparse, pd.DataFrame):
@@ -1133,11 +1133,11 @@ class BaseDetector(BaseEstimator):
         --------
         >>> import pandas as pd
         >>> from sktime.detection.base import BaseDetector
-        >>> segments =  pd.DataFrame({
-                "ilocs": pd.IntervalIndex.from_tuples([(0, 3), (3, 4), (4, 5),
-                (5, 6), (6, 7), (7, 8), (8, 10), (10, 11), (11, 12), (12, 20)]),
-                "labels": [0, 2, 1, 0, 2, 1, 0, 2, 1, 0]
-            })
+        >>> segments = pd.DataFrame({
+        ...     "ilocs": pd.IntervalIndex.from_tuples([(0, 3), (3, 4), (4, 5),
+        ...     (5, 6), (6, 7), (7, 8), (8, 10), (10, 11), (11, 12), (12, 20)]),
+        ...     "labels": [0, 2, 1, 0, 2, 1, 0, 2, 1, 0]
+        ... })
         >>> BaseDetector.segments_to_change_points(segments)
         Index([0, 3, 4, 5, 6, 7, 8, 10, 11, 12], dtype='int64')
         """

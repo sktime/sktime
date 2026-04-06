@@ -6,7 +6,70 @@ from sktime.detection._skchange.anomaly_detectors import CAPA
 
 
 class MVCAPA(CAPA):
-    """Multivariate CAPA compatibility wrapper with affected-component inference."""
+    """MVCAPA = Multivariate collective and point anomaly detection, from skchange.
+
+    Redirects to ``skchange.anomaly_detectors.mvcapa``.
+
+    An efficient implementation of the MVCAPA algorithm [1]_ for anomaly detection.
+
+    Parameters
+    ----------
+    collective_saving : BaseSaving or BaseCost, optional (default=L2Cost(0.0))
+        The saving function to use for collective anomaly detection.
+        Only univariate savings are permitted (see the `evaluation_type` attribute).
+        If a ``BaseCost`` is given, the saving function is constructed from the cost.
+        The cost must have a fixed parameter that represents the baseline cost.
+    point_saving : BaseSaving or BaseCost, optional (default=L2Cost(0.0))
+        The saving function to use for point anomaly detection. Only savings with a
+        minimum size of 1 are permitted.
+        If a ``BaseCost`` is given, the saving function is constructed from the cost.
+        The cost must have a fixed parameter that represents the baseline cost.
+    collective_penalty : str or Callable, optional, default="combined"
+        Penalty function to use for collective anomalies. If a string, must be one of
+        "dense", "sparse", "intermediate" or "combined". If a Callable, must be a
+        function returning a penalty and per-component penalties, given n, p, n_params
+        and scale.
+    collective_penalty_scale : float, optional, default=1.0
+        Scaling factor for the collective penalty.
+    point_penalty : str or Callable, optional, default="sparse"
+        Penalty function to use for point anomalies. See ``collective_penalty``.
+    point_penalty_scale : float, optional, default=1.0
+        Scaling factor for the point penalty.
+    min_segment_length : int, optional, default=2
+        Minimum length of a segment.
+    max_segment_length : int, optional, default=1000
+        Maximum length of a segment.
+    ignore_point_anomalies : bool, optional, default=False
+        If True, detected point anomalies are not returned by `predict`. I.e., only
+        collective anomalies are returned.
+
+    References
+    ----------
+    .. [1] Fisch, A. T., Eckley, I. A., & Fearnhead, P. (2022). Subset multivariate
+       collective and point anomaly detection. Journal of Computational and Graphical
+       Statistics, 31(2), 574-585.
+
+    Examples
+    --------
+    >>> import numpy as np  # doctest: +SKIP
+    >>> from skchange.anomaly_detectors import MVCAPA  # doctest: +SKIP
+    >>> from skchange.datasets.generate import generate_anomalous_data  # doctest: +SKIP
+    >>> n = 300  # doctest: +SKIP
+    >>> means = [np.array([8.0, 0.0, 0.0]), np.array([2.0, 3.0, 5.0])]  # doctest: +SKIP
+    >>> df = generate_anomalous_data(  # doctest: +SKIP
+    ...     n, anomalies=[(100, 120), (250, 300)], means=means, random_state=3
+    ... )  # doctest: +SKIP
+    >>> detector = MVCAPA()  # doctest: +SKIP
+    >>> detector.fit_predict(df)  # doctest: +SKIP
+      anomaly_interval anomaly_columns
+    0       [100, 120)             [0]
+    1       [250, 300)       [2, 1, 0]
+
+    Notes
+    -----
+    The MVCAPA algorithm assumes the input data is centered before fitting and
+    predicting.
+    """
 
     def __init__(
         self,
