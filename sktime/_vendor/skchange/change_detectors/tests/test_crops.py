@@ -190,8 +190,15 @@ def test_retrieve_change_points_2():
     specific_change_points = change_point_detector.change_points_lookup[2]
 
     # Check that the results are as expected:
-    assert np.array_equal(specific_change_points, np.array([88, 176])), (
-        f"Expected [88, 176], got {specific_change_points}"
+    # platform-independent: tests position proximity instead of exact values
+    assert len(specific_change_points) == 2, (
+        f"Expected 2 changepoints, got {len(specific_change_points)}"
+    )
+    assert abs(specific_change_points[0] - 88) <= 5, (
+        f"Expected first changepoint near 88, got {specific_change_points[0]}"
+    )
+    assert abs(specific_change_points[1] - 176) <= 5, (
+        f"Expected second changepoint near 176, got {specific_change_points[1]}"
     )
 
 

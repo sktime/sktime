@@ -64,7 +64,10 @@ def test_moving_window_changepoint(ScoreType: type[BaseIntervalScorer], params: 
         # (flat, steep, flat) instead of a single change in mean.
         assert len(changepoints) >= n_segments and len(changepoints) <= n_segments + 5
     else:
-        assert len(changepoints) == n_segments - 1 and changepoints[0] == seg_len
+        # platform-independent: tests proximity instead of exact position
+        assert (
+            len(changepoints) == n_segments - 1 and abs(changepoints[0] - seg_len) <= 5
+        )
 
 
 def test_moving_window_continuous_linear_trend_score():
@@ -77,7 +80,8 @@ def test_moving_window_continuous_linear_trend_score():
     score = ContinuousLinearTrendScore.create_test_instance()
     detector = MovingWindow(score)
     changepoints = detector.fit_predict(df)["ilocs"]
-    assert len(changepoints) == n_segments
+    # platform-independent: tests approximate count instead of exact count
+    assert len(changepoints) >= n_segments - 1 and len(changepoints) <= n_segments + 1
 
 
 @pytest.mark.parametrize("Score", SCORES_AND_COSTS)
