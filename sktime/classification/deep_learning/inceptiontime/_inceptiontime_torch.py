@@ -235,6 +235,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
             activation=self._validated_activation,
             activation_hidden=self.activation_hidden,
             activation_inception=self.activation_inception,
+            init_weights=self.init_weights,
         )
 
     @classmethod
