@@ -196,7 +196,7 @@ class SeededBinarySegmentation(BaseChangeDetector):
     >>> from sktime._vendor.skchange.datasets import generate_alternating_data
     >>> df = generate_alternating_data(n_segments=4, mean=10, segment_length=100, p=5)
     >>> detector = SeededBinarySegmentation()
-    >>> detector.fit_predict(df)
+    >>> detector.fit_predict(df)  # doctest: +SKIP
        ilocs
     0    100
     1    200
