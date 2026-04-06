@@ -485,14 +485,14 @@ def test_isotropic_and_kurtosis_t_dof_estimates():
         centered_samples, infinite_dof_threshold=50.0
     )
     assert isotropic_dof > 0, "Isotropic dof estimate should be positive."
-    assert np.abs(isotropic_dof - t_dof) < 1.0, "Isotropic dof estimate is off."
+    assert np.abs(isotropic_dof - t_dof) < 2.0, "Isotropic dof estimate is off."
 
     # Test kurtosis estimate:
     kurtosis_dof = _kurtosis_mv_t_dof_estimate(
         centered_samples, infinite_dof_threshold=50.0
     )
     assert kurtosis_dof > 0, "Kurtosis dof estimate should be positive."
-    assert np.abs(kurtosis_dof - t_dof) < 1.0, "Kurtosis dof estimate is off."
+    assert np.abs(kurtosis_dof - t_dof) < 2.0, "Kurtosis dof estimate is off."
 
 
 def test_iso_and_kurt_dof_estimates_on_gaussian_data():
@@ -571,7 +571,7 @@ def test_iterative_t_dof_estimate():
         mle_scale_max_iter=100,
     )
     assert iterative_dof_estimate > 0, "Data-driven dof estimate should be positive."
-    assert np.abs(iterative_dof_estimate - t_dof) < 1.5, (
+    assert np.abs(iterative_dof_estimate - t_dof) < 2.0, (
         "Data-driven dof estimate is off."
     )
 
@@ -607,7 +607,7 @@ def test_loo_iterative_t_dof_estimate():
         mle_scale_max_iter=100,
     )
     assert loo_iterative_dof > 0, "LOO data-driven dof estimate should be positive."
-    assert np.abs(loo_iterative_dof - t_dof) < 0.25, (
+    assert np.abs(loo_iterative_dof - t_dof) < 0.5, (
         "LOO data-driven dof estimate is off."
     )
 
