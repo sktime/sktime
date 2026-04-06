@@ -915,7 +915,9 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         else:
             self._trend_forecaster = StatsForecastAutoETS(model="ZZN")
 
-        if not self._trend_forecaster.get_tag("capability:supports-negative-data", True):
+        if not self._trend_forecaster.get_tag(
+            "capability:supports-negative-data", True
+        ):
             self.set_tags(**{"capability:supports-negative-data": False})
 
         # checks if trend_forecaster is already wrapped with
