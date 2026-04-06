@@ -736,7 +736,7 @@ def test_MultiVariateTCost_with_moving_window(
         n_samples
     )
 
-    mean_2 = mean_1 + 1.0
+    mean_2 = mean_1 + 3.0
     scale_2 = np.eye(p)
     scale_2[0, 0] = 10.0
     mv_t_2_samples = st.multivariate_t(loc=mean_2, shape=scale_2, df=t_dof).rvs(
