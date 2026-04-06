@@ -11,6 +11,7 @@ from sktime.datasets import load_airline
 from sktime.param_est.impulse import ImpulseResponseFunction
 from sktime.utils.dependencies import _check_estimator_deps
 
+
 # DynamicFactor tests
 @pytest.mark.skipif(
     not _check_estimator_deps(ImpulseResponseFunction, severity="none"),
@@ -67,6 +68,7 @@ def test_additional_irfparams_on_dyn():
 def test_irf_dyn_against_statsmodels():
     """Compare sktime irf DynamicFactor wrapper against statsmodels irf"""
     from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor as statsdyn
+
     from sktime.forecasting.dynamic_factor import DynamicFactor as skdyn
 
     X = load_airline()
@@ -150,6 +152,7 @@ def test_additional_irfparams_on_varmax():
 def test_irf_vmax_against_statsmodels():
     """Compare sktime irf VARMAX wrapper against statsmodels irf"""
     from statsmodels.tsa.statespace.varmax import VARMAX as statsmax
+
     from sktime.forecasting.varmax import VARMAX as skmax
 
     # Convergence and estimation warnings happen regularly in statsmodels too.
@@ -197,7 +200,7 @@ def test_irf_on_var():
     actual = np.round(sk_res.get_fitted_params()["irf"].sum())
     expected = 3.0
     np.testing.assert_allclose(actual, expected, rtol=0.10)
-    
+
 
 @pytest.mark.skipif(
     not _check_estimator_deps(ImpulseResponseFunction, severity="none"),
@@ -228,6 +231,7 @@ def test_additional_irfparams_on_var():
 def test_irf_var_against_statsmodels():
     """Compare sktime irf VAR wrapper against statsmodels irf"""
     from statsmodels.tsa.api import VAR as statsvar
+
     from sktime.forecasting.var import VAR as skvar
 
     X = load_airline()
@@ -297,6 +301,7 @@ def test_additional_irfparams_on_vecm():
 def test_irf_vecm_against_statsmodels():
     """Compare sktime irf VECM wrapper against statsmodels irf"""
     from statsmodels.tsa.api import VECM as statsvecm
+
     from sktime.forecasting.vecm import VECM as skvecm
 
     X = load_airline()
