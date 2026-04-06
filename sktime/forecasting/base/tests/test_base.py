@@ -106,7 +106,7 @@ def test_vectorization_series_to_hier(mtype, backend):
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
     f = YfromX.create_test_instance()
-    assert f.get_tag("scitype:y") == "univariate"  # check the assumption
+    assert not f.get_tag("capability:multivariate")  # check the assumption
 
     f.set_config(**backend.copy())
     y_pred = f.fit(y).predict([1, 2, 3])
@@ -324,7 +324,7 @@ def test_col_vectorization_correct_col_order():
 
     f = NaiveForecaster()
     # force univariate tag to trigger vectorization over columns for sure
-    f.set_tags(**{"scitype:y": "univariate"})
+    f.set_tags(**{"capability:multivariate": False})
 
     f.fit(y=y, fh=[1])
     y_pred = f.predict()
