@@ -108,13 +108,12 @@ class BaseDetector(_BaseDetector):
             * If ``task`` is "segmentation", the values are integer labels of the
               segments. Possible labels are integers starting from 0.
         """
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X)
-        columns = X.columns
-        index = X.index
+        X_df = pd.DataFrame(X) if not isinstance(X, pd.DataFrame) else X
+        columns = X_df.columns
+        index = X_df.index
 
         y_sparse = self.predict(X)
-        y_dense = self.sparse_to_dense(y_sparse, range(len(X)), columns)
+        y_dense = self.sparse_to_dense(y_sparse, range(len(X_df)), columns)
 
         y_dense.index = index
         return y_dense
@@ -150,13 +149,12 @@ class BaseDetector(_BaseDetector):
             * If ``task`` is "segmentation", the values are integer labels of the
               segments. Possible labels are integers starting from 0.
         """
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X)
-        columns = X.columns
-        index = X.index
+        X_df = pd.DataFrame(X) if not isinstance(X, pd.DataFrame) else X
+        columns = X_df.columns
+        index = X_df.index
 
         y_sparse = self.fit_predict(X)
-        y_dense = self.sparse_to_dense(y_sparse, range(len(X)), columns)
+        y_dense = self.sparse_to_dense(y_sparse, range(len(X_df)), columns)
 
         y_dense.index = index
         return y_dense
