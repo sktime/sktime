@@ -24,15 +24,25 @@ VALID_SCORER_TAGS = list(VALID_ESTIMATOR_TAGS) + [
 ]
 
 
-def _contains_multivariate_t_cost(scorer) -> bool:
-    """Check if scorer or any of its components is a MultivariateTCost."""
+def _contains_multivariate_t_cost(scorer, _seen=None) -> bool:
+    """Recursively check if scorer or any nested component is a MultivariateTCost."""
     from sktime._vendor.skchange.costs import MultivariateTCost
+
+    if _seen is None:
+        _seen = set()
+    obj_id = id(scorer)
+    if obj_id in _seen:
+        return False
+    _seen.add(obj_id)
 
     if isinstance(scorer, MultivariateTCost):
         return True
     for attr in vars(scorer).values():
         if isinstance(attr, MultivariateTCost):
             return True
+        if hasattr(attr, "__dict__") and not isinstance(attr, type):
+            if _contains_multivariate_t_cost(attr, _seen):
+                return True
     return False
 
 
