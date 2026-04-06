@@ -24,12 +24,29 @@ VALID_SCORER_TAGS = list(VALID_ESTIMATOR_TAGS) + [
 ]
 
 
+def _contains_multivariate_t_cost(scorer) -> bool:
+    """Check if scorer or any of its components is a MultivariateTCost."""
+    from sktime._vendor.skchange.costs import MultivariateTCost
+
+    if isinstance(scorer, MultivariateTCost):
+        return True
+    for attr in vars(scorer).values():
+        if isinstance(attr, MultivariateTCost):
+            return True
+    return False
+
+
 def skip_if_no_test_data(scorer: BaseIntervalScorer):
     distribution_type = scorer.get_tag("distribution_type")
     is_conditional = scorer.get_tag("is_conditional")
     if distribution_type == "Poisson" or is_conditional:
         pytest.skip(
             f"{scorer.__class__.__name__} does not have test data in place yet."
+        )
+    if _contains_multivariate_t_cost(scorer):
+        pytest.skip(
+            "MultivariateTCost causes worker crashes in parametrised CI tests. "
+            "Tested separately in costs/tests/test_multivariate_t_cost.py."
         )
 
 
