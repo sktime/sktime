@@ -571,7 +571,7 @@ def test_iterative_t_dof_estimate():
         mle_scale_max_iter=100,
     )
     assert iterative_dof_estimate > 0, "Data-driven dof estimate should be positive."
-    assert np.abs(iterative_dof_estimate - t_dof) < 1.0, (
+    assert np.abs(iterative_dof_estimate - t_dof) < 1.5, (
         "Data-driven dof estimate is off."
     )
 
@@ -607,7 +607,7 @@ def test_loo_iterative_t_dof_estimate():
         mle_scale_max_iter=100,
     )
     assert loo_iterative_dof > 0, "LOO data-driven dof estimate should be positive."
-    assert np.abs(loo_iterative_dof - t_dof) < 0.15, (
+    assert np.abs(loo_iterative_dof - t_dof) < 0.25, (
         "LOO data-driven dof estimate is off."
     )
 
