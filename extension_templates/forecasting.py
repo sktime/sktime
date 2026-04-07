@@ -10,8 +10,9 @@ How to use this implementation template to implement a new estimator:
 - make a copy of the template in a suitable location, give it a descriptive name.
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
-- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, cutoff, _fh,
-    _cutoff, _converter_store_y, forecasters_, _tags, _tags_dynamic, _is_vectorized
+- do not write to reserved variables: is_fitted, _is_fitted, _state,
+    _pretrained_attrs, _X, _y, cutoff, _fh, _cutoff, _converter_store_y,
+    forecasters_, _tags, _tags_dynamic, _is_vectorized
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
@@ -31,6 +32,8 @@ Optional methods to implement:
     predicting variance         - _predict_var(self, fh, X=None, cov=False)
     distribution forecast       - _predict_proba(self, fh, X=None)
     fitted parameter inspection - _get_fitted_params()
+    pretraining (1st batch)     - _pretrain(self, y, X=None, fh=None)
+    pretraining (update)        - _pretrain_update(self, y, X=None, fh=None)
 
 Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
@@ -98,13 +101,12 @@ class MyForecaster(BaseForecaster):
         #   in that case, X/y are passed through without conversion if on the list
         #   if not on the list, converted to the first entry of the same scitype
         #
-        # scitype:y controls whether internal y can be univariate/multivariate
+        # capability:multivariate controls whether inner y can be multivariate
         # if multivariate is not valid, applies vectorization over variables
-        "scitype:y": "univariate",
-        # valid values: "univariate", "multivariate", "both"
-        #   "univariate": inner _fit, _predict, etc, receive only univariate series
-        #   "multivariate": inner methods receive only series with 2 or more variables
-        #   "both": inner methods can see series with any number of variables
+        "capability:multivariate": False,
+        # valid values: True, False
+        #   False: inner _fit, _predict, etc, receive only univariate series
+        #   True: inner methods work with series with any number of variables
         #
         # capability tags: properties of the estimator
         # --------------------------------------------
@@ -149,6 +151,12 @@ class MyForecaster(BaseForecaster):
         # valid values: boolean True (yes), False (no)
         # only needs to be set if capability:pred_int is True
         # if False, exception raised if proba methods are called with in-sample fh
+        #
+        # capability:pretrain = does forecaster support pretraining on panel data?
+        "capability:pretrain": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, implement _pretrain and optionally _pretrain_update below
+        # enables the pretrain -> fit -> predict workflow for global learning
         #
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages
@@ -241,16 +249,17 @@ class MyForecaster(BaseForecaster):
         y : sktime time series object
             guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X :  sktime time series object, optional (default=None)
+        X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series to fit to.
 
@@ -326,13 +335,14 @@ class MyForecaster(BaseForecaster):
         Parameters
         ----------
         y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -346,6 +356,70 @@ class MyForecaster(BaseForecaster):
 
         # implement here
         # IMPORTANT: avoid side effects to X, fh
+
+    # todo: consider implementing this, optional
+    # if not implementing, delete the _pretrain and _pretrain_update methods
+    # requires setting the tag "capability:pretrain" to True
+    # pretrain receives panel or hierarchical data (MultiIndex DataFrame)
+    # and should learn global patterns shared across instances
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain forecaster on panel/global data (first batch).
+
+        private _pretrain containing the core logic, called from pretrain
+
+        Writes to self:
+            Sets pretrained model attributes ending in "_".
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex (guaranteed Panel or Hierarchical)
+            Panel or hierarchical time series data to pretrain on.
+            The last index level is time, all other levels identify instances.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series.
+        fh : ForecastingHorizon or None, optional (default=None)
+            Forecasting horizon.
+
+        Returns
+        -------
+        self : reference to self
+        """
+
+        # implement here
+        # IMPORTANT: avoid side effects to y, X, fh
+        #
+        # any pretrained model parameters should be written to attributes ending in "_"
+        #   these will be automatically tracked by the base class
+        #   and accessible via get_pretrained_params()
+        #
+        # example:
+        #   self.global_mean_ = y.values.mean()
+        #   self.n_pretrain_instances_ = len(y.index.droplevel(-1).unique())
+
+    # todo: consider implementing this, optional
+    # if not implementing, delete this method (default calls _pretrain)
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Update pretrained forecaster with additional panel data.
+
+        private _pretrain_update, called from pretrain when already pretrained.
+        Default implementation calls _pretrain. Override for incremental logic.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex (guaranteed Panel or Hierarchical)
+            Additional panel data to learn from.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series.
+        fh : ForecastingHorizon or None, optional (default=None)
+            Forecasting horizon.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # default: just call _pretrain again
+        # override for incremental/online pretraining
+        return self._pretrain(y=y, X=X, fh=fh)
 
     # todo: consider implementing this, optional
     # if not implementing, delete the _update_predict_single method
