@@ -48,7 +48,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html
     """  # noqa: E501
 
     _tags = {
@@ -73,7 +73,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             "pd_multiindex_hier",
             "pd.DataFrame",
         ],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "capability:missing_values": False,

@@ -77,6 +77,11 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
 
         - "ar": Autoregressive mode for one-step-ahead predictions.
         - "direct": Direct mode for multi-step-ahead predictions.
+    pred_len : int, optional (default=None)
+        Prediction length, i.e., the number of future time steps to forecast.
+        Defines the network output dimension in direct mode.
+        In AR mode this is ignored (output is always 1).
+        Required for pretraining in direct mode if fh is not passed to pretrain().
     activation : str, optional (default="relu")
         Activation function to apply after each linear layer. Supported values are:
         "relu", "leaky_relu", "elu", "selu", "tanh", "sigmoid", "gelu".
@@ -92,12 +97,13 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         "python_dependencies": "torch",
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:pred_int": False,
+        "capability:pretrain": True,
     }
 
     def __init__(
@@ -116,6 +122,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         criterion="mse",
         device="cpu",
         mode="ar",
+        pred_len=None,
         activation="relu",
         dropout_rate=0.1,
     ):
@@ -136,6 +143,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         self.activation = activation
         self.dropout_rate = dropout_rate
         self.mode = mode
+        self.pred_len = pred_len
         self._fh_length = None
 
         if self.mode not in ["ar", "direct"]:
@@ -172,12 +180,18 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                 device = "cpu"
         return torch.device(device)
 
-    def _build_network(self, input_size):
-        """Build the RBF network architecture."""
-        output_size = self._fh_length if self.mode == "direct" else 1
+    def _build_network(self, fh):
+        """Build the RBF network architecture.
 
-        self.network = RBFNetwork(
-            input_size=input_size,
+        Parameters
+        ----------
+        fh : int
+            Prediction length (output dimension for direct mode, ignored for AR).
+        """
+        output_size = fh if self.mode == "direct" else 1
+
+        return RBFNetwork(
+            input_size=self.window_length,
             hidden_size=self.hidden_size,
             output_size=output_size,
             centers=self.centers,
@@ -196,15 +210,17 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         ----------
         y : pd.Series
             The time series data to be fitted.
+        fh : ForecastingHorizon
+            Forecasting horizon.
         X : optional
             Additional exogenous data (not used).
-        fh : optional
-            Forecasting horizon (not used).
         """
         import torch
         from torch.utils.data import DataLoader, TensorDataset
 
         self._y = y.copy()
+        self._y_len = len(y)
+
         if isinstance(y, pd.Series):
             y_scaled = self.scaler.fit_transform(y.values.reshape(-1, 1))
         else:
@@ -215,15 +231,31 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         else:
             self._fh_length = 1
 
+        if hasattr(self, "network") and self.network is not None:
+            # Pretrained network exists: validate fh for direct mode only
+            # AR mode has no fh constraint (iterates step-by-step)
+            if self.mode == "direct" and fh is not None:
+                fh_rel = fh.to_relative(self.cutoff)
+                max_fh = max(list(fh_rel))
+                if max_fh > self.network.pred_len:
+                    raise ValueError(
+                        f"max(fh)={max_fh} exceeds the network's output "
+                        f"dimension (pred_len={self.network.pred_len}). "
+                        f"The network architecture was fixed during "
+                        f"pretraining. Either use a smaller fh "
+                        f"(<= {self.network.pred_len}) or create a new "
+                        f"forecaster with a larger pred_len."
+                    )
+                self._fh_length = self.network.pred_len
+        else:
+            self.network = self._build_network(self._fh_length)
+
         X_train, y_train = self._create_windows(y_scaled)
         X_tensor = torch.FloatTensor(X_train).to(self._device)
         y_tensor = torch.FloatTensor(y_train).to(self._device)
 
         dataset = TensorDataset(X_tensor, y_tensor)
         dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
-
-        input_size = self.window_length
-        self._build_network(input_size)
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -278,6 +310,146 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                     current_window[-1] = pred_scaled.ravel()[0]
 
         return pd.Series(predictions, index=fh_abs, name=self._y.name)
+
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain the RBF network on panel data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Panel data to pretrain on.
+        X : pd.DataFrame, optional
+            Exogenous data (not used).
+        fh : ForecastingHorizon, optional
+            Forecasting horizon. Uses pred_len from constructor if not provided.
+        """
+        from sktime.forecasting.base.adapters._pytorch import _get_series_from_panel
+
+        pred_len = self._get_pretrain_pred_len(fh)
+        all_series = _get_series_from_panel(y)
+
+        # Use first column of first series as reference (univariate forecaster)
+        ref_series = all_series[0]
+        if isinstance(ref_series, pd.DataFrame) and ref_series.shape[1] > 1:
+            ref_series = ref_series.iloc[:, 0]
+        self._y = ref_series
+        self._y_len = len(ref_series)
+        self._fh_length = pred_len if self.mode == "direct" else 1
+
+        self.network = self._build_network(pred_len)
+        dataloader = self._build_panel_dataloader(y, all_series, pred_len)
+
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
+
+        self.network.train()
+        for epoch in range(self.epochs):
+            self._run_epoch(epoch, dataloader)
+
+        self._store_pretrain_metadata(y, pred_len)
+        return self
+
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Update pretrained RBF network with additional panel data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Additional panel data to train on.
+        X : pd.DataFrame, optional
+            Exogenous data (not used).
+        fh : ForecastingHorizon, optional
+            Forecasting horizon.
+        """
+        from sktime.forecasting.base.adapters._pytorch import _get_series_from_panel
+
+        if hasattr(self, "_pretrain_pred_len"):
+            pred_len = self._pretrain_pred_len
+        else:
+            pred_len = self._get_pretrain_pred_len(fh)
+
+        all_series = _get_series_from_panel(y)
+        dataloader = self._build_panel_dataloader(y, all_series, pred_len)
+
+        self.network.train()
+        for epoch in range(self.epochs):
+            self._run_epoch(epoch, dataloader)
+
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            n_new = len(y.index.get_level_values(0).unique())
+            if hasattr(self, "n_pretrain_instances_"):
+                self.n_pretrain_instances_ += n_new
+            else:
+                self.n_pretrain_instances_ = n_new
+
+        return self
+
+    def _build_panel_dataloader(self, y, all_series, pred_len):
+        """Build PyTorch DataLoader for panel data pretraining.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Panel data (not used directly).
+        all_series : list of pd.DataFrame
+            Pre-extracted individual time series.
+        pred_len : int
+            Prediction length for the dataset.
+        """
+        import torch
+        from torch.utils.data import ConcatDataset, DataLoader, TensorDataset
+
+        fh_length = pred_len if self.mode == "direct" else 1
+        self._fh_length = fh_length
+
+        # Split multi-column DataFrames into separate univariate series
+        univariate_series = []
+        for series in all_series:
+            if isinstance(series, pd.DataFrame) and series.shape[1] > 1:
+                for col in series.columns:
+                    univariate_series.append(series[[col]])
+            else:
+                univariate_series.append(series)
+
+        datasets = []
+        for series in univariate_series:
+            scaler = StandardScaler()
+            if isinstance(series, pd.Series):
+                y_scaled = scaler.fit_transform(series.values.reshape(-1, 1))
+            else:
+                y_scaled = scaler.fit_transform(series.values)
+
+            X_train, y_train = self._create_windows(y_scaled)
+            X_tensor = torch.FloatTensor(X_train)
+            y_tensor = torch.FloatTensor(y_train)
+            datasets.append(TensorDataset(X_tensor, y_tensor))
+
+        combined_dataset = ConcatDataset(datasets)
+        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
+
+    def _get_pretrain_pred_len(self, fh):
+        """Get prediction length for pretraining.
+
+        AR mode always returns 1 since the network outputs a single step.
+        Direct mode uses pred_len from constructor or fh.
+        """
+        if self.mode == "ar":
+            return 1
+        if hasattr(self, "pred_len") and self.pred_len is not None:
+            return int(self.pred_len)
+        elif fh is not None:
+            if isinstance(fh, (int, float)):
+                return int(fh)
+            return int(list(fh)[-1])
+        else:
+            raise ValueError(
+                "pred_len must be specified either in constructor or via fh "
+                "parameter for pretraining in direct mode."
+            )
+
+    def _get_seq_len(self):
+        """Return sequence length (window_length for RBF)."""
+        return self.window_length
 
     def _create_windows(self, y):
         """Generate sliding windows from the time series data.
@@ -374,6 +546,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         -------
         params : dict or list of dict
         """
+        # window_length + pred_len must be < min_timepoints (10) in pretrain tests
         params_list = [
             {
                 "window_length": 5,
@@ -392,19 +565,20 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                 "dropout_rate": 0.1,
             },
             {
-                "window_length": 12,
+                "window_length": 5,
                 "hidden_size": 32,
                 "batch_size": 32,
                 "gamma": 0.5,
                 "rbf_type": "gaussian",
                 "hidden_layers": [64, 32],
-                "epochs": 10,
+                "epochs": 3,
                 "lr": 0.005,
-                "stride": 2,
+                "stride": 1,
                 "optimizer": "adam",
                 "criterion": "mse",
                 "device": "cpu",
                 "mode": "direct",
+                "pred_len": 3,
                 "activation": "gelu",
                 "dropout_rate": 0.2,
             },

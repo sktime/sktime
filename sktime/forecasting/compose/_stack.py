@@ -66,7 +66,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         "capability:missing_values": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "X-y-must-have-same-index": True,
     }
 
