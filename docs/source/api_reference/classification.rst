@@ -65,19 +65,24 @@ Deep learning
     :toctree: auto_generated/
     :template: class.rst
 
+    convtimenet.ConvTimeNetClassifier
     cnn.CNNClassifier
     cntc.CNTCClassifier
     fcn.FCNClassifier
     gru.GRUClassifier
     gru.GRUFCNNClassifier
     inceptiontime.InceptionTimeClassifier
+    inceptiontime.InceptionTimeClassifierTorch
     lstmfcn.LSTMFCNClassifier
+    lstmfcn.LSTMFCNClassifierTorch
     macnn.MACNNClassifier
     mcdcnn.MCDCNNClassifier
+    mcdcnn.MCDCNNClassifierTorch
     mlp.MLPClassifier
     mvts_transformer.MVTSTransformerClassifier
     resnet.ResNetClassifier
     rnn.SimpleRNNClassifier
+    rnn.SimpleRNNClassifierTorch
     tapnet.TapNetClassifier
 
 Foundation models

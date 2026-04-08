@@ -64,6 +64,7 @@ class SAXlegacy(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict require for y?
+        "capability:categorical_in_X": False,
     }
 
     def __init__(

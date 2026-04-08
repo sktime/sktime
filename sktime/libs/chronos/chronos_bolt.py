@@ -251,6 +251,7 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
 
         super().__init__(config)
         self.model_dim = config.d_model
+        self.config.use_cache = False
 
         self.chronos_config = ChronosBoltConfig(**config.chronos_config)
 

@@ -61,6 +61,7 @@ class Bollinger(BaseTransformer):
         "transform-returns-same-time-index": True,
         "capability:multivariate": True,
         "capability:inverse_transform": False,
+        "capability:categorical_in_X": False,
         "remember_data": True,
     }
 

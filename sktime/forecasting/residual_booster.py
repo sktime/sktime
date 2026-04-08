@@ -166,14 +166,6 @@ class ResidualBoostingForecaster(BaseForecaster):
         y_resid = self.residual_forecaster_.predict(fh=fh, X=X)
         return y_base + y_resid
 
-    def _add_det_to_proba(self, y_proba, y_pred):
-        """Add multiindex columns to probabilistic forecasts."""
-        y_proba = y_proba.copy()
-        for col in y_proba.columns:
-            var = col[0]
-            y_proba[col] = y_proba[col] + y_pred[var]
-        return y_proba
-
     def _predict_interval(self, fh, X=None, coverage=0.9):
         """Combine prediction intervals from base and residual models."""
         i_base = self.base_future_.predict(fh=fh, X=X)

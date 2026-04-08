@@ -113,6 +113,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "python_dependencies": ["torch", "transformers<=4.40.1", "accelerate<=0.28.0"],
         # estimator type
         # --------------
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
@@ -124,7 +125,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,

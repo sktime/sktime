@@ -25,11 +25,13 @@ class BaseHMMLearn(BaseDetector):
         # --------------
         "authors": "miraep8",
         "maintainers": "miraep8",
+        "python_dependencies": "hmmlearn",
         # estimator type
         # --------------
         "capability:multivariate": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "fit_is_empty": False,
-        "python_dependencies": "hmmlearn",
         "task": "segmentation",
         "learning_type": "unsupervised",
     }  # for unit test cases

@@ -65,10 +65,6 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.verbose = verbose
         self.random_state = random_state
 
-        if self.random_state is not None:
-            if _check_soft_dependencies("torch", severity="none"):
-                torch.manual_seed(self.random_state)
-
         # use this when y has str
         self.label_encoder = None
         super().__init__()
@@ -77,6 +73,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.optimizers = OPTIMIZERS
 
     def _fit(self, X, y):
+        if self.random_state is not None:
+            torch.manual_seed(self.random_state)
+
         y = self._encode_y(y)
 
         self.network = self._build_network(X, y)

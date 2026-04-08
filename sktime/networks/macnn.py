@@ -1,7 +1,5 @@
 """Multi-scale Attention Convolutional Neural Network (MACNN)."""
 
-__author__ = ["jnrusson1"]
-
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -14,6 +12,9 @@ class MACNNNetwork(BaseDeepNetwork):
     padding : str, optional (default="same")
         The type of padding to be provided in MACNN Blocks. Accepts
         all the string values that keras.layers supports.
+        Note: For Conv1D layers within MACNN Blocks, padding is always set to "same"
+        to ensure consistent output lengths for multi-scale convolutions.
+        This parameter only affects the pooling layers between MACNN Blocks.
     pool_size : int, optional (default=3)
         A single value representing pooling windows which are applied
         between two MACNN Blocks.
@@ -28,11 +29,18 @@ class MACNNNetwork(BaseDeepNetwork):
         The output size of Conv1D layers within each MACNN Block.
     reduction : int, optional (default=16)
         The factor by which the first dense layer of a MACNN Block will be divided by.
-    random_state: int, optional (default=0)
+    random_state : int, optional (default=0)
         The seed to any random action.
+    activation : string, optional (default="relu")
+        Activation function used for hidden layers;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {
+        "authors": ["jnrusson1", "noxthot"],
+        "python_dependencies": "tensorflow",
+    }
 
     def __init__(
         self,
@@ -44,10 +52,12 @@ class MACNNNetwork(BaseDeepNetwork):
         kernel_size=(3, 6, 12),
         reduction=16,
         random_state=0,
+        activation="relu",
     ):
         _check_dl_dependencies(severity="error")
         super().__init__()
 
+        self.activation = activation
         self.padding = padding
         self.pool_size = pool_size
         self.strides = strides
@@ -80,23 +90,30 @@ class MACNNNetwork(BaseDeepNetwork):
         from tensorflow import keras
 
         conv_layers = []
+        # Multi-scale convolutions
+        # NOTE: The `padding` parameter controls the pooling layer behavior,
+        # not convolution. For multi-scale convolutions to concatenate,
+        # all kernels MUST produce the same output length.
+        # Therefore, we always use padding="same" for Conv1d layers.
         for kernel_size in self.kernel_size:
             conv_layer = keras.layers.Conv1D(
-                filters=kernels, kernel_size=kernel_size, padding=self.padding
+                filters=kernels, kernel_size=kernel_size, padding="same"
             )(x)
 
             conv_layers.append(conv_layer)
 
         x1 = keras.layers.Concatenate(axis=2)(conv_layers)
         x1 = keras.layers.BatchNormalization()(x1)
-        x1 = keras.layers.Activation("relu")(x1)
+        x1 = keras.layers.Activation(self.activation)(x1)
 
         x2 = keras.layers.GlobalAveragePooling1D()(x1)
         x2 = keras.layers.Dense(
-            units=int(kernels * 3 / reduce), use_bias=False, activation="relu"
+            units=max(1, int(kernels * 3 / reduce)),
+            use_bias=False,
+            activation=self.activation,
         )(x2)
         x2 = keras.layers.Dense(
-            units=int(kernels * 3), use_bias=False, activation="relu"
+            units=int(kernels * 3), use_bias=False, activation=self.activation
         )(x2)
         x2 = keras.layers.RepeatVector(x1.shape[1])(x2)
 

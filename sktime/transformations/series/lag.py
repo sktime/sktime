@@ -645,4 +645,6 @@ class ReducerTransform(BaseTransformer):
         """
         params1 = {"lags": 2}
 
-        return [params1]
+        params2 = {"lags": [1, 3, 5, 7], "impute_method": "ffill"}
+
+        return [params1, params2]

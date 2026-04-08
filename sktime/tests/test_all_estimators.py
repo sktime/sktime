@@ -1265,6 +1265,11 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         for tag in estimator_class._get_class_flags(flag_attr_name="_tags"):
             if tag in ALIAS_DICT:
+                # todo 1.1.0: remove this exception once forecaster tag deprecation done
+                object_type = estimator_class.get_class_tag("object_type")
+                # special case: "scitype:y" deprecated only for forecasters
+                if tag == "scitype:y" and not object_type == "forecaster":
+                    continue
                 msg = (
                     f"{estimator_class} has deprecated tag: {tag!r} - "
                     f"please follow deprecation guide from sktime release notes "
@@ -1288,6 +1293,11 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         for tag in estimator_instance._get_flags(flag_attr_name="_tags"):
             if tag in ALIAS_DICT:
+                # todo 1.0.0: remove this exception once forecaster tag deprecation done
+                object_type = estimator_instance.get_tag("object_type")
+                # special case: "scitype:y" deprecated only for forecasters
+                if tag == "scitype:y" and not object_type == "forecaster":
+                    break
                 msg = (
                     f"{estimator_instance} has deprecated tag: {tag!r} - "
                     f"please follow deprecation guide from sktime release notes "
@@ -1479,7 +1489,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # fixed the random_state params recursively to be integer seeds.
             msg = (
                 "Estimator %s should not change or mutate "
-                " the parameter %s from %s to %s during fit."
+                "the parameter %s from %s to %s during fit."
                 % (estimator.__class__.__name__, param_name, original_value, new_value)
             )
             # joblib.hash has problems with pandas objects, so we use deep_equals then

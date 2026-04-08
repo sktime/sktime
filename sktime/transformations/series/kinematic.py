@@ -78,6 +78,7 @@ class KinematicFeatures(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
+        "capability:categorical_in_X": False,
     }
 
     # todo: add any hyper-parameters and components to constructor

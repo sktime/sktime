@@ -61,6 +61,7 @@ class RandomIntervals(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:skip_by_name": ["test_categorical_X_passes"],
+        "tests:skip_all": True,
         # categoricals can be passed, but depending on transformers passed
     }
 

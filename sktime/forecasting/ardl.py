@@ -123,7 +123,7 @@ class ARDL(_StatsModelsAdapter):
         or only if smaller order lags must be included if larger order
         lags are.  If ``True``, the number of model considered is of the
         order 2**(maxlag + k * maxorder) assuming maxorder is an int. This
-        can be very large unless k and maxorder are bot relatively small.
+        can be very large unless k and maxorder are both relatively small.
         If False, the number of model considered is of the order
         maxlag*maxorder**k which may also be substantial when k and maxorder
         are large.
@@ -205,7 +205,7 @@ class ARDL(_StatsModelsAdapter):
         "python_dependencies": "statsmodels>=0.13.0",
         # estimator type
         # --------------
-        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
+        "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
@@ -214,10 +214,7 @@ class ARDL(_StatsModelsAdapter):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_predict_time_index_with_X"],
-        # known failure in case of non-contiguous X, see issue #8787
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(
@@ -326,10 +323,15 @@ class ARDL(_StatsModelsAdapter):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
             A 1-d endogenous response variable. The dependent variable.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
@@ -461,13 +463,15 @@ class ARDL(_StatsModelsAdapter):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast

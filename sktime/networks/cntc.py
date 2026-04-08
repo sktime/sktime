@@ -1,7 +1,5 @@
 """a combination of CCNN and CLSTM as feature extractors."""
 
-__author__ = ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"]
-
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
 
@@ -13,16 +11,29 @@ class CNTCNetwork(BaseDeepNetwork):
 
     Parameters
     ----------
-    kernel_size     : int, default = 7
+    kernel_size : int, default = 7
         specifying the length of the 1D convolution window
-    avg_pool_size   : int, default = 3
+    avg_pool_size : int, default = 3
         size of the average pooling windows
-    n_conv_layers   : int, default = 2
+    n_conv_layers : int, default = 2
         the number of convolutional plus average pooling layers
-    filter_sizes    : array of int, shape = (nb_conv_layers)
-    activation      : string, default = sigmoid
-        keras activation function
-    random_state    : int, default = 0
+    filter_sizes : array of int, shape = (nb_conv_layers)
+    activation : string, default = "relu"
+        activation function used for hidden layers (excluding self attention module);
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
+    activation_attention: string, default = "sigmoid"
+        activation function inside the self attention module;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
+    dropout : float or tuple of floats, default = (0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1)
+        dropout rate(s), in the range [0, 1).
+        If a single float is provided, the same dropout rate is applied to all layers.
+        If a tuple is provided, it should have 7 values corresponding to:
+        (conv1_dropout, rnn1_dropout, conv2_dropout, lstm_dropout,
+         avg_dropout, att_dropout, mlp_dropout)
+        where mlp_dropout is applied to both MLP layers.
+    random_state : int, default = 0
         seed to any needed random actions
 
     Notes
@@ -50,7 +61,13 @@ class CNTCNetwork(BaseDeepNetwork):
     """
 
     _tags = {
-        "authors": ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"],
+        "authors": [
+            "James-Large",
+            "Withington",
+            "TonyBagnall",
+            "AurumnPegasus",
+            "noxthot",
+        ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
         "python_dependencies": ["tensorflow"],
     }
@@ -63,15 +80,21 @@ class CNTCNetwork(BaseDeepNetwork):
         kernel_sizes=(1, 1),
         lstm_size=8,
         dense_size=64,
+        activation="relu",
+        activation_attention="sigmoid",
+        dropout=(0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1),
     ):
         _check_dl_dependencies(severity="error")
 
+        self.activation = activation
+        self.activation_attention = activation_attention
         self.random_state = random_state
         self.rnn_layer = rnn_layer
         self.filter_sizes = filter_sizes
         self.kernel_sizes = kernel_sizes
         self.lstm_size = lstm_size
         self.dense_size = dense_size
+        self.dropout = dropout
 
         super().__init__()
 
@@ -97,17 +120,28 @@ class CNTCNetwork(BaseDeepNetwork):
         # CNN Arm
         input_layers.append(keras.layers.Input(input_shape))
         input_layers.append(keras.layers.Input(input_shape))
-        self.dropout = 0.2
+
+        # Handle dropout parameter - can be float or tuple
+        if isinstance(self.dropout, (int, float)):
+            dropout_values = (self.dropout,) * 7
+        else:
+            if len(self.dropout) != 7:
+                raise ValueError(
+                    f"dropout tuple must have 7 values, got {len(self.dropout)}. "
+                    "Expected: (conv1_dropout, rnn1_dropout, conv2_dropout, "
+                    "lstm_dropout, avg_dropout, att_dropout, mlp_dropout)"
+                )
+            dropout_values = self.dropout
 
         conv1 = keras.layers.Conv1D(
             self.filter_sizes[0],
             self.kernel_sizes[0],
-            activation="relu",
+            activation=self.activation,
             use_bias=True,
             kernel_initializer="glorot_uniform",
         )(input_layers[0])
         conv1 = keras.layers.BatchNormalization()(conv1)
-        conv1 = keras.layers.Dropout(self.dropout)(conv1)
+        conv1 = keras.layers.Dropout(dropout_values[0])(conv1)
         conv1 = keras.layers.Dense(
             input_shape[1],
             input_shape=(input_shape[0], keras.backend.int_shape(conv1)[2]),
@@ -116,12 +150,12 @@ class CNTCNetwork(BaseDeepNetwork):
         # RNN for CNN Arm (CCNN)
         rnn1 = keras.layers.SimpleRNN(
             self.rnn_layer * input_shape[1],
-            activation="relu",
+            activation=self.activation,
             use_bias=True,
             kernel_initializer="glorot_uniform",
         )(input_layers[1])
         rnn1 = keras.layers.BatchNormalization()(rnn1)
-        rnn1 = keras.layers.Dropout(self.dropout)(rnn1)
+        rnn1 = keras.layers.Dropout(dropout_values[1])(rnn1)
         rnn1 = keras.layers.Reshape((64, input_shape[1]))(rnn1)
 
         # Combining CNN and RNN
@@ -133,7 +167,7 @@ class CNTCNetwork(BaseDeepNetwork):
         conv2 = keras.layers.Conv1D(
             self.filter_sizes[1],
             self.kernel_sizes[1],
-            activation="relu",
+            activation=self.activation,
             kernel_initializer="glorot_uniform",
             name="standard_cnn_layer",
         )(conc1)
@@ -142,7 +176,7 @@ class CNTCNetwork(BaseDeepNetwork):
             input_shape=(input_shape[0], keras.backend.int_shape(conv2)[2]),
         )(conv2)
         conv2 = keras.layers.BatchNormalization()(conv2)
-        conv2 = keras.layers.Dropout(0.1)(conv2)
+        conv2 = keras.layers.Dropout(dropout_values[2])(conv2)
 
         # CLSTM Arm
         input_layers.append(keras.layers.Input(input_shape))
@@ -150,10 +184,10 @@ class CNTCNetwork(BaseDeepNetwork):
             self.lstm_size * input_shape[1],
             return_sequences=False,
             kernel_initializer="glorot_uniform",
-            activation="relu",
+            activation=self.activation,
         )(input_layers[2])
         lstm1 = keras.layers.Reshape((self.lstm_size, input_shape[1]))(lstm1)
-        lstm1 = keras.layers.Dropout(self.dropout)(lstm1)
+        lstm1 = keras.layers.Dropout(dropout_values[3])(lstm1)
         merge = keras.layers.Concatenate(
             axis=-2, name="contextual_convolutional_layer2"
         )([conv2, lstm1])
@@ -162,25 +196,29 @@ class CNTCNetwork(BaseDeepNetwork):
         avg = keras.layers.MaxPooling1D(pool_size=1, strides=None, padding="valid")(
             merge
         )
-        avg = keras.layers.Dropout(0.1)(avg)
+        avg = keras.layers.Dropout(dropout_values[4])(avg)
 
         # Adding self attention
         att = SeqSelfAttention(
             attention_width=10,
-            attention_activation="sigmoid",
+            attention_activation=self.activation_attention,
             name="Attention",
             attention_type="multiplicative",
         )(avg)
-        att = keras.layers.Dropout(0.1)(att)
+        att = keras.layers.Dropout(dropout_values[5])(att)
 
-        # Adding ouutput MLP Layer
+        # Adding output MLP Layer
         mlp1 = keras.layers.Dense(
-            self.dense_size, kernel_initializer="glorot_uniform", activation="relu"
+            self.dense_size,
+            kernel_initializer="glorot_uniform",
+            activation=self.activation,
         )(att)
-        mlp1 = keras.layers.Dropout(0.1)(mlp1)
+        mlp1 = keras.layers.Dropout(dropout_values[6])(mlp1)
         mlp2 = keras.layers.Dense(
-            self.dense_size, kernel_initializer="glorot_uniform", activation="relu"
+            self.dense_size,
+            kernel_initializer="glorot_uniform",
+            activation=self.activation,
         )(mlp1)
-        mlp2 = keras.layers.Dropout(0.1)(mlp2)
+        mlp2 = keras.layers.Dropout(dropout_values[6])(mlp2)
         flat = keras.layers.Flatten()(mlp2)
         return input_layers, flat
