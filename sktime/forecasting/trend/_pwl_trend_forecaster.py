@@ -222,4 +222,9 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
             "changepoint_prior_scale": 0.05,
         }
 
-        return params0
+        params1 = {
+            "changepoint_range": 0.5,
+            "changepoint_prior_scale": 0.1,
+        }
+
+        return [params0, params1]
