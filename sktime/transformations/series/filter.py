@@ -103,7 +103,8 @@ class Filter(BaseTransformer):
         """
         from mne import filter
 
-        # np.darray needs to be [anything, ..., time]
+        # np.ndarray needs to be [anything, ..., time]
+
         # so 3D is ok, but we need to flip in 2D case
         if X.ndim == 2:
             X = X.transpose()
