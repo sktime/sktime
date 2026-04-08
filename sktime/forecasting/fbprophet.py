@@ -238,25 +238,23 @@ class Prophet(_ProphetAdapter):
         -------
         params : dict or list of dict
         """
-        params = [
-            # minimal config, no changepoints or seasonality
-            {
-                "n_changepoints": 0,
-                "yearly_seasonality": False,
-                "weekly_seasonality": False,
-                "daily_seasonality": False,
-                "uncertainty_samples": 10,
-                "verbose": False,
-                "fit_kwargs": {"seed": 12345},
-            },
-            # logistic growth with saturation cap
-            {
-                "growth": "logistic",
-                "growth_cap": 500,
-                "growth_floor": 10,
-                "yearly_seasonality": True,
-                "seasonality_mode": "additive",
-                "uncertainty_samples": 5,
-            },
-        ]
-        return params
+        # minimal config, no changepoints or seasonality
+        params0 = {
+            "n_changepoints": 0,
+            "yearly_seasonality": False,
+            "weekly_seasonality": False,
+            "daily_seasonality": False,
+            "uncertainty_samples": 10,
+            "verbose": False,
+            "fit_kwargs": {"seed": 12345},
+        }
+        # logistic growth with saturation cap
+        params1 = {
+            "growth": "logistic",
+            "growth_cap": 500,
+            "growth_floor": 10,
+            "yearly_seasonality": True,
+            "seasonality_mode": "additive",
+            "uncertainty_samples": 5,
+        }
+        return [params0, params1]
