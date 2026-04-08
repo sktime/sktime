@@ -256,5 +256,4 @@ class Prophet(_ProphetAdapter):
             "verbose": False,
             "fit_kwargs": {"seed": 123456},
         }
-        }
         return [params0, params1]
