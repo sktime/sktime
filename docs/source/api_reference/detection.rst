@@ -269,3 +269,6 @@ Naive Baselines
     :template: class.rst
 
     ZeroSegments
+
+.. autofunction:: sktime.detection.evaluate_detection
+    
