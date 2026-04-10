@@ -96,7 +96,7 @@ def generate_segments_pandas(X: npt.ArrayLike, change_points: list) -> npt.Array
     segment: npt.ArrayLike
         A segments from the input time series between two consecutive change points
     """
-    for interval in pd.IntervalIndex.from_breaks(sorted(change_points), closed="both"):
+    for interval in pd.IntervalIndex.from_breaks(sorted(change_points), closed="left"):
         yield X[interval.left : interval.right, :]
 
 
@@ -258,6 +258,7 @@ class IGTS:
 
         for k in range(self.k_max):
             ig_max = 0
+            best_candidate = None
             # find a point which maximizes score
             for candidate in self.get_candidates(n_samples, current_change_points):
                 try_change_points = {candidate}
@@ -267,6 +268,9 @@ class IGTS:
                 if ig > ig_max:
                     ig_max = ig
                     best_candidate = candidate
+
+            if best_candidate is None:
+                break
 
             current_change_points.append(best_candidate)
             current_change_points.sort()
