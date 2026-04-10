@@ -215,8 +215,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "PCATransformer",
         "PaddingTransformer",
         "PlateauFinder",
-        "Prophet",
-        "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
