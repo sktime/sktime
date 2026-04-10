@@ -870,6 +870,10 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "python_dependencies": ["statsforecast>=1.2.0"],
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
+        # multiplicative test case does not work on negative valued data, see #9808
     }
 
     def __init__(
