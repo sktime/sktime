@@ -26,7 +26,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
+from sktime.datatypes import VectorizedDF, check_is_error_msg, check_is_scitype, convert
 from sktime.utils.adapters._safe_call import _method_has_arg
 from sktime.utils.validation.series import check_series
 
@@ -186,7 +186,11 @@ class BaseDetector(BaseEstimator):
         self._X = X
         self._y = y
 
-        if _method_has_arg(self._fit, "y"):
+        # route to vectorized path if needed
+        self._is_vectorized = isinstance(X_inner, VectorizedDF)
+        if self._is_vectorized:
+            self._vectorize("fit", X=X_inner, y=y)
+        elif _method_has_arg(self._fit, "y"):
             self._fit(X=X_inner, y=y)  # X_inner is the converted X
         else:
             self._fit(X=X_inner)
@@ -241,10 +245,15 @@ class BaseDetector(BaseEstimator):
 
         X_inner = self._check_X(X)
 
-        y = self._predict(X=X_inner)
-
-        # deal with legacy return format with intervals in index
-        y = self._coerce_to_df(y, columns=["ilocs"])
+        # route to vectorized path if needed
+        if getattr(self, "_is_vectorized", False) or isinstance(
+            X_inner, VectorizedDF
+        ):
+            y = self._vectorize("predict", X=X_inner)
+        else:
+            y = self._predict(X=X_inner)
+            # deal with legacy return format with intervals in index
+            y = self._coerce_to_df(y, columns=["ilocs"])
 
         return y
 
@@ -571,9 +580,9 @@ class BaseDetector(BaseEstimator):
         X : X_inner_mtype
             Data to be transformed
         """
-        ALLOWED_SCITYPES = ["Series", "Panel"]
+        ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
         X_valid, X_msg, X_metadata = check_is_scitype(
-            X, scitype=ALLOWED_SCITYPES, return_metadata=[]
+            X, scitype=ALLOWED_SCITYPES, return_metadata=["is_univariate"]
         )
         self._X_metadata = X_metadata
         if not X_valid:
@@ -595,9 +604,107 @@ class BaseDetector(BaseEstimator):
                     raise_exception=True,
                 )
 
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-        X_inner = convert(X, from_type=X_metadata["mtype"], to_type=X_inner_mtype)
-        return X_inner
+        # check if vectorization over columns is required:
+        # needed when detector is univariate but input data is multivariate
+        req_vec_because_cols = (
+            not self.get_tag("capability:multivariate")
+            and not X_metadata["is_univariate"]
+        )
+        # check if vectorization over rows is required:
+        # needed when data is Panel/Hierarchical but detector only handles Series
+        X_scitype = X_metadata["scitype"]
+        req_vec_because_rows = X_scitype in ["Panel", "Hierarchical"]
+
+        requires_vectorization = req_vec_because_cols or req_vec_because_rows
+
+        if not requires_vectorization:
+            # normal path: convert and return a plain DataFrame
+            X_inner_mtype = self.get_tag("X_inner_mtype")
+            X_inner = convert(X, from_type=X_metadata["mtype"], to_type=X_inner_mtype)
+            return X_inner
+        else:
+            # broadcasting path: wrap in VectorizedDF so fit/predict can loop
+            X_inner = VectorizedDF(
+                X=X,
+                iterate_as="Series",
+                is_scitype=X_scitype,
+                iterate_cols=req_vec_because_cols,
+            )
+            return X_inner
+
+    def _vectorize(self, methodname, **kwargs):
+        """Vectorized loop over fit/predict for multivariate/hierarchical data.
+
+        Called automatically when ``_check_X`` returns a ``VectorizedDF``.
+        Stores one fitted detector per column/group in ``self.detectors_``.
+
+        Parameters
+        ----------
+        methodname : str, one of ``"fit"`` or ``"predict"``
+        **kwargs : forwarded keyword arguments (``X``, ``y``)
+        """
+        X = kwargs.get("X")
+        y = kwargs.pop("y", None)
+
+        if methodname == "fit":
+            # clone one copy of self per column/group slice
+            clones_ = X.vectorize_est(
+                self,
+                method="clone",
+                rowname_default="detectors",
+                colname_default="detectors",
+            )
+            # fit each clone on its own slice; store fitted clones
+            # varname_of_self="X" tells vectorize_est to pass the current slice as X
+            self.detectors_ = X.vectorize_est(
+                clones_,
+                method="fit",
+                varname_of_self="X",
+                args_rowvec={"y": y},
+                rowname_default="detectors",
+                colname_default="detectors",
+            )
+            return self
+
+        if methodname == "predict":
+            # if fit_is_empty, detectors_ was never stored during fit.
+            # mirror the transformer pattern: clone+fit on-the-fly, then predict.
+            if not self.get_tag("fit_is_empty") and hasattr(self, "detectors_"):
+                detectors_ = self.detectors_
+            else:
+                clones_ = X.vectorize_est(
+                    self,
+                    method="clone",
+                    rowname_default="detectors",
+                    colname_default="detectors",
+                )
+                detectors_ = X.vectorize_est(
+                    clones_,
+                    method="fit",
+                    varname_of_self="X",
+                    rowname_default="detectors",
+                    colname_default="detectors",
+                )
+
+            # run predict on each slice with its own fitted clone
+            # varname_of_self="X" tells vectorize_est to pass the current slice as X
+            results = X.vectorize_est(
+                detectors_,
+                method="predict",
+                varname_of_self="X",
+                return_type="list",
+                rowname_default="detectors",
+                colname_default="detectors",
+            )
+
+            # stitch annotation DataFrames together.
+            # using pd.concat with column/group names as keys to produce MultiIndex DataFrame.
+            _, col_ix = X.get_iter_indices()
+            row_ix, _ = X.get_iter_indices()
+
+            keys = col_ix if col_ix is not None else row_ix
+            y_out = pd.concat(results, keys=keys)
+            return y_out
 
     def _fit(self, X, y=None):
         """Fit to training data.
