@@ -87,7 +87,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         "authors": ["sbuse", "bletham", "tcuongd"],
         # bletham, tcuongd for prophet
         "maintainers": ["sbuse"],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
@@ -137,6 +137,10 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         self._ModelClass = _Prophet
 
     def _instantiate_model(self):
+        kwargs = {}
+        if self.stan_backend is not None:
+            kwargs["stan_backend"] = self.stan_backend
+
         self._forecaster = self._ModelClass(
             growth=self.growth,
             changepoints=self.changepoints,
@@ -153,7 +157,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
             mcmc_samples=self.mcmc_samples,
             interval_width=1 - self.alpha,
             uncertainty_samples=self.uncertainty_samples,
-            stan_backend=self.stan_backend,
+            **kwargs,
         )
         return self
 
@@ -222,4 +226,9 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
             "changepoint_prior_scale": 0.05,
         }
 
-        return params0
+        params1 = {
+            "changepoint_range": 0.5,
+            "changepoint_prior_scale": 0.1,
+        }
+
+        return [params0, params1]
