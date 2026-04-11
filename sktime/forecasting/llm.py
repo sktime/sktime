@@ -2,27 +2,37 @@
 
 from __future__ import annotations
 
+from skbase.base import BaseObject
+
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.theta import ThetaForecaster
+
+__all__ = ["LLMForecaster"]
+
+
+class DummyLLM(BaseObject):
+    """Simple clone-safe and pickle-safe dummy LLM for testing."""
+
+    def __init__(self, response="FORECASTER: naive\nREASON: stable baseline"):
+        self.response = response
+        super().__init__()
+
+    def invoke(self, prompt):
+        """Return a fixed response."""
+        return self.response
 
 
 class LLMForecaster(BaseForecaster):
-    """LLM-guided sktime forecaster.
-
-    This forecaster uses a user-supplied LLM backend to select one forecaster
-    from a candidate pool, then fits that forecaster and delegates prediction
-    to it.
-    """
+    """LLM-guided sktime forecaster."""
 
     _tags = {
         "authors": ["AdithyaPhaniThota"],
-        "maintainers": ["AdithyaPhaniThota"],
         "scitype:y": "univariate",
         "capability:exogenous": False,
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:missing_values": False,
+        "requires-fh-in-fit": False,
     }
 
     def __init__(
@@ -48,12 +58,12 @@ class LLMForecaster(BaseForecaster):
                 "Only 'select' is supported in v1."
             )
 
+        if not hasattr(self.llm, "invoke"):
+            raise TypeError("llm must implement an 'invoke(prompt)' method.")
+
         candidates = self.candidate_forecasters
         if candidates is None:
-            candidates = [
-                ("naive", NaiveForecaster()),
-                ("theta", ThetaForecaster()),
-            ]
+            candidates = (("naive", NaiveForecaster()),)
 
         fallback = self.default_forecaster
         if fallback is None:
@@ -138,13 +148,8 @@ class LLMForecaster(BaseForecaster):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings."""
-
-        class DummyLLM:
-            def invoke(self, prompt):
-                return "FORECASTER: naive\nREASON: stable baseline"
-
         return {
             "llm": DummyLLM(),
-            "candidate_forecasters": [("naive", NaiveForecaster())],
+            "candidate_forecasters": (("naive", NaiveForecaster()),),
             "default_forecaster": NaiveForecaster(),
         }
