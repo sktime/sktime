@@ -50,6 +50,7 @@ import pandas as pd
 
 import sktime
 from sktime import utils
+from sktime.base import BaseEstimator
 from sktime.base._serialize import load
 from sktime.utils.dependencies import _check_mlflow_dependencies
 from sktime.utils.multiindex import flatten_multiindex
@@ -121,7 +122,7 @@ def get_default_conda_env(include_cloudpickle=False):
 
 
 def save_model(
-    sktime_model,
+    sktime_model: BaseEstimator,
     path,
     conda_env=None,
     code_paths=None,
@@ -131,12 +132,12 @@ def save_model(
     pip_requirements=None,
     extra_pip_requirements=None,
     serialization_format=SERIALIZATION_FORMAT_PICKLE,
-):  # TODO: can we specify a type for fitted instance of sktime model below?
+):
     """Save a sktime model to a path on the local file system.
 
     Parameters
     ----------
-    sktime_model :
+    sktime_model : BaseEstimator
         Fitted sktime model object.
     path : str
         Local path where the model is to be saved.
@@ -309,7 +310,7 @@ def save_model(
 
 
 def log_model(
-    sktime_model,
+    sktime_model: BaseEstimator,
     artifact_path,
     conda_env=None,
     code_paths=None,
@@ -321,12 +322,12 @@ def log_model(
     extra_pip_requirements=None,
     serialization_format=SERIALIZATION_FORMAT_PICKLE,
     **kwargs,
-):  # TODO: can we specify a type for fitted instance of sktime model below?
+):
     """Log a sktime model as an MLflow artifact for the current run.
 
     Parameters
     ----------
-    sktime_model : fitted sktime model
+    sktime_model : BaseEstimator
         Fitted sktime model object.
     artifact_path : str
         Run-relative artifact path to save the model to.
