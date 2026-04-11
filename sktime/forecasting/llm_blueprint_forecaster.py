@@ -256,6 +256,7 @@ class LLMBlueprintForecaster(BaseForecaster):
         "requires-fh-in-fit": True,
         "tests:skip_by_name": ["test_doctest_examples"],
         "authors": ["benheid"],
+        "python_dependencies": ["litellm"],
     }
 
     def __init__(
