@@ -20,7 +20,6 @@ if "skbase.utils.doctest_run" not in sys.modules:
     _doctest_mod.run_doctest = lambda obj, name=None, **kwargs: None
     sys.modules["skbase.utils.doctest_run"] = _doctest_mod
 from sktime.forecasting.base import BaseForecaster
-
 from sktime.forecasting.model_evaluation import evaluate
 
 # ---------------------------------------------------------------------------
@@ -33,12 +32,12 @@ Your task is to propose sktime forecasting pipeline blueprints.
 
 A blueprint is a JSON object with:
 - "name": a short descriptive name
-- "spec": a Python expression passed to sktime.registry.craft() to construct the forecaster.
-  Use sktime class names directly — no imports needed. craft() resolves them automatically.
+- "spec": a Python expression passed to craft() to construct the forecaster.
+  Use sktime class names directly — no imports needed. craft() resolves them.
 
 Rules for "spec":
 - A bare forecaster: NaiveForecaster(strategy="last")
-- A pipeline: TransformedTargetForecaster([Transformer1(), Transformer2(), Forecaster()])
+- A pipeline: TransformedTargetForecaster([Transformer1(), ..., Forecaster()])
   The last element must be a forecaster; all preceding elements must be transformers.
 - You MUST only use class names from the lists below — any other name will fail.
 - Constructor arguments must be JSON-serializable Python literals.
@@ -52,12 +51,30 @@ Available transformer class names:
 
 Few-shot examples of valid blueprints:
 [
-  {{"name": "Naive last", "spec": "NaiveForecaster(strategy=\\"last\\")"}},
-  {{"name": "ETS additive", "spec": "ExponentialSmoothing(trend=\\"add\\", seasonal=\\"add\\", sp=12)"}},
-  {{"name": "Detrend + ETS", "spec": "TransformedTargetForecaster([Detrender(), ExponentialSmoothing()])"}},
-  {{"name": "Deseason + Detrend + AutoARIMA", "spec": "TransformedTargetForecaster([Deseasonalizer(sp=12), Detrender(), AutoARIMA()])"}},
-  {{"name": "BoxCox + Naive mean", "spec": "TransformedTargetForecaster([BoxCoxTransformer(), NaiveForecaster(strategy=\\"mean\\")])"}},
-  {{"name": "Differencer + AutoARIMA BIC", "spec": "TransformedTargetForecaster([Differencer(), AutoARIMA(information_criterion=\\"bic\\")])"}},
+{{
+"name": "Naive last",
+"spec": "NaiveForecaster(strategy=\\"last\\")"
+}},
+{{
+"name": "ETS additive",
+"spec": "ExponentialSmoothing(trend=\\"add\\", seasonal=\\"add\\", sp=12)"
+}},
+{{
+"name": "Detrend + ETS",
+"spec": "TransformedTargetForecaster([Detrender(), ExponentialSmoothing()])"
+}},
+{{
+"name": "Deseason + Detrend + AutoARIMA",
+"spec": "TransformedTargetForecaster([Deseasonalizer(sp=12), Detrender(), AutoARIMA()])"
+}},
+{{
+"name": "BoxCox + Naive mean",
+"spec": "TransformedTargetForecaster([Detrender(), NaiveForecaster(strategy='mean')])"
+}},
+{{
+"name": "Differencer + AutoARIMA BIC",
+"spec": "TransformedTargetForecaster([Differencer(), AutoARIMA()])"
+}}
 ]
 
 Provide {n_blueprints} diverse blueprints in a JSON array.
@@ -296,7 +313,8 @@ class LLMBlueprintForecaster(BaseForecaster):
         )
         failed = [r for r in self.blueprint_history_ if r["error"] is not None]
         lines = [
-            f"  #{i+1} MAPE={r['score']:.6f}  {r['name']}  spec={r['blueprint'].get('spec', '')}"
+            f"  #{i + 1} Score={r['score']:.6f}" +
+            f"{r['name']}  spec={r['blueprint'].get('spec', '')}"
             for i, r in enumerate(valid)
         ] + [
             f"  FAILED  {r['name']}  spec={r['blueprint'].get('spec', '')}"
@@ -361,7 +379,8 @@ class LLMBlueprintForecaster(BaseForecaster):
         dataset_description = (
             f"Dataset info:\n"
             f"- Length: {len(y)} observations\n"
-            f"- Frequency: {y.index.freqstr if hasattr(y.index, 'freqstr') else 'unknown'}\n"
+            "- Frequency:"
+            f"{y.index.freqstr if hasattr(y.index, 'freqstr') else 'unknown'}\n"
             f"- Mean: {y.mean():.4f}, Std: {y.std():.4f}\n"
             f"- Min: {y.min():.4f}, Max: {y.max():.4f}\n"
             f"- Forecast horizon: {len(fh)} steps ahead\n"
@@ -369,7 +388,9 @@ class LLMBlueprintForecaster(BaseForecaster):
 
         forecaster_names, transformer_names = _build_estimator_names()
 
-        system_prompt = self.system_prompt if self.system_prompt is not None else _SYSTEM_PROMPT
+        system_prompt = (
+            self.system_prompt if self.system_prompt is not None else _SYSTEM_PROMPT
+        )
         messages = [
             {
                 "role": "system",
