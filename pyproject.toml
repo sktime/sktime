@@ -267,6 +267,10 @@ notebooks = [
 numpy1 = [
   "numpy<2.0.0",
 ]
+llms = [
+  "litellm!=1.82.7,!=1.82.8"
+]
+
 pandas1 = [
   "pandas<2.0.0",
 ]

@@ -772,6 +772,22 @@ Online and stream forecasting
     UpdateRefitsEvery
     DontUpdate
 
+
+
+AgenticForecasting
+------------------------------------------------
+
+Agentic forecasters that uses LLMs to decide which forecasting models to use.
+
+.. currentmodule:: sktime.forecasting
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LLMBlueprintForecaster
+
+
 Adapters to other forecasting framework packages
 ------------------------------------------------
 
