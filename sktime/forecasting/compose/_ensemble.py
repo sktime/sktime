@@ -110,7 +110,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
     }
@@ -327,7 +327,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "capability:missing_values": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "scitype:y": "both",
+        "capability:multivariate": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
