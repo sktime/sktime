@@ -72,11 +72,14 @@ dependencies = [
 # but are required by popular estimators, e.g., prophet, tbats, etc.
 
 # curated set of all_extras
+# soft dependencies for the framework layer
 # these are not all soft dependencies, but only common ones
 #
 # users can install via "pip install sktime[all_extras]"
 #
-# all_extras soft dependencies must be compatible with pandas 2
+# * all_extras soft dependencies must be compatible with pandas 2, numpy 2
+# * estimator specific soft dependences should be handled
+#   via python_dependencies tag instead, do not add here
 all_extras = [
   'cloudpickle',
   'holidays',
