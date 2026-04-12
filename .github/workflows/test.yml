@@ -431,7 +431,9 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: uv pip install .[dev] --resolution lowest-direct
+        run: >
+          uv pip install .[dev] --resolution lowest-direct
+          --exclude-newer-package "setuptools=false"
         env:
           UV_SYSTEM_PYTHON: 1
 
@@ -470,6 +472,7 @@ jobs:
         run: >
           uv pip install .[dev]
           --exclude-newer-package 'scikit-base=2024-01-01'
+          --exclude-newer-package "setuptools=false"
         env:
           UV_SYSTEM_PYTHON: 1
           UV_EXCLUDE_NEWER: "2023-07-01"
@@ -504,7 +507,9 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: uv pip install .[dev]
+        run: >
+          uv pip install .[dev]
+          --exclude-newer-package "setuptools=false"
         env:
           UV_SYSTEM_PYTHON: 1
           UV_EXCLUDE_NEWER: "2024-09-01"
