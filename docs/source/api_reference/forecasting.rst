@@ -591,6 +591,14 @@ Pre-trained and foundation models
 
     ChronosForecaster
 
+.. currentmodule:: sktime.forecasting.chronos2
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Chronos2Forecaster
+
 .. currentmodule:: sktime.forecasting.hf_transformers_forecaster
 
 .. autosummary::
