@@ -29,8 +29,8 @@ class DummyGlobalForecaster(BaseForecaster):
 
         - ``"mean"``: predict mean of all values in pretrain set
         - ``"last"``: predict last value from fit data
-        - ``"mean_by_index"``: predict mean computed per time index across pretrain series.
-          Useful for cold start scenarios where pattern by index matters.
+        - ``"mean_by_index"``: predict mean computed per time index across pretraining
+          series. Useful for cold start scenarios where pattern by index matters.
 
     Attributes
     ----------
