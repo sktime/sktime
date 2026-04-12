@@ -78,7 +78,7 @@ dependencies = [
 # users can install via "pip install sktime[all_extras]"
 #
 # * all_extras soft dependencies must be compatible with pandas 2, numpy 2
-# * estimator specific soft dependences should be handled
+# * estimator specific soft dependencies should be handled
 #   via python_dependencies tag instead, do not add here
 all_extras = [
   'cloudpickle',
