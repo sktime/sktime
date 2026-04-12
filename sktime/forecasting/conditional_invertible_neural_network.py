@@ -2,6 +2,7 @@
 
 __author__ = ["benHeid"]
 
+import warnings
 from copy import deepcopy
 
 import numpy as np
@@ -11,6 +12,7 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base.adapters._pytorch import (
     BaseDeepNetworkPyTorch,
     PyTorchTrainDataset,
+    _get_series_from_panel,
 )
 from sktime.forecasting.trend import CurveFitForecaster
 from sktime.networks.cinn import CINNNetwork
@@ -119,13 +121,14 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "capability:missing_values": False,
         "capability:pred_int": False,
+        "capability:pretrain": True,
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run tests on vm in GHA
@@ -190,13 +193,14 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         Parameters
         ----------
         y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             guaranteed to be passed in _predict
@@ -271,7 +275,8 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                 val_dataset_nll, shuffle=False, batch_size=len(val_dataset_nll)
             )
 
-        self.network = self._build_network(None)
+        if not hasattr(self, "network") or self.network is None:
+            self.network = self._build_network(None)
 
         self.optimizer = self._instantiate_optimizer()
         early_stopper = _EarlyStopper(patience=self.patience, min_delta=self.delta)
@@ -286,7 +291,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             ):
                 break
         if val_data_loader_nll is not None:
-            self.network = early_stopper._best_model
+            self.network.load_state_dict(early_stopper._best_model.state_dict())
         dataset = self._prepare_data(y, X if X is not None else None)
         X, y = next(iter(DataLoader(dataset, shuffle=False, batch_size=len(dataset))))
 
@@ -294,6 +299,10 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         self.z_ = res[0].detach().numpy()
         self.z_mean_ = self.z_.mean(axis=0)
         self.z_std_ = self.z_.std()
+
+    def _instantiate_optimizer(self):
+        """Create Adam optimizer for the cINN network."""
+        return torch.optim.Adam(self.network.parameters(), lr=self.lr)
 
     def _build_network(self, fh):
         return CINNNetwork(
@@ -303,7 +312,193 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             num_coupling_layers=self.n_coupling_layers,
         ).build()
 
-    def _run_epoch(self, epoch, data_loader, val_data_loader_nll, early_stopper):
+    def _prepare_pretrain_series_data(self, series):
+        """Prepare dataset from a single series for pretraining.
+
+        Runs the same feature engineering pipeline as _fit (WindowSummarizer,
+        CurveFitForecaster, FourierFeatures) but uses local variables so the
+        fitted transformers are not stored on self.
+
+        Parameters
+        ----------
+        series : pd.Series
+            A single time series.
+
+        Returns
+        -------
+        tuple of (Dataset, int) or None
+            (dataset, n_cond_features) on success, None if the series is too
+            short or curve fitting fails.
+        """
+        if len(series) < self.window_size:
+            warnings.warn(
+                f"Skipping series (length {len(series)}) shorter than "
+                f"window_size ({self.window_size}).",
+                UserWarning,
+                stacklevel=2,
+            )
+            return None
+
+        rolling_mean = WindowSummarizer(
+            lag_feature={
+                self.lag_feature: [[-self.window_size // 2, self.window_size // 2]]
+            },
+            truncate="fill",
+        ).fit_transform(series)
+
+        function = CurveFitForecaster(
+            self._f_statistic,
+            {"p0": self._init_param_f_statistic},
+            normalise_index=True,
+        )
+
+        try:
+            function.fit(rolling_mean.dropna())
+        except Exception:
+            warnings.warn(
+                "Skipping series: CurveFitForecaster failed to converge.",
+                UserWarning,
+                stacklevel=2,
+            )
+            return None
+
+        fourier_features = FourierFeatures(
+            sp_list=self._sp_list, fourier_terms_list=self._fourier_terms_list
+        )
+        fourier_features.fit(series)
+
+        cal_features = fourier_features.transform(series)
+        statistics = function.predict(
+            fh=ForecastingHorizon(series.index, is_relative=False)
+        )
+        cond_data = pd.DataFrame(
+            np.concatenate([cal_features, statistics.to_frame()], axis=-1),
+            index=series.index,
+        )
+        n_cond_features = len(cond_data.columns)
+        dataset = PyTorchTrainDataset(series, 0, fh=self.sample_dim, X=cond_data)
+        return dataset, n_cond_features
+
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain the cINN on panel data.
+
+        Extracts individual series, engineers features per series, combines
+        datasets, and trains the network.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Panel data to pretrain on.
+        X : pd.DataFrame, optional
+            Exogenous data (not used during pretrain).
+        fh : ForecastingHorizon, optional
+            Not used; sample_dim determines the output dimension.
+        """
+        from torch.utils.data import ConcatDataset
+
+        all_series = _get_series_from_panel(y)
+
+        datasets = []
+        n_cond_features = None
+        for series_df in all_series:
+            if isinstance(series_df, pd.DataFrame):
+                cols = [series_df.iloc[:, i] for i in range(series_df.shape[1])]
+            else:
+                cols = [series_df]
+            for series in cols:
+                result = self._prepare_pretrain_series_data(series)
+                if result is not None:
+                    dataset, ncf = result
+                    datasets.append(dataset)
+                    if n_cond_features is None:
+                        n_cond_features = ncf
+
+        if not datasets:
+            raise RuntimeError(
+                "Pretraining failed: no series could be processed. "
+                "Check window_size and f_statistic parameters."
+            )
+
+        self.n_cond_features = n_cond_features
+        combined_dataset = ConcatDataset(datasets)
+        data_loader = DataLoader(
+            combined_dataset, batch_size=self.batch_size, shuffle=True
+        )
+
+        self.network = self._build_network(None)
+        self.optimizer = self._instantiate_optimizer()
+
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, data_loader)
+
+        self._pretrain_pred_len = self.sample_dim
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            self.n_pretrain_instances_ = len(y.index.get_level_values(0).unique())
+        else:
+            self.n_pretrain_instances_ = 1
+
+        return self
+
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Continue pretraining with additional panel data.
+
+        Reuses the existing network and creates a fresh optimizer.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Additional panel data to train on.
+        X : pd.DataFrame, optional
+            Exogenous data (not used during pretrain).
+        fh : ForecastingHorizon, optional
+            Not used; sample_dim determines the output dimension.
+        """
+        from torch.utils.data import ConcatDataset
+
+        all_series = _get_series_from_panel(y)
+
+        datasets = []
+        for series_df in all_series:
+            if isinstance(series_df, pd.DataFrame):
+                cols = [series_df.iloc[:, i] for i in range(series_df.shape[1])]
+            else:
+                cols = [series_df]
+            for series in cols:
+                result = self._prepare_pretrain_series_data(series)
+                if result is not None:
+                    dataset, _ = result
+                    datasets.append(dataset)
+
+        if not datasets:
+            raise RuntimeError(
+                "Pretraining update failed: no series could be processed. "
+                "Check window_size and f_statistic parameters."
+            )
+
+        combined_dataset = ConcatDataset(datasets)
+        data_loader = DataLoader(
+            combined_dataset, batch_size=self.batch_size, shuffle=True
+        )
+
+        self.optimizer = self._instantiate_optimizer()
+
+        self.network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, data_loader)
+
+        if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
+            n_new = len(y.index.get_level_values(0).unique())
+            if hasattr(self, "n_pretrain_instances_"):
+                self.n_pretrain_instances_ += n_new
+            else:
+                self.n_pretrain_instances_ = n_new
+
+        return self
+
+    def _run_epoch(
+        self, epoch, data_loader, val_data_loader_nll=None, early_stopper=None
+    ):
         nll = None
         for i, _input in enumerate(data_loader):
             (c, x) = _input
