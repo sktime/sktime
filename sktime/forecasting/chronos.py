@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
+from sktime.forecasting._foundation_model_mixin import _ZeroShotSerializationMixin
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
@@ -176,7 +177,7 @@ class ChronosBoltStrategy(ChronosModelStrategy):
         return np.median(prediction_results[0].numpy(), axis=0)
 
 
-class ChronosForecaster(BaseForecaster):
+class ChronosForecaster(_ZeroShotSerializationMixin, BaseForecaster):
     """
     Interface to the Chronos and Chronos-Bolt Zero-Shot Forecaster by Amazon Research.
 
@@ -447,16 +448,8 @@ class ChronosForecaster(BaseForecaster):
         }
         return str(sorted(kwargs_plus_model_path.items()))
 
-    def __getstate__(self):
-        """Return state for pickling, handling unpickleable model pipeline."""
-        state = self.__dict__.copy()
-        if hasattr(self, "model_pipeline"):
-            state["model_pipeline"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from the unpickled state dictionary."""
-        self.__dict__.update(state)
+    # serialization handled by _ZeroShotSerializationMixin
+    # see sktime/forecasting/_foundation_model_mixin.py
 
     def _ensure_model_pipeline_loaded(self):
         """Ensure model pipeline is loaded, recreating if needed after unpickling."""
