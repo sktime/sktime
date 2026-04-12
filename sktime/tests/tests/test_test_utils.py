@@ -169,7 +169,7 @@ def test_run_test_for_class():
 
     if not dep_present:
         assert not run
-        assert reason == "False_required_deps_missing"
+        assert reason in ["False_required_deps_missing", "False_requires_vm"]
     elif not ONLY_CHANGED_MODULES:
         assert run
         assert reason == "True_run_always"
@@ -178,5 +178,5 @@ def test_run_test_for_class():
         assert reason_wdep == reason or reason_nodep == reason
     else:
         assert reason == "False_no_change"
-        assert reason_wdep == "False_no_change"
+        assert reason_wdep in ["False_no_change", "False_requires_vm"]
         assert reason_nodep == "False_no_change"
