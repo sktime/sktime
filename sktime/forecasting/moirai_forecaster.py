@@ -20,7 +20,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     checkpoint_path : str, default=None
         Path to the checkpoint of the model. Supported weights are available at [1]_.
     context_length : int, default=200
-        Length of the context window, time points the model with take input as infernce.
+        Length of the context window, time points the model will take as input for inference.
     patch_size : int, default=32
         Time steps to perform patching with.
     num_samples : int, default=100
