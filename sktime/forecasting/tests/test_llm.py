@@ -2,27 +2,14 @@
 
 import pandas as pd
 import pytest
-from skbase.base import BaseObject
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.llm import LLMForecaster
+from sktime.forecasting.llm import (
+    DummyLLM,
+    DummyLLMGarbage,
+    LLMForecaster,
+)
 from sktime.forecasting.naive import NaiveForecaster
-
-
-class DummyLLMNaive(BaseObject):
-    """Dummy LLM returning a valid naive selection."""
-
-    def invoke(self, prompt):
-        """Return a fixed valid response."""
-        return "FORECASTER: naive\nREASON: simple baseline"
-
-
-class DummyLLMGarbage(BaseObject):
-    """Dummy LLM returning an invalid selection."""
-
-    def invoke(self, prompt):
-        """Return an invalid response."""
-        return "I choose something unsupported."
 
 
 def test_llm_forecaster_fit_predict():
@@ -30,7 +17,7 @@ def test_llm_forecaster_fit_predict():
     fh = ForecastingHorizon([1, 2], is_relative=True)
 
     forecaster = LLMForecaster(
-        llm=DummyLLMNaive(),
+        llm=DummyLLM("FORECASTER: naive\nREASON: simple baseline"),
         candidate_forecasters=(("naive", NaiveForecaster()),),
     )
 
@@ -64,7 +51,7 @@ def test_llm_forecaster_invalid_strategy():
     fh = ForecastingHorizon([1], is_relative=True)
 
     forecaster = LLMForecaster(
-        llm=DummyLLMNaive(),
+        llm=DummyLLM(),
         strategy="unsupported",
     )
 

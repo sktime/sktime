@@ -22,12 +22,40 @@ class DummyLLM(BaseObject):
         return self.response
 
 
+class DummyLLMGarbage(BaseObject):
+    """Dummy LLM returning an invalid selection."""
+
+    def invoke(self, prompt):
+        """Return an invalid response."""
+        return "I choose something unsupported."
+
+
 class LLMForecaster(BaseForecaster):
-    """LLM-guided sktime forecaster."""
+    """LLM-guided sktime forecaster.
+
+    This forecaster uses a user-supplied LLM backend to select one forecaster
+    from a candidate pool, then fits that forecaster and delegates prediction
+    to it.
+
+    Parameters
+    ----------
+    llm : object
+        Backend object implementing an ``invoke(prompt: str) -> str`` method.
+    candidate_forecasters : tuple of tuple[str, BaseForecaster], optional
+        Candidate forecasters that the LLM can choose from.
+        If None, defaults to a simple built-in candidate list.
+    default_forecaster : BaseForecaster, optional
+        Fallback forecaster used if the LLM output cannot be parsed.
+        If None, defaults to ``NaiveForecaster()``.
+    prompt_template : str, optional
+        Optional custom prompt template.
+    strategy : str, default="select"
+        Strategy used by the forecaster. Only ``"select"`` is supported.
+    """
 
     _tags = {
         "authors": ["AdithyaPhaniThota"],
-        "scitype:y": "univariate",
+        "capability:multivariate": True,
         "capability:exogenous": False,
         "capability:insample": False,
         "capability:pred_int": False,
@@ -148,8 +176,16 @@ class LLMForecaster(BaseForecaster):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings."""
-        return {
+        params1 = {
             "llm": DummyLLM(),
             "candidate_forecasters": (("naive", NaiveForecaster()),),
             "default_forecaster": NaiveForecaster(),
         }
+
+        params2 = {
+            "llm": DummyLLMGarbage(),
+            "candidate_forecasters": (("naive", NaiveForecaster()),),
+            "default_forecaster": NaiveForecaster(),
+        }
+
+        return [params1, params2]
