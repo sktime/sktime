@@ -434,6 +434,7 @@ jobs:
         run: >
           uv pip install .[dev] --resolution lowest-direct
           --exclude-newer-package "setuptools=false"
+          --exclude-newer-package "scikit-base=false"
         env:
           UV_SYSTEM_PYTHON: 1
 
@@ -471,7 +472,7 @@ jobs:
         # so we bump its date later
         run: >
           uv pip install .[dev]
-          --exclude-newer-package 'scikit-base=2024-01-01'
+          --exclude-newer-package "scikit-base=false"
           --exclude-newer-package "setuptools=false"
         env:
           UV_SYSTEM_PYTHON: 1
@@ -510,6 +511,7 @@ jobs:
         run: >
           uv pip install .[dev]
           --exclude-newer-package "setuptools=false"
+          --exclude-newer-package "scikit-base=false"
         env:
           UV_SYSTEM_PYTHON: 1
           UV_EXCLUDE_NEWER: "2024-09-01"
