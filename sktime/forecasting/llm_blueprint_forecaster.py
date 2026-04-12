@@ -313,8 +313,8 @@ class LLMBlueprintForecaster(BaseForecaster):
         )
         failed = [r for r in self.blueprint_history_ if r["error"] is not None]
         lines = [
-            f"  #{i + 1} Score={r['score']:.6f}" +
-            f"{r['name']}  spec={r['blueprint'].get('spec', '')}"
+            f"  #{i + 1} Score={r['score']:.6f}"
+            + f"{r['name']}  spec={r['blueprint'].get('spec', '')}"
             for i, r in enumerate(valid)
         ] + [
             f"  FAILED  {r['name']}  spec={r['blueprint'].get('spec', '')}"
