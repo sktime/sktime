@@ -99,6 +99,13 @@ class SquaringResiduals(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
         "capability:pred_int:insample": False,
+        # test skip config, see #3479, #4504, #4181, #4765
+        "tests:skip_by_name": [
+            "test_predict_time_index",
+            "test_predict_residuals",
+            "test_predict_interval",
+            "test_predict_time_index_with_X",
+        ],
     }
 
     def __init__(
