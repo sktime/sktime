@@ -85,7 +85,6 @@ all_extras = [
   'holidays',
   'matplotlib!=3.9.1,>=3.3.2',
   'numba<0.63,>=0.53; python_version < "3.14"',
-  'pmdarima!=1.8.1,<3.0.0,>=1.8',
   'polars[pandas]>=0.20,<2.0',
   'seaborn>=0.11',
   "skpro>=2,<2.13.0",
