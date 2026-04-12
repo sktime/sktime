@@ -75,7 +75,7 @@ class TimeLLMForecaster(BaseForecaster):
     """
 
     _tags = {
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "authors": ["KimMeen", "jgyasu"],
         # KimMeen for [ICLR 2024] Official implementation of Time-LLM
         "maintainers": ["jgyasu"],
