@@ -268,7 +268,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
             "Jayant Kalagnanam",
         ],
         "maintainers": ["julian-fong"],
-        "python_dependencies": ["transformers<4.41.0", "torch", "accelerate"],
+        "python_dependencies": ["transformers", "torch", "accelerate"],
         "capability:global_forecasting": True,
         "tests:vm": True,
     }
@@ -408,7 +408,13 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
             eval_dataset = None
 
         # Get Training Configuration
-        training_args = TrainingArguments(**self._training_args)
+        # ``overwrite_output_dir`` was removed from ``TrainingArguments`` in
+        # transformers 5.0, so drop it when running on a version that no
+        # longer accepts it. Kept as-is for transformers<5.0.
+        training_args_dict = dict(self._training_args)
+        if not _check_soft_dependencies("transformers<5.0", severity="none"):
+            training_args_dict.pop("overwrite_output_dir", None)
+        training_args = TrainingArguments(**training_args_dict)
         # Get the Trainer
         trainer = Trainer(
             model=self.model,
