@@ -1,15 +1,17 @@
-"Hampel filter for univariate anomaly detection."
+"""Hampel filter for univariate anomaly detection."""
 
 import numpy as np
 import pandas as pd
+
 from sktime.detection.base import BaseDetector
 
 __author__ = ["SpitFire19"]
 
+
 class HampelDetector(BaseDetector):
     """
-    Anomaly detector based on Hampel filter described in [1]
-    
+    Anomaly detector based on Hampel filter described in [1].
+
     Parameters
     ----------
     window_length : int, optional (default=10)
@@ -19,7 +21,7 @@ class HampelDetector(BaseDetector):
     k : float, optional (default=1.4826)
         The consistency constant which depends on the underlying distribution.
         By default, we choose k=1.4826 - the value for Gaussian distribution.
-    
+
     References
     ----------
     .. [1] Hampel F. R., "The influence curve and its role in robust estimation",
@@ -37,7 +39,7 @@ class HampelDetector(BaseDetector):
     >>> y_anomalies = detector.predict(y)
     >>> anomaly_scores = detector.transform_scores(y)
     """
-    
+
     _tags = {
         "authors": "SpitFire19",
         "maintainers": "SpitFire19",
@@ -60,7 +62,8 @@ class HampelDetector(BaseDetector):
         super().__init__()
 
     def _predict(self, X):
-        """Core logic for detecting outliers using a sliding window.
+        """
+        Core logic for detecting outliers using a sliding window.
 
         Returns
         -------
@@ -77,13 +80,13 @@ class HampelDetector(BaseDetector):
         for i in range(n):
             start = max(0, i - hw)
             end = min(n, i + hw + 1)
-            
+
             window_data = x_values[start:end]
-            
+
             # Calculate outlier statistics
             median = np.nanmedian(window_data)
             mad = np.nanmedian(np.abs(window_data - median))
-            
+
             sigma_est = self.k * mad
 
             # Compare absolute deviation to the threshold
@@ -92,10 +95,11 @@ class HampelDetector(BaseDetector):
 
         # Return a series that BaseDetector will coerce to the 'ilocs' format
         return pd.Series(outlier_indices, name="ilocs", dtype="int64")
-    
+
     def _transform_scores(self, X):
         """
         Calculate the anomaly scores (deviation in terms of n * sigma_est).
+
         Anomaly score is the absolute deviation normalized by (k * MAD).
         """
         x_values = X.values
@@ -108,7 +112,7 @@ class HampelDetector(BaseDetector):
             start = max(0, i - hw)
             end = min(n, i + hw + 1)
             window_data = x_values[start:end]
-            
+
             median = np.nanmedian(window_data)
             mad = np.nanmedian(np.abs(window_data - median))
             # Ensure the denominator is non-zero
@@ -137,9 +141,8 @@ class HampelDetector(BaseDetector):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-
         param1 = {"window_length": 20}
         param2 = {}
-        param3 = {"window_length": 5, "n_sigma":3.1, "k":1.5}
+        param3 = {"window_length": 5, "n_sigma": 3.1, "k": 1.5}
         param4 = {"n_sigma": 4}
         return [param1, param2, param3, param4]
