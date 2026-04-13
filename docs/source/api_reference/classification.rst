@@ -84,6 +84,7 @@ Deep learning
     rnn.SimpleRNNClassifier
     rnn.SimpleRNNClassifierTorch
     tapnet.TapNetClassifier
+    tlenet.TleNetClassifier
 
 Foundation models
 -----------------
