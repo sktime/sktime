@@ -91,7 +91,7 @@ class BaseDetector(BaseEstimator):
         self._is_fitted = False
 
         self._X = None
-        self._Y = None
+        self._y = None
 
         task = self.get_tag("task")
         learning_type = self.get_tag("learning_type")
