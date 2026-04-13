@@ -224,15 +224,9 @@ class ClaSPSegmentation(BaseDetector):
         "task": "change_point_detection",
         "learning_type": "unsupervised",
         "capability:multivariate": False,
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "python_dependencies": "numba",
         "X_inner_mtype": "pd.Series",
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": [
-            "test_non_state_changing_method_contract",
-            "test_raises_not_fitted_error",
-        ],
     }
 
     def __init__(self, period_length=10, n_cps=1, exclusion_radius=0.05):
@@ -243,75 +237,91 @@ class ClaSPSegmentation(BaseDetector):
         super().__init__()
 
     def _fit(self, X, Y=None):
-        """Do nothing, as there is no need to fit a model for ClaSP.
+        """Fit ClaSP by computing change points, profiles, and scores on ``X``.
+
+        Since ClaSP is an unsupervised change point detector, "fitting" is
+        equivalent to computing the ClaSP profile for the training series and
+        extracting the top-``n_cps`` change points. The results are stored as
+        fitted attributes so that ``get_fitted_params`` and the backward-
+        compatible ``self.profiles`` / ``self.scores`` / ``self.found_cps``
+        accessors return the values learned from ``X``.
 
         Parameters
         ----------
-        X : pd.DataFrame
-            Training data to fit model to (time series).
+        X : pd.Series
+            Training data to fit model to (univariate time series).
         Y : pd.Series, optional
             Ground truth annotations for training if annotator is supervised.
+            Ignored by ClaSP (unsupervised).
 
         Returns
         -------
-        self : True
+        self : reference to self
         """
-        return True
+        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
+        return self
 
     def _predict(self, X):
         """Create annotations on test/deployment data.
 
+        This method is contract-compliant with ``BaseDetector``: it does not
+        mutate ``self``; results are computed into local variables only.
+
         Parameters
         ----------
-        X : pd.DataFrame
-            Time series subject to detection, which will be assigned labels or scores.
+        X : pd.Series
+            Time series subject to detection, which will be assigned labels.
 
         Returns
         -------
-        Y : pd.Series or an IntervalSeries
-            Change points in sequence X.
+        Y : pd.Series
+            Change points in sequence ``X``.
         """
-        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
-        return pd.Series(self.found_cps)
+        found_cps, _, _ = self._run_clasp(X)
+        return pd.Series(found_cps)
 
     def _predict_scores(self, X):
         """Return scores in ClaSP's profile for each annotation.
 
+        This method is contract-compliant with ``BaseDetector``: it does not
+        mutate ``self``; results are computed into local variables only.
+
         Parameters
         ----------
-        X : pd.DataFrame
-            Time series subject to detection, which will be assigned labels or scores.
+        X : pd.Series
+            Time series subject to detection, which will be assigned scores.
 
         Returns
         -------
         Y : pd.Series
-            Sparse scores for found change points in sequence X.
+            Sparse scores for found change points in sequence ``X``.
         """
-        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
-
-        # Scores of the Change Points
-        scores = pd.Series(self.scores)
-        return scores
+        _, _, scores = self._run_clasp(X)
+        return pd.Series(scores)
 
     def _transform_scores(self, X):
         """Return scores in ClaSP's profile for each annotation.
 
+        This method is contract-compliant with ``BaseDetector``: it does not
+        mutate ``self``; results are computed into local variables only.
+
         Parameters
         ----------
-        X : pd.DataFrame
-            Time series subject to detection, which will be assigned labels or scores.
+        X : pd.Series
+            Time series subject to detection, which will be assigned scores.
 
         Returns
         -------
         Y : pd.Series
-            Dense scores for found change points in sequence X.
+            Dense scores for found change points in sequence ``X``.
         """
-        self.found_cps, self.profiles, self.scores = self._run_clasp(X)
-
-        # ClaSP creates multiple profiles. Hard to map. Thus, we return the main
-        # (first) one
-        profile = pd.Series(self.profiles[0])
-        return profile
+        _, profiles, scores = self._run_clasp(X)
+        # ClaSP creates multiple profiles. Hard to map. We return the profile
+        # with the highest score (most dominant change point). This matches
+        # the pre-sort behavior where ``profiles[0]`` was the first-popped
+        # (highest-priority) profile from the internal priority queue.
+        top_idx = int(np.argmax(scores)) if len(scores) > 0 else 0
+        return pd.Series(profiles[top_idx])
 
     def get_fitted_params(self):
         """Get fitted parameters.
@@ -319,10 +329,40 @@ class ClaSPSegmentation(BaseDetector):
         Returns
         -------
         fitted_params : dict
+            Dict with keys ``"profiles"`` and ``"scores"``, holding the ClaSP
+            profiles and change point scores computed during ``fit``.
+
+        Raises
+        ------
+        NotFittedError
+            If the estimator has not been fitted.
         """
+        self.check_is_fitted()
         return {"profiles": self.profiles, "scores": self.scores}
 
     def _run_clasp(self, X):
+        """Compute ClaSP change points, profiles, and scores for ``X``.
+
+        Pure method: does not mutate ``self``. Change points are returned in
+        chronological (ascending) order so that downstream consumers such as
+        ``_get_interval_series`` / ``predict_segments`` receive valid,
+        non-overlapping intervals. ``profiles`` and ``scores`` are reordered
+        by the same permutation to stay aligned with ``found_cps``.
+
+        Parameters
+        ----------
+        X : pd.Series or np.ndarray
+            Univariate time series.
+
+        Returns
+        -------
+        found_cps : np.ndarray
+            Array of detected change point indices, in ascending order.
+        profiles : np.ndarray, dtype=object
+            Array of ClaSP profile arrays, aligned with ``found_cps``.
+        scores : np.ndarray
+            Array of change point scores, aligned with ``found_cps``.
+        """
         X = check_series(X, enforce_univariate=True, allow_numpy=True)
 
         if isinstance(X, pd.Series):
@@ -332,14 +372,25 @@ class ClaSPSegmentation(BaseDetector):
             window_length=self.period_length, exclusion_radius=self.exclusion_radius
         ).fit(X)
 
-        self.found_cps, self.profiles, self.scores = _segmentation(
+        found_cps, profiles, scores = _segmentation(
             X,
             clasp_transformer,
             n_change_points=self.n_cps,
             exclusion_radius=self.exclusion_radius,
         )
 
-        return self.found_cps, self.profiles, self.scores
+        # Sort change points chronologically and apply the same permutation to
+        # profiles and scores so they stay aligned. Without this, a priority
+        # queue ordering (highest-score first) can produce unsorted change
+        # points, which causes ``pd.IntervalIndex.from_arrays`` in
+        # ``_get_interval_series`` to raise ``ValueError`` when ``n_cps > 1``.
+        if len(found_cps) > 1:
+            order = np.argsort(found_cps)
+            found_cps = found_cps[order]
+            profiles = profiles[order]
+            scores = scores[order]
+
+        return found_cps, profiles, scores
 
     def _get_interval_series(self, X, found_cps):
         """Get the segmentation results based on the found change points.
