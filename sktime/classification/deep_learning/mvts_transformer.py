@@ -110,6 +110,7 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         lr=0.001,
         verbose=True,
         random_state=None,
+        device="cpu",
     ):
         self.d_model = d_model
         self.n_heads = n_heads
@@ -129,6 +130,7 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.device = device
 
         # infer from the data
         self.feat_dim = None
@@ -145,6 +147,7 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
             lr=lr,
             verbose=verbose,
             random_state=random_state,
+            device=device,
         )
 
         from sktime.utils.dependencies import _check_soft_dependencies
