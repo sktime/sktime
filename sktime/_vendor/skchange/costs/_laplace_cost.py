@@ -235,6 +235,14 @@ class LaplaceCost(BaseCost):
             raise ValueError("Fixed Laplace parameters must be (location, scale).")
         means = check_mean(param[0], X)
         scales = check_non_negative_parameter(param[1], X)
+        # Broadcast to shape (p,) so laplace_cost_fixed_params receives arrays
+        # of the same shape as mle_scales in laplace_cost_mle_params.
+        # Shape (1,) causes platform-dependent Numba JIT broadcasting issues.
+        p = X.shape[1]
+        if len(means) == 1 and p > 1:
+            means = np.full(p, means[0])
+        if len(scales) == 1 and p > 1:
+            scales = np.full(p, scales[0])
         return means, scales
 
     @property
