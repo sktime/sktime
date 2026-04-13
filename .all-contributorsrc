@@ -3804,6 +3804,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "yrevash",
+      "name": "Yash Tiwari",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52358052?v=4",
+      "profile": "https://github.com/yrevash",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ]
 }
