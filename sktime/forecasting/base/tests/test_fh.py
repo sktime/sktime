@@ -635,7 +635,7 @@ def test_frequency_setter(freqstr):
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-def test_auto_ets_case_with_naive():
+def test_auto_ets():
     """Test failure case from #1435.
 
     AutoETS is replaced by NaiveForecaster.
@@ -660,7 +660,7 @@ def test_auto_ets_case_with_naive():
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-def test_exponential_smoothing_case_with_naive():
+def test_exponential_smoothing():
     """Test failure case from #1876.
 
     ExponentialSmoothing is replaced by NaiveForecaster.
@@ -690,7 +690,7 @@ def test_exponential_smoothing_case_with_naive():
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-def test_auto_arima_case_with_naive():
+def test_auto_arima():
     """Test failure case from #805.
 
     AutoARIMA is replaced by NaiveForecaster.
