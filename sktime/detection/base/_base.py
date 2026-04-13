@@ -1001,7 +1001,7 @@ class BaseDetector(BaseEstimator):
               labels of segments.
         """
         if isinstance(y_dense, pd.DataFrame):
-            y_sparse = y_dense.iloc[:, 0]
+            y_dense = y_dense.iloc[:, 0]
         if not isinstance(y_dense, pd.Series):
             y_dense = pd.Series(y_dense, dtype="int64")
         if 0 in y_dense.values:
