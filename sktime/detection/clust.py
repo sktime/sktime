@@ -21,6 +21,10 @@ class ClusterSegmenter(BaseDetector):
     segments time series data into distinct segments based on similarity, identified
     using the chosen clustering algorithm.
 
+    The wrapped clusterer predicts one label per time point. ``ClusterSegmenter``
+    then groups consecutive equal labels into sparse labelled segments, which is the
+    contract expected from segmentation detectors in ``sktime``.
+
     Parameters
     ----------
     clusterer : sklearn.cluster
@@ -36,6 +40,7 @@ class ClusterSegmenter(BaseDetector):
         # --------------
         "task": "segmentation",
         "learning_type": "unsupervised",
+        "capability:multivariate": False,
         # CI and test flags
         # -----------------
         "tests:skip_by_name": ["test_non_state_changing_method_contract"],
@@ -81,9 +86,11 @@ class ClusterSegmenter(BaseDetector):
         return self
 
     def _predict(self, X):
-        """Create annotations on test/deployment data.
+        """Create sparse segmentation output on test/deployment data.
 
-        core logic
+        The clustering model predicts one label per time point. This method then
+        converts the dense label sequence into the sparse segment format expected by
+        ``BaseDetector`` for ``task="segmentation"``.
 
         Parameters
         ----------
@@ -92,19 +99,45 @@ class ClusterSegmenter(BaseDetector):
 
         Returns
         -------
-        Y : pd.Series - annotations for sequence X
-            exact format depends on annotation type
+        pd.DataFrame
+            Segments in sparse format with columns ``"ilocs"`` and ``"labels"``.
         """
         if isinstance(X, pd.Series):
             X = X.to_frame()
-        self.n_instances, self.n_timepoints = X.shape
+
         X_flat = X.values.reshape(-1, 1)
         labels = self._clusterer_.predict(X_flat)
-        labels = labels.reshape(self.n_instances, self.n_timepoints)
-        if self.n_instances == 1:
-            return pd.Series(labels.flatten(), index=X.index)
+        labels = pd.Series(labels, index=pd.RangeIndex(len(labels)), dtype="int64")
+        return self._labels_to_segments(labels)
 
-        return pd.Series(labels.flatten(), index=X.index.repeat(self.n_timepoints))
+    @staticmethod
+    def _labels_to_segments(labels):
+        """Convert dense per-timepoint labels to sparse labelled segments."""
+        if len(labels) == 0:
+            return BaseDetector._empty_segments().assign(
+                labels=pd.Series(dtype="int64")
+            )
+
+        dense = labels.reset_index(drop=True)
+        start = 0
+        intervals = []
+        segment_labels = []
+
+        for i in range(1, len(dense)):
+            if dense.iloc[i] != dense.iloc[i - 1]:
+                intervals.append(pd.Interval(start, i, closed="left"))
+                segment_labels.append(dense.iloc[start])
+                start = i
+
+        intervals.append(pd.Interval(start, len(dense), closed="left"))
+        segment_labels.append(dense.iloc[start])
+
+        return pd.DataFrame(
+            {
+                "ilocs": pd.IntervalIndex(intervals),
+                "labels": pd.Series(segment_labels, dtype="int64"),
+            }
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -122,6 +155,6 @@ class ClusterSegmenter(BaseDetector):
         params : dict or list of dict, default = {}
 
         """
-        params1 = {"clusterer": KMeans(n_clusters=2)}
-        params2 = {}
+        params1 = {"clusterer": KMeans(n_clusters=2, random_state=0)}
+        params2 = {"clusterer": KMeans(n_clusters=3, random_state=0)}
         return [params1, params2]
