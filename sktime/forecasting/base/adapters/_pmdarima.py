@@ -24,6 +24,9 @@ class _PmdArimaAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "python_dependencies": ["pmdarima"],
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
     }
 
     def __init__(self):
