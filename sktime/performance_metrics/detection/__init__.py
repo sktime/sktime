@@ -8,7 +8,6 @@ from sktime.performance_metrics.detection._randindex import RandIndex
 from sktime.performance_metrics.detection._ts_auprc import TimeSeriesAUPRC
 
 from ._detectiondelaymean import DetectionDelayMean
-from ._earlydetection import EarlyDetectionScore
 
 __all__ = [
     "DirectedChamfer",
@@ -17,6 +16,5 @@ __all__ = [
     "WindowedF1Score",
     "RandIndex",
     "TimeSeriesAUPRC",
-    "EarlyDetectionScore",
     "DetectionDelayMean",
 ]
