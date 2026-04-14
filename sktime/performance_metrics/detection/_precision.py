@@ -4,10 +4,16 @@ from sktime.performance_metrics.detection._windowed import _BaseWindowedDetectio
 
 
 class WindowedPrecision(_BaseWindowedDetectionScore):
-    """Windowed precision (positive predictive value) for event detection.
+    r"""Windowed precision (positive predictive value) for event detection.
 
     This score computes precision for point-event detection using one-to-one matching
     within a window around each true event.
+
+    Denoting by :math:`M` the number of matched predicted/true event pairs and by
+    :math:`|\hat{Y}|` the number of predicted events, the metric is
+
+    .. math::
+        \mathrm{WindowedPrecision} = \frac{M}{|\hat{Y}|}.
 
     By default, matching is iloc based. If ``use_loc=True`` and ``X`` is provided,
     windowing uses the corresponding values from ``X.index`` instead.

@@ -2,10 +2,16 @@ from sktime.performance_metrics.detection._windowed import _BaseWindowedDetectio
 
 
 class WindowedF1Score(_BaseWindowedDetectionScore):
-    """F1-score for event detection, using a margin-based match criterion.
+    r"""F1-score for event detection, using a margin-based match criterion.
 
     This score computes the harmonic mean of windowed precision and recall for
     point-event detection.
+
+    If :math:`P` denotes windowed precision and :math:`R` denotes windowed recall,
+    the metric is
+
+    .. math::
+        \mathrm{WindowedF1Score} = \frac{2PR}{P + R}.
 
     By default, matching is iloc based. If ``use_loc=True`` and ``X`` is provided,
     windowing uses the corresponding values from ``X.index`` instead.
