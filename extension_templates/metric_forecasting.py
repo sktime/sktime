@@ -20,14 +20,17 @@ Purpose of this implementation template:
     - More details:
       https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-    Mandatory methods to implement:
+    Mandatory methods to implement (at least one of):
         evaluating at each time index  -
             _evaluate_by_index(self, y_true, y_pred, **kwargs)
-
-    Optional methods to override:
         overall evaluation             -
             _evaluate(self, y_true, y_pred, **kwargs)
-        (if not overridden, _evaluate averages _evaluate_by_index over time)
+
+    Note: if only ``_evaluate_by_index`` is implemented, ``_evaluate``
+    defaults to the arithmetic mean of ``_evaluate_by_index`` over time points.
+    If only ``_evaluate`` is implemented, ``_evaluate_by_index`` defaults to
+    jackknife pseudosamples from ``_evaluate``.
+    Optimally, both are implemented for best performance and correctness.
 
     Testing - required for sktime test framework and check_estimator usage:
         get default parameters for test instance(s) - get_test_params()
@@ -62,6 +65,10 @@ class MyForecastingMetric(BaseForecastingErrorMetric):
     that do not implement native handling of hierarchical (multi-level) data.
     For hierarchical metrics, use the ``metric_forecasting_hierarchical``
     template instead.
+
+    At least one of ``_evaluate`` or ``_evaluate_by_index`` must be implemented.
+    If only ``_evaluate_by_index`` is implemented, ``_evaluate`` defaults to
+    the arithmetic mean over time points. Optimally, implement both.
 
     Parameters
     ----------
@@ -166,8 +173,8 @@ class MyForecastingMetric(BaseForecastingErrorMetric):
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
 
-        Core logic of the metric, called from ``evaluate_by_index``.
-        ``_evaluate`` (overall metric) defaults to the mean of this over time.
+        Mandatory to implement if ``_evaluate`` is not implemented.
+        If implemented, ``_evaluate`` defaults to the mean of this over time.
 
         Parameters
         ----------
@@ -217,34 +224,38 @@ class MyForecastingMetric(BaseForecastingErrorMetric):
         # # handle multioutput averaging (use the helper method)
         # return self._handle_multioutput(raw_values, multioutput)
 
-    # todo: optionally override _evaluate for performance or custom aggregation.
-    # If not overridden, _evaluate computes the mean of _evaluate_by_index over time.
-    #
-    # def _evaluate(self, y_true, y_pred, **kwargs):
-    #     """Evaluate the metric overall (aggregated over time points).
-    #
-    #     Override this for efficiency, or if aggregation is not a simple mean
-    #     over time points (e.g., a weighted aggregation).
-    #
-    #     Parameters
-    #     ----------
-    #     y_true : pd.DataFrame
-    #         Ground truth target values.
-    #     y_pred : pd.DataFrame
-    #         Predicted values to evaluate.
-    #     **kwargs : dict, optional
-    #         Same optional kwargs as _evaluate_by_index.
-    #
-    #     Returns
-    #     -------
-    #     loss : float or np.ndarray
-    #         Calculated metric, averaged or by variable.
-    #
-    #         * float if ``multioutput="uniform_average"`` or array-like.
-    #         * ``np.ndarray`` of shape ``(y_true.columns,)``
-    #           if ``multioutput="raw_values"``.
-    #     """
-    #     raise NotImplementedError("implement _evaluate")
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the metric overall (aggregated over time points).
+
+        Optional to implement. If not implemented, defaults to the arithmetic
+        mean of ``_evaluate_by_index`` over time points.
+
+        Override this method for efficiency, or if your aggregation is not
+        a simple mean over time points (e.g., a weighted or non-linear
+        aggregation such as MASE, MAPE, or geometric mean).
+
+        Parameters
+        ----------
+        y_true : pd.DataFrame
+            Ground truth target values.
+        y_pred : pd.DataFrame
+            Predicted values to evaluate.
+        **kwargs : dict, optional
+            Same optional kwargs as ``_evaluate_by_index``.
+
+        Returns
+        -------
+        loss : float or np.ndarray
+            Calculated metric, averaged or by variable.
+
+            * float if ``multioutput="uniform_average"`` or array-like.
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if ``multioutput="raw_values"``.
+        """
+        # default: mean over time points from _evaluate_by_index
+        # override this for non-simple aggregations or performance
+        index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
+        return index_df.mean(axis=0)
 
     # todo: return default parameters so that a test instance can be created
     # required for automated unit and integration testing of estimator
@@ -271,12 +282,6 @@ class MyForecastingMetric(BaseForecastingErrorMetric):
         # Testing parameters can be a dictionary or list of dictionaries.
         # Testing parameter choice should cover internal cases well.
         #
-        # This method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # Important: all such imports should be *inside get_test_params*, not at top
-        #            since imports are used only at testing time
-        #
         # A good parameter set should primarily satisfy two criteria:
         #   1. Low testing time - ideally a few seconds for the entire test suite.
         #   2. At least two parameter sets with different values for good coverage.
@@ -287,11 +292,6 @@ class MyForecastingMetric(BaseForecastingErrorMetric):
         # example 2: list of parameter dicts
         # params = [{"parama": 1, "paramb": "option1"},
         #           {"parama": 2, "paramb": "option2"}]
-        #
-        # example 3: parameter set depending on parameter_set value
-        # if parameter_set == "special_param_set":
-        #     return {"parama": 3, "paramb": "option3"}
-        # return {"parama": 1, "paramb": "option1"}
 
         # todo: replace with your actual test parameters
         params1 = {"parama": 1, "paramb": "default"}

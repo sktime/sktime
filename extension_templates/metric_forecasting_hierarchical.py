@@ -30,13 +30,17 @@ Purpose of this implementation template:
 
     For non-hierarchical metrics, use the ``metric_forecasting`` template.
 
-    Mandatory methods to implement:
-        evaluating overall            -
+    Mandatory methods to implement (at least one of):
+        overall evaluation             -
             _evaluate(self, y_true, y_pred, **kwargs)
-
-    Optional methods to override:
-        evaluating at each time index -
+        evaluating at each time index  -
             _evaluate_by_index(self, y_true, y_pred, **kwargs)
+
+    Note: if only ``_evaluate`` is implemented, ``_evaluate_by_index`` defaults
+    to jackknife pseudosamples from ``_evaluate``.
+    If only ``_evaluate_by_index`` is implemented, ``_evaluate`` defaults to
+    the arithmetic mean over time points.
+    Optimally, both are implemented for best performance and correctness.
 
     Testing - required for sktime test framework and check_estimator usage:
         get default parameters for test instance(s) - get_test_params()
@@ -78,6 +82,10 @@ class MyForecastingMetricHierarchical(BaseForecastingErrorMetric):
     - ``_evaluate`` should return a ``pd.DataFrame`` of shape
       ``(n_levels, n_columns)`` when ``multilevel="raw_values"``,
       or a float/array when ``multilevel`` leads to averaging.
+
+    At least one of ``_evaluate`` or ``_evaluate_by_index`` must be implemented.
+    If only ``_evaluate`` is implemented, ``_evaluate_by_index`` defaults to
+    jackknife pseudosamples. Optimally, implement both.
 
     Parameters
     ----------
@@ -182,8 +190,11 @@ class MyForecastingMetricHierarchical(BaseForecastingErrorMetric):
     def _evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the metric on hierarchical inputs.
 
-        Core logic of the metric, called from ``evaluate``.
+        Mandatory to implement if ``_evaluate_by_index`` is not implemented.
         Must handle hierarchical data natively (``inner_implements_multilevel=True``).
+
+        If not implemented, defaults to the mean of ``_evaluate_by_index``
+        over time points (via jackknife pseudosamples).
 
         Parameters
         ----------
@@ -239,19 +250,15 @@ class MyForecastingMetricHierarchical(BaseForecastingErrorMetric):
         #
         # --- case: multilevel leads to averaging (not "raw_values") ---
         # if multilevel != "raw_values":
-        #     # compute your metric over all data, ignoring hierarchy
         #     raw_values = (y_true - y_pred).abs()
         #     raw_values = self._get_weighted_df(raw_values, **kwargs)
-        #     result = raw_values.mean(axis=0)  # mean over time
+        #     result = raw_values.mean(axis=0)
         #     return self._handle_multioutput(result, multioutput)
         #
         # --- case: multilevel="raw_values", return per-level results ---
         # else:
-        #     # y_true has a MultiIndex; last level is time, preceding are hierarchy
-        #     # group by all hierarchy levels (all except the last/time level)
         #     level_names = y_true.index.names[:-1]
         #     grouped = y_true.groupby(level=level_names)
-        #
         #     results = {}
         #     for group_key, group_idx in grouped.groups.items():
         #         y_true_g = y_true.loc[group_idx]
@@ -259,44 +266,45 @@ class MyForecastingMetricHierarchical(BaseForecastingErrorMetric):
         #         raw_values_g = (y_true_g - y_pred_g).abs()
         #         raw_values_g = self._get_weighted_df(raw_values_g, **kwargs)
         #         results[group_key] = raw_values_g.mean(axis=0)
-        #
         #     out_df = pd.DataFrame(results).T
         #     out_df.index.names = level_names
-        #
         #     if isinstance(multioutput, str) and multioutput == "raw_values":
         #         return out_df
         #     elif isinstance(multioutput, str) and multioutput == "uniform_average":
         #         return out_df.mean(axis=1).to_frame()
         #     else:
-        #         # array-like multioutput: weighted average across columns
         #         return out_df.dot(multioutput).to_frame()
 
-    # todo: optionally override _evaluate_by_index for per-time-point evaluation.
-    # If not overridden, the base class uses jackknife pseudosamples from _evaluate.
-    # For hierarchical data, _evaluate_by_index should return a pd.DataFrame
-    # with the same MultiIndex as y_true (hierarchy + time levels).
-    #
-    # def _evaluate_by_index(self, y_true, y_pred, **kwargs):
-    #     """Return the metric evaluated at each time point.
-    #
-    #     Parameters
-    #     ----------
-    #     y_true : pd.DataFrame
-    #         Ground truth (may have MultiIndex for hierarchical data).
-    #     y_pred : pd.DataFrame
-    #         Predicted values, same format as y_true.
-    #     **kwargs : dict, optional
-    #         Same optional kwargs as _evaluate.
-    #
-    #     Returns
-    #     -------
-    #     loss : pd.Series or pd.DataFrame
-    #         Metric at each time point.
-    #         pd.Series if multioutput="uniform_average" or array-like.
-    #         pd.DataFrame if multioutput="raw_values".
-    #         Index matches y_true.index (including hierarchy levels if present).
-    #     """
-    #     raise NotImplementedError("implement _evaluate_by_index")
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        Optional to implement. If not implemented, defaults to jackknife
+        pseudosamples derived from ``_evaluate``.
+
+        Override for efficiency or if per-time-point evaluation has a
+        closed-form expression for your metric.
+
+        Parameters
+        ----------
+        y_true : pd.DataFrame
+            Ground truth (may have MultiIndex for hierarchical data).
+        y_pred : pd.DataFrame
+            Predicted values, same format as y_true.
+        **kwargs : dict, optional
+            Same optional kwargs as ``_evaluate``.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Metric at each time point.
+            pd.Series if multioutput="uniform_average" or array-like.
+            pd.DataFrame if multioutput="raw_values".
+            Index matches y_true.index (including hierarchy levels if present).
+        """
+        # default: jackknife pseudosamples from _evaluate
+        # override for closed-form per-index computation
+        index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
+        return index_df.mean(axis=0)
 
     # todo: return default parameters so that a test instance can be created
     # required for automated unit and integration testing of estimator
@@ -319,27 +327,6 @@ class MyForecastingMetricHierarchical(BaseForecastingErrorMetric):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be a dictionary or list of dictionaries.
-        # Testing parameter choice should cover internal cases well.
-        #
-        # This method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # Important: all such imports should be *inside get_test_params*, not at top
-        #            since imports are used only at testing time
-        #
-        # A good parameter set should primarily satisfy two criteria:
-        #   1. Low testing time - ideally a few seconds for the entire test suite.
-        #   2. At least two parameter sets with different values for good coverage.
-        #
-        # example 1: single parameter dict
-        # params = {"parama": 1, "paramb": "option1"}
-        #
-        # example 2: list of parameter dicts
-        # params = [{"parama": 1, "paramb": "option1"},
-        #           {"parama": 2, "paramb": "option2"}]
-
         # todo: replace with your actual test parameters
         params1 = {"parama": 1, "paramb": "default"}
         params2 = {"parama": 2, "paramb": "option2", "multilevel": "raw_values"}
