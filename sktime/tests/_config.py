@@ -33,7 +33,6 @@ EXCLUDE_ESTIMATORS = [
     "HIVECOTEV1",
     "HIVECOTEV2",
     "RandomIntervalSpectralEnsemble",
-    "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
@@ -95,13 +94,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
-    ],
-    "SimpleRNNClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-        "test_multioutput",  # see 6201
-        "test_classifier_on_unit_test_data",  # see 6201
     ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
@@ -228,8 +220,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "PELT",
         "PaddingTransformer",
         "PlateauFinder",
-        "Prophet",
-        "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
