@@ -72,14 +72,14 @@ class SignatureClassifier(BaseClassifier):
     Attributes
     ----------
     signature_method: sklearn.Pipeline
-    An sklearn pipeline that performs the signature feature extraction step.
+        An sklearn pipeline that performs the signature feature extraction step.
     pipeline: sklearn.Pipeline
-    The classifier appended to the ``signature_method`` pipeline to make a
-    classification pipeline.
+        The classifier appended to the ``signature_method`` pipeline to make a
+        classification pipeline.
     n_classes_ : int
-    Number of classes. Extracted from the data.
+        Number of classes. Extracted from the data.
     classes_ : ndarray of shape (n_classes_)
-    Holds the label for each class.
+        Holds the label for each class.
 
     Examples
     --------
@@ -91,12 +91,12 @@ class SignatureClassifier(BaseClassifier):
     >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     SignatureClassifier(...)
     >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
-
+    
     References
     ----------
     .. [1] Morrill, James, et al. "A generalised signature method for multivariate time
-    series feature extraction." arXiv preprint arXiv:2006.00873 (2020).
-    https://arxiv.org/pdf/2006.00873.pdf
+        series feature extraction." arXiv preprint arXiv:2006.00873 (2020).
+        https://arxiv.org/pdf/2006.00873.pdf
 
     See Also
     --------
