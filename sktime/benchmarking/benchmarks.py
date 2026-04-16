@@ -307,7 +307,83 @@ class BaseBenchmark:
         raise NotImplementedError("This method must be implemented by a subclass.")
 
     def add(self, *args):
-        """Add estimators, tasks, datasets, metrics, CV splitters, or catalogues."""
+        """Add estimators, task components, full task tuples, or catalogues.
+
+        Objects are interpreted based on their ``scitype`` and added to the
+        benchmark accordingly. Multiple objects can be provided in a single call.
+
+        Supported inputs include estimators, datasets, metrics, CV splitters,
+        task tuples, and catalogues.
+
+        Parameters
+        ----------
+        *args : object
+            Objects to add. Supported patterns are:
+
+            - estimator
+                Estimator with scitype "classifier" or "forecaster".
+
+            - (estimator, estimator_id)
+                Tuple specifying an estimator and its string identifier.
+
+            - dataset
+                Object with scitype `dataset_classification` or
+                `dataset_forecasting`.
+
+            - metric
+                Object with scitype `metric_forecasting`, `metric_tabular`, or
+                `metric_proba_tabular`.
+
+            - cv_splitter
+                Object with scitype "splitter" or "splitter_tabular".
+
+            - (dataset, metric, splitter)
+                Tuple specifying a full task. Must contain exactly one dataset, one
+                metric, and one splitter.
+
+            - catalogue
+                Instance of ``BaseCatalogue``. All contained objects are added
+                recursively.
+
+        Notes
+        -----
+        - Task tuples are order-invariant; roles are inferred via ``scitype``.
+        - Duplicate datasets, metrics, and splitters are ignored.
+
+        Raises
+        ------
+        TypeError
+            If:
+            - a tuple has unsupported length
+            - a tuple of length 2 is not (estimator, estimator_id)
+            - a task tuple does not contain exactly one dataset, metric, and splitter
+            - duplicate scitypes are present in a task tuple
+            - an object has an unrecognized ``scitype``
+
+        Examples
+        --------
+        >>> benchmark = ClassificationBenchmark()
+
+        Add an estimator:
+        >>> benchmark.add(DummyClassifier())
+
+        Add components individually:
+        >>> benchmark.add(ArrowHead())
+        >>> benchmark.add(accuracy_score)
+        >>> benchmark.add(KFold(n_splits=3))
+
+        Add a task tuple (order does not matter):
+        >>> benchmark.add((accuracy_score, ArrowHead(), KFold(n_splits=3)))
+
+        Add estimator with ID:
+        >>> benchmark.add((DummyClassifier(), "dummy_1"))
+
+        Add multiple objects:
+        >>> benchmark.add(
+        ...     DummyClassifier(),
+        ...     (ArrowHead(), accuracy_score, KFold(n_splits=3)),
+        ... )
+        """
         for obj in args:
             # add catalogue
             if isinstance(obj, BaseCatalogue):
