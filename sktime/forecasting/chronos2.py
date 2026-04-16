@@ -1,13 +1,13 @@
 """Implements Chronos-2 forecaster."""
 
-__author__ = ["priyanshuharshbodhi1"]
+__author__ = ["priyanshuharshbodhi1", "NestroyMusoke"]
 
 __all__ = ["Chronos2Forecaster"]
 
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
-
+from sktime.forecasting._foundation_model_mixin import _ZeroShotSerializationMixin
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
@@ -33,7 +33,7 @@ else:
             """Set random seed."""
 
 
-class Chronos2Forecaster(BaseForecaster):
+class Chronos2Forecaster(_ZeroShotSerializationMixin, BaseForecaster):
     """Interface to the Chronos-2 Zero-Shot Forecaster by Amazon Research.
 
     Chronos-2 is a pretrained encoder-only time series foundation model
@@ -44,6 +44,10 @@ class Chronos2Forecaster(BaseForecaster):
     Unlike Chronos (v1), Chronos-2 natively handles multivariate targets,
     past-only covariates, and known-future covariates via a group attention
     mechanism described in [2]_.
+
+    Serialization note: ``model_pipeline`` is excluded from pickle state
+    and restored lazily on first predict call after unpickling.
+    This is handled by ``_ZeroShotSerializationMixin``.
 
     Parameters
     ----------
@@ -79,6 +83,7 @@ class Chronos2Forecaster(BaseForecaster):
     ----------
     model_pipeline : Chronos2Pipeline
         The underlying model pipeline used for forecasting.
+        Set to ``None`` after unpickling; restored lazily on first predict.
 
     References
     ----------
@@ -99,7 +104,7 @@ class Chronos2Forecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["priyanshuharshbodhi1"],
+        "authors": ["priyanshuharshbodhi1", "NestroyMusoke"],
         "maintainers": ["priyanshuharshbodhi1"],
         "python_dependencies": ["chronos-forecasting>=2.0.0"],
         "capability:exogenous": True,
@@ -114,10 +119,7 @@ class Chronos2Forecaster(BaseForecaster):
         "capability:global_forecasting": True,
         "capability:non_contiguous_X": False,
         "tests:vm": True,
-        "tests:skip_by_name": [
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
-        ],
+        "tests:skip_by_name": [],
     }
 
     _default_config = {
@@ -152,17 +154,6 @@ class Chronos2Forecaster(BaseForecaster):
             self.set_tags(python_dependencies=[])
 
         super().__init__()
-
-    def __getstate__(self):
-        """Return state for pickling, excluding unpickleable model pipeline."""
-        state = self.__dict__.copy()
-        if hasattr(self, "model_pipeline"):
-            state["model_pipeline"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
-        self.__dict__.update(state)
 
     def _get_pipeline_kwargs(self):
         return {
@@ -214,8 +205,7 @@ class Chronos2Forecaster(BaseForecaster):
         X : time series in sktime compatible format, optional
             Future exogenous covariates.
         y : time series in sktime compatible format, optional
-            Historical values for global forecasting. If provided,
-            performs fit_predict on the new series.
+            Historical values for global forecasting.
 
         Returns
         -------
@@ -238,8 +228,7 @@ class Chronos2Forecaster(BaseForecaster):
         ----------
         fh : ForecastingHorizon
         X : pd.DataFrame, optional
-            Future exogenous covariates (known-future). Column names must be
-            a subset of X provided in fit.
+            Future exogenous covariates (known-future).
 
         Returns
         -------
