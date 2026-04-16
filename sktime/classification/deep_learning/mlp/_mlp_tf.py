@@ -49,9 +49,19 @@ class MLPClassifier(BaseDeepClassifier):
     dropout : float or tuple, default=(0.1, 0.2, 0.2, 0.3)
         The dropout rate for the hidden layers.
         If float, the same rate is used for all layers.
-        If tuple, it must have length equal to number of hidden layers in the MLP,
-        each element specifying the dropout rate for the corresponding hidden layer.
-        Current implementation of the MLP has 4 hidden layers.
+        If tuple, length must equal n_layers + 1, where the first
+        n_layers elements correspond to dropout applied before each hidden Dense layer,
+        and the last element corresponds to the dropout applied after the final
+        hidden layer (before the output layer).
+    n_layers : int, default=3
+        Number of hidden Dense layers in the MLP.
+    hidden_dim : int or tuple, default=500
+        Number of units in each hidden Dense layer.
+        If int, the same number of units is used for all hidden layers.
+        If list or tuple, length must equal n_layers, with each element
+        specifying the number of units for the corresponding hidden layer.
+
+
 
     References
     ----------
@@ -92,6 +102,8 @@ class MLPClassifier(BaseDeepClassifier):
         use_bias=True,
         optimizer=None,
         dropout=(0.1, 0.2, 0.2, 0.3),
+        n_layers=3,
+        hidden_dim=500,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -107,6 +119,8 @@ class MLPClassifier(BaseDeepClassifier):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.dropout = dropout
+        self.n_layers = n_layers
+        self.hidden_dim = hidden_dim
 
         super().__init__()
 
@@ -115,6 +129,8 @@ class MLPClassifier(BaseDeepClassifier):
             activation=self.activation_hidden,
             random_state=self.random_state,
             dropout=self.dropout,
+            n_layers=self.n_layers,
+            hidden_dim=self.hidden_dim,
         )
 
     def build_model(self, input_shape, n_classes, **kwargs):
@@ -228,6 +244,8 @@ class MLPClassifier(BaseDeepClassifier):
             "batch_size": 4,
             "use_bias": False,
             "dropout": (0.1, 0.2, 0.2, 0.1),
+            "n_layers": 3,
+            "hidden_dim": 500,
         }
 
         param2 = {
@@ -235,6 +253,8 @@ class MLPClassifier(BaseDeepClassifier):
             "batch_size": 6,
             "use_bias": True,
             "dropout": 0.1,
+            "n_layers": 4,
+            "hidden_dim": 256,
         }
         test_params = [param1, param2]
 
