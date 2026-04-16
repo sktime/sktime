@@ -306,51 +306,104 @@ class BaseBenchmark:
         """Register a task to the benchmark."""
         raise NotImplementedError("This method must be implemented by a subclass.")
 
-    def add(self, *args, **kwargs):
-        """Add estimators, tasks, datasets, metrics, CV splitters, or catalogues.
-
-        Supports:
-            - Single estimator or list/dict of estimators
-            - Task components (datasets, metrics, CV splitters)
-            - Full task tuples (dataset, metric, CV splitter)
-            - Catalogues
-        """
+    def add(self, *args):
+        """Add estimators, tasks, datasets, metrics, CV splitters, or catalogues."""
         for obj in args:
-            # catalogue
+            # add catalogue
             if isinstance(obj, BaseCatalogue):
                 for category in obj.available_categories():
                     for item in obj.get(category, as_object=True):
                         self.add(item)
                 continue
 
-            # tuple of (dataset, metric, splitter)
-            if isinstance(obj, tuple) and len(obj) == 3:
-                dataset, metric, splitter = obj
-                self._datasets.append(dataset)
-                self._metrics.append(metric)
-                self._cv_splitters.append(splitter)
-                continue
+            # add tuple inputs
+            if isinstance(obj, tuple):
+                # add task tuple (dataset, metric, splitter)
+                if len(obj) == 3:
+                    dataset = metric = splitter = None
 
-            # single object type (estimators or one of the tasks)
+                    for item in obj:
+                        sctype = scitype(item)
+
+                        if sctype in ["dataset_classification", "dataset_forecasting"]:
+                            if dataset is not None:
+                                raise TypeError("Multiple datasets provided in tuple")
+                            dataset = item
+
+                        elif sctype in [
+                            "metric_forecasting",
+                            "metric_tabular",
+                            "metric_proba_tabular",
+                        ]:
+                            if metric is not None:
+                                raise TypeError("Multiple metrics provided in tuple")
+                            metric = item
+
+                        elif sctype in ["splitter", "splitter_tabular"]:
+                            if splitter is not None:
+                                raise TypeError("Multiple splitters provided in tuple")
+                            splitter = item
+
+                        else:
+                            raise TypeError(
+                                f"Unrecognized object in task tuple: {type(item)} (scitype: {sctype})"  # noqa: E501
+                            )
+
+                    # ensure all required components exist
+                    if dataset is None or metric is None or splitter is None:
+                        raise TypeError(
+                            "Task tuple must contain exactly one dataset, one metric, and one splitter"  # noqa: E501
+                        )
+
+                    self._add_unique(self._datasets, dataset)
+                    self._add_unique(self._metrics, metric)
+                    self._add_unique(self._cv_splitters, splitter)
+                    continue
+
+                # add estimator tuple (estimator, estimator_id)
+                elif len(obj) == 2:
+                    est, est_id = obj
+                    sctype = scitype(est)
+
+                    if sctype in ["classifier", "forecaster"]:
+                        self.add_estimator(est, estimator_id=est_id)
+                        continue
+                    else:
+                        raise TypeError(
+                            f"Tuple of length 2 must be (estimator, id), got: {type(est)}"  # noqa: E501
+                        )
+
+                else:
+                    raise TypeError(f"Unsupported tuple format of length {len(obj)}")
+
+            # add single object
             sctype = scitype(obj)
+
             if sctype in ["classifier", "forecaster"]:
                 self.add_estimator(obj)
+
             elif sctype in ["dataset_classification", "dataset_forecasting"]:
-                self._datasets.append(obj)
+                self._add_unique(self._datasets, obj)
+
             elif sctype in [
                 "metric_forecasting",
                 "metric_tabular",
                 "metric_proba_tabular",
             ]:
-                self._metrics.append(obj)
+                self._add_unique(self._metrics, obj)
+
             elif sctype in ["splitter", "splitter_tabular"]:
-                self._cv_splitters.append(obj)
-            elif sctype == "catalogue":
-                self.add(obj)
+                self._add_unique(self._cv_splitters, obj)
+
             else:
                 raise TypeError(
                     f"Unrecognized object type: {type(obj)} (scitype: {sctype})"
                 )
+
+    def _add_unique(self, collection, item):
+        """Add item to list if not already present."""
+        if item not in collection:
+            collection.append(item)
 
     def register_stored_tasks(self):
         """Register stored tasks from global DATASETS, METRICS, CV_SPLITTERS."""

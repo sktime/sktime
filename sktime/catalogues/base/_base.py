@@ -88,7 +88,15 @@ class BaseCatalogue(BaseObject):
         if object_type not in self._cached_objects:
             processed = []
             for item in items:
-                if isinstance(item, str):
+                if isinstance(item, tuple) and len(item) == 2:
+                    est, est_id = item
+
+                    if isinstance(est, str):
+                        est = craft(est)
+
+                    processed.append((est, est_id))
+
+                elif isinstance(item, str):
                     processed.append(craft(item))
                 else:
                     processed.append(item)
