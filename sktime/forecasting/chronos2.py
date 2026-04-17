@@ -203,33 +203,19 @@ class Chronos2Forecaster(BaseForecaster):
         self
         """
         self.model_pipeline = self._load_pipeline()
+
+        context = y
+        context = context.values.T
+
+        context_length = self._config["context_length"]
+        if context_length is None:
+            context_length = self.model_pipeline.model_context_length
+
+        if context.shape[1] > context_length:
+            context = context[:, -context_length:]
+
+        self._context = context
         return self
-
-    def predict(self, fh=None, X=None, y=None):
-        """Forecast time series at future horizon.
-
-        Parameters
-        ----------
-        fh : int, list, pd.Index or ForecastingHorizon, optional
-        X : time series in sktime compatible format, optional
-            Future exogenous covariates.
-        y : time series in sktime compatible format, optional
-            Historical values for global forecasting. If provided,
-            performs fit_predict on the new series.
-
-        Returns
-        -------
-        y_pred : time series in sktime compatible format
-        """
-        if self._fh is None and fh is not None:
-            _fh = fh
-        else:
-            _fh = self._fh
-
-        if y is not None:
-            return self.fit_predict(fh=_fh, X=X, y=y)
-
-        return super().predict(fh=fh, X=X)
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -254,16 +240,11 @@ class Chronos2Forecaster(BaseForecaster):
         if context_length is None:
             context_length = self.model_pipeline.model_context_length
 
-        _y = self._y.copy()
-        y_vals = _y.values.T
-
-        if y_vals.shape[1] > context_length:
-            y_vals = y_vals[:, -context_length:]
-
-        input_dict = {"target": y_vals}
+        context = self._context
+        input_dict = {"target": context}
 
         if self._X is not None:
-            actual_len = y_vals.shape[1]
+            actual_len = context.shape[1]
             past_X = self._X.values[-actual_len:]
             input_dict["past_covariates"] = {
                 col: past_X[:, i] for i, col in enumerate(self._X.columns)
