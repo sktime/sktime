@@ -11,27 +11,6 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-else:
-
-    class torch:
-        """Dummy class if torch is unavailable."""
-
-        bfloat16 = None
-
-
-if _check_soft_dependencies("transformers", severity="none"):
-    import transformers
-else:
-
-    class transformers:
-        """Dummy class if transformers is unavailable."""
-
-        @staticmethod
-        def set_seed(seed):
-            """Set random seed."""
-
 
 class Chronos2Forecaster(BaseForecaster):
     """Interface to the Chronos-2 Zero-Shot Forecaster by Amazon Research.
@@ -122,7 +101,6 @@ class Chronos2Forecaster(BaseForecaster):
 
     _default_config = {
         "limit_prediction_length": False,
-        "torch_dtype": torch.bfloat16,
         "device_map": "cpu",
         "batch_size": 256,
         "context_length": None,
@@ -143,15 +121,19 @@ class Chronos2Forecaster(BaseForecaster):
         self.ignore_deps = ignore_deps
 
         self._config = self._default_config.copy()
-        if config is not None:
-            self._config.update(config)
-
         self.model_pipeline = None
 
         if ignore_deps:
             self.set_tags(python_dependencies=[])
 
         super().__init__()
+
+        import torch
+
+        self._config["torch_dtype"] = torch.bfloat16
+
+        if config is not None:
+            self._config.update(config)
 
     def __getstate__(self):
         """Return state for pickling, excluding unpickleable model pipeline."""
@@ -231,6 +213,8 @@ class Chronos2Forecaster(BaseForecaster):
         -------
         y_pred : pd.DataFrame
         """
+        import transformers
+
         self._ensure_model_pipeline_loaded()
         transformers.set_seed(self._seed)
 
