@@ -56,7 +56,7 @@ jobs:
           UV_SYSTEM_PYTHON: 1
 
       - name: Store wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: wheels
           path: wheelhouse/*
@@ -78,7 +78,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: wheels
           path: wheelhouse
@@ -96,7 +96,7 @@ jobs:
         run: echo "WHEELNAME=$(ls ./wheelhouse/sktime-*none-any.whl)" >> $env:GITHUB_ENV
 
       - name: Install wheel and extras
-        run: python3 -m pip install "${{ env.WHEELNAME }}[all_extras_pandas2,dev]"
+        run: python3 -m pip install "${{ env.WHEELNAME }}[all_extras,dev]"
 
       - name: Run tests  # explicit commands as windows does not support make
         run: python -m pytest  --ignore sktime/datasets
@@ -110,7 +110,7 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: wheels
           path: wheelhouse

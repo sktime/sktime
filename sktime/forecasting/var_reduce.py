@@ -125,7 +125,7 @@ class VARReduce(BaseForecaster):
     """
 
     _tags = {
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "authors": ["meraldoantonio"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",

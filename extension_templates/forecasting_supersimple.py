@@ -64,12 +64,12 @@ class MyForecaster(BaseForecaster):
 
     # todo: fill in the scitype:y tag for univariate/multivariate
     _tags = {
-        # scitype:y controls whether internal y can be univariate/multivariate
+        # capability:multivariate controls whether inner y can be multivariate
         # if multivariate is not valid, applies vectorization over variables
-        "scitype:y": "univariate",
-        # fill in "univariate" or "both"
-        #   "univariate": inner _fit, _predict, receives only single-column DataFrame
-        #   "both": inner _predict gets pd.DataFrame series with any number of columns
+        "capability:multivariate": False,
+        # valid values: True, False
+        #   False: inner _fit, _predict, etc, receive only univariate series
+        #   True: inner methods work with series with any number of variables
         #
         # specify one or multiple authors and maintainers, only for sktime contribution
         "authors": ["author1", "author2"],  # authors, GitHub handles
@@ -117,9 +117,12 @@ class MyForecaster(BaseForecaster):
         Parameters
         ----------
         y : pd.DataFrame
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to have a single column
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle single-column and multi-column y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here.

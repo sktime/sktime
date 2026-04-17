@@ -55,6 +55,7 @@ from sktime.datatypes import (
     update_data,
 )
 from sktime.datatypes._dtypekind import DtypeKind
+from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
@@ -94,7 +95,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # estimator type
         # --------------
         "object_type": "forecaster",  # type of object
-        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
+        "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
@@ -138,8 +139,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
     }
 
     def __init__(self):
-        self._is_fitted = False
-
         self._y = None
         self._X = None
 
@@ -151,6 +150,25 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         super().__init__()
         _check_estimator_deps(self)
+        self._state = "new"
+
+    @classmethod
+    def _get_clone_plugins(cls):
+        """Get clone plugins for BaseForecaster.
+
+        Overrides the default skbase clone behavior to preserve
+        pretrained attributes when cloning forecasters.
+
+        The ``_PretrainedCloner`` plugin ensures that when a forecaster
+        with pretrained state is cloned (e.g., during cross-validation),
+        the pretrained attributes are copied to the clone.
+
+        Returns
+        -------
+        list
+            List containing ``_PretrainedCloner`` plugin class.
+        """
+        return [_PretrainedCloner]
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformedTargetForecaster.
@@ -319,6 +337,66 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         else:
             return ColumnSelect(key) ** self
 
+    @property
+    def is_fitted(self):
+        """Whether ``fit`` has been called.
+
+        Checks if the estimator state is "fitted". Returns True only after
+        a successful call to ``fit()``, not after ``pretrain()``.
+
+        Returns
+        -------
+        bool
+            True if the estimator has been fitted, False otherwise.
+        """
+        return self.state == "fitted"
+
+    @property
+    def _is_fitted(self):
+        """Internal fitted state for backward compatibility with skbase.
+
+        Same semantics as ``is_fitted``: returns True only after ``fit()``.
+        For pretrain state checks, use ``self.state`` directly.
+
+        Returns
+        -------
+        bool
+            True if the estimator has been fitted, False otherwise.
+        """
+        return self._state == "fitted"
+
+    @_is_fitted.setter
+    def _is_fitted(self, value):
+        """Setter for backward compatibility.
+
+        Parameters
+        ----------
+        value : bool
+            If True, sets state to "fitted". If False, sets state to "new".
+        """
+        if value:
+            self._state = "fitted"
+        else:
+            self._state = "new"
+
+    @property
+    def state(self):
+        """State of the estimator.
+
+        Possible states for forecasters are:
+
+        * "new": post-init state
+        * "fitted": if ``fit`` has been called.
+        * "pretrained": if ``pretrain`` has been called. Only available for
+            forecasters that support pretraining.
+
+        Returns
+        -------
+        str, one of {"new", "fitted", "pretrained"}
+            State of the estimator.
+        """
+        return self._state
+
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -376,7 +454,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         assert y is not None, "y cannot be None, but found None"
 
         # if fit is called, estimator is reset, including fitted state
-        self.reset()
+        if not self._state == "pretrained":
+            self.reset()
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -400,7 +479,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
 
         # this should happen last
-        self._is_fitted = True
+        self._state = "fitted"
 
         return self
 
@@ -570,7 +649,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             # otherwise we call the vectorized version of fit
             self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
 
-        self._is_fitted = True
+        self._state = "fitted"
         # call the public predict to avoid duplicating output conversions
         #  input conversions are skipped since we are using X_inner
         return self.predict(fh=fh, X=X_inner)
@@ -955,6 +1034,207 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 raise e
 
         return pred_dist
+
+    def pretrain(self, y, X=None, fh=None):
+        """Pre-train forecaster on panel (global) data.
+
+        Pre-trains the forecaster by learning shared patterns from multiple
+        time series (panel or hierarchical data). After pretraining, the
+        forecaster can be fine-tuned on a specific series via ``fit``,
+        which preserves the pretrained weights instead of resetting them.
+
+        Only forecasters with the ``capability:pretrain`` tag set to ``True``
+        implement meaningful pretraining logic. For all other forecasters,
+        ``pretrain`` is a no-op that still transitions the state.
+
+        If called when the forecaster is already in the ``"pretrained"`` or
+        ``"fitted"`` state, the internal ``_pretrain_update`` method is called
+        instead, enabling incremental pretraining on additional data batches.
+
+        State change:
+            Changes ``state`` from ``"new"`` to ``"pretrained"``.
+
+        Writes to self:
+
+            * Sets pretrained model attributes ending in ``"_"``.
+              These are inspectable via ``get_pretrained_params``.
+            * Sets ``self.state`` to ``"pretrained"``.
+            * Sets ``self._pretrained_attrs`` to list of pretrained attribute
+              names (as strings).
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex, or other Panel/Hierarchical mtype
+            Panel or hierarchical time series data to pretrain on.
+            Must contain multiple time series instances (not a single series).
+            For ``pd-multiindex`` mtype, the index should have levels
+            ``(instance, timepoint)``.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series, if supported by the forecaster.
+        fh : int, list, np.array, or ForecastingHorizon, optional (default=None)
+            Forecasting horizon. Not required by all forecasters.
+            For neural network based forecasters, may need to match the
+            network's output dimension (e.g., ``pred_len``).
+
+        Returns
+        -------
+        self : reference to self
+
+        Raises
+        ------
+        TypeError
+            If ``y`` is a single Series instead of Panel/Hierarchical data.
+        TypeError
+            If the forecaster does not natively support the input data
+            and would require vectorization (not supported for pretraining).
+
+        See Also
+        --------
+        fit : Fit forecaster to a single series (fine-tunes after pretraining).
+        get_pretrained_params : Retrieve parameters set during pretraining.
+        state : Current state of the forecaster.
+
+        Examples
+        --------
+        >>> from sktime.forecasting.dummy_global import DummyGlobalForecaster
+        >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+        >>> y_panel = _make_hierarchical(
+        ...     hierarchy_levels=(3,), min_timepoints=12, max_timepoints=12
+        ... )
+        >>> forecaster = DummyGlobalForecaster()
+        >>> forecaster.pretrain(y_panel)
+        DummyGlobalForecaster()
+        >>> forecaster.state
+        'pretrained'
+        """
+        if check_is_scitype(y, "Series"):
+            raise TypeError(
+                f"{type(self).__name__}.pretrain requires Panel or Hierarchical data "
+                "(multiple time series instances), but a single Series was passed. "
+                "Use fit() for fitting on a single series, or pass panel data "
+                "(e.g., pd.DataFrame with MultiIndex) to pretrain()."
+            )
+
+        # pretrain always requires panel data, independent of what fit/predict
+        # support via y_inner_mtype. Pass expanded mtypes directly to _check_X_y
+        # to decouple pretrain's data requirements from the tag.
+        _PRETRAIN_MTYPES = ["pd-multiindex", "pd_multiindex_hier"]
+        orig_y_mtypes = _coerce_to_list(self.get_tag("y_inner_mtype"))
+        pretrain_y_mtypes = list(set(orig_y_mtypes + _PRETRAIN_MTYPES))
+
+        # pretrain accepts multivariate panel data even for univariate forecasters,
+        # because _pretrain can split columns into separate univariate series.
+        # Pass multivariate=True to prevent column vectorization.
+        X_inner, y_inner = self._check_X_y(
+            X=X, y=y, y_inner_mtype=pretrain_y_mtypes, multivariate=True
+        )
+
+        # pretrain does not support vectorization - global learning requires
+        # the forecaster to handle panel data directly
+        if isinstance(y_inner, VectorizedDF):
+            raise TypeError(
+                f"{type(self).__name__}.pretrain does not support automatic "
+                "vectorization. Pretraining requires global learning across all "
+                "instances, so the forecaster must natively support the input data."
+            )
+
+        # Convert fh to ForecastingHorizon if needed
+        _fh = fh
+        if fh is not None and not isinstance(fh, ForecastingHorizon):
+            _fh = ForecastingHorizon(fh)
+
+        if self._state == "new":
+            self._pretrain(y=y_inner, X=X_inner, fh=_fh)
+        else:
+            self._pretrain_update(y=y_inner, X=X_inner, fh=_fh)
+
+        if not hasattr(self, "_pretrained_attrs"):
+            self._pretrained_attrs = []
+
+        # Track new pretrained attributes (extend, not append, to avoid nested lists)
+        new_attrs = [
+            a
+            for a in dir(self)
+            if a.endswith("_")
+            and not a.startswith("_")
+            and a not in self._pretrained_attrs
+        ]
+        self._pretrained_attrs.extend(new_attrs)
+
+        self._state = "pretrained"
+        return self
+
+    def get_pretrained_params(self, deep=True):
+        """Get pretrained parameters of this estimator.
+
+        Returns a dictionary of attributes that were set during ``pretrain``.
+        These are attributes ending in ``"_"`` that appeared on the estimator
+        after ``pretrain`` was called, and are tracked separately from the
+        fitted parameters set by ``fit``.
+
+        State required:
+            Requires state to be ``"pretrained"`` or ``"fitted"``
+            (after pretraining). Returns an empty dict if the estimator
+            has not been pretrained.
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            Whether to return pretrained parameters of nested estimators.
+
+            * If True, will return a dict of parameter name : value for this
+              object, including pretrained parameters of nested estimators.
+            * If False, will return a dict of parameter name : value for this
+              object, but not include pretrained parameters of nested
+              estimators.
+
+        Returns
+        -------
+        params : dict
+            Dictionary of pretrained parameter names mapped to their values.
+            Keys are attribute names ending in ``"_"`` that were set during
+            pretraining. Returns empty dict if estimator has not been
+            pretrained.
+
+            If ``deep=True``, also contains keys/value pairs of nested
+            estimators' pretrained parameters, indexed as
+            ``[attrname]__[paramname]``.
+
+        See Also
+        --------
+        pretrain : Pre-train forecaster on panel data.
+        get_fitted_params : Get parameters set during ``fit``.
+
+        Examples
+        --------
+        >>> from sktime.forecasting.dummy_global import DummyGlobalForecaster
+        >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+        >>> y_panel = _make_hierarchical(
+        ...     hierarchy_levels=(3,), min_timepoints=12, max_timepoints=12
+        ... )
+        >>> forecaster = DummyGlobalForecaster()
+        >>> forecaster.pretrain(y_panel)
+        DummyGlobalForecaster()
+        >>> params = forecaster.get_pretrained_params()
+        >>> sorted(params.keys())  # doctest: +ELLIPSIS
+        ['global_mean_', ..., 'n_pretrain_timepoints_']
+        """
+        if not hasattr(self, "_pretrained_attrs"):
+            return {}
+
+        params = {}
+        for attr in self._pretrained_attrs:
+            if hasattr(self, attr):
+                value = getattr(self, attr)
+                params[attr] = value
+
+                # Handle nesting: if value is an estimator with pretrained params
+                if deep and hasattr(value, "get_pretrained_params"):
+                    nested = value.get_pretrained_params(deep=True)
+                    for nested_key, nested_val in nested.items():
+                        params[f"{attr}__{nested_key}"] = nested_val
+
+        return params
 
     def update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
@@ -1442,38 +1722,48 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
               all parameters of ``componentname`` appear as ``paramname`` with its value
             * if ``deep=True``, also contains arbitrary levels of component recursion,
               e.g., ``[componentname]__[componentcomponentname]__[paramname]``, etc
+
+        Notes
+        -----
+        Pretrained parameters (set via ``pretrain``) are excluded from the result.
+        Use ``get_pretrained_params`` to retrieve those.
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
-            return super().get_fitted_params(deep=deep)
+            fitted_params = super().get_fitted_params(deep=deep)
+        else:
+            # otherwise, we delegate to the instances' get_fitted_params
+            # instances' parameters are returned at dataframe-slice-like keys
+            fitted_params = {}
 
-        # otherwise, we delegate to the instances' get_fitted_params
-        # instances' parameters are returned at dataframe-slice-like keys
-        fitted_params = {}
+            # forecasters contains a pd.DataFrame with the individual forecasters
+            forecasters = self.forecasters_
 
-        # forecasters contains a pd.DataFrame with the individual forecasters
-        forecasters = self.forecasters_
+            # return forecasters in the "forecasters" param
+            fitted_params["forecasters"] = forecasters
 
-        # return forecasters in the "forecasters" param
-        fitted_params["forecasters"] = forecasters
+            def _to_str(x):
+                if isinstance(x, str):
+                    x = f"'{x}'"
+                return str(x)
 
-        def _to_str(x):
-            if isinstance(x, str):
-                x = f"'{x}'"
-            return str(x)
+            # populate fitted_params with forecasters and their parameters
+            for ix, col in product(forecasters.index, forecasters.columns):
+                fcst = forecasters.loc[ix, col]
+                fcst_key = f"forecasters.loc[{_to_str(ix)},{_to_str(col)}]"
+                fitted_params[fcst_key] = fcst
+                fcst_params = fcst.get_fitted_params(deep=deep)
+                for key, val in fcst_params.items():
+                    fitted_params[f"{fcst_key}__{key}"] = val
 
-        # populate fitted_params with forecasters and their parameters
-        for ix, col in product(forecasters.index, forecasters.columns):
-            fcst = forecasters.loc[ix, col]
-            fcst_key = f"forecasters.loc[{_to_str(ix)},{_to_str(col)}]"
-            fitted_params[fcst_key] = fcst
-            fcst_params = fcst.get_fitted_params(deep=deep)
-            for key, val in fcst_params.items():
-                fitted_params[f"{fcst_key}__{key}"] = val
+        # Remove pretrained attributes from fitted params
+        if hasattr(self, "_pretrained_attrs"):
+            for attr in self._pretrained_attrs:
+                fitted_params.pop(attr, None)
 
         return fitted_params
 
-    def _check_X_y(self, X=None, y=None):
+    def _check_X_y(self, X=None, y=None, y_inner_mtype=None, multivariate=None):
         """Check and coerce X/y for fit/predict/update functions.
 
         Parameters
@@ -1500,14 +1790,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             Case 2: self.get_tag("X_inner_mtype") does not support scitype of X, then
                 VectorizedDF of X, iterated as the most complex supported scitype
             Case 3: None if X was None
+        multivariate : None, True or False
+            if not-None, overrides the capability tag "capability:multivariate"
+            in internal behaviour.
+            Overridden currently from: the ``pretrain`` method.
 
         Raises
         ------
         TypeError if y or X is not one of the permissible Series mtypes
-        TypeError if y is not compatible with self.get_tag("scitype:y")
-            if tag value is "univariate", y must be univariate
-            if tag value is "multivariate", y must be bi- or higher-variate
-            if tag value is "both", y can be either
         TypeError if self.get_tag("X-y-must-have-same-index") is True
             and the index set of X is not a super-set of the index set of y
 
@@ -1551,7 +1841,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                     raise ValueError(msg)
 
         # retrieve supported mtypes
-        y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
+        if y_inner_mtype is None:
+            y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
+        else:
+            y_inner_mtype = _coerce_to_list(y_inner_mtype)
+        if multivariate is None:
+            multivariate = self.get_tag("capability:multivariate")
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
         y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
         X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
@@ -1569,7 +1864,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         if y is not None:
             # request only required metadata from checks
             y_metadata_required = ["n_features", "feature_names", "feature_kind"]
-            if self.get_tag("scitype:y") != "both":
+
+            if not multivariate:
                 y_metadata_required += ["is_univariate"]
             if not self.get_tag("capability:missing_values"):
                 y_metadata_required += ["has_nans"]
@@ -1610,21 +1906,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             self._y_mtype_last_seen = y_metadata["mtype"]
 
             req_vec_because_rows = y_scitype not in y_inner_scitype
-            req_vec_because_cols = (
-                self.get_tag("scitype:y") == "univariate"
-                and not y_metadata["is_univariate"]
-            )
+            req_vec_because_cols = not multivariate and not y_metadata["is_univariate"]
             requires_vectorization = req_vec_because_rows or req_vec_because_cols
-
-            if (
-                self.get_tag("scitype:y") == "multivariate"
-                and y_metadata["is_univariate"]
-            ):
-                raise ValueError(
-                    f"Unsupported input data type in {type(self).__name__}, "
-                    "this forecaster accepts only strictly multivariate data. "
-                    "y must have two or more variables, but found only one."
-                )
 
             _check_missing(y_metadata, "y")
 
@@ -1927,7 +2210,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # B. no fh is passed
         if fh is None:
             # A. strategy fitted (call of predict or similar)
-            if self._is_fitted:
+            if self.is_fitted:
                 # in case C. fh is optional in fit:
                 # if there is none from before, there is none overall - raise error
                 if not requires_fh and self._fh is None:
@@ -1967,13 +2250,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             # - fh has not been seen yet
             # - fh has been seen, but was optional in fit,
             #     this means fh needs not be same and can be overwritten
-            if not requires_fh or not self._fh or not self._is_fitted:
+            if not requires_fh or not self._fh or not self.is_fitted:
                 self._fh = fh
             # there is one error condition:
             # - fh is mandatory in fit, i.e., fh in predict must be same if passed
             # - fh already passed, and estimator is fitted
             # - fh that was passed in fit is not the same as seen in predict
-            # note that elif means: optfh == False, and self._is_fitted == True
+            # note that elif means: optfh == False, and self.is_fitted == True
             elif self._fh and not np.array_equal(fh, self._fh):
                 # raise error if existing fh and new one don't match
                 raise ValueError(
@@ -2090,13 +2373,15 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
@@ -2139,6 +2424,26 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain forecaster on training data, first pretraining batch.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # the default simply discards the data, i.e., no pretraining happens
+        return self
+
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Pretrain forecaster on training data, if already pretrained.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # the default calls _pretrain
+        return self._pretrain(y=y, X=X, fh=fh)
+
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
 
@@ -2157,13 +2462,15 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -2239,8 +2546,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         Parameters
         ----------
         y : time series in sktime compatible data container format
-                Time series to which to fit the forecaster in the update.
+            Time series to which to fit the forecaster in the update.
             y can be in one of the following formats, must be same scitype as in fit:
+
             Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
                 for vanilla forecasting, one time series
             Panel scitype: pd.DataFrame with 2-level row MultiIndex,
@@ -2248,15 +2556,11 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 for global or panel forecasting
             Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
                 for hierarchical forecasting
-            Number of columns admissible depend on the "scitype:y" tag:
-                if self.get_tag("scitype:y")=="univariate":
-                    y must have a single column/variable
-                if self.get_tag("scitype:y")=="multivariate":
-                    y must have 2 or more columns
-                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+
             For further details:
                 on usage, see forecasting tutorial examples/01_forecasting.ipynb
                 on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+
         cv : temporal cross-validation generator, optional (default=None)
         X : time series in sktime compatible format, optional (default=None)
                 Exogeneous time series for updating and forecasting
