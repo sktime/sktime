@@ -28,9 +28,7 @@ class DummyClassificationCatalogue(BaseCatalogue):
             "ArrowHead",
         ]
 
-        classifiers = [
-            ("DummyClassifier()", "DummyClassifier"),
-        ]
+        classifiers = [{"DummyClassifier": "DummyClassifier()"}]
 
         metrics = [accuracy_score]
 

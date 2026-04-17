@@ -323,8 +323,13 @@ class BaseBenchmark:
             - estimator
                 Estimator with scitype "classifier" or "forecaster".
 
-            - (estimator, estimator_id)
-                Tuple specifying an estimator and its string identifier.
+            - dict
+                Dictionary of estimators where keys are custom `estimator_id`s and
+                values are the estimators.
+
+            - list
+                List of estimators. `estimator_id`s are generated automatically using
+                the estimator's class name.
 
             - dataset
                 Object with scitype `dataset_classification` or
@@ -354,8 +359,7 @@ class BaseBenchmark:
         ------
         TypeError
             If:
-            - a tuple has unsupported length
-            - a tuple of length 2 is not (estimator, estimator_id)
+            - a tuple has unsupported length (e.g., not length 3 for task tuples)
             - a task tuple does not contain exactly one dataset, metric, and splitter
             - duplicate scitypes are present in a task tuple
             - an object has an unrecognized ``scitype``
@@ -375,12 +379,20 @@ class BaseBenchmark:
         Add a task tuple (order does not matter):
         >>> benchmark.add((accuracy_score, ArrowHead(), KFold(n_splits=3)))
 
-        Add estimator with ID:
-        >>> benchmark.add((DummyClassifier(), "dummy_1"))
+        Add a dictionary of estimators with custom IDs:
+        >>> benchmark.add(
+        ...     {
+        ...         "dummy": DummyClassifier(),
+        ...         "knn": KNeighborsClassifier(),
+        ...     }
+        ... )
+
+        Add a list of estimators (IDs generated automatically):
+        >>> benchmark.add([DummyClassifier(), KNeighborsClassifier()])
 
         Add multiple objects:
         >>> benchmark.add(
-        ...     DummyClassifier(),
+        ...     {"dummy_1": DummyClassifier()},
         ...     (ArrowHead(), accuracy_score, KFold(n_splits=3)),
         ... )
         """
@@ -390,6 +402,11 @@ class BaseBenchmark:
                 for category in obj.available_categories():
                     for item in obj.get(category, as_object=True):
                         self.add(item)
+                continue
+
+            # add dictionary or list of estimators
+            if isinstance(obj, (dict, list)):
+                self.add_estimator(obj)
                 continue
 
             # add tuple inputs
@@ -422,13 +439,15 @@ class BaseBenchmark:
 
                         else:
                             raise TypeError(
-                                f"Unrecognized object in task tuple: {type(item)} (scitype: {sctype})"  # noqa: E501
+                                f"Unrecognized object in task tuple:"
+                                f"{type(item)} (scitype: {sctype})"
                             )
 
                     # ensure all required components exist
                     if dataset is None or metric is None or splitter is None:
                         raise TypeError(
-                            "Task tuple must contain exactly one dataset, one metric, and one splitter"  # noqa: E501
+                            "Task tuple must contain exactly one dataset,"
+                            "one metric, and one splitter"
                         )
 
                     self._add_unique(self._datasets, dataset)
@@ -436,21 +455,11 @@ class BaseBenchmark:
                     self._add_unique(self._cv_splitters, splitter)
                     continue
 
-                # add estimator tuple (estimator, estimator_id)
-                elif len(obj) == 2:
-                    est, est_id = obj
-                    sctype = scitype(est)
-
-                    if sctype in ["classifier", "forecaster"]:
-                        self.add_estimator(est, estimator_id=est_id)
-                        continue
-                    else:
-                        raise TypeError(
-                            f"Tuple of length 2 must be (estimator, id), got: {type(est)}"  # noqa: E501
-                        )
-
                 else:
-                    raise TypeError(f"Unsupported tuple format of length {len(obj)}")
+                    raise TypeError(
+                        f"Unsupported tuple format of length {len(obj)}."
+                        "Expected task tuple of length 3."
+                    )
 
             # add single object
             sctype = scitype(obj)

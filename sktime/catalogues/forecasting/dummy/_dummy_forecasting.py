@@ -25,9 +25,7 @@ class DummyForecastingCatalogue(BaseCatalogue):
             "hospital_dataset",
         ]
 
-        forecasters = [
-            ("NaiveForecaster(strategy='last')", "NaiveForecaster"),
-        ]
+        forecasters = [{"NaiveForecaster": "NaiveForecaster(strategy='last')"}]
 
         metrics = ["MeanAbsoluteError()", "MeanAbsolutePercentageError()"]
 
