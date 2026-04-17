@@ -17,7 +17,7 @@ from sktime.tests.test_switch import run_test_module_changed
     reason="run test only if benchmarking module has changed",
 )
 class TestBenchmarkAddMethods:
-    """Test  benchmark.add() method with different input formats."""
+    """Test benchmark.add() method with different input formats."""
 
     def _assert_standard_metrics(self, results_df):
         """Helper to check standard benchmark outputs."""
@@ -91,7 +91,7 @@ class TestBenchmarkAddMethods:
         scorer = accuracy_score
         dataset = ArrowHead()
 
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError, match="Unsupported tuple format"):
             benchmark.add((dataset, scorer))
 
     def test_add_task_tuple_duplicate_roles(self):
@@ -101,7 +101,7 @@ class TestBenchmarkAddMethods:
         dataset2 = ArrowHead()
         splitter = KFold(n_splits=3)
 
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError, match="Multiple datasets provided in tuple"):
             benchmark.add((dataset1, dataset2, splitter))
 
     def test_add_task_tuple_invalid_object(self):
@@ -139,8 +139,8 @@ class TestBenchmarkAddMethods:
         splitter = KFold(n_splits=3)
         dataset = ArrowHead()
 
-        # invalid mixed tuple
-        with pytest.raises(TypeError):
+        # invalid mixed tuple length
+        with pytest.raises(TypeError, match="Unsupported tuple format"):
             benchmark.add((scorer, splitter))
 
         # valid flow
@@ -171,11 +171,12 @@ class TestBenchmarkAddMethods:
         results_df = benchmark.run()
         self._assert_standard_metrics(results_df)
 
-    def test_add_estimator_with_id(self):
+    def test_add_estimator_dict(self):
+        """Test adding estimators using a dictionary for custom IDs."""
         benchmark = ClassificationBenchmark()
 
         clf = DummyClassifier()
-        benchmark.add((clf, "dummy_1"))
+        benchmark.add({"dummy_custom_id": clf})
 
         scorer = accuracy_score
         splitter = KFold(n_splits=3)
@@ -184,4 +185,30 @@ class TestBenchmarkAddMethods:
         benchmark.add((dataset, scorer, splitter))
         results_df = benchmark.run()
 
-        assert results_df.loc[0, "model_id"] == "dummy_1"
+        # Check that the custom ID from the dictionary was used
+        assert results_df.loc[0, "model_id"] == "dummy_custom_id"
+
+    def test_add_estimator_list(self):
+        """Test adding multiple estimators using a list."""
+        benchmark = ClassificationBenchmark()
+
+        clfs = [DummyClassifier()]
+        benchmark.add(clfs)
+
+        scorer = accuracy_score
+        splitter = KFold(n_splits=3)
+        dataset = ArrowHead()
+
+        benchmark.add((dataset, scorer, splitter))
+        results_df = benchmark.run()
+
+        # Check that the default class name was generated as the ID
+        assert results_df.loc[0, "model_id"] == "DummyClassifier"
+
+    def test_unsupported_tuple_length(self):
+        """Test that passing length-2 tuples (old estimator/ID behavior) fails."""
+        benchmark = ClassificationBenchmark()
+        clf = DummyClassifier()
+
+        with pytest.raises(TypeError, match="Unsupported tuple format of length 2"):
+            benchmark.add((clf, "should_fail"))
