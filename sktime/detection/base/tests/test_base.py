@@ -36,7 +36,7 @@ def test_fit_transform_numpy():
 def test_sparse_to_dense_segmentation_series_input():
     """Test sparse_to_dense correctly handles Series with IntervalIndex input.
 
-    Regression test for bugs fixed in GH#<issue>, where sparse_to_dense
+    Regression test for bugs fixed in GH issue #9917, where sparse_to_dense
     silently misrouted a pd.Series with IntervalIndex to the anomaly/changepoint
     branch, returning all zeros instead of segment labels (Bug 1), and
     _sparse_segments_to_dense returned a DataFrame instead of a Series (Bug 2).
