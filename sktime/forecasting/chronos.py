@@ -310,7 +310,7 @@ class ChronosForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "capability:missing_values": False,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
@@ -610,6 +610,129 @@ class ChronosForecaster(BaseForecaster):
 
         y_pred = pred.loc[dateindex]
         return y_pred
+
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Forecast quantiles using the model's native quantile output.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+        X : pd.DataFrame, optional
+        alpha : list of float
+        Quantile levels to forecast, each in (0, 1).
+
+        Returns
+        -------
+        pd.DataFrame with pd.MultiIndex columns (variable, alpha).
+        """
+        import transformers
+
+        if alpha is None:
+            alpha = [0.1, 0.5, 0.9]
+
+        self._ensure_model_pipeline_loaded()
+        transformers.set_seed(self._seed)
+
+        if fh is not None:
+            prediction_length = int(max(fh.to_relative(self.cutoff)))
+        else:
+            prediction_length = 1
+
+        # Build the context tensor the same way _predict does
+        _y = self._y.values.reshape(1, -1, 1)
+        _y_i = _y[0, :, 0]
+        _y_i = _y_i[-self.model_pipeline.model.config.context_length :]
+        y_tensor = torch.tensor(_y_i)
+
+        # Check if native quantiles exist
+        if hasattr(self.model_pipeline, "predict_quantiles"):
+            quantile_tensors, _ = self.model_pipeline.predict_quantiles(
+                y_tensor,
+                prediction_length=prediction_length,
+                quantile_levels=alpha,
+            )
+            qt_np = quantile_tensors[0].numpy()[0]  # (pred_len, n_q)
+
+        else:
+            # Fallback: use sampling + numpy quantiles
+            prediction_results = self.model_pipeline.predict(
+                y_tensor,
+                prediction_length,
+            )
+            # shape: (num_samples, pred_len)
+            samples = prediction_results[0].numpy()
+
+            # compute quantiles manually
+            qt_np = np.quantile(samples, alpha, axis=0).T  # (pred_len, n_q)
+
+        # Build full absolute index then filter to fh
+        full_index = (
+            ForecastingHorizon(range(1, prediction_length + 1))
+            .to_absolute(self._cutoff)
+            ._values
+        )
+        pred_out = fh.get_expected_pred_idx(self._y, cutoff=self.cutoff)
+        mask = [idx in pred_out for idx in full_index]
+        qt_np = qt_np[mask]
+        fh_index = [idx for idx, m in zip(full_index, mask) if m]
+
+        # Build MultiIndex columns: (variable_name, alpha_level)
+        if hasattr(self._y, "columns"):
+            var_name = self._y.columns[0]
+        else:
+            var_name = self._y.name if self._y.name else 0
+        col_idx = pd.MultiIndex.from_tuples(
+            [(var_name, a) for a in alpha],
+            names=["variable", "quantile"],
+        )
+
+        return pd.DataFrame(qt_np, index=fh_index, columns=col_idx)
+
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """Forecast prediction intervals via quantile mapping.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+        X : pd.DataFrame, optional
+        coverage : float or list of float
+            Nominal coverage(s), e.g. 0.9 → interval [0.05, 0.95].
+
+        Returns
+        -------
+        pd.DataFrame with pd.MultiIndex columns (variable, coverage, bound).
+        """
+        if coverage is None:
+            coverage = [0.9]
+        if not isinstance(coverage, list):
+            coverage = [coverage]
+
+        # Map each coverage value to its lower/upper quantile
+        alphas = sorted(
+            {round(0.5 - c / 2, 10) for c in coverage}
+            | {round(0.5 + c / 2, 10) for c in coverage}
+        )
+
+        quantile_df = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
+        if hasattr(self._y, "columns"):
+            var_name = self._y.columns[0]
+        else:
+            var_name = self._y.name if self._y.name else 0
+
+        col_idx = pd.MultiIndex.from_tuples(
+            [(var_name, c, b) for c in coverage for b in ("lower", "upper")],
+            names=["variable", "coverage", "bound"],
+        )
+        result = pd.DataFrame(index=quantile_df.index, columns=col_idx, dtype=float)
+
+        available = sorted(quantile_df[var_name].columns.tolist())
+        for c in coverage:
+            lo = min(available, key=lambda x: abs(x - (0.5 - c / 2)))
+            hi = min(available, key=lambda x: abs(x - (0.5 + c / 2)))
+            result[(var_name, c, "lower")] = quantile_df[(var_name, lo)].values
+            result[(var_name, c, "upper")] = quantile_df[(var_name, hi)].values
+
+        return result
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
