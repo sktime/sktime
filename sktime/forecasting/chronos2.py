@@ -183,15 +183,16 @@ class Chronos2Forecaster(BaseForecaster):
         """
         self.model_pipeline = self._load_pipeline()
 
-        context = y
-        context = context.values.T
-
         context_length = self._config["context_length"]
         if context_length is None:
             context_length = self.model_pipeline.model_context_length
 
+        context = y
+
         if context.shape[1] > context_length:
-            context = context[:, -context_length:]
+            context = context.iloc[-context_length:]
+
+        context = context.values.T
 
         self._context = context
         return self
