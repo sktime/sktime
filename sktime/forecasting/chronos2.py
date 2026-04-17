@@ -1,7 +1,5 @@
 """Implements Chronos-2 forecaster."""
 
-__author__ = ["priyanshuharshbodhi1"]
-
 __all__ = ["Chronos2Forecaster"]
 
 import numpy as np
@@ -78,7 +76,7 @@ class Chronos2Forecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["priyanshuharshbodhi1"],
+        "authors": ["priyanshuharshbodhi1", "fkiraly"],
         "maintainers": ["priyanshuharshbodhi1"],
         "python_dependencies": ["chronos-forecasting>=2.0.0"],
         "capability:exogenous": True,
