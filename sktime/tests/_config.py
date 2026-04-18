@@ -240,7 +240,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "StackingForecaster",
         "StatThresholdAnomaliser",
         "SummaryClassifier",
-        "SupervisedTimeSeriesForest",
+        # "SupervisedTimeSeriesForest", 
         "TEASER",
         "TSFreshClassifier",
         "TapNetNetwork",
