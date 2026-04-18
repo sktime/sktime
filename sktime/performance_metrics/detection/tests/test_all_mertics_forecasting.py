@@ -1,4 +1,7 @@
 """Tests for all sktime forecasting metrics."""
+import pytest
+
+pytest.importorskip("mlflow")
 
 import pandas as pd
 import pytest
