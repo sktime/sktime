@@ -1,7 +1,8 @@
 """Tests for all sktime forecasting metrics."""
-import pytest
+import os
 
-pytest.importorskip("mlflow")
+# prevent strict dependency checks during docs build
+os.environ["SKTIME_DISABLE_DEPENDENCY_CHECK"] = "1"
 
 import pandas as pd
 import pytest
