@@ -474,6 +474,42 @@ class AutoETS(_StatsModelsAdapter):
         y_pred.name = self._y.name
         return y_pred.loc[valid_indices]
 
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data."""
+        if update_params and self.auto:
+            from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
+
+            # Reconstruct the model using the optimal parameters found during fit
+            self._forecaster = _ETSModel(
+                self._y,
+                error=getattr(self._forecaster, "error", self.error),
+                trend=getattr(self._forecaster, "trend", self.trend),
+                damped_trend=getattr(self._forecaster, "damped_trend", self.damped_trend),
+                seasonal=getattr(self._forecaster, "seasonal", self.seasonal),
+                seasonal_periods=self.sp,
+                initialization_method=self.initialization_method,
+                initial_level=self.initial_level,
+                initial_trend=self.initial_trend,
+                initial_seasonal=self.initial_seasonal,
+                bounds=self.bounds,
+                dates=self.dates,
+                freq=self.freq,
+                missing=self.missing,
+            )
+
+            self._fitted_forecaster = self._forecaster.fit(
+                start_params=self._fitted_forecaster.params,
+                maxiter=self.maxiter,
+                full_output=self.full_output,
+                disp=self.disp,
+                callback=self.callback,
+                return_params=self.return_params,
+            )
+        else:
+            super()._update(y, X, update_params=update_params)
+            
+        return self
+
     @staticmethod
     def _extract_conf_int(prediction_results, alpha) -> pd.DataFrame:
         """Construct confidence interval at specified ``alpha`` for each timestep.
