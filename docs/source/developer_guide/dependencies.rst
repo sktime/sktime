@@ -92,12 +92,11 @@ the ``_safe_import`` utility should be used (see below).
 The ``_safe_import`` utility
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Why this exists.** Previously, optional integrations often relied on ``_check_soft_dependencies`` together with hand-written
-dummy modules or classes so that ``sktime`` could be imported without the third-party package.
-That approach did not scale: every new symbol or base class required more boilerplate.
-``_safe_import`` centralises the fallback: it tries to import a real object and, if the dependency is missing or the import fails,
-returns a stand-in so that **importing** ``sktime`` still succeeds. Actual use of the dependency at runtime still requires the
-package to be installed; user-facing checks remain the job of estimator tags and ``_check_soft_dependencies`` as described above.
+**What it does.** ``_safe_import`` attempts to import a module or object by dotted path.
+If the dependency is installed and import succeeds, the real object is returned.
+If the dependency is missing or import fails, a stand-in is returned so that **importing**
+``sktime`` still succeeds. Runtime use of that dependency still requires the package to be
+installed; keep estimator tags and ``_check_soft_dependencies`` checks as described above.
 
 **Where it lives.** The implementation is maintained in ``skbase``; ``sktime`` re-exports it for developers as
 ``from sktime.utils.dependencies import _safe_import``. The upstream source is
