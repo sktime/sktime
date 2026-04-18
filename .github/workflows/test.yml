@@ -431,9 +431,15 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: pip install .[dev,dependencies_lower]
+        # We require `scikit-base>=0.6.1` which was released after the 2023 cutoff
+        # so we bump its date later
+        run: >
+          uv pip install .[dev]
+          --exclude-newer-package "scikit-base=false"
+          --exclude-newer-package "setuptools=false"
         env:
           UV_SYSTEM_PYTHON: 1
+          UV_EXCLUDE_NEWER: "2023-07-01"
 
       - name: Show dependencies
         run: uv pip list
@@ -465,9 +471,13 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: pip install .[dev,dependencies_2024]
+        run: >
+          uv pip install .[dev]
+          --exclude-newer-package "setuptools=false"
+          --exclude-newer-package "scikit-base=false"
         env:
           UV_SYSTEM_PYTHON: 1
+          UV_EXCLUDE_NEWER: "2024-09-01"
 
       - name: Show dependencies
         run: uv pip list
