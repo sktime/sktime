@@ -14,12 +14,18 @@ class FCNNetwork(BaseDeepNetwork):
 
     Parameters
     ----------
-    random_states : int, default = 0
+    random_state : int, default = 0
         seed to any needed random actions
     activation : string, default = "relu"
         activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
+    filter_sizes : list or tuple of int, default = (128, 256, 128)
+        number of filters for each convolutional layer.
+        must have length equal to kernel_sizes.
+    kernel_sizes : list or tuple of int, default = (8, 5, 3)
+        kernel size for each convolutional layer.
+        must have length equal to filter_sizes.
 
     References
     ----------
@@ -45,11 +51,33 @@ class FCNNetwork(BaseDeepNetwork):
         self,
         random_state=0,
         activation="relu",
+        filter_sizes=(128, 256, 128),
+        kernel_sizes=(8, 5, 3),
     ):
         super().__init__()
         _check_dl_dependencies(severity="error")
         self.random_state = random_state
         self.activation = activation
+        self.filter_sizes = filter_sizes
+        self.kernel_sizes = kernel_sizes
+
+        # type check for filter_sizes
+        if not isinstance(self.filter_sizes, (list, tuple)):
+            raise ValueError(
+                f"filter_sizes must be a list or tuple ,"
+                f"but got type {type(self.filter_sizes)}."
+            )
+        # type check for kernel_sizes
+        if not isinstance(self.kernel_sizes, (list, tuple)):
+            raise ValueError(
+                f"kernel_sizes must be a list or tuple ,"
+                f"but got type {type(self.kernel_sizes)}."
+            )
+        if len(self.filter_sizes) != len(self.kernel_sizes):
+            raise ValueError(
+                f"filter_sizes and kernel_sizes must have the same length ,"
+                f"but got {len(self.filter_sizes)} and {len(self.kernel_sizes)}."
+            )
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
@@ -68,22 +96,17 @@ class FCNNetwork(BaseDeepNetwork):
 
         input_layer = keras.layers.Input(input_shape)
 
-        conv1 = keras.layers.Conv1D(filters=128, kernel_size=8, padding="same")(
-            input_layer
-        )
-        conv1 = keras.layers.BatchNormalization()(conv1)
-        conv1 = keras.layers.Activation(activation=self.activation)(conv1)
+        x = input_layer
+        for i in range(len(self.filter_sizes)):
+            x = keras.layers.Conv1D(
+                filters=self.filter_sizes[i],
+                kernel_size=self.kernel_sizes[i],
+                padding="same",
+            )(x)
+            x = keras.layers.BatchNormalization()(x)
+            x = keras.layers.Activation(activation=self.activation)(x)
 
-        conv2 = keras.layers.Conv1D(filters=256, kernel_size=5, padding="same")(conv1)
-        conv2 = keras.layers.BatchNormalization()(conv2)
-        conv2 = keras.layers.Activation(activation=self.activation)(conv2)
-
-        conv3 = keras.layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv2)
-        conv3 = keras.layers.BatchNormalization()(conv3)
-        conv3 = keras.layers.Activation(activation=self.activation)(conv3)
-
-        gap_layer = keras.layers.GlobalAveragePooling1D()(conv3)
-
+        gap_layer = keras.layers.GlobalAveragePooling1D()(x)
         return input_layer, gap_layer
 
     @classmethod
@@ -109,5 +132,17 @@ class FCNNetwork(BaseDeepNetwork):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {}
-        params2 = {"random_state": 42}
-        return [params1, params2]
+        params2 = {
+            "random_state": 42,
+            "filter_sizes": [64, 128],
+            "kernel_sizes": [5, 3],
+        }
+
+        # for tuple checking
+        params3 = {
+            "random_state": 1,
+            "filter_sizes": (64, 128),
+            "kernel_sizes": (5, 3),
+        }
+
+        return [params1, params2, params3]
