@@ -4,4 +4,9 @@
 
 __all__ = ["PyODAnnotator", "PyODDetector"]
 
-from sktime.detection.adapters._pyod import PyODAnnotator, PyODDetector
+try:
+    from sktime.detection.adapters._pyod import PyODAnnotator, PyODDetector
+except Exception:
+    # Optional dependency not available (e.g., during docs build)
+    PyODAnnotator = None
+    PyODDetector = None
