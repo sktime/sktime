@@ -28,6 +28,9 @@ class _StatsForecastAdapter(BaseForecaster):
         "capability:pred_int": True,  # does forecaster implement predict_quantiles?
         "capability:pred_int:insample": True,
         "python_dependencies": "statsforecast",
+        # CI and test dependencies
+        # ------------------------
+        "tests:vm": True,
     }
 
     def __init__(self):
