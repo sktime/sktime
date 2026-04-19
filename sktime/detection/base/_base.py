@@ -907,24 +907,14 @@ class BaseDetector(BaseEstimator):
         dtype: int64
         """
         if not isinstance(y_sparse, pd.DataFrame):
-            if isinstance(y_sparse.index, pd.IntervalIndex):
-                y_sparse = pd.DataFrame(
-                    {"ilocs": y_sparse.index, "labels": y_sparse.to_numpy()}
-                )
-            else:
-                y_sparse = pd.DataFrame(y_sparse, dtype="int64")
-        is_segmentation = (
+            y_sparse = pd.DataFrame(y_sparse, dtype="int64")
+        is_segmentation = isinstance(y_sparse.index, pd.IntervalIndex) or (
             "ilocs" in y_sparse.columns
             and isinstance(y_sparse["ilocs"].dtype, pd.IntervalDtype)
         )
         if not is_segmentation:
-            # Anomaly/changepoint detection case
-            y_dense = BaseDetector._sparse_points_to_dense(y_sparse, index)
-            return y_dense
-        else:
-            # Segmentation case
-            y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
-            return y_dense
+            return BaseDetector._sparse_points_to_dense(y_sparse, index)
+        return BaseDetector._sparse_segments_to_dense(y_sparse, index)
 
     @staticmethod
     def _sparse_points_to_dense(y_sparse, index):
@@ -968,6 +958,12 @@ class BaseDetector(BaseEstimator):
         """
         if len(y_sparse) == 0:
             return pd.Series(0, index=index, dtype="int64")
+
+        if isinstance(y_sparse.index, pd.IntervalIndex):
+            data = {"ilocs": y_sparse.index}
+            if len(y_sparse.columns) > 0:
+                data["labels"] = y_sparse.iloc[:, 0].to_numpy()
+            y_sparse = pd.DataFrame(data)
 
         seg_index = y_sparse.set_index("ilocs").index
         index_rg = pd.RangeIndex(len(index))
