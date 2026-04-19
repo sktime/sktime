@@ -305,6 +305,7 @@ class ChronosForecaster(BaseForecaster):
         "python_dependencies": ["torch", "transformers", "accelerate"],
         # estimator type
         # --------------
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
@@ -312,7 +313,7 @@ class ChronosForecaster(BaseForecaster):
         "capability:pred_int": False,
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,

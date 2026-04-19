@@ -33,7 +33,6 @@ EXCLUDE_ESTIMATORS = [
     "HIVECOTEV1",
     "HIVECOTEV2",
     "RandomIntervalSpectralEnsemble",
-    "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
@@ -73,7 +72,6 @@ EXCLUDE_ESTIMATORS = [
     "FreshPRINCE",
     # multiple timeouts and sporadic failures reported related to VARMAX
     # 2997, 3176, 7985
-    "VARMAX",
     "SCINetForecaster",  # known bug #7871
     "MAPAForecaster",  # known bug #8039
 ]
@@ -96,13 +94,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
-    ],
-    "SimpleRNNClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-        "test_multioutput",  # see 6201
-        "test_classifier_on_unit_test_data",  # see 6201
     ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
@@ -130,9 +121,6 @@ EXCLUDED_TESTS = {
     ],
     "ARIMA": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
-    ],
-    "VECM": [
-        "test_hierarchical_with_exogeneous",  # refer to #4743
     ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
@@ -166,8 +154,6 @@ EXCLUDED_TESTS = {
         "test_inheritance",
         "test_create_test_instance",
     ],
-    # see PR 7921
-    "RocketClassifier": ["test_classifier_on_basic_motions"],
     # see bug report #6465 and #7958
     "MACNNClassifier": [
         "test_multioutput",
@@ -194,7 +180,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "CircularBinarySegmentation",
         "ClaSPTransformer",
         "ClearSky",
-        "ColumnwiseTransformer",
         "ContractableBOSS",
         "DOBIN",
         "DilationMappingTransformer",
@@ -235,8 +220,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "PELT",
         "PaddingTransformer",
         "PlateauFinder",
-        "Prophet",
-        "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",

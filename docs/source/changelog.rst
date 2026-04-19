@@ -17,6 +17,12 @@ available on GitHub.
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.40.1 - 2025-11-24
+---------------------------
+
+Mini-release to correct Zenodo indexing record.
+
+
 Version 0.40.0 - 2025-11-24
 ---------------------------
 

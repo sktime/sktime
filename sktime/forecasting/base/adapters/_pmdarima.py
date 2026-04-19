@@ -24,6 +24,9 @@ class _PmdArimaAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "python_dependencies": ["pmdarima"],
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
     }
 
     def __init__(self):
@@ -162,7 +165,7 @@ class _PmdArimaAdapter(BaseForecaster):
             if end < start:
                 # since we might have forced `start` to surpass `end`
                 end = diff_order
-            # get rid of unforcastable points
+            # get rid of unforecastable points
             fh_abs = fh_abs[fh_idx >= diff_order]
             # reindex accordingly
             fh_idx = fh_idx[fh_idx >= diff_order] - diff_order

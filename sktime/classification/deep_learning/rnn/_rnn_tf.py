@@ -55,6 +55,8 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = RMSprop(lr=0.001)
         specify the optimizer and the learning rate to be used.
+    dropout : float, default=0.0
+        The dropout rate for the RNN layer.
 
     References
     ----------
@@ -78,6 +80,13 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         "property:randomness": "stochastic",
         "capability:random_state": True,
         # estimator type handled by parent class
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+            "test_multioutput",  # see 6201
+            "test_classifier_on_unit_test_data",  # see 6201
+        ],
     }
 
     # TODO (release 0.41.0)
@@ -97,6 +106,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         activation_hidden="changing_from_linear_to_tanh_in_0.41.0",
         use_bias=True,
         optimizer=None,
+        dropout=0.0,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -131,6 +141,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
             self._activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
+        self.dropout = dropout
 
         super().__init__()
 
@@ -144,6 +155,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
             activation=self._activation_hidden,
             random_state=random_state,
             units=units,
+            dropout=self.dropout,
         )
 
     def build_model(self, input_shape, n_classes, **kwargs):
@@ -288,5 +300,6 @@ class SimpleRNNClassifier(BaseDeepClassifier):
             "batch_size": 2,
             "units": 5,
             "use_bias": False,
+            "dropout": 0.1,
         }
         return [params1, params2]

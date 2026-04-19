@@ -110,15 +110,15 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.temporal_fusion_transformer.TemporalFusionTransformer.html
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.temporal_fusion_transformer._tft.TemporalFusionTransformer.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:pred_int": True,
         # CI and test flags
         # -----------------
@@ -396,8 +396,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats.NBeats.html
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
@@ -405,7 +405,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "capability:exogenous": False,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
     }
 
     def __init__(
@@ -691,15 +691,15 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats.NBeats.html
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:pred_int": True,
     }
 
@@ -970,15 +970,15 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats.NBeats.html
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:pred_int": True,
     }
 
