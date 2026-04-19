@@ -1,36 +1,12 @@
 """Implements Chronos-2 forecaster."""
 
-__author__ = ["priyanshuharshbodhi1"]
-
 __all__ = ["Chronos2Forecaster"]
 
 import numpy as np
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
-
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-else:
-
-    class torch:
-        """Dummy class if torch is unavailable."""
-
-        bfloat16 = None
-
-
-if _check_soft_dependencies("transformers", severity="none"):
-    import transformers
-else:
-
-    class transformers:
-        """Dummy class if transformers is unavailable."""
-
-        @staticmethod
-        def set_seed(seed):
-            """Set random seed."""
 
 
 class Chronos2Forecaster(BaseForecaster):
@@ -99,7 +75,7 @@ class Chronos2Forecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["priyanshuharshbodhi1"],
+        "authors": ["priyanshuharshbodhi1", "fkiraly"],
         "maintainers": ["priyanshuharshbodhi1"],
         "python_dependencies": ["chronos-forecasting>=2.0.0"],
         "capability:exogenous": True,
@@ -122,7 +98,6 @@ class Chronos2Forecaster(BaseForecaster):
 
     _default_config = {
         "limit_prediction_length": False,
-        "torch_dtype": torch.bfloat16,
         "device_map": "cpu",
         "batch_size": 256,
         "context_length": None,
@@ -143,15 +118,19 @@ class Chronos2Forecaster(BaseForecaster):
         self.ignore_deps = ignore_deps
 
         self._config = self._default_config.copy()
-        if config is not None:
-            self._config.update(config)
-
         self.model_pipeline = None
 
         if ignore_deps:
             self.set_tags(python_dependencies=[])
 
         super().__init__()
+
+        import torch
+
+        self._config["torch_dtype"] = torch.bfloat16
+
+        if config is not None:
+            self._config.update(config)
 
     def __getstate__(self):
         """Return state for pickling, excluding unpickleable model pipeline."""
@@ -203,33 +182,20 @@ class Chronos2Forecaster(BaseForecaster):
         self
         """
         self.model_pipeline = self._load_pipeline()
+
+        context_length = self._config["context_length"]
+        if context_length is None:
+            context_length = self.model_pipeline.model_context_length
+
+        context = y
+
+        if context.shape[1] > context_length:
+            context = context.iloc[-context_length:]
+
+        context = context.values.T
+
+        self._context = context
         return self
-
-    def predict(self, fh=None, X=None, y=None):
-        """Forecast time series at future horizon.
-
-        Parameters
-        ----------
-        fh : int, list, pd.Index or ForecastingHorizon, optional
-        X : time series in sktime compatible format, optional
-            Future exogenous covariates.
-        y : time series in sktime compatible format, optional
-            Historical values for global forecasting. If provided,
-            performs fit_predict on the new series.
-
-        Returns
-        -------
-        y_pred : time series in sktime compatible format
-        """
-        if self._fh is None and fh is not None:
-            _fh = fh
-        else:
-            _fh = self._fh
-
-        if y is not None:
-            return self.fit_predict(fh=_fh, X=X, y=y)
-
-        return super().predict(fh=fh, X=X)
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -245,6 +211,8 @@ class Chronos2Forecaster(BaseForecaster):
         -------
         y_pred : pd.DataFrame
         """
+        import transformers
+
         self._ensure_model_pipeline_loaded()
         transformers.set_seed(self._seed)
 
@@ -254,16 +222,11 @@ class Chronos2Forecaster(BaseForecaster):
         if context_length is None:
             context_length = self.model_pipeline.model_context_length
 
-        _y = self._y.copy()
-        y_vals = _y.values.T
-
-        if y_vals.shape[1] > context_length:
-            y_vals = y_vals[:, -context_length:]
-
-        input_dict = {"target": y_vals}
+        context = self._context
+        input_dict = {"target": context}
 
         if self._X is not None:
-            actual_len = y_vals.shape[1]
+            actual_len = context.shape[1]
             past_X = self._X.values[-actual_len:]
             input_dict["past_covariates"] = {
                 col: past_X[:, i] for i, col in enumerate(self._X.columns)
