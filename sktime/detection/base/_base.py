@@ -570,10 +570,18 @@ class BaseDetector(BaseEstimator):
         -------
         X : X_inner_mtype
             Data to be transformed
+
+        Raises
+        ------
+        TypeError
+            If ``X`` is not of a supported scitype.
+        ValueError
+            If ``X`` is multivariate and the detector does not support multivariate
+            input, i.e., the tag ``capability:multivariate`` is ``False``.
         """
         ALLOWED_SCITYPES = ["Series", "Panel"]
         X_valid, X_msg, X_metadata = check_is_scitype(
-            X, scitype=ALLOWED_SCITYPES, return_metadata=[]
+            X, scitype=ALLOWED_SCITYPES, return_metadata=["is_univariate"]
         )
         self._X_metadata = X_metadata
         if not X_valid:
@@ -594,6 +602,18 @@ class BaseDetector(BaseEstimator):
                     allowed_msg=allowed_msg,
                     raise_exception=True,
                 )
+
+        # Check multivariate capability: raise a clear error rather than
+        # silently producing incorrect results on multi-column input.
+        # This mirrors the equivalent guard in BaseClassifier._check_capabilities.
+        is_univariate = X_metadata.get("is_univariate", True)
+        if not is_univariate and not self.get_tag("capability:multivariate", False):
+            raise ValueError(
+                f"{type(self).__name__} does not support multivariate time series "
+                f"(detected {X.shape[1] if hasattr(X, 'shape') else '?'} columns). "
+                f"Set the tag 'capability:multivariate' to True in the estimator, "
+                f"or use a multivariate-capable detector."
+            )
 
         X_inner_mtype = self.get_tag("X_inner_mtype")
         X_inner = convert(X, from_type=X_metadata["mtype"], to_type=X_inner_mtype)
