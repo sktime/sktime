@@ -117,3 +117,14 @@ from sktime.performance_metrics.forecasting._msle import MeanSquaredLogError
 from sktime.performance_metrics.forecasting._mspe import MeanSquaredPercentageError
 from sktime.performance_metrics.forecasting._msse import MeanSquaredScaledError
 from sktime.performance_metrics.forecasting._rell import RelativeLoss
+from sktime.performance_metrics.forecasting._forecasting_template import (
+    ForecastingMetricTemplate,
+)
+from sktime.performance_metrics.forecasting._forecasting_hierarchical_template import (
+    ForecastingHierarchicalMetricTemplate,
+)
+
+__all__ += [
+    "ForecastingMetricTemplate",
+    "ForecastingHierarchicalMetricTemplate",
+]
