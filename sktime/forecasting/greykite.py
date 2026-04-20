@@ -203,7 +203,7 @@ class GreykiteForecaster(BaseForecaster):
         y_pred = pd.Series(selected_preds, index=selected_times)
         return y_pred
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Return fitted parameters."""
         if self._forecaster is None:
             raise ValueError("Forecaster has not been fitted yet. Call 'fit' first.")

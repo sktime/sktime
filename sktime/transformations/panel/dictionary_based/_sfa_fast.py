@@ -227,7 +227,7 @@ class SFAFast(BaseTransformer):
         if not return_pandas_data_series:
             self.set_config(**{"output_conversion": "off"})
 
-    def fit_transform(self, X, y=None):
+    def _fit_transform(self, X, y=None):
         """Fit to data, then transform it."""
         from sktime.transformations.panel.dictionary_based._sfa_fast_numba import (
             _transform_case,
@@ -270,7 +270,6 @@ class SFAFast(BaseTransformer):
 
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
-        self._is_fitted = True
 
         words, dfts = _transform_case(
             X,
@@ -299,7 +298,7 @@ class SFAFast(BaseTransformer):
         # fitting: learns the feature selection strategy, too
         return self.transform_to_bag(words, self.word_length_actual, y)
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Calculate word breakpoints using MCB or IGB.
 
         Parameters
@@ -312,10 +311,9 @@ class SFAFast(BaseTransformer):
         self: object
         """
         # with parallel_backend("loky", inner_max_num_threads=n_jobs):
-        self.fit_transform(X, y)
-        return self
+        self._fit_transform(X, y)
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform data into SFA words.
 
         Parameters
@@ -336,7 +334,6 @@ class SFAFast(BaseTransformer):
             create_bag_transform,
         )
 
-        self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
