@@ -12,6 +12,7 @@ import pytest
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.statsforecast import StatsForecastAutoCES, StatsForecastMSTL
 from sktime.tests.test_switch import run_test_for_class
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
@@ -41,7 +42,13 @@ def test_statsforecast_mstl(mock_autoets):
         return
 
     model.fit(y)
-    fh_index = pd.PeriodIndex(pd.date_range("1961-01", periods=36, freq="M"))
+
+    if _check_soft_dependencies("pandas>=3.0.0", severity="none"):
+        freqstr = "ME"
+    else:
+        freqstr = "M"
+
+    fh_index = pd.PeriodIndex(pd.date_range("1961-01", periods=36, freq=freqstr))
     fh = ForecastingHorizon(fh_index, is_relative=False)
     model.predict_interval(fh, coverage=0.95)
     predict.assert_called_with(36, X=None, level=[95.0])

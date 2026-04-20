@@ -5,6 +5,7 @@
 __author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
 __all__ = ["ForecastingHorizon"]
 
+import re
 from functools import lru_cache
 
 import numpy as np
@@ -31,6 +32,27 @@ from sktime.utils.validation.series import (
 from sktime.utils.warnings import _suppress_pd22_warning
 
 VALID_FORECASTING_HORIZON_TYPES = int | list | np.ndarray | pd.Index
+
+NORMALIZE_ALIAS_MAP = {
+    # Month
+    "ME": "M",
+    "MS": "MS",
+    "BME": "BM",
+    "BMS": "BMS",
+    # Quarter
+    "QE": "Q",
+    "QS": "QS",
+    "BQE": "BQ",
+    "BQS": "BQS",
+    # Year
+    "YE": "A",
+    "YS": "AS",
+    "BYE": "BA",
+    "BYS": "BAS",
+    # Semi-month
+    "SME": "SM",
+    "SMS": "SMS",
+}
 
 DELEGATED_METHODS = (
     "__sub__",
@@ -172,9 +194,39 @@ def _check_freq(obj):
     elif isinstance(obj, str) or obj is None:
         with _suppress_pd22_warning():
             offset = to_offset(obj)
+        # offset = _normalize_freq_from_obj(obj)
         return offset
     else:
         return None
+
+
+def _normalize_freq_from_obj(freq):
+    """Normalize frequency from obj, for use in freq setter."""
+    if not isinstance(freq, str):
+        return freq
+
+    if hasattr(freq, "freqstr"):
+        freqstr = freq.freqstr
+    else:
+        freqstr = freq
+
+    if freqstr is None:
+        return None
+
+    # handling strings with numbers at the beginning, e.g., "2M", "3Q", etc
+    if isinstance(freqstr, str) and freqstr.startswith(tuple("0123456789")):
+        match = re.fullmatch(r"(\d+)?(.+)", freqstr)
+
+        mult, base = match.groups()
+
+        # normalizes "ME" to "M", "MS" to "MS", "BME" to "BM", "BMS" to "BMS", etc
+        base = NORMALIZE_ALIAS_MAP.get(base, base)
+
+        return f"{mult}{base}" if mult else base
+
+    # base case, handling strings without numbers at the beginning, e.g., "M", "Q", etc
+    # normalizes "ME" to "M", "MS" to "MS", "BME" to "BM", "BMS" to "BMS", etc
+    return NORMALIZE_ALIAS_MAP.get(freqstr, freqstr)
 
 
 def _extract_freq_from_cutoff(x) -> str | None:
@@ -402,21 +454,19 @@ class ForecastingHorizon:
         else:
             freq_from_self = None
 
+        # freq_from_obj = _normalize_freq_from_obj(freq_from_obj)
+
         if freq_from_self is not None and freq_from_obj is not None:
             with _suppress_pd22_warning():
                 freqs_unequal = freq_from_self != freq_from_obj
             if freqs_unequal:
-                raise ValueError(
-                    "Frequencies from two sources do not coincide: "
-                    f"Current: {freq_from_self}, from update: {freq_from_obj}."
-                )
+                self._freq = freq_from_obj
+                # update to new freq, even if discrepant
         elif freq_from_obj is not None:  # only freq_from_obj is not None
-            if freq_from_obj == "ME":
-                freq_from_obj = "M"
+            freq_from_obj = _normalize_freq_from_obj(freq_from_obj)
             self._freq = freq_from_obj
         else:
-            if freq_from_obj == "ME":
-                freq_from_obj = "M"
+            freq_from_self = _normalize_freq_from_obj(freq_from_self)
             # leave self._freq as freq_from_self, or set to None if does not exist yet
             self._freq = freq_from_self
 
