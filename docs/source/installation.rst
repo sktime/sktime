@@ -174,7 +174,7 @@ In order to install only the dev dependencies, :code:`pip install -e ".[dev]"`
 If you also want to install soft dependencies, install them individually, after the above,
 or instead use: :code:`pip install -e ".[all_extras,dev]"` to install all of them.
 
-7. If everything has worked, you should see message "successfully installed sktime"
+7. If everything has worked, you should see message "successfully built sktime"
 
 Some users have experienced issues when installing NumPy, particularly version 1.19.4.
 
