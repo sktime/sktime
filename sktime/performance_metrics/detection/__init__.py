@@ -6,6 +6,10 @@ from sktime.performance_metrics.detection._f1score import WindowedF1Score
 from sktime.performance_metrics.detection._hausdorff import DirectedHausdorff
 from sktime.performance_metrics.detection._randindex import RandIndex
 from sktime.performance_metrics.detection._ts_auprc import TimeSeriesAUPRC
+from sktime.performance_metrics.detection._range_based_precision_recall import (
+    RangeBasedPrecision,
+    RangeBasedRecall,
+)
 
 __all__ = [
     "DirectedChamfer",
@@ -13,5 +17,7 @@ __all__ = [
     "DetectionCount",
     "WindowedF1Score",
     "RandIndex",
+    "RangeBasedPrecision",
+    "RangeBasedRecall",
     "TimeSeriesAUPRC",
 ]
