@@ -9,6 +9,7 @@ from sklearn.utils import check_random_state
 from sktime.networks.inceptiontime import InceptionTimeNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
 
 class InceptionTimeRegressor(BaseDeepRegressor):
@@ -22,8 +23,10 @@ class InceptionTimeRegressor(BaseDeepRegressor):
     n_epochs : int, default=1500
     batch_size : int, default=64
         the number of samples per gradient update
-    kernel_size : int, default=40
+    kernel_sizes : int, default=40
         specifying the length of the 1D convolution window
+    kernel_size : int, default=None
+        Deprecated, use kernel_sizes instead.
     n_filters : int, default=32
     use_residual : boolean, default=True
     use_bottleneck : boolean, default=True
@@ -67,7 +70,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         self,
         n_epochs=1500,
         batch_size=64,
-        kernel_size=40,
+        kernel_sizes=40,
         n_filters=32,
         use_residual=True,
         use_bottleneck=True,
@@ -81,6 +84,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         activation="linear",
         activation_hidden="relu",
         activation_inception="linear",
+        kernel_size=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -94,6 +98,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         self.bottleneck_size = bottleneck_size
         self.callbacks = callbacks
         self.depth = depth
+        self.kernel_sizes = kernel_sizes
         self.kernel_size = kernel_size
         self.loss = loss
         self.metrics = metrics
@@ -106,13 +111,23 @@ class InceptionTimeRegressor(BaseDeepRegressor):
 
         super().__init__()
 
+        if self.kernel_size is not None:
+            warn(
+                "In InceptionTimeRegressor, parameter `kernel_size` is deprecated and "
+                "will be removed in a future release. Please use `kernel_sizes` instead.",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            self.kernel_sizes = self.kernel_size
+
         network_params = {
             "n_filters": n_filters,
             "use_residual": use_residual,
             "use_bottleneck": use_bottleneck,
             "bottleneck_size": bottleneck_size,
             "depth": depth,
-            "kernel_size": kernel_size,
+            "kernel_sizes": self.kernel_sizes,
             "random_state": random_state,
             "activation": activation_hidden,
             "activation_inception": activation_inception,

@@ -8,7 +8,7 @@ from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.mcdcnn import MCDCNNNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
-from warnings import warn
+from sktime.utils.warnings import warn
 
 
 class MCDCNNClassifier(BaseDeepClassifier):
@@ -63,6 +63,8 @@ class MCDCNNClassifier(BaseDeepClassifier):
         The callback(s) to use during training.
     random_state : int, optional (default=0)
         The seed to any random action.
+    kernel_size : int, optional (default=None)
+        Deprecated and will be removed in a future release. Please use `kernel_sizes` instead.
 
     References
     ----------
@@ -136,6 +138,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
                 "In MCDCNNClassifier, parameter `kernel_size` is deprecated and will "
                 "be removed in a future release. Please use `kernel_sizes` instead.",
                 FutureWarning,
+                obj=self,
                 stacklevel=2,
             )
             self.kernel_sizes = self.kernel_size

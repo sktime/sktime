@@ -6,6 +6,7 @@ import numpy as np
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
 
 class TapNetNetwork(BaseDeepNetwork):
@@ -19,7 +20,7 @@ class TapNetNetwork(BaseDeepNetwork):
         activation function to use in the hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
-    kernel_size : array of int, default = (8, 5, 3)
+    kernel_sizes : array of int, default = (8, 5, 3)
         specifying the length of the 1D convolution window
     layers : array of int, default = (500, 300)
         size of dense layers
@@ -44,6 +45,12 @@ class TapNetNetwork(BaseDeepNetwork):
         whether to use an LSTM layer
     use_cnn : bool, default = True
         whether to use a CNN layer
+    filter_sizes : tuple, default = (256, 256, 128)
+        size of filters for convolution layers
+    kernel_sizes : tuple, default = (8, 5, 3)
+        size of kernels for convolution layers
+    kernel_size : int, optional (default=None)
+        Deprecated, use kernel_sizes instead.
 
     References
     ----------
@@ -62,7 +69,7 @@ class TapNetNetwork(BaseDeepNetwork):
         self,
         dropout=0.5,
         filter_sizes=(256, 256, 128),
-        kernel_size=(8, 5, 3),
+        kernel_sizes=(8, 5, 3),
         dilation=1,
         layers=(500, 300),
         use_rp=True,
@@ -74,6 +81,7 @@ class TapNetNetwork(BaseDeepNetwork):
         padding="same",
         activation="leaky_relu",
         lstm_dropout=0.8,
+        kernel_size=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -81,7 +89,17 @@ class TapNetNetwork(BaseDeepNetwork):
 
         self.activation = activation
         self.random_state = random_state
-        self.kernel_size = kernel_size
+        if kernel_size is not None:
+            warn(
+                "In TapNetNetwork, the parameter 'kernel_size' is deprecated and will "
+                "be removed in a future release. Please use 'kernel_sizes' instead.",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            self.kernel_sizes = kernel_size
+        else:
+            self.kernel_sizes = kernel_sizes
         self.layers = layers
         self.rp_params = rp_params
         self.filter_sizes = filter_sizes
@@ -203,7 +221,7 @@ class TapNetNetwork(BaseDeepNetwork):
                     # x_conv = self.conv_1_models[i](x[:, self.idx[i], :])
                     x_conv = keras.layers.Conv1D(
                         self.filter_sizes[0],
-                        kernel_size=self.kernel_size[0],
+                        kernel_size=self.kernel_sizes[0],
                         dilation_rate=self.dilation,
                         strides=1,
                         padding=self.padding,
@@ -214,7 +232,7 @@ class TapNetNetwork(BaseDeepNetwork):
 
                     x_conv = keras.layers.Conv1D(
                         self.filter_sizes[1],
-                        kernel_size=self.kernel_size[0],
+                        kernel_size=self.kernel_sizes[0],
                         dilation_rate=self.dilation,
                         strides=1,
                         padding=self.padding,
@@ -224,7 +242,7 @@ class TapNetNetwork(BaseDeepNetwork):
 
                     x_conv = keras.layers.Conv1D(
                         self.filter_sizes[2],
-                        kernel_size=self.kernel_size[0],
+                        kernel_size=self.kernel_sizes[0],
                         dilation_rate=self.dilation,
                         strides=1,
                         padding=self.padding,
@@ -249,7 +267,7 @@ class TapNetNetwork(BaseDeepNetwork):
             else:
                 x_conv = keras.layers.Conv1D(
                     self.filter_sizes[0],
-                    kernel_size=self.kernel_size[0],
+                    kernel_size=self.kernel_sizes[0],
                     dilation_rate=self.dilation,
                     strides=1,
                     padding=self.padding,
@@ -260,7 +278,7 @@ class TapNetNetwork(BaseDeepNetwork):
 
                 x_conv = keras.layers.Conv1D(
                     self.filter_sizes[1],
-                    kernel_size=self.kernel_size[0],
+                    kernel_size=self.kernel_sizes[0],
                     dilation_rate=self.dilation,
                     strides=1,
                     padding=self.padding,
@@ -270,7 +288,7 @@ class TapNetNetwork(BaseDeepNetwork):
 
                 x_conv = keras.layers.Conv1D(
                     self.filter_sizes[2],
-                    kernel_size=self.kernel_size[0],
+                    kernel_size=self.kernel_sizes[0],
                     dilation_rate=self.dilation,
                     strides=1,
                     padding=self.padding,

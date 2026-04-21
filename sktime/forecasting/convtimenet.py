@@ -7,6 +7,7 @@ import warnings
 
 from sktime.forecasting.base.adapters import _pytorch
 from sktime.utils.dependencies import _safe_import
+from sktime.utils.warnings import warn
 
 torch = _safe_import("torch")
 
@@ -249,7 +250,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
             original_context_window = self.context_window
             adjusted_context_window = max(1, self._y_len - fh)
 
-            warnings.warn(
+            warn(
                 f"The context_window ({original_context_window}) is too large "
                 f"for the given time series (length={self._y_len}) and forecast "
                 f"horizon (fh={fh}). Adjusting context_window from "
@@ -257,6 +258,8 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
                 f"at least one training sample.\nConsider using a longer time series "
                 f"or reducing context_window or forecast horizon.\n",
                 UserWarning,
+                obj=self,
+                stacklevel=2,
             )
             self.context_window = adjusted_context_window
 
@@ -268,12 +271,14 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
             original_patch_ks = self.patch_ks
             adjusted_patch_ks = self.context_window
 
-            warnings.warn(
+            warn(
                 f"The patch_ks ({original_patch_ks}) is too large for the "
                 f"context_window ({self.context_window}). Adjusting patch_ks "
                 f"from {original_patch_ks} to {adjusted_patch_ks} to ensure valid "
                 f"patch_ks.\n",
                 UserWarning,
+                obj=self,
+                stacklevel=2,
             )
             self.patch_ks = adjusted_patch_ks
 
@@ -281,13 +286,15 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
 
         if self.norm == "batch" and dataset_len == 1:
             self.norm = "layer"
-            warnings.warn(
+            warn(
                 "Normalization automatically switched from 'batch' to 'layer' "
                 "because the effective training sample size is 1 "
                 "(computed as input_length - context_window - fh + 1 == 1). "
                 "\nTo avoid this automatic change, increase your input length "
                 "or reduce the context/fh values.\n",
                 UserWarning,
+                obj=self,
+                stacklevel=2,
             )
         self.n_layers = len(self.dw_ks)
         configs = {
@@ -355,13 +362,15 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         if self.random_state:
             gen.manual_seed(self.random_state)
         if drop_last:
-            warnings.warn(
+            warn(
                 "The last batch has only 1 sample which may cause issues with "
                 "BatchNorm. Dropping the last batch.\n"
                 "To avoid this, consider changing hyperparameters such that the "
                 "number of training samples (len(y) - context_window - max(fh) + 1) "
                 "is not equal to (batch_size * n + 1) for any integer n.\n",
                 UserWarning,
+                obj=self,
+                stacklevel=2,
             )
         return DataLoader(
             dataset, batch_size, shuffle=True, drop_last=drop_last, generator=gen

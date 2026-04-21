@@ -2,7 +2,7 @@
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
-from warnings import warn
+from sktime.utils.warnings import warn
 
 
 class MCDCNNNetwork(BaseDeepNetwork):
@@ -36,6 +36,8 @@ class MCDCNNNetwork(BaseDeepNetwork):
         Activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
+    kernel_size : int, optional (default=None)
+        Deprecated and will be removed in a future release. Please use `kernel_sizes` instead.
     """
 
     _tags = {
@@ -72,6 +74,7 @@ class MCDCNNNetwork(BaseDeepNetwork):
                 "In MCDCNNNetwork, parameter `kernel_size` is deprecated and will be "
                 "removed in a future release. Please use `kernel_sizes` instead.",
                 FutureWarning,
+                obj=self,
                 stacklevel=2,
             )
             self.kernel_sizes = kernel_size
