@@ -90,9 +90,6 @@ class BaseDetector(BaseEstimator):
     def __init__(self):
         self._is_fitted = False
 
-        self._X = None
-        self._y = None
-
         super().__init__()
 
     def __rmul__(self, other):
