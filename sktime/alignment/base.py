@@ -30,6 +30,7 @@ from sktime.alignment.utils.utils_align import convert_align_to_align_loc, reind
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert
 from sktime.datatypes._dtypekind import DtypeKind
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 class BaseAligner(BaseEstimator):
@@ -51,6 +52,7 @@ class BaseAligner(BaseEstimator):
         self._X = None
 
         super().__init__()
+        _check_estimator_deps(self, severity="warning")
 
     def fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.
@@ -70,6 +72,8 @@ class BaseAligner(BaseEstimator):
         Z : pd.DataFrame with n rows, optional
             metadata, i-th row of Z corresponds to i-th element of X
         """
+        _check_estimator_deps(self)
+
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 

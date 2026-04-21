@@ -21,6 +21,7 @@ from sktime.split.base._common import (
     SPLIT_GENERATOR_TYPE,
     SPLIT_TYPE,
 )
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation import NON_FLOAT_WINDOW_LENGTH_TYPES
 from sktime.utils.validation.forecasting import check_fh
 
@@ -113,6 +114,7 @@ class BaseSplitter(BaseObject):
         self.fh = fh
 
         super().__init__()
+        _check_estimator_deps(self, severity="warning")
 
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`.

@@ -94,7 +94,7 @@ class BaseRegressor(BasePanelMixin):
         self._converter_store_y = {}
 
         super().__init__()
-        _check_estimator_deps(self)
+        _check_estimator_deps(self, severity="warning")
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
@@ -204,6 +204,8 @@ class BaseRegressor(BasePanelMixin):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        _check_estimator_deps(self)
+
         self.reset()
 
         # fit timer start

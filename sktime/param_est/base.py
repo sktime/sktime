@@ -88,7 +88,7 @@ class BaseParamFitter(BaseEstimator):
         self._y = None
 
         super().__init__()
-        _check_estimator_deps(self)
+        _check_estimator_deps(self, severity="warning")
 
     def __mul__(self, other):
         """Magic * method, for estimators on the right.
@@ -212,6 +212,8 @@ class BaseParamFitter(BaseEstimator):
         -------
         self : Reference to self.
         """
+        _check_estimator_deps(self)
+
         # check X is not None
         assert X is not None, "X cannot be None, but found None"
 

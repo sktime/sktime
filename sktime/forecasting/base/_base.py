@@ -148,9 +148,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
-        super().__init__()
-        _check_estimator_deps(self)
         self._state = "new"
+
+        super().__init__()
+        _check_estimator_deps(self, severity="warning")
 
     @classmethod
     def _get_clone_plugins(cls):
@@ -450,6 +451,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         -------
         self : Reference to self.
         """
+        _check_estimator_deps(self)
+
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
@@ -1107,6 +1110,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         >>> forecaster.state
         'pretrained'
         """
+        _check_estimator_deps(self)
+
         if check_is_scitype(y, "Series"):
             raise TypeError(
                 f"{type(self).__name__}.pretrain requires Panel or Hierarchical data "

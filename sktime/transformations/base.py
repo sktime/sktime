@@ -213,7 +213,7 @@ class BaseTransformer(BaseEstimator):
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
 
         super().__init__()
-        _check_estimator_deps(self)
+        _check_estimator_deps(self, severity="warning")
 
     def _is_transformer(self, other):
         """Check whether other is a transformer - sklearn or sktime.
@@ -477,6 +477,8 @@ class BaseTransformer(BaseEstimator):
         -------
         self : a fitted instance of the estimator
         """
+        _check_estimator_deps(self)
+
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
