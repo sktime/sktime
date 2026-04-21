@@ -33,7 +33,6 @@ EXCLUDE_ESTIMATORS = [
     "HIVECOTEV1",
     "HIVECOTEV2",
     "RandomIntervalSpectralEnsemble",
-    "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
@@ -221,8 +220,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "PELT",
         "PaddingTransformer",
         "PlateauFinder",
-        "Prophet",
-        "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
