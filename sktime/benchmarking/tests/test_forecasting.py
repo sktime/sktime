@@ -412,3 +412,93 @@ def test_dataset_classes(tmp_path):
         ),
         results_df["validation_id"],
     )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
+def test_run_output_file_none():
+    """Test that run with output_file=None returns a DataFrame and writes no file."""
+    benchmark = ForecastingBenchmark()
+    benchmark.add_estimator(NaiveForecaster(strategy="last"))
+
+    cv_splitter = ExpandingWindowSplitter(
+        initial_window=1,
+        step_length=1,
+        fh=1,
+    )
+    benchmark.add_task(data_loader_simple, cv_splitter, [MeanAbsoluteError()])
+
+    results_df = benchmark.run(output_file=None)
+
+    assert isinstance(results_df, pd.DataFrame), (
+        "run with output_file=None should return a DataFrame."
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
+def test_coerce_estimator_invalid_input():
+    """Test that _coerce_estimator_and_id raises TypeError for invalid input."""
+    with pytest.raises(TypeError):
+        _coerce_estimator_and_id("not_an_estimator")
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
+def test_force_rerun_all(tmp_path):
+    """Test that force_rerun='all' reruns benchmark and returns a DataFrame."""
+    benchmark = ForecastingBenchmark()
+    benchmark.add_estimator(NaiveForecaster(strategy="last"))
+
+    cv_splitter = ExpandingWindowSplitter(
+        initial_window=1,
+        step_length=1,
+        fh=1,
+    )
+    benchmark.add_task(data_loader_simple, cv_splitter, [MeanAbsoluteError()])
+
+    results_file = tmp_path / "results_rerun.csv"
+    results_df_first = benchmark.run(results_file)
+    results_df_second = benchmark.run(results_file, force_rerun="all")
+
+    assert isinstance(results_df_first, pd.DataFrame), (
+        "First run should return a DataFrame."
+    )
+    assert isinstance(results_df_second, pd.DataFrame), (
+        "Second run with force_rerun='all' should return a DataFrame."
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
+def test_add_task_error_score(tmp_path):
+    """Test that ForecastingBenchmark with error_score=np.nan returns a DataFrame."""
+    benchmark = ForecastingBenchmark()
+    benchmark.add_estimator(NaiveForecaster(strategy="last"))
+
+    cv_splitter = ExpandingWindowSplitter(
+        initial_window=1,
+        step_length=1,
+        fh=1,
+    )
+    benchmark.add_task(
+        data_loader_simple,
+        cv_splitter,
+        [MeanAbsoluteError()],
+        error_score=np.nan,
+    )
+
+    results_file = tmp_path / "results_error_score.csv"
+    results_df = benchmark.run(results_file)
+
+    assert isinstance(results_df, pd.DataFrame), (
+        "run with error_score=np.nan should return a DataFrame."
+    )
