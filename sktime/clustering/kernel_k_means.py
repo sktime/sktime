@@ -173,7 +173,7 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
             "max_iter": 2,
             "tol": 0.001,
             "kernel_params": {"sigma": 0.5},
-            "verbose": True,
+            "verbose": False,
             "n_jobs": None,
             "random_state": 42,
         }
