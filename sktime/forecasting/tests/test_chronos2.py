@@ -5,8 +5,13 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.chronos2 import Chronos2Forecaster
+from sktime.utils.dependencies import _check_estimator_deps
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(Chronos2Forecaster, severity="none"),
+    reason="autots not available",
+)
 def test_chronos2_fit_truncates_context_on_time_axis():
     """`context_length` truncation should apply to time axis, not feature axis."""
     pytest.importorskip("torch")
