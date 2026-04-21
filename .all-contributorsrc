@@ -3804,6 +3804,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "sid200727",
+      "name": "Siddhi Khandelwal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/sid200727?v=4",
+      "profile": "https://github.com/sid200727",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ]
 }
