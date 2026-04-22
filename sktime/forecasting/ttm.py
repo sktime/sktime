@@ -265,16 +265,18 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         "python_dependencies": ["transformers", "torch", "accelerate>=0.26.0"],
         # estimator type
         # --------------
-        "X_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
+        # "X_inner_mtype": [
+        #     "pd.DataFrame",
+        #     "pd-multiindex",
+        #     "pd_multiindex_hier",
+        # ],
+        # "y_inner_mtype": [
+        #     "pd.DataFrame",
+        #     "pd-multiindex",
+        #     "pd_multiindex_hier",
+        # ],
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": True,
         "requires-fh-in-fit": True,
@@ -564,10 +566,10 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         _y = self._y
 
         # multi-index conversion goes here
-        if isinstance(_y.index, pd.MultiIndex):
-            hist = _frame2numpy(_y)
-        else:
-            hist = np.expand_dims(_y.values, axis=0)
+        # if isinstance(_y.index, pd.MultiIndex):
+        #     hist = _frame2numpy(_y)
+        # else:
+        hist = np.expand_dims(_y.values, axis=0)
 
         # hist.shape: (batch_size, n_timestamps, n_cols)
 
@@ -587,10 +589,10 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         future_values = None
         if X is not None:
             # Process exogenous variables for prediction
-            if isinstance(X.index, pd.MultiIndex):
-                exog_data = _frame2numpy(X)
-            else:
-                exog_data = np.expand_dims(X.values, axis=0)
+            # if isinstance(X.index, pd.MultiIndex):
+            #     exog_data = _frame2numpy(X)
+            # else:
+            exog_data = np.expand_dims(X.values, axis=0)
 
             # Extract future exogenous values for the prediction horizon
             # X should contain future values that cover the prediction horizon
@@ -737,22 +739,22 @@ def _pad_truncate(data, seq_len, pad_value=0):
     return truncated_data, mask
 
 
-def _same_index(data):
-    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
-        lambda x: x.index.get_level_values(-1)
-    )
-    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
-        "All series must has the same index"
-    )
-    return data.iloc[0], len(data.iloc[0])
+# def _same_index(data):
+#     data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
+#         lambda x: x.index.get_level_values(-1)
+#     )
+#     assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
+#         "All series must has the same index"
+#     )
+#     return data.iloc[0], len(data.iloc[0])
 
 
-def _frame2numpy(data):
-    idx, length = _same_index(data)
-    arr = np.array(data.values, dtype=np.float32).reshape(
-        (-1, length, len(data.columns))
-    )
-    return arr
+# def _frame2numpy(data):
+#     idx, length = _same_index(data)
+#     arr = np.array(data.values, dtype=np.float32).reshape(
+#         (-1, length, len(data.columns))
+#     )
+#     return arr
 
 
 class PyTorchDataset(Dataset):
@@ -778,18 +780,18 @@ class PyTorchDataset(Dataset):
         self.prediction_length = prediction_length
 
         # multi-index conversion for y
-        if isinstance(y.index, pd.MultiIndex):
-            self.y = _frame2numpy(y)
-        else:
-            self.y = np.expand_dims(y.values, axis=0)
+        # if isinstance(y.index, pd.MultiIndex):
+        #     self.y = _frame2numpy(y)
+        # else:
+        self.y = np.expand_dims(y.values, axis=0)
 
         # Handle exogenous variables
         self.X = None
         if X is not None:
-            if isinstance(X.index, pd.MultiIndex):
-                self.X = _frame2numpy(X)
-            else:
-                self.X = np.expand_dims(X.values, axis=0)
+            # if isinstance(X.index, pd.MultiIndex):
+            #     self.X = _frame2numpy(X)
+            # else:
+            self.X = np.expand_dims(X.values, axis=0)
 
         self.n_sequences, self.n_timestamps, _ = self.y.shape
         self.single_length = max(
