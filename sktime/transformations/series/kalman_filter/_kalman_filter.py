@@ -777,7 +777,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         # --------------
         "authors": ["NoaWegerhoff", "lielleravid"],
         "maintainers": ["NoaWegerhoff"],
-        "python_dependencies": "filterpy",
+        "python_dependencies": ["filterpy", "pykalman"],
         # estimator type
         # --------------
         "scitype:transform-labels": "Series",
