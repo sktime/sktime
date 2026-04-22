@@ -60,6 +60,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
 
         super().__init__()
 
+    def __post_init__(self):
         # _get_extraction_params should be after the init because this imports tsfresh
         # and the init checks for python version and tsfresh being present
         self.default_fc_parameters_ = self._get_extraction_params()
@@ -513,6 +514,8 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             distributor=distributor,
         )
 
+    def __post_init__(self):
+        self.default_fc_parameters_ = self._get_extraction_params()
         self.default_fs_parameters_ = self._get_selection_params()
 
     def _get_selection_params(self):

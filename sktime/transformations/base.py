@@ -213,7 +213,16 @@ class BaseTransformer(BaseEstimator):
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
 
         super().__init__()
-        _check_estimator_deps(self, severity="warning")
+
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post init for BaseTransformer, can be used by inheriting classes."""
+        pass
 
     def _is_transformer(self, other):
         """Check whether other is a transformer - sklearn or sktime.
