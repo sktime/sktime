@@ -148,6 +148,16 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         self.verbose = verbose
         self.random_state = random_state
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # input_size to be inferred from the data
         # and will be set in _build_network
         self.input_size = None
@@ -166,6 +176,8 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
             verbose=self.verbose,
             random_state=self.random_state,
         )
+
+        super().__post_init__()
 
     def _build_network(self, X):
         """Build the InceptionTime network.
