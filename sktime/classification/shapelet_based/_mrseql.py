@@ -61,12 +61,17 @@ class MrSEQL(_DelegatedClassifier):
         self.symrep = symrep
         self.custom_config = custom_config
 
-        if isinstance(self.symrep, (list, tuple)) and "sfa" in self.symrep:
-            self.set_tags(**{"python_dependencies": ["mrseql", "numba"]})
-        if isinstance(self.symrep, str) and self.symrep == "sfa":
+        if "sfa" in self._coerce_to_list(symrep):
             self.set_tags(**{"python_dependencies": ["mrseql", "numba"]})
 
         super().__init__()
+
+    def _coerce_to_list(self, x):
+        """Coerce x to a list if it is not already a list or tuple."""
+        if isinstance(x, (list, tuple)):
+            return x
+        else:
+            return [x]
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
@@ -78,10 +83,7 @@ class MrSEQL(_DelegatedClassifier):
         * dynamic tag setting
         * any soft dependency imports in the constructor
         """
-        if not isinstance(self.symrep, (list, tuple)):
-            self._symrep = [self.symrep]
-        else:
-            self._symrep = self.symrep
+        self._symrep = self._coerce_to_list(self.symrep)
 
         # construct the delegate - direct delegation to MrSEQLClassifier
         from mrseql import MrSEQLClassifier
