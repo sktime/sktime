@@ -197,6 +197,7 @@ class Prophet(_ProphetAdapter):
 
         super().__init__()
 
+    def __post_init__(self):
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
 
