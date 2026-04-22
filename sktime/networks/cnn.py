@@ -1,7 +1,6 @@
 """Time Convolutional Neural Network (CNN) (minus the final output layer)."""
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 from sktime.utils.warnings import warn
 
 

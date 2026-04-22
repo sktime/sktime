@@ -5,7 +5,6 @@ import math
 import numpy as np
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class TapNetNetwork(BaseDeepNetwork):
