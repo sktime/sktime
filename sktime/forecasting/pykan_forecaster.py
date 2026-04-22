@@ -59,13 +59,13 @@ class PyKANForecaster(BaseForecaster):
         # --------------
         "authors": ["benheid"],
         "maintainers": ["benheid"],
-        "python_dependencies": ["pykan", "torch", "matplotlib"],
+        "python_dependencies": ["pykan", "torch", "matplotlib", "tqdm"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
-        "scitype:y": "univariate",
-        "ignores-exogeneous-X": False,
+        "capability:multivariate": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
@@ -73,6 +73,10 @@ class PyKANForecaster(BaseForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:insample": False,
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,  # run tests on vm in GHA
+        "tests:skip_by_name": ["test_predict_time_index_in_sample_full"],
     }
 
     def __init__(
@@ -108,13 +112,14 @@ class PyKANForecaster(BaseForecaster):
         Parameters
         ----------
         y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             guaranteed to be passed in _predict
@@ -139,12 +144,14 @@ class PyKANForecaster(BaseForecaster):
             ds_test = PyTorchTrainDataset(
                 y_test, self.input_layer_size, output_size, X=X_test
             )
-            input_layer_size = self.input_layer_size + X_train.shape[1] * output_size
+            self._input_layer_size = (
+                self.input_layer_size + X_train.shape[1] * output_size
+            )
         else:
             y_train, y_test = temporal_train_test_split(y, test_size=(self.val_size))
             ds_train = PyTorchTrainDataset(y_train, self.input_layer_size, output_size)
             ds_test = PyTorchTrainDataset(y_test, self.input_layer_size, output_size)
-            input_layer_size = self.input_layer_size
+            self._input_layer_size = self.input_layer_size
         train_input = [ds_train[i][0] for i in range(len(ds_train))]
         train_target = [ds_train[i][1] for i in range(len(ds_train))]
         test_input = [ds_test[i][0] for i in range(len(ds_test))]
@@ -163,7 +170,7 @@ class PyKANForecaster(BaseForecaster):
         self.train_losses = []
         self.test_losses = []
 
-        self._layer_sizes = [input_layer_size, *self.hidden_layers, output_size]
+        self._layer_sizes = [self._input_layer_size, *self.hidden_layers, output_size]
         for i in range(len(self._grids)):
             if i == 0:
                 model = KAN(
@@ -223,7 +230,7 @@ class PyKANForecaster(BaseForecaster):
         if X is not None:
             input_ = torch.cat(
                 [
-                    torch.from_numpy(self._y.values[-self.input_layer_size :]).reshape(
+                    torch.from_numpy(self._y.values[-self._input_layer_size :]).reshape(
                         (1, -1)
                     ),
                     torch.from_numpy(X.values).reshape((1, -1)),
@@ -232,7 +239,7 @@ class PyKANForecaster(BaseForecaster):
             ).type(torch.float32)
         else:
             input_ = (
-                torch.from_numpy(self._y.values[-self.input_layer_size :])
+                torch.from_numpy(self._y.values[-self._input_layer_size :])
                 .reshape((1, -1))
                 .type(torch.float32)
             )

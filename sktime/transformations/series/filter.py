@@ -57,6 +57,9 @@ class Filter(BaseTransformer):
         "X_inner_mtype": ["np.ndarray", "numpy3D"],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,  # run in VM due to dependency requirement mne
     }
 
     def __init__(
@@ -100,7 +103,8 @@ class Filter(BaseTransformer):
         """
         from mne import filter
 
-        # np.darray needs to be [anything, ..., time]
+        # np.ndarray needs to be [anything, ..., time]
+
         # so 3D is ok, but we need to flip in 2D case
         if X.ndim == 2:
             X = X.transpose()

@@ -18,13 +18,14 @@ class _ProphetAdapter(BaseForecaster):
     _tags = {
         "authors": ["bletham", "tcuongd", "mloning", "aiwalter", "fkiraly"],
         # bletham and tcuongd for prophet/fbprophet
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
         "python_dependencies": "prophet",
+        "tests:vm": True,  # all estimators depending on prophet are tested in VM
     }
 
     def _convert_int_to_date(self, y):

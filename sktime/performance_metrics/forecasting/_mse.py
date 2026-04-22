@@ -13,6 +13,10 @@ from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMet
 class MeanSquaredError(BaseForecastingErrorMetric):
     r"""Mean squared error (MSE) or root mean squared error (RMSE).
 
+    MSE and RMSE output is non-negative floating point.
+    MSE has units of the input data squared, while RMSE is of the same unit as
+    the input data. Lower is better, and the lowest possible value is 0.0.
+
     For a univariate, non-hierarchical sample
     of true values :math:`y_1, \dots, y_n` and
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
@@ -53,18 +57,18 @@ class MeanSquaredError(BaseForecastingErrorMetric):
     square_root : bool, default = False
         Whether to take the square root of the metric
 
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines how to aggregate metric for multivariate (multioutput) data.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If array-like, values used as weights to average the errors.
-        * If ``'raw_values'``,
-          returns a full set of errors in case of multioutput input.
-        * If ``'uniform_average'``,
+        * If ``'uniform_average'`` (default),
           errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
-        Defines how to aggregate metric for hierarchical data (with levels).
+        How to aggregate the metric for hierarchical data (with levels).
 
         * If ``'uniform_average'`` (default),
           errors are mean-averaged across levels.
@@ -74,11 +78,12 @@ class MeanSquaredError(BaseForecastingErrorMetric):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        Determines averaging over time points in direct call to metric object.
+        Controls averaging over time points in direct call to metric object.
 
-        * If False, direct call to the metric object averages over time points,
-          equivalent to a call of the``evaluate`` method.
-        * If True, direct call to the metric object evaluates the metric at each
+        * If ``False`` (default),
+          direct call to the metric object averages over time points,
+          equivalent to a call of the ``evaluate`` method.
+        * If ``True``, direct call to the metric object evaluates the metric at each
           time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
@@ -141,29 +146,26 @@ class MeanSquaredError(BaseForecastingErrorMetric):
 
         private _evaluate containing core logic, called from evaluate
 
-        By default this uses evaluate_by_index, taking arithmetic mean over time points.
-
         Parameters
         ----------
-        y_true : time series in sktime compatible data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
-                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
         Returns
         -------
         loss : float or np.ndarray
-            Calculated metric, averaged or by variable.
-            float if self.multioutput="uniform_average" or array-like
-                value is metric averaged over variables (see class docstring)
-            np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
-                i-th entry is metric calculated for i-th variable
+            Calculated metric, possibly averaged by variable given ``multioutput``.
+
+            * float if ``multioutput="uniform_average" or array-like,
+              Value is metric averaged over variables and levels (see class docstring)
+            * ``np.ndarray`` of shape ``(y_true.columns,)``
+              if `multioutput="raw_values"``
+              i-th entry is the, metric calculated for i-th variable
         """
         multioutput = self.multioutput
 
@@ -183,26 +185,25 @@ class MeanSquaredError(BaseForecastingErrorMetric):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible pandas based data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.DataFrame
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
         Returns
         -------
         loss : pd.Series or pd.DataFrame
             Calculated metric, by time point (default=jackknife pseudo-values).
-            pd.Series if self.multioutput="uniform_average" or array-like
-                index is equal to index of y_true
-                entry at index i is metric at time i, averaged over variables
-            pd.DataFrame if self.multioutput="raw_values"
-                index and columns equal to those of y_true
-                i,j-th entry is metric at time i, at variable j
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
         """
         multioutput = self.multioutput
 
@@ -221,15 +222,7 @@ class MeanSquaredError(BaseForecastingErrorMetric):
 
         pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
 
-        if isinstance(multioutput, str):
-            if multioutput == "raw_values":
-                return pseudo_values
-
-            if multioutput == "uniform_average":
-                return pseudo_values.mean(axis=1)
-
-        # else, we expect multioutput to be array-like
-        return pseudo_values.dot(multioutput)
+        return self._handle_multioutput(raw_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

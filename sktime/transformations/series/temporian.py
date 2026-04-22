@@ -55,7 +55,7 @@ class TemporianTransformer(BaseTransformer):
         "python_version": ">=3.8",
         # estimator tags
         # --------------
-        "univariate-only": False,
+        "capability:multivariate": True,
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
@@ -84,9 +84,9 @@ class TemporianTransformer(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns

@@ -18,14 +18,15 @@ class _PmdArimaAdapter(BaseForecaster):
     _tags = {
         "authors": ["mloning", "hyang1996", "kejsitake", "fkiraly"],
         "maintainers": "hyang1996",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
-        # TODO 0.39.0: check if numpy 2 incompatiblity can be removed
-        # todo 0.39.0: check whether scipy<1.16 is still needed
-        "python_dependencies": ["pmdarima", "numpy<2", "scipy<1.16"],
+        "python_dependencies": ["pmdarima"],
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
     }
 
     def __init__(self):
@@ -164,7 +165,7 @@ class _PmdArimaAdapter(BaseForecaster):
             if end < start:
                 # since we might have forced `start` to surpass `end`
                 end = diff_order
-            # get rid of unforcastable points
+            # get rid of unforecastable points
             fh_abs = fh_abs[fh_idx >= diff_order]
             # reindex accordingly
             fh_idx = fh_idx[fh_idx >= diff_order] - diff_order

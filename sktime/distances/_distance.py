@@ -1,7 +1,7 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
 from collections.abc import Callable
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 
@@ -32,9 +32,9 @@ from sktime.distances.base import (
 def erp_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     g: float = 0.0,
     **kwargs: Any,
 ) -> float:
@@ -122,9 +122,9 @@ def erp_distance(
 def edr_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     epsilon: float = None,
     **kwargs: Any,
 ) -> float:
@@ -218,9 +218,9 @@ def edr_distance(
 def lcss_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     epsilon: float = 1.0,
     **kwargs: Any,
 ) -> float:
@@ -299,9 +299,9 @@ def lcss_distance(
 def wddtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     compute_derivative=None,
     g: float = 0.0,
     **kwargs: Any,
@@ -411,8 +411,8 @@ def wddtw_distance(
 def wdtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     g: float = 0.05,
     **kwargs: Any,
@@ -510,8 +510,8 @@ def wdtw_distance(
 def ddtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     compute_derivative=None,
     **kwargs: Any,
@@ -615,8 +615,8 @@ def ddtw_distance(
 def dtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     **kwargs: Any,
 ) -> float:
@@ -838,8 +838,8 @@ def msm_distance(
 def twe_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     lmbda: float = 1.0,
     nu: float = 0.001,
@@ -1044,8 +1044,8 @@ def dtw_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
@@ -1131,8 +1131,8 @@ def wdtw_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     g: float = 0.05,
     **kwargs: Any,
@@ -1226,8 +1226,8 @@ def ddtw_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
     compute_derivative=None,
     **kwargs: Any,
@@ -1327,9 +1327,9 @@ def wddtw_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     compute_derivative=None,
     g: float = 0.0,
     **kwargs: Any,
@@ -1435,9 +1435,9 @@ def edr_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     epsilon: float = None,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
@@ -1526,9 +1526,9 @@ def erp_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     g: float = 0.0,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
@@ -1612,9 +1612,9 @@ def lcss_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
+    bounding_matrix: np.ndarray | None = None,
     epsilon: float = 1.0,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
@@ -1882,14 +1882,12 @@ def twe_alignment_path(
 def distance(
     x: np.ndarray,
     y: np.ndarray,
-    metric: Union[
-        str,
-        Callable[
-            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
-        ],
-        Callable[[np.ndarray, np.ndarray], float],
-        NumbaDistance,
-    ],
+    metric: str
+    | Callable[
+        [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+    ]
+    | Callable[[np.ndarray, np.ndarray], float]
+    | NumbaDistance,
     **kwargs: Any,
 ) -> float:
     """Compute the distance between two time series.
@@ -1978,14 +1976,12 @@ def distance(
 def distance_factory(
     x: np.ndarray = None,
     y: np.ndarray = None,
-    metric: Union[
-        str,
-        Callable[
-            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
-        ],
-        Callable[[np.ndarray, np.ndarray], float],
-        NumbaDistance,
-    ] = "euclidean",
+    metric: str
+    | Callable[
+        [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+    ]
+    | Callable[[np.ndarray, np.ndarray], float]
+    | NumbaDistance = "euclidean",
     **kwargs: Any,
 ) -> DistanceCallable:
     """Create a no_python distance callable.
@@ -2055,14 +2051,12 @@ def distance_factory(
 def pairwise_distance(
     x: np.ndarray,
     y: np.ndarray = None,
-    metric: Union[
-        str,
-        Callable[
-            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
-        ],
-        Callable[[np.ndarray, np.ndarray], float],
-        NumbaDistance,
-    ] = "euclidean",
+    metric: str
+    | Callable[
+        [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+    ]
+    | Callable[[np.ndarray, np.ndarray], float]
+    | NumbaDistance = "euclidean",
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute the pairwise distance matrix between two time series.
@@ -2162,14 +2156,12 @@ def pairwise_distance(
 def distance_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
-    metric: Union[
-        str,
-        Callable[
-            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
-        ],
-        Callable[[np.ndarray, np.ndarray], float],
-        NumbaDistance,
-    ],
+    metric: str
+    | Callable[
+        [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+    ]
+    | Callable[[np.ndarray, np.ndarray], float]
+    | NumbaDistance,
     return_cost_matrix: bool = False,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
@@ -2243,14 +2235,12 @@ def distance_alignment_path(
 def distance_alignment_path_factory(
     x: np.ndarray,
     y: np.ndarray,
-    metric: Union[
-        str,
-        Callable[
-            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
-        ],
-        Callable[[np.ndarray, np.ndarray], float],
-        NumbaDistance,
-    ],
+    metric: str
+    | Callable[
+        [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+    ]
+    | Callable[[np.ndarray, np.ndarray], float]
+    | NumbaDistance,
     return_cost_matrix: bool = False,
     **kwargs: Any,
 ) -> DistanceAlignmentPathCallable:

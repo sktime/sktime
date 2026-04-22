@@ -106,6 +106,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:class_weight": False,  # ability to handle class weights
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -143,7 +144,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # if est.foo == 42:
         #   self.set_tags(handles-missing-data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
 
     # todo: implement this, mandatory
     def _fit(self, X, y):

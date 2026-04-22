@@ -5,7 +5,6 @@ __all__ = ["MSTL"]
 __authors__ = ["luca-miniati"]
 
 from collections.abc import Sequence
-from typing import Optional, Union
 
 import pandas as pd
 
@@ -194,21 +193,22 @@ class MSTL(BaseTransformer):
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
         "transform-returns-same-time-index": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "capability:inverse_transform": True,
         "capability:inverse_transform:exact": False,
         "skip-inverse-transform": False,
         "fit_is_empty": False,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
         self,
         *,
-        periods: Optional[Union[int, Sequence[int]]] = None,
-        windows: Optional[Union[int, Sequence[int]]] = None,
-        lmbda: Optional[Union[float, str]] = None,
-        iterate: Optional[int] = 2,
-        stl_kwargs: Optional[dict[str, Union[int, bool, None]]] = None,
+        periods: int | Sequence[int] | None = None,
+        windows: int | Sequence[int] | None = None,
+        lmbda: float | str | None = None,
+        iterate: int | None = 2,
+        stl_kwargs: dict[str, int | bool | None] | None = None,
         return_components: bool = False,
     ):
         self.periods = periods

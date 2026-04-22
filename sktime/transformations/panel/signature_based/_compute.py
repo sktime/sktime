@@ -34,7 +34,6 @@ class _WindowSignatureTransform(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
         "python_dependencies": "esig",
-        "python_version": "<3.10",
     }
 
     def __init__(
@@ -70,6 +69,12 @@ class _WindowSignatureTransform(BaseTransformer):
 
         depth = self.sig_depth
         data = np.swapaxes(X, 1, 2)
+
+        if self.rescaling == "post" and self.sig_tfm == "logsignature":
+            raise NotImplementedError(
+                "rescaling='post' is not supported for sig_tfm='logsignature'. "
+                "Set rescaling=None."
+            )
 
         # Path rescaling
         if self.rescaling == "pre":

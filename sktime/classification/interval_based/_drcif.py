@@ -151,6 +151,8 @@ class DrCIF(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "interval",
     }
 
@@ -210,6 +212,10 @@ class DrCIF(BaseClassifier):
             self._base_estimator = _clone_estimator(base_estimator)
         else:
             raise ValueError("DrCIF invalid base estimator given")
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         from joblib import Parallel, delayed

@@ -92,10 +92,11 @@ class PolynomialTrendForecaster(BaseForecaster):
     _tags = {
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
         "maintainers": ["tensorflow-as-tf"],
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:pred_int": True,
+        "y_inner_mtype": "pd.DataFrame",
     }
 
     def __init__(
@@ -149,12 +150,12 @@ class PolynomialTrendForecaster(BaseForecaster):
         X_sklearn = _get_X_numpy_int_from_pandas(y.index)
 
         # fit regressor
-        self.regressor_.fit(X_sklearn, y)
+        self.regressor_.fit(X_sklearn, y.iloc[:, 0])
 
         if self.prediction_intervals:
             # calculate and save values needed for the prediction interval method
             fitted_values = self.regressor_.predict(X_sklearn)
-            residuals = y - fitted_values
+            residuals = y.iloc[:, 0] - fitted_values
             p = self.degree + int(self.with_intercept)
             self.s_squared_ = np.sum(residuals**2) / (len(y) - p)
             self.train_index_ = y.index
@@ -180,8 +181,8 @@ class PolynomialTrendForecaster(BaseForecaster):
         fh = self.fh.to_absolute_index(self.cutoff)
         X_sklearn = _get_X_numpy_int_from_pandas(fh)
         y_pred_sklearn = self.regressor_.predict(X_sklearn)
-        y_pred = pd.Series(y_pred_sklearn, index=fh)
-        y_pred.name = self._y.name
+        cols = self._get_varnames()
+        y_pred = pd.DataFrame(y_pred_sklearn, index=fh, columns=cols)
         return y_pred
 
     def _predict_var(self, fh=None, X=None, cov=False):
@@ -219,7 +220,9 @@ class PolynomialTrendForecaster(BaseForecaster):
         v = (1 + np.array(v)).flatten()  # see Hyndman FPP3 Section 7.9
 
         l_var = v * self.s_squared_  # see Hyndman FPP3 Section 7.9
-        pred_var = pd.DataFrame(l_var, columns=[self._y.name])
+        cols = self._get_varnames()
+        fh = self.fh.to_absolute_index(self.cutoff)
+        pred_var = pd.DataFrame(l_var, index=fh, columns=cols)
         return pred_var
 
     @classmethod

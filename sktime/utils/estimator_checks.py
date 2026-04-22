@@ -15,14 +15,36 @@ def check_estimator(
 ):
     """Run all tests on one single estimator.
 
-    Tests that are run on estimator:
-        all tests in test_all_estimators
-        all interface compatibility tests from the module of estimator's scitype
-            for example, test_all_forecasters if estimator is a forecaster
+    This utility runs all tests from the unified API conformance suites
+    applying to the estimator, including tests for the specific subtype
+    and all supertypes.
+
+    If ``estimator`` is an instance, tests are run on the specific instance
+    and its class;
+    if ``estimator`` is a class, tests are run on the class, and all instances
+    constructed via its ``create_test_instances_and_names`` method.
+
+    NOTE: individual tests not in the API conformance suites are not run.
+
+    Example: if ``estimator`` is a forecaster, runs:
+
+    * tests in ``TestAllObjects``, because every ``forecaster`` is an ``object``
+    * tests in ``TestAllEstimators``, because every ``forecaster`` is an ``estimator``
+    * tests in ``TestAllForecasters``
+
+    In the example, we do not run a ``test_my_favourite_estimator`` test that is not
+    in ``TestAll[Something]``, if the
+    ``estimator`` is an instance of ``MyFavouriteEstimator``.
 
     Parameters
     ----------
     estimator : estimator class or estimator instance
+        class or instance of the estimator to be tested
+
+        * if class: tests are run on the class, and all instances
+          constructed via its ``create_test_instances_and_names`` method
+        * if instance: tests are run on the instance, and its class
+
     raise_exceptions : bool, optional, default=False
         whether to return exceptions/failures in the results dict, or raise them
 
@@ -32,31 +54,44 @@ def check_estimator(
     tests_to_run : str or list of str, optional. Default = run all tests.
         Names (test/function name string) of tests to run.
         sub-sets tests that are run to the tests given here.
+
     fixtures_to_run : str or list of str, optional. Default = run all tests.
         pytest test-fixture combination codes, which test-fixture combinations to run.
         sub-sets tests and fixtures to run to the list given here.
         If both tests_to_run and fixtures_to_run are provided, runs the *union*,
         i.e., all test-fixture combinations for tests in tests_to_run,
-            plus all test-fixture combinations in fixtures_to_run.
-    verbose : str, optional, default=True.
-        whether to print out informative summary of tests run.
+        plus all test-fixture combinations in fixtures_to_run.
+
+    verbose : int or bool, optional, default=1.
+        verbosity level for printouts from tests run.
+
+        * 0 or False: no printout
+        * 1 or True (default): print summary of test run, but no print from tests
+        * 2: print all test output, including output from within the tests
+
     tests_to_exclude : str or list of str, names of tests to exclude. default = None
         removes tests that should not be run, after subsetting via tests_to_run.
+
     fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
         removes test-fixture combinations that should not be run.
         This is done after subsetting via fixtures_to_run.
 
     Returns
     -------
-    results : dict of results of the tests in self
-        keys are test/fixture strings, identical as in pytest, e.g., test[fixture]
-        entries are the string "PASSED" if the test passed,
-        or the exception raised if the test did not pass
-        returned only if all tests pass, or raise_exceptions=False
+    results : dict
+        dictionary of results of the tests that were run
+
+        keys are test/fixture strings, identical as in pytest,
+        e.g., ``test[fixture]``;
+        entries are the string ``"PASSED"`` if the test passed,
+        or the exception raised if the test did not pass.
+
+        ``results`` is returned only if all tests pass,
+        or ``raise_exceptions=False``.
 
     Raises
     ------
-    if raise_exceptions=True,
+    if ``raise_exceptions=True``,
     raises any exception produced by the tests directly
 
     Examples
@@ -92,7 +127,10 @@ def check_estimator(
     All tests PASSED!
     {'test_clone[ExponentTransformer-1]': 'PASSED'}
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from sktime.utils.dependencies import (
+        _check_estimator_deps,
+        _check_soft_dependencies,
+    )
 
     msg = (
         "check_estimator is a testing utility for developers, and "
@@ -105,6 +143,17 @@ def check_estimator(
         " `pip install sktime[dev]`"
     )
     _check_soft_dependencies("pytest", msg=msg)
+
+    try:
+        _check_estimator_deps(estimator)
+    except ModuleNotFoundError as e:
+        msg = (
+            "check_estimator requires all dependencies of the tested object "
+            "to be present in the python environment, "
+            "but some were not found. "
+            f"Details: {e}"
+        )
+        raise ModuleNotFoundError(msg) from e
 
     from sktime.tests.test_class_register import get_test_classes_for_obj
 
@@ -120,7 +169,7 @@ def check_estimator(
             fixtures_to_run=fixtures_to_run,
             tests_to_exclude=tests_to_exclude,
             fixtures_to_exclude=fixtures_to_exclude,
-            verbose=verbose and raise_exceptions,
+            verbose=verbose if raise_exceptions else False,
         )
         results.update(test_cls_results)
 
@@ -132,7 +181,7 @@ def check_estimator(
     else:
         msg = "All tests PASSED!"
 
-    if verbose:
+    if int(verbose) > 0:
         # printing is an intended feature, for console usage and interactive debugging
         print(msg)  # noqa T001
 

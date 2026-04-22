@@ -37,11 +37,11 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         "maintainers": ["magittan"],
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "y_inner_mtype": ["pd.Series"],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
     }
 
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):

@@ -96,12 +96,13 @@ class ADICVTransformer(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
-        "univariate-only": True,  # Demand being the only variable
+        "capability:multivariate": False,  # Demand being the only variable
         "requires_y": False,
         "fit_is_empty": True,
         "capability:inverse_transform": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
+        "capability:categorical_in_X": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?

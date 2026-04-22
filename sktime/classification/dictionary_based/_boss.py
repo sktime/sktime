@@ -140,6 +140,8 @@ class BOSSEnsemble(BaseClassifier):
         "capability:multithreading": True,
         "classifier_type": "dictionary",
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -460,12 +462,15 @@ class BOSSEnsemble(BaseClassifier):
                 "alphabet_size": 4,
             }
         else:
-            return {
+            param1 = {
                 "max_ensemble_size": 2,
                 "save_train_predictions": True,
                 "feature_selection": "none",
                 "use_boss_distance": False,
             }
+            param2 = {**param1, "feature_selection": "chi2"}
+
+        return [param1, param2]
 
 
 class IndividualBOSS(BaseClassifier):
@@ -501,6 +506,9 @@ class IndividualBOSS(BaseClassifier):
         the dictionary of words is returned. If True, the array is saved, which
         can shorten the time to calculate dictionaries using a shorter
         ``word_length`` (since the last "n" letters can be removed).
+    store_histogram : bool, default = False
+        Whether to store the histograms of words in ``fit``. If False, avoids
+        storing the histograms in memory, which can be large for some datasets.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
@@ -513,6 +521,12 @@ class IndividualBOSS(BaseClassifier):
         Number of classes. Extracted from the data.
     classes_ : list
         The classes labels.
+    histograms_ : list of dict
+        A list of dictionaries, where each dictionary is a word histogram for an
+        individual time series instance. The length of the list is equal to
+        the number of instances passed to ``fit``. Each dictionary maps SFA words
+        (str) to their frequency (int). Only created if ``store_histogram``
+        is ``True``.
 
     See Also
     --------
@@ -550,6 +564,8 @@ class IndividualBOSS(BaseClassifier):
         # estimator type
         # --------------
         "capability:multithreading": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -562,6 +578,7 @@ class IndividualBOSS(BaseClassifier):
         typed_dict="deprecated",
         use_boss_distance=True,
         feature_selection="none",
+        store_histogram=False,
         n_jobs=1,
         random_state=None,
     ):
@@ -574,6 +591,7 @@ class IndividualBOSS(BaseClassifier):
 
         self.save_words = save_words
         self.typed_dict = typed_dict
+        self.store_histogram = store_histogram
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -583,6 +601,7 @@ class IndividualBOSS(BaseClassifier):
         self._accuracy = 0
         self._subsample = []
         self._train_predictions = []
+        self.histograms_ = []
 
         super().__init__()
 
@@ -622,7 +641,38 @@ class IndividualBOSS(BaseClassifier):
         self._transformed_data = self._transformer.fit_transform(X, y)
         self._class_vals = y
 
+        if self.store_histogram:
+            self._create_histograms()
+
         return self
+
+    def _create_histograms(self):
+        if hasattr(self._transformer, "vocabulary_"):
+            vocab = self._transformer.vocabulary_
+        elif hasattr(self._transformer, "words"):
+            vocab = self._transformer.words
+        else:
+            vocab = None
+
+        if hasattr(self._transformed_data, "toarray") and vocab is not None:
+            arr = self._transformed_data.toarray()
+            if isinstance(vocab, dict):
+                if all(isinstance(v, int) for v in vocab.values()):
+                    idx_to_word = {v: k for k, v in vocab.items()}
+                else:
+                    idx_to_word = vocab
+            else:
+                idx_to_word = {i: str(i) for i in range(arr.shape[1])}
+            self.histograms_ = [
+                {
+                    str(idx_to_word[idx]): int(count)
+                    for idx, count in enumerate(row)
+                    if count > 0
+                }
+                for row in arr
+            ]
+        else:
+            self.histograms_ = self._transformed_data
 
     def _predict(self, X):
         """Predict class values of all instances in X.

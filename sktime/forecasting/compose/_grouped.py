@@ -1,8 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositors for performing forecasting by group."""
 
-from typing import Union
-
 import pandas as pd
 
 from sktime.base._meta import _HeterogenousMetaEstimator
@@ -65,7 +63,7 @@ class ForecastByLevel(_DelegatedForecaster):
         "authors": ["fkiraly"],
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
@@ -199,15 +197,15 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     >>> group_forecaster = GroupbyCategoryForecaster(
     ...     forecasters =
     ...         {"smooth": NaiveForecaster(),
-    ...         "erratic": Croston(),
-    ...         "intermittent": PolynomialTrendForecaster()},
+    ...         "erratic": PolynomialTrendForecaster(),
+    ...         "intermittent": Croston()},
     ...     transformer=ADICVTransformer(features=["class"]))
 
     >>> generated_data = _generate_erratic_series()
 
     The fit function firstly passes the data through the given transformer
     to generate a given category. This category can be seen by the variable
-    self.category_.
+    ``self.category_``.
 
     >>> group_forecaster = group_forecaster.fit(generated_data, fh=50)
     >>> #print(f"The chosen category is: {group_forecaster.category}")
@@ -227,8 +225,8 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "scitype:y": "both",
-        "ignores-exogeneous-X": False,
+        "capability:multivariate": True,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
         "authors": ["felipeangelimvieira", "shlok191"],
@@ -270,7 +268,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         # Assigning all capabilities on the basis of the capabilities
         # of the passed forecasters
         true_if_all_tags = {
-            "ignores-exogeneous-X": True,
+            "capability:exogenous": False,
             "X-y-must-have-same-index": True,
             "enforce_index_type": True,
             "capability:missing_values": True,
@@ -469,13 +467,14 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         Parameters
         ----------
         y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
-            Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series to which to fit the forecaster.
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -620,7 +619,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             else:
                 self.fallback_forecaster = forecaster
 
-    def _loc_group(self, df: pd.DataFrame, group: Union[pd.DataFrame, None]):
+    def _loc_group(self, df: pd.DataFrame, group: pd.DataFrame | None):
         """
         Return the indexes of the given dataframe that match the given group.
 

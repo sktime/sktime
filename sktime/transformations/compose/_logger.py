@@ -73,7 +73,7 @@ class Logger(BaseTransformer):
     _tags = {
         "authors": "fkiraly",
         "capability:inverse_transform": True,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": CORE_MTYPES,  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": CORE_MTYPES,  # which mtypes do _fit/_predict support for y?
@@ -149,9 +149,9 @@ class Logger(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns

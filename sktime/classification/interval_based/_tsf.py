@@ -6,7 +6,6 @@ Interval based TSF classifier, extracts basic summary features from random inter
 __author__ = ["kkoziara", "luiszugasti", "kanand77"]
 __all__ = ["TimeSeriesForestClassifier"]
 
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -113,13 +112,15 @@ class TimeSeriesForestClassifier(
         # --------------
         "capability:feature_importance": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
         self,
         min_interval=3,
         n_estimators=200,
-        inner_series_length: Optional[int] = None,
+        inner_series_length: int | None = None,
         n_jobs=1,
         random_state=None,
     ):

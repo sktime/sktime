@@ -4,7 +4,6 @@
 
 __author__ = ["khrapovs", "mloning", "hazrulakmal"]
 
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -293,7 +292,7 @@ class BaseWindowSplitter(BaseSplitter):
                 start = np.argmin(y <= shifted_y0) if shifted_y0 >= y[start] else start
         return start
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
 
         Parameters
@@ -339,7 +338,7 @@ class BaseWindowSplitter(BaseSplitter):
             n_splits = len(self.get_cutoffs(y))
         return n_splits
 
-    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
+    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Parameters

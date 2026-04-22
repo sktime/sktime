@@ -132,10 +132,10 @@ class MAPAForecaster(BaseForecaster):
     """
 
     _tags = {
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "authors": ["trnnick", "phoeenniixx", "satvshr"],
         "python_dependencies": ["statsmodels", "pandas>1"],

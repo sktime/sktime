@@ -3,15 +3,11 @@
 import numpy as np
 
 from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    from torch.utils.data import DataLoader, Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
+torch = _safe_import("torch")
+DataLoader = _safe_import("torch.utils.data.DataLoader")
+Dataset = _safe_import("torch.utils.data.Dataset")
 
 
 class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
@@ -86,6 +82,10 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         "authors": ["gzerveas", "geetu040"],
         # gzerveas for original code in research repository
         "maintainers": ["geetu040"],
+        # estimator type
+        # --------------
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(

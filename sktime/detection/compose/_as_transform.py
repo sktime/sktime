@@ -58,7 +58,7 @@ class DetectorAsTransformer(BaseTransformer):
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": MTYPE_LIST_FOR_DETECTORS,
         "y_inner_mtype": MTYPE_LIST_FOR_DETECTORS,
         "requires_y": False,  # does y need to be passed in fit?
@@ -94,9 +94,9 @@ class DetectorAsTransformer(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns
@@ -114,9 +114,9 @@ class DetectorAsTransformer(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame
-            if self.get_tag("univariate-only")==True:
+            if self.get_tag("capability:multivariate")==False:
                 guaranteed to have a single column
-            if self.get_tag("univariate-only")==False: no restrictions apply
+            if self.get_tag("capability:multivariate")==True: no restrictions apply
         y : None, present only for interface compatibility
 
         Returns

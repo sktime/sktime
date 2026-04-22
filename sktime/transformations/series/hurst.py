@@ -1,8 +1,6 @@
 # Copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Hurst Exponent Transformer for time series analysis."""
 
-from typing import Optional, Union
-
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -51,24 +49,29 @@ class HurstExponentTransformer(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["phoeenniixx"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "requires_y": False,
         "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
-        "authors": ["phoeenniixx"],
+        "capability:categorical_in_X": False,
     }
 
     def __init__(
         self,
-        lags: Optional[Union[list[int], range]] = None,
+        lags: list[int] | range | None = None,
         method: str = "rs",
         min_lag: int = 2,
         max_lag: int = 100,
@@ -112,7 +115,7 @@ class HurstExponentTransformer(BaseTransformer):
             raise ValueError(f"Failed to calculate Hurst exponent: {str(e)}") from e
         return self
 
-    def _get_effective_lags(self, series_length: int) -> Union[list[int], range]:
+    def _get_effective_lags(self, series_length: int) -> list[int] | range:
         """Get effective lag range based on series length and initial parameters."""
         if self.lags is not None:
             return [lag for lag in self.lags if 2 <= lag <= series_length // 2]
@@ -202,7 +205,7 @@ class HurstExponentTransformer(BaseTransformer):
             fluctuations.append(fluctuation)
         return np.mean(fluctuations)
 
-    def _fit_hurst(self, lags: Union[list[int], range], tau: list[float]) -> float:
+    def _fit_hurst(self, lags: list[int] | range, tau: list[float]) -> float:
         """Fit Hurst exponent from log-log plot."""
         log_lags = np.log(lags)
         log_tau = np.log(tau)

@@ -1,6 +1,5 @@
 """Multi Layer Perceptron Network (MLP) for regression."""
 
-__author__ = ["James-Large", "AurumnPegasus", "nilesh05apr"]
 __all__ = ["MLPRegressor"]
 
 from copy import deepcopy
@@ -21,25 +20,46 @@ class MLPRegressor(BaseDeepRegressor):
     Parameters
     ----------
     should inherited fields be listed here?
-    n_epochs       : int, default = 2000
+    n_epochs : int, default = 2000
         the number of epochs to train the model
-    batch_size      : int, default = 16
+    batch_size : int, default = 16
         the number of samples per gradient update.
-    random_state    : int or None, default=None
+    callbacks : list of keras.callbacks.Callback, optional (default=None)
+        List of Keras callbacks to apply during model training.
+    random_state : int or None, default=None
         Seed for random number generation.
-    verbose         : boolean, default = False
+    verbose : boolean, default = False
         whether to output extra information
-    loss            : string, default="mean_squared_error"
+    loss : string, default="mean_squared_error"
         fit parameter for the keras model
-    metrics         : list of strings, default=["accuracy"],
-    activation      : string or a tf callable, default="sigmoid"
-        Activation function used in the output linear layer.
+    metrics : list of strings, default=["accuracy"],
+    activation : string or a tf callable, default="linear"
+        Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
-    use_bias        : boolean, default = True
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    use_bias : boolean, default = True
         whether the layer uses a bias vector.
-    optimizer       : keras.optimizers object, default = Adam(lr=0.01)
+    optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
+    dropout : float or tuple, default=(0.1, 0.2, 0.2, 0.3)
+        The dropout rate for the hidden layers.
+        If float, the same rate is used for all layers.
+        If tuple, length must equal n_layers + 1, where the first n_layers
+        elements correspond to dropout applied before each hidden Dense layer,
+        and the last element corresponds to the dropout applied after the final
+        hidden layer (before the output layer).
+    n_layers : int, default=3
+        Number of hidden Dense layers in the MLP.
+    hidden_dim : int or tuple, default=500
+        Number of units in each hidden Dense layer.
+        If int, the same number of units is used for all hidden layers.
+        If list or tuple, length must equal n_layers, with each element
+        specifying the number of units for the corresponding hidden layer.
+
 
     References
     ----------
@@ -62,7 +82,7 @@ class MLPRegressor(BaseDeepRegressor):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large", "AurumnPegasus"],
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
         "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         # estimator type handled by parent class
     }
@@ -76,9 +96,13 @@ class MLPRegressor(BaseDeepRegressor):
         loss="mean_squared_error",
         metrics=None,
         random_state=None,
-        activation="sigmoid",
+        activation="linear",
+        activation_hidden="relu",
         use_bias=True,
         optimizer=None,
+        dropout=(0.1, 0.2, 0.2, 0.3),
+        n_layers=3,
+        hidden_dim=500,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -90,14 +114,22 @@ class MLPRegressor(BaseDeepRegressor):
         self.metrics = metrics
         self.random_state = random_state
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
+        self.dropout = dropout
+        self.n_layers = n_layers
+        self.hidden_dim = hidden_dim
 
         super().__init__()
 
         self.history = None
         self._network = MLPNetwork(
+            activation=self.activation_hidden,
             random_state=self.random_state,
+            dropout=self.dropout,
+            n_layers=self.n_layers,
+            hidden_dim=self.hidden_dim,
         )
 
     def build_model(self, input_shape, **kwargs):
@@ -207,12 +239,18 @@ class MLPRegressor(BaseDeepRegressor):
             "n_epochs": 10,
             "batch_size": 4,
             "use_bias": False,
+            "dropout": (0.2, 0.1, 0.1, 0.2),
+            "n_layers": 3,
+            "hidden_dim": 500,
         }
 
         param2 = {
             "n_epochs": 12,
             "batch_size": 6,
             "use_bias": True,
+            "dropout": 0.1,
+            "n_layers": 4,
+            "hidden_dim": 256,
         }
         test_params = [param1, param2]
 

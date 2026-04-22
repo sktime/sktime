@@ -13,6 +13,7 @@ __all__ = []
 
 from inspect import isclass
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -37,7 +38,7 @@ from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformSeriesUnivariate,
 )
 from sktime.utils._testing.series import _make_series
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 # other scenarios that might be needed later in development:
@@ -501,7 +502,7 @@ def test_vectorization_multivariate_no_row_vectorization(backend):
     This test should trigger column (variable) vectorization, but not row vectorization.
 
     Setting: transformer has tags
-        "univariate-only" = True
+        "capability:multivariate" = False
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
         "fit_is_empty" = False
@@ -521,7 +522,7 @@ def test_vectorization_multivariate_no_row_vectorization(backend):
     assert not est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
-    assert est.get_tag("univariate-only")
+    assert not est.get_tag("capability:multivariate")
 
     # scenario in which series are passed to fit/transform
     scenario = TransformerFitTransformSeriesMultivariate()
@@ -546,7 +547,7 @@ def test_vectorization_multivariate_and_hierarchical(backend):
     This test should trigger both column (variable) and row (hierarchy) vectorization.
 
     Setting: transformer has tags
-        "univariate-only" = True
+        "capability:multivariate" = False
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
         "fit_is_empty" = False
@@ -568,7 +569,7 @@ def test_vectorization_multivariate_and_hierarchical(backend):
     assert not est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
-    assert est.get_tag("univariate-only")
+    assert not est.get_tag("capability:multivariate")
 
     # scenario in which series are passed to fit/transform
     scenario = TransformerFitTransformHierarchicalMultivariate()
@@ -593,7 +594,7 @@ def test_vectorization_multivariate_no_row_vectorization_empty_fit(backend):
     This test should trigger column (variable) vectorization, but not row vectorization.
 
     Setting: transformer has tags
-        "univariate-only" = True
+        "capability:multivariate" = False
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
         "fit_is_empty" = True
@@ -613,7 +614,7 @@ def test_vectorization_multivariate_no_row_vectorization_empty_fit(backend):
     assert est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
-    assert est.get_tag("univariate-only")
+    assert not est.get_tag("capability:multivariate")
 
     # scenario in which series are passed to fit/transform
     scenario = TransformerFitTransformSeriesMultivariate()
@@ -638,7 +639,7 @@ def test_vectorization_multivariate_and_hierarchical_empty_fit(backend):
     This test should trigger both column (variable) and row (hierarchy) vectorization.
 
     Setting: transformer has tags
-        "univariate-only" = True
+        "capability:multivariate" = False
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
         "fit_is_empty" = True
@@ -660,7 +661,7 @@ def test_vectorization_multivariate_and_hierarchical_empty_fit(backend):
     assert est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
-    assert est.get_tag("univariate-only")
+    assert not est.get_tag("capability:multivariate")
 
     # scenario in which series are passed to fit/transform
     scenario = TransformerFitTransformHierarchicalMultivariate()
@@ -867,3 +868,31 @@ def test_series_to_primitives_hierarchical():
 
     # check that Xt.index is the same as X.index with time level dropped and made unique
     assert (X.index.droplevel(-1).unique() == ix).all()
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations")
+    or _check_soft_dependencies("scikit-learn<1.6", severity="none"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_functrafo_and_default_capability_categorical_in_X():
+    """Test that FunctionTransformer and TTSA let categoricals through in X.
+
+    Indirectly also tests the default value for the tag capability:categorical_in_X,
+    in BaseTransformer.
+
+    Failure cases from #8752 and #8753.
+    """
+    from sktime.transformations.series.func_transform import FunctionTransformer
+
+    transformer = FunctionTransformer(lambda x: x)
+    X = pd.DataFrame(np.array([[0, 1], [2, 3]]).astype(str))
+    transformer.fit_transform(X)
+
+    from sklearn.preprocessing import OneHotEncoder
+
+    from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+
+    transformer = TabularToSeriesAdaptor(OneHotEncoder(), input_type="pandas")
+    X = pd.DataFrame([["A", "B"], ["A", "B"]])
+    transformer.fit_transform(X)

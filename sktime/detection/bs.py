@@ -60,7 +60,7 @@ class BinarySegmentation(BaseDetector):
         # estimator type
         # --------------
         "fit_is_empty": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "task": "change_point_detection",
         "learning_type": "unsupervised",
         "X_inner_mtype": "pd.Series",

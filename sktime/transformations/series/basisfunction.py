@@ -106,7 +106,7 @@ class RBFTransformer(BaseTransformer):
         "scitype:instancewise": True,
         "X_inner_mtype": ["pd.DataFrame", "pd.Series", "np.ndarray"],
         "y_inner_mtype": "None",
-        "univariate-only": False,
+        "capability:multivariate": True,
         "requires_y": False,
         "fit_is_empty": False,
         "capability:inverse_transform": False,

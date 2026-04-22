@@ -74,8 +74,9 @@ class ThetaLinesTransformer(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": True,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(self, theta=(0, 2)):

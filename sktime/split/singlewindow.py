@@ -8,7 +8,6 @@ __all__ = [
     "SingleWindowSplitter",
 ]
 
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -106,7 +105,7 @@ class SingleWindowSplitter(BaseSplitter):
     def __init__(
         self,
         fh: FORECASTING_HORIZON_TYPES,
-        window_length: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
+        window_length: ACCEPTED_WINDOW_LENGTH_TYPES | None = None,
     ) -> None:
         _check_inputs_for_compatibility(args=[fh, window_length])
         super().__init__(fh=fh, window_length=window_length)
@@ -124,7 +123,7 @@ class SingleWindowSplitter(BaseSplitter):
 
         yield training_window, test_window
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
 
         Since this splitter returns a single train/test split,
@@ -142,7 +141,7 @@ class SingleWindowSplitter(BaseSplitter):
         """
         return 1
 
-    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
+    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Since this splitter returns a single train/test split,

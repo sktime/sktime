@@ -65,8 +65,8 @@ class BaseAligner(BaseEstimator):
 
         Parameters
         ----------
-        X : list of pd.DataFrame (Series) of length n
-            collection of series to align
+        X : list of pd.DataFrame (Series) of length n or other panel mtype
+            collection of series to align.
         Z : pd.DataFrame with n rows, optional
             metadata, i-th row of Z corresponds to i-th element of X
         """

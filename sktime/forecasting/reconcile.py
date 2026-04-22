@@ -100,8 +100,8 @@ class ReconcilerForecaster(BaseForecaster):
         "maintainers": ["ciaran-g", "felipeangelimvieira"],
         # estimator type
         # --------------
-        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "capability:multivariate": False,  # which y are fine? False/True
+        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "capability:unequal_length": False,
         "y_inner_mtype": [

@@ -82,7 +82,7 @@ class OptionalPassthrough(_DelegatedTransformer):
         "X_inner_mtype": CORE_MTYPES,
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
         "capability:inverse_transform": True,
         # CI and test flags

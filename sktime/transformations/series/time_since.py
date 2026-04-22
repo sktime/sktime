@@ -89,7 +89,7 @@ class TimeSince(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",
-        "univariate-only": False,
+        "capability:multivariate": True,
         "requires_y": False,
         "remember_data": False,
         "fit_is_empty": False,  # is fit empty and can be skipped?
@@ -105,6 +105,12 @@ class TimeSince(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        # the test_categorical_X_passes test uses RangeIndex,
+        # but this transformation requires DatetimeIndex
+        "tests:skip_by_name": [
+            "test_categorical_X_passes",
+            "test_categorical_y_raises_error",
+        ],
     }
 
     def __init__(

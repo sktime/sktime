@@ -12,7 +12,6 @@ from sktime.datatypes import check_is_scitype, convert_to, scitype_to_mtype
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
-from sktime.utils.validation import check_n_jobs
 from sktime.utils.warnings import warn
 
 
@@ -44,7 +43,6 @@ class BaseClusterer(BaseEstimator):
     def __init__(self, n_clusters: int = None):
         self.fit_time_ = 0
         self._class_dictionary = {}
-        self._threads_to_use = 1
 
         # defensive programming in case subclass does set n_clusters
         # but does not pass it to super().__init__
@@ -134,15 +132,6 @@ class BaseClusterer(BaseEstimator):
         self.reset()
 
         X = self._check_clusterer_input(X)
-
-        multithread = self.get_tag("capability:multithreading")
-        if multithread:
-            try:
-                self._threads_to_use = check_n_jobs(self.n_jobs)
-            except NameError:
-                raise AttributeError(
-                    "self.n_jobs must be set if capability:multithreading is True"
-                )
 
         start = int(round(time.time() * 1000))
         self._fit(X)
@@ -479,6 +468,7 @@ class BaseClusterer(BaseEstimator):
         X_valid, _, X_metadata = check_is_scitype(
             X, scitype=ALLOWED_SCITYPES, return_metadata=X_metadata_required
         )
+        self._X_metadata = X_metadata
         if not X_valid:
             raise TypeError(
                 "X must be in a sktime compatible format, of scitype: "

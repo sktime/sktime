@@ -9,7 +9,6 @@ __all__ = [
 ]
 __author__ = ["davidgilbertson"]
 
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -66,9 +65,9 @@ class ExpandingGreedySplitter(BaseSplitter):
 
     def __init__(
         self,
-        test_size: Union[int, float],
+        test_size: int | float,
         folds: int = 5,
-        step_length: Optional[int] = None,
+        step_length: int | None = None,
     ):
         super().__init__()
         self.test_size = test_size

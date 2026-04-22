@@ -28,8 +28,8 @@ import numpy as np
 
 from sktime.base import BasePanelMixin
 from sktime.datatypes import VectorizedDF
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
-from sktime.utils.validation import check_n_jobs
 
 
 class BaseRegressor(BasePanelMixin):
@@ -84,7 +84,6 @@ class BaseRegressor(BasePanelMixin):
     def __init__(self):
         self.fit_time_ = 0
         self._class_dictionary = {}
-        self._threads_to_use = 1
         self._X_metadata = {}
 
         # required for compatibility with some sklearn interfaces
@@ -95,6 +94,7 @@ class BaseRegressor(BasePanelMixin):
         self._converter_store_y = {}
 
         super().__init__()
+        _check_estimator_deps(self)
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
@@ -245,14 +245,6 @@ class BaseRegressor(BasePanelMixin):
 
         # Convert data as dictated by the regressor tags
         X = self._convert_X(X, X_mtype)
-        multithread = self.get_tag("capability:multithreading")
-        if multithread:
-            try:
-                self._threads_to_use = check_n_jobs(self.n_jobs)
-            except NameError:
-                raise AttributeError(
-                    "self.n_jobs must be set if capability:multithreading is True"
-                )
 
         self._fit(X, y)
         self.fit_time_ = int(round(time.time() * 1000)) - start

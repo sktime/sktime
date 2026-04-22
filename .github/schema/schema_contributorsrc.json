@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "All Contributors RC Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "projectName": {
+      "type": "string"
+    },
+    "projectOwner": {
+      "type": "string"
+    },
+    "repoType": {
+      "type": "string"
+    },
+    "repoHost": {
+      "type": "string"
+    },
+    "commitConvention": {
+      "type": "string"
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "imageSize": {
+      "type": "number"
+    },
+    "contributorsPerLine": {
+      "type": "number"
+    },
+    "contributorsSortAlphabetically": {
+      "type": "boolean"
+    },
+    "badgeTemplate": {
+      "type": "string"
+    },
+    "skipCi": {
+      "type": "boolean"
+    },
+    "contributors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "login",
+          "name",
+          "contributions"
+        ],
+        "properties": {
+          "login": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "avatar_url": {
+            "type": "string"
+          },
+          "profile": {
+            "type": "string"
+          },
+          "contributions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "projectName",
+    "projectOwner",
+    "repoType",
+    "repoHost",
+    "commitConvention",
+    "files",
+    "imageSize",
+    "contributorsPerLine",
+    "contributorsSortAlphabetically",
+    "badgeTemplate",
+    "skipCi",
+    "contributors"
+  ]
+}

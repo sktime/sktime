@@ -311,7 +311,7 @@ def _dataset_to_mtype(dataset_name, obj):
 
 def _process_dataset(dataset_name, temp_folder=None, robust=True):
     if dataset_name in fpp3:
-        datafile = "fpp3_1.0.1.tar.gz"
+        datafile = "fpp3_1.0.2.tar.gz"
         archivedir = "fpp3"
     elif dataset_name in tsibble:
         datafile = "tsibble_1.1.6.tar.gz"
