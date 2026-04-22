@@ -408,17 +408,23 @@ def test_get_duration(n_timepoints, index_type):
 
 
 FIXED_FREQUENCY_STRINGS = ["10min", "h", "D", "2D"]
-NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT", "M"]
+NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT"]
 FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 
 
 def _get_expected_freqstr(freqstr):
-    # special case for 10min, T is being deprecated and replaced by min
-    if _check_soft_dependencies("pandas<2.2.0", severity="none"):
+    """Return the canonical freqstr for the installed pandas version.
+
+    On pandas<2.1.0, 'ME'/'YE' do not exist; we map back to the old alias.
+    On pandas>=2.1.0, modern aliases are used ('ME' instead of 'M', etc.).
+    """
+    pandas_lt_21 = _check_soft_dependencies("pandas<2.1.0", severity="none")
+    if pandas_lt_21:
+        # pandas<2.1.0: "10min" is represented as "10T"
         if freqstr == "10min":
             return "10T"
         return freqstr
-    # on more recent pandas versions, >=2.2.0
+    # pandas>=2.1.0: modern aliases are canonical
     if freqstr == "H":
         return "h"
     if freqstr == "M":
@@ -1018,14 +1024,13 @@ def test_tz_preserved():
     assert fh_absolute[0].tz == cutoff.tz
 
 
-# the "XE" frequencies are not supported by pandas 1 or 2.0.X
-# Deprecated aliases "Y", "M" etc. are excluded on pandas>=2.2.0 where they emit
-# FutureWarning. Their modern equivalents "YE", "ME" etc. are already included
-# via the pandas>=2.1.0 block below, so no test coverage is lost.
-if _check_soft_dependencies("pandas<2.2.0", severity="none"):
-    FREQ_STR_FOR_PD22 = ["Y", "2Y", "M", "3M"]
-else:
-    FREQ_STR_FOR_PD22 = []
+# The "XE" / modern-alias frequencies ("YE", "ME", etc.) require pandas>=2.1.0.
+# The deprecated aliases "Y", "M", "2Y", "3M" still work on all of pandas 2.x
+# (they emit a FutureWarning on >=2.2.0, but are not removed until pandas 3.0).
+# We test both the deprecated and modern forms on pandas 2.x to ensure backward
+# compatibility, and only exclude the deprecated aliases on pandas>=3 where they
+# are removed entirely.  There is NO 2.2.0-based distinction here.
+FREQ_STR_FOR_PD22 = []
 
 if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
     FREQ_STR_FOR_PD22 += [
@@ -1041,6 +1046,10 @@ if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
         "3YS",
     ]
 
+# Deprecated aliases: still valid on pandas<3, removed on pandas>=3.
+if _check_soft_dependencies("pandas<3", severity="none"):
+    FREQ_STR_FOR_PD22 += ["Y", "2Y", "M", "3M"]
+
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
@@ -1051,15 +1060,23 @@ def test_pandas22_freq(freq):
     """Test that to_absolute and to_relative conversions work with all freqs.
 
     Failure case in bug #6499.
+    Tests both deprecated aliases (on pandas<3) and modern aliases (on pandas>=2.1).
+    Deprecated aliases emit FutureWarning on pandas>=2.2; we accept that warning here
+    because we are specifically testing that the deprecated form still functions
+    correctly on pandas 2.x before removal in pandas 3.0.
     """
+    import warnings
+
     fh = ForecastingHorizon([1, 2, 3])
 
-    datetime_ = pd.date_range("1/1/1870", periods=20, freq=freq)
-    cutoff = datetime_[[-1]]
-    cutoff.freq = datetime_.freq
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", FutureWarning)
+        datetime_ = pd.date_range("1/1/1870", periods=20, freq=freq)
+        cutoff = datetime_[[-1]]
+        cutoff.freq = datetime_.freq
 
-    fh.to_absolute(cutoff)  # failure 1
-    fh.to_absolute(cutoff).to_relative(cutoff)  # failure 2
+        fh.to_absolute(cutoff)  # failure 1
+        fh.to_absolute(cutoff).to_relative(cutoff)  # failure 2
 
 
 @pytest.mark.skipif(
