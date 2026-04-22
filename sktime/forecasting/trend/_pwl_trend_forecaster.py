@@ -4,8 +4,6 @@
 
 __author__ = ["sbuse"]
 
-from tabnanny import verbose
-
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
