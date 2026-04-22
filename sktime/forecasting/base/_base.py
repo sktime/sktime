@@ -151,7 +151,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         self._state = "new"
 
         super().__init__()
-        _check_estimator_deps(self, severity="warning")
+
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
 
     @classmethod
     def _get_clone_plugins(cls):

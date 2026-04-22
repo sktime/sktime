@@ -300,9 +300,9 @@ class AutoTS(BaseForecaster):
         self.verbose = verbose
         self.n_jobs = n_jobs
 
-        # leave this as is
         super().__init__()
 
+    def __post_init__(self):
         # import inside method to avoid hard dependency
         from autots import AutoTS as _autots
 
