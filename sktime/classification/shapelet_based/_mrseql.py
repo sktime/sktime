@@ -61,7 +61,9 @@ class MrSEQL(_DelegatedClassifier):
         self.symrep = symrep
         self.custom_config = custom_config
 
-        if "sfa" in self._symrep:
+        if isinstance(self.symrep, (list, tuple)) and "sfa" in self.symrep:
+            self.set_tags(**{"python_dependencies": ["mrseql", "numba"]})
+        if isinstance(self.symrep, str) and self.symrep == "sfa":
             self.set_tags(**{"python_dependencies": ["mrseql", "numba"]})
 
         super().__init__()

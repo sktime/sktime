@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.inceptiontime import InceptionTimeNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class InceptionTimeRegressor(BaseDeepRegressor):
@@ -82,8 +81,6 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         activation_hidden="relu",
         activation_inception="linear",
     ):
-        _check_dl_dependencies(severity="error")
-
         self.verbose = verbose
 
         # predefined
