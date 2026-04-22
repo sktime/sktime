@@ -198,7 +198,7 @@ class Prophet(_ProphetAdapter):
         super().__init__()
 
     def __post_init__(self):
-        """Post-init for BaseTransformer, can be used by inheriting classes.
+        """Post-init constructor logic, can be used by inheriting classes.
 
         This method should be used for:
 

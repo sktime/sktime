@@ -122,7 +122,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         )
 
     def __post_init__(self):
-        """Post-init for BaseTransformer, can be used by inheriting classes.
+        """Post-init constructor logic, can be used by inheriting classes.
 
         This method should be used for:
 
@@ -473,7 +473,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         )
 
     def __post_init__(self):
-        """Post-init for BaseTransformer, can be used by inheriting classes.
+        """Post-init constructor logic, can be used by inheriting classes.
 
         This method should be used for:
 
@@ -667,7 +667,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         )
 
     def __post_init__(self):
-        """Post-init for BaseTransformer, can be used by inheriting classes.
+        """Post-init constructor logic, can be used by inheriting classes.
 
         This method should be used for:
 
@@ -1072,7 +1072,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         )
 
     def __post_init__(self):
-        """Post-init for BaseTransformer, can be used by inheriting classes.
+        """Post-init constructor logic, can be used by inheriting classes.
 
         This method should be used for:
 
