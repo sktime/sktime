@@ -191,6 +191,8 @@ class TapNetClassifier(BaseDeepClassifier):
             lstm_dropout=self.lstm_dropout,
         )
 
+        super().__post_init__()
+
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a complied, un-trained, keras model that is ready for training.
 

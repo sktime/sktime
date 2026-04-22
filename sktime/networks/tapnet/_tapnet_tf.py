@@ -75,10 +75,6 @@ class TapNetNetwork(BaseDeepNetwork):
         activation="leaky_relu",
         lstm_dropout=0.8,
     ):
-        _check_dl_dependencies(severity="error")
-
-        super().__init__()
-
         self.activation = activation
         self.random_state = random_state
         self.kernel_size = kernel_size
@@ -97,6 +93,8 @@ class TapNetNetwork(BaseDeepNetwork):
         # parameters for random projection
         self.use_rp = use_rp
         self.rp_params = rp_params
+
+        super().__init__()
 
     @staticmethod
     def output_conv_size(in_size, kernel_size, strides, padding):

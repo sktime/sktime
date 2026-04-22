@@ -209,6 +209,8 @@ class TapNetClassifierTorch(BaseDeepClassifierPytorch):
         self.input_size = None
         self.num_classes = None
 
+        super().__post_init__()
+
     def _build_network(self, X, y):
         """Build the TapNet network.
 
