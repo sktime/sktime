@@ -207,6 +207,14 @@ class SubLOF(BaseDetector):
 
         if isinstance(interval_size, int) and not is_integer_index(x):
             interval_size = x.freq * interval_size
+
+        import datetime
+
+        if isinstance(interval_size, datetime.timedelta) and is_integer_index(x):
+            raise ValueError(
+                "window_size is a timedelta but X has an integer index. "
+                "Use an integer window_size when X is indexed by integers."
+            )
         n_intervals = math.floor(x_span / interval_size) + 1
 
         if x_max >= x_min + (n_intervals - 1) * interval_size:

@@ -93,3 +93,22 @@ def test_sublof_does_not_mutate_input():
     _ = model.fit_transform(X)
 
     pd.testing.assert_frame_equal(X, X_original)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SubLOF),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_sublof_timedelta_window_on_integer_index_raises():
+    """Regression test: timedelta window_size on integer-indexed data raises ValueError.
+
+    SubLOF._split_into_intervals tried to compute x_span / timedelta, where x_span
+    is an int (from a RangeIndex). That raises a raw TypeError deep in the method.
+    The fix adds an early guard that raises a descriptive ValueError instead.
+    """
+    X = pd.DataFrame({"sensor_reading": [0.1, 0.5, 0.2, 100.0, 0.1, 0.0]})
+
+    model = SubLOF(n_neighbors=2, window_size=datetime.timedelta(days=1))
+
+    with pytest.raises(ValueError, match="integer index"):
+        model.fit(X)
