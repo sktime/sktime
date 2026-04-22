@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.fcn import FCNNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class FCNClassifier(BaseDeepClassifier):

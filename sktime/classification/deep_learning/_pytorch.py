@@ -13,7 +13,7 @@ from sklearn.preprocessing import LabelEncoder
 from sktime.classification.base import BaseClassifier
 from sktime.utils.dependencies import _safe_import
 
-
+torch = _safe_import("torch")
 Dataset = _safe_import("torch.utils.data.Dataset")
 
 
