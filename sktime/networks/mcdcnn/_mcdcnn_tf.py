@@ -1,7 +1,6 @@
 """Multi Channel Deep Convolution Neural Network (MCDCNN)."""
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MCDCNNNetwork(BaseDeepNetwork):
