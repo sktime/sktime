@@ -140,8 +140,8 @@ class Chronos2Forecaster(BaseForecaster):
         self._config = self._default_config.copy()
         self._config["torch_dtype"] = torch.bfloat16
 
-        if config is not None:
-            self._config.update(config)
+        if self.config is not None:
+            self._config.update(self.config)
 
     def __getstate__(self):
         """Return state for pickling, excluding unpickleable model pipeline."""
