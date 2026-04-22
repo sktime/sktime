@@ -131,6 +131,16 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
 
