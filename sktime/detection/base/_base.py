@@ -89,19 +89,8 @@ class BaseDetector(BaseEstimator):
     }
 
     def __init__(self):
-        self._is_fitted = False
-
-        self._X = None
-        self._Y = None
-
-        task = self.get_tag("task")
-        learning_type = self.get_tag("learning_type")
-
         super().__init__()
-
         _check_estimator_deps(self, severity="warning")
-
-        self.set_tags(**{"task": task, "learning_type": learning_type})
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated DetectorPipeline.
