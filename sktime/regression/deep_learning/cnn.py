@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.cnn import CNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 from sktime.utils.warnings import warn
 
 
