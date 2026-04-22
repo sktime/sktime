@@ -150,6 +150,15 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         super().__init__()
 
     def __post_init__(self):
+        """Post-init for BaseTransformer, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self._fh_length = None
 
         if self.mode not in ["ar", "direct"]:
