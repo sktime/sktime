@@ -76,7 +76,6 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.estimator_, tags_to_clone)
 
-
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated DetectorPipeline.
 
