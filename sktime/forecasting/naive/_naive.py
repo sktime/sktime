@@ -177,21 +177,24 @@ class NaiveForecaster(_BaseWindowForecaster):
         n_timepoints = y.shape[0]
 
         if self.strategy in ("last", "mean"):
-            # check window length is greater than sp for seasonal mean or seasonal last
-            if self.window_length is not None and sp != 1:
-                if self.window_length < sp:
-                    raise ValueError(
+            
+            window = check_window_length(self.window_length, n_timepoints)
+
+            if window is None:
+            # if window is none, len(y) acts as the default window length
+                window = n_timepoints
+
+            # ValueError when window < sp, with default window or given window  
+            if sp != 1 and window < sp:
+                raise ValueError(
                         f"The `window_length`: "
-                        f"{self.window_length} is smaller than "
+                        f"{window} is smaller than "
                         f"`sp`: {sp}."
                     )
-            self.window_length_ = check_window_length(self.window_length, n_timepoints)
+            
+            self.window_length_ = window
             self.sp_ = check_sp(sp)
-
-            #  if not given, set default window length
-            if self.window_length is None:
-                self.window_length_ = len(y)
-
+            
         elif self.strategy == "drift":
             if sp != 1:
                 warn(
@@ -219,11 +222,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         # check window length
         if self.window_length_ > len(y):
-            param = "sp" if self.strategy == "last" and sp != 1 else "window_length_"
-            raise ValueError(
-                f"The {param}: {self.window_length_} is larger than "
-                f"the training series."
-            )
+            raise ValueError(f"`window_length` {self.window_length_} is larger than training series length {len(y)}")
 
         return self
 
