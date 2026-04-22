@@ -35,6 +35,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:libs": ["sktime.forecasting.base.adapters._generalised_statsforecast"],
+        "tests:vm": True,
     }
 
     def __init__(self):
