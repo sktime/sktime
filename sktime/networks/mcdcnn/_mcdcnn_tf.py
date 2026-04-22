@@ -53,9 +53,6 @@ class MCDCNNNetwork(BaseDeepNetwork):
         random_state=0,
         activation="relu",
     ):
-        _check_dl_dependencies(severity="error")
-        super().__init__()
-
         self.activation = activation
         self.kernel_size = kernel_size
         self.pool_size = pool_size
@@ -64,6 +61,8 @@ class MCDCNNNetwork(BaseDeepNetwork):
         self.conv_padding = conv_padding
         self.pool_padding = pool_padding
         self.random_state = random_state
+
+        super().__init__()
 
     def build_network(self, input_shape, **kwargs):
         """

@@ -140,6 +140,15 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.verbose = verbose
         self.random_state = random_state
 
+        self.optimizer = self.optim
+        self.optimizer_kwargs = self.optim_kwargs
+
+        # default case
+        if self.optim is None:
+            self.optimizer = "SGD"
+            if self.optimizer_kwargs is None:
+                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
+
         super().__init__(
             num_epochs=self.n_epochs,
             batch_size=self.batch_size,
@@ -164,15 +173,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         * dynamic tag setting
         * any soft dependency imports in the constructor
         """
-        self.optimizer = self.optim
-        self.optimizer_kwargs = self.optim_kwargs
-
-        # default case
-        if self.optim is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
-
         if len(self.filter_sizes) != len(self.kernel_sizes):
             raise ValueError(
                 f"Length of `filter_sizes` {len(self.filter_sizes)} must match "

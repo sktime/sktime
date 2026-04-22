@@ -108,8 +108,6 @@ class MCDCNNClassifier(BaseDeepClassifier):
         verbose=False,
         random_state=0,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.kernel_size = kernel_size
@@ -130,6 +128,16 @@ class MCDCNNClassifier(BaseDeepClassifier):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self.history = None
         self._network = MCDCNNNetwork(
             activation=self.activation_hidden,
