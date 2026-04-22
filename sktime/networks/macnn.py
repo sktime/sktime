@@ -54,9 +54,6 @@ class MACNNNetwork(BaseDeepNetwork):
         random_state=0,
         activation="relu",
     ):
-        _check_dl_dependencies(severity="error")
-        super().__init__()
-
         self.activation = activation
         self.padding = padding
         self.pool_size = pool_size
@@ -66,6 +63,8 @@ class MACNNNetwork(BaseDeepNetwork):
         self.kernel_size = kernel_size
         self.reduction = reduction
         self.random_state = random_state
+
+        super().__init__()
 
     def _macnn_block(self, x, kernels, reduce):
         """Implement a single MACNN Block.
