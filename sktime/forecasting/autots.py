@@ -303,7 +303,15 @@ class AutoTS(BaseForecaster):
         super().__init__()
 
     def __post_init__(self):
-        # import inside method to avoid hard dependency
+        """Post-init for BaseTransformer, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         from autots import AutoTS as _autots
 
         self._ModelClass = _autots

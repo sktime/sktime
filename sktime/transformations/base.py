@@ -221,7 +221,15 @@ class BaseTransformer(BaseEstimator):
             self.__post_init__()
 
     def __post_init__(self):
-        """Post init for BaseTransformer, can be used by inheriting classes."""
+        """Post-init for BaseTransformer, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         pass
 
     def _is_transformer(self, other):

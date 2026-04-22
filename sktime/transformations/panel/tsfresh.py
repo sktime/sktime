@@ -61,6 +61,15 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         super().__init__()
 
     def __post_init__(self):
+        """Post-init for BaseTransformer, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # _get_extraction_params should be after the init because this imports tsfresh
         # and the init checks for python version and tsfresh being present
         self.default_fc_parameters_ = self._get_extraction_params()
@@ -515,6 +524,15 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         )
 
     def __post_init__(self):
+        """Post-init for BaseTransformer, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self.default_fc_parameters_ = self._get_extraction_params()
         self.default_fs_parameters_ = self._get_selection_params()
 

@@ -122,6 +122,15 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         )
 
     def __post_init__(self):
+        """Post-init for BaseTransformer, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         import torch
 
         self.criterions = {
@@ -464,6 +473,15 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         )
 
     def __post_init__(self):
+        """Post-init for BaseTransformer, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         import torch
 
         self.criterions = {
@@ -649,6 +667,15 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         )
 
     def __post_init__(self):
+        """Post-init for BaseTransformer, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         import torch
 
         self.criterions = {
@@ -1045,6 +1072,15 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         )
 
     def __post_init__(self):
+        """Post-init for BaseTransformer, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         import torch
 
         self.criterions = {
