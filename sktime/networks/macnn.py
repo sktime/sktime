@@ -1,7 +1,6 @@
 """Multi-scale Attention Convolutional Neural Network (MACNN)."""
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MACNNNetwork(BaseDeepNetwork):
