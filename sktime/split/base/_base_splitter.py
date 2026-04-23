@@ -116,6 +116,10 @@ class BaseSplitter(BaseObject):
         super().__init__()
         _check_estimator_deps(self, severity="warning")
 
+        from sktime.utils.dependencies import _check_estimator_deps
+
+        _check_estimator_deps(self)
+
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`.
 
