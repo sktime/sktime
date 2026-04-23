@@ -53,11 +53,11 @@ class FCNNetwork(BaseDeepNetwork):
         filter_sizes=(128, 256, 128),
         kernel_sizes=(8, 5, 3),
     ):
-        super().__init__()
         self.random_state = random_state
         self.activation = activation
         self.filter_sizes = filter_sizes
         self.kernel_sizes = kernel_sizes
+        super().__init__()
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
