@@ -211,7 +211,7 @@ jobs:
           # Load input
           obj_list = json.loads('''${{ needs.detect-changed-classes.outputs.obj_list }}''')
 
-          CHUNK_SIZE = 10  # adjust this!
+          CHUNK_SIZE = 10  # chosen such that this times number of runs is smaller 256
 
           # Split into chunks
           chunks = [obj_list[i:i+CHUNK_SIZE] for i in range(0, len(obj_list), CHUNK_SIZE)]
