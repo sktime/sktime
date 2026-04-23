@@ -14,6 +14,7 @@ from sktime.utils.dependencies._dependencies import (
 )
 from sktime.utils.dependencies._isinstance import _isinstance_by_name
 from sktime.utils.dependencies._placeholder import _placeholder_record
+from sktime.utils.dependencies.get_soft_dependencies import get_soft_dependencies
 
 __all__ = [
     "_check_dl_dependencies",
@@ -25,4 +26,5 @@ __all__ = [
     "_isinstance_by_name",
     "_placeholder_record",
     "_safe_import",
+    "get_soft_dependencies",
 ]

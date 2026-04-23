@@ -8,6 +8,8 @@ from collections.abc import Iterable
 
 from sktime.registry import all_estimators
 
+__all__ = ["get_soft_dependencies"]
+
 
 def _normalize_dependencies(deps: str | Iterable | None) -> set[str]:
     """Return a normalized set of dependency strings.
