@@ -6,7 +6,7 @@ on:
         type: string
 
 jobs:
-  test-est-inner:
+  test-est:
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +46,7 @@ jobs:
       - name: Install dependencies for ${{ matrix.flag }}
         run: |
           python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}', include_test_deps=True)))" > deps.txt
-          pip install -r deps.txt
+          uv pip install -r deps.txt
         continue-on-error: true
 
       - name: Show dependencies
