@@ -416,7 +416,13 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X[i] and X2[j]
         """
-        _check_estimator_deps(self)
+        # todo: handle optional dependencies here properly
+        # this should be severity = "error", but:
+        # currently, numba based distances work without numba but are slower
+        # the "numba" dependency is optional, making this an "error" severity
+        # would prevent that slower usage without numba
+        # solution: add tag for optional python dependencies and appropriate checks
+        _check_estimator_deps(self, severity="warning")
 
         X = self._pairwise_panel_x_check(X)
 
@@ -472,7 +478,13 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         diag: np.array of shape [n]
             i-th entry contains distance/kernel between X[i] and X[i]
         """
-        _check_estimator_deps(self)
+        # todo: handle optional dependencies here properly
+        # this should be severity = "error", but:
+        # currently, numba based distances work without numba but are slower
+        # the "numba" dependency is optional, making this an "error" severity
+        # would prevent that slower usage without numba
+        # solution: add tag for optional python dependencies and appropriate checks
+        _check_estimator_deps(self, severity="warning")
 
         import numpy as np
 
