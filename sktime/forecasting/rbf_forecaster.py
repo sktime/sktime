@@ -147,7 +147,11 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         self.pred_len = pred_len
         self.device = device
 
-        super().__init__()
+        super().__init__(
+            batch_size=batch_size,
+            optimizer=optimizer,
+            lr=lr,
+        )
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
