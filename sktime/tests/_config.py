@@ -89,7 +89,6 @@ EXCLUDED_TESTS = {
         "test_predict_time_index_with_X",  # separate - refer to #4765
     ],
     # known issue when X is passed, wrong time indices are returned, #1364
-    "StackingForecaster": ["test_predict_time_index_with_X"],
     "TapNetRegressor": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
