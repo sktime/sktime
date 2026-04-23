@@ -113,7 +113,6 @@ class BaseSplitter(BaseObject):
         self.window_length = window_length
         self.fh = fh
 
-    def __init__(self):
         super().__init__()
 
         # this block has a double purpose:
