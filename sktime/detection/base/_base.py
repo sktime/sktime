@@ -28,6 +28,7 @@ import pandas as pd
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.utils.adapters._safe_call import _method_has_arg
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation.series import check_series
 
 
@@ -88,17 +89,8 @@ class BaseDetector(BaseEstimator):
     }
 
     def __init__(self):
-        self._is_fitted = False
-
-        self._X = None
-        self._Y = None
-
-        task = self.get_tag("task")
-        learning_type = self.get_tag("learning_type")
-
         super().__init__()
-
-        self.set_tags(**{"task": task, "learning_type": learning_type})
+        _check_estimator_deps(self, severity="warning")
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated DetectorPipeline.
