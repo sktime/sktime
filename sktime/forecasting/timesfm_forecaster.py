@@ -9,11 +9,15 @@ import os
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import (
+    ForecastingHorizon,
+    _BaseGlobalForecaster,
+    _ZeroShotSerializationMixin,
+)
 from sktime.utils.singleton import _multiton
 
 
-class TimesFMForecaster(_BaseGlobalForecaster):
+class TimesFMForecaster(_ZeroShotSerializationMixin, _BaseGlobalForecaster):
     """TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
 
     TimesFM (Time Series Foundation Model) is a pretrained time-series foundation model

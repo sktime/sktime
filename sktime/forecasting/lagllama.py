@@ -6,7 +6,7 @@ __author__ = ["pranavvp16"]
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster, _ZeroShotSerializationMixin
 from sktime.utils.singleton import _multiton
 
 
@@ -124,7 +124,7 @@ class _CachedLagLlama:
         return self.estimator_, self.predictor_
 
 
-class LagLlamaForecaster(BaseForecaster):
+class LagLlamaForecaster(_ZeroShotSerializationMixin, BaseForecaster):
     """LagLlama Foundation Model for Time Series Forecasting.
 
     LagLlama is a foundation model for univariate probabilistic time series forecasting

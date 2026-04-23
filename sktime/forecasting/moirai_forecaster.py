@@ -5,13 +5,16 @@ from unittest.mock import patch
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.forecasting.base import (
+    _BaseGlobalForecaster,
+    _ZeroShotSerializationMixin,
+)
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
 
 
-class MOIRAIForecaster(_BaseGlobalForecaster):
+class MOIRAIForecaster(_ZeroShotSerializationMixin, _BaseGlobalForecaster):
     """
     Adapter for using MOIRAI Forecasters.
 

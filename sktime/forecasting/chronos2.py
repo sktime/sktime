@@ -5,11 +5,15 @@ __all__ = ["Chronos2Forecaster"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _ZeroShotSerializationMixin,
+)
 from sktime.utils.singleton import _multiton
 
 
-class Chronos2Forecaster(BaseForecaster):
+class Chronos2Forecaster(_ZeroShotSerializationMixin, BaseForecaster):
     """Interface to the Chronos-2 Zero-Shot Forecaster by Amazon Research.
 
     Chronos-2 is a pretrained encoder-only time series foundation model
@@ -132,16 +136,6 @@ class Chronos2Forecaster(BaseForecaster):
         if config is not None:
             self._config.update(config)
 
-    def __getstate__(self):
-        """Return state for pickling, excluding unpickleable model pipeline."""
-        state = self.__dict__.copy()
-        if hasattr(self, "model_pipeline"):
-            state["model_pipeline"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
-        self.__dict__.update(state)
 
     def _get_pipeline_kwargs(self):
         return {
