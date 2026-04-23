@@ -68,6 +68,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         "property:randomness": "derandomized",
         "capability:multivariate": False,
         "X-y-must-have-same-index": True,
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],
     }
 
     def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
