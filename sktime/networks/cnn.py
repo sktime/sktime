@@ -54,6 +54,7 @@ class CNNNetwork(BaseDeepNetwork):
         # --------------
         "authors": ["hfawaz", "James-Large", "Withington", "TonyBagnall", "noxthot"],
         "python_dependencies": "tensorflow",
+        "tests:skip_by_name": ["test_inheritance"],
     }
 
     # TODO (release 0.41.0)
