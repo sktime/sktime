@@ -149,7 +149,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
         super().__init__()
-        _check_estimator_deps(self)
+        _check_estimator_deps(self, severity="warning")
         self._state = "new"
 
     @classmethod

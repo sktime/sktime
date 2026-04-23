@@ -103,7 +103,7 @@ class BaseClassifier(BasePanelMixin):
         self._converter_store_y = {}
 
         super().__init__()
-        _check_estimator_deps(self)
+        _check_estimator_deps(self, severity="warning")
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.

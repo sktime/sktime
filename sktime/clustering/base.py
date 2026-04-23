@@ -50,7 +50,7 @@ class BaseClusterer(BaseEstimator):
             self.n_clusters = n_clusters
 
         super().__init__()
-        _check_estimator_deps(self)
+        _check_estimator_deps(self, severity="warning")
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.
