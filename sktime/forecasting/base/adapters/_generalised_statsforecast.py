@@ -35,6 +35,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:libs": ["sktime.forecasting.base.adapters._generalised_statsforecast"],
+        "tests:vm": True,
     }
 
     def __init__(self):
@@ -506,7 +507,7 @@ class StatsForecastBackAdapter:
         `_predict_in_or_out_of_sample` method of `_GeneralisedStatsForecastAdapter`.
         """
         if self._inner_fh is not None and not self._inner_fh.is_all_in_sample():
-            # Case on which we neeed to calcualte the maximum horizon passing it to MSTL
+            # Case on which we need to calculate the maximum horizon passing it to MSTL
             maximum_forecast_horizon = self._inner_fh[-1]
             return range(1, maximum_forecast_horizon + 1)
         else:

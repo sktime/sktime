@@ -26,6 +26,10 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 * `granite_ttm` - a package implementing TinyTimeMixer.
   Unofficial fork of package which is not available on pypi.
 
+* `lag_llama` - partial fork of Lag-Llama, from [time-series-foundation-models/lag-llama](https://github.com/time-series-foundation-models/lag-llama).
+  Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
+  Licensed under Apache 2.0.
+
 * `momentfm` - a package implementing the `momentfm` library, unofficial fork
   maintained since April 2025.
 
