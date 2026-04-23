@@ -1,10 +1,12 @@
 """Util to collect and install soft dependencies from estimators."""
 
-import re
 import subprocess
 import sys
 from collections import defaultdict
 from collections.abc import Iterable
+
+from packaging.requirements import Requirement
+from packaging.specifiers import SpecifierSet
 
 from sktime.registry import all_estimators
 
@@ -91,56 +93,75 @@ def get_soft_dependencies(
     return dependencies
 
 
-def _parse_package_spec(spec: str):
-    """Split a package specification into name and version specifier.
-
-    Parameters
-    ----------
-    spec : str
-        Package specification string, e.g., ``"numpy>=1.20"`` or ``"pandas"``.
-
-    Returns
-    -------
-    tuple of str
-        A tuple ``(name, version_specifier)`` where the version specifier
-        may be an empty string if not provided.
-    """
-    match = re.match(r"^([a-zA-Z0-9_\-]+)(.*)$", spec)
-    if match:
-        return match.group(1), match.group(2)
-    return spec, ""
-
-
-def _merge_dependencies(packages):
+def _merge_dependencies(packages, verbose=True, strategy="strict"):
     """Merge multiple specifications of the same package.
 
-    For duplicate packages, a heuristic is used to keep the most restrictive
-    version constraint by selecting the longest specifier string.
+    This implementation uses proper parsing via ``packaging`` and attempts
+    to compute the intersection of version constraints.
 
     Parameters
     ----------
     packages : iterable of str
         Collection of package specification strings.
+    verbose : bool, default=True
+        If True, print warnings for conflicts.
+    strategy : {"strict", "permissive"}, default="strict"
+        Strategy to handle conflicting constraints:
+        - "strict": skip packages with incompatible constraints
+        - "permissive": fall back to a heuristic (longest specifier)
 
     Returns
     -------
     list of str
         Sorted list of merged package specifications.
     """
-    merged = defaultdict(list)
+    grouped = defaultdict(list)
 
+    # group by package name
     for pkg in packages:
-        name, spec = _parse_package_spec(pkg)
-        merged[name].append(spec)
+        try:
+            req = Requirement(pkg)
+            grouped[req.name].append(req.specifier)
+        except Exception:
+            # fallback for non-standard strings
+            grouped[pkg].append(SpecifierSet(""))
 
-    final = []
+    merged = []
 
-    for name, specs in merged.items():
-        # pick the "most restrictive" spec (heuristic: longest string)
-        best_spec = max(specs, key=len) if specs else ""
-        final.append(name + best_spec)
+    for name, specifiers in grouped.items():
+        # compute intersection
+        combined = SpecifierSet()
+        for spec in specifiers:
+            combined &= spec
 
-    return sorted(final)
+        combined_str = str(combined)
+
+        # detect potential conflict (empty intersection heuristic)
+        if not combined_str:
+            if len(specifiers) > 1:
+                if verbose:
+                    print(
+                        f"[WARN] Conflicting requirements for {name}: "
+                        f"{[str(s) for s in specifiers]}"
+                    )
+
+                if strategy == "strict":
+                    # skip conflicting package
+                    continue
+
+                elif strategy == "permissive":
+                    # fallback: pick longest original spec
+                    fallback = max(
+                        (str(s) for s in specifiers),
+                        key=len,
+                        default="",
+                    )
+                    merged.append(name + fallback)
+                    continue
+
+        merged.append(name + combined_str)
+
+    return sorted(merged)
 
 
 def _install_packages(packages, verbose=True):
