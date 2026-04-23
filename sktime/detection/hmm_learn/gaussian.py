@@ -104,6 +104,10 @@ class GaussianHMM(BaseHMMLearn):
     >>> labeled_data = model.predict(data) # doctest: +SKIP
     """
 
+    _tags = {
+        "capability:multivariate": False,
+    }
+
     def __init__(
         self,
         n_components: int = 1,
