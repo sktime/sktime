@@ -193,39 +193,39 @@ jobs:
           echo "Number of changed classes: $OBJ_LIST_LENGTH"
           echo "Changed classes: $OBJ_LIST"
 
-prepare-chunks:
-  needs: detect-changed-classes
-  runs-on: ubuntu-latest
-  outputs:
-    obj_chunks: ${{ steps.chunk.outputs.obj_chunks }}
+  prepare-chunks:
+    needs: detect-changed-classes
+    runs-on: ubuntu-latest
+    outputs:
+      obj_chunks: ${{ steps.chunk.outputs.obj_chunks }}
 
-  steps:
-    - name: Chunk obj_list
-      id: chunk
-      shell: bash
-      run: |
-        python - <<'EOF'
-        import json
-        import os
+    steps:
+      - name: Chunk obj_list
+        id: chunk
+        shell: bash
+        run: |
+          python - <<'EOF'
+          import json
+          import os
 
-        # Load input
-        obj_list = json.loads('''${{ needs.detect-changed-classes.outputs.obj_list }}''')
+          # Load input
+          obj_list = json.loads('''${{ needs.detect-changed-classes.outputs.obj_list }}''')
 
-        CHUNK_SIZE = 10  # adjust this!
+          CHUNK_SIZE = 10  # adjust this!
 
-        # Split into chunks
-        chunks = [obj_list[i:i+CHUNK_SIZE] for i in range(0, len(obj_list), CHUNK_SIZE)]
+          # Split into chunks
+          chunks = [obj_list[i:i+CHUNK_SIZE] for i in range(0, len(obj_list), CHUNK_SIZE)]
 
-        # Fallback to avoid empty matrix error
-        if not chunks:
-            chunks = [[]]
+          # Fallback to avoid empty matrix error
+          if not chunks:
+              chunks = [[]]
 
-        print(f"Chunks: {len(chunks)}", file=os.sys.stderr)
+          print(f"Chunks: {len(chunks)}", file=os.sys.stderr)
 
-        # Emit output
-        with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-            f.write(f"obj_chunks={json.dumps(chunks)}\n")
-        EOF
+          # Emit output
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"obj_chunks={json.dumps(chunks)}\n")
+          EOF
 
   test-est:
     needs: [detect-changed-classes, prepare-chunks, test-nosoftdeps]
