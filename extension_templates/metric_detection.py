@@ -125,7 +125,7 @@ class MyMetric(BaseDetectionMetric):
             self._paramc = MyOtherEstimator(foo=42)
         else:
             # estimators should be cloned to avoid side effects
-            self._paramc = paramc.clone()
+            self._paramc = self.paramc.clone()
 
     def _evaluate(self, y_true, y_pred, X):
         """Evaluate the desired metric on given inputs.

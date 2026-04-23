@@ -174,7 +174,7 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
             self._paramc = MyOtherEstimator(foo=42)
         else:
             # estimators should be cloned to avoid side effects
-            self._paramc = paramc.clone()
+            self._paramc = self.paramc.clone()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite

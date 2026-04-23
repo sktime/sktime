@@ -143,7 +143,7 @@ class MyClusterer(BaseClusterer):
             self._paramc = MyOtherEstimator(foo=42)
         else:
             # estimators should be cloned to avoid side effects
-            self._paramc = paramc.clone()
+            self._paramc = self.paramc.clone()
 
     # todo: implement this abstract class, mandatory
     def _fit(self, X):
