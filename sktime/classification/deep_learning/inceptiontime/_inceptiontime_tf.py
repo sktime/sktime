@@ -182,7 +182,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
         self._network = InceptionTimeNetwork(**network_params)
 
-        super.__post_init__()
+        super().__post_init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

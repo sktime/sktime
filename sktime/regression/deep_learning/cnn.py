@@ -188,7 +188,7 @@ class CNNRegressor(BaseDeepRegressor):
             random_state=self.random_state,
         )
 
-        super.__post_init__()
+        super().__post_init__()
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
