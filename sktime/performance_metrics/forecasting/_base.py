@@ -883,7 +883,11 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
                 constr_params = set(constr.keys()).intersection(params.keys())
                 params = {key: params[key] for key in constr_params}
 
-        res = func(y_true=y_true, y_pred=y_pred, **params)
+        func_args = list(signature(func).parameters.keys())
+        if func_args and func_args[0] != "y_true":
+            res = func(y_true, y_pred, **params)
+        else:
+            res = func(y_true=y_true, y_pred=y_pred, **params)
         return res
 
 
@@ -990,7 +994,7 @@ def make_forecasting_scorer(
     ----------
     func : callable
         Callable to convert to a forecasting scorer class.
-        Score function (or loss function) with signature ``func(y, y_pred, **kwargs)``.
+        Score function (or loss function) with signature ``func(y_true, y_pred, **kwargs)``.
 
     name : str, default=None
         Name to use for the forecasting scorer loss class.
