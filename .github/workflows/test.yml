@@ -221,7 +221,7 @@ jobs:
               chunks = [[]]
 
           print(f"Number of chunks: {len(chunks)}", file=os.sys.stderr)
-          print(f"Chunks: {chunks}"")
+          print(f"Chunks: {chunks}")
 
           # Emit output
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
