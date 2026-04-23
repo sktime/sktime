@@ -147,8 +147,16 @@ class VARReduce(BaseForecaster):
         else:
             self.regressor_ = clone(regressor)
 
-        assert hasattr(self.regressor_, "fit"), "Regressor must have 'fit'"
-        assert hasattr(self.regressor_, "predict"), "Regressor must have 'predict'"
+        if not hasattr(self.regressor_, "fit"):
+            raise ValueError(
+                "regressor must expose a 'fit' method, "
+                f"but {type(self.regressor_)} does not."
+            )
+        if not hasattr(self.regressor_, "predict"):
+            raise ValueError(
+                "regressor must expose a 'predict' method, "
+                f"but {type(self.regressor_)} does not."
+            )
 
         self.coefficients_ = None
         self.intercept_ = None
