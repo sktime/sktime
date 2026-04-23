@@ -113,12 +113,26 @@ class BaseSplitter(BaseObject):
         self.window_length = window_length
         self.fh = fh
 
+    def __init__(self):
         super().__init__()
-        _check_estimator_deps(self, severity="warning")
 
-        from sktime.utils.dependencies import _check_estimator_deps
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
 
-        _check_estimator_deps(self)
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`.
