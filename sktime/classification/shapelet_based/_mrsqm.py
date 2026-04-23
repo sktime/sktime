@@ -25,7 +25,7 @@ class MrSQM(_DelegatedClassifier):
         (maximum) number of features selected per representation.
     selection_per_rep : int, default=2000
         (maximum) number of candidate features selected per representation.
-        Only applied in two stages strategies (RS and SR), otherwise ignored.
+        Only applied in twco stages strategies (RS and SR), otherwise ignored.
     nsax : int, default=1
         number of representations produced by sax transformation.
     nsfa : int, default=0

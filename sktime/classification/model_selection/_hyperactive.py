@@ -93,7 +93,7 @@ class TSCOptCV(_DelegatedForecaster):
         - "ray": uses ``ray``, requires ``ray`` package in environment
 
         Recommendation: Use "dask" or "loky" for parallel evaluate.
-        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        "threading" is unlikelcy to see speed ups due to the GIL and the serialization
         backend (``cloudpickle``) for "dask" and "loky" is generally more robust
         than the standard ``pickle`` library used in "multiprocessing".
 
