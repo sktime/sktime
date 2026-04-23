@@ -33,7 +33,6 @@ EXCLUDE_ESTIMATORS = [
     "HIVECOTEV1",
     "HIVECOTEV2",
     "RandomIntervalSpectralEnsemble",
-    "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
@@ -100,8 +99,6 @@ EXCLUDED_TESTS = {
     #   but these are anyway on their path to deprecation, see #2370
     "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
-    # ColumnTransformer still needs to be refactored, see #2537
-    "ColumnTransformer": ["test_methods_do_not_change_state"],
     # Early classifiers intentionally retain information from previous predict calls
     #   for #1.
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
@@ -221,8 +218,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "PELT",
         "PaddingTransformer",
         "PlateauFinder",
-        "Prophet",
-        "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
@@ -249,7 +244,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
         "TimeSeriesKMedoids",
-        "TimeSeriesKernelKMeans",
         "WEASEL",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
         # too after adding test parameters to them

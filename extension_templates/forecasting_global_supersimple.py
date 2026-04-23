@@ -75,7 +75,7 @@ class MyForecaster(_BaseGlobalForecaster):
     _tags = {
         # scitype:y controls whether internal y can be univariate/multivariate
         # if multivariate is not valid, applies vectorization over variables
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         # fill in "univariate" or "both"
         #   "univariate": inner _fit, _predict, receives only single-column DataFrame
         #   "both": inner _predict gets pd.DataFrame series with any number of columns
@@ -154,9 +154,12 @@ class MyForecaster(_BaseGlobalForecaster):
         Parameters
         ----------
         y : pd.DataFrame
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to have a single column
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here.

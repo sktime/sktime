@@ -15,6 +15,7 @@ __all__ = [
     "SimpleRNNRegressor",
     "SimpleRNNRegressorTorch",
     "TapNetRegressor",
+    "TapNetRegressorTorch",
 ]
 
 from sktime.regression.deep_learning.cnn import CNNRegressor
@@ -36,4 +37,7 @@ from sktime.regression.deep_learning.rnn import (
     SimpleRNNRegressor,
     SimpleRNNRegressorTorch,
 )
-from sktime.regression.deep_learning.tapnet import TapNetRegressor
+from sktime.regression.deep_learning.tapnet import (
+    TapNetRegressor,
+    TapNetRegressorTorch,
+)
