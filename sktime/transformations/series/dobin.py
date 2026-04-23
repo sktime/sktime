@@ -20,7 +20,7 @@ class DOBIN(BaseTransformer):
 
     DOBIN is a pre-processing algorithm that constructs a set of basis
     vectors tailored for outlier detection as described by _[1]. DOBIN
-    has a simple mathematical foundation and can be used as a dimension
+    has a simple mathematiccal foundation and can be used as a dimension
     reduction tool for outlier detection tasks.
 
     Method assumes normalized data, the original R code implementation uses:

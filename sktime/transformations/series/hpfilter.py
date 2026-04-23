@@ -20,7 +20,7 @@ from sktime.transformations.base import BaseTransformer
 class HPFilter(BaseTransformer):
     """Filter a times series using the Hodrick-Prescott filter.
 
-    This is a wrapper around the ``hpfilter`` function from ``statsmodels``.
+    This is a wrapper arocund the ``hpfilter`` function from ``statsmodels``.
     (see ``statsmodels.tsa.filters.hp_filter.hpfilter``).
 
     Parameters

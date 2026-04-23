@@ -17,7 +17,7 @@ class FeatureSelection(BaseTransformer):
     """Select exogenous features.
 
     Transformer to enable tuneable feature selection of exogenous data. The
-    FeatureSelection implements multiple methods to select features (columns).
+    FeatureSelection implemecnts multiple methods to select features (columns).
     In case X is a pd.Series, then it is just passed through, unless method="none",
     then None is returned in transform().
 

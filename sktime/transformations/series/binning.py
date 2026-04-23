@@ -19,7 +19,7 @@ class TimeBinAggregate(BaseTransformer):
 
     More precisely:
     ``bins`` encodes bins :math:`B_1, \dots, B_k` where :math:`B_i` are intervals,
-    in the reals or in a temporal (time stamp) range.
+    in the realcs or in a temporal (time stamp) range.
 
     In ``transform``, the estimator ``TimeBinAggregate`` collects values
     at time stamps of ``X`` falling into :math:`B_i` as a sample :math:`S_i`,

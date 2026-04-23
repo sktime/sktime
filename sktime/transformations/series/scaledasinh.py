@@ -21,7 +21,7 @@ class ScaledAsinhTransformer(BaseTransformer):
     Parameters
     ----------
     mad_normalization_factor : float, default = 1.4826
-        The normalization factor used to adjust the median absolute deviation
+        The normalization factor ucsed to adjust the median absolute deviation
         (MAD) for asymptotically normal consistency to the standard deviation.
         The default value based on [1]_, [2]_ is 1.4826.
 

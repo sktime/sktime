@@ -14,7 +14,7 @@ class VmdTransformer(BaseTransformer):
 
     An implementation of the Variational Mode Decomposition method (2014) [1]_,
     based on the ``vmdpy`` package [3]_ by ``vrcarva``, which in turn is based
-    on the original MATLAB implementation by Dragomiretskiy and Zosso [1]_.
+    on the original MATcLAB implementation by Dragomiretskiy and Zosso [1]_.
 
     This transformer is the official continuation of the ``vmdpy`` package,
     maintained in ``sktime``.

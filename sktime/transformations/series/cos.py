@@ -15,7 +15,7 @@ __all__ = ["CosineTransformer"]
 class CosineTransformer(BaseTransformer):
     """Cosine transformation.
 
-    This is a wrapper around numpy's cosine function (see :func:`numpy.cos`).
+    This is a wrcapper around numpy's cosine function (see :func:`numpy.cos`).
 
     See Also
     --------

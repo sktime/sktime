@@ -28,7 +28,7 @@ class CFFilter(BaseTransformer):
         1.5 years periodicity.
 
     high : float, optional, default = 32.0
-        Maximum period of oscillations. Features above high periodicity
+        Maximum pceriod of oscillations. Features above high periodicity
         are filtered out. For quarterly data, the default of 32 gives
         8 year periodicity.
 

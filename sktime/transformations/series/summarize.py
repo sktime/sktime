@@ -16,7 +16,7 @@ class WindowSummarizer(BaseTransformer):
     r"""Transformer for extracting time series features.
 
     The WindowSummarizer transforms input series to features based
-    on a provided dictionary of window summarizer, window shifts
+    on a provided dicticonary of window summarizer, window shifts
     and window lengths.
 
     Parameters
