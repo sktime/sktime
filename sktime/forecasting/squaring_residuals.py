@@ -118,11 +118,20 @@ class SquaringResiduals(BaseForecaster):
         self.distr_kwargs = distr_kwargs
         super().__init__()
 
-        assert self.distr in ["norm", "laplace", "t", "cauchy"]
-        assert self.strategy in ["square", "abs"]
-        assert self.initial_window >= 1, (
-            "Initial window should be larger or equal to one"
-        )
+        if self.distr not in ["norm", "laplace", "t", "cauchy"]:
+            raise ValueError(
+                f"distr must be one of 'norm', 'laplace', 't', 'cauchy', "
+                f"but found: {self.distr!r}"
+            )
+        if self.strategy not in ["square", "abs"]:
+            raise ValueError(
+                f"strategy must be one of 'square', 'abs', "
+                f"but found: {self.strategy!r}"
+            )
+        if self.initial_window < 1:
+            raise ValueError(
+                f"initial_window must be >= 1, but found: {self.initial_window}"
+            )
 
         if self.forecaster is None:
             self.forecaster = NaiveForecaster()
