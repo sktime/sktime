@@ -185,6 +185,10 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         if not _check_estimator_deps(estimator_class, severity="none"):
             return None
 
+        estimator_instance = estimator_class.create_test_instance(
+            parameter_set="results_comparison"
+        )
+
         # set random seed if possible
         if "random_state" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
