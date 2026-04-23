@@ -194,7 +194,7 @@ jobs:
           echo "Changed classes: $OBJ_LIST"
 
   test-est:
-    needs: detect-changed-classes
+    needs: [detect-changed-classes, test-nosoftdeps]
     if: ${{ needs.detect-changed-classes.outputs.obj_list != '[]' }}
 
     strategy:
