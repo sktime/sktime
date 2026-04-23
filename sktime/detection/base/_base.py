@@ -94,9 +94,6 @@ class BaseDetector(BaseEstimator):
         self._X = None
         self._y = None
 
-        task = self.get_tag("task")
-        learning_type = self.get_tag("learning_type")
-
         super().__init__()
         _check_estimator_deps(self, severity="warning")
 
