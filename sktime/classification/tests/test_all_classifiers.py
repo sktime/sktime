@@ -189,6 +189,12 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             parameter_set="results_comparison"
         )
 
+        if estimator_instance.is_composite():
+            # if the estimator is a composite, we set random state for all sub-estimators
+            for sub_estimator in estimator_instance._components().values():
+                if not _check_estimator_deps(sub_estimator, severity="none"):
+                    return None
+
         # set random seed if possible
         if "random_state" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
