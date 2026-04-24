@@ -869,11 +869,10 @@ class LagLlamaForecaster(BaseForecaster):
 
         _y = self._extend_df(_y, fh)
 
-        # Check for range index
-        self._is_range_index = False
-        if self.check_range_index(y):
+        # _is_range_index is pre-computed in _fit; do not mutate it here
+        # (see _fit comment on the sktime non-state-changing contract).
+        if self._is_range_index:
             _y.index = self.handle_range_index(_y.index)
-            self._is_range_index = True
 
         # Check for hierarchical data and convert to panel
         _is_hierarchical = False
