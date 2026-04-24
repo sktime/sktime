@@ -78,7 +78,7 @@ class SBAForecaster(BaseForecaster):
         # packaging info
         # --------------
         "authors": "R2-STAR",
-        "maintainers": [],
+        "maintainers": ["R2-STAR"],
         # estimator type
         # --------------
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
