@@ -1,0 +1,59 @@
+on:
+  workflow_call:
+    inputs:
+      flags:
+        required: true
+        type: string
+
+jobs:
+  test-est:
+    strategy:
+      fail-fast: false
+      matrix:
+        flag: ${{ fromJson(inputs.flags) }}
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install OSX packages
+        run: ./.github/scripts/install_osx_dependencies.sh
+
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
+
+      - name: Install sktime with dev dependencies
+        run: uv pip install .[dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
+
+      - name: Install dependencies for ${{ matrix.flag }}
+        run: |
+          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}', include_test_deps=True)))" > deps.txt
+          uv pip install -r deps.txt
+        continue-on-error: true
+
+      - name: Show dependencies
+        run: uv pip list
+
+      - name: Run tests with ${{ matrix.flag }}
+        env:
+          FLAG: ${{ matrix.flag }}
+        shell: bash
+        run: python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('${{ matrix.flag }}')"
