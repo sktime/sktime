@@ -2,6 +2,7 @@
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
 
 class MACNNNetwork(BaseDeepNetwork):
@@ -25,7 +26,7 @@ class MACNNNetwork(BaseDeepNetwork):
         The number of MACNN Blocks to be stacked.
     filter_sizes : tuple, optional (default=(64, 128, 256))
         The input size of Conv1D layers within each MACNN Block.
-    kernel_size : tuple, optional (default=(3, 6, 12))
+    kernel_sizes : tuple, optional (default=(3, 6, 12))
         The output size of Conv1D layers within each MACNN Block.
     reduction : int, optional (default=16)
         The factor by which the first dense layer of a MACNN Block will be divided by.
@@ -35,6 +36,8 @@ class MACNNNetwork(BaseDeepNetwork):
         Activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
+    kernel_size : int, optional (default=None)
+        Deprecated, use kernel_sizes instead.
     """
 
     _tags = {
@@ -49,10 +52,11 @@ class MACNNNetwork(BaseDeepNetwork):
         strides=2,
         repeats=2,
         filter_sizes=(64, 128, 256),
-        kernel_size=(3, 6, 12),
+        kernel_sizes=(3, 6, 12),
         reduction=16,
         random_state=0,
         activation="relu",
+        kernel_size=None,
     ):
         _check_dl_dependencies(severity="error")
         super().__init__()
@@ -63,7 +67,17 @@ class MACNNNetwork(BaseDeepNetwork):
         self.strides = strides
         self.repeats = repeats
         self.filter_sizes = filter_sizes
-        self.kernel_size = kernel_size
+        if kernel_size is not None:
+            warn(
+                "In MACNNNetwork, the parameter 'kernel_size' is deprecated and will "
+                "be removed in a future release. Please use 'kernel_sizes' instead.",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            self.kernel_sizes = kernel_size
+        else:
+            self.kernel_sizes = kernel_sizes
         self.reduction = reduction
         self.random_state = random_state
 
@@ -95,7 +109,7 @@ class MACNNNetwork(BaseDeepNetwork):
         # not convolution. For multi-scale convolutions to concatenate,
         # all kernels MUST produce the same output length.
         # Therefore, we always use padding="same" for Conv1d layers.
-        for kernel_size in self.kernel_size:
+        for kernel_size in self.kernel_sizes:
             conv_layer = keras.layers.Conv1D(
                 filters=kernels, kernel_size=kernel_size, padding="same"
             )(x)

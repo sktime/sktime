@@ -33,7 +33,7 @@ class CNNClassifier(BaseDeepClassifier):
         the number of epochs to train the model
     batch_size : int, default = 16
         the number of samples per gradient update.
-    kernel_size : int, default = 7
+    kernel_sizes : int or list of int, default = 7
         the length of the 1D convolution window
     avg_pool_size : int, default = 3
         size of the average pooling windows
@@ -105,7 +105,7 @@ class CNNClassifier(BaseDeepClassifier):
         self,
         n_epochs=2000,
         batch_size=16,
-        kernel_size=7,
+        kernel_sizes=7,
         avg_pool_size=3,
         n_conv_layers=2,
         callbacks=None,
@@ -119,13 +119,25 @@ class CNNClassifier(BaseDeepClassifier):
         optimizer=None,
         filter_sizes=None,
         padding="auto",
+        kernel_size=None,
     ):
         _check_dl_dependencies(severity="error")
 
         self.batch_size = batch_size
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
-        self.kernel_size = kernel_size
+        if kernel_size is not None:
+            warn(
+                "In CNNClassifier, the parameter 'kernel_size' is deprecated and "
+                "will be removed in a future release. Please use 'kernel_sizes' "
+                "instead.",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            self.kernel_sizes = kernel_size
+        else:
+            self.kernel_sizes = kernel_sizes
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -167,7 +179,7 @@ class CNNClassifier(BaseDeepClassifier):
         # Remove the usage of self._activation_hidden in the following lines
         # and replace it with self.activation_hidden
         self._network = CNNNetwork(
-            kernel_size=self.kernel_size,
+            kernel_sizes=self.kernel_sizes,
             avg_pool_size=self.avg_pool_size,
             n_conv_layers=self.n_conv_layers,
             filter_sizes=self.filter_sizes,

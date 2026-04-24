@@ -21,7 +21,7 @@ class CNNNetwork(BaseDeepNetwork):
 
     Parameters
     ----------
-    kernel_size : int, default = 7
+    kernel_sizes : int or list of int, default = 7
         specifying the length of the 1D convolution window
     avg_pool_size : int, default = 3
         size of the average pooling windows
@@ -60,18 +60,29 @@ class CNNNetwork(BaseDeepNetwork):
     # Change the default value of 'activation' to "relu"
     def __init__(
         self,
-        kernel_size=7,
+        kernel_sizes=7,
         avg_pool_size=3,
         n_conv_layers=2,
         filter_sizes=None,
         activation="changing_from_sigmoid_to_relu_in_0.41.0",
         padding="auto",
         random_state=0,
+        kernel_size=None,
     ):
         _check_dl_dependencies(severity="error")
         self.random_state = random_state
         self.padding = padding
-        self.kernel_size = kernel_size
+        if kernel_size is not None:
+            warn(
+                "In CNNNetwork, the parameter 'kernel_size' is deprecated and will be "
+                "removed in a future release. Please use 'kernel_sizes' instead.",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            self.kernel_sizes = kernel_size
+        else:
+            self.kernel_sizes = kernel_sizes
         self.avg_pool_size = avg_pool_size
         self.n_conv_layers = n_conv_layers
         self.filter_sizes = filter_sizes
@@ -139,7 +150,7 @@ class CNNNetwork(BaseDeepNetwork):
         # and replace it with self.activation
         conv = keras.layers.Conv1D(
             filters=filter_sizes[0],
-            kernel_size=self.kernel_size,
+            kernel_size=self.kernel_sizes,
             padding=padding,
             activation=self._activation,
         )(input_layer)
@@ -153,7 +164,7 @@ class CNNNetwork(BaseDeepNetwork):
             # and replace it with self.activation
             conv = keras.layers.Conv1D(
                 filters=filter_sizes[i],
-                kernel_size=self.kernel_size,
+                kernel_size=self.kernel_sizes,
                 padding=padding,
                 activation=self._activation,
             )(conv)

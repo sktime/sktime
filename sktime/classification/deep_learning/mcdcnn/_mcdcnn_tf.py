@@ -8,6 +8,7 @@ from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.mcdcnn import MCDCNNNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
 
 class MCDCNNClassifier(BaseDeepClassifier):
@@ -22,7 +23,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         The number of epochs to train the model.
     batch_size : int, optional (default=16)
         The number of samples per gradient update.
-    kernel_size : int, optional (default=5)
+    kernel_sizes : tuple, optional (default=(5, 5))
         The size of kernel in Conv1D layer.
     pool_size : int, optional (default=2)
         The size of kernel in (Max) Pool layer.
@@ -62,6 +63,8 @@ class MCDCNNClassifier(BaseDeepClassifier):
         The callback(s) to use during training.
     random_state : int, optional (default=0)
         The seed to any random action.
+    kernel_size : int, optional (default=None)
+        Deprecated and will be removed in a future release. Please use `kernel_sizes` instead.
 
     References
     ----------
@@ -92,7 +95,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         self,
         n_epochs=120,
         batch_size=16,
-        kernel_size=5,
+        kernel_sizes=(5, 5),
         pool_size=2,
         filter_sizes=(8, 8),
         dense_units=732,
@@ -107,12 +110,13 @@ class MCDCNNClassifier(BaseDeepClassifier):
         optimizer=None,
         verbose=False,
         random_state=0,
+        kernel_size=None,
     ):
         _check_dl_dependencies(severity="error")
 
         self.n_epochs = n_epochs
         self.batch_size = batch_size
-        self.kernel_size = kernel_size
+        self.kernel_sizes = kernel_sizes
         self.pool_size = pool_size
         self.filter_sizes = filter_sizes
         self.dense_units = dense_units
@@ -127,13 +131,24 @@ class MCDCNNClassifier(BaseDeepClassifier):
         self.optimizer = optimizer
         self.verbose = verbose
         self.random_state = random_state
+        self.kernel_size = kernel_size
+
+        if self.kernel_size is not None:
+            warn(
+                "In MCDCNNClassifier, parameter `kernel_size` is deprecated and will "
+                "be removed in a future release. Please use `kernel_sizes` instead.",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            self.kernel_sizes = self.kernel_size
 
         super().__init__()
 
         self.history = None
         self._network = MCDCNNNetwork(
             activation=self.activation_hidden,
-            kernel_size=self.kernel_size,
+            kernel_sizes=self.kernel_sizes,
             pool_size=self.pool_size,
             filter_sizes=self.filter_sizes,
             dense_units=self.dense_units,

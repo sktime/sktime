@@ -7,6 +7,7 @@ from sklearn.utils import check_random_state
 from sktime.networks.macnn import MACNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
 
 class MACNNRegressor(BaseDeepRegressor):
@@ -34,7 +35,7 @@ class MACNNRegressor(BaseDeepRegressor):
         The number of MACNN Blocks to be stacked.
     filter_sizes : tuple, optional (default=(64, 128, 256))
         The input size of Conv1D layers within each MACNN Block.
-    kernel_size : tuple, optional (default=(3, 6, 12))
+    kernel_sizes : tuple, optional (default=(3, 6, 12))
         The output size of Conv1D layers within each MACNN Block.
     reduction : int, optional (default = 16)
         The factor by which the first dense layer of a MACNN Block will be divided by.
@@ -64,6 +65,11 @@ class MACNNRegressor(BaseDeepRegressor):
         Activation function used in the hidden layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
+    kernel_sizes : tuple, optional (default=(3, 6, 12))
+        The output size of Conv1D layers within each MACNN Block.
+    kernel_size : int, optional (default=None)
+        Deprecated and will be removed in a future release.
+        Please use `kernel_sizes` instead.
 
     References
     ----------
@@ -91,7 +97,7 @@ class MACNNRegressor(BaseDeepRegressor):
         strides=2,
         repeats=2,
         filter_sizes=(64, 128, 256),
-        kernel_size=(3, 6, 12),
+        kernel_sizes=(3, 6, 12),
         reduction=16,
         loss="mean_squared_error",
         use_bias=True,
@@ -102,6 +108,7 @@ class MACNNRegressor(BaseDeepRegressor):
         verbose=False,
         activation="linear",
         activation_hidden="relu",
+        kernel_size=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -114,7 +121,18 @@ class MACNNRegressor(BaseDeepRegressor):
         self.strides = strides
         self.repeats = repeats
         self.filter_sizes = filter_sizes
-        self.kernel_size = kernel_size
+        if kernel_size is not None:
+            warn(
+                "In MACNNRegressor, the parameter 'kernel_size' is deprecated and "
+                "will be removed in a future release. Please use 'kernel_sizes' "
+                "instead.",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            self.kernel_sizes = kernel_size
+        else:
+            self.kernel_sizes = kernel_sizes
         self.reduction = reduction
         self.loss = loss
         self.use_bias = use_bias
@@ -134,7 +152,7 @@ class MACNNRegressor(BaseDeepRegressor):
             strides=self.strides,
             repeats=self.repeats,
             filter_sizes=self.filter_sizes,
-            kernel_size=self.kernel_size,
+            kernel_sizes=self.kernel_sizes,
             reduction=self.reduction,
             random_state=self.random_state,
         )

@@ -7,6 +7,7 @@ from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.macnn import MACNNNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
 
 class MACNNClassifier(BaseDeepClassifier):
@@ -34,7 +35,7 @@ class MACNNClassifier(BaseDeepClassifier):
         The number of MACNN Blocks to be stacked.
     filter_sizes : tuple, optional (default=(64, 128, 256))
         The input size of Conv1D layers within each MACNN Block.
-    kernel_size : tuple, optional (default=(3, 6, 12))
+    kernel_sizes : tuple, optional (default=(3, 6, 12))
         The output size of Conv1D layers within each MACNN Block.
     reduction : int, optional (default = 16)
         The factor by which the first dense layer of a MACNN Block will be divided by.
@@ -64,6 +65,9 @@ class MACNNClassifier(BaseDeepClassifier):
     verbose : bool, optional (default=False)
         Verbosity during model training, making it ``True`` will
         print model summary, training information etc.
+    kernel_size : int, optional (default=None)
+        Deprecated and will be removed in a future release.
+        Please use `kernel_sizes` instead.
 
     References
     ----------
@@ -101,7 +105,7 @@ class MACNNClassifier(BaseDeepClassifier):
         strides=2,
         repeats=2,
         filter_sizes=(64, 128, 256),
-        kernel_size=(3, 6, 12),
+        kernel_sizes=(3, 6, 12),
         reduction=16,
         loss="categorical_crossentropy",
         activation="sigmoid",
@@ -112,6 +116,7 @@ class MACNNClassifier(BaseDeepClassifier):
         callbacks=None,
         random_state=0,
         verbose=False,
+        kernel_size=None,
     ):
         _check_dl_dependencies(severity="error")
 
@@ -122,7 +127,18 @@ class MACNNClassifier(BaseDeepClassifier):
         self.strides = strides
         self.repeats = repeats
         self.filter_sizes = filter_sizes
-        self.kernel_size = kernel_size
+        if kernel_size is not None:
+            warn(
+                "In MACNNClassifier, the parameter 'kernel_size' is deprecated and "
+                "will be removed in a future release. Please use 'kernel_sizes' "
+                "instead.",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            self.kernel_sizes = kernel_size
+        else:
+            self.kernel_sizes = kernel_sizes
         self.reduction = reduction
         self.loss = loss
         self.activation = activation
@@ -144,7 +160,7 @@ class MACNNClassifier(BaseDeepClassifier):
             strides=self.strides,
             repeats=self.repeats,
             filter_sizes=self.filter_sizes,
-            kernel_size=self.kernel_size,
+            kernel_sizes=self.kernel_sizes,
             reduction=self.reduction,
             random_state=self.random_state,
         )

@@ -2,6 +2,7 @@
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
 
 class MCDCNNNetwork(BaseDeepNetwork):
@@ -13,7 +14,7 @@ class MCDCNNNetwork(BaseDeepNetwork):
 
     Parameters
     ----------
-    kernel_size : int, optional (default=5)
+    kernel_sizes : tuple, optional (default=(5, 5))
         The size of kernel in Conv1D layer.
     pool_size : int, optional (default=2)
         The size of kernel in (Max) Pool layer.
@@ -35,6 +36,8 @@ class MCDCNNNetwork(BaseDeepNetwork):
         Activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
+    kernel_size : int, optional (default=None)
+        Deprecated and will be removed in a future release. Please use `kernel_sizes` instead.
     """
 
     _tags = {
@@ -44,7 +47,7 @@ class MCDCNNNetwork(BaseDeepNetwork):
 
     def __init__(
         self,
-        kernel_size=5,
+        kernel_sizes=(5, 5),
         pool_size=2,
         filter_sizes=(8, 8),
         dense_units=732,
@@ -52,18 +55,41 @@ class MCDCNNNetwork(BaseDeepNetwork):
         pool_padding="same",
         random_state=0,
         activation="relu",
+        kernel_size=None,
     ):
         _check_dl_dependencies(severity="error")
         super().__init__()
 
         self.activation = activation
-        self.kernel_size = kernel_size
+        self.kernel_sizes = kernel_sizes
         self.pool_size = pool_size
         self.filter_sizes = filter_sizes
         self.dense_units = dense_units
         self.conv_padding = conv_padding
         self.pool_padding = pool_padding
         self.random_state = random_state
+
+        if kernel_size is not None:
+            warn(
+                "In MCDCNNNetwork, parameter `kernel_size` is deprecated and will be "
+                "removed in a future release. Please use `kernel_sizes` instead.",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            self.kernel_sizes = kernel_size
+
+        if isinstance(self.kernel_sizes, int):
+            self.kernel_sizes = tuple(
+                [self.kernel_sizes for _ in range(len(self.filter_sizes))]
+            )
+
+        if len(self.filter_sizes) != len(self.kernel_sizes):
+            raise ValueError(
+                f"Length of `filter_sizes` {len(self.filter_sizes)} must match "
+                f"the number of convolutional layers determined by the length of "
+                f"`kernel_sizes` {len(self.kernel_sizes)}."
+            )
 
     def build_network(self, input_shape, **kwargs):
         """
@@ -87,44 +113,35 @@ class MCDCNNNetwork(BaseDeepNetwork):
         n_t = input_shape[0]  # corresponding to the number of time steps (m)
         n_vars = input_shape[1]  # corresponding to the number of variables (d)
 
-        input_layers, conv2_layers = [], []
+        input_layers, conv_layers = [], []
 
         for _ in range(n_vars):
             input_layer = keras.layers.Input((n_t, 1))
             input_layers.append(input_layer)
 
-            conv1 = keras.layers.Conv1D(
-                self.filter_sizes[0],
-                kernel_size=self.kernel_size,
-                activation=self.activation,
-                padding=self.conv_padding,
-            )(input_layer)
-            conv1 = keras.layers.MaxPooling1D(
-                pool_size=self.pool_size,
-                padding=self.pool_padding,
-            )(conv1)
+            x = input_layer
+            for i, filter_size in enumerate(self.filter_sizes):
+                x = keras.layers.Conv1D(
+                    filter_size,
+                    kernel_size=self.kernel_sizes[i],
+                    activation=self.activation,
+                    padding=self.conv_padding,
+                )(x)
+                x = keras.layers.MaxPooling1D(
+                    pool_size=self.pool_size,
+                    padding=self.pool_padding,
+                )(x)
 
-            conv2 = keras.layers.Conv1D(
-                self.filter_sizes[1],
-                kernel_size=self.kernel_size,
-                activation=self.activation,
-                padding=self.conv_padding,
-            )(conv1)
-            conv2 = keras.layers.MaxPooling1D(
-                pool_size=self.pool_size,
-                padding=self.pool_padding,
-            )(conv2)
-            conv2 = keras.layers.Flatten()(conv2)
-
-            conv2_layers.append(conv2)
+            x = keras.layers.Flatten()(x)
+            conv_layers.append(x)
 
         # In univariate cases, legacy tf loaders returns just the
         # layer and not a list of layers with one element,
         # therefore simply use that layer, bypassing concat layer.
         if n_vars == 1:
-            output_layer = conv2_layers[0]
+            output_layer = conv_layers[0]
         else:
-            output_layer = keras.layers.Concatenate(axis=-1)(conv2_layers)
+            output_layer = keras.layers.Concatenate(axis=-1)(conv_layers)
 
         output_layer = keras.layers.Dense(
             units=self.dense_units,

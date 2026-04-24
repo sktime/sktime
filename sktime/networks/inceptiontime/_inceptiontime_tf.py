@@ -2,6 +2,7 @@
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
 
 class InceptionTimeNetwork(BaseDeepNetwork):
@@ -34,10 +35,11 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         use_bottleneck=True,
         bottleneck_size=32,
         depth=6,
-        kernel_size=40,
+        kernel_sizes=40,
         random_state=0,
         activation="relu",
         activation_inception="linear",
+        kernel_size=None,
     ):
         """Initialize Inception Time.
 
@@ -46,7 +48,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         use_residual : boolean,
         use_bottleneck : boolean,
         depth : int
-        kernel_size : int, specifying the length of the 1D convolution window
+        kernel_sizes : int or tuple of 3 ints, specifying the length of the 1D convolution window
         bottleneck_size : int,
         random_state : int, seed to any needed random actions
         activation : string, default = "relu"
@@ -57,6 +59,8 @@ class InceptionTimeNetwork(BaseDeepNetwork):
             activation function used inside the inception module;
             List of available keras activation functions:
             https://keras.io/api/layers/activations/
+        kernel_size : int, default = None
+            Deprecated, use kernel_sizes instead.
         """
         _check_dl_dependencies(severity="error")
         super().__init__()
@@ -67,9 +71,23 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         self.use_residual = use_residual
         self.use_bottleneck = use_bottleneck
         self.depth = depth
+        self.kernel_sizes = kernel_sizes
         self.kernel_size = kernel_size
         self.bottleneck_size = bottleneck_size
         self.random_state = random_state
+
+        if self.kernel_size is not None:
+            warn(
+                "In InceptionTimeNetwork, parameter `kernel_size` is deprecated and "
+                "will be removed in a future release. Please use `kernel_sizes` instead.",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            self.kernel_sizes = self.kernel_size
+
+        if isinstance(self.kernel_sizes, int):
+            self.kernel_sizes = [self.kernel_sizes // (2**i) for i in range(3)]
 
     def _inception_module(self, input_tensor, activation, activation_output, stride=1):
         from tensorflow import keras
@@ -85,8 +103,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         else:
             input_inception = input_tensor
 
-        # kernel_size_s = [3, 5, 8, 11, 17]
-        kernel_size_s = [self.kernel_size // (2**i) for i in range(3)]
+        kernel_size_s = self.kernel_sizes
 
         conv_list = []
 

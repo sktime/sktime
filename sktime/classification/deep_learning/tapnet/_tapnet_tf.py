@@ -11,6 +11,7 @@ from sklearn.utils import check_random_state
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.tapnet import TapNetNetwork
 from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
 
 class TapNetClassifier(BaseDeepClassifier):
@@ -69,6 +70,11 @@ class TapNetClassifier(BaseDeepClassifier):
     ----------
     n_classes      : int
         number of classes extracted from the data
+    kernel_sizes : tuple, default = (8, 5, 3)
+        size of kernels for convolution layers
+    kernel_size : int, optional (default=None)
+        Deprecated and will be removed in a future release.
+        Please use `kernel_sizes` instead.
 
     References
     ----------
@@ -114,7 +120,7 @@ class TapNetClassifier(BaseDeepClassifier):
         batch_size=16,
         dropout=0.5,
         filter_sizes=(256, 256, 128),
-        kernel_size=(8, 5, 3),
+        kernel_sizes=(8, 5, 3),
         dilation=1,
         layers=(500, 300),
         use_rp=True,
@@ -133,12 +139,24 @@ class TapNetClassifier(BaseDeepClassifier):
         callbacks=None,
         verbose=False,
         lstm_dropout=0.8,
+        kernel_size=None,
     ):
         _check_dl_dependencies(severity="error")
 
         self.batch_size = batch_size
         self.random_state = random_state
-        self.kernel_size = kernel_size
+        if kernel_size is not None:
+            warn(
+                "In TapNetClassifier, the parameter 'kernel_size' is deprecated and "
+                "will be removed in a future release. Please use 'kernel_sizes' "
+                "instead.",
+                FutureWarning,
+                obj=self,
+                stacklevel=2,
+            )
+            self.kernel_sizes = kernel_size
+        else:
+            self.kernel_sizes = kernel_sizes
         self.layers = layers
         self.rp_params = rp_params
         self.filter_sizes = filter_sizes
@@ -171,7 +189,7 @@ class TapNetClassifier(BaseDeepClassifier):
             activation=self.activation_hidden,
             dropout=self.dropout,
             filter_sizes=self.filter_sizes,
-            kernel_size=self.kernel_size,
+            kernel_sizes=self.kernel_sizes,
             dilation=self.dilation,
             layers=self.layers,
             use_rp=self.use_rp,
