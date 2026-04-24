@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.base import BaseObject
 from sktime.classification.tests._expected_outputs import (
     basic_motions_proba,
     unit_test_proba,
@@ -191,9 +192,10 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
         if estimator_instance.is_composite():
             # if the estimator is a composite, we set random state for all components
-            for sub_estimator in estimator_instance._components().values():
-                if not _check_estimator_deps(sub_estimator, severity="none"):
-                    return None
+            for sub_estimator in estimator_instance.get_params(deep=False).values():
+                if isinstance(sub_estimator, BaseObject):
+                    if not _check_estimator_deps(sub_estimator, severity="none"):
+                        return None
 
         # set random seed if possible
         if "random_state" in estimator_instance.get_params().keys():
