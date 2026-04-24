@@ -2817,7 +2817,19 @@
       "name": "Priyanshu Harshabodhi",
       "avatar_url": "https://avatars.githubusercontent.com/u/132090159?v=4",
       "profile": "https://github.com/priyanshuharshbodhi1",
-      "contributions": ["code"]
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "shaun0927",
+      "name": "Junghwan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70629228?v=4",
+      "profile": "https://github.com/shaun0927",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }
