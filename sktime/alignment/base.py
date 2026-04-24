@@ -52,6 +52,10 @@ class BaseAligner(BaseEstimator):
 
         super().__init__()
 
+        from sktime.utils.dependencies import _check_estimator_deps
+
+        _check_estimator_deps(self)
+
     def fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.
 
