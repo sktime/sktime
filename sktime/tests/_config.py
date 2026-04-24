@@ -80,16 +80,7 @@ EXCLUDE_ESTIMATORS = [
 # DO NOT ADD ESTIMATORS HERE ANYMORE
 # ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
 EXCLUDED_TESTS = {
-    # issue when prediction intervals, see #3479 and #4504
-    # known issue with prediction intervals that needs fixing, tracked in #4181
-    "SquaringResiduals": [
-        "test_predict_time_index",
-        "test_predict_residuals",
-        "test_predict_interval",
-        "test_predict_time_index_with_X",  # separate - refer to #4765
-    ],
     # known issue when X is passed, wrong time indices are returned, #1364
-    "StackingForecaster": ["test_predict_time_index_with_X"],
     "TapNetRegressor": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
@@ -99,8 +90,6 @@ EXCLUDED_TESTS = {
     #   but these are anyway on their path to deprecation, see #2370
     "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
-    # ColumnTransformer still needs to be refactored, see #2537
-    "ColumnTransformer": ["test_methods_do_not_change_state"],
     # Early classifiers intentionally retain information from previous predict calls
     #   for #1.
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking

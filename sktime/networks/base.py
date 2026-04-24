@@ -16,6 +16,13 @@ class BaseDeepNetwork(BaseObject):
         "capability:random_state": True,
     }
 
+    def __init__(self):
+        super().__init__()
+
+        from sktime.utils.dependencies import _check_estimator_deps
+
+        _check_estimator_deps(self)
+
     @abstractmethod
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
