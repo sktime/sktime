@@ -1,4 +1,4 @@
-name: Unequal Length Forecaster Test
+name: unequal-length-forecaster-test
 
 on:
   push:
@@ -68,63 +68,39 @@ jobs:
 
       - name: Install soft dependencies
         run: |
-          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.forecaster }}', include_test_deps=True)))" > deps.txt
-          pip install -r deps.txt
+          python - <<EOF
+          from sktime.registry import deps
+
+          name = "${{ matrix.forecaster }}"
+          d = deps(name, include_test_deps=True)
+
+          if d:
+              with open("deps.txt", "w") as f:
+                  f.write("\n".join(d))
+          EOF
+
+          if [ -f deps.txt ]; then
+            pip install -r deps.txt
+          fi
         continue-on-error: true
 
       - name: Run targeted test
-        id: run
-        continue-on-error: true
         run: |
           python - <<EOF
           from sktime.registry import all_estimators
           from sktime.utils.estimator_checks import check_estimator
 
           name = "${{ matrix.forecaster }}"
+          print(f"Running test for: {name}")
+
           forecasters = dict(all_estimators("forecaster"))
           est = forecasters[name]
 
-          try:
-              check_estimator(
-                  estimator=est,
-                  tests_to_run="test_unequal_length_hierarchical_fit_predict",
-                  raise_exceptions=True,
-              )
-              print("PASS:", name)
-          except Exception:
-              print("FAIL:", name)
-              raise
+          check_estimator(
+              estimator=est,
+              tests_to_run="test_unequal_length_hierarchical_fit_predict",
+              raise_exceptions=True,
+          )
+
+          print(f"PASS: {name}")
           EOF
-
-      - name: Save failure
-        if: steps.run.outcome == 'failure'
-        run: |
-          echo "${{ matrix.forecaster }}" > failed.txt
-
-      - name: Upload result
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: result-${{ matrix.forecaster }}
-          path: failed.txt
-        continue-on-error: true
-
-  aggregate:
-    needs: test-forecasters
-    runs-on: ubuntu-latest
-    if: always()
-
-    steps:
-      - uses: actions/download-artifact@v4
-
-      - name: Aggregate failures
-        run: |
-          echo "=============================="
-          echo "FAILED FORECASTERS"
-          echo "=============================="
-
-          if ls */failed.txt 1> /dev/null 2>&1; then
-            cat */failed.txt | sort | uniq
-          else
-            echo "None"
-          fi
