@@ -23,6 +23,10 @@ class BaseMetric(BaseObject):
     def __init__(self):
         super().__init__()
 
+        from sktime.utils.dependencies import _check_estimator_deps
+
+        _check_estimator_deps(self)
+
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.
 
