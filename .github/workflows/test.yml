@@ -1,4 +1,4 @@
-name: unequal-length-forecaster-test
+name: equal-length-forecaster-test
 
 on:
   push:
@@ -98,7 +98,7 @@ jobs:
 
           check_estimator(
               estimator=est,
-              tests_to_run="test_unequal_length_hierarchical_fit_predict",
+              tests_to_run="test_equal_length_hierarchical_fit_predict",
               raise_exceptions=True,
           )
 
