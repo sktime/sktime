@@ -75,6 +75,14 @@ Window-based Anomaly Detection
 
     SubLOF
 
+.. currentmodule:: sktime.detection.moving_average
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MovingAverageDetector
+
 Foundation Model-based Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
