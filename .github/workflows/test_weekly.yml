@@ -1,0 +1,127 @@
+name: Weekly test
+
+on:
+  schedule:
+    - cron: "0 3 * * 6"
+  workflow_dispatch:
+
+jobs:
+  collect-estimators:
+    runs-on: ubuntu-latest
+    outputs:
+      est_chunks: ${{ steps.chunk.outputs.est_chunks }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install sktime
+        run: uv pip install .[dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
+
+      - name: Collect and chunk estimators
+        id: chunk
+        run: |
+          python - <<'EOF'
+          import json
+          import os
+          from sktime.registry import all_estimators
+
+          estimators = all_estimators()
+          names = [name for name, _ in estimators]
+
+          CHUNK_SIZE = 30  # adjust if needed (keep total jobs < 256)
+
+          chunks = [names[i:i+CHUNK_SIZE] for i in range(0, len(names), CHUNK_SIZE)]
+
+          if not chunks:
+              chunks = [[]]
+
+          print(f"Total estimators: {len(names)}")
+          print(f"Chunks: {len(chunks)}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"est_chunks={json.dumps(chunks)}\n")
+          EOF
+
+  test-estimators:
+    needs: collect-estimators
+
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.collect-estimators.outputs.est_chunks) }}
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        os: [ubuntu-latest, macos-latest, windows-latest, ubuntu-22.04-arm]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install OSX packages
+        if: runner.os == 'macOS'
+        run: ./.github/scripts/install_osx_dependencies.sh
+
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
+
+      - name: Install sktime
+        run: uv pip install .[dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
+
+      - name: Run check_estimator on chunk
+        shell: bash
+        run: |
+          python - <<'EOF'
+          import sys
+          from sktime.registry import all_estimators
+          from sktime.utils.estimator_checks import check_estimator
+
+          chunk = ${{ matrix.chunk }}
+
+          # Map name -> class
+          est_dict = dict(all_estimators())
+
+          failed = []
+
+          for name in chunk:
+              print(f"\n[TESTING] {name}")
+              est = est_dict[name]
+              try:
+                  check_estimator(est)
+              except Exception as e:
+                  print(f"[FAIL] {name}: {e}")
+                  failed.append(name)
+
+          if failed:
+              print("\nFailed estimators:")
+              for f in failed:
+                  print(f" - {f}")
+              sys.exit(1)
+          else:
+              print("\nAll estimators passed.")
+          EOF
