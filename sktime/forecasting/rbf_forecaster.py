@@ -57,7 +57,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         - "gaussian": :math:`\exp(-\gamma (t - c)^2)`
         - "multiquadric": :math:`\sqrt{1 + \gamma (t - c)^2}`
         - "inverse_multiquadric": :math:`\frac{1}{\sqrt{1 + \gamma (t - c)^2}}`
-    hidden_layers : list of int, optional (default=[64, 32])
+    hidden_layers : list of int, optional (default=[64,32])
         Sizes of linear layers following the RBF layer.
     optimizer : {"adam", "sgd", "rmsprop"}, optional (default="adam")
         Type of optimizer to use.
@@ -114,7 +114,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         centers=None,
         gamma=1.0,
         rbf_type="gaussian",
-        hidden_layers=[64, 32],
+        hidden_layers=None,
         optimizer="adam",
         lr=0.01,
         epochs=100,
@@ -127,7 +127,6 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         dropout_rate=0.1,
     ):
         super().__init__()
-
         self.window_length = window_length
         self.hidden_size = hidden_size
         self.batch_size = batch_size
@@ -135,6 +134,18 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         self.gamma = gamma
         self.rbf_type = rbf_type
         self.hidden_layers = hidden_layers
+
+        if hidden_layers is None:
+            self._hidden_layers = [64, 32]
+        elif not isinstance(hidden_layers, (list, tuple)):
+            raise TypeError(
+                "hidden_layers must be a list or tuple of positive integers"
+            )
+        elif not all(isinstance(x, int) and x > 0 for x in hidden_layers):
+            raise ValueError("hidden_layers must contain only positive integers")
+        else:
+            self._hidden_layers = list(hidden_layers)
+
         self.optimizer = optimizer
         self.lr = lr
         self.epochs = epochs
@@ -197,7 +208,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             centers=self.centers,
             gamma=self.gamma,
             rbf_type=self.rbf_type,
-            hidden_layers=self.hidden_layers,
+            hidden_layers=self._hidden_layers,
             mode=self.mode,
             activation=self.activation,
             dropout_rate=self.dropout_rate,
@@ -537,7 +548,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         return loss_fns[self.criterion.lower()]()
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
         Provide example parameters for unit testing or experimentation.
