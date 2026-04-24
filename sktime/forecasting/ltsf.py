@@ -43,6 +43,12 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         keyword arguments to pass to optimizer
     lr : float, default=0.003
         learning rate to train model with
+    custom_dataset_train : Dataset, default=None
+        A custom dataset to be used for training. If not provided, the default dataset
+        structure is used.
+    custom_dataset_pred : Dataset, default=None
+        A custom dataset to be used for prediction.If not provided, the default dataset
+        structure is used.
 
     References
     ----------
@@ -106,8 +112,6 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
         self.num_epochs = num_epochs
-        self.custom_dataset_train = custom_dataset_train
-        self.custom_dataset_pred = custom_dataset_pred
         self.batch_size = batch_size
 
         super().__init__(
@@ -119,6 +123,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
         )
 
         from sktime.utils.dependencies import _check_soft_dependencies
@@ -387,6 +393,12 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         keyword arguments to pass to optimizer
     lr : float, default=0.003
         learning rate to train model with
+    custom_dataset_train : Dataset, default=None
+        A custom dataset to be used for training. If not provided, the default dataset
+        structure is used.
+    custom_dataset_pred : Dataset, default=None
+        A custom dataset to be used for prediction. If not provided, the default dataset
+        structure is used.
 
     References
     ----------
@@ -450,8 +462,6 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
         self.num_epochs = num_epochs
-        self.custom_dataset_train = custom_dataset_train
-        self.custom_dataset_pred = custom_dataset_pred
         self.batch_size = batch_size
 
         super().__init__(
@@ -463,6 +473,8 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
         )
 
         from sktime.utils.dependencies import _check_soft_dependencies
@@ -574,6 +586,12 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         keyword arguments to pass to optimizer
     lr : float, default=0.003
         learning rate to train model with
+    custom_dataset_train : Dataset, default=None
+        A custom dataset to be used for training. If not provided, the default dataset
+        structure is used.
+    custom_dataset_pred : Dataset, default=None
+        A custom dataset to be used for prediction. If not provided, the default dataset
+        structure is used.
 
     References
     ----------
@@ -637,8 +655,6 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
         self.num_epochs = num_epochs
-        self.custom_dataset_train = custom_dataset_train
-        self.custom_dataset_pred = custom_dataset_pred
         self.batch_size = batch_size
 
         super().__init__(
@@ -650,6 +666,8 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
         )
 
         from sktime.utils.dependencies import _check_soft_dependencies
@@ -1021,8 +1039,6 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
         self.num_epochs = num_epochs
-        self.custom_dataset_train = custom_dataset_train
-        self.custom_dataset_pred = custom_dataset_pred
         self.batch_size = batch_size
 
         self.position_encoding = position_encoding
@@ -1038,7 +1054,6 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         self.dropout = dropout
         self.activation = activation
         self.freq = freq
-
         super().__init__(
             num_epochs=num_epochs,
             batch_size=batch_size,
@@ -1048,6 +1063,8 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
         )
 
         from sktime.utils.dependencies import _check_soft_dependencies
@@ -1109,8 +1126,8 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
                 self.custom_dataset_pred.build_dataset
             ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
+                self.custom_dataset_pred.build_dataset(y)
+                dataset = self.custom_dataset_pred
             else:
                 raise NotImplementedError(
                     "Custom Dataset `build_dataset` method is not available. Please"
