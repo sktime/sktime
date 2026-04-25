@@ -8,12 +8,12 @@ from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.libs.tsbootstrap import BlockBootstrap
 from sktime.libs._aws_fortuna_enbpi.enbpi import EnbPI
 from sktime.transformations.bootstrap import (
     MovingBlockBootstrapTransformer,
     TSBootstrapAdapter,
 )
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -23,7 +23,7 @@ class EnbPIForecaster(BaseForecaster):
     """
     Ensemble Bootstrap Prediction Interval Forecaster.
 
-    The forecaster combines sktime forecasters, with tsbootstrap bootstrappers
+    The forecaster combines sktime forecasters with bootstrap transformers
     and the EnbPI algorithm [1] implemented in fortuna using the
     tutorial from this blogpost [2].
 
@@ -64,7 +64,7 @@ class EnbPIForecaster(BaseForecaster):
     ----------
     forecaster : estimator
         The base forecaster to fit to each bootstrap sample.
-    bootstrap_transformer : tsbootstrap.BootstrapTransformer
+    bootstrap_transformer : bootstrap transformer-like object
         The transformer to fit to the target series to generate bootstrap samples.
         This transformer must be able to return the indices of the original
         time series as an additional column. I.e., the ``bootstrap_transformer``
@@ -80,7 +80,7 @@ class EnbPIForecaster(BaseForecaster):
     Examples
     --------
     >>> import numpy as np
-    >>> from tsbootstrap import MovingBlockBootstrap
+    >>> from sktime.libs.tsbootstrap import MovingBlockBootstrap
     >>> from sktime.forecasting.enbpi import EnbPIForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
@@ -107,7 +107,6 @@ class EnbPIForecaster(BaseForecaster):
 
     _tags = {
         "authors": ["benheid"],
-        "python_dependencies": ["tsbootstrap>=0.1.0"],
         "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:missing_values": False,  # can estimator handle missing data?
@@ -149,16 +148,18 @@ class EnbPIForecaster(BaseForecaster):
 
         super().__init__()
 
-        if bootstrap_transformer.get_tag("object_type") == "bootstrap":
+        if self.bootstrap_transformer is None:
+            self.bootstrap_transformer_ = MovingBlockBootstrapTransformer(
+                return_indices=True
+            )
+        elif hasattr(bootstrap_transformer, "bootstrap") and not hasattr(
+            bootstrap_transformer, "fit_transform"
+        ):
             self.bootstrap_transformer_ = TSBootstrapAdapter(
                 bootstrap_transformer, return_indices=True
             )
         else:
             self.bootstrap_transformer_ = bootstrap_transformer
-
-        if self.bootstrap_transformer is None:
-            mbb = MovingBlockBootstrapTransformer(return_indices=True)
-            self.bootstrap_transformer_ = mbb
 
         bs_capable = self.bootstrap_transformer_.get_tag(
             "capability:bootstrap_index", False, raise_error=False
@@ -274,16 +275,11 @@ class EnbPIForecaster(BaseForecaster):
                 "bootstrap_transformer": MovingBlockBootstrapTransformer(
                     return_indices=True
                 ),
-            }
+            },
+            {
+                "forecaster": NaiveForecaster(),
+                "bootstrap_transformer": BlockBootstrap(),
+            },
         ]
-        if _check_soft_dependencies("tsbootstrap", severity="none"):
-            from tsbootstrap import BlockBootstrap
-
-            params.append(
-                {
-                    "forecaster": NaiveForecaster(),
-                    "bootstrap_transformer": BlockBootstrap(),
-                }
-            )
 
         return params

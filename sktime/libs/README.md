@@ -17,6 +17,11 @@ This folder contains libraries directly distributed with, and maintained by, `sk
   Unofficial fork of abandoned package from June 2024 onwards,
   see [pykalman issue 109](https://github.com/pykalman/pykalman/issues/109).
 
+* `tsbootstrap` - minimal in-repo implementation of ``BlockBootstrap`` and
+  ``MovingBlockBootstrap`` APIs used by `sktime` bootstrapping adapters.
+  Added as a temporary vendor while upstream maintenance is uncertain,
+  see [issue 9990](https://github.com/sktime/sktime/issues/9990).
+
 * `vmdpy` - a package implementing Variational Mode Decomposition.
   Official fork, `vmdpy` is maintained in `sktime` since August 2023.
 

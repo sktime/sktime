@@ -31,11 +31,11 @@ class TSBootstrapAdapter(BaseTransformer):
     Examples
     --------
     >>> from sktime.datasets import load_airline
+    >>> from sktime.libs.tsbootstrap import MovingBlockBootstrap
     >>> from sktime.transformations.bootstrap import TSBootstrapAdapter
-    >>> from tsbootstrap import MovingBlockBootstrap, # doctest: +SKIP
     >>> y = load_airline()
     >>> bootstrap = TSBootstrapAdapter(
-    ...    MovingBlockBootstrap(n_bootstrap=10, block_length=10)
+    ...    MovingBlockBootstrap(n_bootstraps=10, block_length=10)
     ... )  # doctest: +SKIP
     >>> result = bootstrap.fit_transform(y)  # doctest: +SKIP
     """
@@ -44,7 +44,6 @@ class TSBootstrapAdapter(BaseTransformer):
         # packaging info
         # --------------
         "authors": "benheid",
-        "python_dependencies": ["tsbootstrap>=0.1.0"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
@@ -61,9 +60,6 @@ class TSBootstrapAdapter(BaseTransformer):
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,
         "capability:bootstrap_index": True,
-        # CI and test flags
-        # -----------------
-        "tests:vm": True,  # run on separate VM due to tsbootstrap dependency
     }
 
     def __init__(
@@ -143,21 +139,14 @@ class TSBootstrapAdapter(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from sktime.libs.tsbootstrap import BlockBootstrap, MovingBlockBootstrap
 
-        deps = cls.get_class_tag("python_dependencies")
-
-        if _check_soft_dependencies(deps, severity="none"):
-            from tsbootstrap import BlockBootstrap, MovingBlockBootstrap
-
-            params = [
-                {"bootstrap": BlockBootstrap(n_bootstraps=10)},
-                {
-                    "bootstrap": MovingBlockBootstrap(n_bootstraps=10, block_length=4),
-                    "include_actual": True,
-                },
-            ]
-        else:
-            params = {"bootstrap": "dummy"}
+        params = [
+            {"bootstrap": BlockBootstrap(n_bootstraps=10)},
+            {
+                "bootstrap": MovingBlockBootstrap(n_bootstraps=10, block_length=4),
+                "include_actual": True,
+            },
+        ]
 
         return params
