@@ -2,6 +2,8 @@
 
 from contextlib import contextmanager
 
+from sktime.forecasting.base._base import BaseForecaster
+
 __all__ = ["_BaseGlobalForecaster", "_GlobalForecastingDeprecationMixin"]
 
 
@@ -308,7 +310,7 @@ class _BaseGlobalForecaster(BaseForecaster):
     .. deprecated:: 0.41.0
 
         ``_BaseGlobalForecaster`` is deprecated and will be removed in
-        version 0.43.0. Inherit from ``BaseForecaster`` directly instead.
+        version 1.1.0. Inherit from ``BaseForecaster`` directly instead.
 
         For backward compatibility with the ``y`` parameter in ``predict()``,
         also inherit from ``_GlobalForecastingDeprecationMixin``.
@@ -331,7 +333,7 @@ class _BaseGlobalForecaster(BaseForecaster):
 
     _tags = {"object_type": ["global_forecaster", "forecaster"]}
 
-    # TODO 0.43.0: remove _BaseGlobalForecaster class entirely
+    # TODO 1.1.0: remove _BaseGlobalForecaster class entirely
     def __init_subclass__(cls, **kwargs):
         """Warn when _BaseGlobalForecaster is subclassed."""
         super().__init_subclass__(**kwargs)
@@ -343,7 +345,7 @@ class _BaseGlobalForecaster(BaseForecaster):
 
             warn(
                 f"Class '{cls.__name__}' inherits from _BaseGlobalForecaster, "
-                "which is deprecated and will be removed in sktime version 0.43.0. "
+                "which is deprecated and will be removed in sktime version 1.1.0. "
                 "Please inherit from BaseForecaster instead. "
                 "For backward compatibility with the 'y' parameter in predict(), "
                 "also inherit from _GlobalForecastingDeprecationMixin. "
