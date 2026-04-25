@@ -47,9 +47,9 @@ jobs:
         run: |
           python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}', include_test_deps=True)))" > deps.txt
           uv pip install --no-upgrade -r deps.txt
-        continue-on-error: true
         env:
           UV_SYSTEM_PYTHON: 1
+        continue-on-error: true
 
       - name: Show dependencies
         run: uv pip list
