@@ -54,9 +54,10 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
     rbf_type : str, optional (default="gaussian")
         The type of RBF kernel to apply.
 
-        - "gaussian": :math:`\exp(-\gamma (t - c)^2)`
-        - "multiquadric": :math:`\sqrt{1 + \gamma (t - c)^2}`
-        - "inverse_multiquadric": :math:`\frac{1}{\sqrt{1 + \gamma (t - c)^2}}`
+        - ``"gaussian"``: :math:`\exp(-\gamma (t - c)^2)`
+        - ``"multiquadric"``: :math:`\sqrt{1 + \gamma (t - c)^2}`
+        - ``"inverse_multiquadric"``: :math:`\frac{1}{\sqrt{1 + \gamma (t - c)^2}}`
+
     hidden_layers : list of int, optional (default=[64, 32])
         Sizes of linear layers following the RBF layer.
     optimizer : {"adam", "sgd", "rmsprop"}, optional (default="adam")
@@ -75,8 +76,9 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
     mode : {"ar", "direct"}, optional (default="ar")
         Forecasting mode:
 
-        - "ar": Autoregressive mode for one-step-ahead predictions.
-        - "direct": Direct mode for multi-step-ahead predictions.
+        - ``"ar"``: Autoregressive mode for one-step-ahead predictions.
+        - ``"direct"``: Direct mode for multi-step-ahead predictions.
+
     pred_len : int, optional (default=None)
         Prediction length, i.e., the number of future time steps to forecast.
         Defines the network output dimension in direct mode.
@@ -84,7 +86,8 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         Required for pretraining in direct mode if fh is not passed to pretrain().
     activation : str, optional (default="relu")
         Activation function to apply after each linear layer. Supported values are:
-        "relu", "leaky_relu", "elu", "selu", "tanh", "sigmoid", "gelu".
+        ``"relu"``, ``"leaky_relu"``, ``"elu"``, ``"selu"``, ``"tanh"``, ``"sigmoid"``,
+        ``"gelu"``.
     dropout_rate : float, optional (default=0.1)
         Dropout rate applied after each hidden layer. A value of 0 disables dropout.
     """
@@ -126,8 +129,6 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         activation="relu",
         dropout_rate=0.1,
     ):
-        super().__init__()
-
         self.window_length = window_length
         self.hidden_size = hidden_size
         self.batch_size = batch_size
@@ -144,13 +145,30 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         self.dropout_rate = dropout_rate
         self.mode = mode
         self.pred_len = pred_len
+        self.device = device
+
+        super().__init__(
+            batch_size=batch_size,
+            optimizer=optimizer,
+            lr=lr,
+        )
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self._fh_length = None
 
         if self.mode not in ["ar", "direct"]:
             raise ValueError("mode must be either 'ar' or 'direct'")
 
-        self.device = device
-        self._device = self._get_device(device)
+        self._device = self._get_device(self.device)
         self.network = None
         self.scaler = StandardScaler()
 

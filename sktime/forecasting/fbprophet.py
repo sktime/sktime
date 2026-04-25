@@ -197,7 +197,16 @@ class Prophet(_ProphetAdapter):
 
         super().__init__()
 
-        # import inside method to avoid hard dependency
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         from prophet.forecaster import Prophet as _Prophet
 
         self._ModelClass = _Prophet
