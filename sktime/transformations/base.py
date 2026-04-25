@@ -65,7 +65,7 @@ from sktime.datatypes import (
 )
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.datatypes._series_as_panel import convert_to_scitype
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.sklearn import (
     is_sklearn_classifier,
     is_sklearn_clusterer,
@@ -214,6 +214,11 @@ class BaseTransformer(BaseEstimator):
 
         super().__init__()
         _check_estimator_deps(self)
+        recommended = self.get_class_tag(
+            "python_dependencies_recommended", tag_value_default=None
+        )
+        if recommended is not None:
+            _check_soft_dependencies(recommended, severity="warning", obj=self)
 
     def _is_transformer(self, other):
         """Check whether other is a transformer - sklearn or sktime.

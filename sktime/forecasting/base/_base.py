@@ -150,6 +150,11 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         super().__init__()
         _check_estimator_deps(self)
+        recommended = self.get_class_tag(
+            "python_dependencies_recommended", tag_value_default=None
+        )
+        if recommended is not None:
+            _check_soft_dependencies(recommended, severity="warning", obj=self)
         self._state = "new"
 
     @classmethod

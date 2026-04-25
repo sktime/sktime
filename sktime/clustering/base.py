@@ -10,7 +10,7 @@ import numpy as np
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to, scitype_to_mtype
 from sktime.datatypes._dtypekind import DtypeKind
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.warnings import warn
 
@@ -51,6 +51,11 @@ class BaseClusterer(BaseEstimator):
 
         super().__init__()
         _check_estimator_deps(self)
+        recommended = self.get_class_tag(
+            "python_dependencies_recommended", tag_value_default=None
+        )
+        if recommended is not None:
+            _check_soft_dependencies(recommended, severity="warning", obj=self)
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.

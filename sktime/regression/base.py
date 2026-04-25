@@ -28,7 +28,7 @@ import numpy as np
 
 from sktime.base import BasePanelMixin
 from sktime.datatypes import VectorizedDF
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.sklearn import is_sklearn_transformer
 
 
@@ -95,6 +95,11 @@ class BaseRegressor(BasePanelMixin):
 
         super().__init__()
         _check_estimator_deps(self)
+        recommended = self.get_class_tag(
+            "python_dependencies_recommended", tag_value_default=None
+        )
+        if recommended is not None:
+            _check_soft_dependencies(recommended, severity="warning", obj=self)
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.

@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseObject
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.pandas import df_map
 
 
@@ -44,6 +44,11 @@ class BaseDistribution(BaseObject):
 
         super().__init__()
         _check_estimator_deps(self)
+        recommended = self.get_class_tag(
+            "python_dependencies_recommended", tag_value_default=None
+        )
+        if recommended is not None:
+            _check_soft_dependencies(recommended, severity="warning", obj=self)
 
     @property
     def loc(self):

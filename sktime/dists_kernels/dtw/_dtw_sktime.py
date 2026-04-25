@@ -125,7 +125,7 @@ class DtwDist(BasePairwiseTransformerPanel):
         # packaging info
         # --------------
         "authors": ["chrisholder", "TonyBagnall", "fkiraly"],
-        "python_dependencies": "numba",
+        "python_dependencies_recommended": "numba",
         # estimator type
         # --------------
         "symmetric": True,  # all the distances are symmetric

@@ -299,6 +299,76 @@ class python_dependencies(_BaseTag):
     }
 
 
+class python_dependencies_recommended(_BaseTag):
+    """Recommended (optional) Python package dependencies for the object (PEP 440).
+
+    Part of packaging metadata for the object.
+
+    - String name: ``"python_dependencies_recommended"``
+    - Private tag, developer and framework facing
+    - Values: str or list of str, each str a PEP 440 compliant dependency specifier
+    - Example: ``"numba"``
+    - Example 2: ``["numba>=0.55", "joblib"]``
+    - Default: no recommended dependencies (``None``)
+
+    ``sktime`` manages objects and estimators like mini-packages,
+    with their own dependencies and compatibility requirements.
+    Dependencies are specified in the tags:
+
+    - ``"python_version"``: Python version specifier (PEP 440) for the object,
+    - ``"python_dependencies"``: list of required Python packages (PEP 440)
+    - ``"python_dependencies_recommended"``: list of recommended Python packages
+      (PEP 440)
+    - ``"env_marker"``: environment marker for the object (PEP 508)
+    - ``"requires_cython"``: whether the object requires a C compiler present
+
+    The ``python_dependencies_recommended`` tag of an object is a string or list of
+    strings, each string a PEP 440 compliant version specifier,
+    specifying recommended but optional Python dependencies of the object.
+
+    Unlike ``python_dependencies``, missing recommended dependencies do not prevent
+    the estimator from being instantiated or used. Instead, a ``UserWarning`` is
+    raised at construction time to inform the user that installing the listed
+    packages would improve performance (e.g., via JIT compilation).
+
+    Use this tag for estimators that have a pure-Python fallback but run
+    significantly faster when an optional package such as ``numba`` is available.
+
+    If passed as a list, conditions are combined with logical AND.
+    Optionally, lists within a list can be used to combine conditions with logical OR.
+
+    The tag is used internally to check for recommended dependencies in the
+    build environment, and raise informative warnings if they are absent.
+
+    Valid dependency specifications with plain English descriptions:
+
+    * ``"numba"``: ``numba`` is recommended
+    * ``"numba>=0.55"``: ``numba`` version 0.55 or higher is recommended
+    * ``["numba>=0.55", "joblib"]``: both ``numba`` version 0.55 or higher
+      and ``joblib`` are recommended
+
+    Developers should note that package names in the PEP 440 specifier strings
+    that should be provided
+    are identical with the package names used in ``pip install`` commands or on PyPI,
+    which in general is not the same as the import name of the package,
+    e.g., ``"scikit-learn"`` as in ``pip install scikit-learn``,
+    and not ``"sklearn"``, as in ``import sklearn``.
+
+    Developers can use ``_check_soft_dependencies`` from ``skbase.utils.dependencies``
+    with ``severity="warning"`` to check recommended dependencies of the object
+    manually, or rely on the base class ``__init__`` to issue the warning
+    automatically via the tag.
+    """
+
+    _tags = {
+        "tag_name": "python_dependencies_recommended",
+        "parent_type": "object",
+        "tag_type": ("list", "str"),
+        "short_descr": "recommended soft dependencies as str or list of str (PEP 440)",
+        "user_facing": False,
+    }
+
+
 class env_marker(_BaseTag):
     """Environment marker requirement for the object (PEP 508).
 

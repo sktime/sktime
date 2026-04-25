@@ -31,7 +31,7 @@ from sktime.datatypes import (
 )
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.utils.adapters._safe_call import _safe_call
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.warnings import warn
 
@@ -89,6 +89,11 @@ class BaseParamFitter(BaseEstimator):
 
         super().__init__()
         _check_estimator_deps(self)
+        recommended = self.get_class_tag(
+            "python_dependencies_recommended", tag_value_default=None
+        )
+        if recommended is not None:
+            _check_soft_dependencies(recommended, severity="warning", obj=self)
 
     def __mul__(self, other):
         """Magic * method, for estimators on the right.
