@@ -64,9 +64,10 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)
     >>> morai_forecaster.fit(y, X=X)
     MOIRAIForecaster(checkpoint_path='sktime/moirai-1.0-R-small')
-    >>> X_test = pd.DataFrame(np.random.normal(0, 1, (10, 2)),
-    ...                      columns=["x1", "x2"],
-    ...                      index=pd.date_range("2020-01-31", periods=10, freq="D"),
+    >>> X_test = pd.DataFrame(
+    ...     np.random.normal(0, 1, (10, 2)),
+    ...     columns=["x1", "x2"],
+    ...     index=pd.date_range("2020-01-31", periods=10, freq="D"),
     ... )
     >>> forecast = morai_forecaster.predict(fh=range(1, 11), X=X_test)
 
@@ -110,6 +111,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "property:randomness": "stochastic",
         # CI and test flags
         # -----------------
         "tests:vm": True,
