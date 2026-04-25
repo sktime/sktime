@@ -183,7 +183,7 @@ class LagLlamaForecaster(BaseForecaster):
     --------
     **Zero-shot forecasting (default)**
 
-    >>> from sktime.forecasting.lagllama import LagLlamaForecaster  # doctest: +SKIP
+    >>> from sktime.forecasting.lagllama import LagLlamaForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon  # doctest: +SKIP
     >>> from sktime.datasets import load_airline  # doctest: +SKIP
     >>>
