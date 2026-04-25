@@ -109,7 +109,9 @@ class OffsetPredictor(nn.Module):
         patch_X = X.unsqueeze(1).permute(0, 1, 3, 2)
         patch_X = F.unfold(
             patch_X, kernel_size=(self.patch_size, self.channel), stride=self.stride
-        ).permute(0, 2, 1)  # (B, patch_count, patch_size*channel)
+        ).permute(
+            0, 2, 1
+        )  # (B, patch_count, patch_size*channel)
 
         # decoupling
         B, patch_count = patch_X.shape[0], patch_X.shape[1]

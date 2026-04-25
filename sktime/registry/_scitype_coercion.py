@@ -11,9 +11,9 @@ def _coerce_transformer_tabular_to_transformer(obj):
     return TabularToSeriesAdaptor(obj)
 
 
-_coerce_register[("transformer_tabular", "transformer")] = (
-    _coerce_transformer_tabular_to_transformer
-)
+_coerce_register[
+    ("transformer_tabular", "transformer")
+] = _coerce_transformer_tabular_to_transformer
 
 
 def _coerce_series_annotator_to_transformer(obj):
@@ -23,9 +23,9 @@ def _coerce_series_annotator_to_transformer(obj):
 
 
 # todo 1.0.0 - remove series-annotator
-_coerce_register[("series-annotator", "transformer")] = (
-    _coerce_series_annotator_to_transformer
-)
+_coerce_register[
+    ("series-annotator", "transformer")
+] = _coerce_series_annotator_to_transformer
 
 
 _coerce_register[("detector", "transformer")] = _coerce_series_annotator_to_transformer

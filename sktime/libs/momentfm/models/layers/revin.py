@@ -95,6 +95,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             x = x * self.stdev
             x = x + self.mean
             return x
+
 else:
 
     class RevIN:

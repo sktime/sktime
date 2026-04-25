@@ -172,9 +172,9 @@ def convert_s_to_df_as_table(obj: pd.Series, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("pd_Series_Table", "pd_DataFrame_Table", "Table")] = (
-    convert_s_to_df_as_table
-)
+convert_dict[
+    ("pd_Series_Table", "pd_DataFrame_Table", "Table")
+] = convert_s_to_df_as_table
 
 
 def convert_df_to_s_as_table(obj: pd.DataFrame, store=None) -> pd.Series:
@@ -193,9 +193,9 @@ def convert_df_to_s_as_table(obj: pd.DataFrame, store=None) -> pd.Series:
     return y
 
 
-convert_dict[("pd_DataFrame_Table", "pd_Series_Table", "Table")] = (
-    convert_df_to_s_as_table
-)
+convert_dict[
+    ("pd_DataFrame_Table", "pd_Series_Table", "Table")
+] = convert_df_to_s_as_table
 
 
 def convert_list_of_dict_to_df_as_table(obj: list, store=None) -> pd.DataFrame:
@@ -217,9 +217,9 @@ def convert_list_of_dict_to_df_as_table(obj: list, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("list_of_dict", "pd_DataFrame_Table", "Table")] = (
-    convert_list_of_dict_to_df_as_table
-)
+convert_dict[
+    ("list_of_dict", "pd_DataFrame_Table", "Table")
+] = convert_list_of_dict_to_df_as_table
 
 
 def convert_df_to_list_of_dict_as_table(obj: pd.DataFrame, store=None) -> list:
@@ -234,9 +234,9 @@ def convert_df_to_list_of_dict_as_table(obj: pd.DataFrame, store=None) -> list:
     return ret_dict
 
 
-convert_dict[("pd_DataFrame_Table", "list_of_dict", "Table")] = (
-    convert_df_to_list_of_dict_as_table
-)
+convert_dict[
+    ("pd_DataFrame_Table", "list_of_dict", "Table")
+] = convert_df_to_list_of_dict_as_table
 
 
 _extend_conversions(
@@ -283,26 +283,26 @@ if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
 
         return obj.collect()
 
-    convert_dict[("pd_DataFrame_Table", "polars_eager_table", "Table")] = (
-        convert_pandas_to_polars_eager
-    )
-    convert_dict[("pd_DataFrame_Table", "polars_lazy_table", "Table")] = (
-        convert_pandas_to_polars_lazy
-    )
+    convert_dict[
+        ("pd_DataFrame_Table", "polars_eager_table", "Table")
+    ] = convert_pandas_to_polars_eager
+    convert_dict[
+        ("pd_DataFrame_Table", "polars_lazy_table", "Table")
+    ] = convert_pandas_to_polars_lazy
 
-    convert_dict[("polars_eager_table", "pd_DataFrame_Table", "Table")] = (
-        convert_polars_to_pandas
-    )
-    convert_dict[("polars_lazy_table", "pd_DataFrame_Table", "Table")] = (
-        convert_polars_to_pandas
-    )
+    convert_dict[
+        ("polars_eager_table", "pd_DataFrame_Table", "Table")
+    ] = convert_polars_to_pandas
+    convert_dict[
+        ("polars_lazy_table", "pd_DataFrame_Table", "Table")
+    ] = convert_polars_to_pandas
 
-    convert_dict[("polars_lazy_table", "polars_eager_table", "Table")] = (
-        convert_polars_lazy_to_eager
-    )
-    convert_dict[("polars_eager_table", "polars_lazy_table", "Table")] = (
-        convert_polars_eager_to_lazy
-    )
+    convert_dict[
+        ("polars_lazy_table", "polars_eager_table", "Table")
+    ] = convert_polars_lazy_to_eager
+    convert_dict[
+        ("polars_eager_table", "polars_lazy_table", "Table")
+    ] = convert_polars_eager_to_lazy
 
     _extend_conversions(
         "polars_eager_table", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE

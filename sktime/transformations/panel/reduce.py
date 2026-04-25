@@ -114,9 +114,9 @@ class TimeBinner(BaseTransformer):
     }
 
     def __init__(self, idx, aggfunc=None):
-        assert isinstance(idx, pd.IntervalIndex), (
-            "idx should be of type pd.IntervalIndex"
-        )
+        assert isinstance(
+            idx, pd.IntervalIndex
+        ), "idx should be of type pd.IntervalIndex"
         self.aggfunc = aggfunc
         if self.aggfunc is None:
             self._aggfunc = np.mean
@@ -125,9 +125,9 @@ class TimeBinner(BaseTransformer):
                 stacklevel=2,
             )
         else:
-            assert callable(aggfunc), (
-                "aggfunc should be callable withsignature 1D -> float"
-            )
+            assert callable(
+                aggfunc
+            ), "aggfunc should be callable withsignature 1D -> float"
             if aggfunc.__name__ == "<lambda>":
                 warnings.warn(
                     "Save and load will not work with lambda functions",

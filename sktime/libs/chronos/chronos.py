@@ -288,9 +288,9 @@ class ChronosModel(nn.Module):
             A tensor of encoder embeddings with shape
             (batch_size, sequence_length, d_model).
         """
-        assert self.config.model_type == "seq2seq", (
-            "Encoder embeddings are only supported for encoder-decoder models"
-        )
+        assert (
+            self.config.model_type == "seq2seq"
+        ), "Encoder embeddings are only supported for encoder-decoder models"
         return self.model.encoder(
             input_ids=input_ids, attention_mask=attention_mask
         ).last_hidden_state
@@ -422,9 +422,11 @@ class ChronosPipeline:
         """
         with torch.no_grad():
             context_tensor = self._prepare_and_validate_context(context=context)
-            token_ids, attention_mask, tokenizer_state = (
-                self.tokenizer.context_input_transform(context_tensor)
-            )
+            (
+                token_ids,
+                attention_mask,
+                tokenizer_state,
+            ) = self.tokenizer.context_input_transform(context_tensor)
             embeddings = self.model.encode(
                 input_ids=token_ids.to(self.model.device),
                 attention_mask=attention_mask.to(self.model.device),

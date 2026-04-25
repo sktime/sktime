@@ -94,9 +94,9 @@ class TimeBinAggregate(BaseTransformer):
         if self.aggfunc is None:
             self._aggfunc = np.mean
         else:
-            assert callable(aggfunc), (
-                "aggfunc should be callable withsignature 1D -> float"
-            )
+            assert callable(
+                aggfunc
+            ), "aggfunc should be callable withsignature 1D -> float"
             if aggfunc.__name__ == "<lambda>":
                 warnings.warn(
                     "Save and load will not work with lambda functions",

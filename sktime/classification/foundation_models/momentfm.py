@@ -274,10 +274,14 @@ class MomentFMClassifier(BaseClassifier):
         # Gradient clipping value
         max_norm = self.max_norm
 
-        self.model, optimizer, train_dataloader, val_dataloader, scheduler = (
-            accelerator.prepare(
-                self.model, optimizer, train_dataloader, val_dataloader, scheduler
-            )
+        (
+            self.model,
+            optimizer,
+            train_dataloader,
+            val_dataloader,
+            scheduler,
+        ) = accelerator.prepare(
+            self.model, optimizer, train_dataloader, val_dataloader, scheduler
         )
 
         while cur_epoch < max_epoch:
@@ -571,6 +575,7 @@ class MomentFMClassifierPytorchDataset(Dataset):
     def __getitem__(self, i):
         """Return dataset items from index i."""
         from torch import cat, ones, zeros
+
         # batches must be returned in format (B, C, S)
         # where B = batch_size, C = channels, S = sequence_length
 

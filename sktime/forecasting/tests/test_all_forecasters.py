@@ -1004,9 +1004,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         from sktime.utils._testing.hierarchical import _make_hierarchical
 
         # Initial state should be "new"
-        assert estimator_instance.state == "new", (
-            f"Initial state should be 'new', got {estimator_instance.state}"
-        )
+        assert (
+            estimator_instance.state == "new"
+        ), f"Initial state should be 'new', got {estimator_instance.state}"
 
         fh = self._pretrain_fh(estimator_instance)
 
@@ -1041,9 +1041,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # Fit after pretrain should result in fitted state
         y_series = _make_series(n_columns=n_columns)
         estimator_instance.fit(y_series, fh=fh)
-        assert estimator_instance.state == "fitted", (
-            f"State after fit should be 'fitted', got {estimator_instance.state}"
-        )
+        assert (
+            estimator_instance.state == "fitted"
+        ), f"State after fit should be 'fitted', got {estimator_instance.state}"
 
     def test_pretrain_fit_predict_workflow(self, estimator_instance, n_columns):
         """Test full pretrain → fit → predict workflow.
@@ -1074,9 +1074,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         estimator_instance.fit(y_train, fh=fh)
 
         y_pred = estimator_instance.predict()
-        assert len(y_pred) == len(fh), (
-            f"Expected {len(fh)} predictions, got {len(y_pred)}"
-        )
+        assert len(y_pred) == len(
+            fh
+        ), f"Expected {len(fh)} predictions, got {len(y_pred)}"
 
         cutoff = get_cutoff(y_train, return_index=True)
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
@@ -1265,9 +1265,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         cloned = estimator_instance.clone()
 
         # clone must be in pretrained state
-        assert cloned.state == "pretrained", (
-            f"Cloned forecaster state should be 'pretrained', got '{cloned.state}'"
-        )
+        assert (
+            cloned.state == "pretrained"
+        ), f"Cloned forecaster state should be 'pretrained', got '{cloned.state}'"
 
         # clone must have all pretrained attributes
         pretrained_params_cloned = cloned.get_pretrained_params()

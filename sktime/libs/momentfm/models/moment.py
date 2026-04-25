@@ -667,6 +667,7 @@ if _check_soft_dependencies(
             param.requires_grad = False
 
         return model
+
 else:
 
     class PretrainHead:

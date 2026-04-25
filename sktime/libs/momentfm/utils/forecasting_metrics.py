@@ -326,6 +326,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             smape=smape(y=y, y_hat=y_hat, axis=axis, reduction=reduction),
             rmse=rmse(y=y, y_hat=y_hat, axis=axis, reduction=reduction),
         )
+
 else:
 
     class sMAPELoss:

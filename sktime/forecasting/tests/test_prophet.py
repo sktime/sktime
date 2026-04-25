@@ -120,7 +120,9 @@ def test_prophet_added_seasonality_is_not_regressor():
     y = (
         load_airline()
         .to_frame()
-        .assign(test_condition=lambda df: random.choices([True, False], k=len(df)))  # noqa: S311
+        .assign(
+            test_condition=lambda df: random.choices([True, False], k=len(df))
+        )  # noqa: S311
     )
 
     forecaster = Prophet(
@@ -151,8 +153,12 @@ def test_prophet_added_seasonalities_are_not_regressors():
         load_airline()
         .to_frame()
         .assign(
-            test_condition1=lambda df: random.choices([True, False], k=len(df)),  # noqa: S311
-            test_condition2=lambda df: random.choices([True, False], k=len(df)),  # noqa: S311
+            test_condition1=lambda df: random.choices(
+                [True, False], k=len(df)
+            ),  # noqa: S311
+            test_condition2=lambda df: random.choices(
+                [True, False], k=len(df)
+            ),  # noqa: S311
         )
     )
 

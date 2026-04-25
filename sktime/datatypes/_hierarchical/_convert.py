@@ -42,17 +42,17 @@ if _check_soft_dependencies("dask", severity="none"):
     def convert_dask_to_pd_as_hierarchical(obj, store=None):
         return convert_dask_to_pandas(obj)
 
-    convert_dict[("dask_hierarchical", "pd_multiindex_hier", "Hierarchical")] = (
-        convert_dask_to_pd_as_hierarchical
-    )
+    convert_dict[
+        ("dask_hierarchical", "pd_multiindex_hier", "Hierarchical")
+    ] = convert_dask_to_pd_as_hierarchical
 
     def convert_pd_to_dask_as_hierarchical(obj, store=None):
         obj = _coerce_df_dtypes(obj)
         return convert_pandas_to_dask(obj)
 
-    convert_dict[("pd_multiindex_hier", "dask_hierarchical", "Hierarchical")] = (
-        convert_pd_to_dask_as_hierarchical
-    )
+    convert_dict[
+        ("pd_multiindex_hier", "dask_hierarchical", "Hierarchical")
+    ] = convert_pd_to_dask_as_hierarchical
 
     _extend_conversions(
         "dask_hierarchical",
@@ -70,16 +70,16 @@ if _check_soft_dependencies("polars", severity="none"):
     def convert_polars_to_pd_as_hierarchical(obj, store=None):
         return convert_polars_to_pandas(obj)
 
-    convert_dict[("polars_hierarchical", "pd_multiindex_hier", "Hierarchical")] = (
-        convert_polars_to_pd_as_hierarchical
-    )
+    convert_dict[
+        ("polars_hierarchical", "pd_multiindex_hier", "Hierarchical")
+    ] = convert_polars_to_pd_as_hierarchical
 
     def convert_pd_to_polars_as_hierarchical(obj, store=None):
         return convert_pandas_to_polars(obj)
 
-    convert_dict[("pd_multiindex_hier", "polars_hierarchical", "Hierarchical")] = (
-        convert_pd_to_polars_as_hierarchical
-    )
+    convert_dict[
+        ("pd_multiindex_hier", "polars_hierarchical", "Hierarchical")
+    ] = convert_pd_to_polars_as_hierarchical
 
     _extend_conversions(
         "polars_hierarchical",

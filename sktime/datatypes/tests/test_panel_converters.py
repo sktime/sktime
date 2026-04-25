@@ -323,7 +323,9 @@ def test_from_multiindex_to_listdataset(n_instances, n_columns, n_timepoints):
         """
         np.random.seed(random_seed)
         (divide_by, unit) = (
-            (10**9, "s") if out_format == "datetime" else (24 * 60 * 60 * 10**9, "D")
+            (10**9, "s")
+            if out_format == "datetime"
+            else (24 * 60 * 60 * 10**9, "D")
         )
 
         start_u = start.value // divide_by

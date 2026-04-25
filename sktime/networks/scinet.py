@@ -913,13 +913,14 @@ class SCINet:
                         div_x = x[
                             :,
                             :,
-                            i * self.div_len : min(
+                            i
+                            * self.div_len : min(
                                 i * self.div_len + self.overlap_len, self.seq_len
                             ),
                         ]
-                        output[:, :, i * self.div_len : (i + 1) * self.div_len] = (
-                            div_layer(div_x)
-                        )
+                        output[
+                            :, :, i * self.div_len : (i + 1) * self.div_len
+                        ] = div_layer(div_x)
                     x = output
                 x = self.projection1(x)
                 x = x.permute(0, 2, 1)
