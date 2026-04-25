@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        estimator: ${{ fromJson(inputs.flags) }}
+        flag: ${{ fromJson(inputs.flags) }}
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         os: [ubuntu-latest, macos-latest, windows-latest, ubuntu-22.04-arm]
 
@@ -38,31 +38,22 @@ jobs:
         shell: pwsh
         run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
 
-      - name: Install sktime
+      - name: Install sktime with dev dependencies
         run: uv pip install .[dev]
         env:
           UV_SYSTEM_PYTHON: 1
 
-      - name: Install estimator dependencies
+      - name: Install dependencies for ${{ matrix.flag }}
         run: |
-          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.estimator }}', include_test_deps=True)))" > deps.txt
+          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}', include_test_deps=True)))" > deps.txt
           uv pip install -r deps.txt
         continue-on-error: true
 
-      - name: Run check_estimator
+      - name: Show dependencies
+        run: uv pip list
+
+      - name: Run check_estimator for ${{ matrix.flag }}
+        env:
+          FLAG: ${{ matrix.flag }}
         shell: bash
-        run: |
-          python - <<'EOF'
-          from sktime.registry import all_estimators
-          from sktime.utils.estimator_checks import check_estimator
-
-          name = "${{ matrix.estimator }}"
-          est_dict = dict(all_estimators())
-
-          print(f"[TESTING] {name}")
-
-          est = est_dict[name]
-          check_estimator(est)
-
-          print(f"[PASS] {name}")
-          EOF
+        run: python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('${{ matrix.flag }}')"
