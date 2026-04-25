@@ -240,6 +240,20 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": [
+            "julian-fong",
+            "geetu040",
+            "Yuqi Nie",
+            "Nam H. Nguyen",
+            "Phanwadee Sinthong",
+            "Jayant Kalagnanam",
+        ],
+        "maintainers": ["julian-fong"],
+        "python_dependencies": ["transformers<4.41.0", "torch", "accelerate"],
+        # estimator type
+        # --------------
         "X_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",
@@ -259,17 +273,9 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "authors": [
-            "julian-fong",
-            "geetu040",
-            "Yuqi Nie",
-            "Nam H. Nguyen",
-            "Phanwadee Sinthong",
-            "Jayant Kalagnanam",
-        ],
-        "maintainers": ["julian-fong"],
-        "python_dependencies": ["transformers<4.41.0", "torch", "accelerate"],
         "capability:global_forecasting": True,
+        # Tests and CI tags
+        # -----------------
         "tests:vm": True,
     }
 
