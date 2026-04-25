@@ -2,8 +2,8 @@
 
 from contextlib import contextmanager
 
-from sktime.forecasting.base._base import BaseForecaster
 from sktime.datatypes import convert_to
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.utils.validation.forecasting import check_alpha
 
 __all__ = ["_BaseGlobalForecaster", "_GlobalForecastingDeprecationMixin"]
