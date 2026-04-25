@@ -148,9 +148,27 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
-        super().__init__()
-        _check_estimator_deps(self)
         self._state = "new"
+
+        super().__init__()
+
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     @classmethod
     def _get_clone_plugins(cls):
@@ -450,6 +468,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         -------
         self : Reference to self.
         """
+        _check_estimator_deps(self)
+
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
@@ -1107,6 +1127,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         >>> forecaster.state
         'pretrained'
         """
+        _check_estimator_deps(self)
+
         if check_is_scitype(y, "Series"):
             raise TypeError(
                 f"{type(self).__name__}.pretrain requires Panel or Hierarchical data "
