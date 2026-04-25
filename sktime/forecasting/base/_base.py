@@ -34,9 +34,9 @@ State:
 
 __author__ = [
     "big-o",
-    "ciaran-g"
+    "ciaran-g",
     "fkiraly",
-    "miraep8"
+    "miraep8",
     "mloning",
     "simonblanke",
     "sveameyer13",
