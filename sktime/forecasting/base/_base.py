@@ -704,12 +704,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         Returns
         -------
         quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+            Quantile forecasts, with columns and rows as follows:
+
+            * Column has multi-index: first level is variable name from y in fit,
+              second level being the values of alpha passed to the function.
+            * Row index is fh, with additional (upper) levels equal to instance levels,
+              from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            * Entries are quantile forecasts, for var in col index,
+              at quantile probability in second col index, for the row index.
         """
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
@@ -795,17 +797,19 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         Returns
         -------
         pred_int : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level coverage fractions for which intervals were computed.
-                    in the same order as in input ``coverage``.
-                Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                from y seen in fit, if y seen in fit was Panel or Hierarchical.
-            Entries are forecasts of lower/upper interval end,
-                for var in col index, at nominal coverage in second col index,
-                lower/upper depending on third col index, for the row index.
-                Upper/lower interval end forecasts are equivalent to
-                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+            Prediction interval forecasts, with columns and rows as follows:
+
+            * Column has multi-index: first level is variable name from y in fit,
+              second level coverage fractions for which intervals were computed.
+              in the same order as in input ``coverage``.
+              Third level is string "lower" or "upper", for lower/upper interval end.
+            * Row index is fh, with additional (upper) levels equal to instance levels,
+              from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            * Entries are forecasts of lower/upper interval end,
+              for var in col index, at nominal coverage in second col index,
+              lower/upper depending on third col index, for the row index.
+              Upper/lower interval end forecasts are equivalent to
+              quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
@@ -882,29 +886,19 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``fh`` index reference.
 
-        cov : bool, optional (default=False)
-            if True, computes covariance matrix forecast.
-            if False, computes marginal variance forecasts.
-
         Returns
         -------
         pred_var : pd.DataFrame, format dependent on ``cov`` variable
-            If cov=False:
-                Column names are exactly those of ``y`` passed in ``fit``/``update``.
-                    For nameless formats, column index will be a RangeIndex.
-                Row index is fh, with additional levels equal to instance levels,
-                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
-                Entries are variance forecasts, for var in col index.
-                A variance forecast for given variable and fh index is a predicted
-                    variance for that variable and index, given observed data.
-            If cov=True:
-                Column index is a multiindex: 1st level is variable names (as above)
-                    2nd level is fh.
-                Row index is fh, with additional levels equal to instance levels,
-                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
-                Entries are (co-)variance forecasts, for var in col index, and
-                    covariance between time index in row and col.
-                Note: no covariance forecasts are returned between different variables.
+            Variance forecasts, with columns and rows as follows:
+
+            * Column names are exactly those of ``y`` passed in ``fit``/``update``.
+              For nameless formats, column index will be a RangeIndex.
+            * Row index is fh, with additional levels equal to instance levels,
+              from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            * Entries are variance forecasts, for var in col index.
+
+            A variance forecast for given variable and fh index is a predicted
+            marginal variance for that variable and index, given observed data.
         """
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
@@ -2704,7 +2698,7 @@ class _GlobalForecastingDeprecationMixin:
     .. deprecated:: 0.41.0
 
         The ``y`` parameter in ``predict()`` is deprecated and will be removed
-        in version 0.43.0. Global forecasting now uses the data from ``fit()``.
+        in version 1.1.0. Global forecasting now uses the data from ``fit()``.
 
     Usage
     -----
@@ -2716,7 +2710,7 @@ class _GlobalForecastingDeprecationMixin:
     The mixin must come before ``BaseForecaster`` to ensure correct MRO.
     """
 
-    # TODO 0.43.0: Remove this mixin class entirely
+    # TODO 1.1.0: Remove this mixin class entirely
 
     @contextmanager
     def _temporary_y_swap(self, X, y):
@@ -2741,9 +2735,12 @@ class _GlobalForecastingDeprecationMixin:
 
         warn(
             f"In {self.__class__.__name__}.{method_name}(), the 'y' parameter "
-            "is deprecated and will be removed in sktime version 0.43.0. "
-            "Global forecasting now uses the data passed to fit(). "
-            "To retain current behavior, pass your data to fit() instead.",
+            "is deprecated and will be removed in sktime version 1.1.0. "
+            "Global forecasters now pass global pretraining data via pretrain, and"
+            "historical  data via fit. "
+            "To retain current behavior, pass pretraining data to pretrain(y) - "
+            "previously fit(y) -"
+            "and historical data as y to fit(y) - previously predict(y)."
             category=FutureWarning,
             obj=self,
         )
@@ -2751,7 +2748,43 @@ class _GlobalForecastingDeprecationMixin:
     def predict(self, fh=None, X=None, y=None):
         """Forecast time series at future horizon.
 
-        Wraps ``BaseForecaster.predict()`` with deprecation warning for ``y``.
+        State required:
+            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+
+        Accesses in self:
+
+            * Fitted model attributes ending in "_".
+            * ``self.cutoff``, ``self.is_fitted``
+
+        Writes to self:
+            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
+            previously.
+
+        Parameters
+        ----------
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
+            The forecasting horizon encoding the time stamps to forecast at.
+            Should not be passed if has already been passed in ``fit``.
+            If has not been passed in fit, must be passed, not optional
+
+            If fh is not None and not of type ForecastingHorizon it is coerced to
+            ForecastingHorizon via a call to _check_fh. In particular,
+            if fh is of type pd.Index it is coerced via
+            ForecastingHorizon(fh, is_relative=False)
+
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
+            as ``y`` in ``fit``.
+            If ``self.get_tag("X-y-must-have-same-index")``,
+            ``X.index`` must contain ``fh`` index reference.
+
+        Returns
+        -------
+        y_pred : time series in sktime compatible data container format
+            Point forecasts at ``fh``, with same index as ``fh``.
+            ``y_pred`` has same type as the ``y`` that has been passed most recently:
+            ``Series``, ``Panel``, ``Hierarchical`` scitype, same format (see above)
         """
         if y is not None:
             self._warn_y_deprecated("predict")
@@ -2762,7 +2795,63 @@ class _GlobalForecastingDeprecationMixin:
     def predict_interval(self, fh=None, X=None, coverage=0.90, y=None):
         """Compute/return prediction interval forecasts.
 
-        Wraps ``BaseForecaster.predict_interval()`` with deprecation warning.
+        If ``coverage`` is iterable, multiple intervals will be calculated.
+
+        State required:
+            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+
+        Accesses in self:
+
+            * Fitted model attributes ending in "_".
+            * ``self.cutoff``, ``self.is_fitted``
+
+        Writes to self:
+            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
+            previously.
+
+        Parameters
+        ----------
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
+            The forecasting horizon encoding the time stamps to forecast at.
+            Should not be passed if has already been passed in ``fit``.
+            If has not been passed in fit, must be passed, not optional
+
+            If ``fh`` is not None and not of type ``ForecastingHorizon``,
+            it is coerced to ``ForecastingHorizon`` internally (via ``_check_fh``).
+
+            * if ``fh`` is ``int`` or array-like of ``int``, it is interpreted as
+              relative horizon, and coerced to a
+              relative ``ForecastingHorizon(fh, is_relative=True)``.
+            * if ``fh`` is of type ``pd.Index``, it is interpreted
+              as an absolute horizon, and coerced
+              to an absolute ``ForecastingHorizon(fh, is_relative=False)``.
+
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
+            as ``y`` in ``fit``.
+            If ``self.get_tag("X-y-must-have-same-index")``,
+            ``X.index`` must contain ``fh`` index reference.
+
+        coverage : float or list of float of unique values, optional (default=0.90)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Prediction interval forecasts, with columns and rows as follows:
+
+            * Column has multi-index: first level is variable name from y in fit,
+              second level coverage fractions for which intervals were computed.
+              in the same order as in input ``coverage``.
+              Third level is string "lower" or "upper", for lower/upper interval end.
+            * Row index is fh, with additional (upper) levels equal to instance levels,
+              from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            * Entries are forecasts of lower/upper interval end,
+              for var in col index, at nominal coverage in second col index,
+              lower/upper depending on third col index, for the row index.
+              Upper/lower interval end forecasts are equivalent to
+              quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         if y is not None:
             self._warn_y_deprecated("predict_interval")
@@ -2773,7 +2862,60 @@ class _GlobalForecastingDeprecationMixin:
     def predict_quantiles(self, fh=None, X=None, alpha=None, y=None):
         """Compute/return quantile forecasts.
 
-        Wraps ``BaseForecaster.predict_quantiles()`` with deprecation warning.
+        If ``alpha`` is iterable, multiple quantiles will be calculated.
+
+        State required:
+            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+
+        Accesses in self:
+
+            * Fitted model attributes ending in "_".
+            * ``self.cutoff``, ``self.is_fitted``
+
+        Writes to self:
+            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
+            previously.
+
+        Parameters
+        ----------
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
+            The forecasting horizon encoding the time stamps to forecast at.
+            Should not be passed if has already been passed in ``fit``.
+            If has not been passed in fit, must be passed, not optional
+
+
+            If ``fh`` is not None and not of type ``ForecastingHorizon``,
+            it is coerced to ``ForecastingHorizon`` internally (via ``_check_fh``).
+
+            * if ``fh`` is ``int`` or array-like of ``int``, it is interpreted as
+              relative horizon, and coerced to a
+              relative ``ForecastingHorizon(fh, is_relative=True)``.
+            * if ``fh`` is of type ``pd.Index``, it is interpreted
+              as an absolute horizon, and coerced
+              to an absolute ``ForecastingHorizon(fh, is_relative=False)``.
+
+
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
+            as ``y`` in ``fit``.
+            If ``self.get_tag("X-y-must-have-same-index")``,
+            ``X.index`` must contain ``fh`` index reference.
+
+        alpha : float or list of float of unique values, optional (default=[0.05, 0.95])
+            A probability or list of, at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Quantile forecasts, with columns and rows as follows:
+
+            * Column has multi-index: first level is variable name from y in fit,
+              second level being the values of alpha passed to the function.
+            * Row index is fh, with additional (upper) levels equal to instance levels,
+              from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            * Entries are quantile forecasts, for var in col index,
+              at quantile probability in second col index, for the row index.
         """
         if y is not None:
             self._warn_y_deprecated("predict_quantiles")
@@ -2784,7 +2926,57 @@ class _GlobalForecastingDeprecationMixin:
     def predict_var(self, fh=None, X=None, cov=False, y=None):
         """Compute/return variance forecasts.
 
-        Wraps ``BaseForecaster.predict_var()`` with deprecation warning.
+        State required:
+            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
+
+        Accesses in self:
+
+            * Fitted model attributes ending in "_".
+            * ``self.cutoff``, ``self.is_fitted``
+
+        Writes to self:
+            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
+            previously.
+
+        Parameters
+        ----------
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
+            The forecasting horizon encoding the time stamps to forecast at.
+            Should not be passed if has already been passed in ``fit``.
+            If has not been passed in fit, must be passed, not optional
+
+
+            If ``fh`` is not None and not of type ``ForecastingHorizon``,
+            it is coerced to ``ForecastingHorizon`` internally (via ``_check_fh``).
+
+            * if ``fh`` is ``int`` or array-like of ``int``, it is interpreted as
+              relative horizon, and coerced to a
+              relative ``ForecastingHorizon(fh, is_relative=True)``.
+            * if ``fh`` is of type ``pd.Index``, it is interpreted
+              as an absolute horizon, and coerced
+              to an absolute ``ForecastingHorizon(fh, is_relative=False)``.
+
+
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
+            as ``y`` in ``fit``.
+            If ``self.get_tag("X-y-must-have-same-index")``,
+            ``X.index`` must contain ``fh`` index reference.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on ``cov`` variable
+            Variance forecasts, with columns and rows as follows:
+
+            * Column names are exactly those of ``y`` passed in ``fit``/``update``.
+              For nameless formats, column index will be a RangeIndex.
+            * Row index is fh, with additional levels equal to instance levels,
+              from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            * Entries are variance forecasts, for var in col index.
+
+            A variance forecast for given variable and fh index is a predicted
+            marginal variance for that variable and index, given observed data.
         """
         if y is not None:
             self._warn_y_deprecated("predict_var")
