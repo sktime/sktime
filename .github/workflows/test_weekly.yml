@@ -1,4 +1,4 @@
-name: Weekly test
+name: weekly-test
 
 on:
   schedule:
