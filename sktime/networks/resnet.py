@@ -1,7 +1,6 @@
 """Residual Network (ResNet) (minus the final output layer)."""
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class ResNetNetwork(BaseDeepNetwork):
@@ -38,10 +37,10 @@ class ResNetNetwork(BaseDeepNetwork):
     }
 
     def __init__(self, random_state=0, activation="relu"):
-        _check_dl_dependencies(severity="error")
-        super().__init__()
         self.random_state = random_state
         self.activation = activation
+
+        super().__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.

@@ -213,7 +213,24 @@ class BaseTransformer(BaseEstimator):
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
 
         super().__init__()
-        _check_estimator_deps(self)
+
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     def _is_transformer(self, other):
         """Check whether other is a transformer - sklearn or sktime.
@@ -477,6 +494,8 @@ class BaseTransformer(BaseEstimator):
         -------
         self : a fitted instance of the estimator
         """
+        _check_estimator_deps(self)
+
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
