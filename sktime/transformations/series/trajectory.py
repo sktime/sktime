@@ -93,9 +93,7 @@ class DouglasPeuckerTrajectoryGeneralizer(BaseTransformer):
         if self.datetime_col is not None:
             df = df.set_index(self.datetime_col)
 
-        geometry = [
-            Point(xy) for xy in zip(df[self.lon_col], df[self.lat_col])
-        ]
+        geometry = [Point(xy) for xy in zip(df[self.lon_col], df[self.lat_col])]
         gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
 
         traj = mpd.Trajectory(gdf, traj_id=1)
@@ -126,4 +124,3 @@ class DouglasPeuckerTrajectoryGeneralizer(BaseTransformer):
         params1 = {"tolerance": 0.01, "lat_col": "lat", "lon_col": "lon"}
         params2 = {"tolerance": 0.001}
         return [params1, params2]
-
