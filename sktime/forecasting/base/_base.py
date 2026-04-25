@@ -2707,3 +2707,64 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
 # initialize dynamic docstrings
 BaseForecaster._init_dynamic_doc()
+
+
+def _format_moving_cutoff_predictions(y_preds, cutoffs):
+    """Format moving-cutoff predictions.
+
+    Parameters
+    ----------
+    y_preds: list of pd.Series or pd.DataFrames, of length n
+            must have equal index and equal columns
+    cutoffs: iterable of cutoffs, of length n
+
+    Returns
+    -------
+    y_pred: pd.DataFrame, composed of entries of y_preds
+        if length of elements in y_preds is 2 or larger:
+            row-index = index common to the y_preds elements
+            col-index = (cutoff[i], y_pred.column)
+            entry is forecast at horizon given by row, from cutoff/variable at column
+        if length of elements in y_preds is 1:
+            row-index = forecasting horizon
+            col-index = y_pred.column
+    """
+    # check that input format is correct
+    if not isinstance(y_preds, list):
+        raise ValueError(f"`y_preds` must be a list, but found: {type(y_preds)}")
+    if len(y_preds) == 0:
+        return pd.DataFrame(columns=cutoffs)
+    if not isinstance(y_preds[0], (pd.DataFrame, pd.Series)):
+        raise ValueError("y_preds must be a list of pd.Series or pd.DataFrame")
+    ylen = len(y_preds[0])
+    ytype = type(y_preds[0])
+    if isinstance(y_preds[0], pd.DataFrame):
+        ycols = y_preds[0].columns
+    for i, y_pred in enumerate(y_preds):
+        if not isinstance(y_pred, ytype):
+            raise ValueError(
+                "all elements of y_preds must be of the same type, "
+                f"but y_pred[0] is {ytype} and y_pred[{i}] is {type(y_pred)}"
+            )
+        if not len(y_pred) == ylen:
+            raise ValueError("all elements of y_preds must be of the same length")
+    if isinstance(y_preds[0], pd.DataFrame):
+        for y_pred in y_preds:
+            if not y_pred.columns.equals(ycols):
+                raise ValueError("all elements of y_preds must have the same columns")
+
+    if len(y_preds[0]) == 1:
+        # return series for single step ahead predictions
+        y_pred = pd.concat(y_preds)
+    else:
+        cutoffs = [cutoff[0] for cutoff in cutoffs]
+        y_pred = pd.concat(y_preds, axis=1, keys=cutoffs)
+
+    if not y_pred.index.is_monotonic_increasing:
+        y_pred = y_pred.sort_index()
+
+    if hasattr(y_preds[0], "columns") and not isinstance(y_pred.columns, pd.MultiIndex):
+        col_ordered = y_preds[0].columns
+        y_pred = y_pred.loc[:, col_ordered]
+
+    return y_pred
