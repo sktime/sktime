@@ -1,4 +1,4 @@
-"""Utilities for handling the random_state variable."""
+"""Utilities for handling estimator randomness parameters."""
 
 # copied from scikit-learn to avoid dependency on sklearn private methods
 
@@ -9,13 +9,13 @@ from sklearn.utils import check_random_state
 def set_random_state(estimator, random_state=0):
     """Set fixed random_state parameters for an estimator.
 
-    Finds all parameters ending ``random_state`` and sets them to integers
-    derived from ``random_state``.
+    Finds all parameters ending ``random_state`` or ``random_seed`` and sets them
+    to integers derived from ``random_state``.
 
     Parameters
     ----------
     estimator : estimator supporting get_params, set_params
-        Estimator with potential randomness managed by random_state parameters.
+        Estimator with potential randomness managed by randomization parameters.
 
     random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the generation of the random
@@ -23,14 +23,18 @@ def set_random_state(estimator, random_state=0):
 
     Notes
     -----
-    This does not necessarily set *all* ``random_state`` attributes that
-    control an estimator's randomness, only those accessible through
-    ``estimator.get_params()``.
+    This does not necessarily set *all* estimator attributes that control
+    randomness, only those accessible through ``estimator.get_params()``.
     """
     random_state = check_random_state(random_state)
     to_set = {}
     for key in sorted(estimator.get_params(deep=True)):
-        if key == "random_state" or key.endswith("__random_state"):
+        if (
+            key == "random_state"
+            or key.endswith("__random_state")
+            or key == "random_seed"
+            or key.endswith("__random_seed")
+        ):
             to_set[key] = random_state.randint(np.iinfo(np.int32).max)
 
     if to_set:

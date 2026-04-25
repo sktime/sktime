@@ -230,7 +230,7 @@ class ChronosForecaster(BaseForecaster):
         If not provided, the default values from the pretrained model or system
         configuration are used.
 
-    seed: int, optional, default=None
+    random_seed: int, optional, default=None
         Random seed for transformers.
 
     use_source_package: bool, optional, default=False
@@ -311,12 +311,14 @@ class ChronosForecaster(BaseForecaster):
         "enforce_index_type": None,
         "capability:missing_values": False,
         "capability:pred_int": False,
+        "capability:random_seed": True,
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "property:randomness": "derandomized",
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -347,17 +349,20 @@ class ChronosForecaster(BaseForecaster):
         self,
         model_path: str,
         config: dict = None,
-        seed: int | None = None,
         use_source_package: bool = False,
         ignore_deps: bool = False,
+        random_seed: int | None = None,
     ):
         self.model_path = model_path
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
 
         # set random seed
-        self.seed = seed
-        self._seed = np.random.randint(0, 2**31) if seed is None else seed
+        self.random_seed = random_seed
+        self.seed = random_seed
+        self._seed = (
+            np.random.randint(0, 2**31) if random_seed is None else random_seed
+        )
 
         # initialize model_strategy as None, will be set correctly after loading config.
         self.model_strategy = None
@@ -566,7 +571,8 @@ class ChronosForecaster(BaseForecaster):
         """
         self._ensure_model_pipeline_loaded()
 
-        transformers.set_seed(self._seed)
+        seed = self.random_seed if self.random_seed is not None else self._seed
+        transformers.set_seed(seed)
         if fh is not None:
             # needs to be integer not np.int64
             prediction_length = int(max(fh.to_relative(self.cutoff)))
@@ -637,7 +643,7 @@ class ChronosForecaster(BaseForecaster):
                 "config": {
                     "num_samples": 20,
                 },
-                "seed": 42,
+                "random_seed": 42,
             }
         )
         test_params.append(

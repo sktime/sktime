@@ -45,7 +45,7 @@ class Chronos2Forecaster(BaseForecaster):
             If True, enables cross-learning across all input series in a batch,
             sharing information via the group attention mechanism.
 
-    seed : int or None, optional, default=None
+    random_seed : int or None, optional, default=None
         Random seed for reproducibility.
 
     ignore_deps : bool, optional, default=False
@@ -83,12 +83,14 @@ class Chronos2Forecaster(BaseForecaster):
         "X-y-must-have-same-index": False,
         "capability:missing_values": False,
         "capability:pred_int": False,
+        "capability:random_seed": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:insample": False,
         "capability:global_forecasting": True,
         "capability:non_contiguous_X": False,
+        "property:randomness": "derandomized",
         "tests:vm": True,
         "tests:skip_by_name": [
             "test_persistence_via_pickle",
@@ -108,12 +110,15 @@ class Chronos2Forecaster(BaseForecaster):
         self,
         model_path: str = "amazon/chronos-2",
         config: dict = None,
-        seed: int | None = None,
         ignore_deps: bool = False,
+        random_seed: int | None = None,
     ):
         self.model_path = model_path
-        self.seed = seed
-        self._seed = np.random.randint(0, 2**31) if seed is None else seed
+        self.random_seed = random_seed
+        self.seed = random_seed
+        self._seed = (
+            np.random.randint(0, 2**31) if random_seed is None else random_seed
+        )
         self.config = config
         self.ignore_deps = ignore_deps
 
@@ -214,7 +219,8 @@ class Chronos2Forecaster(BaseForecaster):
         import transformers
 
         self._ensure_model_pipeline_loaded()
-        transformers.set_seed(self._seed)
+        seed = self.random_seed if self.random_seed is not None else self._seed
+        transformers.set_seed(seed)
 
         prediction_length = int(max(fh.to_relative(self.cutoff)))
 
@@ -280,7 +286,7 @@ class Chronos2Forecaster(BaseForecaster):
         """Return testing parameter settings for the estimator."""
         return [
             {"model_path": "amazon/chronos-2"},
-            {"model_path": "amazon/chronos-2", "seed": 42},
+            {"model_path": "amazon/chronos-2", "random_seed": 42},
         ]
 
 

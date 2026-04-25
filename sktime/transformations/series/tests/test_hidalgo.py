@@ -36,7 +36,7 @@ def test_X():
 )
 def test_get_neighbourhood_params():
     """Test for neighbourhood parameter generation."""
-    model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, seed=1)
+    model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, random_seed=1)
     (
         N_actual,
         mu_actual,
@@ -146,7 +146,7 @@ def test_get_neighbourhood_params():
 )
 def test_initialise_params():
     """Test for initialise parameters."""
-    model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, seed=1)
+    model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, random_seed=1)
     N = 10
     mu = np.array(
         [
@@ -196,7 +196,7 @@ def test_initialise_params():
             4,
         ]
     )
-    _rng = check_random_state(model.seed)
+    _rng = check_random_state(model.random_seed)
 
     (
         V_actual,
@@ -275,8 +275,8 @@ def test_gibbs():
         ],
     ]
 
-    model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, seed=1)
-    _rng = check_random_state(model.seed)
+    model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, random_seed=1)
+    _rng = check_random_state(model.random_seed)
 
     N, mu, Iin, Iout, Iout_count, Iout_track = model._get_neighbourhood_params(X)
     V, NN, a1, b1, c1, Z, f1, N_in = model._initialise_params(N, mu, Iin, _rng)

@@ -1309,20 +1309,28 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         """Check that estimator randomization tags are compatibly set."""
         randomness = estimator_class.get_class_tag("property:randomness")
         random_state = estimator_class.get_class_tag("capability:random_state")
+        random_seed = estimator_class.get_class_tag("capability:random_seed")
+        has_random_state = "random_state" in estimator_class.get_param_names()
+        has_random_seed = "random_seed" in estimator_class.get_param_names()
 
-        # randomness = "derandomized" should be set only if random_state is available
+        # randomness = "derandomized" should be set only if a seed parameter exists
         if randomness == "derandomized":
-            assert random_state, (
+            assert random_state or random_seed, (
                 f"{estimator_class.__name__} must set "
-                "'capability:random_state' tag to True if "
+                "'capability:random_state' or 'capability:random_seed' tag to True if "
                 "'property:randomness' tag is set to 'derandomized'"
             )
 
-        # random_state tag should be set iff the parameter exists in the signature
-        assert random_state == ("random_state" in estimator_class.get_param_names()), (
+        # randomness capability tags should be set iff the parameter exists
+        assert random_state == has_random_state, (
             f"{estimator_class.__name__} must set "
             "'capability:random_state' tag to True, if and only if the "
             "random_state parameter exists in the estimator signature"
+        )
+        assert random_seed == has_random_seed, (
+            f"{estimator_class.__name__} must set "
+            "'capability:random_seed' tag to True, if and only if the "
+            "random_seed parameter exists in the estimator signature"
         )
 
     def test_obj_vs_cls_signature(self, estimator_class):

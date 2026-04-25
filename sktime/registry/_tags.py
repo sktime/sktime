@@ -803,6 +803,34 @@ class capability__random_state(_BaseTag):
     }
 
 
+class capability__random_seed(_BaseTag):
+    """Capability: the estimator can be derandomized using a random_seed.
+
+    - String name: ``"capability:random_seed"``
+    - Public capability tag
+    - Values: bool, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the estimator can be derandomized using a
+    ``random_seed`` parameter. If the ``random_seed`` parameter is set, then the
+    estimator will produce the same results on every run, up to minimal numerical
+    precision discrepancies (1e-5 relative error).
+    If the tag is ``False``, the estimator does not have a ``random_seed``
+    parameter and cannot be derandomized through that parameter.
+    """
+
+    _tags = {
+        "tag_name": "capability:random_seed",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": (
+            "does the object have a random_seed parameter for derandomization?"
+        ),
+        "user_facing": True,
+    }
+
+
 class fit_is_empty(_BaseTag):
     """Property: Whether the estimator has an empty fit method.
 

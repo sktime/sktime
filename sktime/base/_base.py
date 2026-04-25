@@ -91,6 +91,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         # default property tags
         "property:randomness": "deterministic",
         "capability:random_state": False,
+        "capability:random_seed": False,
         # default tags for testing
         "tests:core": False,  # core objects have wider trigger conditions in testing
         "tests:vm": False,  # whether the object should be tested in its own VM

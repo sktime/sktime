@@ -59,6 +59,8 @@ class TotoForecaster(BaseForecaster):
         Path to the Toto huggingface model.
     device : string, optional (default=None)
         Specifies the device on which to run the model on ('cpu' or 'cuda').
+    random_seed : int, optional (default=None)
+        Random seed for reproducibility.
 
     References
     ----------
@@ -87,6 +89,8 @@ class TotoForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:random_seed": True,
+        "property:randomness": "derandomized",
         # contribution and dependency tags
         "authors": [
             "JATAYU000",
@@ -114,7 +118,6 @@ class TotoForecaster(BaseForecaster):
 
     def __init__(
         self,
-        seed=None,
         num_samples: int = 1,
         samples_per_batch: int = 1,
         prediction_type: str = "median",
@@ -123,6 +126,7 @@ class TotoForecaster(BaseForecaster):
         use_memory_efficient_attention: bool = False,
         model_path: str = "Datadog/Toto-Open-Base-1.0",
         device=None,
+        random_seed=None,
     ):
         self.model_path = model_path
         self.device = device
@@ -145,8 +149,11 @@ class TotoForecaster(BaseForecaster):
         if prediction_type not in ["mean", "median"]:
             raise ValueError("prediction_type must be either 'mean' or 'median'")
 
-        self.seed = seed
-        self._seed = np.random.randint(0, 2**31) if seed is None else seed
+        self.random_seed = random_seed
+        self.seed = random_seed
+        self._seed = (
+            np.random.randint(0, 2**31) if random_seed is None else random_seed
+        )
         super().__init__()
 
     def _get_toto_key(self):
@@ -274,9 +281,10 @@ class TotoForecaster(BaseForecaster):
         """
         import torch
 
-        torch.manual_seed(self._seed)
+        seed = self.random_seed if self.random_seed is not None else self._seed
+        torch.manual_seed(seed)
         if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(self._seed)
+            torch.cuda.manual_seed_all(seed)
 
         prediction_length = max(fh.to_relative(self._cutoff))
 

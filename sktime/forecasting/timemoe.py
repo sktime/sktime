@@ -69,7 +69,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         - tie_word_embeddings: bool, default=False
             Whether to tie word embeddings in the TimeMOE model.
 
-    seed: int, optional (default=None)
+    random_seed: int, optional (default=None)
         Seed for reproducibility.
 
     use_source_package: bool, optional (default=False)
@@ -119,6 +119,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "enforce_index_type": None,
         "capability:missing_values": False,
         "capability:pred_int": False,
+        "capability:random_seed": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": [
             "pd.DataFrame",
@@ -129,6 +130,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "property:randomness": "derandomized",
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -139,15 +141,18 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         self,
         model_path: str,
         config: dict = None,
-        seed: int = None,
         use_source_package: bool = False,
         ignore_deps: bool = False,
+        random_seed: int = None,
     ):
         if not ignore_deps:
             _check_soft_dependencies("torch", severity="error")
             _check_soft_dependencies("transformers", severity="error")
-        self.seed = seed
-        self._seed = np.random.randint(0, 2**31) if seed is None else seed
+        self.random_seed = random_seed
+        self.seed = random_seed
+        self._seed = (
+            np.random.randint(0, 2**31) if random_seed is None else random_seed
+        )
 
         self.config = config
         _config = self._get_default_config()
@@ -290,7 +295,8 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         import torch
         import transformers
 
-        transformers.set_seed(self._seed)
+        seed = self.random_seed if self.random_seed is not None else self._seed
+        transformers.set_seed(seed)
         if fh is not None:
             prediction_length = int(max(fh.to_relative(self.cutoff)))
         else:
