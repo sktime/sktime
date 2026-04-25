@@ -2,48 +2,39 @@
 
 from __future__ import annotations
 
-from skbase.base import BaseObject
-
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
 
 __all__ = ["LLMForecaster"]
 
 
-class DummyLLM(BaseObject):
-    """Simple clone-safe and pickle-safe dummy LLM for testing."""
+class _DummyLLM:
+    """Simple pickle-safe dummy LLM for testing."""
 
     def __init__(self, response="FORECASTER: naive\nREASON: stable baseline"):
         self.response = response
-        super().__init__()
 
     def invoke(self, prompt):
         """Return a fixed response."""
         return self.response
 
 
-class DummyLLMGarbage(BaseObject):
-    """Dummy LLM returning an invalid selection."""
-
-    def invoke(self, prompt):
-        """Return an invalid response."""
-        return "I choose something unsupported."
-
-
 class LLMForecaster(BaseForecaster):
     """LLM-guided sktime forecaster.
 
-    This forecaster uses a user-supplied LLM backend to select one forecaster
-    from a candidate pool, then fits that forecaster and delegates prediction
+    This forecaster uses a user-supplied LLM backend to select a forecasting
+    object from a candidate pool, then fits that object and delegates prediction
     to it.
 
     Parameters
     ----------
     llm : object
         Backend object implementing an ``invoke(prompt: str) -> str`` method.
-    candidate_forecasters : tuple of tuple[str, BaseForecaster], optional
-        Candidate forecasters that the LLM can choose from.
-        If None, defaults to a simple built-in candidate list.
+    candidate_forecasters : tuple of tuple[str, object], optional
+        Candidate forecasting objects that the LLM can choose from.
+        Entries may be forecaster instances, forecaster classes, or compatible
+        forecasting composites/pipelines.
+        If None, the full sktime forecaster registry is used.
     default_forecaster : BaseForecaster, optional
         Fallback forecaster used if the LLM output cannot be parsed.
         If None, defaults to ``NaiveForecaster()``.
@@ -89,9 +80,7 @@ class LLMForecaster(BaseForecaster):
         if not hasattr(self.llm, "invoke"):
             raise TypeError("llm must implement an 'invoke(prompt)' method.")
 
-        candidates = self.candidate_forecasters
-        if candidates is None:
-            candidates = (("naive", NaiveForecaster()),)
+        candidates = self._get_candidate_forecasters()
 
         fallback = self.default_forecaster
         if fallback is None:
@@ -101,17 +90,17 @@ class LLMForecaster(BaseForecaster):
         response = self.llm.invoke(self.last_prompt_)
         self.last_response_ = response
 
-        selected_name, selected_estimator = self._parse_llm_response(
+        selected_name, selected_forecaster = self._parse_llm_response(
             response=response,
             candidates=candidates,
         )
 
-        if selected_estimator is None:
+        if selected_forecaster is None:
             selected_name = type(fallback).__name__
-            selected_estimator = fallback
+            selected_forecaster = fallback
 
         self.selected_forecaster_ = selected_name
-        self.forecaster_ = selected_estimator.clone()
+        self.forecaster_ = self._coerce_forecaster(selected_forecaster)
         self.forecaster_.fit(y=y, X=X, fh=fh)
 
         return self
@@ -120,14 +109,47 @@ class LLMForecaster(BaseForecaster):
         """Forecast time series at future horizon."""
         return self.forecaster_.predict(fh=fh, X=X)
 
+    def _get_candidate_forecasters(self):
+        """Return candidate forecasting objects."""
+        if self.candidate_forecasters is not None:
+            return self.candidate_forecasters
+
+        from sktime.registry import all_estimators
+
+        forecasters = all_estimators(
+            estimator_types="forecaster",
+            return_names=True,
+        )
+
+        return tuple(
+            (name, forecaster)
+            for name, forecaster in forecasters
+            if name != self.__class__.__name__
+        )
+
+    def _coerce_forecaster(self, forecaster):
+        """Return a fitted-ready forecaster instance."""
+        if isinstance(forecaster, type):
+            return forecaster()
+
+        if hasattr(forecaster, "clone"):
+            return forecaster.clone()
+
+        raise TypeError(
+            "Candidate forecasting objects must be forecaster classes "
+            "or cloneable forecaster instances."
+        )
+
     def _build_prompt(self, y, fh, candidates):
         """Build prompt for the LLM."""
         candidate_names = [name for name, _ in candidates]
 
         length = len(y)
-        y_min = float(y.min())
-        y_max = float(y.max())
-        y_mean = float(y.mean())
+        y_min = float(y.min().min()) if hasattr(y.min(), "min") else float(y.min())
+        y_max = float(y.max().max()) if hasattr(y.max(), "max") else float(y.max())
+        y_mean = (
+            float(y.mean().mean()) if hasattr(y.mean(), "mean") else float(y.mean())
+        )
         fh_repr = str(fh)
 
         if self.prompt_template is not None:
@@ -143,14 +165,14 @@ class LLMForecaster(BaseForecaster):
         candidate_block = "\n".join(f"- {name}" for name in candidate_names)
 
         return (
-            "You are selecting the best forecasting model.\n\n"
+            "You are selecting the best forecasting object.\n\n"
             f"Series summary:\n"
             f"- length: {length}\n"
             f"- min: {y_min:.4f}\n"
             f"- max: {y_max:.4f}\n"
             f"- mean: {y_mean:.4f}\n\n"
             f"Forecast horizon:\n{fh_repr}\n\n"
-            f"Candidate forecasters:\n{candidate_block}\n\n"
+            f"Candidate forecasting objects:\n{candidate_block}\n\n"
             "Return exactly in this format:\n"
             "FORECASTER: <name>\n"
             "REASON: <short explanation>"
@@ -163,13 +185,13 @@ class LLMForecaster(BaseForecaster):
 
         response_lower = response.lower()
 
-        for name, estimator in candidates:
+        for name, forecaster in candidates:
             if f"forecaster: {name.lower()}" in response_lower:
-                return name, estimator
+                return name, forecaster
 
-        for name, estimator in candidates:
+        for name, forecaster in candidates:
             if name.lower() in response_lower:
-                return name, estimator
+                return name, forecaster
 
         return None, None
 
@@ -177,13 +199,13 @@ class LLMForecaster(BaseForecaster):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings."""
         params1 = {
-            "llm": DummyLLM(),
+            "llm": _DummyLLM(),
             "candidate_forecasters": (("naive", NaiveForecaster()),),
             "default_forecaster": NaiveForecaster(),
         }
 
         params2 = {
-            "llm": DummyLLMGarbage(),
+            "llm": _DummyLLM("invalid response"),
             "candidate_forecasters": (("naive", NaiveForecaster()),),
             "default_forecaster": NaiveForecaster(),
         }
