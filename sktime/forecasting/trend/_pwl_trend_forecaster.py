@@ -106,30 +106,41 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         weekly_seasonality=False,
         daily_seasonality=False,
     ):
+        self.changepoints = changepoints
+        self.n_changepoints = n_changepoints
+        self.changepoint_range = changepoint_range
+        self.changepoint_prior_scale = changepoint_prior_scale
+        self.verbose = verbose
+        self.yearly_seasonality = yearly_seasonality
+        self.weekly_seasonality = weekly_seasonality
+        self.daily_seasonality = daily_seasonality
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self.freq = None
         self.add_seasonality = None
         self.add_country_holidays = None
         self.growth = "linear"
         self.growth_floor = 0.0
         self.growth_cap = None
-        self.changepoints = changepoints
-        self.n_changepoints = n_changepoints
-        self.changepoint_range = changepoint_range
-        self.yearly_seasonality = yearly_seasonality
-        self.weekly_seasonality = weekly_seasonality
-        self.daily_seasonality = daily_seasonality
         self.holidays = None
         self.seasonality_mode = "additive"
         self.seasonality_prior_scale = 10.0
-        self.changepoint_prior_scale = changepoint_prior_scale
         self.holidays_prior_scale = 10.0
         self.mcmc_samples = 0
         self.alpha = DEFAULT_ALPHA
         self.uncertainty_samples = 1000
         self.stan_backend = None
-        self.verbose = verbose
-
-        super().__init__()
 
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
