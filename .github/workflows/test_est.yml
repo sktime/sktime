@@ -40,12 +40,8 @@ jobs:
 
       - name: Install dependencies for ${{ matrix.flag }}
         run: |
-          uv pip install .
-          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}', include_test_deps=True)))" > deps.txt
-        continue-on-error: true
-
-      - name: Install dependencies for ${{ matrix.flag }}
-        run: uv pip install .[dev] -r deps.txt
+          uv run --with ".[dev]" python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}', include_test_deps=True)))" > deps.txt
+          pip install .[dev] -r deps.txt
         env:
           UV_SYSTEM_PYTHON: 1
         continue-on-error: true
