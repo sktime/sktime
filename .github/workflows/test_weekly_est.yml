@@ -1,0 +1,68 @@
+on:
+  workflow_call:
+    inputs:
+      flags:
+        required: true
+        type: string
+
+jobs:
+  test-est:
+    strategy:
+      fail-fast: false
+      matrix:
+        estimator: ${{ fromJson(inputs.flags) }}
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        os: [ubuntu-latest, macos-latest, windows-latest, ubuntu-22.04-arm]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install OSX packages
+        if: runner.os == 'macOS'
+        run: ./.github/scripts/install_osx_dependencies.sh
+
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
+
+      - name: Install sktime
+        run: uv pip install .[dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
+
+      - name: Install estimator dependencies
+        run: |
+          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.estimator }}', include_test_deps=True)))" > deps.txt
+          uv pip install -r deps.txt
+        continue-on-error: true
+
+      - name: Run check_estimator
+        shell: bash
+        run: |
+          python - <<'EOF'
+          from sktime.registry import all_estimators
+          from sktime.utils.estimator_checks import check_estimator
+
+          name = "${{ matrix.estimator }}"
+          est_dict = dict(all_estimators())
+
+          print(f"[TESTING] {name}")
+
+          est = est_dict[name]
+          check_estimator(est)
+
+          print(f"[PASS] {name}")
+          EOF
