@@ -383,9 +383,9 @@ def test_check_negative(scitype, mtype):
                     return_metadata=[],
                     msg_return_dict="list",
                 )[0]
-                assert (
-                    not result
-                ), f"check_is_mtype {mtype} returns True on {wrong_mtype} fixture {i}"
+                assert not result, (
+                    f"check_is_mtype {mtype} returns True on {wrong_mtype} fixture {i}"
+                )
 
 
 @pytest.mark.skipif(
@@ -420,9 +420,9 @@ def test_mtype_infer(scitype, mtype, fixture_index):
 
     # check fixtures that exist against checks that exist
     if fixture is not None and check_is_defined:
-        assert mtype == infer_mtype(
-            fixture, as_scitype=scitype, exclude_mtypes=[]
-        ), f"mtype {mtype} not correctly identified for fixture {fixture_index}"
+        assert mtype == infer_mtype(fixture, as_scitype=scitype, exclude_mtypes=[]), (
+            f"mtype {mtype} not correctly identified for fixture {fixture_index}"
+        )
 
     # check indirect mtype inference via check_is_scitype
     if fixture is not None and check_is_defined:
@@ -430,9 +430,9 @@ def test_mtype_infer(scitype, mtype, fixture_index):
             fixture, scitype=scitype, exclude_mtypes=[], return_metadata=[]
         )
         inferred_mtype = scitype_res[2]["mtype"]
-        assert (
-            mtype == inferred_mtype
-        ), f"mtype {mtype} not correctly identified for fixture {fixture_index}"
+        assert mtype == inferred_mtype, (
+            f"mtype {mtype} not correctly identified for fixture {fixture_index}"
+        )
 
 
 # exclude these scitypes in inference of scitype test

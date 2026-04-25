@@ -160,6 +160,6 @@ def test_list_available_datasets(origin_repo):
     available_datasets = _list_available_datasets(
         extract_path=None, origin_repo=origin_repo
     )
-    assert (
-        dataset_name in available_datasets
-    ), f"{dataset_name} dataset should be available."  # noqa: E501
+    assert dataset_name in available_datasets, (
+        f"{dataset_name} dataset should be available."
+    )  # noqa: E501

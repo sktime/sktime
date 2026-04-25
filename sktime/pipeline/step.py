@@ -169,10 +169,12 @@ class Step:
                     result = getattr(self.skobject, method)(
                         **dict(
                             filter(
-                                lambda k: k[0]
-                                in inspect.getfullargspec(
-                                    getattr(self.skobject, method)
-                                ).args,
+                                lambda k: (
+                                    k[0]
+                                    in inspect.getfullargspec(
+                                        getattr(self.skobject, method)
+                                    ).args
+                                ),
                                 input_data.items(),
                             )
                         ),

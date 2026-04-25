@@ -54,8 +54,7 @@ class AttentionBias(nn.Module, abc.ABC):
         key,
         query_id,
         kv_id,
-    ):
-        ...
+    ): ...
 
 
 class BinaryAttentionBias(AttentionBias):

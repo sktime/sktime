@@ -679,9 +679,9 @@ class _SktimeModelWrapper:
                 else:
                     coverage = 0.9
 
-                raw_predictions[
-                    SKTIME_PREDICT_INTERVAL
-                ] = self.sktime_model.predict_interval(X=X, coverage=coverage)
+                raw_predictions[SKTIME_PREDICT_INTERVAL] = (
+                    self.sktime_model.predict_interval(X=X, coverage=coverage)
+                )
 
             if SKTIME_PREDICT_PROBA in predict_methods:
                 if not isinstance(
@@ -738,9 +738,9 @@ class _SktimeModelWrapper:
                     )
                 else:
                     alpha = None
-                raw_predictions[
-                    SKTIME_PREDICT_QUANTILES
-                ] = self.sktime_model.predict_quantiles(X=X, alpha=alpha)
+                raw_predictions[SKTIME_PREDICT_QUANTILES] = (
+                    self.sktime_model.predict_quantiles(X=X, alpha=alpha)
+                )
 
             if SKTIME_PREDICT_VAR in predict_methods:
                 if predict_params:

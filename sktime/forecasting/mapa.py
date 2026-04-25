@@ -398,9 +398,9 @@ class MAPAForecaster(BaseForecaster):
                     residual = series / (trend * seasonal)
                     seasonal_pattern = np.exp(seasonal_pattern)
 
-                self._decomposition_info[level][
-                    f"{col}_seasonal_pattern"
-                ] = seasonal_pattern
+                self._decomposition_info[level][f"{col}_seasonal_pattern"] = (
+                    seasonal_pattern
+                )
 
             decomposed[f"{col}_trend"] = trend
             decomposed[f"{col}_seasonal"] = seasonal

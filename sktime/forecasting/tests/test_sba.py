@@ -20,9 +20,9 @@ def test_sba_forecast_less_than_croston():
     pred_croston = croston.predict()
     pred_sba = sba.predict()
 
-    assert (
-        pred_sba[0, 0] < pred_croston[0, 0]
-    ), "SBA should produce a lower (bias-corrected) forecast than Croston"
+    assert pred_sba[0, 0] < pred_croston[0, 0], (
+        "SBA should produce a lower (bias-corrected) forecast than Croston"
+    )
 
 
 def test_sba_correction_factor():

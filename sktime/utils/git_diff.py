@@ -73,9 +73,7 @@ def is_module_changed(module_str):
         return True
     cmd = ["git", "diff", "remotes/origin/main", "--", module_file_path]
     try:
-        output = subprocess.check_output(
-            cmd, shell=False, text=True, encoding="utf-8"
-        )  # noqa: S603
+        output = subprocess.check_output(cmd, shell=False, text=True, encoding="utf-8")  # noqa: S603
         return bool(output)
     except subprocess.CalledProcessError:
         return True

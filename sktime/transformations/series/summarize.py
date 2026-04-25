@@ -473,9 +473,11 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         feat = Z.transform(lambda x: x.shift(lag))
     elif callable(summarizer):
         feat = Z.transform(
-            lambda x: x.rolling(window=window_length, min_periods=window_length)
-            .apply(summarizer, raw=True)
-            .shift(lag)
+            lambda x: (
+                x.rolling(window=window_length, min_periods=window_length)
+                .apply(summarizer, raw=True)
+                .shift(lag)
+            )
         )
     else:
         raise ValueError("The provided summarizer is not callable.")

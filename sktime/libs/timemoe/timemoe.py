@@ -126,9 +126,7 @@ def load_balancing_loss_func(
         # Compute the percentage of tokens routed to each experts
         tokens_per_expert = torch.sum(
             expert_mask.float() * expert_attention_mask, dim=0
-        ) / torch.sum(
-            expert_attention_mask, dim=0
-        )  # noqa: E501
+        ) / torch.sum(expert_attention_mask, dim=0)  # noqa: E501
 
         # Compute the mask that masks all padding tokens as 0 with the
         # same shape of tokens_per_expert
@@ -287,9 +285,7 @@ class TimeMoeRotaryEmbedding(nn.Module):
         self.max_seq_len_cached = seq_len
         t = torch.arange(
             self.max_seq_len_cached, device=device, dtype=torch.int64
-        ).type_as(
-            self.inv_freq
-        )  # noqa: E501
+        ).type_as(self.inv_freq)  # noqa: E501
 
         freqs = torch.outer(t, self.inv_freq)
         # Different from paper, but it uses a different permutation in order to obtain the same calculation  # noqa: E501
@@ -518,9 +514,7 @@ class TimeMoeSparseExpertsLayer(nn.Module):
         # this will be used to easily index which expert is going to be sollicitated
         expert_mask = torch.nn.functional.one_hot(
             selected_experts, num_classes=self.num_experts
-        ).permute(
-            2, 1, 0
-        )  # noqa: E501
+        ).permute(2, 1, 0)  # noqa: E501
 
         # Loop over all available experts in the model and perform the computation on
         # each expert
@@ -655,19 +649,13 @@ class TimeMoeAttention(nn.Module):
 
         query_states = query_states.view(
             bsz, q_len, self.num_heads, self.head_dim
-        ).transpose(
-            1, 2
-        )  # noqa: E501
+        ).transpose(1, 2)  # noqa: E501
         key_states = key_states.view(
             bsz, q_len, self.num_key_value_heads, self.head_dim
-        ).transpose(
-            1, 2
-        )  # noqa: E501
+        ).transpose(1, 2)  # noqa: E501
         value_states = value_states.view(
             bsz, q_len, self.num_key_value_heads, self.head_dim
-        ).transpose(
-            1, 2
-        )  # noqa: E501
+        ).transpose(1, 2)  # noqa: E501
 
         kv_seq_len = key_states.shape[-2]
         if past_key_value is not None:

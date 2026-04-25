@@ -103,9 +103,9 @@ def test_check_link_downloadable(name):
     response = urlopen(req)
 
     # Check if the response status code is 200 (OK)
-    assert (
-        response.status == 200
-    ), f"URL is not valid or does not exist. Error code {response.status}."
+    assert response.status == 200, (
+        f"URL is not valid or does not exist. Error code {response.status}."
+    )
 
     # Check if the response headers indicate that the content is downloadable
     content_type = response.headers.get("Content-Type")

@@ -179,13 +179,11 @@ class DistributionOutput:
 
     @property
     @abc.abstractmethod
-    def args_dim(self) -> [int, "T"]:
-        ...
+    def args_dim(self) -> [int, "T"]: ...
 
     @property
     @abc.abstractmethod
-    def domain_map(self):
-        ...
+    def domain_map(self): ...
 
     def get_param_proj(
         self,

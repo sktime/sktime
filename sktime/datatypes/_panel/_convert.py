@@ -1148,16 +1148,16 @@ if _check_soft_dependencies("polars", severity="none"):
     def convert_polars_to_pd_as_panel(obj, store=None):
         return convert_polars_to_pandas(obj)
 
-    convert_dict[
-        ("polars_panel", "pd-multiindex", "Panel")
-    ] = convert_polars_to_pd_as_panel
+    convert_dict[("polars_panel", "pd-multiindex", "Panel")] = (
+        convert_polars_to_pd_as_panel
+    )
 
     def convert_pd_to_polars_as_panel(obj, store=None):
         return convert_pandas_to_polars(obj)
 
-    convert_dict[
-        ("pd-multiindex", "polars_panel", "Panel")
-    ] = convert_pd_to_polars_as_panel
+    convert_dict[("pd-multiindex", "polars_panel", "Panel")] = (
+        convert_pd_to_polars_as_panel
+    )
 
     _extend_conversions(
         "polars_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
@@ -1185,21 +1185,21 @@ if _check_soft_dependencies("gluonts", severity="none"):
         return convert_pandasDataset_to_pandas(obj)
 
     # Storing functions in convert_dict
-    convert_dict[
-        ("pd-multiindex", "gluonts_ListDataset_panel", "Panel")
-    ] = convert_pandas_to_gluonts_listDataset
+    convert_dict[("pd-multiindex", "gluonts_ListDataset_panel", "Panel")] = (
+        convert_pandas_to_gluonts_listDataset
+    )
 
-    convert_dict[
-        ("gluonts_ListDataset_panel", "pd-multiindex", "Panel")
-    ] = convert_gluonts_listDataset_to_pandas
+    convert_dict[("gluonts_ListDataset_panel", "pd-multiindex", "Panel")] = (
+        convert_gluonts_listDataset_to_pandas
+    )
 
-    convert_dict[
-        ("pd-multiindex", "gluonts_PandasDataset_panel", "Panel")
-    ] = convert_pandas_multiindex_to_gluonts_pandasDataset
+    convert_dict[("pd-multiindex", "gluonts_PandasDataset_panel", "Panel")] = (
+        convert_pandas_multiindex_to_gluonts_pandasDataset
+    )
 
-    convert_dict[
-        ("gluonts_PandasDataset_panel", "pd-multiindex", "Panel")
-    ] = convert_gluonts_pandasDataset_to_pandas_multiindex
+    convert_dict[("gluonts_PandasDataset_panel", "pd-multiindex", "Panel")] = (
+        convert_gluonts_pandasDataset_to_pandas_multiindex
+    )
 
     # Extending conversions
     _extend_conversions(

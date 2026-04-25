@@ -207,9 +207,7 @@ class TapNetNetwork(BaseDeepNetwork):
                         dilation_rate=self.dilation,
                         strides=1,
                         padding=self.padding,
-                    )(
-                        channel
-                    )  # N * C * L
+                    )(channel)  # N * C * L
 
                     x_conv = keras.layers.BatchNormalization()(x_conv)
                     x_conv = keras.layers.Activation(self.activation)(x_conv)
@@ -255,9 +253,7 @@ class TapNetNetwork(BaseDeepNetwork):
                     dilation_rate=self.dilation,
                     strides=1,
                     padding=self.padding,
-                )(
-                    input_layer
-                )  # N * C * L
+                )(input_layer)  # N * C * L
 
                 x_conv = keras.layers.BatchNormalization()(x_conv)
                 x_conv = keras.layers.Activation(self.activation)(x_conv)

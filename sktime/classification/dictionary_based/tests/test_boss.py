@@ -108,12 +108,12 @@ def test_individual_boss_histograms(dataset):
         if hist:  # only check if not empty
             key = next(iter(hist.keys()))
             value = next(iter(hist.values()))
-            assert isinstance(
-                key, str
-            ), f"histogram key should be str, found {type(key)}"
-            assert isinstance(
-                value, int
-            ), f"histogram value should be int, found {type(value)}"
+            assert isinstance(key, str), (
+                f"histogram key should be str, found {type(key)}"
+            )
+            assert isinstance(value, int), (
+                f"histogram value should be int, found {type(value)}"
+            )
 
 
 @pytest.mark.skipif(

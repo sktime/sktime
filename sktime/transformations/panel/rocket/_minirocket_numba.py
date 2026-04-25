@@ -732,17 +732,17 @@ def _transform(X, parameters):
 
                 if _padding1 == 0:
                     for feature_count in range(num_features_this_dilation):
-                        features[
-                            example_index, feature_index_start + feature_count
-                        ] = _PPV(C, biases[feature_index_start + feature_count]).mean()
+                        features[example_index, feature_index_start + feature_count] = (
+                            _PPV(C, biases[feature_index_start + feature_count]).mean()
+                        )
                 else:
                     for feature_count in range(num_features_this_dilation):
-                        features[
-                            example_index, feature_index_start + feature_count
-                        ] = _PPV(
-                            C[padding:-padding],
-                            biases[feature_index_start + feature_count],
-                        ).mean()
+                        features[example_index, feature_index_start + feature_count] = (
+                            _PPV(
+                                C[padding:-padding],
+                                biases[feature_index_start + feature_count],
+                            ).mean()
+                        )
 
                 feature_index_start = feature_index_end
 

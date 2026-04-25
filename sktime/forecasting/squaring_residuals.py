@@ -129,9 +129,9 @@ class SquaringResiduals(BaseForecaster):
 
         assert self.distr in ["norm", "laplace", "t", "cauchy"]
         assert self.strategy in ["square", "abs"]
-        assert (
-            self.initial_window >= 1
-        ), "Initial window should be larger or equal to one"
+        assert self.initial_window >= 1, (
+            "Initial window should be larger or equal to one"
+        )
 
         if self.forecaster is None:
             self.forecaster = NaiveForecaster()
