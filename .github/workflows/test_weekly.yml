@@ -40,7 +40,7 @@ jobs:
           estimators = all_estimators()
           names = [name for name, _ in estimators]
 
-          CHUNK_SIZE = 30  # (keep total jobs < 256)
+          CHUNK_SIZE = 10  # (keep total jobs < 256)
 
           chunks = [names[i:i+CHUNK_SIZE] for i in range(0, len(names), CHUNK_SIZE)]
 
