@@ -42,7 +42,7 @@ __author__ = [
     "sveameyer13",
 ]
 
-__all__ = ["BaseForecaster"]
+__all__ = ["BaseForecaster", "_BaseGlobalForecaster"]
 
 from copy import deepcopy
 from itertools import product
