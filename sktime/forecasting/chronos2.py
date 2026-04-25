@@ -189,7 +189,7 @@ class Chronos2Forecaster(BaseForecaster):
 
         context = y
 
-        if context.shape[1] > context_length:
+        if context.shape[0] > context_length:
             context = context.iloc[-context_length:]
 
         context = context.values.T
