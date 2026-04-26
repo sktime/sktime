@@ -346,27 +346,23 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         )
         return output.loc[dateindex]
 
-    def _predict_quantiles(self, fh, X, alpha, y=None):
-        """Compute/return prediction quantiles for a forecast.
+    def _predict_quantiles_inner(self, fh, X, alpha, y=None):
+        """Core logic for probabilistic quantile forecasting via pytorch-forecasting.
 
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and default _predict_interval
+        Shared implementation used by subclasses that support quantile prediction.
+        Calls the underlying model with ``mode="quantiles"`` and maps the output
+        back to the sktime quantile DataFrame format.
 
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to predict from.
-            If ``y`` is passed (performing global forecasting), ``X`` must contain
-            all historical values and the time points to be predicted.
-        alpha : list of float, optional (default=[0.5])
-            A list of probabilities at which quantile forecasts are computed.
-        y : time series in ``sktime`` compatible format, optional (default=None)
-            Historical values of the time series that should be predicted.
-            If not None, global forecasting will be performed.
-            Only pass the historical values not the time points to be predicted.
+        fh : ForecastingHorizon
+            The forecasting horizon.
+        X : pd.DataFrame or None
+            Exogeneous time series.
+        alpha : list of float
+            Quantile levels to predict, e.g. [0.1, 0.5, 0.9].
+        y : time series in sktime format, optional (default=None)
+            Historical values for global forecasting.
 
         Returns
         -------
@@ -374,25 +370,8 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             Column has multi-index: first level is variable name from y in fit,
                 second level being the values of alpha passed to the function.
             Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
         """
-        methods_list = [
-            method[0]
-            for method in inspect.getmembers(
-                self.best_model.loss, predicate=inspect.ismethod
-            )
-        ]
-        if "to_quantiles" not in methods_list:
-            raise NotImplementedError(
-                "To perform probabilistic forecast, QuantileLoss or other loss"
-                "metrics that support to_quantiles function has to be used in fit."
-                f"With {self.best_model.loss}, it doesn't support probabilistic"
-                "forecast. Details can be found:"
-                "https://pytorch-forecasting.readthedocs.io/en/stable/metrics.html"
-            )
-
         X, y = self._Xy_precheck(X, y)
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
@@ -417,7 +396,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         predictions = self.best_model.predict(
             validation.to_dataloader(**self._validation_to_dataloader_params),
             mode="quantiles",
-            mode_kwargs={"use_metric": False, "quantiles": alpha},
+            mode_kwargs={"quantiles": alpha},
             return_x=True,
             return_index=True,
             return_decoder_lengths=True,
@@ -432,16 +411,71 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                 torch.set_rng_state(torch_state)
         except AttributeError:
             pass
-        # convert pytorch-forecasting predictions to dataframe
+
+        loss = self.best_model.loss
+        loss_to_quantiles_sig = inspect.signature(loss.to_quantiles)
+        loss_accepts_quantiles_kwarg = "quantiles" in loss_to_quantiles_sig.parameters
+
+        if loss_accepts_quantiles_kwarg:
+            # Output already has the requested quantiles.
+            output_alpha = alpha
+        else:
+            # QuantileLoss path: output has all loss.quantiles, need to interpolate.
+            output_alpha = list(getattr(loss, "quantiles", alpha))
+
+        # convert pytorch-forecasting predictions to dataframe using output_alpha
         output = self._predictions_to_dataframe(
-            predictions, self._max_prediction_length, alpha=alpha
+            predictions, self._max_prediction_length, alpha=output_alpha
         )
 
         absolute_horizons = self.fh.to_absolute_index(self.cutoff)
         dateindex = output.index.get_level_values(-1).map(
             lambda x: x in absolute_horizons
         )
-        return output.loc[dateindex]
+        output = output.loc[dateindex]
+
+        if list(output_alpha) != list(alpha):
+            # Interpolate from loss quantiles to the requested alpha values.
+            output = self._interpolate_quantiles(output, output_alpha, alpha)
+
+        return output
+
+    def _interpolate_quantiles(self, df, source_alpha, target_alpha):
+        """Interpolate quantile forecasts from source_alpha to target_alpha.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Quantile forecast DataFrame with MultiIndex columns (var, source_alpha).
+        source_alpha : list of float
+            Quantile levels present in df.
+        target_alpha : list of float
+            Desired quantile levels.
+
+        Returns
+        -------
+        pd.DataFrame
+            Quantile forecasts at target_alpha levels.
+        """
+        var_names = df.columns.get_level_values(0).unique()
+        result_dict = {}
+        for var in var_names:
+            var_df = df[var]  # shape (n_rows, len(source_alpha))
+            interpolated = np.zeros((len(var_df), len(target_alpha)))
+            for i, row in enumerate(var_df.values):
+                interpolated[i] = np.interp(target_alpha, source_alpha, row)
+            result_dict[var] = interpolated
+
+        # rebuild MultiIndex columns
+        col_idx = pd.MultiIndex.from_product([var_names, target_alpha])
+        result = pd.DataFrame(
+            data=np.concatenate(
+                [result_dict[v] for v in var_names], axis=1
+            ),
+            index=df.index,
+            columns=col_idx,
+        )
+        return result
 
     def _Xy_precheck(self, X, y):
         if y is None:
