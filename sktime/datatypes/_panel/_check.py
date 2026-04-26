@@ -1383,7 +1383,7 @@ class PanelGluontsList(ScitypePanel):
 
         if _req("is_equal_length", return_metadata):
             lengths = [series["target"].shape[0] for series in obj]
-            metadata["is_equal_length"] = len(set(lengths)) == 1
+            metadata["is_equal_length"] = len(obj) == 0 or len(set(lengths)) == 1
 
         if _req("feature_names", return_metadata):
             # Check first if the ListDataset is empty
