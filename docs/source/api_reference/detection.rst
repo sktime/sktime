@@ -75,6 +75,14 @@ Window-based Anomaly Detection
 
     SubLOF
 
+.. currentmodule:: sktime.detection.isof
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SubIsolationForest
+
 Foundation Model-based Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
