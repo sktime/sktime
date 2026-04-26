@@ -230,7 +230,6 @@ jobs:
 
   test-est:
     name: test-est
-    run-name: test-est
     needs: [detect-changed-classes, prepare-chunks, test-nosoftdeps]
     if: ${{ needs.detect-changed-classes.outputs.obj_list != '[]' }}
 
