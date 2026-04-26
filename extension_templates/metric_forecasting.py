@@ -166,7 +166,20 @@ class MyForecastingMetric(BaseForecastingErrorMetric):
             by_index=by_index,
         )
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
+        # do not put anything else in __init__,
+        # use __post_init__ for any further initialization logic
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        # todo: optional, parameter checking or coercion should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
         # instead, write to self._parama, self._newparam (starting with _)
 

@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.tapnet import TapNetNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class TapNetRegressor(BaseDeepRegressor):
@@ -115,8 +114,6 @@ class TapNetRegressor(BaseDeepRegressor):
         verbose=False,
         lstm_dropout=0.8,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.batch_size = batch_size
         self.random_state = random_state
         self.kernel_size = kernel_size
@@ -148,6 +145,16 @@ class TapNetRegressor(BaseDeepRegressor):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self._network = TapNetNetwork(
             activation=self.activation_hidden,
             dropout=self.dropout,
@@ -164,6 +171,8 @@ class TapNetRegressor(BaseDeepRegressor):
             padding=self.padding,
             lstm_dropout=self.lstm_dropout,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, **kwargs):
         """Construct a complied, un-trained, keras model that is ready for training.
