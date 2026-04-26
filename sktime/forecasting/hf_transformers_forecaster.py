@@ -212,7 +212,6 @@ class HFTransformersForecaster(BaseForecaster):
         self._training_args = training_args if training_args is not None else {}
         self.compute_metrics = compute_metrics
         self._compute_metrics = compute_metrics
-        self._compute_metrics = compute_metrics
         self.deterministic = deterministic
         self.callbacks = callbacks
         self._callbacks = callbacks

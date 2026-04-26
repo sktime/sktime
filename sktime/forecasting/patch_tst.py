@@ -295,7 +295,6 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
 
-        self._config = self.config if self.config else {}
         super().__init__()
         if self.fit_strategy not in ["full", "minimal", "zero-shot"]:
             raise ValueError("unexpected fit_strategy passed in argument")
