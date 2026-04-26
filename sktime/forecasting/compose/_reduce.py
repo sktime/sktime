@@ -33,6 +33,7 @@ import pandas as pd
 from sklearn.base import clone
 from sklearn.multioutput import MultiOutputRegressor
 
+from sktime.base import BaseEstimator
 from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
@@ -43,7 +44,12 @@ from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
 from sktime.utils.multiindex import apply_method_per_series
-from sktime.utils.sklearn import is_sklearn_estimator, prep_skl_df, sklearn_scitype
+from sktime.utils.sklearn import (
+    get_sklearn_tag,
+    is_sklearn_estimator,
+    prep_skl_df,
+    sklearn_scitype,
+)
 from sktime.utils.validation import check_window_length
 from sktime.utils.warnings import warn
 
@@ -2363,6 +2369,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
         # -----------------
+        "capability:missing_values": True,
         "tests:libs": ["sktime.transformations.series.lag"],
     }
 
@@ -2378,6 +2385,20 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self._lags = list(range(window_length))
+
+        if isinstance(self.estimator, BaseEstimator):
+            # sktime estimator
+            handles_missing = self.estimator.get_tag(
+                "capability:missing_values", tag_value_default=False
+            )
+            self.set_tags(**{"capability:missing_values": handles_missing})
+        else:
+            # sklearn-compatible regressors
+            handles_missing = get_sklearn_tag(
+                self.estimator, "capability:missing_values"
+            )
+            self.set_tags(**{"capability:missing_values": handles_missing})
+
         super().__init__()
 
         warn(
