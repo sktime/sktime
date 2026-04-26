@@ -181,7 +181,7 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         ann_ind = self._get_first_detector_index(estimator_tuples)
 
         if not allow_postproc and ann_ind != len(estimators) - 1:
-            TypeError(
+            raise TypeError(
                 f"in {self_name}, last estimator must be a time series detector, "
                 f"but found a transformer"
             )
