@@ -103,7 +103,7 @@
     },
     {
       "login": "mloning",
-      "name": "Markus Löning",
+      "name": "Markus L\u00f6ning",
       "avatar_url": "https://avatars3.githubusercontent.com/u/21020482?v=4",
       "profile": "https://github.com/mloning",
       "contributions": [
@@ -438,7 +438,7 @@
     },
     {
       "login": "patrickzib",
-      "name": "Patrick Schäfer",
+      "name": "Patrick Sch\u00e4fer",
       "avatar_url": "https://avatars0.githubusercontent.com/u/7783034?v=4",
       "profile": "http://www2.informatik.hu-berlin.de/~schaefpa/",
       "contributions": ["code", "tutorial"]
@@ -659,7 +659,7 @@
     },
     {
       "login": "vnmabus",
-      "name": "Carlos Ramos Carreño",
+      "name": "Carlos Ramos Carre\u00f1o",
       "avatar_url": "https://avatars1.githubusercontent.com/u/2364173?v=4",
       "profile": "https://github.com/vnmabus",
       "contributions": ["doc"]
@@ -1179,7 +1179,7 @@
     },
     {
       "login": "marcio55afr",
-      "name": "Márcio A. Freitas Jr",
+      "name": "M\u00e1rcio A. Freitas Jr",
       "avatar_url": "https://avatars.githubusercontent.com/u/42646282?v=4",
       "profile": "https://github.com/marcio55afr",
       "contributions": ["doc"]
@@ -1507,7 +1507,7 @@
     },
     {
       "login": "dainelli98",
-      "name": "Daniel Martín Martínez",
+      "name": "Daniel Mart\u00edn Mart\u00ednez",
       "avatar_url": "https://avatars.githubusercontent.com/dainelli98",
       "profile": "https://www.linkedin.com/in/daniel-martin-martinez",
       "contributions": ["doc", "bug"]
@@ -1584,7 +1584,7 @@
     },
     {
       "login": "hoesler",
-      "name": "Christoph Hösler",
+      "name": "Christoph H\u00f6sler",
       "avatar_url": "https://avatars.githubusercontent.com/u/1052770?v=4",
       "profile": "https://www.linkedin.com/in/hoesler/",
       "contributions": ["code"]
@@ -1734,7 +1734,7 @@
     },
     {
       "login": "eyjo",
-      "name": "Eyjólfur Sigurðsson",
+      "name": "Eyj\u00f3lfur Sigur\u00f0sson",
       "avatar_url": "https://avatars.githubusercontent.com/eyjo",
       "profile": "https://github.com/eyjo",
       "contributions": ["code", "doc"]
@@ -2070,7 +2070,7 @@
     },
     {
       "login": "manuel-munoz-aguirre",
-      "name": "Manuel Muñoz Aguirre",
+      "name": "Manuel Mu\u00f1oz Aguirre",
       "avatar_url": "https://avatars.githubusercontent.com/u/5576458?v=4",
       "profile": "https://github.com/manuel-munoz-aguirre",
       "contributions": ["doc"]
@@ -2126,7 +2126,7 @@
     },
     {
       "login": "cedricdonie",
-      "name": "Cedric Donié",
+      "name": "Cedric Doni\u00e9",
       "avatar_url": "https://avatars.githubusercontent.com/u/6626593?v=4",
       "profile": "https://github.com/cedricdonie",
       "contributions": ["bug", "code"]
@@ -2300,7 +2300,7 @@
     },
     {
       "login": "jan-mue",
-      "name": "Jan Müller",
+      "name": "Jan M\u00fcller",
       "avatar_url": "https://avatars.githubusercontent.com/u/6440416?v=4",
       "profile": "https://github.com/jan-mue",
       "contributions": ["doc"]
@@ -2335,7 +2335,7 @@
     },
     {
       "login": "RobKuebler",
-      "name": "Robert Kübler",
+      "name": "Robert K\u00fcbler",
       "avatar_url": "https://avatars.githubusercontent.com/u/932327?v=4",
       "profile": "https://linkedin.com/in/robert-kuebler",
       "contributions": ["bug", "code", "test"]
@@ -2370,7 +2370,7 @@
     },
     {
       "login": "manolotis",
-      "name": "Manuel Muñoz Sánchez",
+      "name": "Manuel Mu\u00f1oz S\u00e1nchez",
       "avatar_url": "https://avatars.githubusercontent.com/manolotis",
       "profile": "https://github.com/manolotis",
       "contributions": ["doc"]
@@ -2398,7 +2398,7 @@
     },
     {
       "login": "mjste",
-      "name": "Michał Stefanik",
+      "name": "Micha\u0142 Stefanik",
       "avatar_url": "https://avatars.githubusercontent.com/mjste",
       "profile": "https://github.com/mjste",
       "contributions": ["doc"]
@@ -2533,7 +2533,7 @@
     },
     {
       "login": "LHoelper",
-      "name": "Luca Hölper",
+      "name": "Luca H\u00f6lper",
       "avatar_url": "https://avatars.githubusercontent.com/LHoelper",
       "profile": "https://github.com/LHoelper",
       "contributions": ["code", "doc"]
@@ -2829,6 +2829,16 @@
       "contributions": [
         "bug",
         "code"
+      ]
+    },
+    {
+      "login": "yashkotha",
+      "name": "Yash Kotha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/yashkotha?v=4",
+      "profile": "https://github.com/yashkotha",
+      "contributions": [
+        "code",
+        "bug"
       ]
     }
   ]

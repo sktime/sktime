@@ -706,6 +706,17 @@ Intermittent time series forecasters
 
     TSB
 
+LLM-based forecasters
+---------------------
+
+.. currentmodule:: sktime.forecasting.llm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LLMForecaster
+
 Ensembles and stacking
 ----------------------
 
