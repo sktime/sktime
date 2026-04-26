@@ -69,13 +69,12 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         self.steps = steps
         self.steps_ = self._check_steps(steps, allow_postproc=False)
 
+        super().__init__()
+
         tags_to_clone = ["learning_type", "task"]
         # we do not clone X-y-must-have-same-index, since transformers can
         #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.estimator_, tags_to_clone)
-
-        # init must be called at the end so task is properly set
-        super().__init__()
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated DetectorPipeline.
