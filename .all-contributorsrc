@@ -2822,6 +2822,7 @@
       ]
     },
     {
+<<<<<<< HEAD
       "login": "shaun0927",
       "name": "Junghwan",
       "avatar_url": "https://avatars.githubusercontent.com/u/70629228?v=4",
@@ -2829,6 +2830,15 @@
       "contributions": [
         "bug",
         "code"
+=======
+      "login": "Maya-Mohamed",
+      "name": "Maya Mohamed",
+      "avatar_url": "https://avatars.githubusercontent.com/u/Maya-Mohamed",
+      "profile": "https://github.com/Maya-Mohamed",
+      "contributions": [
+        "code",
+        "doc"
+>>>>>>> bd6cf5561 (DOC: Add Maya-Mohamed to contributors)
       ]
     }
   ]
