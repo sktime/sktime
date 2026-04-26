@@ -271,7 +271,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         """
         del fh  # avoid being detected as unused by ``vulture`` like tools
         endogenous_actuals = self.convert_dataframe_to_timeseries(y)
-        unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
+        known_exogenous, unknown_exogenous = self.convert_exogenous_dataset(X)
         # single-target variable for univariate prediction
         if endogenous_actuals.width > 1 and not self.get_tag("capability:multivariate"):
             raise ValueError(
@@ -334,7 +334,7 @@ class _DartsRegressionAdapter(BaseForecaster):
                 stacklevel=2,
             )
         self.check_is_fitted()
-        unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
+        known_exogenous, unknown_exogenous = self.convert_exogenous_dataset(X)
         absolute_fh = fh.to_absolute(self.cutoff)
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
 
@@ -606,7 +606,7 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
                 obj=self,
                 stacklevel=2,
             )
-        unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
+        known_exogenous, unknown_exogenous = self.convert_exogenous_dataset(X)
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
         absolute_fh = fh.to_absolute(self.cutoff)
 
