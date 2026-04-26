@@ -694,7 +694,7 @@ class BaseDetector(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def _update(self, X, y=None):
+    def _update(self, X, y=None, **kwargs):
         """Update model with new data and optional ground truth labels.
 
         core logic
@@ -705,6 +705,9 @@ class BaseDetector(BaseEstimator):
             Training data to update model with time series
         y : pd.Series, optional
             Ground truth labels for training if detector is supervised.
+        # todo: this probably should be documented better, but for now we just want to have the option to pass in kwargs
+        kwargs: dict
+            Only needed to support certain API handthroughs, e.g. update_params
 
         Returns
         -------

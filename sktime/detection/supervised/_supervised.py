@@ -52,31 +52,10 @@ class BaseSupervisedDetector(BaseDetector):
         self._state = "new"  # can be "new", "pretrained", "fitted"
 
     def _check_X_y(self, X=None, y=None, y_inner_mtype=None, multivariate=False):
-        # this is basically copied from panel check_X_y but without the consistency checks, since y is not line-for-line target for X!
-        # todo: we would need to add checks that y_inner_mtype is compatible and coerce appropriately
-        if isinstance(y, pd.DataFrame):
-            if len(y.columns) > 1:
-                raise NotImplementedError(
-                    "pretrain does not currently support multivariate targets. "
-                    )
-            else:
-                y = y.iloc[:, 0]
-        # just set these values somehow for now
-        # enforce_univariate=False
-        # enforce_min_instances=
-        # enforce_min_columns=1
-        coerce_to_numpy=False
-        # coerce_to_pandas=False
-        y = check_y(y, coerce_to_numpy=coerce_to_numpy)
-
-        # X = check_X(
-        #     X,
-        #     enforce_univariate=enforce_univariate,
-        #     enforce_min_columns=enforce_min_columns,
-        #     enforce_min_instances=enforce_min_instances,
-        #     coerce_to_numpy=coerce_to_numpy,
-        #     coerce_to_pandas=coerce_to_pandas,
-        # )
+        # y is a DataFrame with at minimum an "ilocs" column; for panel data
+        # it also has an "instances" column.
+        if y is not None and isinstance(y, pd.DataFrame) and "ilocs" not in y.columns:
+            raise ValueError("y must have an 'ilocs' column")
         return X, y
 
     # todo: needed?
@@ -187,60 +166,34 @@ class BaseSupervisedDetector(BaseDetector):
 
         return params
 
-    def update(self, X, y, update_params=True):
+    def update(self, X, y, **kwargs):
         """todo: write docstring        """
+        # todo: I think we can have a private function doing this!
+        # pretrain always requires panel data, independent of what fit/predict
+        # support via y_inner_mtype. Pass expanded mtypes directly to _check_X_y
+        # to decouple pretrain's data requirements from the tag.
+        _PRETRAIN_MTYPES = ["pd-multiindex", "pd_multiindex_hier"]
+        orig_y_mtypes = _coerce_to_list(self.get_tag("y_inner_mtype"))
+        pretrain_y_mtypes = list(set(orig_y_mtypes + _PRETRAIN_MTYPES))
+
+        # pretrain accepts multivariate panel data even for univariate forecasters,
+        # because _pretrain can split columns into separate univariate series.
+        # Pass multivariate=True to prevent column vectorization.
+        X_inner, y_inner = self._check_X_y(
+            X=X, y=y, y_inner_mtype=pretrain_y_mtypes, multivariate=True
+        )
         self.check_is_fitted()
 
-        if y is None or (hasattr(y, "__len__") and len(y) == 0):
+        if y_inner is None or (hasattr(y, "__len__") and len(y) == 0):
             warn(
                 f"empty y passed to update of {self}, no update was carried out",
                 obj=self,
             )
             return self
-
-        # input checks and minor coercions on X, y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
-
-        # update internal X/y with the new X/y
-        # this also updates cutoff from y
-        self._update_y_X(y_inner, X_inner)
-
-        # checks and conversions complete, pass to inner fit
-        if not self._is_vectorized:
-            self._update(y=y_inner, X=X_inner, update_params=update_params)
-        else:
-            self._vectorize("update", y=y_inner, X=X_inner, update_params=update_params)
-
+        # we don't support vectorization here
+        # make sure that we don't call the base class's update since that needs ._X, ._y which we certainly want to avoid here
+        self._update(X=X_inner, y=y_inner)
         return self
-
-    def update_predict(
-        self,
-        X,
-        cv=None,
-        y=None,
-        update_params=True,
-        reset_forecaster=True,
-    ):
-        """todo: write docstring        """
-        from sktime.split import ExpandingWindowSplitter
-
-        if cv is None:
-            cv = ExpandingWindowSplitter(initial_window=1)
-
-        self.check_is_fitted()
-
-        # input checks and minor coercions on X, y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
-
-        cv = check_cv(cv)
-
-        return self._predict_moving_cutoff(
-            y=y_inner,
-            cv=cv,
-            X=X_inner,
-            update_params=update_params,
-            reset_forecaster=reset_forecaster,
-        )
 
     def _predict(self, fh, X):
         """todo: write!        """
