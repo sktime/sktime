@@ -46,6 +46,14 @@ Change Point Detection
         pelt.PELT
         seeded_binseg.SeededBinarySegmentation
 
+.. currentmodule:: sktime.detection.wbs
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WildBinarySegmentation
+
 Naive Baselines
 ^^^^^^^^^^^^^^^
 
