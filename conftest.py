@@ -46,3 +46,5 @@ def pytest_configure(config):
         _config.MATRIXDESIGN = True
     if config.getoption("--only_changed_modules") in [True, "True"]:
         _config.ONLY_CHANGED_MODULES = True
+
+// Contributed via automated bounty system
