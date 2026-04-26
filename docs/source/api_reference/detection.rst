@@ -117,6 +117,7 @@ Naive Baselines
     :toctree: auto_generated/
     :template: class.rst
 
+    QuantileDetector
     ThresholdDetector
 
 Time Series Segment Anomaly Detection
@@ -153,6 +154,7 @@ Naive Baselines
     :toctree: auto_generated/
     :template: class.rst
 
+    QuantileDetector
     ThresholdDetector
 
 Time Series Segmentation
