@@ -70,7 +70,7 @@ class BaseTimeSeriesBootstrapConfig(BaseObject):
         return self._rng
 
     @rng.setter
-    def rng(self, value: RngTypes) -> None:
+    def rng(self, value: RngTypes) -> None:  # type: ignore
         """Setter for rng. Performs validation on assignment."""
         self._rng = validate_rng(value)
 
@@ -168,7 +168,7 @@ class BaseResidualBootstrapConfig(BaseTimeSeriesBootstrapConfig):
         self._model_type = value
 
     @property
-    def order(self) -> OrderTypes:
+    def order(self) -> OrderTypes:  # type: ignore
         """Getter for order."""
         return self._order
 
@@ -509,7 +509,7 @@ class BaseSieveBootstrapConfig(BaseResidualBootstrapConfig):
         kwargs_base_sieve=None,
         model_type: ModelTypesWithoutArch = "ar",
         model_params=None,
-        order: OrderTypes = None,
+        order: OrderTypes = None,  # type: ignore
         **kwargs_base_residual,
     ) -> None:
         """
@@ -587,7 +587,7 @@ class BaseSieveBootstrapConfig(BaseResidualBootstrapConfig):
         self._resids_model_type = value
 
     @property
-    def resids_order(self) -> OrderTypes:
+    def resids_order(self) -> OrderTypes:  # type: ignore
         return self._resids_order
 
     @resids_order.setter

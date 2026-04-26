@@ -8,12 +8,12 @@ from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.libs.tsbootstrap import BlockBootstrap
 from sktime.libs._aws_fortuna_enbpi.enbpi import EnbPI
 from sktime.transformations.bootstrap import (
     MovingBlockBootstrapTransformer,
     TSBootstrapAdapter,
 )
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -276,10 +276,16 @@ class EnbPIForecaster(BaseForecaster):
                     return_indices=True
                 ),
             },
-            {
-                "forecaster": NaiveForecaster(),
-                "bootstrap_transformer": BlockBootstrap(),
-            },
         ]
+
+        if _check_soft_dependencies("pydantic", severity="none"):
+            from sktime.libs.tsbootstrap import BlockBootstrap
+
+            params.append(
+                {
+                    "forecaster": NaiveForecaster(),
+                    "bootstrap_transformer": BlockBootstrap(),
+                }
+            )
 
         return params

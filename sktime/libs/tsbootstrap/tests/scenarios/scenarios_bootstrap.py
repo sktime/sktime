@@ -54,10 +54,7 @@ class _BootstrapTestScenario(TestScenario, BaseObject):
 
         obj_can_handle_multivariate = get_tag(obj, "capability:multivariate")
 
-        if is_multivariate and not obj_can_handle_multivariate:
-            return False
-
-        return True
+        return not (is_multivariate and not obj_can_handle_multivariate)
 
 
 X_np_uni = rng.random((20, 1))

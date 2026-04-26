@@ -1,6 +1,8 @@
+import logging
 import warnings
 from collections.abc import Callable
 from numbers import Integral
+from typing import List, Optional, Union
 
 import numpy as np
 from numpy.random import Generator
@@ -11,6 +13,8 @@ from tsbootstrap.utils.validate import (
     validate_rng,
     validate_weights,
 )
+
+logger = logging.getLogger("tsbootstrap")
 
 
 class BlockResampler:
@@ -27,11 +31,11 @@ class BlockResampler:
 
     def __init__(
         self,
-        blocks,
+        blocks: List[np.ndarray],
         X: np.ndarray,
-        block_weights=None,
-        tapered_weights: Callable = None,
-        rng: RngTypes = None,
+        block_weights: Optional[Union[Callable, np.ndarray]] = None,
+        tapered_weights: Optional[Union[Callable, np.ndarray]] = None,
+        rng: RngTypes = None,  # type: ignore
     ):
         """
         Initialize the BlockResampler with the selected distribution and average block length.
@@ -112,8 +116,10 @@ class BlockResampler:
         self._X = value
 
     @property
-    def blocks(self):
-        """A list of numpy arrays where each array represents the indices of a block in the time series."""
+    def blocks(self) -> List[np.ndarray]:
+        """
+        A list of numpy arrays where each array represents the indices of a block in the time series.
+        """
         return self._blocks
 
     @blocks.setter
@@ -148,7 +154,7 @@ class BlockResampler:
         return self._rng
 
     @rng.setter
-    def rng(self, value: RngTypes) -> None:
+    def rng(self, value: RngTypes) -> None:  # type: ignore
         """
         Set the random number generator.
 
@@ -173,16 +179,22 @@ class BlockResampler:
         return self._block_weights
 
     @block_weights.setter
-    def block_weights(self, value) -> None:
+    def block_weights(
+        self, value: Optional[Union[Callable, np.ndarray]]
+    ) -> None:
         """
         Set the block_weights array.
 
         Parameters
         ----------
-        value : Union[np.ndarray, Callable]
+        value : Optional[Union[np.ndarray, Callable]]
             An array of weights or a callable function to generate weights.
             If None, then the default uniform weights are used.
 
+        Attributes
+        ----------
+        block_weights : np.ndarray
+            An array of normalized block_weights.
 
         Raises
         ------
@@ -200,7 +212,9 @@ class BlockResampler:
         return self._tapered_weights
 
     @tapered_weights.setter
-    def tapered_weights(self, value: Callable) -> None:
+    def tapered_weights(
+        self, value: Optional[Union[Callable, np.ndarray]]
+    ) -> None:
         """
         Set the tapered_weights array.
 
@@ -209,6 +223,11 @@ class BlockResampler:
         value : Optional[Callable]
             A callable function to generate weights.
             If None, then the default uniform weights are used.
+
+        Attributes
+        ----------
+        tapered_weights : List[np.ndarray]
+            A list of normalized weights.
 
         Raises
         ------
@@ -219,39 +238,16 @@ class BlockResampler:
         """
         self._tapered_weights = self._prepare_tapered_weights(value)
 
-    @staticmethod
-    def _normalize_array(array: np.ndarray) -> np.ndarray:
-        """
-        Normalize the weights array.
-
-        Parameters
-        ----------
-        array : np.ndarray
-            n-dimensional array.
-
-        Returns
-        -------
-        np.ndarray
-            An array of normalized values, with the same shape as the input array.
-        """
-        sum_array = np.sum(array, axis=0, keepdims=True)
-        zero_mask = sum_array != 0
-        normalized_array = np.where(
-            zero_mask, array / sum_array, 1.0 / array.shape[0]
-        )
-        return normalized_array
-
-    def _prepare_tapered_weights(self, tapered_weights: Callable = None):
+    def _prepare_tapered_weights(
+        self, tapered_weights: Optional[Union[Callable, np.ndarray]] = None
+    ) -> List[np.ndarray]:
         """
         Prepare the tapered weights array by normalizing it or generating it.
 
         Parameters
         ----------
-        tapered_weights : Union[np.ndarray, Callable]
+        tapered_weights : Optional[Union[Callable, np.ndarray]], optional
             An array of weights or a callable function to generate weights.
-        size : int, optional
-            The size of the weights array (required for "tapered_weights").
-            If None, then the size is the same as the block length.
 
         Returns
         -------
@@ -285,63 +281,25 @@ class BlockResampler:
 
         return tapered_weights_arr
 
-    def _prepare_block_weights(self, block_weights=None) -> np.ndarray:
-        """
-        Prepare the block_weights array by normalizing it or generating it based on the callable function provided.
-
-        Parameters
-        ----------
-        block_weights : Union[np.ndarray, Callable], optional
-            An array of weights or a callable function to generate weights. Defaults to None.
-
-        Returns
-        -------
-        np.ndarray
-            An array of normalized block_weights.
-        """
-        size = self.X.shape[0]
-
-        if callable(block_weights):
-            block_weights_arr = self._handle_callable_weights(
-                block_weights, size
-            )
-        elif isinstance(block_weights, np.ndarray):
-            block_weights_arr = self._handle_array_block_weights(
-                block_weights, size
-            )
-        elif block_weights is None:
-            block_weights_arr = np.full(size, 1 / size)
-        else:
-            raise TypeError(
-                "'block_weights' must be a numpy array or a callable function or None."
-            )
-
-        # Validate the block_weights array
-        validate_weights(block_weights_arr)
-        # Normalize the block_weights array
-        block_weights_arr = self._normalize_array(block_weights_arr)
-
-        return block_weights_arr
-
     def _handle_callable_weights(
         self,
         weights_func: Callable,
-        size,
-    ) -> np.ndarray:
+        size: Union[Integral, List[Integral], np.ndarray],
+    ) -> Union[np.ndarray, List[np.ndarray]]:
         """
         Handle callable block_weights by executing the function and validating the output.
 
         Parameters
         ----------
-        block_weights : Callable
+        weights_func : Callable
             A callable function to generate block weights.
         size : int
             The size of the block_weights array.
 
         Returns
         -------
-        np.ndarray
-            An array of block_weights.
+        Union[np.ndarray, List[np.ndarray]]
+            An array or list of arrays of weights.
         """
         weights_arr = self._generate_weights_from_callable(weights_func, size)
 
@@ -354,8 +312,8 @@ class BlockResampler:
     def _generate_weights_from_callable(
         self,
         weights_func: Callable,
-        size,
-    ):
+        size: Union[Integral, List[Integral], np.ndarray],
+    ) -> Union[np.ndarray, List[np.ndarray]]:
         """
         Generate weights from a callable function.
 
@@ -373,17 +331,79 @@ class BlockResampler:
         """
         if isinstance(size, Integral):
             return weights_func(size)
-        elif isinstance(size, (np.ndarray, list)):  # noqa: UP038
+        elif isinstance(size, (np.ndarray, list)):
             return [weights_func(size_iter) for size_iter in size]
         else:
             raise TypeError(
                 "size must be an integer or a list/array of integers"
             )
 
+    def _prepare_block_weights(
+        self, block_weights: Optional[Union[Callable, np.ndarray]] = None
+    ) -> np.ndarray:
+        """
+        Prepare the block_weights array by normalizing it or generating it based on the callable function provided.
+
+        Parameters
+        ----------
+        block_weights : Union[np.ndarray, Callable], optional
+            An array of weights or a callable function to generate weights. Defaults to None.
+
+        Returns
+        -------
+        np.ndarray
+            An array of normalized block_weights.
+        """
+        size = self.X.shape[0]
+
+        if callable(block_weights):
+            block_weights_arr = self._handle_callable_weights(
+                block_weights, size  # type: ignore
+            )
+        elif isinstance(block_weights, np.ndarray):
+            block_weights_arr = self._handle_array_block_weights(
+                block_weights, size
+            )
+        elif block_weights is None:
+            block_weights_arr = np.full(size, 1 / size)
+        else:
+            raise TypeError(
+                "'block_weights' must be a numpy array or a callable function or None."
+            )
+
+        # Validate the block_weights array
+        validate_weights(block_weights_arr)  # type: ignore
+        # Normalize the block_weights array
+        block_weights_arr = self._normalize_array(block_weights_arr)  # type: ignore
+
+        return block_weights_arr
+
+    @staticmethod
+    def _normalize_array(array: np.ndarray) -> np.ndarray:
+        """
+        Normalize the weights array.
+
+        Parameters
+        ----------
+        array : np.ndarray
+            n-dimensional array.
+
+        Returns
+        -------
+        np.ndarray
+            An array of normalized values, with the same shape as the input array.
+        """
+        sum_array = np.sum(array, axis=0, keepdims=True)
+        zero_mask = sum_array != 0
+        normalized_array = np.where(
+            zero_mask, array / sum_array, 1.0 / array.shape[0]
+        )
+        return normalized_array
+
     def _validate_callable_generated_weights(
         self,
-        weights_arr,
-        size,
+        weights_arr: Union[np.ndarray, List[np.ndarray]],
+        size: Union[Integral, List[Integral], np.ndarray],
         callable_name: str,
     ):
         """
@@ -393,7 +413,7 @@ class BlockResampler:
         ----------
         weights_arr : Union[np.ndarray, List[np.ndarray]]
             An array or list of arrays of weights.
-        size : Union[Integral, List[Integral]]
+        size : Union[Integral, List[Integral], np.ndarray]
             The size of the weights array.
         callable_name : str
             The name of the callable function.
@@ -404,22 +424,48 @@ class BlockResampler:
             If the output of the callable function is not a numpy array.
         ValueError
             If the output of the callable function is not a 1d array of length 'size'.
+            If the size and the length of the weights array do not match.
 
         Returns
         -------
         None
         """
         if isinstance(weights_arr, list):
-            print("dealing with tapered_weights")
-            weights_arr = weights_arr[0]
-            size = size[0]
-        if not isinstance(weights_arr, np.ndarray):
+            logger.debug("dealing with tapered_weights")
+            if not isinstance(size, (list, np.ndarray)):
+                raise TypeError(
+                    "size must be a list or np.ndarray when weights_arr is a list."
+                )
+            if len(weights_arr) != len(size):
+                raise ValueError(
+                    f"When `weight_array` is a list of np.ndarrays, and `size` is either a list of ints or an array of ints, they must have the same length. Got {len(weights_arr)} and {len(size)} respectively."
+                )
+            for weights, size_iter in zip(weights_arr, size):
+                if not isinstance(weights, np.ndarray):
+                    raise TypeError(
+                        f"Output of '{callable_name}(size)' must be a numpy array."
+                    )
+                if len(weights) != size_iter or weights.ndim != 1:
+                    raise ValueError(
+                        f"Output of '{callable_name}(size)' must be a 1d array of length 'size'."
+                    )
+        elif isinstance(weights_arr, np.ndarray):
+            logger.debug("dealing with block_weights")
+            if isinstance(size, (list, np.ndarray)):
+                raise TypeError(
+                    "size must be an integer when weights_arr is a np.ndarray."
+                )
+            if not isinstance(size, Integral):
+                raise TypeError(
+                    "size must be an integer when weights_arr is a np.ndarray."
+                )
+            if len(weights_arr) != size or weights_arr.ndim != 1:
+                raise ValueError(
+                    f"Output of '{callable_name}(size)' must be a 1d array of length 'size'."
+                )
+        else:
             raise TypeError(
                 f"Output of '{callable_name}(size)' must be a numpy array."
-            )
-        if len(weights_arr) != size or weights_arr.ndim != 1:
-            raise ValueError(
-                f"Output of '{callable_name}(size)' must be a 1d array of length 'size'."
             )
 
     def _handle_array_block_weights(

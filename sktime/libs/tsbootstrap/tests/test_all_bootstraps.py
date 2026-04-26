@@ -1,5 +1,7 @@
 """Automated tests based on the skbase test suite template."""
 
+import inspect
+
 import numpy as np
 import pytest
 from skbase.testing import QuickTester
@@ -18,6 +20,41 @@ class TestAllBootstraps(PackageConfig, BaseFixtureGenerator, QuickTester):
 
     # which object types are generated; None=all, or class (passed to all_objects)
     object_type_filter = "bootstrap"
+
+    def test_class_signature(self, object_class):
+        """Check constraints on class init signature.
+
+        Tests that:
+
+        * the first parameter is n_bootstraps, with default 10
+        * all parameters have defaults
+        """
+        init_signature = inspect.signature(object_class.__init__)
+
+        # Consider the constructor parameters excluding 'self'
+        param_names_in_order = [
+            p.name
+            for p in init_signature.parameters.values()
+            if p.name != "self" and p.kind != p.VAR_KEYWORD
+        ]
+
+        param_defaults = object_class.get_param_defaults()
+
+        # test that all parameters have defaults
+        params_without_default = [
+            param
+            for param in param_names_in_order
+            if param not in param_defaults
+        ]
+
+        assert len(params_without_default) == 0, (
+            f"All parameters of bootstraps must have default values. "
+            f"Init parameters without default values: {params_without_default}. "
+        )
+
+        # test that first parameter is n_bootstraps, with default 10
+        assert param_names_in_order[0] == "n_bootstraps"
+        assert param_defaults["n_bootstraps"] == 10
 
     def test_n_bootstraps(self, object_instance):
         """Tests handling of n_bootstraps parameter."""
@@ -94,9 +131,9 @@ class TestAllBootstraps(PackageConfig, BaseFixtureGenerator, QuickTester):
             )
 
         if not all(bs.ndim == 2 for bs in bss):
+            print([bs.shape for bs in bss])
             raise ValueError(
-                f"{cls_name}.bootstrap yielded arrays with unexpected number of "
-                "dimensions. All bootstrap samples should have 2 dimensions."
+                f"{cls_name}.bootstrap yielded arrays with unexpected number of dimensions. All bootstrap samples should have 2 dimensions."
             )
 
         if not all(bs.shape[0] == n_timepoints for bs in bss):
@@ -181,9 +218,9 @@ class TestAllBootstraps(PackageConfig, BaseFixtureGenerator, QuickTester):
             )
 
         if not all(bs.ndim == 2 for bs in bss):
+            print([bs.shape for bs in bss])
             raise ValueError(
-                f"{cls_name}.bootstrap yielded arrays with unexpected number of "
-                "dimensions. All bootstrap samples should have 2 dimensions."
+                f"{cls_name}.bootstrap yielded arrays with unexpected number of dimensions. All bootstrap samples should have 2 dimensions."
             )
 
         if not all(bs.shape[0] == expected_length for bs in bss):

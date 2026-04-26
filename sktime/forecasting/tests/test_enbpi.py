@@ -9,8 +9,8 @@ import pytest
 from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.enbpi import EnbPIForecaster
-from sktime.libs.tsbootstrap import BlockBootstrap
 from sktime.tests.test_switch import run_test_for_class
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
@@ -36,6 +36,11 @@ def test_enbpi_default_bootstrap_transformer_initializes_and_predicts():
 )
 def test_enbpi_with_inrepo_blockbootstrap_predicts_interval():
     """In-repo BlockBootstrap should be accepted through TSBootstrapAdapter."""
+    if not _check_soft_dependencies("pydantic", severity="none"):
+        pytest.skip("test requires pydantic for tsbootstrap v0.1.5")
+
+    from sktime.libs.tsbootstrap import BlockBootstrap
+
     y = load_airline().to_frame()
     fh = ForecastingHorizon(np.arange(1, 4), is_relative=True)
 

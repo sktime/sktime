@@ -1,5 +1,5 @@
 from numbers import Integral
-from typing import Any
+from typing import Any, List, Optional, Union
 
 import numpy as np
 from numpy.random import Generator
@@ -169,7 +169,7 @@ class TimeSeriesSimulator:
         """
         random_errors = self.rng.normal(size=self.n_samples)
 
-        if len(init) < max_lag:
+        if len(init) < max_lag:  # type: ignore
             raise ValueError(
                 "Length of 'init' must be at least as long as the maximum lag in 'lags'"
             )
@@ -207,7 +207,7 @@ class TimeSeriesSimulator:
 
     def simulate_ar_process(
         self,
-        resids_lags,
+        resids_lags: Union[Integral, List[Integral]],
         resids_coefs: np.ndarray,
         resids: np.ndarray,
     ) -> np.ndarray:
@@ -242,7 +242,7 @@ class TimeSeriesSimulator:
         """
         from statsmodels.tsa.ar_model import AutoRegResultsWrapper
 
-        validate_integers(resids_lags, min_value=1)
+        validate_integers(resids_lags, min_value=1)  # type: ignore
 
         if not isinstance(self.fitted_model, AutoRegResultsWrapper):
             # logger.error("fitted_model must be an instance of AutoRegResultsWrapper.")
@@ -272,7 +272,7 @@ class TimeSeriesSimulator:
             else np.array(sorted(resids_lags))
         )  # type: ignore
         # resids_lags.shape: (n_lags,)
-        max_lag = np.max(resids_lags)
+        max_lag = np.max(resids_lags)  # type: ignore
         if resids_coefs.shape[0] != 1:
             raise ValueError(
                 "AR coefficients must be a 1D NumPy array of shape (1, X)"
@@ -284,7 +284,7 @@ class TimeSeriesSimulator:
 
         # Simulate residuals using the AR model
         simulated_residuals = self._simulate_ar_residuals(
-            lags=resids_lags,
+            lags=resids_lags,  # type: ignore
             coefs=resids_coefs,
             init=resids[:max_lag],
             max_lag=max_lag,
@@ -295,7 +295,7 @@ class TimeSeriesSimulator:
 
         # Loop through the series, calculating each value based on the lagged values, coefficients, and random error
         for t in range(max_lag, self.n_samples):
-            lagged_values = bootstrap_series[t - resids_lags]
+            lagged_values = bootstrap_series[t - resids_lags]  # type: ignore
             # lagged_values.shape: (n_lags,)
             lagged_values = lagged_values.reshape(-1, 1)
             # lagged_values.shape: (n_lags, 1)
@@ -337,7 +337,7 @@ class TimeSeriesSimulator:
                 steps=self.n_samples + self.burnin, seed=rng_seed
             )
         elif isinstance(self.fitted_model, ARCHModelResult):
-            return self.fitted_model.model.simulate(
+            return self.fitted_model.model.simulate(  # type: ignore
                 params=self.fitted_model.params,
                 nobs=self.n_samples,
                 burn=self.burnin,
@@ -371,9 +371,9 @@ class TimeSeriesSimulator:
     def generate_samples_sieve(
         self,
         model_type: ModelTypes,
-        resids_lags=None,
-        resids_coefs: np.ndarray = None,
-        resids: np.ndarray = None,
+        resids_lags: Optional[Union[Integral, List[Integral]]] = None,
+        resids_coefs: Optional[np.ndarray] = None,
+        resids: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """
         Generate a bootstrap sample using the sieve bootstrap.
@@ -408,7 +408,7 @@ class TimeSeriesSimulator:
                     "resids": resids,
                 }
             )
-            return self.simulate_ar_process(resids_lags, resids_coefs, resids)
+            return self.simulate_ar_process(resids_lags, resids_coefs, resids)  # type: ignore
         else:
             return self.simulate_non_ar_process()
 

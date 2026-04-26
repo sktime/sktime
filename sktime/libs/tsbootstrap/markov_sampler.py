@@ -1,5 +1,7 @@
+import logging
 import warnings
 from numbers import Integral
+from typing import Optional
 
 import numpy as np
 import scipy.stats
@@ -14,6 +16,8 @@ from tsbootstrap.utils.validate import (
     validate_integers,
     validate_literal_type,
 )
+
+logger = logging.getLogger("tsbootstrap")
 
 try:
     from dtaidistance import dtw_ndim  # type: ignore
@@ -45,8 +49,8 @@ class BlockCompressor:
         self,
         method: BlockCompressorTypes = "middle",
         apply_pca_flag: bool = False,
-        pca: PCA = None,
-        random_seed: Integral = None,
+        pca: Optional[PCA] = None,
+        random_seed: Optional[Integral] = None,
     ):
         """
         Initialize the BlockCompressor with the selected method, PCA flag, PCA instance, and random seed.
@@ -145,7 +149,7 @@ class BlockCompressor:
         return self._pca
 
     @pca.setter
-    def pca(self, value: PCA) -> None:
+    def pca(self, value: Optional[PCA]) -> None:
         """
         Setter for pca. Performs validation on assignment.
 
@@ -159,7 +163,7 @@ class BlockCompressor:
                 raise TypeError(
                     "pca must be a sklearn.decomposition.PCA instance"
                 )
-            elif value.n_components != 1:
+            elif value.n_components != 1:  # type: ignore
                 raise ValueError(
                     "The provided PCA object must have n_components set to 1 for compression."
                 )
@@ -172,7 +176,7 @@ class BlockCompressor:
         return self._random_seed
 
     @random_seed.setter
-    def random_seed(self, value: Integral) -> None:
+    def random_seed(self, value: Optional[Integral]) -> None:
         """
         Setter for rng. Performs validation on assignment.
 
@@ -294,7 +298,7 @@ class BlockCompressor:
         This method uses the scikit-learn implementation of k-means clustering.
         """
         return (
-            KMeans(n_clusters=1, random_state=self.random_seed, n_init="auto")
+            KMeans(n_clusters=1, random_state=self.random_seed, n_init="auto")  # type: ignore
             .fit(block)
             .cluster_centers_[0]
         )
@@ -319,11 +323,11 @@ class BlockCompressor:
         """
         from pyclustering.cluster.kmedians import kmedians  # type: ignore
 
-        rng = np.random.default_rng(self.random_seed)
+        rng = np.random.default_rng(self.random_seed)  # type: ignore
         initial_centers = rng.choice(block.flatten(), size=(1, block.shape[1]))
         kmedians_instance = kmedians(block, initial_centers)
         kmedians_instance.process()
-        return kmedians_instance.get_medians()[0]
+        return kmedians_instance.get_medians()[0]  # type: ignore
 
     def _kmedoids_compression(self, block: np.ndarray) -> np.ndarray:
         """
@@ -343,10 +347,10 @@ class BlockCompressor:
         -----
         This method uses the scikit-learn-extra implementation of k-medoids clustering.
         """
-        from sklearn_extra.cluster import KMedoids  # type: ignore
+        from sklearn_extra.cluster import KMedoids
 
         return (
-            KMedoids(n_clusters=1, random_state=self.random_seed)
+            KMedoids(n_clusters=1, random_state=self.random_seed)  # type: ignore
             .fit(block)
             .cluster_centers_[0]
         )
@@ -488,7 +492,7 @@ class MarkovTransitionMatrixCalculator:
         distances = np.zeros((num_blocks, num_blocks))
         for i in range(num_blocks):
             for j in range(i, num_blocks):
-                dist = dtw_ndim.distance(blocks[i], blocks[j]) + eps
+                dist = dtw_ndim.distance(blocks[i], blocks[j]) + eps  # type: ignore
                 distances[i, j] = dist
                 distances[j, i] = dist
 
@@ -579,11 +583,11 @@ class MarkovSampler:
         self,
         method: BlockCompressorTypes = "middle",
         apply_pca_flag: bool = False,
-        pca: PCA = None,
-        n_iter_hmm: Integral = 100,
-        n_fits_hmm: Integral = 10,
+        pca: Optional[PCA] = None,
+        n_iter_hmm: Integral = 100,  # type: ignore
+        n_fits_hmm: Integral = 10,  # type: ignore
         blocks_as_hidden_states_flag: bool = False,
-        random_seed: Integral = None,
+        random_seed: Optional[Integral] = None,
     ):
         """
         Initialize the MarkovSampler instance.
@@ -652,7 +656,7 @@ class MarkovSampler:
         value : Integral
             The number of iterations to run the HMM for.
         """
-        validate_integers(value, min_value=1)
+        validate_integers(value, min_value=1)  # type: ignore
         self._n_iter_hmm = value
 
     @property
@@ -670,7 +674,7 @@ class MarkovSampler:
         value : Integral
             The number of times to fit the HMM.
         """
-        validate_integers(value, min_value=1)
+        validate_integers(value, min_value=1)  # type: ignore
         self._n_fits_hmm = value
 
     @property
@@ -698,7 +702,7 @@ class MarkovSampler:
         return self._random_seed
 
     @random_seed.setter
-    def random_seed(self, value: Integral) -> None:
+    def random_seed(self, value: Optional[Integral]) -> None:
         """
         Setter for rng. Performs validation on assignment.
 
@@ -725,10 +729,10 @@ class MarkovSampler:
     def fit_hidden_markov_model(
         self,
         X: np.ndarray,
-        n_states: Integral = 5,
-        transmat_init=None,
-        means_init=None,
-        lengths=None,
+        n_states: Integral = 5,  # type: ignore
+        transmat_init: Optional[np.ndarray] = None,
+        means_init: Optional[np.ndarray] = None,
+        lengths: Optional[np.ndarray] = None,
     ):
         """
         Fit a Gaussian Hidden Markov Model on the input data.
@@ -753,7 +757,7 @@ class MarkovSampler:
         best_hmm_model = None
         for idx in range(self.n_fits_hmm):
             hmm_model = self._initialize_hmm_model(
-                n_states, transmat_init, means_init, idx
+                n_states, transmat_init, means_init, idx  # type: ignore
             )
 
             try:
@@ -777,8 +781,8 @@ class MarkovSampler:
         self,
         X: np.ndarray,
         n_states: Integral,
-        transmat_init: np.ndarray,
-        means_init: np.ndarray,
+        transmat_init: Optional[np.ndarray],
+        means_init: Optional[np.ndarray],
     ) -> None:
         """
         Validate the inputs to fit_hidden_markov_model.
@@ -832,8 +836,8 @@ class MarkovSampler:
     def _initialize_hmm_model(
         self,
         n_states: Integral,
-        transmat_init: np.ndarray,
-        means_init: np.ndarray,
+        transmat_init: Optional[np.ndarray],
+        means_init: Optional[np.ndarray],
         idx: Integral,
     ):
         """
@@ -862,9 +866,9 @@ class MarkovSampler:
         from hmmlearn import hmm
 
         hmm_model = hmm.GaussianHMM(
-            n_components=n_states,
+            n_components=n_states,  # type: ignore
             covariance_type="full",
-            n_iter=self.n_iter_hmm,
+            n_iter=self.n_iter_hmm,  # type: ignore
             init_params="stmc",
             params="stmc",
             random_state=(
@@ -881,7 +885,7 @@ class MarkovSampler:
     def fit(
         self,
         blocks,
-        n_states: Integral = 5,
+        n_states: Integral = 5,  # type: ignore
     ) -> "MarkovSampler":
         """
         Sample from a Markov chain with given transition probabilities.
@@ -973,7 +977,7 @@ class MarkovSampler:
                     raise ValueError(
                         f"Input 'X' must have at least {n_states * 10} points to fit a {n_states}-state HMM."
                     )
-                print(
+                logger.debug(
                     f"Using {len(blocks)} blocks as 'n_states', since 'blocks_as_hidden_states_flag' is True. Ignoring user-provided 'n_states' parameter."
                 )
                 lengths = None
@@ -985,7 +989,7 @@ class MarkovSampler:
         if not isinstance(n_states, Integral) or n_states < 1:
             raise ValueError("Input 'n_states' must be an integer >= 1.")
 
-        if n_states > X.shape[0]:
+        if n_states > X.shape[0]:  # type: ignore
             raise ValueError(
                 f"Input 'X' must have at least {n_states} points to fit a {n_states}-state HMM."
             )
@@ -1026,8 +1030,8 @@ class MarkovSampler:
 
     def sample(
         self,
-        X=None,
-        random_seed: Integral = None,
+        X: Optional[np.ndarray] = None,
+        random_seed: Optional[Integral] = None,
     ):
         """
         Sample from a Markov chain with given transition probabilities.
@@ -1045,12 +1049,12 @@ class MarkovSampler:
             A tuple containing the start probabilities and transition probabilities of the Markov chain.
         """
         # Check if the model is already fitted
-        check_is_fitted(self, ["model"])
+        check_is_fitted(self, ["model"])  # type: ignore
         if X is None:
             X = self.X
         if random_seed is None:
             random_seed = self.random_seed
-        return self.model.sample(X.shape[0], random_state=random_seed)
+        return self.model.sample(X.shape[0], random_state=random_seed)  # type: ignore
 
     def __repr__(self) -> str:
         return f"BlockCompressor(method='{self.method}', apply_pca_flag={self.apply_pca_flag}, pca={self.pca}, random_seed={self.random_seed})"

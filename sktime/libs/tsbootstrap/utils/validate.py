@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from numbers import Integral
-from typing import Any, get_args
+from typing import Any, List, Optional, get_args
 
 import numpy as np
 from numpy.random import Generator
@@ -284,8 +284,8 @@ def add_newaxis_if_needed(X: np.ndarray, model_is_var: bool) -> np.ndarray:
 
 def validate_single_integer(
     value: Integral,
-    min_value: Integral = None,
-    max_value: Integral = None,
+    min_value: Optional[Integral] = None,
+    max_value: Optional[Integral] = None,
 ) -> None:
     """Validate a single integer value against an optional minimum value."""
     if not isinstance(value, Integral):
@@ -298,8 +298,8 @@ def validate_single_integer(
 
 def validate_list_of_integers(
     value,
-    min_value: Integral = None,
-    max_value: Integral = None,
+    min_value: Optional[Integral] = None,
+    max_value: Optional[Integral] = None,
 ) -> None:
     """Validate a list of integer values against an optional minimum value."""
     if not value:
@@ -323,8 +323,8 @@ def validate_list_of_integers(
 
 def validate_integer_array(
     value: np.ndarray,
-    min_value: Integral = None,
-    max_value: Integral = None,
+    min_value: Optional[Integral] = None,
+    max_value: Optional[Integral] = None,
 ) -> None:
     """Validate a 1D numpy array of integers against an optional minimum value."""
     if value.size == 0:
@@ -348,8 +348,8 @@ def validate_integer_array(
 
 def validate_integers(
     *values,
-    min_value: Integral = None,
-    max_value: Integral = None,
+    min_value: Optional[Integral] = None,
+    max_value: Optional[Integral] = None,
 ) -> None:
     """
     Validates that all input values are integers and optionally, above a minimum value.
@@ -388,7 +388,7 @@ def validate_integers(
 def validate_X(
     X: np.ndarray,
     model_is_var: bool,
-    allow_multi_column: bool = None,
+    allow_multi_column: Optional[bool] = None,
 ) -> np.ndarray:
     """
     Validate the input array X based on the given model type.
@@ -461,7 +461,7 @@ def validate_exog(exog: np.ndarray) -> np.ndarray:
 
 def validate_X_and_y(
     X: np.ndarray,
-    y: np.ndarray,
+    y: Optional[np.ndarray],
     model_is_var: bool = False,
     model_is_arch: bool = False,
 ):
@@ -508,7 +508,9 @@ def validate_X_and_y(
     return X, y
 
 
-def validate_block_indices(block_indices, input_length: Integral) -> None:
+def validate_block_indices(
+    block_indices: List[np.ndarray], input_length: Integral
+) -> None:
     """
     Validate the input block indices. Each block index must be a 1D NumPy array with at least one index and all indices must be within the range of X.
 
@@ -540,7 +542,7 @@ def validate_block_indices(block_indices, input_length: Integral) -> None:
     )
 
 
-def validate_blocks(blocks) -> None:
+def validate_blocks(blocks: List[np.ndarray]) -> None:
     """
     Validate the input blocks. Each block must be a 2D NumPy array with at least one element.
 
@@ -624,9 +626,9 @@ def validate_literal_type(input_value: str, literal_type: Any) -> None:
     ----------
     input_value : str
         The value to validate.
-    literal_type : type, or listt
+    literal_type : type, or list
         if type: Literal type or dictionary against which to validate the `input_value`.
-        if list: List of valid values against which to validate the `input_value`.
+        if list: list of valid values against which to validate the `input_value`.
 
     Raises
     ------
@@ -662,7 +664,7 @@ def validate_literal_type(input_value: str, literal_type: Any) -> None:
         )
 
 
-def validate_rng(rng: RngTypes, allow_seed: bool = True) -> Generator:
+def validate_rng(rng: RngTypes, allow_seed: bool = True) -> Generator:  # type: ignore
     """Validate the input random number generator.
 
     This function validates if the input random number generator is an instance of

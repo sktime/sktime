@@ -12,9 +12,20 @@ from tsbootstrap.base_bootstrap import (
     BaseSieveBootstrap,
     BaseStatisticPreservingBootstrap,
 )
+from tsbootstrap.block_bootstrap import (
+    BlockBootstrap,
+    MovingBlockBootstrap,
+)
 from tsbootstrap.markov_sampler import MarkovSampler
 from tsbootstrap.time_series_simulator import TimeSeriesSimulator
 from tsbootstrap.utils.odds_and_ends import generate_random_indices
+from tsbootstrap.utils.types import (
+    BlockCompressorTypes,
+    ModelTypes,
+    ModelTypesWithoutArch,
+    OrderTypes,
+    RngTypes,
+)
 
 # TODO: add a check if generated block is only one unit long
 # TODO: ensure docstrings align with functionality
@@ -22,6 +33,9 @@ from tsbootstrap.utils.odds_and_ends import generate_random_indices
 # TODO: ensure x is 2d only for var, otherwise 1d or 2d with 1 feature
 # TODO: block_weights=p with block_length=1 should be equivalent to the iid bootstrap
 # TODO: add test to fit_ar to ensure input lags, if list, are unique
+# TODO: for `StatisticPreservingBootstrap`, see if the statistic on the bootstrapped
+# sample is close to the statistic on the original sample
+# TODO: in `DistributionBootstrap`, allow mixture of distributions
 
 
 # Fit, then resample residuals.
@@ -42,7 +56,7 @@ class WholeResidualBootstrap(BaseResidualBootstrap):
         The model type to use. Must be one of "ar", "arima", "sarima", "var", or "arch".
     model_params : dict, default=None
         Additional keyword arguments to pass to the TSFit model.
-    order : Integral or list or tuple, default=None
+    order : OrderTypes, default=None
         The order of the model. If None, the best order is chosen via TSFitBestLag.
         If Integral, it is the lag order for AR, ARIMA, and SARIMA,
         and the lag order for ARCH. If list or tuple, the order is a
@@ -54,7 +68,7 @@ class WholeResidualBootstrap(BaseResidualBootstrap):
         not the best (p, o, q) or (p, d, q, s). The rest of the values are set to 0.
     save_models : bool, default=False
         Whether to save the fitted models.
-    rng : Integral or np.random.Generator, default=np.random.default_rng()
+    rng : RngTypes, default=None
         The random number generator or seed used to generate the bootstrap samples.
 
     Methods
@@ -66,10 +80,10 @@ class WholeResidualBootstrap(BaseResidualBootstrap):
     def __init__(
         self,
         n_bootstraps: Integral = 10,  # type: ignore
-        rng=None,
-        model_type="ar",
-        model_params: Optional[dict] = None,  # noqa: UP007
-        order=None,
+        rng: RngTypes = None,  # type: ignore
+        model_type: ModelTypesWithoutArch = "ar",
+        model_params: Optional[dict] = None,
+        order: OrderTypes = None,  # type: ignore
         save_models: bool = False,
     ):
         self._model_type = model_type
@@ -107,7 +121,7 @@ class BlockResidualBootstrap(BaseResidualBootstrap):
 
     Parameters
     ----------
-    block_bootstrap : BaseBlockBootstrap
+    block_bootstrap : BlockBootstrap, default=MovingBlockBootstrap()
         The block bootstrap algorithm.
     n_bootstraps : Integral, default=10
         The number of bootstrap samples to create.
@@ -115,7 +129,7 @@ class BlockResidualBootstrap(BaseResidualBootstrap):
         The model type to use. Must be one of "ar", "arima", "sarima", "var", or "arch".
     model_params : dict, default=None
         Additional keyword arguments to pass to the TSFit model.
-    order : Integral or list or tuple, default=None
+    order : OrderTypes, default=None
         The order of the model. If None, the best order is chosen via TSFitBestLag.
         If Integral, it is the lag order for AR, ARIMA, and SARIMA,
         and the lag order for ARCH. If list or tuple, the order is a
@@ -127,7 +141,7 @@ class BlockResidualBootstrap(BaseResidualBootstrap):
         not the best (p, o, q) or (p, d, q, s). The rest of the values are set to 0.
     save_models : bool, default=False
         Whether to save the fitted models.
-    rng : Integral or np.random.Generator, default=np.random.default_rng()
+    rng : RngTypes, default=None
         The random number generator or seed used to generate the bootstrap samples.
 
     Methods
@@ -138,13 +152,13 @@ class BlockResidualBootstrap(BaseResidualBootstrap):
 
     def __init__(
         self,
-        block_bootstrap,
         n_bootstraps: Integral = 10,  # type: ignore
-        model_type="ar",
-        model_params=None,
-        order=None,
+        block_bootstrap: Optional[BlockBootstrap] = None,
+        model_type: ModelTypesWithoutArch = "ar",
+        model_params: Optional[dict] = None,
+        order: OrderTypes = None,  # type: ignore
         save_models: bool = False,
-        rng=None,
+        rng: RngTypes = None,  # type: ignore
     ) -> None:
         super().__init__(
             n_bootstraps=n_bootstraps,
@@ -154,6 +168,8 @@ class BlockResidualBootstrap(BaseResidualBootstrap):
             order=order,
             save_models=save_models,
         )
+        if block_bootstrap is None:
+            block_bootstrap = MovingBlockBootstrap()
         self.block_bootstrap = block_bootstrap
 
     def _generate_samples_single_bootstrap(self, X: np.ndarray, y=None):
@@ -190,46 +206,8 @@ class WholeMarkovBootstrap(BaseMarkovBootstrap):
     resampled using the Markov model. The resampled residuals are added to
     the fitted values to generate new samples.
 
-    Parameters
-    ----------
-    n_bootstraps : Integral, default=10
-        The number of bootstrap samples to create.
-    method : str, default="middle"
-        The method to use for compressing the blocks.
-        Must be one of "first", "middle", "last", "mean", "mode", "median",
-        "kmeans", "kmedians", "kmedoids".
-    apply_pca_flag : bool, default=False
-        Whether to apply PCA to the residuals before fitting the HMM.
-    pca : PCA, default=None
-        The PCA object to use for applying PCA to the residuals.
-    n_iter_hmm : Integral, default=10
-        Number of iterations for fitting the HMM.
-    n_fits_hmm : Integral, default=1
-        Number of times to fit the HMM.
-    blocks_as_hidden_states_flag : bool, default=False
-        Whether to use blocks as hidden states.
-    n_states : Integral, default=2
-        Number of states for the HMM.
-    model_type : str, default="ar"
-        The model type to use. Must be one of "ar", "arima", "sarima", "var", or "arch".
-    model_params : dict, default=None
-        Additional keyword arguments to pass to the TSFit model.
-    order : Integral or list or tuple, default=None
-        The order of the model. If None, the best order is chosen via TSFitBestLag.
-        If Integral, it is the lag order for AR, ARIMA, and SARIMA, and the lag order
-        for ARCH. If list or tuple, the order is a tuple of (p, o, q) for ARIMA
-        and (p, d, q, s) for SARIMAX. It is either a single Integral or a
-        list of non-consecutive ints for AR, and an Integral for VAR and ARCH.
-        If None, the best order is chosen via TSFitBestLag. Do note that TSFitBestLag
-        only chooses the best lag, not the best order, so for the tuple values,
-        it only chooses the best p, not the best (p, o, q) or (p, d, q, s).
-        The rest of the values are set to 0.
-    rng : Integral or np.random.Generator, default=np.random.default_rng()
-        The random number generator or seed used to generate the bootstrap samples.
-
     Methods
     -------
-    __init__ : Initialize self.
     _generate_samples_single_bootstrap : Generate a single bootstrap sample.
 
     Notes
@@ -282,7 +260,7 @@ class BlockMarkovBootstrap(BaseMarkovBootstrap):
 
     Parameters
     ----------
-    block_bootstrap : BaseBlockBootstrap
+    block_bootstrap : BlockBootstrap, default=MovingBlockBootstrap()
         The block bootstrap algorithm.
     n_bootstraps : Integral, default=10
         The number of bootstrap samples to create.
@@ -333,20 +311,20 @@ class BlockMarkovBootstrap(BaseMarkovBootstrap):
 
     def __init__(
         self,
-        block_bootstrap,
         n_bootstraps: Integral = 10,  # type: ignore
-        method="middle",
+        block_bootstrap: Optional[BlockBootstrap] = None,
+        method: BlockCompressorTypes = "middle",
         apply_pca_flag: bool = False,
         pca=None,
         n_iter_hmm: Integral = 10,  # type: ignore
         n_fits_hmm: Integral = 1,  # type: ignore
         blocks_as_hidden_states_flag: bool = False,
         n_states: Integral = 2,  # type: ignore
-        model_type="ar",
-        model_params=None,
+        model_type: ModelTypesWithoutArch = "ar",
+        model_params: Optional[dict] = None,
         order=None,
         save_models: bool = False,
-        rng=None,
+        rng: RngTypes = None,  # type: ignore
     ) -> None:
         super().__init__(
             n_bootstraps=n_bootstraps,
@@ -363,6 +341,8 @@ class BlockMarkovBootstrap(BaseMarkovBootstrap):
             save_models=save_models,
             rng=rng,
         )
+        if block_bootstrap is None:
+            block_bootstrap = MovingBlockBootstrap()
         self.block_bootstrap = block_bootstrap
 
     def _generate_samples_single_bootstrap(self, X: np.ndarray, y=None):
@@ -414,21 +394,15 @@ class BlockMarkovBootstrap(BaseMarkovBootstrap):
 
 class WholeStatisticPreservingBootstrap(BaseStatisticPreservingBootstrap):
     """
-    Whole Bias Corrected Bootstrap class for time series data.
+    Whole Statistic Preserving Bootstrap class for time series data.
 
-    This class applies bias corrected bootstrapping to the entire time series,
-    without any block structure. This is the most basic form of bias corrected
+    This class applies statistic-preserving bootstrapping to the entire time series,
+    without any block structure. This is the most basic form of statistic-preserving
     bootstrapping. The residuals are resampled with replacement and added to
     the fitted values to generate new samples.
 
-    Attributes
-    ----------
-    statistic_X : np.ndarray, default=None
-        The statistic calculated from the original data. This is used as a parameter for generating the bootstrapped samples.
-
     Methods
     -------
-    __init__ : Initialize self.
     _generate_samples_single_bootstrap : Generate a single bootstrap sample.
     """
 
@@ -438,7 +412,7 @@ class WholeStatisticPreservingBootstrap(BaseStatisticPreservingBootstrap):
 
         # Resample residuals
         resampled_indices = generate_random_indices(
-            X.shape[0], self.config.rng
+            X.shape[0], self.config.rng  # type: ignore
         )
         bootstrapped_sample = X[resampled_indices]
         # Calculate the bootstrapped statistic
@@ -452,15 +426,15 @@ class WholeStatisticPreservingBootstrap(BaseStatisticPreservingBootstrap):
 
 class BlockStatisticPreservingBootstrap(BaseStatisticPreservingBootstrap):
     """
-    Block Bias Corrected Bootstrap class for time series data.
+    Block Statistic Preserving Bootstrap class for time series data.
 
-    This class applies bias corrected bootstrapping to blocks of the time series.
+    This class applies statistic-preserving bootstrapping to blocks of the time series.
     The residuals are resampled using the specified block structure and added to
     the fitted values to generate new samples.
 
     Parameters
     ----------
-    block_bootstrap : BaseBlockBootstrap
+    block_bootstrap : BlockBootstrap, default=MovingBlockBootstrap()
         The block bootstrap algorithm.
     n_bootstraps : Integral, default=10
         The number of bootstrap samples to create.
@@ -486,12 +460,12 @@ class BlockStatisticPreservingBootstrap(BaseStatisticPreservingBootstrap):
 
     def __init__(
         self,
-        block_bootstrap,
         n_bootstraps: Integral = 10,  # type: ignore
+        block_bootstrap: Optional[BlockBootstrap] = None,
         statistic=None,
         statistic_axis: Integral = 0,  # type: ignore
         statistic_keepdims: bool = False,
-        rng=None,
+        rng: RngTypes = None,  # type: ignore
     ) -> None:
         """
         Initialize self.
@@ -510,6 +484,8 @@ class BlockStatisticPreservingBootstrap(BaseStatisticPreservingBootstrap):
             statistic_keepdims=statistic_keepdims,
             rng=rng,
         )
+        if block_bootstrap is None:
+            block_bootstrap = MovingBlockBootstrap()
         self.block_bootstrap = block_bootstrap
 
     def _generate_samples_single_bootstrap(self, X: np.ndarray, y=None):
@@ -589,7 +565,7 @@ class WholeDistributionBootstrap(BaseDistributionBootstrap):
         else:
             # Resample residuals
             resampled_indices = generate_random_indices(
-                self.resids.shape[0], self.config.rng
+                self.resids.shape[0], self.config.rng  # type: ignore
             )
             resampled_residuals = self.resids[resampled_indices]
             resids_dist, resids_dist_params = super()._fit_distribution(
@@ -618,7 +594,7 @@ class BlockDistributionBootstrap(BaseDistributionBootstrap):
 
     Parameters
     ----------
-    block_bootstrap : BaseBlockBootstrap
+    block_bootstrap : BlockBootstrap, default=MovingBlockBootstrap()
         The block bootstrap algorithm.
     n_bootstraps : Integral, default=10
         The number of bootstrap samples to create.
@@ -668,15 +644,15 @@ class BlockDistributionBootstrap(BaseDistributionBootstrap):
 
     def __init__(
         self,
-        block_bootstrap,
         n_bootstraps: Integral = 10,  # type: ignore
+        block_bootstrap: Optional[BlockBootstrap] = None,
         distribution: str = "normal",
         refit: bool = False,
-        model_type="ar",
-        model_params=None,
+        model_type: ModelTypesWithoutArch = "ar",
+        model_params: Optional[dict] = None,
         order=None,
         save_models: bool = False,
-        rng=None,
+        rng: RngTypes = None,  # type: ignore
     ) -> None:
         """
         Initialize self.
@@ -698,6 +674,8 @@ class BlockDistributionBootstrap(BaseDistributionBootstrap):
             model_params=model_params,
             rng=rng,
         )
+        if block_bootstrap is None:
+            block_bootstrap = MovingBlockBootstrap()
         self.block_bootstrap = block_bootstrap
 
     def _generate_samples_single_bootstrap(self, X: np.ndarray, y=None):
@@ -805,7 +783,7 @@ class WholeSieveBootstrap(BaseSieveBootstrap):
         )
 
         simulated_samples = ts_simulator.generate_samples_sieve(
-            model_type=self.config.resids_model_type,
+            model_type=self.config.resids_model_type,  # type: ignore
             resids_lags=self.resids_order,
             resids_coefs=self.resids_coefs,
             resids=self.resids,
@@ -825,7 +803,7 @@ class BlockSieveBootstrap(BaseSieveBootstrap):
 
     Parameters
     ----------
-    block_bootstrap : BaseBlockBootstrap
+    block_bootstrap : BlockBootstrap, default=MovingBlockBootstrap()
         The block bootstrap algorithm.
     resids_model_type : str, default="ar"
         The model type to use for fitting the residuals. Must be one of "ar", "arima", "sarima", "var", or "arch".
@@ -860,17 +838,17 @@ class BlockSieveBootstrap(BaseSieveBootstrap):
 
     def __init__(
         self,
-        block_bootstrap,
         n_bootstraps: Integral = 10,  # type: ignore
-        resids_model_type="ar",
+        block_bootstrap: Optional[BlockBootstrap] = None,
+        resids_model_type: ModelTypes = "ar",
         resids_order=None,
         save_resids_models: bool = False,
         kwargs_base_sieve=None,
-        model_type="ar",
-        model_params=None,
+        model_type: ModelTypesWithoutArch = "ar",
+        model_params: Optional[dict] = None,
         order=None,
         save_models: bool = False,
-        rng=None,
+        rng: RngTypes = None,  # type: ignore
     ) -> None:
         """
         Initialize self.
@@ -894,6 +872,8 @@ class BlockSieveBootstrap(BaseSieveBootstrap):
             save_models=save_models,
             rng=rng,
         )
+        if block_bootstrap is None:
+            block_bootstrap = MovingBlockBootstrap()
         self.block_bootstrap = block_bootstrap
 
     def _generate_samples_single_bootstrap(self, X: np.ndarray, y=None):
@@ -908,7 +888,7 @@ class BlockSieveBootstrap(BaseSieveBootstrap):
         )
 
         simulated_samples = ts_simulator.generate_samples_sieve(
-            model_type=self.config.resids_model_type,
+            model_type=self.config.resids_model_type,  # type: ignore
             resids_lags=self.resids_order,
             resids_coefs=self.resids_coefs,
             resids=self.resids,

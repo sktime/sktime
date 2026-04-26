@@ -6,9 +6,9 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.libs.tsbootstrap import BlockBootstrap
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.bootstrap import TSBootstrapAdapter
+from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
@@ -17,6 +17,11 @@ from sktime.transformations.bootstrap import TSBootstrapAdapter
 )
 def test_tsbootstrap_adapter_with_inrepo_blockbootstrap_returns_index_col():
     """In-repo BlockBootstrap should work through TSBootstrapAdapter."""
+    if not _check_soft_dependencies("pydantic", severity="none"):
+        pytest.skip("test requires pydantic for tsbootstrap v0.1.5")
+
+    from sktime.libs.tsbootstrap import BlockBootstrap
+
     y = load_airline().to_frame()
 
     adapter = TSBootstrapAdapter(
@@ -24,7 +29,8 @@ def test_tsbootstrap_adapter_with_inrepo_blockbootstrap_returns_index_col():
         return_indices=True,
     )
     Xt = adapter.fit_transform(y)
+    n_bootstraps = adapter.bootstrap.clone().get_n_bootstraps()
 
     assert isinstance(Xt, pd.DataFrame)
     assert "resampled_index" in Xt.columns
-    assert Xt.index.get_level_values(0).nunique() == 2
+    assert Xt.index.get_level_values(0).nunique() == n_bootstraps

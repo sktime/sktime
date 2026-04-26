@@ -234,11 +234,13 @@ class TSFit(BaseEstimator, RegressorMixin):
                 self.model_params[key] = value
         return self
 
+    '''
     def __repr__(self):
         """
         Official string representation of a TSFit object.
         """
         return f"TSFit(order={self.order}, model_type='{self.model_type}')"
+    '''
 
     def fit(self, X: np.ndarray, y=None) -> TSFit:
         """
@@ -247,7 +249,7 @@ class TSFit(BaseEstimator, RegressorMixin):
         Parameters
         ----------
         X : np.ndarray
-            Input data of shape (n_samples, n_features).
+            Input data of shape (n_timepoints, n_features).
         y : np.ndarray, optional
             Exogenous variables, by default None.
 
@@ -566,7 +568,7 @@ class TSFit(BaseEstimator, RegressorMixin):
         Parameters
         ----------
         X : np.ndarray
-            Input data of shape (n_samples, n_features).
+            Input data of shape (n_timepoints, n_features).
         y : np.ndarray, optional
             Exogenous variables, by default None.
         n_steps : int, optional

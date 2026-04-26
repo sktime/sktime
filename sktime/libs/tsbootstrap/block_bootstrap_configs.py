@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from functools import partial
 from numbers import Integral
+from typing import Optional
 
 import numpy as np
 from scipy.signal.windows import tukey
@@ -18,15 +19,15 @@ class BlockBootstrapConfig(BaseTimeSeriesBootstrapConfig):
 
     def __init__(
         self,
-        block_length: Integral = None,
-        block_length_distribution: str = None,
+        block_length: Optional[Integral] = None,
+        block_length_distribution: Optional[str] = None,
         wrap_around_flag: bool = False,
         overlap_flag: bool = False,
         combine_generation_and_sampling_flag: bool = False,
         block_weights=None,
-        tapered_weights: Callable = None,
-        overlap_length: Integral = None,
-        min_block_length: Integral = None,
+        tapered_weights: Optional[Callable] = None,
+        overlap_length: Optional[Integral] = None,
+        min_block_length: Optional[Integral] = None,
         n_bootstraps: Integral = 10,  # type: ignore
         rng=None,
     ) -> None:
@@ -89,7 +90,7 @@ class BlockBootstrapConfig(BaseTimeSeriesBootstrapConfig):
         value : Integral or None.
         """
         if value is not None:
-            validate_single_integer(value, min_value=1)
+            validate_single_integer(value, min_value=1)  # type: ignore
         self._block_length = value
 
     @property
@@ -225,7 +226,7 @@ class BlockBootstrapConfig(BaseTimeSeriesBootstrapConfig):
         value : Integral or None.
         """
         if value is not None:
-            validate_single_integer(value, min_value=1)
+            validate_single_integer(value, min_value=1)  # type: ignore
         self._overlap_length = value
 
     @property
@@ -243,7 +244,7 @@ class BlockBootstrapConfig(BaseTimeSeriesBootstrapConfig):
         value : Integral or None.
         """
         if value is not None:
-            validate_single_integer(value, min_value=1)
+            validate_single_integer(value, min_value=1)  # type: ignore
         self._min_block_length = value
 
 
@@ -258,7 +259,7 @@ class BaseBlockBootstrapConfig(BlockBootstrapConfig):
 
     def __init__(
         self,
-        bootstrap_type: str = None,
+        bootstrap_type: str = "moving",
         **kwargs,
     ) -> None:
         """
@@ -266,7 +267,7 @@ class BaseBlockBootstrapConfig(BlockBootstrapConfig):
 
         Parameters
         ----------
-        bootstrap_type : str, default=None
+        bootstrap_type : str, default="moving"
             The type of block bootstrap to use.
             Must be one of "nonoverlapping", "moving", "stationary", or "circular".
         kwargs
@@ -303,7 +304,7 @@ class MovingBlockBootstrapConfig(BlockBootstrapConfig):
 
     def __init__(
         self,
-        block_length: Integral = None,
+        block_length: Optional[Integral] = None,
         **kwargs,
     ) -> None:
         """
@@ -343,7 +344,7 @@ class StationaryBlockBootstrapConfig(BlockBootstrapConfig):
 
     def __init__(
         self,
-        block_length: Integral,
+        block_length: Optional[Integral],
         **kwargs,
     ) -> None:
         """
@@ -383,7 +384,7 @@ class CircularBlockBootstrapConfig(BlockBootstrapConfig):
 
     def __init__(
         self,
-        block_length: Integral = None,
+        block_length: Optional[Integral] = None,
         **kwargs,
     ) -> None:
         """
@@ -423,7 +424,7 @@ class NonOverlappingBlockBootstrapConfig(BlockBootstrapConfig):
 
     def __init__(
         self,
-        block_length: Integral,
+        block_length: Optional[Integral],
         **kwargs,
     ) -> None:
         """

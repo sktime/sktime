@@ -3,8 +3,8 @@
 This directory vendors the upstream `tsbootstrap` library source.
 
 - Upstream repository: https://github.com/astrogilda/tsbootstrap
-- Upstream release: `v0.1.0`
-- Upstream commit: `1ee1be3e52ab74bca27674a022f7a303af1266d1`
+- Upstream release: `v0.1.5`
+- Upstream commit: `619e8ff232f416f02065b4e2fac5eeeb07a824ca`
 - Vendored date: 2026-04-26
 - Upstream license: MIT (see `LICENSE` in this directory)
 

@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from numbers import Integral
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 import numpy as np
 
@@ -21,7 +21,7 @@ class TimeSeriesModel:
     def __init__(
         self,
         X: np.ndarray,
-        y=None,
+        y: Optional[np.ndarray] = None,
         model_type: ModelTypes = "ar",
         verbose: bool = True,
     ):
@@ -51,13 +51,13 @@ class TimeSeriesModel:
     @property
     def model_type(self) -> ModelTypes:
         """The type of model to fit."""
-        return self._model_type
+        return self._model_type  # type: ignore
 
     @model_type.setter
     def model_type(self, value: ModelTypes) -> None:
         """Sets the type of model to fit."""
         validate_literal_type(value, ModelTypes)
-        value = value.lower()
+        value = value.lower()  # type: ignore
         self._model_type = value
 
     @property
@@ -76,12 +76,12 @@ class TimeSeriesModel:
         )
 
     @property
-    def y(self) -> np.ndarray:
+    def y(self) -> Optional[np.ndarray]:
         """Optional array of exogenous variables."""
         return self._y
 
     @y.setter
-    def y(self, value: np.ndarray) -> None:
+    def y(self, value: Optional[np.ndarray]) -> None:
         """Sets the optional array of exogenous variables."""
         _, self._y = validate_X_and_y(
             self.X,
@@ -161,7 +161,9 @@ class TimeSeriesModel:
         """
         k = self.y.shape[1] if self.y is not None else 0
         seasonal_terms, trend_parameters = self._calculate_terms(kwargs)
-        max_lag = (N - k - seasonal_terms - trend_parameters) // 2
+        max_lag = (
+            N - k - seasonal_terms - trend_parameters  # type: ignore
+        ) // 2  # - 1
 
         if order is not None:
             if isinstance(order, list):
@@ -213,9 +215,7 @@ class TimeSeriesModel:
         trend_parameters = (
             1
             if kwargs.get("trend", "c") == "c"
-            else 2
-            if kwargs.get("trend") == "ct"
-            else 0
+            else 2 if kwargs.get("trend") == "ct" else 0
         )
 
         return seasonal_terms, trend_parameters
@@ -353,8 +353,8 @@ class TimeSeriesModel:
         if len(arima_order) != 3:
             raise ValueError("The order must be a 3-tuple")
 
-        validate_integers(*order, min_value=0)
-        validate_integers(*arima_order, min_value=0)
+        validate_integers(*order, min_value=0)  # type: ignore
+        validate_integers(*arima_order, min_value=0)  # type: ignore
 
         # Check to ensure that the AR terms (p and P) don't duplicate order
         if arima_order[0] >= order[-1] and order[0] != 0:
@@ -384,7 +384,7 @@ class TimeSeriesModel:
 
         return self._fit_with_verbose_handling(fit_logic)
 
-    def fit_var(self, order: int = None, **kwargs):
+    def fit_var(self, order: Optional[int] = None, **kwargs):
         """Fits a Vector Autoregression (VAR) model to the input data.
 
         Parameters
@@ -423,7 +423,7 @@ class TimeSeriesModel:
 
     def fit_arch(
         self,
-        order: int = None,
+        order: Optional[int] = None,
         p: int = 1,
         q: int = 1,
         arch_model_type: Literal[
@@ -465,7 +465,7 @@ class TimeSeriesModel:
             order = 1
 
         # Assuming a validate_X_and_y function exists for data validation
-        validate_integers(p, q, order, min_value=1)
+        validate_integers(p, q, order, min_value=1)  # type: ignore
 
         if mean_type not in ["zero", "AR"]:
             raise ValueError("mean_type must be one of 'zero' or 'AR'")
@@ -476,7 +476,7 @@ class TimeSeriesModel:
                 x=self.y,
                 mean=mean_type,
                 lags=order,
-                vol=arch_model_type,
+                vol=arch_model_type,  # type: ignore
                 p=p,
                 q=q,
                 **kwargs,
@@ -520,7 +520,7 @@ class TimeSeriesModel:
 
         return self._fit_with_verbose_handling(fit_logic)
 
-    def fit(self, order: OrderTypes = None, **kwargs):
+    def fit(self, order: OrderTypes = None, **kwargs):  # type: ignore
         """Fits a time series model to the input data.
 
         Parameters
