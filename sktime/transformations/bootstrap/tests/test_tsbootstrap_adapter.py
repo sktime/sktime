@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Tests for TSBootstrapAdapter with vendored tsbootstrap classes."""
+"""Tests for TSBootstrapAdapter with in-repo tsbootstrap classes."""
 
 import pandas as pd
 import pytest
@@ -15,8 +15,8 @@ from sktime.transformations.bootstrap import TSBootstrapAdapter
     not run_test_for_class(TSBootstrapAdapter),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_tsbootstrap_adapter_with_vendored_blockbootstrap_returns_index_col():
-    """Vendored BlockBootstrap should work through TSBootstrapAdapter."""
+def test_tsbootstrap_adapter_with_inrepo_blockbootstrap_returns_index_col():
+    """In-repo BlockBootstrap should work through TSBootstrapAdapter."""
     y = load_airline().to_frame()
 
     adapter = TSBootstrapAdapter(

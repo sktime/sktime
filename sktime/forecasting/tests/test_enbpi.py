@@ -34,8 +34,8 @@ def test_enbpi_default_bootstrap_transformer_initializes_and_predicts():
     not run_test_for_class(EnbPIForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_enbpi_with_vendored_blockbootstrap_predicts_interval():
-    """Vendored BlockBootstrap should be accepted through TSBootstrapAdapter."""
+def test_enbpi_with_inrepo_blockbootstrap_predicts_interval():
+    """In-repo BlockBootstrap should be accepted through TSBootstrapAdapter."""
     y = load_airline().to_frame()
     fh = ForecastingHorizon(np.arange(1, 4), is_relative=True)
 
