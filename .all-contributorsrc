@@ -2830,6 +2830,15 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "andrexandrex",
+      "name": "Andre Juarez",
+      "avatar_url": "https://avatars.githubusercontent.com/andrexandrex",
+      "profile": "https://github.com/andrexandrex",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }

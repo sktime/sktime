@@ -35,6 +35,21 @@ class DtwPythonDist(_DelegatedPairwiseTransformerPanel):
         whether to perform open-ended alignments
         open_begin = whether alignment open ended at start (low index)
         open_end = whether alignment open ended at end (high index)
+
+    Examples
+    --------
+    >>> from sktime.dists_kernels.dtw import DtwPythonDist
+    >>> from sktime.utils._testing.panel import _make_panel
+    >>> X = _make_panel(
+    ...     n_instances=2,
+    ...     n_columns=2,
+    ...     n_timepoints=4,
+    ...     return_mtype="df-list",
+    ...     random_state=0,
+    ... )
+    >>> dist = DtwPythonDist()
+    >>> dist(X).shape
+    (2, 2)
     """
 
     _tags = {
