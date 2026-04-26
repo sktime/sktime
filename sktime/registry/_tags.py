@@ -3302,8 +3302,8 @@ class visual_block_kind(_BaseTag):
     in a jupyter notebook.
 
     Meta-estimators are composites with a variable number of sub-estimators,
-    such as ``ForecastingPipeline`` or ``ColumnTransformer``, inheriting from
-    ``_HeterogenousMetaEstimator``.
+    such as ``ForecastingPipeline`` or ``ColumnEnsembleTransformer``,
+    inheriting from ``_HeterogenousMetaEstimator``.
 
     The html display is triggered by calling the ``_repr_html_`` method on any
     ``scikit-base`` estimator, which returns a html representation of the estimator,
@@ -3561,6 +3561,15 @@ ESTIMATOR_TAG_REGISTER = [
         "which scitypes does X internally support?",
     ),
     (
+        "scitype:y",  # -> capability:multivariate
+        # the scitype:y tag should be kept but for separate use,
+        # a list of the internal scitypes supported by the estimator
+        # or the base scitype of the target data
+        ["param_est", "metric"],
+        "str",
+        "what scitype of y does the object support? must be scitype string",
+    ),
+    (
         "scitype:instancewise",
         "transformer",
         "bool",
@@ -3724,15 +3733,6 @@ ESTIMATOR_TAG_REGISTER = [
         "estimator",
         "bool",
         "can the estimator handle missing data (NA, np.nan) in inputs?",
-    ),
-    (
-        "scitype:y",  # -> capability:multivariate
-        # the scitype:y tag should be kept but for separate use,
-        # a list of the internal scitypes supported by the estimator
-        # or the base scitype of the target data
-        "forecaster",
-        ("str", ["univariate", "multivariate", "both"]),
-        "which series type does the forecaster support? multivariate means >1 vars",
     ),
     # ---------------------------
     # to be deprecated or removed
