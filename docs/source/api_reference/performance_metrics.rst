@@ -193,6 +193,9 @@ Event detection - anomalies, outliers
     DirectedHausdorff
     DetectionCount
     WindowedF1Score
+    WindowedTPR
+    WindowedFPR
+    EarlyDetectionTime
     TimeSeriesAUPRC
 
 Segment detection
