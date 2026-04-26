@@ -137,15 +137,6 @@
       "contributions": ["code", "test", "platform", "example", "doc"]
     },
     {
-      "login": "goyaladitya05",
-      "name": "Aditya Goyal",
-      "avatar_url": "https://avatars.githubusercontent.com/u/goyaladitya05?v=4",
-      "profile": "https://github.com/goyaladitya05",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
       "login": "ViktorKaz",
       "name": "ViktorKaz",
       "avatar_url": "https://avatars0.githubusercontent.com/u/33499138?v=4",
@@ -2876,6 +2867,16 @@
       "contributions": [
         "code",
         "doc"
+      ]
+    },
+    {
+      "login": "goyaladitya05",
+      "name": "Aditya Goyal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/goyaladitya05?v=4",
+      "profile": "https://github.com/goyaladitya05",
+      "contributions": [
+        "code",
+        "bug"
       ]
     }
   ]
