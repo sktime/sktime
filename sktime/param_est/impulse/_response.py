@@ -311,9 +311,9 @@ class ImpulseResponseFunction(BaseParamFitter):
             in ``skbase.base._clone_plugins``, and implement
             the methods ``_check`` and ``_clone``.
         """
-        from skbase.base._clone_plugins import BaseCloner
+        from skbase.base._clone_plugins import _CloneSkbase
 
-        class ModelCloner(BaseCloner):
+        class ModelCloner(_CloneSkbase):
             """Clone plugin to preserve model attribute of self."""
 
             def _check(self, obj):
