@@ -2795,7 +2795,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         # handle inputs
         self.check_is_fitted()
@@ -2940,7 +2940,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         self.check_is_fitted()
         if y is None:
@@ -3072,7 +3072,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         self.check_is_fitted()
         if y is None:
@@ -3200,7 +3200,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
         self.check_is_fitted()
         if y is None:
             self._global_forecasting = False
@@ -3309,7 +3309,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         self.check_is_fitted()
         if y is None:
