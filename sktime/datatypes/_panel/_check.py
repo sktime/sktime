@@ -1361,7 +1361,7 @@ class PanelGluontsList(ScitypePanel):
             # Each entry in a ListDataset is formed with an ndarray.
             # Basing off definitions in _dtypekind, assigning values of FLOAT
 
-            dtypes.extend([DtypeKind.FLOAT] * len(obj))
+            dtypes.extend([DtypeKind.FLOAT] * n_features)
 
             if _req("dtypekind_dfip", return_metadata):
                 metadata["dtypekind_dfip"] = dtypes
@@ -1373,7 +1373,17 @@ class PanelGluontsList(ScitypePanel):
             metadata["n_instances"] = len(obj)
 
         if _req("n_panels", return_metadata):
-            metadata["n_panels"] = len(obj)
+            metadata["n_panels"] = 1
+
+        if _req("is_one_panel", return_metadata):
+            metadata["is_one_panel"] = True
+
+        if _req("is_one_series", return_metadata):
+            metadata["is_one_series"] = len(obj) == 1
+
+        if _req("is_equal_length", return_metadata):
+            lengths = [series["target"].shape[0] for series in obj]
+            metadata["is_equal_length"] = len(obj) == 0 or len(set(lengths)) == 1
 
         if _req("feature_names", return_metadata):
             # Check first if the ListDataset is empty
