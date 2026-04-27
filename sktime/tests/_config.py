@@ -80,14 +80,6 @@ EXCLUDE_ESTIMATORS = [
 # DO NOT ADD ESTIMATORS HERE ANYMORE
 # ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
 EXCLUDED_TESTS = {
-    # issue when prediction intervals, see #3479 and #4504
-    # known issue with prediction intervals that needs fixing, tracked in #4181
-    "SquaringResiduals": [
-        "test_predict_time_index",
-        "test_predict_residuals",
-        "test_predict_interval",
-        "test_predict_time_index_with_X",  # separate - refer to #4765
-    ],
     # known issue when X is passed, wrong time indices are returned, #1364
     "TapNetRegressor": [
         "test_fit_idempotent",
@@ -155,12 +147,6 @@ EXCLUDED_TESTS = {
     "MACNNClassifier": [
         "test_multioutput",
         "test_classifier_on_unit_test_data",
-    ],
-    "MCDCNNClassifier": [
-        "test_persistence_via_pickle",
-        "test_multioutput",
-        "test_classifier_on_unit_test_data",
-        "test_fit_idempotent",  # not part of bug reports but due to randomness
     ],
     "ARLagOrderSelector": [
         "test_doctest_examples",  # doctest fails, see #8129
