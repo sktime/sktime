@@ -293,6 +293,44 @@ class ImpulseResponseFunction(BaseParamFitter):
         return self
 
     @classmethod
+    def _get_clone_plugins(cls):
+        """Get clone plugins for BaseObject.
+
+        See scikit-base documentation for details on clone plugins.
+
+        We need to override the cloning functionality for this estimator,
+        since the ``model`` attribute is already fitted when passed.
+        We do not want to reset ``model`` on ``clone``, and this needs to be
+        overridden.
+
+        Returns
+        -------
+        list of BaseCloner descendants, or None
+            List of clone plugins for descendants.
+            Each plugin must inherit from ``BaseCloner``
+            in ``skbase.base._clone_plugins``, and implement
+            the methods ``_check`` and ``_clone``.
+        """
+        from skbase.base._clone_plugins import BaseCloner
+
+        class ModelCloner(BaseCloner):
+            """Clone plugin to preserve model attribute of self."""
+
+            def _check(self, obj):
+                """Check if the plugin should be applied to the given object."""
+                return isinstance(obj, ImpulseResponseFunction)
+
+            def _clone(self, obj):
+                """Clone the ``model`` attribute of the given object."""
+                # we do not want to reset the model on clone, so we return it as is
+                temp = obj.model
+                clone = super()._clone(obj)
+                clone.model = temp
+                return clone
+
+        return [ModelCloner]
+
+    @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator/test.
 
