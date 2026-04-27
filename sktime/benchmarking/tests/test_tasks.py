@@ -65,3 +65,22 @@ def check_set_metadata(task, target, metadata):
 def test_set_metadata_supervised(task):
     """Test check_set_metadata."""
     check_set_metadata(task, "class_val", gunpoint)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
+def test_invalid_task_init_inputs():
+    """Test constructor validation for invalid target/features inputs."""
+    with raises(ValueError, match="target must be a non-empty string"):
+        BaseTask(target="")
+
+    with raises(TypeError, match="features must be a list-like of strings"):
+        BaseTask(target="class_val", features="dim_0")
+
+    with raises(ValueError, match="must not contain duplicate"):
+        BaseTask(target="class_val", features=["dim_0", "dim_0"])
+
+    with raises(ValueError, match="must not also be included in features"):
+        BaseTask(target="class_val", features=["dim_0", "class_val"])

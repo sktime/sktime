@@ -31,7 +31,26 @@ class BaseTask(BaseObject):
     """
 
     def __init__(self, target, features=None, metadata=None):
-        # TODO input checks on target and feature args
+        if not isinstance(target, str) or target == "":
+            raise ValueError(
+                f"target must be a non-empty string, but found {target!r}"
+            )
+
+        if features is not None:
+            if isinstance(features, str):
+                raise TypeError(
+                    "features must be a list-like of strings, but found a string"
+                )
+            features_index = pd.Index(features)
+            if len(features_index) > 0 and not features_index.map(
+                lambda x: isinstance(x, str) and x != ""
+            ).all():
+                raise ValueError("all feature names must be non-empty strings")
+            if features_index.has_duplicates:
+                raise ValueError("features must not contain duplicate column names")
+            if target in features_index:
+                raise ValueError("target must not also be included in features")
+
         self._target = target
         self._features = features if features is None else pd.Index(features)
 
