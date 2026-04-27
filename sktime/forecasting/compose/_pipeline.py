@@ -110,7 +110,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         self._forecaster_index = forecaster_ind
 
         if not allow_postproc and forecaster_ind != len(estimators) - 1:
-            TypeError(
+            raise TypeError(
                 f"in {self_name}, last estimator must be a forecaster, "
                 f"but found a transformer"
             )
@@ -417,7 +417,7 @@ class ForecastingPipeline(_Pipeline):
 
     _tags = {
         "authors": ["mloning", "fkiraly", "aiwalter"],
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:exogenous": True,
@@ -869,7 +869,7 @@ class TransformedTargetForecaster(_Pipeline):
 
     _tags = {
         "authors": ["mloning", "fkiraly", "aiwalter"],
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:exogenous": True,
@@ -1512,7 +1512,7 @@ class ForecastX(BaseForecaster):
         "authors": ["fkiraly", "benheid", "yarnabrina"],
         "X_inner_mtype": SUPPORTED_MTYPES,
         "y_inner_mtype": SUPPORTED_MTYPES,
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "X-y-must-have-same-index": False,
         "fit_is_empty": False,
         "capability:exogenous": True,
@@ -2060,7 +2060,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
 
     _tags = {
         "authors": "aiwalter",
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "capability:exogenous": True,
