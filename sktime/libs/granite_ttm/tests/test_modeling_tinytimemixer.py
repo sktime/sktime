@@ -7,7 +7,6 @@ because transformers v5 looks it up during ``from_pretrained``.
 """
 
 import pytest
-
 from skbase.utils.dependencies import _check_soft_dependencies
 
 
