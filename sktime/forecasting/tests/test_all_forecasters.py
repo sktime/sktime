@@ -1328,6 +1328,22 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             f"The network object must be preserved when pretrained."
         )
 
+    def test_fit_and_predict(self, estimator_instance):
+        """Test forecaster fit and predict."""
+        from sktime.datasets import Airline
+
+        estimator = estimator_instance
+
+        if estimator.get_tag("capability:unequal_length"):
+            y = Airline().load("y")
+
+            fh = [1, 2]
+
+            estimator.fit(y, fh=fh)
+            y_pred = estimator.predict()
+
+            assert isinstance(y_pred, pd.DataFrame)
+
 
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
     """Module level tests for all global forecasters."""
