@@ -161,6 +161,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:pred_int": False,
+        "capability:unequal_length": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,

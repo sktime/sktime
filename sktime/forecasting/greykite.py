@@ -71,6 +71,7 @@ class GreykiteForecaster(BaseForecaster):
         "capability:pred_int": False,  # Can produce prediction intervals.
         "capability:pickle": False,
         "capability:in-sample": False,
+        "capability:unequal_length": False,
         "python_dependencies": ["greykite>=1.0.0"],  # Required Python dependencies.
     }
 

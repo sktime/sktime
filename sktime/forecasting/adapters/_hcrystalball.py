@@ -115,6 +115,7 @@ class HCrystalBallAdapter(BaseForecaster):
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        "capability:unequal_length": False,
     }
 
     def __init__(self, model):

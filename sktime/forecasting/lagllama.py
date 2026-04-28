@@ -246,6 +246,7 @@ class LagLlamaForecaster(BaseForecaster):
         "capability:pretrain": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:unequal_length": False,
         "authors": ["pranavvp16"],
         "maintainers": ["pranavvp16"],
         "python_version": "<3.14",
