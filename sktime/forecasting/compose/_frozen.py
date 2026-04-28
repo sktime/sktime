@@ -1,6 +1,6 @@
 """Frozen forecaster which behaves like the fitted forecaster passed in init."""
 
-all = ["FrozenForecaster"]
+__all__ = ["FrozenForecaster"]
 
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
