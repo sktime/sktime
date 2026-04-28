@@ -3,8 +3,8 @@
 author = ["OldPatrick"]
 all = ["ImpulseResponseFunction"]
 
-from copy import deepcopy
 import warnings
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
