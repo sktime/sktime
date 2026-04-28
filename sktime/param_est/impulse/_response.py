@@ -34,9 +34,10 @@ class ImpulseResponseFunction(BaseParamFitter):
     and Georgiadis 2019, "Estimation of impulse response functions when shocks are
     observed at a higher frequency than outcome variables.", Working Paper No. 2307,
     European Central Bank.
-     
+
     The following methods support the calculation of an impulse response, where an (x)
     marks the completed implementation for sktime:
+
     - ARIMA
     - ARMA
     - DynamicFactor (x)
