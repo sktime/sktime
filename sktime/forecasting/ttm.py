@@ -463,6 +463,10 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
             # Adjust requires_grad property of model weights based on info
             for key in info["mismatched_keys"]:
+                # transformers>=5.0 may return tuples (key, shape) instead
+                # of plain strings for mismatched_keys
+                if isinstance(key, tuple):
+                    key = key[0]
                 _model = self.model
                 for attr_name in key.split(".")[:-1]:
                     _model = getattr(_model, attr_name)

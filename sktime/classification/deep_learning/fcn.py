@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.fcn import FCNNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class FCNClassifier(BaseDeepClassifier):
@@ -19,11 +18,8 @@ class FCNClassifier(BaseDeepClassifier):
 
     Parameters
     ----------
-    should inherited fields be listed here?
     n_epochs : int, default = 2000
         the number of epochs to train the model
-    callbacks : list of tf.keras.callbacks.Callback objects, default=None
-        List of callbacks to apply during training.
     batch_size : int, default = 16
         the number of samples per gradient update.
     callbacks : list of keras.callbacks.Callback, optional (default=None)
@@ -48,6 +44,13 @@ class FCNClassifier(BaseDeepClassifier):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
+    filter_sizes : list or tuple of int , default = (128,256,128)
+        number of filters for each convolutional layer.
+        must have length equal to kernel_sizes.
+    kernel_sizes : list or tuple of int , default = (8,5,3)
+        kernel size for each convolutional layer.
+        must have length equal to filter_sizes.
+
 
     References
     ----------
@@ -89,9 +92,9 @@ class FCNClassifier(BaseDeepClassifier):
         activation_hidden="relu",
         use_bias=True,
         optimizer=None,
+        filter_sizes=(128, 256, 128),
+        kernel_sizes=(8, 5, 3),
     ):
-        _check_dl_dependencies(severity="error")
-
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -104,13 +107,29 @@ class FCNClassifier(BaseDeepClassifier):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
+        self.filter_sizes = filter_sizes
+        self.kernel_sizes = kernel_sizes
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self._network = FCNNetwork(
             activation=self.activation_hidden,
             random_state=self.random_state,
+            filter_sizes=self.filter_sizes,
+            kernel_sizes=self.kernel_sizes,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -228,8 +247,20 @@ class FCNClassifier(BaseDeepClassifier):
             "n_epochs": 12,
             "batch_size": 6,
             "use_bias": True,
+            "filter_sizes": [64, 128],
+            "kernel_sizes": [5, 3],
         }
-        test_params = [param1, param2]
+
+        # to check for tuple
+        params3 = {
+            "n_epochs": 8,
+            "batch_size": 4,
+            "use_bias": False,
+            "filter_sizes": (64, 128),
+            "kernel_sizes": (5, 3),
+        }
+
+        test_params = [param1, param2, params3]
 
         if _check_soft_dependencies("keras", severity="none"):
             from keras.callbacks import LambdaCallback

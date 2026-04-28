@@ -354,19 +354,8 @@ class ChronosForecaster(BaseForecaster):
         self.model_path = model_path
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
-
-        # set random seed
-        self.seed = seed
-        self._seed = np.random.randint(0, 2**31) if seed is None else seed
-
-        # initialize model_strategy as None, will be set correctly after loading config.
-        self.model_strategy = None
-
-        # set config
         self.config = config
-        self._config = None
-
-        self.context = None
+        self.seed = seed
 
         if self.ignore_deps:
             self.set_tags(python_dependencies=[])
@@ -376,6 +365,26 @@ class ChronosForecaster(BaseForecaster):
             self.set_tags(python_dependencies=["torch", "transformers", "accelerate"])
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
+
+        # initialize model_strategy as None, will be set correctly after loading config.
+        self.model_strategy = None
+
+        # set config
+        self._config = None
+
+        self.context = None
 
         self._initialize_model_type()
 
