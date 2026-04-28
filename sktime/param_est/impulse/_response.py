@@ -31,8 +31,8 @@ class ImpulseResponseFunction(BaseParamFitter):
     of one time series variable within a system (of several time-series variables)
     unfolds over time in the whole system of all variables. Practical examples could
     be the shock/change in oil prices on gasoline prices, see for example: Chudik
-    and Georgiadis 2019, "Estimation of impulse response functions when shocks are 
-    observed at a higher frequency than outcome variables.", Working Paper No. 2307, 
+    and Georgiadis 2019, "Estimation of impulse response functions when shocks are
+    observed at a higher frequency than outcome variables.", Working Paper No. 2307,
     European Central Bank.
      
     The following methods support the calculation of an impulse response, where an (x)
