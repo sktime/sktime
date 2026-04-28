@@ -1334,15 +1334,14 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         estimator = estimator_instance
 
-        if estimator.get_tag("capability:unequal_length"):
-            y = Airline().load("y")
+        y = Airline().load("y")
 
-            fh = [1, 2]
+        fh = [1, 2]
 
-            estimator.fit(y, fh=fh)
-            y_pred = estimator.predict()
+        estimator.fit(y, fh=fh)
+        y_pred = estimator.predict()
 
-            assert isinstance(y_pred, pd.DataFrame)
+        assert isinstance(y_pred, pd.DataFrame)
 
 
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
