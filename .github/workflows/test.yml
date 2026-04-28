@@ -98,7 +98,6 @@ jobs:
 
           check_estimator(
               estimator=est,
-              tests_to_run="test_equal_length_hierarchical_fit_predict",
               raise_exceptions=True,
           )
 
