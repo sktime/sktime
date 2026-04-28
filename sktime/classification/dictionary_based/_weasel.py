@@ -149,24 +149,35 @@ class WEASEL(BaseClassifier):
         random_state=None,
     ):
         self.alphabet_size = alphabet_size
-
         # feature selection is applied based on the chi-squared test.
         self.p_threshold = p_threshold
-
         self.anova = anova
-
-        self.norm_options = [False]
-        self.word_lengths = [4, 6]
-
         self.bigrams = bigrams
         self.binning_strategy = binning_strategy
         self.random_state = random_state
+        self.feature_selection = feature_selection
+        self.window_inc = window_inc
+        self.n_jobs = n_jobs
+        self.support_probabilities = support_probabilities
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self.norm_options = [False]
+        self.word_lengths = [4, 6]
 
         self.min_window = 6
         self.max_window = 100
 
-        self.feature_selection = feature_selection
-        self.window_inc = window_inc
         self.highest_bit = -1
         self.window_sizes = []
 
@@ -175,18 +186,16 @@ class WEASEL(BaseClassifier):
 
         self.SFA_transformers = []
         self.clf = None
-        self.n_jobs = n_jobs
-        self.support_probabilities = support_probabilities
-
-        super().__init__()
 
         from numba import set_num_threads
 
-        set_num_threads(n_jobs)
+        set_num_threads(self.n_jobs)
 
         from sktime.utils.validation import check_n_jobs
 
-        self._threads_to_use = check_n_jobs(n_jobs)
+        self._threads_to_use = check_n_jobs(self.n_jobs)
+
+        super().__post_init__()
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
