@@ -30,6 +30,7 @@ from sktime.alignment.utils.utils_align import convert_align_to_align_loc, reind
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert
 from sktime.datatypes._dtypekind import DtypeKind
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 class BaseAligner(BaseEstimator):
@@ -52,9 +53,23 @@ class BaseAligner(BaseEstimator):
 
         super().__init__()
 
-        from sktime.utils.dependencies import _check_estimator_deps
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
 
-        _check_estimator_deps(self)
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     def fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.
@@ -74,6 +89,8 @@ class BaseAligner(BaseEstimator):
         Z : pd.DataFrame with n rows, optional
             metadata, i-th row of Z corresponds to i-th element of X
         """
+        _check_estimator_deps(self)
+
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
