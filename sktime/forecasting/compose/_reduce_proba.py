@@ -274,7 +274,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         * dynamic tag setting
         * any soft dependency imports in the constructor
         """
-        self._lags = list(range(window_length))
+        self._lags = list(range(self.window_length))
 
         # Detect if estimator is a probabilistic regressor (skpro)
         if hasattr(self.estimator, "get_tags"):
