@@ -2407,7 +2407,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
               the method should handle uni- and multivariate y appropriately
 
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
@@ -2435,7 +2435,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
@@ -2795,7 +2795,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         # handle inputs
         self.check_is_fitted()
@@ -2846,7 +2846,7 @@ class _BaseGlobalForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
@@ -2940,7 +2940,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         self.check_is_fitted()
         if y is None:
@@ -3072,7 +3072,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         self.check_is_fitted()
         if y is None:
@@ -3200,7 +3200,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
         self.check_is_fitted()
         if y is None:
             self._global_forecasting = False
@@ -3309,7 +3309,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         self.check_is_fitted()
         if y is None:
