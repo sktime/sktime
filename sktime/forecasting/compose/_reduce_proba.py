@@ -159,19 +159,22 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     Algorithm details:
 
     In ``fit``, given endogenous time series ``y`` and possibly exogenous ``X``:
-        fits ``estimator`` to feature-label pairs for one-step-ahead prediction:
-        features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_length+1)``,
-                   if provided: ``X(t+1)``
-        labels = ``y(t+1)``
-        ranging over all ``t`` where the above have been observed
+
+    fits ``estimator`` to feature-label pairs for one-step-ahead prediction:
+    features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_length+1)``,
+    if provided: ``X(t+1)``; labels = ``y(t+1)``,
+    ranging over all ``t`` where the above have been observed
 
     In ``predict_proba``, given possibly exogenous ``X``, at cutoff time ``c``:
-        1. Generate ``n_samples`` Monte Carlo trajectories using ancestral sampling
-        2. For each trajectory and each horizon step ``h``:
-           a. Get probabilistic prediction from estimator using lagged features
-           b. Sample one value from the predicted distribution
-           c. Use this sampled value as input for the next step
-        3. Construct empirical distribution from the ``n_samples`` trajectories
+
+    1. Generate ``n_samples`` Monte Carlo trajectories using ancestral sampling
+    2. For each trajectory and each horizon step ``h``:
+
+        a. Get probabilistic prediction from estimator using lagged features
+        b. Sample one value from the predicted distribution
+        c. Use this sampled value as input for the next step
+
+    3. Construct empirical distribution from the ``n_samples`` trajectories
 
     In ``predict``, returns the mean of the empirical distribution from MC samples.
 
