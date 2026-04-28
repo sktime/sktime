@@ -17,6 +17,19 @@ from sktime.catalogues.base import BaseCatalogue
 from sktime.registry import scitype
 from sktime.utils.unique_str import _make_strings_unique
 
+# Scitype groupings — defined once, used everywhere
+_DATASET_SCITYPES = {"dataset_classification", "dataset_forecasting"}
+_METRIC_SCITYPES = {"metric_forecasting", "metric_tabular", "metric_proba_tabular"}
+_SPLITTER_SCITYPES = {"splitter", "splitter_tabular"}
+_ESTIMATOR_SCITYPES = {"classifier", "forecaster"}
+
+# Maps scitype → which collection to add to (for single objects)
+_SCTYPE_TO_COLLECTION = {
+    **dict.fromkeys(_DATASET_SCITYPES, "_datasets"),
+    **dict.fromkeys(_METRIC_SCITYPES, "_metrics"),
+    **dict.fromkeys(_SPLITTER_SCITYPES, "_cv_splitters"),
+}
+
 
 def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
     """Check if estimator is initialised BaseEstimator object."""
@@ -397,96 +410,63 @@ class BaseBenchmark:
         ... )
         """
         for obj in args:
-            # add catalogue
             if isinstance(obj, BaseCatalogue):
                 for category in obj.available_categories():
                     for item in obj.get(category, as_object=True):
                         self.add(item)
-                continue
 
-            # add dictionary or list of estimators
-            if isinstance(obj, (dict, list)):
-                self.add_estimator(obj)
-                continue
-
-            # add tuple inputs
-            if isinstance(obj, tuple):
-                # add task tuple (dataset, metric, splitter)
-                if len(obj) == 3:
-                    dataset = metric = splitter = None
-
-                    for item in obj:
-                        sctype = scitype(item)
-
-                        if sctype in ["dataset_classification", "dataset_forecasting"]:
-                            if dataset is not None:
-                                raise TypeError("Multiple datasets provided in tuple")
-                            dataset = item
-
-                        elif sctype in [
-                            "metric_forecasting",
-                            "metric_tabular",
-                            "metric_proba_tabular",
-                        ]:
-                            if metric is not None:
-                                raise TypeError("Multiple metrics provided in tuple")
-                            metric = item
-
-                        elif sctype in ["splitter", "splitter_tabular"]:
-                            if splitter is not None:
-                                raise TypeError("Multiple splitters provided in tuple")
-                            splitter = item
-
-                        else:
-                            raise TypeError(
-                                f"Unrecognized object in task tuple:"
-                                f"{type(item)} (scitype: {sctype})"
-                            )
-
-                    # ensure all required components exist
-                    if dataset is None or metric is None or splitter is None:
-                        raise TypeError(
-                            "Task tuple must contain exactly one dataset,"
-                            "one metric, and one splitter"
-                        )
-
-                    self._add_unique(self._datasets, dataset)
-                    self._add_unique(self._metrics, metric)
-                    self._add_unique(self._cv_splitters, splitter)
-                    continue
-
-                else:
-                    raise TypeError(
-                        f"Unsupported tuple format of length {len(obj)}."
-                        "Expected task tuple of length 3."
-                    )
-
-            # add single object
-            sctype = scitype(obj)
-
-            if sctype in ["classifier", "forecaster"]:
+            elif isinstance(obj, (dict, list)):
                 self.add_estimator(obj)
 
-            elif sctype in ["dataset_classification", "dataset_forecasting"]:
-                self._add_unique(self._datasets, obj)
-
-            elif sctype in [
-                "metric_forecasting",
-                "metric_tabular",
-                "metric_proba_tabular",
-            ]:
-                self._add_unique(self._metrics, obj)
-
-            elif sctype in ["splitter", "splitter_tabular"]:
-                self._add_unique(self._cv_splitters, obj)
+            elif isinstance(obj, tuple):
+                self._add_task_tuple(obj)
 
             else:
+                sctype = scitype(obj)
+                if sctype in _ESTIMATOR_SCITYPES:
+                    self.add_estimator(obj)
+                elif sctype in _SCTYPE_TO_COLLECTION:
+                    self._add_unique(getattr(self, _SCTYPE_TO_COLLECTION[sctype]), obj)
+                else:
+                    raise TypeError(
+                        f"Unrecognized object type: {type(obj)} (scitype: {sctype})"
+                    )
+
+    def _add_task_tuple(self, obj):
+        """Parse and register a 3-tuple task (dataset, metric, splitter)."""
+        if len(obj) != 3:
+            raise TypeError(
+                f"Unsupported tuple format of length {len(obj)}. "
+                "Expected task tuple of length 3."
+            )
+
+        # Map scitype group → (slot_name, collection_attr)
+        SLOT_MAP = {
+            **dict.fromkeys(_DATASET_SCITYPES, ("dataset", "_datasets")),
+            **dict.fromkeys(_METRIC_SCITYPES, ("metric", "_metrics")),
+            **dict.fromkeys(_SPLITTER_SCITYPES, ("splitter", "_cv_splitters")),
+        }
+
+        slots = {}  # slot_name → item
+        for item in obj:
+            st = scitype(item)
+            if st not in SLOT_MAP:
                 raise TypeError(
-                    f"Unrecognized object type: {type(obj)} (scitype: {sctype})"
+                    f"Unrecognized object in task tuple: {type(item)} (scitype: {st})"
                 )
+            slot_name, _ = SLOT_MAP[st]
+            if slot_name in slots:
+                raise TypeError(f"Multiple {slot_name}s provided in tuple")
+            slots[slot_name] = (item, SLOT_MAP[st][1])
+
+        if len(slots) != 3:
+            missing = {"dataset", "metric", "splitter"} - slots.keys()
+            raise TypeError(f"Task tuple missing: {', '.join(missing)}")
+
+        for item, collection_attr in slots.values():
+            self._add_unique(getattr(self, collection_attr), item)
 
     def _add_unique(self, collection, item):
-        """Add item to list if not already present."""
         if item not in collection:
             collection.append(item)
 
