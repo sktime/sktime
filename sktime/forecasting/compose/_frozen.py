@@ -6,7 +6,7 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
 class FrozenForecaster(_DelegatedForecaster):
-    """Frozen forecaster which behaves an already fitted forecaster passed in init.
+    """Frozen forecaster which behaves like an already fitted forecaster passed in init.
 
     Composing with FrozenForecaster instructs the wrapped forecaster to behave like
     the fitted forecaster passed in init. This is useful for testing the impact of
