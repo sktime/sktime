@@ -161,7 +161,7 @@ to produce probabilistic forecasts via reduction.
     :template: class.rst
 
     MCRecursiveProbaReductionForecaster
-    DirectReductionForecaster
+    DirectTabularRegressionForecaster
 
 Naive forecasters
 -----------------
