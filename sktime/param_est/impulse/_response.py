@@ -142,7 +142,7 @@ class ImpulseResponseFunction(BaseParamFitter):
     >>> sktime_irf = ImpulseResponseFunction(fitted_model, orthogonalized=True)
     >>> sktime_irf.fit(df)
     ImpulseResponseFunction(...)
-    >>> print(sktime_irf.get_fitted_params()["irf"])  # DOCTEST: +SKIP
+    >>> print(sktime_irf.get_fitted_params()["irf"])  # doctest: +SKIP
     [[1414.75907225 1401.6016836 ]
      [  -1.45858745   -1.44502246]]
 
