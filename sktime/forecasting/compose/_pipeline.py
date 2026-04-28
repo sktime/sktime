@@ -110,7 +110,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         self._forecaster_index = forecaster_ind
 
         if not allow_postproc and forecaster_ind != len(estimators) - 1:
-            TypeError(
+            raise TypeError(
                 f"in {self_name}, last estimator must be a forecaster, "
                 f"but found a transformer"
             )
@@ -877,6 +877,7 @@ class TransformedTargetForecaster(_Pipeline):
         "capability:missing_values": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
+        "capability:unequal_length": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?

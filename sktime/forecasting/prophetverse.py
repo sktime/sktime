@@ -105,6 +105,7 @@ class Prophetverse(_DelegatedForecaster):
         # --------------
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "capability:unequal_length": False,
         "enforce_index_type": [pd.Period, pd.DatetimeIndex],
         "requires-fh-in-fit": False,
         "y_inner_mtype": "pd.DataFrame",
@@ -143,6 +144,16 @@ class Prophetverse(_DelegatedForecaster):
         self.broadcast_mode = broadcast_mode
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # delegation, only for prophetverse 0.2.X
         from prophetverse.sktime import Prophetverse
 
@@ -270,6 +281,7 @@ class HierarchicalProphet(_DelegatedForecaster):
         "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:missing_values": False,
+        "capability:unequal_length": False,
         "y_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",
@@ -316,6 +328,16 @@ class HierarchicalProphet(_DelegatedForecaster):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # delegation, only for prophetverse 0.2.X
         from prophetverse.sktime import HierarchicalProphet
 
