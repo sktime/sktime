@@ -262,12 +262,23 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         self.impute_method = impute_method
         self.pooling = pooling
         self.random_state = random_state
-        self._lags = list(range(window_length))
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self._lags = list(range(window_length))
+
         # Detect if estimator is a probabilistic regressor (skpro)
-        if hasattr(estimator, "get_tags"):
-            _est_type = estimator.get_tag("object_type", "regressor", False)
+        if hasattr(self.estimator, "get_tags"):
+            _est_type = self.estimator.get_tag("object_type", "regressor", False)
         else:
             _est_type = "regressor"
 
@@ -278,6 +289,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
                 "Use RecursiveReductionForecaster for non-probabilistic estimators."
             )
 
+        pooling = self.pooling
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
