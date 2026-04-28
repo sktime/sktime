@@ -91,6 +91,9 @@ class GreykiteForecaster(BaseForecaster):
         self._forecast = None
         self._X = None
 
+        if self.model_template == "PROPHET":
+            self.set_tags(python_dependencies=["greykite>=1.0.0", "prophet"])
+
     def _create_forecast_config(self, y=None):
         """Create a ForecastConfig object if one wasn't provided."""
         if self.forecast_config is not None:
