@@ -1341,7 +1341,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         estimator.fit(y, fh=fh)
         y_pred = estimator.predict()
 
-        assert isinstance(y_pred, pd.DataFrame)
+        assert isinstance(y_pred, pd.Series)
 
 
 class TestAllGlobalForecasters(BaseFixtureGenerator, QuickTester):
