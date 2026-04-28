@@ -9,7 +9,7 @@ jobs:
   collect-estimators:
     runs-on: ubuntu-latest
     outputs:
-      est_chunks: ${{ steps.chunk.outputs.est_chunks }}
+      obj_chunks: ${{ steps.chunk.outputs.obj_chunks }}
     steps:
       - uses: actions/checkout@v6
 
@@ -48,7 +48,7 @@ jobs:
           print(f"Chunks: {len(chunks)}", file=os.sys.stderr)
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write(f"est_chunks={json.dumps(chunks)}\n")
+              f.write(f"obj_chunks={json.dumps(chunks)}\n")
           EOF
 
   test-estimators:
@@ -56,7 +56,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        chunk: ${{ fromJson(needs.collect-estimators.outputs.est_chunks) }}
+        chunk: ${{ fromJson(needs.collect-estimators.outputs.obj_chunks) }}
 
     uses: ./.github/workflows/test_weekly_est.yml
     with:
