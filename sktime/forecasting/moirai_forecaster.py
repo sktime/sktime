@@ -17,10 +17,17 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
     Parameters
     ----------
-    checkpoint_path : str, default=None
-        Path to the checkpoint of the model. Supported weights are available at [1]_.
+    checkpoint_path : str
+        MOIRAI checkpoint repository identifier. Values starting with
+        ``"Salesforce"`` are passed to ``MoiraiModule.from_pretrained``.
+        Other values are passed as ``repo_id`` to ``huggingface_hub.hf_hub_download``
+        with ``filename="model.ckpt"`` and then loaded via
+        ``MoiraiForecast.load_from_checkpoint``. sktime does not resolve local
+        paths, arbitrary strings, or alternate model hubs here. Supported
+        weights are available at [1]_.
     context_length : int, default=200
-        Length of the context window, time points the model will take as input for inference.
+        Length of the context window, time points the model will take as input
+        for inference.
     patch_size : int, default=32
         Time steps to perform patching with.
     num_samples : int, default=100

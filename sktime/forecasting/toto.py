@@ -55,8 +55,13 @@ class TotoForecaster(BaseForecaster):
         Whether to stabilize the model with global context.
     use_memory_efficient_attention : boolean, optional (default=True)
         Whether to use memory-efficient attention mechanisms using Xformers.
-    model_path : string, optional (default='Datadog/Toto-Open-Base-1.0')
-        Path to the Toto huggingface model.
+    model_path : str, optional (default='Datadog/Toto-Open-Base-1.0')
+        Toto weight source passed as ``pretrained_model_name_or_path`` to
+        ``Toto.from_pretrained``. Valid values are a Hugging Face Hub model ID,
+        for example ``"Datadog/Toto-Open-Base-1.0"``, or a local directory
+        accepted by the Toto ``from_pretrained`` loader. sktime forwards this
+        value unchanged and does not resolve arbitrary strings, checkpoint
+        files, or alternate model hubs.
     device : string, optional (default=None)
         Specifies the device on which to run the model on ('cpu' or 'cuda').
 
