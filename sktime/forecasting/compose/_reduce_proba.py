@@ -234,7 +234,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
     _tags = {
         "authors": ["marrov"],
-        "python_dependencies": ["skpro>=2,<2.12.0"],
+        "python_dependencies": ["skpro>=2,<3.0.0"],
         "requires-fh-in-fit": False,
         "capability:exogenous": True,
         "capability:insample": False,
