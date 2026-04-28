@@ -58,21 +58,31 @@ class BaseGridSearch(_DelegatedForecaster):
 
         super().__init__()
 
-        self._set_delegated_tags(forecaster)
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self._set_delegated_tags(self.forecaster)
 
         tags_to_clone = ["y_inner_mtype", "X_inner_mtype"]
-        self.clone_tags(forecaster, tags_to_clone)
+        self.clone_tags(self.forecaster, tags_to_clone)
         self._extend_to_all_scitypes("y_inner_mtype")
         self._extend_to_all_scitypes("X_inner_mtype")
 
         # this ensures univariate broadcasting over variables
         # if tune_by_variable is True
-        if tune_by_variable:
+        if self.tune_by_variable:
             self.set_tags(**{"capability:multivariate": False})
 
         # todo 1.0.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
-        if n_jobs != "deprecated":
+        if self.n_jobs != "deprecated":
             warn(
                 f"Parameter n_jobs of {self.__class__.__name__} has been removed "
                 "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
