@@ -159,7 +159,7 @@ class ImpulseResponseFunction(BaseParamFitter):
         "python_dependencies": "statsmodels",
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": "test_fit_does_not_overwrite_hyper_params",
+        # "tests:skip_by_name": "test_fit_does_not_overwrite_hyper_params",
         # reason for the failure is that deepcopy(self.model) has a different
         # joblib hash from self.model, which erroneously leads the test
         # to believe that the model is not preserved on fit, even though it is.
@@ -181,7 +181,7 @@ class ImpulseResponseFunction(BaseParamFitter):
         extend_model=None,
         extend_kwargs=None,
     ):
-        self.model = model  # needs a previously fitted model
+        self.model = deepcopy(model)  # needs a previously fitted model
         self.steps = steps
         self.impulse = impulse
         self.orthogonalized = orthogonalized
