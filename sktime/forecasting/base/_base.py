@@ -32,7 +32,15 @@ State:
     fitted state inspection - check_is_fitted()
 """
 
-__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8", "ciaran-g"]
+__author__ = [
+    "big-o",
+    "ciaran-g",
+    "fkiraly",
+    "miraep8",
+    "mloning",
+    "simonblanke",
+    "sveameyer13",
+]
 
 __all__ = ["BaseForecaster", "_BaseGlobalForecaster"]
 
@@ -148,9 +156,27 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
-        super().__init__()
-        _check_estimator_deps(self)
         self._state = "new"
+
+        super().__init__()
+
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     @classmethod
     def _get_clone_plugins(cls):
@@ -450,6 +476,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         -------
         self : Reference to self.
         """
+        _check_estimator_deps(self)
+
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
@@ -703,12 +731,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         Returns
         -------
         quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+            Quantile forecasts, with columns and rows as follows:
+
+            * Column has multi-index: first level is variable name from y in fit,
+              second level being the values of alpha passed to the function.
+            * Row index is fh, with additional (upper) levels equal to instance levels,
+              from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            * Entries are quantile forecasts, for var in col index,
+              at quantile probability in second col index, for the row index.
         """
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
@@ -794,17 +824,19 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         Returns
         -------
         pred_int : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level coverage fractions for which intervals were computed.
-                    in the same order as in input ``coverage``.
-                Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                from y seen in fit, if y seen in fit was Panel or Hierarchical.
-            Entries are forecasts of lower/upper interval end,
-                for var in col index, at nominal coverage in second col index,
-                lower/upper depending on third col index, for the row index.
-                Upper/lower interval end forecasts are equivalent to
-                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+            Prediction interval forecasts, with columns and rows as follows:
+
+            * Column has multi-index: first level is variable name from y in fit,
+              second level coverage fractions for which intervals were computed.
+              in the same order as in input ``coverage``.
+              Third level is string "lower" or "upper", for lower/upper interval end.
+            * Row index is fh, with additional (upper) levels equal to instance levels,
+              from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            * Entries are forecasts of lower/upper interval end,
+              for var in col index, at nominal coverage in second col index,
+              lower/upper depending on third col index, for the row index.
+              Upper/lower interval end forecasts are equivalent to
+              quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
@@ -881,29 +913,19 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``fh`` index reference.
 
-        cov : bool, optional (default=False)
-            if True, computes covariance matrix forecast.
-            if False, computes marginal variance forecasts.
-
         Returns
         -------
         pred_var : pd.DataFrame, format dependent on ``cov`` variable
-            If cov=False:
-                Column names are exactly those of ``y`` passed in ``fit``/``update``.
-                    For nameless formats, column index will be a RangeIndex.
-                Row index is fh, with additional levels equal to instance levels,
-                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
-                Entries are variance forecasts, for var in col index.
-                A variance forecast for given variable and fh index is a predicted
-                    variance for that variable and index, given observed data.
-            If cov=True:
-                Column index is a multiindex: 1st level is variable names (as above)
-                    2nd level is fh.
-                Row index is fh, with additional levels equal to instance levels,
-                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
-                Entries are (co-)variance forecasts, for var in col index, and
-                    covariance between time index in row and col.
-                Note: no covariance forecasts are returned between different variables.
+            Variance forecasts, with columns and rows as follows:
+
+            * Column names are exactly those of ``y`` passed in ``fit``/``update``.
+              For nameless formats, column index will be a RangeIndex.
+            * Row index is fh, with additional levels equal to instance levels,
+              from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            * Entries are variance forecasts, for var in col index.
+
+            A variance forecast for given variable and fh index is a predicted
+            marginal variance for that variable and index, given observed data.
         """
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
@@ -1107,6 +1129,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         >>> forecaster.state
         'pretrained'
         """
+        _check_estimator_deps(self)
+
         if check_is_scitype(y, "Series"):
             raise TypeError(
                 f"{type(self).__name__}.pretrain requires Panel or Hierarchical data "
@@ -2771,7 +2795,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         # handle inputs
         self.check_is_fitted()
@@ -2916,7 +2940,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         self.check_is_fitted()
         if y is None:
@@ -3048,7 +3072,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         self.check_is_fitted()
         if y is None:
@@ -3176,7 +3200,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
         self.check_is_fitted()
         if y is None:
             self._global_forecasting = False
@@ -3285,7 +3309,7 @@ class _BaseGlobalForecaster(BaseForecaster):
             "capability:global_forecasting", tag_value_default=False, raise_error=False
         )
         if not gf and y is not None:
-            ValueError("no global forecasting support!")
+            raise ValueError("no global forecasting support!")
 
         self.check_is_fitted()
         if y is None:
