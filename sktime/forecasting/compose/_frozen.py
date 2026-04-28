@@ -151,8 +151,8 @@ class FrozenForecaster(_DelegatedForecaster):
         See scikit-base documentation for details on clone plugins.
 
         We need to override the cloning functionality for this estimator,
-        since the ``model`` attribute is already fitted when passed.
-        We do not want to reset ``model`` on ``clone``, and this needs to be
+        since the ``forecaster`` attribute is already fitted when passed.
+        We do not want to reset ``forecaster`` on ``clone``, and this needs to be
         overridden.
 
         Returns
@@ -206,14 +206,14 @@ class FrozenForecaster(_DelegatedForecaster):
 
         est = NaiveForecaster(strategy="last")
 
-        params0 = {"model": est}
+        params0 = {"forecaster": est}
         params1 = {
-            "model": est,
+            "forecaster": est,
             "deepcopy_forecaster": True,
             "update_forecaster": True,
         }
         params2 = {
-            "model": est,
+            "forecaster": est,
             "deepcopy_forecaster": True,
             "update_forecaster": False,
         }
