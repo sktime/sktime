@@ -291,7 +291,7 @@ class _Reducer(_BaseWindowForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -526,7 +526,7 @@ class _DirectReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to to predict.
+             The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -793,7 +793,7 @@ class _MultioutputReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to to predict.
+             The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -887,7 +887,7 @@ class _RecursiveReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to to predict.
+             The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -1130,7 +1130,7 @@ class _DirRecReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to to predict.
+             The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -2427,7 +2427,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             mtype is pd.DataFrame, pd-multiindex, or pd_multiindex_hier
             Time series to which to fit the forecaster.
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : pd.DataFrame optional (default=None)
@@ -2488,7 +2488,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             mtype is pd.DataFrame, pd-multiindex, or pd_multiindex_hier
@@ -2832,7 +2832,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
             mtype is pd.DataFrame, pd-multiindex, or pd_multiindex_hier
             Time series to which to fit the forecaster.
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : pd.DataFrame optional (default=None)
@@ -2878,7 +2878,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             mtype is pd.DataFrame, pd-multiindex, or pd_multiindex_hier
@@ -2918,7 +2918,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -2956,7 +2956,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -2991,7 +2991,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")

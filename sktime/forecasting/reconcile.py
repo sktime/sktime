@@ -167,7 +167,7 @@ class ReconcilerForecaster(BaseForecaster):
         y : pd.DataFrame
             Time series to which to fit the forecaster.
         fh : ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, default=None
             Exogenous variables for the base forecaster
 
@@ -242,7 +242,7 @@ class ReconcilerForecaster(BaseForecaster):
         Parameters
         ----------
         fh : ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             Exogeneous time series for the forecast
 
