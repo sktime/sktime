@@ -29,9 +29,29 @@ class ImpulseResponseFunction(BaseParamFitter):
 
     Going further, an impulse response traces how a one-time shock or sudden change
     of one time series variable within a system (of several time-series variables)
-    unfolds over time in the whole system of all variables. A common example
-    is how a shock to GDP growth propagates to another country`s GDP growth over time:
-    https://www.reed.edu/economics/parker/s14/312/tschapters/S13_Ch_5.pdf (pp. 83-94)
+    unfolds over time in the whole system of all variables. Practical examples could
+    be the shock/change in oil prices on gasoline prices, see for example: Chudik
+    and Georgiadis 2019, "Estimation of impulse response functions when shocks are 
+    observed at a higher frequency than outcome variables.", Working Paper No. 2307, 
+    European Central Bank.
+     
+    The following methods support the calculation of an impulse response, where an (x)
+    marks the completed implementation for sktime:
+    - ARIMA
+    - ARMA
+    - DynamicFactor (x)
+    - DynamicFactorMQ
+    - ExponentialSmoothing
+    - KalmanFilter
+    - KalmanSmoother
+    - MLEModel
+    - RecursiveLS
+    - SARIMAX
+    - SimulationSmoother
+    - UnobservedComponents
+    - VAR (x)
+    - VARMAX (x)
+    - VECM (x)
 
     Parameters
     ----------
