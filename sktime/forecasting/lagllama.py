@@ -273,47 +273,6 @@ class LagLlamaForecaster(BaseForecaster):
         lr=5e-4,
         aug_prob=0.0,
     ):
-        """Initialize LagLlamaForecaster.
-
-        Parameters
-        ----------
-        ckpt_path : str, optional (default=None)
-            Path to LagLlama checkpoint file. If None, automatically downloads
-            from HuggingFace: "time-series-foundation-models/Lag-Llama"
-        device : str, optional (default=None)
-            Device for inference ("cpu", "cuda", "cuda:0", etc.).
-            If None, uses CUDA if available, otherwise CPU.
-        context_length : int, optional (default=32)
-            Number of past time steps used as context for prediction.
-            LagLlama was trained with context_length=32.
-        num_samples : int, optional (default=100)
-            Number of sample paths for probabilistic forecasting.
-        batch_size : int, optional (default=1)
-            Batch size for prediction.
-        use_rope_scaling : bool, optional (default=False)
-            Whether to use RoPE scaling for handling longer context lengths.
-        nonnegative_pred_samples : bool, optional (default=False)
-            If True, ensures all predicted samples are passed through ReLU.
-        use_source_package : bool, optional (default=False)
-            If True, uses the external lag-llama package instead of vendored version.
-        validation_split : float, optional (default=0.2)
-            Fraction of training data to use for validation during pretrain().
-            Set to None to skip validation.
-        trainer_kwargs : dict, optional (default=None)
-            Additional arguments for PyTorch Lightning Trainer during pretrain().
-            If None, defaults to {"max_epochs": 50}.
-            Common options: "max_epochs", "devices", "accelerator", etc.
-        lr : float, optional (default=5e-4)
-            Learning rate for fine-tuning during pretrain().
-        aug_prob : float, optional (default=0.0)
-            Probability of applying data augmentation during pretrain().
-        """
-        # Initialize parent class
-        super().__init__()
-
-        import torch
-
-        # Store parameters
         self.ckpt_path = ckpt_path
         self.device = device
         self.context_length = context_length
@@ -324,17 +283,34 @@ class LagLlamaForecaster(BaseForecaster):
         self.use_source_package = use_source_package
         self.validation_split = validation_split
         self.trainer_kwargs = trainer_kwargs
+        self.lr = lr
+        self.aug_prob = aug_prob
+        # Initialize parent class
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        import torch
+
+        # Store parameters
+        trainer_kwargs = self.trainer_kwargs
         self._trainer_kwargs = (
             trainer_kwargs if trainer_kwargs is not None else {"max_epochs": 50}
         )
-        self.lr = lr
-        self.aug_prob = aug_prob
 
         # Set device (lazy - actual device object created when needed)
-        if device is None:
+        if self.device is None:
             self.device_ = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
-            self.device_ = torch.device(device)
+            self.device_ = torch.device(self.device)
 
         # On Apple Silicon, PyTorch Lightning auto-selects MPS but not all ops are
         # supported (e.g. aten::nanmedian). Force CPU accelerator in that case.

@@ -1,7 +1,6 @@
 """Fully Connected Neural Network (FCN) (minus the final output layer)."""
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class FCNNetwork(BaseDeepNetwork):
@@ -54,13 +53,22 @@ class FCNNetwork(BaseDeepNetwork):
         filter_sizes=(128, 256, 128),
         kernel_sizes=(8, 5, 3),
     ):
-        super().__init__()
-        _check_dl_dependencies(severity="error")
         self.random_state = random_state
         self.activation = activation
         self.filter_sizes = filter_sizes
         self.kernel_sizes = kernel_sizes
+        super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # type check for filter_sizes
         if not isinstance(self.filter_sizes, (list, tuple)):
             raise ValueError(
@@ -78,6 +86,8 @@ class FCNNetwork(BaseDeepNetwork):
                 f"filter_sizes and kernel_sizes must have the same length ,"
                 f"but got {len(self.filter_sizes)} and {len(self.kernel_sizes)}."
             )
+
+        super().__post_init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.

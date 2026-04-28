@@ -113,11 +113,9 @@ class Chronos2Forecaster(BaseForecaster):
     ):
         self.model_path = model_path
         self.seed = seed
-        self._seed = np.random.randint(0, 2**31) if seed is None else seed
         self.config = config
         self.ignore_deps = ignore_deps
 
-        self._config = self._default_config.copy()
         self.model_pipeline = None
 
         if ignore_deps:
@@ -125,12 +123,25 @@ class Chronos2Forecaster(BaseForecaster):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
+
         import torch
 
+        self._config = self._default_config.copy()
         self._config["torch_dtype"] = torch.bfloat16
 
-        if config is not None:
-            self._config.update(config)
+        if self.config is not None:
+            self._config.update(self.config)
 
     def __getstate__(self):
         """Return state for pickling, excluding unpickleable model pipeline."""

@@ -9,7 +9,6 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.rnn import RNNNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 from sktime.utils.warnings import warn
 
 
@@ -108,8 +107,6 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         optimizer=None,
         dropout=0.0,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.batch_size = batch_size
         self.n_epochs = n_epochs
         self.verbose = verbose
@@ -121,13 +118,29 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self.metrics = metrics
         self.activation = activation
         self.activation_hidden = activation_hidden
+        self.use_bias = use_bias
+        self.optimizer = optimizer
+        self.dropout = dropout
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # TODO (release 0.41.0)
         # After changing the default value of 'activation_hidden' to "tanh"
         # in the __init__ method signature,
         # remove the following 'if-else' check.
         # Remove the usage of self._activation_hidden throughout the class
         # and replace it with self.activation_hidden
-        if activation_hidden == "changing_from_linear_to_tanh_in_0.41.0":
+        if self.activation_hidden == "changing_from_linear_to_tanh_in_0.41.0":
             warn(
                 "in `SimpleRNNClassifier`, the default value of parameter "
                 "'activation_hidden' will change to 'tanh' in version '0.41.0'. "
@@ -138,13 +151,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
             )
             self._activation_hidden = "linear"
         else:
-            self._activation_hidden = activation_hidden
-        self.use_bias = use_bias
-        self.optimizer = optimizer
-        self.dropout = dropout
-
-        super().__init__()
-
+            self._activation_hidden = self.activation_hidden
         # TODO (release 0.41.0)
         # After changing the default value of 'activation_hidden' to "tanh"
         # in the __init__ method signature,
@@ -153,10 +160,12 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         self.history = None
         self._network = RNNNetwork(
             activation=self._activation_hidden,
-            random_state=random_state,
-            units=units,
+            random_state=self.random_state,
+            units=self.units,
             dropout=self.dropout,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
