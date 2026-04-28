@@ -56,6 +56,7 @@ class FrozenForecaster(_DelegatedForecaster):
     _tags = {
         "authors": "fkiraly",
         "maintainers": "fkiraly",
+        "fit_is_empty": True,
     }
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -94,7 +95,7 @@ class FrozenForecaster(_DelegatedForecaster):
 
         self._set_delegated_tags(self.forecaster_)
 
-        self.set_tags(**{"fit_is_empty": False})
+        self.set_tags(**{"fit_is_empty": True})
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data."""
