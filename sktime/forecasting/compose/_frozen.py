@@ -169,7 +169,7 @@ class FrozenForecaster(_DelegatedForecaster):
 
             def _check(self, obj):
                 """Check if the plugin should be applied to the given object."""
-                return isinstance(obj, FrozenForecaster)
+                return isinstance(obj, cls)
 
             def _clone(self, obj):
                 """Clone the ``model`` attribute of the given object."""
