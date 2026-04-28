@@ -35,8 +35,15 @@ class MomentFMForecaster(_BaseGlobalForecaster):
     For information regarding licensing and use of the momentfm model please visit:
     https://huggingface.co/AutonLab/MOMENT-1-large
 
-    pretrained_model_name_or_path : str
-        Path to the pretrained Momentfm model. Default is AutonLab/MOMENT-1-large
+    Parameters
+    ----------
+    pretrained_model_name_or_path : str, default="AutonLab/MOMENT-1-large"
+        MomentFM weight source passed to ``MOMENTPipeline.from_pretrained``.
+        Valid values are a Hugging Face Hub model ID, for example
+        ``"AutonLab/MOMENT-1-large"``, or a local directory accepted by the
+        MomentFM ``from_pretrained`` loader. sktime forwards this value
+        unchanged and does not resolve arbitrary strings, checkpoint files, or
+        alternate model hubs.
 
     freeze_encoder : bool
         Selection of whether or not to freeze the weights of the encoder

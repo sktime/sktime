@@ -150,8 +150,11 @@ class LagLlamaForecaster(BaseForecaster):
     Parameters
     ----------
     ckpt_path : str, optional (default=None)
-        Path to LagLlama checkpoint file. If None, automatically downloads
-        from HuggingFace: "time-series-foundation-models/Lag-Llama".
+        Local path to a LagLlama checkpoint file. If ``None`` or if the path
+        does not exist, sktime downloads ``"lag-llama.ckpt"`` from the fixed
+        Hugging Face Hub repository ``"time-series-foundation-models/Lag-Llama"``
+        using ``huggingface_hub.hf_hub_download``. This parameter is not a
+        generic repository ID or alternate hub selector.
     device : str, optional (default=None)
         Device for inference ("cpu", "cuda", "cuda:0", etc.).
         If None, uses CUDA if available, otherwise CPU.

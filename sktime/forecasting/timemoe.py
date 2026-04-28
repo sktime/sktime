@@ -25,16 +25,15 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
 
     Parameters
     ----------
-    model_path: str
-        Path to the TimeMOE model. This can be:
+    model_path : str
+        TimeMOE weight source passed as ``pretrained_model_name_or_path`` to
+        ``TimeMoeForPrediction.from_pretrained``. Valid values are a Hugging
+        Face Hub model ID, for example ``"Maple728/TimeMoE-50M"``, or a local
+        directory accepted by the TimeMOE/Transformers ``from_pretrained``
+        loader. sktime forwards this value unchanged and does not resolve
+        arbitrary strings, checkpoint files, or alternate model hubs.
 
-        - A model ID from the HuggingFace Hub, e.g., "Maple728/TimeMoE-50M"
-        - A local directory containing the model files, specified as an absolute or
-          relative path to the current working directory
-          The path should point to a directory containing the model weights and
-          configuration files in the format expected by the HuggingFace Transformers
-          library.
-    config: dict, optional
+    config : dict, optional
         A dictionary specifying the configuration of the TimeMOE model.
         The available configuration options include hyperparameters that control
         the prediction behavior, sampling, and hardware utilization.

@@ -31,13 +31,15 @@ class HFTransformersForecaster(BaseForecaster):
     Parameters
     ----------
     model_path : str or PreTrainedModel
-        Path to the huggingface model to use for forecasting. Currently,
-        Informer, Autoformer, and TimeSeriesTransformer are supported.
-        This can be one of the following:
-        - A string specifying the Hugging Face model name or path
-          (e.g., `"huggingface/autoformer-tourism-monthly"`).
-        - An instance of a `PreTrainedModel`, allowing manual initialization
-          and configuration.
+        Forecasting model source. Currently, Informer, Autoformer, and
+        TimeSeriesTransformer are supported. If a string is supplied, it is
+        passed to ``transformers.AutoConfig.from_pretrained`` and the matching
+        Transformers model ``from_pretrained`` loader. Valid string values are
+        a Hugging Face Hub model ID, for example
+        ``"huggingface/autoformer-tourism-monthly"``, or a local directory
+        accepted by those Transformers loaders. A ``PreTrainedModel`` instance
+        is used directly. sktime does not resolve arbitrary strings, checkpoint
+        files, or alternate model hubs.
     fit_strategy : str, default="minimal"
         Strategy to use for fitting (fine-tuning) the model. This can be one of
         the following:

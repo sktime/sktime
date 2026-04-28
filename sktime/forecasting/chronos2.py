@@ -24,7 +24,13 @@ class Chronos2Forecaster(BaseForecaster):
     Parameters
     ----------
     model_path : str, default="amazon/chronos-2"
-        Path to the Chronos-2 HuggingFace model.
+        Chronos-2 weight source passed to
+        ``Chronos2Pipeline.from_pretrained`` as
+        ``pretrained_model_name_or_path``. Valid values are a Hugging Face Hub
+        model ID, for example ``"amazon/chronos-2"``, or a local directory
+        accepted by the Chronos-2 ``from_pretrained`` loader. sktime forwards
+        this value unchanged and does not resolve arbitrary strings, checkpoint
+        files, or alternate model hubs.
 
     config : dict, optional, default=None
         Configuration overrides. Supported keys:

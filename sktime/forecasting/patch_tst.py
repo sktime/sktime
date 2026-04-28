@@ -52,17 +52,15 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
     Parameters
     ----------
     model_path : str or PatchTSTModel, optional
-        Path to the Huggingface model to use for global forecasting. If
-        model_path is passed, the remaining model config parameters will be
-        ignored except for specific training or dataset parameters.
-        This has 3 options:
-
-        - model id to an online pretrained PatchTST Model hosted on HuggingFace
-        - A path or url to a saved configuration JSON file
-        - A path to a *directory* containing a configuration file saved
-
-        using the ``~PretrainedConfig.save_pretrained`` method
-        or the ``~PreTrainedModel.save_pretrained`` method
+        PatchTST weight source or already initialized model. If a string is
+        supplied, it is passed to ``PatchTSTConfig.from_pretrained`` and
+        ``PatchTSTForPrediction.from_pretrained``. Valid string values are a
+        Hugging Face Hub model ID, for example
+        ``"namctin/patchtst_etth1_forecast"``, or a local directory accepted by
+        the Transformers ``from_pretrained`` loaders, such as the output of
+        ``PreTrainedModel.save_pretrained``. A ``PatchTSTModel`` instance is
+        used directly. sktime does not resolve arbitrary strings, checkpoint
+        files, or alternate model hubs.
 
     fit_strategy : str, values = ["full","minimal","zero-shot"], default = "full"
         String to set the fit_strategy of the model.

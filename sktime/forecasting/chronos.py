@@ -197,9 +197,15 @@ class ChronosForecaster(BaseForecaster):
     Parameters
     ----------
     model_path : str
-        Path to the Chronos huggingface model.
+        Chronos weight source passed as ``pretrained_model_name_or_path`` to
+        the upstream ``from_pretrained`` loader. Valid values are a Hugging Face
+        Hub model ID, for example ``"amazon/chronos-t5-tiny"`` or
+        ``"amazon/chronos-bolt-tiny"``, or a local directory accepted by the
+        selected Chronos loader and ``transformers.AutoConfig.from_pretrained``.
+        sktime forwards this value unchanged and does not resolve arbitrary
+        strings, checkpoint files, or alternate model hubs.
 
-    config : dict, optional, default={}
+    config : dict, optional, default=None
         A dictionary specifying the configuration settings for the model.
         The available configuration options include hyperparameters that control
         the prediction behavior, sampling, and hardware preferences. In case of the

@@ -67,8 +67,11 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         although it is recommended to follow these guidelines for optimal results.
 
     repo_id : str, optional (default="google/timesfm-1.0-200m")
-        The identifier for the model repository.
-        The default model is the 200M parameter version.
+        TimesFM repository identifier passed as ``repo_id`` to
+        ``TimesFm.load_from_checkpoint``. The default model is the 200M
+        parameter version, ``"google/timesfm-1.0-200m"``. sktime forwards this
+        value unchanged and does not resolve arbitrary strings, local
+        checkpoint files, or alternate model hubs.
     input_patch_len : int, optional (default=32)
         The fixed length of input patches that the model processes.
         This parameter is fixed to 1280 for the 200M model and should not be changed.

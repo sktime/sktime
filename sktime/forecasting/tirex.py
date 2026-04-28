@@ -71,7 +71,10 @@ class TiRexForecaster(BaseForecaster):
     Parameters
     ----------
     model : str (default = "NX-AI/TiRex")
-        "Model identifier to load via the vendored TiRex loader"
+        Model identifier passed to ``tirex.load_model``. The default is
+        ``"NX-AI/TiRex"``. sktime forwards this value unchanged and does not
+        resolve arbitrary strings, local checkpoint files, or alternate model
+        hubs.
     device : {"cpu", "cuda", ...}, default="cpu"
         Compute device used by the underlying TiRex model.
     license_accepted : bool, default=False

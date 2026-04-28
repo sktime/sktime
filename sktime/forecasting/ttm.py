@@ -96,20 +96,19 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     Parameters
     ----------
     model_path : str, default="ibm/TTM"
-        Path to the Huggingface model to use for forecasting.
-        This can be either:
+        TinyTimeMixer weight source passed to
+        ``TinyTimeMixerConfig.from_pretrained`` and
+        ``TinyTimeMixerForPrediction.from_pretrained``. Valid values are a
+        Hugging Face Hub model ID, for example ``"ibm/TTM"``, or a local
+        directory accepted by those ``from_pretrained`` loaders. sktime forwards
+        this value unchanged and does not resolve arbitrary strings, checkpoint
+        files, or alternate model hubs.
 
-        - The name of a Huggingface repository (e.g., "ibm/TTM")
+        If this parameter is ``None``, ``fit_strategy`` must be ``"full"`` to
+        allow full fine tuning of the model loaded from pretrained/provided
+        config; otherwise, ``ValueError`` is raised.
 
-        - A local path to a folder containing model files in a format supported
-          by transformers. In this case, ensure that the directory contains all
-          necessary files (e.g., configuration, tokenizer, and model weights).
-
-        - If this parameter is *None*, fit_strategy should be *full* to allow
-          full fine tuning of the model loaded from pretrained/provided config,
-          else ValueError is raised.
-
-    revision: str, default="main"
+    revision : str, default="main"
         Revision of the model to use:
 
         - "main": For loading model with context_length of 512
