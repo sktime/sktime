@@ -11,6 +11,7 @@ from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import MCRecursiveProbaReductionForecaster
 from sktime.split import temporal_train_test_split
+from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -25,7 +26,10 @@ def _make_probabilistic_regressor():
     return ResidualDouble(LinearRegression())
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_basic_fit_predict():
     """Test basic fit and predict returns correct output type and shape."""
     y = load_airline()
@@ -48,7 +52,10 @@ def test_basic_fit_predict():
     assert not y_pred.isna().any()
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_predict_proba_returns_distribution():
     """Test predict_proba returns a valid distribution object."""
     y = load_airline()
@@ -75,7 +82,10 @@ def test_predict_proba_returns_distribution():
     assert len(samples) == 5 * len(fh)
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_predict_equals_distribution_mean():
     """Test that predict() returns the mean of the distribution."""
     y = load_airline()
@@ -101,7 +111,10 @@ def test_predict_equals_distribution_mean():
     pd.testing.assert_series_equal(y_pred, dist_mean, check_names=False)
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_with_exogenous():
     """Test with exogenous variables."""
     y, X = load_longley()
@@ -122,7 +135,10 @@ def test_with_exogenous():
     assert not y_pred.isna().any()
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_with_exogenous_missing_first_future_index():
     """Test exogenous fallback when first prediction-time index is missing in X."""
     y, X = load_longley()
@@ -146,7 +162,10 @@ def test_with_exogenous_missing_first_future_index():
     assert not y_pred.isna().any()
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_with_exogenous_missing_first_future_index_hierarchical():
     """Test exogenous fallback for hierarchical data
     with missing first future index."""
@@ -193,7 +212,10 @@ def test_with_exogenous_missing_first_future_index_hierarchical():
     assert not y_pred.isna().any().any()
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_reproducibility_with_random_state():
     """Test that same random_state produces identical results."""
     y = load_airline()
@@ -218,7 +240,10 @@ def test_reproducibility_with_random_state():
     pd.testing.assert_series_equal(pred1, pred2)
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_different_random_state_produces_different_results():
     """Test that different random_state produces different results."""
     y = load_airline()
@@ -246,7 +271,10 @@ def test_different_random_state_produces_different_results():
     assert not pred1.equals(pred2)
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_hierarchical_global_pooling():
     """Test with hierarchical data and global pooling."""
     y = _make_hierarchical(
@@ -285,7 +313,10 @@ def test_hierarchical_global_pooling():
     assert len(samples) == 3 * len(y_test)
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_non_contiguous_horizon():
     """Test with non-contiguous forecasting horizon (e.g., fh=[1, 3, 5])."""
     y = load_airline()[:50]
@@ -307,7 +338,10 @@ def test_non_contiguous_horizon():
     assert not y_pred.isna().any()
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_window_length_1():
     """Test with window_length=1 (single lag)."""
     y = load_airline()[:50]
@@ -328,7 +362,10 @@ def test_window_length_1():
     assert not y_pred.isna().any()
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_rejects_non_probabilistic_regressor():
     """Test that ValueError is raised for non-probabilistic regressors."""
     from sklearn.linear_model import LinearRegression
@@ -340,7 +377,10 @@ def test_rejects_non_probabilistic_regressor():
         )
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_invalid_pooling_raises():
     """Test that invalid pooling value raises ValueError."""
     with pytest.raises(ValueError, match="pooling"):
@@ -351,7 +391,10 @@ def test_invalid_pooling_raises():
         )
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_in_sample_horizon_rejected():
     """In-sample horizons should be rejected for point and probabilistic prediction."""
     y = load_airline()[:60]
@@ -373,7 +416,10 @@ def test_in_sample_horizon_rejected():
         forecaster.predict_proba(fh_in_sample)
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_multivariate_y_smoke():
     """Multivariate y should produce multivariate point and probabilistic forecasts."""
     y = load_airline()[:80]
@@ -401,7 +447,10 @@ def test_multivariate_y_smoke():
     assert dist_mean.shape == (len(fh), 2)
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_predict_interval_and_quantiles_smoke():
     """Smoke test for predict_interval and predict_quantiles."""
     y = load_airline()[:80]
@@ -426,7 +475,10 @@ def test_predict_interval_and_quantiles_smoke():
     assert len(pred_q) == len(fh)
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_short_series_warns_and_falls_back_to_mean():
     """Fit should warn and fallback to constant mean for too-short series."""
     y = load_airline()[:3]
@@ -449,7 +501,10 @@ def test_short_series_warns_and_falls_back_to_mean():
     assert not y_pred.isna().any()
 
 
-@pytest.mark.skipif(not SKPRO_INSTALLED, reason="skpro required")
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_vectorized_predict_proba_concat_path_smoke():
     """Exercise vectorized predict_proba concatenation path for local pooling."""
     y = _make_hierarchical(
