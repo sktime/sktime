@@ -3,6 +3,7 @@
 author = ["OldPatrick"]
 all = ["ImpulseResponseFunction"]
 
+from copy import deepcopy
 import warnings
 
 import numpy as np
@@ -224,7 +225,7 @@ class ImpulseResponseFunction(BaseParamFitter):
         }
 
         model_name = self.model.__class__.__name__
-        sm_wrapper = self.model._fitted_forecaster
+        sm_wrapper = deepcopy(self.model._fitted_forecaster)
 
         if len(X.shape) < 2 or X.shape[1] < 2:
             # some models have problem with univariate d,ata need warning
