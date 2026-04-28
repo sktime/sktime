@@ -149,7 +149,7 @@ Direct and recursive - 3rd party
     DartsXGBModel
 
 Probabilistic reduction forecasters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Meta-algorithms that wrap probabilistic tabular regressors (e.g., from ``skpro``)
 to produce probabilistic forecasts via reduction.
