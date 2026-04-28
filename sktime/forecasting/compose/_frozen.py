@@ -1,12 +1,12 @@
 """Frozen forecaster which behaves like the fitted forecaster passed in init."""
 
-all = ["FrozenForecaster"]
+__all__ = ["FrozenForecaster"]
 
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
 class FrozenForecaster(_DelegatedForecaster):
-    """Frozen forecaster which behaves an already fitted forecaster passed in init.
+    """Frozen forecaster which behaves like an already fitted forecaster passed in init.
 
     Composing with FrozenForecaster instructs the wrapped forecaster to behave like
     the fitted forecaster passed in init. This is useful for testing the impact of
@@ -170,7 +170,7 @@ class FrozenForecaster(_DelegatedForecaster):
 
             def _check(self, obj):
                 """Check if the plugin should be applied to the given object."""
-                return isinstance(obj, FrozenForecaster)
+                return isinstance(obj, cls)
 
             def _clone(self, obj):
                 """Clone the ``model`` attribute of the given object."""
