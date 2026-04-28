@@ -43,25 +43,23 @@ def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
 
     ts = check_X(ts)
 
-    fig = plt.figure(figsize=(20, 5))
+    fig, ax = plt.subplots(figsize=(20, 5))
     true_cps = np.sort(true_cps)
     segments = [0] + list(true_cps) + [ts.shape[0]]
 
     for idx in np.arange(0, len(segments) - 1):
-        plt.plot(
+        ax.plot(
             range(segments[idx], segments[idx + 1]),
             ts[segments[idx] : segments[idx + 1]],
         )
 
-    lim1 = plt.ylim()[0]
-    lim2 = plt.ylim()[1]
+    lim1, lim2 = ax.get_ylim()
 
-    ax = plt.gca()
     for i, idx in enumerate(true_cps):
         ax.vlines(idx, lim1, lim2, linestyles="--", label=str(i) + "-th-CPT")
 
-    plt.legend(loc="best")
-    plt.title(ts_name, fontsize=font_size)
+    ax.legend(loc="best")
+    ax.set_title(ts_name, fontsize=font_size)
     return fig, ax
 
 
