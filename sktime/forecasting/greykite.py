@@ -82,7 +82,7 @@ class GreykiteForecaster(BaseForecaster):
         coverage: float = 0.95,
     ):
         if self.model_template == "PROPHET":
-            self.set_tags(python_dependencies=["greykite>=1.0.0", "prophet"])
+            self.set_tags(**{"python_dependencies": ["greykite>=1.0.0", "prophet"]})
 
         super().__init__()
         self.forecast_config = forecast_config
