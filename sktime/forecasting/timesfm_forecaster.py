@@ -148,6 +148,8 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     _tags = {
         # packaging info
         # --------------
+                "requires_license_acceptance": True,
+        "license:link": "https://github.com/google-research/timesfm/blob/master/LICENSE",
         "authors": ["rajatsen91", "geetu040"],
         # rajatsen91 for google-research/timesfm
         "maintainers": ["geetu040"],
@@ -187,6 +189,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
 
     def __init__(
         self,
+        license_accepted=False,
         context_len=None,
         horizon_len=128,
         freq=0,
@@ -248,7 +251,17 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         os.environ["JAX_PLATFORM_NAME"] = backend
         os.environ["JAX_PLATFORMS"] = backend
 
+        self.license_accepted = license_accepted
         super().__init__()
+
+        if self.get_class_tag("requires_license_acceptance", False) and not self.license_accepted:
+            license_link = self.get_class_tag("license:link", "Unknown")
+            raise PermissionError(
+                f"Use of {self.__class__.__name__} is subject to a restrictive license. "
+                f"You must accept the license terms to use this estimator. "
+                f"To accept the license, set the `license_accepted` parameter to True. "
+                f"View the license here: {license_link}"
+            )
 
     def _fit(self, y, X, fh):
         if fh is None and self.horizon_len is None:
@@ -376,6 +389,10 @@ class TimesFMForecaster(_BaseGlobalForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
+        return {"license_accepted": True}
+
+    @classmethod
+    def get_test_params_dummy(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
         Parameters
