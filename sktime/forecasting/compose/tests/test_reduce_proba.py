@@ -445,6 +445,8 @@ def test_multivariate_y_smoke():
     dist_mean = pred_dist.mean()
     assert isinstance(dist_mean, pd.DataFrame)
     assert dist_mean.shape == (len(fh), 2)
+    pd.testing.assert_index_equal(dist_mean.index, y_test.index)
+    assert list(dist_mean.columns) == ["y1", "y2"]
 
 
 @pytest.mark.skipif(
