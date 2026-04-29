@@ -143,6 +143,16 @@ class Prophetverse(_DelegatedForecaster):
         self.broadcast_mode = broadcast_mode
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # delegation, only for prophetverse 0.2.X
         from prophetverse.sktime import Prophetverse
 
@@ -316,6 +326,16 @@ class HierarchicalProphet(_DelegatedForecaster):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # delegation, only for prophetverse 0.2.X
         from prophetverse.sktime import HierarchicalProphet
 
