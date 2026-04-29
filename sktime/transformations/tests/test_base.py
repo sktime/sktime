@@ -690,7 +690,7 @@ def test_vectorize_reconstruct_unique_columns():
     ------
     AssertionError if output columns are not as expected.
     """
-    from sktime.transformations.series.detrend import Detrender
+    from sktime.transformations.detrend import Detrender
     from sktime.transformations.series.theta import ThetaLinesTransformer
 
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})

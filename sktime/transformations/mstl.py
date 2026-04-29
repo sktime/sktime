@@ -120,7 +120,7 @@ class MSTL(BaseTransformer):
     Simple use case: decompose a time series into trend, seasonal, residual components
     >>> import matplotlib.pyplot as plt  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.detrend import MSTL
+    >>> from sktime.transformations.detrend import MSTL
     >>> X = load_airline()
     >>> X.index = X.index.to_timestamp()
     >>> mstl = MSTL(return_components=True)
@@ -137,7 +137,7 @@ class MSTL(BaseTransformer):
     After the trend forecast, the seasonal components
     are added back to the forecast automatically.
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.detrend import MSTL
+    >>> from sktime.transformations.detrend import MSTL
     >>> from sktime.forecasting.trend import TrendForecaster
     >>>
     >>> mstl_trafo = MSTL(periods=[2, 12])
@@ -159,7 +159,7 @@ class MSTL(BaseTransformer):
     a seasonal naive forecaster for the seasonal components, with different
     seasonalities, and a naive forecaster for the residuals.
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.detrend import MSTL
+    >>> from sktime.transformations.detrend import MSTL
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import TrendForecaster
