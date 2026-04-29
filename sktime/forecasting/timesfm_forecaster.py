@@ -97,7 +97,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         only one multiindex output from ``predict``.
     use_source_package : bool, default=False
         If True, the model will be loaded directly from the source package ``timesfm``.
-        This also enforces a version bound for ``timesfm`` to be <1.2.0.
+        This also enforces a version bound for ``timesfm`` to be >=1.2.0.
         This setting is useful if the latest updates from the source package are needed,
         bypassing the local version of the package.
     ignore_deps : bool, default=False
@@ -151,7 +151,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "authors": ["rajatsen91", "geetu040"],
         # rajatsen91 for google-research/timesfm
         "maintainers": ["geetu040"],
-        "python_version": ">=3.10,<3.11",
+        "python_version": ">=3.10",
         "python_dependencies": [
             "tensorflow",
             "einshape",
@@ -223,9 +223,9 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         if not self.ignore_deps:
             if self.use_source_package:
                 # Use timesfm with a version bound if use_source_package is True
-                # todo 0.41.0: Regularly check whether timesfm version can be updated
+                # todo 0.42.0: Regularly check whether timesfm version can be updated
                 # if changed, also needs to be changed in docstring
-                self.set_tags(python_dependencies=["timesfm<1.2.0"])
+                self.set_tags(python_dependencies=["timesfm>=1.2.0"])
         else:
             # Ignore dependencies, leave the dependency set empty
             clear_deps = {
