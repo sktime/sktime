@@ -79,7 +79,7 @@ class ExponentTransformer(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "transform-returns-same-time-index": True,
         "capability:multivariate": True,
         "capability:inverse_transform": True,
@@ -115,6 +115,22 @@ class ExponentTransformer(BaseTransformer):
             )
             self.set_tags(**{"skip-inverse-transform": True})
 
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        Parameters
+        ----------
+        X : pd.Series or pd.DataFrame
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self._offset_ = self._get_offset(X)
+        return self
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -132,7 +148,7 @@ class ExponentTransformer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             transformed version of X
         """
-        offset = self._get_offset(X)
+        offset = self._offset_ if self.offset == "auto" else self._get_offset(X)
         Xt = X.add(offset).pow(self.power)
         return Xt
 
@@ -151,7 +167,7 @@ class ExponentTransformer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        offset = self._get_offset(X)
+        offset = self._offset_ if self.offset == "auto" else self._get_offset(X)
         Xt = X.pow(1.0 / self.power).add(-offset)
         return Xt
 
