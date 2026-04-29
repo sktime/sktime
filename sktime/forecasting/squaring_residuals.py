@@ -99,6 +99,15 @@ class SquaringResiduals(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
         "capability:pred_int:insample": False,
+        # test skip config:
+        "tests:skip_by_name": [
+            # issue when prediction intervals, see #3479 and #4504
+            # known issue with prediction intervals that needs fixing, tracked in #4181
+            "test_predict_time_index",
+            "test_predict_residuals",
+            "test_predict_interval",
+            "test_predict_time_index_with_X",  # separate - refer to #4765
+        ],
     }
 
     def __init__(
@@ -149,7 +158,7 @@ class SquaringResiduals(BaseForecaster):
               the method should handle uni- and multivariate y appropriately
 
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
@@ -221,7 +230,7 @@ class SquaringResiduals(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
@@ -295,7 +304,7 @@ class SquaringResiduals(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast

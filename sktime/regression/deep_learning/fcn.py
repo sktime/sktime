@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.fcn import FCNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class FCNRegressor(BaseDeepRegressor):
@@ -19,7 +18,6 @@ class FCNRegressor(BaseDeepRegressor):
 
     Parameters
     ----------
-    should inherited fields be listed here?
     n_epochs : int, default = 2000
         the number of epochs to train the model
     batch_size : int, default = 16
@@ -45,6 +43,12 @@ class FCNRegressor(BaseDeepRegressor):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
+    filter_sizes : list or tuple of int , default = (128,256,128)
+        number of filters for each convolutional layer.
+        must have length equal to kernel_sizes.
+    kernel_sizes : list or tuple of int  , default = (8,5,3)
+        kernel size for each convolutional layer.
+        must have length equal to filter_sizes.
 
     References
     ----------
@@ -74,9 +78,9 @@ class FCNRegressor(BaseDeepRegressor):
         activation_hidden="relu",
         use_bias=True,
         optimizer=None,
+        filter_sizes=(128, 256, 128),
+        kernel_sizes=(8, 5, 3),
     ):
-        _check_dl_dependencies(severity="error")
-
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.callbacks = callbacks
@@ -89,12 +93,26 @@ class FCNRegressor(BaseDeepRegressor):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
+        self.filter_sizes = filter_sizes
+        self.kernel_sizes = kernel_sizes
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self._network = FCNNetwork(
             activation=self.activation_hidden,
             random_state=self.random_state,
+            filter_sizes=self.filter_sizes,
+            kernel_sizes=self.kernel_sizes,
         )
 
     def build_model(self, input_shape, **kwargs):
@@ -210,8 +228,19 @@ class FCNRegressor(BaseDeepRegressor):
             "n_epochs": 12,
             "batch_size": 6,
             "use_bias": True,
+            "filter_sizes": [64, 128],
+            "kernel_sizes": [5, 3],
         }
-        test_params = [param1, param2]
+
+        # to check for tuple
+        param3 = {
+            "n_epochs": 8,
+            "batch_size": 4,
+            "use_bias": False,
+            "filter_sizes": (64, 128),
+            "kernel_sizes": (5, 3),
+        }
+        test_params = [param1, param2, param3]
 
         if _check_soft_dependencies("keras", severity="none"):
             from keras.callbacks import LambdaCallback

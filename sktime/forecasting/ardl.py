@@ -123,7 +123,7 @@ class ARDL(_StatsModelsAdapter):
         or only if smaller order lags must be included if larger order
         lags are.  If ``True``, the number of model considered is of the
         order 2**(maxlag + k * maxorder) assuming maxorder is an int. This
-        can be very large unless k and maxorder are bot relatively small.
+        can be very large unless k and maxorder are both relatively small.
         If False, the number of model considered is of the order
         maxlag*maxorder**k which may also be substantial when k and maxorder
         are large.
@@ -142,7 +142,7 @@ class ARDL(_StatsModelsAdapter):
         continuing through the end of prediction, forecasted endogenous
         values will be used instead. Datetime-like objects are not
         interpreted as offsets. They are instead used to find the index
-        location of ``dynamic`` which is then used to to compute the offset.
+        location of ``dynamic`` which is then used to compute the offset.
 
     Notes
     -----
@@ -420,7 +420,7 @@ class ARDL(_StatsModelsAdapter):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")

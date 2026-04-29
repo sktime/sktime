@@ -343,7 +343,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
               the method should handle uni- and multivariate y appropriately
 
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X :  sktime time series object, optional (default=None)
@@ -463,6 +463,10 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
             # Adjust requires_grad property of model weights based on info
             for key in info["mismatched_keys"]:
+                # transformers>=5.0 may return tuples (key, shape) instead
+                # of plain strings for mismatched_keys
+                if isinstance(key, tuple):
+                    key = key[0]
                 _model = self.model
                 for attr_name in key.split(".")[:-1]:
                     _model = getattr(_model, attr_name)
@@ -539,7 +543,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")

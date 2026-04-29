@@ -288,7 +288,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         # mbalatsko, gliptak for fixes and updates
         # NoaWegerhoff, lielleravid for the sktime adapter
         "maintainers": ["NoaWegerhoff"],
-        # todo 0.42.0: add python_dependencies tag with "pykalman"
+        "python_dependencies": "pykalman",
         # estimator type
         # --------------
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
@@ -300,6 +300,9 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "scitype:instancewise": True,  # is this an instance-wise transform?
+        # test and CI flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
@@ -328,18 +331,6 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
             measurement_function=measurement_function,
             initial_state=initial_state,
             initial_state_covariance=initial_state_covariance,
-        )
-
-        # todo 0.42.0: remove this warning
-        from sktime.utils.warnings import warn
-
-        warn(
-            "KalmanFilterTransformerPK will revert to use the pykalman package instead "
-            "of the sktime fork in version 0.42.0. An sktime fork was used due to "
-            "temporary lapse of maintenance of the pykalman package. The pykalman "
-            "package is now maintained, and has been merged with the sktime fork. "
-            "The sktime fork will also point to pykalman from version 0.42.0 onwards.",
-            obj=self,
         )
 
     def _fit(self, X, y=None):
@@ -477,8 +468,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
             X_transformed : np.ndarray
                 transformed version of X
         """
-        # todo 0.42.0: replace with import from pykalman
-        from sktime.libs.pykalman import KalmanFilter
+        from pykalman import KalmanFilter
 
         X_masked = np.ma.masked_invalid(X)
 
@@ -561,8 +551,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
             F, H, Q, R, transition_offsets, measurement_offsets,
             X0, P0 as np.ndarray.
         """
-        # todo 0.42.0: replace with import from pykalman
-        from sktime.libs.pykalman import KalmanFilter
+        from pykalman import KalmanFilter
 
         X_masked = np.ma.masked_invalid(X)
         estimate_matrices_ = self._get_estimate_matrices()
@@ -788,7 +777,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         # --------------
         "authors": ["NoaWegerhoff", "lielleravid"],
         "maintainers": ["NoaWegerhoff"],
-        "python_dependencies": "filterpy",
+        "python_dependencies": ["filterpy", "pykalman"],
         # estimator type
         # --------------
         "scitype:transform-labels": "Series",
