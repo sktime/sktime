@@ -20,6 +20,7 @@ will have the same effect as new_est = spec.clone()
 __author__ = ["fkiraly"]
 
 import re
+import warnings
 
 from sktime.registry._lookup import all_estimators
 from sktime.registry._lookup_sklearn import _all_sklearn_estimators
@@ -51,6 +52,80 @@ def _extract_class_names(spec):
     return cls_name_list
 
 
+
+def _validate_spec_for_security(spec):
+    """Validate specification for potentially malicious patterns.
+
+    Parameters
+    ----------
+    spec : str
+        The specification string to validate.
+
+    Raises
+    ------
+    ValueError
+        If potentially malicious patterns are detected in the specification.
+    """
+    if not isinstance(spec, str):
+        raise TypeError(f"spec must be a string, got {type(spec)}")
+
+    # List of dangerous patterns to check for
+    dangerous_patterns = [
+        r"\bimport\s+",  # Import statements
+        r"\b__import__\s*\(",  # __import__ function
+        r"\beval\s*\(",  # Nested eval
+        r"\bexec\s*\(",  # Nested exec
+        r"\bcompile\s*\(",  # Compile function
+        r"\bopen\s*\(",  # File operations
+        r"\bfile\s*\(",  # File operations (Python 2)
+        r"\bgetattr\s*\(",  # Potentially dangerous attribute access
+        r"\bsetattr\s*\(",  # Potentially dangerous attribute modification
+        r"\bdelattr\s*\(",  # Potentially dangerous attribute deletion
+        r"\b__[a-zA-Z_]+__\s*\(",  # Dunder methods that could be dangerous
+        r"\bglobals\s*\(",  # Access to globals
+        r"\blocals\s*\(",  # Access to locals
+        r"\bvars\s*\(",  # Access to variable dictionaries
+        r"\bsubclasses\s*\(",  # Potentially dangerous
+        r"\bbases\s*\(",  # Potentially dangerous
+        r"from\s+\w+\s+import",  # Import statements
+        r"\bos\s*\.",  # OS module access
+        r"\bsys\s*\.",  # sys module access
+        r"\bsubprocess\s*\.",  # subprocess module access
+        r"\bshutil\s*\.",  # shutil module access
+    ]
+
+    for pattern in dangerous_patterns:
+        if re.search(pattern, spec, re.IGNORECASE):
+            raise ValueError(
+                f"Potentially malicious pattern detected in specification: "
+                f"'{pattern}'. This pattern could be used to execute arbitrary code. "
+                f"If you believe this pattern is safe, please review the specification "
+                f"and ensure it comes from a trusted source."
+            )
+
+    # Check for shell command patterns
+    shell_patterns = [
+        r"__import__\(['\"]os['\"]\)\.system",
+        r"__import__\(['\"]subprocess['\"]",
+    ]
+
+    for pattern in shell_patterns:
+        if re.search(pattern, spec, re.IGNORECASE):
+            raise ValueError(
+                f"Shell command execution detected in specification. "
+                f"This is not allowed for security reasons."
+            )
+
+    # Warn about potential risks even if patterns pass validation
+    if any(keyword in spec for keyword in ["lambda", "def ", "class "]):
+        warnings.warn(
+            "Specification contains function or class definitions. "
+            "Ensure the specification comes from a trusted source.",
+            UserWarning,
+            stacklevel=3,
+        )
+
+
 def craft(spec):
     """Instantiate an object from the specification string.
 
@@ -69,6 +144,16 @@ def craft(spec):
     -------
     obj : skbase BaseObject descendant, constructed from ``spec``
         this will have the property that ``spec == str(obj)`` (up to formatting)
+
+    Notes
+    -----
+    **Security Warning**: This function uses ``eval`` and ``exec`` to execute
+    arbitrary Python code. Only use this function with trusted input.
+    Maliciously crafted specifications can execute arbitrary code on your system.
+    Input validation is performed to reduce risk, but cannot guarantee complete safety.
+
+    For untrusted input, consider using safer alternatives or implement additional
+    validation specific to your use case.
     """
     # retrieve all estimators from sktime and sklearn for namespace resolution
     register_sktime = dict(all_estimators())  # noqa: F841
