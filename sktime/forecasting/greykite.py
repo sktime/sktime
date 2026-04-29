@@ -81,7 +81,7 @@ class GreykiteForecaster(BaseForecaster):
         model_template: str = "SILVERKITE",
         coverage: float = 0.95,
     ):
-        if self.model_template == "PROPHET":
+        if model_template == "PROPHET":
             self.set_tags(**{"python_dependencies": ["greykite>=1.0.0", "prophet"]})
 
         super().__init__()
