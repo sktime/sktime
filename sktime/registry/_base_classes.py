@@ -476,7 +476,8 @@ class splitter(_BaseScitypeOfObject):
         from sktime.split.tests.test_all_splitters import TestAllSplitters
 
         return TestAllSplitters
-    
+
+
 class bootstrap(_BaseScitypeOfObject):
     """Bootstrap resampling algorithm."""
 
@@ -488,13 +489,13 @@ class bootstrap(_BaseScitypeOfObject):
 
     @classmethod
     def get_base_class(cls):
-        from sktime.bootstrap.base import BaseBootstrap
+        from sktime.libs.tsbootstrap.base import BaseBootstrap
 
         return BaseBootstrap
 
     @classmethod
     def get_test_class(cls):
-        return None    
+        return None
 
 
 class transformer(_BaseScitypeOfObject):

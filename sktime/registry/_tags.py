@@ -652,6 +652,7 @@ class capability__missing_values(_BaseTag):
         "user_facing": True,
     }
 
+
 class capability__bootstrap_index(_BaseTag):
     """Whether bootstrap returns sampled indices."""
 
@@ -662,6 +663,7 @@ class capability__bootstrap_index(_BaseTag):
         "short_descr": "whether bootstrap returns resampled indices",
         "user_facing": True,
     }
+
 
 class capability__feature_importance(_BaseTag):
     """Capability: the estimator can provide feature importance.
