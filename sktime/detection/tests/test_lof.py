@@ -93,3 +93,25 @@ def test_sublof_does_not_mutate_input():
     _ = model.fit_transform(X)
 
     pd.testing.assert_frame_equal(X, X_original)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SubLOF),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_sublof_multivariate_prediction():
+    """Check that SubLOF uses all columns for predictions."""
+    X1 = pd.DataFrame({0: [0, 0, 100, 0, 0, 0, 0], 1: [0, 0, 0, 0, 0, 0, 0], 2: [0, 0, 0, 0, 0, 0, 0]})
+    X2 = pd.DataFrame({0: [0, 0, 0, 0, 0, 0, 0], 1: [0, 0, 100, 0, 0, 0, 0], 2: [0, 0, 0, 0, 0, 0, 0]})
+
+    model1 = SubLOF(n_neighbors=2, window_size=3, novelty=True)
+    model1.fit(X1)
+    y1 = model1.predict(X1)
+
+    model2 = SubLOF(n_neighbors=2, window_size=3, novelty=True)
+    model2.fit(X2)
+    y2 = model2.predict(X2)
+
+    assert len(y1) > 0, "Model 1 should detect anomaly"
+    assert len(y2) > 0, "Model 2 should detect anomaly, proving column 1 is used"
+    pd.testing.assert_frame_equal(y1, y2)
