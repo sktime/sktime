@@ -81,6 +81,9 @@ class GreykiteForecaster(BaseForecaster):
         model_template: str = "SILVERKITE",
         coverage: float = 0.95,
     ):
+        if self.model_template == "PROPHET":
+            self.set_tags(python_dependencies=["greykite>=1.0.0", "prophet"])
+
         super().__init__()
         self.forecast_config = forecast_config
         self.date_format = date_format
@@ -90,9 +93,6 @@ class GreykiteForecaster(BaseForecaster):
         self._forecaster = None
         self._forecast = None
         self._X = None
-
-        if self.model_template == "PROPHET":
-            self.set_tags(python_dependencies=["greykite>=1.0.0", "prophet"])
 
     def _create_forecast_config(self, y=None):
         """Create a ForecastConfig object if one wasn't provided."""
