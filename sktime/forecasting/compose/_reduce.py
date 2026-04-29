@@ -1866,33 +1866,36 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     Algorithm details:
 
     In ``fit``, given endogeneous time series ``y`` and possibly exogeneous ``X``:
-        fits ``estimator`` to feature-label pairs as defined as follows.
-    if `X_treatment = "concurrent":
-        features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_size)``, if provided:
-        ``X(t+h)``
-        labels = ``y(t+h)`` for ``h`` in the forecasting horizon
-        ranging over all ``t`` where the above have been observed (are in the index)
-        for each ``h`` in the forecasting horizon (separate estimator fitted per ``h``)
-    if `X_treatment = "shifted":
-        features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_size)``, if provided:
-        ``X(t)``
-        labels = ``y(t+h_1)``, ..., ``y(t+h_k)`` for ``h_j`` in the forecasting horizon
-        ranging over all ``t`` where the above have been observed (are in the index)
-        estimator is fitted as a multi-output estimator (for all ``h_j``
-        simultaneously)
+    fits ``estimator`` to feature-label pairs as defined as follows.
+
+    * if ``X_treatment = "concurrent"``:
+      features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_size)``,
+      if provided ``X(t+h)``;
+      labels = ``y(t+h)`` for ``h`` in the forecasting horizon,
+      ranging over all ``t`` where the above have been observed (are in the index)
+      for each ``h`` in the forecasting horizon (separate estimator fitted per ``h``)
+
+    * if ``X_treatment = "shifted"``:
+      features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_size)``, if provided: ``X(t)``;
+      labels = ``y(t+h_1)``, ..., ``y(t+h_k)`` for ``h_j`` in the forecasting horizon
+      ranging over all ``t`` where the above have been observed (are in the index)
+      estimator is fitted as a multi-output estimator (for all ``h_j``
+      simultaneously)
 
     In ``predict``, given possibly exogeneous ``X``, at cutoff time ``c``,
-    if `X_treatment = "concurrent":
-        applies fitted estimators' predict to
-        feature = ``y(c)``, ``y(c-1)``, ..., ``y(c-window_size)``, if provided:
-        ``X(c+h)``
-        to obtain a prediction for ``y(c+h)``, for each ``h`` in the forecasting horizon
-    if `X_treatment = "shifted":
-        applies fitted estimator's predict to
-        features = ``y(c)``, ``y(c-1)``, ..., ``y(c-window_size)``, if provided:
-        ``X(c)``
-        to obtain prediction for ``y(c+h_1)``, ..., ``y(c+h_k)`` for ``h_j`` in forec.
-        horizon
+
+    * if ``X_treatment = "concurrent"``:
+      applies fitted estimators' predict to
+      feature = ``y(c)``, ``y(c-1)``, ..., ``y(c-window_size)``, if provided
+      ``X(c+h)``;
+      to obtain a prediction for ``y(c+h)``, for each ``h`` in the forecasting horizon
+
+    * if ``X_treatment = "shifted"``:
+      applies fitted estimator's predict to
+      features = ``y(c)``, ``y(c-1)``, ..., ``y(c-window_size)``, if provided:
+      ``X(c)``;
+      to obtain prediction for ``y(c+h_1)``, ..., ``y(c+h_k)`` for ``h_j`` in
+      forecasting horizon
 
     Parameters
     ----------
@@ -1906,10 +1909,11 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     X_treatment : str, optional, one of "concurrent" (default) or "shifted"
         determines the timestamps of X from which y(t+h) is predicted, for horizon h
-        "concurrent": y(t+h) is predicted from lagged y, and X(t+h), for all h in fh
-            in particular, if no y-lags are specified, y(t+h) is predicted from X(t)
-        "shifted": y(t+h) is predicted from lagged y, and X(t), for all h in fh
-            in particular, if no y-lags are specified, y(t+h) is predicted from X(t+h)
+
+        * "concurrent": y(t+h) is predicted from lagged y, and X(t+h), for all h in fh
+          in particular, if no y-lags are specified, y(t+h) is predicted from X(t)
+        * "shifted": y(t+h) is predicted from lagged y, and X(t), for all h in fh
+          in particular, if no y-lags are specified, y(t+h) is predicted from X(t+h)
 
     impute_method : str, None, or sktime transformation, optional
         Imputation method to use for missing values in the lagged data
@@ -1925,9 +1929,12 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     pooling : str, one of ["local", "global", "panel"], optional, default="local"
         level on which data are pooled to fit the supervised regression model
-        "local" = unit/instance level, one reduced model per lowest hierarchy level
-        "global" = top level, one reduced model overall, on pooled data ignoring levels
-        "panel" = second lowest level, one reduced model per panel level (-2)
+
+        * "local" = unit/instance level, one reduced model per lowest hierarchy level
+        * "global" = top level, one reduced model overall, on pooled data
+          ignoring levels
+        * "panel" = second lowest level, one reduced model per panel level (-2)
+
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
 
@@ -1935,13 +1942,13 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         Specifies whether all direct models use the same number of observations
         or a different number of observations.
 
-        * `True` : Uniform window of length (total observations - maximum
+        * ``True`` : Uniform window of length (total observations - maximum
           forecasting horizon). Note: Currently, there are no missing arising
           from window length due to backwards imputation in
-          `ReductionTransformer`. Without imputation, the window size
+          ``ReductionTransformer``. Without imputation, the window size
           corresponds to (total observations + 1 - window_length + maximum
           forecasting horizon).
-        * `False` : Window size differs for each forecasting horizon. Window
+        * ``False`` : Window size differs for each forecasting horizon. Window
           length corresponds to (total observations + 1 - window_length +
           forecasting horizon).
     """
