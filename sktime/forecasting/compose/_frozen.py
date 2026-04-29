@@ -202,9 +202,11 @@ class FrozenForecaster(_DelegatedForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sktime.datasets import load_airline
         from sktime.forecasting.naive import NaiveForecaster
 
         est = NaiveForecaster(strategy="last")
+        est.fit(load_airline()[:20])
 
         params0 = {"forecaster": est}
         params1 = {
