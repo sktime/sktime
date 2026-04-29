@@ -25,6 +25,7 @@ class _ProphetAdapter(BaseForecaster):
         "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
         "python_dependencies": "prophet",
+        "tests:vm": True,  # all estimators depending on prophet are tested in VM
     }
 
     def _convert_int_to_date(self, y):
@@ -63,7 +64,7 @@ class _ProphetAdapter(BaseForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -174,7 +175,7 @@ class _ProphetAdapter(BaseForecaster):
         Parameters
         ----------
         fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
         X : pd.DataFrame, optional

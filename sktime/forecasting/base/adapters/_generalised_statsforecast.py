@@ -35,6 +35,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:libs": ["sktime.forecasting.base.adapters._generalised_statsforecast"],
+        "tests:vm": True,
     }
 
     def __init__(self):
@@ -151,7 +152,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
               the method should handle uni- and multivariate y appropriately
 
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X :  sktime time series object, optional (default=None)
@@ -277,7 +278,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
@@ -328,7 +329,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -506,7 +507,7 @@ class StatsForecastBackAdapter:
         `_predict_in_or_out_of_sample` method of `_GeneralisedStatsForecastAdapter`.
         """
         if self._inner_fh is not None and not self._inner_fh.is_all_in_sample():
-            # Case on which we neeed to calcualte the maximum horizon passing it to MSTL
+            # Case on which we need to calculate the maximum horizon passing it to MSTL
             maximum_forecast_horizon = self._inner_fh[-1]
             return range(1, maximum_forecast_horizon + 1)
         else:
