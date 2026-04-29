@@ -3766,6 +3766,42 @@ ESTIMATOR_TAG_REGISTER = [
 ]
 
 # construct the tag register from all classes in this module
+class requires_license_acceptance(_BaseTag):
+    """Whether the estimator requires explicit license acceptance.
+
+    - String name: ``"requires_license_acceptance"``
+    - Public metadata tag
+    - Values: boolean
+    - Default: ``False``
+    """
+
+    _tags = {
+        "tag_name": "requires_license_acceptance",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "whether the estimator requires explicit license acceptance",
+        "user_facing": True,
+    }
+
+
+class license__link(_BaseTag):
+    """Link to the license for the estimator.
+
+    - String name: ``"license:link"``
+    - Public metadata tag
+    - Values: string
+    - Default: ``None``
+    """
+
+    _tags = {
+        "tag_name": "license:link",
+        "parent_type": "object",
+        "tag_type": "str",
+        "short_descr": "link to the license for the estimator",
+        "user_facing": True,
+    }
+
+
 tag_clses = inspect.getmembers(sys.modules[__name__], inspect.isclass)
 for _, cl in tag_clses:
     # skip the base class
@@ -3783,6 +3819,8 @@ for _, cl in tag_clses:
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
 ESTIMATOR_TAG_LIST = ESTIMATOR_TAG_TABLE[0].tolist()
+
+
 
 
 def check_tag_is_valid(tag_name, tag_value):

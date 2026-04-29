@@ -101,6 +101,8 @@ class TiRexForecaster(BaseForecaster):
     """
 
     _tags = {
+        "requires_license_acceptance": True,
+        "license:link": "https://github.com/NX-AI/tirex/blob/main/LICENSE",
         # packaging tags
         # --------------
         "maintainers": ["sinemkilicdere", "martinloretzzz"],
@@ -138,16 +140,13 @@ class TiRexForecaster(BaseForecaster):
         # leave this as is
         super().__init__()
 
-        if not self.license_accepted:
-            raise ValueError(
-                "Use of TiRexForecaster is subject to the license terms of TiRex, "
-                "licensed to third party vendor NXAI GmbH. "
-                "This license is not permissive, and differs from the sktime license. "
-                "You must accept the license terms of TiRex to use TiRexForecaster. "
-                "To accept the license, set the `license_accepted` parameter to True "
-                "to confirm that you have read and accepted the license terms. "
-                "To print and view the license for TiRex, "
-                "call `TiRexForecaster.print_license()`"
+        if self.get_class_tag("requires_license_acceptance", False) and not self.license_accepted:
+            license_link = self.get_class_tag("license:link", "Unknown")
+            raise PermissionError(
+                f"Use of {self.__class__.__name__} is subject to a restrictive license. "
+                f"You must accept the license terms to use this estimator. "
+                f"To accept the license, set the `license_accepted` parameter to True. "
+                f"View the license here: {license_link}"
             )
 
     @classmethod
