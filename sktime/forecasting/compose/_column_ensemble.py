@@ -173,7 +173,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         y : pd.DataFrame
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
 
@@ -229,7 +229,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
@@ -257,7 +257,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -302,7 +302,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -343,7 +343,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
