@@ -72,9 +72,8 @@ EXCLUDE_ESTIMATORS = [
     "FreshPRINCE",
     # multiple timeouts and sporadic failures reported related to VARMAX
     # 2997, 3176, 7985
-    "SCINetForecaster",  # known bug #7871
     "MAPAForecaster",  # known bug #8039
-]
+] 
 
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
