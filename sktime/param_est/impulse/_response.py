@@ -59,7 +59,8 @@ class ImpulseResponseFunction(BaseParamFitter):
     model : Any
         A previous fitted time series model from the sktime library.
         See below for the current supported sktime models.
-        
+
+
     steps : int, optional
         The number of steps for which impulse responses are calculated.
         Default is 1. Note that for time-invariant models, the initial
