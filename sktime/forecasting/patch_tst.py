@@ -240,25 +240,8 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
-        "X_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "scitype:y": "both",
-        "capability:exogenous": False,
-        "requires-fh-in-fit": False,
-        "X-y-must-have-same-index": True,
-        "enforce_index_type": None,
-        "capability:missing_values": False,
-        "capability:insample": False,
-        "capability:pred_int": False,
-        "capability:pred_int:insample": False,
+        # packaging info
+        # --------------
         "authors": [
             "julian-fong",
             "geetu040",
@@ -269,7 +252,30 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         ],
         "maintainers": ["julian-fong"],
         "python_dependencies": ["transformers", "torch", "accelerate"],
+        # estimator type
+        # --------------
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "y_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "capability:multivariate": True,
+        "capability:exogenous": False,
+        "requires-fh-in-fit": False,
+        "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
+        "capability:missing_values": False,
+        "capability:insample": False,
+        "capability:pred_int": False,
+        "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        # Tests and CI tags
+        # -----------------
         "tests:vm": True,
     }
 
@@ -408,7 +414,13 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
             eval_dataset = None
 
         # Get Training Configuration
-        training_args = TrainingArguments(**self._training_args)
+        # ``overwrite_output_dir`` was removed from ``TrainingArguments`` in
+        # transformers 5.0, so drop it when running on a version that no
+        # longer accepts it. Kept as-is for transformers<5.0.
+        training_args_dict = dict(self._training_args)
+        if not _check_soft_dependencies("transformers<5.0", severity="none"):
+            training_args_dict.pop("overwrite_output_dir", None)
+        training_args = TrainingArguments(**training_args_dict)
         # Get the Trainer
         trainer = Trainer(
             model=self.model,
@@ -439,7 +451,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here. If using a pre-trained
             model, ensure that the prediction_length of the model matches the passed fh.
         y : sktime time series object, required

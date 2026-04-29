@@ -6,7 +6,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.macnn import MACNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MACNNRegressor(BaseDeepRegressor):
@@ -103,8 +102,6 @@ class MACNNRegressor(BaseDeepRegressor):
         activation="linear",
         activation_hidden="relu",
     ):
-        _check_dl_dependencies(severity="error")
-
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.n_epochs = n_epochs
@@ -126,6 +123,16 @@ class MACNNRegressor(BaseDeepRegressor):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self.history = None
         self._network = MACNNNetwork(
             activation=self.activation_hidden,
@@ -138,6 +145,8 @@ class MACNNRegressor(BaseDeepRegressor):
             reduction=self.reduction,
             random_state=self.random_state,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
