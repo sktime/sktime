@@ -96,7 +96,7 @@ class AlignerNaive(BaseAligner):
                 vals = np.round(vals).astype("int64")
             else:
                 raise ValueError(
-                    f"Invalid strategy: '{strategy}'. "
+                    f"Invalid strategy '{strategy}' passed to AlignerNaive. "
                     "strategy must be one of 'start', 'end', or 'start-end'."
                 )
 
