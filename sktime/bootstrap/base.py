@@ -1,4 +1,10 @@
-"""Base class for bootstrap algorithms."""
+"""Base class for bootstrap algorithms.
+
+copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""
+
+__author__ = ["sunkireddy-Barath"]
+__all__ = ["BaseBootstrap"]
 
 from sktime.base import BaseObject
 
@@ -8,9 +14,5 @@ class BaseBootstrap(BaseObject):
 
     _tags = {
         "object_type": "bootstrap",
-        "capability:bootstrap_index": True,
+        "capability:bootstrap_index": False,
     }
-
-    def clone(self):
-        """Return a clone of self."""
-        return self.__class__(**self.get_params())

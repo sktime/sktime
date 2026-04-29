@@ -477,6 +477,7 @@ class splitter(_BaseScitypeOfObject):
 
         return TestAllSplitters
 
+
 class bootstrap(_BaseScitypeOfObject):
     """Bootstrap resampling algorithm."""
 
