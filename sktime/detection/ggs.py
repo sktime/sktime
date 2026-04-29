@@ -30,6 +30,20 @@ References
    "Greedy Gaussian segmentation of multivariate time series.",
     Adv Data Anal Classif 13, 727-751 (2019).
     https://doi.org/10.1007/s11634-018-0335-0
+
+Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> from sktime.detection.ggs import GreedyGaussianSegmentation
+    >>> np.random.seed(42)
+    >>> X = pd.DataFrame(
+    ...     np.concatenate(
+    ...         [np.random.normal(0, 1, (50, 2)), np.random.normal(5, 1, (50, 2))]
+    ...     )
+    ... )
+    >>> detector = GreedyGaussianSegmentation(k_max=2, lamb=1.0)
+    >>> y_pred = detector.fit_predict(X)
 """
 
 import logging
