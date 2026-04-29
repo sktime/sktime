@@ -56,6 +56,10 @@ class ImpulseResponseFunction(BaseParamFitter):
 
     Parameters
     ----------
+    model : Any
+        A previous fitted time series model from the sktime library.
+        See below for the current supported sktime models.
+        
     steps : int, optional
         The number of steps for which impulse responses are calculated.
         Default is 1. Note that for time-invariant models, the initial
@@ -95,7 +99,6 @@ class ImpulseResponseFunction(BaseParamFitter):
         If parameters were previously fixed with the fix_params method, this argument
         describes whether or not params also includes the fixed parameters, in addition
         to the free parameters. Default is False.
-
 
     extend_model : None
         Used in Statsmodels for a special handling of matrix terms that are time-varying
