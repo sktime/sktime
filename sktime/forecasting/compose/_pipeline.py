@@ -436,7 +436,7 @@ class ForecastingPipeline(_Pipeline):
         self.steps_ = self._check_steps(steps, allow_postproc=False)
         super().__init__()
         tags_to_clone = [
-            "capability:exogenous",  # does estimator ignore the exogeneous X?
+            "capability:exogenous",  # does estimator ignore the exogenous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "capability:pred_int:insample",  # ... for in-sample horizons?
             "capability:insample",  # can the estimator make in-sample predictions?
@@ -759,7 +759,7 @@ class TransformedTargetForecaster(_Pipeline):
     """Meta-estimator for forecasting transformed time series.
 
     Pipeline functionality to apply transformers to endogeneous time series, ``y``.
-    The exogeneous data, ``X``, is not transformed.
+    The exogenous data, ``X``, is not transformed.
     To transform ``X``, the ``ForecastingPipeline`` can be used.
 
     For a list ``t1``, ``t2``, ..., ``tN``, ``f``, ``tp1``, ``tp2``, ..., ``tpM``,
@@ -889,7 +889,7 @@ class TransformedTargetForecaster(_Pipeline):
 
         # set the tags based on forecaster
         tags_to_clone = [
-            "capability:exogenous",  # does estimator ignore the exogeneous X?
+            "capability:exogenous",  # does estimator ignore the exogenous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "capability:pred_int:insample",  # ... for in-sample horizons?
             "capability:insample",  # can the estimator make in-sample predictions?
@@ -1386,22 +1386,22 @@ class TransformedTargetForecaster(_Pipeline):
 
 
 class ForecastX(BaseForecaster):
-    """Forecaster that forecasts exogeneous data for use in an endogeneous forecast.
+    """Forecaster that forecasts exogenous data for use in an endogeneous forecast.
 
-    In ``predict``, this forecaster carries out a ``predict`` step on exogeneous ``X``.
+    In ``predict``, this forecaster carries out a ``predict`` step on exogenous ``X``.
     Then, a forecast is made for ``y``,
-    using exogeneous data plus its forecasts as ``X``.
+    using exogenous data plus its forecasts as ``X``.
     If ``columns`` argument is provided, will carry ``predict`` out only for the columns
     in ``columns``, and will use other columns in ``X`` unchanged.
 
     The two forecasters and forecasting horizons (for forecasting ``y`` resp ``X``)
     can be selected independently, but default to the same.
 
-    The typical use case is extending exogeneous data available only up until the cutoff
-    into the future, for use by an exogeneous forecaster that requires such future data.
+    The typical use case is extending exogenous data available only up until the cutoff
+    into the future, for use by an exogenous forecaster that requires such future data.
 
     If no X is passed in ``fit``, behaves like ``forecaster_y``.
-    In such a case (no exogeneous data), there is no benefit in using this compositor.
+    In such a case (no exogenous data), there is no benefit in using this compositor.
 
     If variables in ``columns`` are present in the provided ``X`` during ``predict``,
     by default these are still forecasted and the forecasts are used for prediction of
@@ -1414,7 +1414,7 @@ class ForecastX(BaseForecaster):
         sktime forecaster to use for endogeneous data ``y``
 
     forecaster_X : BaseForecaster, optional
-        sktime forecaster to use for exogeneous data ``X``,
+        sktime forecaster to use for exogenous data ``X``,
         default = None = same as ``forecaster_y``
 
     fh_X : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
@@ -1444,7 +1444,7 @@ class ForecastX(BaseForecaster):
         * if "use_forecast", then ``forecaster_y`` uses the ``X`` predicted by
         ``forecaster_X`` as exogenous features in ``fit``
 
-    forecaster_X_exogeneous : optional, str, one of "None" (default), or "complement",
+    forecaster_X_exogenous : optional, str, one of "None" (default), or "complement",
         or ``pandas.Index`` coercible
 
         * if "None", then ``forecaster_X`` uses no exogenous data
@@ -1504,7 +1504,7 @@ class ForecastX(BaseForecaster):
     Notes
     -----
     * ``predict_behaviour="use_actuals"`` is as of now unused if future values are
-        passed for a subset of exogeneous variables in ``columns``. In that case, it
+        passed for a subset of exogenous variables in ``columns``. In that case, it
         behaves as if ``predict_behaviour="use_forecasts"``.
     """
 
@@ -1529,7 +1529,7 @@ class ForecastX(BaseForecaster):
         behaviour="update",
         columns=None,
         fit_behaviour="use_actual",
-        forecaster_X_exogeneous="None",
+        forecaster_X_exogenous="None",
         predict_behaviour="use_forecasts",
     ):
         if fit_behaviour not in ["use_actual", "use_forecast"]:
@@ -1551,13 +1551,13 @@ class ForecastX(BaseForecaster):
         self.fh_X = fh_X
         self.behaviour = behaviour
         self.columns = columns
-        if isinstance(forecaster_X_exogeneous, str):
-            if forecaster_X_exogeneous not in ["None", "complement"]:
+        if isinstance(forecaster_X_exogenous, str):
+            if forecaster_X_exogenous not in ["None", "complement"]:
                 raise ValueError(
-                    'forecaster_X_exogeneous must be one of "None", "complement",'
+                    'forecaster_X_exogenous must be one of "None", "complement",'
                     "or a pandas.Index coercible"
                 )
-        self.forecaster_X_exogeneous = forecaster_X_exogeneous
+        self.forecaster_X_exogenous = forecaster_X_exogenous
 
         if predict_behaviour not in ["use_forecasts", "use_actuals"]:
             raise ValueError(
@@ -1663,7 +1663,7 @@ class ForecastX(BaseForecaster):
         Parameters
         ----------
         X : typing.Optional[pd.DataFrame]
-            user input for exogeneous data in ``predict``
+            user input for exogenous data in ``predict``
 
         Returns
         -------
@@ -1694,12 +1694,12 @@ class ForecastX(BaseForecaster):
 
         If behaviour = "update": uses self.forecaster_X_, this is already fitted.
         If behaviour = "refitted", uses a local clone of self.forecaster_X,
-            after fitting it to self._X, i.e., all exogeneous data seen so far.
+            after fitting it to self._X, i.e., all exogenous data seen so far.
 
         Parameters
         ----------
         X : pandas.DataFrame, optional, default=None
-            exogeneous data seen in predict
+            exogenous data seen in predict
         fh : ForecastingHorizon, should be the input of the predict method, optional
         method : str, optional, default="predict"
             method of forecaster to call to obtain prediction
@@ -1742,7 +1742,7 @@ class ForecastX(BaseForecaster):
 
     def _get_X_for_fcX(self, X):
         """Shorthand to obtain X for forecaster_X, depending on parameters."""
-        ixx = self.forecaster_X_exogeneous
+        ixx = self.forecaster_X_exogenous
         if X is None or ixx is None or ixx == "None":
             return None
 
@@ -1979,7 +1979,7 @@ class ForecastX(BaseForecaster):
         params3 = {
             "forecaster_y": fy,
             "fit_behaviour": "use_forecast",
-            "forecaster_X_exogeneous": "complement",
+            "forecaster_X_exogenous": "complement",
         }
 
         params4 = {"forecaster_y": fy, "predict_behaviour": "use_actuals"}

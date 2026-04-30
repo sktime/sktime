@@ -83,7 +83,7 @@ class ForecastingData(BaseForecastingDataset):
         Parameters
         ----------
         *args: tuple of strings that specify what to load
-            "X": exogeneous time series
+            "X": exogenous time series
             "y": time series
 
         Returns

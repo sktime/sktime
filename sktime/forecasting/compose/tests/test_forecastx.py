@@ -304,7 +304,7 @@ def test_forecastx_exog_for_forecaster_x():
         model_supporting_exogenous.clone(),
         model_supporting_exogenous.clone(),
         columns=cols_to_forecast,
-        forecaster_X_exogeneous="None",
+        forecaster_X_exogenous="None",
     )
 
     model_1.fit(y, X=X, fh=fh)
@@ -314,7 +314,7 @@ def test_forecastx_exog_for_forecaster_x():
         model_supporting_exogenous.clone(),
         model_supporting_exogenous.clone(),
         columns=cols_to_forecast,
-        forecaster_X_exogeneous="complement",
+        forecaster_X_exogenous="complement",
     )
 
     model_2.fit(y, X=X, fh=fh)
@@ -324,7 +324,7 @@ def test_forecastx_exog_for_forecaster_x():
         model_supporting_exogenous.clone(),
         model_supporting_exogenous.clone(),
         columns=cols_to_forecast,
-        forecaster_X_exogeneous=["UNEMP", "ARMED"],
+        forecaster_X_exogenous=["UNEMP", "ARMED"],
     )
 
     model_3.fit(y, X=X, fh=fh)
@@ -410,7 +410,7 @@ def test_use_of_passed_unknown_X(predict_behaviour_option: str) -> None:
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("cols_to_forecast", [["GNPDEFL", "GNP"], ["ARMED", "POP"]])
-def test_forecaster_X_exogeneous(cols_to_forecast):
+def test_forecaster_X_exogenous(cols_to_forecast):
     """Test that ForecastX uses exogenous data as told by parameter."""
     from sktime.forecasting.compose import ForecastX
     from sktime.split import temporal_train_test_split
@@ -427,7 +427,7 @@ def test_forecaster_X_exogeneous(cols_to_forecast):
         forecaster.clone(),
         forecaster_X=forecaster.clone(),
         columns=cols_to_forecast,
-        forecaster_X_exogeneous="complement",
+        forecaster_X_exogenous="complement",
     )
 
     pipeline1.fit(y_train, X=X_train, fh=fh)
@@ -437,7 +437,7 @@ def test_forecaster_X_exogeneous(cols_to_forecast):
         forecaster.clone(),
         forecaster_X=forecaster.clone(),
         columns=cols_to_forecast,
-        forecaster_X_exogeneous="None",
+        forecaster_X_exogenous="None",
     )
 
     pipeline2.fit(y_train, X=X_train, fh=fh)
@@ -445,5 +445,5 @@ def test_forecaster_X_exogeneous(cols_to_forecast):
     np.testing.assert_array_equal(y_pred1.index, y_pred2.index)
 
     # check that the update method doesn't break on
-    # forecaster_X_exogeneous = "complement"
+    # forecaster_X_exogenous = "complement"
     pipeline1.update(y_test, X=X_test, update_params=True)

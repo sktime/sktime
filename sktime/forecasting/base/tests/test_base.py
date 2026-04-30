@@ -254,8 +254,8 @@ def test_vectorization_preserves_row_index_names(method):
     reason="run only if base module has changed or datatypes module has changed",
 )
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
-@pytest.mark.parametrize("exogeneous", [True, False])
-def test_vectorization_multivariate(mtype, exogeneous):
+@pytest.mark.parametrize("exogenous", [True, False])
+def test_vectorization_multivariate(mtype, exogenous):
     """Test that forecaster vectorization preserves row index names in forecast."""
     hierarchy_levels = (2, 4)
     n_instances = reduce(mul, hierarchy_levels)
@@ -264,7 +264,7 @@ def test_vectorization_multivariate(mtype, exogeneous):
         hierarchy_levels=hierarchy_levels, random_state=84, n_columns=2
     )
 
-    if exogeneous:
+    if exogenous:
         y_fit = get_window(y, lag=pd.Timedelta("3D"))
         X_fit = y_fit
         X_pred = get_window(y, window_length=pd.Timedelta("3D"), lag=pd.Timedelta("0D"))
