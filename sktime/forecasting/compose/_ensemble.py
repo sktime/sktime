@@ -142,7 +142,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional, default=None
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional, default=None
             Exogenous variables are ignored.
 
@@ -376,7 +376,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y : pd.DataFrame - Series, Panel, or Hierarchical mtype format.
             Target time series to which to fit the forecaster.
         fh : ForecastingHorizon, optional, default=None
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional, default=None, must be of same mtype as y
             Exogenous data to which to fit the forecaster.
 
