@@ -255,7 +255,7 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "Jayant Kalagnanam",
         ],
         "maintainers": ["julian-fong"],
-        "python_dependencies": ["transformers<4.41.0", "torch", "accelerate"],
+        "python_dependencies": ["transformers", "torch", "accelerate"],
         # estimator type
         # --------------
         "X_inner_mtype": [
@@ -418,7 +418,13 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             eval_dataset = None
 
         # Get Training Configuration
-        training_args = TrainingArguments(**self._training_args)
+        # ``overwrite_output_dir`` was removed from ``TrainingArguments`` in
+        # transformers 5.0, so drop it when running on a version that no
+        # longer accepts it. Kept as-is for transformers<5.0.
+        training_args_dict = dict(self._training_args)
+        if not _check_soft_dependencies("transformers<5.0", severity="none"):
+            training_args_dict.pop("overwrite_output_dir", None)
+        training_args = TrainingArguments(**training_args_dict)
         # Get the Trainer
         trainer = Trainer(
             model=self.model,
@@ -449,7 +455,7 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here. If using a pre-trained
             model, ensure that the prediction_length of the model matches the passed fh.
         y : sktime time series object, required
