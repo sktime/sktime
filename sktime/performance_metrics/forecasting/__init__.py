@@ -59,6 +59,8 @@ __all__ = [
     "relative_loss",
     "MeanSquaredLogError",
     "mean_squared_log_error",
+    "OverlayDX",
+    "overlay_dx_score",
 ]
 
 from sktime.performance_metrics.forecasting._base import make_forecasting_scorer
@@ -116,4 +118,8 @@ from sktime.performance_metrics.forecasting._msep import MeanSquaredErrorPercent
 from sktime.performance_metrics.forecasting._msle import MeanSquaredLogError
 from sktime.performance_metrics.forecasting._mspe import MeanSquaredPercentageError
 from sktime.performance_metrics.forecasting._msse import MeanSquaredScaledError
+from sktime.performance_metrics.forecasting._overlay_dx import (
+    OverlayDX,
+    overlay_dx_score,
+)
 from sktime.performance_metrics.forecasting._rell import RelativeLoss
