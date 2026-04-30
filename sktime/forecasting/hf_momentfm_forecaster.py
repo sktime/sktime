@@ -144,11 +144,12 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
         "capability:missing_values": False,
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
+        # "y_inner_mtype": [
+        #     "pd.DataFrame",
+        #     "pd-multiindex",
+        #     "pd_multiindex_hier",
+        # ],
+        "y_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
         "requires-fh-in-fit": True,
         "python_dependencies": [

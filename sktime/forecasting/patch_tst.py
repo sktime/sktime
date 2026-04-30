@@ -258,16 +258,18 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "python_dependencies": ["transformers", "torch", "accelerate"],
         # estimator type
         # --------------
-        "X_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
+        # "X_inner_mtype": [
+        #     "pd.DataFrame",
+        #     "pd-multiindex",
+        #     "pd_multiindex_hier",
+        # ],
+        # "y_inner_mtype": [
+        #     "pd.DataFrame",
+        #     "pd-multiindex",
+        #     "pd_multiindex_hier",
+        # ],
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,

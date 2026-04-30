@@ -168,11 +168,12 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "env_marker": "sys_platform=='linux'",
         # estimator type
         # --------------
-        "y_inner_mtype": [
-            "pd.Series",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
+        # "y_inner_mtype": [
+        #     "pd.Series",
+        #     "pd-multiindex",
+        #     "pd_multiindex_hier",
+        # ],
+        "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
