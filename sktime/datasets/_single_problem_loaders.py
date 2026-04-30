@@ -40,6 +40,9 @@ __all__ = [
     "load_unit_test_tsf",
     "load_covid_3month",
     "load_tecator",
+    "load_mitdb",
+    "load_seatbelts",
+    "load_yahoo",
 ]
 
 import os
@@ -1746,3 +1749,174 @@ def load_m5(
             inplace=True,
         )
         return sales_train_validation, sell_prices, calendar
+
+
+def load_yahoo(return_mtype: str = None):
+    """Load the Yahoo labeled anomaly detection dataset.
+
+    Parameters
+    ----------
+    return_mtype : str, optional (default=None)
+        The return mtype for the output, a valid sktime Series mtype string.
+        If None, returns pd.Series.
+
+    Returns
+    -------
+    y : pd.Series
+        Anomaly labels (0 or 1) for each time point.
+    X : pd.Series
+        Time series values.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_yahoo
+    >>> y, X = load_yahoo()
+
+    Notes
+    -----
+    Dimensionality:     univariate
+    Series length:      1422
+    Frequency:          not specified
+
+    This dataset is used to benchmark anomaly detection algorithms. It consists
+    of real and synthetic time series with tagged anomaly points. The dataset
+    tests detection accuracy of various anomaly types including outliers and
+    change points. The synthetic dataset consists of time series with varying
+    trend, noise and seasonality. The real dataset consists of time series
+    representing metrics of various Yahoo services.
+
+    From the TSB-UAD benchmark suite:
+    "TSB-UAD: An End-to-End Benchmark Suite for Univariate Time-Series Anomaly
+    Detection", Paparrizos et al., PVLDB 2022, Volume 15, pages 1697-1711.
+
+    References
+    ----------
+    .. [1] N. Laptev, S. Amizadeh, and Y. Billawala. 2015.
+           S5 - A Labeled Anomaly Detection Dataset, version 1.0(16M).
+           https://webscope.sandbox.yahoo.com/catalog.php?datatype=s&did=70.
+    .. [2] Paparrizos et al. TSB-UAD: An End-to-End Benchmark Suite for
+           Univariate Time-Series Anomaly Detection. PVLDB 2022.
+           https://github.com/TheDatumOrg/TSB-UAD
+    """
+    name = "yahoo"
+    fname = name + ".csv"
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    data = pd.read_csv(path)
+    y = data["label"]
+    X = data["data"]
+
+    if return_mtype is not None:
+        y = convert(y, from_type="pd.Series", to_type=return_mtype)
+        X = convert(X, from_type="pd.Series", to_type=return_mtype)
+
+    return y, X
+
+
+def load_mitdb(return_mtype: str = None):
+    """Load the MIT-BIH Arrhythmia database dataset.
+
+    Parameters
+    ----------
+    return_mtype : str, optional (default=None)
+        The return mtype for the output, a valid sktime Series mtype string.
+        If None, returns pd.Series.
+
+    Returns
+    -------
+    y : pd.Series
+        Anomaly labels for each time point.
+    X : pd.Series
+        ECG time series values.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_mitdb
+    >>> y, X = load_mitdb()
+
+    Notes
+    -----
+    Dimensionality:     univariate
+    Frequency:          360 Hz
+
+    The MIT-BIH Arrhythmia database contains 48 half-hour excerpts of
+    two-channel ambulatory ECG recordings, obtained from 47 subjects studied
+    by the BIH Arrhythmia Laboratory between 1975 and 1979.
+
+    From the TSB-UAD benchmark suite:
+    "TSB-UAD: An End-to-End Benchmark Suite for Univariate Time-Series Anomaly
+    Detection", Paparrizos et al., PVLDB 2022, Volume 15, pages 1697-1711.
+
+    References
+    ----------
+    .. [1] George B Moody and Roger G Mark. 1992. MIT-BIH Arrhythmia Database.
+           https://doi.org/10.13026/C2F305
+    .. [2] Paparrizos et al. TSB-UAD: An End-to-End Benchmark Suite for
+           Univariate Time-Series Anomaly Detection. PVLDB 2022.
+           https://github.com/TheDatumOrg/TSB-UAD
+    """
+    name = "mitdb"
+    fname = name + ".csv"
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    data = pd.read_csv(path)
+    y = data["label"]
+    X = data["data"]
+
+    if return_mtype is not None:
+        y = convert(y, from_type="pd.Series", to_type=return_mtype)
+        X = convert(X, from_type="pd.Series", to_type=return_mtype)
+
+    return y, X
+
+
+def load_seatbelts(return_mtype: str = None):
+    """Load the Seatbelts changepoint detection dataset.
+
+    Parameters
+    ----------
+    return_mtype : str, optional (default=None)
+        The return mtype for the output, a valid sktime Series mtype string.
+        If None, returns pd.Series.
+
+    Returns
+    -------
+    y : pd.Series
+        Changepoint labels for each time point.
+    X : pd.Series
+        Monthly time series of drivers killed or seriously injured (KSI).
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_seatbelts
+    >>> y, X = load_seatbelts()
+
+    Notes
+    -----
+    Dimensionality:     univariate
+    Series length:      192
+    Frequency:          Monthly
+    Time span:          January 1969 to December 1984
+
+    This dataset concerns the number of drivers killed or seriously injured
+    in the UK around the period when seatbelts were introduced. Seatbelts
+    were compulsory equipment in all new cars from 1972 and mandatory to be
+    worn from 1983 onwards.
+
+    References
+    ----------
+    .. [1] G. J. J. Van den Burg and C. K. I. Williams. An Evaluation of
+           Change Point Detection Algorithms. arXiv:2003.06222, 2020.
+           https://github.com/alan-turing-institute/TCPD
+    """
+    name = "seatbelts"
+    fname = name + ".csv"
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    data = pd.read_csv(path, index_col=0).squeeze("columns")
+    data.index = _coerce_to_monthly_period_index(data.index)
+    y = data["label"]
+    X = data["KSI"]
+
+    if return_mtype is not None:
+        y = convert(y, from_type="pd.Series", to_type=return_mtype)
+        X = convert(X, from_type="pd.Series", to_type=return_mtype)
+
+    return y, X
