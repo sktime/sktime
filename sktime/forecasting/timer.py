@@ -73,6 +73,17 @@ class TimerForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["PewterZz"],
+        "maintainers": "PewterZz",
+        "python_dependencies": [
+            "transformers>=4.40,<4.45",
+            "torch",
+        ],
+        "python_version": ">=3.13",
+        # estimator type
+        # --------------
         "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
@@ -80,10 +91,8 @@ class TimerForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:insample": False,
-        "python_dependencies": [
-            "transformers>=4.40,<4.45",
-            "torch",
-        ],
+        # CI and test tags
+        # ----------------
         "tests:vm": True,
     }
 
