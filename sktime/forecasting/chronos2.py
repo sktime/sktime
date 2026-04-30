@@ -6,10 +6,11 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base._serialization import _CachedModelSerializationMixin
 from sktime.utils.singleton import _multiton
 
 
-class Chronos2Forecaster(BaseForecaster):
+class Chronos2Forecaster(_CachedModelSerializationMixin, BaseForecaster):
     """Interface to the Chronos-2 Zero-Shot Forecaster by Amazon Research.
 
     Chronos-2 is a pretrained encoder-only time series foundation model
@@ -90,10 +91,6 @@ class Chronos2Forecaster(BaseForecaster):
         "capability:global_forecasting": True,
         "capability:non_contiguous_X": False,
         "tests:vm": True,
-        "tests:skip_by_name": [
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
-        ],
     }
 
     _default_config = {
@@ -103,6 +100,7 @@ class Chronos2Forecaster(BaseForecaster):
         "context_length": None,
         "cross_learning": False,
     }
+    _cached_model_fields = ("model_pipeline",)
 
     def __init__(
         self,
@@ -143,23 +141,16 @@ class Chronos2Forecaster(BaseForecaster):
         if self.config is not None:
             self._config.update(self.config)
 
-    def __getstate__(self):
-        """Return state for pickling, excluding unpickleable model pipeline."""
-        state = self.__dict__.copy()
-        if hasattr(self, "model_pipeline"):
-            state["model_pipeline"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
-        self.__dict__.update(state)
-
     def _get_pipeline_kwargs(self):
         return {
             "pretrained_model_name_or_path": self.model_path,
             "torch_dtype": self._config["torch_dtype"],
             "device_map": self._config["device_map"],
         }
+
+    def _get_cached_model_loaders(self):
+        """Return cached model loaders used after deserialization."""
+        return {"model_pipeline": self._load_pipeline}
 
     def _get_unique_key(self):
         kwargs = self._get_pipeline_kwargs()
@@ -170,12 +161,6 @@ class Chronos2Forecaster(BaseForecaster):
             key=self._get_unique_key(),
             chronos2_kwargs=self._get_pipeline_kwargs(),
         ).load_from_checkpoint()
-
-    def _ensure_model_pipeline_loaded(self):
-        """Reload model pipeline if needed after unpickling."""
-        if not hasattr(self, "model_pipeline") or self.model_pipeline is None:
-            if hasattr(self, "_is_fitted") and self._is_fitted:
-                self.model_pipeline = self._load_pipeline()
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecaster to training data.
@@ -224,7 +209,7 @@ class Chronos2Forecaster(BaseForecaster):
         """
         import transformers
 
-        self._ensure_model_pipeline_loaded()
+        self._ensure_cached_models_loaded()
         transformers.set_seed(self._seed)
 
         prediction_length = int(max(fh.to_relative(self.cutoff)))

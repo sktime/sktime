@@ -9,13 +9,14 @@ from types import SimpleNamespace
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._serialization import _CachedModelSerializationMixin
 from sktime.utils.dependencies import _safe_import
 from sktime.utils.singleton import _multiton
 
 torch = _safe_import("torch")
 
 
-class TimeLLMForecaster(BaseForecaster):
+class TimeLLMForecaster(_CachedModelSerializationMixin, BaseForecaster):
     """
     Interface to the Time-LLM.
 
@@ -89,6 +90,7 @@ class TimeLLMForecaster(BaseForecaster):
         "tests:vm": True,
         "tests:libs": ["sktime.libs.time_llm"],
     }
+    _cached_model_fields = ("model_",)
 
     def __init__(
         self,
@@ -142,34 +144,53 @@ class TimeLLMForecaster(BaseForecaster):
         else:
             self._pred_len = self.pred_len
 
+        self.last_values = y
+
+        self.model_ = self._load_model()
+
+    def _get_time_llm_kwargs(self):
+        """Get the kwargs for Time-LLM model creation."""
+        values = getattr(self, "last_values", getattr(self, "_y", None))
+        enc_in = 1 if values is None else values.shape[1]
+
+        return {
+            "task_name": self.task_name,
+            "pred_len": self._pred_len,
+            "seq_len": self.seq_len,
+            "llm_model": self.llm_model,
+            "llm_layers": self.llm_layers,
+            "llm_dim": self.llm_dim,
+            "patch_len": self.patch_len,
+            "stride": self.stride,
+            "d_model": self.d_model,
+            "d_ff": self.d_ff,
+            "n_heads": self.n_heads,
+            "dropout": self.dropout,
+            "enc_in": enc_in,
+            "prompt_domain": self.prompt_domain,
+        }
+
+    def _load_model(self):
+        """Load the cached Time-LLM model and move it to the configured device."""
+        self.device_ = (
+            "cuda" if self.device is None and torch.cuda.is_available() else "cpu"
+        )
+
         # Create a unique key for the current model configuration
         key = self._get_unique_time_llm_key()
 
         # Load or reuse cached model with the same key
-        self.model_ = _CachedTimeLLM(
+        model = _CachedTimeLLM(
             key=key,
-            time_llm_kwargs={
-                "task_name": self.task_name,
-                "pred_len": self._pred_len,
-                "seq_len": self.seq_len,
-                "llm_model": self.llm_model,
-                "llm_layers": self.llm_layers,
-                "llm_dim": self.llm_dim,
-                "patch_len": self.patch_len,
-                "stride": self.stride,
-                "d_model": self.d_model,
-                "d_ff": self.d_ff,
-                "n_heads": self.n_heads,
-                "dropout": self.dropout,
-                "enc_in": y.shape[1],
-                "prompt_domain": self.prompt_domain,
-            },
+            time_llm_kwargs=self._get_time_llm_kwargs(),
         ).load_model()
 
-        self.model_ = self.model_.to(self.device_)
-        self.model_ = self.model_.to(torch.bfloat16)
+        model = model.to(self.device_)
+        return model.to(torch.bfloat16)
 
-        self.last_values = y
+    def _get_cached_model_loaders(self):
+        """Return cached model loaders used after deserialization."""
+        return {"model_": self._load_model}
 
     def _get_unique_time_llm_key(self):
         """Get unique key for Time-LLM model to use in multiton."""
@@ -226,6 +247,7 @@ class TimeLLMForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
+        self._ensure_cached_models_loaded()
         X_tensor = (
             torch.tensor(self.last_values.values).reshape(1, -1, 1).to(self.device_)
         )

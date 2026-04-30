@@ -10,10 +10,11 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base._serialization import _CachedModelSerializationMixin
 from sktime.utils.singleton import _multiton
 
 
-class TimesFMForecaster(_BaseGlobalForecaster):
+class TimesFMForecaster(_CachedModelSerializationMixin, _BaseGlobalForecaster):
     """TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
 
     TimesFM (Time Series Foundation Model) is a pretrained time-series foundation model
@@ -184,6 +185,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "tests:vm": True,
         "tests:libs": ["sktime.libs.timesfm"],
     }
+    _cached_model_fields = ("tfm",)
 
     def __init__(
         self,
@@ -272,12 +274,20 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             context_multiple = (len(y) // self.input_patch_len) + 1
             self._context_len = context_multiple * self.input_patch_len
 
-        self.tfm = _CachedTimesFM(
+        self.tfm = self._load_tfm()
+
+    def _load_tfm(self):
+        """Load the cached TimesFM model."""
+        return _CachedTimesFM(
             key=self._get_unique_timesfm_key(),
             timesfm_kwargs=self._get_timesfm_kwargs(),
             use_source_package=self.use_source_package,
             repo_id=self.repo_id,
         ).load_from_checkpoint()
+
+    def _get_cached_model_loaders(self):
+        """Return cached model loaders used after deserialization."""
+        return {"tfm": self._load_tfm}
 
     def _get_timesfm_kwargs(self):
         """Get the kwargs for TimesFM model."""
@@ -306,6 +316,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         return str(sorted(kwargs_plus_repo_id.items()))
 
     def _predict(self, fh, X, y=None):
+        self._ensure_cached_models_loaded()
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)

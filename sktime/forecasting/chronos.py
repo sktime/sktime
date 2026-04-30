@@ -12,6 +12,7 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base._serialization import _CachedModelSerializationMixin
 from sktime.utils.singleton import _multiton
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -176,7 +177,7 @@ class ChronosBoltStrategy(ChronosModelStrategy):
         return np.median(prediction_results[0].numpy(), axis=0)
 
 
-class ChronosForecaster(BaseForecaster):
+class ChronosForecaster(_CachedModelSerializationMixin, BaseForecaster):
     """
     Interface to the Chronos and Chronos-Bolt Zero-Shot Forecaster by Amazon Research.
 
@@ -321,10 +322,6 @@ class ChronosForecaster(BaseForecaster):
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.chronos"],
-        "tests:skip_by_name": [  # pickling problems
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
-        ],
     }
 
     _default_chronos_config = {
@@ -342,6 +339,7 @@ class ChronosForecaster(BaseForecaster):
         "torch_dtype": torch.bfloat16,  # torch.dtype
         "device_map": "cpu",  # str, use "cpu" for CPU inference, "cuda" for gpu and "mps" for Apple Silicon # noqa
     }
+    _cached_model_fields = ("model_pipeline",)
 
     def __init__(
         self,
@@ -456,22 +454,9 @@ class ChronosForecaster(BaseForecaster):
         }
         return str(sorted(kwargs_plus_model_path.items()))
 
-    def __getstate__(self):
-        """Return state for pickling, handling unpickleable model pipeline."""
-        state = self.__dict__.copy()
-        if hasattr(self, "model_pipeline"):
-            state["model_pipeline"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from the unpickled state dictionary."""
-        self.__dict__.update(state)
-
-    def _ensure_model_pipeline_loaded(self):
-        """Ensure model pipeline is loaded, recreating if needed after unpickling."""
-        if not hasattr(self, "model_pipeline") or self.model_pipeline is None:
-            if hasattr(self, "_is_fitted") and self._is_fitted:
-                self.model_pipeline = self._load_pipeline()
+    def _get_cached_model_loaders(self):
+        """Return cached model loaders used after deserialization."""
+        return {"model_pipeline": self._load_pipeline}
 
     def _load_pipeline(self):
         """Load the model pipeline using the multiton pattern.
@@ -573,7 +558,7 @@ class ChronosForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Predicted forecasts.
         """
-        self._ensure_model_pipeline_loaded()
+        self._ensure_cached_models_loaded()
 
         transformers.set_seed(self._seed)
         if fh is not None:

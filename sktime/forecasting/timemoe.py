@@ -10,10 +10,11 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.forecasting.base._serialization import _CachedModelSerializationMixin
 from sktime.utils.singleton import _multiton
 
 
-class TimeMoEForecaster(_BaseGlobalForecaster):
+class TimeMoEForecaster(_CachedModelSerializationMixin, _BaseGlobalForecaster):
     """
     Interface for TimeMOE forecaster for zero-shot forecasting.
 
@@ -135,6 +136,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "tests:vm": True,
         "tests:libs": ["sktime.libs.timemoe"],
     }
+    _cached_model_fields = ("model",)
 
     def __init__(
         self,
@@ -203,13 +205,21 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         else:
             config["input_size"] = 1
         self._config = config
-        self.model = _CachedTimeMoE(
+        self.model = self._load_model()
+
+        return self
+
+    def _load_model(self):
+        """Load the cached TimeMoE model."""
+        return _CachedTimeMoE(
             key=self._get_unique_timemoe_key(),
             timemoe_kwargs=self._get_timemoe_kwargs(),
             use_source_package=self.use_source_package,
         ).load_from_checkpoint()
 
-        return self
+    def _get_cached_model_loaders(self):
+        """Return cached model loaders used after deserialization."""
+        return {"model": self._load_model}
 
     def _get_timemoe_kwargs(self):
         """Get the kwargs for TimeMoE model."""
@@ -298,6 +308,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         import torch
         import transformers
 
+        self._ensure_cached_models_loaded()
         transformers.set_seed(self._seed)
         if fh is not None:
             prediction_length = int(max(fh.to_relative(self.cutoff)))
