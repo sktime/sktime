@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 from sktime.utils.warnings import warn
 
 
@@ -120,8 +119,6 @@ class CNNClassifier(BaseDeepClassifier):
         filter_sizes=None,
         padding="auto",
     ):
-        _check_dl_dependencies(severity="error")
-
         self.batch_size = batch_size
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
@@ -135,13 +132,31 @@ class CNNClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self.activation = activation
         self.activation_hidden = activation_hidden
+        self.use_bias = use_bias
+        self.optimizer = optimizer
+        self.history = None
+        self.filter_sizes = filter_sizes
+        self.padding = padding
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # TODO (release 0.42.0)
         # After changing the default value of 'activation_hidden' to "relu"
         # in the __init__ method signature,
         # remove the following 'if-else' check.
         # Remove the usage of self._activation_hidden throughout the class
         # and replace it with self.activation_hidden
-        if activation_hidden == "changing_from_sigmoid_to_relu_in_0.42.0":
+        if self.activation_hidden == "changing_from_sigmoid_to_relu_in_0.42.0":
             warn(
                 "in `CNNClassifier`, the default value of parameter 'activation_hidden'"
                 " will change to 'relu' in version '0.42.0'. "
@@ -152,14 +167,7 @@ class CNNClassifier(BaseDeepClassifier):
             )
             self._activation_hidden = "sigmoid"
         else:
-            self._activation_hidden = activation_hidden
-        self.use_bias = use_bias
-        self.optimizer = optimizer
-        self.history = None
-        self.filter_sizes = filter_sizes
-        self.padding = padding
-
-        super().__init__()
+            self._activation_hidden = self.activation_hidden
 
         # TODO (release 0.42.0)
         # After changing the default value of 'activation_hidden' to "relu"
@@ -175,6 +183,8 @@ class CNNClassifier(BaseDeepClassifier):
             padding=self.padding,
             random_state=self.random_state,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
