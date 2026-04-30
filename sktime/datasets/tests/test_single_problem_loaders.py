@@ -14,6 +14,9 @@ from sktime.datasets import (
     load_plaid,
     load_tecator,
     load_unit_test,
+    load_mitdb,
+    load_seatbelts,
+    load_yahoo,
 )
 
 UNIVARIATE_PROBLEMS = [
@@ -73,3 +76,26 @@ def test_load_numpy2d_multivariate_raises(loader):
     """Test that multivariate and/or unequal length raise the correct error."""
     with pytest.raises(ValueError, match="attempting to load into a numpy2d"):
         X, y = loader(return_type="numpy2d")
+
+def test_load_yahoo():
+    """Test that load_yahoo returns two pd.Series objects."""
+    y, X = load_yahoo()
+    assert isinstance(y, pd.Series)
+    assert isinstance(X, pd.Series)
+    assert len(y) == len(X)
+
+
+def test_load_mitdb():
+    """Test that load_mitdb returns two pd.Series objects."""
+    y, X = load_mitdb()
+    assert isinstance(y, pd.Series)
+    assert isinstance(X, pd.Series)
+    assert len(y) == len(X)
+
+
+def test_load_seatbelts():
+    """Test that load_seatbelts returns two pd.Series objects."""
+    y, X = load_seatbelts()
+    assert isinstance(y, pd.Series)
+    assert isinstance(X, pd.Series)
+    assert len(y) == len(X)

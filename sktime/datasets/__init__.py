@@ -64,6 +64,9 @@ __all__ = [
     "OSULeaf",
     "PLAID",
     "UCRUEADataset",
+    "load_mitdb",
+    "load_seatbelts",
+    "load_yahoo",
 ]
 
 from sktime.datasets._data_io import (
@@ -113,6 +116,9 @@ from sktime.datasets._single_problem_loaders import (
     load_unit_test,
     load_unit_test_tsf,
     load_uschange,
+    load_mitdb,
+    load_seatbelts,
+    load_yahoo,
 )
 from sktime.datasets.base import BaseDataset
 from sktime.datasets.classification import (
