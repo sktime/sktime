@@ -372,6 +372,7 @@ class BaseBenchmark:
         ------
         TypeError
             If:
+
             - a tuple has unsupported length (e.g., not length 3 for task tuples)
             - a task tuple does not contain exactly one dataset, metric, and splitter
             - duplicate scitypes are present in a task tuple
