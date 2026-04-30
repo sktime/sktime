@@ -75,6 +75,14 @@ Window-based Anomaly Detection
 
     SubLOF
 
+.. currentmodule:: sktime.detection.lstm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LSTMAD
+
 Foundation Model-based Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
