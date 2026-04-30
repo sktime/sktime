@@ -149,16 +149,23 @@ class EnbPIForecaster(BaseForecaster):
 
         super().__init__()
 
-        if bootstrap_transformer.get_tag("object_type") == "bootstrap":
-            self.bootstrap_transformer_ = TSBootstrapAdapter(
-                bootstrap_transformer, return_indices=True
-            )
-        else:
-            self.bootstrap_transformer_ = bootstrap_transformer
-
         if self.bootstrap_transformer is None:
             mbb = MovingBlockBootstrapTransformer(return_indices=True)
             self.bootstrap_transformer_ = mbb
+        else:
+            is_bootstrap = False
+            if hasattr(self.bootstrap_transformer, "get_tag"):
+                is_bootstrap = self.bootstrap_transformer.get_tag("object_type", raise_error=False) == "bootstrap"
+
+            if is_bootstrap:
+                self.bootstrap_transformer_ = TSBootstrapAdapter(
+                    self.bootstrap_transformer.clone(), return_indices=True
+                )
+            else:
+                if hasattr(self.bootstrap_transformer, "clone"):
+                    self.bootstrap_transformer_ = self.bootstrap_transformer.clone()
+                else:
+                    self.bootstrap_transformer_ = clone(self.bootstrap_transformer)
 
         bs_capable = self.bootstrap_transformer_.get_tag(
             "capability:bootstrap_index", False, raise_error=False
