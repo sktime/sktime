@@ -160,10 +160,9 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         self.nan_predict_policy = _check_nan_policy_option(self.nan_predict_policy)
 
         self._forecasters = self._check_estimators(
-            forecasters, "forecasters", clone_ests=False
+            self.forecasters, "forecasters", clone_ests=False
         )
-        self.forecasters_ = self._check_estimators(forecasters, "forecasters")
-
+        self.forecasters_ = self._check_estimators(self.forecasters, "forecasters")
 
     def _validate_y_pred(self, y_pred):
         if self.nan_predict_policy in ("warn", "raise"):

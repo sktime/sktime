@@ -126,7 +126,7 @@ class ForecastByLevel(_DelegatedForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        self.forecaster_ = forecaster.clone()
+        self.forecaster_ = self.forecaster.clone()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

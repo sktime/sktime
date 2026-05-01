@@ -173,6 +173,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         This method should be used for setting dynamic tags only.
         """
+        forecasters = self.forecasters
         if isinstance(forecasters, BaseForecaster):
             tags_to_clone = [
                 "requires-fh-in-fit",

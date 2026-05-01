@@ -142,8 +142,9 @@ class BaggingForecaster(BaseForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
+        bootstrap_transformer = self.bootstrap_transformer
         self.bootstrap_transformer_ = self._check_transformer(bootstrap_transformer)
-        self.forecaster_ = self._check_forecaster(forecaster)
+        self.forecaster_ = self._check_forecaster(self.forecaster)
 
     def _check_transformer(self, transformer):
         """Check if the transformer is a valid transformer for BaggingForecaster.

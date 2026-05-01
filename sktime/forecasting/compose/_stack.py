@@ -77,6 +77,11 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
         super().__init__(forecasters=forecasters, n_jobs=n_jobs)
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         self._anytagis_then_set("capability:exogenous", True, False, forecasters)
         self._anytagis_then_set("capability:missing_values", False, True, forecasters)
         self._anytagis_then_set("fit_is_empty", False, True, forecasters)
