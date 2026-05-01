@@ -186,6 +186,8 @@ class AutoREG(_StatsModelsAdapter):
         for param, value in self._fitted_forecaster.params.items():
             setattr(self, str(param) + "_", value)
             self._fitted_param_names = self._fitted_param_names + (str(param),)
+
+        self._y_index0 = self._y.index[0]
         return self
 
     def _predict(self, fh, X=None):
@@ -216,7 +218,7 @@ class AutoREG(_StatsModelsAdapter):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
 
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        start, end = fh.to_absolute_int(self._y_index0, self.cutoff)[[0, -1]]
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute_index(self.cutoff)
@@ -224,7 +226,7 @@ class AutoREG(_StatsModelsAdapter):
         y_pred = self._fitted_forecaster.predict(
             start=start, end=end, exog=self._X, exog_oos=X, dynamic=self.dynamic
         )
-        y_pred.name = self._y.name
+        y_pred.name = self._get_varnames()[0]
 
         return y_pred.loc[valid_indices]
         # implement here
