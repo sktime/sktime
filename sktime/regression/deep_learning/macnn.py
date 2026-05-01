@@ -6,7 +6,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.macnn import MACNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MACNNRegressor(BaseDeepRegressor):
@@ -21,6 +20,9 @@ class MACNNRegressor(BaseDeepRegressor):
     padding : str, optional (default="same")
         The type of padding to be provided in MACNN Blocks. Accepts
         all the string values that keras.layers supports.
+        Note: For Conv1D layers within MACNN Blocks, padding is always set to "same"
+        to ensure consistent output lengths for multi-scale convolutions.
+        This parameter only affects the pooling layers between MACNN Blocks.
     pool_size : int, optional (default=3)
         A single value representing pooling windows which are applied
         between two MACNN Blocks.
@@ -100,8 +102,6 @@ class MACNNRegressor(BaseDeepRegressor):
         activation="linear",
         activation_hidden="relu",
     ):
-        _check_dl_dependencies(severity="error")
-
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.n_epochs = n_epochs
@@ -123,6 +123,16 @@ class MACNNRegressor(BaseDeepRegressor):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self.history = None
         self._network = MACNNNetwork(
             activation=self.activation_hidden,
@@ -135,6 +145,8 @@ class MACNNRegressor(BaseDeepRegressor):
             reduction=self.reduction,
             random_state=self.random_state,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -244,6 +256,7 @@ class MACNNRegressor(BaseDeepRegressor):
             "n_epochs": 5,
             "batch_size": 3,
             "filter_sizes": (2, 4, 8),
+            "padding": "valid",
             "repeats": 1,
         }
 
@@ -253,6 +266,7 @@ class MACNNRegressor(BaseDeepRegressor):
             "reduction": 8,
             "repeats": 1,
             "random_state": 1,
+            "padding": "same",
         }
 
         return [params1, params2]

@@ -570,6 +570,46 @@ class tests__skip_by_name(_BaseTag):
     }
 
 
+class tests__python_dependencies(_BaseTag):
+    """Python package dependency requirement specifiers for tests (PEP 440).
+
+    Part of packaging metadata for the object.
+
+    - String name: ``"tests:python_dependencies"``
+    - Private tag, developer and framework facing
+    - Values: str or list of str, each str a PEP 440 compliant dependency specifier
+    - Example: ``"numpy>=1.20.0"``
+    - Example 2: ``["numpy>=1.20.0", "pandas>=1.3.0"]``
+    - Default: no requirements beyond ``sktime`` core dependencies (``None``)
+
+    ``sktime``'s CI framework regularly tests estimators in pull request.
+
+    The ``tests:python_dependencies`` tag specifies additional environment dependencies
+    required for testing the object, in a VM setup, via the ``tests:vm`` tag.
+
+    These dependencies will not be highlighted to the user when using the
+    estimator, and are used only in the CI testing setup.
+
+    This tag should be used, for example, if the tests instances in ``get_test_params``
+    requre additional packages not required for the main functionality of the object.
+
+    The ``tests:python_dependencies`` tag of an object is a string,
+    a list of strings, or a nested list of strings, with same format, convention,
+    and meaning as ``python_dependencies``.
+
+    It is developer facing only, and is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:python_dependencies",
+        "parent_type": "object",
+        "tag_type": ("list", "str"),
+        "short_descr": "additional python dependencies for testing the estimator, as str or list of str (PEP 440)",  # noqa: E501
+        "user_facing": False,
+    }
+
+
 # Estimator tags
 # --------------
 
@@ -998,6 +1038,42 @@ class capability__pred_int__insample(_BaseTag):
         "parent_type": "forecaster",
         "tag_type": "bool",
         "short_descr": "can the forecaster make in-sample predictions in predict_interval/quantiles?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__pretrain(_BaseTag):
+    """Capability: the forecaster can use pretraining for global learning.
+
+    - String name: ``"capability:pretrain"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    The ``capability:pretrain`` tag indicates whether a forecaster supports
+    pretraining on global/panel data before being fit to specific time series.
+
+    If the tag is ``True``, the forecaster implements the ``pretrain`` method
+    and can be used in the following workflow:
+
+    1. ``forecaster.pretrain(y_panel)`` - learn from panel/global data
+    2. ``forecaster.fit(y_series)`` - set context or fine-tune on specific series
+    3. ``forecaster.predict(fh)`` - make predictions
+
+    The ``pretrain`` method sets the forecaster state to ``"pretrained"``,
+    and subsequent calls to ``fit`` will preserve the pretrained weights
+    (enabling fine-tuning) rather than resetting the estimator.
+
+    If the tag is ``False``, the forecaster does not support pretraining,
+    and calling ``pretrain`` will have no effect.
+    """
+
+    _tags = {
+        "tag_name": "capability:pretrain",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can use pretrain for global learning",
         "user_facing": True,
     }
 
@@ -3226,8 +3302,8 @@ class visual_block_kind(_BaseTag):
     in a jupyter notebook.
 
     Meta-estimators are composites with a variable number of sub-estimators,
-    such as ``ForecastingPipeline`` or ``ColumnTransformer``, inheriting from
-    ``_HeterogenousMetaEstimator``.
+    such as ``ForecastingPipeline`` or ``ColumnEnsembleTransformer``,
+    inheriting from ``_HeterogenousMetaEstimator``.
 
     The html display is triggered by calling the ``_repr_html_`` method on any
     ``scikit-base`` estimator, which returns a html representation of the estimator,
@@ -3485,6 +3561,15 @@ ESTIMATOR_TAG_REGISTER = [
         "which scitypes does X internally support?",
     ),
     (
+        "scitype:y",  # -> capability:multivariate
+        # the scitype:y tag should be kept but for separate use,
+        # a list of the internal scitypes supported by the estimator
+        # or the base scitype of the target data
+        ["param_est", "metric"],
+        "str",
+        "what scitype of y does the object support? must be scitype string",
+    ),
+    (
         "scitype:instancewise",
         "transformer",
         "bool",
@@ -3648,15 +3733,6 @@ ESTIMATOR_TAG_REGISTER = [
         "estimator",
         "bool",
         "can the estimator handle missing data (NA, np.nan) in inputs?",
-    ),
-    (
-        "scitype:y",  # -> capability:multivariate
-        # the scitype:y tag should be kept but for separate use,
-        # a list of the internal scitypes supported by the estimator
-        # or the base scitype of the target data
-        "forecaster",
-        ("str", ["univariate", "multivariate", "both"]),
-        "which series type does the forecaster support? multivariate means >1 vars",
     ),
     # ---------------------------
     # to be deprecated or removed
