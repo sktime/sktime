@@ -1992,6 +1992,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         This method should be used for setting dynamic tags only.
         """
+        pooling = self.pooling
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -2858,6 +2859,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
+        estimator = self.estimator
         # self._est_type encodes information what type of estimator is passed
         if hasattr(estimator, "get_tags"):
             _est_type = estimator.get_tag("object_type", "regressor", False)
