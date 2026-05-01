@@ -144,6 +144,7 @@ class MyForecaster(BaseForecaster):
         # do not put anything else in __init__,
         # use __post_init__ for any further initialization logic
 
+    # todo: add any post-init logic here, otherwise delete this method
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 
