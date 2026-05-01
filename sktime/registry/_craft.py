@@ -54,6 +54,31 @@ def _extract_class_names(spec):
 def craft(spec):
     """Instantiate an object from the specification string.
 
+    The ``craft`` utility can be used to deserialize an estimator specification string,
+    including composites such as pipelines.
+
+    It takes a specification string and returns an ``sktime`` estimator, class,
+    or object, corresponding to that string.
+
+    Specification strings can be:
+
+    * simple expressions such as ``"NaiveForecaster"`` or ``"NaiveForecaster(sp=2)"``
+    * compositions such as ``"Deseasonalizer() * NaiveForecaster()"``
+    * a longer block of code, closing with a return statement, e.g., the string block
+
+    .. code-block:: python
+
+        deseason = Deseasonalizer()
+        naive = NaiveForecaster()
+        return deseason * naive
+
+    The ``craft`` utility is useful as a serialization / deserialization pair,
+    together with ``str`` coercion (or commandline printing) of an
+    unfitted estimator.
+
+    ``craft`` recognizes estimators present in ``sktime`` and ``scikit-learn``,
+    and base python.
+
     Parameters
     ----------
     spec : str, sktime/skbase compatible object specification
@@ -69,6 +94,41 @@ def craft(spec):
     -------
     obj : skbase BaseObject descendant, constructed from ``spec``
         this will have the property that ``spec == str(obj)`` (up to formatting)
+
+    Examples
+    --------
+    >>> from sktime.registry import craft
+
+    Example 1: simple estimator
+
+    * serialized as the string ``"NaiveForecaster(sp=2)"``
+    * deserialized as the estimator ``NaiveForecaster(sp=2)``
+
+    >>> spec = "NaiveForecaster(sp=2)"
+    >>> est = craft(spec)
+    >>> print(est)
+    NaiveForecaster(sp=2)
+
+    Example 2: composite estimator
+
+    * serialized as the string ``"Deseasonalizer() * NaiveForecaster()"``
+    * deserialized as the estimator ``Deseasonalizer() * NaiveForecaster()``,
+      same as ``ForecastingPipeline([Deseasonalizer(), NaiveForecaster()])``
+
+    >>> spec = "Deseasonalizer() * NaiveForecaster()"
+    >>> est = craft(spec)
+
+    Example 3: longer code block
+
+    * serialized as a code block with assignments and return statement
+    * deserialized as the estimator defined in the return statement
+
+    >>> spec = '''
+    ... deseason = Deseasonalizer()
+    ... naive = NaiveForecaster()
+    ... return deseason * naive
+    ... '''
+    >>> est = craft(spec)
     """
     # retrieve all estimators from sktime and sklearn for namespace resolution
     register_sktime = dict(all_estimators())  # noqa: F841
@@ -97,7 +157,8 @@ def build_obj():
 def deps(spec, include_test_deps=False):
     """Get PEP 440 dependency requirements for a craft spec.
 
-    This will result in a list of PEP 440 compatible requirement string.
+    The ``deps`` utility returns a PEP 440 compatible requirement string
+    required to construct the deserialization via ``craft``.
 
     In case the spec includes estimators with disjunctions in their requirement
     specifications, the first disjunctive requirement is returned, i.e.,
@@ -171,6 +232,12 @@ def deps(spec, include_test_deps=False):
 
 def imports(spec):
     """Get import code block for a craft spec.
+
+    The ``imports`` utility returns a full python import block,
+    as a string block, required for importing all estimators and objects occurring
+    in the ``spec`` block.
+
+    The ``imports`` utility recognizes ``sktime`` and ``scikit-learn`` objects.
 
     Parameters
     ----------
