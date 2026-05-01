@@ -446,7 +446,6 @@ class AutoETS(_StatsModelsAdapter):
                 callback=self.callback,
                 return_params=self.return_params,
             )
-            self._y_index0 = self._y.index[0]
 
     def _predict(self, fh, X):
         """Make forecasts.

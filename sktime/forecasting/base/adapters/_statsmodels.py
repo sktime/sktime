@@ -62,6 +62,8 @@ class _StatsModelsAdapter(BaseForecaster):
         if isinstance(y, pd.Series):
             self._y_name = y.name
 
+        self._y_index0 = y.index[0]
+
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
         if isinstance(y, pd.Series) and pd.api.types.is_integer_dtype(y.index):
