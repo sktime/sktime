@@ -451,7 +451,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here. If using a pre-trained
             model, ensure that the prediction_length of the model matches the passed fh.
         y : sktime time series object, required
