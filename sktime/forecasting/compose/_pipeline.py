@@ -1444,7 +1444,7 @@ class ForecastX(BaseForecaster):
         * if "use_forecast", then ``forecaster_y`` uses the ``X`` predicted by
         ``forecaster_X`` as exogenous features in ``fit``
 
-    forecaster_X_exogenous : optional, str, one of "None" (default), or "complement",
+    forecaster_X_exogeneous : optional, str, one of "None" (default), or "complement",
         or ``pandas.Index`` coercible
 
         * if "None", then ``forecaster_X`` uses no exogenous data
@@ -1529,7 +1529,7 @@ class ForecastX(BaseForecaster):
         behaviour="update",
         columns=None,
         fit_behaviour="use_actual",
-        forecaster_X_exogenous="None",
+        forecaster_X_exogeneous="None",
         predict_behaviour="use_forecasts",
     ):
         if fit_behaviour not in ["use_actual", "use_forecast"]:
@@ -1551,13 +1551,13 @@ class ForecastX(BaseForecaster):
         self.fh_X = fh_X
         self.behaviour = behaviour
         self.columns = columns
-        if isinstance(forecaster_X_exogenous, str):
-            if forecaster_X_exogenous not in ["None", "complement"]:
+        if isinstance(forecaster_X_exogeneous, str):
+            if forecaster_X_exogeneous not in ["None", "complement"]:
                 raise ValueError(
-                    'forecaster_X_exogenous must be one of "None", "complement",'
+                    'forecaster_X_exogeneous must be one of "None", "complement",'
                     "or a pandas.Index coercible"
                 )
-        self.forecaster_X_exogenous = forecaster_X_exogenous
+        self.forecaster_X_exogeneous = forecaster_X_exogeneous
 
         if predict_behaviour not in ["use_forecasts", "use_actuals"]:
             raise ValueError(
@@ -1742,7 +1742,7 @@ class ForecastX(BaseForecaster):
 
     def _get_X_for_fcX(self, X):
         """Shorthand to obtain X for forecaster_X, depending on parameters."""
-        ixx = self.forecaster_X_exogenous
+        ixx = self.forecaster_X_exogeneous
         if X is None or ixx is None or ixx == "None":
             return None
 
@@ -1979,7 +1979,7 @@ class ForecastX(BaseForecaster):
         params3 = {
             "forecaster_y": fy,
             "fit_behaviour": "use_forecast",
-            "forecaster_X_exogenous": "complement",
+            "forecaster_X_exogeneous": "complement",
         }
 
         params4 = {"forecaster_y": fy, "predict_behaviour": "use_actuals"}
