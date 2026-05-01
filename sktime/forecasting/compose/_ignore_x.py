@@ -53,7 +53,7 @@ class IgnoreX(_DelegatedForecaster):
 
         This method should be used for setting dynamic tags only.
         """
-        self._set_delegated_tags(self.forecaster_)
+        self._set_delegated_tags(self.forecaster)
         self.set_tags(**{"capability:exogenous": not self.ignore_x})
 
     def __post_init__(self):
@@ -65,7 +65,7 @@ class IgnoreX(_DelegatedForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        self.forecaster_ = forecaster.clone()
+        self.forecaster_ = self.forecaster.clone()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
