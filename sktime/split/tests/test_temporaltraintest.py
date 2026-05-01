@@ -31,7 +31,7 @@ def _check_train_test_split_y(fh, split):
     assert len(train) > 0
 
     cutoff = train.index[-1]
-    np.testing.assert_array_equal(test.index, fh.to_absolute(cutoff).to_numpy())
+    np.testing.assert_array_equal(test.index, fh.to_absolute_index(cutoff))
 
 
 @pytest.mark.skipif(

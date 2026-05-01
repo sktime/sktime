@@ -234,7 +234,12 @@ class TimeLLMForecaster(BaseForecaster):
             X_tensor, x_mark_enc=None, x_mark_dec=None, x_dec=None
         )
 
-        forecast_index = fh.to_absolute(self.cutoff).to_pandas()
+        # forecast_index = fh.to_absolute(self.cutoff).to_pandas()
+        # above line changed to below line after forecasting horizon v2 rework
+        # In the new FH, `to_pandas()` returns a `PeriodIndex` for absolute FH,
+        # which may not match the cutoff's type (e.g., DatetimeIndex cutoff).
+        # `to_absolute_index(cutoff)` returns an Index matching the cutoff type.
+        forecast_index = fh.to_absolute_index(self.cutoff)
 
         y_pred = pd.DataFrame(
             data=res.detach().cpu().numpy().flatten(),

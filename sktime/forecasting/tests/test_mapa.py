@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base._fh_v2 import ForecastingHorizon
 from sktime.forecasting.mapa import MAPAForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster

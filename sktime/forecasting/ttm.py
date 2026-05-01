@@ -427,7 +427,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
         if fh is not None:
             _config["prediction_length"] = max(
-                *(fh.to_relative(self._cutoff)._values),
+                fh.to_relative(self._cutoff).max(),
                 _config["prediction_length"],
             )
 
@@ -621,10 +621,17 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             )
             ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
 
+            # idx = (
+            #     ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
+            #     .to_absolute(self._cutoff)
+            #     ._values.tolist()
+            #     * pred.shape[0]
+            # )
+            # above line changed to below after Forecasting Horizon v2 rework
             idx = (
                 ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
-                .to_absolute(self._cutoff)
-                ._values.tolist()
+                .to_absolute_index(self._cutoff)
+                .tolist()
                 * pred.shape[0]
             )
             index = pd.MultiIndex.from_arrays(
@@ -632,10 +639,14 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 names=_y.index.names,
             )
         else:
-            index = (
-                ForecastingHorizon(range(1, pred.shape[1] + 1))
-                .to_absolute(self._cutoff)
-                ._values
+            # index = (
+            #     ForecastingHorizon(range(1, pred.shape[1] + 1))
+            #     .to_absolute(self._cutoff)
+            #     ._values
+            # )
+            # above line changed to below after Forecasting Horizon v2 rework
+            index = ForecastingHorizon(range(1, pred.shape[1] + 1)).to_absolute_index(
+                self._cutoff
             )
 
         pred = pd.DataFrame(

@@ -369,7 +369,12 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         lagger = Lag(1, keep_column_names=True, freq=freq)
 
-        expected_index = fh.to_absolute(cutoff).to_pandas()
+        # expected_index = fh.to_absolute(cutoff).to_pandas()
+        # above line changed to below line after forecasting horizon v2 rework
+        # In the new FH, `to_pandas()` returns a `PeriodIndex` for absolute FH,
+        # which may not match the cutoff's type (e.g., DatetimeIndex cutoff).
+        # `to_absolute_index(cutoff)` returns an Index matching the cutoff type.
+        expected_index = fh.to_absolute_index(cutoff)
         if strategy == "last" and sp == 1:
             y_old = lagger.fit_transform(_y)
             y_new = pd.DataFrame(index=expected_index, columns=[0], dtype="float64")
@@ -780,8 +785,7 @@ class NaiveVariance(BaseForecaster):
         for a, error in zip(alpha, errors):
             pred_quantiles[(var_name, a)] = y_pred + error
 
-        fh_absolute = fh.to_absolute(self.cutoff)
-        pred_quantiles.index = fh_absolute.to_pandas()
+        pred_quantiles.index = fh.to_absolute_index(self.cutoff)
 
         return pred_quantiles
 
@@ -819,8 +823,7 @@ class NaiveVariance(BaseForecaster):
             )
 
         fh_relative = fh.to_relative(self.cutoff)
-        fh_absolute = fh.to_absolute(self.cutoff)
-        fh_absolute_ix = fh_absolute.to_pandas()
+        fh_absolute_ix = fh.to_absolute_index(self.cutoff)
 
         if cov:
             fh_size = len(fh)

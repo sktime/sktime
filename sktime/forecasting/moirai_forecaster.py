@@ -20,7 +20,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     checkpoint_path : str, default=None
         Path to the checkpoint of the model. Supported weights are available at [1]_.
     context_length : int, default=200
-        Length of the context window, time points the model will take as input for inference.
+        Length of the context window, time points the model will take as input for
+        inference.
     patch_size : int, default=32
         Time steps to perform patching with.
     num_samples : int, default=100
@@ -236,9 +237,9 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        self.model.hparams.prediction_length = max(fh._values)
+        self.model.hparams.prediction_length = fh.max()
 
-        if min(fh._values) < 0:
+        if fh.min() < 0:
             raise NotImplementedError(
                 "The MORAI adapter is not supporting insample predictions."
             )

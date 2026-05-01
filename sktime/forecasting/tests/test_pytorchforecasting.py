@@ -7,7 +7,7 @@ import pytest
 from sklearn.model_selection import train_test_split
 
 from sktime.datatypes._utilities import get_cutoff
-from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base._fh_v2 import ForecastingHorizon
 from sktime.forecasting.pytorchforecasting import (
     PytorchForecastingDeepAR,
     PytorchForecastingNBeats,
