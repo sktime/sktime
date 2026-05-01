@@ -48,7 +48,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html
     """  # noqa: E501
 
     _tags = {
@@ -73,7 +73,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             "pd_multiindex_hier",
             "pd.DataFrame",
         ],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "capability:missing_values": False,
@@ -191,7 +191,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         y : sktime time series object
             guaranteed to have a single column/variable
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : sktime time series object, optional (default=None)
             guaranteed to have at least one column/variable
             Exogeneous time series to fit to.
@@ -265,7 +265,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -355,7 +355,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
