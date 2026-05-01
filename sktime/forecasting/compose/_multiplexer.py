@@ -123,21 +123,7 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
 
         This method should be used for setting dynamic tags only.
         """
-        self._set_delegated_tags()
-        self.set_tags(**{"fit_is_empty": False})
-        # this ensures that we convert in the inner estimator, not in the multiplexer
-        self.set_tags(**{"y_inner_mtype": ALL_TIME_SERIES_MTYPES})
-        self.set_tags(**{"X_inner_mtype": ALL_TIME_SERIES_MTYPES})
-
-    def __post_init__(self):
-        """Post-init constructor logic, can be used by inheriting classes.
-
-        This method should be used for:
-
-        * parameter validation
-        * initialization logic beyond self.param = param
-        * any soft dependency imports in the constructor
-        """
+        # setting forecaster early to allow tag setting
         self._check_estimators(
             self.forecasters,
             attr_name="forecasters",
@@ -145,6 +131,12 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
             clone_ests=False,
         )
         self._set_forecaster()
+
+        self._set_delegated_tags()
+        self.set_tags(**{"fit_is_empty": False})
+        # this ensures that we convert in the inner estimator, not in the multiplexer
+        self.set_tags(**{"y_inner_mtype": ALL_TIME_SERIES_MTYPES})
+        self.set_tags(**{"X_inner_mtype": ALL_TIME_SERIES_MTYPES})
 
     @property
     def _forecasters(self):

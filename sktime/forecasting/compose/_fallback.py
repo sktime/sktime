@@ -142,6 +142,11 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
 
         This method should be used for setting dynamic tags only.
         """
+        # writing self._forecasters early to allow tag setting
+        self._forecasters = self._check_estimators(
+            self.forecasters, "forecasters", clone_ests=False
+        )
+
         self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
         self._anytagis_then_set("capability:pred_int", False, True, self._forecasters)
 
@@ -159,9 +164,6 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
 
         self.nan_predict_policy = _check_nan_policy_option(self.nan_predict_policy)
 
-        self._forecasters = self._check_estimators(
-            self.forecasters, "forecasters", clone_ests=False
-        )
         self.forecasters_ = self._check_estimators(self.forecasters, "forecasters")
 
     def _validate_y_pred(self, y_pred):
