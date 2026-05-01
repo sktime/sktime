@@ -224,7 +224,7 @@ class MyForecaster(BaseForecaster):
         """
         # todo: if tags of estimator depend on component tags, set these here
         #  typically only needed if estimator is a composite
-        #  tags set here apply to the incstance, and override the class tags
+        #  tags set here apply to the instance, and override the class tags
         #
         # example 1: conditional setting of a tag based on parameter foo
         # if self.foo == 42:
