@@ -278,6 +278,8 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "property:randomness": "stochastic",
+        "capability:random_state": False,
         # Tests and CI tags
         # -----------------
         "tests:vm": True,

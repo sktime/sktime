@@ -285,6 +285,8 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "property:randomness": "stochastic",
+        "capability:random_state": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,
