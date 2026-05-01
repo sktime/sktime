@@ -28,7 +28,7 @@ class FhPlexForecaster(BaseForecaster):
     forecaster : sktime compatible forecaster
     fh_params : dict, list, callable, or str that eval-defines a callable
         specifies forecaster to use per fh element
-        
+
         * dict: keys = fh elements, values = param dict for forecaster
         * list: i-th entry is forecaster param dict for i-th fh element
         * callable: maps fh element to forecaster param dict

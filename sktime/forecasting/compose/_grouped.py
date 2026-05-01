@@ -112,11 +112,6 @@ class ForecastByLevel(_DelegatedForecaster):
         self.set_tags(**{"y_inner_mtype": mtypes})
         self.set_tags(**{"X_inner_mtype": mtypes})
 
-    def __dynamic_tags__(self):
-        """Dynamic tag setter logic for setting tag values condition on parameters.
-
-        This method should be used for setting dynamic tags only.
-        """
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 

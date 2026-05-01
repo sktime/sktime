@@ -484,7 +484,6 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         # Call this function for the chosen forecaster
         return self.chosen_forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
 
-
     def _predict_var(self, fh, X=None, cov=False):
         """Forecast variance at future horizon.
 
@@ -523,7 +522,6 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
                 Note: no covariance forecasts are returned between different variables.
         """
         return self.chosen_forecaster_.predict_var(fh=fh, X=X, cov=cov)
-
 
     def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.

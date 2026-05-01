@@ -82,6 +82,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
         This method should be used for setting dynamic tags only.
         """
+        forecasters = self._get_forecaster_list()
         self._anytagis_then_set("capability:exogenous", True, False, forecasters)
         self._anytagis_then_set("capability:missing_values", False, True, forecasters)
         self._anytagis_then_set("fit_is_empty", False, True, forecasters)
