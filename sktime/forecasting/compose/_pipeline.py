@@ -440,6 +440,9 @@ class ForecastingPipeline(_Pipeline):
 
         This method should be used for setting dynamic tags only.
         """
+        # setting self.steps_ early to allow self.forecaster_ property etc
+        self.steps_ = self._check_steps(self.steps, allow_postproc=False)
+
         tags_to_clone = [
             "capability:exogenous",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
@@ -452,17 +455,6 @@ class ForecastingPipeline(_Pipeline):
         #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
-
-    def __post_init__(self):
-        """Post-init constructor logic, can be used by inheriting classes.
-
-        This method should be used for:
-
-        * parameter validation
-        * initialization logic beyond self.param = param
-        * any soft dependency imports in the constructor
-        """
-        self.steps_ = self._check_steps(self.steps, allow_postproc=False)
 
     @property
     def forecaster_(self):
@@ -907,6 +899,9 @@ class TransformedTargetForecaster(_Pipeline):
 
         This method should be used for setting dynamic tags only.
         """
+        # setting self.steps_ early to allow self.forecaster_ property etc
+        self.steps_ = self._check_steps(self.steps, allow_postproc=True)
+
         # set the tags based on forecaster
         tags_to_clone = [
             "capability:exogenous",  # does estimator ignore the exogeneous X?
@@ -935,17 +930,6 @@ class TransformedTargetForecaster(_Pipeline):
 
         if any_t_use_y:
             self.set_tags(**{"capability:exogenous": True})
-
-    def __post_init__(self):
-        """Post-init constructor logic, can be used by inheriting classes.
-
-        This method should be used for:
-
-        * parameter validation
-        * initialization logic beyond self.param = param
-        * any soft dependency imports in the constructor
-        """
-        self.steps_ = self._check_steps(self.steps, allow_postproc=True)
 
     @property
     def forecaster_(self):
