@@ -31,10 +31,11 @@ class TestAllCatalogues(CatalogueFixtureGenerator, QuickTester):
         assert all(isinstance(c, str) for c in cats)
 
     def test_get_all_returns_list(self, estimator_instance):
-        """Test that catalogue.get('all') returns a flat list of names."""
+        """Test that catalogue.get('all') returns a flat list of names or dicts."""
         items = estimator_instance.get("all")
         assert isinstance(items, list)
-        assert all(isinstance(i, str) for i in items)
+        # Items can now be strings or dictionaries (for custom estimator IDs)
+        assert all(isinstance(i, (str, dict)) for i in items)
 
     def test_get_by_category(self, estimator_instance):
         """Test that catalogue.get(category) returns items only from that category."""
@@ -42,7 +43,7 @@ class TestAllCatalogues(CatalogueFixtureGenerator, QuickTester):
         for cat in cats:
             items = estimator_instance.get(cat)
             assert isinstance(items, list)
-            assert all(isinstance(i, str) for i in items)
+            assert all(isinstance(i, (str, dict)) for i in items)
 
     def test_get_invalid_category_raises(self, estimator_instance):
         """Test that invalid category names raise KeyError."""
@@ -50,14 +51,16 @@ class TestAllCatalogues(CatalogueFixtureGenerator, QuickTester):
             estimator_instance.get("not-a-real-category")
 
     def test_as_object_returns_instances(self, estimator_instance):
-        """Test `as_object=True` returns instantiated objects."""
+        """Test `as_object=True` returns instantiated objects or dicts of objects."""
         cats = estimator_instance.available_categories()
         for cat in cats:
             objs = estimator_instance.get(cat, as_object=True)
             assert isinstance(objs, list)
-            assert len(objs) > 0 or objs == []
             for o in objs:
                 assert not isinstance(o, str)
+                if isinstance(o, dict):
+                    # Ensure the dictionary values are instantiated objects, not strings
+                    assert all(not isinstance(v, str) for v in o.values())
 
     def test_as_object_caching(self, estimator_instance):
         """Repeated calls to get(as_object=True) should return cached instances."""
@@ -76,5 +79,13 @@ class TestAllCatalogues(CatalogueFixtureGenerator, QuickTester):
         """Test __contains__ reports presence correctly."""
         items = estimator_instance.get("all")
         for it in items:
-            assert it in estimator_instance
+            if isinstance(it, dict):
+                # The dictionary itself should be found
+                assert it in estimator_instance
+                # Its individual custom IDs and estimator names should also be found
+                for k, v in it.items():
+                    assert k in estimator_instance
+                    assert v in estimator_instance
+            else:
+                assert it in estimator_instance
         assert "definitely-not-present" not in estimator_instance
