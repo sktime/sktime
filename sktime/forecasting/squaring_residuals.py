@@ -70,8 +70,6 @@ class SquaringResiduals(BaseForecaster):
     ----------
     forecaster_ : sktime forecaster, BaseForecaster descendant
         Fitted estimator to which probabilistic forecasts are being added
-    residual_forecaster_ : sktime forecaster, BaseForecaster descendant
-        Fitted estimator which is fitted to the residuals of forecaster
 
     Examples
     --------
@@ -152,13 +150,13 @@ class SquaringResiduals(BaseForecaster):
         )
 
         if self.forecaster is None:
-            self.forecaster_ = NaiveForecaster()
+            self._forecaster = NaiveForecaster()
         else:
-            self.forecaster_ = self.forecaster.clone()
+            self._forecaster = self.forecaster
         if self.residual_forecaster is None:
             self._residual_forecaster = NaiveForecaster()
         else:
-            self._residual_forecaster = self._residual_forecaster.clone()
+            self._residual_forecaster = self.residual_forecaster.clone()
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -193,6 +191,7 @@ class SquaringResiduals(BaseForecaster):
         """
         fh_rel = fh.to_relative(self.cutoff)
         self._res_forecasters = {}
+        self.forecaster_ = self._forecaster.clone()
 
         y = convert_to(y, "pd.Series")
         cv = ExpandingWindowSplitter(initial_window=self.initial_window, fh=fh_rel)
