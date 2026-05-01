@@ -285,8 +285,27 @@ class BaseDetector(BaseEstimator):
             * If ``task`` is "segmentation", the values are integer labels of the
               segments. Possible labels are integers starting from 0.
         """
-        y_sparse = self.predict(X)
-        y_dense = self.sparse_to_dense(y_sparse, pd.RangeIndex(len(X)))
+
+        if getattr(self, "labels", None) == "score":
+            y_sparse = self._predict(self._check_X(X))  # DIRECT CALL
+        else:
+            y_sparse = self.predict(X)
+
+        # FIX: skip sparse_to_dense for score outputs
+        if getattr(self, "labels", None) == "score":
+
+            if hasattr(X, "index"):
+                y_sparse.index = X.index
+
+            return self._coerce_to_df(y_sparse, columns=["labels"])
+
+        # default behavior
+        if hasattr(X, "index"):
+            index = X.index
+        else:
+            index = pd.RangeIndex(len(X))
+
+        y_dense = self.sparse_to_dense(y_sparse, index)
         y_dense = self._coerce_to_df(y_dense, columns=["labels"])
         return y_dense
 
@@ -524,15 +543,25 @@ class BaseDetector(BaseEstimator):
             * If ``task`` is "segmentation", the values are integer labels of the
               segments. Possible labels are integers starting from 0.
         """
-        y_sparse = self.fit_predict(X, y=y)
 
-        # Handle both pandas and numpy inputs
+        if getattr(self, "labels", None) == "score":
+            self.fit(X, y=y)
+            y_sparse = self._predict(self._check_X(X))  # DIRECT CALL
+        else:
+            y_sparse = self.fit_predict(X, y=y)
+
+        # FIX: detect score outputs (float) and skip sparse_to_dense
+        if hasattr(y_sparse, "dtype") and np.issubdtype(y_sparse.dtype, np.floating):
+
+            if hasattr(X, "index"):
+                y_sparse.index = X.index
+
+            return self._coerce_to_df(y_sparse, columns=["labels"])
+
+        # default behavior
         if hasattr(X, "index"):
-            # X is pandas DataFrame or Series
             index = X.index
         else:
-            # X is numpy array or other array-like without index
-            # Create a default integer index
             index = pd.RangeIndex(len(X))
 
         y_dense = self.sparse_to_dense(y_sparse, index=index)
@@ -547,7 +576,12 @@ class BaseDetector(BaseEstimator):
         * IntervalIndex containing segments -> DataFrame with "ilocs" column
         """
         if not isinstance(y, (pd.Series, pd.DataFrame)):
-            y = pd.DataFrame(y, columns=columns, dtype="int64")
+            # preserve float outputs if present, else enforce int
+            arr = np.asarray(y)
+            if np.issubdtype(arr.dtype, np.floating):
+                y = pd.DataFrame(y, columns=columns)
+            else:
+                y = pd.DataFrame(y, columns=columns, dtype="int64")
         if isinstance(y.index, pd.IntervalIndex):
             if isinstance(y, pd.Series):
                 y = pd.DataFrame(y.index, columns=columns)
@@ -557,8 +591,11 @@ class BaseDetector(BaseEstimator):
                 y = pd.concat([y_index, y], axis=1)
 
         if not isinstance(y, pd.DataFrame):
-            y = pd.DataFrame(y, columns=columns, dtype="int64")
-
+            arr = np.asarray(y)
+            if np.issubdtype(arr.dtype, np.floating):
+                y = pd.DataFrame(y, columns=columns)
+            else:
+                y = pd.DataFrame(y, columns=columns, dtype="int64")
         return y
 
     def _coerce_intervals_to_values(self, y):

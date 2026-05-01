@@ -115,17 +115,19 @@ class PyODDetector(BaseDetector):
         if len(X_np.shape) == 1:
             X_np = X_np.reshape(-1, 1)
 
-        Y_np = self.estimator_.predict(X_np)
-
         if labels == "score":
+            # return full score vector (dense, float)
             Y_val_np = self.estimator_.decision_function(X_np)
+            return pd.Series(Y_val_np)
+
         elif labels == "indicator":
-            Y_val_np = Y_np
+            # existing sparse anomaly indices
+            Y_np = self.estimator_.predict(X_np)
+            Y_loc = np.where(Y_np)
+            return pd.Series(Y_loc[0])
 
-        Y_loc = np.where(Y_np)
-        Y = pd.Series(Y_val_np[Y_loc])
-
-        return Y
+        else:
+            raise ValueError(f"Unsupported labels mode: {labels}")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
