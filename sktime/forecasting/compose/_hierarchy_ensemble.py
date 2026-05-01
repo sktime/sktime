@@ -168,6 +168,11 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.backend_params = backend_params
         super().__init__(forecasters=None)
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         if isinstance(forecasters, BaseForecaster):
             tags_to_clone = [
                 "requires-fh-in-fit",

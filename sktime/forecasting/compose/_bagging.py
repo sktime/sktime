@@ -111,23 +111,37 @@ class BaggingForecaster(BaseForecaster):
         self.sp = sp
         self.random_state = random_state
 
-        if bootstrap_transformer is None:
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.bootstrap_transformer is None:
             # if the transformer is None, this uses the statsmodels dependent
             # sktime.transformations.bootstrap.STLBootstrapTransformer
             #
             # done before the super call to trigger exceptions
             self.set_tags(**{"python_dependencies": "statsmodels"})
 
-        super().__init__()
-
         # set the tags based on forecaster
         tags_to_clone = [
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",
         ]
-        if forecaster is not None:
+        if self.forecaster is not None:
             self.clone_tags(self.forecaster, tags_to_clone)
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         self.bootstrap_transformer_ = self._check_transformer(bootstrap_transformer)
         self.forecaster_ = self._check_forecaster(forecaster)
 
