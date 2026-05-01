@@ -20,8 +20,8 @@ import pytest
 from sktime.datatypes import check_is_scitype, get_examples, mtype_to_scitype
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.compose import FitInTransform
-from sktime.transformations.panel.padder import PaddingTransformer
-from sktime.transformations.panel.tsfresh import (
+from sktime.transformations.padder import PaddingTransformer
+from sktime.transformations.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
@@ -760,7 +760,7 @@ def test_wrong_y_is_not_passed_to_transformer():
     from sktime.pipeline import make_pipeline
     from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
     from sktime.transformations.compose import FitInTransform
-    from sktime.transformations.panel.interpolate import TSInterpolator
+    from sktime.transformations.interpolate import TSInterpolator
     from sktime.transformations.series.kalman_filter import KalmanFilterTransformerFP
 
     # this test requires the KalmanFilterTransformerFP to be runnable

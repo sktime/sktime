@@ -70,7 +70,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.transformations.pca import PCATransformer
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.regression.compose import RegressorPipeline
     >>> from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
