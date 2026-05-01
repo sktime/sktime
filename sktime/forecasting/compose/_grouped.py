@@ -88,7 +88,7 @@ class ForecastByLevel(_DelegatedForecaster):
 
         This method should be used for setting dynamic tags only.
         """
-        self._set_delegated_tags(self.forecaster_)
+        self._set_delegated_tags(self.forecaster)
         self.set_tags(**{"fit_is_empty": False})
 
         groupby = self.groupby
