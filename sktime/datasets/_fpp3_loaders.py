@@ -374,39 +374,43 @@ def _load_fpp3(dataset, temp_folder=None, robust=True):
 
 
 def load_fpp3(dataset, temp_folder=None):
-    """Load a dataset from the fpp3 package.
+    try:
+        """Load a dataset from the fpp3 package.
 
-    Returns ``pd.DataFrame`` in one of the valid sktime :term:`mtype` formats,
-    depending on the dataset.
+        Returns ``pd.DataFrame`` in one of the valid sktime :term:`mtype` formats,
+        depending on the dataset.
 
-    Valid datasets are listed in ``datasets.DATASET_NAMES_FPP3``.
+        Valid datasets are listed in ``datasets.DATASET_NAMES_FPP3``.
 
-    Requires ``rdata`` and ``requests`` packages in the environment.
+        Requires ``rdata`` and ``requests`` packages in the environment.
 
-    Parameters
-    ----------
-    dataset : str
-        The name of the dataset to load.
-        Valid values are listed in ``datasets.DATASET_NAMES_FPP3``.
-    temp_folder: str, optional
-        Location of temporary data folder for downloading and extracting the dataset.
-        Deleted if the operation is successful.
+        Parameters
+        ----------
+        dataset : str
+            The name of the dataset to load.
+            Valid values are listed in ``datasets.DATASET_NAMES_FPP3``.
+        temp_folder: str, optional
+            Location of temporary data folder for downloading and extracting the dataset.
+            Deleted if the operation is successful.
 
-    Returns
-    -------
-    y : pd.DataFrame
-        The loaded data.
-        The mtype format is  ``pd.DataFrame`` for single time series,
-        ``pd-multiindex`` for collections of time series,
-        and ``pd_multiindex_hier`` for hierarchical time series.
+        Returns
+        -------
+        y : pd.DataFrame
+            The loaded data.
+            The mtype format is  ``pd.DataFrame`` for single time series,
+            ``pd-multiindex`` for collections of time series,
+            and ``pd_multiindex_hier`` for hierarchical time series.
 
-    Raises
-    ------
-    ValueError
-        If the dataset is not known.
-    RuntimeError
-        If there is an error loading the dataset.
-    """
-    y = _load_fpp3(dataset, temp_folder=None, robust=True)
+        Raises
+        ------
+        ValueError
+            If the dataset is not known.
+        RuntimeError
+            If there is an error loading the dataset.
+        """
+        y = _load_fpp3(dataset, temp_folder=None, robust=True)
 
-    return y
+        return y
+
+    except Exception:
+        raise
