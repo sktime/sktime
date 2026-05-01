@@ -186,8 +186,6 @@ class AutoREG(_StatsModelsAdapter):
         for param, value in self._fitted_forecaster.params.items():
             setattr(self, str(param) + "_", value)
             self._fitted_param_names = self._fitted_param_names + (str(param),)
-
-        self._y_index0 = self._y.index[0]
         return self
 
     def _predict(self, fh, X=None):
