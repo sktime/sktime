@@ -122,10 +122,22 @@ class PyODDetector(BaseDetector):
         elif labels == "indicator":
             Y_val_np = Y_np
 
-        Y_loc = np.where(Y_np)
-        Y = pd.Series(Y_val_np[Y_loc])
+        if labels == "score":
+            Y = pd.Series(Y_val_np, index=X.index)
+        else:
+            Y_loc = np.where(Y_np)
+            Y = pd.Series(Y_val_np[Y_loc], index=X.index[Y_loc[0]])
 
         return Y
+
+
+    def predict(self, X):
+        """Override predict to handle labels='score' without int64 coercion."""
+        if self.labels == "score":
+            self.check_is_fitted()
+            X_inner = self._check_X(X)
+            return self._predict(X=X_inner)
+        return super().predict(X)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
