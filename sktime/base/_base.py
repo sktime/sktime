@@ -176,8 +176,8 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
     }
 
     def __init__(self):
-        self.__dynamic_tags__()
         super().__init__()
+        self.__dynamic_tags__()
 
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
