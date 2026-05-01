@@ -48,13 +48,21 @@ class IgnoreX(_DelegatedForecaster):
 
         super().__init__()
 
-        self.forecaster_ = forecaster.clone()
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self.forecaster_ = self.forecaster.clone()
 
         self._set_delegated_tags(self.forecaster_)
-        self.set_tags(**{"capability:exogenous": True})
 
-        if ignore_x:
-            self.set_tags(**{"capability:exogenous": False})
+        self.set_tags(**{"capability:exogenous": not self.ignore_x})
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
