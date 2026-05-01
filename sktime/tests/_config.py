@@ -86,10 +86,6 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
-    # sth is not quite right with the RowTransformer-s changing state,
-    #   but these are anyway on their path to deprecation, see #2370
-    "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
-    "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # Early classifiers intentionally retain information from previous predict calls
     #   for #1.
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking

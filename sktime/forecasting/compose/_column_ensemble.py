@@ -31,13 +31,15 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     Parameters
     ----------
     forecasters : sktime forecaster, or list of tuples (str, estimator, int or pd.index)
-        if tuples, with name = str, estimator is forecaster, index as int or index
-        if last element is index, it must be int, str, or pd.Index coercible
-        if last element is int x, and is not in columns, is interpreted as x-th column
-        all columns must be present in an index
 
-        If forecaster, clones of forecaster are applied to all columns.
-        If list of tuples, forecaster in tuple is applied to column with int/str index
+        * if tuples, with name = str, estimator is forecaster, index as int or index
+        * if last element is index, it must be int, str, or pd.Index coercible
+        * if last element is int x, and is not in columns, is interpreted as x-th column
+
+        All columns must be present in an index
+
+        * If forecaster, clones of forecaster are applied to all columns.
+        * If list of tuples, forecaster in tuple is applied to column with int/str index
 
     Examples
     --------
@@ -89,7 +91,11 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["GuzalBulatova", "mloning", "fkiraly"],
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:exogenous": True,
         "y_inner_mtype": PANDAS_MTYPES,
@@ -119,17 +125,22 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
 
         super().__init__(forecasters=None)
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         # set requires-fh-in-fit depending on forecasters
-        if isinstance(forecasters, BaseForecaster):
+        if isinstance(self.forecasters, BaseForecaster):
             tags_to_clone = [
                 "requires-fh-in-fit",
                 "capability:pred_int",
                 "capability:exogenous",
                 "capability:missing_values",
             ]
-            self.clone_tags(forecasters, tags_to_clone)
+            self.clone_tags(self.forecasters, tags_to_clone)
         else:
-            l_forecasters = [(x[0], x[1]) for x in forecasters]
+            l_forecasters = [(x[0], x[1]) for x in self.forecasters]
             self._anytagis_then_set("requires-fh-in-fit", True, False, l_forecasters)
             self._anytagis_then_set("capability:pred_int", False, True, l_forecasters)
             self._anytagis_then_set("capability:exogenous", True, False, l_forecasters)
