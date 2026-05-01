@@ -91,7 +91,11 @@ class FhPlexForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": "fkiraly",
+        # estimator type
+        # --------------
         "requires-fh-in-fit": True,
         "capability:missing_values": True,
         "capability:multivariate": True,

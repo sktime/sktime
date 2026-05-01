@@ -81,7 +81,11 @@ class BaggingForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["fkiraly", "ltsaprounis"],
+        # estimator type
+        # --------------
         "capability:multivariate": True,  # which y are fine? True/False
         "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:missing_values": True,  # can estimator handle missing data?

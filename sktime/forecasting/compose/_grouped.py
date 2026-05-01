@@ -60,7 +60,11 @@ class ForecastByLevel(_DelegatedForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["fkiraly"],
+        # estimator type
+        # --------------
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:multivariate": True,

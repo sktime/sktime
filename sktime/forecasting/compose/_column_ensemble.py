@@ -91,7 +91,11 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["GuzalBulatova", "mloning", "fkiraly"],
+        # estimator type
+        # --------------
         "capability:multivariate": True,
         "capability:exogenous": True,
         "y_inner_mtype": PANDAS_MTYPES,

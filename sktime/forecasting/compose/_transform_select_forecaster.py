@@ -97,15 +97,20 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["shlok191"],
+        "maintainers": ["shlok191"],
+        "python_version": None,
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": True,
+        "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
-        "authors": ["shlok191"],
-        "maintainers": ["shlok191"],
-        "python_version": None,
         "visual_block_kind": "parallel",
         # CI and test flags
         # -----------------

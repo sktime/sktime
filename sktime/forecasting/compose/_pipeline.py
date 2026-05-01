@@ -876,8 +876,12 @@ class TransformedTargetForecaster(_Pipeline):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "fkiraly", "aiwalter"],
         "capability:multivariate": True,
+        # estimator type
+        # --------------
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:exogenous": True,

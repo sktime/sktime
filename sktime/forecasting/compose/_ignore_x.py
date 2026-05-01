@@ -36,6 +36,8 @@ class IgnoreX(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
+        # estimator type
+        # --------------
         "capability:exogenous": True,
         # CI and test flags
         # -----------------
