@@ -216,6 +216,7 @@ class MyForecaster(BaseForecaster):
         # do not put anything else in __init__,
         # use __post_init__ for any further initialization logic
 
+    # todo: add if there is dynamic tag setting logic, otherwise delete this method
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values condition on parameters.
 
@@ -231,6 +232,7 @@ class MyForecaster(BaseForecaster):
         # example 2: cloning tags from component estimator component_estimator
         #   self.clone_tags(self.component_estimator, ["capability:missing_values"])
 
+    # todo: add any post-init logic here, otherwise delete this method
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 
