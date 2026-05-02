@@ -252,30 +252,6 @@ class forecaster(_BaseScitypeOfObject):
         return TestAllForecasters
 
 
-class global_forecaster(_BaseScitypeOfObject):
-    """Global time series forecaster."""
-
-    _tags = {
-        "scitype_name": "global_forecaster",
-        "short_descr": "global time series forecaster",
-        "parent_scitype": "forecaster",
-    }
-
-    @classmethod
-    def get_base_class(cls):
-        from sktime.forecasting.base import _BaseGlobalForecaster
-
-        return _BaseGlobalForecaster
-
-    @classmethod
-    def get_test_class(cls):
-        from sktime.forecasting.tests.test_all_forecasters import (
-            TestAllGlobalForecasters,
-        )
-
-        return TestAllGlobalForecasters
-
-
 class metric(_BaseScitypeOfObject):
     """Performance metric for time series."""
 
