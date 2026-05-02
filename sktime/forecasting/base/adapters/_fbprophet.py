@@ -64,7 +64,7 @@ class _ProphetAdapter(BaseForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -175,7 +175,7 @@ class _ProphetAdapter(BaseForecaster):
         Parameters
         ----------
         fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
         X : pd.DataFrame, optional

@@ -121,25 +121,32 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             lr=lr,
         )
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
 
-        if _check_soft_dependencies("torch"):
-            import torch
+        This method should be used for:
 
-            self.criterions = {
-                "MSE": torch.nn.MSELoss,
-                "L1": torch.nn.L1Loss,
-                "SmoothL1": torch.nn.SmoothL1Loss,
-                "Huber": torch.nn.HuberLoss,
-            }
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        import torch
 
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+        self.criterions = {
+            "MSE": torch.nn.MSELoss,
+            "L1": torch.nn.L1Loss,
+            "SmoothL1": torch.nn.SmoothL1Loss,
+            "Huber": torch.nn.HuberLoss,
+        }
+
+        self.optimizers = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adagrad": torch.optim.Adagrad,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+        }
 
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.linear import LTSFLinearNetwork
@@ -465,25 +472,32 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
             lr=lr,
         )
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
 
-        if _check_soft_dependencies("torch"):
-            import torch
+        This method should be used for:
 
-            self.criterions = {
-                "MSE": torch.nn.MSELoss,
-                "L1": torch.nn.L1Loss,
-                "SmoothL1": torch.nn.SmoothL1Loss,
-                "Huber": torch.nn.HuberLoss,
-            }
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        import torch
 
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+        self.criterions = {
+            "MSE": torch.nn.MSELoss,
+            "L1": torch.nn.L1Loss,
+            "SmoothL1": torch.nn.SmoothL1Loss,
+            "Huber": torch.nn.HuberLoss,
+        }
+
+        self.optimizers = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adagrad": torch.optim.Adagrad,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+        }
 
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.linear import LTSFDLinearNetwork
@@ -652,25 +666,32 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             lr=lr,
         )
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
 
-        if _check_soft_dependencies("torch"):
-            import torch
+        This method should be used for:
 
-            self.criterions = {
-                "MSE": torch.nn.MSELoss,
-                "L1": torch.nn.L1Loss,
-                "SmoothL1": torch.nn.SmoothL1Loss,
-                "Huber": torch.nn.HuberLoss,
-            }
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        import torch
 
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+        self.criterions = {
+            "MSE": torch.nn.MSELoss,
+            "L1": torch.nn.L1Loss,
+            "SmoothL1": torch.nn.SmoothL1Loss,
+            "Huber": torch.nn.HuberLoss,
+        }
+
+        self.optimizers = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adagrad": torch.optim.Adagrad,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+        }
 
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.linear import LTSFNLinearNetwork
@@ -1050,25 +1071,32 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             lr=lr,
         )
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
 
-        if _check_soft_dependencies("torch"):
-            import torch
+        This method should be used for:
 
-            self.criterions = {
-                "MSE": torch.nn.MSELoss,
-                "L1": torch.nn.L1Loss,
-                "SmoothL1": torch.nn.SmoothL1Loss,
-                "Huber": torch.nn.HuberLoss,
-            }
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        import torch
 
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+        self.criterions = {
+            "MSE": torch.nn.MSELoss,
+            "L1": torch.nn.L1Loss,
+            "SmoothL1": torch.nn.SmoothL1Loss,
+            "Huber": torch.nn.HuberLoss,
+        }
+
+        self.optimizers = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adagrad": torch.optim.Adagrad,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+        }
 
     def build_pytorch_train_dataloader(self, y):
         """Build PyTorch DataLoader for training."""
