@@ -314,7 +314,7 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
         self.device_map = None
 
     def _tie_weights(self):
-        """Tie the weights for encoder and decoder embeddings to use the shared embedding.
+        """Tie weights for encoder and decoder embeddings to use the shared embedding.
 
         This method ensures that the encoder.embed_tokens and decoder.embed_tokens
         reference the same underlying weight tensor for compatibility with newer
