@@ -324,7 +324,9 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
         # encoder and decoder, they already share the same embedding weights.
         # This method exists to ensure compatibility with transformers' post_init()
         # which expects _tie_weights() to be callable.
-        pass
+        parent_tie_weights = getattr(super(), "_tie_weights", None)
+        if callable(parent_tie_weights):
+            parent_tie_weights()
 
     def _init_weights(self, module):
         super()._init_weights(module)
