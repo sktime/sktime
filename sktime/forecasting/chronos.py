@@ -580,8 +580,7 @@ class ChronosForecaster(BaseForecaster):
         """
         self._ensure_model_pipeline_loaded()
 
-        if "transformers" in globals() and hasattr(transformers, "set_seed"):
-            transformers.set_seed(self._seed)
+        transformers.set_seed(self._seed)
         if fh is not None:
             # needs to be integer not np.int64
             prediction_length = int(max(fh.to_relative(self.cutoff)))
@@ -655,11 +654,21 @@ class ChronosForecaster(BaseForecaster):
                 "seed": 42,
             }
         )
-        test_params.append(
-            {
-                "model_path": "amazon/chronos-bolt-tiny",
-            }
-        )
+
+        # skip Chronos-Bolt for transformers >= 5.x (incompatible)
+        try:
+            import transformers
+            major_version = int(transformers.__version__.split(".")[0])
+        except ImportError:
+            major_version = 0
+
+        if major_version < 5:
+            test_params.append(
+                {
+                    "model_path": "amazon/chronos-bolt-tiny",
+                }
+            )
+
         return test_params
 
 
@@ -686,17 +695,9 @@ class _CachedChronos:
         else:
             from sktime.libs.chronos import ChronosPipeline
 
-        try:
-            self.model_pipeline = ChronosPipeline.from_pretrained(
-                **self.chronos_kwargs,
-            )
-        except TypeError:
-            # fallback for transformers >=5.x API changes
-            kwargs = self.chronos_kwargs.copy()
-            kwargs.pop("torch_dtype", None)
-            kwargs.pop("device_map", None)
-
-            self.model_pipeline = ChronosPipeline.from_pretrained(**kwargs)
+        self.model_pipeline = ChronosPipeline.from_pretrained(
+            **self.chronos_kwargs,
+        )
 
         return self.model_pipeline
 
@@ -724,16 +725,8 @@ class _CachedChronosBolt:
         else:
             from sktime.libs.chronos import ChronosBoltPipeline
 
-        try:
-            self.model_pipeline = ChronosBoltPipeline.from_pretrained(
-                **self.chronos_bolt_kwargs,
-            )
-        except TypeError:
-            # fallback for transformers >=5.x API changes
-            kwargs = self.chronos_bolt_kwargs.copy()
-            kwargs.pop("torch_dtype", None)
-            kwargs.pop("device_map", None)
-
-            self.model_pipeline = ChronosBoltPipeline.from_pretrained(**kwargs)
+        self.model_pipeline = ChronosBoltPipeline.from_pretrained(
+            **self.chronos_bolt_kwargs,
+        )
 
         return self.model_pipeline
