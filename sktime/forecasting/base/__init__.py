@@ -8,8 +8,8 @@ __all__ = [
     "_GlobalForecastingDeprecationMixin",
 ]
 
-from sktime.forecasting.base._base import (
-    BaseForecaster,
+from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._deprecation_global import (
     _BaseGlobalForecaster,
     _GlobalForecastingDeprecationMixin,
 )

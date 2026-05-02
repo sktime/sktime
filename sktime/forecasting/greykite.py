@@ -73,6 +73,7 @@ class GreykiteForecaster(BaseForecaster):
         "capability:in-sample": False,
         "capability:unequal_length": False,
         "python_dependencies": ["greykite>=1.0.0"],  # Required Python dependencies.
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     def __init__(

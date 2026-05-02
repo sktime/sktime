@@ -166,6 +166,9 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:pred_int": False,
+        "capability:unequal_length": False,
+        "property:randomness": "stochastic",
+        "capability:random_state": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,

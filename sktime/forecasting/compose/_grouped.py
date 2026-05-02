@@ -60,7 +60,11 @@ class ForecastByLevel(_DelegatedForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["fkiraly"],
+        # estimator type
+        # --------------
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:multivariate": True,
@@ -81,13 +85,17 @@ class ForecastByLevel(_DelegatedForecaster):
         self.forecaster = forecaster
         self.groupby = groupby
 
-        self.forecaster_ = forecaster.clone()
-
         super().__init__()
 
-        self._set_delegated_tags(self.forecaster_)
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        self._set_delegated_tags(self.forecaster)
         self.set_tags(**{"fit_is_empty": False})
 
+        groupby = self.groupby
         if groupby == "local":
             scitypes = ["Series"]
         elif groupby == "global":
@@ -107,6 +115,17 @@ class ForecastByLevel(_DelegatedForecaster):
         # but vectorization/broadcasting happens at the level of groupby
         self.set_tags(**{"y_inner_mtype": mtypes})
         self.set_tags(**{"X_inner_mtype": mtypes})
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        self.forecaster_ = self.forecaster.clone()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
