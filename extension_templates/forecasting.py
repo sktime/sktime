@@ -216,6 +216,23 @@ class MyForecaster(BaseForecaster):
         # do not put anything else in __init__,
         # use __post_init__ for any further initialization logic
 
+    # todo: add if there is dynamic tag setting logic, otherwise delete this method
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        # todo: if tags of estimator depend on component tags, set these here
+        #  typically only needed if estimator is a composite
+        #  tags set here apply to the instance, and override the class tags
+        #
+        # example 1: conditional setting of a tag based on parameter foo
+        # if self.foo == 42:
+        #   self.set_tags(**{"capability:missing_values": True})
+        # example 2: cloning tags from component estimator component_estimator
+        #   self.clone_tags(self.component_estimator, ["capability:missing_values"])
+
+    # todo: add any post-init logic here, otherwise delete this method
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 
@@ -223,7 +240,6 @@ class MyForecaster(BaseForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # todo: optional, parameter checking or coercion should happen here
@@ -237,16 +253,6 @@ class MyForecaster(BaseForecaster):
         else:
             # estimators should be cloned to avoid side effects
             self._paramc = self.paramc.clone()
-
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
 
     # todo: implement this, mandatory
     def _fit(self, y, X, fh):

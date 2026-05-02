@@ -5,75 +5,77 @@ from unittest.mock import patch
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
 
 
-class MOIRAIForecaster(_BaseGlobalForecaster):
+class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """
-    Adapter for using MOIRAI Forecasters.
+        Adapter for using MOIRAI Forecasters.
 
     Parameters
     ----------
-    checkpoint_path : str, default=None
-        Path to the checkpoint of the model. Supported weights are available at [1]_.
-    context_length : int, default=200
-        Length of the context window, time points the model will take as input
-        for inference.
-    patch_size : int, default=32
-        Time steps to perform patching with.
-    num_samples : int, default=100
-        Number of samples to draw.
-    map_location : str, default=None
-        Hardware to use for the model.
-    target_dim : int, default=2
-        Dimension of the target.
-    deterministic : bool, default=False
-        Whether to use a deterministic model.
-    batch_size : int, default=32
-        Number of samples in each batch of inference.
-    broadcasting : bool, default=False
-        if True, multiindex data input will be broadcasted to single series.
-        For each single series, one copy of this forecaster will try to
-        fit and predict on it. The broadcasting is happening inside automatically,
-        from the outerside api perspective, the input and output are the same,
-        only one multiindex output from ``predict``
-     use_source_package : bool, default=False
-        If True, the model and configuration will be loaded directly from the source
-        package ``uni2ts.models.moirai``. This is useful if you
-        want to bypass the local version of the package or when working in an
-        environment where the latest updates from the source package are needed.
-        If False, the model and configuration will be loaded from the local
-        version of package maintained in sktime.
-        To install the source package, follow the instructions here [2]_.
+        checkpoint_path : str, default=None
+            Path to the checkpoint of the model.
+            Supported weights are available at [1]_.
+        context_length : int, default=200
+            Length of the context window, time points the model will take as input
+            for inference.
+        patch_size : int, default=32
+            Time steps to perform patching with.
+        num_samples : int, default=100
+            Number of samples to draw.
+        map_location : str, default=None
+            Hardware to use for the model.
+        target_dim : int, default=2
+            Dimension of the target.
+        deterministic : bool, default=False
+            Whether to use a deterministic model.
+        batch_size : int, default=32
+            Number of samples in each batch of inference.
+        broadcasting : bool, default=False
+            if True, multiindex data input will be broadcasted to single series.
+            For each single series, one copy of this forecaster will try to
+            fit and predict on it. The broadcasting is happening inside automatically,
+            from the outerside api perspective, the input and output are the same,
+            only one multiindex output from ``predict``
+         use_source_package : bool, default=False
+            If True, the model and configuration will be loaded directly from the source
+            package ``uni2ts.models.moirai``. This is useful if you
+            want to bypass the local version of the package or when working in an
+            environment where the latest updates from the source package are needed.
+            If False, the model and configuration will be loaded from the local
+            version of package maintained in sktime.
+            To install the source package, follow the instructions here [2]_.
 
     Examples
     --------
-    >>> from sktime.forecasting.moirai_forecaster import MOIRAIForecaster
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> morai_forecaster = MOIRAIForecaster(
-    ...     checkpoint_path=f"sktime/moirai-1.0-R-small"
-    ... )
-    >>> y = np.random.normal(0, 1, (30, 2))
-    >>> X = y * 2 + np.random.normal(0, 1, (30,1))
-    >>> index = pd.date_range("2020-01-01", periods=30, freq="D")
-    >>> y = pd.DataFrame(y, index=index)
-    >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)
-    >>> morai_forecaster.fit(y, X=X)
-    MOIRAIForecaster(checkpoint_path='sktime/moirai-1.0-R-small')
-    >>> X_test = pd.DataFrame(np.random.normal(0, 1, (10, 2)),
-    ...                      columns=["x1", "x2"],
-    ...                      index=pd.date_range("2020-01-31", periods=10, freq="D"),
-    ... )
-    >>> forecast = morai_forecaster.predict(fh=range(1, 11), X=X_test)
+        >>> from sktime.forecasting.moirai_forecaster import MOIRAIForecaster
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> morai_forecaster = MOIRAIForecaster(
+        ...     checkpoint_path=f"sktime/moirai-1.0-R-small"
+        ... )
+        >>> y = np.random.normal(0, 1, (30, 2))
+        >>> X = y * 2 + np.random.normal(0, 1, (30,1))
+        >>> index = pd.date_range("2020-01-01", periods=30, freq="D")
+        >>> y = pd.DataFrame(y, index=index)
+        >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)
+        >>> morai_forecaster.fit(y, X=X)
+        MOIRAIForecaster(checkpoint_path='sktime/moirai-1.0-R-small')
+        >>> X_test = pd.DataFrame(
+        ...     np.random.normal(0, 1, (10, 2)),
+        ...     columns=["x1", "x2"],
+        ...     index=pd.date_range("2020-01-31", periods=10, freq="D"),
+        ... )
+        >>> forecast = morai_forecaster.predict(fh=range(1, 11), X=X_test)
 
     References
     ----------
-    .. [1] https://huggingface.co/collections/sktime/moirai-variations-66ba3bc9f1dfeeafaed3b974
-    .. [2] https://pypi.org/project/uni2ts/1.1.0/
+        .. [1] https://huggingface.co/collections/sktime/moirai-variations-66ba3bc9f1dfeeafaed3b974
+        .. [2] https://pypi.org/project/uni2ts/1.1.0/
     """
 
     _tags = {
@@ -111,6 +113,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "capability:unequal_length": False,
+        "property:randomness": "stochastic",
         # CI and test flags
         # -----------------
         "tests:vm": True,
@@ -179,7 +182,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 )
                 return MoiraiForecast.load_from_checkpoint(**model_kwargs)
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X=None, fh=None):
         if fh is not None:
             prediction_length = max(fh.to_relative(self.cutoff))
         else:
@@ -228,7 +231,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             self.model = self._instantiate_patched_model(model_kwargs)
             self.model.to(self.map_location)
 
-    def _predict(self, fh, y=None, X=None):
+    def _predict(self, fh, X=None):
         if self.deterministic:
             import torch
 
@@ -251,15 +254,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             _X = self._X.copy()
 
         # Zero shot case with X and fit data as context
-        _use_fit_data_as_context = False
-        if X is not None and y is None:
-            _use_fit_data_as_context = True
-
-        # Override to data in fit as new timeseries is passed
-        elif y is not None:
-            _y = y.copy()
-            if X is not None:
-                _X = X.copy()
+        _use_fit_data_as_context = X is not None
 
         if isinstance(_y, pd.Series):
             target = [_y.name]
