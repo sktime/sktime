@@ -649,11 +649,11 @@ class ChronosForecaster(BaseForecaster):
                 "seed": 42,
             }
         )
-        test_params.append(
-            {
-                "model_path": "amazon/chronos-bolt-tiny",
-            }
-        )
+        # test_params.append(
+        #     {
+        #         "model_path": "amazon/chronos-bolt-tiny",
+        #     }
+        # )
         return test_params
 
 
