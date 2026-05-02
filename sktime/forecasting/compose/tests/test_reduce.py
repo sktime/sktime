@@ -35,7 +35,7 @@ from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.split import SlidingWindowSplitter, temporal_train_test_split
 from sktime.split.tests.test_split import _get_windows
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.transformations.reduce import Tabularizer
+from sktime.transformations.panel.reduce import Tabularizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh

@@ -11,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.tsfresh import (
+from sktime.transformations.panel.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )

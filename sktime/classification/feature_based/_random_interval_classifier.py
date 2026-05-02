@@ -12,8 +12,8 @@ import numpy as np
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.sklearn import RotationForest
-from sktime.transformations.catch22 import Catch22
-from sktime.transformations.random_intervals import RandomIntervals
+from sktime.transformations.panel.catch22 import Catch22
+from sktime.transformations.panel.random_intervals import RandomIntervals
 
 
 class RandomIntervalClassifier(BaseClassifier):

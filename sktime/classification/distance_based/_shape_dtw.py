@@ -15,14 +15,14 @@ from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
 from sktime.datatypes import convert
-from sktime.transformations.paa_legacy import PAAlegacy as PAA
-from sktime.transformations.dwt import DWTTransformer
-from sktime.transformations.hog1d import HOG1DTransformer
+from sktime.transformations.panel.dictionary_based._paa import PAAlegacy as PAA
+from sktime.transformations.panel.dwt import DWTTransformer
+from sktime.transformations.panel.hog1d import HOG1DTransformer
 
 # Transforms
-from sktime.transformations.segment import SlidingWindowSegmenter
-from sktime.transformations.slope import SlopeTransformer
-from sktime.transformations.interval_features import DerivativeSlopeTransformer
+from sktime.transformations.panel.segment import SlidingWindowSegmenter
+from sktime.transformations.panel.slope import SlopeTransformer
+from sktime.transformations.panel.summarize._extract import DerivativeSlopeTransformer
 
 __author__ = ["vincent-nich12"]
 

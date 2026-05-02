@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from sktime.classification.compose import ClassifierPipeline
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.transformations.padder import PaddingTransformer
+from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
