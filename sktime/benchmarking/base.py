@@ -116,7 +116,7 @@ class BaseResults:
 
     def save(self):
         """Save results object as master file."""
-        NotImplementedError()
+        raise NotImplementedError()
 
     def _iter(self):
         """Iterate over registry of results object."""
