@@ -12,8 +12,7 @@ __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 
 
 class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
-    """
-    Adapter for using MOIRAI Forecasters.
+    """MOIRAI Forecasters.
 
     Parameters
     ----------
@@ -132,7 +131,6 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         batch_size=32,
         use_source_package=False,
     ):
-        super().__init__()
         self.checkpoint_path = checkpoint_path
         self.context_length = context_length
         self.patch_size = patch_size
@@ -145,7 +143,13 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self.deterministic = deterministic
         self.batch_size = batch_size
         self.use_source_package = use_source_package
+        super().__init__()
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         if self.broadcasting:
             self.set_tags(
                 **{
