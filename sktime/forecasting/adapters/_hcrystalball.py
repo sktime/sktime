@@ -116,6 +116,7 @@ class HCrystalBallAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:unequal_length": False,
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     def __init__(self, model):

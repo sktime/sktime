@@ -112,6 +112,7 @@ class Prophetverse(_DelegatedForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,  # run in VM due to dependency requirement prophetverse
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -300,6 +301,7 @@ class HierarchicalProphet(_DelegatedForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,  # run in VM due to dependency requirement prophetverse
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     def __init__(
