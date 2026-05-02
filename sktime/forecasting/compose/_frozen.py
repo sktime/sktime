@@ -2,8 +2,6 @@
 
 __all__ = ["FrozenForecaster"]
 
-from copy import deepcopy
-
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
