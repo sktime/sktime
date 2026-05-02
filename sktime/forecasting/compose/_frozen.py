@@ -176,7 +176,10 @@ class FrozenForecaster(_DelegatedForecaster):
                 """Clone the ``model`` attribute of the given object."""
                 # we do not want to reset the model on clone, so we return it as is
                 temp = obj.forecaster
+                temp2 = temp.clone()
+                obj.forecaster = temp2
                 clone = super()._clone(obj)
+                obj.forecaster = temp
                 clone.forecaster = temp
                 return clone
 
