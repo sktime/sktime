@@ -218,7 +218,7 @@ class MyForecaster(BaseForecaster):
 
     # todo: add if there is dynamic tag setting logic, otherwise delete this method
     def __dynamic_tags__(self):
-        """Dynamic tag setter logic for setting tag values condition on parameters.
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
 
         This method should be used for setting dynamic tags only.
         """
