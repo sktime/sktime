@@ -397,7 +397,12 @@ class ChronosForecaster(BaseForecaster):
 
             # "ChronosBoltModelForForecasting is the name of the architecture"
             # as specified in the config.json file
-            is_bolt = "ChronosBoltModelForForecasting" in (config.architectures or [])
+            architectures = getattr(config, "architectures", None)
+
+            if architectures is None:
+                architectures = []
+
+            is_bolt = "ChronosBoltModelForForecasting" in architectures
 
             if is_bolt:
                 self.model_strategy = ChronosBoltStrategy()
@@ -575,7 +580,8 @@ class ChronosForecaster(BaseForecaster):
         """
         self._ensure_model_pipeline_loaded()
 
-        transformers.set_seed(self._seed)
+        if "transformers" in globals() and hasattr(transformers, "set_seed"):
+            transformers.set_seed(self._seed)
         if fh is not None:
             # needs to be integer not np.int64
             prediction_length = int(max(fh.to_relative(self.cutoff)))
@@ -649,11 +655,11 @@ class ChronosForecaster(BaseForecaster):
                 "seed": 42,
             }
         )
-        # test_params.append(
-        #     {
-        #         "model_path": "amazon/chronos-bolt-tiny",
-        #     }
-        # )
+        test_params.append(
+            {
+                "model_path": "amazon/chronos-bolt-tiny",
+            }
+        )
         return test_params
 
 
@@ -680,9 +686,17 @@ class _CachedChronos:
         else:
             from sktime.libs.chronos import ChronosPipeline
 
-        self.model_pipeline = ChronosPipeline.from_pretrained(
-            **self.chronos_kwargs,
-        )
+        try:
+            self.model_pipeline = ChronosPipeline.from_pretrained(
+                **self.chronos_kwargs,
+            )
+        except TypeError:
+            # fallback for transformers >=5.x API changes
+            kwargs = self.chronos_kwargs.copy()
+            kwargs.pop("torch_dtype", None)
+            kwargs.pop("device_map", None)
+
+            self.model_pipeline = ChronosPipeline.from_pretrained(**kwargs)
 
         return self.model_pipeline
 
@@ -710,8 +724,16 @@ class _CachedChronosBolt:
         else:
             from sktime.libs.chronos import ChronosBoltPipeline
 
-        self.model_pipeline = ChronosBoltPipeline.from_pretrained(
-            **self.chronos_bolt_kwargs,
-        )
+        try:
+            self.model_pipeline = ChronosBoltPipeline.from_pretrained(
+                **self.chronos_bolt_kwargs,
+            )
+        except TypeError:
+            # fallback for transformers >=5.x API changes
+            kwargs = self.chronos_bolt_kwargs.copy()
+            kwargs.pop("torch_dtype", None)
+            kwargs.pop("device_map", None)
+
+            self.model_pipeline = ChronosBoltPipeline.from_pretrained(**kwargs)
 
         return self.model_pipeline
