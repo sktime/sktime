@@ -125,8 +125,8 @@ Cointegration
 
     JohansenCointegration
 
-ImpulseResponseFunction
-~~~~~~~~~~~~~
+Model Analysis
+~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.param_est.impulse
 
