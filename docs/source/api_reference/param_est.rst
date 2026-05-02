@@ -125,7 +125,7 @@ Cointegration
 
     JohansenCointegration
 
-ImpulseResponseFunction
+Impulse and Shock Response Estimation
 ~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.param_est.impulse
