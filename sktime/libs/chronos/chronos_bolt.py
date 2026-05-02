@@ -14,7 +14,7 @@ import warnings
 from dataclasses import dataclass
 from typing import Any
 
-from sktime.utils.dependencies import _safe_import
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 torch = _safe_import("torch")
 nn = _safe_import("torch.nn")
@@ -285,7 +285,12 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
         encoder_config.is_decoder = False
         encoder_config.use_cache = False
         encoder_config.is_encoder_decoder = False
-        self.encoder = T5Stack(encoder_config, self.shared)
+
+        if _check_soft_dependencies("transformers>=5.0", severity="none"):
+            self.encoder = T5Stack(encoder_config)
+            self.encoder.set_input_embeddings(self.shared)
+        else:
+            self.encoder = T5Stack(encoder_config, self.shared)
 
         self._init_decoder(config)
 
@@ -524,7 +529,12 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
         decoder_config.is_decoder = True
         decoder_config.is_encoder_decoder = False
         decoder_config.num_layers = config.num_decoder_layers
-        self.decoder = T5Stack(decoder_config, self.shared)
+
+        if _check_soft_dependencies("transformers>=5.0", severity="none"):
+            self.encoder = T5Stack(decoder_config)
+            self.encoder.set_input_embeddings(self.shared)
+        else:
+            self.encoder = T5Stack(decoder_config, self.shared)
 
     def decode(
         self,
