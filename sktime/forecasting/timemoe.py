@@ -150,6 +150,13 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
 
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         if self.ignore_deps:
             self.set_tags(python_dependencies=[])
         elif self.use_source_package:
@@ -162,8 +169,6 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                     "accelerate<=0.28.0",
                 ]
             )
-
-        super().__init__()
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
