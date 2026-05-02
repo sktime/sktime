@@ -1,6 +1,6 @@
-from sktime.transformations.base import BaseTransformer
 from sktime.transformations.aggregate import Aggregator
-from sktime.transformations.hierarchical_reconcile_utils import (
+from sktime.transformations.base import BaseTransformer
+from sktime.transformations._hierarchical_reconcile_utils import (
     _loc_series_idxs,
 )
 

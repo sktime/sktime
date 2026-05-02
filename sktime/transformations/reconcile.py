@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 from numpy.linalg import inv
 
-from sktime.transformations.base import BaseTransformer
 from sktime.transformations.aggregate import _check_index_no_total
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.warnings import warn
 
 # TODO: failing test which are escaped

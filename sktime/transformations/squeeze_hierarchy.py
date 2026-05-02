@@ -1,7 +1,7 @@
 """Drop redundant levels from multiindex."""
 
-from sktime.transformations.base import BaseTransformer
 from sktime.transformations.aggregate import Aggregator
+from sktime.transformations.base import BaseTransformer
 
 __all__ = ["SqueezeHierarchy"]
 

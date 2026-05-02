@@ -2,8 +2,8 @@
 
 import pandas as pd
 
-from sktime.transformations.hierarchical_reconcile_base import _ReconcilerTransformer
-from sktime.transformations.hierarchical_reconcile_utils import (
+from sktime.transformations._hierarchical_reconcile_base import _ReconcilerTransformer
+from sktime.transformations._hierarchical_reconcile_utils import (
     _get_total_level_idxs,
     _loc_series_idxs,
     _promote_hierarchical_indexes_and_keep_timeindex,

@@ -11,7 +11,9 @@ import sys
 import warnings
 
 from sktime.transformations.bottom_up_reconciler import BottomUpReconciler  # noqa: F401
-from sktime.transformations.middle_out_reconciler import MiddleOutReconciler  # noqa: F401
+from sktime.transformations.middle_out_reconciler import (
+    MiddleOutReconciler,  # noqa: F401
+)
 from sktime.transformations.optimal_reconciler import (  # noqa: F401
     NonNegativeOptimalReconciler,
     OptimalReconciler,
@@ -37,8 +39,8 @@ _legacy_to_new = {
     "_middle_out": "sktime.transformations.middle_out_reconciler",
     "_optimal": "sktime.transformations.optimal_reconciler",
     "_topdown": "sktime.transformations.topdown_reconciler",
-    "_base": "sktime.transformations.hierarchical_reconcile_base",
-    "_utils": "sktime.transformations.hierarchical_reconcile_utils",
+    "_base": "sktime.transformations._hierarchical_reconcile_base",
+    "_utils": "sktime.transformations._hierarchical_reconcile_utils",
 }
 for _legacy, _new in _legacy_to_new.items():
     sys.modules[f"{__name__}.{_legacy}"] = importlib.import_module(_new)

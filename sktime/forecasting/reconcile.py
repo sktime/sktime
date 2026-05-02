@@ -14,7 +14,7 @@ from sktime.transformations.aggregate import (
     _check_index_no_total,
 )
 from sktime.transformations.bottom_up_reconciler import BottomUpReconciler
-from sktime.transformations.hierarchical_reconcile_utils import _loc_series_idxs
+from sktime.transformations._hierarchical_reconcile_utils import _loc_series_idxs
 from sktime.transformations.optimal_reconciler import (
     NonNegativeOptimalReconciler,
     OptimalReconciler,
