@@ -400,6 +400,7 @@ class ARDL(_StatsModelsAdapter):
             )
 
         self._y_index0 = y.index[0]
+        self._y_name = y.name
 
         return self
 
