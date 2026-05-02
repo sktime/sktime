@@ -125,7 +125,7 @@ class VARReduce(BaseForecaster):
     """
 
     _tags = {
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "authors": ["meraldoantonio"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
@@ -137,15 +137,28 @@ class VARReduce(BaseForecaster):
     }
 
     def __init__(self, lags=1, regressor=None):
-        from sklearn.base import clone
-        from sklearn.linear_model import LinearRegression
-
         self.regressor = regressor  # not used/modified
         self.lags = lags
-        if regressor is None:
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        if self.regressor is None:
+            from sklearn.linear_model import LinearRegression
+
             self.regressor_ = LinearRegression()
         else:
-            self.regressor_ = clone(regressor)
+            from sklearn.base import clone
+
+            self.regressor_ = clone(self.regressor)
 
         assert hasattr(self.regressor_, "fit"), "Regressor must have 'fit'"
         assert hasattr(self.regressor_, "predict"), "Regressor must have 'predict'"
@@ -154,7 +167,6 @@ class VARReduce(BaseForecaster):
         self.intercept_ = None
         self.num_series = None
         self.var_names = None
-        super().__init__()
 
     def _prepare_for_fit(self, data, return_as_ndarray=True):
         """
@@ -259,7 +271,7 @@ class VARReduce(BaseForecaster):
         y : pd.DataFrame
             Guaranteed to have a single column if scitype:y=="univariate".
         fh : ForecastingHorizon, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous time series to fit to; will be ignored
 
@@ -300,7 +312,7 @@ class VARReduce(BaseForecaster):
         Parameters
         ----------
         fh : ForecastingHorizon
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)

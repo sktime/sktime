@@ -100,7 +100,7 @@ class ReconcilerForecaster(BaseForecaster):
         "maintainers": ["ciaran-g", "felipeangelimvieira"],
         # estimator type
         # --------------
-        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
+        "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogeneous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": [
@@ -167,7 +167,7 @@ class ReconcilerForecaster(BaseForecaster):
         y : pd.DataFrame
             Time series to which to fit the forecaster.
         fh : ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, default=None
             Exogenous variables for the base forecaster
 
@@ -242,7 +242,7 @@ class ReconcilerForecaster(BaseForecaster):
         Parameters
         ----------
         fh : ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             Exogeneous time series for the forecast
 

@@ -10,7 +10,12 @@ from typing import Literal
 import numpy as np
 import pandas
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _GlobalForecastingDeprecationMixin,
+)
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 __all__ = ["_NeuralForecastAdapter"]
@@ -21,7 +26,7 @@ _SUPPORTED_LOCAL_SCALAR_TYPES = Literal[
 ]
 
 
-class _NeuralForecastAdapter(_BaseGlobalForecaster):
+class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """Base adapter class for NeuralForecast models.
 
     Parameters
@@ -81,7 +86,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "capability:missing_values": False,
@@ -231,6 +236,47 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
             "trainer_kwargs": instance_trainer_parameters,
         }
 
+    def _get_validated_input_size(
+        self: "_NeuralForecastAdapter",
+        input_size: int,
+        inference_input_size: int | None = None,
+    ) -> int:
+        """Validate input_size for neuralforecast v3+ compatibility.
+
+        In neuralforecast v3.0.0+, input_size is required for recurrent models
+        (RNN, LSTM, GRU, DilatedRNN) and the default -1 may cause issues with
+        short time series. This method handles the transition by using
+        inference_input_size as fallback, or a sensible default.
+
+        Parameters
+        ----------
+        input_size : int
+            The input_size parameter value.
+        inference_input_size : int, optional
+            The inference_input_size parameter value, used as fallback.
+
+        Returns
+        -------
+        int
+            Validated input_size value.
+        """
+        if _check_soft_dependencies("neuralforecast>=3.0.0", severity="none"):
+            if input_size == -1:
+                # Fall back to inference_input_size if available and not -1
+                if inference_input_size is not None and inference_input_size != -1:
+                    return inference_input_size
+                # Auto-default to 2 for v3+ to handle short time series in tests
+                # and provide a smoother v2->v3 transition
+                warn(
+                    "neuralforecast>=3.0.0 requires 'input_size' to be set "
+                    "explicitly for recurrent models. Using default input_size=2. "
+                    "Consider setting 'input_size' explicitly for your data.",
+                    obj=self,
+                    stacklevel=2,
+                )
+                return 2
+        return input_size
+
     def _instantiate_model(self: "_NeuralForecastAdapter", fh: ForecastingHorizon):
         """Instantiate the model."""
         exogenous_parameters = (
@@ -251,8 +297,11 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
 
         from neuralforecast import NeuralForecast
 
+        # Use keyword arguments for better forward compatibility
         model = NeuralForecast(
-            [algorithm_instance], self._freq, local_scaler_type=self.local_scaler_type
+            models=[algorithm_instance],
+            freq=self._freq,
+            local_scaler_type=self.local_scaler_type,
         )
 
         return model
@@ -260,8 +309,8 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
     def _fit(
         self: "_NeuralForecastAdapter",
         y: pandas.Series,
-        X: pandas.DataFrame | None,
-        fh: ForecastingHorizon,
+        X: pandas.DataFrame | None = None,
+        fh: ForecastingHorizon | None = None,
     ) -> "_NeuralForecastAdapter":
         """Fit forecaster to training data.
 
@@ -275,7 +324,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         y : sktime time series object
             guaranteed to have a single column/variable
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : sktime time series object, optional (default=None)
             guaranteed to have at least one column/variable
             Exogeneous time series to fit to.
@@ -403,8 +452,7 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
     def _predict(
         self: "_NeuralForecastAdapter",
         fh: ForecastingHorizon | None,
-        X: pandas.DataFrame | None,
-        y: pandas.Series | None = None,
+        X: pandas.DataFrame | None = None,
     ) -> pandas.Series:
         """Forecast time series at future horizon.
 
@@ -420,18 +468,10 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
-            If ``y`` is not passed (not performing global forecasting), ``X`` should
-            only contain the time points to be predicted.
-            If ``y`` is passed (performing global forecasting), ``X`` must contain
-            all historical values and the time points to be predicted.
-        y : sktime time series object, optional (default=None)
-            Historical values of the time series that should be predicted.
-            If not None, global forecasting will be performed.
-            Only pass the historical values not the time points to be predicted.
 
         Returns
         -------
@@ -442,24 +482,11 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         Notes
         -----
         This method does not use ``fh``, the one passed during ``fit`` takes precedence.
-
-        If ``y`` is not None, global forecast will be performed.
-        In global forecast mode,
-        ``X`` should contain all historical values and the time points to be predicted,
-        while ``y`` should only contain historical values
-        not the time points to be predicted.
-
-        If ``y`` is None, non global forecast will be performed.
-        In non global forecast mode,
-        ``X`` should only contain the time points to be predicted,
-        while ``y`` should only contain historical values
-        not the time points to be predicted.
         """
         del fh  # to avoid being detected as unused by ``vulture`` etc.
 
         predict_parameters: dict = {"verbose": self.verbose_predict}
-        if not self._global_forecasting:
-            y = self._y
+        y = self._y
 
         if self.futr_exog_list and X is None:
             raise ValueError("Missing exogeneous data, 'futr_exog_list' is non-empty.")
@@ -478,17 +505,9 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                 predict_data[column] = X[column].to_numpy()
 
             predict_dataset = pandas.DataFrame(data=predict_data)
-            if not self._global_forecasting:
-                predict_parameters["futr_df"] = predict_dataset
-            else:
-                predict_parameters["futr_df"] = predict_dataset[
-                    predict_dataset.ds > self.cutoff[0]
-                ]
-                df = predict_dataset[predict_dataset.ds <= self.cutoff[0]]
-                df[self.target_col] = y.to_numpy().flatten()
-                predict_parameters["df"] = df
+            predict_parameters["futr_df"] = predict_dataset
 
-        if self._global_forecasting and not self.futr_exog_list:
+        if not self.futr_exog_list:
             y_time_index = y.index.get_level_values(-1)
             if isinstance(y_time_index, pandas.PeriodIndex):
                 predict_indices = self._handle_PeriodIndex(y)
@@ -519,20 +538,26 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         new_index_names = [f"_new_idx_name_{i}" for i in range(len(y.index.names))]
 
         if isinstance(y, pandas.DataFrame):
-            if self._global_forecasting:
-                id_idx = np.array(y.index.to_list())
-            else:
-                id_idx = np.array(y.index.to_list())
+            id_idx = np.array(y.index.to_list())
             id_int = id_idx[:, :-1].sum(axis=1)
             ins = id_idx[:, :-1]
-            id_ins = pandas.DataFrame(
-                data=ins, index=id_int, columns=new_index_names[:-1]
+
+            # Create a mapping from unique_id to original index level values
+            # Use DataFrame with unique_id as a regular column for proper merging
+            id_ins = pandas.DataFrame(data=ins, columns=new_index_names[:-1])
+            id_ins[self.id_col] = id_int
+            # Keep only unique combinations of instance info
+            id_ins = id_ins.drop_duplicates(subset=[self.id_col])
+
+            # neuralforecast v3 returns unique_id and ds as columns, not index
+            # Merge predictions with instance info on unique_id
+            final_predictions = pandas.merge(
+                model_forecasts,
+                id_ins,
+                on=self.id_col,
+                how="left",
             )
-            id_ins = id_ins.drop_duplicates()
-            final_predictions = pandas.concat(
-                (model_forecasts, id_ins.loc[model_forecasts.index.tolist()]),
-                axis=1,
-            )
+
             if self._is_PeriodIndex:
                 time_idx = pandas.DatetimeIndex(final_predictions[self.time_col])
                 time_idx = time_idx.to_period(
@@ -545,6 +570,8 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
                     prediction_column_names[0]: y.columns[0],
                 },
             )
+            # Drop the unique_id column as it's only used for internal mapping
+            final_predictions = final_predictions.drop(columns=[self.id_col])
             final_predictions = final_predictions.set_index(new_index_names)
         else:
             model_point_predictions = model_forecasts[

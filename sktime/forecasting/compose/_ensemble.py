@@ -106,11 +106,15 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
+        # estimator type
+        # --------------
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
     }
@@ -142,7 +146,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional, default=None
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional, default=None
             Exogenous variables are ignored.
 
@@ -327,7 +331,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "capability:missing_values": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "scitype:y": "both",
+        "capability:multivariate": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -376,7 +380,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y : pd.DataFrame - Series, Panel, or Hierarchical mtype format.
             Target time series to which to fit the forecaster.
         fh : ForecastingHorizon, optional, default=None
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional, default=None, must be of same mtype as y
             Exogenous data to which to fit the forecaster.
 

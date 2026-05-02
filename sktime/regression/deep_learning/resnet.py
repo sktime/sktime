@@ -6,7 +6,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.resnet import ResNetNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class ResNetRegressor(BaseDeepRegressor):
@@ -21,6 +20,8 @@ class ResNetRegressor(BaseDeepRegressor):
         the number of epochs to train the model
     batch_size : int, default = 16
         the number of samples per gradient update.
+    callbacks : list of keras.callbacks.Callback, optional (default=None)
+        List of Keras callbacks to apply during model training.
     random_state : int or None, default=None
         Seed for random number generation.
     verbose : boolean, default = False
@@ -82,8 +83,6 @@ class ResNetRegressor(BaseDeepRegressor):
         use_bias=True,
         optimizer=None,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.n_epochs = n_epochs
         self.callbacks = callbacks
         self.verbose = verbose
@@ -98,11 +97,23 @@ class ResNetRegressor(BaseDeepRegressor):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self.history = None
         self._network = ResNetNetwork(
             activation_hidden=self.activation_hidden,
-            random_state=random_state,
+            random_state=self.random_state,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

@@ -6,6 +6,7 @@ on:
 
 jobs:
   code_quality:
+    if: ${{ github.repository == 'sktime/sktime' }}
     name: code-quality
     runs-on: ubuntu-latest
     steps:
@@ -130,7 +131,7 @@ jobs:
         run: ./.github/scripts/install_osx_dependencies.sh
 
       - name: install core, test and all soft dependencies
-        run: uv pip install .[all_extras_pandas2,tests]
+        run: uv pip install .[all_extras,tests]
         env:
           UV_SYSTEM_PYTHON: 1
 
@@ -239,7 +240,7 @@ jobs:
 
       - name: Install dependencies for ${{ matrix.flag }}
         run: |
-          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}')))" > deps.txt
+          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}', include_test_deps=True)))" > deps.txt
           uv pip install -r deps.txt
         continue-on-error: true
 

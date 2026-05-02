@@ -63,7 +63,7 @@ class TSBootstrapAdapter(BaseTransformer):
         "capability:bootstrap_index": True,
         # CI and test flags
         # -----------------
-        "tests:vms": True,  # run on separate VM due to tsbootstrap dependency
+        "tests:vm": True,  # run on separate VM due to tsbootstrap dependency
     }
 
     def __init__(

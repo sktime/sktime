@@ -5,29 +5,22 @@ from unittest.mock import patch
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("lightning", severity="none"):
-    import sktime.libs.uni2ts
-
-from sktime.forecasting.base import _BaseGlobalForecaster
-
-if _check_soft_dependencies("huggingface-hub", severity="none"):
-    from huggingface_hub import hf_hub_download
-
+from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
 
 
-class MOIRAIForecaster(_BaseGlobalForecaster):
-    """
-    Adapter for using MOIRAI Forecasters.
+class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+    """MOIRAI Forecasters.
 
     Parameters
     ----------
     checkpoint_path : str, default=None
         Path to the checkpoint of the model. Supported weights are available at [1]_.
     context_length : int, default=200
-        Length of the context window, time points the model with take input as infernce.
+        Length of the context window, time points the model will take as input for
+        inference.
     patch_size : int, default=32
         Time steps to perform patching with.
     num_samples : int, default=100
@@ -70,9 +63,10 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)
     >>> morai_forecaster.fit(y, X=X)
     MOIRAIForecaster(checkpoint_path='sktime/moirai-1.0-R-small')
-    >>> X_test = pd.DataFrame(np.random.normal(0, 1, (10, 2)),
-    ...                      columns=["x1", "x2"],
-    ...                      index=pd.date_range("2020-01-31", periods=10, freq="D"),
+    >>> X_test = pd.DataFrame(
+    ...     np.random.normal(0, 1, (10, 2)),
+    ...     columns=["x1", "x2"],
+    ...     index=pd.date_range("2020-01-31", periods=10, freq="D"),
     ... )
     >>> forecast = morai_forecaster.predict(fh=range(1, 11), X=X_test)
 
@@ -88,12 +82,13 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
         # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
         "maintainers": ["pranavvp16"],
+        "python_version": "<3.14",
         "python_dependencies": [
             "gluonts",
             "torch",
             "einops",
             "huggingface-hub",
-            "hf_xet",
+            "hf-xet",
             "lightning",
             "hydra-core",
         ],
@@ -115,6 +110,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "property:randomness": "stochastic",
         # CI and test flags
         # -----------------
         "tests:vm": True,
@@ -135,7 +131,6 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         batch_size=32,
         use_source_package=False,
     ):
-        super().__init__()
         self.checkpoint_path = checkpoint_path
         self.context_length = context_length
         self.patch_size = patch_size
@@ -148,7 +143,13 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         self.deterministic = deterministic
         self.batch_size = batch_size
         self.use_source_package = use_source_package
+        super().__init__()
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         if self.broadcasting:
             self.set_tags(
                 **{
@@ -160,6 +161,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
     if _check_soft_dependencies(["lightning", "huggingface-hub"], severity="none"):
+        import sktime
         from sktime.libs.uni2ts.forecast import MoiraiForecast
 
         @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
@@ -175,12 +177,14 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 )
                 return MoiraiForecast(**model_kwargs)
             else:
+                from huggingface_hub import hf_hub_download
+
                 model_kwargs["checkpoint_path"] = hf_hub_download(
                     repo_id=self.checkpoint_path, filename="model.ckpt"
                 )
                 return MoiraiForecast.load_from_checkpoint(**model_kwargs)
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X=None, fh=None):
         if fh is not None:
             prediction_length = max(fh.to_relative(self.cutoff))
         else:
@@ -217,6 +221,8 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                     )
                     self.model = MoiraiForecast(**model_kwargs)
                 else:
+                    from huggingface_hub import hf_hub_download
+
                     model_kwargs["checkpoint_path"] = hf_hub_download(
                         repo_id=self.checkpoint_path, filename="model.ckpt"
                     )
@@ -227,7 +233,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             self.model = self._instantiate_patched_model(model_kwargs)
             self.model.to(self.map_location)
 
-    def _predict(self, fh, y=None, X=None):
+    def _predict(self, fh, X=None):
         if self.deterministic:
             import torch
 
@@ -250,15 +256,7 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
             _X = self._X.copy()
 
         # Zero shot case with X and fit data as context
-        _use_fit_data_as_context = False
-        if X is not None and y is None:
-            _use_fit_data_as_context = True
-
-        # Override to data in fit as new timeseries is passed
-        elif y is not None:
-            _y = y.copy()
-            if X is not None:
-                _X = X.copy()
+        _use_fit_data_as_context = X is not None
 
         if isinstance(_y, pd.Series):
             target = [_y.name]
