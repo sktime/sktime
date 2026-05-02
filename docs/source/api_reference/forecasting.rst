@@ -591,6 +591,14 @@ Pre-trained and foundation models
 
     ChronosForecaster
 
+.. currentmodule:: sktime.forecasting.chronos2
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Chronos2Forecaster
+
 .. currentmodule:: sktime.forecasting.hf_transformers_forecaster
 
 .. autosummary::
@@ -598,6 +606,14 @@ Pre-trained and foundation models
     :template: class.rst
 
     HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.lagllama
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LagLlamaForecaster
 
 .. currentmodule:: sktime.forecasting.moirai_forecaster
 
@@ -638,6 +654,14 @@ Pre-trained and foundation models
     :template: class.rst
 
     TimeMoEForecaster
+
+.. currentmodule:: sktime.forecasting.timer
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimerForecaster
 
 .. currentmodule:: sktime.forecasting.timesfm_forecaster
 
