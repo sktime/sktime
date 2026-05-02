@@ -3,12 +3,12 @@
 
 import numpy as np
 
-from sktime.classification._delegate import _DelegatedClassifier
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.utils.dependencies import _placeholder_record
 
 
 @_placeholder_record("hyperactive.integrations.sktime", dependencies="hyperactive>=5")
-class TSCOptCV(_DelegatedClassifier):
+class TSCOptCV(_DelegatedForecaster):
     """Tune an sktime classifier via any optimizer in the hyperactive toolbox.
 
     ``TSCOptCV`` uses any available tuning engine from ``hyperactive``

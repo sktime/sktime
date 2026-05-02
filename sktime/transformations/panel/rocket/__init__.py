@@ -41,9 +41,7 @@ _legacy_to_new = {
     "_rocket_pyts": "sktime.transformations.rocket_pyts",
     "_minirocket": "sktime.transformations.minirocket",
     "_minirocket_multivariate": "sktime.transformations.minirocket_multivariate",
-    "_minirocket_multivariate_variable": (
-        "sktime.transformations.minirocket_multivariate_variable"
-    ),
+    "_minirocket_multivariate_variable": "sktime.transformations.minirocket_multivariate_variable",
     "_multirocket": "sktime.transformations.multirocket",
     "_multirocket_multivariate": "sktime.transformations.multirocket_multivariate",
     "_rocket_numba": "sktime.transformations._rocket_numba",

@@ -9,11 +9,7 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 from skbase.utils.stdout_mute import StdoutMute
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
-)
+from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
 from sktime.utils.warnings import warn
@@ -22,7 +18,7 @@ torch = _safe_import("torch")
 Dataset = _safe_import("torch.utils.data.Dataset")
 
 
-class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class TinyTimeMixerForecaster(_BaseGlobalForecaster):
     """
     TinyTimeMixer Forecaster for Zero-Shot Forecasting of Multivariate Time Series.
 
@@ -285,8 +281,6 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
-        "property:randomness": "stochastic",
-        "capability:random_state": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -329,7 +323,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
                 }
             )
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -534,7 +528,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         # Get the model
         self.model = trainer.model
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X, y=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -567,7 +561,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        _y = self._y
+        _y = y if self._global_forecasting else self._y
 
         # multi-index conversion goes here
         if isinstance(_y.index, pd.MultiIndex):

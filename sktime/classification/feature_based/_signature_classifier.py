@@ -13,10 +13,10 @@ from sklearn.pipeline import Pipeline
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.signature_based._checks import (
+from sktime.transformations.signature_based._checks import (
     _handle_sktime_signatures,
 )
-from sktime.transformations.panel.signature_based._signature_method import (
+from sktime.transformations.signature_based._signature_method import (
     SignatureTransformer,
 )
 

@@ -1,5 +1,3 @@
-"""MultiRocketMultivariate transformer for time series classification."""
-
 import multiprocessing
 
 import numpy as np

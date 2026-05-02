@@ -194,31 +194,25 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
             lr=lr,
         )
 
-    def __post_init__(self):
-        """Post-init constructor logic, can be used by inheriting classes.
+        from sktime.utils.dependencies import _check_soft_dependencies
 
-        This method should be used for:
+        if _check_soft_dependencies("torch"):
+            import torch
 
-        * parameter validation
-        * initialization logic beyond self.param = param
-        * any soft dependency imports in the constructor
-        """
-        import torch
+            self.criterions = {
+                "MSE": torch.nn.MSELoss,
+                "L1": torch.nn.L1Loss,
+                "SmoothL1": torch.nn.SmoothL1Loss,
+                "Huber": torch.nn.HuberLoss,
+            }
 
-        self.criterions = {
-            "MSE": torch.nn.MSELoss,
-            "L1": torch.nn.L1Loss,
-            "SmoothL1": torch.nn.SmoothL1Loss,
-            "Huber": torch.nn.HuberLoss,
-        }
-
-        self.optimizers = {
-            "Adadelta": torch.optim.Adadelta,
-            "Adagrad": torch.optim.Adagrad,
-            "Adam": torch.optim.Adam,
-            "AdamW": torch.optim.AdamW,
-            "SGD": torch.optim.SGD,
-        }
+            self.optimizers = {
+                "Adadelta": torch.optim.Adadelta,
+                "Adagrad": torch.optim.Adagrad,
+                "Adam": torch.optim.Adam,
+                "AdamW": torch.optim.AdamW,
+                "SGD": torch.optim.SGD,
+            }
 
     def _build_network(self, fh):
         # Define the SCINet-based network

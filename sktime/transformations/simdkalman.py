@@ -5,6 +5,7 @@ __author__ = ["oseiskar"]
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
+
 from sktime.transformations.kalman_filter_base import BaseKalmanFilter
 
 
