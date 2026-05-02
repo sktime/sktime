@@ -108,8 +108,12 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["ninedigits", "RikStarmans"],
         "maintainers": ["ninedigits"],
+        # estimator type
+        # --------------
         "capability:missing_values": True,
         "capability:multivariate": True,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
@@ -131,21 +135,40 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     _steps_fitted_attr = "forecasters_"
 
     def __init__(self, forecasters, verbose=False, nan_predict_policy="ignore"):
+        self.forecasters = forecasters
+        self.verbose = verbose
+        self.nan_predict_policy = nan_predict_policy
+
         super().__init__()
 
-        self.forecasters = forecasters
-        self.current_forecaster_ = None
-        self.current_name_ = None
-        self.verbose = verbose
-        self.nan_predict_policy = _check_nan_policy_option(nan_predict_policy)
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
 
+        This method should be used for setting dynamic tags only.
+        """
+        # writing self._forecasters early to allow tag setting
         self._forecasters = self._check_estimators(
-            forecasters, "forecasters", clone_ests=False
+            self.forecasters, "forecasters", clone_ests=False
         )
-        self.forecasters_ = self._check_estimators(forecasters, "forecasters")
 
         self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
         self._anytagis_then_set("capability:pred_int", False, True, self._forecasters)
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        self.current_forecaster_ = None
+        self.current_name_ = None
+
+        self.nan_predict_policy = _check_nan_policy_option(self.nan_predict_policy)
+
+        self.forecasters_ = self._check_estimators(self.forecasters, "forecasters")
 
     def _validate_y_pred(self, y_pred):
         if self.nan_predict_policy in ("warn", "raise"):
