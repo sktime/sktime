@@ -471,7 +471,7 @@ class AutoETS(_StatsModelsAdapter):
         valid_indices = fh.to_absolute_index(self.cutoff)
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
-        y_pred.name = self._get_varnames()[0]
+        y_pred.name = self._y_name
         return y_pred.loc[valid_indices]
 
     @staticmethod

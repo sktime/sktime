@@ -398,6 +398,9 @@ class ARDL(_StatsModelsAdapter):
             self._fitted_forecaster = self._forecaster.model.fit(
                 cov_type=self.cov_type, cov_kwds=self.cov_kwds, use_t=self.use_t
             )
+
+        self._y_index0 = y.index[0]
+
         return self
 
     def summary(self):
