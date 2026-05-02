@@ -313,21 +313,6 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
         self.model_parallel = False
         self.device_map = None
 
-    def _tie_weights(self):
-        """Tie weights for encoder and decoder embeddings to use the shared embedding.
-
-        This method ensures that the encoder.embed_tokens and decoder.embed_tokens
-        reference the same underlying weight tensor for compatibility with newer
-        transformers versions.
-        """
-        # Since we use set_input_embeddings() to set the shared embeddings for both
-        # encoder and decoder, they already share the same embedding weights.
-        # This method exists to ensure compatibility with transformers' post_init()
-        # which expects _tie_weights() to be callable.
-        parent_tie_weights = getattr(super(), "_tie_weights", None)
-        if callable(parent_tie_weights):
-            parent_tie_weights()
-
     def _init_weights(self, module):
         super()._init_weights(module)
         """Initialize the weights"""
