@@ -326,7 +326,6 @@ class ChronosForecaster(BaseForecaster):
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
         ],
-        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     _default_chronos_config = {
