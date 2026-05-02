@@ -10,7 +10,7 @@ import pandas as pd
 from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+from sktime.transformations.aggregate import _check_index_no_total
 from sktime.utils.parallel import parallelize
 from sktime.utils.warnings import warn
 
@@ -221,7 +221,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     def _aggregate(self, y):
         """Add total levels to y, using Aggregate."""
-        from sktime.transformations.hierarchical.aggregate import Aggregator
+        from sktime.transformations.aggregate import Aggregator
 
         return Aggregator().fit_transform(y)
 

@@ -595,7 +595,7 @@ def test_evaluate_hierarchical_unequal_X_y():
 
     Tests failure case in bug report #4842.
     """
-    from sktime.transformations.hierarchical.aggregate import Aggregator
+    from sktime.transformations.aggregate import Aggregator
 
     # hierarchical/panel with 2-level pd.MultiIndex,
     # level 0 with "A", and "B", dates from 2020-01-01 to 2020-01-10

@@ -51,7 +51,7 @@ class TransformByLevel(_DelegatedTransformer):
     Examples
     --------
     >>> from sktime.transformations.compose import TransformByLevel
-    >>> from sktime.transformations.hierarchical.reconcile import Reconciler
+    >>> from sktime.transformations.reconcile import Reconciler
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical()
     >>> f = TransformByLevel(Reconciler(), groupby="panel")

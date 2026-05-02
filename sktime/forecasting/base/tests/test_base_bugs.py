@@ -12,7 +12,7 @@ from sktime.forecasting.reconcile import ReconcilerForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.transformations.hierarchical.aggregate import Aggregator
+from sktime.transformations.aggregate import Aggregator
 from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.dependencies import _check_estimator_deps

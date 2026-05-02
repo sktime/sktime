@@ -6,7 +6,7 @@ __all__ = []
 import pytest
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
-from sktime.transformations.hierarchical.aggregate import Aggregator
+from sktime.transformations.aggregate import Aggregator
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
 from sktime.utils._testing.panel import _make_panel
 

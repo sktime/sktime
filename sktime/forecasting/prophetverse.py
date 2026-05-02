@@ -251,7 +251,7 @@ class HierarchicalProphet(_DelegatedForecaster):
     Examples
     --------
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.hierarchical.aggregate import Aggregator
+    >>> from sktime.transformations.aggregate import Aggregator
     >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
     >>> from sktime.forecasting.prophetverse import HierarchicalProphet
     >>> agg = Aggregator()

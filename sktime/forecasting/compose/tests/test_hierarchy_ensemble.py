@@ -13,7 +13,7 @@ from sktime.forecasting.compose import HierarchyEnsembleForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.hierarchical.aggregate import Aggregator
+from sktime.transformations.aggregate import Aggregator
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
 
 

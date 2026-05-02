@@ -2,14 +2,14 @@
 
 import pandas as pd
 
-from sktime.transformations.hierarchical.reconcile._base import _ReconcilerTransformer
-from sktime.transformations.hierarchical.reconcile._utils import (
+from sktime.transformations.hierarchical_reconcile_base import _ReconcilerTransformer
+from sktime.transformations.hierarchical_reconcile_utils import (
     _get_total_level_idxs,
     _loc_series_idxs,
     _promote_hierarchical_indexes_and_keep_timeindex,
     _recursively_propagate_topdown,
 )
-from sktime.transformations.hierarchical.squeeze_hierarchy import (  # noqa: E501
+from sktime.transformations.squeeze_hierarchy import (  # noqa: E501
     SqueezeHierarchy,
 )
 

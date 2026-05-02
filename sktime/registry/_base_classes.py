@@ -632,7 +632,7 @@ class reconciler(_BaseScitypeOfObject):
 
     @classmethod
     def get_base_class(cls):
-        from sktime.transformations.hierarchical.reconcile._base import (
+        from sktime.transformations.hierarchical_reconcile_base import (
             _ReconcilerTransformer,
         )
 
