@@ -227,8 +227,6 @@ class AutoREG(_StatsModelsAdapter):
         y_pred.name = self._y_name
 
         return y_pred.loc[valid_indices]
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
