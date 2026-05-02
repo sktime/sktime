@@ -291,7 +291,7 @@ class _Reducer(_BaseWindowForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -526,7 +526,7 @@ class _DirectReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to to predict.
+             The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -793,7 +793,7 @@ class _MultioutputReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to to predict.
+             The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -887,7 +887,7 @@ class _RecursiveReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to to predict.
+             The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -1130,7 +1130,7 @@ class _DirRecReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to to predict.
+             The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -1866,33 +1866,36 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     Algorithm details:
 
     In ``fit``, given endogeneous time series ``y`` and possibly exogeneous ``X``:
-        fits ``estimator`` to feature-label pairs as defined as follows.
-    if `X_treatment = "concurrent":
-        features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_size)``, if provided:
-        ``X(t+h)``
-        labels = ``y(t+h)`` for ``h`` in the forecasting horizon
-        ranging over all ``t`` where the above have been observed (are in the index)
-        for each ``h`` in the forecasting horizon (separate estimator fitted per ``h``)
-    if `X_treatment = "shifted":
-        features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_size)``, if provided:
-        ``X(t)``
-        labels = ``y(t+h_1)``, ..., ``y(t+h_k)`` for ``h_j`` in the forecasting horizon
-        ranging over all ``t`` where the above have been observed (are in the index)
-        estimator is fitted as a multi-output estimator (for all ``h_j``
-        simultaneously)
+    fits ``estimator`` to feature-label pairs as defined as follows.
+
+    * if ``X_treatment = "concurrent"``:
+      features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_size)``,
+      if provided ``X(t+h)``;
+      labels = ``y(t+h)`` for ``h`` in the forecasting horizon,
+      ranging over all ``t`` where the above have been observed (are in the index)
+      for each ``h`` in the forecasting horizon (separate estimator fitted per ``h``)
+
+    * if ``X_treatment = "shifted"``:
+      features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_size)``, if provided: ``X(t)``;
+      labels = ``y(t+h_1)``, ..., ``y(t+h_k)`` for ``h_j`` in the forecasting horizon
+      ranging over all ``t`` where the above have been observed (are in the index)
+      estimator is fitted as a multi-output estimator (for all ``h_j``
+      simultaneously)
 
     In ``predict``, given possibly exogeneous ``X``, at cutoff time ``c``,
-    if `X_treatment = "concurrent":
-        applies fitted estimators' predict to
-        feature = ``y(c)``, ``y(c-1)``, ..., ``y(c-window_size)``, if provided:
-        ``X(c+h)``
-        to obtain a prediction for ``y(c+h)``, for each ``h`` in the forecasting horizon
-    if `X_treatment = "shifted":
-        applies fitted estimator's predict to
-        features = ``y(c)``, ``y(c-1)``, ..., ``y(c-window_size)``, if provided:
-        ``X(c)``
-        to obtain prediction for ``y(c+h_1)``, ..., ``y(c+h_k)`` for ``h_j`` in forec.
-        horizon
+
+    * if ``X_treatment = "concurrent"``:
+      applies fitted estimators' predict to
+      feature = ``y(c)``, ``y(c-1)``, ..., ``y(c-window_size)``, if provided
+      ``X(c+h)``;
+      to obtain a prediction for ``y(c+h)``, for each ``h`` in the forecasting horizon
+
+    * if ``X_treatment = "shifted"``:
+      applies fitted estimator's predict to
+      features = ``y(c)``, ``y(c-1)``, ..., ``y(c-window_size)``, if provided:
+      ``X(c)``;
+      to obtain prediction for ``y(c+h_1)``, ..., ``y(c+h_k)`` for ``h_j`` in
+      forecasting horizon
 
     Parameters
     ----------
@@ -1906,10 +1909,11 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     X_treatment : str, optional, one of "concurrent" (default) or "shifted"
         determines the timestamps of X from which y(t+h) is predicted, for horizon h
-        "concurrent": y(t+h) is predicted from lagged y, and X(t+h), for all h in fh
-            in particular, if no y-lags are specified, y(t+h) is predicted from X(t)
-        "shifted": y(t+h) is predicted from lagged y, and X(t), for all h in fh
-            in particular, if no y-lags are specified, y(t+h) is predicted from X(t+h)
+
+        * "concurrent": y(t+h) is predicted from lagged y, and X(t+h), for all h in fh
+          in particular, if no y-lags are specified, y(t+h) is predicted from X(t)
+        * "shifted": y(t+h) is predicted from lagged y, and X(t), for all h in fh
+          in particular, if no y-lags are specified, y(t+h) is predicted from X(t+h)
 
     impute_method : str, None, or sktime transformation, optional
         Imputation method to use for missing values in the lagged data
@@ -1925,9 +1929,12 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     pooling : str, one of ["local", "global", "panel"], optional, default="local"
         level on which data are pooled to fit the supervised regression model
-        "local" = unit/instance level, one reduced model per lowest hierarchy level
-        "global" = top level, one reduced model overall, on pooled data ignoring levels
-        "panel" = second lowest level, one reduced model per panel level (-2)
+
+        * "local" = unit/instance level, one reduced model per lowest hierarchy level
+        * "global" = top level, one reduced model overall, on pooled data
+          ignoring levels
+        * "panel" = second lowest level, one reduced model per panel level (-2)
+
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
 
@@ -1935,13 +1942,13 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         Specifies whether all direct models use the same number of observations
         or a different number of observations.
 
-        * `True` : Uniform window of length (total observations - maximum
+        * ``True`` : Uniform window of length (total observations - maximum
           forecasting horizon). Note: Currently, there are no missing arising
           from window length due to backwards imputation in
-          `ReductionTransformer`. Without imputation, the window size
+          ``ReductionTransformer``. Without imputation, the window size
           corresponds to (total observations + 1 - window_length + maximum
           forecasting horizon).
-        * `False` : Window size differs for each forecasting horizon. Window
+        * ``False`` : Window size differs for each forecasting horizon. Window
           length corresponds to (total observations + 1 - window_length +
           forecasting horizon).
     """
@@ -1980,6 +1987,12 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self._lags = list(range(window_length))
         super().__init__()
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        pooling = self.pooling
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -2377,7 +2390,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.estimator = estimator
         self.impute_method = impute_method
         self.pooling = pooling
-        self._lags = list(range(window_length))
         super().__init__()
 
         warn(
@@ -2386,6 +2398,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "https://github.com/alan-turing-institute/sktime/issues/3224"
         )
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        pooling = self.pooling
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -2401,6 +2419,18 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        self._lags = list(range(self.window_length))
+
+        impute_method = self.impute_method
         if isinstance(impute_method, str):
             from sktime.transformations.series.impute import Imputer
 
@@ -2427,7 +2457,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             mtype is pd.DataFrame, pd-multiindex, or pd_multiindex_hier
             Time series to which to fit the forecaster.
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : pd.DataFrame optional (default=None)
@@ -2488,7 +2518,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             mtype is pd.DataFrame, pd-multiindex, or pd_multiindex_hier
@@ -2789,23 +2819,22 @@ class YfromX(BaseForecaster, _ReducerMixin):
         self.pooling = pooling
         super().__init__()
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        estimator = self.estimator
         # self._est_type encodes information what type of estimator is passed
         if hasattr(estimator, "get_tags"):
             _est_type = estimator.get_tag("object_type", "regressor", False)
         else:
             _est_type = "regressor"
 
-        if _est_type not in ["regressor", "regressor_proba"]:
-            raise TypeError(
-                "error in YfromX, estimator must be either an sklearn compatible "
-                "regressor, or an skpro probabilistic regressor."
-            )
-
         # has probabilistic mode iff the estimator is of type regressor_proba
         self.set_tags(**{"capability:pred_int": _est_type == "regressor_proba"})
 
-        self._est_type = _est_type
-
+        pooling = self.pooling
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -2821,6 +2850,30 @@ class YfromX(BaseForecaster, _ReducerMixin):
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        estimator = self.estimator
+        # self._est_type encodes information what type of estimator is passed
+        if hasattr(estimator, "get_tags"):
+            _est_type = estimator.get_tag("object_type", "regressor", False)
+        else:
+            _est_type = "regressor"
+
+        if _est_type not in ["regressor", "regressor_proba"]:
+            raise TypeError(
+                "error in YfromX, estimator must be either an sklearn compatible "
+                "regressor, or an skpro probabilistic regressor."
+            )
+
+        self._est_type = _est_type
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -2832,7 +2885,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
             mtype is pd.DataFrame, pd-multiindex, or pd_multiindex_hier
             Time series to which to fit the forecaster.
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : pd.DataFrame optional (default=None)
@@ -2878,7 +2931,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             mtype is pd.DataFrame, pd-multiindex, or pd_multiindex_hier
@@ -2918,7 +2971,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -2956,7 +3009,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -2991,7 +3044,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
