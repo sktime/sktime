@@ -35,10 +35,10 @@ from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 from sktime.transformations.catch22 import Catch22
 from sktime.transformations.catch22wrapper import Catch22Wrapper
-from sktime.transformations.random_intervals import RandomIntervals
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.supervised_intervals import SupervisedIntervals
+from sktime.transformations.random_intervals import RandomIntervals
 from sktime.transformations.series.summarize import SummaryTransformer
+from sktime.transformations.supervised_intervals import SupervisedIntervals
 
 
 def _reproduce_classification_unit_test(estimator):

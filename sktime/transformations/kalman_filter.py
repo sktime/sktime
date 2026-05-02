@@ -15,14 +15,13 @@ __all__ = [
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.utils.warnings import warn
-
 from sktime.transformations.kalman_filter_base import (
     BaseKalmanFilter,
     _init_matrix,
     _validate_param_shape,
 )
+from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.warnings import warn
 
 
 def _get_t_matrix(time_t, matrices, shape, time_steps):
