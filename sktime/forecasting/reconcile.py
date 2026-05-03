@@ -9,12 +9,12 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.transformations._hierarchical_reconcile_utils import _loc_series_idxs
 from sktime.transformations.aggregate import (
     Aggregator,
     _check_index_no_total,
 )
 from sktime.transformations.bottom_up_reconciler import BottomUpReconciler
-from sktime.transformations._hierarchical_reconcile_utils import _loc_series_idxs
 from sktime.transformations.optimal_reconciler import (
     NonNegativeOptimalReconciler,
     OptimalReconciler,
