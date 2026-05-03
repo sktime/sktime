@@ -199,9 +199,9 @@ class MyForecaster(BaseForecaster):
         # below code guarantees the right row and column index
         #
         # row_idx = fh.to_absolute_index(self.cutoff)
-        # col_idx = self._y.index
+        # col_idx = self._get_varnames()
         #
-        # y_pred = pd.DataFrame(values, index=row_ind, columns=col_idx)
+        # y_pred = pd.DataFrame(values, index=row_idx, columns=col_idx)
 
         # IMPORTANT: avoid side effects to X, fh
 
