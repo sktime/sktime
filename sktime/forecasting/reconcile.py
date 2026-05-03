@@ -9,17 +9,17 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.transformations.hierarchical.aggregate import (
+from sktime.transformations.aggregate import (
     Aggregator,
     _check_index_no_total,
 )
-from sktime.transformations.hierarchical.reconcile import (
-    BottomUpReconciler,
+from sktime.transformations.bottom_up_reconciler import BottomUpReconciler
+from sktime.transformations._hierarchical_reconcile_utils import _loc_series_idxs
+from sktime.transformations.optimal_reconciler import (
     NonNegativeOptimalReconciler,
     OptimalReconciler,
-    TopdownReconciler,
 )
-from sktime.transformations.hierarchical.reconcile._utils import _loc_series_idxs
+from sktime.transformations.topdown_reconciler import TopdownReconciler
 from sktime.utils.warnings import warn
 
 
@@ -76,7 +76,7 @@ class ReconcilerForecaster(BaseForecaster):
     --------
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.reconcile import ReconcilerForecaster
-    >>> from sktime.transformations.hierarchical.aggregate import Aggregator
+    >>> from sktime.transformations.aggregate import Aggregator
     >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
     >>> agg = Aggregator()
     >>> y = _bottom_hier_datagen(
@@ -155,7 +155,7 @@ class ReconcilerForecaster(BaseForecaster):
 
     def _add_totals(self, y):
         """Add total levels to y, using Aggregate."""
-        from sktime.transformations.hierarchical.aggregate import Aggregator
+        from sktime.transformations.aggregate import Aggregator
 
         return Aggregator().fit_transform(y)
 

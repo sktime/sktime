@@ -57,7 +57,7 @@ class Deseasonalizer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.detrend import Deseasonalizer
+    >>> from sktime.transformations.deseasonalize import Deseasonalizer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()  # doctest: +SKIP
     >>> transformer = Deseasonalizer()  # doctest: +SKIP
@@ -296,7 +296,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 
     Examples
     --------
-    >>> from sktime.transformations.detrend import ConditionalDeseasonalizer
+    >>> from sktime.transformations.deseasonalize import ConditionalDeseasonalizer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()  # doctest: +SKIP
     >>> transformer = ConditionalDeseasonalizer(sp=12)  # doctest: +SKIP
@@ -464,7 +464,7 @@ class STLTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.detrend import STLTransformer
+    >>> from sktime.transformations.deseasonalize import STLTransformer
     >>> X = load_airline()  # doctest: +SKIP
     >>> transformer = STLTransformer(sp=12)  # doctest: +SKIP
     >>> Xt = transformer.fit_transform(X)  # doctest: +SKIP

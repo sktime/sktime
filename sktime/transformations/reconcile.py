@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 from numpy.linalg import inv
 
+from sktime.transformations.aggregate import _check_index_no_total
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.hierarchical.aggregate import _check_index_no_total
 from sktime.utils.warnings import warn
 
 # TODO: failing test which are escaped
@@ -69,7 +69,7 @@ class Reconciler(BaseTransformer):
     --------
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.transformations.hierarchical.reconcile import Reconciler
-    >>> from sktime.transformations.hierarchical.aggregate import Aggregator
+    >>> from sktime.transformations.aggregate import Aggregator
     >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
     >>> agg = Aggregator()
     >>> y = _bottom_hier_datagen(
@@ -126,7 +126,7 @@ class Reconciler(BaseTransformer):
 
     def _add_totals(self, X):
         """Add total levels to X, using Aggregate."""
-        from sktime.transformations.hierarchical.aggregate import Aggregator
+        from sktime.transformations.aggregate import Aggregator
 
         return Aggregator().fit_transform(X)
 

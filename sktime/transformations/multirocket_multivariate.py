@@ -1,3 +1,5 @@
+"""Multi RandOm Convolutional KErnel Transform (MultiRocket)."""
+
 import multiprocessing
 
 import numpy as np

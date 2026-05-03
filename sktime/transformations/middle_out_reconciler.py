@@ -5,17 +5,17 @@ import warnings
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.hierarchical.reconcile._base import _ReconcilerTransformer
-from sktime.transformations.hierarchical.reconcile._bottom_up import (
+from sktime.transformations.bottom_up_reconciler import (
     BottomUpReconciler,
 )
-from sktime.transformations.hierarchical.reconcile._topdown import (
-    TopdownReconciler,
-)
-from sktime.transformations.hierarchical.reconcile._utils import (
+from sktime.transformations._hierarchical_reconcile_base import _ReconcilerTransformer
+from sktime.transformations._hierarchical_reconcile_utils import (
     _filter_descendants,
     _get_series_for_each_hierarchical_level,
     _loc_series_idxs,
+)
+from sktime.transformations.topdown_reconciler import (
+    TopdownReconciler,
 )
 
 __all__ = ["MiddleOutReconciler"]
@@ -80,7 +80,7 @@ class MiddleOutReconciler(_ReconcilerTransformer):
     ...     MiddleOutReconciler)
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.hierarchical.aggregate import Aggregator
+    >>> from sktime.transformations.aggregate import Aggregator
     >>> y = _make_hierarchical(hierarchy_levels=(2, 2, 4))
     >>> pipe = MiddleOutReconciler(middle_level=1) * NaiveForecaster()
     >>> pipe = pipe.fit(y)
@@ -310,7 +310,7 @@ class MiddleOutReconciler(_ReconcilerTransformer):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Get test params."""
-        from sktime.transformations.hierarchical.reconcile._topdown import (
+        from sktime.transformations.topdown_reconciler import (
             TopdownReconciler,
         )
 

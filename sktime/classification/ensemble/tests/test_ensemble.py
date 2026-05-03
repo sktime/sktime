@@ -12,8 +12,8 @@ from sktime.classification.ensemble import ComposableTimeSeriesForestClassifier
 from sktime.datasets import load_unit_test
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import FeatureUnion
-from sktime.transformations.segment import RandomIntervalSegmenter
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.transformations.segment import RandomIntervalSegmenter
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils.slope_and_trend import _slope

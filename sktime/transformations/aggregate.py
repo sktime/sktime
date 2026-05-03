@@ -41,7 +41,7 @@ class Aggregator(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.hierarchical.aggregate import Aggregator
+    >>> from sktime.transformations.aggregate import Aggregator
     >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
     >>> agg = Aggregator()
     >>> y = _bottom_hier_datagen(

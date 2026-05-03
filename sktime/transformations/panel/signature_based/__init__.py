@@ -24,6 +24,7 @@ _legacy_to_new = {
     "_rescaling": "sktime.transformations.signature_based._rescaling",
     "_signature_method": "sktime.transformations.signature_based._signature_method",
     "_window": "sktime.transformations.signature_based._window",
+    "SignatureTransformer": "sktime.transformations.signature_based._signature_method",
 }
 for _legacy, _new in _legacy_to_new.items():
     sys.modules[f"{__name__}.{_legacy}"] = importlib.import_module(_new)
