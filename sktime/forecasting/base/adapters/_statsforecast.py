@@ -121,7 +121,7 @@ class _StatsForecastAdapter(BaseForecaster):
 
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
-        y_pred.name = self._y.name
+        y_pred.name = self._get_varnames()[0]
         return y_pred
 
     def _predict_in_sample(
