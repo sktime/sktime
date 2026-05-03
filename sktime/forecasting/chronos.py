@@ -397,12 +397,7 @@ class ChronosForecaster(BaseForecaster):
 
             # "ChronosBoltModelForForecasting is the name of the architecture"
             # as specified in the config.json file
-            architectures = getattr(config, "architectures", None)
-
-            if architectures is None:
-                architectures = []
-
-            is_bolt = "ChronosBoltModelForForecasting" in architectures
+            is_bolt = "ChronosBoltModelForForecasting" in (config.architectures or [])
 
             if is_bolt:
                 self.model_strategy = ChronosBoltStrategy()
@@ -439,6 +434,7 @@ class ChronosForecaster(BaseForecaster):
         self : reference to self
         """
         self.model_pipeline = self._load_pipeline()
+        self._context = y
         return self
 
     def _get_chronos_kwargs(self):
@@ -587,7 +583,7 @@ class ChronosForecaster(BaseForecaster):
         else:
             prediction_length = 1
 
-        _y = self._y.copy()
+        _y = self._context.copy()
         if y is not None:
             _y = y.copy()
         _y_df = _y
@@ -654,21 +650,11 @@ class ChronosForecaster(BaseForecaster):
                 "seed": 42,
             }
         )
-
-        # skip Chronos-Bolt for transformers >= 5.x (incompatible)
-        try:
-            import transformers
-            major_version = int(transformers.__version__.split(".")[0])
-        except ImportError:
-            major_version = 0
-
-        if major_version < 5:
-            test_params.append(
-                {
-                    "model_path": "amazon/chronos-bolt-tiny",
-                }
-            )
-
+        test_params.append(
+            {
+                "model_path": "amazon/chronos-bolt-tiny",
+            }
+        )
         return test_params
 
 
