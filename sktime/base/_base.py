@@ -175,6 +175,10 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         """,
     }
 
+    def __init__(self):
+        super().__init__()
+        self.__dynamic_tags__()
+
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
@@ -192,6 +196,13 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         other_params = other.get_params(deep=False)
 
         return deep_equals(self_params, other_params)
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        pass
 
     @classmethod
     def _get_set_config_doc(cls):
