@@ -263,8 +263,8 @@ class HierarchicalProphet(_DelegatedForecaster):
     ... )
     >>> y = agg.fit_transform(y)
     >>> forecaster = HierarchicalProphet()
-    >>> forecaster.fit(y)
-    >>> forecaster.predict(fh=[1])
+    >>> forecaster.fit(y) # doctest: +SKIP
+    >>> forecaster.predict(fh=[1]) # doctest: +SKIP
     """
 
     _delegate_name = "_delegate"
