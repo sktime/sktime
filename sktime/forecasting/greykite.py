@@ -69,7 +69,6 @@ class GreykiteForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",  # Expected input type for X.
         "requires-fh-in-fit": True,  # Forecasting horizon is required in fit.
         "capability:pred_int": False,  # Can produce prediction intervals.
-        "capability:pickle": False,
         "capability:unequal_length": False,
         "python_dependencies": ["greykite>=1.0.0"],  # Required Python dependencies.
         "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
