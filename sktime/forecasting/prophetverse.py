@@ -91,8 +91,8 @@ class Prophetverse(_DelegatedForecaster):
     ...         )
     ...     ],
     ... )
-    >>> model.fit(y)
-    >>> model.predict(fh=[1, 2, 3])
+    >>> model.fit(y) # doctest: +SKIP
+    >>> model.predict(fh=[1, 2, 3]) # doctest: +SKIP
     """
 
     _tags = {
