@@ -161,6 +161,17 @@ class MAPAForecaster(BaseForecaster):
         self.weights = weights
         self.base_forecaster = base_forecaster
 
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         self._aggregation_levels = (
             self.aggregation_levels if self.aggregation_levels else [1, 2, 4]
         )
@@ -170,8 +181,6 @@ class MAPAForecaster(BaseForecaster):
         self._y_cols = None
         self._y_name = None
         self._transformation_offset = None
-
-        super().__init__()
 
         self._base_forecaster = self._initialize_base_forecaster(self.base_forecaster)
 
