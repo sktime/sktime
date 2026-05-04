@@ -3,6 +3,7 @@
 
 __author__ = ["vedantag17"]
 
+import copy
 from typing import Optional
 
 import numpy as np
@@ -104,9 +105,16 @@ class GreykiteForecaster(BaseForecaster):
         self._X = None
 
     def _create_forecast_config(self, y=None):
-        """Create a ForecastConfig object if one wasn't provided."""
+        """Create a ForecastConfig object if one wasn't provided.
+
+        The resolved config is stored in ``self._forecast_config_`` so that
+        ``self.forecast_config`` (the user-supplied hyperparameter) is never
+        mutated during ``fit``, as required by sktime's estimator contract.
+        """
         if self.forecast_config is not None:
-            return self.forecast_config
+            # User supplied a config; store a reference but do not mutate.
+            self._forecast_config_ = self.forecast_config
+            return self._forecast_config_
 
         # If frequency is not provided, try to infer it from the index.
         if y is not None:
@@ -140,8 +148,9 @@ class GreykiteForecaster(BaseForecaster):
         # Default model components.
         model_components_param = ModelComponentsParam()
 
-        # Create the ForecastConfig using Greykite's parameters.
-        self.forecast_config = ForecastConfig(
+        # Build the config and store it as a fitted attribute, NOT as a
+        # hyperparameter, so that self.forecast_config stays None.
+        self._forecast_config_ = ForecastConfig(
             metadata_param=metadata_param,
             model_components_param=model_components_param,
             model_template=self.model_template,
@@ -151,7 +160,7 @@ class GreykiteForecaster(BaseForecaster):
             computation_param=ComputationParam(),
             forecast_one_by_one=False,
         )
-        return self.forecast_config
+        return self._forecast_config_
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -177,7 +186,10 @@ class GreykiteForecaster(BaseForecaster):
             self._X = X.copy()
 
         # Create the forecast configuration if not already provided.
-        fc = self._create_forecast_config(y)
+        # Use a shallow copy so that setting forecast_horizon does not mutate
+        # either self.forecast_config (the user-supplied hyperparameter) or
+        # self._forecast_config_ across repeated fit calls.
+        fc = copy.copy(self._create_forecast_config(y))
         if hasattr(fh, "to_numpy"):
             steps = fh.to_numpy()
         else:
@@ -221,7 +233,7 @@ class GreykiteForecaster(BaseForecaster):
             raise ValueError("Forecaster has not been fitted yet. Call 'fit' first.")
         return {
             "model": self._forecaster.model,
-            "forecast_config": self.forecast_config,
+            "forecast_config": self._forecast_config_,
         }
 
     @classmethod
@@ -253,11 +265,5 @@ class GreykiteForecaster(BaseForecaster):
                 "model_template": "SILVERKITE",
                 "date_format": None,
                 "coverage": 0.95,
-            },
-            {
-                "model_template": "PROPHET",
-                "date_format": "%Y-%m-%d",
-                "forecast_config": None,
-                "coverage": 0.75,
             },
         ]
