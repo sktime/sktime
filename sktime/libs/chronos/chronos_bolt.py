@@ -244,10 +244,20 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
         r"output_patch_embedding\.",
     ]
     _keys_to_ignore_on_load_unexpected = [r"lm_head.weight"]
-    _tied_weights_keys = ["encoder.embed_tokens.weight", "decoder.embed_tokens.weight"]
 
     def __init__(self, config: ChronosBoltConfig):
         assert hasattr(config, "chronos_config"), "Not a Chronos config file"
+
+        if _check_soft_dependencies("transformers>=5.0", severity="none"):
+            self._tied_weights_keys = {
+                "encoder.embed_tokens.weight": "shared.weight",
+                "decoder.embed_tokens.weight": "shared.weight",
+            }
+        else:
+            self._tied_weights_keys = [
+                "encoder.embed_tokens.weight",
+                "decoder.embed_tokens.weight",
+            ]
 
         super().__init__(config)
         self.model_dim = config.d_model
@@ -531,10 +541,10 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
         decoder_config.num_layers = config.num_decoder_layers
 
         if _check_soft_dependencies("transformers>=5.0", severity="none"):
-            self.encoder = T5Stack(decoder_config)
-            self.encoder.set_input_embeddings(self.shared)
+            self.decoder = T5Stack(decoder_config)
+            self.decoder.set_input_embeddings(self.shared)
         else:
-            self.encoder = T5Stack(decoder_config, self.shared)
+            self.decoder = T5Stack(decoder_config, self.shared)
 
     def decode(
         self,
