@@ -186,7 +186,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:unequal_length": False,
         # testing configuration
         # ---------------------
-        "tests:vm": True,
+        # "tests:vm": True, # skip all tests temporarily, issue tracked in #10083
         "tests:libs": ["sktime.libs.timesfm"],
         "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
