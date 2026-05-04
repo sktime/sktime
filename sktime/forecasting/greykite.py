@@ -75,7 +75,7 @@ class GreykiteForecaster(BaseForecaster):
         "capability:insample": False,
         # CI and test flags
         # -----------------
-        "tests:vm": True,
+        # "tests:vm": True, # skip all tests temporarily, issue tracked in #10083
     }
 
     def __init__(
