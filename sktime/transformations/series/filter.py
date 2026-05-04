@@ -93,7 +93,7 @@ class Filter(BaseTransformer):
 
         Parameters
         ----------
-        X : 2D or 3D numpy array, sktime format np.darray or numpy3D
+        X : 2D or 3D numpy array, sktime format np.ndarray or numpy3D
         y : not used, passed only for interface conformance
 
         Returns

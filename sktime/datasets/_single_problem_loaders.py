@@ -1636,7 +1636,7 @@ def load_m5(
             value_name="sales",
         ).dropna()
 
-        # add calender info
+        # add calendar info
         df2 = df1.merge(cal, left_on="day", right_on="d", how="left")
 
         # select useful columns
