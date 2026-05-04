@@ -140,10 +140,13 @@ class TimeBinAggregate(BaseTransformer):
             else:
                 Xt.index = bins[1:]
         elif self.return_index == "bin_mid":
-            if bins is pd.IntervalIndex:
-                Xt.index = [(x.left + x.right) / 2 for x in Xt.index]
-            else:
-                Xt.index = [(bins[i] + bins[i + 1]) / 2 for i in range(len(bins))]
+            mid = self._bins.mid
+            if pd.api.types.is_float_dtype(mid):
+                rounded_mid = np.round(mid)
+                if np.all(np.isclose(mid, rounded_mid)):
+                    mid = pd.Index(rounded_mid.astype("int64"))
+            Xt.index = mid
+
         elif self.return_index == "bin":
             Xt.index = self._bins
         return Xt
