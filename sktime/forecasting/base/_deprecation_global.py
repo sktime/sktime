@@ -471,7 +471,7 @@ class _BaseGlobalForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
