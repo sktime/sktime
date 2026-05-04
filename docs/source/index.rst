@@ -40,12 +40,12 @@ Contents
    :maxdepth: 1
    :hidden:
 
-   get_started
+   get-started
    users
    installation
-   estimator_overview
-   api_reference
-   get_involved
+   estimator-overview
+   api-reference
+   get-involved
    developers
    about
    examples
@@ -64,7 +64,7 @@ Contents
 
         +++
 
-        .. button-ref:: get_started
+        .. button-ref:: get-started
             :color: primary
             :click-parent:
             :expand:
@@ -118,7 +118,7 @@ Contents
 
         +++
 
-        .. button-ref:: estimator_overview
+        .. button-ref:: estimator-overview
             :color: primary
             :click-parent:
             :expand:
@@ -136,7 +136,7 @@ Contents
 
         +++
 
-        .. button-ref:: api_reference
+        .. button-ref:: api-reference
             :color: primary
             :click-parent:
             :expand:
@@ -154,7 +154,7 @@ Contents
 
         +++
 
-        .. button-ref:: get_involved
+        .. button-ref:: get-involved
             :color: primary
             :click-parent:
             :expand:
