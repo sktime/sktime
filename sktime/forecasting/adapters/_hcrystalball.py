@@ -182,4 +182,6 @@ class HCrystalBallAdapter(BaseForecaster):
         if _check_soft_dependencies(["hcrystalball", "statsmodels"], severity="none"):
             from hcrystalball.wrappers import HoltSmoothingWrapper
 
-            params = {"model": HoltSmoothingWrapper()}
+            return {"model": HoltSmoothingWrapper()}
+        
+        return {"model": 42}
