@@ -7,7 +7,7 @@ Splitters
 The :mod:`sktime.split` module contains algorithms for splitting and resampling data.
 
 All splitters in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
-using ``estimator-types="splitter"``, optionally filtered by tags.
+using ``estimator_types="splitter"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the

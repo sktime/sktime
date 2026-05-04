@@ -6,7 +6,7 @@ Time series classification
 The :mod:`sktime.classification` module contains algorithms and composition tools for time series classification.
 
 All classifiers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
-using ``estimator-types="classifier"``, optionally filtered by tags.
+using ``estimator_types="classifier"``, optionally filtered by tags.
 
 Valid tags are listed in :ref:`the classifier tags API reference <panel_tags>`,
 and can be listed using ``sktime.registry.all_tags``.
@@ -149,7 +149,7 @@ Dummy
 Early classification
 --------------------
 
-.. currentmodule:: sktime.classification.early-classification
+.. currentmodule:: sktime.classification.early_classification
 
 .. autosummary::
     :toctree: auto_generated/
@@ -269,7 +269,7 @@ Base
 
     BaseDeepClassifier
 
-.. currentmodule:: sktime.classification.early-classification.base
+.. currentmodule:: sktime.classification.early_classification.base
 
 .. autosummary::
     :toctree: auto_generated/

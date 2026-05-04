@@ -7,7 +7,7 @@ Forecasting
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
 All forecasters in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
-using ``estimator-types="forecaster"``, optionally filtered by tags.
+using ``estimator_types="forecaster"``, optionally filtered by tags.
 
 Valid tags are listed in :ref:`the forecaster tags API reference <forecaster_tags>`,
 and can be listed using ``sktime.registry.all_tags``.

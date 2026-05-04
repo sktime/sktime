@@ -7,7 +7,7 @@ The :mod:`sktime.transformations` module contains classes for data
 transformations.
 
 All (simple) transformers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
-using ``estimator-types="transformer"``, optionally filtered by tags.
+using ``estimator_types="transformer"``, optionally filtered by tags.
 
 Valid tags are listed in :ref:`the transformations tags API reference <transformer_tags>`,
 and can be listed using ``sktime.registry.all_tags``.
@@ -785,7 +785,7 @@ These transformers select features in `X` based on `y`.
 
     FeatureSelection
 
-.. currentmodule:: sktime.transformations.panel.channel-selection
+.. currentmodule:: sktime.transformations.panel.channel_selection
 
 .. autosummary::
     :toctree: auto_generated/

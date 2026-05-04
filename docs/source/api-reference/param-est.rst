@@ -4,14 +4,14 @@
 Parameter estimation
 ====================
 
-The :mod:`sktime.param-est` module contains parameter estimators, e.g., for
+The :mod:`sktime.param_est` module contains parameter estimators, e.g., for
 seasonality, and utilities for plugging the estimated parameters into other estimators.
 For example, seasonality estimators can be combined with any seasonal forecaster
 to an auto-seasonality version.
 
 All parameter estimators in ``sktime`` can be listed using the
 ``sktime.registry.all_estimators`` utility,
-using ``estimator-types="param-est"``, optionally filtered by tags.
+using ``estimator_types="param_est"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
@@ -25,7 +25,7 @@ Parameter estimators
 Composition
 ~~~~~~~~~~~
 
-.. currentmodule:: sktime.param-est.compose
+.. currentmodule:: sktime.param_est.compose
 
 .. autosummary::
     :toctree: auto_generated/
@@ -39,7 +39,7 @@ Composition
 
     FunctionParamFitter
 
-.. currentmodule:: sktime.param-est.plugin
+.. currentmodule:: sktime.param_est.plugin
 
 .. autosummary::
     :toctree: auto_generated/
@@ -51,7 +51,7 @@ Composition
 Naive parameter estimators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.param-est.fixed
+.. currentmodule:: sktime.param_est.fixed
 
 .. autosummary::
     :toctree: auto_generated/
@@ -62,7 +62,7 @@ Naive parameter estimators
 Seasonality estimators
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.param-est.seasonality
+.. currentmodule:: sktime.param_est.seasonality
 
 .. autosummary::
     :toctree: auto_generated/
@@ -75,7 +75,7 @@ Seasonality estimators
 Stationarity tests
 ~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.param-est.stationarity
+.. currentmodule:: sktime.param_est.stationarity
 
 .. autosummary::
     :toctree: auto_generated/
@@ -94,7 +94,7 @@ Stationarity tests
 Lag and autocorrelation estimators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.param-est.lag
+.. currentmodule:: sktime.param_est.lag
 
 .. autosummary::
     :toctree: auto_generated/
@@ -106,7 +106,7 @@ Lag and autocorrelation estimators
 Residual tests and estimators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.param-est.residuals
+.. currentmodule:: sktime.param_est.residuals
 
 .. autosummary::
     :toctree: auto_generated/
@@ -117,7 +117,7 @@ Residual tests and estimators
 Cointegration
 ~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.param-est.cointegration
+.. currentmodule:: sktime.param_est.cointegration
 
 .. autosummary::
     :toctree: auto_generated/

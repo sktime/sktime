@@ -2077,7 +2077,7 @@ Enhancements
 BaseObject and base framework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] refactor ``_check_estimator-types`` to use record class interface (:pr:`7395`) :user:`fkiraly`
+* [ENH] refactor ``_check_estimator_types`` to use record class interface (:pr:`7395`) :user:`fkiraly`
 * [ENH] parity of ``_HeterogenousMetaEstimator._check_estimator`` with ``skbase`` and fixes in ``EnsembleForecaster.__init__`` (:pr:`7429`) :user:`fkiraly`
 
 Benchmarking, Metrics, Splitters
@@ -3456,7 +3456,7 @@ Test framework
 * [ENH] ``parametrize_with_checks`` utility for granular API compliance test setup in 2nd/3rd party libraries (:pr:`6588`) :user:`fkiraly`
 * [ENH] differential testing to ``utils`` module (:pr:`6620`) :user:`fkiraly`
 * [ENH] differential testing and minor improvements to ``forecasting.base`` tests (:pr:`6619`) :user:`fkiraly`
-* [ENH] differential testing for ``performance-metrics`` module (:pr:`6616`) :user:`fkiraly`
+* [ENH] differential testing for ``performance_metrics`` module (:pr:`6616`) :user:`fkiraly`
 * [ENH] fixes and improvements to ``pytest`` ``doctest`` integration (:pr:`6621`) :user:`fkiraly`
 
 Documentation
@@ -7238,13 +7238,13 @@ Documentation
 * [DOC] Improve Docstring for MAPE Metrics (:pr:`4563`) :user:`hazrulakmal`
 * [DOC] Update link in minirocket.ipynb (:pr:`4577`) :user:`panozzaj`
 * [DOC] additional glossary terms (:pr:`4556`) :user:`sanjayk0508`
-* [DOC] fix warnings in make sphinx - language (``conf.py``) and ``dists-kernels.rst`` wrong imports (:pr:`4593`) :user:`mdsaad2305`
+* [DOC] fix warnings in make sphinx - language (``conf.py``) and ``dists_kernels.rst`` wrong imports (:pr:`4593`) :user:`mdsaad2305`
 * [DOC] Add SVG version of the sktime logo (:pr:`4604`) :user:`marrov`
 * [DOC] change logos to vector graphic ``png`` (:pr:`4605`) :user:`fkiraly`
 * [DOC] change ``sktime`` logos to vector graphic ``svg`` (:pr:`4606`) :user:`fkiraly`
 * [DOC] Remove white fill from ``svg`` and ``png`` ``sktime`` logos (:pr:`4607`) :user:`fkiraly`
 * [DOC] ``AutoETS`` docstring - clarify conditional ignore of parameters dependent on ``auto`` (:pr:`4597`) :user:`luca-miniati`
-* [DOC] correcting module path in ``dists-kernels.rst`` (:pr:`4625`) :user:`mdsaad2305`
+* [DOC] correcting module path in ``dists_kernels.rst`` (:pr:`4625`) :user:`mdsaad2305`
 * [DOC] Contributors update (:pr:`4609`) :user:`fkiraly`
 * [DOC] updated ``PULL_REQUEST_TEMPLATE.md`` (:pr:`4599`) :user:`fkiraly`
 * [DOC] docstring for ``SimpleRNNClassifier`` (:pr:`4572`) :user:`wasup-yash`
@@ -7787,7 +7787,7 @@ Maintenance
 * [MNT] Fixes linting issues in ``annotation`` module (:pr:`4309`) :user:`SamiAlavi`
 * [MNT] Fix linting issues in ``series_as_features``, ``tests``, ``dist_kernels``, ``benchmarking`` modules (:pr:`4321`) :user:`SamiAlavi`
 * [MNT] Fixes linting issues in ``classification`` module (:pr:`4311`) :user:`SamiAlavi`
-* [MNT] Fix linting issues in ``performance-metrics`` module (:pr:`4320`) :user:`SamiAlavi`
+* [MNT] Fix linting issues in ``performance_metrics`` module (:pr:`4320`) :user:`SamiAlavi`
 * [MNT] Fix linting issues in ``utils`` module (:pr:`4322`) :user:`SamiAlavi`
 * [MNT] replace author names by GitHub ID in author fields (:pr:`4340`) :user:`SamiAlavi`
 * [MNT] address deprecation warnings from dependencies (:pr:`4423`) :user:`fkiraly`
@@ -9275,7 +9275,7 @@ Documentation
 ~~~~~~~~~~~~~
 
 * [DOC] updated extension templates - tags explained, soft dependencies (:pr:`3334`) :user:`fkiraly`
-* [DOC] API reference for ``dists-kernels`` module (:pr:`3312`) :user:`fkiraly`
+* [DOC] API reference for ``dists_kernels`` module (:pr:`3312`) :user:`fkiraly`
 * [DOC] fix notebook/example symlinks (:pr:`3379`) :user:`khrapovs`
 * [DOC] Some tips on getting virtual environments to work (:pr:`3331`) :user:`miraep8`
 * [DOC] changed wrong docstring default value of ``start_with_window`` in ``SlidingWindowSplitter`` to actual default value (:pr:`3340`) :user:`bugslayer-332`
@@ -9663,7 +9663,7 @@ Documentation
 * [DOC] parameter checking and move of ``super.__init__`` in extension templates (:pr:`3010`) :user:`fkiraly`
 * [DOC] proba forecasting notebook from pydata Berlin 2022 (:pr:`3016`) :user:`ciaran-g`, :user:`eenticott-shell`, :user:`fkiraly`
 * [DOC] added docstring example for ``make_reduction`` (:pr:`3054`) :user:`aiwalter`
-* [DOC] fix typo in ``segmentation-with-clasp.ipynb`` (:pr:`3060`) :user:`soma2000-lang`
+* [DOC] fix typo in ``segmentation_with_clasp.ipynb`` (:pr:`3060`) :user:`soma2000-lang`
 * [DOC] improve splitters docstrings (:pr:`3075`) :user:`khrapovs`
 * [DOC] code quality docs expanded with instructions for local code quality checking set-up (:pr:`3089`) :user:`fkiraly`
 * [DOC] added NumFOCUS to sponsors website (:pr:`3093`) :user:`aiwalter`
@@ -11287,7 +11287,7 @@ Documentation
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] ``check_is_scitype``, cleaning up dists-kernels input checks/conversions (:pr:`1704`) :user:`fkiraly`
+* [ENH] ``check_is_scitype``, cleaning up dists_kernels input checks/conversions (:pr:`1704`) :user:`fkiraly`
 * [ENH] `Table` scitype and refactor of ``convert`` module (:pr:`1745`) :user:`fkiraly`
 * [ENH] estimator scitype utility (:pr:`1838`) :user:`fkiraly`
 * [ENH] experimental: hierarchical time series scitype	hierarchical_scitype (:pr:`1786`) :user:`fkiraly`
@@ -11517,7 +11517,7 @@ Documentation
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] added ``check_is_scitype`` for scitype checks, cleaning up dists-kernels input checks/conversions (:pr:`1704`) :user:`fkiraly`
+* [ENH] added ``check_is_scitype`` for scitype checks, cleaning up dists_kernels input checks/conversions (:pr:`1704`) :user:`fkiraly`
 
 Forecasting
 ^^^^^^^^^^^

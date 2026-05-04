@@ -31,7 +31,7 @@ AI algorithms
     clusterer
     detector
     forecaster
-    param-est
+    param_est
     regressor
     transformer
     transformer_pairwise

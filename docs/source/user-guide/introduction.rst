@@ -31,7 +31,7 @@ can simply write:
     from sktime.datasets import load_airline
     from sktime.forecasting.compose import make_reduction
     from sklearn.ensemble import RandomForestRegressor
-    from sktime.performance-metrics.forecasting import MeanAbsolutePercentageError
+    from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
     from sktime.split import temporal_train_test_split
 
     y = load_airline()

@@ -4,11 +4,11 @@
 Performance metrics
 ===================
 
-The :mod:`sktime.performance-metrics` module contains metrics for evaluating and tuning time series models.
+The :mod:`sktime.performance_metrics` module contains metrics for evaluating and tuning time series models.
 
 All parameter estimators in ``sktime`` can be listed using the
 ``sktime.registry.all_estimators`` utility,
-using ``estimator-types="metric"``, optionally filtered by tags.
+using ``estimator_types="metric"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
@@ -16,7 +16,7 @@ A full table with tag based search is also available on the
 (select "metric" in the "Estimator type" dropdown).
 
 
-.. automodule:: sktime.performance-metrics
+.. automodule:: sktime.performance_metrics
     :no-members:
     :no-inherited-members:
 
@@ -29,7 +29,7 @@ Point forecasts - classes
 Average losses
 ^^^^^^^^^^^^^^
 
-.. currentmodule:: sktime.performance-metrics.forecasting
+.. currentmodule:: sktime.performance_metrics.forecasting
 
 .. autosummary::
     :toctree: auto_generated/
@@ -104,7 +104,7 @@ Under- and over-prediction errors
 Point forecasts - functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.performance-metrics.forecasting
+.. currentmodule:: sktime.performance_metrics.forecasting
 
 .. autosummary::
     :toctree: auto_generated/
@@ -136,7 +136,7 @@ Point forecasts - functions
 Quantile and interval forecasts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.performance-metrics.forecasting.probabilistic
+.. currentmodule:: sktime.performance_metrics.forecasting.probabilistic
 
 .. autosummary::
     :toctree: auto_generated/
@@ -150,7 +150,7 @@ Quantile and interval forecasts
 Distribution forecasts
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.performance-metrics.forecasting.probabilistic
+.. currentmodule:: sktime.performance_metrics.forecasting.probabilistic
 
 .. autosummary::
     :toctree: auto_generated/
@@ -182,7 +182,7 @@ The metrics in ``sktime`` can be used for both types of detection tasks:
 Event detection - anomalies, outliers
 -------------------------------------
 
-.. currentmodule:: sktime.performance-metrics.detection
+.. currentmodule:: sktime.performance_metrics.detection
 
 .. autosummary::
     :recursive:
@@ -198,7 +198,7 @@ Event detection - anomalies, outliers
 Segment detection
 -----------------
 
-.. currentmodule:: sktime.performance-metrics.detection
+.. currentmodule:: sktime.performance_metrics.detection
 
 .. autosummary::
     :toctree: auto_generated/
@@ -212,7 +212,7 @@ Legacy detection metrics
 
 These metrics do not follow the standard API and will be deprecated in the future.
 
-.. currentmodule:: sktime.performance-metrics.annotation
+.. currentmodule:: sktime.performance_metrics.annotation
 
 .. autosummary::
     :toctree: auto_generated/

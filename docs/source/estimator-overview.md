@@ -90,7 +90,7 @@ Use the below search table to find estimators by property.
             <option value="transformer-pairwise-panel">Distance/Kernel</option>
             <option value="forecaster">Forecaster</option>
             <option value="metric">Metric</option>
-            <option value="param-est">Param.Estimator</option>
+            <option value="param_est">Param.Estimator</option>
             <option value="regressor">Regressor</option>
             <option value="splitter">Splitter</option>
             <option value="transformer">Transformer</option>

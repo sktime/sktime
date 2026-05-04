@@ -14,7 +14,7 @@ The tasks include unsupervised and semi-supervised variants, and can batch or
 stream/online detection.
 
 All detectors in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
-using ``estimator-types="detector"``, optionally filtered by tags.
+using ``estimator_types="detector"``, optionally filtered by tags.
 
 Valid tags are listed in :ref:`the detector tags API reference <detector_tags>`,
 and can be listed using ``sktime.registry.all_tags``.

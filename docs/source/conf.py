@@ -454,7 +454,7 @@ def _make_estimator_overview(app):
             "authors",
             "maintainers",
         ],
-        "param-est": [
+        "param_est": [
             "capability:multivariate",
             "capability:missing_values",
             "python_dependencies",

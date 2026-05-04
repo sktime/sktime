@@ -8,7 +8,7 @@ dynamic time warping aligners.
 
 All time series aligners in ``sktime`` can be listed using the
 ``sktime.registry.all_estimators`` utility,
-using ``estimator-types="aligner"``, optionally filtered by tags.
+using ``estimator_types="aligner"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
