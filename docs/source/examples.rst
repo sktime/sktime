@@ -28,7 +28,7 @@ Introduction
 .. nbgallery::
     :glob:
 
-    examples/00_sktime_intro.ipynb
+    examples/intro.ipynb
 
 Forecasting
 ===========
@@ -36,10 +36,10 @@ Forecasting
 .. nbgallery::
     :glob:
 
-    examples/01_forecasting.ipynb
-    examples/01a_forecasting_sklearn.ipynb
-    examples/01b_forecasting_proba.ipynb
-    examples/01c_forecasting_hierarchical_global.ipynb
+    examples/forecasting.ipynb
+    examples/forecasting-sklearn.ipynb
+    examples/probabilistic-forecasting.ipynb
+    examples/hierarchical-forecasting.ipynb
     examples/forecasting/pretraining.ipynb
 
 Time Series Classification, Regression, Clustering
@@ -48,7 +48,7 @@ Time Series Classification, Regression, Clustering
 .. nbgallery::
     :glob:
 
-    examples/02_classification.ipynb
+    examples/classification-clustering.ipynb
 
 Transformations, pipelines
 ==========================
@@ -56,9 +56,9 @@ Transformations, pipelines
 .. nbgallery::
     :glob:
 
-    examples/03_transformers.ipynb
-    examples/03a_transformers_cheat_sheet.ipynb
-    examples/03b_forecasting_transformers_pipelines_tuning.ipynb
+    examples/transformers.ipynb
+    examples/transformer-cheat-sheets.ipynb
+    examples/pipelines-tuning.ipynb
 
 Changepoint, Anomaly or Outlier Detection
 =========================================
@@ -66,7 +66,7 @@ Changepoint, Anomaly or Outlier Detection
 .. nbgallery::
     :glob:
 
-    examples/07_detection_anomaly_changepoints.ipynb
+    examples/detection.ipynb
     examples/annotation/*
 
 Time series Distances, Kernels, Alignment
@@ -75,7 +75,7 @@ Time series Distances, Kernels, Alignment
 .. nbgallery::
     :glob:
 
-    examples/06_distances_kernels_alignment.ipynb
+    examples/distances-kernels.ipynb
 
 Data formats and data sets
 ==========================
@@ -83,7 +83,7 @@ Data formats and data sets
 .. nbgallery::
     :glob:
 
-    examples/AA_datatypes_and_datasets.ipynb
+    examples/data-formats.ipynb
 
 Benchmarking
 ============
@@ -91,6 +91,6 @@ Benchmarking
 .. nbgallery::
     :glob:
 
-    examples/04_benchmarking_classifiers.ipynb
-    examples/04_benchmarking_forecasters.ipynb
-    examples/04_benchmarking_legacy.ipynb
+    examples/benchmarking-classifiers.ipynb
+    examples/benchmarking-forecasters.ipynb
+    examples/benchmarking-legacy.ipynb

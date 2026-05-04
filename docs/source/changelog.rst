@@ -1465,7 +1465,7 @@ Documentation
 * [DOC] ``FCNClassifier`` - add Wang et al reference (:pr:`7884`) :user:`itsbharatj`
 * [DOC] added docstring to the ``HierarchicalDask`` class (:pr:`7684`) :user:`TomatoChocolate12`
 * [DOC] clarify assumptions on function ``fun`` in ``utils.parallel.parallelize`` (:pr:`7823`) :user:`fkiraly`
-* [DOC] minor typo fix in ``add_estimators.rst`` (:pr:`7956`) :user:`fkiraly`
+* [DOC] minor typo fix in ``add-estimators.rst`` (:pr:`7956`) :user:`fkiraly`
 * [DOC] Added example for ``AlignerNaive`` and ``AlignerLuckyDtw`` (:pr:`7795`) :user:`haroon0x`
 * [DOC] fix ``RotationForest`` docstring example (:pr:`7978`) :user:`fkiraly`
 * [DOC] minor linting improvement (:pr:`7987`) :user:`fkiraly`
@@ -2077,7 +2077,7 @@ Enhancements
 BaseObject and base framework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] refactor ``_check_estimator_types`` to use record class interface (:pr:`7395`) :user:`fkiraly`
+* [ENH] refactor ``_check_estimator-types`` to use record class interface (:pr:`7395`) :user:`fkiraly`
 * [ENH] parity of ``_HeterogenousMetaEstimator._check_estimator`` with ``skbase`` and fixes in ``EnsembleForecaster.__init__`` (:pr:`7429`) :user:`fkiraly`
 
 Benchmarking, Metrics, Splitters
@@ -3320,7 +3320,7 @@ Version 0.30.2 - 2024-07-04
 Highlights
 ~~~~~~~~~~
 
-* new `estimator overview table and estimator search page <https://www.sktime.net/en/stable/estimator_overview.html>`_ (:pr:`6147`) :user:`duydl`
+* new `estimator overview table and estimator search page <https://www.sktime.net/en/stable/estimator-overview.html>`_ (:pr:`6147`) :user:`duydl`
 * ``HFTransformersForecaster`` (hugging face transformers connector) now has a user friendly interface for applying PEFT methods (:pr:`6457`) :user:`geetu040`
 * ``ForecastingOptunaSearchCV`` for hyper-parameter tuning of forecasters via ``optuna`` (:pr:`6630`) :user:`mk406`, :user:`gareth-brown-86`
 * ``prophetverse`` package forecasters are now indexed by ``sktime`` (:pr:`6614`) :user:`felipeangelimvieira`
@@ -3367,13 +3367,13 @@ Test framework
 
 * 2nd and 3rd party extension packages can now use the ``parametrize_with_checks``
   utility to set up granular API compliance tests. For detailed usage notes,
-  consult the extender guide: :ref:`developer_guide_add_estimators`.
+  consult the extender guide: :ref:`developer-guide_add-estimators`.
 * various quality-of-life improvements have been made to facilitate
   indexing an estimator in the estimator overview and estimator search for
   developers of API compatible 2nd and 3rd party packages,
   without adding it directly to the main ``sktime`` repository.
   For detailed usage notes, consult the extender guide:
-  :ref:`developer_guide_add_estimators`, or inspect the ``Prophetverse`` forecaster
+  :ref:`developer-guide_add-estimators`, or inspect the ``Prophetverse`` forecaster
   as a worked example.
 
 Enhancements
@@ -3456,7 +3456,7 @@ Test framework
 * [ENH] ``parametrize_with_checks`` utility for granular API compliance test setup in 2nd/3rd party libraries (:pr:`6588`) :user:`fkiraly`
 * [ENH] differential testing to ``utils`` module (:pr:`6620`) :user:`fkiraly`
 * [ENH] differential testing and minor improvements to ``forecasting.base`` tests (:pr:`6619`) :user:`fkiraly`
-* [ENH] differential testing for ``performance_metrics`` module (:pr:`6616`) :user:`fkiraly`
+* [ENH] differential testing for ``performance-metrics`` module (:pr:`6616`) :user:`fkiraly`
 * [ENH] fixes and improvements to ``pytest`` ``doctest`` integration (:pr:`6621`) :user:`fkiraly`
 
 Documentation
@@ -4006,7 +4006,7 @@ Highlights
 ~~~~~~~~~~
 
 * Experimental Hugging Face interface for pre-trained forecasters and foundation models (:pr:`5796`) :user:`benHeid`
-* estimator tags are now `systematically documented in the API reference <https://www.sktime.net/en/latest/api_reference/tags.html>`_ (:pr:`6289`) :user:`fkiraly`
+* estimator tags are now `systematically documented in the API reference <https://www.sktime.net/en/latest/api-reference/tags.html>`_ (:pr:`6289`) :user:`fkiraly`
 * new classifiers, transformers from ``pyts`` interfaced: BOSSVS, learning shapelets, shapelet transform (:pr:`6296`) :user:`johannfaouzi` (author), :user:`fkiraly` (interface)
 * new classifiers from ``tslearn`` interfaced: time series SVC, SVR, learning shapelets (:pr:`6273`) :user:`rtavenar` (author), :user:`fkiraly` (interface)
 * ``ForecastX`` can now use use future-unknown exogenous variables if passed in ``predict`` (:pr:`6199`) :user:`yarnabrina`
@@ -5543,7 +5543,7 @@ Documentation
 * [DOC] Added notebook accompanying Joanna Lenczuk's blog post for testing (:pr:`5604`) :user:`onyekaugochukwu`, :user:`joanlenczuk`
 * [DOC] Remove extra parameter in docstring with incorrect definition (:pr:`5617`) :user:`wayneadams`
 * [DOC] fix and complete ``YfromX`` docstring (:pr:`5593`) :user:`fkiraly`
-* [DOC] fix typo in ``AA_datatypes_and_datasets.ipynb`` panel data loading example (:pr:`5594`) :user:`fkiraly`
+* [DOC] fix typo in ``data-formats.ipynb`` panel data loading example (:pr:`5594`) :user:`fkiraly`
 * [DOC] forecasting ``evaluate`` utility - improved algorithm description in docstring #5603  (:pr:`5603`) :user:`adamkells`
 * [DOC] add explanation about fit/transform instance linking behaviour of rocket transformers (:pr:`5621`) :user:`fkiraly`
 * [DOC] Adjust ``FunctionTransformer``'s docstring (:pr:`5634`) :user:`tpvasconcelos`
@@ -5995,7 +5995,7 @@ Documentation
 * [DOC] prevent line break in ``README.md`` badges table (:pr:`5263`) :user:`fkiraly`
 * [DOC] forecasting extension template - add insample capability tags (:pr:`5272`) :user:`fkiraly`
 * [DOC] add ``blog`` badge for ``fkiraly``, for ODSC blog post (:pr:`5291`) :user:`fkiraly`
-* [DOC] speed improvement of ``partition_based_clustering`` notebook (:pr:`5278`) :user:`alexfilothodoros`
+* [DOC] speed improvement of ``partition-based-clustering`` notebook (:pr:`5278`) :user:`alexfilothodoros`
 * [DOC] Documented ax argument and the figure in plot_series (:pr:`5325`) :user:`ShreeshaM07`
 * [DOC] Improve Readability of Notebook 2 - Classification, Regression & Clustering (:pr:`5312`) :user:`achieveordie`
 * [DOC] Added all feature names to docstring for DateTimeFeatures class (:pr:`5283`) :user:`Abhay-Lejith`
@@ -7238,13 +7238,13 @@ Documentation
 * [DOC] Improve Docstring for MAPE Metrics (:pr:`4563`) :user:`hazrulakmal`
 * [DOC] Update link in minirocket.ipynb (:pr:`4577`) :user:`panozzaj`
 * [DOC] additional glossary terms (:pr:`4556`) :user:`sanjayk0508`
-* [DOC] fix warnings in make sphinx - language (``conf.py``) and ``dists_kernels.rst`` wrong imports (:pr:`4593`) :user:`mdsaad2305`
+* [DOC] fix warnings in make sphinx - language (``conf.py``) and ``dists-kernels.rst`` wrong imports (:pr:`4593`) :user:`mdsaad2305`
 * [DOC] Add SVG version of the sktime logo (:pr:`4604`) :user:`marrov`
 * [DOC] change logos to vector graphic ``png`` (:pr:`4605`) :user:`fkiraly`
 * [DOC] change ``sktime`` logos to vector graphic ``svg`` (:pr:`4606`) :user:`fkiraly`
 * [DOC] Remove white fill from ``svg`` and ``png`` ``sktime`` logos (:pr:`4607`) :user:`fkiraly`
 * [DOC] ``AutoETS`` docstring - clarify conditional ignore of parameters dependent on ``auto`` (:pr:`4597`) :user:`luca-miniati`
-* [DOC] correcting module path in ``dists_kernels.rst`` (:pr:`4625`) :user:`mdsaad2305`
+* [DOC] correcting module path in ``dists-kernels.rst`` (:pr:`4625`) :user:`mdsaad2305`
 * [DOC] Contributors update (:pr:`4609`) :user:`fkiraly`
 * [DOC] updated ``PULL_REQUEST_TEMPLATE.md`` (:pr:`4599`) :user:`fkiraly`
 * [DOC] docstring for ``SimpleRNNClassifier`` (:pr:`4572`) :user:`wasup-yash`
@@ -7787,7 +7787,7 @@ Maintenance
 * [MNT] Fixes linting issues in ``annotation`` module (:pr:`4309`) :user:`SamiAlavi`
 * [MNT] Fix linting issues in ``series_as_features``, ``tests``, ``dist_kernels``, ``benchmarking`` modules (:pr:`4321`) :user:`SamiAlavi`
 * [MNT] Fixes linting issues in ``classification`` module (:pr:`4311`) :user:`SamiAlavi`
-* [MNT] Fix linting issues in ``performance_metrics`` module (:pr:`4320`) :user:`SamiAlavi`
+* [MNT] Fix linting issues in ``performance-metrics`` module (:pr:`4320`) :user:`SamiAlavi`
 * [MNT] Fix linting issues in ``utils`` module (:pr:`4322`) :user:`SamiAlavi`
 * [MNT] replace author names by GitHub ID in author fields (:pr:`4340`) :user:`SamiAlavi`
 * [MNT] address deprecation warnings from dependencies (:pr:`4423`) :user:`fkiraly`
@@ -8158,7 +8158,7 @@ Maintenance
 Documentation
 ~~~~~~~~~~~~~
 
-* [DOC] fixes table of contents in ``01_forecasting.ipynb`` tutorial (:pr:`4120`) :user:`fkiraly`
+* [DOC] fixes table of contents in ``forecasting.ipynb`` tutorial (:pr:`4120`) :user:`fkiraly`
 * [DOC] improved docstring for ``AutoETS`` (:pr:`4116`) :user:`fkiraly`
 * [DOC] Added Paul Yim, Kevin Lam, and Margaret Gorlin to contributor list (:pr:`4122`) :user:`Pyyim`
 * [DOC] Fix broken link to the user guide in the glossary (:pr:`4125`) :user:`romanlutz`
@@ -9275,11 +9275,11 @@ Documentation
 ~~~~~~~~~~~~~
 
 * [DOC] updated extension templates - tags explained, soft dependencies (:pr:`3334`) :user:`fkiraly`
-* [DOC] API reference for ``dists_kernels`` module (:pr:`3312`) :user:`fkiraly`
+* [DOC] API reference for ``dists-kernels`` module (:pr:`3312`) :user:`fkiraly`
 * [DOC] fix notebook/example symlinks (:pr:`3379`) :user:`khrapovs`
 * [DOC] Some tips on getting virtual environments to work (:pr:`3331`) :user:`miraep8`
 * [DOC] changed wrong docstring default value of ``start_with_window`` in ``SlidingWindowSplitter`` to actual default value (:pr:`3340`) :user:`bugslayer-332`
-* [DOC] Correct minor typos in ``examples/AA_datatypes_and_datasets.ipynb`` (:pr:`3349`) :user:`achieveordie`
+* [DOC] Correct minor typos in ``examples/data-formats.ipynb`` (:pr:`3349`) :user:`achieveordie`
 * [DOC] updated extension templates - transformer tags explained (:pr:`3377`) :user:`fkiraly`
 * [DOC] correcting and clarifying ``BaseSplitter`` docstrings (:pr:`3440`) :user:`fkiraly`
 * [DOC] Fix docstring of TransformerPipeline (:pr:`3401`) :user:`aiwalter`
@@ -9663,7 +9663,7 @@ Documentation
 * [DOC] parameter checking and move of ``super.__init__`` in extension templates (:pr:`3010`) :user:`fkiraly`
 * [DOC] proba forecasting notebook from pydata Berlin 2022 (:pr:`3016`) :user:`ciaran-g`, :user:`eenticott-shell`, :user:`fkiraly`
 * [DOC] added docstring example for ``make_reduction`` (:pr:`3054`) :user:`aiwalter`
-* [DOC] fix typo in ``segmentation_with_clasp.ipynb`` (:pr:`3060`) :user:`soma2000-lang`
+* [DOC] fix typo in ``segmentation-with-clasp.ipynb`` (:pr:`3060`) :user:`soma2000-lang`
 * [DOC] improve splitters docstrings (:pr:`3075`) :user:`khrapovs`
 * [DOC] code quality docs expanded with instructions for local code quality checking set-up (:pr:`3089`) :user:`fkiraly`
 * [DOC] added NumFOCUS to sponsors website (:pr:`3093`) :user:`aiwalter`
@@ -10312,7 +10312,7 @@ Documentation
 * [DOC] Links to ``extension_templates`` folder (:pr:`2623`) :user:`Ris-Bali`
 * [DOC] Classification notebook clean-up, added new pipelines (:pr:`2641`) :user:`fkiraly`
 * [DOC] Text changes example notebooks (:pr:`2648`) :user:`lbventura`
-* [DOC] update doc location of ``TimeSeriesForestClassifier`` from ``kernel_based`` to ``interval_based`` in ``get_started.rst`` (:pr:`2722`) :user:`dougollerenshaw`
+* [DOC] update doc location of ``TimeSeriesForestClassifier`` from ``kernel_based`` to ``interval_based`` in ``get-started.rst`` (:pr:`2722`) :user:`dougollerenshaw`
 * [DOC] ``update_predict`` docstrings corrected (:pr:`2671`) :user:`fkiraly`
 * [DOC] Fixes in class description ``ExpandingWindowSplitter`` (:pr:`2676`) :user:`keepersas`
 * [DOC] Fixed A Few Links on the Website (:pr:`2688`) :user:`asattiraju13`
@@ -10798,14 +10798,14 @@ Documentation
 
 * [DOC] fix 0.11.0 release note highlights formatting (:pr:`2310`) :user:`fkiraly`
 * [DOC] typo fix constructor -> constructor in extension templates (:pr:`2348`) :user:`fkiraly`
-* [DPC] fixed the issue with ``'docs/source/developer_guide/testing_framework.rst'`` (:pr:`2335`) :user:`0saurabh0`
+* [DPC] fixed the issue with ``'docs/source/developer-guide/testing-framework.rst'`` (:pr:`2335`) :user:`0saurabh0`
 * [DOC] Updated conda installation instructions (:pr:`2365`) :user:`RISHIKESHAVAN`
 * [DOC] updated extension templates: link to docs and reference to `check_estimator` (:pr:`2303`) :user:`fkiraly`
 * [DOC] Improved docstrings in forecasters (:pr:`2314`) :user:`fkiraly`
 * [DOC] Added docstring examples to load data functions (:pr:`2393`) :user:`aiwalter`
 * [DOC] Added platform badge to README (:pr:`2398`) :user:`aiwalter`
 * [DOC] Add GSoC 2022 landing page and announcement (:pr:`2373`) :user:`lmmentel`
-* [DOC] In interval_based_classification example notebook, use multivariate dataset for the multivariate examples (:pr:`1822`) :user:`ksachdeva`
+* [DOC] In interval-based-classification example notebook, use multivariate dataset for the multivariate examples (:pr:`1822`) :user:`ksachdeva`
 
 Contributors
 ~~~~~~~~~~~~
@@ -10838,7 +10838,7 @@ Highlights
 * probabilistic forecasting: ``predict_var`` (variance forecast) and ``predict_proba`` (full distribution forecast) interfaces; performance metrics for interval and quantile forecasts (:pr:`2100`, :pr:`2130`, :pr:`2232`) :user:`eenticott-shell` :user:`fkiraly` :user:`kejsitake`
 * dunder methods for transformer and classifier pipelines: write ``my_trafo1 * my_trafo2`` for pipeline, ``my_trafo1 + my_trafo2`` for ``FeatureUnion`` (:pr:`2090`, :pr:`2251`) :user:`fkiraly`
 * Frequently requested: ``AutoARIMA`` from ``statsforecast`` package available as ``StatsforecastAutoARIMA`` (:pr:`2251`) :user:`FedericoGarza`
-* for extenders: detailed `"creating sktime compatible estimator" guide <https://www.sktime.net/en/stable/developer_guide/add_estimators.html>`_
+* for extenders: detailed `"creating sktime compatible estimator" guide <https://www.sktime.net/en/stable/developer-guide/add-estimators.html>`_
 * for extenders: simplified extension templates for forecasters and transformers (:pr:`2161`) :user:`fkiraly`
 
 Dependency changes
@@ -11026,7 +11026,7 @@ Documentation
 *  [DOC] improved docstrings for HIVE-COTE v1.0 (:pr:`2239`) :user:`TonyBagnall`
 *  [DOC] typo fix and minor clarification in estimator implementation guide (:pr:`2241`) :user:`fkiraly`
 *  [DOC] numpydoc compliance fix of simple forecasting extension template (:pr:`2284`) :user:`fkiraly`
-*  [DOC] typos in ``developer_guide.rst`` (:pr:`2131`) :user:`theanorak`
+*  [DOC] typos in ``developer-guide.rst`` (:pr:`2131`) :user:`theanorak`
 *  [DOC] fix broken link to CoC (:pr:`2104`) :user:`mikofski`
 *  [DOC] minor update to tutorials (:pr:`2114`) :user:`ciaran-g`
 *  [DOC] various minor doc issues (:pr:`2168`) :user:`aiwalter`
@@ -11287,7 +11287,7 @@ Documentation
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] ``check_is_scitype``, cleaning up dists_kernels input checks/conversions (:pr:`1704`) :user:`fkiraly`
+* [ENH] ``check_is_scitype``, cleaning up dists-kernels input checks/conversions (:pr:`1704`) :user:`fkiraly`
 * [ENH] `Table` scitype and refactor of ``convert`` module (:pr:`1745`) :user:`fkiraly`
 * [ENH] estimator scitype utility (:pr:`1838`) :user:`fkiraly`
 * [ENH] experimental: hierarchical time series scitype	hierarchical_scitype (:pr:`1786`) :user:`fkiraly`
@@ -11517,7 +11517,7 @@ Documentation
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] added ``check_is_scitype`` for scitype checks, cleaning up dists_kernels input checks/conversions (:pr:`1704`) :user:`fkiraly`
+* [ENH] added ``check_is_scitype`` for scitype checks, cleaning up dists-kernels input checks/conversions (:pr:`1704`) :user:`fkiraly`
 
 Forecasting
 ^^^^^^^^^^^
@@ -11794,7 +11794,7 @@ Highlights
 * framework support for multivariate forecasting (:pr:`980` :pr:`1195` :pr:`1286` :pr:`1301` :pr:`1306` :pr:`1311` :pr:`1401` :pr:`1410`) :user:`aiwalter` :user:`fkiraly` :user:`thayeylolu`
 * consolidated lookup of estimators and tags using :code:`registry.all_estimators` and :code:`registry.all_tags` (:pr:`1196`) :user:`fkiraly`
 * [DOC] major overhaul of :code:`sktime`'s `online documentation <https://www.sktime.net/en/latest/>`_
-* [DOC] `searchable, auto-updating estimators register <https://www.sktime.net/en/latest/estimator_overview.html>`_ in online documentation (:pr:`930` :pr:`1138`) :user:`afzal442` :user:`mloning`
+* [DOC] `searchable, auto-updating estimators register <https://www.sktime.net/en/latest/estimator-overview.html>`_ in online documentation (:pr:`930` :pr:`1138`) :user:`afzal442` :user:`mloning`
 * [MNT] working Binder in-browser notebook showcase (:pr:`1266`) :user:`corvusrabus`
 * [DOC] tutorial notebook for in-memory data format conventions, validation, and conversion (:pr:`1232`) :user:`fkiraly`
 * easy conversion functionality for estimator inputs, series and panel data (:pr:`1061` :pr:`1187` :pr:`1201` :pr:`1225`) :user:`fkiraly`
@@ -11814,7 +11814,7 @@ BaseEstimator/BaseObject
 In-memory data types
 ^^^^^^^^^^^^^^^^^^^^
 
-* introduction of m(achine)types and scitypes for defining in-memory format conventions across all modules, see `in-memory data types tutorial <https://github.com/sktime/sktime/blob/main/examples/AA_datatypes_and_datasets.ipynb>`_
+* introduction of m(achine)types and scitypes for defining in-memory format conventions across all modules, see `in-memory data types tutorial <https://github.com/sktime/sktime/blob/main/examples/data-formats.ipynb>`_
 * loose conversion methods now in :code:`_convert` files in :code:`datatypes` will no longer be publicly accessible in 0.10.0
 
 Forecasting
@@ -11990,7 +11990,7 @@ Added
 * Feature/information criteria get_fitted_params (:pr:`942`) :user:`ltsaprounis`
 * Add plot_correlations() to plot series and acf/pacf (:pr:`850`) :user:`RNKuhns`
 * Add doc-quality tests on changed files (:pr:`752`) :user:`mloning`
-* Docs: Create add_dataset.rst (:pr:`970`) :user:`Riyabelle25`
+* Docs: Create add-dataset.rst (:pr:`970`) :user:`Riyabelle25`
 * Added two new related software packages (:pr:`1019`) :user:`aiwalter`
 * Added orbit as related software (:pr:`1128`) :user:`aiwalter`
 * adding fkiraly as codeowner for forecasting base classes (:pr:`989`) :user:`fkiraly`
@@ -12235,7 +12235,7 @@ Changed
 * Update forecasting.py (:pr:`487`) :user:`raishubham1`
 * update basic motion description (:pr:`475`) :user:`vollmersj`
 * [DOC] Update docs in benchmarking/data.py (:pr:`489`) :user:`Afzal-Ind`
-* Edit Jupyter Notebook 01_forecasting (:pr:`486`) :user:`bmurdata`
+* Edit Jupyter Notebook forecasting (:pr:`486`) :user:`bmurdata`
 * Feature & Performance improvements of SFA/WEASEL (:pr:`457`) :user:`patrickzib`
 * Moved related software from wiki to docs (:pr:`439`) :user:`mloning`
 

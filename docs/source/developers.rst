@@ -6,17 +6,17 @@ Development
 .. note::
 
    If you are new to sktime, it may be helpful to take a look at the
-   :ref:`get_involved` page first.
+   :ref:`get-involved` page first.
 
 .. toctree::
    :maxdepth: 1
    :hidden:
 
-   developer_guide
-   contributing/reviewer_guide
-   contributing/enhancement_proposals
+   developer-guide
+   contributing/reviewer-guide
+   contributing/enhancement-proposals
    roadmap
-   get_involved/governance
+   get-involved/governance
 
 .. grid:: 1 2 2 2
     :gutter: 3
@@ -32,7 +32,7 @@ Development
 
         +++
 
-        .. button-ref:: developer_guide
+        .. button-ref:: developer-guide
             :color: primary
             :click-parent:
             :expand:
@@ -50,7 +50,7 @@ Development
 
         +++
 
-        .. button-ref:: reviewer_guide
+        .. button-ref:: reviewer-guide
             :color: primary
             :click-parent:
             :expand:
@@ -68,7 +68,7 @@ Development
 
         +++
 
-        .. button-ref:: enhancement_proposals
+        .. button-ref:: enhancement-proposals
             :color: primary
             :click-parent:
             :expand:

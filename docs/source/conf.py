@@ -65,7 +65,7 @@ myst_enable_extensions = ["colon_fence"]
 
 # Populate thumbnails of notebooks?
 nbsphinx_thumbnails = {
-    "examples/02_classification": "examples/img/tsc.png",
+    "examples/classification-clustering": "examples/img/tsc.png",
 }
 
 # Use bootstrap CSS from theme.
@@ -97,6 +97,7 @@ language = "en"
 exclude_patterns = [
     "_build",
     ".ipynb_checkpoints",
+    "about/_mission.rst",
     "Thumbs.db",
     ".DS_Store",
 ]
@@ -238,7 +239,7 @@ html_favicon = "images/sktime-favicon.ico"
 html_sidebars = {
     "**": ["sidebar-nav-bs.html", "sidebar-ethical-ads.html"],
     "index": [],
-    "get_started": [],
+    "get-started": [],
     "search": [],
 }
 
@@ -453,7 +454,7 @@ def _make_estimator_overview(app):
             "authors",
             "maintainers",
         ],
-        "param_est": [
+        "param-est": [
             "capability:multivariate",
             "capability:missing_values",
             "python_dependencies",
@@ -565,7 +566,7 @@ def _make_estimator_overview(app):
         )
 
     df = pd.DataFrame(records, columns=COLNAMES)
-    # with open("estimator_overview_table.md", "w") as file:
+    # with open("estimator-overview_table.md", "w") as file:
     #     df.to_markdown(file, index=False)
 
     with open("_static/table_all.html", "w") as file:
@@ -573,7 +574,7 @@ def _make_estimator_overview(app):
             ["Class Name", "Estimator Type", "Authors", "Maintainers", "Dependencies"]
         ].to_html(file, classes="pre-rendered", index=False, border=0, escape=False)
 
-    with open("_static/estimator_overview_db.json", "w") as file:
+    with open("_static/estimator-overview_db.json", "w") as file:
         df.to_json(file, orient="records")
     # pass
 

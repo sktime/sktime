@@ -51,7 +51,7 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 ``sktime`` also comes with dependency sets specific to learning task, i.e., estimator scitype.
 These are curated selections of the most common soft dependencies for the respective learning task.
 The available dependency sets are of the same names as the respective modules:
-``forecasting``, ``transformations``, ``classification``, ``regression``, ``clustering``, ``param_est``,
+``forecasting``, ``transformations``, ``classification``, ``regression``, ``clustering``, ``param-est``,
 ``networks``, ``detection``, ``alignment``.
 
 .. warning::

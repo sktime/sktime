@@ -10,10 +10,10 @@ Documentation
    installation
    tutorials
    examples
-   estimator_overview
+   estimator-overview
    glossary
    changelog
-   related_software
+   related-software
 
 .. grid:: 1 2 2 2
     :gutter: 3
@@ -83,7 +83,7 @@ Documentation
 
         +++
 
-        .. button-ref:: estimator_overview
+        .. button-ref:: estimator-overview
             :color: primary
             :click-parent:
             :expand:
@@ -137,7 +137,7 @@ Documentation
 
         +++
 
-        .. button-ref:: related_software
+        .. button-ref:: related-software
             :color: primary
             :click-parent:
             :expand:
