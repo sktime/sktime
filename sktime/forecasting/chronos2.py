@@ -206,6 +206,7 @@ class Chronos2Forecaster(BaseForecaster):
         context = context.values.T
 
         self._context = context
+        self._y_index_names = y.index.names
         return self
 
     def _predict(self, fh, X=None):
@@ -274,14 +275,14 @@ class Chronos2Forecaster(BaseForecaster):
             .to_absolute(self._cutoff)
             ._values
         )
-        pred_out = fh.get_expected_pred_idx(self._y, cutoff=self.cutoff)
+        pred_out = fh.get_expected_pred_idx(context, cutoff=self.cutoff)
 
         pred_df = pd.DataFrame(
             point_forecast.T,
             index=index,
-            columns=self._y.columns,
+            columns=self._get_varnames(),
         )
-        pred_df.index.names = self._y.index.names
+        pred_df.index.names = self._y_index_names
 
         dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
         return pred_df.loc[dateindex]
