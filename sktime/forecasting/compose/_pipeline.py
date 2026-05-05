@@ -433,8 +433,16 @@ class ForecastingPipeline(_Pipeline):
 
     def __init__(self, steps):
         self.steps = steps
-        self.steps_ = self._check_steps(steps, allow_postproc=False)
         super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        # setting self.steps_ early to allow self.forecaster_ property etc
+        self.steps_ = self._check_steps(self.steps, allow_postproc=False)
+
         tags_to_clone = [
             "capability:exogenous",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
@@ -868,8 +876,12 @@ class TransformedTargetForecaster(_Pipeline):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "fkiraly", "aiwalter"],
         "capability:multivariate": True,
+        # estimator type
+        # --------------
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:exogenous": True,
@@ -884,8 +896,15 @@ class TransformedTargetForecaster(_Pipeline):
 
     def __init__(self, steps):
         self.steps = steps
-        self.steps_ = self._check_steps(steps, allow_postproc=True)
         super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        # setting self.steps_ early to allow self.forecaster_ property etc
+        self.steps_ = self._check_steps(self.steps, allow_postproc=True)
 
         # set the tags based on forecaster
         tags_to_clone = [

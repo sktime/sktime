@@ -434,6 +434,7 @@ class ChronosForecaster(BaseForecaster):
         self : reference to self
         """
         self.model_pipeline = self._load_pipeline()
+        self._context = y
         return self
 
     def _get_chronos_kwargs(self):
@@ -582,7 +583,7 @@ class ChronosForecaster(BaseForecaster):
         else:
             prediction_length = 1
 
-        _y = self._y.copy()
+        _y = self._context.copy()
         if y is not None:
             _y = y.copy()
         _y_df = _y
