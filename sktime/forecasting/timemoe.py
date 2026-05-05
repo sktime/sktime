@@ -9,11 +9,11 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
 from sktime.utils.singleton import _multiton
 
 
-class TimeMoEForecaster(_BaseGlobalForecaster):
+class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """
     Interface for TimeMOE forecaster for zero-shot forecasting.
 
@@ -150,6 +150,13 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
 
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         if self.ignore_deps:
             self.set_tags(python_dependencies=[])
         elif self.use_source_package:
@@ -162,8 +169,6 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
                     "accelerate<=0.28.0",
                 ]
             )
-
-        super().__init__()
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
@@ -271,12 +276,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         }
         return default_config
 
-    def _predict(
-        self,
-        fh,
-        X=None,
-        y=None,
-    ):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         Private _predict containing the core logic, called from predict
@@ -305,8 +305,6 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
             prediction_length = 1
 
         _y = self._y.copy()
-        if y is not None:
-            _y = y.copy()
         _y_df = _y
 
         index_names = _y.index.names

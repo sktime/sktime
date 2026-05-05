@@ -21,9 +21,9 @@ class SkforecastAutoreg(BaseForecaster):
     lags : int, list, numpy ndarray, range
         Lags used as predictors. Index starts at 1, so lag 1 is equal to t-1.
 
-            - ``int``: include lags from 1 to ``lags`` (included).
-            - ``list``, ``1d numpy ndarray`` or ``range``: include only lags present in
-            ``lags``, all elements must be int.
+        - ``int``: include lags from 1 to ``lags`` (included).
+        - ``list``, ``1d numpy ndarray`` or ``range``: include only lags present in
+          ``lags``, all elements must be int.
 
     transformer_y : object transformer (preprocessor), default ``None``
         An instance of a transformer (preprocessor) compatible with the scikit-learn
@@ -156,6 +156,15 @@ class SkforecastAutoreg(BaseForecaster):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         self._regressor = None
         self._forecaster = None
         self._transformer_y = None
