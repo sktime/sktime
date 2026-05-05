@@ -27,6 +27,7 @@ class SquaringResiduals(BaseForecaster):
     the minimal number of observations to which the forecaster is fitted.
 
     1. For :math:`i = initial\_window, \dots, N - steps\_ahead`
+
         a. Train/Update forecaster A on :math:`y(t_1), \dots, y(t_i)`
         b. Make point prediction for :math:`t_{i+steps\_ahead}` to get
            :math:`\hat{y}(t_{i+steps\_ahead})`
@@ -35,6 +36,7 @@ class SquaringResiduals(BaseForecaster):
            - \hat{y}(t_{i+steps\_ahead})`
         d. Compute :math:`e(t_{i+steps\_ahead}) := h(r(t_{i+steps\_ahead}))`
            where :math:`h(x)` is given by :math:`strategy`
+
     2. Train ``residual_forecaster`` on
        :math:`e(t_{initial\_window+steps\_ahead}), \dots, e(t_{N})`
 
@@ -63,6 +65,11 @@ class SquaringResiduals(BaseForecaster):
         Distributional assumption (["norm", "laplace", "t", "cauchy"])
     distr_kwargs : dict, optional
         Additional arguments required by the distribution
+
+    Attributes
+    ----------
+    forecaster_ : sktime forecaster, BaseForecaster descendant
+        Fitted estimator to which probabilistic forecasts are being added
 
     Examples
     --------
@@ -127,6 +134,15 @@ class SquaringResiduals(BaseForecaster):
         self.distr_kwargs = distr_kwargs
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         assert self.distr in ["norm", "laplace", "t", "cauchy"]
         assert self.strategy in ["square", "abs"]
         assert self.initial_window >= 1, (
@@ -134,9 +150,13 @@ class SquaringResiduals(BaseForecaster):
         )
 
         if self.forecaster is None:
-            self.forecaster = NaiveForecaster()
+            self._forecaster = NaiveForecaster()
+        else:
+            self._forecaster = self.forecaster
         if self.residual_forecaster is None:
-            self.residual_forecaster = NaiveForecaster()
+            self._residual_forecaster = NaiveForecaster()
+        else:
+            self._residual_forecaster = self.residual_forecaster.clone()
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -171,13 +191,12 @@ class SquaringResiduals(BaseForecaster):
         """
         fh_rel = fh.to_relative(self.cutoff)
         self._res_forecasters = {}
-        self._residual_forecaster_ = self.residual_forecaster.clone()
-        self._forecaster_ = self.forecaster.clone()
+        self.forecaster_ = self._forecaster.clone()
 
         y = convert_to(y, "pd.Series")
         cv = ExpandingWindowSplitter(initial_window=self.initial_window, fh=fh_rel)
-        self._forecaster_.fit(y=y.iloc[: self.initial_window], X=X)
-        y_pred = self._forecaster_.update_predict(y=y, cv=cv, X=X, update_params=True)
+        self.forecaster_.fit(y=y.iloc[: self.initial_window], X=X)
+        y_pred = self.forecaster_.update_predict(y=y, cv=cv, X=X, update_params=True)
 
         for step_ahead in fh_rel:
             if isinstance(y.index, pd.DatetimeIndex):
@@ -210,7 +229,7 @@ class SquaringResiduals(BaseForecaster):
                 residuals = residuals.asfreq(y.index.freq)
 
             # fit to residuals
-            res_step_forecaster_ = self.residual_forecaster.clone()
+            res_step_forecaster_ = self._residual_forecaster.clone()
             res_step_forecaster_.fit(y=residuals)
             self._res_forecasters[step_ahead] = res_step_forecaster_
         return self
@@ -242,7 +261,7 @@ class SquaringResiduals(BaseForecaster):
             Point predictions
         """
         fh_abs = fh.to_absolute(self.cutoff)
-        y_pred = self._forecaster_.predict(X=X, fh=fh_abs)
+        y_pred = self.forecaster_.predict(X=X, fh=fh_abs)
         y_pred.name = self._y.name
         return y_pred
 
@@ -283,7 +302,7 @@ class SquaringResiduals(BaseForecaster):
         -------
         self : reference to self
         """
-        self._forecaster_.update(X=X, y=y, update_params=update_params)
+        self.forecaster_.update(X=X, y=y, update_params=update_params)
         for forecaster in self._res_forecasters.values():
             forecaster.update(X=X, y=y, update_params=update_params)
         return self
@@ -326,7 +345,7 @@ class SquaringResiduals(BaseForecaster):
         dist_fun = getattr(stats, self.distr)
 
         fh_abs = fh.to_absolute(self.cutoff)
-        y_pred = self._forecaster_.predict(fh=fh_abs, X=X)
+        y_pred = self.forecaster_.predict(fh=fh_abs, X=X)
         pred_var = self._predict_var(fh=fh, X=X)
         if self.distr_kwargs is not None:
             z_scores = dist_fun.ppf(alpha, **self.distr_kwargs)
