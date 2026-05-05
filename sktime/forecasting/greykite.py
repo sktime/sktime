@@ -69,9 +69,11 @@ class GreykiteForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",  # Expected input type for X.
         "requires-fh-in-fit": True,  # Forecasting horizon is required in fit.
         "capability:pred_int": False,  # Can produce prediction intervals.
-        "capability:pickle": False,
-        "capability:in-sample": False,
+        "capability:insample": False,
         "python_dependencies": ["greykite>=1.0.0"],  # Required Python dependencies.
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
@@ -81,12 +83,22 @@ class GreykiteForecaster(BaseForecaster):
         model_template: str = "SILVERKITE",
         coverage: float = 0.95,
     ):
-        super().__init__()
         self.forecast_config = forecast_config
         self.date_format = date_format
         self.model_template = model_template
         self.coverage = coverage
 
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         self._forecaster = None
         self._forecast = None
         self._X = None
