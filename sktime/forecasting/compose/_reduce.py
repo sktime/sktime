@@ -1987,6 +1987,12 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self._lags = list(range(window_length))
         super().__init__()
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        pooling = self.pooling
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -2384,7 +2390,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.estimator = estimator
         self.impute_method = impute_method
         self.pooling = pooling
-        self._lags = list(range(window_length))
         super().__init__()
 
         warn(
@@ -2393,6 +2398,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             "https://github.com/alan-turing-institute/sktime/issues/3224"
         )
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        pooling = self.pooling
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -2408,6 +2419,18 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        self._lags = list(range(self.window_length))
+
+        impute_method = self.impute_method
         if isinstance(impute_method, str):
             from sktime.transformations.series.impute import Imputer
 
@@ -2796,23 +2819,22 @@ class YfromX(BaseForecaster, _ReducerMixin):
         self.pooling = pooling
         super().__init__()
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        estimator = self.estimator
         # self._est_type encodes information what type of estimator is passed
         if hasattr(estimator, "get_tags"):
             _est_type = estimator.get_tag("object_type", "regressor", False)
         else:
             _est_type = "regressor"
 
-        if _est_type not in ["regressor", "regressor_proba"]:
-            raise TypeError(
-                "error in YfromX, estimator must be either an sklearn compatible "
-                "regressor, or an skpro probabilistic regressor."
-            )
-
         # has probabilistic mode iff the estimator is of type regressor_proba
         self.set_tags(**{"capability:pred_int": _est_type == "regressor_proba"})
 
-        self._est_type = _est_type
-
+        pooling = self.pooling
         if pooling == "local":
             mtypes = "pd.DataFrame"
         elif pooling == "global":
@@ -2827,6 +2849,30 @@ class YfromX(BaseForecaster, _ReducerMixin):
             )
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        estimator = self.estimator
+        # self._est_type encodes information what type of estimator is passed
+        if hasattr(estimator, "get_tags"):
+            _est_type = estimator.get_tag("object_type", "regressor", False)
+        else:
+            _est_type = "regressor"
+
+        if _est_type not in ["regressor", "regressor_proba"]:
+            raise TypeError(
+                "error in YfromX, estimator must be either an sklearn compatible "
+                "regressor, or an skpro probabilistic regressor."
+            )
+
+        self._est_type = _est_type
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
