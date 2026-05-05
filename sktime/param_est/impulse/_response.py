@@ -56,6 +56,10 @@ class ImpulseResponseFunction(BaseParamFitter):
 
     Parameters
     ----------
+    model : Any
+        A previous fitted time series model from the sktime library.
+        See below for the current supported sktime models.
+
     steps : int, optional
         The number of steps for which impulse responses are calculated.
         Default is 1. Note that for time-invariant models, the initial
@@ -83,11 +87,7 @@ class ImpulseResponseFunction(BaseParamFitter):
         Integer values can run from 0 to nobs - 1, or can be negative to apply negative
         indexing. Finally, if a date/time index was provided to the model, then this
         argument can be a date string to parse or a datetime type. Default is #start#.
-
-    exog : array_like, optional
-        New observations of exogenous regressors for our-of-sample periods, if
-        applicable.
-
+        
     transformed : bool, optional
         Whether or not params is already transformed. Default is True.
 
@@ -95,7 +95,6 @@ class ImpulseResponseFunction(BaseParamFitter):
         If parameters were previously fixed with the fix_params method, this argument
         describes whether or not params also includes the fixed parameters, in addition
         to the free parameters. Default is False.
-
 
     extend_model : None
         Used in Statsmodels for a special handling of matrix terms that are time-varying
@@ -195,7 +194,6 @@ class ImpulseResponseFunction(BaseParamFitter):
         orthogonalized=False,
         cumulative=False,
         anchor=None,
-        exog=None,
         transformed=True,
         includes_fixed=False,
         extend_model=None,
@@ -207,7 +205,6 @@ class ImpulseResponseFunction(BaseParamFitter):
         self.orthogonalized = orthogonalized
         self.cumulative = cumulative
         self.anchor = anchor
-        self.exog = exog
         self.transformed = transformed
         self.includes_fixed = includes_fixed
 
@@ -216,7 +213,7 @@ class ImpulseResponseFunction(BaseParamFitter):
 
         super().__init__()
 
-    def _fit(self, X):
+    def _fit(self, X, y=None):
         """Fit estimator for univariate and multivariate orthogonal or cumulative irfs.
 
         Text from statsmodels:
@@ -233,8 +230,14 @@ class ImpulseResponseFunction(BaseParamFitter):
 
         Parameters
         ----------
-        X : array_like, e.g. pd.Series
+        X : array_like, e.g. pd.Series or pd.DataFrame
         Contains the full set of time-series to be investigated, all X AND y.
+
+        y : array_like, e.g. pd.Series or pd.DataFrame, optional (default=None)
+        Can be used for additional time-series input influencing the system, but
+        not be influenced by the system, e.g. exog. variables like temperature
+        or policies. Hint: VECM/VAR exog will be given to the fitted models in
+        statsmodels, no need to give it here.
 
         Returns
         -------
@@ -315,6 +318,7 @@ class ImpulseResponseFunction(BaseParamFitter):
             orthogonalized=self.orthogonalized,
             cumulative=self.cumulative,
             impulse=self.impulse,
+            exog=y
         )
 
         self.irf_ = irf_result

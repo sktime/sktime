@@ -125,8 +125,9 @@ Cointegration
 
     JohansenCointegration
 
-Model Analysis
-~~~~~~~~~~~~~~
+
+Impulse and Shock Response Estimation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.param_est.impulse
 
