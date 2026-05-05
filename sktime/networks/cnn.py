@@ -1,7 +1,6 @@
 """Time Convolutional Neural Network (CNN) (minus the final output layer)."""
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 from sktime.utils.warnings import warn
 
 
@@ -68,25 +67,37 @@ class CNNNetwork(BaseDeepNetwork):
         padding="auto",
         random_state=0,
     ):
-        _check_dl_dependencies(severity="error")
         self.random_state = random_state
         self.padding = padding
         self.kernel_size = kernel_size
         self.avg_pool_size = avg_pool_size
         self.n_conv_layers = n_conv_layers
         self.filter_sizes = filter_sizes
-        if filter_sizes is None:
+        self.activation = activation
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        if self.filter_sizes is None:
             self._filter_sizes = [6, 12]
         else:
-            self._filter_sizes = filter_sizes
-        self.activation = activation
+            self._filter_sizes = self.filter_sizes
         # TODO (release 0.41.0)
         # After changing the default value of 'activation' to "relu"
         # in the __init__ method signature,
         # Remove the following 'if-else' check
         # Remove the usage of self._activation throughout the class
         # and replace it with self.activation
-        if activation == "changing_from_sigmoid_to_relu_in_0.41.0":
+        if self.activation == "changing_from_sigmoid_to_relu_in_0.41.0":
             warn(
                 "in `CNNNetwork`, the default value of parameter 'activation'"
                 " will change to 'relu' in version '0.41.0'. "
@@ -97,9 +108,7 @@ class CNNNetwork(BaseDeepNetwork):
             )
             self._activation = "sigmoid"
         else:
-            self._activation = activation
-
-        super().__init__()
+            self._activation = self.activation
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
