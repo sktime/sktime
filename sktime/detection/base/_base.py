@@ -906,8 +906,15 @@ class BaseDetector(BaseEstimator):
         9    1
         dtype: int64
         """
-        if not isinstance(y_sparse, pd.DataFrame):
+        if isinstance(y_sparse, pd.Series) and isinstance(
+            y_sparse.index, pd.IntervalIndex
+        ):
+            # legacy sparse segmentation format
+            y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
+            return y_dense
+        elif not isinstance(y_sparse, pd.DataFrame):
             y_sparse = pd.DataFrame(y_sparse, dtype="int64")
+
         if not hasattr(y_sparse, "ilocs") or y_sparse.ilocs.dtype != "interval":
             # Anomaly/changepoint detection case
             y_dense = BaseDetector._sparse_points_to_dense(y_sparse, index)
@@ -957,8 +964,18 @@ class BaseDetector(BaseEstimator):
             according to ``y_sparse``. Indexes that do not fall within any index are
             labelled -1.
         """
+        is_legacy_series = isinstance(y_sparse, pd.Series)
+
         if len(y_sparse) == 0:
-            return pd.DataFrame(0, index=index, dtype="int64", columns=["labels"])
+            y_dense = pd.Series(0, index=index, dtype="int64")
+            if is_legacy_series:
+                return y_dense
+            return pd.DataFrame({"labels": y_dense})
+
+        if is_legacy_series:
+            y_sparse = pd.DataFrame(
+                {"ilocs": y_sparse.index, "labels": y_sparse.to_numpy()}
+            )
 
         seg_index = y_sparse.set_index("ilocs").index
         index_rg = pd.RangeIndex(len(index))
@@ -971,12 +988,18 @@ class BaseDetector(BaseEstimator):
         interval_ixs = seg_index.get_indexer(index_rg)
 
         if "labels" not in y_sparse.columns:
-            y_dense = pd.DataFrame({"labels": interval_ixs}, index=index_rg)
-            return y_dense
+            y_dense = pd.Series(interval_ixs, index=index_rg, dtype="int64")
         else:
-            y_dense = y_sparse.labels.loc[interval_ixs]
-            y_dense = y_dense.reset_index(drop=True)
-            return pd.DataFrame({"labels": y_dense}, index=index_rg)
+            y_dense = pd.Series(-1, index=index_rg, dtype="int64")
+            in_segment = interval_ixs != -1
+            y_dense.loc[in_segment] = y_sparse["labels"].iloc[
+                interval_ixs[in_segment]
+            ].to_numpy()
+
+        if is_legacy_series:
+            y_dense.index = index
+            return y_dense
+        return pd.DataFrame({"labels": y_dense}, index=index_rg)
 
     @staticmethod
     def dense_to_sparse(y_dense):
@@ -1001,7 +1024,7 @@ class BaseDetector(BaseEstimator):
               labels of segments.
         """
         if isinstance(y_dense, pd.DataFrame):
-            y_sparse = y_dense.iloc[:, 0]
+            y_dense = y_dense.iloc[:, 0]
         if not isinstance(y_dense, pd.Series):
             y_dense = pd.Series(y_dense, dtype="int64")
         if 0 in y_dense.values:
