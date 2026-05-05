@@ -81,7 +81,11 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["kkoralturk", "aiwalter", "fkiraly", "miraep8"],
+        # estimator type
+        # --------------
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:multivariate": True,
@@ -114,12 +118,18 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         forecasters: list,
         selected_forecaster=None,
     ):
-        super().__init__()
         self.selected_forecaster = selected_forecaster
-
         self.forecasters = forecasters
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        # setting forecaster early to allow tag setting
         self._check_estimators(
-            forecasters,
+            self.forecasters,
             attr_name="forecasters",
             cls_type=BaseForecaster,
             clone_ests=False,

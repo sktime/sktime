@@ -85,6 +85,13 @@ class MCDCNNClassifier(BaseDeepClassifier):
         "maintainers": ["james-large"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        # test skips, see #6465 and #7958
+        "tests:skip_by_name": [
+            "test_persistence_via_pickle",
+            "test_multioutput",
+            "test_classifier_on_unit_test_data",
+            "test_fit_idempotent",  # due to randomness
+        ],
     }
 
     def __init__(
