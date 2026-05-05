@@ -121,6 +121,8 @@ class TiRexForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        "capability:pretrain": True,
+        "fit_is_empty": True,
     }
 
     def __init__(
@@ -159,10 +161,20 @@ class TiRexForecaster(BaseForecaster):
         license_text = dist.read_text("licenses/LICENSE")
         print(license_text)
 
+    def _ensure_model_loaded(self):
+        """Ensure model is loaded, loading lazily on first access."""
+        if self.model_ is None:
+            key = _tirex_cache_key(self.model, self.device)
+            self.model_ = _cached_TiRex(
+                key=key, model=self.model, device=self.device
+            ).load()
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
-        Loads and caches the underlying TiRex model instance (no training).
+        For zero-shot models like TiRex, fitting only stores the context.
+        The model is loaded lazily on first access and cached via the
+        multiton pattern.
 
         Parameters
         ----------
@@ -188,10 +200,7 @@ class TiRexForecaster(BaseForecaster):
         self : TiRexForecaster
             Fitted forecaster (with ``model_`` set).
         """
-        key = _tirex_cache_key(self.model, self.device)
-        self.model_ = _cached_TiRex(
-            key=key, model=self.model, device=self.device
-        ).load()
+        self._ensure_model_loaded()
         return self
 
     def _predict(self, fh, X):

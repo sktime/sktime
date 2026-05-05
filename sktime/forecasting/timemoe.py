@@ -130,6 +130,8 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "capability:pretrain": True,
+        "fit_is_empty": True,
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -186,8 +188,30 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         _config.update(self.config if self.config is not None else {})
         self._config = _config
 
+        # Load the model eagerly at construction time.
+        # TimeMoE is a zero-shot model: weights are pretrained and immutable,
+        # so loading them once here avoids redundant reloading on every fit().
+        self.model = self._load_model()
+
+    def _load_model(self):
+        """Load the TimeMoE model using the multiton pattern."""
+        return _CachedTimeMoE(
+            key=self._get_unique_timemoe_key(),
+            timemoe_kwargs=self._get_timemoe_kwargs(),
+            use_source_package=self.use_source_package,
+        ).load_from_checkpoint()
+
+    def _ensure_model_loaded(self):
+        """Ensure model is loaded, reloading if needed after unpickling."""
+        if not hasattr(self, "model") or self.model is None:
+            self.model = self._load_model()
+
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
+
+        For zero-shot models like TimeMoE, fitting only stores the context
+        and updates input_size config. The model weights are loaded once in
+        ``__post_init__`` and reused across fit calls.
 
         Parameters
         ----------
@@ -208,11 +232,9 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         else:
             config["input_size"] = 1
         self._config = config
-        self.model = _CachedTimeMoE(
-            key=self._get_unique_timemoe_key(),
-            timemoe_kwargs=self._get_timemoe_kwargs(),
-            use_source_package=self.use_source_package,
-        ).load_from_checkpoint()
+
+        # Ensure model is available (e.g., after deserialization)
+        self._ensure_model_loaded()
 
         return self
 

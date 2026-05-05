@@ -317,6 +317,8 @@ class ChronosForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "capability:pretrain": True,
+        "fit_is_empty": True,
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -388,6 +390,11 @@ class ChronosForecaster(BaseForecaster):
 
         self._initialize_model_type()
 
+        # Load the model pipeline eagerly at construction time.
+        # Chronos is a zero-shot model: weights are pretrained and immutable,
+        # so loading them once here avoids redundant reloading on every fit().
+        self.model_pipeline = self._load_pipeline()
+
     def _initialize_model_type(self):
         """Initialise model type and configuration based on model's architecture."""
         from transformers import AutoConfig
@@ -418,6 +425,10 @@ class ChronosForecaster(BaseForecaster):
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
+        For zero-shot models like Chronos, fitting only stores the context
+        window. The model pipeline (pretrained weights) is loaded once in
+        ``__post_init__`` and reused across fit calls.
+
         private _fit containing the core logic, called from fit
 
         Parameters
@@ -433,7 +444,8 @@ class ChronosForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        self.model_pipeline = self._load_pipeline()
+        # Ensure pipeline is available (e.g., after deserialization)
+        self._ensure_model_pipeline_loaded()
         self._context = y
         return self
 
@@ -471,8 +483,7 @@ class ChronosForecaster(BaseForecaster):
     def _ensure_model_pipeline_loaded(self):
         """Ensure model pipeline is loaded, recreating if needed after unpickling."""
         if not hasattr(self, "model_pipeline") or self.model_pipeline is None:
-            if hasattr(self, "_is_fitted") and self._is_fitted:
-                self.model_pipeline = self._load_pipeline()
+            self.model_pipeline = self._load_pipeline()
 
     def _load_pipeline(self):
         """Load the model pipeline using the multiton pattern.

@@ -88,6 +88,8 @@ class Chronos2Forecaster(BaseForecaster):
         "capability:multivariate": True,
         "capability:insample": False,
         "capability:global_forecasting": True,
+        "capability:pretrain": True,
+        "fit_is_empty": True,
         "capability:non_contiguous_X": False,
         "tests:vm": True,
         "tests:skip_by_name": [
@@ -116,7 +118,7 @@ class Chronos2Forecaster(BaseForecaster):
         self.config = config
         self.ignore_deps = ignore_deps
 
-        self.model_pipeline = None
+
 
         if ignore_deps:
             self.set_tags(python_dependencies=[])
@@ -142,6 +144,11 @@ class Chronos2Forecaster(BaseForecaster):
 
         if self.config is not None:
             self._config.update(self.config)
+
+        # Load the model pipeline eagerly at construction time.
+        # Chronos-2 is a zero-shot model: weights are pretrained and immutable,
+        # so loading them once here avoids redundant reloading on every fit().
+        self.model_pipeline = self._load_pipeline()
 
     def __getstate__(self):
         """Return state for pickling, excluding unpickleable model pipeline."""
@@ -174,8 +181,7 @@ class Chronos2Forecaster(BaseForecaster):
     def _ensure_model_pipeline_loaded(self):
         """Reload model pipeline if needed after unpickling."""
         if not hasattr(self, "model_pipeline") or self.model_pipeline is None:
-            if hasattr(self, "_is_fitted") and self._is_fitted:
-                self.model_pipeline = self._load_pipeline()
+            self.model_pipeline = self._load_pipeline()
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecaster to training data.
@@ -192,7 +198,8 @@ class Chronos2Forecaster(BaseForecaster):
         -------
         self
         """
-        self.model_pipeline = self._load_pipeline()
+        # Ensure pipeline is available (e.g., after deserialization)
+        self._ensure_model_pipeline_loaded()
 
         context_length = self._config["context_length"]
         if context_length is None:
