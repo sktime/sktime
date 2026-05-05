@@ -35,76 +35,54 @@ class ImpulseResponseFunction(BaseParamFitter):
     observed at a higher frequency than outcome variables.", Working Paper No. 2307,
     European Central Bank.
 
-    The following methods support the calculation of an impulse response, where an (x)
-    marks the completed implementation for sktime:
+    The following ``sktime`` estimators support the calculation of an impulse response:
 
-    - ARIMA
-    - ARMA
-    - DynamicFactor (x)
-    - DynamicFactorMQ
-    - ExponentialSmoothing
-    - KalmanFilter
-    - KalmanSmoother
-    - MLEModel
-    - RecursiveLS
-    - SARIMAX
-    - SimulationSmoother
-    - UnobservedComponents
-    - VAR (x)
-    - VARMAX (x)
-    - VECM (x)
+    - ``DynamicFactor``
+    - ``VAR``
+    - ``VARMAX``
+    - ``VECM``
 
     Parameters
     ----------
     model : Any
-        A previous fitted time series model from the sktime library.
-        See below for the current supported sktime models.
+        A previous fitted ``sktime`` time series forecaster from ``sktime.forecasting``.
+        See above for the current supported ``sktime`` models.
 
-    steps : int, optional
+    steps : int, optional, default=1
         The number of steps for which impulse responses are calculated.
         Default is 1. Note that for time-invariant models, the initial
         impulse is not counted as a step, so if steps=1, the output
         will have 2 entries.
 
-    impulse : int, str or array_like
+    impulse : int, str or array_like, optional, default=0
         If an integer, the state innovation to pulse; must be between 0 and k_posdef-1.
         If a str, it indicates which column of df the unit (1) impulse is given.
         Alternatively, a custom impulse vector may be provided; must be shaped
         k_posdef x 1.
 
-    orthogonalized : bool, optional
+    orthogonalized : bool, optional, default=False
         Whether or not to perform impulse using orthogonalized innovations.
-        Note that this will also affect custum impulse vectors. Default is False.
+        Note that this will also affect custom impulse vectors.
 
-    cumulative : bool, optional
-        Whether or not to return cumulative impulse responses. Default is False.
+    cumulative : bool, optional, default=False
+        Whether or not to return cumulative impulse responses.
 
-    anchor : int, str, or datetime, optional
+    anchor : int, str, or datetime, optional, default = #start#
         Time point within the sample for the state innovation impulse.
         Type depends on the index of the given endog in the model.
         Two special cases are the strings #start# and #end#, which refer to
         setting the impulse at the first and last points of the sample, respectively.
         Integer values can run from 0 to nobs - 1, or can be negative to apply negative
         indexing. Finally, if a date/time index was provided to the model, then this
-        argument can be a date string to parse or a datetime type. Default is #start#.
-        
-    transformed : bool, optional
-        Whether or not params is already transformed. Default is True.
+        argument can be a date string to parse or a datetime type.
 
-    includes_fixed : bool, optional
+    transformed : bool, optional, default=True
+        Whether or not params is already transformed.
+
+    includes_fixed : bool, optional, default=False
         If parameters were previously fixed with the fix_params method, this argument
         describes whether or not params also includes the fixed parameters, in addition
-        to the free parameters. Default is False.
-
-    extend_model : None
-        Used in Statsmodels for a special handling of matrix terms that are time-varying
-        but irrelevant for impulse response functions. Thus not integrated for this
-        purpose.For more Info see MLEModel class in statsmodels mlemodel.py and the
-        functions: get_prediction(), _get_extension_time_varying_matrices(), simulate().
-        Datatype not shown in statsmodels, looks like bool.
-
-    extend_kwargs : None, Used with extend_model. Datatype not shown in statsmodels,
-        looks like bool.
+        to the free parameters.
 
     Attributes
     ----------
@@ -196,8 +174,6 @@ class ImpulseResponseFunction(BaseParamFitter):
         anchor=None,
         transformed=True,
         includes_fixed=False,
-        extend_model=None,
-        extend_kwargs=None,
     ):
         self.model = model  # needs a previously fitted model
         self.steps = steps
@@ -207,9 +183,6 @@ class ImpulseResponseFunction(BaseParamFitter):
         self.anchor = anchor
         self.transformed = transformed
         self.includes_fixed = includes_fixed
-
-        self.extend_model = extend_model
-        self.extend_kwargs = extend_kwargs
 
         super().__init__()
 
@@ -318,7 +291,7 @@ class ImpulseResponseFunction(BaseParamFitter):
             orthogonalized=self.orthogonalized,
             cumulative=self.cumulative,
             impulse=self.impulse,
-            exog=y
+            exog=y,
         )
 
         self.irf_ = irf_result
