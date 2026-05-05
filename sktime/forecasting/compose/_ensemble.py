@@ -106,7 +106,11 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
+        # estimator type
+        # --------------
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
