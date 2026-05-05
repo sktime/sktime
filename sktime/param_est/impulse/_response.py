@@ -376,11 +376,8 @@ class ImpulseResponseFunction(BaseParamFitter):
             "orthogonalized": True,
             "cumulative": True,
             "anchor": None,
-            "exog": None,
             "transformed": True,
             "includes_fixed": False,
-            "extend_model": None,
-            "extend_kwargs": None,
         }
         params2 = {
             "model": fitted_model,
@@ -389,11 +386,8 @@ class ImpulseResponseFunction(BaseParamFitter):
             "orthogonalized": False,
             "cumulative": False,
             "anchor": None,
-            "exog": None,
             "transformed": True,
             "includes_fixed": False,
-            "extend_model": None,
-            "extend_kwargs": None,
         }
 
         return [params1, params2]
