@@ -179,11 +179,6 @@ class TapNetClassifierTorch(BaseDeepClassifierPytorch):
         self.verbose = verbose
         self.random_state = random_state
 
-        # input_size and num_classes inferred from the data and will be
-        # set in build_network
-        self.input_size = None
-        self.num_classes = None
-
         super().__init__(
             num_epochs=self.num_epochs,
             batch_size=self.batch_size,
@@ -198,6 +193,23 @@ class TapNetClassifierTorch(BaseDeepClassifierPytorch):
             verbose=self.verbose,
             random_state=self.random_state,
         )
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        # input_size and num_classes inferred from the data and will be
+        # set in build_network
+        self.input_size = None
+        self.num_classes = None
+
+        super().__post_init__()
 
     def _build_network(self, X, y):
         """Build the TapNet network.

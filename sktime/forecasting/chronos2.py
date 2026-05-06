@@ -113,11 +113,9 @@ class Chronos2Forecaster(BaseForecaster):
     ):
         self.model_path = model_path
         self.seed = seed
-        self._seed = np.random.randint(0, 2**31) if seed is None else seed
         self.config = config
         self.ignore_deps = ignore_deps
 
-        self._config = self._default_config.copy()
         self.model_pipeline = None
 
         if ignore_deps:
@@ -125,12 +123,25 @@ class Chronos2Forecaster(BaseForecaster):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
+
         import torch
 
+        self._config = self._default_config.copy()
         self._config["torch_dtype"] = torch.bfloat16
 
-        if config is not None:
-            self._config.update(config)
+        if self.config is not None:
+            self._config.update(self.config)
 
     def __getstate__(self):
         """Return state for pickling, excluding unpickleable model pipeline."""
@@ -189,12 +200,13 @@ class Chronos2Forecaster(BaseForecaster):
 
         context = y
 
-        if context.shape[1] > context_length:
+        if context.shape[0] > context_length:
             context = context.iloc[-context_length:]
 
         context = context.values.T
 
         self._context = context
+        self._y_index_names = y.index.names
         return self
 
     def _predict(self, fh, X=None):
@@ -263,14 +275,14 @@ class Chronos2Forecaster(BaseForecaster):
             .to_absolute(self._cutoff)
             ._values
         )
-        pred_out = fh.get_expected_pred_idx(self._y, cutoff=self.cutoff)
+        pred_out = fh.get_expected_pred_idx(context, cutoff=self.cutoff)
 
         pred_df = pd.DataFrame(
             point_forecast.T,
             index=index,
-            columns=self._y.columns,
+            columns=self._get_varnames(),
         )
-        pred_df.index.names = self._y.index.names
+        pred_df.index.names = self._y_index_names
 
         dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
         return pred_df.loc[dateindex]
