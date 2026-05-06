@@ -216,7 +216,11 @@ def _evaluate_window(x, meta):
     y_preds_cache = dict()
     old_naming = True
     old_name_mapping = {}
-    if fh is None:
+    if fh is None or forecaster.get_tag("requires-fh-in-fit", raise_error=False):
+        # If fh is None or forecaster requires fh at fit time, derive fh from
+        # the actual test window to ensure y_pred and y_test have the same length.
+        # Fixes issue #7360 - MultioutputTabularRegressionForecaster with
+        # TemporalTrainTestSplitter in ForecastingGridSearchCV.
         fh = _select_fh_from_y(y_true if global_mode else y_test)
 
     try:
