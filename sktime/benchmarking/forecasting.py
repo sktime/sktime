@@ -127,7 +127,7 @@ class ForecastingBenchmark(BaseBenchmark):
                 y_pred = forecaster.predict(y=y_past)
                 metric(y_true, y_pred)
 
-        error_score : "raise" or numeric, default=np.nan
+        error_score : "raise" or numeric, default="raise"
             Value to assign to the score if an exception occurs in estimator fitting.
             If set to "raise", the exception is raised. If a numeric value is given,
             FitFailedWarning is raised.
