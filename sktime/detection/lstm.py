@@ -3,15 +3,15 @@
 import numpy as np
 import pandas as pd
 
-from sktime.detection.adapters import PyODDetector
+from sktime.detection.base import BaseDetector
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
 pyod = _safe_import("pyod")
 
 
-class LSTMAD(PyODDetector):
-    """LSTM-based time series anomaly detector via the PyOD adapter.
+class LSTMAD(BaseDetector):
+    """LSTM-based time series anomaly detector.
 
     Trains a stacked LSTM to predict the next timestep, then scores
     each timestamp by the Mahalanobis distance of its prediction error
@@ -88,18 +88,21 @@ class LSTMAD(PyODDetector):
         self.batch_size = batch_size
         self.contamination = contamination
 
-        from pyod.models.ts_lstm import LSTMAD as PyODLSTMAD
+        super().__init__()
 
-        estimator = PyODLSTMAD(
-            window_size=window_size,
-            hidden_size=hidden_size,
-            n_layers=n_layers,
-            epochs=epochs,
-            lr=lr,
-            batch_size=batch_size,
-            contamination=contamination,
+    def __post_init__(self):
+        """Initialize the PyOD LSTMAD estimator."""
+        from pyod.models.lstm_ad import LSTMAD
+
+        self.estimator = LSTMAD(
+            window_size=self.window_size,
+            hidden_size=self.hidden_size,
+            n_layers=self.n_layers,
+            epochs=self.epochs,
+            lr=self.lr,
+            batch_size=self.batch_size,
+            contamination=self.contamination,
         )
-        super().__init__(estimator=estimator)
 
     @staticmethod
     def _to_lstmad_array(X):
