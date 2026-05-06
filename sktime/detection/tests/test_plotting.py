@@ -43,7 +43,9 @@ def test_plot_time_series_with_change_points(time_series_data):
     true_cps = time_series_data["true_cps"]
     font_size = time_series_data["font_size"]
 
-    fig, ax = plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=font_size)
+    fig, ax = plot_time_series_with_change_points(
+        ts_name, ts, true_cps, font_size=font_size
+    )
 
     assert isinstance(fig, plt.Figure)
     assert isinstance(ax, plt.Axes)
