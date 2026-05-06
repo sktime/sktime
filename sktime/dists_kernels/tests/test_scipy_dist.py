@@ -1,4 +1,5 @@
 """Tests for scipy interface."""
+import warnings
 
 import numpy as np
 import pytest
@@ -55,30 +56,42 @@ def X2_df():
         panel=False,
     )
 
+def _scipy_available(metric):
+    """
+    Return
+        True if scipy accepts metric
+        False if not
+    """
+    from scipy.spatial.distance import cdist
+
+    x = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            cdist(x, x, metric=metric)
+    except ValueError:
+        return False
+
+    return True
+
 
 def _get_kul_name():
     """Get name of kul... distance.
 
     Utility to bridge deprecation of kulsinski distance in scipy.
     Name pre-1.11.0 is kulsinski, and from 1.11.0 it is kulczynski1.
-
-    Returns
-    -------
-    name : str
-        one of "kulsinski" (if scipy < 1.11.0) and "kulczynski1" (if scipy >= 1.11.0)
+    From 1.17.0 none of them is available returns None in that case.
     """
-    try:
-        from scipy.spatial.distance import kulczynski1  # noqa: F401
+    distance = ["kulczynski1", "kulsinski"]
+    for name in distance:
+        if _scipy_available(name):
+            return name
 
-        name = "kulczynski1"
-    except Exception:
-        name = "kulsinski"
-
-    return name
+    return None
 
 
 # potential parameters
-METRIC_VALUES = [
+_METRIC_CANDIDATES = [
     "braycurtis",
     "canberra",
     "chebyshev",
@@ -90,7 +103,7 @@ METRIC_VALUES = [
     "hamming",
     "jaccard",
     "jensenshannon",
-    _get_kul_name(),
+    *filter(None, [_get_kul_name()]),
     "mahalanobis",
     "matching",
     "minkowski",
@@ -102,6 +115,10 @@ METRIC_VALUES = [
     "sqeuclidean",
     "yule",
 ]
+METRIC_VALUES = [
+    metric for metric in _METRIC_CANDIDATES if _scipy_available(metric)
+]
+
 P_VALUES = [1, 2, 5, 10]
 COLALIGN_VALUES = ["intersect", "force-align", "none"]
 
