@@ -177,9 +177,6 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
         self.verbose = verbose
         self.random_state = random_state
 
-        self.input_size = None
-        self.num_classes = 1  # for regression
-
         super().__init__(
             num_epochs=self.num_epochs,
             batch_size=self.batch_size,
@@ -193,6 +190,21 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
             verbose=self.verbose,
             random_state=self.random_state,
         )
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self.input_size = None
+        self.num_classes = 1  # for regression
+
+        super().__post_init__()
 
     def _build_network(self, X):
         """Build the TapNet network.
