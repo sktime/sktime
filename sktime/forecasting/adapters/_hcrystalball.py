@@ -183,5 +183,5 @@ class HCrystalBallAdapter(BaseForecaster):
             from hcrystalball.wrappers import HoltSmoothingWrapper
 
             return {"model": HoltSmoothingWrapper()}
-        
+
         return {"model": 42}
