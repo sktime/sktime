@@ -14,7 +14,7 @@ class AlignerDtwNumba(BaseAligner):
     Interface to simple dynamic time warping (DTW) alignment,
     and the following weighted/derivative versions:
 
-    * WDTW - weighted dynamic tyme warping - ``weighted=True, derivative=False`
+    * WDTW - weighted dynamic time warping - ``weighted=True, derivative=False`
     * DDTW - derivative dynamic time warping - ``weighted=False, derivative=True``
     * WDDTW - weighted derivative dynamic time
       warping - ``weighted=True, derivative=True``
