@@ -119,7 +119,7 @@ class MultiplexRegressor(_HeterogenousMetaEstimator, _DelegatedRegressor):
         component_names = self._get_estimator_names(self._regressors, make_unique=True)
         selected = self.selected_regressor
         if selected is not None and selected not in component_names:
-            raise Exception(
+            raise ValueError(
                 f"Invalid selected_regressor parameter value provided, "
                 f" found: {self.selected_regressor}. Must be one of these"
                 f" valid selected_regressor parameter values: {component_names}."

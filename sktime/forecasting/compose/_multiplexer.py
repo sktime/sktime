@@ -155,7 +155,7 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         component_names = self._get_estimator_names(self._forecasters, make_unique=True)
         selected = self.selected_forecaster
         if selected is not None and selected not in component_names:
-            raise Exception(
+            raise ValueError(
                 f"Invalid selected_forecaster parameter value provided, "
                 f" found: {self.selected_forecaster}. Must be one of these"
                 f" valid selected_forecaster parameter values: {component_names}."

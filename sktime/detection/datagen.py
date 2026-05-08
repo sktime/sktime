@@ -310,7 +310,9 @@ def piecewise_poisson(
             for lams, length in zip(lambdas, lengths)
         ]
     except ValueError:
-        raise Exception("Size mismatch")
+        raise ValueError(
+            "Size mismatch between `lambdas` and `lengths` parameters."
+        )
 
     return np.concatenate(tuple(segments_data))
 
