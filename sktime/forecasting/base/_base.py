@@ -683,13 +683,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         return self.predict(fh=fh, X=X_inner)
 
     def predict_quantiles(self, fh=None, X=None, alpha=None):
-        """
+        """Compute/return quantile forecasts.
+
         Availability:
             Only available if estimator tag `capability:pred_quantiles` is True.
             Otherwise raises NotImplementedError.
 
-        Compute/return quantile forecasts.
-
+        
         If ``alpha`` is iterable, multiple quantiles will be calculated.
 
         State required:
@@ -783,12 +783,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         return quantiles
 
     def predict_interval(self, fh=None, X=None, coverage=0.90):
-        """
+        """Compute/return prediction interval forecasts.
+
         Availability:
             Only available if estimator tag `capability:pred_int` is True.
             Otherwise raises NotImplementedError.
 
-        Compute/return prediction interval forecasts.
+        
 
         If ``coverage`` is iterable, multiple intervals will be calculated.
 
@@ -883,12 +884,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         return pred_int
 
     def predict_var(self, fh=None, X=None, cov=False):
-        """
+        """Compute/return variance forecasts.
+
         Availability:
             Only available if estimator tag `capability:pred_var` is True.
             Otherwise raises NotImplementedError.
 
-        Compute/return variance forecasts.
+        
 
         State required:
             Requires state to be "fitted", i.e., ``self.is_fitted=True``.
@@ -969,12 +971,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         return pred_var
 
     def predict_proba(self, fh=None, X=None, marginal=True):
-        """
+        """Compute/return fully probabilistic forecasts.
+        
         Availability:
             Only available if estimator tag `capability:pred_proba` is True.
             Otherwise raises NotImplementedError.
 
-        Compute/return fully probabilistic forecasts.
+        
 
         Note:
 
