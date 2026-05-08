@@ -152,20 +152,19 @@ class EnbPIForecaster(BaseForecaster):
         if self.bootstrap_transformer is None:
             mbb = MovingBlockBootstrapTransformer(return_indices=True)
             self.bootstrap_transformer_ = mbb
-        else:
+     else:
             is_bootstrap = False
             if hasattr(self.bootstrap_transformer, "get_tag"):
                 is_bootstrap = self.bootstrap_transformer.get_tag("object_type", raise_error=False) == "bootstrap"
 
+            from sklearn.base import clone
+
             if is_bootstrap:
                 self.bootstrap_transformer_ = TSBootstrapAdapter(
-                    self.bootstrap_transformer.clone(), return_indices=True
+                    clone(self.bootstrap_transformer), return_indices=True
                 )
             else:
-                if hasattr(self.bootstrap_transformer, "clone"):
-                    self.bootstrap_transformer_ = self.bootstrap_transformer.clone()
-                else:
-                    self.bootstrap_transformer_ = clone(self.bootstrap_transformer)
+                self.bootstrap_transformer_ = clone(self.bootstrap_transformer)
 
         bs_capable = self.bootstrap_transformer_.get_tag(
             "capability:bootstrap_index", False, raise_error=False
