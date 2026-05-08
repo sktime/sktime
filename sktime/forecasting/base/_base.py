@@ -479,7 +479,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         _check_estimator_deps(self)
 
         # check y is not None
-        assert y is not None, "y cannot be None, but found None"
+        if y is None:
+            raise ValueError("y cannot be None, but found None")
 
         # if fit is called, estimator is reset, including fitted state
         if not self._state == "pretrained":
@@ -2690,7 +2691,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         if method in ["predict", "predict_var"]:
             return featnames
         else:
-            assert method in ["predict_interval", "predict_quantiles"]
+            if method not in ["predict_interval", "predict_quantiles"]:
+                raise ValueError(
+                    f"`method` must be one of 'predict', 'predict_var', "
+                    f"'predict_interval', or 'predict_quantiles', "
+                    f"but found: {method!r}"
+                )
 
         if method == "predict_interval":
             coverage = kwargs.get("coverage", None)

@@ -146,11 +146,22 @@ class SquaringResiduals(BaseForecaster):
         IMPORTANT: no significant compute or memory use should happen in __post_init__,
         memory and compute intensive operations should be in _fit, not __post_init__.
         """
-        assert self.distr in ["norm", "laplace", "t", "cauchy"]
-        assert self.strategy in ["square", "abs"]
-        assert self.initial_window >= 1, (
-            "Initial window should be larger or equal to one"
-        )
+        valid_distr = ["norm", "laplace", "t", "cauchy"]
+        if self.distr not in valid_distr:
+            raise ValueError(
+                f"`distr` must be one of {valid_distr}, but found: {self.distr!r}"
+            )
+        valid_strategy = ["square", "abs"]
+        if self.strategy not in valid_strategy:
+            raise ValueError(
+                f"`strategy` must be one of {valid_strategy}, "
+                f"but found: {self.strategy!r}"
+            )
+        if self.initial_window < 1:
+            raise ValueError(
+                f"`initial_window` should be >= 1, "
+                f"but found: {self.initial_window}"
+            )
 
         if self.forecaster is None:
             self._forecaster = NaiveForecaster()

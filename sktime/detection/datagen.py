@@ -96,29 +96,58 @@ def piecewise_normal_multivariate(
     L, N = np.array(means).shape
 
     rng = check_random_state(random_state)
-    assert len(lengths) == L
+    if len(lengths) != L:
+        raise ValueError(
+            f"`lengths` must have the same length as `means` ({L}), "
+            f"but found {len(lengths)}."
+        )
 
     # if no covariance is specified, build it from variance
     # assuming independent random variables
     if covariances is None:
-        assert variances is not None
+        if variances is None:
+            raise ValueError(
+                "`variances` must not be None when `covariances` is None."
+            )
 
         # variances van be specified as a float, make 1D array, repeat L times
         if isinstance(variances, (float, int)):
             variances = np.repeat(variances, N)
             variances = np.tile(variances, (L, 1))
 
-        assert np.array(variances).shape == (L, N)
+        if np.array(variances).shape != (L, N):
+            raise ValueError(
+                f"`variances` must have shape ({L}, {N}), "
+                f"but found {np.array(variances).shape}."
+            )
 
         # get covariance matrices from variance arrays
         covariances = [get_covariances(var) for var in variances]
 
     else:
-        assert all(np.allclose(np.array(cov), np.array(cov).T) for cov in covariances)
-        assert all(np.all(np.linalg.eigvals(cov) >= 0) for cov in covariances)
+        if not all(
+            np.allclose(np.array(cov), np.array(cov).T) for cov in covariances
+        ):
+            raise ValueError(
+                "All covariance matrices must be symmetric."
+            )
+        if not all(
+            np.all(np.linalg.eigvals(cov) >= 0) for cov in covariances
+        ):
+            raise ValueError(
+                "All covariance matrices must be positive semi-definite."
+            )
 
-    assert np.array(covariances).shape[0] == L
-    assert np.array(covariances).shape[1] == N
+    if np.array(covariances).shape[0] != L:
+        raise ValueError(
+            f"Number of covariance matrices must match number of segments "
+            f"({L}), but found {np.array(covariances).shape[0]}."
+        )
+    if np.array(covariances).shape[1] != N:
+        raise ValueError(
+            f"Covariance matrix dimensions must match number of series "
+            f"({N}), but found {np.array(covariances).shape[1]}."
+        )
 
     return np.concatenate(
         [
@@ -175,12 +204,20 @@ def piecewise_normal(
         2.53658231, 2.53427025, 3.24196227, 1.08671976])
     """
     rng = check_random_state(random_state)
-    assert len(means) == len(lengths)
+    if len(means) != len(lengths):
+        raise ValueError(
+            f"`means` and `lengths` must have the same length, "
+            f"but found {len(means)} and {len(lengths)}."
+        )
 
     if isinstance(std_dev, (float, int)):
         std_dev = np.repeat(std_dev, len(means))
 
-    assert len(std_dev) == len(means)
+    if len(std_dev) != len(means):
+        raise ValueError(
+            f"`std_dev` and `means` must have the same length, "
+            f"but found {len(std_dev)} and {len(means)}."
+        )
 
     segments_data = [
         rng.normal(loc=mean, scale=sd, size=[length])
@@ -302,7 +339,11 @@ def piecewise_poisson(
     """
     rng = check_random_state(random_state)
 
-    assert len(lambdas) == len(lengths)
+    if len(lambdas) != len(lengths):
+        raise ValueError(
+            f"`lambdas` and `lengths` must have the same length, "
+            f"but found {len(lambdas)} and {len(lengths)}."
+        )
 
     try:
         segments_data = [
@@ -310,7 +351,9 @@ def piecewise_poisson(
             for lams, length in zip(lambdas, lengths)
         ]
     except ValueError:
-        raise Exception("Size mismatch")
+        raise ValueError(
+            "Size mismatch between `lambdas` and `lengths` parameters."
+        )
 
     return np.concatenate(tuple(segments_data))
 
