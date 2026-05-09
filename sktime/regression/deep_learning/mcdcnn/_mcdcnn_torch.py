@@ -131,6 +131,10 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
 
+        # ``self.optim`` / ``self.optim_kwargs`` mirror what the caller
+        # passed (sklearn ``__init__`` contract: ``get_params`` must
+        # round-trip). The previous implementation overwrote these here
+        # when ``optim is None`` and ``optim_kwargs is None`` — see #10208.
         self.optim = optim
         self.optim_kwargs = optim_kwargs
 
@@ -140,22 +144,27 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.verbose = verbose
         self.random_state = random_state
 
-        self.optimizer = self.optim
-        self.optimizer_kwargs = self.optim_kwargs
-
-        # default case
-        if self.optim is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
+        # Resolve the default-when-None values into local variables for the
+        # downstream ``super().__init__`` call without touching the public
+        # ``self.optim*`` attributes.
+        if optim is None:
+            resolved_optimizer = "SGD"
+            resolved_optimizer_kwargs = (
+                {"momentum": 0.9, "weight_decay": 0.0005}
+                if optim_kwargs is None
+                else optim_kwargs
+            )
+        else:
+            resolved_optimizer = optim
+            resolved_optimizer_kwargs = optim_kwargs
 
         super().__init__(
             num_epochs=self.n_epochs,
             batch_size=self.batch_size,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
-            optimizer=self.optimizer,
-            optimizer_kwargs=self.optimizer_kwargs,
+            optimizer=resolved_optimizer,
+            optimizer_kwargs=resolved_optimizer_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
             lr=self.lr,
