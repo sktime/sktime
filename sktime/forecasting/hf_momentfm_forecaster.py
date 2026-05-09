@@ -688,9 +688,9 @@ def _same_index(data: pd.DataFrame):
     data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
         lambda x: x.index.get_level_values(-1)
     )
-    assert data.map(
-        lambda x: x.equals(data.iloc[0])
-    ).all(), "All series must have the same index"
+    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
+        "All series must have the same index"
+    )
     return data.iloc[0], len(data.iloc[0])
 
 
