@@ -483,3 +483,43 @@ def test_insample_with_numpy_input():
     forecaster.fit(y)
     y_pred = forecaster.predict(np.arange(0, 10))
     assert len(y_pred) == 10
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_predict_var_cov_returns_diagonal_dataframe():
+    """``NaiveForecaster.predict_var(cov=True)`` must return a DataFrame.
+
+    Pins the fix for sktime/sktime#9858: previously ``cov_matrix`` was
+    assigned the return value of ``np.fill_diagonal`` (which is ``None``,
+    by numpy convention), so ``pd.DataFrame(cov_matrix, ...)`` raised
+    ``ValueError``. The off-diagonal values must be 0 and the diagonal
+    must be the marginal variances.
+    """
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    f = NaiveForecaster(strategy="mean")
+    f.fit(y)
+    fh = [1, 2, 3]
+    cov = f.predict_var(fh=fh, cov=True)
+
+    assert isinstance(cov, pd.DataFrame), (
+        f"predict_var(cov=True) returned {type(cov).__name__}, "
+        "expected a pandas DataFrame"
+    )
+    assert cov.shape == (len(fh), len(fh))
+    # Off-diagonal entries are zero; diagonal entries are the marginal
+    # variances (and therefore strictly positive for a non-degenerate
+    # input).
+    arr = cov.to_numpy()
+    np.testing.assert_array_equal(arr - np.diag(np.diag(arr)), 0)
+    assert np.all(np.diag(arr) > 0)
+
+    # ``cov=False`` path (sanity-check it still produces a single-column
+    # frame, since the patched code path is shared).
+    var = f.predict_var(fh=fh, cov=False)
+    assert isinstance(var, pd.DataFrame)
+    assert var.shape == (len(fh), 1)
