@@ -143,7 +143,14 @@ class TimeBinAggregate(BaseTransformer):
             if bins is pd.IntervalIndex:
                 Xt.index = [(x.left + x.right) / 2 for x in Xt.index]
             else:
-                Xt.index = [(bins[i] + bins[i + 1]) / 2 for i in range(len(bins))]
+                # ``bins`` describes N+1 edges of N bins, so the loop must
+                # stop one short of ``len(bins)``: index ``i + 1`` would
+                # otherwise read past the end on the last iteration. The
+                # sister branches ``bin_start`` (``bins[:-1]``) and
+                # ``bin_end`` (``bins[1:]``) already use this convention.
+                Xt.index = [
+                    (bins[i] + bins[i + 1]) / 2 for i in range(len(bins) - 1)
+                ]
         elif self.return_index == "bin":
             Xt.index = self._bins
         return Xt
