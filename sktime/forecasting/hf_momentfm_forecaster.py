@@ -21,7 +21,6 @@ Dataset = _safe_import("torch.utils.data.Dataset")
 class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """
     Interface for forecasting with the deep learning time series model momentfm.
-    .
 
     MomentFM is a collection of open source foundation models for the general
     purpose of time series analysis. The Moment Foundation Model is a pre-trained
@@ -691,7 +690,7 @@ def _same_index(data: pd.DataFrame):
     )
     assert data.map(
         lambda x: x.equals(data.iloc[0])
-    ).all(), "All series must has the same index"
+    ).all(), "All series must have the same index"
     return data.iloc[0], len(data.iloc[0])
 
 
