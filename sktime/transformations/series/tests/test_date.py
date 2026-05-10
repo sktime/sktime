@@ -423,3 +423,19 @@ def test_fit_transform_no_warnings():
         warnings.simplefilter("always")
         transformer.fit_transform(y)
         assert len(w) == 0
+@pytest.mark.skipif(
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_manual_selection_no_warnings():
+    """Test manual_selection does not raise chained assignment warnings."""
+    y = load_airline()
+
+    transformer = DateTimeFeatures(
+        ts_freq="M",
+        manual_selection=["day_of_week", "month_of_year"],
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        transformer.fit_transform(y)
