@@ -104,7 +104,11 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
             raise TypeError(
                 "Type of parameter 'scale' must be a non-negative float value."
             )
-        return X[0] + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
+        X_noise = X.copy()
+        X_noise.iloc[:, 0] += norm.rvs(
+            0, scale, size=len(X), random_state=self.random_state
+        )
+        return X_noise
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
