@@ -217,7 +217,7 @@ class BaseGridSearch(_DelegatedForecaster):
         # Run grid-search cross-validation.
         results = self._run_search(evaluate_candidates)
 
-        results = pd.DataFrame(results)
+        results = pd.DataFrame(results).copy()
 
         # Rank results, according to whether greater is better for the given scoring.
         results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(

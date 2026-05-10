@@ -441,7 +441,7 @@ class _Reducer(_BaseWindowForecaster):
                 index_range = index_range.tz_localize(cutoff.tzinfo)
         # index_range will convert the indices to the date format of cutoff
 
-        y_raw = _create_fcst_df(index_range, self._y)
+        y_raw = _create_fcst_df(index_range, self._y).copy()
         # y_raw is a dataframe window_length forecasting steps into the past in order to
         # calculate the new X from y features based on the transformer provided
 
@@ -1020,7 +1020,7 @@ class _RecursiveReducer(_Reducer):
                 if self.cutoff.tzinfo is not None:
                     index_range = index_range.tz_localize(self.cutoff.tzinfo)
 
-            y_pred = _create_fcst_df(index_range, self._y)
+            y_pred = _create_fcst_df(index_range, self._y).copy()
 
             for i in range(fh_max):
                 # Generate predictions.

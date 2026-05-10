@@ -401,7 +401,7 @@ def _calendar_dummies(x, funcs):
         cd = date_sequence.day_of_week > 4
     else:
         cd = getattr(date_sequence, funcs)
-    cd = pd.DataFrame(cd)
+    cd = pd.DataFrame(cd).copy()
     cd = cd.rename(columns={cd.columns[0]: funcs})
     cd[funcs] = np.int64(cd[funcs])
     return cd
