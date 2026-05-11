@@ -506,11 +506,10 @@ class Chronos2Forecaster(BaseForecaster):
         spl_df = pd.DataFrame(spl_data, index=spl_index, columns=pd.Index(var_names))
 
         pred_dist = Empirical(
-            spl=spl_df,
-            index=time_index,
-            columns=pd.Index(var_names),
-            time_indep=marginal,   
+            spl_df,
+            time_indep=marginal,
         )
+        
         return pred_dist
     
     @classmethod
