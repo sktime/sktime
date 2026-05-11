@@ -269,7 +269,7 @@ class Chronos2Forecaster(BaseForecaster):
         pred_tensor = predictions[0]
         quantiles = self.model_pipeline.quantiles
         median_idx = quantiles.index(0.5)
-        point_forecast = pred_tensor[:, median_idx, :].numpy()
+        point_forecast = pred_tensor[:, median_idx, :].detach().cpu().numpy()
 
         index = (
             ForecastingHorizon(range(1, prediction_length + 1))
@@ -360,21 +360,20 @@ class Chronos2Forecaster(BaseForecaster):
         
         # Round to avoid floating-point precision issues
         # e.g. (1 - 0.9) / 2 == 0.04999...99 instead of 0.05
-        alpha = [round(a, 10) for a in alpha]
+        alpha_rounded = [round(a, 10) for a in alpha]
         model_quantiles_rounded = [round(q, 10) for q in model_quantiles]
 
-        # Map requested alphas to model quantile indices
         quantile_indices = []
-        for a in alpha:
-            if a not in model_quantiles_rounded:
+        for a, a_rounded in zip(alpha, alpha_rounded):
+            if a_rounded not in model_quantiles_rounded:
                 raise ValueError(
                     f"Requested quantile {a} not available in model. "
                     f"Available quantiles: {model_quantiles}"
                 )
-            quantile_indices.append(model_quantiles_rounded.index(a))
+            quantile_indices.append(model_quantiles_rounded.index(a_rounded))
 
         # Extract quantile predictions
-        quantile_forecasts = pred_tensor[:, quantile_indices, :].numpy()
+        quantile_forecasts = pred_tensor[:, quantile_indices, :].detach().cpu().numpy()
 
         # Build index for forecasts
         index = (
@@ -510,8 +509,8 @@ class Chronos2Forecaster(BaseForecaster):
             spl=spl_df,
             index=time_index,
             columns=pd.Index(var_names),
+            time_indep=marginal,   
         )
-
         return pred_dist
     
     @classmethod
