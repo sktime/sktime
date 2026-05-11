@@ -72,8 +72,9 @@ def test_chronos2_predict_interval():
     assert intervals.columns.nlevels == 3  # (variable, coverage, bound)
     assert set(intervals.columns.get_level_values(2)) == {"lower", "upper"}
     
-    # Test with specific coverage
-    coverage = [0.8, 0.95]
+    # Use coverage values whose symmetric quantiles exist in the model grid
+    # e.g. 0.8 -> (0.1, 0.9), 0.9 -> (0.05, 0.95) — both available
+    coverage = [0.8, 0.9]
     intervals_cov = forecaster.predict_interval(fh=[1, 2], coverage=coverage)
     
     assert intervals_cov.shape[0] == 2

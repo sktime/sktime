@@ -358,15 +358,20 @@ class Chronos2Forecaster(BaseForecaster):
         if alpha is None:
             alpha = model_quantiles
         
+        # Round to avoid floating-point precision issues
+        # e.g. (1 - 0.9) / 2 == 0.04999...99 instead of 0.05
+        alpha = [round(a, 10) for a in alpha]
+        model_quantiles_rounded = [round(q, 10) for q in model_quantiles]
+
         # Map requested alphas to model quantile indices
         quantile_indices = []
         for a in alpha:
-            if a not in model_quantiles:
+            if a not in model_quantiles_rounded:
                 raise ValueError(
                     f"Requested quantile {a} not available in model. "
                     f"Available quantiles: {model_quantiles}"
                 )
-            quantile_indices.append(model_quantiles.index(a))
+            quantile_indices.append(model_quantiles_rounded.index(a))
 
         # Extract quantile predictions
         quantile_forecasts = pred_tensor[:, quantile_indices, :].numpy()
@@ -434,8 +439,8 @@ class Chronos2Forecaster(BaseForecaster):
         # Convert coverage to quantiles
         alphas_for_intervals = []
         for c in coverage:
-            lower_alpha = (1 - c) / 2
-            upper_alpha = 1 - lower_alpha
+            lower_alpha = round((1 - c) / 2, 10)
+            upper_alpha = round(1 - lower_alpha, 10)
             alphas_for_intervals.extend([lower_alpha, upper_alpha])
 
         # Get quantile predictions
@@ -453,8 +458,8 @@ class Chronos2Forecaster(BaseForecaster):
         interval_data = []
         for var in var_names:
             for c in coverage:
-                lower_alpha = (1 - c) / 2
-                upper_alpha = 1 - lower_alpha
+                lower_alpha = round((1 - c) / 2, 10)
+                upper_alpha = round(1 - lower_alpha, 10)
                 
                 lower_vals = quantile_pred[(var, lower_alpha)].values
                 upper_vals = quantile_pred[(var, upper_alpha)].values
@@ -471,55 +476,42 @@ class Chronos2Forecaster(BaseForecaster):
         return interval_df
 
     def _predict_proba(self, fh, X=None, marginal=True):
-        """Compute/return fully probabilistic forecasts.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-            The forecasting horizon.
-        X : pd.DataFrame, optional
-            Future exogenous covariates.
-        marginal : bool, optional
-            Whether returned distribution is marginal by time index.
-
-        Returns
-        -------
-        pred_dist : skpro BaseDistribution
-            Predictive distribution at fh.
-        """
         from skpro.distributions.empirical import Empirical
 
         # Get all available quantiles from the model
         quantile_pred = self._predict_quantiles(fh=fh, X=X, alpha=None)
-        
-        # Extract the quantiles and reshape for Empirical distribution
-        # Empirical expects shape (n_samples, n_vars) per time point
+
         var_names = self._get_varnames()
         model_quantiles = self.model_pipeline.quantiles
-        
-        # For each time point, create an empirical distribution
-        # We'll use the quantiles as sample points with equal weights
-        n_timepoints = len(quantile_pred)
-        n_vars = len(var_names)
         n_quantiles = len(model_quantiles)
-        
-        # Reshape quantile predictions into samples
-        # Shape: (n_timepoints, n_quantiles, n_vars)
-        samples = np.zeros((n_timepoints, n_quantiles, n_vars))
-        
+        n_timepoints = len(quantile_pred)
+
+        # Build a DataFrame with MultiIndex (sample, timepoint) as index
+        # Empirical expects spl as pd.DataFrame with
+        # rows = pd.MultiIndex (sample_idx, time_idx), cols = variables
+        time_index = quantile_pred.index
+
+        spl_index = pd.MultiIndex.from_product(
+            [range(n_quantiles), time_index],
+            names=["sample", *time_index.names],
+        )
+
+        spl_data = np.zeros((n_quantiles * n_timepoints, len(var_names)))
+
         for i, var in enumerate(var_names):
             for j, q in enumerate(model_quantiles):
-                samples[:, j, i] = quantile_pred[(var, q)].values
-        
-        # Create Empirical distribution
-        # spl parameter expects (n_samples, n_vars) for each time point
-        # We'll pass the transposed samples
+                spl_data[j * n_timepoints : (j + 1) * n_timepoints, i] = (
+                    quantile_pred[(var, q)].values
+                )
+
+        spl_df = pd.DataFrame(spl_data, index=spl_index, columns=pd.Index(var_names))
+
         pred_dist = Empirical(
-            spl=samples,
-            index=quantile_pred.index,
-            columns=pd.Index(var_names)
+            spl=spl_df,
+            index=time_index,
+            columns=pd.Index(var_names),
         )
-        
+
         return pred_dist
     
     @classmethod
