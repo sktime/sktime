@@ -131,19 +131,8 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
 
-        # used to difrentiate between user passed "SGD"
-        # and the default "SGD" with kwargs
         self.optim = optim
         self.optim_kwargs = optim_kwargs
-
-        self.optimizer = optim
-        self.optimizer_kwargs = optim_kwargs
-
-        # default case
-        if self.optim is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
 
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
@@ -151,12 +140,14 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.verbose = verbose
         self.random_state = random_state
 
-        if len(self.filter_sizes) != len(self.kernel_sizes):
-            raise ValueError(
-                f"Length of `filter_sizes` {len(self.filter_sizes)} must match "
-                f"the number of convolutional layers determined by the length of tuple "
-                f"`kernel_sizes` {len(self.kernel_sizes)}."
-            )
+        self.optimizer = self.optim
+        self.optimizer_kwargs = self.optim_kwargs
+
+        # default case
+        if self.optim is None:
+            self.optimizer = "SGD"
+            if self.optimizer_kwargs is None:
+                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
 
         super().__init__(
             num_epochs=self.n_epochs,
@@ -171,6 +162,25 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             verbose=self.verbose,
             random_state=self.random_state,
         )
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        if len(self.filter_sizes) != len(self.kernel_sizes):
+            raise ValueError(
+                f"Length of `filter_sizes` {len(self.filter_sizes)} must match "
+                f"the number of convolutional layers determined by the length of tuple "
+                f"`kernel_sizes` {len(self.kernel_sizes)}."
+            )
+
+        super().__post_init__()
 
     def _build_network(self, X):
         """Build the MCDCNN network with output layer for regression.

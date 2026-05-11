@@ -44,7 +44,7 @@ class _PmdArimaAdapter(BaseForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 
@@ -84,7 +84,7 @@ class _PmdArimaAdapter(BaseForecaster):
         Parameters
         ----------
         fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
 
@@ -122,7 +122,7 @@ class _PmdArimaAdapter(BaseForecaster):
 
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
-        y_pred.name = self._y.name
+        y_pred.name = self._get_varnames()[0]
         y_pred.index = fh_abs
         return y_pred
 
@@ -134,7 +134,7 @@ class _PmdArimaAdapter(BaseForecaster):
         Parameters
         ----------
         fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
 
@@ -208,7 +208,7 @@ class _PmdArimaAdapter(BaseForecaster):
         Parameters
         ----------
         fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
 
