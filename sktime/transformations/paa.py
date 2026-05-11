@@ -141,7 +141,7 @@ class PAA(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = {"frames": 4}
+        params = [{"frames": 4}, {"frame_size": 4}]
         return params
 
     def _check_params(self):
