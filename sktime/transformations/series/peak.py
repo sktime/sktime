@@ -590,7 +590,7 @@ def _check_ts_freq(x_df, datetime_freq, ts_freq):
     """
     # Check 1: Determine whether input ts_freq is valid or not
     freq_list = datetime_freq["frequency"].tolist()
-    if (ts_freq is not None) & (ts_freq not in freq_list):
+    if (ts_freq is not None) and (ts_freq not in freq_list):
         raise ValueError(f"Invalid ts_freq specified, must be in: {freq_list}")
 
     # Check 2: Compare the frequency of main dataframe with 'ts_freq'
