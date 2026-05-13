@@ -9,11 +9,11 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
 from sktime.utils.singleton import _multiton
 
 
-class TimeMoEForecaster(_BaseGlobalForecaster):
+class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """
     Interface for TimeMOE forecaster for zero-shot forecasting.
 
@@ -30,14 +30,15 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
 
         - A model ID from the HuggingFace Hub, e.g., "Maple728/TimeMoE-50M"
         - A local directory containing the model files, specified as an absolute or
-        relative path to the current working directory
-        The path should point to a directory containing the model weights and
-        configuration files in the format expected by the HuggingFace Transformers
-        library.
+          relative path to the current working directory
+          The path should point to a directory containing the model weights and
+          configuration files in the format expected by the HuggingFace Transformers
+          library.
     config: dict, optional
         A dictionary specifying the configuration of the TimeMOE model.
         The available configuration options include hyperparameters that control
         the prediction behavior, sampling, and hardware utilization.
+
         - input_size: int, default=1
             The size of the input time series.
         - hidden_size: int, default=4096
@@ -125,7 +126,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
@@ -143,21 +144,19 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):
-        if not ignore_deps:
-            _check_soft_dependencies("torch", severity="error")
-            _check_soft_dependencies("transformers", severity="error")
         self.seed = seed
-        self._seed = np.random.randint(0, 2**31) if seed is None else seed
-
         self.config = config
-        _config = self._get_default_config()
-        _config.update(config if config is not None else {})
-        self._config = _config
-
         self.model_path = model_path
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
 
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         if self.ignore_deps:
             self.set_tags(python_dependencies=[])
         elif self.use_source_package:
@@ -171,7 +170,21 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
                 ]
             )
 
-        super().__init__()
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
+
+        _config = self._get_default_config()
+        _config.update(self.config if self.config is not None else {})
+        self._config = _config
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -263,12 +276,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         }
         return default_config
 
-    def _predict(
-        self,
-        fh,
-        X=None,
-        y=None,
-    ):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         Private _predict containing the core logic, called from predict
@@ -297,8 +305,6 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
             prediction_length = 1
 
         _y = self._y.copy()
-        if y is not None:
-            _y = y.copy()
         _y_df = _y
 
         index_names = _y.index.names

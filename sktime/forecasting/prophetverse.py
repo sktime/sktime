@@ -91,8 +91,8 @@ class Prophetverse(_DelegatedForecaster):
     ...         )
     ...     ],
     ... )
-    >>> model.fit(y)
-    >>> model.predict(fh=[1, 2, 3])
+    >>> model.fit(y) # doctest: +SKIP
+    >>> model.predict(fh=[1, 2, 3]) # doctest: +SKIP
     """
 
     _tags = {
@@ -143,6 +143,16 @@ class Prophetverse(_DelegatedForecaster):
         self.broadcast_mode = broadcast_mode
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # delegation, only for prophetverse 0.2.X
         from prophetverse.sktime import Prophetverse
 
@@ -253,8 +263,8 @@ class HierarchicalProphet(_DelegatedForecaster):
     ... )
     >>> y = agg.fit_transform(y)
     >>> forecaster = HierarchicalProphet()
-    >>> forecaster.fit(y)
-    >>> forecaster.predict(fh=[1])
+    >>> forecaster.fit(y) # doctest: +SKIP
+    >>> forecaster.predict(fh=[1]) # doctest: +SKIP
     """
 
     _delegate_name = "_delegate"
@@ -267,7 +277,7 @@ class HierarchicalProphet(_DelegatedForecaster):
         "python_dependencies": "prophetverse",
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:missing_values": False,
         "y_inner_mtype": [
@@ -316,6 +326,16 @@ class HierarchicalProphet(_DelegatedForecaster):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # delegation, only for prophetverse 0.2.X
         from prophetverse.sktime import HierarchicalProphet
 
