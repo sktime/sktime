@@ -191,6 +191,18 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         )
         return bool(has_pretrain_capability and has_pretrained_state)
 
+    def _save_pretrained_state(self):
+        """Save pretrained attributes before an in-place reset."""
+        if not self._has_pretrained_state():
+            return {}
+
+        attr_names = list(self._pretrained_attrs)
+        saved = {
+            attr: getattr(self, attr) for attr in attr_names if hasattr(self, attr)
+        }
+        saved["_pretrained_attrs"] = attr_names
+        return saved
+
     @classmethod
     def _get_clone_plugins(cls):
         """Get clone plugins for BaseForecaster.
