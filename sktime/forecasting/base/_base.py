@@ -212,6 +212,27 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             # forecaster must come back as pretrained rather than fitted.
             self._state = "pretrained"
 
+    def reset(self, keep_pretrained=True):
+        """Reset forecaster while preserving pretrained state by default.
+
+        Parameters
+        ----------
+        keep_pretrained : bool, default=True
+            If True, pretrained attributes tracked in ``_pretrained_attrs`` are
+            restored after reset. If False, pretrained state is discarded and
+            reset behaves like the generic skbase reset.
+
+        Returns
+        -------
+        self : reference to self
+            Reset forecaster.
+        """
+        pretrained_state = self._save_pretrained_state() if keep_pretrained else {}
+        super().reset()
+        if pretrained_state:
+            self._restore_pretrained_state(pretrained_state)
+        return self
+
     @classmethod
     def _get_clone_plugins(cls):
         """Get clone plugins for BaseForecaster.
