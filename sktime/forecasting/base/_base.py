@@ -44,6 +44,7 @@ __author__ = [
 
 __all__ = ["BaseForecaster"]
 
+from collections import defaultdict
 from copy import deepcopy
 from itertools import product
 
