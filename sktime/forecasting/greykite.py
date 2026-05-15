@@ -296,11 +296,22 @@ class GreykiteForecaster(BaseForecaster):
                 - date_format: str or None
                     Format of the time column (default is None, allowing inference).
         """
+        from greykite.framework.templates.autogen.forecast_config import (
+            EvaluationPeriodParam,
+            ForecastConfig,
+            MetadataParam,
+        )
+
+        # minimum for changepoint detection (ValueError) and triggers a
+        # MemoryError in the autoregressive lag builder.  Setting cv_max_splits=0
+        # skips the internal grid-search CV so the full dataset is used for fit.
+        _test_config = ForecastConfig(
+            metadata_param=MetadataParam(time_col="ts", value_col="y"),
+            evaluation_period_param=EvaluationPeriodParam(cv_max_splits=0),
+        )
+
         return [
-            {
-                "model_template": "SILVERKITE",
-                "date_format": None,
-            },
+            {"forecast_config": _test_config},
             {
                 "model_template": "SILVERKITE",
                 "date_format": None,
