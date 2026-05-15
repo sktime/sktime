@@ -116,6 +116,9 @@ class HCrystalBallAdapter(BaseForecaster):
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        # test and CI flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(self, model):
