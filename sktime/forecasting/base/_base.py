@@ -44,7 +44,6 @@ __author__ = [
 
 __all__ = ["BaseForecaster"]
 
-from collections import defaultdict
 from copy import deepcopy
 from itertools import product
 
@@ -53,6 +52,7 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.base._proba import _PredictProbaMixin
+from sktime.forecasting.base._pretrained_mixin import _PretrainedStateMixin
 from sktime.datatypes import (
     VectorizedDF,
     check_is_error_msg,
@@ -83,7 +83,7 @@ def _coerce_to_list(obj):
         return obj
 
 
-class BaseForecaster(_PredictProbaMixin, BaseEstimator):
+class BaseForecaster(_PretrainedStateMixin, _PredictProbaMixin, BaseEstimator):
     """Base forecaster template class.
 
     The base forecaster specifies the methods and method signatures that all forecasters
@@ -179,122 +179,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         pass
 
-    def _has_pretrained_state(self):
-        """Return whether this forecaster has pretrained state to preserve."""
-        has_pretrain_capability = self.get_tag(
-            "capability:pretrain", tag_value_default=False, raise_error=False
-        )
-        has_pretrained_state = (
-            hasattr(self, "_pretrained_attrs")
-            and self._pretrained_attrs
-            and hasattr(self, "_state")
-            and self._state in ("pretrained", "fitted")
-        )
-        return bool(has_pretrain_capability and has_pretrained_state)
+    def _copy_pretrained_attr(self, attr_name, attr_value, memo=None):
+        """Copy a pretrained attribute for ``clone``.
 
-    def _save_pretrained_state(self):
-        """Save pretrained attributes before an in-place reset."""
-        if not self._has_pretrained_state():
-            return {}
-
-        attr_names = list(self._pretrained_attrs)
-        saved = {
-            attr: getattr(self, attr) for attr in attr_names if hasattr(self, attr)
-        }
-        saved["_pretrained_attrs"] = attr_names
-        return saved
-
-    def _restore_pretrained_state(self, attrs):
-        """Restore pretrained attributes after an in-place reset."""
-        for attr, value in attrs.items():
-            setattr(self, attr, value)
-        if attrs.get("_pretrained_attrs"):
-            # reset removes fitted/task-specific state, so a fitted pretrained
-            # forecaster must come back as pretrained rather than fitted.
-            self._state = "pretrained"
-
-    def reset(self, keep_pretrained=True):
-        """Reset forecaster while preserving pretrained state by default.
-
-        Parameters
-        ----------
-        keep_pretrained : bool, default=True
-            If True, pretrained attributes tracked in ``_pretrained_attrs`` are
-            restored after reset. If False, pretrained state is discarded and
-            reset behaves like the generic skbase reset.
-
-        Returns
-        -------
-        self : reference to self
-            Reset forecaster.
+        Subclasses may override this hook for framework-specific copies, for
+        example state-dict based copies of Torch or HuggingFace model objects.
         """
-        pretrained_state = self._save_pretrained_state() if keep_pretrained else {}
-        super().reset()
-        if pretrained_state:
-            self._restore_pretrained_state(pretrained_state)
-        return self
+        return deepcopy(attr_value, memo)
 
-    def set_params(self, **params):
-        """Set forecaster parameters.
-
-        Parameters
-        ----------
-        **params : dict
-            Forecaster parameters. If ``_reset=False`` is passed, parameter
-            values are set without calling ``reset`` on this forecaster or
-            nested forecasters. By default, ``set_params`` calls ``reset``;
-            pretrained state is preserved by the forecaster reset override.
-
-        Returns
-        -------
-        self : reference to self
-            Forecaster with updated parameters.
-        """
-        reset = params.pop("_reset", True)
-
-        if not params:
-            return self
-        valid_params = self.get_params(deep=True)
-
-        unmatched_keys = []
-
-        nested_params = defaultdict(dict)
-        for full_key, value in params.items():
-            key, delim, sub_key = full_key.partition("__")
-            if key not in valid_params:
-                unmatched_keys += [key]
-            elif delim:
-                nested_params[key][sub_key] = value
-            else:
-                setattr(self, key, value)
-                valid_params[key] = value
-
-        if reset:
-            self.reset()
-
-        for key, sub_params in nested_params.items():
-            component = valid_params[key]
-            if isinstance(component, BaseForecaster):
-                component.set_params(**sub_params, _reset=reset)
-            else:
-                component.set_params(**sub_params)
-
-        if len(unmatched_keys) > 0:
-            valid_params = self.get_params(deep=True)
-            unmatched_params = {key: params[key] for key in unmatched_keys}
-            aliased_params = self._alias_params(unmatched_params, valid_params)
-
-            if set(aliased_params) == set(unmatched_params):
-                raise ValueError(
-                    f"Invalid parameter keys provided to set_params of object {self}. "
-                    "Check the list of available parameters "
-                    "with `object.get_params().keys()`. "
-                    f"Invalid keys provided: {unmatched_keys}"
-                )
-
-            self.set_params(**aliased_params, _reset=reset)
-
-        return self
     @classmethod
     def _get_clone_plugins(cls):
         """Get clone plugins for BaseForecaster.
@@ -1773,7 +1665,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # we want residuals, so fh must be the index of y
         # if data frame: take directly from y
         # to avoid issues with _set_fh, we convert to relative if self.fh is
-        if isinstance(y, (pd.DataFrame, pd.Series)):
+        if isinstance(y, pd.DataFrame | pd.Series):
             fh = ForecastingHorizon(y.index, is_relative=False, freq=self._cutoff)
             if self._fh is not None and self.fh.is_relative:
                 fh = fh.to_relative(self._cutoff)
@@ -2855,7 +2747,7 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
         raise ValueError(f"`y_preds` must be a list, but found: {type(y_preds)}")
     if len(y_preds) == 0:
         return pd.DataFrame(columns=cutoffs)
-    if not isinstance(y_preds[0], (pd.DataFrame, pd.Series)):
+    if not isinstance(y_preds[0], pd.DataFrame | pd.Series):
         raise ValueError("y_preds must be a list of pd.Series or pd.DataFrame")
     ylen = len(y_preds[0])
     ytype = type(y_preds[0])
