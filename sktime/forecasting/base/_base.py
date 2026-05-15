@@ -203,6 +203,15 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         saved["_pretrained_attrs"] = attr_names
         return saved
 
+    def _restore_pretrained_state(self, attrs):
+        """Restore pretrained attributes after an in-place reset."""
+        for attr, value in attrs.items():
+            setattr(self, attr, value)
+        if attrs.get("_pretrained_attrs"):
+            # reset removes fitted/task-specific state, so a fitted pretrained
+            # forecaster must come back as pretrained rather than fitted.
+            self._state = "pretrained"
+
     @classmethod
     def _get_clone_plugins(cls):
         """Get clone plugins for BaseForecaster.
