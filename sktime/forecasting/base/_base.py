@@ -178,6 +178,19 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         pass
 
+    def _has_pretrained_state(self):
+        """Return whether this forecaster has pretrained state to preserve."""
+        has_pretrain_capability = self.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        )
+        has_pretrained_state = (
+            hasattr(self, "_pretrained_attrs")
+            and self._pretrained_attrs
+            and hasattr(self, "_state")
+            and self._state in ("pretrained", "fitted")
+        )
+        return bool(has_pretrain_capability and has_pretrained_state)
+
     @classmethod
     def _get_clone_plugins(cls):
         """Get clone plugins for BaseForecaster.
