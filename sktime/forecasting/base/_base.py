@@ -233,6 +233,67 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             self._restore_pretrained_state(pretrained_state)
         return self
 
+    def set_params(self, **params):
+        """Set forecaster parameters.
+
+        Parameters
+        ----------
+        **params : dict
+            Forecaster parameters. If ``_reset=False`` is passed, parameter
+            values are set without calling ``reset`` on this forecaster or
+            nested forecasters. By default, ``set_params`` calls ``reset``;
+            pretrained state is preserved by the forecaster reset override.
+
+        Returns
+        -------
+        self : reference to self
+            Forecaster with updated parameters.
+        """
+        reset = params.pop("_reset", True)
+
+        if not params:
+            return self
+        valid_params = self.get_params(deep=True)
+
+        unmatched_keys = []
+
+        nested_params = defaultdict(dict)
+        for full_key, value in params.items():
+            key, delim, sub_key = full_key.partition("__")
+            if key not in valid_params:
+                unmatched_keys += [key]
+            elif delim:
+                nested_params[key][sub_key] = value
+            else:
+                setattr(self, key, value)
+                valid_params[key] = value
+
+        if reset:
+            self.reset()
+
+        for key, sub_params in nested_params.items():
+            component = valid_params[key]
+            if isinstance(component, BaseForecaster):
+                component.set_params(**sub_params, _reset=reset)
+            else:
+                component.set_params(**sub_params)
+
+        if len(unmatched_keys) > 0:
+            valid_params = self.get_params(deep=True)
+            unmatched_params = {key: params[key] for key in unmatched_keys}
+            aliased_params = self._alias_params(unmatched_params, valid_params)
+
+            if set(aliased_params) == set(unmatched_params):
+                raise ValueError(
+                    f"Invalid parameter keys provided to set_params of object {self}. "
+                    "Check the list of available parameters "
+                    "with `object.get_params().keys()`. "
+                    f"Invalid keys provided: {unmatched_keys}"
+                )
+
+            self.set_params(**aliased_params, _reset=reset)
+
+        return self
     @classmethod
     def _get_clone_plugins(cls):
         """Get clone plugins for BaseForecaster.
