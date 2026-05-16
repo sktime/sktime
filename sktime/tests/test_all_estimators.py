@@ -642,8 +642,15 @@ class QuickTester:
                 print_if_verbose(f"{key}")
 
                 try:
-                    with StderrMute(active=verbose < 2), StdoutMute(active=verbose < 2):
+                    # with StderrMute(active=verbose < 2), StdoutMute(active=verbose < 2):
+                    # todo: remove to main state
+                    try:
                         test_fun(**deepcopy(args))
+                    except Exception as e:
+                        breakpoint()
+                        copied_args = deepcopy(args)
+                        test_fun(**copied_args)
+
                     results[key] = "PASSED"
                     print_if_verbose("PASSED")
                 except Skipped as err:

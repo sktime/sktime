@@ -1,0 +1,277 @@
+from sktime.transformations.merger import Merger; assert Merger.__name__ == 'Merger'
+from sktime.transformations.base import BaseTransformer; assert BaseTransformer.__name__ == 'BaseTransformer'
+from sktime.transformations.series.feature_selection import FeatureSelection; assert FeatureSelection.__name__ == 'FeatureSelection'
+from sktime.transformations.series.peak import PeakTimeFeature; assert PeakTimeFeature.__name__ == 'PeakTimeFeature'
+from sktime.transformations.series.acf import AutoCorrelationTransformer; assert AutoCorrelationTransformer.__name__ == 'AutoCorrelationTransformer'
+from sktime.transformations.series.acf import PartialAutoCorrelationTransformer; assert PartialAutoCorrelationTransformer.__name__ == 'PartialAutoCorrelationTransformer'
+from sktime.transformations.series.basisfunction import RBFTransformer; assert RBFTransformer.__name__ == 'RBFTransformer'
+from sktime.transformations.series.kinematic import KinematicFeatures; assert KinematicFeatures.__name__ == 'KinematicFeatures'
+from sktime.transformations.series.binning import TimeBinAggregate; assert TimeBinAggregate.__name__ == 'TimeBinAggregate'
+from sktime.transformations.series.time_since import TimeSince; assert TimeSince.__name__ == 'TimeSince'
+from sktime.transformations.series.adi_cv import ADICVTransformer; assert ADICVTransformer.__name__ == 'ADICVTransformer'
+from sktime.transformations.series.signature import SignatureMoments; assert SignatureMoments.__name__ == 'SignatureMoments'
+from sktime.transformations.series.fourier import FourierFeatures; assert FourierFeatures.__name__ == 'FourierFeatures'
+from sktime.transformations.series.fourier import FourierTransform; assert FourierTransform.__name__ == 'FourierTransform'
+from sktime.transformations.series.exponent import ExponentTransformer; assert ExponentTransformer.__name__ == 'ExponentTransformer'
+from sktime.transformations.series.exponent import SqrtTransformer; assert SqrtTransformer.__name__ == 'SqrtTransformer'
+from sktime.transformations.series.func_transform import FunctionTransformer; assert FunctionTransformer.__name__ == 'FunctionTransformer'
+from sktime.transformations.series.difference import Differencer; assert Differencer.__name__ == 'Differencer'
+from sktime.transformations.series.boxcox import BoxCoxTransformer; assert BoxCoxTransformer.__name__ == 'BoxCoxTransformer'
+from sktime.transformations.series.boxcox import LogTransformer; assert LogTransformer.__name__ == 'LogTransformer'
+from sktime.transformations.series.bollinger import Bollinger; assert Bollinger.__name__ == 'Bollinger'
+from sktime.transformations.series.filter import Filter; assert Filter.__name__ == 'Filter'
+from sktime.transformations.series.theta import ThetaLinesTransformer; assert ThetaLinesTransformer.__name__ == 'ThetaLinesTransformer'
+from sktime.transformations.series.paa import PAA; assert PAA.__name__ == 'PAA'
+from sktime.transformations.series.clear_sky import ClearSky; assert ClearSky.__name__ == 'ClearSky'
+from sktime.transformations.series.lag import Lag; assert Lag.__name__ == 'Lag'
+from sktime.transformations.series.lag import ReducerTransform; assert ReducerTransform.__name__ == 'ReducerTransform'
+from sktime.transformations.series.hurst import HurstExponentTransformer; assert HurstExponentTransformer.__name__ == 'HurstExponentTransformer'
+from sktime.transformations.series.degree_day import DegreeDayFeatures; assert DegreeDayFeatures.__name__ == 'DegreeDayFeatures'
+from sktime.transformations.series.summarize import WindowSummarizer; assert WindowSummarizer.__name__ == 'WindowSummarizer'
+from sktime.transformations.series.summarize import get_name_list; assert get_name_list.__name__ == 'get_name_list'
+from sktime.transformations.series.summarize import SummaryTransformer; assert SummaryTransformer.__name__ == 'SummaryTransformer'
+from sktime.transformations.series.summarize import SplitterSummarizer; assert SplitterSummarizer.__name__ == 'SplitterSummarizer'
+from sktime.transformations.series.scaledlogit import ScaledLogitTransformer; assert ScaledLogitTransformer.__name__ == 'ScaledLogitTransformer'
+from sktime.transformations.series.subset import IndexSubset; assert IndexSubset.__name__ == 'IndexSubset'
+from sktime.transformations.series.subset import ColumnSelect; assert ColumnSelect.__name__ == 'ColumnSelect'
+from sktime.transformations.series.date import DateTimeFeatures; assert DateTimeFeatures.__name__ == 'DateTimeFeatures'
+from sktime.transformations.series.subsequence_extraction import SubsequenceExtractionTransformer; assert SubsequenceExtractionTransformer.__name__ == 'SubsequenceExtractionTransformer'
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor; assert TabularToSeriesAdaptor.__name__ == 'TabularToSeriesAdaptor'
+from sktime.transformations.series.adapt import PandasTransformAdaptor; assert PandasTransformAdaptor.__name__ == 'PandasTransformAdaptor'
+from sktime.transformations.series.dummies import SeasonalDummiesOneHot; assert SeasonalDummiesOneHot.__name__ == 'SeasonalDummiesOneHot'
+from sktime.transformations.series.dilation_mapping import DilationMappingTransformer; assert DilationMappingTransformer.__name__ == 'DilationMappingTransformer'
+from sktime.transformations.series.matrix_profile import MatrixProfileTransformer; assert MatrixProfileTransformer.__name__ == 'MatrixProfileTransformer'
+from sktime.transformations.series.scaledasinh import ScaledAsinhTransformer; assert ScaledAsinhTransformer.__name__ == 'ScaledAsinhTransformer'
+from sktime.transformations.series._clasp_numba import clasp; assert clasp.__name__ == 'clasp'
+from sktime.transformations.series.cffilter import CFFilter; assert CFFilter.__name__ == 'CFFilter'
+from sktime.transformations.series.hpfilter import HPFilter; assert HPFilter.__name__ == 'HPFilter'
+from sktime.transformations.series.bkfilter import BKFilter; assert BKFilter.__name__ == 'BKFilter'
+from sktime.transformations.series.clasp import ClaSPTransformer; assert ClaSPTransformer.__name__ == 'ClaSPTransformer'
+from sktime.transformations.series.hidalgo import Hidalgo; assert Hidalgo.__name__ == 'Hidalgo'
+from sktime.transformations.series.hidalgo import binom; assert binom.__name__ == 'binom'
+from sktime.transformations.series.hidalgo import partition_function; assert partition_function.__name__ == 'partition_function'
+from sktime.transformations.series.outlier_detection import HampelFilter; assert HampelFilter.__name__ == 'HampelFilter'
+from sktime.transformations.series.augmenter import WhiteNoiseAugmenter; assert WhiteNoiseAugmenter.__name__ == 'WhiteNoiseAugmenter'
+from sktime.transformations.series.augmenter import ReverseAugmenter; assert ReverseAugmenter.__name__ == 'ReverseAugmenter'
+from sktime.transformations.series.augmenter import InvertAugmenter; assert InvertAugmenter.__name__ == 'InvertAugmenter'
+from sktime.transformations.series.augmenter import RandomSamplesAugmenter; assert RandomSamplesAugmenter.__name__ == 'RandomSamplesAugmenter'
+from sktime.transformations.series.vmd import VmdTransformer; assert VmdTransformer.__name__ == 'VmdTransformer'
+from sktime.transformations.series.impute import Imputer; assert Imputer.__name__ == 'Imputer'
+from sktime.transformations.series.fabba import FABBA; assert FABBA.__name__ == 'FABBA'
+from sktime.transformations.series.dropna import DropNA; assert DropNA.__name__ == 'DropNA'
+from sktime.transformations.series.cos import CosineTransformer; assert CosineTransformer.__name__ == 'CosineTransformer'
+from sktime.transformations.series.temporian import TemporianTransformer; assert TemporianTransformer.__name__ == 'TemporianTransformer'
+from sktime.transformations.series.sax import SAX; assert SAX.__name__ == 'SAX'
+from sktime.transformations.series.dobin import DOBIN; assert DOBIN.__name__ == 'DOBIN'
+from sktime.transformations.series.dobin import close_distance_matrix; assert close_distance_matrix.__name__ == 'close_distance_matrix'
+from sktime.transformations.bootstrap._repeat import RepeatBootstrapTransformer; assert RepeatBootstrapTransformer.__name__ == 'RepeatBootstrapTransformer'
+from sktime.transformations.bootstrap import RepeatBootstrapTransformer; assert RepeatBootstrapTransformer.__name__ == 'RepeatBootstrapTransformer'
+from sktime.transformations.bootstrap import RepeatBootstrapTransformer as A; from sktime.transformations.bootstrap._repeat import RepeatBootstrapTransformer as B; assert A is B
+from sktime.transformations.bootstrap._splitterboot import SplitterBootstrapTransformer; assert SplitterBootstrapTransformer.__name__ == 'SplitterBootstrapTransformer'
+from sktime.transformations.bootstrap import SplitterBootstrapTransformer; assert SplitterBootstrapTransformer.__name__ == 'SplitterBootstrapTransformer'
+from sktime.transformations.bootstrap import SplitterBootstrapTransformer as A; from sktime.transformations.bootstrap._splitterboot import SplitterBootstrapTransformer as B; assert A is B
+from sktime.transformations.bootstrap._mbb import STLBootstrapTransformer; assert STLBootstrapTransformer.__name__ == 'STLBootstrapTransformer'
+from sktime.transformations.bootstrap import STLBootstrapTransformer; assert STLBootstrapTransformer.__name__ == 'STLBootstrapTransformer'
+from sktime.transformations.bootstrap import STLBootstrapTransformer as A; from sktime.transformations.bootstrap._mbb import STLBootstrapTransformer as B; assert A is B
+from sktime.transformations.bootstrap._mbb import MovingBlockBootstrapTransformer; assert MovingBlockBootstrapTransformer.__name__ == 'MovingBlockBootstrapTransformer'
+from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer; assert MovingBlockBootstrapTransformer.__name__ == 'MovingBlockBootstrapTransformer'
+from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer as A; from sktime.transformations.bootstrap._mbb import MovingBlockBootstrapTransformer as B; assert A is B
+from sktime.transformations.bootstrap._tsbootstrap import TSBootstrapAdapter; assert TSBootstrapAdapter.__name__ == 'TSBootstrapAdapter'
+from sktime.transformations.bootstrap import TSBootstrapAdapter; assert TSBootstrapAdapter.__name__ == 'TSBootstrapAdapter'
+from sktime.transformations.bootstrap import TSBootstrapAdapter as A; from sktime.transformations.bootstrap._tsbootstrap import TSBootstrapAdapter as B; assert A is B
+from sktime.transformations.compose._grouped import TransformByLevel; assert TransformByLevel.__name__ == 'TransformByLevel'
+from sktime.transformations.compose import TransformByLevel; assert TransformByLevel.__name__ == 'TransformByLevel'
+from sktime.transformations.compose import TransformByLevel as A; from sktime.transformations.compose._grouped import TransformByLevel as B; assert A is B
+from sktime.transformations.compose._transformif import TransformIf; assert TransformIf.__name__ == 'TransformIf'
+from sktime.transformations.compose import TransformIf; assert TransformIf.__name__ == 'TransformIf'
+from sktime.transformations.compose import TransformIf as A; from sktime.transformations.compose._transformif import TransformIf as B; assert A is B
+from sktime.transformations.compose._invert import InvertTransform; assert InvertTransform.__name__ == 'InvertTransform'
+from sktime.transformations.compose import InvertTransform; assert InvertTransform.__name__ == 'InvertTransform'
+from sktime.transformations.compose import InvertTransform as A; from sktime.transformations.compose._invert import InvertTransform as B; assert A is B
+from sktime.transformations.compose._pipeline import TransformerPipeline; assert TransformerPipeline.__name__ == 'TransformerPipeline'
+from sktime.transformations.compose import TransformerPipeline; assert TransformerPipeline.__name__ == 'TransformerPipeline'
+from sktime.transformations.compose import TransformerPipeline as A; from sktime.transformations.compose._pipeline import TransformerPipeline as B; assert A is B
+from sktime.transformations.compose._multiplex import MultiplexTransformer; assert MultiplexTransformer.__name__ == 'MultiplexTransformer'
+from sktime.transformations.compose import MultiplexTransformer; assert MultiplexTransformer.__name__ == 'MultiplexTransformer'
+from sktime.transformations.compose import MultiplexTransformer as A; from sktime.transformations.compose._multiplex import MultiplexTransformer as B; assert A is B
+from sktime.transformations.compose._ixtox import IxToX; assert IxToX.__name__ == 'IxToX'
+from sktime.transformations.compose import IxToX; assert IxToX.__name__ == 'IxToX'
+from sktime.transformations.compose import IxToX as A; from sktime.transformations.compose._ixtox import IxToX as B; assert A is B
+from sktime.transformations.compose._ytox import YtoX; assert YtoX.__name__ == 'YtoX'
+from sktime.transformations.compose import YtoX; assert YtoX.__name__ == 'YtoX'
+from sktime.transformations.compose import YtoX as A; from sktime.transformations.compose._ytox import YtoX as B; assert A is B
+from sktime.transformations.compose._column import ColumnEnsembleTransformer; assert ColumnEnsembleTransformer.__name__ == 'ColumnEnsembleTransformer'
+from sktime.transformations.compose import ColumnEnsembleTransformer; assert ColumnEnsembleTransformer.__name__ == 'ColumnEnsembleTransformer'
+from sktime.transformations.compose import ColumnEnsembleTransformer as A; from sktime.transformations.compose._column import ColumnEnsembleTransformer as B; assert A is B
+from sktime.transformations.compose._column import ColumnwiseTransformer; assert ColumnwiseTransformer.__name__ == 'ColumnwiseTransformer'
+from sktime.transformations.compose import ColumnwiseTransformer; assert ColumnwiseTransformer.__name__ == 'ColumnwiseTransformer'
+from sktime.transformations.compose import ColumnwiseTransformer as A; from sktime.transformations.compose._column import ColumnwiseTransformer as B; assert A is B
+from sktime.transformations.compose._fitintransform import FitInTransform; assert FitInTransform.__name__ == 'FitInTransform'
+from sktime.transformations.compose import FitInTransform; assert FitInTransform.__name__ == 'FitInTransform'
+from sktime.transformations.compose import FitInTransform as A; from sktime.transformations.compose._fitintransform import FitInTransform as B; assert A is B
+from sktime.transformations.compose._logger import Logger; assert Logger.__name__ == 'Logger'
+from sktime.transformations.compose import Logger; assert Logger.__name__ == 'Logger'
+from sktime.transformations.compose import Logger as A; from sktime.transformations.compose._logger import Logger as B; assert A is B
+from sktime.transformations.compose import DataLog as A; from sktime.transformations.compose._logger import DataLog as B; assert A is B
+from sktime.transformations.compose._id import Id; assert Id.__name__ == 'Id'
+from sktime.transformations.compose import Id; assert Id.__name__ == 'Id'
+from sktime.transformations.compose import Id as A; from sktime.transformations.compose._id import Id as B; assert A is B
+from sktime.transformations.compose._optional import OptionalPassthrough; assert OptionalPassthrough.__name__ == 'OptionalPassthrough'
+from sktime.transformations.compose import OptionalPassthrough; assert OptionalPassthrough.__name__ == 'OptionalPassthrough'
+from sktime.transformations.compose import OptionalPassthrough as A; from sktime.transformations.compose._optional import OptionalPassthrough as B; assert A is B
+from sktime.transformations.compose._featureunion import FeatureUnion; assert FeatureUnion.__name__ == 'FeatureUnion'
+from sktime.transformations.compose import FeatureUnion; assert FeatureUnion.__name__ == 'FeatureUnion'
+from sktime.transformations.compose import FeatureUnion as A; from sktime.transformations.compose._featureunion import FeatureUnion as B; assert A is B
+from sktime.transformations.compose._arithmetic import CombineTransformers; assert CombineTransformers.__name__ == 'CombineTransformers'
+from sktime.transformations.compose import CombineTransformers; assert CombineTransformers.__name__ == 'CombineTransformers'
+from sktime.transformations.compose import CombineTransformers as A; from sktime.transformations.compose._arithmetic import CombineTransformers as B; assert A is B
+from sktime.transformations.panel.compose import ColumnConcatenator; assert ColumnConcatenator.__name__ == 'ColumnConcatenator'
+from sktime.transformations.panel.slope import SlopeTransformer; assert SlopeTransformer.__name__ == 'SlopeTransformer'
+from sktime.transformations.panel.compose_distance import DistanceFeatures; assert DistanceFeatures.__name__ == 'DistanceFeatures'
+from sktime.transformations.panel.tsfeatures import TSFeaturesTransformer; assert TSFeaturesTransformer.__name__ == 'TSFeaturesTransformer'
+from sktime.transformations.panel.catch22wrapper import Catch22Wrapper; assert Catch22Wrapper.__name__ == 'Catch22Wrapper'
+from sktime.transformations.panel.padder import PaddingTransformer; assert PaddingTransformer.__name__ == 'PaddingTransformer'
+from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor; assert TSFreshFeatureExtractor.__name__ == 'TSFreshFeatureExtractor'
+from sktime.transformations.panel.tsfresh import TSFreshRelevantFeatureExtractor; assert TSFreshRelevantFeatureExtractor.__name__ == 'TSFreshRelevantFeatureExtractor'
+from sktime.transformations.panel.truncation import TruncationTransformer; assert TruncationTransformer.__name__ == 'TruncationTransformer'
+from sktime.transformations.panel.matrix_profile import MatrixProfile; assert MatrixProfile.__name__ == 'MatrixProfile'
+from sktime.transformations.panel.interpolate import TSInterpolator; assert TSInterpolator.__name__ == 'TSInterpolator'
+from sktime.transformations.panel.supervised_intervals import SupervisedIntervals; assert SupervisedIntervals.__name__ == 'SupervisedIntervals'
+from sktime.transformations.panel.hog1d import HOG1DTransformer; assert HOG1DTransformer.__name__ == 'HOG1DTransformer'
+from sktime.transformations.panel.random_intervals import RandomIntervals; assert RandomIntervals.__name__ == 'RandomIntervals'
+from sktime.transformations.panel.pca import PCATransformer; assert PCATransformer.__name__ == 'PCATransformer'
+from sktime.transformations.panel.channel_selection import ElbowClassSum; assert ElbowClassSum.__name__ == 'ElbowClassSum'
+from sktime.transformations.panel.channel_selection import ElbowClassPairwise; assert ElbowClassPairwise.__name__ == 'ElbowClassPairwise'
+from sktime.transformations.panel.reduce import Tabularizer; assert Tabularizer.__name__ == 'Tabularizer'
+from sktime.transformations.panel.reduce import TimeBinner; assert TimeBinner.__name__ == 'TimeBinner'
+from sktime.transformations.panel.segment import IntervalSegmenter; assert IntervalSegmenter.__name__ == 'IntervalSegmenter'
+from sktime.transformations.panel.segment import RandomIntervalSegmenter; assert RandomIntervalSegmenter.__name__ == 'RandomIntervalSegmenter'
+from sktime.transformations.panel.segment import SlidingWindowSegmenter; assert SlidingWindowSegmenter.__name__ == 'SlidingWindowSegmenter'
+from sktime.transformations.panel.dwt import DWTTransformer; assert DWTTransformer.__name__ == 'DWTTransformer'
+from sktime.transformations.panel.catch22 import get_methods_dict; assert get_methods_dict.__name__ == 'get_methods_dict'
+from sktime.transformations.panel.catch22 import Catch22; assert Catch22.__name__ == 'Catch22'
+from sktime.transformations.hierarchical.squeeze_hierarchy import SqueezeHierarchy; assert SqueezeHierarchy.__name__ == 'SqueezeHierarchy'
+from sktime.transformations.hierarchical.aggregate import Aggregator; assert Aggregator.__name__ == 'Aggregator'
+from sktime.transformations.hierarchical.reconcile._bottom_up import BottomUpReconciler; assert BottomUpReconciler.__name__ == 'BottomUpReconciler'
+from sktime.transformations.hierarchical.reconcile import BottomUpReconciler; assert BottomUpReconciler.__name__ == 'BottomUpReconciler'
+from sktime.transformations.hierarchical.reconcile import BottomUpReconciler as A; from sktime.transformations.hierarchical.reconcile._bottom_up import BottomUpReconciler as B; assert A is B
+from sktime.transformations.hierarchical.reconcile._topdown import TopdownReconciler; assert TopdownReconciler.__name__ == 'TopdownReconciler'
+from sktime.transformations.hierarchical.reconcile import TopdownReconciler; assert TopdownReconciler.__name__ == 'TopdownReconciler'
+from sktime.transformations.hierarchical.reconcile import TopdownReconciler as A; from sktime.transformations.hierarchical.reconcile._topdown import TopdownReconciler as B; assert A is B
+from sktime.transformations.hierarchical.reconcile._middle_out import MiddleOutReconciler; assert MiddleOutReconciler.__name__ == 'MiddleOutReconciler'
+from sktime.transformations.hierarchical.reconcile import MiddleOutReconciler; assert MiddleOutReconciler.__name__ == 'MiddleOutReconciler'
+from sktime.transformations.hierarchical.reconcile import MiddleOutReconciler as A; from sktime.transformations.hierarchical.reconcile._middle_out import MiddleOutReconciler as B; assert A is B
+from sktime.transformations.hierarchical.reconcile._reconcile import Reconciler; assert Reconciler.__name__ == 'Reconciler'
+from sktime.transformations.hierarchical.reconcile import Reconciler; assert Reconciler.__name__ == 'Reconciler'
+from sktime.transformations.hierarchical.reconcile import Reconciler as A; from sktime.transformations.hierarchical.reconcile._reconcile import Reconciler as B; assert A is B
+from sktime.transformations.hierarchical.reconcile._optimal import OptimalReconciler; assert OptimalReconciler.__name__ == 'OptimalReconciler'
+from sktime.transformations.hierarchical.reconcile import OptimalReconciler; assert OptimalReconciler.__name__ == 'OptimalReconciler'
+from sktime.transformations.hierarchical.reconcile import OptimalReconciler as A; from sktime.transformations.hierarchical.reconcile._optimal import OptimalReconciler as B; assert A is B
+from sktime.transformations.hierarchical.reconcile._optimal import NonNegativeOptimalReconciler; assert NonNegativeOptimalReconciler.__name__ == 'NonNegativeOptimalReconciler'
+from sktime.transformations.hierarchical.reconcile import NonNegativeOptimalReconciler; assert NonNegativeOptimalReconciler.__name__ == 'NonNegativeOptimalReconciler'
+from sktime.transformations.hierarchical.reconcile import NonNegativeOptimalReconciler as A; from sktime.transformations.hierarchical.reconcile._optimal import NonNegativeOptimalReconciler as B; assert A is B
+from sktime.transformations.panel.rocket._minirocket_multivariate_variable import MiniRocketMultivariateVariable; assert MiniRocketMultivariateVariable.__name__ == 'MiniRocketMultivariateVariable'
+from sktime.transformations.panel.rocket import MiniRocketMultivariateVariable; assert MiniRocketMultivariateVariable.__name__ == 'MiniRocketMultivariateVariable'
+from sktime.transformations.panel.rocket import MiniRocketMultivariateVariable as A; from sktime.transformations.panel.rocket._minirocket_multivariate_variable import MiniRocketMultivariateVariable as B; assert A is B
+from sktime.transformations.panel.rocket._rocket_pyts import RocketPyts; assert RocketPyts.__name__ == 'RocketPyts'
+from sktime.transformations.panel.rocket import RocketPyts; assert RocketPyts.__name__ == 'RocketPyts'
+from sktime.transformations.panel.rocket import RocketPyts as A; from sktime.transformations.panel.rocket._rocket_pyts import RocketPyts as B; assert A is B
+from sktime.transformations.panel.rocket._multirocket_multivariate import MultiRocketMultivariate; assert MultiRocketMultivariate.__name__ == 'MultiRocketMultivariate'
+from sktime.transformations.panel.rocket import MultiRocketMultivariate; assert MultiRocketMultivariate.__name__ == 'MultiRocketMultivariate'
+from sktime.transformations.panel.rocket import MultiRocketMultivariate as A; from sktime.transformations.panel.rocket._multirocket_multivariate import MultiRocketMultivariate as B; assert A is B
+from sktime.transformations.panel.rocket._minirocket_multivariate import MiniRocketMultivariate; assert MiniRocketMultivariate.__name__ == 'MiniRocketMultivariate'
+from sktime.transformations.panel.rocket import MiniRocketMultivariate; assert MiniRocketMultivariate.__name__ == 'MiniRocketMultivariate'
+from sktime.transformations.panel.rocket import MiniRocketMultivariate as A; from sktime.transformations.panel.rocket._minirocket_multivariate import MiniRocketMultivariate as B; assert A is B
+from sktime.transformations.panel.rocket._minirocket import MiniRocket; assert MiniRocket.__name__ == 'MiniRocket'
+from sktime.transformations.panel.rocket import MiniRocket; assert MiniRocket.__name__ == 'MiniRocket'
+from sktime.transformations.panel.rocket import MiniRocket as A; from sktime.transformations.panel.rocket._minirocket import MiniRocket as B; assert A is B
+from sktime.transformations.panel.rocket._multirocket import MultiRocket; assert MultiRocket.__name__ == 'MultiRocket'
+from sktime.transformations.panel.rocket import MultiRocket; assert MultiRocket.__name__ == 'MultiRocket'
+from sktime.transformations.panel.rocket import MultiRocket as A; from sktime.transformations.panel.rocket._multirocket import MultiRocket as B; assert A is B
+from sktime.transformations.panel.rocket._rocket import Rocket; assert Rocket.__name__ == 'Rocket'
+from sktime.transformations.panel.rocket import Rocket; assert Rocket.__name__ == 'Rocket'
+from sktime.transformations.panel.rocket import Rocket as A; from sktime.transformations.panel.rocket._rocket import Rocket as B; assert A is B
+from sktime.transformations.panel.shapelet_transform._shapelet_transform_pyts import ShapeletTransformPyts; assert ShapeletTransformPyts.__name__ == 'ShapeletTransformPyts'
+from sktime.transformations.panel.shapelet_transform import ShapeletTransformPyts; assert ShapeletTransformPyts.__name__ == 'ShapeletTransformPyts'
+from sktime.transformations.panel.shapelet_transform import ShapeletTransformPyts as A; from sktime.transformations.panel.shapelet_transform._shapelet_transform_pyts import ShapeletTransformPyts as B; assert A is B
+from sktime.transformations.panel.shapelet_transform._shapelet_transform import Shapelet; assert Shapelet.__name__ == 'Shapelet'
+from sktime.transformations.panel.shapelet_transform._shapelet_transform import ShapeletPQ; assert ShapeletPQ.__name__ == 'ShapeletPQ'
+from sktime.transformations.panel.shapelet_transform._shapelet_transform import ShapeletTransform; assert ShapeletTransform.__name__ == 'ShapeletTransform'
+from sktime.transformations.panel.shapelet_transform import ShapeletTransform; assert ShapeletTransform.__name__ == 'ShapeletTransform'
+from sktime.transformations.panel.shapelet_transform import ShapeletTransform as A; from sktime.transformations.panel.shapelet_transform._shapelet_transform import ShapeletTransform as B; assert A is B
+from sktime.transformations.panel.shapelet_transform._shapelet_transform import RandomShapeletTransform; assert RandomShapeletTransform.__name__ == 'RandomShapeletTransform'
+from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform; assert RandomShapeletTransform.__name__ == 'RandomShapeletTransform'
+from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform as A; from sktime.transformations.panel.shapelet_transform._shapelet_transform import RandomShapeletTransform as B; assert A is B
+from sktime.transformations.panel.summarize._extract import PlateauFinder; assert PlateauFinder.__name__ == 'PlateauFinder'
+from sktime.transformations.panel.summarize import PlateauFinder; assert PlateauFinder.__name__ == 'PlateauFinder'
+from sktime.transformations.panel.summarize import PlateauFinder as A; from sktime.transformations.panel.summarize._extract import PlateauFinder as B; assert A is B
+from sktime.transformations.panel.summarize._extract import DerivativeSlopeTransformer; assert DerivativeSlopeTransformer.__name__ == 'DerivativeSlopeTransformer'
+from sktime.transformations.panel.summarize import DerivativeSlopeTransformer; assert DerivativeSlopeTransformer.__name__ == 'DerivativeSlopeTransformer'
+from sktime.transformations.panel.summarize import DerivativeSlopeTransformer as A; from sktime.transformations.panel.summarize._extract import DerivativeSlopeTransformer as B; assert A is B
+from sktime.transformations.panel.summarize._extract import RandomIntervalFeatureExtractor; assert RandomIntervalFeatureExtractor.__name__ == 'RandomIntervalFeatureExtractor'
+from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor; assert RandomIntervalFeatureExtractor.__name__ == 'RandomIntervalFeatureExtractor'
+from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor as A; from sktime.transformations.panel.summarize._extract import RandomIntervalFeatureExtractor as B; assert A is B
+from sktime.transformations.panel.summarize._extract import FittedParamExtractor; assert FittedParamExtractor.__name__ == 'FittedParamExtractor'
+from sktime.transformations.panel.summarize import FittedParamExtractor; assert FittedParamExtractor.__name__ == 'FittedParamExtractor'
+from sktime.transformations.panel.summarize import FittedParamExtractor as A; from sktime.transformations.panel.summarize._extract import FittedParamExtractor as B; assert A is B
+from sktime.transformations.panel.signature_based._signature_method import SignatureTransformer; assert SignatureTransformer.__name__ == 'SignatureTransformer'
+from sktime.transformations.panel.signature_based import SignatureTransformer; assert SignatureTransformer.__name__ == 'SignatureTransformer'
+from sktime.transformations.panel.signature_based import SignatureTransformer as A; from sktime.transformations.panel.signature_based._signature_method import SignatureTransformer as B; assert A is B
+from sktime.transformations.panel.dictionary_based._paa import PAAlegacy; assert PAAlegacy.__name__ == 'PAAlegacy'
+from sktime.transformations.panel.dictionary_based import PAAlegacy; assert PAAlegacy.__name__ == 'PAAlegacy'
+from sktime.transformations.panel.dictionary_based import PAAlegacy as A; from sktime.transformations.panel.dictionary_based._paa import PAAlegacy as B; assert A is B
+from sktime.transformations.panel.dictionary_based._sfa import SFA; assert SFA.__name__ == 'SFA'
+from sktime.transformations.panel.dictionary_based import SFA; assert SFA.__name__ == 'SFA'
+from sktime.transformations.panel.dictionary_based import SFA as A; from sktime.transformations.panel.dictionary_based._sfa import SFA as B; assert A is B
+from sktime.transformations.panel.dictionary_based._sfa_fast_numba import remove_repeating_words; assert remove_repeating_words.__name__ == 'remove_repeating_words'
+from sktime.transformations.panel.dictionary_based._sfa_fast_numba import generate_words; assert generate_words.__name__ == 'generate_words'
+from sktime.transformations.panel.dictionary_based._sfa_fast_numba import create_feature_names; assert create_feature_names.__name__ == 'create_feature_names'
+from sktime.transformations.panel.dictionary_based._sfa_fast_numba import create_bag_none; assert create_bag_none.__name__ == 'create_bag_none'
+from sktime.transformations.panel.dictionary_based._sfa_fast_numba import create_bag_feature_selection; assert create_bag_feature_selection.__name__ == 'create_bag_feature_selection'
+from sktime.transformations.panel.dictionary_based._sfa_fast_numba import create_bag_transform; assert create_bag_transform.__name__ == 'create_bag_transform'
+from sktime.transformations.panel.dictionary_based._sfa_fast_numba import shorten_words; assert shorten_words.__name__ == 'shorten_words'
+from sktime.transformations.panel.dictionary_based._sfa_fast import SFAFast; assert SFAFast.__name__ == 'SFAFast'
+from sktime.transformations.panel.dictionary_based import SFAFast; assert SFAFast.__name__ == 'SFAFast'
+from sktime.transformations.panel.dictionary_based import SFAFast as A; from sktime.transformations.panel.dictionary_based._sfa_fast import SFAFast as B; assert A is B
+from sktime.transformations.panel.dictionary_based._sax import SAXlegacy; assert SAXlegacy.__name__ == 'SAXlegacy'
+from sktime.transformations.panel.dictionary_based import SAXlegacy; assert SAXlegacy.__name__ == 'SAXlegacy'
+from sktime.transformations.panel.dictionary_based import SAXlegacy as A; from sktime.transformations.panel.dictionary_based._sax import SAXlegacy as B; assert A is B
+from sktime.transformations.series.detrend._deseasonalize import Deseasonalizer; assert Deseasonalizer.__name__ == 'Deseasonalizer'
+from sktime.transformations.series.detrend import Deseasonalizer; assert Deseasonalizer.__name__ == 'Deseasonalizer'
+from sktime.transformations.series.detrend import Deseasonalizer as A; from sktime.transformations.series.detrend._deseasonalize import Deseasonalizer as B; assert A is B
+from sktime.transformations.series.detrend._deseasonalize import ConditionalDeseasonalizer; assert ConditionalDeseasonalizer.__name__ == 'ConditionalDeseasonalizer'
+from sktime.transformations.series.detrend import ConditionalDeseasonalizer; assert ConditionalDeseasonalizer.__name__ == 'ConditionalDeseasonalizer'
+from sktime.transformations.series.detrend import ConditionalDeseasonalizer as A; from sktime.transformations.series.detrend._deseasonalize import ConditionalDeseasonalizer as B; assert A is B
+from sktime.transformations.series.detrend._deseasonalize import STLTransformer; assert STLTransformer.__name__ == 'STLTransformer'
+from sktime.transformations.series.detrend import STLTransformer; assert STLTransformer.__name__ == 'STLTransformer'
+from sktime.transformations.series.detrend import STLTransformer as A; from sktime.transformations.series.detrend._deseasonalize import STLTransformer as B; assert A is B
+from sktime.transformations.series.detrend._detrend import Detrender; assert Detrender.__name__ == 'Detrender'
+from sktime.transformations.series.detrend import Detrender; assert Detrender.__name__ == 'Detrender'
+from sktime.transformations.series.detrend import Detrender as A; from sktime.transformations.series.detrend._detrend import Detrender as B; assert A is B
+from sktime.transformations.series.detrend.mstl import MSTL; assert MSTL.__name__ == 'MSTL'
+from sktime.transformations.series.detrend import MSTL; assert MSTL.__name__ == 'MSTL'
+from sktime.transformations.series.detrend import MSTL as A; from sktime.transformations.series.detrend.mstl import MSTL as B; assert A is B
+from sktime.transformations.series.holiday._holidayfeats import HolidayFeatures; assert HolidayFeatures.__name__ == 'HolidayFeatures'
+from sktime.transformations.series.holiday import HolidayFeatures; assert HolidayFeatures.__name__ == 'HolidayFeatures'
+from sktime.transformations.series.holiday import HolidayFeatures as A; from sktime.transformations.series.holiday._holidayfeats import HolidayFeatures as B; assert A is B
+from sktime.transformations.series.holiday.financial_holidays import FinancialHolidaysTransformer; assert FinancialHolidaysTransformer.__name__ == 'FinancialHolidaysTransformer'
+from sktime.transformations.series.holiday import FinancialHolidaysTransformer; assert FinancialHolidaysTransformer.__name__ == 'FinancialHolidaysTransformer'
+from sktime.transformations.series.holiday import FinancialHolidaysTransformer as A; from sktime.transformations.series.holiday.financial_holidays import FinancialHolidaysTransformer as B; assert A is B
+from sktime.transformations.series.holiday.country_holidays import CountryHolidaysTransformer; assert CountryHolidaysTransformer.__name__ == 'CountryHolidaysTransformer'
+from sktime.transformations.series.holiday import CountryHolidaysTransformer; assert CountryHolidaysTransformer.__name__ == 'CountryHolidaysTransformer'
+from sktime.transformations.series.holiday import CountryHolidaysTransformer as A; from sktime.transformations.series.holiday.country_holidays import CountryHolidaysTransformer as B; assert A is B
+from sktime.transformations.series.tsfel._tsfel import TSFELTransformer; assert TSFELTransformer.__name__ == 'TSFELTransformer'
+from sktime.transformations.series.tsfel import TSFELTransformer; assert TSFELTransformer.__name__ == 'TSFELTransformer'
+from sktime.transformations.series.tsfel import TSFELTransformer as A; from sktime.transformations.series.tsfel._tsfel import TSFELTransformer as B; assert A is B
+from sktime.transformations.series.kalman_filter._kalman_filter import KalmanFilterTransformerPK; assert KalmanFilterTransformerPK.__name__ == 'KalmanFilterTransformerPK'
+from sktime.transformations.series.kalman_filter import KalmanFilterTransformerPK; assert KalmanFilterTransformerPK.__name__ == 'KalmanFilterTransformerPK'
+from sktime.transformations.series.kalman_filter import KalmanFilterTransformerPK as A; from sktime.transformations.series.kalman_filter._kalman_filter import KalmanFilterTransformerPK as B; assert A is B
+from sktime.transformations.series.kalman_filter._kalman_filter import KalmanFilterTransformerFP; assert KalmanFilterTransformerFP.__name__ == 'KalmanFilterTransformerFP'
+from sktime.transformations.series.kalman_filter import KalmanFilterTransformerFP; assert KalmanFilterTransformerFP.__name__ == 'KalmanFilterTransformerFP'
+from sktime.transformations.series.kalman_filter import KalmanFilterTransformerFP as A; from sktime.transformations.series.kalman_filter._kalman_filter import KalmanFilterTransformerFP as B; assert A is B
+from sktime.transformations.series.kalman_filter._simdkalman import KalmanFilterTransformerSIMD; assert KalmanFilterTransformerSIMD.__name__ == 'KalmanFilterTransformerSIMD'
+from sktime.transformations.series.kalman_filter import KalmanFilterTransformerSIMD; assert KalmanFilterTransformerSIMD.__name__ == 'KalmanFilterTransformerSIMD'
+from sktime.transformations.series.kalman_filter import KalmanFilterTransformerSIMD as A; from sktime.transformations.series.kalman_filter._simdkalman import KalmanFilterTransformerSIMD as B; assert A is B
+from sktime.transformations.series.kalman_filter._base import BaseKalmanFilter; assert BaseKalmanFilter.__name__ == 'BaseKalmanFilter'
+from sktime.transformations.series.kalman_filter import BaseKalmanFilter; assert BaseKalmanFilter.__name__ == 'BaseKalmanFilter'
+from sktime.transformations.series.kalman_filter import BaseKalmanFilter as A; from sktime.transformations.series.kalman_filter._base import BaseKalmanFilter as B; assert A is B
