@@ -27,7 +27,7 @@ sktime.
         a given mtype using the :func:`sktime.datatypes.check_is_mtype` function;
         all mtypes can be listed in ``sktime.datatypes.MTYPE_REGISTER``.
         For more details on the general concept, and precise specifications, see the
-        :ref:`data_format` and
+        :ref:`data-format` and
         the datatypes and datasets user guide (example notebook AA),
         here: :ref:`examples`.
 
@@ -50,7 +50,7 @@ sktime.
         the ``sktime.datatypes.check_is_scitype`` utility; for estimators, compliance
         is checked using ``sktime.utils.check_estimator``.
         For more details on data mtpyes, see :term:`mtype`.
-        For exact specifications of data scitypes, see the :ref:`data_format`.
+        For exact specifications of data scitypes, see the :ref:`data-format`.
         For more details on estimator scitypes, see the user guides on individual
         learning tasks, here: :ref:`examples`.
 
@@ -91,7 +91,7 @@ sktime.
         private, e.g., ``_fit``, ``_predict``, while boilerplate is taken care of
         by the base class.
         For further details and a step-by-step tutorial on 1st and 3rd party
-        extensions, see the guide on :ref:`developer_guide_add_estimators`.
+        extensions, see the guide on :ref:`developer-guide_add-estimators`.
         For power users familiar with software engineering
         patterns: the extension templates make use of the template pattern for
         the extension contract, ensuring compliance with the strategy pattern for
@@ -137,7 +137,7 @@ sktime.
         in a linear model.
 
     Forecasting
-        A learning task focused on prediction future values of a time series. For more details, see the :ref:`user_guide_introduction`.
+        A learning task focused on prediction future values of a time series. For more details, see the :ref:`user-guide_introduction`.
 
     Time series
          Data where the :term:`variable` measurements are ordered over time or an index indicating the position of an observation in the sequence of values.
