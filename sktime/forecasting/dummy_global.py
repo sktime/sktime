@@ -109,7 +109,7 @@ class DummyGlobalForecaster(BaseForecaster):
         self.global_mean_ = float(np.nanmean(values))
         self.global_std_ = float(np.nanstd(values))
 
-        if isinstance(y, (pd.Series, pd.DataFrame)) and isinstance(
+        if isinstance(y, pd.Series | pd.DataFrame) and isinstance(
             y.index, pd.MultiIndex
         ):
             # Panel or hierarchical data with MultiIndex
