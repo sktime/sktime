@@ -1200,6 +1200,9 @@ class BaseForecaster(_PretrainedStateMixin, _PredictProbaMixin, BaseEstimator):
         if fh is not None and not isinstance(fh, ForecastingHorizon):
             _fh = ForecastingHorizon(fh)
 
+        declared_attrs = self._get_pretrain_attributes()
+        attrs_before = set(dir(self))
+
         if self._state == "new":
             self._pretrain(y=y_inner, X=X_inner, fh=_fh)
         else:
@@ -1208,15 +1211,27 @@ class BaseForecaster(_PretrainedStateMixin, _PredictProbaMixin, BaseEstimator):
         if not hasattr(self, "_pretrained_attrs"):
             self._pretrained_attrs = []
 
-        # Track new pretrained attributes (extend, not append, to avoid nested lists)
-        new_attrs = [
-            a
-            for a in dir(self)
-            if a.endswith("_")
-            and not a.startswith("_")
-            and a not in self._pretrained_attrs
-        ]
-        self._pretrained_attrs.extend(new_attrs)
+        if declared_attrs:
+            new_attrs = declared_attrs
+        else:
+            warn(
+                f"{type(self).__name__} does not declare the "
+                '"pretrain:attributes" tag. Falling back to automatic detection '
+                'of newly-created public attributes ending in "_". This fallback '
+                "may miss valid pretrained state.",
+                obj=self,
+                stacklevel=2,
+            )
+            attrs_after = set(dir(self))
+            new_attrs = [
+                a
+                for a in attrs_after - attrs_before
+                if a.endswith("_") and not a.startswith("_")
+            ]
+
+        for attr in new_attrs:
+            if attr not in self._pretrained_attrs:
+                self._pretrained_attrs.append(attr)
 
         self._state = "pretrained"
         return self
