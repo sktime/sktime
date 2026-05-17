@@ -1151,8 +1151,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         estimator_instance.reset()
 
         assert estimator_instance.state == "pretrained", (
-            f"State after reset should be 'pretrained', "
-            f"got {estimator_instance.state}"
+            f"State after reset should be 'pretrained', got {estimator_instance.state}"
         )
 
         pretrained_params_after = estimator_instance.get_pretrained_params()
