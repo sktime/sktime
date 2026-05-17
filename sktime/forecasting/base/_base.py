@@ -188,6 +188,29 @@ class BaseForecaster(_PretrainedStateMixin, _PredictProbaMixin, BaseEstimator):
         """
         return deepcopy(attr_value, memo)
 
+    def _get_pretrain_attributes(self):
+        """Return declared pretrained attribute names as a list of strings."""
+        attrs = self.get_tag(
+            "pretrain:attributes", tag_value_default=(), raise_error=False
+        )
+
+        if attrs is None:
+            return []
+
+        if not isinstance(attrs, list | tuple):
+            raise TypeError(
+                f"{type(self).__name__} tag 'pretrain:attributes' must be a "
+                f"list or tuple of strings, but found {type(attrs).__name__}."
+            )
+
+        if not all(isinstance(attr, str) for attr in attrs):
+            raise TypeError(
+                f"{type(self).__name__} tag 'pretrain:attributes' must contain "
+                "only strings."
+            )
+
+        return list(attrs)
+
     @classmethod
     def _get_clone_plugins(cls):
         """Get clone plugins for BaseForecaster.
