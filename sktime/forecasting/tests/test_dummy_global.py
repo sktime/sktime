@@ -298,3 +298,33 @@ class TestDummyGlobalForecaster:
         assert cloned_inner._state == "pretrained"
         assert hasattr(cloned_inner, "global_mean_")
         np.testing.assert_almost_equal(cloned_inner.global_mean_, pretrain_mean)
+
+    def test_reset_preserves_pretrained_attrs(self):
+        """Test reset preserves pretrained attributes by default."""
+        forecaster = DummyGlobalForecaster(strategy="mean")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+
+        forecaster.reset()
+
+        assert forecaster._state == "pretrained"
+        assert hasattr(forecaster, "global_mean_")
+        np.testing.assert_almost_equal(forecaster.global_mean_, pretrain_mean)
+
+    def test_reset_can_discard_pretrained_attrs(self):
+        """Test reset can explicitly discard pretrained attributes."""
+        forecaster = DummyGlobalForecaster(strategy="mean")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+
+        forecaster.reset(keep_pretrained=False)
+
+        assert forecaster._state == "new"
+        assert not hasattr(forecaster, "global_mean_")
+        assert not hasattr(forecaster, "_pretrained_attrs")
+
