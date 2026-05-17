@@ -268,7 +268,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         n_iter: int = 10,
         n_points: int | None = 1,
         random_state: int | None = None,
-        scoring:=None,
+        scoring=None,
         optimizer_kwargs: dict | None = None,
         strategy: str | None = "refit",
         update_behaviour: str = "full_refit",
