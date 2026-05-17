@@ -48,6 +48,11 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:multivariate": True,
         "capability:exogenous": False,
+        "pretrain:attributes": (
+            "network",
+            "n_pretrain_instances_",
+            "_pretrain_pred_len",
+        ),
     }
 
     def __init__(
