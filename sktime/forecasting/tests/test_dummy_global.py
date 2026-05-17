@@ -422,3 +422,140 @@ class TestDummyGlobalForecaster:
         assert forecaster.copied_attr_name_ == "global_mean_"
         assert cloned._state == "pretrained"
         np.testing.assert_almost_equal(cloned.global_mean_, pretrain_mean + 1)
+
+    def test_pretrain_attributes_tag_allows_non_underscore_private_attrs(self):
+        """Test declared attrs need not be public or end in underscore."""
+
+        class ExplicitAttrForecaster(DummyGlobalForecaster):
+            _tags = {
+                **DummyGlobalForecaster._tags,
+                "pretrain:attributes": ("network", "_private_pretrained"),
+            }
+
+            def _pretrain(self, y, X=None, fh=None):
+                self.network = {"weights": [1, 2, 3]}
+                self._private_pretrained = {"metadata": 42}
+                return self
+
+        forecaster = ExplicitAttrForecaster()
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+
+        assert forecaster._pretrained_attrs == ["network", "_private_pretrained"]
+
+        forecaster.reset()
+
+        assert forecaster._state == "pretrained"
+        assert forecaster.network == {"weights": [1, 2, 3]}
+        assert forecaster._private_pretrained == {"metadata": 42}
+
+        cloned = forecaster.clone()
+
+        assert cloned._state == "pretrained"
+        assert cloned.network == {"weights": [1, 2, 3]}
+        assert cloned._private_pretrained == {"metadata": 42}
+
+    def test_pretrain_attributes_empty_tag_warns_and_uses_fallback(self):
+        """Test empty tag keeps legacy fallback but emits a warning."""
+
+        class LegacyAttrForecaster(DummyGlobalForecaster):
+            _tags = {
+                **DummyGlobalForecaster._tags,
+                "pretrain:attributes": (),
+            }
+
+        forecaster = LegacyAttrForecaster()
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        with pytest.warns(UserWarning, match="does not declare"):
+            forecaster.pretrain(y_panel)
+
+        assert "global_mean_" in forecaster._pretrained_attrs
+        assert "global_std_" in forecaster._pretrained_attrs
+        assert "n_pretrain_instances_" in forecaster._pretrained_attrs
+        assert "n_pretrain_timepoints_" in forecaster._pretrained_attrs
+
+    def test_pretrain_attributes_empty_tag_warning_independent_of_capability(self):
+        """Test fallback warning is tied to fallback use, not the capability tag."""
+
+        class LegacyAttrForecaster(DummyGlobalForecaster):
+            _tags = {
+                **DummyGlobalForecaster._tags,
+                "capability:pretrain": False,
+                "pretrain:attributes": (),
+            }
+
+        forecaster = LegacyAttrForecaster()
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        with pytest.warns(UserWarning, match="does not declare"):
+            forecaster.pretrain(y_panel)
+
+    def test_pretrain_attributes_rejects_string_tag(self):
+        """Test pretrain:attributes must not be a bare string."""
+
+        class InvalidAttrForecaster(DummyGlobalForecaster):
+            _tags = {
+                **DummyGlobalForecaster._tags,
+                "pretrain:attributes": "global_mean_",
+            }
+
+        forecaster = InvalidAttrForecaster()
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        with pytest.raises(TypeError, match="list or tuple of strings"):
+            forecaster.pretrain(y_panel)
+
+    def test_pretrain_attributes_rejects_non_string_entries(self):
+        """Test pretrain:attributes entries must be strings."""
+
+        class InvalidAttrForecaster(DummyGlobalForecaster):
+            _tags = {
+                **DummyGlobalForecaster._tags,
+                "pretrain:attributes": ("global_mean_", 1),
+            }
+
+        forecaster = InvalidAttrForecaster()
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        with pytest.raises(TypeError, match="only strings"):
+            forecaster.pretrain(y_panel)
+
+    def test_register_pretrained_attrs_supports_dynamic_attrs(self):
+        """Test dynamic pretrained attrs can be registered at runtime."""
+
+        class DynamicAttrForecaster(DummyGlobalForecaster):
+            _tags = {
+                **DummyGlobalForecaster._tags,
+                "pretrain:attributes": ("static_state",),
+            }
+
+            def _pretrain(self, y, X=None, fh=None):
+                self.static_state = {"static": True}
+                self.dynamic_state = {"dynamic": True}
+                self._register_pretrained_attrs("dynamic_state")
+                return self
+
+        forecaster = DynamicAttrForecaster()
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+
+        assert forecaster._pretrained_attrs == ["dynamic_state", "static_state"]
+
+        forecaster.reset()
+
+        assert forecaster._state == "pretrained"
+        assert forecaster.static_state == {"static": True}
+        assert forecaster.dynamic_state == {"dynamic": True}
