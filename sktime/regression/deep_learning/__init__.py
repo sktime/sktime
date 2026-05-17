@@ -11,6 +11,7 @@ __all__ = [
     "MCDCNNRegressor",
     "MCDCNNRegressorTorch",
     "MLPRegressor",
+    "MLPTorchRegressor",
     "ResNetRegressor",
     "SimpleRNNRegressor",
     "SimpleRNNRegressorTorch",
@@ -32,6 +33,7 @@ from sktime.regression.deep_learning.mcdcnn import (
     MCDCNNRegressorTorch,
 )
 from sktime.regression.deep_learning.mlp import MLPRegressor
+from sktime.regression.deep_learning.mlp_torch import MLPTorchRegressor
 from sktime.regression.deep_learning.resnet import ResNetRegressor
 from sktime.regression.deep_learning.rnn import (
     SimpleRNNRegressor,

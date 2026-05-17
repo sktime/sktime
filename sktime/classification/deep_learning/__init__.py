@@ -11,6 +11,7 @@ __all__ = [
     "MCDCNNClassifier",
     "MCDCNNClassifierTorch",
     "MLPClassifier",
+    "MLPTorchClassifier",
     "MVTSTransformerClassifier",
     "ResNetClassifier",
     "SimpleRNNClassifier",
@@ -41,6 +42,7 @@ from sktime.classification.deep_learning.mcdcnn import (
     MCDCNNClassifierTorch,
 )
 from sktime.classification.deep_learning.mlp import MLPClassifier
+from sktime.classification.deep_learning.mlp_torch import MLPTorchClassifier
 from sktime.classification.deep_learning.mvts_transformer import (
     MVTSTransformerClassifier,
 )
