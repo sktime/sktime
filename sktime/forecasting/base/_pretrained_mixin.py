@@ -58,6 +58,20 @@ class _PretrainedStateMixin:
             # forecaster must come back as pretrained rather than fitted.
             self._state = "pretrained"
 
+    def _register_pretrained_attrs(self, *attrs):
+        """Register existing attributes as pretrained state.
+
+        Prefer declaring static pretrained attributes via the
+        ``"pretrain:attributes"`` tag. Use this helper for attributes that are
+        determined dynamically at runtime.
+        """
+        if not hasattr(self, "_pretrained_attrs"):
+            self._pretrained_attrs = []
+
+        for attr in attrs:
+            if hasattr(self, attr) and attr not in self._pretrained_attrs:
+                self._pretrained_attrs.append(attr)
+
     def reset(self, keep_pretrained=True):
         """Reset object while preserving pretrained state by default.
 
