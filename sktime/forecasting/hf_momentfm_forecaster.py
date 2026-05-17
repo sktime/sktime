@@ -355,10 +355,14 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # Gradient clipping value
         max_norm = self.max_norm
 
-        self.model, optimizer, train_dataloader, val_dataloader, scheduler = (
-            accelerator.prepare(
-                self.model, optimizer, train_dataloader, val_dataloader, scheduler
-            )
+        (
+            self.model,
+            optimizer,
+            train_dataloader,
+            val_dataloader,
+            scheduler,
+        ) = accelerator.prepare(
+            self.model, optimizer, train_dataloader, val_dataloader, scheduler
         )
 
         while cur_epoch < max_epoch:
@@ -399,9 +403,11 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         else:
             y_ = np.expand_dims(y.values, axis=0)
 
-        num_instances, sequence_length, num_channels = (
-            y_.shape
-        )  # shape of our input to predict
+        (
+            num_instances,
+            sequence_length,
+            num_channels,
+        ) = y_.shape  # shape of our input to predict
         # raise warning if sequence length of y is greater than the sequence
         # length used to fit the model
         if sequence_length > self._seq_len:

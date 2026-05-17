@@ -51,9 +51,11 @@ def _drcif_feature(X, interval, dim, att, c22, case_id=None):
     if isinstance(X, pd.DataFrame):
         series_col = X.iloc[:, dim]
         X_interval = series_col.apply(
-            lambda x: pd.Series(x[interval[0] : interval[1]])
-            if isinstance(x, (pd.Series, np.ndarray))
-            else pd.Series([])
+            lambda x: (
+                pd.Series(x[interval[0] : interval[1]])
+                if isinstance(x, (pd.Series, np.ndarray))
+                else pd.Series([])
+            )
         ).to_frame()
     else:
         sliced = X[:, dim, interval[0] : interval[1]]

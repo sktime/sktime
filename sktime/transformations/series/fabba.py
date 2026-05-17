@@ -375,8 +375,10 @@ class FABBA(BaseTransformer):
                             if n_jobs > partition:  # to prevent useless processors
                                 n_jobs = partition
                         else:
-                            warnings.warn("""Partition has exceed the
-                                          maximum length of series.""")
+                            warnings.warn(
+                                """Partition has exceed the
+                                          maximum length of series."""
+                            )
                             partition = n_jobs
 
                     # Interval of partition
@@ -697,8 +699,10 @@ class FABBA(BaseTransformer):
             if num_unique < len(self.alphabet_set):
                 alphabets = self.alphabet_set
             else:
-                raise ValueError("""Alphabet set provided is smaller than
-                                 number of unique clusters.""")
+                raise ValueError(
+                    """Alphabet set provided is smaller than
+                                 number of unique clusters."""
+                )
 
         else:  # default alphabet set
             alphabets = [
@@ -758,8 +762,10 @@ class FABBA(BaseTransformer):
 
         # If more unique labels than alphabets in set, use ASCII values
         if num_unique > len(alphabets):
-            warnings.warn("""Using ASCII values since num of unique clusters
-                          more than alphabet set""")
+            warnings.warn(
+                """Using ASCII values since num of unique clusters
+                          more than alphabet set"""
+            )
             alphabets = [chr(i + 33) for i in range(0, num_unique)]
         # If less unique labels than alphabets in set, use only what is needed
         else:
@@ -946,8 +952,10 @@ class FABBA(BaseTransformer):
             # check if more unique tuples than clusters
             if self._k > max_k:
                 self._k = max_k
-                warnings.warn(f"""More clusters than unique tuples,
-                              so k reduced to {self._k}""")
+                warnings.warn(
+                    f"""More clusters than unique tuples,
+                              so k reduced to {self._k}"""
+                )
 
             with parallel_backend("threading", n_jobs=self.n_jobs):
                 kmeans = MiniBatchKMeans(
@@ -969,8 +977,10 @@ class FABBA(BaseTransformer):
             # check if more unique tuples than clusters
             if self._k > max_k:
                 self._k = max_k
-                warnings.warn(f"""More clusters than unique tuples,
-                              so k reduced to {self._k}""")
+                warnings.warn(
+                    f"""More clusters than unique tuples,
+                              so k reduced to {self._k}"""
+                )
 
             # apply k means clustering
             with parallel_backend("threading", n_jobs=self.n_jobs):
@@ -1169,8 +1179,10 @@ class FABBA(BaseTransformer):
                             if n_jobs > partition:  # to prevent useless processors
                                 n_jobs = partition
                         else:
-                            warnings.warn("""Partition has exceed the
-                                          maximum length of series.""")
+                            warnings.warn(
+                                """Partition has exceed the
+                                          maximum length of series."""
+                            )
                             partition = n_jobs
 
                     # Interval of partition
