@@ -196,10 +196,21 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
                 f"but got shape {X.shape}. Please ensure your input data is "
                 "properly formatted."
             )
-
+        
         # n_instances, n_dims, n_timesteps = X.shape
         self.num_classes = len(np.unique(y))
         self.input_shape = X.shape
+
+# simple validation for activation_hidden
+        if self.activation_hidden is not None:
+            if not (
+                isinstance(self.activation_hidden, str)
+                or callable(self.activation_hidden)
+                ):
+                raise TypeError(
+                    "activation_hidden must be str, callable, or None."
+                    )
+
         return MLPNetworkTorch(
             input_shape=self.input_shape,
             num_classes=self.num_classes,
