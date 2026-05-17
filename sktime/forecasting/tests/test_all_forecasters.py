@@ -700,7 +700,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_pred = estimator_instance.update_predict(
             y_test, cv=cv, update_params=update_params
         )
-        assert isinstance(y_pred, (pd.Series, pd.DataFrame))
+        assert isinstance(y_pred, pd.Series | pd.DataFrame)
         expected = _get_expected_index_for_update_predict(
             y_test, fh_int_oos, step_length, initial_window
         )
