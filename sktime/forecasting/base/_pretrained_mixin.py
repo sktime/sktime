@@ -84,7 +84,7 @@ class _PretrainedStateMixin:
         return self
 
     def set_params(self, **params):
-        """Set parameters, optionally skipping reset.
+        """Set parameters, optionally controlling pretrained state reset.
 
         Reimplements skbase's ``BaseObject.set_params`` to support the
         ``_reset`` control flag. When ``_reset=False``, parameter values
@@ -96,12 +96,16 @@ class _PretrainedStateMixin:
         inherited ``set_params`` except that ``self.reset()`` calls this
         mixin's override which preserves pretrained state.
 
+        Passing ``_keep_pretrained=False`` discards pretrained state when
+        ``_reset=True``.
+
         Parameters
         ----------
         **params : dict
             Object parameters. If ``_reset=False`` is passed, parameter
             values are set without calling ``reset`` on this object or
-            nested components.
+            nested components. If ``_keep_pretrained=False`` is passed,
+            pretrained attributes are discarded during reset.
 
         Returns
         -------
@@ -109,6 +113,7 @@ class _PretrainedStateMixin:
             Instance with updated parameters.
         """
         reset = params.pop("_reset", True)
+        keep_pretrained = params.pop("_keep_pretrained", True)
 
         if not params:
             return self
@@ -128,14 +133,18 @@ class _PretrainedStateMixin:
                 valid_params[key] = value
 
         if reset:
-            self.reset()
+            self.reset(keep_pretrained=keep_pretrained)
 
         for key, sub_params in nested_params.items():
             component = valid_params[key]
             if hasattr(component, "set_params"):
                 # propagate _reset only to objects likely to understand it
                 if isinstance(component, _PretrainedStateMixin):
-                    component.set_params(**sub_params, _reset=reset)
+                    component.set_params(
+                        **sub_params,
+                        _reset=reset,
+                        _keep_pretrained=keep_pretrained,
+                    )
                 else:
                     component.set_params(**sub_params)
 
@@ -152,6 +161,10 @@ class _PretrainedStateMixin:
                     f"Invalid keys provided: {unmatched_keys}"
                 )
 
-            self.set_params(**aliased_params, _reset=reset)
+            self.set_params(
+                **aliased_params,
+                _reset=reset,
+                _keep_pretrained=keep_pretrained,
+            )
 
         return self
