@@ -1111,8 +1111,8 @@ class BaseForecaster(_PretrainedStateMixin, _PredictProbaMixin, BaseEstimator):
 
         Writes to self:
 
-            * Sets pretrained model attributes ending in ``"_"``.
-              These are inspectable via ``get_pretrained_params``.
+            * Sets pretrained model attributes. These are inspectable via
+              ``get_pretrained_params``.
             * Sets ``self.state`` to ``"pretrained"``.
             * Sets ``self._pretrained_attrs`` to list of pretrained attribute
               names (as strings).
@@ -1225,9 +1225,10 @@ class BaseForecaster(_PretrainedStateMixin, _PredictProbaMixin, BaseEstimator):
         """Get pretrained parameters of this estimator.
 
         Returns a dictionary of attributes that were set during ``pretrain``.
-        These are attributes ending in ``"_"`` that appeared on the estimator
-        after ``pretrain`` was called, and are tracked separately from the
-        fitted parameters set by ``fit``.
+        These are attributes declared via the ``"pretrain:attributes"`` tag,
+        registered dynamically via ``_register_pretrained_attrs``, or detected
+        by the transitional legacy fallback in ``pretrain``. They are tracked
+        separately from the fitted parameters set by ``fit``.
 
         State required:
             Requires state to be ``"pretrained"`` or ``"fitted"``
@@ -1249,9 +1250,8 @@ class BaseForecaster(_PretrainedStateMixin, _PredictProbaMixin, BaseEstimator):
         -------
         params : dict
             Dictionary of pretrained parameter names mapped to their values.
-            Keys are attribute names ending in ``"_"`` that were set during
-            pretraining. Returns empty dict if estimator has not been
-            pretrained.
+            Keys are attribute names tracked as pretrained state. Returns empty
+            dict if estimator has not been pretrained.
 
             If ``deep=True``, also contains keys/value pairs of nested
             estimators' pretrained parameters, indexed as
