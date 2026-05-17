@@ -267,7 +267,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         if hasattr(self, "pred_len") and self.pred_len is not None:
             return int(self.pred_len)
         elif fh is not None:
-            if isinstance(fh, (int, float)):
+            if isinstance(fh, int | float):
                 return int(fh)
             return int(list(fh)[-1])
         else:
