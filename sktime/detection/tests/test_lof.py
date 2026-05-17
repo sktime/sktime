@@ -84,6 +84,23 @@ def test_predict(X, y_expected):
     not run_test_for_class(SubLOF),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+def test_sublof_timedelta_window_size_integer_index_raises():
+    """SubLOF must raise ValueError when timedelta window_size meets integer index.
+
+    Regression test for GitHub issue #9929.
+    """
+    import datetime
+
+    X = pd.DataFrame({"sensor_reading": [0.1, 0.5, 0.2, 100.0, 0.1, 0.0]})
+    model = SubLOF(n_neighbors=2, window_size=datetime.timedelta(days=1))
+    with pytest.raises(ValueError, match="timedelta window_size"):
+        model.fit(X)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SubLOF),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_sublof_does_not_mutate_input():
     """Check that SubLOF does not modify the input DataFrame."""
     X = pd.DataFrame([0, 0.5, 100, 0.1, 0, 0.2, 0.3, 50])
