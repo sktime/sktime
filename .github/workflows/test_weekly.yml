@@ -58,6 +58,6 @@ jobs:
       matrix:
         chunk: ${{ fromJson(needs.collect-estimators.outputs.obj_chunks) }}
 
-    uses: ./.github/workflows/test_weekly_est.yml
+    uses: ./.github/workflows/test_est.yml
     with:
       flags: ${{ toJson(matrix.chunk) }}
