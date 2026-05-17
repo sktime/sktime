@@ -107,6 +107,12 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         "capability:missing_values": False,
         "capability:pred_int": False,
         "capability:pretrain": True,
+        "pretrain:attributes": (
+            "network",
+            "n_pretrain_instances_",
+            "_pretrain_pred_len",
+            "_fh_length",
+        ),
     }
 
     def __init__(

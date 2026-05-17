@@ -244,6 +244,11 @@ class LagLlamaForecaster(BaseForecaster):
         "capability:missing_values": False,
         "capability:insample": False,
         "capability:pretrain": True,
+        "pretrain:attributes": (
+            "estimator_",
+            "predictor_",
+            "_pretrain_prediction_length_",
+        ),
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "authors": ["pranavvp16"],
