@@ -111,6 +111,7 @@ class BaseForecaster(_PretrainedStateMixin, _PredictProbaMixin, BaseEstimator):
         "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
         "capability:missing_values": False,  # can estimator handle missing data?
         "capability:non_contiguous_X": True,  # support non-contiguous X?
+        "pretrain:attributes": (),  # attribute names containing pretrained state
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
