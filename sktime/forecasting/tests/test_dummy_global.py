@@ -328,3 +328,97 @@ class TestDummyGlobalForecaster:
         assert not hasattr(forecaster, "global_mean_")
         assert not hasattr(forecaster, "_pretrained_attrs")
 
+    def test_set_params_preserves_pretrained_attrs_by_default(self):
+        """Test set_params preserves pretrained attributes by default."""
+        forecaster = DummyGlobalForecaster(strategy="mean")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+
+        forecaster.set_params(strategy="last")
+
+        assert forecaster.strategy == "last"
+        assert forecaster._state == "pretrained"
+        assert hasattr(forecaster, "global_mean_")
+        np.testing.assert_almost_equal(forecaster.global_mean_, pretrain_mean)
+
+    def test_set_params_can_discard_pretrained_attrs(self):
+        """Test set_params can explicitly discard pretrained attributes."""
+        forecaster = DummyGlobalForecaster(strategy="mean")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+
+        forecaster.set_params(strategy="last", _keep_pretrained=False)
+
+        assert forecaster.strategy == "last"
+        assert forecaster._state == "new"
+        assert not hasattr(forecaster, "global_mean_")
+        assert not hasattr(forecaster, "_pretrained_attrs")
+
+    def test_reset_after_fit_preserves_only_pretrained_attrs(self):
+        """Test reset after fit removes fitted attrs but keeps pretrained attrs."""
+        forecaster = DummyGlobalForecaster(strategy="last")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+        assert hasattr(forecaster, "last_value_")
+
+        forecaster.reset()
+
+        assert forecaster._state == "pretrained"
+        assert hasattr(forecaster, "global_mean_")
+        assert not hasattr(forecaster, "last_value_")
+        np.testing.assert_almost_equal(forecaster.global_mean_, pretrain_mean)
+
+    def test_set_params_after_fit_preserves_only_pretrained_attrs(self):
+        """Test set_params after fit removes fitted attrs but keeps pretrained attrs."""
+        forecaster = DummyGlobalForecaster(strategy="last")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+        assert hasattr(forecaster, "last_value_")
+
+        forecaster.set_params(strategy="mean")
+
+        assert forecaster.strategy == "mean"
+        assert forecaster._state == "pretrained"
+        assert hasattr(forecaster, "global_mean_")
+        assert not hasattr(forecaster, "last_value_")
+        np.testing.assert_almost_equal(forecaster.global_mean_, pretrain_mean)
+
+    def test_clone_uses_pretrained_attr_copy_hook(self):
+        """Test clone delegates pretrained attr copying to the forecaster hook."""
+
+        class HookedDummyGlobalForecaster(DummyGlobalForecaster):
+            def _copy_pretrained_attr(self, attr_name, attr_value, memo=None):
+                if attr_name == "global_mean_":
+                    self.copied_attr_name_ = attr_name
+                    return attr_value + 1
+                return super()._copy_pretrained_attr(attr_name, attr_value, memo=memo)
+
+        forecaster = HookedDummyGlobalForecaster(strategy="mean")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+
+        cloned = forecaster.clone()
+
+        assert forecaster.copied_attr_name_ == "global_mean_"
+        assert cloned._state == "pretrained"
+        np.testing.assert_almost_equal(cloned.global_mean_, pretrain_mean + 1)
