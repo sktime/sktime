@@ -987,6 +987,24 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 f"capability:pretrain=True but does not override _pretrain method"
             )
 
+    def test_pretrain_attributes_tag_contract(self, estimator_instance):
+        """Test that pretrain:attributes tag has valid type."""
+        if not estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        attrs = estimator_instance._get_pretrain_attributes()
+
+        assert isinstance(attrs, list), (
+            f"{estimator_instance.__class__.__name__}._get_pretrain_attributes() "
+            "must return a list"
+        )
+        assert all(isinstance(attr, str) for attr in attrs), (
+            f"{estimator_instance.__class__.__name__} tag "
+            "'pretrain:attributes' must contain only strings"
+        )
+
     def test_pretrain_state_transitions(self, estimator_instance, n_columns):
         """Test that pretrain() correctly transitions state.
 
