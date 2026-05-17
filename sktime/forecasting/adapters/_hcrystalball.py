@@ -110,6 +110,7 @@ class HCrystalBallAdapter(BaseForecaster):
         "authors": "MichalChromcak",
         "maintainers": "MichalChromcak",
         "python_dependencies": "hcrystalball",
+        "tests:python_dependencies": ["statsmodels"],
         # estimator type
         # --------------
         "capability:exogenous": False,
@@ -178,12 +179,9 @@ class HCrystalBallAdapter(BaseForecaster):
         """
         from sktime.utils.dependencies import _check_soft_dependencies
 
-        if _check_soft_dependencies("hcrystalball", severity="none"):
+        if _check_soft_dependencies(["hcrystalball", "statsmodels"], severity="none"):
             from hcrystalball.wrappers import HoltSmoothingWrapper
 
-            params = {"model": HoltSmoothingWrapper()}
+            return {"model": HoltSmoothingWrapper()}
 
-        else:
-            params = {"model": 42}
-
-        return params
+        return {"model": 42}
