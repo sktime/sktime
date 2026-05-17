@@ -102,7 +102,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     backend : str, default="loky"
         Backend to use when running the fit.
 
-        Bakend must be one supported by ``optuna``:
+        Backend must be one supported by ``optuna``:
 
         * "loky" (default): joblib's LokyBackend.
         * "threading": joblib's ThreadingBackend.
