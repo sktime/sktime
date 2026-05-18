@@ -296,25 +296,28 @@ class GreykiteForecaster(BaseForecaster):
                 - date_format: str or None
                     Format of the time column (default is None, allowing inference).
         """
-        from greykite.framework.templates.autogen.forecast_config import (
-            EvaluationPeriodParam,
-            ForecastConfig,
-            MetadataParam,
-        )
+        from sktime.utils.dependencies import _check_soft_dependencies
 
-        # minimum for changepoint detection (ValueError) and triggers a
-        # MemoryError in the autoregressive lag builder.  Setting cv_max_splits=0
-        # skips the internal grid-search CV so the full dataset is used for fit.
-        _test_config = ForecastConfig(
-            metadata_param=MetadataParam(time_col="ts", value_col="y"),
-            evaluation_period_param=EvaluationPeriodParam(cv_max_splits=0),
-        )
+        if _check_soft_dependencies("greykite", severity="none"):
+            from greykite.framework.templates.autogen.forecast_config import (
+                EvaluationPeriodParam,
+                ForecastConfig,
+                MetadataParam,
+            )
 
-        return [
-            {"forecast_config": _test_config},
-            {
-                "model_template": "SILVERKITE",
-                "date_format": None,
-                "coverage": 0.95,
-            },
-        ]
+            # minimum for changepoint detection (ValueError) and triggers a
+            # MemoryError in the autoregressive lag builder.  Setting cv_max_splits=0
+            # skips the internal grid-search CV so the full dataset is used for fit.
+            _test_config = ForecastConfig(
+                metadata_param=MetadataParam(time_col="ts", value_col="y"),
+                evaluation_period_param=EvaluationPeriodParam(cv_max_splits=0),
+            )
+
+            return [
+                {"forecast_config": _test_config},
+                {
+                    "model_template": "SILVERKITE",
+                    "date_format": None,
+                    "coverage": 0.95,
+                },
+            ]
