@@ -109,7 +109,7 @@ class HCrystalBallAdapter(BaseForecaster):
         # --------------
         "authors": "MichalChromcak",
         "maintainers": "MichalChromcak",
-        "python_dependencies": "hcrystalball",
+        "python_dependencies": ["hcrystalball", "setuptools"],
         "tests:python_dependencies": ["statsmodels"],
         # estimator type
         # --------------
