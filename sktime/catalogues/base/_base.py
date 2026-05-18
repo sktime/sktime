@@ -34,8 +34,9 @@ class BaseCatalogue(BaseObject):
 
         Returns
         -------
-        list[str]
-            list of item names/ids
+        dict
+            Dictionary of categories containing lists of item names/ids, dicts,
+            or objects.
         """
         pass
 
@@ -74,12 +75,25 @@ class BaseCatalogue(BaseObject):
         )
 
         if not as_object:
-            return [
-                item
-                if isinstance(item, str)
-                else (item.__name__ if callable(item) else type(item).__name__)
-                for item in items
-            ]
+            res = []
+            for item in items:
+                if isinstance(item, str):
+                    res.append(item)
+                elif isinstance(item, dict):
+                    # keep the custom ID mapping but resolve the estimator repr
+                    res.append(
+                        {
+                            k: (
+                                v
+                                if isinstance(v, str)
+                                else (v.__name__ if callable(v) else type(v).__name__)
+                            )
+                            for k, v in item.items()
+                        }
+                    )
+                else:
+                    res.append(item.__name__ if callable(item) else type(item).__name__)
+            return res
 
         # as_object=True path
         if self._cached_objects is None:
@@ -88,8 +102,20 @@ class BaseCatalogue(BaseObject):
         if object_type not in self._cached_objects:
             processed = []
             for item in items:
-                if isinstance(item, str):
+                # handle dictionaries of estimators mapped to custom IDs
+                if isinstance(item, dict):
+                    processed_dict = {}
+                    for est_id, est in item.items():
+                        if isinstance(est, str):
+                            est = craft(est)
+                        processed_dict[est_id] = est
+                    processed.append(processed_dict)
+
+                # handle string specs
+                elif isinstance(item, str):
                     processed.append(craft(item))
+
+                # handle raw objects/callables
                 else:
                     processed.append(item)
             self._cached_objects[object_type] = processed
@@ -113,4 +139,10 @@ class BaseCatalogue(BaseObject):
     def __contains__(self, name):
         """Check if an item name exists in the catalogue."""
         all_items = self.get("all")
-        return name in all_items
+        # check against both standard list items and dictionary keys/values
+        for item in all_items:
+            if item == name:
+                return True
+            if isinstance(item, dict) and (name in item or name in item.values()):
+                return True
+        return False
