@@ -321,3 +321,11 @@ class GreykiteForecaster(BaseForecaster):
                     "coverage": 0.95,
                 },
             ]
+
+        return [
+            {
+                "model_template": "SILVERKITE",
+                "date_format": None,
+                "coverage": 0.95,
+            },
+        ]
