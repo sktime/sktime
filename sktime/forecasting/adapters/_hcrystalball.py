@@ -119,7 +119,7 @@ class HCrystalBallAdapter(BaseForecaster):
         # test and CI flags
         # -----------------
         "tests:vm": True,
-        "tests:skip_by_name": ["test_get_test_params_coverage"]
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
         # old package with secondary dependencies
     }
 
