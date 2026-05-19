@@ -109,7 +109,7 @@ class HCrystalBallAdapter(BaseForecaster):
         # --------------
         "authors": "MichalChromcak",
         "maintainers": "MichalChromcak",
-        "python_dependencies": "hcrystalball",
+        "python_dependencies": ["hcrystalball", "setuptools<82"],
         "tests:python_dependencies": ["statsmodels"],
         # estimator type
         # --------------
@@ -117,7 +117,11 @@ class HCrystalBallAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:unequal_length": False,
-        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
+        # test and CI flags
+        # -----------------
+        "tests:vm": True,
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
+        # old package with secondary dependencies
     }
 
     def __init__(self, model):
