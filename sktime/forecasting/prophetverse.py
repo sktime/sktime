@@ -111,7 +111,7 @@ class Prophetverse(_DelegatedForecaster):
         "y_inner_mtype": "pd.DataFrame",
         # testing configuration
         # ---------------------
-        "tests:vm": True,  # run in VM due to dependency requirement prophetverse
+        # "tests:vm": True,   # skip all tests temporarily, issue tracked in #10083
         "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
@@ -300,7 +300,7 @@ class HierarchicalProphet(_DelegatedForecaster):
         "capability:pred_int:insample": True,
         # testing configuration
         # ---------------------
-        "tests:vm": True,  # run in VM due to dependency requirement prophetverse
+        # "tests:vm": True,  # skip all tests temporarily, issue tracked in #10083
         "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
