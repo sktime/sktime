@@ -119,6 +119,7 @@ class ReconcilerForecaster(BaseForecaster):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
+        "capability:unequal_length": False,
         "fit_is_empty": False,
         # CI and test flags
         # -----------------

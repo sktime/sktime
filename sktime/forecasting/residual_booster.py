@@ -86,6 +86,11 @@ class ResidualBoostingForecaster(BaseForecaster):
         self.residual_forecaster = residual_forecaster
         super().__init__()
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         exog = self.base_forecaster.get_tag(
             "capability:exogenous"
         ) or self.residual_forecaster.get_tag("capability:exogenous")

@@ -106,7 +106,11 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
+        # estimator type
+        # --------------
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
@@ -328,6 +332,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:multivariate": True,
+        "capability:unequal_length": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?

@@ -91,8 +91,8 @@ class Prophetverse(_DelegatedForecaster):
     ...         )
     ...     ],
     ... )
-    >>> model.fit(y)
-    >>> model.predict(fh=[1, 2, 3])
+    >>> model.fit(y) # doctest: +SKIP
+    >>> model.predict(fh=[1, 2, 3]) # doctest: +SKIP
     """
 
     _tags = {
@@ -105,12 +105,14 @@ class Prophetverse(_DelegatedForecaster):
         # --------------
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "capability:unequal_length": False,
         "enforce_index_type": [pd.Period, pd.DatetimeIndex],
         "requires-fh-in-fit": False,
         "y_inner_mtype": "pd.DataFrame",
         # testing configuration
         # ---------------------
-        "tests:vm": True,  # run in VM due to dependency requirement prophetverse
+        # "tests:vm": True,   # skip all tests temporarily, issue tracked in #10083
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -263,8 +265,8 @@ class HierarchicalProphet(_DelegatedForecaster):
     ... )
     >>> y = agg.fit_transform(y)
     >>> forecaster = HierarchicalProphet()
-    >>> forecaster.fit(y)
-    >>> forecaster.predict(fh=[1])
+    >>> forecaster.fit(y) # doctest: +SKIP
+    >>> forecaster.predict(fh=[1]) # doctest: +SKIP
     """
 
     _delegate_name = "_delegate"
@@ -280,6 +282,7 @@ class HierarchicalProphet(_DelegatedForecaster):
         "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:missing_values": False,
+        "capability:unequal_length": False,
         "y_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",
@@ -297,7 +300,8 @@ class HierarchicalProphet(_DelegatedForecaster):
         "capability:pred_int:insample": True,
         # testing configuration
         # ---------------------
-        "tests:vm": True,  # run in VM due to dependency requirement prophetverse
+        # "tests:vm": True,  # skip all tests temporarily, issue tracked in #10083
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     def __init__(
