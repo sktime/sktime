@@ -1,8 +1,8 @@
 """Tests for scipy interface."""
-import warnings
 
 import numpy as np
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.dists_kernels.scipy_dist import ScipyDist
 from sktime.tests.test_switch import run_test_for_class
@@ -56,42 +56,9 @@ def X2_df():
         panel=False,
     )
 
-def _scipy_available(metric):
-    """
-    Return
-        True if scipy accepts metric
-        False if not
-    """
-    from scipy.spatial.distance import cdist
-
-    x = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-    try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            cdist(x, x, metric=metric)
-    except ValueError:
-        return False
-
-    return True
-
-
-def _get_kul_name():
-    """Get name of kul... distance.
-
-    Utility to bridge deprecation of kulsinski distance in scipy.
-    Name pre-1.11.0 is kulsinski, and from 1.11.0 it is kulczynski1.
-    From 1.17.0 none of them is available returns None in that case.
-    """
-    distance = ["kulczynski1", "kulsinski"]
-    for name in distance:
-        if _scipy_available(name):
-            return name
-
-    return None
-
 
 # potential parameters
-_METRIC_CANDIDATES = [
+METRIC_VALUES = [
     "braycurtis",
     "canberra",
     "chebyshev",
@@ -103,7 +70,6 @@ _METRIC_CANDIDATES = [
     "hamming",
     "jaccard",
     "jensenshannon",
-    *filter(None, [_get_kul_name()]),
     "mahalanobis",
     "matching",
     "minkowski",
@@ -115,12 +81,15 @@ _METRIC_CANDIDATES = [
     "sqeuclidean",
     "yule",
 ]
-METRIC_VALUES = [
-    metric for metric in _METRIC_CANDIDATES if _scipy_available(metric)
-]
-
 P_VALUES = [1, 2, 5, 10]
 COLALIGN_VALUES = ["intersect", "force-align", "none"]
+
+
+if _check_soft_dependencies("scipy<1.11.0", severity="none"):
+    METRIC_VALUES.append("kulsinski")
+elif _check_soft_dependencies("scipy<1.17.0", severity="none"):
+    METRIC_VALUES.append("kulczynski1")
+# kulsinski distance is no longer present after scipy 1.17
 
 
 @pytest.mark.skipif(
