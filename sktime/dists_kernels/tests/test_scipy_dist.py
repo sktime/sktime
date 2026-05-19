@@ -89,7 +89,7 @@ if _check_soft_dependencies("scipy<1.11.0", severity="none"):
     METRIC_VALUES.append("kulsinski")
 elif _check_soft_dependencies("scipy<1.17.0", severity="none"):
     METRIC_VALUES.append("kulczynski1")
-# kulsinski distance is no longer prsent after scipy 1.17
+# kulsinski distance is no longer present after scipy 1.17
 
 
 @pytest.mark.skipif(
