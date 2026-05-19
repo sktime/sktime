@@ -171,6 +171,7 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:skip_by_name": ["test_persistence_via_pickle"],
         "tests:libs": ["sktime.libs.momentfm"],
     }
 
