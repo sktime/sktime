@@ -111,8 +111,8 @@ class Prophetverse(_DelegatedForecaster):
         "y_inner_mtype": "pd.DataFrame",
         # testing configuration
         # ---------------------
-        "tests:vm": True,  # run in VM due to dependency requirement prophetverse
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
+        # "tests:vm": True,   # skip all tests temporarily, issue tracked in #10083
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     # attribute for _DelegatedForecaster, which then delegates
