@@ -126,7 +126,6 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
-        "capability:unequal_length": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,
