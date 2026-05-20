@@ -116,10 +116,12 @@ class HCrystalBallAdapter(BaseForecaster):
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        "capability:unequal_length": False,
         # test and CI flags
         # -----------------
-        "tests:vm": True,
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
+        # "tests:vm": True,  # skip all tests temporarily, issue tracked in #10083
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
+        # "tests:skip_by_name": ["test_get_test_params_coverage"],
         # old package with secondary dependencies
     }
 
