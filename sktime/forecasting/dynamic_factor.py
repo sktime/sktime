@@ -248,21 +248,35 @@ class DynamicFactor(_StatsModelsAdapter):
 
             # Select only the requested in-sample indices
             insample_abs_int = abs_int_fh[insample_mask]
-            y_insample = fitted_vals.iloc[insample_abs_int]
+            # Convert to numpy array of integers for compatibility with pandas .iloc
+            if hasattr(insample_abs_int, "to_numpy"):
+                insample_idx = insample_abs_int.to_numpy()
+            else:
+                insample_idx = np.asarray(insample_abs_int)
+            y_insample = fitted_vals.iloc[insample_idx]
 
             # Restore the correct index using sktime's absolute index converter
-            fh_insample = fh[insample_mask]
+            fh_insample = fh._new(fh.to_pandas()[insample_mask])
             y_insample.index = fh_insample.to_absolute_index(self.cutoff)
             parts.append(y_insample)
 
         # --- Out-of-sample part: use statsmodels predict() ---
         if outsample_mask.any():
             outsample_abs_int = abs_int_fh[outsample_mask]
-            start_oos = int(outsample_abs_int[0])
-            end_oos = int(outsample_abs_int[-1])
+            if hasattr(outsample_abs_int, "to_numpy"):
+                outsample_idx = outsample_abs_int.to_numpy()
+            else:
+                outsample_idx = np.asarray(outsample_abs_int)
+            start_oos = int(outsample_idx[0])
+            end_oos = int(outsample_idx[-1])
+
+            if X is not None:
+                exog_part = X.iloc[:end_oos - n_train]
+            else:
+                exog_part = None
 
             y_oos = self._fitted_forecaster.predict(
-                start=start_oos, end=end_oos, exog=X
+                start=start_oos, end=end_oos, exog=exog_part
             )
 
             # if y is univariate, we duplicated the column in fit,
@@ -276,7 +290,7 @@ class DynamicFactor(_StatsModelsAdapter):
                     start_oos + y_first_index, end_oos + y_first_index + 1
                 )
 
-            fh_oos = fh[outsample_mask]
+            fh_oos = fh._new(fh.to_pandas()[outsample_mask])
             y_oos = y_oos.loc[fh_oos.to_absolute_index(self.cutoff)]
             parts.append(y_oos)
 
@@ -331,18 +345,33 @@ class DynamicFactor(_StatsModelsAdapter):
         else:
             coverage_list = coverage
 
-        _, end = fh.to_absolute_int(y_first_index, self.cutoff)[[0, -1]]
-        steps = end - self._y_len + 1
-        ix = fh.to_indexer(self.cutoff)
+        abs_int_fh = fh.to_absolute_int(y_first_index, self.cutoff)
+        if hasattr(abs_int_fh, "to_numpy"):
+            abs_int_fh_np = abs_int_fh.to_numpy()
+        else:
+            abs_int_fh_np = np.asarray(abs_int_fh)
+        start = int(abs_int_fh_np.min())
+        end = int(abs_int_fh_np.max())
+
+        n_train = len(self._y) - 1
+        if end > n_train:
+            if X is not None:
+                exog_part = X.iloc[:end - n_train]
+            else:
+                exog_part = None
+        else:
+            exog_part = None
 
         model = self._fitted_forecaster
+        abs_fh = fh.to_absolute_index(self.cutoff)
 
         df_list = []
         # generate the forecasts for each alpha/coverage
         for coverage in coverage_list:
             alpha = 1 - coverage
 
-            y_pred = model.get_forecast(steps=steps, exog=X).conf_int(alpha=alpha)
+            pred = model.get_prediction(start=start, end=end, exog=exog_part)
+            y_pred = pred.conf_int(alpha=alpha)
 
             # if y is univariate, we duplicated the column in fit,
             # so now we need to revert this duplication
@@ -350,7 +379,7 @@ class DynamicFactor(_StatsModelsAdapter):
             if self._was_univariate:
                 y_pred = y_pred.iloc[:, [0, 1]]
 
-            y_pred = y_pred.iloc[ix]
+            y_pred = y_pred.loc[abs_fh]
 
             y_pred.rename(
                 columns={orig_col: orig_col + f" {coverage}" for orig_col in y_pred},
