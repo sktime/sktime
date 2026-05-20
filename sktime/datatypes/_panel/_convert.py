@@ -658,6 +658,9 @@ def from_3d_numpy_to_multi_index(
     time_index : str
         Name of multi-index level corresponding to DataFrame's timepoints
 
+    column_names : list, optional
+        Optional list of column names to use for the DataFrame columns.
+
 
     Returns
     -------
@@ -730,7 +733,7 @@ def from_multi_index_to_nested(
     multi_ind_dataframe : pd.DataFrame
         Input multi-indexed pandas DataFrame
 
-    instance_index_name : int or str, default=0 (first level = 0-th index)
+    instance_index : int or str, default=None (first level = 0-th index)
         Index or name of multi-index level corresponding to the DataFrame's instances
 
     cells_as_numpy : bool, default = False
@@ -894,7 +897,7 @@ def from_nested_to_3d_numpy(X):
 
     Returns
     -------
-    X_3d : np.ndarrray
+    X_3d : np.ndarray
         3-dimensional NumPy array
     """
     # n_columns = X.shape[1]

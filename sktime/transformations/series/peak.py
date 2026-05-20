@@ -24,7 +24,7 @@ class PeakTimeFeature(BaseTransformer):
         the frequency of the time series given by ts_freq.
         E.g., if daily data is provided and ts_freq = ("D"), it does not make
         sense to derive PeakTimeFeature with higher frequency like hourly features. So,
-        the outpul must exclude is_peak_hour and will be is_peak_day, is_peak_week,
+        the output must exclude is_peak_hour and will be is_peak_day, is_peak_week,
         is_peak_month, is_peak_quarter, is_peak_year.
         Only supports the following frequencies:
         {"Y": year, "Q": quarter, "M": month, "W": week, "D": day, "H": hour}
@@ -119,7 +119,7 @@ class PeakTimeFeature(BaseTransformer):
 
     2- Example for two peak intervals: peak_hour_start=[6, 16], peak_hour_end=[9, 20]
     means we have two peak hour intervals where the first peak starts at 6 am
-    and ends at 9 am. The second peak starts at 16 am and ends at 20. we can
+    and ends at 9 am. The second peak starts at 16 (4 PM) and ends at 20. we can
     have more than two intervals.
 
     3- Example for one working interval: working_hour_start=[8], working_hour_end=[16]
@@ -134,7 +134,7 @@ class PeakTimeFeature(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.series.peak import PeakTimeFeature  # doctest: +SKIP
-    >>> from sktime.datasets import   # doctest: +SKIP
+    >>> from sktime.datasets import load_solar  # doctest: +SKIP
     >>> y = load_solar()  # doctest: +SKIP
     >>> y = y.tz_localize(None)  # doctest: +SKIP
     >>> y = y.asfreq("H")  # doctest: +SKIP
