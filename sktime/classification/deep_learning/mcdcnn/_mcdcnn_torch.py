@@ -157,28 +157,33 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
                 f"`kernel_sizes` {len(self.kernel_sizes)}."
             )
 
-        # compute effective optimizer/kwargs for parent — not stored on self
-        _optimizer = optim if optim is not None else "SGD"
-        _optimizer_kwargs = (
-            optim_kwargs
-            if optim is not None or optim_kwargs is not None
-            else {"momentum": 0.9, "weight_decay": 0.0005}
-        )
-
         super().__init__(
             num_epochs=self.n_epochs,
             batch_size=self.batch_size,
             activation=self.activation,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
-            optimizer=_optimizer,
-            optimizer_kwargs=_optimizer_kwargs,
+            optimizer=optim,
+            optimizer_kwargs=optim_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
         )
+
+    def _instantiate_optimizer(self):
+        if self.optim is None:
+            from sktime.utils.dependencies import _safe_import
+
+            SGD = _safe_import("torch.optim.SGD")
+            return SGD(
+                self.network.parameters(),
+                lr=self.lr,
+                momentum=0.9,
+                weight_decay=0.0005,
+            )
+        return super()._instantiate_optimizer()
 
     def _build_network(self, X, y):
         """Build the MCDCNN network with output layer for classification.

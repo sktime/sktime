@@ -601,6 +601,12 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                 "activation": "gelu",
                 "dropout_rate": 0.2,
             },
+            {
+                "window_length": 5,
+                "hidden_size": 8,
+                "epochs": 3,
+                "hidden_layers": None,
+            },
         ]
 
         return params_list

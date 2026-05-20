@@ -459,5 +459,14 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
                 "verbose": False,
                 "random_state": 0,
             },
+            {
+                "hidden_dim": 32,
+                "gru_layers": 1,
+                "num_epochs": 2,
+                "conv_layers": None,
+                "kernel_sizes": None,
+                "optimizer_kwargs": None,
+                "random_state": 0,
+            },
         ]
         return params
