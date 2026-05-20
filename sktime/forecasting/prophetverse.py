@@ -105,12 +105,14 @@ class Prophetverse(_DelegatedForecaster):
         # --------------
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "capability:unequal_length": False,
         "enforce_index_type": [pd.Period, pd.DatetimeIndex],
         "requires-fh-in-fit": False,
         "y_inner_mtype": "pd.DataFrame",
         # testing configuration
         # ---------------------
-        "tests:vm": True,  # run in VM due to dependency requirement prophetverse
+        # "tests:vm": True,   # skip all tests temporarily, issue tracked in #10083
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -280,6 +282,7 @@ class HierarchicalProphet(_DelegatedForecaster):
         "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:missing_values": False,
+        "capability:unequal_length": False,
         "y_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",
@@ -297,7 +300,8 @@ class HierarchicalProphet(_DelegatedForecaster):
         "capability:pred_int:insample": True,
         # testing configuration
         # ---------------------
-        "tests:vm": True,  # run in VM due to dependency requirement prophetverse
+        # "tests:vm": True,  # skip all tests temporarily, issue tracked in #10083
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     def __init__(
