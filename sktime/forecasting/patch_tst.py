@@ -258,16 +258,6 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "python_dependencies": ["transformers", "torch", "accelerate"],
         # estimator type
         # --------------
-        # "X_inner_mtype": [
-        #     "pd.DataFrame",
-        #     "pd-multiindex",
-        #     "pd_multiindex_hier",
-        # ],
-        # "y_inner_mtype": [
-        #     "pd.DataFrame",
-        #     "pd-multiindex",
-        #     "pd_multiindex_hier",
-        # ],
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
@@ -477,10 +467,6 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             fh = fh.to_relative(self.cutoff)
         y_columns = y.columns
         y_index_names = list(y.index.names)
-        # multi-index conversion
-        # if isinstance(y.index, pd.MultiIndex):
-        #     _y = _frame2numpy(y)
-        # else:
         _y = np.expand_dims(y.values, axis=0)
 
         _y = torch.tensor(_y).float().to(self.model.device)
@@ -604,24 +590,6 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         params_set.append(params2)
 
         return params_set
-
-
-# def _same_index(data):
-#     data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
-#         lambda x: x.index.get_level_values(-1)
-#     )
-#     assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
-#         "All series must has the same index"
-#     )
-#     return data.iloc[0], len(data.iloc[0])
-
-
-# def _frame2numpy(data):
-#     idx, length = _same_index(data)
-#     arr = np.array(data.values, dtype=np.float32).reshape(
-#         (-1, length, len(data.columns))
-#     )
-#     return arr
 
 
 # copied from the PytorchDataset module from hf_transformers_forecaster.py
