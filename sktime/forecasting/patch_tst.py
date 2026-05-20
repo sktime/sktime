@@ -613,10 +613,6 @@ class PyTorchDataset(Dataset):
         self.context_length = context_length
         self.prediction_length = prediction_length
 
-        # multi-index conversion
-        # if isinstance(y.index, pd.MultiIndex):
-        #     self.y = _frame2numpy(y)
-        # else:
         self.y = np.expand_dims(y.values, axis=0)
 
         self.n_sequences, self.n_timestamps, _ = self.y.shape

@@ -751,18 +751,11 @@ class PyTorchDataset(Dataset):
         self.context_length = context_length
         self.prediction_length = prediction_length
 
-        # multi-index conversion for y
-        # if isinstance(y.index, pd.MultiIndex):
-        #     self.y = _frame2numpy(y)
-        # else:
         self.y = np.expand_dims(y.values, axis=0)
 
         # Handle exogenous variables
         self.X = None
         if X is not None:
-            # if isinstance(X.index, pd.MultiIndex):
-            #     self.X = _frame2numpy(X)
-            # else:
             self.X = np.expand_dims(X.values, axis=0)
 
         self.n_sequences, self.n_timestamps, _ = self.y.shape

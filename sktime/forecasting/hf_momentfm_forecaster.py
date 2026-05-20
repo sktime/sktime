@@ -690,10 +690,6 @@ class MomentPytorchDataset(Dataset):
         self.shape = y.shape
         self.device = device
 
-        # multi-index conversion
-        # if isinstance(y.index, pd.MultiIndex):
-        #     self.y = _frame2numpy(y)
-        # else:
         self.y = np.expand_dims(y.values, axis=0)
 
         # n_timestamps should be the seq length for a single series in both
