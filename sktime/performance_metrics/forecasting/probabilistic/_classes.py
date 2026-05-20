@@ -177,13 +177,15 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         # Default implementation relies on implementation of evaluate_by_index
         try:
             index_df = self._evaluate_by_index(y_true, y_pred, multioutput, **kwargs)
-            
+
             sample_weight = kwargs.get("sample_weight", None)
             if sample_weight is not None:
-                out_df = pd.DataFrame(np.average(index_df, weights=sample_weight, axis=0)).T
+                out_df = pd.DataFrame(
+                    np.average(index_df, weights=sample_weight, axis=0)
+                ).T
             else:
                 out_df = pd.DataFrame(index_df.mean(axis=0)).T
-                
+
             out_df.columns = index_df.columns
             return out_df
         except RecursionError:
@@ -985,13 +987,13 @@ class _BaseDistrForecastingMetric(_BaseProbaForecastingErrorMetric):
             y_true=y_true, y_pred=y_pred, **kwargs
         )
         index_df = self.evaluate_by_index(y_true, y_pred, multioutput, **kwargs)
-        
+
         sample_weight = kwargs.get("sample_weight", None)
         if sample_weight is not None:
             out_df = pd.DataFrame(np.average(index_df, weights=sample_weight, axis=0)).T
         else:
             out_df = pd.DataFrame(index_df.mean(axis=0)).T
-            
+
         out_df.columns = index_df.columns
 
         if multioutput == "uniform_average":
