@@ -66,6 +66,7 @@ Deep learning
     cntc.CNTCRegressor
     fcn.FCNRegressor
     inceptiontime.InceptionTimeRegressor
+    inceptiontime.InceptionTimeRegressorTorch
     lstmfcn.LSTMFCNRegressor
     lstmfcn.LSTMFCNRegressorTorch
     macnn.MACNNRegressor
@@ -76,6 +77,7 @@ Deep learning
     rnn.SimpleRNNRegressor
     rnn.SimpleRNNRegressorTorch
     tapnet.TapNetRegressor
+    tapnet.TapNetRegressorTorch
 
 Distance-based
 --------------

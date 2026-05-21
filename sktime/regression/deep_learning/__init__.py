@@ -6,6 +6,7 @@ __all__ = [
     "CNTCRegressor",
     "FCNRegressor",
     "InceptionTimeRegressor",
+    "InceptionTimeRegressorTorch",
     "LSTMFCNRegressor",
     "MACNNRegressor",
     "MCDCNNRegressor",
@@ -15,12 +16,16 @@ __all__ = [
     "SimpleRNNRegressor",
     "SimpleRNNRegressorTorch",
     "TapNetRegressor",
+    "TapNetRegressorTorch",
 ]
 
 from sktime.regression.deep_learning.cnn import CNNRegressor, CNNRegressorTorch
 from sktime.regression.deep_learning.cntc import CNTCRegressor
 from sktime.regression.deep_learning.fcn import FCNRegressor
-from sktime.regression.deep_learning.inceptiontime import InceptionTimeRegressor
+from sktime.regression.deep_learning.inceptiontime import (
+    InceptionTimeRegressor,
+    InceptionTimeRegressorTorch,
+)
 from sktime.regression.deep_learning.lstmfcn import LSTMFCNRegressor
 from sktime.regression.deep_learning.macnn import MACNNRegressor
 from sktime.regression.deep_learning.mcdcnn import (
@@ -33,4 +38,7 @@ from sktime.regression.deep_learning.rnn import (
     SimpleRNNRegressor,
     SimpleRNNRegressorTorch,
 )
-from sktime.regression.deep_learning.tapnet import TapNetRegressor
+from sktime.regression.deep_learning.tapnet import (
+    TapNetRegressor,
+    TapNetRegressorTorch,
+)
