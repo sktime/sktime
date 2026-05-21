@@ -168,6 +168,14 @@ Naive forecasters
 
     ForecastKnownValues
 
+.. currentmodule:: sktime.forecasting.dummy_global
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyGlobalForecaster
+
 Prediction intervals
 --------------------
 
@@ -393,6 +401,14 @@ Auto-ARIMA models
 
     StatsForecastAutoARIMA
 
+.. currentmodule:: sktime.forecasting.arar
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARARForecaster
+
 
 ARCH models
 -----------
@@ -497,6 +513,14 @@ Deep learning based forecasters
     LTSFNLinearForecaster
     LTSFTransformerForecaster
 
+.. currentmodule:: sktime.forecasting.xlstm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    XLSTMForecaster
+
 .. currentmodule:: sktime.forecasting.scinet
 
 .. autosummary::
@@ -579,6 +603,14 @@ Pre-trained and foundation models
 
     ChronosForecaster
 
+.. currentmodule:: sktime.forecasting.chronos2
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Chronos2Forecaster
+
 .. currentmodule:: sktime.forecasting.hf_transformers_forecaster
 
 .. autosummary::
@@ -586,6 +618,14 @@ Pre-trained and foundation models
     :template: class.rst
 
     HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.lagllama
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LagLlamaForecaster
 
 .. currentmodule:: sktime.forecasting.moirai_forecaster
 
@@ -626,6 +666,14 @@ Pre-trained and foundation models
     :template: class.rst
 
     TimeMoEForecaster
+
+.. currentmodule:: sktime.forecasting.timer
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimerForecaster
 
 .. currentmodule:: sktime.forecasting.timesfm_forecaster
 

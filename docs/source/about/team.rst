@@ -37,8 +37,12 @@ Community Council Observers
      - GitHub ID
    * - Benedikt Heidrich
      - :user:`benheid`
+   * - Felipe Angelim Vieira
+     - :user:`felipeangelimvieira`
    * - Jana Schmidberger
      - :user:`janasberger`
+   * - Jigyasu
+     - :user:`jgyasu`
    * - Kiril Ralinovski
      - :user:`kirilral`
 

@@ -72,15 +72,19 @@ Deep learning
     gru.GRUClassifier
     gru.GRUFCNNClassifier
     inceptiontime.InceptionTimeClassifier
+    inceptiontime.InceptionTimeClassifierTorch
     lstmfcn.LSTMFCNClassifier
+    lstmfcn.LSTMFCNClassifierTorch
     macnn.MACNNClassifier
     mcdcnn.MCDCNNClassifier
+    mcdcnn.MCDCNNClassifierTorch
     mlp.MLPClassifier
     mvts_transformer.MVTSTransformerClassifier
     resnet.ResNetClassifier
     rnn.SimpleRNNClassifier
     rnn.SimpleRNNClassifierTorch
     tapnet.TapNetClassifier
+    tapnet.TapNetClassifierTorch
 
 Foundation models
 -----------------

@@ -30,9 +30,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         The activation function applied inside the RNN. Can be either 'tanh' or 'relu'.
         Because currently PyTorch only supports these two activations inside the RNN.
         https://docs.pytorch.org/docs/stable/generated/torch.nn.RNN.html#torch.nn.RNN
-    batch_first : bool, default = False
-        If True, then the input and output tensors are provided
-        as (batch, seq, feature) instead of (seq, batch, feature).
     bias : bool, default = True
         If False, then the layer does not use bias weights.
     init_weights : bool, default = True
@@ -110,7 +107,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         n_layers: int = 1,
         activation: str | None | Callable = None,
         activation_hidden: str = "relu",
-        batch_first: bool = False,
         bias: bool = True,
         init_weights: bool = True,
         dropout: float = 0.0,
@@ -132,11 +128,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
         self.activation = activation
-        # Note: we do not validate activation_hidden here.
-        # if activation_hidden is invalid, i.e. not in ['tanh', 'relu']
-        # PyTorch will raise an error
         self.activation_hidden = activation_hidden
-        self.batch_first = batch_first
         self.bias = bias
         self.init_weights = init_weights
         self.dropout = dropout
@@ -155,11 +147,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         self.verbose = verbose
         self.random_state = random_state
 
-        # input_size and num_classes to be inferred from the data
-        # and will be set in _build_network
-        self.input_size = None
-        self.num_classes = None
-
         super().__init__(
             num_epochs=self.num_epochs,
             batch_size=self.batch_size,
@@ -174,6 +161,27 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             verbose=self.verbose,
             random_state=self.random_state,
         )
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        # Note: we do not validate activation_hidden here.
+        # if activation_hidden is invalid, i.e. not in ['tanh', 'relu']
+        # PyTorch will raise an error
+
+        # input_size and num_classes to be inferred from the data
+        # and will be set in _build_network
+        self.input_size = None
+        self.num_classes = None
+
+        super().__post_init__()
 
     def _build_network(self, X, y):
         """Build the RNN network.
@@ -206,7 +214,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             activation=self._validated_activation,  # use self._validated_activation
             activation_hidden=self.activation_hidden,
             bias=self.bias,
-            batch_first=self.batch_first,
             num_classes=self.num_classes,
             init_weights=self.init_weights,
             dropout=self.dropout,
@@ -243,7 +250,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "n_layers": 1,
             "activation": None,
             "activation_hidden": "relu",
-            "batch_first": False,
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
@@ -266,7 +272,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "n_layers": 1,
             "activation": "sigmoid",
             "activation_hidden": "relu",
-            "batch_first": False,
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
@@ -289,7 +294,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "n_layers": 1,
             "activation": None,
             "activation_hidden": "relu",
-            "batch_first": False,
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
@@ -312,7 +316,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "n_layers": 1,
             "activation": "logsoftmax",
             "activation_hidden": "relu",
-            "batch_first": False,
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,

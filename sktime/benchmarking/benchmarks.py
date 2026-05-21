@@ -13,7 +13,22 @@ from sktime.benchmarking._benchmarking_dataclasses import (
 )
 from sktime.benchmarking._storage_handlers import get_storage_backend
 from sktime.benchmarking._utils import _check_id_format
+from sktime.catalogues.base import BaseCatalogue
+from sktime.registry import scitype
 from sktime.utils.unique_str import _make_strings_unique
+
+# Scitype groupings — defined once, used everywhere
+_DATASET_SCITYPES = {"dataset_classification", "dataset_forecasting"}
+_METRIC_SCITYPES = {"metric_forecasting", "metric_tabular", "metric_proba_tabular"}
+_SPLITTER_SCITYPES = {"splitter", "splitter_tabular"}
+_ESTIMATOR_SCITYPES = {"classifier", "forecaster"}
+
+# Maps scitype → which collection to add to (for single objects)
+_SCTYPE_TO_COLLECTION = {
+    **dict.fromkeys(_DATASET_SCITYPES, "_datasets"),
+    **dict.fromkeys(_METRIC_SCITYPES, "_metrics"),
+    **dict.fromkeys(_SPLITTER_SCITYPES, "_cv_splitters"),
+}
 
 
 def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
@@ -242,6 +257,10 @@ class BaseBenchmark:
         self.estimators = _SktimeRegistry(id_format)
         self.tasks = _SktimeRegistry(id_format)
 
+        self._datasets = []
+        self._cv_splitters = []
+        self._metrics = []
+
     def add_estimator(
         self,
         estimator: BaseEstimator,
@@ -300,6 +319,187 @@ class BaseBenchmark:
         """Register a task to the benchmark."""
         raise NotImplementedError("This method must be implemented by a subclass.")
 
+    def add(self, *args):
+        """Add estimators, task components, full task tuples, or catalogues.
+
+        Objects are interpreted based on their ``scitype`` and added to the
+        benchmark accordingly. Multiple objects can be provided in a single call.
+
+        Supported inputs include estimators, datasets, metrics, CV splitters,
+        task tuples, and catalogues.
+
+        Parameters
+        ----------
+        *args : object
+            Objects to add. Supported patterns are:
+
+            - estimator
+                Estimator with scitype "classifier" or "forecaster".
+
+            - dict
+                Dictionary of estimators where keys are custom `estimator_id`s and
+                values are the estimators.
+
+            - list
+                List of estimators. `estimator_id`s are generated automatically using
+                the estimator's class name.
+
+            - dataset
+                Object with scitype `dataset_classification` or
+                `dataset_forecasting`.
+
+            - metric
+                Object with scitype `metric_forecasting`, `metric_tabular`, or
+                `metric_proba_tabular`.
+
+            - cv_splitter
+                Object with scitype "splitter" or "splitter_tabular".
+
+            - (dataset, metric, splitter)
+                Tuple specifying a full task. Must contain exactly one dataset, one
+                metric, and one splitter.
+
+            - catalogue
+                Instance of ``BaseCatalogue``. All contained objects are added
+                recursively.
+
+        Notes
+        -----
+        - Task tuples are order-invariant; roles are inferred via ``scitype``.
+        - Duplicate datasets, metrics, and splitters are ignored.
+
+        Raises
+        ------
+        TypeError
+            If:
+
+            - a tuple has unsupported length (e.g., not length 3 for task tuples)
+            - a task tuple does not contain exactly one dataset, metric, and splitter
+            - duplicate scitypes are present in a task tuple
+            - an object has an unrecognized ``scitype``
+
+        Examples
+        --------
+        >>> benchmark = ClassificationBenchmark()
+
+        Add an estimator:
+        >>> benchmark.add(DummyClassifier())
+
+        Add components individually:
+        >>> benchmark.add(ArrowHead())
+        >>> benchmark.add(accuracy_score)
+        >>> benchmark.add(KFold(n_splits=3))
+
+        Add a task tuple (order does not matter):
+        >>> benchmark.add((accuracy_score, ArrowHead(), KFold(n_splits=3)))
+
+        Add a dictionary of estimators with custom IDs:
+        >>> benchmark.add(
+        ...     {
+        ...         "dummy": DummyClassifier(),
+        ...         "knn": KNeighborsClassifier(),
+        ...     }
+        ... )
+
+        Add a list of estimators (IDs generated automatically):
+        >>> benchmark.add([DummyClassifier(), KNeighborsClassifier()])
+
+        Add multiple objects:
+        >>> benchmark.add(
+        ...     {"dummy_1": DummyClassifier()},
+        ...     (ArrowHead(), accuracy_score, KFold(n_splits=3)),
+        ... )
+        """
+        for obj in args:
+            if isinstance(obj, BaseCatalogue):
+                for category in obj.available_categories():
+                    for item in obj.get(category, as_object=True):
+                        self.add(item)
+
+            elif isinstance(obj, (dict, list)):
+                self.add_estimator(obj)
+
+            elif isinstance(obj, tuple):
+                self._add_task_tuple(obj)
+
+            else:
+                sctype = scitype(obj)
+                if sctype in _ESTIMATOR_SCITYPES:
+                    self.add_estimator(obj)
+                elif sctype in _SCTYPE_TO_COLLECTION:
+                    self._add_unique(getattr(self, _SCTYPE_TO_COLLECTION[sctype]), obj)
+                else:
+                    raise TypeError(
+                        f"Unrecognized object type: {type(obj)} (scitype: {sctype})"
+                    )
+
+    def _add_task_tuple(self, obj):
+        """Parse and register a 3-tuple task (dataset, metric, splitter)."""
+        if len(obj) != 3:
+            raise TypeError(
+                f"Unsupported tuple format of length {len(obj)}. "
+                "Expected task tuple of length 3."
+            )
+
+        # Map scitype group → (slot_name, collection_attr)
+        SLOT_MAP = {
+            **dict.fromkeys(_DATASET_SCITYPES, ("dataset", "_datasets")),
+            **dict.fromkeys(_METRIC_SCITYPES, ("metric", "_metrics")),
+            **dict.fromkeys(_SPLITTER_SCITYPES, ("splitter", "_cv_splitters")),
+        }
+
+        slots = {}  # slot_name → item
+        for item in obj:
+            st = scitype(item)
+            if st not in SLOT_MAP:
+                raise TypeError(
+                    f"Unrecognized object in task tuple: {type(item)} (scitype: {st})"
+                )
+            slot_name, _ = SLOT_MAP[st]
+            if slot_name in slots:
+                raise TypeError(f"Multiple {slot_name}s provided in tuple")
+            slots[slot_name] = (item, SLOT_MAP[st][1])
+
+        if len(slots) != 3:
+            missing = {"dataset", "metric", "splitter"} - slots.keys()
+            raise TypeError(f"Task tuple missing: {', '.join(missing)}")
+
+        for item, collection_attr in slots.values():
+            self._add_unique(getattr(self, collection_attr), item)
+
+    def _add_unique(self, collection, item):
+        if item not in collection:
+            collection.append(item)
+
+    def register_stored_tasks(self):
+        """Register stored tasks from global DATASETS, METRICS, CV_SPLITTERS."""
+        if self._datasets and self._metrics and self._cv_splitters:
+            for dataset_loader in self._datasets:
+                if callable(dataset_loader) and hasattr(dataset_loader, "__name__"):
+                    dataset_name = dataset_loader.__name__
+                elif isinstance(dataset_loader, type):
+                    dataset_name = dataset_loader().get_tags().get("name")
+                elif hasattr(dataset_loader, "get_tags"):
+                    dataset_name = dataset_loader.get_tags().get("name")
+                else:
+                    dataset_name = "_"
+
+                for splitter in self._cv_splitters:
+                    task_id = (
+                        f"[dataset={dataset_name}]"
+                        f"_[cv_splitter={splitter.__class__.__name__}]"
+                    )
+
+                    task_kwargs = {
+                        "data": dataset_loader,
+                        "cv_splitter": splitter,
+                        "scorers": self._metrics,
+                    }
+                    self._add_task(
+                        task_id,
+                        TaskObject(**task_kwargs),
+                    )
+
     def _run(self, results_path: str, force_rerun: str | list[str] = "none"):
         """
         Run the benchmarking for all tasks and estimators.
@@ -316,6 +516,8 @@ class BaseBenchmark:
             * If "all", will run validation for all tasks and models.
             * If list of str, will run validation for tasks and models in list.
         """
+        self.register_stored_tasks()
+
         results = _BenchmarkingResults(path=results_path)
 
         for task_id, estimator_id, task, estimator in self._generate_experiments():
@@ -362,13 +564,20 @@ class BaseBenchmark:
                 exps.append((task_id, estimator_id, task, estimator))
         return exps
 
-    def run(self, output_file: str, force_rerun: str | list[str] = "none"):
+    def run(self, output_file: str = None, force_rerun: str | list[str] = "none"):
         """
         Run the benchmarking for all tasks and estimators.
 
+        If ``output_file`` is provided, results will be saved to a file or location,
+        in a format inferred from the file extension.
+
+        The exact format is determined by the storage backend used, see
+        documentation on storage handlers in
+        ``sktime.benchmarking._storage_handlers.get_storage_backend``.
+
         Parameters
         ----------
-        output_file : str or None.
+        output_file : str or None (default)
             Path to save the results to.
             If None, results will not be saved.
 

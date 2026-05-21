@@ -8,11 +8,20 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.warnings import warn
 
 
+# TODO (release 0.42.0)
+# change the default value of 'activation_hidden' to "relu"
+# update the docstring for activation_hidden from "sigmoid" to "relu"
+# and remove the note about the change from the docstring.
+# Remove the usage of self._activation_hidden throughout the class
+# and replace it with self.activation_hidden
 class CNNClassifier(BaseDeepClassifier):
     """Time Convolutional Neural Network (CNN), as described in [1]_.
+
+    Zhao et al. 2017 uses sigmoid activation in the hidden layers.
+    To obtain same behaviour as Zhao et al. 2017, set activation_hidden to "sigmoid".
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
@@ -45,6 +54,8 @@ class CNNClassifier(BaseDeepClassifier):
         Activation function used in the hidden layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
+        Default value of activation_hidden will change to "relu"
+        in version '0.42.0'.
     use_bias : boolean, default = True
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
@@ -87,6 +98,8 @@ class CNNClassifier(BaseDeepClassifier):
         "tests:vm": True,  # run in VM due to memory requirement
     }
 
+    # TODO (release 0.42.0)
+    # Change the default value of 'activation_hidden' to "relu"
     def __init__(
         self,
         n_epochs=2000,
@@ -100,14 +113,12 @@ class CNNClassifier(BaseDeepClassifier):
         metrics=None,
         random_state=None,
         activation="softmax",
-        activation_hidden="sigmoid",
+        activation_hidden="changing_from_sigmoid_to_relu_in_0.42.0",
         use_bias=True,
         optimizer=None,
         filter_sizes=None,
         padding="auto",
     ):
-        _check_dl_dependencies(severity="error")
-
         self.batch_size = batch_size
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
@@ -129,15 +140,51 @@ class CNNClassifier(BaseDeepClassifier):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        # TODO (release 0.42.0)
+        # After changing the default value of 'activation_hidden' to "relu"
+        # in the __init__ method signature,
+        # remove the following 'if-else' check.
+        # Remove the usage of self._activation_hidden throughout the class
+        # and replace it with self.activation_hidden
+        if self.activation_hidden == "changing_from_sigmoid_to_relu_in_0.42.0":
+            warn(
+                "in `CNNClassifier`, the default value of parameter 'activation_hidden'"
+                " will change to 'relu' in version '0.42.0'. "
+                "To keep current behaviour and to silence this warning, "
+                "set 'activation_hidden' to 'sigmoid' explicitly.",
+                category=DeprecationWarning,
+                obj=self,
+            )
+            self._activation_hidden = "sigmoid"
+        else:
+            self._activation_hidden = self.activation_hidden
+
+        # TODO (release 0.42.0)
+        # After changing the default value of 'activation_hidden' to "relu"
+        # in the __init__ method signature,
+        # Remove the usage of self._activation_hidden in the following lines
+        # and replace it with self.activation_hidden
         self._network = CNNNetwork(
             kernel_size=self.kernel_size,
             avg_pool_size=self.avg_pool_size,
             n_conv_layers=self.n_conv_layers,
             filter_sizes=self.filter_sizes,
-            activation=self.activation_hidden,
+            activation=self._activation_hidden,
             padding=self.padding,
             random_state=self.random_state,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

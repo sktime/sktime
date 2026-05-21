@@ -52,6 +52,7 @@ Percentage errors
     MeanSquaredPercentageError
     MedianSquaredPercentageError
     MeanSquaredErrorPercentage
+    MeanArctangentAbsolutePercentageError
 
 Scaled errors
 ^^^^^^^^^^^^^

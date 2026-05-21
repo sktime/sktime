@@ -6,7 +6,6 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.macnn import MACNNNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MACNNClassifier(BaseDeepClassifier):
@@ -21,6 +20,9 @@ class MACNNClassifier(BaseDeepClassifier):
     padding : str, optional (default="same")
         The type of padding to be provided in MACNN Blocks. Accepts
         all the string values that keras.layers supports.
+        Note: For Conv1D layers within MACNN Blocks, padding is always set to "same"
+        to ensure consistent output lengths for multi-scale convolutions.
+        This parameter only affects the pooling layers between MACNN Blocks.
     pool_size : int, optional (default=3)
         A single value representing pooling windows which are applied
         between two MACNN Blocks.
@@ -110,8 +112,6 @@ class MACNNClassifier(BaseDeepClassifier):
         random_state=0,
         verbose=False,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.padding = padding
@@ -133,6 +133,16 @@ class MACNNClassifier(BaseDeepClassifier):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self.history = None
         self._network = MACNNNetwork(
             activation=self.activation_hidden,
@@ -145,6 +155,8 @@ class MACNNClassifier(BaseDeepClassifier):
             reduction=self.reduction,
             random_state=self.random_state,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

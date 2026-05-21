@@ -34,14 +34,14 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         If None, CrossEntropyLoss is used.
         If a string/Callable is passed, it must be one of the loss functions defined in
         https://pytorch.org/docs/stable/nn.html#loss-functions
-    criterion_kwargs : dict, default = None
+    criterion_kwargs : dict or None, default = None
         The keyword arguments to be passed to the loss function.
     optimizer : case insensitive str or an instance of an optimizer
         defined in PyTorch, default = None
         The optimizer to use for training the model. If None, Adam optimizer is used.
         If a string/Callable is passed, it must be one of the optimizers defined in
         https://pytorch.org/docs/stable/optim.html#algorithms
-    optimizer_kwargs : dict, default = None
+    optimizer_kwargs : dict or None, default = None
         The keyword arguments to be passed to the optimizer.
     callbacks : None or str or a tuple of str, default = None
         Currently only learning rate schedulers are supported as callbacks.
@@ -73,6 +73,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         "capability:multioutput": False,
         "capability:random_state": True,
         "property:randomness": "stochastic",
+        "tests:vm": True,
     }
 
     def __init__(
@@ -81,10 +82,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         batch_size: int = 8,
         activation: str | None | Callable = None,
         criterion: str | None | Callable = None,
-        criterion_kwargs: dict = None,
+        criterion_kwargs: dict | None = None,
         optimizer: str | Callable | None = None,
-        optimizer_kwargs: dict = None,
-        callbacks: None | Callable | tuple[Callable, ...] = None,
+        optimizer_kwargs: dict | None = None,
+        callbacks: None | str | tuple[str, ...] = None,
         callback_kwargs: dict | None = None,
         lr: float = 0.001,
         verbose: bool = True,
@@ -103,10 +104,18 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.verbose = verbose
         self.random_state = random_state
 
-        # use this when y has str
-        self.label_encoder = None
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # set random seed for torch
         if self.random_state is not None:
             torchManual_seed = _safe_import("torch.manual_seed")
@@ -115,7 +124,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         # validate activation function w.r.t. criterion specified
         self._validate_activation_criterion()
         # post this function call,
-        # self.validated_criterion and self.validated_activation are used
+        # self._validated_criterion and self._validated_activation are used
         # and self.criterion and self.activation are ignored
 
         # optimizers, criterions, callbacks will be instantiated in
@@ -124,6 +133,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self._all_optimizers = None
         self._all_criterions = None
         self._all_callbacks = None
+
+        # use this when y has str
+        self.label_encoder = None
 
     def _fit(self, X, y):
         y = self._encode_y(y)
@@ -162,7 +174,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     scheduler.step(epoch_loss)
                 else:
                     scheduler.step()
-        # print loss for the epoch
+        # print loss for the epoch, if verbose is True
         if self.verbose:
             print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
 
@@ -432,7 +444,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                 optimizer_class = _safe_import(
                     f"torch.optim.{self._all_optimizers[self.optimizer.lower()]}"
                 )
-                if self.callback_kwargs:
+                if self.optimizer_kwargs:
                     return optimizer_class(
                         self.network.parameters(), lr=self.lr, **self.optimizer_kwargs
                     )
@@ -595,6 +607,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         dataloader = self._build_dataloader(X)
         y_pred = []
         torchNo_grad = _safe_import("torch.no_grad")
+        # disable gradient calculation for inference
         with torchNo_grad():
             for inputs in dataloader:
                 y_pred.append(self.network(**inputs).detach())
