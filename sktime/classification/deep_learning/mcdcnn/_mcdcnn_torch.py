@@ -1,6 +1,7 @@
 """Multi Channel Deep Convolutional Neural Classifier (MCDCNN)."""
 
 import warnings
+from collections.abc import Callable
 
 import numpy as np
 
@@ -101,27 +102,27 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
     }
 
     def __init__(
-        self,
-        n_epochs=120,
-        batch_size=16,
-        kernel_sizes=(5, 5),
-        pool_size=2,
-        filter_sizes=(8, 8),
-        dense_units=732,
-        conv_padding="same",
-        pool_padding="same",
-        activation=None,
-        activation_hidden="relu",
-        use_bias=True,
-        criterion="CrossEntropyLoss",
-        criterion_kwargs=None,
-        callbacks=None,
-        callback_kwargs=None,
-        optim=None,
-        optim_kwargs=None,
-        lr=0.01,
-        verbose=False,
-        random_state=0,
+        self: "MCDCNNClassifierTorch",
+        n_epochs: int = 120,
+        batch_size: int = 16,
+        kernel_sizes: tuple[int, ...] = (5, 5),
+        pool_size: int = 2,
+        filter_sizes: tuple[int, ...] = (8, 8),
+        dense_units: int = 732,
+        conv_padding: str | None = "same",
+        pool_padding: str | None = "same",
+        activation: str | None | Callable = None,
+        activation_hidden: str = "relu",
+        use_bias: bool = True,
+        criterion: str | None | Callable = "CrossEntropyLoss",
+        criterion_kwargs: dict | None = None,
+        callbacks: str | tuple[str, ...] | None = None,
+        callback_kwargs: dict | None = None,
+        optim: str | None | Callable = None,
+        optim_kwargs: dict | None = None,
+        lr: float = 0.01,
+        verbose: bool = False,
+        random_state: int = 0,
     ):
         self.n_epochs = n_epochs
         self.batch_size = batch_size
