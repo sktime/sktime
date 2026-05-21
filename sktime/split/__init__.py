@@ -9,7 +9,9 @@ __all__ = [
     "ExpandingSlidingWindowSplitter",
     "ForecastingHorizonSplitter",
     "InstanceSplitter",
+    "PresplitFilesCV",
     "SameLocSplitter",
+    "SingleSplit",
     "SingleWindowSplitter",
     "SlidingGreedySplitter",
     "SlidingWindowSplitter",
@@ -18,6 +20,7 @@ __all__ = [
     "temporal_train_test_split",
 ]
 
+from sktime.split._legacy_splitters import PresplitFilesCV, SingleSplit
 from sktime.split.cutoff import CutoffFhSplitter, CutoffSplitter
 from sktime.split.expandingcutoff import ExpandingCutoffSplitter
 from sktime.split.expandinggreedy import ExpandingGreedySplitter

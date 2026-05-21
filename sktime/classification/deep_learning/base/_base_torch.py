@@ -73,6 +73,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         "capability:multioutput": False,
         "capability:random_state": True,
         "property:randomness": "stochastic",
+        "tests:vm": True,
     }
 
     def __init__(
@@ -103,10 +104,18 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.verbose = verbose
         self.random_state = random_state
 
-        # use this when y has str
-        self.label_encoder = None
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # set random seed for torch
         if self.random_state is not None:
             torchManual_seed = _safe_import("torch.manual_seed")
@@ -124,6 +133,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self._all_optimizers = None
         self._all_criterions = None
         self._all_callbacks = None
+
+        # use this when y has str
+        self.label_encoder = None
 
     def _fit(self, X, y):
         y = self._encode_y(y)
@@ -432,7 +444,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                 optimizer_class = _safe_import(
                     f"torch.optim.{self._all_optimizers[self.optimizer.lower()]}"
                 )
-                if self.callback_kwargs:
+                if self.optimizer_kwargs:
                     return optimizer_class(
                         self.network.parameters(), lr=self.lr, **self.optimizer_kwargs
                     )

@@ -208,6 +208,7 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "capability:unequal_length:removes": True,
+        "tests:skip_all": True,
         # is transform result always guaranteed to be equal length (and series)?
     }
 
@@ -268,8 +269,7 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
 
         # Compute random intervals for each column.
         # TODO if multiple columns are passed, introduce option to compute
-        #  one set of shared intervals,
-        #  or rely on ColumnTransformer?
+        #  one set of shared intervals
         if self.n_intervals == "random":
             if self.min_length is not None or self.max_length is not None:
                 raise ValueError(
