@@ -165,21 +165,22 @@ class InsampleForecaster(BaseForecaster):
     >>> fh = [-3, -1, 0, 1, 2, 3, 4]
     >>> wrapper.fit(y_train, X=X_train, fh=fh)
     InsampleForecaster(cv=ExpandingWindowSplitter(initial_window=7),
-        forecaster=RecursiveTabularRegressionForecaster(estimator=LinearRegression(),
-                                                        window_length=4))
+                       forecaster=RecursiveTabularRegressionForecaster(estimator=LinearRegression(),
+                                                                       window_length=4))
     >>> y_pred = wrapper.predict(X=X_test)
     """
 
     _tags = {
         "authors": ["geetu040"],
         "maintainers": ["geetu040"],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:insample": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:missing_values": True,
         "capability:categorical_in_X": True,
+        "capability:unequal_length": False,
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "requires-fh-in-fit": False,
