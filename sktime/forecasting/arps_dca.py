@@ -81,9 +81,14 @@ class _ArpsDcaBase(BaseForecaster):
 
     def __post_init__(self):
         """Validate constructor parameters."""
-        if self.output not in ["rate", "cumulative"]:
+        if self.output not in ("rate", "cumulative"):
             raise ValueError(
-                f"Output must be 'rate' or 'cumulative', got {self.output}"
+                f"Output must be 'rate' or 'cumulative', got {self.output!r}"
+            )
+        if self.anchor not in (False, "multiplicative", "additive"):
+            raise ValueError(
+                "anchor must be False, 'multiplicative', or 'additive', "
+                f"got {self.anchor!r}"
             )
 
     def _get_varnames(self):
@@ -168,6 +173,14 @@ class _ArpsDcaBase(BaseForecaster):
 
         return self
 
+    def _apply_forecast_transforms(self, y_pred):
+        """Apply anchoring and cumulative offset to raw model predictions."""
+        y_pred = y_pred * self.anchor_scale_ + self.anchor_shift_
+        if self.output == "cumulative":
+            baseline = y_pred[0] if y_pred.ndim == 1 else y_pred[:, [0]]
+            y_pred = (y_pred - baseline) + self.base_np
+        return y_pred
+
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
@@ -186,11 +199,7 @@ class _ArpsDcaBase(BaseForecaster):
         fh_abs = fh.to_absolute_index(self.cutoff)
         t = self._index_to_float_array(fh_abs) - self.t0_
         func = self._rate_func if self.output == "rate" else self._cum_func
-        y_pred = func(t, *self.params_)
-        y_pred = y_pred * self.anchor_scale_ + self.anchor_shift_
-
-        if self.output == "cumulative":
-            y_pred = (y_pred - y_pred[0]) + self.base_np
+        y_pred = self._apply_forecast_transforms(func(t, *self.params_))
 
         cols = self._get_varnames()
         y_arr = np.asarray(y_pred).reshape(-1, len(cols))
@@ -234,6 +243,7 @@ class _ArpsDcaBase(BaseForecaster):
         y_pred = func(
             t, *[param_samples[:, [i]] for i in range(param_samples.shape[1])]
         )
+        y_pred = self._apply_forecast_transforms(y_pred)
         quantile_values = np.quantile(y_pred, alpha, axis=0).T
 
         varnames = self._get_varnames()
