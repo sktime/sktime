@@ -687,6 +687,19 @@ Pre-trained and foundation models
 
     TotoForecaster
 
+Decline curve analysis forecasters
+----------------------------------
+
+.. currentmodule:: sktime.forecasting.arps_dca
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ArpsExponential
+    ArpsHyperbolic
+    ArpsHarmonic
+
 Intermittent time series forecasters
 ------------------------------------
 
