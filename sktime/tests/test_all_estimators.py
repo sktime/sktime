@@ -644,12 +644,9 @@ class QuickTester:
                 try:
                     # with StderrMute(active=verbose < 2), StdoutMute(active=verbose < 2):
                     # todo: remove to main state
-                    try:
-                        test_fun(**deepcopy(args))
-                    except Exception as e:
-                        breakpoint()
-                        copied_args = deepcopy(args)
-                        test_fun(**copied_args)
+                    copied_args = deepcopy(args)
+                    test_fun(**copied_args)
+                    # test_fun(**deepcopy(args))
 
                     results[key] = "PASSED"
                     print_if_verbose("PASSED")
