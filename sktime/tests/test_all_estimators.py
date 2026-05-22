@@ -16,6 +16,8 @@ from tempfile import TemporaryDirectory
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.stderr_mute import StderrMute
+from skbase.utils.stdout_mute import StdoutMute
 
 from sktime.base import BaseEstimator, BaseObject, load
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -640,11 +642,8 @@ class QuickTester:
                 print_if_verbose(f"{key}")
 
                 try:
-                    # with StderrMute(active=verbose < 2), StdoutMute(active=verbose < 2):
-                    # todo: remove to main state
-                    copied_args = deepcopy(args)
-                    test_fun(**copied_args)
-                    # test_fun(**deepcopy(args))
+                    with StderrMute(active=verbose < 2), StdoutMute(active=verbose < 2):
+                        test_fun(**deepcopy(args))
 
                     results[key] = "PASSED"
                     print_if_verbose("PASSED")
