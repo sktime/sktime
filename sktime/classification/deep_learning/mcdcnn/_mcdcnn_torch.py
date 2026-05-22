@@ -144,19 +144,9 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         self.lr = lr
         self.criterion_kwargs = criterion_kwargs
 
-        # used to difrentiate between user passed "SGD"
-        # and the default "SGD" with kwargs
+        # stored as-is: sklearn __init__ contract requires no mutation
         self.optim = optim
         self.optim_kwargs = optim_kwargs
-
-        self.optimizer = optim
-        self.optimizer_kwargs = optim_kwargs
-
-        # default case
-        if self.optim is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
 
         if len(self.filter_sizes) != len(self.kernel_sizes):
             raise ValueError(
@@ -165,14 +155,22 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
                 f"`kernel_sizes` {len(self.kernel_sizes)}."
             )
 
+        # resolve defaults as local vars so the parent stores conformant values
+        _optimizer = optim if optim is not None else "SGD"
+        _optimizer_kwargs = (
+            optim_kwargs
+            if not (optim is None and optim_kwargs is None)
+            else {"momentum": 0.9, "weight_decay": 0.0005}
+        )
+
         super().__init__(
             num_epochs=self.n_epochs,
             batch_size=self.batch_size,
             activation=self.activation,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
-            optimizer=self.optimizer,
-            optimizer_kwargs=self.optimizer_kwargs,
+            optimizer=_optimizer,
+            optimizer_kwargs=_optimizer_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
             lr=self.lr,
@@ -225,6 +223,34 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             random_state=self.random_state,
         )
 
+    def _instantiate_optimizer(self):
+        """Instantiate optimizer from the sklearn-conformant optim/optim_kwargs params.
+
+        Uses self.optim and self.optim_kwargs (the params declared in __init__) rather
+        than self.optimizer/self.optimizer_kwargs (set by the parent) so that
+        set_params(optim=...) propagates correctly to the optimizer used in training.
+        """
+        import torch
+
+        params = self.network.parameters()
+        if self.optim is None:
+            kwargs = (
+                self.optim_kwargs
+                if self.optim_kwargs is not None
+                else {"momentum": 0.9, "weight_decay": 0.0005}
+            )
+            return torch.optim.SGD(params, lr=self.lr, **kwargs)
+        if isinstance(self.optim, str):
+            if self.optim not in self.optimizers:
+                raise TypeError(
+                    f"Unrecognized optimizer '{self.optim}'. "
+                    f"Must be one of {list(self.optimizers)}."
+                )
+            kwargs = self.optim_kwargs if self.optim_kwargs is not None else {}
+            return self.optimizers[self.optim](params, lr=self.lr, **kwargs)
+        # assume it's already a torch.optim.Optimizer instance
+        return self.optim
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -244,6 +270,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        # default: optim=None exercises the default-SGD path
         params1 = {"random_state": 0}
         params2 = {
             "n_epochs": 1,
@@ -259,6 +286,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             "lr": 0.005,
             "random_state": 0,
         }
+        # explicit Adam + kwargs: exercises set_params propagation
         params3 = {
             "n_epochs": 2,
             "batch_size": 2,
@@ -275,4 +303,14 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             "lr": 0.01,
             "random_state": 0,
         }
-        return [params1, params2, params3]
+        # optim=None, explicit optim_kwargs: custom SGD kwargs stored as-is
+        params4 = {
+            "n_epochs": 1,
+            "batch_size": 4,
+            "kernel_sizes": (3,),
+            "filter_sizes": (6,),
+            "optim": None,
+            "optim_kwargs": {"momentum": 0.5, "weight_decay": 0.001},
+            "random_state": 0,
+        }
+        return [params1, params2, params3, params4]
