@@ -28,22 +28,26 @@ jnp = _safe_import("jax.numpy")
 
 snapshot_download = _safe_import("huggingface_hub.snapshot_download")
 
-checkpoints = _safe_import("paxml.checkpoints")
-tasks_lib = _safe_import("paxml.tasks_lib")
+CheckpointType = _safe_import("paxml.checkpoints.CheckpointType")
+restore_checkpoint = _safe_import("paxml.checkpoints.restore_checkpoint")
+create_state_partition_specs = _safe_import(
+    "paxml.tasks_lib.create_state_partition_specs"
+)
+create_state_unpadded_shapes = _safe_import(
+    "paxml.tasks_lib.create_state_unpadded_shapes"
+)
 
-FLAX = checkpoints.CheckpointType.FLAX
+FLAX = CheckpointType.FLAX
 
-base_hyperparams = _safe_import("praxis.base_hyperparams")
-base_layer = _safe_import("praxis.base_layer")
-pax_fiddle = _safe_import("praxis.pax_fiddle")
-py_utils = _safe_import("praxis.py_utils")
-pytypes = _safe_import("praxis.pytypes")
+instantiate = _safe_import("praxis.base_hyperparams.instantiate")
+JaxContext = _safe_import("praxis.base_layer.JaxContext")
+PARAMS = _safe_import("praxis.base_layer.PARAMS")
+RANDOM = _safe_import("praxis.base_layer.RANDOM")
+Config = _safe_import("praxis.pax_fiddle.Config")
+NestedMap = _safe_import("praxis.py_utils.NestedMap")
+JTensor = _safe_import("praxis.pytypes.JTensor")
 normalizations = _safe_import("praxis.layers.normalizations")
 transformers = _safe_import("praxis.layers.transformers")
-
-instantiate = base_hyperparams.instantiate
-NestedMap = py_utils.NestedMap
-JTensor = pytypes.JTensor
 
 make_future_dataframe = _safe_import("utilsforecast.processing.make_future_dataframe")
 
@@ -136,23 +140,23 @@ class TimesFm:
         if quantiles is None:
             quantiles = patched_decoder.DEFAULT_QUANTILES
 
-        self.model_p = pax_fiddle.Config(
+        self.model_p = Config(
             patched_decoder.PatchedTimeSeriesDecoder,
             name="patched_decoder",
             horizon_len=self.output_patch_len,
             patch_len=input_patch_len,
             model_dims=model_dims,
             hidden_dims=model_dims,
-            residual_block_tpl=pax_fiddle.Config(patched_decoder.ResidualBlock),
+            residual_block_tpl=Config(patched_decoder.ResidualBlock),
             quantiles=quantiles,
             use_freq=True,
-            stacked_transformer_params_tpl=pax_fiddle.Config(
+            stacked_transformer_params_tpl=Config(
                 transformers.StackedTransformer,
                 num_heads=16,
                 num_layers=num_layers,
-                transformer_layer_params_tpl=pax_fiddle.Config(
+                transformer_layer_params_tpl=Config(
                     transformers.Transformer,
-                    ln_tpl=pax_fiddle.Config(
+                    ln_tpl=Config(
                         normalizations.RmsNorm,
                     ),
                 ),
@@ -164,7 +168,7 @@ class TimesFm:
         self._train_state = None
         self._pmapped_decode = None
         self._verbose = verbose
-        self._eval_context = base_layer.JaxContext.HParams(do_eval=True)
+        self._eval_context = JaxContext.HParams(do_eval=True)
         try:
             multiprocessing.set_start_method("spawn")
         except RuntimeError:
@@ -214,14 +218,14 @@ class TimesFm:
         var_weight_hparams = self._model.abstract_init_with_metadata(
             self._get_sample_inputs(), do_eval=True
         )
-        train_state_partition_specs = tasks_lib.create_state_partition_specs(
+        train_state_partition_specs = create_state_partition_specs(
             var_weight_hparams,
             mesh_shape=self.mesh_shape,
             mesh_axis_names=self.mesh_name,
             discard_opt_states=True,
             learners=None,
         )
-        train_state_local_shapes = tasks_lib.create_state_unpadded_shapes(
+        train_state_local_shapes = create_state_unpadded_shapes(
             var_weight_hparams,
             discard_opt_states=True,
             learners=None,
@@ -233,7 +237,7 @@ class TimesFm:
         # Load the model weights.
         self._logging(f"Restoring checkpoint from {checkpoint_path}.")
         start_time = time.time()
-        self._train_state = checkpoints.restore_checkpoint(
+        self._train_state = restore_checkpoint(
             train_state_local_shapes,
             checkpoint_dir=checkpoint_path,
             checkpoint_type=checkpoint_type,
@@ -258,8 +262,8 @@ class TimesFm:
                 max_len=self.context_len,
                 return_forecast_on_context=True,
                 rngs={
-                    base_layer.PARAMS: self._key1,
-                    base_layer.RANDOM: self._key2,
+                    PARAMS: self._key1,
+                    RANDOM: self._key2,
                 },
                 method=self._model.decode,
             )
@@ -273,7 +277,7 @@ class TimesFm:
             backend=self.backend,
             axis_size=self.num_devices,
         )
-        with base_layer.JaxContext.new_context(hparams=self._eval_context):
+        with JaxContext.new_context(hparams=self._eval_context):
             _ = self._pmapped_decode(
                 NestedMap(
                     {
@@ -371,7 +375,7 @@ class TimesFm:
             freq = [0] * len(inputs)
 
         input_ts, input_padding, inp_freq, pmap_pad = self._preprocess(inputs, freq)
-        with base_layer.JaxContext.new_context(hparams=self._eval_context):
+        with JaxContext.new_context(hparams=self._eval_context):
             mean_outputs = []
             full_outputs = []
             assert input_ts.shape[0] % self.global_batch_size == 0
