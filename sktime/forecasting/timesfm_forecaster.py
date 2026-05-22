@@ -4,7 +4,6 @@
 __author__ = ["rajatsen91", "geetu040"]
 # rajatsen91 for google-research/timesfm
 
-import os
 
 import numpy as np
 import pandas as pd
@@ -249,10 +248,6 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                     "capability:global_forecasting": False,
                 }
             )
-
-        # Set environment variables for JAX backend based on CPU, GPU, or TPU
-        os.environ["JAX_PLATFORM_NAME"] = backend
-        os.environ["JAX_PLATFORMS"] = backend
 
         super().__init__()
 
