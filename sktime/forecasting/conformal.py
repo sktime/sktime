@@ -278,6 +278,126 @@ class ConformalIntervals(BaseForecaster):
         pred_int = pd.concat(pred_ints, axis=0, keys=y_pred_index)
         return pred_int
 
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : skpro BaseDistribution
+            predictive distribution
+        """
+        from skpro.distributions.empirical import Empirical
+
+        from sktime.datatypes import convert_to
+
+        y_pred = self.predict(fh=fh, X=X)
+
+        if not isinstance(self.residuals_matrix_, dict):
+            spl = self._predict_proba_series(fh, X, y_pred, None)
+            time_name = y_pred.index.name
+            spl.index.names = ["sample", time_name if time_name is not None else "time"]
+        else:
+            y_pred_df = convert_to(y_pred, ["pd-multiindex", "pd_multiindex_hier"])
+            y_pred_index = y_pred_df.index.droplevel(-1).unique()
+
+            spls = []
+            for ix in y_pred_index:
+                y_pred_ix = y_pred_df.loc[ix]
+                spl_ix = self._predict_proba_series(fh, X, y_pred_ix, ix)
+                spls.append(spl_ix)
+
+            spl = pd.concat(spls, axis=0)
+
+            names = ["sample"] + list(y_pred_df.index.names)
+            names = [n if n is not None else f"level_{i}" for i, n in enumerate(names)]
+            spl.index.names = names
+
+        return Empirical(spl, time_indep=marginal)
+
+    def _predict_proba_series(self, fh, X, y_pred, ix=None):
+        """Compute prediction probabilities for series scitype."""
+        from sktime.datatypes import convert
+
+        fh_relative = fh.to_relative(self.cutoff)
+        fh_absolute = fh.to_absolute(self.cutoff)
+        fh_absolute_idx = fh_absolute.to_pandas()
+
+        if self.fh_early_:
+            if ix is None:
+                residuals_matrix = self.residuals_matrix_
+            else:
+                residuals_matrix = self.residuals_matrix_[ix]
+        else:
+            if ix is None:
+                y_series = self._y
+                X_series = self._X
+            else:
+                y_series = self._y.loc[ix]
+                X_series = self._X.loc[ix] if self._X is not None else None
+            residuals_matrix = self._compute_sliding_residuals(
+                y=y_series,
+                X=X_series,
+                forecaster=self.forecaster,
+                initial_window=self.initial_window,
+                sample_frac=self.sample_frac,
+            )
+
+        ABS_RESIDUAL_BASED = ["conformal", "conformal_bonferroni", "empirical_residual"]
+
+        var_names = self._get_varnames()
+
+        y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
+        y_pred.index = fh_absolute_idx
+
+        samples_list = []
+        for fh_ind, offset in zip(fh_absolute_idx, fh_relative):
+            resids = np.diagonal(residuals_matrix, offset=offset)
+            resids = resids[~np.isnan(resids)]
+            if len(resids) < 1:
+                resids = np.array([0.0], dtype=float)
+
+            if self.method in ABS_RESIDUAL_BASED:
+                abs_resids = np.abs(resids)
+                resids = np.concatenate([abs_resids, -abs_resids])
+
+            y_pred_val = y_pred.loc[fh_ind]
+            time_samples = resids[:, None] + np.array([y_pred_val])
+
+            df = pd.DataFrame(time_samples, columns=var_names)
+            df["_time"] = fh_ind
+            df["_sample"] = np.arange(len(resids))
+
+            if ix is not None:
+                if isinstance(ix, tuple):
+                    for i, level_val in enumerate(ix):
+                        df[f"_ix_{i}"] = level_val
+                else:
+                    df["_ix_0"] = ix
+            samples_list.append(df)
+
+        spl = pd.concat(samples_list, axis=0)
+
+        if ix is None:
+            spl = spl.set_index(["_sample", "_time"])
+        else:
+            if isinstance(ix, tuple):
+                ix_cols = [f"_ix_{i}" for i in range(len(ix))]
+                spl = spl.set_index(["_sample"] + ix_cols + ["_time"])
+            else:
+                spl = spl.set_index(["_sample", "_ix_0", "_time"])
+
+        return spl
+
     def _predict_interval_series(self, fh, coverage, y_pred):
         """Compute prediction intervals predict_interval for series scitype."""
         fh_relative = fh.to_relative(self.cutoff)

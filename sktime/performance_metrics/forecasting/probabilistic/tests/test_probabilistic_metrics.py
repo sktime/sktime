@@ -352,3 +352,50 @@ def test_empirical_coverage_boundary_equality(y_true_vals, lower_vals, upper_val
         f"Expected coverage 1.0 but got {coverage}. "
         "True values on interval boundaries should be counted as covered."
     )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize("metric", all_metrics)
+@pytest.mark.parametrize("score_average", [True, False])
+def test_sample_weight_probabilistic(metric, score_average):
+    """Test output contracts and correctness for sample_weight."""
+    y_true = pd.Series([3, -0.5, 2, 7, 2])
+
+    loss = metric.create_test_instance()
+    loss.set_params(score_average=score_average)
+
+    if loss.get_tag("scitype:y_pred") == "pred_interval":
+        y_pred = pd.DataFrame(
+            {
+                ("var1", 0.9, "lower"): [1.5, -1, 1, 4, 0.65],
+                ("var1", 0.9, "upper"): [3.5, 4, 3, 12, 1.85],
+            }
+        )
+    else:
+        y_pred = pd.DataFrame(
+            {
+                ("var1", 0.05): [1.5, -1, 1, 4, 0.65],
+                ("var1", 0.5): [2.5, 0, 2, 8, 1.25],
+                ("var1", 0.95): [3.5, 4, 3, 12, 1.85],
+            }
+        )
+
+    weights = np.array([1.0, 0.1, 0.1, 0.1, 0.1])
+
+    # 1. Without weights
+    eval_loss_unweighted = loss(y_true, y_pred)
+
+    # 2. With weights
+    eval_loss_weighted = loss(y_true, y_pred, sample_weight=weights)
+
+    if score_average:
+        assert isinstance(eval_loss_weighted, float)
+    else:
+        assert isinstance(eval_loss_weighted, pd.Series)
+
+    # The weighted and unweighted loss should differ unless mathematically
+    # identical by coincidence
+    assert not np.all(np.isclose(eval_loss_unweighted, eval_loss_weighted))

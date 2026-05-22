@@ -64,10 +64,13 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         y_pred : return object of probabilistic prediction method scitype:y_pred
             must be at fh and for variables equal to those in y_true.
 
+        sample_weight : optional, 1D array-like, default=None
+            Sample weights for each time point.
+
         Returns
         -------
         loss : float or 1-column pd.DataFrame with calculated metric value(s)
-            metric is always averaged (arithmetic) over fh values
+            metric is always averaged (arithmetic or weighted) over fh values
             if multioutput = "raw_values",
                 will have a column level corresponding to variables in y_true
             if multioutput = multioutput = "uniform_average" or or array-like
@@ -94,10 +97,13 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         multioutput : string "uniform_average" or "raw_values" determines how\
             multioutput results will be treated.
 
+        sample_weight : optional, 1D array-like, default=None
+            Sample weights for each time point.
+
         Returns
         -------
         loss : float or 1-column pd.DataFrame with calculated metric value(s)
-            metric is always averaged (arithmetic) over fh values
+            metric is always averaged (arithmetic or weighted) over fh values
             if multioutput = "raw_values",
                 will have a column level corresponding to variables in y_true
             if multioutput = multioutput = "uniform_average" or or array-like
@@ -110,6 +116,10 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         # Input checks and conversions
         y_true_inner, y_pred_inner, multioutput = self._check_ys(
             y_true, y_pred, multioutput
+        )
+
+        kwargs = self._apply_sample_weight_to_kwargs(
+            y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
         )
 
         # Don't want to include scores for 0 width intervals, makes no sense
@@ -166,8 +176,16 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         """
         # Default implementation relies on implementation of evaluate_by_index
         try:
-            index_df = self._evaluate_by_index(y_true, y_pred, multioutput)
-            out_df = pd.DataFrame(index_df.mean(axis=0)).T
+            index_df = self._evaluate_by_index(y_true, y_pred, multioutput, **kwargs)
+
+            sample_weight = kwargs.get("sample_weight", None)
+            if sample_weight is not None:
+                out_df = pd.DataFrame(
+                    np.average(index_df, weights=sample_weight, axis=0)
+                ).T
+            else:
+                out_df = pd.DataFrame(index_df.mean(axis=0)).T
+
             out_df.columns = index_df.columns
             return out_df
         except RecursionError:
@@ -956,14 +974,26 @@ class _BaseDistrForecastingMetric(_BaseProbaForecastingErrorMetric):
             * If 'raw_values', does not average errors across variables,
             columns are retained.
 
+        sample_weight : optional, 1D array-like, default=None
+            Sample weights for each time point.
+
         Returns
         -------
         loss : float or 1-column pd.DataFrame with calculated metric value(s)
             float if multioutput = "uniform_average"
-            metric is always averaged (arithmetic) over fh values
+            metric is always averaged (arithmetic or weighted) over fh values
         """
-        index_df = self.evaluate_by_index(y_true, y_pred, multioutput)
-        out_df = pd.DataFrame(index_df.mean(axis=0)).T
+        kwargs = self._apply_sample_weight_to_kwargs(
+            y_true=y_true, y_pred=y_pred, **kwargs
+        )
+        index_df = self.evaluate_by_index(y_true, y_pred, multioutput, **kwargs)
+
+        sample_weight = kwargs.get("sample_weight", None)
+        if sample_weight is not None:
+            out_df = pd.DataFrame(np.average(index_df, weights=sample_weight, axis=0)).T
+        else:
+            out_df = pd.DataFrame(index_df.mean(axis=0)).T
+
         out_df.columns = index_df.columns
 
         if multioutput == "uniform_average":

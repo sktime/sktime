@@ -108,3 +108,53 @@ def test_conformal_with_hierarchical():
 
     forecaster.predict(X=X_test)
     forecaster.predict_interval(X=X_test)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ConformalIntervals),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_conformal_predict_proba():
+    """Test _predict_proba interface of ConformalIntervals."""
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    if not _check_soft_dependencies("skpro", severity="none"):
+        pytest.skip("skpro is not available")
+
+    y = load_airline()
+    forecaster = NaiveForecaster(strategy="drift")
+
+    conformal_forecaster = ConformalIntervals(forecaster)
+    conformal_forecaster.fit(y, fh=[1, 2, 3])
+
+    pred_dist = conformal_forecaster.predict_proba()
+
+    assert check_is_mtype(pred_dist, "pred_proba", "Proba", msg_return_dict="list")
+
+    # Check that the distribution provides reasonable quantiles
+    quantiles = pred_dist.quantile([0.1, 0.9])
+    assert quantiles.shape == (3, 2)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ConformalIntervals),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "method", ["empirical", "empirical_residual", "conformal", "conformal_bonferroni"]
+)
+def test_conformal_predict_proba_methods(method):
+    """Test that all methods work with predict_proba."""
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    if not _check_soft_dependencies("skpro", severity="none"):
+        pytest.skip("skpro is not available")
+
+    y = load_airline()
+    forecaster = NaiveForecaster(strategy="last")
+
+    conformal_forecaster = ConformalIntervals(forecaster, method=method)
+    conformal_forecaster.fit(y, fh=[1, 2])
+
+    pred_dist = conformal_forecaster.predict_proba()
+    assert pred_dist is not None
