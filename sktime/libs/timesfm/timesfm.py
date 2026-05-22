@@ -26,10 +26,7 @@ es = _safe_import("einshape")
 jax = _safe_import("jax")
 jnp = _safe_import("jax.numpy")
 
-snapshot_download = _safe_import(
-    "huggingface_hub.snapshot_download",
-    pkg_name="huggingface-hub",
-)
+snapshot_download = _safe_import("huggingface_hub.snapshot_download")
 
 checkpoints = _safe_import("paxml.checkpoints")
 tasks_lib = _safe_import("paxml.tasks_lib")
