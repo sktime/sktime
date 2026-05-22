@@ -161,6 +161,7 @@ def check_estimator(
 
     results = {}
 
+    breakpoint()
     for test_cls in test_clss_for_est:
         test_cls_results = test_cls().run_tests(
             estimator=estimator,

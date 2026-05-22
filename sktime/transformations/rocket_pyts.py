@@ -99,6 +99,7 @@ class RocketPyts(_PytsAdapter, BaseTransformer):
         "scitype:transform-output": "Primitives",
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
+        "capability:random_state": True,
     }
 
     # defines the name of the attribute containing the pyts estimator

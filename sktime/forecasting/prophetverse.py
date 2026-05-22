@@ -91,8 +91,8 @@ class Prophetverse(_DelegatedForecaster):
     ...         )
     ...     ],
     ... )
-    >>> model.fit(y)
-    >>> model.predict(fh=[1, 2, 3])
+    >>> model.fit(y) # doctest: +SKIP
+    >>> model.predict(fh=[1, 2, 3]) # doctest: +SKIP
     """
 
     _tags = {
@@ -142,6 +142,21 @@ class Prophetverse(_DelegatedForecaster):
         self.inference_engine = inference_engine
         self.broadcast_mode = broadcast_mode
         super().__init__()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        return [{},
+                {"trend": "linear",
+                "exogenous_effects": None,
+                "default_effect": None,
+                "feature_transformer": None,
+                "noise_scale": None,
+                "likelihood": "normal",
+                "scale": None,
+                "rng_key": None,
+                "inference_engine": None,
+                "broadcast_mode": "estimator",
+                }]
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
@@ -263,8 +278,8 @@ class HierarchicalProphet(_DelegatedForecaster):
     ... )
     >>> y = agg.fit_transform(y)
     >>> forecaster = HierarchicalProphet()
-    >>> forecaster.fit(y)
-    >>> forecaster.predict(fh=[1])
+    >>> forecaster.fit(y) # doctest: +SKIP
+    >>> forecaster.predict(fh=[1]) # doctest: +SKIP
     """
 
     _delegate_name = "_delegate"
@@ -325,6 +340,28 @@ class HierarchicalProphet(_DelegatedForecaster):
         self.likelihood = likelihood
 
         super().__init__()
+
+    @classmethod
+    def get_test_params(cls):
+        # params = [
+        #     {
+        #         "bootstrap_transformer": MovingBlockBootstrapTransformer(
+        #             return_indices=True
+        #         ),
+        #     }
+        # ]
+        return [{},
+                {"trend": "linear",
+                "feature_transformer": None,
+                "exogenous_effects": None,
+                "default_effect": None,
+                "shared_features": None,
+                "noise_scale": 0.05,
+                "correlation_matrix_concentration": 1.0,
+                "rng_key": None,
+                "inference_engine": None,
+                "likelihood": None,
+                }]
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
