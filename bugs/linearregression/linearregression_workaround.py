@@ -5,10 +5,11 @@ as (unknown, known) — so past/future covariates are SWAPPED (existing bug).
 To work around BOTH bugs, we put the future covariates in past_covariates
 so the swap sends them to the correct darts argument.
 """
-import sklearn
-import pandas as pd
-from sktime.forecasting.darts import DartsLinearRegressionModel
 
+import pandas as pd
+import sklearn
+
+from sktime.forecasting.darts import DartsLinearRegressionModel
 
 X, y = sklearn.datasets.make_regression(
     n_samples=1000, n_features=2, noise=0.1, random_state=42

@@ -11,7 +11,6 @@ import traceback
 import warnings
 from pathlib import Path
 
-
 FILE = Path(__file__).parent / "all_import_statements.txt"
 
 # Subpackages flattened in the migration. Imports under these paths are
@@ -56,7 +55,9 @@ def main():
         if legacy:
             dep = [w for w in caught if issubclass(w.category, DeprecationWarning)]
             if not dep:
-                failures.append((lineno, code, "expected DeprecationWarning, none raised\n"))
+                failures.append(
+                    (lineno, code, "expected DeprecationWarning, none raised\n")
+                )
                 print(f"  [{lineno:>4}] FAIL (no warn): {code[:100]}")
                 continue
             print(f"  [{lineno:>4}] ok (warned)")

@@ -1,9 +1,9 @@
+import numpy as np
 import pandas as pd
 from darts import TimeSeries
 from darts.models import LinearRegressionModel
-import numpy as np
-from sktime.forecasting.model_selection import temporal_train_test_split
 
+from sktime.forecasting.model_selection import temporal_train_test_split
 
 np.random.seed(42)
 date_idx = pd.date_range(start="2020-01-01", periods=1000, freq="15min")

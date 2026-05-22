@@ -1,6 +1,6 @@
-from pathlib import Path
 import ast
 import traceback
+from pathlib import Path
 
 statements_need_to_pass = []
 for path in Path("./sktime/transformations/").rglob("*.py"):
@@ -34,11 +34,13 @@ for path in Path("./sktime/transformations/").rglob("*.py"):
         if is_init:
             continue
         import_sub_path = import_path.rsplit(".", 1)[0]
-        all_imports_to_test.extend([
-            f"from {import_sub_path} import {name}; assert {name}.__name__ == '{name}'",
-            f"from {import_sub_path} import {name} as A; "
-            f"from {import_path} import {name} as B; assert A is B",
-        ])
+        all_imports_to_test.extend(
+            [
+                f"from {import_sub_path} import {name}; assert {name}.__name__ == '{name}'",
+                f"from {import_sub_path} import {name} as A; "
+                f"from {import_path} import {name} as B; assert A is B",
+            ]
+        )
     for code in all_imports_to_test:
         try:
             exec(compile(code, "<gen>", "exec"), {})

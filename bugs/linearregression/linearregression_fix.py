@@ -5,10 +5,11 @@ but still fail through the sktime adapter due to a bug in convert_exogenous_data
 which doesn't properly route features based on lags_future_covariates keys.
 The adapter bug is in sktime/forecasting/base/adapters/_darts.py line 220-226.
 """
-import sklearn
-import pandas as pd
-from sktime.forecasting.darts import DartsLinearRegressionModel
 
+import pandas as pd
+import sklearn
+
+from sktime.forecasting.darts import DartsLinearRegressionModel
 
 X, y = sklearn.datasets.make_regression(
     n_samples=1000, n_features=2, noise=0.1, random_state=42

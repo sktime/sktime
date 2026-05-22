@@ -509,8 +509,6 @@ class QuickTester:
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
         """
         from _pytest.outcomes import Skipped
-        from skbase.utils.stderr_mute import StderrMute
-        from skbase.utils.stdout_mute import StdoutMute
 
         tests_to_run = self._check_None_str_or_list_of_str(
             tests_to_run, var_name="tests_to_run"

@@ -1,9 +1,9 @@
 """Same scenario as linearregression.py but using darts directly to show it works."""
-import sklearn
+
 import pandas as pd
+import sklearn
 from darts import TimeSeries
 from darts.models import LinearRegressionModel
-
 
 X, y = sklearn.datasets.make_regression(
     n_samples=1000, n_features=2, noise=0.1, random_state=42
