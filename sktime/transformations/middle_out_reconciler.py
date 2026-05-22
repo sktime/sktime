@@ -4,15 +4,15 @@ import warnings
 
 import pandas as pd
 
-from sktime.transformations.base import BaseTransformer
-from sktime.transformations.bottom_up_reconciler import (
-    BottomUpReconciler,
-)
 from sktime.transformations._hierarchical_reconcile_base import _ReconcilerTransformer
 from sktime.transformations._hierarchical_reconcile_utils import (
     _filter_descendants,
     _get_series_for_each_hierarchical_level,
     _loc_series_idxs,
+)
+from sktime.transformations.base import BaseTransformer
+from sktime.transformations.bottom_up_reconciler import (
+    BottomUpReconciler,
 )
 from sktime.transformations.topdown_reconciler import (
     TopdownReconciler,
