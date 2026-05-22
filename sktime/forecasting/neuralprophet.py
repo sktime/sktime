@@ -172,25 +172,26 @@ class NeuralProphet(BaseForecaster):
         super().__init__()
 
     def __deepcopy__(self, memo):
-        """Handle deepcopy by excluding the non-deepcopy-able PyTorch model.
+        """Handle deepcopy by copy-serializing the non-deepcopy-able PyTorch model.
 
         NeuralProphet's underlying PyTorch model uses ``weight_norm`` internally,
         which makes tensors non-deepcopy-able (see pytorch/pytorch#103001).
-        We exclude ``_model`` from the deepcopy to avoid the error.
-
-        Note: regular pickle is NOT affected — PyTorch modules are picklable.
-        Only deepcopy (used by test_fit_idempotent) is intercepted here.
         """
         import copy
+        import pickle
 
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
             if k == "_model":
-                # Skip the PyTorch model — it cannot be deepcopied
-                continue
-            setattr(result, k, copy.deepcopy(v, memo))
+                try:
+                    setattr(result, k, pickle.loads(pickle.dumps(v)))
+                except Exception:
+                    # Fallback to direct reference if pickling fails
+                    setattr(result, k, v)
+            else:
+                setattr(result, k, copy.deepcopy(v, memo))
         return result
 
     def _fit(self, y, X=None, fh=None):
