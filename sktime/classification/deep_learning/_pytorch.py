@@ -11,23 +11,10 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
 from sktime.classification.base import BaseClassifier
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    from torch.utils.data import DataLoader, Dataset
-
-    OPTIMIZERS = {
-        "Adadelta": torch.optim.Adadelta,
-        "Adam": torch.optim.Adam,
-        "AdamW": torch.optim.AdamW,
-        "SGD": torch.optim.SGD,
-        "Adagrad": torch.optim.Adagrad,
-    }
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
+torch = _safe_import("torch")
+Dataset = _safe_import("torch.utils.data.Dataset")
 
 
 class BaseDeepClassifierPytorch(BaseClassifier):
@@ -65,12 +52,33 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.verbose = verbose
         self.random_state = random_state
 
-        # use this when y has str
-        self.label_encoder = None
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        import torch
+
+        OPTIMIZERS = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+            "Adagrad": torch.optim.Adagrad,
+        }
 
         # instantiate optimizers
         self.optimizers = OPTIMIZERS
+
+        # use this when y has str
+        self.label_encoder = None
 
     def _fit(self, X, y):
         if self.random_state is not None:
@@ -142,6 +150,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
     def _build_dataloader(self, X, y=None):
         # default behaviour if estimator doesnot implement
         # dataloader of its own
+        from torch.utils.data import DataLoader
+
         dataset = PytorchDataset(X, y)
         return DataLoader(dataset, self.batch_size)
 
