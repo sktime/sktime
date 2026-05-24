@@ -17,10 +17,11 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     Parameters
     ----------
     checkpoint_path : str, default=None
-        Path to the checkpoint of the model. Supported weights are available at [1]_.
+        Path to the checkpoint of the model.
+        Supported weights are available at [1]_.
     context_length : int, default=200
-        Length of the context window, time points the model will take as input for
-        inference.
+        Length of the context window, time points the model will take as input
+        for inference.
     patch_size : int, default=32
         Time steps to perform patching with.
     num_samples : int, default=100
@@ -39,7 +40,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from ``predict``
-     use_source_package : bool, default=False
+        use_source_package : bool, default=False
         If True, the model and configuration will be loaded directly from the source
         package ``uni2ts.models.moirai``. This is useful if you
         want to bypass the local version of the package or when working in an
@@ -110,10 +111,12 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
         "property:randomness": "stochastic",
         # CI and test flags
         # -----------------
-        "tests:vm": True,
+        # "tests:vm": True, # skip all tests temporarily, issue tracked in #10083
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     def __init__(

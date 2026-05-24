@@ -124,6 +124,9 @@ class ForecastByLevel(_DelegatedForecaster):
         * parameter validation
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
         """
         self.forecaster_ = self.forecaster.clone()
 
@@ -246,6 +249,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         ],
         "capability:multivariate": True,
         "capability:exogenous": True,
+        "capability:unequal_length": False,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
         "authors": ["felipeangelimvieira", "shlok191"],
