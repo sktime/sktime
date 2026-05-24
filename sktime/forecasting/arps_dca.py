@@ -47,6 +47,14 @@ class _ArpsDcaBase(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["scuervo91"],
+        "maintainers": ["scuervo91"],
+        "python_version": None,
+        "python_dependencies": None,
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
@@ -60,10 +68,6 @@ class _ArpsDcaBase(BaseForecaster):
         "capability:pred_int:insample": True,
         "capability:pretrain": False,
         "capability:random_state": True,
-        "authors": ["scuervo91"],
-        "maintainers": ["scuervo91"],
-        "python_version": None,
-        "python_dependencies": None,
     }
 
     def __init__(
