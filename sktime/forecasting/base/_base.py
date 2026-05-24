@@ -118,6 +118,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         "fit_is_empty": False,  # is fit empty and can be skipped?
         "capability:categorical_in_X": True,
         # does the forecaster natively support categorical in exogeneous X?
+        "capability:unequal_length": True,  # can forecaster handle unequal length TS?
     }
 
     # configs and default config values
@@ -2649,15 +2650,11 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
-    def _get_varnames(self, y=None):
+    def _get_varnames(self):
         """Return variable column for DataFrame-like returns.
 
         Primarily used as helper for probabilistic predict-like methods.
         Assumes that _check_X_y has been called, and self._y_metadata set.
-
-        Parameter
-        ---------
-        y : ignored, present for downwards compatibility
 
         Returns
         -------

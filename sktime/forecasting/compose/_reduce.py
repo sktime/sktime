@@ -1958,6 +1958,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "maintainers": "hliebert",
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
+        "capability:unequal_length": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
@@ -2372,6 +2373,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         "authors": "fkiraly",
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
+        "capability:unequal_length": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
@@ -2427,6 +2429,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         * parameter validation
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
         """
         self._lags = list(range(self.window_length))
 
@@ -2858,6 +2863,9 @@ class YfromX(BaseForecaster, _ReducerMixin):
         * parameter validation
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
         """
         estimator = self.estimator
         # self._est_type encodes information what type of estimator is passed
