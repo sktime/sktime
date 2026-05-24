@@ -223,6 +223,43 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self._moment_seq_len = 512
         self.return_model_to_cpu = return_model_to_cpu
 
+    def __getstate__(self):
+        """Return picklable state, replacing the model with its state_dict."""
+        state = self.__dict__.copy()
+        if "model" in state and state["model"] is not None:
+            model = state["model"]
+            state["_model_state_dict"] = model.state_dict()
+            state["_model_config"] = model.config
+            state["model"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state; model is rebuilt lazily on next predict."""
+        self.__dict__.update(state)
+
+    def _rebuild_model(self):
+        """Rebuild MOMENTPipeline from saved config and state_dict."""
+        from sktime.libs.momentfm import MOMENTPipeline
+
+        model = MOMENTPipeline(
+            config=self._model_config,
+            model_kwargs={
+                "task_name": "forecasting",
+                "forecast_horizon": self._model_config.forecast_horizon,
+            },
+        )
+        model.init()
+        model.load_state_dict(self._model_state_dict)
+        model.eval()
+        # disable gradient checkpointing since it registers unpicklable hooks
+        # and is not needed for inference
+        if hasattr(model, "encoder") and hasattr(
+            model.encoder, "gradient_checkpointing_disable"
+        ):
+            model.encoder.gradient_checkpointing_disable()
+        self.model = model
+        del self._model_state_dict
+
     def _fit(self, y, X=None, fh=None):
         """Assumes y is a single or multivariate time series."""
         from accelerate import Accelerator
@@ -376,6 +413,10 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 val_dataloader,
             )
 
+        # unwrap from Accelerator so self.model is the raw MOMENTPipeline
+        # (the Accelerator wrapper is not picklable)
+        self.model = accelerator.unwrap_model(self.model)
+
         if self.return_model_to_cpu:
             self.model.to("cpu")
             empty_cache()
@@ -392,6 +433,9 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         index = self._fh.to_absolute_index(self.cutoff)
         from torch import from_numpy
+
+        if self.model is None:
+            self._rebuild_model()
 
         self.model = self.model.to(self._device)
         self.model.eval()
@@ -691,7 +735,7 @@ def _same_index(data: pd.DataFrame):
         lambda x: x.index.get_level_values(-1)
     )
     assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
-        "All series must has the same index"
+        "All series must have the same index"
     )
     return data.iloc[0], len(data.iloc[0])
 
