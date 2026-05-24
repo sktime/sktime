@@ -9,12 +9,13 @@ import base64
 import io
 import json
 import sys
-from time import sleep
 import types
 import warnings
+from time import sleep
 
 import matplotlib.pyplot as plt
 import pandas as pd
+
 from sktime.registry import craft
 
 # Compatibility shim: skbase < 0.8 does not ship skbase.utils.doctest_run,
@@ -57,28 +58,34 @@ Available transformer class names:
 Few-shot examples of valid blueprints:
 [
 {{
+"reason": <Reason why you selected this  blueprint for this dataset.>
 "name": "Naive last",
-"spec": "NaiveForecaster(strategy=\\"last\\")"
+"spec": "NaiveForecaster(strategy=\\"last\\")",
 }},
 {{
+"reason": <Reason why you selected this  blueprint for this dataset.>
 "name": "ETS additive",
-"spec": "ExponentialSmoothing(trend=\\"add\\", seasonal=\\"add\\", sp=12)"
+"spec": "ExponentialSmoothing(trend=\\"add\\", seasonal=\\"add\\", sp=12)",
 }},
 {{
+"reason": <Reason why you selected this  blueprint for this dataset.>
 "name": "Detrend + ETS",
-"spec": "TransformedTargetForecaster([Detrender(), ExponentialSmoothing()])"
+"spec": "TransformedTargetForecaster([Detrender(), ExponentialSmoothing()])",
 }},
 {{
+"reason": <Reason why you selected this  blueprint for this dataset.>
 "name": "Deseason + Detrend + AutoARIMA",
-"spec": "TransformedTargetForecaster([Deseasonalizer(sp=12), Detrender(), AutoARIMA()])"
+"spec": "TransformedTargetForecaster([Deseasonalizer(sp=12),Detrender(), AutoARIMA()])",
 }},
 {{
+"reason": <Reason why you selected this  blueprint for this dataset.>
 "name": "BoxCox + Naive mean",
-"spec": "TransformedTargetForecaster([Detrender(), NaiveForecaster(strategy='mean')])"
+"spec": "TransformedTargetForecaster([Detrender(), NaiveForecaster(strategy='mean')])",
 }},
 {{
+"reason": <Reason why you selected this  blueprint for this dataset.>
 "name": "Differencer + AutoARIMA BIC",
-"spec": "TransformedTargetForecaster([Differencer(), AutoARIMA()])"
+"spec": "TransformedTargetForecaster([Differencer(), AutoARIMA()])",
 }}
 ]
 
@@ -97,7 +104,8 @@ Documentation for the estimators used in this blueprint:
 {estimator_docs}
 
 Fix the blueprint so it runs without error. Keep the intent as close as possible.
-Respond ONLY with a valid JSON array containing exactly one blueprint object — no markdown, no explanation.
+Respond ONLY with a valid JSON array containing exactly one blueprint object
+— no markdown, no explanation.
 """
 
 _REFINEMENT_PROMPT = """\
@@ -113,8 +121,9 @@ Based on these results:
 2. Estimators already tried and their best scores are listed above — avoid repeating
    exact combinations that failed; prefer unexplored estimators or new configurations.
 3. Try to improve on the best blueprint by making targeted modifications.
-4. Try to fix any blueprints that failed with errors by using the error messages as clues. Append "FIXED" to the name of the blueprint your are trying to fix.
-4. Also explore new diverse combinations that might outperform it.
+4. Try to fix any blueprints that failed with errors by using the error messages
+   as clues. Append "FIXED" to the name of the blueprint your are trying to fix.
+5. Also explore new diverse combinations that might outperform it.
 
 Propose {n_blueprints} new blueprints. At least one should be a variation of the
 best blueprint, and at least one should be a novel combination.
@@ -185,9 +194,7 @@ def _build_estimator_names(info="names"):
             if info == "signatures":
                 try:
                     sig = inspect.signature(cls.__init__)
-                    params = ", ".join(
-                        p for p in sig.parameters if p != "self"
-                    )
+                    params = ", ".join(p for p in sig.parameters if p != "self")
                     parts.append(f"{name}({params})")
                 except (ValueError, TypeError):
                     parts.append(name)
@@ -242,9 +249,10 @@ def _call_llm(messages, model, api_params):
     class Blueprint(BaseModel):
         name: str
         spec: str
-    class LLMformat(BaseModel):
-        blueprints : list[Blueprint]
+        reason: str
 
+    class LLMformat(BaseModel):
+        blueprints: list[Blueprint]
 
     litellm.suppress_debug_info = True
     for i in range(5):
@@ -256,9 +264,9 @@ def _call_llm(messages, model, api_params):
                 **api_params,
             )
             return response.choices[0].message.content
-        except litellm.RateLimitError as e:
+        except litellm.RateLimitError:
             sleep(10)  # simple retry logic for rate limits
-    raise RuntimeError("LLM call failed after 5 attempts due to rate limits.") 
+    raise RuntimeError("LLM call failed after 5 attempts due to rate limits.")
 
 
 def _parse_blueprints(response_text):
@@ -301,7 +309,8 @@ def _get_basic_description(y):
     return (
         f"Dataset info:\n"
         f"- Length: {len(y)} observations\n"
-        f"- Frequency: {y.index.freqstr if hasattr(y.index, 'freqstr') else 'unknown'}\n"
+        f"""- Frequency: {y.index.freqstr if hasattr(y.index, 'freqstr')
+                          else 'unknown'}\n"""
         f"- Mean: {y.mean():.4f}, Std: {y.std():.4f}\n"
         f"- Min: {y.min():.4f}, Max: {y.max():.4f}\n"
     )
@@ -336,7 +345,6 @@ def _generate_time_series_plot_base64(y):
     return base64_img
 
 
-
 def _get_described_plot_description(y, model, api_params):
     """Generate dataset description with VLM-described plot.
 
@@ -369,7 +377,9 @@ def _get_described_plot_description(y, model, api_params):
             "content": [
                 {
                     "type": "text",
-                    "text": "Describe the key characteristics of this time series plot briefly, focusing on trends, seasonality, and volatility.",
+                    "text": "Describe the key characteristics of this time"
+                            "series plot briefly, focusing on trends,"
+                            "seasonality, and volatility.",
                 },
                 {
                     "type": "image_url",
@@ -446,8 +456,9 @@ class LLMBlueprintForecaster(BaseForecaster):
         and {transformer_names} which are filled in automatically.
     refinement_prompt : str or None, default=None
         Custom refinement prompt template for the LLM. If None, uses the default prompt.
-        The prompt should contain placeholders for {results_summary}, {all_results_ranked},
-        {best_name}, {best_score}, and {n_blueprints} which are filled in automatically.
+        The prompt should contain placeholders for {results_summary},
+        {all_results_ranked}, {best_name}, {best_score}, and {n_blueprints} which
+        are filled in automatically.
     llm_func : callable or None, default=None
         Custom callable to invoke the LLM. If None, uses litellm.completion via
         the internal ``_call_llm`` function. The callable must have the signature
@@ -503,7 +514,7 @@ class LLMBlueprintForecaster(BaseForecaster):
         "requires-fh-in-fit": True,
         "tests:skip_by_name": ["test_doctest_examples"],
         "authors": ["benheid"],
-        "python_dependencies": ["litellm", "pydantic"],
+        "python_dependencies": ["litellm"],
     }
 
     def __init__(
@@ -534,6 +545,7 @@ class LLMBlueprintForecaster(BaseForecaster):
         # treat it as a warning rather than a hard error.
         if description_method in {"described_plot", "image"}:
             import litellm
+
             if not litellm.supports_vision(model=model):
                 warnings.warn(
                     f"Model '{model}' was not recognised as vision-capable by litellm. "
@@ -586,15 +598,21 @@ class LLMBlueprintForecaster(BaseForecaster):
     def _build_refinement_message(self, iteration_results, best_overall_result):
         """Build the refinement prompt for the next iteration."""
         refinement_prompt = (
-            self.refinement_prompt if self.refinement_prompt is not None else _REFINEMENT_PROMPT
+            self.refinement_prompt
+            if self.refinement_prompt is not None
+            else _REFINEMENT_PROMPT
         )
         results_summary = _build_iteration_summary(iteration_results)
         all_results_ranked = self._build_ranked_history()
         return refinement_prompt.format(
             results_summary=results_summary,
             all_results_ranked=all_results_ranked,
-            best_name=best_overall_result["name"] if best_overall_result is not None else "N/A",
-            best_score=best_overall_result["score"] if best_overall_result is not None else float("nan"),
+            best_name=best_overall_result["name"]
+            if best_overall_result is not None
+            else "N/A",
+            best_score=best_overall_result["score"]
+            if best_overall_result is not None
+            else float("nan"),
             n_blueprints=self.n_blueprints,
         )
 
@@ -670,7 +688,9 @@ class LLMBlueprintForecaster(BaseForecaster):
             self.blueprint_history_.append(result)
             print(f"    {_format_result(result, prefix='')}")
             if result["error"] is not None and self.n_fix_attempts > 0:
-                print(f"    Attempting to fix '{result['name']}' ({self.n_fix_attempts} tries)...")
+                print(
+                    f"Trying to fix '{result['name']}', retry: {self.n_fix_attempts}"
+                )
                 fixed, _ = self._try_fix_blueprint(result, messages, y, X)
                 if fixed is not None:
                     iteration_results.append(fixed)
@@ -687,7 +707,6 @@ class LLMBlueprintForecaster(BaseForecaster):
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecaster by running the LLM blueprint search."""
-
         # Generate dataset description using the configured method
         if self.description_method == "basic":
             dataset_description = _get_basic_description(y)
@@ -701,11 +720,11 @@ class LLMBlueprintForecaster(BaseForecaster):
             dataset_description, image_base64 = _get_image_description(y)
         else:
             # Should not reach here due to validation in __init__
-            raise ValueError(
-                f"Unknown description_method: {self.description_method}"
-            )
+            raise ValueError(f"Unknown description_method: {self.description_method}")
 
-        forecaster_names, transformer_names = _build_estimator_names(self.estimator_info)
+        forecaster_names, transformer_names = _build_estimator_names(
+            self.estimator_info
+        )
 
         system_prompt = (
             self.system_prompt if self.system_prompt is not None else _SYSTEM_PROMPT
