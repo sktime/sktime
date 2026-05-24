@@ -1,0 +1,109 @@
+name: weekly classifiers test
+
+on:
+  schedule:
+    # Runs every Saturday at 03:00 UTC
+    - cron: "0 3 * * 6"
+
+  workflow_dispatch:
+
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  collect-classifiers:
+    runs-on: ubuntu-latest
+    outputs:
+      classifiers: ${{ steps.get.outputs.classifiers }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install sktime
+        run: pip install .[dev]
+
+      - name: Get all classifiers
+        id: get
+        run: |
+          python - <<EOF
+          import json
+          from sktime.registry import all_estimators
+
+          classifiers = all_estimators("classifier")
+          names = [name for name, _ in classifiers]
+
+          with open("classifiers.json", "w") as f:
+              json.dump(names, f)
+
+          print(json.dumps(names))
+          EOF
+
+          echo "classifiers=$(cat classifiers.json)" >> $GITHUB_OUTPUT
+
+  test-classifiers:
+    needs: collect-classifiers
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        classifier: ${{ fromJson(needs.collect-classifiers.outputs.classifiers) }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install sktime
+        run: pip install .[dev]
+
+      - name: Install soft dependencies
+        run: |
+          python - <<EOF
+          from sktime.registry import deps
+
+          name = "${{ matrix.classifier }}"
+          d = deps(name, include_test_deps=True)
+
+          if d:
+              with open("deps.txt", "w") as f:
+                  f.write("\n".join(d))
+          EOF
+
+          if [ -f deps.txt ]; then
+            pip install -r deps.txt
+          fi
+        continue-on-error: true
+
+      - name: Run targeted test
+        run: |
+          python - <<EOF
+          from sktime.registry import all_estimators
+          from sktime.utils.estimator_checks import check_estimator
+
+          name = "${{ matrix.classifier }}"
+          print(f"Running test for: {name}")
+
+          classifiers = dict(all_estimators("classifier"))
+          est = classifiers[name]
+
+          check_estimator(
+              estimator=est,
+              tests_to_run="test_fit_predict",
+              raise_exceptions=True,
+          )
+
+          print(f"PASS: {name}")
+          EOF
