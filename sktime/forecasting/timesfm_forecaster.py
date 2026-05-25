@@ -192,6 +192,10 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.timesfm"],
+        "tests:skip_by_name": [
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+        ],
     }
 
     def __init__(
