@@ -418,12 +418,22 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 "horizon_len": 128,
                 "freq": 0,
                 "verbose": False,
+                "repo_id": None,
+                "output_patch_len": 32,
+                "num_layers": 1,
+                "model_dims": 16,
+                "per_core_batch_size": 1,
             },
             {
                 "context_len": 64,
                 "horizon_len": 32,
                 "freq": 0,
                 "verbose": False,
+                "repo_id": None,
+                "output_patch_len": 32,
+                "num_layers": 1,
+                "model_dims": 16,
+                "per_core_batch_size": 1,
             },
         ]
         params_no_broadcasting = [
