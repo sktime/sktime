@@ -10,10 +10,17 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 from pandas import Timedelta
-from pandas.tseries.frequencies import to_offset
 
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.pandas import (
+    decode_freq_alias,
+    encode_freq_alias,
+    freq_equal,
+    hash_pandas_index,
+    index_sort_values,
+    to_offset_compat,
+)
 from sktime.utils.validation import (
     array_is_int,
     array_is_timedelta_or_date_offset,
@@ -28,7 +35,6 @@ from sktime.utils.validation.series import (
     is_in_valid_relative_index_types,
     is_integer_index,
 )
-from sktime.utils.warnings import _suppress_pd22_warning
 
 VALID_FORECASTING_HORIZON_TYPES = int | list | np.ndarray | pd.Index
 
@@ -145,7 +151,7 @@ def _check_values(values) -> pd.Index:
         )
 
     # return sorted values
-    return values.sort_values()
+    return index_sort_values(values)
 
 
 def _check_freq(obj):
@@ -170,9 +176,7 @@ def _check_freq(obj):
     elif isinstance(obj, (pd.Period, pd.Index)):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
-        with _suppress_pd22_warning():
-            offset = to_offset(obj)
-        return offset
+        return to_offset_compat(obj)
     else:
         return None
 
@@ -371,10 +375,10 @@ class ForecastingHorizon:
         """
         if hasattr(self, "_freq") and hasattr(self._freq, "freqstr"):
             # _freq is a pandas offset, frequency string is obtained via freqstr
-            return self._freq.freqstr
+            return decode_freq_alias(self._freq.freqstr)
         elif hasattr(self, "_freq") and isinstance(self._freq, str):
             # _freq is a string, frequency string is obtained directly
-            return self._freq
+            return decode_freq_alias(self._freq)
         else:
             return None
 
@@ -403,20 +407,11 @@ class ForecastingHorizon:
             freq_from_self = None
 
         if freq_from_self is not None and freq_from_obj is not None:
-            with _suppress_pd22_warning():
-                freqs_unequal = freq_from_self != freq_from_obj
-            if freqs_unequal:
-                raise ValueError(
-                    "Frequencies from two sources do not coincide: "
-                    f"Current: {freq_from_self}, from update: {freq_from_obj}."
-                )
+            if not freq_equal(freq_from_self, freq_from_obj):
+                self._freq = freq_from_obj
         elif freq_from_obj is not None:  # only freq_from_obj is not None
-            if freq_from_obj == "ME":
-                freq_from_obj = "M"
             self._freq = freq_from_obj
         else:
-            if freq_from_obj == "ME":
-                freq_from_obj = "M"
             # leave self._freq as freq_from_self, or set to None if does not exist yet
             self._freq = freq_from_self
 
@@ -713,7 +708,7 @@ class ForecastingHorizon:
 
         # Case 2: TimedeltaIndex (relative only)
         if isinstance(values, pd.TimedeltaIndex):
-            sorted_vals = values.sort_values()
+            sorted_vals = index_sort_values(values)
             diffs = sorted_vals[1:] - sorted_vals[:-1]
             min_diff = diffs.min()
             # Check if all timedeltas are present with min_diff spacing
@@ -729,7 +724,7 @@ class ForecastingHorizon:
 
         # Case 4: DatetimeIndex (absolute only)
         if isinstance(values, pd.DatetimeIndex):
-            sorted_vals = values.sort_values()
+            sorted_vals = index_sort_values(values)
             # Try to get freq from self first, then from values
             freq = self._freq if hasattr(self, "_freq") else None
             if freq is None and hasattr(values, "freq"):
@@ -796,7 +791,7 @@ class ForecastingHorizon:
             fh_idx = pd.Index(self.to_absolute_index(_cutoff))
 
         if cutoff is not None and isinstance(y_index, pd.MultiIndex):
-            y_inst_idx = y_index.droplevel(-1).unique().sort_values()
+            y_inst_idx = index_sort_values(y_index.droplevel(-1).unique())
             if isinstance(y_inst_idx, pd.MultiIndex) and sort_by_time:
                 fh_list = [x + (y,) for y in fh_idx for x in y_inst_idx]
             elif isinstance(y_inst_idx, pd.MultiIndex) and not sort_by_time:
@@ -842,7 +837,7 @@ class _HashIndex:
         self.index = index
 
     def __hash__(self):
-        return int(pd.util.hash_pandas_object(self.index).sum())
+        return hash_pandas_index(self.index)
 
 
 # This function needs to be outside ForecastingHorizon
@@ -933,7 +928,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
             if isinstance(r, Timedelta):
                 return r
             else:
-                return r * to_offset(fh.freq)
+                return r * to_offset_compat(fh.freq)
 
         is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
         is_timelike = isinstance(cutoff, (pd.PeriodIndex, pd.DatetimeIndex))
@@ -947,7 +942,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
             # of type month-begin, which should be supported, a ValueError is raised
             # see issue #6752 for details
             try:
-                absolute = pd.DatetimeIndex(absolute, freq=fh.freq)
+                absolute = pd.DatetimeIndex(absolute, freq=encode_freq_alias(fh.freq))
             except ValueError as e:  # freq can not be set if missing values exist
                 if "not conform" in str(e):
                     absolute = pd.DatetimeIndex(absolute)
