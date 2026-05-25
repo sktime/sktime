@@ -634,6 +634,19 @@ def test_frequency_setter(freqstr):
     assert fh.freq == freqstr
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
+    or not _check_soft_dependencies("pandas>=2.1.0", severity="none"),
+    reason="run only if base module has changed and pandas >= 2.1",
+)
+def test_frequency_setter_from_me_index():
+    """Test frequency inferred from DatetimeIndex with ME freq alias."""
+    index = pd.date_range("2000-01-01", periods=3, freq="ME")
+    fh = ForecastingHorizon([1, 2, 3])
+    fh.freq = index
+    assert fh.freq == "M"
+
+
 # TODO: Replace this long running test with fast unit test
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
