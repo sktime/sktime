@@ -287,18 +287,34 @@ def _evaluate_window(x, meta):
     except Exception as e:
         if error_score == "raise":
             raise e
-        else:  # assign default value when fitting failed
+        else:  # assign default value when fitting or predicting failed
             for scitype in scoring:
-                temp_result[f"{scitype}_time"] = [pred_time]
-                if return_data:
-                    temp_result[f"y_{scitype}"] = [y_pred]
                 for metric in scoring.get(scitype):
-                    temp_result[f"test_{metric.name}"] = [score]
+                    pred_args = _get_pred_args_from_metric(scitype, metric)
+                    if pred_args == {}:
+                        time_key = f"{scitype}_time"
+                        result_key = f"test_{metric.name}"
+                        y_pred_key = f"y_{scitype}"
+                    else:
+                        argval = list(pred_args.values())[0]
+                        time_key = f"{scitype}_{argval}_time"
+                        result_key = f"test_{metric.name}_{argval}"
+                        y_pred_key = f"y_{scitype}_{argval}"
+
+                    if time_key not in temp_result:
+                        temp_result[time_key] = [np.nan]
+                    if return_data and y_pred_key not in temp_result:
+                        temp_result[y_pred_key] = [pd.NA]
+                    if result_key not in temp_result:
+                        temp_result[result_key] = [error_score]
+
             warnings.warn(
                 f"""
-                In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
+                In evaluate, fitting or predicting of forecaster
+                {type(forecaster).__name__} failed,
                 you can set error_score='raise' in evaluate to see
                 the exception message.
+                Exception: {e}
                 Fit failed for the {i}-th data split, on training data y_train with
                 cutoff {cutoff}, and len(y_train)={len(y_train)}.
                 The score will be set to {error_score}.
