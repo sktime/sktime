@@ -162,7 +162,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "pandas>=2.1.4",
             "paxml>=1.4.0",
             "utilsforecast>=0.1.10",
-            "jax>=0.4.26",
+            "jax[cuda12]>=0.4.26",
             "jaxlib>=0.4.26",
             "huggingface-hub[cli]>=0.23.0",
             "scikit-learn>=1.2.2",
