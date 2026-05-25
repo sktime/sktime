@@ -12,7 +12,6 @@ from sktime.utils.pandas import (
     hash_pandas_index,
     index_sort_values,
     is_pandas_ge_2_1,
-    is_pandas_ge_3,
     to_offset_compat,
 )
 

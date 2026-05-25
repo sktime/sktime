@@ -12,9 +12,8 @@ import pandas as pd
 
 from sktime.datatypes import VectorizedDF
 from sktime.datatypes._utilities import get_time_index
-from sktime.utils.validation.series import check_time_index, is_integer_index
 from sktime.utils.pandas import to_offset_compat
-from sktime.utils.warnings import _suppress_pd22_warning
+from sktime.utils.validation.series import check_time_index, is_integer_index
 
 
 def _coerce_duration_to_int(
