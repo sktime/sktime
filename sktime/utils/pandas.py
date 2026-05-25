@@ -94,6 +94,9 @@ def encode_freq_alias(freqstr):
 def decode_freq_alias(freqstr):
     """Decode pandas 2.1+ frequency aliases to sktime canonical aliases.
 
+    On pandas < 2.1, modern aliases such as ``ME`` are not used by pandas and
+    the string is returned unchanged.
+
     Parameters
     ----------
     freqstr : str or None
@@ -102,12 +105,29 @@ def decode_freq_alias(freqstr):
     -------
     str or None
     """
-    if freqstr is None:
-        return None
+    if freqstr is None or _check_soft_dependencies("pandas<2.1.0", severity="none"):
+        return freqstr
 
     mult, base = _split_freq_alias(freqstr)
     base_dec = _MODERN_TO_LEGACY_ALIAS.get(base, base)
     return f"{mult}{base_dec}" if mult else base_dec
+
+
+def _freq_for_to_offset(freqstr):
+    """Normalize a frequency string for ``to_offset`` on the installed pandas.
+
+    On pandas >= 2.1, legacy aliases are encoded to modern aliases.
+    On pandas < 2.1, modern aliases are mapped to legacy aliases.
+    """
+    if freqstr is None:
+        return None
+
+    mult, base = _split_freq_alias(freqstr)
+    if is_pandas_ge_2_1():
+        base_norm = _LEGACY_TO_MODERN_ALIAS.get(base, base)
+    else:
+        base_norm = _MODERN_TO_LEGACY_ALIAS.get(base, base)
+    return f"{mult}{base_norm}" if mult else base_norm
 
 
 def to_offset_compat(freq):
@@ -126,7 +146,8 @@ def to_offset_compat(freq):
     if freq is None:
         with _suppress_pd22_warning():
             return to_offset(freq)
-    freq_enc = encode_freq_alias(freq) if isinstance(freq, str) else freq
+    # freq_enc = encode_freq_alias(freq) if isinstance(freq, str) else freq
+    freq_enc = _freq_for_to_offset(freq) if isinstance(freq, str) else freq
     with _suppress_pd22_warning():
         return to_offset(freq_enc)
 
