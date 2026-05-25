@@ -464,14 +464,14 @@ class AutoETS(_StatsModelsAdapter):
         y_pred : pd.Series
             Returns series of predicted values.
         """
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        start, end = fh.to_absolute_int(self._y_index0, self.cutoff)[[0, -1]]
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute_index(self.cutoff)
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
-        y_pred.name = self._y.name
+        y_pred.name = self._y_name
         return y_pred.loc[valid_indices]
 
     @staticmethod
