@@ -11,7 +11,6 @@ from sktime.detection.base import BaseDetector
 from sktime.tests.test_switch import run_test_for_class
 
 
-@pytest.mark.xfail(reason="Changed interface, need to update test")
 @pytest.mark.skipif(
     not run_test_for_class(BaseDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -69,6 +68,7 @@ def test_sparse_to_dense(y_sparse, y_dense_expected, index):
                 index=pd.IntervalIndex.from_arrays([3, 6], [5, 6], closed="left"),
             ),
         ),
+        (pd.DataFrame({"labels": [0, 1, 0, 1]}), pd.Series([1, 3])),
     ],
 )
 def test_dense_to_sparse(y_dense, y_sparse_expected):
@@ -156,7 +156,6 @@ def test_segments_to_change_points(segments, expected_change_points):
     assert actual_change_points.equals(expected_change_points)
 
 
-@pytest.mark.xfail(reason="Changed interface, need to update test")
 @pytest.mark.skipif(
     not run_test_for_class(BaseDetector),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -177,6 +176,26 @@ def test_segments_to_change_points(segments, expected_change_points):
 def test_sparse_segments_to_dense(y_sparse, index, y_dense_expected):
     y_dense_actual = BaseDetector._sparse_segments_to_dense(y_sparse, index)
     testing.assert_series_equal(y_dense_expected, y_dense_actual)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(BaseDetector),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_sparse_segments_to_dense_dataframe():
+    """Test converting current sparse segmentation format to dense labels."""
+    y_sparse = pd.DataFrame(
+        {
+            "ilocs": pd.IntervalIndex.from_arrays([0, 3], [3, 5], closed="left"),
+            "labels": [1, 2],
+        }
+    )
+    index = pd.RangeIndex(0, 6, 1)
+    y_dense_expected = pd.DataFrame({"labels": [1, 1, 1, 2, 2, -1]})
+
+    y_dense_actual = BaseDetector.sparse_to_dense(y_sparse, index=index)
+
+    testing.assert_frame_equal(y_dense_actual, y_dense_expected)
 
 
 @pytest.mark.skipif(
