@@ -33,6 +33,7 @@ restore_checkpoint = _safe_import("paxml.checkpoints.restore_checkpoint")
 create_state_partition_specs = _safe_import(
     "paxml.tasks_lib.create_state_partition_specs"
 )
+create_state = _safe_import("paxml.tasks_lib.create_state")
 create_state_unpadded_shapes = _safe_import(
     "paxml.tasks_lib.create_state_unpadded_shapes"
 )
@@ -245,6 +246,35 @@ class TimesFm:
             step=step,
         )
         self._logging(f"Restored checkpoint in {time.time() - start_time:.2f} seconds.")
+        self.jit_decode()
+
+    def init_from_random_weights(self):
+        """Initialize the model with random weights and compile the decoder."""
+        self._logging("Constructing random model weights.")
+        start_time = time.time()
+        self._model = instantiate(self.model_p)
+        sample_inputs = self._get_sample_inputs()
+        var_weight_hparams = self._model.abstract_init_with_metadata(
+            sample_inputs, do_eval=True
+        )
+        with JaxContext.new_context(hparams=self._eval_context):
+            mdl_vars = self._model.init(
+                {
+                    PARAMS: self._key1,
+                    RANDOM: self._key2,
+                },
+                sample_inputs,
+            )
+        self._train_state = create_state(
+            mdl_vars,
+            var_weight_hparams,
+            discard_opt_states=True,
+            learners=None,
+        )
+        self._logging(
+            f"Constructed random model weights in {time.time() - start_time:.2f} "
+            "seconds."
+        )
         self.jit_decode()
 
     def jit_decode(self):
