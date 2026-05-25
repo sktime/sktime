@@ -70,9 +70,12 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         on your specific use case,
         although it is recommended to follow these guidelines for optimal results.
 
-    repo_id : str, optional (default="google/timesfm-1.0-200m")
+    repo_id : str or None, optional (default="google/timesfm-1.0-200m")
         The identifier for the model repository.
         The default model is the 200M parameter version.
+        If None, the model is initialized from random weights and no checkpoint is
+        downloaded or restored. Random initialization is supported for the vendored
+        sktime TimesFM implementation, i.e. when ``use_source_package=False``.
     input_patch_len : int, optional (default=32)
         The fixed length of input patches that the model processes.
         This parameter is fixed to 1280 for the 200M model and should not be changed.
@@ -293,7 +296,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             timesfm_kwargs=self._get_timesfm_kwargs(),
             use_source_package=self.use_source_package,
             repo_id=self.repo_id,
-        ).load_from_checkpoint()
+        ).load()
 
     def _get_timesfm_kwargs(self):
         """Get the kwargs for TimesFM model."""
@@ -463,7 +466,7 @@ class _CachedTimesFM:
         self.use_source_package = use_source_package
         self.tfm = None
 
-    def load_from_checkpoint(self):
+    def load(self):
         if self.tfm is None:
             if self.use_source_package:
                 from timesfm import TimesFm
@@ -471,6 +474,14 @@ class _CachedTimesFM:
                 from sktime.libs.timesfm import TimesFm
 
             self.tfm = TimesFm(**self.timesfm_kwargs)
-            self.tfm.load_from_checkpoint(repo_id=self.repo_id)
+            if self.repo_id is not None:
+                self.tfm.load_from_checkpoint(repo_id=self.repo_id)
+            else:
+                if not hasattr(self.tfm, "init_from_random_weights"):
+                    raise NotImplementedError(
+                        "repo_id=None requires the vendored TimesFM "
+                        "implementation. Set use_source_package=False."
+                    )
+                self.tfm.init_from_random_weights()
 
         return self.tfm
