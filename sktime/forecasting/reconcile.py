@@ -119,6 +119,7 @@ class ReconcilerForecaster(BaseForecaster):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
+        "capability:unequal_length": False,
         "fit_is_empty": False,
         # CI and test flags
         # -----------------
@@ -167,7 +168,7 @@ class ReconcilerForecaster(BaseForecaster):
         y : pd.DataFrame
             Time series to which to fit the forecaster.
         fh : ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, default=None
             Exogenous variables for the base forecaster
 
@@ -242,7 +243,7 @@ class ReconcilerForecaster(BaseForecaster):
         Parameters
         ----------
         fh : ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             Exogeneous time series for the forecast
 

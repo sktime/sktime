@@ -179,6 +179,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
@@ -256,6 +257,18 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             broadcasting=broadcasting,
         )
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
         # initiate internal variables to avoid AttributeError in future
         self._trainer_kwargs = None
         self._loss = None
@@ -573,6 +586,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
@@ -964,6 +978,7 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
@@ -1366,6 +1381,7 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
@@ -1766,6 +1782,7 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
