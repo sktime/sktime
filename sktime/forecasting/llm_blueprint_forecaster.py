@@ -309,8 +309,9 @@ def _get_basic_description(y):
     return (
         f"Dataset info:\n"
         f"- Length: {len(y)} observations\n"
-        f"""- Frequency: {y.index.freqstr if hasattr(y.index, 'freqstr')
-                          else 'unknown'}\n"""
+        f"""- Frequency: {
+            y.index.freqstr if hasattr(y.index, "freqstr") else "unknown"
+        }\n"""
         f"- Mean: {y.mean():.4f}, Std: {y.std():.4f}\n"
         f"- Min: {y.min():.4f}, Max: {y.max():.4f}\n"
     )
@@ -378,8 +379,8 @@ def _get_described_plot_description(y, model, api_params):
                 {
                     "type": "text",
                     "text": "Describe the key characteristics of this time"
-                            "series plot briefly, focusing on trends,"
-                            "seasonality, and volatility.",
+                    "series plot briefly, focusing on trends,"
+                    "seasonality, and volatility.",
                 },
                 {
                     "type": "image_url",
@@ -688,9 +689,7 @@ class LLMBlueprintForecaster(BaseForecaster):
             self.blueprint_history_.append(result)
             print(f"    {_format_result(result, prefix='')}")
             if result["error"] is not None and self.n_fix_attempts > 0:
-                print(
-                    f"Trying to fix '{result['name']}', retry: {self.n_fix_attempts}"
-                )
+                print(f"Trying to fix '{result['name']}', retry: {self.n_fix_attempts}")
                 fixed, _ = self._try_fix_blueprint(result, messages, y, X)
                 if fixed is not None:
                     iteration_results.append(fixed)
