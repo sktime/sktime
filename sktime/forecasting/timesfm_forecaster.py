@@ -4,7 +4,6 @@
 __author__ = ["rajatsen91", "geetu040"]
 # rajatsen91 for google-research/timesfm
 
-import os
 
 import numpy as np
 import pandas as pd
