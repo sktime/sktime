@@ -214,7 +214,7 @@ class AutoTS(BaseForecaster):
         "python_version": ">=3.6",
         # estimator type
         # --------------
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": True,
@@ -300,10 +300,18 @@ class AutoTS(BaseForecaster):
         self.verbose = verbose
         self.n_jobs = n_jobs
 
-        # leave this as is
         super().__init__()
 
-        # import inside method to avoid hard dependency
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         from autots import AutoTS as _autots
 
         self._ModelClass = _autots
@@ -322,9 +330,12 @@ class AutoTS(BaseForecaster):
         Parameters
         ----------
         y : pd.DataFrame
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+            Time series to fit.
+
+            - if ``self.get_tag("capability:multivariate") == False``:
+              guaranteed to have a single column
+            - if ``self.get_tag("capability:multivariate") == True``:
+              no restrictions apply
         X : pd.DataFrame, optional (default=None)
             Exogeneous time series to fit to.
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)

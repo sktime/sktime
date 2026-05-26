@@ -106,7 +106,7 @@ def test_vectorization_series_to_hier(mtype, backend):
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
     f = YfromX.create_test_instance()
-    assert f.get_tag("scitype:y") == "univariate"  # check the assumption
+    assert not f.get_tag("capability:multivariate")  # check the assumption
 
     f.set_config(**backend.copy())
     y_pred = f.fit(y).predict([1, 2, 3])
@@ -172,7 +172,7 @@ def test_vectorization_series_to_panel_proba(method, mtype):
     elif method in ["predict_var"]:
         expected_mtype = "pd-multiindex"
     else:
-        RuntimeError(f"bug in test, unreachable state, method {method} queried")
+        raise RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
     valid, _, _ = check_is_mtype(
         y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"
@@ -212,7 +212,7 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     elif method in ["predict_var"]:
         expected_mtype = "pd_multiindex_hier"
     else:
-        RuntimeError(f"bug in test, unreachable state, method {method} queried")
+        raise RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
     valid, _, _ = check_is_mtype(
         y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"
@@ -324,7 +324,7 @@ def test_col_vectorization_correct_col_order():
 
     f = NaiveForecaster()
     # force univariate tag to trigger vectorization over columns for sure
-    f.set_tags(**{"scitype:y": "univariate"})
+    f.set_tags(**{"capability:multivariate": False})
 
     f.fit(y=y, fh=[1])
     y_pred = f.predict()
