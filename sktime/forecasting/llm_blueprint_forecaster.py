@@ -13,8 +13,8 @@ import types
 import warnings
 from time import sleep
 
-import matplotlib.pyplot as plt
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.registry import craft
 
@@ -330,6 +330,10 @@ def _generate_time_series_plot_base64(y):
     base64_img : str
         Base64-encoded PNG image.
     """
+    _check_soft_dependencies("matplotlib", object="LLMBlueprintForecaster plotting")
+
+    import matplotlib.pyplot as plt
+
     fig, ax = plt.subplots(figsize=(10, 4))
     ax.plot(y.values, linewidth=1.5)
     ax.set_title("Time Series Data")
