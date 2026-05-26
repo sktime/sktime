@@ -511,15 +511,22 @@ class LLMBlueprintForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["benheid"],
+        "python_dependencies": ["litellm"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "scitype:y": "univariate",
         "capability:exogenous": False,
         "capability:missing_values": False,
         "requires-fh-in-fit": True,
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,  # tested on separate VM due to litellm dependency
         "tests:skip_by_name": ["test_doctest_examples"],
-        "authors": ["benheid"],
-        "python_dependencies": ["litellm"],
     }
 
     def __init__(
