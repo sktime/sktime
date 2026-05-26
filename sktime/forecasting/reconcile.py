@@ -380,10 +380,10 @@ class ReconcilerForecaster(BaseForecaster):
 
         if shrink:
             # diag matrix of variances
-            var_d = pd.DataFrame(0.0, index=cov_mat.index, columns=cov_mat.columns)
-            np.fill_diagonal(var_d.values, np.diag(cov_mat))
+            diag_mat = np.diag(np.diag(cov_mat.values))
+            var_d = pd.DataFrame(diag_mat, index=cov_mat.index, columns=cov_mat.columns)
 
-            # get correltion from covariance above
+            # get correlation from covariance above
             cor_mat = resid.corr()
             nobs = len(resid)
 
