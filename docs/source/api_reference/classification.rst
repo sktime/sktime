@@ -97,7 +97,7 @@ Foundation models
     :template: class.rst
 
     MomentFMClassifier
-
+    TSPulseClassifier
 
 Dictionary-based
 ----------------
