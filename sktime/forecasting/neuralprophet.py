@@ -176,7 +176,11 @@ class NeuralProphet(BaseForecaster):
 
         NeuralProphet's underlying PyTorch model uses ``weight_norm`` internally,
         which makes tensors non-deepcopy-able (see pytorch/pytorch#103001).
+
+        PyTorch 2.6 changed the default of ``torch.load`` to ``weights_only=True``,
+        which blocks NeuralProphet's internal classes from being unpickled.
         """
+        import contextlib
         import copy
         import pickle
 
@@ -186,6 +190,19 @@ class NeuralProphet(BaseForecaster):
         for k, v in self.__dict__.items():
             if k == "_model":
                 try:
+                    # Allowlist NeuralProphet configure globals for PyTorch >= 2.6
+                    # where torch.load defaults to weights_only=True.
+                    with contextlib.suppress(Exception):
+                        import neuralprophet.configure as _np_cfg
+                        import torch.serialization as _ts
+
+                        _np_globals = [
+                            getattr(_np_cfg, name)
+                            for name in dir(_np_cfg)
+                            if isinstance(getattr(_np_cfg, name), type)
+                        ]
+                        _ts.add_safe_globals(_np_globals)
+
                     setattr(result, k, pickle.loads(pickle.dumps(v)))
                 except Exception:
                     # Fallback to direct reference if pickling fails
