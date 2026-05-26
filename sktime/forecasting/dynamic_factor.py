@@ -271,7 +271,7 @@ class DynamicFactor(_StatsModelsAdapter):
             end_oos = int(outsample_idx[-1])
 
             if X is not None:
-                exog_part = X.iloc[:end_oos - n_train]
+                exog_part = X.iloc[: end_oos - n_train]
             else:
                 exog_part = None
 
@@ -356,7 +356,7 @@ class DynamicFactor(_StatsModelsAdapter):
         n_train = len(self._y) - 1
         if end > n_train:
             if X is not None:
-                exog_part = X.iloc[:end - n_train]
+                exog_part = X.iloc[: end - n_train]
             else:
                 exog_part = None
         else:
@@ -379,7 +379,11 @@ class DynamicFactor(_StatsModelsAdapter):
             if self._was_univariate:
                 y_pred = y_pred.iloc[:, [0, 1]]
 
-            y_pred = y_pred.loc[abs_fh]
+            # statsmodels prediction results contain all steps from start to end.
+            # Extract exactly the steps requested in fh using integer locations.
+            ilocs = abs_int_fh_np - start
+            y_pred = y_pred.iloc[ilocs]
+            y_pred.index = abs_fh
 
             y_pred.rename(
                 columns={orig_col: orig_col + f" {coverage}" for orig_col in y_pred},
