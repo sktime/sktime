@@ -27,6 +27,7 @@ class _PmdArimaAdapter(BaseForecaster):
         # CI and testing tags
         # -------------------
         "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
         "tests:libs": ["sktime.forecasting.base.adapters._pmdarima"],
     }
 
