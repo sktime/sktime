@@ -172,6 +172,7 @@ class MLPNetworkTorch(NNModule):
         self.fc = nnLinear(
             in_features=self.hidden_dim,
             out_features=self.num_classes,
+            bias=self.bias,
         )
         if self.activation:
             self._activation = instantiate_activation(self.activation)

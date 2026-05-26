@@ -16,7 +16,7 @@ from sktime.utils.warnings import warn
 class BaseGridSearch(_DelegatedForecaster):
     _tags = {
         "authors": ["mloning", "fkiraly", "aiwalter"],
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,
@@ -58,21 +58,31 @@ class BaseGridSearch(_DelegatedForecaster):
 
         super().__init__()
 
-        self._set_delegated_tags(forecaster)
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self._set_delegated_tags(self.forecaster)
 
         tags_to_clone = ["y_inner_mtype", "X_inner_mtype"]
-        self.clone_tags(forecaster, tags_to_clone)
+        self.clone_tags(self.forecaster, tags_to_clone)
         self._extend_to_all_scitypes("y_inner_mtype")
         self._extend_to_all_scitypes("X_inner_mtype")
 
         # this ensures univariate broadcasting over variables
         # if tune_by_variable is True
-        if tune_by_variable:
-            self.set_tags(**{"scitype:y": "univariate"})
+        if self.tune_by_variable:
+            self.set_tags(**{"capability:multivariate": False})
 
         # todo 1.0.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
-        if n_jobs != "deprecated":
+        if self.n_jobs != "deprecated":
             warn(
                 f"Parameter n_jobs of {self.__class__.__name__} has been removed "
                 "in sktime 0.27.0 and is no longer used. It is ignored when passed. "
@@ -159,7 +169,7 @@ class BaseGridSearch(_DelegatedForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 
@@ -284,7 +294,7 @@ class BaseGridSearch(_DelegatedForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
@@ -307,13 +317,15 @@ class BaseGridSearch(_DelegatedForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
