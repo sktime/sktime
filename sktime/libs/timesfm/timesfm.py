@@ -129,7 +129,6 @@ class TimesFm:
         self.backend = backend
         if self.backend == "cpu":
             jax.config.update("jax_platforms", self.backend)
-            jax.config.update("jax_platform_name", self.backend)
         self.num_devices = jax.local_device_count(self.backend)
         self.global_batch_size = self.per_core_batch_size * self.num_devices
 

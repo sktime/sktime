@@ -260,13 +260,6 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 }
             )
 
-        # With CUDA-enabled jaxlib, JAX may initialize CUDA even when
-        # TimesFM later asks for the CPU backend. Restrict JAX to CPU to
-        # avoid failures on CPU-only systems and CI.
-        if self.backend == "cpu":
-            os.environ["JAX_PLATFORM_NAME"] = self.backend
-            os.environ["JAX_PLATFORMS"] = self.backend
-
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
