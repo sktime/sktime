@@ -56,6 +56,7 @@ class _PmdArimaAdapter(BaseForecaster):
             X = X.loc[y.index]
         self._forecaster = self._instantiate_model()
         self._forecaster.fit(y, X=X)
+        self._y_name = y.name
         return self
 
     def _update(self, y, X=None, update_params=True):
@@ -122,7 +123,7 @@ class _PmdArimaAdapter(BaseForecaster):
 
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
-        y_pred.name = self._get_varnames()[0]
+        y_pred.name = self._y_name
         y_pred.index = fh_abs
         return y_pred
 
