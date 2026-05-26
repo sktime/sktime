@@ -249,6 +249,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         ],
         "capability:multivariate": True,
         "capability:exogenous": True,
+        "capability:unequal_length": False,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
         "authors": ["felipeangelimvieira", "shlok191"],
