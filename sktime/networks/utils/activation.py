@@ -12,7 +12,7 @@ from sktime.utils.dependencies import _safe_import
 NNModule = _safe_import("torch.nn.Module")
 
 
-def instantiate_activation(activation, activation_kwargs={}):
+def instantiate_activation(activation):
     """Instantiate an activation function from a string or return module as-is.
 
     This utility function supports backward compatibility across all network
@@ -25,9 +25,6 @@ def instantiate_activation(activation, activation_kwargs={}):
         - If str: activation name (case-insensitive)
         - If torch.nn.Module: returned as-is
         - If None: returns None
-    activation_kwargs : dict, optional
-        Additional keyword arguments to pass when instantiating the activation function.
-        This is only applicable if `activation` is a string. Ignored otherwise.
 
     Returns
     -------
@@ -87,8 +84,6 @@ def instantiate_activation(activation, activation_kwargs={}):
             f"Supported activations are: {supported}"
         )
 
-    module_path, kwargs = activation_map[act_lower]
+    module_path, activation_kwargs = activation_map[act_lower]
     activation_class = _safe_import(module_path)
-    if not activation_kwargs:
-        activation_kwargs = kwargs
     return activation_class(**activation_kwargs)
