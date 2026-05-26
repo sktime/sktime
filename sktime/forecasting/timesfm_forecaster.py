@@ -174,7 +174,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "env_marker": "sys_platform=='linux'",
         # estimator type
         # --------------
-        "y_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.Series",
         "capability:multivariate": False,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
@@ -327,7 +327,6 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         _y = self._y
 
         hist = np.expand_dims(_y.values, axis=0)
-
         # hist.shape: (batch_size, n_timestamps)
 
         pred, _ = self.tfm.forecast(hist)
@@ -336,38 +335,17 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         batch_size, n_timestamps = pred.shape
 
-        if isinstance(_y.index, pd.MultiIndex):
-            ins = np.array(list(np.unique(_y.index.droplevel(-1)).repeat(n_timestamps)))
-            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
-
-            idx = (
-                ForecastingHorizon(range(1, n_timestamps + 1), freq=self.fh.freq)
-                .to_absolute(self._cutoff)
-                ._values.tolist()
-                * pred.shape[0]
-            )
-            index = pd.MultiIndex.from_arrays(
-                ins + [idx],
-                names=_y.index.names,
-            )
-            pred = pd.DataFrame(
-                # batch_size * num_timestamps
-                pred.ravel(),
-                index=index,
-                columns=_y.columns,
-            )
-        else:
-            index = (
-                ForecastingHorizon(range(1, n_timestamps + 1))
-                .to_absolute(self._cutoff)
-                ._values
-            )
-            pred = pd.Series(
-                # batch_size * num_timestamps
-                pred.ravel(),
-                index=index,
-                name=_y.name,
-            )
+        index = (
+            ForecastingHorizon(range(1, n_timestamps + 1))
+            .to_absolute(self._cutoff)
+            ._values
+        )
+        pred = pd.Series(
+            # batch_size * num_timestamps
+            pred.ravel(),
+            index=index,
+            name=_y.name,
+        )
 
         absolute_horizons = fh.to_absolute_index(self.cutoff)
         dateindex = pred.index.get_level_values(-1).map(
