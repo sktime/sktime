@@ -27,6 +27,7 @@ class _PmdArimaAdapter(BaseForecaster):
         # CI and testing tags
         # -------------------
         "tests:vm": True,
+        "tests:libs": ["sktime.forecasting.base.adapters._pmdarima"],
     }
 
     def __init__(self):
