@@ -222,6 +222,7 @@ dl = [
   'accelerate',
   'tqdm',
   'hydra-core; python_version < "3.13"',
+  'torchmetrics; python_version < "3.13"',
 ]
 mlflow = [
   "mlflow<4.0",
