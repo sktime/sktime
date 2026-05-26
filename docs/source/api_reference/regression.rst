@@ -65,16 +65,20 @@ Deep learning
     cntc.CNTCRegressor
     fcn.FCNRegressor
     inceptiontime.InceptionTimeRegressor
+    inceptiontime.InceptionTimeRegressorTorch
     lstmfcn.LSTMFCNRegressor
+    lstmfcn.LSTMFCNRegressorTorch
     macnn.MACNNRegressor
     macnn.MACCNNRegressorTorch
     mcdcnn.MCDCNNRegressor
     mcdcnn.MCDCNNRegressorTorch
     mlp.MLPRegressor
+    mlp.MLPRegressorTorch
     resnet.ResNetRegressor
     rnn.SimpleRNNRegressor
     rnn.SimpleRNNRegressorTorch
     tapnet.TapNetRegressor
+    tapnet.TapNetRegressorTorch
 
 Distance-based
 --------------

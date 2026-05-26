@@ -79,7 +79,7 @@ def SlidingWindowSplitter(
 ):
     """Legacy export of Sliding window splitter.
 
-    DEPRECATED - use sktime.split.ExpandingWindowSplitter instead.
+    DEPRECATED - use sktime.split.SlidingWindowSplitter instead.
     """
     from warnings import warn
 
