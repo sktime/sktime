@@ -171,6 +171,33 @@ class NeuralProphet(BaseForecaster):
 
         super().__init__()
 
+    @staticmethod
+    def _allowlist_neuralprophet_globals():
+        """Register all neuralprophet.configure types as torch safe globals.
+
+        Required for PyTorch >= 2.6 where ``torch.load`` defaults to
+        ``weights_only=True``. Must be called before any pickle roundtrip
+        that involves a NeuralProphet model.
+
+        ``torch.serialization.add_safe_globals`` was introduced in PyTorch 2.4.
+        On older versions this method is a no-op; the pickle roundtrip still
+        works because ``weights_only`` defaulted to ``False`` there.
+        """
+        import torch.serialization as _ts
+
+        if not hasattr(_ts, "add_safe_globals"):
+            # PyTorch < 2.4: weights_only defaults to False, no allowlisting needed.
+            return
+
+        import neuralprophet.configure as _np_cfg
+
+        _np_globals = [
+            getattr(_np_cfg, name)
+            for name in dir(_np_cfg)
+            if isinstance(getattr(_np_cfg, name), type)
+        ]
+        _ts.add_safe_globals(_np_globals)
+
     def __deepcopy__(self, memo):
         """Handle deepcopy by copy-serializing the non-deepcopy-able PyTorch model.
 
@@ -179,8 +206,9 @@ class NeuralProphet(BaseForecaster):
 
         PyTorch 2.6 changed the default of ``torch.load`` to ``weights_only=True``,
         which blocks NeuralProphet's internal classes from being unpickled.
+        We allowlist all ``neuralprophet.configure`` types before the pickle
+        roundtrip so the load succeeds without disabling weights_only globally.
         """
-        import contextlib
         import copy
         import pickle
 
@@ -192,17 +220,8 @@ class NeuralProphet(BaseForecaster):
                 try:
                     # Allowlist NeuralProphet configure globals for PyTorch >= 2.6
                     # where torch.load defaults to weights_only=True.
-                    with contextlib.suppress(Exception):
-                        import neuralprophet.configure as _np_cfg
-                        import torch.serialization as _ts
-
-                        _np_globals = [
-                            getattr(_np_cfg, name)
-                            for name in dir(_np_cfg)
-                            if isinstance(getattr(_np_cfg, name), type)
-                        ]
-                        _ts.add_safe_globals(_np_globals)
-
+                    # This must succeed — do NOT suppress exceptions here.
+                    self._allowlist_neuralprophet_globals()
                     setattr(result, k, pickle.loads(pickle.dumps(v)))
                 except Exception:
                     # Fallback to direct reference if pickling fails
