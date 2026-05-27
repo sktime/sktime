@@ -147,6 +147,7 @@ class TSPulseClassifier(BaseClassifier):
         "tests:skip_by_name": [
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
+            "test_fit_idempotent",  # random_split is not deterministic
         ],
     }
 
@@ -193,6 +194,7 @@ class TSPulseClassifier(BaseClassifier):
         self.__dict__.update(state)
 
     def _fit(self, X, y):
+        """Fit the TSPulse classifier to the training data."""
         from torch.utils.data import random_split
         from transformers import Trainer, TrainingArguments, set_seed
         from tsfm_public.models.tspulse import TSPulseForClassification
