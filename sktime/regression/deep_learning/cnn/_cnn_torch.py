@@ -3,6 +3,8 @@
 __all__ = ["CNNRegressorTorch"]
 
 
+from collections.abc import Callable
+
 from sktime.networks.cnn import CNNNetworkTorch
 from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
 
@@ -94,26 +96,26 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
     }
 
     def __init__(
-        self,
-        num_epochs=2000,
-        batch_size=16,
-        kernel_sizes=(7, 7),
-        avg_pool_size=3,
-        filter_sizes=(6, 12),
-        use_bias=True,
-        padding="auto",
-        activation=None,
-        activation_hidden="sigmoid",
-        optimizer="Adam",
-        optimizer_kwargs=None,
-        criterion="MSELoss",
-        criterion_kwargs=None,
-        callbacks="ReduceLROnPlateau",
-        callback_kwargs=None,
-        lr=0.01,
-        verbose=False,
-        init_weights=None,
-        random_state=None,
+        self: "CNNRegressorTorch",
+        num_epochs: int = 2000,
+        batch_size: int = 16,
+        kernel_sizes: tuple[int, ...] = (7, 7),
+        avg_pool_size: int = 3,
+        filter_sizes: tuple[int, ...] = (6, 12),
+        use_bias: bool = True,
+        padding: str = "auto",
+        activation: str | None = None,
+        activation_hidden: str = "sigmoid",
+        optimizer: str | None | Callable = "Adam",
+        optimizer_kwargs: dict | None = None,
+        criterion: str | None | Callable = "MSELoss",
+        criterion_kwargs: dict | None = None,
+        callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
+        callback_kwargs: dict | None = None,
+        lr: float = 0.01,
+        verbose: bool = False,
+        init_weights: str | None = None,
+        random_state: int | None = None,
     ):
         self.kernel_sizes = kernel_sizes
         self.avg_pool_size = avg_pool_size

@@ -204,23 +204,22 @@ class CNNNetworkTorch(NNModule):
     def _init_weights(self, module):
         nnConv1d = _safe_import("torch.nn.Conv1d")
 
-        kaiming_uniform_ = _safe_import("torch.nn.init.kaiming_uniform_")
-        kaiming_normal_ = _safe_import("torch.nn.init.kaiming_normal_")
-        xavier_uniform_ = _safe_import("torch.nn.init.xavier_uniform_")
-        xavier_normal_ = _safe_import("torch.nn.init.xavier_normal_")
-
         if isinstance(module, nnConv1d):
             if self.init_weights == "kaiming_uniform":
-                kaiming_uniform_(module.weight, nonlinearity="relu")
+                _safe_import("torch.nn.init.kaiming_uniform_")(
+                    module.weight, nonlinearity="relu"
+                )
 
             elif self.init_weights == "kaiming_normal":
-                kaiming_normal_(module.weight, nonlinearity="relu")
+                _safe_import("torch.nn.init.kaiming_normal_")(
+                    module.weight, nonlinearity="relu"
+                )
 
             elif self.init_weights == "xavier_uniform":
-                xavier_uniform_(module.weight)
+                _safe_import("torch.nn.init.xavier_uniform_")(module.weight)
 
             elif self.init_weights == "xavier_normal":
-                xavier_normal_(module.weight)
+                _safe_import("torch.nn.init.xavier_normal_")(module.weight)
 
             if module.bias is not None:
                 module.bias.data.zero_()

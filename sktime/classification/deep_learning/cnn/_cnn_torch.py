@@ -2,6 +2,8 @@
 
 __all__ = ["CNNClassifierTorch"]
 
+from collections.abc import Callable
+
 import numpy as np
 
 from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
@@ -89,33 +91,32 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
     _tags = {
         "authors": ["hfawaz", "James-Large", "noxthot", "Faakhir30"],
         "maintainers": ["Faakhir30"],
-        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
     }
 
     def __init__(
-        self,
-        num_epochs=2000,
-        batch_size=16,
-        kernel_sizes=(7, 7),
-        avg_pool_size=3,
-        filter_sizes=(6, 12),
-        padding="auto",
-        use_bias=True,
-        activation=None,
-        activation_hidden="sigmoid",
-        optimizer="Adam",
-        optimizer_kwargs=None,
-        criterion="CrossEntropyLoss",
-        criterion_kwargs=None,
-        callbacks="ReduceLROnPlateau",
-        callback_kwargs=None,
-        lr=0.01,
-        verbose=False,
-        init_weights=None,
-        random_state=None,
+        self: "CNNClassifierTorch",
+        num_epochs: int = 2000,
+        batch_size: int = 16,
+        kernel_sizes: tuple[int, ...] = (7, 7),
+        avg_pool_size: int = 3,
+        filter_sizes: tuple[int, ...] = (6, 12),
+        padding: str = "auto",
+        use_bias: bool = True,
+        activation: str | None = None,
+        activation_hidden: str = "sigmoid",
+        optimizer: str | None | Callable = "Adam",
+        optimizer_kwargs: dict | None = None,
+        criterion: str | None | Callable = "CrossEntropyLoss",
+        criterion_kwargs: dict | None = None,
+        callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
+        callback_kwargs: dict | None = None,
+        lr: float = 0.01,
+        verbose: bool = False,
+        init_weights: str | None = None,
+        random_state: int | None = None,
     ):
         self.kernel_sizes = kernel_sizes
         self.avg_pool_size = avg_pool_size
