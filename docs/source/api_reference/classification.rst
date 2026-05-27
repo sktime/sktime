@@ -98,6 +98,8 @@ Foundation models
 
     MomentFMClassifier
 
+    MantisClassifier
+
 
 Dictionary-based
 ----------------
