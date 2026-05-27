@@ -4,6 +4,7 @@ __authors__ = ["Faakhir30"]
 __all__ = ["InceptionTimeNetworkTorch"]
 
 
+from sktime.networks.utils.activation import instantiate_activation
 from sktime.utils.dependencies import _safe_import
 
 NNModule = _safe_import("torch.nn.Module")
@@ -112,11 +113,9 @@ class InceptionTimeNetworkTorch(NNModule):
 
         super().__init__()
 
-        self._activation = self._instantiate_activation(self.activation)
-        self._activation_hidden = self._instantiate_activation(self.activation_hidden)
-        self._activation_inception = self._instantiate_activation(
-            self.activation_inception
-        )
+        self._activation = instantiate_activation(self.activation)
+        self._activation_hidden = instantiate_activation(self.activation_hidden)
+        self._activation_inception = instantiate_activation(self.activation_inception)
 
         nnModuleList = _safe_import("torch.nn.ModuleList")
         self.inception_modules = nnModuleList()
@@ -224,43 +223,6 @@ class InceptionTimeNetworkTorch(NNModule):
 
             if module.bias is not None:
                 module.bias.data.zero_()
-
-    def _instantiate_activation(self, activation_str):
-        """Instantiate activation function.
-
-        Parameters
-        ----------
-        activation_str : str
-            Name of the activation function
-
-        Returns
-        -------
-        activation_function : torch.nn.Module
-            The activation function to be applied
-        """
-        if activation_str is None or activation_str.lower() == "linear":
-            nnIdentity = _safe_import("torch.nn.Identity")
-            return nnIdentity()
-        elif activation_str.lower() == "relu":
-            return _safe_import("torch.nn.ReLU")()
-        elif activation_str.lower() == "tanh":
-            return _safe_import("torch.nn.Tanh")()
-        elif activation_str.lower() == "sigmoid":
-            return _safe_import("torch.nn.Sigmoid")()
-        elif activation_str.lower() == "leaky_relu":
-            return _safe_import("torch.nn.LeakyReLU")()
-        elif activation_str.lower() == "elu":
-            return _safe_import("torch.nn.ELU")()
-        elif activation_str.lower() == "selu":
-            return _safe_import("torch.nn.SELU")()
-        elif activation_str.lower() == "gelu":
-            return _safe_import("torch.nn.GELU")()
-        else:
-            raise ValueError(
-                f"Unsupported activation: {activation_str}. "
-                "Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', "
-                "'elu', 'selu', 'gelu', 'linear'"
-            )
 
 
 class InceptionModule(NNModule):
