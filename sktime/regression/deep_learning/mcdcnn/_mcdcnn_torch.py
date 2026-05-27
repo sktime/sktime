@@ -69,8 +69,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         If a string/Callable is passed, it must be one of the metrics defined in
         https://lightning.ai/docs/torchmetrics/stable/
         Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
-    metrics_kwargs : dict or None, default = None
-        The keyword arguments to be passed to the metrics.
     lr : float, optional (default=0.01)
         The learning rate to use for the optimizer.
     verbose : bool, optional (default=False)
@@ -122,7 +120,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         callbacks=None,
         callback_kwargs=None,
         metrics=None,
-        metrics_kwargs=None,
         lr=0.01,
         verbose=False,
         random_state=0,
@@ -141,7 +138,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.metrics = metrics
-        self.metrics_kwargs = metrics_kwargs
 
         self.optim = optim
         self.optim_kwargs = optim_kwargs
@@ -174,7 +170,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             verbose=self.verbose,
             random_state=self.random_state,
             metrics=self.metrics,
-            metrics_kwargs=self.metrics_kwargs,
         )
 
     def __post_init__(self):

@@ -58,8 +58,6 @@ class BaseDeepRegressorTorch(BaseRegressor):
         If a string/Callable is passed, it must be one of the metrics defined in
         https://lightning.ai/docs/torchmetrics/stable/
         Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
-    metrics_kwargs : dict or None, default = None
-        The keyword arguments to be passed to the metrics.
     lr : float, default = 0.001
         The learning rate to be used in the optimizer.
     verbose : bool, default = True
@@ -92,7 +90,6 @@ class BaseDeepRegressorTorch(BaseRegressor):
         callbacks: None | str | tuple[str, ...] = None,
         callback_kwargs: dict | None = None,
         metrics: None | str | tuple[str, ...] = None,
-        metrics_kwargs: dict | None = None,
         lr: float = 0.001,
         verbose: bool = True,
         random_state: int | None = None,
@@ -106,7 +103,6 @@ class BaseDeepRegressorTorch(BaseRegressor):
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
         self.metrics = metrics
-        self.metrics_kwargs = metrics_kwargs
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -449,11 +445,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
 
                 if hasattr(torchmetrics, metric_class_name):
                     metric_class = getattr(torchmetrics, metric_class_name)
-                    if self.metrics_kwargs:
-                        metric_obj = metric_class(**self.metrics_kwargs)
-                    else:
-                        metric_obj = metric_class()
-                    metrics_dict[metric_class_name] = metric_obj
+                    metrics_dict[metric_class_name] = metric_class()
                 else:
                     raise ValueError(
                         f"Unknown metric: {metric}. Please pass one of the available "
