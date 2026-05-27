@@ -617,6 +617,14 @@ Pre-trained and foundation models
 
     LagLlamaForecaster
 
+.. currentmodule:: sktime.forecasting.mantis
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MantisForecaster
+
 .. currentmodule:: sktime.forecasting.moirai_forecaster
 
 .. autosummary::
