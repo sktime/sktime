@@ -724,6 +724,10 @@ def test_make_reduction_proba():
 
     assert y_pred.shape == y_test.shape
 
+    # Ensure strategy="recursive" falls back to "direct" for proba regressors
+    forecaster_recursive = make_reduction(DummyProbaRegressor(), strategy="recursive")
+    assert type(forecaster_recursive) is type(forecaster)
+
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
