@@ -70,6 +70,12 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         Currently only learning rate schedulers are supported as callbacks.
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
     lr : float, default = 0.001
         The learning rate to use for the optimizer.
     init_weights : str or None, default = None
@@ -149,6 +155,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         criterion_kwargs: dict | None = None,
         callbacks: None | str | tuple[str, ...] = None,
         callback_kwargs: dict | None = None,
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.001,
         init_weights: str | None = None,
         verbose: bool = False,
@@ -172,6 +179,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         self.optimizer_kwargs = optimizer_kwargs
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
+        self.metrics = metrics
         self.lr = lr
         self.init_weights = init_weights
         self.verbose = verbose
@@ -187,6 +195,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
             callbacks=self.callbacks,
             activation=self.activation,
             callback_kwargs=self.callback_kwargs,
+            metrics=self.metrics,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,

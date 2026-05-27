@@ -89,7 +89,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         optimizer_kwargs: dict = None,
         callbacks: None | str | tuple[str, ...] = None,
         callback_kwargs: dict | None = None,
-        metrics: None | str | tuple[str, ...] = None,
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.001,
         verbose: bool = True,
         random_state: int | None = None,

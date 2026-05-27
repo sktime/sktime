@@ -68,6 +68,12 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
         for default PyTorch initialization.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
     lr : float, default = 0.001
         The learning rate to use for the optimizer.
     verbose : bool, default = False
@@ -122,6 +128,7 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
         callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
         callback_kwargs: dict | None = None,
         init_weights: str | None = "kaiming_uniform",
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int | None = None,
@@ -142,6 +149,7 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
         self.init_weights = init_weights
+        self.metrics = metrics
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -168,6 +176,7 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
             optimizer_kwargs=self.optimizer_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
+            metrics=self.metrics,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
