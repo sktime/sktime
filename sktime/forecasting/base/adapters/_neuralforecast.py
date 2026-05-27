@@ -53,6 +53,15 @@ class _NeuralForecastAdapter(_BaseGlobalForecaster):
         Panels, e.g., multiindex data input, will be broadcasted to single series,
         and for each single series, one copy of this forecaster will be applied.
 
+    Attributes
+    ----------
+    n_trainable_params_ : int or None
+        Number of trainable parameters summed across all underlying PyTorch models,
+        set after ``fit``. ``None`` if ``_forecaster.models`` is not iterable.
+    n_total_params_ : int or None
+        Total number of parameters summed across all underlying PyTorch models,
+        set after ``fit``. ``None`` if ``_forecaster.models`` is not iterable.
+
     Notes
     -----
     Only ``futr_exog_list`` will be considered as exogenous variables.
