@@ -6,10 +6,7 @@ __all__ = ["TSPulseClassifier"]
 
 import tempfile
 
-import pandas as pd
-
 from sktime.classification.base import BaseClassifier
-from sktime.datatypes._panel._convert import from_numpy3d_to_dflist
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
@@ -28,6 +25,8 @@ _DEFAULT_MODEL_CONFIG = {
     "ignore_mismatched_sizes": True,
 }
 
+LABEL_COLUMN = "__TS_PULSE_LABEL_COLUMN__"
+
 
 class TSPulseClassifier(BaseClassifier):
     """Time series classifier wrapping IBM TSPulse via granite-tsfm.
@@ -45,42 +44,41 @@ class TSPulseClassifier(BaseClassifier):
     revision : str, default="tspulse-block-dualhead-512-p16-r1"
         Model revision on the Hugging Face Hub.
     config : dict, optional, default=None
-        Keyword arguments passed to the Hugging Face loader when building the
-        classification model. Any key you supply overrides the built-in default
-        for that key. Two keys are always set from the training data and cannot
-        be overridden: ``num_input_channels`` (number of input series channels)
-        and ``num_targets`` (number of distinct classes).
+        Extra keyword arguments forwarded to
+        ``tsfm_public.models.tspulse.TSPulseForClassification.from_pretrained``.
 
-        If ``config`` is ``None``, the following defaults are used (from the
-        granite-tsfm classification tutorial):
+        Any key you supply overrides the built-in default for that key, *except*
+        for the following two keys which are always inferred from the training
+        data:
 
-        ``head_gated_attention_activation`` : str, default ``"softmax"``
-            Activation for the gated attention in the classification head.
-            Alternatives include ``"sigmoid"``.
-        ``channel_virtual_expand_scale`` : int, default ``2``
-            Expansion factor for the channel-mixing block in the decoder head.
-        ``mask_ratio`` : float, default ``0.3``
-            Fraction of patches masked during training (masked modelling).
-            Use ``0`` to disable masking.
-        ``head_reduce_d_model`` : int, default ``1``
-            Reduction factor applied to the model dimension in the head.
-        ``disable_mask_in_classification_eval`` : bool, default ``True``
-            If ``True``, masking is turned off at evaluation and prediction time.
-        ``fft_time_consistent_masking`` : bool, default ``True``
-            If ``True``, apply FFT-based time-consistent masking during training.
-        ``decoder_mode`` : str, default ``"mix_channel"``
-            How channels are combined in the decoder. Alternative:
-            ``"common_channel"``.
-        ``head_aggregation_dim`` : str, default ``"patch"``
-            Dimension along which the classification head aggregates features.
-        ``head_aggregation`` : None, default ``None``
-            Optional aggregation module for the head; ``None`` uses the model default.
-        ``loss`` : str, default ``"cross_entropy"``
-            Training loss used by the model.
-        ``ignore_mismatched_sizes`` : bool, default ``True``
-            If ``True``, allow loading pretrained weights even when the
-            classification head shape differs from the checkpoint (head weights
-            are then randomly initialized).
+        - ``num_input_channels``: set to the number of channels in ``X``
+        - ``num_targets``: set to the number of distinct labels in ``y``
+
+        If ``config`` is ``None``, then following default overrides are applied:
+
+        - ``head_gated_attention_activation="softmax"``:
+          gated attention activation in the classification head
+        - ``channel_virtual_expand_scale=2``:
+          virtual expansion factor for channel mixing in the decoder/head
+        - ``mask_ratio=0.3``:
+          fraction of patches masked during training (use ``0`` to disable)
+        - ``head_reduce_d_model=1``:
+          reduction factor for model dimension in the head
+        - ``disable_mask_in_classification_eval=True``:
+          disables masking at evaluation/prediction time
+        - ``fft_time_consistent_masking=True``:
+          uses masked time-series for FFT during training
+        - ``decoder_mode="mix_channel"``:
+          decoder channel mixing mode (alternative: ``"common_channel"``)
+        - ``head_aggregation_dim="patch"``:
+          aggregation dimension used by the head
+        - ``head_aggregation=None``:
+          use model-default aggregation module
+        - ``loss="cross_entropy"``:
+          loss for classification fine-tuning
+        - ``ignore_mismatched_sizes=True``:
+          allows loading when head shapes differ from the checkpoint
+
     context_length : int, default=512
         Series length passed to the preprocessor and dataset.
     scaling : bool, default=True
@@ -98,8 +96,6 @@ class TSPulseClassifier(BaseClassifier):
         ``0.0`` uses all training data.
     device : str, default="auto"
         PyTorch device (``"auto"``, ``"cpu"``, ``"cuda"``, ``"mps"``).
-    label_column : str, default="class_vals"
-        Label column name used in the granite-tsfm preprocessor.
     seed : int, default=42
         Random seed for training.
 
@@ -112,8 +108,8 @@ class TSPulseClassifier(BaseClassifier):
     --------
     >>> from sktime.classification.foundation_models.tspulse import TSPulseClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_type="numpy3d")
-    >>> X_test, _ = load_unit_test(split="test", return_type="numpy3d")
+    >>> X_train, y_train = load_unit_test(split="train", return_type="nested_univ")
+    >>> X_test, _ = load_unit_test(split="test", return_type="nested_univ")
     >>> clf = TSPulseClassifier(epochs=1, batch_size=8)  # doctest: +SKIP
     >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
@@ -139,15 +135,14 @@ class TSPulseClassifier(BaseClassifier):
             "transformers",
             "accelerate",
         ],
-        "X_inner_mtype": "numpy3D",
+        "X_inner_mtype": "nested_univ",
         "y_inner_mtype": "numpy1D",
         "capability:multivariate": True,
-        "capability:unequal_length": False,
+        "capability:unequal_length": True,
         "tests:vm": True,
         "tests:skip_by_name": [
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
-            "test_fit_idempotent",  # random_split is not deterministic
         ],
     }
 
@@ -164,7 +159,6 @@ class TSPulseClassifier(BaseClassifier):
         freeze_backbone=True,
         train_val_split=0.0,
         device="auto",
-        label_column="class_vals",
         seed=42,
     ):
         self.model_path = model_path
@@ -178,7 +172,6 @@ class TSPulseClassifier(BaseClassifier):
         self.freeze_backbone = freeze_backbone
         self.train_val_split = train_val_split
         self.device = device
-        self.label_column = label_column
         self.seed = seed
         super().__init__()
 
@@ -194,7 +187,18 @@ class TSPulseClassifier(BaseClassifier):
         self.__dict__.update(state)
 
     def _fit(self, X, y):
-        """Fit the TSPulse classifier to the training data."""
+        f"""Fit the TSPulse classifier to the training data.
+
+        Column name ``{LABEL_COLUMN}`` is reserved for internal use.
+        Please avoid having column with this name in ``X``.
+
+        Parameters
+        ----------
+        X : pd.DataFrame (nested_univ)
+            Panel data in nested format (cells are ``pd.Series``).
+        y : np.ndarray, optional
+            Class labels aligned with rows of ``X``.
+        """
         from torch.utils.data import random_split
         from transformers import Trainer, TrainingArguments, set_seed
         from tsfm_public.models.tspulse import TSPulseForClassification
@@ -210,12 +214,17 @@ class TSPulseClassifier(BaseClassifier):
         self._y_dtype = y.dtype
         self._device = _resolve_device(self.device)
 
-        df = _panel_to_nested_df(X, y, label_column=self.label_column)
-        self._input_columns = [f"dim_{j}" for j in range(X.shape[1])]
+        df = X.copy()
+        # tsfm_public classification preprocessor expects integer-like row indices
+        # (it uses them to build repeated indices after unnesting).
+        df = df.reset_index(drop=True)
+        if y is not None:
+            df[LABEL_COLUMN] = y
+        input_columns = [c for c in X.columns if c != LABEL_COLUMN]
 
         preprocessor = TimeSeriesClassificationPreprocessor(
-            input_columns=self._input_columns,
-            label_column=self.label_column,
+            input_columns=input_columns,
+            label_column=LABEL_COLUMN,
             scaling=self.scaling,
             context_length=self.context_length,
         )
@@ -226,7 +235,6 @@ class TSPulseClassifier(BaseClassifier):
         model_config = _build_model_config(
             preprocessor=preprocessor,
             df=df,
-            label_column=self.label_column,
             user_config=self.config,
         )
         model = TSPulseForClassification.from_pretrained(
@@ -240,8 +248,8 @@ class TSPulseClassifier(BaseClassifier):
 
         dataset = ClassificationDFDataset(
             df_prep,
-            input_columns=self._input_columns,
-            label_column=self.label_column,
+            input_columns=input_columns,
+            label_column=LABEL_COLUMN,
             context_length=self.context_length,
             enable_padding=False,
             full_series=True,
@@ -289,12 +297,19 @@ class TSPulseClassifier(BaseClassifier):
         return self
 
     def _predict(self, X):
-        df = _panel_to_nested_df(X, label_column=self.label_column)
-        if self.label_column not in df.columns:
-            df[self.label_column] = self.classes_[0]
+        f"""Predict labels for the test data.
+
+        Column name ``{LABEL_COLUMN}`` is reserved for internal use.
+        Please avoid having column with this name in ``X``.
+        """
+
+        df = X.copy()
+        df = df.reset_index(drop=True)
+        if LABEL_COLUMN not in df.columns:
+            df[LABEL_COLUMN] = self.classes_[0]
 
         out = self._pipeline(df)
-        pred_col = f"{self.label_column}_prediction"
+        pred_col = f"{LABEL_COLUMN}_prediction"
         preds = out[pred_col].to_numpy()
         return preds.astype(self._y_dtype)
 
@@ -318,25 +333,12 @@ class TSPulseClassifier(BaseClassifier):
         ]
 
 
-def _panel_to_nested_df(X, y=None, label_column="class_vals"):
-    """Convert numpy3D panel data to nested DataFrame for granite-tsfm."""
-    dflist = from_numpy3d_to_dflist(X)
-    n_vars = X.shape[1]
-    data = {
-        f"dim_{j}": [dflist[i][f"var_{j}"] for i in range(len(dflist))]
-        for j in range(n_vars)
-    }
-    if y is not None:
-        data[label_column] = y
-    return pd.DataFrame(data)
-
-
-def _build_model_config(preprocessor, df, label_column, user_config):
+def _build_model_config(preprocessor, df, user_config):
     config = _DEFAULT_MODEL_CONFIG.copy()
     if user_config is not None:
         config.update(user_config)
     config["num_input_channels"] = preprocessor.num_input_channels
-    config["num_targets"] = df[label_column].nunique()
+    config["num_targets"] = df[LABEL_COLUMN].nunique()
     return config
 
 
