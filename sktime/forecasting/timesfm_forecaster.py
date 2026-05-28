@@ -279,6 +279,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             context_multiple = (len(y) // self.input_patch_len) + 1
             self._context_len = context_multiple * self.input_patch_len
 
+        self.context = y
         self.tfm = _CachedTimesFM(
             key=self._get_unique_timesfm_key(),
             timesfm_kwargs=self._get_timesfm_kwargs(),
@@ -324,12 +325,11 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 " when initializing the model or try another forecasting horizon."
             )
 
-        _y = self._y
+        context = self.context
+        context_np = np.expand_dims(context.values, axis=0)
+        # context_np.shape: (batch_size, n_timestamps)
 
-        hist = np.expand_dims(_y.values, axis=0)
-        # hist.shape: (batch_size, n_timestamps)
-
-        pred, _ = self.tfm.forecast(hist)
+        pred, _ = self.tfm.forecast(context_np)
 
         # converting pred datatype
 
@@ -344,7 +344,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             # batch_size * num_timestamps
             pred.ravel(),
             index=index,
-            name=_y.name,
+            name=context.name,
         )
 
         absolute_horizons = fh.to_absolute_index(self.cutoff)
