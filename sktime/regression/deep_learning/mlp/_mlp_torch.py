@@ -241,7 +241,7 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
         params1 = {
             "metrics": (
                 "MeanSquaredError",
-                _safe_import("torchmetrics.R2Score")(multioutput="uniform_average"),
+                _safe_import("torchmetrics.R2Score")(),
             ),
         }
         params2 = {
