@@ -140,22 +140,23 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.verbose = verbose
         self.random_state = random_state
 
-        self.optimizer = self.optim
-        self.optimizer_kwargs = self.optim_kwargs
-
-        # default case
+        # compute effective optimizer settings as locals; do not store computed
+        # values on self, to comply with sklearn's __init__ parameter storage
+        # contract. self.optim / self.optim_kwargs above preserve user inputs.
+        optimizer = self.optim
+        optimizer_kwargs = self.optim_kwargs
         if self.optim is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
+            optimizer = "SGD"
+            if optimizer_kwargs is None:
+                optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
 
         super().__init__(
             num_epochs=self.n_epochs,
             batch_size=self.batch_size,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
-            optimizer=self.optimizer,
-            optimizer_kwargs=self.optimizer_kwargs,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
             lr=self.lr,
