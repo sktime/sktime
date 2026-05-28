@@ -131,6 +131,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
 
+        # stored as-is: sklearn __init__ contract requires no mutation
         self.optim = optim
         self.optim_kwargs = optim_kwargs
 
@@ -140,22 +141,21 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.verbose = verbose
         self.random_state = random_state
 
-        self.optimizer = self.optim
-        self.optimizer_kwargs = self.optim_kwargs
-
-        # default case
-        if self.optim is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
+        # resolve defaults as local vars so the parent stores conformant values
+        _optimizer = optim if optim is not None else "SGD"
+        _optimizer_kwargs = (
+            optim_kwargs
+            if not (optim is None and optim_kwargs is None)
+            else {"momentum": 0.9, "weight_decay": 0.0005}
+        )
 
         super().__init__(
             num_epochs=self.n_epochs,
             batch_size=self.batch_size,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
-            optimizer=self.optimizer,
-            optimizer_kwargs=self.optimizer_kwargs,
+            optimizer=_optimizer,
+            optimizer_kwargs=_optimizer_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
             lr=self.lr,
@@ -215,6 +215,60 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             use_bias=self.use_bias,
         )
 
+    def _instantiate_optimizer(self):
+        """Instantiate optimizer from the sklearn-conformant optim/optim_kwargs params.
+
+        Uses self.optim and self.optim_kwargs (the params declared in __init__) rather
+        than self.optimizer/self.optimizer_kwargs (set by the parent) so that
+        set_params(optim=...) propagates correctly to the optimizer used in training.
+        """
+        from sktime.utils.dependencies import _safe_import
+
+        params = self.network.parameters()
+        if self.optim is None:
+            kwargs = (
+                self.optim_kwargs
+                if self.optim_kwargs is not None
+                else {"momentum": 0.9, "weight_decay": 0.0005}
+            )
+            SGD = _safe_import("torch.optim.SGD")
+            return SGD(params, lr=self.lr, **kwargs)
+        if self._all_optimizers is None:
+            self._all_optimizers = {
+                "adadelta": "Adadelta",
+                "adagrad": "Adagrad",
+                "adam": "Adam",
+                "adamw": "AdamW",
+                "sparseadam": "SparseAdam",
+                "adamax": "Adamax",
+                "asgd": "ASGD",
+                "lbfgs": "LBFGS",
+                "nadam": "NAdam",
+                "radam": "RAdam",
+                "rmsprop": "RMSprop",
+                "rprop": "Rprop",
+                "sgd": "SGD",
+            }
+        torchOptimizer = _safe_import("torch.optim.Optimizer")
+        if isinstance(self.optim, str):
+            key = self.optim.lower()
+            if key not in self._all_optimizers:
+                raise ValueError(
+                    f"Unknown optimizer: '{self.optim}'. Please pass one of "
+                    f"{', '.join(self._all_optimizers)} for `optim`."
+                )
+            optimizer_class = _safe_import(
+                f"torch.optim.{self._all_optimizers[key]}"
+            )
+            kwargs = self.optim_kwargs if self.optim_kwargs is not None else {}
+            return optimizer_class(params, lr=self.lr, **kwargs)
+        if isinstance(self.optim, torchOptimizer):
+            return self.optim
+        raise TypeError(
+            "`optim` must be None, a str, or a torch.optim.Optimizer instance. "
+            f"Got {type(self.optim)} instead."
+        )
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -234,10 +288,11 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        # default: optim=None exercises the default-SGD path
         params1 = {
             "n_epochs": 1,
             "random_state": 0,
-        }  # default params with 1 epoch
+        }
         params2 = {
             "n_epochs": 1,
             "batch_size": 16,
@@ -249,6 +304,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             "activation": None,
             "random_state": 0,
         }
+        # explicit Adam + kwargs: exercises set_params propagation
         params3 = {
             "n_epochs": 2,
             "batch_size": 2,
@@ -264,6 +320,15 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             "optim_kwargs": {"weight_decay": 0.001},
             "lr": 0.01,
             "random_state": 0,
-        }  # override optimizer
+        }
+        # optim=None, explicit optim_kwargs: custom SGD kwargs stored as-is
+        params4 = {
+            "n_epochs": 1,
+            "kernel_sizes": (5,),
+            "filter_sizes": (8,),
+            "optim": None,
+            "optim_kwargs": {"momentum": 0.5, "weight_decay": 0.001},
+            "random_state": 0,
+        }
 
-        return [params1, params2, params3]
+        return [params1, params2, params3, params4]

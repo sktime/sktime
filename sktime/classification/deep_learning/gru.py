@@ -303,8 +303,8 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         dropout: float = 0.0,
         gru_dropout: float = 0.0,
         bidirectional: bool = False,
-        conv_layers: list = [128, 256, 128],
-        kernel_sizes: list = [7, 5, 3],
+        conv_layers: list = None,
+        kernel_sizes: list = None,
         # base classifier specific
         num_epochs: int = 10,
         batch_size: int = 8,
@@ -331,7 +331,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         self.criterion = criterion
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
-        self.optimizer_kwargs = {"betas": (0.9, 0.999)} if optimizer == "Adam" else {}
+        self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -360,6 +360,8 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         # n_instances, n_dims, n_timesteps = X.shape
         self.numclasses = len(np.unique(y))
         _, self.input_size, _ = X.shape
+        conv_layers = self.conv_layers if self.conv_layers is not None else [128, 256, 128]
+        kernel_sizes = self.kernel_sizes if self.kernel_sizes is not None else [7, 5, 3]
         return GRUFCNN(
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
@@ -371,9 +373,28 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
             dropout=self.dropout,
             gru_dropout=self.gru_dropout,
             bidirectional=self.bidirectional,
-            conv_layers=self.conv_layers,
-            kernel_sizes=self.kernel_sizes,
+            conv_layers=conv_layers,
+            kernel_sizes=kernel_sizes,
         )
+
+    def _instantiate_optimizer(self):
+        """Instantiate optimizer, applying Adam betas default when needed.
+
+        Overrides parent to preserve the intended Adam default betas=(0.9, 0.999)
+        without storing a computed dict in __init__ (which would violate the sklearn
+        parameter storage contract).
+        """
+        if (
+            self.optimizer_kwargs is None
+            and isinstance(self.optimizer, str)
+            and self.optimizer.lower() == "adam"
+        ):
+            import torch
+
+            return torch.optim.Adam(
+                self.network.parameters(), lr=self.lr, betas=(0.9, 0.999)
+            )
+        return super()._instantiate_optimizer()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -407,10 +428,9 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
                 "dropout": 0.1,
                 "gru_dropout": 0.1,
                 "bidirectional": False,
-                "conv_layers": [128, 256, 128],
-                "kernel_sizes": [7, 5, 3],
                 "num_epochs": 2,
                 "optimizer": "Adam",
+                "optimizer_kwargs": None,
                 "lr": 0.01,
                 "verbose": False,
                 "random_state": 0,
@@ -428,6 +448,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
                 "kernel_sizes": [7, 5, 3],
                 "num_epochs": 2,
                 "optimizer": "Adam",
+                "optimizer_kwargs": {"betas": (0.9, 0.999)},
                 "lr": 0.01,
                 "verbose": False,
                 "random_state": 0,

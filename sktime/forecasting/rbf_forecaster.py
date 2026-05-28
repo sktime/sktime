@@ -117,7 +117,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         centers=None,
         gamma=1.0,
         rbf_type="gaussian",
-        hidden_layers=[64, 32],
+        hidden_layers=None,
         optimizer="adam",
         lr=0.01,
         epochs=100,
@@ -208,6 +208,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         """
         output_size = fh if self.mode == "direct" else 1
 
+        hidden_layers = self.hidden_layers if self.hidden_layers is not None else [64, 32]
         return RBFNetwork(
             input_size=self.window_length,
             hidden_size=self.hidden_size,
@@ -215,7 +216,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             centers=self.centers,
             gamma=self.gamma,
             rbf_type=self.rbf_type,
-            hidden_layers=self.hidden_layers,
+            hidden_layers=hidden_layers,
             mode=self.mode,
             activation=self.activation,
             dropout_rate=self.dropout_rate,
@@ -599,6 +600,17 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                 "pred_len": 3,
                 "activation": "gelu",
                 "dropout_rate": 0.2,
+            },
+            # hidden_layers=None exercises the default-list path without mutable sharing
+            {
+                "window_length": 5,
+                "hidden_size": 8,
+                "batch_size": 16,
+                "hidden_layers": None,
+                "epochs": 3,
+                "lr": 0.01,
+                "device": "cpu",
+                "mode": "ar",
             },
         ]
 
