@@ -16,93 +16,199 @@ from sktime.tests.test_switch import run_test_module_changed
     not run_test_module_changed("sktime.benchmarking"),
     reason="run test only if benchmarking module has changed",
 )
-class TestBenchmarkAddAPI:
-    """Tests for different ways of adding items to a benchmark."""
+class TestBenchmarkAddMethods:
+    """Test benchmark.add() method with different input formats."""
 
-    @staticmethod
-    def _make_components():
-        return {
-            "estimator": DummyClassifier(),
-            "dataset": ArrowHead(),
-            "metric": accuracy_score,
-            "cv": KFold(n_splits=3),
-        }
+    def _assert_standard_metrics(self, results_df):
+        """Helper to check standard benchmark outputs."""
+        expected = [
+            "accuracy_score_fold_0_test",
+            "accuracy_score_fold_1_test",
+            "accuracy_score_fold_2_test",
+            "accuracy_score_mean",
+            "accuracy_score_std",
+            "fit_time_fold_0_test",
+            "fit_time_fold_1_test",
+            "fit_time_fold_2_test",
+            "fit_time_mean",
+            "fit_time_std",
+            "pred_time_fold_0_test",
+            "pred_time_fold_1_test",
+            "pred_time_fold_2_test",
+            "pred_time_mean",
+            "pred_time_std",
+            "runtime_secs",
+        ]
 
-    def _run_benchmark(self, benchmark):
-        results = benchmark.run()
-        assert not results.empty
-        return results
+        rows = results_df.T.index.to_list()
+        for metric in expected:
+            assert metric in rows, f"{metric} not found in result rows"
 
-    def _assert_basic_structure(self, results):
-        """Assert core result schema is present."""
-        assert "validation_id" in results.columns
-        assert "model_id" in results.columns
-
-    def _assert_metrics_present(self, results):
-        """Assert at least one aggregated metric exists."""
-        assert any(col.endswith("_mean") for col in results.columns)
-
-    def test_task_tuple_equivalent_to_individual_add(self):
-        comps = self._make_components()
-
-        bench_tuple = ClassificationBenchmark()
-        bench_individual = ClassificationBenchmark()
-
-        bench_tuple.add(comps["estimator"])
-        bench_tuple.add((comps["dataset"], comps["metric"], comps["cv"]))
-
-        bench_individual.add(comps["estimator"])
-        bench_individual.add(comps["dataset"])
-        bench_individual.add(comps["metric"])
-        bench_individual.add(comps["cv"])
-
-        res_tuple = self._run_benchmark(bench_tuple)
-        res_individual = self._run_benchmark(bench_individual)
-
-        self._assert_basic_structure(res_tuple)
-        self._assert_basic_structure(res_individual)
-
-        # Same tasks should be run
-        assert set(res_tuple["validation_id"]) == set(res_individual["validation_id"])
-
-        # Same estimators should be present
-        assert set(res_tuple["model_id"]) == set(res_individual["model_id"])
-
-    def test_add_named_estimator(self):
-        comps = self._make_components()
-
+    def test_add_task_tuple(self):
         benchmark = ClassificationBenchmark()
-        benchmark.add(("dummy_named", comps["estimator"]))
-        benchmark.add(comps["dataset"], comps["metric"], comps["cv"])
+        benchmark.add(DummyClassifier())
 
-        results = self._run_benchmark(benchmark)
+        scorer = accuracy_score
+        cv_splitter = KFold(n_splits=3)
+        dataset = ArrowHead()
 
-        self._assert_basic_structure(results)
+        benchmark.add((dataset, scorer, cv_splitter))
+        results_df = benchmark.run()
 
-        assert "dummy_named" in results["model_id"].values
+        self._assert_standard_metrics(results_df)
 
-    @pytest.mark.parametrize(
-        "add_order",
-        [
-            ("estimator", "dataset", "metric", "cv"),
-            ("dataset", "estimator", "cv", "metric"),
-            ("metric", "cv", "dataset", "estimator"),
-        ],
-    )
-    def test_mixed_add_order(self, add_order):
-        comps = self._make_components()
+    def test_add_task_individually(self):
+        benchmark = ClassificationBenchmark()
+        benchmark.add(DummyClassifier())
+
+        scorer = accuracy_score
+        splitter = KFold(n_splits=3)
+        dataset = ArrowHead()
+
+        benchmark.add(dataset)
+        benchmark.add(scorer)
+        benchmark.add(splitter)
+
+        results_df = benchmark.run()
+        self._assert_standard_metrics(results_df)
+
+    def test_add_task_tuple_order_invariant(self):
+        benchmark = ClassificationBenchmark()
+        benchmark.add(DummyClassifier())
+
+        scorer = accuracy_score
+        splitter = KFold(n_splits=3)
+        dataset = ArrowHead()
+
+        benchmark.add((scorer, dataset, splitter))  # shuffled
+        results_df = benchmark.run()
+
+        self._assert_standard_metrics(results_df)
+
+    def test_add_task_tuple_missing_component(self):
         benchmark = ClassificationBenchmark()
 
-        for key in add_order:
-            benchmark.add(comps[key])
+        scorer = accuracy_score
+        dataset = ArrowHead()
 
-        results = self._run_benchmark(benchmark)
+        with pytest.raises(TypeError, match="Unsupported tuple format"):
+            benchmark.add((dataset, scorer))
 
-        self._assert_basic_structure(results)
-        self._assert_metrics_present(results)
-
-    def test_unknown_object_type_raises(self):
+    def test_add_task_tuple_duplicate_roles(self):
         benchmark = ClassificationBenchmark()
+
+        dataset1 = ArrowHead()
+        dataset2 = ArrowHead()
+        splitter = KFold(n_splits=3)
+
+        with pytest.raises(TypeError, match="Multiple datasets provided in tuple"):
+            benchmark.add((dataset1, dataset2, splitter))
+
+    def test_add_task_tuple_invalid_object(self):
+        benchmark = ClassificationBenchmark()
+
+        dataset = ArrowHead()
+        splitter = KFold(n_splits=3)
 
         with pytest.raises(TypeError):
-            benchmark.add(object())
+            benchmark.add((dataset, "not_a_metric", splitter))
+
+    def test_add_deduplicates_components(self):
+        benchmark = ClassificationBenchmark()
+        benchmark.add(DummyClassifier())
+
+        scorer = accuracy_score
+        splitter = KFold(n_splits=3)
+        dataset = ArrowHead()
+
+        benchmark.add(dataset)
+        benchmark.add(dataset)
+        benchmark.add(scorer)
+        benchmark.add(scorer)
+        benchmark.add(splitter)
+        benchmark.add(splitter)
+
+        results_df = benchmark.run()
+        self._assert_standard_metrics(results_df)
+
+    def test_add_mixed_inputs(self):
+        benchmark = ClassificationBenchmark()
+        benchmark.add(DummyClassifier())
+
+        scorer = accuracy_score
+        splitter = KFold(n_splits=3)
+        dataset = ArrowHead()
+
+        # invalid mixed tuple length
+        with pytest.raises(TypeError, match="Unsupported tuple format"):
+            benchmark.add((scorer, splitter))
+
+        # valid flow
+        benchmark = ClassificationBenchmark()
+        benchmark.add(DummyClassifier())
+        benchmark.add(dataset)
+        benchmark.add(scorer)
+        benchmark.add(splitter)
+
+        results_df = benchmark.run()
+        self._assert_standard_metrics(results_df)
+
+    def test_add_multiple_tasks(self):
+        benchmark = ClassificationBenchmark()
+        benchmark.add(DummyClassifier())
+
+        scorer = accuracy_score
+        splitter = KFold(n_splits=3)
+
+        dataset1 = ArrowHead()
+        dataset2 = ArrowHead()
+
+        benchmark.add(
+            (dataset1, scorer, splitter),
+            (scorer, dataset2, splitter),
+        )
+
+        results_df = benchmark.run()
+        self._assert_standard_metrics(results_df)
+
+    def test_add_estimator_dict(self):
+        """Test adding estimators using a dictionary for custom IDs."""
+        benchmark = ClassificationBenchmark()
+
+        clf = DummyClassifier()
+        benchmark.add({"dummy_custom_id": clf})
+
+        scorer = accuracy_score
+        splitter = KFold(n_splits=3)
+        dataset = ArrowHead()
+
+        benchmark.add((dataset, scorer, splitter))
+        results_df = benchmark.run()
+
+        # Check that the custom ID from the dictionary was used
+        assert results_df.loc[0, "model_id"] == "dummy_custom_id"
+
+    def test_add_estimator_list(self):
+        """Test adding multiple estimators using a list."""
+        benchmark = ClassificationBenchmark()
+
+        clfs = [DummyClassifier()]
+        benchmark.add(clfs)
+
+        scorer = accuracy_score
+        splitter = KFold(n_splits=3)
+        dataset = ArrowHead()
+
+        benchmark.add((dataset, scorer, splitter))
+        results_df = benchmark.run()
+
+        # Check that the default class name was generated as the ID
+        assert results_df.loc[0, "model_id"] == "DummyClassifier"
+
+    def test_unsupported_tuple_length(self):
+        """Test that passing length-2 tuples (old estimator/ID behavior) fails."""
+        benchmark = ClassificationBenchmark()
+        clf = DummyClassifier()
+
+        with pytest.raises(TypeError, match="Unsupported tuple format of length 2"):
+            benchmark.add((clf, "should_fail"))

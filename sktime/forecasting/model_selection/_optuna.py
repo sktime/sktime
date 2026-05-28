@@ -158,7 +158,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     _tags = {
         "authors": ["gareth-brown-86", "mk406", "bastisar"],
         "maintainers": ["gareth-brown-86", "mk406"],
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,
@@ -291,11 +291,12 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
+        from sktime.forecasting.naive import NaiveForecaster
         from sktime.utils.dependencies import _check_soft_dependencies
 
         if not _check_soft_dependencies("optuna", severity="none"):
             return {
-                "forecaster": "foo",
+                "forecaster": NaiveForecaster(strategy="mean"),
                 "cv": "bar",
                 "param_grid": "foobar",
                 "scoring": "barfoo",
@@ -303,7 +304,6 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
 
         from optuna.distributions import CategoricalDistribution
 
-        from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import (
             MeanAbsolutePercentageError,
