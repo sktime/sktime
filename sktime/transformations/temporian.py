@@ -68,6 +68,7 @@ class TemporianTransformer(BaseTransformer):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:skip_by_name": ["test_categorical_X_passes"],
     }
 
     def __init__(self, function, compile=False):

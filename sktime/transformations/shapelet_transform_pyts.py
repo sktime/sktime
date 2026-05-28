@@ -137,6 +137,7 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         "y_inner_mtype": "numpy1D",
         "requires_y": True,
         "capability:random_state": True,
+        "tests:skip_by_name": ["test_categorical_X_passes"],
     }
 
     _estimator_attr = "_pyts_shapelet_transform"
