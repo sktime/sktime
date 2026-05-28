@@ -172,31 +172,41 @@ class NeuralProphet(BaseForecaster):
         super().__init__()
 
     @staticmethod
-    def _allowlist_neuralprophet_globals():
-        """Register all neuralprophet.configure types as torch safe globals.
+    def _neuralprophet_weights_only_patch():
+        """Context manager: force ``weights_only=False`` during NeuralProphet fit.
 
-        Required for PyTorch >= 2.6 where ``torch.load`` defaults to
-        ``weights_only=True``. Must be called before any pickle roundtrip
-        that involves a NeuralProphet model.
+        PyTorch >= 2.6 defaults ``weights_only`` to ``True`` (and treats
+        ``None`` as ``True``).  NeuralProphet's PyTorch Lightning training
+        loop (LR finder, model checkpointing, etc.) serialises arbitrary
+        ``nn.Module`` subclasses into its checkpoint file.  These cannot be
+        fully enumerated in a safe-globals allowlist, so we patch
+        ``torch.load`` itself to strip ``weights_only`` for the duration of
+        NeuralProphet's own fit / pickle roundtrip.
 
-        ``torch.serialization.add_safe_globals`` was introduced in PyTorch 2.4.
-        On older versions this method is a no-op; the pickle roundtrip still
-        works because ``weights_only`` defaulted to ``False`` there.
+        The patch is active only inside the ``with`` block, so it does not
+        affect any other ``torch.load`` calls in the process.
         """
-        import torch.serialization as _ts
+        import contextlib
 
-        if not hasattr(_ts, "add_safe_globals"):
-            # PyTorch < 2.4: weights_only defaults to False, no allowlisting needed.
-            return
+        import torch
 
-        import neuralprophet.configure as _np_cfg
+        _original_torch_load = torch.load
 
-        _np_globals = [
-            getattr(_np_cfg, name)
-            for name in dir(_np_cfg)
-            if isinstance(getattr(_np_cfg, name), type)
-        ]
-        _ts.add_safe_globals(_np_globals)
+        def _patched_torch_load(*args, **kwargs):
+            # Force weights_only=False so NeuralProphet's Lightning checkpoint
+            # (which contains arbitrary nn.Module subclasses) can be loaded.
+            kwargs["weights_only"] = False
+            return _original_torch_load(*args, **kwargs)
+
+        @contextlib.contextmanager
+        def _ctx():
+            torch.load = _patched_torch_load
+            try:
+                yield
+            finally:
+                torch.load = _original_torch_load
+
+        return _ctx()
 
     def __deepcopy__(self, memo):
         """Handle deepcopy by copy-serializing the non-deepcopy-able PyTorch model.
@@ -204,10 +214,12 @@ class NeuralProphet(BaseForecaster):
         NeuralProphet's underlying PyTorch model uses ``weight_norm`` internally,
         which makes tensors non-deepcopy-able (see pytorch/pytorch#103001).
 
-        PyTorch 2.6 changed the default of ``torch.load`` to ``weights_only=True``,
-        which blocks NeuralProphet's internal classes from being unpickled.
-        We allowlist all ``neuralprophet.configure`` types before the pickle
-        roundtrip so the load succeeds without disabling weights_only globally.
+        PyTorch 2.6 changed the default of ``torch.load`` to ``weights_only=True``.
+        Lightning's checkpoint restore (used internally during NeuralProphet's fit)
+        passes ``weights_only=True`` explicitly and the checkpoint contains
+        arbitrary ``nn.Module`` subclasses that cannot all be allowlisted.
+        We patch lightning_fabric's ``_load`` for the duration of the pickle
+        roundtrip to avoid the restriction.
         """
         import copy
         import pickle
@@ -218,13 +230,10 @@ class NeuralProphet(BaseForecaster):
         for k, v in self.__dict__.items():
             if k == "_model":
                 try:
-                    # Allowlist NeuralProphet configure globals for PyTorch >= 2.6
-                    # where torch.load defaults to weights_only=True.
-                    # This must succeed — do NOT suppress exceptions here.
-                    self._allowlist_neuralprophet_globals()
-                    setattr(result, k, pickle.loads(pickle.dumps(v)))
+                    with self._neuralprophet_weights_only_patch():
+                        setattr(result, k, pickle.loads(pickle.dumps(v)))
                 except Exception:
-                    # Fallback to direct reference if pickling fails
+                    # Fallback to direct reference if pickling fails entirely.
                     setattr(result, k, v)
             else:
                 setattr(result, k, copy.deepcopy(v, memo))
@@ -306,8 +315,11 @@ class NeuralProphet(BaseForecaster):
                     regularization=self.holidays_reg,
                 )
 
-        # Fit the model
-        self._model.fit(df)
+        # Fit the model — patch lightning_fabric for the duration so that
+        # NeuralProphet's internal torch.load (LR finder / checkpoint restore)
+        # does not fail under PyTorch >= 2.6 weights_only=True restrictions.
+        with self._neuralprophet_weights_only_patch():
+            self._model.fit(df)
 
         return self
 
