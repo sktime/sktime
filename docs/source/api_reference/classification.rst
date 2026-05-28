@@ -98,9 +98,10 @@ Foundation models
     :toctree: auto_generated/
     :template: class.rst
 
+    MantisClassifier
     MomentFMClassifier
 
-    MantisClassifier
+
 
 
 Dictionary-based
