@@ -33,7 +33,6 @@ EXCLUDE_ESTIMATORS = [
     "HIVECOTEV1",
     "HIVECOTEV2",
     "RandomIntervalSpectralEnsemble",
-    "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
@@ -81,34 +80,12 @@ EXCLUDE_ESTIMATORS = [
 # DO NOT ADD ESTIMATORS HERE ANYMORE
 # ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
 EXCLUDED_TESTS = {
-    # issue when prediction intervals, see #3479 and #4504
-    # known issue with prediction intervals that needs fixing, tracked in #4181
-    "SquaringResiduals": [
-        "test_predict_time_index",
-        "test_predict_residuals",
-        "test_predict_interval",
-        "test_predict_time_index_with_X",  # separate - refer to #4765
-    ],
     # known issue when X is passed, wrong time indices are returned, #1364
-    "StackingForecaster": ["test_predict_time_index_with_X"],
     "TapNetRegressor": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
-    "SimpleRNNClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-        "test_multioutput",  # see 6201
-        "test_classifier_on_unit_test_data",  # see 6201
-    ],
-    # sth is not quite right with the RowTransformer-s changing state,
-    #   but these are anyway on their path to deprecation, see #2370
-    "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
-    "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
-    # ColumnTransformer still needs to be refactored, see #2537
-    "ColumnTransformer": ["test_methods_do_not_change_state"],
     # Early classifiers intentionally retain information from previous predict calls
     #   for #1.
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
@@ -167,12 +144,6 @@ EXCLUDED_TESTS = {
         "test_multioutput",
         "test_classifier_on_unit_test_data",
     ],
-    "MCDCNNClassifier": [
-        "test_persistence_via_pickle",
-        "test_multioutput",
-        "test_classifier_on_unit_test_data",
-        "test_fit_idempotent",  # not part of bug reports but due to randomness
-    ],
     "ARLagOrderSelector": [
         "test_doctest_examples",  # doctest fails, see #8129
     ],
@@ -228,8 +199,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "PELT",
         "PaddingTransformer",
         "PlateauFinder",
-        "Prophet",
-        "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
@@ -256,7 +225,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
         "TimeSeriesKMedoids",
-        "TimeSeriesKernelKMeans",
         "WEASEL",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
         # too after adding test parameters to them

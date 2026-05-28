@@ -1,5 +1,7 @@
 """Multi Channel Deep Convolutional Neural Regressor (MCDCNN)."""
 
+from collections.abc import Callable
+
 from sktime.networks.mcdcnn import MCDCNNNetworkTorch
 from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
 
@@ -32,28 +34,27 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         layers.
     pool_padding : str or None, optional (default="same")
         The type of padding to be applied to pooling layers.
-    criterion : str, optional (default="MSELoss")
-        The name of the loss function to be used during training,
-        should be supported by PyTorch.
-    criterion_kwargs : dict or None, optional (default=None)
-        Additional keyword arguments to pass to the loss function.
-    activation : str or None, optional (default=None)
+    activation : str or callable or None, optional (default=None)
         The activation function to apply at the output.
         List of available activation functions:
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
-    activation_hidden : string, default="relu"
+    activation_hidden : string or callable, default="relu"
         Activation function used in the hidden layers.
         List of available activation functions:
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
     use_bias : bool, optional (default=True)
         Whether bias should be included in the output layer.
+    criterion : str, optional (default="MSELoss")
+        The name of the loss function to be used during training,
+        should be supported by PyTorch.
+    criterion_kwargs : dict or None, optional (default=None)
+        Additional keyword arguments to pass to the loss function.
     optim: str or None or an instance of optimizers defined in torch.optim,
         optional (default=None)
         The optimizer to use for training the model. If left with None, "SGD" is
         used with momentum=0.9, weight_decay=0.0005.
         List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
-
     optim_kwargs : dict or None, optional (default=None)
         Additional keyword arguments to pass to the optimizer.
         If None, SGD is used with momentum=0.9, weight_decay=0.0005.
@@ -96,26 +97,26 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
 
     def __init__(
         self: "MCDCNNRegressorTorch",
-        n_epochs=120,
-        batch_size=16,
-        kernel_sizes=(5, 5),
-        pool_size=2,
-        filter_sizes=(8, 8),
-        dense_units=732,
-        conv_padding="same",
-        pool_padding="same",
-        criterion="MSELoss",
-        criterion_kwargs=None,
-        activation=None,
-        activation_hidden="relu",
-        use_bias=True,
-        optim=None,
-        optim_kwargs=None,
-        callbacks=None,
-        callback_kwargs=None,
-        lr=0.01,
-        verbose=False,
-        random_state=0,
+        n_epochs: int = 120,
+        batch_size: int = 16,
+        kernel_sizes: tuple[int, ...] = (5, 5),
+        pool_size: int = 2,
+        filter_sizes: tuple[int, ...] = (8, 8),
+        dense_units: int = 732,
+        conv_padding: str | None = "same",
+        pool_padding: str | None = "same",
+        activation: str | None | Callable = None,
+        activation_hidden: str | Callable = "relu",
+        use_bias: bool = True,
+        criterion: str | None | Callable = "MSELoss",
+        criterion_kwargs: dict | None = None,
+        optim: str | None | Callable = None,
+        optim_kwargs: dict | None = None,
+        callbacks: str | tuple[str, ...] | None = None,
+        callback_kwargs: dict | None = None,
+        lr: float = 0.01,
+        verbose: bool = False,
+        random_state: int = 0,
     ):
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -131,19 +132,8 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
 
-        # used to difrentiate between user passed "SGD"
-        # and the default "SGD" with kwargs
         self.optim = optim
         self.optim_kwargs = optim_kwargs
-
-        self.optimizer = optim
-        self.optimizer_kwargs = optim_kwargs
-
-        # default case
-        if self.optim is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
 
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
@@ -151,12 +141,14 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.verbose = verbose
         self.random_state = random_state
 
-        if len(self.filter_sizes) != len(self.kernel_sizes):
-            raise ValueError(
-                f"Length of `filter_sizes` {len(self.filter_sizes)} must match "
-                f"the number of convolutional layers determined by the length of tuple "
-                f"`kernel_sizes` {len(self.kernel_sizes)}."
-            )
+        self.optimizer = self.optim
+        self.optimizer_kwargs = self.optim_kwargs
+
+        # default case
+        if self.optim is None:
+            self.optimizer = "SGD"
+            if self.optimizer_kwargs is None:
+                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
 
         super().__init__(
             num_epochs=self.n_epochs,
@@ -171,6 +163,25 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             verbose=self.verbose,
             random_state=self.random_state,
         )
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        if len(self.filter_sizes) != len(self.kernel_sizes):
+            raise ValueError(
+                f"Length of `filter_sizes` {len(self.filter_sizes)} must match "
+                f"the number of convolutional layers determined by the length of tuple "
+                f"`kernel_sizes` {len(self.kernel_sizes)}."
+            )
+
+        super().__post_init__()
 
     def _build_network(self, X):
         """Build the MCDCNN network with output layer for regression.

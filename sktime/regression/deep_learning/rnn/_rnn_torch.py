@@ -125,9 +125,6 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
         self.activation = activation
-        # Note: we do not validate activation_hidden here.
-        # if activation_hidden is invalid, i.e. not in ['tanh', 'relu']
-        # PyTorch will raise an error
         self.activation_hidden = activation_hidden
         self.bias = bias
         self.init_weights = init_weights
@@ -147,11 +144,6 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
         self.verbose = verbose
         self.random_state = random_state
 
-        # input_size to be inferred from the data
-        # and will be set in _build_network
-        self.input_size = None
-        self.num_classes = 1  # because regression
-
         super().__init__(
             num_epochs=self.num_epochs,
             batch_size=self.batch_size,
@@ -165,6 +157,27 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
             verbose=self.verbose,
             random_state=self.random_state,
         )
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        # Note: we do not validate activation_hidden here.
+        # if activation_hidden is invalid, i.e. not in ['tanh', 'relu']
+        # PyTorch will raise an error
+
+        # input_size to be inferred from the data
+        # and will be set in _build_network
+        self.input_size = None
+        self.num_classes = 1  # because regression
+
+        super().__post_init__()
 
     def _build_network(self, X):
         """Build the RNN network.

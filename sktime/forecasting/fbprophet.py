@@ -197,12 +197,25 @@ class Prophet(_ProphetAdapter):
 
         super().__init__()
 
-        # import inside method to avoid hard dependency
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         from prophet.forecaster import Prophet as _Prophet
 
         self._ModelClass = _Prophet
 
     def _instantiate_model(self):
+        kwargs = {}
+        if self.stan_backend is not None:
+            kwargs["stan_backend"] = self.stan_backend
+
         self._forecaster = self._ModelClass(
             growth=self.growth,
             changepoints=self.changepoints,
@@ -219,7 +232,7 @@ class Prophet(_ProphetAdapter):
             mcmc_samples=self.mcmc_samples,
             interval_width=1 - self.alpha,
             uncertainty_samples=self.uncertainty_samples,
-            stan_backend=self.stan_backend,
+            **kwargs,
         )
         return self
 
@@ -238,7 +251,7 @@ class Prophet(_ProphetAdapter):
         -------
         params : dict or list of dict
         """
-        params = {
+        params0 = {
             "n_changepoints": 0,
             "yearly_seasonality": False,
             "weekly_seasonality": False,
@@ -247,4 +260,13 @@ class Prophet(_ProphetAdapter):
             "verbose": False,
             "fit_kwargs": {"seed": 12345},
         }
-        return params
+        params1 = {
+            "n_changepoints": 2,
+            "yearly_seasonality": False,
+            "weekly_seasonality": False,
+            "daily_seasonality": False,
+            "uncertainty_samples": 12,
+            "verbose": False,
+            "fit_kwargs": {"seed": 123456},
+        }
+        return [params0, params1]
