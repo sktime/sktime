@@ -190,10 +190,6 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.timesfm"],
-        "tests:skip_by_name": [
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
-        ],
     }
 
     def __init__(
@@ -257,6 +253,17 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         super().__init__()
 
+    def __getstate__(self):
+        """Return state for pickling, excluding unpickleable TimesFM model."""
+        state = self.__dict__.copy()
+        if "tfm" in state:
+            state["tfm"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state, TimesFM model will be reloaded on next use."""
+        self.__dict__.update(state)
+
     def _fit(self, y, X=None, fh=None):
         if fh is None and self.horizon_len is None:
             raise ValueError(
@@ -280,7 +287,11 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             self._context_len = context_multiple * self.input_patch_len
 
         self.context = y
-        self.tfm = _CachedTimesFM(
+        self.tfm = self._load_model()
+
+    def _load_model(self):
+        """Load TimesFM model via multiton cache."""
+        return _CachedTimesFM(
             key=self._get_unique_timesfm_key(),
             timesfm_kwargs=self._get_timesfm_kwargs(),
             use_source_package=self.use_source_package,
@@ -328,6 +339,9 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         context = self.context
         context_np = np.expand_dims(context.values, axis=0)
         # context_np.shape: (batch_size, n_timestamps)
+
+        if not hasattr(self, "tfm") or self.tfm is None:
+            self.tfm = self._load_model()
 
         pred, _ = self.tfm.forecast(context_np)
 
