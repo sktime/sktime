@@ -113,16 +113,6 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.verbose = verbose
         self.random_state = random_state
 
-        if self.metrics and not _check_soft_dependencies(
-            "torchmetrics", severity="none"
-        ):
-            raise ImportError(
-                "torchmetrics is required for computing metrics. "
-                "Please install torchmetrics with `pip install torchmetrics`."
-            )
-
-        # use this when y has str
-        self.label_encoder = None
         super().__init__()
 
     def __post_init__(self):
@@ -140,6 +130,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             torchManual_seed = _safe_import("torch.manual_seed")
             torchManual_seed(self.random_state)
 
+        if self.metrics:
+            _check_soft_dependencies("torchmetrics", severity="error")
+
         # validate activation function w.r.t. criterion specified
         self._validate_activation_criterion()
         # post this function call,
@@ -152,6 +145,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self._all_optimizers = None
         self._all_criterions = None
         self._all_callbacks = None
+
+        # use this when y has str
+        self.label_encoder = None
         self._all_metrics = None
         self._metrics_objects = None
 
@@ -192,7 +188,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
             # Compute metrics if any
             if self._metrics_objects:
-                with _safe_import("torch.no_grad")():
+                import torch
+
+                with torch.no_grad():
                     for metric_name, metric_obj in self._metrics_objects.items():
                         metric_value = metric_obj(y_pred, outputs)
                         metric_values[metric_name].append(metric_value.item())

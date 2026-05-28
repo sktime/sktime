@@ -107,14 +107,6 @@ class BaseDeepRegressorTorch(BaseRegressor):
         self.verbose = verbose
         self.random_state = random_state
 
-        if self.metrics and not _check_soft_dependencies(
-            "torchmetrics", severity="none"
-        ):
-            raise ImportError(
-                "torchmetrics is required for computing metrics. "
-                "Please install torchmetrics with `pip install torchmetrics`."
-            )
-
         super().__init__()
 
     def __post_init__(self):
@@ -131,6 +123,9 @@ class BaseDeepRegressorTorch(BaseRegressor):
         if self.random_state is not None:
             torchManual_seed = _safe_import("torch.manual_seed")
             torchManual_seed(self.random_state)
+
+        if self.metrics:
+            _check_soft_dependencies("torchmetrics", severity="error")
 
         # optimizers, criterions, callbacks will be instantiated in
         # _instantiate_optimizer, _instantiate_criterion & _instantiate_callbacks
@@ -172,7 +167,9 @@ class BaseDeepRegressorTorch(BaseRegressor):
 
             # Compute metrics if any
             if self._metrics_objects:
-                with _safe_import("torch.no_grad")():
+                import torch
+
+                with torch.no_grad():
                     for metric_name, metric_obj in self._metrics_objects.items():
                         metric_value = metric_obj(y_pred, outputs)
                         metric_values[metric_name].append(metric_value.item())
