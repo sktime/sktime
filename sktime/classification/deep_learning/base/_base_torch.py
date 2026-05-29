@@ -61,7 +61,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         the loss. Metrics are computed from torchmetrics library.
         If a string/Callable is passed, it must be one of the metrics defined in
         https://lightning.ai/docs/torchmetrics/stable/
-        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
+        Examples: "Accuracy", "F1Score", "Precision", "Recall"
     lr : float, default = 0.001
         The learning rate to be used in the optimizer.
     verbose : bool, default = True
@@ -148,7 +148,6 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
         # use this when y has str
         self.label_encoder = None
-        self._all_metrics = None
         self._metrics_objects = None
 
     def _fit(self, X, y):
@@ -165,6 +164,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self._optimizer = self._instantiate_optimizer()
         # instantiate callbacks (learning rate schedulers)
         self._schedulers = self._instantiate_schedulers()
+        # ensure num_classes is set before instantiating metrics
+        # as classification metrics require num_classes as an argument
+        self.num_classes = len(np.unique(y))
         # instantiate metrics
         self._metrics_objects = self._instantiate_metrics()
         # build dataloader
@@ -596,39 +598,19 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
         metrics_dict = {}
 
-        if self._all_metrics is None:
-            self._all_metrics = {
-                "meansquarederror": "MeanSquaredError",
-                "mse": "MeanSquaredError",
-                "meanabsoluteerror": "MeanAbsoluteError",
-                "mae": "MeanAbsoluteError",
-                "meanabsolutepercentageerror": "MeanAbsolutePercentageError",
-                "mape": "MeanAbsolutePercentageError",
-                "meansquaredlogarithmicerror": "MeanSquaredLogError",
-                "msle": "MeanSquaredLogError",
-                "r2score": "R2Score",
-                "r2": "R2Score",
-                "meantweedie": "MeanTweedieDeviance",
-                "meansquarederrornorm": "MeanSquaredError",
-            }
-
         for metric in metrics_list:
             if isinstance(metric, str):
-                metric_lower = metric.lower()
-                if metric_lower in self._all_metrics:
-                    metric_class_name = self._all_metrics[metric_lower]
-                else:
-                    # Try to use the metric name directly
-                    metric_class_name = metric
-
-                if hasattr(torchmetrics, metric_class_name):
-                    metric_class = getattr(torchmetrics, metric_class_name)
-                    metrics_dict[metric_class_name] = metric_class()
+                if hasattr(torchmetrics, metric):
+                    metric_class = getattr(torchmetrics, metric)
+                    kwargs = {"task": "multiclass", "num_classes": self.num_classes}
+                    if metric in ("F1Score", "Precision", "Recall"):
+                        kwargs["average"] = "macro"
+                    metrics_dict[metric] = metric_class(**kwargs)
                 else:
                     raise ValueError(
                         f"Unknown metric: {metric}. Please pass one of the available "
-                        f"metrics from torchmetrics or check the metric name. "
-                        f"See https://lightning.ai/docs/torchmetrics/stable/"
+                        f"classification metrics from torchmetrics or check the metric "
+                        f"name. See https://lightning.ai/docs/torchmetrics/stable/"
                     )
             elif isinstance(metric, Callable):
                 metric_name = metric.__class__.__name__

@@ -76,7 +76,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         the loss. Metrics are computed from torchmetrics library.
         If a string/Callable is passed, it must be one of the metrics defined in
         https://lightning.ai/docs/torchmetrics/stable/
-        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
+        Examples: "Accuracy", "F1Score", "Precision", "Recall"
     lr : float, default = 0.001
         The learning rate to use for the optimizer.
     verbose : bool, default = False

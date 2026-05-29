@@ -133,7 +133,6 @@ class BaseDeepRegressorTorch(BaseRegressor):
         self._all_optimizers = None
         self._all_criterions = None
         self._all_callbacks = None
-        self._all_metrics = None
         self._metrics_objects = None
 
     def _fit(self, X, y):
@@ -425,34 +424,11 @@ class BaseDeepRegressorTorch(BaseRegressor):
 
         metrics_dict = {}
 
-        if self._all_metrics is None:
-            self._all_metrics = {
-                "meansquarederror": "MeanSquaredError",
-                "mse": "MeanSquaredError",
-                "meanabsoluteerror": "MeanAbsoluteError",
-                "mae": "MeanAbsoluteError",
-                "meanabsolutepercentageerror": "MeanAbsolutePercentageError",
-                "mape": "MeanAbsolutePercentageError",
-                "meansquaredlogarithmicerror": "MeanSquaredLogError",
-                "msle": "MeanSquaredLogError",
-                "r2score": "R2Score",
-                "r2": "R2Score",
-                "meantweedie": "MeanTweedieDeviance",
-                "meansquarederrornorm": "MeanSquaredError",
-            }
-
         for metric in metrics_list:
             if isinstance(metric, str):
-                metric_lower = metric.lower()
-                if metric_lower in self._all_metrics:
-                    metric_class_name = self._all_metrics[metric_lower]
-                else:
-                    # Try to use the metric name directly
-                    metric_class_name = metric
-
-                if hasattr(torchmetrics, metric_class_name):
-                    metric_class = getattr(torchmetrics, metric_class_name)
-                    metrics_dict[metric_class_name] = metric_class()
+                if hasattr(torchmetrics, metric):
+                    metric_class = getattr(torchmetrics, metric)
+                    metrics_dict[metric] = metric_class()
                 else:
                     raise ValueError(
                         f"Unknown metric: {metric}. Please pass one of the available "

@@ -75,7 +75,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         the loss. Metrics are computed from torchmetrics library.
         If a string/Callable is passed, it must be one of the metrics defined in
         https://lightning.ai/docs/torchmetrics/stable/
-        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
+        Examples: "Accuracy", "F1Score", "Precision", "Recall"
     lr : float, default = 0.001
         The learning rate to use for the optimizer.
     init_weights : str or None, default = None
