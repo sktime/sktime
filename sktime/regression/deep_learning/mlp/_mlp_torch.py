@@ -1,18 +1,15 @@
-"""MLP (Multi-Layer Perceptron) Classifier for Time Series Classification in PyTorch."""
+"""Multi Layer Perceptron Network (MLP) for regression."""
 
-__authors__ = ["RecreationalMath"]
-__all__ = ["MLPClassifierTorch"]
+__all__ = ["MLPRegressorTorch"]
 
 from collections.abc import Callable
 
-import numpy as np
-
-from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.mlp import MLPNetworkTorch
+from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
 
 
-class MLPClassifierTorch(BaseDeepClassifierPytorch):
-    """Multi Layer Perceptron classifier in PyTorch for time series classification.
+class MLPRegressorTorch(BaseDeepRegressorTorch):
+    """Multi Layer Perceptron Network (MLP), as described in [1]_.
 
     A simple MLP classifier based on MLP network defined in [1]_.
     Adapts the implementation from [2]_ and [3]_.
@@ -94,27 +91,27 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
 
     Examples
     --------
-    >>> from sktime.classification.deep_learning.mlp import MLPClassifierTorch
+    >>> from sktime.regression.deep_learning.mlp import MLPRegressorTorch
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> clf = MLPClassifierTorch(n_epochs=50,batch_size=2) # doctest: +SKIP
+    >>> clf = MLPRegressorTorch(n_epochs=50,batch_size=2) # doctest: +SKIP
     >>> clf.fit(X_train, y_train) # doctest: +SKIP
-    MLPClassifierTorch(...)
+    MLPRegressorTorch(...)
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["RecreationalMath"],
-        "maintainers": ["RecreationalMath"],
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
+        "maintainers": ["Faakhir30"],
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
     }
 
     def __init__(
-        self: "MLPClassifierTorch",
+        self: "MLPRegressorTorch",
         # model architecture parameters
         hidden_dim: int = 500,
         n_layers: int = 4,
@@ -123,12 +120,12 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         bias: bool = True,
         dropout: float | tuple[float, ...] = (0.1, 0.2, 0.2, 0.3),
         fc_dropout: float = 0.0,
-        # base classifier parameters
+        # base regressor parameters
         num_epochs: int = 100,
         optimizer: str | None | Callable = "Adam",
         optimizer_kwargs: dict | None = None,
         batch_size: int = 1,
-        criterion: str | None | Callable = "CrossEntropyLoss",
+        criterion: str | None | Callable = "MSELoss",
         criterion_kwargs: dict | None = None,
         callbacks: str | tuple[str] | None = "ReduceLROnPlateau",
         callback_kwargs: dict | None = None,
@@ -155,17 +152,15 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         self.verbose = verbose
         self.random_state = random_state
 
-        # input_shape and num_classes to be inferred from the data
+        # input_shape to be inferred from the data
         # and will be set in _build_network
         self.input_shape = None
-        self.num_classes = None
 
         super().__init__(
             num_epochs=self.num_epochs,
             optimizer=self.optimizer,
             optimizer_kwargs=self.optimizer_kwargs,
             batch_size=self.batch_size,
-            activation=self.activation,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
             callbacks=self.callbacks,
@@ -175,30 +170,33 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
             random_state=self.random_state,
         )
 
-    def _build_network(self, X, y):
-        """Build the RNN network.
+    def _build_network(self, X):
+        """Build the MLP network.
 
         Parameters
         ----------
         X : numpy.ndarray
             Input data containing the time series data.
         y : numpy.ndarray
-            Target labels for the classification task.
+            Target values for the regression task.
 
         Returns
         -------
-        model : RNNNetworkTorch instance
-            The constructed RNN network.
+        model : MLPNetworkTorch instance
+            The constructed MLP network.
         """
-        # n_instances, n_dims, n_timesteps = X.shape
-        self.num_classes = len(np.unique(y))
+        # X arrives in sktime format: (n_instances, n_dims, n_timesteps)
+        # The base class's _build_dataloader transposes it to
+        # (batch, n_timesteps, n_dims) before passing to forward().
+        # But at this point, X has not been transposed.
+        # So input_size = n_dims is correct here
         self.input_shape = X.shape
         return MLPNetworkTorch(
             input_shape=self.input_shape,
-            num_classes=self.num_classes,
+            num_classes=1,  # regression task has a single output
             hidden_dim=self.hidden_dim,
             n_layers=self.n_layers,
-            activation=self._validated_activation,  # use self._validated_activation
+            activation=self.activation,
             activation_hidden=self.activation_hidden,
             bias=self.bias,
             dropout=self.dropout,
@@ -240,73 +238,13 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
             "num_epochs": 50,
             "batch_size": 2,
             "optimizer": "Adam",
-            "criterion": "CrossEntropyLoss",
+            "criterion": "MSELoss",
             "callbacks": None,
             "criterion_kwargs": None,
-            "optimizer_kwargs": {"weight_decay": 0.01},
+            "optimizer_kwargs": None,
             "callback_kwargs": None,
             "lr": 0.001,
             "verbose": False,
             "random_state": 0,
         }
-        params3 = {
-            "hidden_dim": 5,
-            "n_layers": 1,
-            "activation": "sigmoid",
-            "activation_hidden": "relu",
-            "bias": False,
-            "dropout": 0.0,
-            "fc_dropout": 0.0,
-            "num_epochs": 50,
-            "batch_size": 2,
-            "optimizer": "Adam",
-            "criterion": "BCELoss",
-            "callbacks": None,
-            "criterion_kwargs": None,
-            "optimizer_kwargs": None,
-            "callback_kwargs": None,
-            "lr": 0.001,
-            "verbose": False,
-            "random_state": 0,
-        }  # functionally equivalent to params2 for binary classification
-        params4 = {
-            "hidden_dim": 5,
-            "n_layers": 1,
-            "activation": None,
-            "activation_hidden": "relu",
-            "bias": False,
-            "dropout": 0.0,
-            "fc_dropout": 0.0,
-            "num_epochs": 50,
-            "batch_size": 2,
-            "optimizer": "Adam",
-            "criterion": "BCEWithLogitsLoss",
-            "callbacks": None,
-            "criterion_kwargs": None,
-            "optimizer_kwargs": None,
-            "callback_kwargs": None,
-            "lr": 0.001,
-            "verbose": False,
-            "random_state": 0,
-        }  # functionally equivalent to params2 for binary classification
-        params5 = {
-            "hidden_dim": 5,
-            "n_layers": 1,
-            "activation": "logsoftmax",
-            "activation_hidden": "relu",
-            "bias": False,
-            "dropout": 0.0,
-            "fc_dropout": 0.0,
-            "num_epochs": 50,
-            "batch_size": 2,
-            "optimizer": "Adam",
-            "criterion": "NLLLoss",
-            "callbacks": None,
-            "criterion_kwargs": None,
-            "optimizer_kwargs": None,
-            "callback_kwargs": None,
-            "lr": 0.001,
-            "verbose": False,
-            "random_state": 0,
-        }  # functionally equivalent to params2 for multi-class classification
-        return [params1, params2, params3, params4, params5]
+        return [params1, params2]

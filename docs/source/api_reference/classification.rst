@@ -67,6 +67,7 @@ Deep learning
 
     convtimenet.ConvTimeNetClassifier
     cnn.CNNClassifier
+    cnn.CNNClassifierTorch
     cntc.CNTCClassifier
     fcn.FCNClassifier
     gru.GRUClassifier
@@ -76,6 +77,7 @@ Deep learning
     lstmfcn.LSTMFCNClassifier
     lstmfcn.LSTMFCNClassifierTorch
     macnn.MACNNClassifier
+    macnn.MACCNNClassifierTorch
     mcdcnn.MCDCNNClassifier
     mcdcnn.MCDCNNClassifierTorch
     mlp.MLPClassifier
@@ -97,7 +99,7 @@ Foundation models
     :template: class.rst
 
     MomentFMClassifier
-
+    TSPulseClassifier
 
 Dictionary-based
 ----------------
