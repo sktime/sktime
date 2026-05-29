@@ -88,7 +88,7 @@ class TimesFM2Forecaster(BaseForecaster):
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:insample": False,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
         "capability:pretrain": True,
         "authors": ["rajatsen91", "siriuz42", "geetu040"],
         # rajatsen91, siriuz42 for google-research/timesfm
@@ -301,6 +301,95 @@ class TimesFM2Forecaster(BaseForecaster):
 
         return preds
 
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and possibly predict_interval
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        import torch
+
+        self.model_ = self._load_model()
+
+        horizon_length = self.model_.config.horizon_length
+        quantiles = self.model_.config.quantiles
+        past_values = self.context_
+
+        if fh is None:
+            fh = self.fh
+        fh = fh.to_relative(self.cutoff)
+        preds_idx = fh._values.values - 1
+        if np.max(preds_idx) >= horizon_length:
+            raise ValueError(
+                "The requested forecasting horizon extends beyond the TimesFM "
+                f"model horizon_length. The maximum requested relative horizon "
+                f"is {np.max(preds_idx) + 1}, but model.config.horizon_length is "
+                f"{horizon_length}."
+            )
+
+        if alpha is None:
+            alpha = quantiles
+        alpha = [round(i, 3) for i in alpha]
+        quantiles = [round(i, 3) for i in quantiles]
+        if not set(alpha).issubset(set(quantiles)):
+            raise ValueError(
+                "The requested quantiles are different than the ones in config "
+                f"alpha: {alpha} and valid quantiles in config: {quantiles}"
+            )
+        quantiles_idx = np.array([quantiles.index(i) for i in alpha])
+
+        past_values = np.expand_dims(past_values, axis=0)
+        past_values = torch.from_numpy(past_values)
+        past_values = past_values.to(self.model_.dtype)
+        past_values = past_values.to(self.model_.device)
+
+        forward_kwargs = {} if self.forward_kwargs is None else self.forward_kwargs
+        output = self.model_(past_values=past_values, **forward_kwargs)
+
+        preds = output.full_predictions
+        preds = preds.squeeze(0)
+        preds = preds[preds_idx]
+        preds = preds[:, quantiles_idx]
+        preds = preds.detach().cpu().numpy()
+
+        index = fh.to_absolute(self._cutoff)._values
+        name = self.context_.name if self.context_.name is not None else 0
+        columns = pd.MultiIndex.from_product([[name], alpha])
+        pred_quantiles = pd.DataFrame(
+            data=preds,
+            index=index,
+            columns=columns,
+        )
+
+        return pred_quantiles
+
     def __getstate__(self):
         """Return state for pickling, excluding the model object."""
         state = self.__dict__.copy()
@@ -355,6 +444,8 @@ class TimesFM2Forecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        intervals = [0.9, 0.75, 0.5, 0.25, 0.1, 0.05]
+        quantiles = sorted(q for p in intervals for q in ((1 - p) / 2, (1 + p) / 2))
         return [
             {
                 "model_path": None,
@@ -368,6 +459,7 @@ class TimesFM2Forecaster(BaseForecaster):
                     "context_length": 8,
                     "horizon_length": 6,
                     "patch_length": 2,
+                    "quantiles": quantiles,
                 },
                 "validation_split": 0.1,
                 "training_args": {
@@ -388,6 +480,7 @@ class TimesFM2Forecaster(BaseForecaster):
                     "context_length": 8,
                     "horizon_length": 6,
                     "patch_length": 2,
+                    "quantiles": quantiles,
                 },
                 "validation_split": 0.1,
                 "training_args": {
