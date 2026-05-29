@@ -116,17 +116,6 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
     >>> kf_SIMD = KalmanFilterTransformerSIMD(**kf_params)
     >>> X_SIMD = kf_SIMD.fit_transform(X)
     >>> T_SIMD = time.time() - t0
-    >>>
-    >>> t0 = time.time()
-    >>> kf_PK = KalmanFilterTransformerPK(**kf_params)
-    >>> X_PK = kf_PK.fit_transform(X)
-    >>> T_PK = time.time() - t0
-    >>>
-    >>> print("SIMD Kalman: %.03f s" % T_SIMD)  # doctest: +SKIP
-    SIMD Kalman: 0.260 s
-    >>> print("PyKalman:    %.03f s" % T_PK)  # doctest: +SKIP
-    PyKalman:    13.934 s
-    >>>
     """
 
     _tags = {
@@ -156,6 +145,7 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:vm": True,
     }
 
     def __init__(

@@ -9,15 +9,13 @@ from sktime.transformations.panel.signature_based._augmentations import (
 from sktime.transformations.panel.signature_based._compute import (
     _WindowSignatureTransform,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.utils.warnings import warn
 
 
 class SignatureTransformer(BaseTransformer):
     """Transformation class from the signature method.
 
     Follows the methodology laid out in the paper:
-        "A Generalised Signature Method for Multivariate Time Series"
+    "A Generalised Signature Method for Multivariate Time Series"
 
     Parameters
     ----------
@@ -77,6 +75,7 @@ class SignatureTransformer(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?#
         "fit_is_empty": False,
+        "capability:categorical_in_X": False,  # can estimator handle categorical data?
         # testing configuration
         # ---------------------
         "tests:libs": ["sktime.transformations.panel.signature_based"],
@@ -105,20 +104,24 @@ class SignatureTransformer(BaseTransformer):
         self.depth = depth
         self.backend = backend
 
+        if self.backend == "esig":
+            self.set_tags(**{"python_dependencies": ["esig"]})
+        elif self.backend == "iisignature":
+            self.set_tags(**{"python_dependencies": ["iisignature"]})
+
         super().__init__()
 
-        if backend == "esig":
-            _check_soft_dependencies("esig")
-        elif backend == "iisignature":
-            _check_soft_dependencies("iisignature")
-            warn(
-                "iisignature backend of SignatureTransformer is experimental "
-                "and not systematically tested, due to lack of stable installation "
-                "process for iisignature via pip. Kindly exercise caution, "
-                "and report any issues on the sktime issue tracker.",
-                stacklevel=2,
-            )
-        else:
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        if self.backend not in ["esig", "iisignature"]:
             raise ValueError(
                 "Error in SignatureTransformer, backend "
                 "must be one of 'esig' or 'iisignature'"
