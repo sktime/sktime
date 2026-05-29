@@ -119,6 +119,14 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
         "tests:python_dependencies": "torchmetrics",
     }
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.metrics is not None:
+            self.set_tags(**{"tests:python_dependencies": "torchmetrics"})
+
     def __init__(
         self: "MLPRegressorTorch",
         # model architecture parameters
