@@ -14,6 +14,7 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.singleton import _multiton
 
 
@@ -509,13 +510,11 @@ class _CachedTimesFM2:
         if self.model_ is not None:
             return self.model_
 
-        from transformers import AutoConfig, TimesFmConfig
+        from transformers import TimesFmConfig
 
         if self.model_path is not None:
             config = self.config
-            if config is None:
-                config = AutoConfig.from_pretrained(self.model_path)
-            elif isinstance(config, dict):
+            if isinstance(config, dict):
                 config_class = _get_timesfm_config_class(config)
                 config = config_class.from_dict(config)
 
@@ -547,6 +546,8 @@ def _get_timesfm_model_class(config):
     architectures = getattr(config, "architectures", None) or [
         "TimesFmModelForPrediction"
     ]
+    if architectures[0] == "TimesFm2_5ModelForPrediction":
+        _check_soft_dependencies("transformers>=5.3.0", severity="warning")
     return getattr(transformers, architectures[0])
 
 
@@ -555,6 +556,8 @@ def _get_timesfm_config_class(config):
     import transformers
 
     architectures = config.get("architectures") or ["TimesFmModelForPrediction"]
+    if architectures[0] == "TimesFm2_5ModelForPrediction":
+        _check_soft_dependencies("transformers>=5.3.0", severity="warning")
     config_class_name = architectures[0].replace("ModelForPrediction", "Config")
     return getattr(transformers, config_class_name)
 
