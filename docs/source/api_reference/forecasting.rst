@@ -679,6 +679,14 @@ Pre-trained and foundation models
 
     TimesFMForecaster
 
+.. currentmodule:: sktime.forecasting.timesfm2_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimesFM2Forecaster
+
 .. currentmodule:: sktime.forecasting.ttm
 
 .. autosummary::
