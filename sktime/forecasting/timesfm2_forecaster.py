@@ -89,7 +89,7 @@ class TimesFM2Forecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:insample": False,
         "capability:pred_int": False,
-        "capability:pretrain": False,
+        "capability:pretrain": True,
         "authors": ["rajatsen91", "siriuz42", "geetu040"],
         # rajatsen91, siriuz42 for google-research/timesfm
         "maintainers": ["geetu040"],
@@ -119,6 +119,87 @@ class TimesFM2Forecaster(BaseForecaster):
         self.device = device
 
         super().__init__()
+
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain forecaster on panel/global data (first batch).
+
+        private _pretrain containing the core logic, called from pretrain
+
+        Writes to self:
+            Sets pretrained model attributes ending in "_".
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex (guaranteed Panel or Hierarchical)
+            Panel or hierarchical time series data to pretrain on.
+            The last index level is time, all other levels identify instances.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series.
+        fh : ForecastingHorizon or None, optional (default=None)
+            Forecasting horizon.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self.model_ = self._load_model()
+
+        context_length = self.model_.config.context_length
+        horizon_length = self.model_.config.horizon_length
+
+        from transformers import Trainer, TrainingArguments
+
+        if self.validation_split is not None:
+            y_train, y_eval = temporal_train_test_split(
+                y, test_size=self.validation_split
+            )
+        else:
+            y_train = y
+            y_eval = None
+
+        train = _TimesFM2WindowDataset(
+            series_list=_prepare_series_list(y_train),
+            context_length=context_length,
+            horizon_length=horizon_length,
+        )
+
+        eval = None
+        if (
+            self.validation_split is not None
+            and len(y_eval) >= context_length + horizon_length
+        ):
+            eval = _TimesFM2WindowDataset(
+                series_list=_prepare_series_list(y_eval),
+                context_length=context_length,
+                horizon_length=horizon_length,
+            )
+        elif self.validation_split is not None:
+            warn(
+                "Could not create a TimesFM validation dataset because the "
+                "validation split is shorter than context_length + horizon_length "
+                f"({len(y_eval)} < {context_length + horizon_length}). "
+                "Training will continue without evaluation.",
+                stacklevel=2,
+            )
+
+        training_args = (
+            deepcopy(self.training_args) if self.training_args is not None else {}
+        )
+        training_args = TrainingArguments(**training_args)
+
+        trainer = Trainer(
+            model=self.model_,
+            args=training_args,
+            train_dataset=train,
+            eval_dataset=eval,
+            compute_loss_func=self.compute_loss_func,
+            compute_metrics=self.compute_metrics,
+            callbacks=self.callbacks,
+        )
+
+        trainer.train()
+
+        self.model_ = trainer.model
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -153,63 +234,6 @@ class TimesFM2Forecaster(BaseForecaster):
         """
         self.model_ = self._load_model()
         self.context_ = y
-
-        context_length = self.model_.config.context_length
-        horizon_length = self.model_.config.horizon_length
-
-        from transformers import Trainer, TrainingArguments
-
-        if self.validation_split is not None:
-            y_train, y_eval = temporal_train_test_split(
-                y, test_size=self.validation_split
-            )
-        else:
-            y_train = y
-            y_eval = None
-
-        train = _TimesFM2WindowDataset(
-            series_list=[y_train.to_numpy()],
-            context_length=context_length,
-            horizon_length=horizon_length,
-        )
-
-        eval = None
-        if (
-            self.validation_split is not None
-            and len(y_eval) >= context_length + horizon_length
-        ):
-            eval = _TimesFM2WindowDataset(
-                series_list=[y_eval.to_numpy()],
-                context_length=context_length,
-                horizon_length=horizon_length,
-            )
-        elif self.validation_split is not None:
-            warn(
-                "Could not create a TimesFM validation dataset because the "
-                "validation split is shorter than context_length + horizon_length "
-                f"({len(y_eval)} < {context_length + horizon_length}). "
-                "Training will continue without evaluation.",
-                stacklevel=2,
-            )
-
-        training_args = (
-            deepcopy(self.training_args) if self.training_args is not None else {}
-        )
-        training_args = TrainingArguments(**training_args)
-
-        trainer = Trainer(
-            model=self.model_,
-            args=training_args,
-            train_dataset=train,
-            eval_dataset=eval,
-            compute_loss_func=self.compute_loss_func,
-            compute_metrics=self.compute_metrics,
-            callbacks=self.callbacks,
-        )
-
-        trainer.train()
-
-        self.model_ = trainer.model
 
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
@@ -408,6 +432,18 @@ class _CachedTimesFM2:
         self.model_ = AutoModelForTimeSeriesPrediction.from_config(config)
         self.model_ = self.model_.to(self.device)
         return self.model_
+
+
+def _prepare_series_list(data):
+    instance_levels = list(range(data.index.nlevels - 1))
+    groupby_level = instance_levels[0] if len(instance_levels) == 1 else instance_levels
+
+    series_list = []
+    for _, group in data.groupby(level=groupby_level):
+        for col in group.columns:
+            series_list.append(group[col].to_numpy())
+
+    return series_list
 
 
 def _pad_series(series, seq_len):
