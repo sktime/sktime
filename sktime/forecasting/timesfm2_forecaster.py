@@ -1,264 +1,114 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Extension template for forecasters.
+"""Interface for the HuggingFace TimesFM-2.x forecasting model series."""
 
-Purpose of this implementation template:
-    quick implementation of new estimators following the template
-    NOT a concrete class to import! This is NOT a base class or concrete class!
-    This is to be used as a "fill-in" coding template.
+__author__ = ["rajatsen91", "siriuz42", "geetu040"]
+# rajatsen91 for google-research/timesfm
 
-How to use this implementation template to implement a new estimator:
-- make a copy of the template in a suitable location, give it a descriptive name.
-- work through all the "todo" comments below
-- fill in code for mandatory methods, and optionally for optional methods
-- do not write to reserved variables: is_fitted, _is_fitted, _state,
-    _pretrained_attrs, _X, _y, cutoff, _fh, _cutoff, _converter_store_y,
-    forecasters_, _tags, _tags_dynamic, _is_vectorized
-- you can add more private methods, but do not override BaseEstimator's private methods
-    an easy way to be safe is to prefix your methods with "_custom"
-- change docstrings for functions and the file
-- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
-- once complete: use as a local library, or contribute to sktime via PR
-- more details:
-  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
+__all__ = ["TimesFM2Forecaster"]
 
-Mandatory methods to implement:
-    fitting         - _fit(self, y, X=None, fh=None)
-    forecasting     - _predict(self, fh=None, X=None)
-
-Optional methods to implement:
-    updating                    - _update(self, y, X=None, update_params=True):
-    predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
-    OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
-    predicting variance         - _predict_var(self, fh, X=None, cov=False)
-    distribution forecast       - _predict_proba(self, fh, X=None)
-    fitted parameter inspection - _get_fitted_params()
-    pretraining (1st batch)     - _pretrain(self, y, X=None, fh=None)
-    pretraining (update)        - _pretrain_update(self, y, X=None, fh=None)
-
-Testing - required for sktime test framework and check_estimator usage:
-    get default parameters for test instance(s) - get_test_params()
-"""
-# todo: write an informative docstring for the file or module, remove the above
-# todo: add an appropriate copyright notice for your estimator
-#       estimators contributed to sktime should have the copyright notice at the top
-#       estimators of your own do not need to have permissive or BSD-3 copyright
-
-# todo: uncomment the following line, enter authors' GitHub IDs
-# __author__ = [authorGitHubID, anotherAuthorGitHubID]
+import numpy as np
+import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-
-# todo: add any necessary imports here
-
-# todo: for imports of sktime soft dependencies:
-# make sure to fill in the "python_dependencies" tag with the package import name
-# import soft dependencies only inside methods of the class, not at the top of the file
+from sktime.utils.singleton import _multiton
 
 
-# todo: change class name and write docstring
-class MyForecaster(BaseForecaster):
-    """Custom forecaster. todo: write docstring.
+class TimesFM2Forecaster(BaseForecaster):
+    """TimesFM-2.x forecaster via Hugging Face transformers.
 
-    todo: describe your custom forecaster here
+    TimesFM is a pretrained time-series foundation model developed by
+    Google Research for zero-shot forecasting. This forecaster wraps the
+    Hugging Face ``transformers`` implementation of TimesFM-2.x and exposes
+    it through the sktime forecasting interface.
 
     Parameters
     ----------
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
-        descriptive explanation of paramc
-    and so on
+    model_path : str, default="google/timesfm-2.5-200m-transformers"
+        Hugging Face model identifier or local path to a TimesFM-2.x checkpoint.
+        If ``None``, a model is initialized from ``config`` or from the default
+        ``transformers.TimesFmConfig``.
+    config : transformers.TimesFmConfig or dict, optional (default=None)
+        Configuration passed to the Hugging Face model loader. If ``model_path``
+        is not ``None``, this overrides or supplies the model configuration in
+        ``from_pretrained``. If ``model_path`` is ``None``, it is used to
+        initialize the model from configuration.
+    validation_split : float, default=0.2
+        Fraction of data reserved for validation. This parameter is retained for
+        compatibility with Hugging Face training-style interfaces; the current
+        zero-shot implementation does not fine-tune the model.
+    args : transformers.TrainingArguments or dict, optional (default=None)
+        Training arguments placeholder for future fine-tuning support. Not used
+        by the current zero-shot implementation.
+    compute_loss_func : callable, optional (default=None)
+        Custom loss function placeholder for future fine-tuning support. Not
+        used by the current zero-shot implementation.
+    compute_metrics : callable or list of callable, optional (default=None)
+        Metric function or functions placeholder for future fine-tuning support.
+        Not used by the current zero-shot implementation.
+    callbacks : list, optional (default=None)
+        Hugging Face Trainer callbacks placeholder for future fine-tuning
+        support. Not used by the current zero-shot implementation.
+    device : str, default="cpu"
+        Device on which to run the model, for example ``"cpu"``, ``"cuda"``,
+        or ``"cuda:0"``.
+
+    References
+    ----------
+    .. [1] Das, A., Kong, W., Sen, R., and Zhou, Y. (2024).
+       A decoder-only foundation model for time-series forecasting. CoRR.
+       https://arxiv.org/abs/2310.10688
+    .. [2] https://github.com/google-research/timesfm
+    .. [3] https://huggingface.co/google/timesfm-2.5-200m-transformers
+    .. [4] https://huggingface.co/google/timesfm-2.0-500m-pytorch
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
+    >>> y = load_airline()
+    >>> forecaster = TimesFM2Forecaster(
+    ...     model_path="google/timesfm-2.5-200m-transformers",
+    ...     device="cpu",
+    ... )  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    # todo: define the forecaster scitype by setting the tags
-    #  the "forecaster scitype" is determined by the tags
-    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
-    #  when changing scitype:y to multivariate or both:
-    #   y_inner_mtype should be changed to pd.DataFrame
-    # other tags are "safe defaults" which can usually be left as-is
     _tags = {
-        # tags and full specifications are available in the tag API reference
-        # https://www.sktime.net/en/stable/api_reference/tags.html
-        # to list all valid tags with description, use sktime.registry.all_tags
-        #   all_tags(estimator_types="forecaster", as_dataframe=True)
-        #
-        # behavioural tags: internal type
-        # -------------------------------
-        #
-        # y_inner_mtype, X_inner_mtype control which format X/y appears in
-        # in the inner functions _fit, _predict, etc
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
-        # valid values: str and list of str
-        # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER
-        #   of scitype Series, Panel (panel data) or Hierarchical (hierarchical series)
-        #   in that case, all inputs are converted to that one type
-        # if list of str, must be a list of valid str specifiers
-        #   in that case, X/y are passed through without conversion if on the list
-        #   if not on the list, converted to the first entry of the same scitype
-        #
-        # capability:multivariate controls whether inner y can be multivariate
-        # if multivariate is not valid, applies vectorization over variables
-        "capability:multivariate": False,
-        # valid values: True, False
-        #   False: inner _fit, _predict, etc, receive only univariate series
-        #   True: inner methods work with series with any number of variables
-        #
-        # capability tags: properties of the estimator
-        # --------------------------------------------
-        #
-        # capability:exogenous = does estimator use exogeneous X nontrivially?
-        "capability:exogenous": True,
-        # valid values: boolean False (ignores X), True (uses X in non-trivial manner)
-        # CAVEAT: if tag is set to False, inner methods always see X=None
-        #
-        # requires-fh-in-fit = is forecasting horizon always required in fit?
-        "requires-fh-in-fit": True,
-        # valid values: boolean True (yes), False (no)
-        # if True, raises exception in fit if fh has not been passed
-        #
-        # X-y-must-have-same-index = can estimator handle different X/y index?
-        "X-y-must-have-same-index": True,
-        # valid values: boolean True (yes), False (no)
-        # if True, raises exception if X.index is not contained in y.index
-        #
-        # enforce_index_type = index type that needs to be enforced in X/y
-        "enforce_index_type": None,
-        # valid values: pd.Index subtype, or list of pd.Index subtype
-        # if not None, raises exception if X.index, y.index level -1 is not of that type
-        #
-        # handles-missing-data = can estimator handle missing data?
-        "capability:missing_values": False,
-        # valid values: boolean True (yes), False (no)
-        # if False, raises exception if y or X passed contain missing data (nans)
-        #
-        # capability:insample = can forecaster make in-sample forecasts?
-        "capability:insample": True,
-        # valid values: boolean True (yes), False (no)
-        # if False, exception raised if any forecast method called with in-sample fh
-        #
-        # capability:pred_int = does forecaster implement probabilistic forecasts?
+        "capability:exogenous": False,
+        "requires-fh-in-fit": False,
+        "capability:insample": False,
         "capability:pred_int": False,
-        # valid values: boolean True (yes), False (no)
-        # if False, exception raised if proba methods are called (predict_interval etc)
-        #
-        # capability:pred_int:insample = can forecaster make in-sample proba forecasts?
-        "capability:pred_int:insample": True,
-        # valid values: boolean True (yes), False (no)
-        # only needs to be set if capability:pred_int is True
-        # if False, exception raised if proba methods are called with in-sample fh
-        #
-        # capability:pretrain = does forecaster support pretraining on panel data?
         "capability:pretrain": False,
-        # valid values: boolean True (yes), False (no)
-        # if True, implement _pretrain and optionally _pretrain_update below
-        # enables the pretrain -> fit -> predict workflow for global learning
-        #
-        # ----------------------------------------------------------------------------
-        # packaging info - only required for sktime contribution or 3rd party packages
-        # ----------------------------------------------------------------------------
-        #
-        # ownership and contribution tags
-        # -------------------------------
-        #
-        # author = author(s) of th estimator
-        # an author is anyone with significant contribution to the code at some point
-        "authors": ["author1", "author2"],
-        # valid values: str or list of str, should be GitHub handles
-        # this should follow best scientific contribution practices
-        # scope is the code, not the methodology (method is per paper citation)
-        # if interfacing a 3rd party estimator, ensure to give credit to the
-        # authors of the interfaced estimator
-        #
-        # maintainer = current maintainer(s) of the estimator
-        # per algorithm maintainer role, see governance document
-        # this is an "owner" type role, with rights and maintenance duties
-        # for 3rd party interfaces, the scope is the sktime class only
-        "maintainers": ["maintainer1", "maintainer2"],
-        # valid values: str or list of str, should be GitHub handles
-        # remove tag if maintained by sktime core team
-        #
-        # dependency tags: python version and soft dependencies
-        # -----------------------------------------------------
-        #
-        # python version requirement
-        "python_version": None,
-        # valid values: str, PEP 440 valid python version specifiers
-        # raises exception at construction if local python version is incompatible
-        #
-        # soft dependency requirement
-        "python_dependencies": None,
-        # valid values: str or list of str, PEP 440 valid package version specifiers
-        # raises exception at construction if modules at strings cannot be imported
+        "authors": ["rajatsen91", "siriuz42", "geetu040"],
+        # rajatsen91, siriuz42 for google-research/timesfm
+        "maintainers": ["geetu040"],
+        "python_dependencies": ["torch", "transformers"],
     }
-    #  in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
-    # todo: add any hyper-parameters and components to constructor
-    def __init__(self, parama, paramb="default", paramc=None):
-        # estimators should precede parameters
-        #  if estimators have default values, set None and initialize below
+    def __init__(
+        self,
+        model_path="google/timesfm-2.5-200m-transformers",
+        config=None,
+        validation_split=0.2,
+        args=None,
+        compute_loss_func=None,
+        compute_metrics=None,
+        callbacks=None,
+        device="cpu",
+    ):
+        self.model_path = model_path
+        self.config = config
+        self.validation_split = validation_split
+        self.args = args
+        self.compute_loss_func = compute_loss_func
+        self.compute_metrics = compute_metrics
+        self.callbacks = callbacks
+        self.device = device
 
-        # todo: write any hyper-parameters and components to self
-        self.parama = parama
-        self.paramb = paramb
-        # IMPORTANT: the self.params should never be overwritten or mutated from now on
-        # for handling defaults etc, write to other attributes, e.g., self._paramc
-        self.paramc = paramc
-
-        # leave this as is
         super().__init__()
 
-        # do not put anything else in __init__,
-        # use __post_init__ for any further initialization logic
-
-    # todo: add if there is dynamic tag setting logic, otherwise delete this method
-    def __dynamic_tags__(self):
-        """Dynamic tag setter logic for setting tag values conditional on parameters.
-
-        This method should be used for setting dynamic tags only.
-        """
-        # todo: if tags of estimator depend on component tags, set these here
-        #  typically only needed if estimator is a composite
-        #  tags set here apply to the instance, and override the class tags
-        #
-        # example 1: conditional setting of a tag based on parameter foo
-        # if self.foo == 42:
-        #   self.set_tags(**{"capability:missing_values": True})
-        # example 2: cloning tags from component estimator component_estimator
-        #   self.clone_tags(self.component_estimator, ["capability:missing_values"])
-
-    # todo: add any post-init logic here, otherwise delete this method
-    def __post_init__(self):
-        """Post-init constructor logic, can be used by inheriting classes.
-
-        This method should be used for:
-
-        * parameter validation
-        * initialization logic beyond self.param = param
-        * any soft dependency imports in the constructor
-
-        IMPORTANT: no significant compute or memory use should happen in __post_init__,
-        memory and compute intensive operations should be in _fit, not __post_init__.
-        """
-        # todo: optional, parameter checking or coercion should happen here
-        # if writes derived values to self, should *not* overwrite self.paramc etc
-        # instead, write to self._paramc, self._newparam (starting with _)
-        # example of handling conditional parameters or mutable defaults:
-        if self.paramc is None:
-            from sktime.somewhere import MyOtherEstimator
-
-            self._paramc = MyOtherEstimator(foo=42)
-        else:
-            # estimators should be cloned to avoid side effects
-            self._paramc = self.paramc.clone()
-
-    # todo: implement this, mandatory
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -289,22 +139,9 @@ class MyForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self.model_ = self._load_model()
+        self.context_ = y
 
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh
-        #
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals should be used or fitted if needed
-        #
-        # Note: when interfacing a model that has fit, with parameters
-        #   that are not data (y, X) or forecasting-horizon-like,
-        #   but model parameters, *don't* add as arguments to fit, but treat as follows:
-        #   1. pass to constructor,  2. write to self in constructor,
-        #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
-
-    # todo: implement this, mandatory
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
@@ -332,362 +169,70 @@ class MyForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
+        import torch
 
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
+        self.model_ = self._load_model()
 
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _update method
-    def _update(self, y, X=None, update_params=True):
-        """Update time series to incremental training data.
+        past_values = self.context_
+        past_values = np.expand_dims(past_values, axis=0)
+        past_values = torch.from_numpy(past_values)
+        past_values = past_values.to(self.model_.dtype)
+        past_values = past_values.to(self.model_.device)
 
-        private _update containing the core logic, called from update
+        if fh is None:
+            fh = self.fh
+        fh = fh.to_relative(self.cutoff)
+        preds_idx = fh._values.values - 1
 
-        State required:
-            Requires state to be "fitted".
+        output = self.model_(past_values=past_values)
 
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
+        preds = output.mean_predictions
+        preds = preds.ravel()
+        preds = preds[preds_idx]
+        preds = preds.detach().cpu().numpy()
+        preds = pd.Series(
+            preds,
+            index=fh.to_absolute(self._cutoff)._values,
+            name=self.context_.name,
+        )
 
-        Writes to self:
-            Sets fitted model attributes ending in "_", if update_params=True.
-            Does not write to self if update_params=False.
+        return preds
 
-        Parameters
-        ----------
-        y : sktime time series object
-            guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series with which to update the forecaster.
+    def __getstate__(self):
+        """Return state for pickling, excluding the model object."""
+        state = self.__dict__.copy()
+        if "model_" in state:
+            state["model_"] = None
+        return state
 
-            * if self.get_tag("capability:multivariate")==False:
-              guaranteed to be univariate (e.g., single-column for DataFrame)
-            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
-              the method should handle uni- and multivariate y appropriately
+    def __setstate__(self, state):
+        """Restore state; the model will be reloaded on next prediction."""
+        self.__dict__.update(state)
 
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        update_params : bool, optional (default=True)
-            whether model parameters should be updated
+    def _load_model(self):
+        if hasattr(self, "model_") and self.model_ is not None:
+            return self.model_
 
-        Returns
-        -------
-        self : reference to self
-        """
+        self.model_ = _CachedTimesFM2(
+            key=self._get_unique_key(),
+            model_path=self.model_path,
+            config=self.config,
+            device=self.device,
+        ).load()
 
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
+        return self.model_
 
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _pretrain and _pretrain_update methods
-    # requires setting the tag "capability:pretrain" to True
-    # pretrain receives panel or hierarchical data (MultiIndex DataFrame)
-    # and should learn global patterns shared across instances
-    def _pretrain(self, y, X=None, fh=None):
-        """Pretrain forecaster on panel/global data (first batch).
+    def _get_unique_key(self):
+        return str(
+            sorted(
+                {
+                    "model_path": self.model_path,
+                    "config": self.config,
+                    "device": self.device,
+                }.items()
+            )
+        )
 
-        private _pretrain containing the core logic, called from pretrain
-
-        Writes to self:
-            Sets pretrained model attributes ending in "_".
-
-        Parameters
-        ----------
-        y : pd.DataFrame with MultiIndex (guaranteed Panel or Hierarchical)
-            Panel or hierarchical time series data to pretrain on.
-            The last index level is time, all other levels identify instances.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series.
-        fh : ForecastingHorizon or None, optional (default=None)
-            Forecasting horizon.
-
-        Returns
-        -------
-        self : reference to self
-        """
-
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh
-        #
-        # any pretrained model parameters should be written to attributes ending in "_"
-        #   these will be automatically tracked by the base class
-        #   and accessible via get_pretrained_params()
-        #
-        # example:
-        #   self.global_mean_ = y.values.mean()
-        #   self.n_pretrain_instances_ = len(y.index.droplevel(-1).unique())
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete this method (default calls _pretrain)
-    def _pretrain_update(self, y, X=None, fh=None):
-        """Update pretrained forecaster with additional panel data.
-
-        private _pretrain_update, called from pretrain when already pretrained.
-        Default implementation calls _pretrain. Override for incremental logic.
-
-        Parameters
-        ----------
-        y : pd.DataFrame with MultiIndex (guaranteed Panel or Hierarchical)
-            Additional panel data to learn from.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series.
-        fh : ForecastingHorizon or None, optional (default=None)
-            Forecasting horizon.
-
-        Returns
-        -------
-        self : reference to self
-        """
-        # default: just call _pretrain again
-        # override for incremental/online pretraining
-        return self._pretrain(y=y, X=X, fh=fh)
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _update_predict_single method
-    def _update_predict_single(self, y, fh, X=None, update_params=True):
-        """Update forecaster and then make forecasts.
-
-        Implements default behaviour of calling update and predict sequentially, but can
-        be overwritten by subclasses to implement more efficient updating algorithms
-        when available.
-        """
-        self.update(y, X, update_params=update_params)
-        return self.predict(fh, X)
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh
-
-    # todo: consider implementing one of _predict_quantiles and _predict_interval
-    #   if one is implemented, the other one works automatically
-    #   when interfacing or implementing, consider which of the two is easier
-    #   both can be implemented if desired, but usually that is not necessary
-    #
-    # if _predict_var or _predict_proba is implemented, this will have a default
-    #   implementation which uses _predict_proba or _predict_var under normal assumption
-    #
-    # if implementing _predict_interval, delete _predict_quantiles
-    # if not implementing either, delete both methods
-    def _predict_quantiles(self, fh, X, alpha):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and possibly predict_interval
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        alpha : list of float (guaranteed not None and floats in [0,1] interval)
-            A list of probabilities at which quantile forecasts are computed.
-
-        Returns
-        -------
-        quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
-        """
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh, alpha
-        #
-        # Note: unlike in predict_quantiles where alpha can be float or list of float
-        #   alpha in _predict_quantiles is guaranteed to be a list of float
-
-    # implement one of _predict_interval or _predict_quantiles (above), or delete both
-    #
-    # if implementing _predict_quantiles, delete _predict_interval
-    # if not implementing either, delete both methods
-    def _predict_interval(self, fh, X, coverage):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_interval containing the core logic,
-            called from predict_interval and possibly predict_quantiles
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        coverage : list of float (guaranteed not None and floats in [0,1] interval)
-           nominal coverage(s) of predictive interval(s)
-
-        Returns
-        -------
-        pred_int : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
-                Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are forecasts of lower/upper interval end,
-                for var in col index, at nominal coverage in second col index,
-                lower/upper depending on third col index, for the row index.
-                Upper/lower interval end forecasts are equivalent to
-                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
-        """
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh, coverage
-        #
-        # Note: unlike in predict_interval where coverage can be float or list of float
-        #   coverage in _predict_interval is guaranteed to be a list of float
-
-    # todo: consider implementing _predict_var
-    #
-    # if _predict_proba or interval/quantiles are implemented, this will have a default
-    #   implementation which uses _predict_proba or quantiles under normal assumption
-    #
-    # if not implementing, delete _predict_var
-    def _predict_var(self, fh, X=None, cov=False):
-        """Forecast variance at future horizon.
-
-        private _predict_var containing the core logic, called from predict_var
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        cov : bool, optional (default=False)
-            if True, computes covariance matrix forecast.
-            if False, computes marginal variance forecasts.
-
-        Returns
-        -------
-        pred_var : pd.DataFrame, format dependent on `cov` variable
-            If cov=False:
-                Column names are exactly those of `y` passed in `fit`/`update`.
-                    For nameless formats, column index will be a RangeIndex.
-                Row index is fh, with additional levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-                Entries are variance forecasts, for var in col index.
-                A variance forecast for given variable and fh index is a predicted
-                    variance for that variable and index, given observed data.
-            If cov=True:
-                Column index is a multiindex: 1st level is variable names (as above)
-                    2nd level is fh.
-                Row index is fh, with additional levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-                Entries are (co-)variance forecasts, for var in col index, and
-                    covariance between time index in row and col.
-                Note: no covariance forecasts are returned between different variables.
-        """
-        # implement here
-        # implementing the cov=True case is optional and can be omitted
-
-    # todo: consider implementing _predict_proba
-    #
-    # if interval/quantiles or _predict_var are implemented, this will have a default
-    #   implementation which uses variance or quantiles under normal assumption
-    #
-    # if not implementing, delete _predict_proba
-    def _predict_proba(self, fh, X, marginal=True):
-        """Compute/return fully probabilistic forecasts.
-
-        private _predict_proba containing the core logic, called from predict_proba
-
-        Parameters
-        ----------
-        fh : int, list, np.array or ForecastingHorizon (not optional)
-            The forecasting horizon encoding the time stamps to forecast at.
-            if has not been passed in fit, must be passed, not optional
-        X : sktime time series object, optional (default=None)
-                Exogeneous time series for the forecast
-            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
-            if self.get_tag("X-y-must-have-same-index"),
-                X.index must contain fh.index and y.index both
-        marginal : bool, optional (default=True)
-            whether returned distribution is marginal by time index
-
-        Returns
-        -------
-        pred_dist : sktime BaseDistribution
-            predictive distribution
-            if marginal=True, will be marginal distribution by time point
-            if marginal=False and implemented by method, will be joint
-        """
-        # implement here
-        # returned BaseDistribution should have same index and columns
-        # as the predict return
-        #
-        # implementing the marginal=False case is optional and can be omitted
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete the method
-    def _predict_moving_cutoff(self, y, cv, X=None, update_params=True):
-        """Make single-step or multi-step moving cutoff predictions.
-
-        Parameters
-        ----------
-        y : pd.Series
-        cv : temporal cross-validation generator
-        X : pd.DataFrame
-        update_params : bool
-
-        Returns
-        -------
-        y_pred = pd.Series
-        """
-
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, cv
-
-    # todo: consider implementing this, optional
-    # implement only if different from default:
-    #   default retrieves all self attributes ending in "_"
-    #   and returns them with keys that have the "_" removed
-    # if not implementing, delete the method
-    #   avoid overriding get_fitted_params
-    def _get_fitted_params(self):
-        """Get fitted parameters.
-
-        private _get_fitted_params, called from get_fitted_params
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict with str keys
-            fitted parameters, keyed by names of fitted parameter
-        """
-        # implement here
-        #
-        # when this function is reached, it is already guaranteed that self is fitted
-        #   this does not need to be checked separately
-        #
-        # parameters of components should follow the sklearn convention:
-        #   separate component name from parameter name by double-underscore
-        #   e.g., componentname__paramname
-
-    # todo: implement this if this is an estimator contributed to sktime
-    #   or to run local automated unit and integration testing of estimator
-    #   method should return default parameters, so that a test instance can be created
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -707,47 +252,64 @@ class MyForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        return [
+            {
+                "model_path": None,
+                "config": {
+                    "architectures": ["TimesFm2ModelForPrediction"],
+                    "num_hidden_layers": 1,
+                    "hidden_size": 16,
+                    "intermediate_size": 16,
+                    "head_dim": 8,
+                    "num_attention_heads": 4,
+                },
+                "device": "cpu",
+            },
+            {
+                "model_path": None,
+                "config": {
+                    "architectures": ["TimesFm2_5ModelForPrediction"],
+                    "num_hidden_layers": 1,
+                    "hidden_size": 8,
+                    "intermediate_size": 4,
+                    "head_dim": 2,
+                    "num_attention_heads": 1,
+                },
+            },
+        ]
 
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries
-        # Testing parameter choice should cover internal cases well.
-        #
-        # this method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # The parameter_set argument is not used for automated, module level tests.
-        #   It can be used in custom, estimator specific tests, for "special" settings.
-        # A parameter dictionary must be returned *for all values* of parameter_set,
-        #   i.e., "parameter_set not available" errors should never be raised.
-        #
-        # A good parameter set should primarily satisfy two criteria,
-        #   1. Chosen set of parameters should have a low testing time,
-        #      ideally in the magnitude of few seconds for the entire test suite.
-        #       This is vital for the cases where default values result in
-        #       "big" models which not only increases test time but also
-        #       run into the risk of test workers crashing.
-        #   2. There should be a minimum two such parameter sets with different
-        #      sets of values to ensure a wide range of code coverage is provided.
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        # return params
-        #
-        # example 3: parameter set depending on param_set value
-        #   note: only needed if a separate parameter set is needed in tests
-        # if parameter_set == "special_param_set":
-        #     params = {"est": value1, "parama": value2}
-        #     return params
-        #
-        # # "default" params - always returned except for "special_param_set" value
-        # params = {"est": value3, "parama": value4}
-        # return params
+
+@_multiton
+class _CachedTimesFM2:
+    """Cached TimesFM 2.5 model instance."""
+
+    def __init__(self, key, model_path, config, device):
+        self.key = key
+        self.model_path = model_path
+        self.config = config
+        self.device = device
+        self.model_ = None
+
+    def load(self):
+        if self.model_ is not None:
+            return self.model_
+
+        from transformers import AutoModelForTimeSeriesPrediction, TimesFmConfig
+
+        if self.model_path is not None:
+            self.model_ = AutoModelForTimeSeriesPrediction.from_pretrained(
+                self.model_path,
+                config=self.config,
+            )
+            self.model_ = self.model_.to(self.device)
+            return self.model_
+
+        config = self.config
+        if config is None:
+            config = TimesFmConfig()
+        if isinstance(config, dict):
+            config = TimesFmConfig.from_dict(config)
+
+        self.model_ = AutoModelForTimeSeriesPrediction.from_config(config)
+        self.model_ = self.model_.to(self.device)
+        return self.model_
