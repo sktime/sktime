@@ -342,8 +342,6 @@ class InceptionModule(NNModule):
         maxpool_out = self.conv_from_maxpool(maxpool_out)
         if self.maxpool_activation is not None:
             maxpool_out = self.maxpool_activation(maxpool_out)
-        else:
-            maxpool_out = maxpool_out
         conv_outputs.append(maxpool_out)
 
         torchCat = _safe_import("torch.cat")

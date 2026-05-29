@@ -34,11 +34,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         layers.
     pool_padding : str or None, optional (default="same")
         The type of padding to be applied to pooling layers.
-    criterion : str, optional (default="MSELoss")
-        The name of the loss function to be used during training,
-        should be supported by PyTorch.
-    criterion_kwargs : dict or None, optional (default=None)
-        Additional keyword arguments to pass to the loss function.
     activation : str or Callable or None, optional (default=None)
         The activation function to apply at the output.
         List of available activation functions:

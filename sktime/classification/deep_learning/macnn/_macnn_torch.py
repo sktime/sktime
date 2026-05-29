@@ -41,7 +41,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         Activation function used for final output layer.
         Recommended Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
         'SELU', 'GELU', None
-    activation_hidden : str or Callable or None, default="ReLU"
+    activation_hidden : str or Callable, default="ReLU"
         Activation function used for the hidden layers.
         Recommended Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
         'SELU', 'GELU', None
@@ -114,7 +114,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         kernel_sizes: tuple = (3, 6, 12),
         reduction: int = 16,
         activation: str | Callable | None = None,
-        activation_hidden: str | Callable | None = "ReLU",
+        activation_hidden: str | Callable = "ReLU",
         # base classifier specific
         num_epochs: int = 100,
         batch_size: int = 1,
