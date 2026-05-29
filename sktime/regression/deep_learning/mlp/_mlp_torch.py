@@ -242,9 +242,7 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
             "batch_size": 2,
             "metrics": (
                 "MeanSquaredError",
-                _safe_import("torchmetrics.regression.R2Score")(
-                    multioutput="uniform_average"
-                ),
+                _safe_import("torchmetrics.regression.R2Score")(),
             ),
         }
         params2 = {
