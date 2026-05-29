@@ -1,6 +1,6 @@
 """Multi Channel Deep Convolutional Neural Classifier (MCDCNN)."""
 
-import warnings
+from collections.abc import Callable
 
 import numpy as np
 
@@ -37,9 +37,6 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         layers.
     pool_padding : str or None, optional (default="same")
         The type of padding to be applied to pooling layers.
-    criterion : str, optional (default="CrossEntropyLoss")
-        The name of the loss function to be used during training,
-        should be supported by PyTorch.
     activation : str or None, optional (default=None)
         The activation function to apply at the output.
         List of available activation functions:
@@ -52,13 +49,18 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
     use_bias : bool, optional (default=True)
         Whether bias should be included in the output layer.
-    optimizer : str or None or an instance of optimizers defined in torch.optim,
+    criterion : str, optional (default="CrossEntropyLoss")
+        The name of the loss function to be used during training,
+        should be supported by PyTorch.
+    criterion_kwargs : dict or None, optional (default=None)
+        Additional keyword arguments to pass to the criterion.
+    optim : str or None or an instance of optimizers defined in torch.optim,
         optional (default=None)
         The optimizer to use for training the model. If left as None, SGD is used
         with momentum=0.9, weight_decay=0.0005.
         List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
-    optimizer_kwargs : dict or None, optional (default=None)
+    optim_kwargs : dict or None, optional (default=None)
         Additional keyword arguments to pass to the optimizer.
     callbacks : None or str or a tuple of str, optional (default=None)
         Currently only learning rate schedulers are supported as callbacks.
@@ -74,8 +76,6 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
     lr : float, optional (default=0.01)
         The learning rate to use for the optimizer.
-    criterion_kwargs : dict or None, optional (default=None)
-        Additional keyword arguments to pass to the criterion.
     verbose : bool, optional (default=False)
         Whether to print progress information during training.
     random_state : int, optional (default=0)
@@ -107,28 +107,28 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
     }
 
     def __init__(
-        self,
-        n_epochs=120,
-        batch_size=16,
-        kernel_sizes=(5, 5),
-        pool_size=2,
-        filter_sizes=(8, 8),
-        dense_units=732,
-        conv_padding="same",
-        pool_padding="same",
-        criterion="CrossEntropyLoss",
-        activation=None,
-        activation_hidden="relu",
-        use_bias=True,
-        callbacks=None,
-        optim=None,
-        optim_kwargs=None,
-        criterion_kwargs=None,
-        callback_kwargs=None,
-        metrics=None,
-        lr=0.01,
-        verbose=False,
-        random_state=0,
+        self: "MCDCNNClassifierTorch",
+        n_epochs: int = 120,
+        batch_size: int = 16,
+        kernel_sizes: tuple[int, ...] = (5, 5),
+        pool_size: int = 2,
+        filter_sizes: tuple[int, ...] = (8, 8),
+        dense_units: int = 732,
+        conv_padding: str | None = "same",
+        pool_padding: str | None = "same",
+        activation: str | None | Callable = None,
+        activation_hidden: str = "relu",
+        use_bias: bool = True,
+        criterion: str | None | Callable = "CrossEntropyLoss",
+        criterion_kwargs: dict | None = None,
+        optim: str | None | Callable = None,
+        optim_kwargs: dict | None = None,
+        callbacks: str | tuple[str, ...] | None = None,
+        callback_kwargs: dict | None = None,
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
+        lr: float = 0.01,
+        verbose: bool = False,
+        random_state: int = 0,
     ):
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -202,20 +202,6 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         model : torch.nn.Module
             The constructed MCDCNN network with output layer.
         """
-        if len(X.shape) != 3:
-            raise ValueError(
-                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
-                f"but got shape {X.shape}. Please ensure your input data is "
-                "properly formatted."
-            )
-
-        if len(np.unique(y)) == 1:
-            warnings.warn(
-                "The provided data passed to MCDCNNClassifierTorch contains a "
-                "single label. If this is not intentional, please check.",
-                UserWarning,
-            )
-
         self.num_classes = len(np.unique(y))
 
         return MCDCNNNetworkTorch(
