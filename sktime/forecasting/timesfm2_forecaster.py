@@ -32,6 +32,13 @@ class TimesFM2Forecaster(BaseForecaster):
         is not ``None``, this overrides or supplies the model configuration in
         ``from_pretrained``. If ``model_path`` is ``None``, it is used to
         initialize the model from configuration.
+    forward_kwargs : dict, optional (default=None)
+        Keyword arguments passed directly to the Hugging Face model forward
+        method during inference. See the Hugging Face TimesFM forward
+        documentation for supported model-specific options such as
+        ``forecast_context_len``, ``truncate_negative``, or
+        ``force_flip_invariance``.
+        See [5]_ for TimesFM-2.0 and [6]_ for TimesFM-2.5.
     validation_split : float, default=0.2
         Fraction of data reserved for validation. This parameter is retained for
         compatibility with Hugging Face training-style interfaces; the current
@@ -60,6 +67,8 @@ class TimesFM2Forecaster(BaseForecaster):
     .. [2] https://github.com/google-research/timesfm
     .. [3] https://huggingface.co/google/timesfm-2.5-200m-transformers
     .. [4] https://huggingface.co/google/timesfm-2.0-500m-pytorch
+    .. [5] https://huggingface.co/docs/transformers/en/model_doc/timesfm#transformers.TimesFmModelForPrediction.forward
+    .. [6] https://huggingface.co/docs/transformers/en/model_doc/timesfm2_5#transformers.TimesFm2_5ModelForPrediction.forward
 
     Examples
     --------
@@ -90,6 +99,7 @@ class TimesFM2Forecaster(BaseForecaster):
         self,
         model_path="google/timesfm-2.5-200m-transformers",
         config=None,
+        forward_kwargs=None,
         validation_split=0.2,
         training_args=None,
         compute_loss_func=None,
@@ -99,6 +109,7 @@ class TimesFM2Forecaster(BaseForecaster):
     ):
         self.model_path = model_path
         self.config = config
+        self.forward_kwargs = forward_kwargs
         self.validation_split = validation_split
         self.training_args = training_args
         self.compute_loss_func = compute_loss_func
@@ -184,7 +195,8 @@ class TimesFM2Forecaster(BaseForecaster):
         fh = fh.to_relative(self.cutoff)
         preds_idx = fh._values.values - 1
 
-        output = self.model_(past_values=past_values)
+        forward_kwargs = {} if self.forward_kwargs is None else self.forward_kwargs
+        output = self.model_(past_values=past_values, **forward_kwargs)
 
         preds = output.mean_predictions
         preds = preds.ravel()
