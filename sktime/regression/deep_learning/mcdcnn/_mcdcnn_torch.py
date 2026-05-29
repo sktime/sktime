@@ -37,11 +37,11 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         should be supported by PyTorch.
     criterion_kwargs : dict or None, optional (default=None)
         Additional keyword arguments to pass to the loss function.
-    activation : str or None, optional (default=None)
+    activation : str or Callable or None, optional (default=None)
         The activation function to apply at the output.
         List of available activation functions:
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
-    activation_hidden : string, default="relu"
+    activation_hidden : str or Callable, default="ReLU"
         Activation function used in the hidden layers.
         List of available activation functions:
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
@@ -94,22 +94,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         # estimator type handled by parent class
     }
 
-    # Allowed values used by the base class activation validation hook.
-    _supported_activation = (
-        "sigmoid",
-        "logsigmoid",
-        "relu",
-        "softmax",
-        "logsoftmax",
-    )
-    _supported_activation_hidden = (
-        "sigmoid",
-        "logsigmoid",
-        "relu",
-        "softmax",
-        "logsoftmax",
-    )
-
     def __init__(
         self: "MCDCNNRegressorTorch",
         n_epochs=120,
@@ -123,7 +107,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         criterion="MSELoss",
         criterion_kwargs=None,
         activation=None,
-        activation_hidden="relu",
+        activation_hidden="ReLU",
         use_bias=True,
         optim=None,
         optim_kwargs=None,
@@ -226,8 +210,8 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             conv_padding=self.conv_padding,
             pool_padding=self.pool_padding,
             random_state=self.random_state,
-            activation=self.activation,
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             use_bias=self.use_bias,
         )
 
@@ -274,7 +258,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             "dense_units": 1,
             "conv_padding": "same",
             "pool_padding": "same",
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
             "use_bias": False,
             "optim": "Adam",
             "optim_kwargs": {"weight_decay": 0.001},

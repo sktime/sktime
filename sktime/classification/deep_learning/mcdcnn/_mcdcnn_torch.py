@@ -40,13 +40,13 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
     criterion : str, optional (default="CrossEntropyLoss")
         The name of the loss function to be used during training,
         should be supported by PyTorch.
-    activation : str or None, optional (default=None)
+    activation : str or Callable or None, optional (default=None)
         The activation function to apply at the output.
         List of available activation functions:
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
         When using CrossEntropyLoss (default) as the loss function,
         the activation function in the output layer must be None.
-    activation_hidden : string, default="relu"
+    activation_hidden : str or Callable, default="ReLU"
         Activation function used in the hidden layers.
         List of available activation functions:
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
@@ -100,22 +100,6 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         # estimator type handled by parent class
     }
 
-    # Allowed values used by the base class activation validation hook.
-    _supported_activation = (
-        "sigmoid",
-        "relu",
-        "softmax",
-        "logsoftmax",
-        "logsigmoid",
-    )
-    _supported_activation_hidden = (
-        "sigmoid",
-        "relu",
-        "softmax",
-        "logsoftmax",
-        "logsigmoid",
-    )
-
     def __init__(
         self,
         n_epochs=120,
@@ -128,7 +112,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         pool_padding="same",
         criterion="CrossEntropyLoss",
         activation=None,
-        activation_hidden="relu",
+        activation_hidden="ReLU",
         use_bias=True,
         callbacks=None,
         metrics=None,
@@ -235,8 +219,8 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             dense_units=self.dense_units,
             conv_padding=self.conv_padding,
             pool_padding=self.pool_padding,
-            activation=self._validated_activation,
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             use_bias=self.use_bias,
             random_state=self.random_state,
         )
@@ -270,7 +254,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             "dense_units": 21,
             "conv_padding": "valid",
             "pool_padding": "valid",
-            "activation_hidden": "logsigmoid",
+            "activation_hidden": "LogSigmoid",
             "use_bias": True,
             "lr": 0.005,
             "random_state": 0,
@@ -284,7 +268,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             "dense_units": 1,
             "conv_padding": "same",
             "pool_padding": "same",
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
             "use_bias": False,
             "optim": "Adam",
             "optim_kwargs": {"weight_decay": 0.001},

@@ -26,8 +26,9 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
     activation : str or None or an instance of activation functions defined in
         torch.nn, default = None
         Activation function used in the fully connected output layer.
-    activation_hidden : str, default = "relu"
-        The activation function applied inside the RNN. Can be either 'tanh' or 'relu'.
+    activation_hidden : str or Callable, default = "ReLU"
+        The activation function applied inside the RNN. Recommended callable instance
+        of 'ReLU', 'Tanh'.
         Because currently PyTorch only supports these two activations inside the RNN.
         https://docs.pytorch.org/docs/stable/generated/torch.nn.RNN.html#torch.nn.RNN
     bias : bool, default = True
@@ -100,22 +101,13 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         "capability:random_state": True,
     }
 
-    # Allowed values used by the base class activation validation hook.
-    _supported_activation = (
-        "sigmoid",
-        "softmax",
-        "logsoftmax",
-        "logsigmoid",
-    )
-    _supported_activation_hidden = ("tanh", "relu")
-
     def __init__(
         self: "SimpleRNNClassifierTorch",
         # model specific
         hidden_dim: int = 6,
         n_layers: int = 1,
-        activation: str | None | Callable = None,
-        activation_hidden: str = "relu",
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable = "ReLU",
         bias: bool = True,
         init_weights: bool = True,
         dropout: float = 0.0,
@@ -220,8 +212,8 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
             n_layers=self.n_layers,
-            activation=self._validated_activation,  # use self._validated_activation
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             bias=self.bias,
             num_classes=self.num_classes,
             init_weights=self.init_weights,
@@ -258,7 +250,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "hidden_dim": 5,
             "n_layers": 1,
             "activation": None,
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
@@ -279,8 +271,8 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         params3 = {
             "hidden_dim": 5,
             "n_layers": 1,
-            "activation": "sigmoid",
-            "activation_hidden": "relu",
+            "activation": "Sigmoid",
+            "activation_hidden": "ReLU",
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
@@ -302,7 +294,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
             "hidden_dim": 5,
             "n_layers": 1,
             "activation": None,
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
@@ -323,8 +315,8 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         params5 = {
             "hidden_dim": 5,
             "n_layers": 1,
-            "activation": "logsoftmax",
-            "activation_hidden": "relu",
+            "activation": "LogSoftmax",
+            "activation_hidden": "ReLU",
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,

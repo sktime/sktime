@@ -76,15 +76,11 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         "tests:vm": True,
     }
 
-    # _validate_activation_vars is an iterable of attribute names of activations
-    # to validate Subclasses can control estimator-level activation validation by
-    # overriding this variable. This class expects `_supported_<attribute_name>`
-    # as an iterable of allowed string values for each attribute listed in
-    # `_validate_activation_vars`
-    # For example, if a subclass sets `_validate_activation_vars = ("activation_foo",)`,
-    # then the base class will look for `_supported_activation_foo` attribute and will
-    # ensure that `activation_foo` attribute is one of its supported values.
-    _validate_activation_vars = ("activation", "activation_hidden")
+    # _instantiate_activation_vars is an iterable of attribute names of activations
+    # to instantiate. In case activation attributes in subclasses are different than
+    # the default ones (activation and activation_hidden), this variable should
+    # be overridden.
+    _instantiate_activation_vars = ("activation", "activation_hidden")
 
     def __init__(
         self: "BaseDeepClassifierPytorch",
@@ -134,11 +130,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         # validate activation function w.r.t. criterion specified
         self._validate_activation_criterion()
 
-        self._validate_supported_activations()
         # post this function call,
         # self._validated_criterion and self._validated_activation are used
         # and self.criterion and self.activation are ignored
-
+        self._instantiate_activations()
         # optimizers, criterions, callbacks will be instantiated in
         # _instantiate_optimizer, _instantiate_criterion & _instantiate_callbacks
         # methods respectively
@@ -190,51 +185,39 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         if self.verbose:
             print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
 
-    def _validate_supported_activations(self):
-        """Validate subclass-declared activation attributes against supported values.
+    def _instantiate_activations(self):
+        import torch
 
-        This method implements a generic validation hook for subclasses.
-        Attribute names listed in ``self._validate_activation_vars`` are checked one by
-        one. For each attribute name ``var``, if the estimator also defines a
-        ``self._supported_<var>`` attribute, string values are validated against that
-        allowed set.
+        self._callable_activations: dict[str, torch.nn.Module | None] = {}
+        for activation_var in self._instantiate_activation_vars:
+            activation = getattr(self, activation_var)
+            if activation_var == "activation":
+                activation = self._validated_activation
 
-        Notes
-        -----
-        For ``activation``, validation is performed against
-        ``self._validated_activation`` when available, since output-layer activation
-        may be normalized by ``_validate_activation_criterion()``.
-        """
-        NNModule = _safe_import("torch.nn.modules.module.Module")
+            if activation is None:
+                self._callable_activations[activation_var] = None
+                continue
+            if isinstance(activation, torch.nn.Module):
+                self._callable_activations[activation_var] = activation
+                continue
+            elif not isinstance(activation, str):
+                raise TypeError(
+                    f"Activation '{activation}' should be string or a torch.nn.Module. "
+                    f"But got {type(activation)} instead."
+                )
 
-        def _validate_one(name, value, supported):
-            if value is None:
-                return
-            if isinstance(value, str):
-                if supported is None:
-                    return
-                supported_set = {option.lower() for option in supported}
-                if value.lower() not in supported_set:
-                    raise ValueError(
-                        f"`{name}` must be one of {sorted(supported_set)}. "
-                        f"Found {value}"
-                    )
-                return
-            if isinstance(value, NNModule):
-                return
-            raise TypeError(
-                f"`{name}` can either be None, a str or an instance of a valid "
-                f"PyTorch activation function. But got {type(value)} instead."
-            )
+            if not _safe_import(f"torch.nn.{activation}"):
+                raise ValueError(
+                    f"Activation '{activation}' is not a valid PyTorch activation"
+                    "function in torch.nn module. Please pass a valid PyTorch"
+                    "activation function in torch.nn module. Refer "
+                    "https://pytorch.org/docs/stable/nn.html#non-linear-activations-"
+                    "weighted-sum-nonlinearity for list of valid activation functions."
+                )
 
-        if not self._validate_activation_vars:
-            return
-        for var in self._validate_activation_vars:
-            value = getattr(self, var, None)
-            if var == "activation":
-                value = getattr(self, "_validated_activation", None)
-            supported = getattr(self, f"_supported_{var}", None)
-            _validate_one(var, value, supported)
+            self._callable_activations[activation_var] = _safe_import(
+                f"torch.nn.{activation}"
+            )()
 
     def _validate_activation_criterion(self):
         """Validate activation function in the output layer w.r.t. criterion specified.

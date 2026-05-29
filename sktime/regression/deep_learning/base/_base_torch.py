@@ -83,11 +83,11 @@ class BaseDeepRegressorTorch(BaseRegressor):
         "tests:vm": True,
     }
 
-    # Subclasses may extend this list with additional activation-related attribute
-    # names. For each name ``foo`` in this list, the base class will look for the
-    # estimator attribute ``foo`` and an allowed-values attribute named
-    # ``_supported_foo``.
-    _validate_activation_vars = ["activation", "activation_hidden"]
+    # _instantiate_activation_vars is an iterable of attribute names of activations
+    # to instantiate. In case activation attributes in subclasses are different than
+    # the default ones (activation and activation_hidden), this variable should
+    # be overridden.
+    _instantiate_activation_vars = ("activation", "activation_hidden")
 
     def __init__(
         self: "BaseDeepRegressorTorch",
@@ -132,7 +132,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
             torchManual_seed = _safe_import("torch.manual_seed")
             torchManual_seed(self.random_state)
 
-        self._validate_supported_activations()
+        self._instantiate_activations()
 
         # optimizers, criterions, callbacks will be instantiated in
         # _instantiate_optimizer, _instantiate_criterion & _instantiate_callbacks
@@ -180,42 +180,36 @@ class BaseDeepRegressorTorch(BaseRegressor):
         if self.verbose:
             print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
 
-    def _validate_supported_activations(self):
-        """Validate subclass-declared activation attributes against supported values.
+    def _instantiate_activations(self):
+        import torch
 
-        Attribute names listed in ``self._validate_activation_vars`` are checked one by
-        one. For each attribute name ``var``, if the estimator also defines a
-        ``self._supported_<var>`` attribute, string values are validated against that
-        allowed set.
-        """
-        NNModule = _safe_import("torch.nn.modules.module.Module")
+        self._callable_activations: dict[str, torch.nn.Module | None] = {}
+        for activation_var in self._instantiate_activation_vars:
+            activation = getattr(self, activation_var)
+            if activation is None:
+                self._callable_activations[activation_var] = None
+                continue
+            if isinstance(activation, torch.nn.Module):
+                self._callable_activations[activation_var] = activation
+                continue
+            elif not isinstance(activation, str):
+                raise TypeError(
+                    f"Activation '{activation}' should be string or a torch.nn.Module. "
+                    f"But got {type(activation)} instead."
+                )
 
-        def _validate_one(name, value, supported):
-            if value is None:
-                return
-            if isinstance(value, str):
-                if supported is None:
-                    return
-                supported_set = {option.lower() for option in supported}
-                if value.lower() not in supported_set:
-                    raise ValueError(
-                        f"`{name}` must be one of {sorted(supported_set)}. "
-                        f"Found {value}"
-                    )
-                return
-            if isinstance(value, NNModule):
-                return
-            raise TypeError(
-                f"`{name}` can either be None, a str or an instance of a valid "
-                f"PyTorch activation function. But got {type(value)} instead."
-            )
+            if not _safe_import(f"torch.nn.{activation}"):
+                raise ValueError(
+                    f"Activation '{activation}' is not a valid PyTorch activation"
+                    "function in torch.nn module. Please pass a valid PyTorch"
+                    "activation function in torch.nn module. Refer "
+                    "https://pytorch.org/docs/stable/nn.html#non-linear-activations-"
+                    "weighted-sum-nonlinearity for list of valid activation functions."
+                )
 
-        if not self._validate_activation_vars:
-            return
-        for var in self._validate_activation_vars:
-            value = getattr(self, var, None)
-            supported = getattr(self, f"_supported_{var}", None)
-            _validate_one(var, value, supported)
+            self._callable_activations[activation_var] = _safe_import(
+                f"torch.nn.{activation}"
+            )()
 
     def _instantiate_schedulers(self):
         """Instantiate the schedulers to be used during training.
