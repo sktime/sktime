@@ -6,7 +6,6 @@ from collections.abc import Callable
 
 from sktime.networks.mlp import MLPNetworkTorch
 from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
-from sktime.utils.dependencies import _safe_import
 
 
 class MLPRegressorTorch(BaseDeepRegressorTorch):
@@ -246,13 +245,7 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {
-            "batch_size": 2,
-            "metrics": (
-                "MeanSquaredError",
-                _safe_import("torchmetrics.regression.R2Score")(),
-            ),
-        }
+        params1 = {}
         params2 = {
             "hidden_dim": 5,
             "n_layers": 1,
@@ -271,7 +264,17 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
             "callback_kwargs": None,
             "lr": 0.001,
             "verbose": False,
-            "metrics": "R2Score",
             "random_state": 0,
         }
-        return [params1, params2]
+        params = [params1, params2]
+
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies("torchmetrics", severity="none"):
+            params.append(
+                {
+                    "batch_size": 2,
+                    "metrics": "R2Score",
+                }
+            )
+        return params

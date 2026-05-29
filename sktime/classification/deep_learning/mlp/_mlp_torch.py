@@ -247,10 +247,7 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {
-            "batch_size": 2,
-            "metrics": ("Accuracy", "F1Score"),
-        }
+        params1 = {}
         params2 = {
             "hidden_dim": 5,
             "n_layers": 1,
@@ -331,4 +328,15 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
             "verbose": False,
             "random_state": 0,
         }  # functionally equivalent to params2 for multi-class classification
-        return [params1, params2, params3, params4, params5]
+        params = [params1, params2, params3, params4, params5]
+
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies("torchmetrics", severity="none"):
+            params.append(
+                {
+                    "batch_size": 2,
+                    "metrics": ("Accuracy", "F1Score"),
+                }
+            )
+        return params
