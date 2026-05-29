@@ -58,11 +58,23 @@ class GAKernel(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
 
         super().__init__()
 
+        if self.sigma == "auto":
+            self.set_tags(**{"fit_is_empty": False})
+
     def _get_tslearn_pwtrafo(self):
         """Adapter method to get tslearn pwtrafo."""
         from tslearn.metrics.softdtw_variants import cdist_gak
 
         return cdist_gak
+
+    def _fit(self, X, X2=None):
+        """Fit the distance parameters if required."""
+        if self.sigma == "auto":
+            from tslearn.metrics import sigma_gak
+
+            X_tslearn = self._coerce_df_list_to_list_of_arr(X)
+            self.sigma_ = float(sigma_gak(X_tslearn))
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -86,5 +98,6 @@ class GAKernel(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         """
         params0 = {"sigma": 0.5}
         params1 = {"sigma": 2}
+        params2 = {"sigma": "auto"}
 
-        return [params0, params1]
+        return [params0, params1, params2]
