@@ -6,10 +6,14 @@ __author__ = ["rajatsen91", "siriuz42", "geetu040"]
 
 __all__ = ["TimesFM2Forecaster"]
 
+from copy import deepcopy
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.split import temporal_train_test_split
 from sktime.utils.singleton import _multiton
 
 
@@ -40,21 +44,17 @@ class TimesFM2Forecaster(BaseForecaster):
         ``force_flip_invariance``.
         See [5]_ for TimesFM-2.0 and [6]_ for TimesFM-2.5.
     validation_split : float, default=0.2
-        Fraction of data reserved for validation. This parameter is retained for
-        compatibility with Hugging Face training-style interfaces; the current
-        zero-shot implementation does not fine-tune the model.
+        Fraction of data reserved for validation when ``training_args`` is
+        supplied. If ``None``, no validation dataset is passed to the Hugging
+        Face Trainer.
     training_args : transformers.TrainingArguments or dict, optional (default=None)
-        Training arguments placeholder for future fine-tuning support. Not used
-        by the current zero-shot implementation.
-    compute_loss_func : callable, optional (default=None)
-        Custom loss function placeholder for future fine-tuning support. Not
-        used by the current zero-shot implementation.
+        Training arguments for Hugging Face Trainer.
+        Custom loss function passed to Hugging Face Trainer during fine-tuning.
     compute_metrics : callable or list of callable, optional (default=None)
-        Metric function or functions placeholder for future fine-tuning support.
-        Not used by the current zero-shot implementation.
+        Metric function or functions passed to Hugging Face Trainer during
+        fine-tuning.
     callbacks : list, optional (default=None)
-        Hugging Face Trainer callbacks placeholder for future fine-tuning
-        support. Not used by the current zero-shot implementation.
+        Hugging Face Trainer callbacks used during fine-tuning.
     device : str, default="cpu"
         Device on which to run the model, for example ``"cpu"``, ``"cuda"``,
         or ``"cuda:0"``.
@@ -153,6 +153,63 @@ class TimesFM2Forecaster(BaseForecaster):
         self.model_ = self._load_model()
         self.context_ = y
 
+        context_length = self.model_.config.context_length
+        horizon_length = self.model_.config.horizon_length
+
+        from transformers import Trainer, TrainingArguments
+
+        if self.validation_split is not None:
+            y_train, y_eval = temporal_train_test_split(
+                y, test_size=self.validation_split
+            )
+        else:
+            y_train = y
+            y_eval = None
+
+        train = _TimesFM2WindowDataset(
+            series_list=[y_train.to_numpy()],
+            context_length=context_length,
+            horizon_length=horizon_length,
+        )
+
+        eval = None
+        if (
+            self.validation_split is not None
+            and len(y_eval) >= context_length + horizon_length
+        ):
+            eval = _TimesFM2WindowDataset(
+                series_list=[y_eval.to_numpy()],
+                context_length=context_length,
+                horizon_length=horizon_length,
+            )
+        elif self.validation_split is not None:
+            warn(
+                "Could not create a TimesFM validation dataset because the "
+                "validation split is shorter than context_length + horizon_length "
+                f"({len(y_eval)} < {context_length + horizon_length}). "
+                "Training will continue without evaluation.",
+                stacklevel=2,
+            )
+
+        training_args = (
+            deepcopy(self.training_args) if self.training_args is not None else {}
+        )
+        training_args = TrainingArguments(**training_args)
+
+        trainer = Trainer(
+            model=self.model_,
+            args=training_args,
+            train_dataset=train,
+            eval_dataset=eval,
+            compute_loss_func=self.compute_loss_func,
+            compute_metrics=self.compute_metrics,
+            callbacks=self.callbacks,
+        )
+
+        trainer.train()
+
+        self.model_ = trainer.model
+
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
@@ -184,16 +241,25 @@ class TimesFM2Forecaster(BaseForecaster):
 
         self.model_ = self._load_model()
 
+        if fh is None:
+            fh = self.fh
+        fh = fh.to_relative(self.cutoff)
+        preds_idx = fh._values.values - 1
+
+        horizon_length = self.model_.config.horizon_length
+        if np.max(preds_idx) >= horizon_length:
+            raise ValueError(
+                "The requested forecasting horizon extends beyond the TimesFM "
+                f"model horizon_length. The maximum requested relative horizon "
+                f"is {np.max(preds_idx) + 1}, but model.config.horizon_length is "
+                f"{horizon_length}."
+            )
+
         past_values = self.context_
         past_values = np.expand_dims(past_values, axis=0)
         past_values = torch.from_numpy(past_values)
         past_values = past_values.to(self.model_.dtype)
         past_values = past_values.to(self.model_.device)
-
-        if fh is None:
-            fh = self.fh
-        fh = fh.to_relative(self.cutoff)
-        preds_idx = fh._values.values - 1
 
         forward_kwargs = {} if self.forward_kwargs is None else self.forward_kwargs
         output = self.model_(past_values=past_values, **forward_kwargs)
@@ -274,7 +340,11 @@ class TimesFM2Forecaster(BaseForecaster):
                     "intermediate_size": 16,
                     "head_dim": 8,
                     "num_attention_heads": 4,
+                    "context_length": 8,
+                    "horizon_length": 4,
+                    "patch_length": 2,
                 },
+                "validation_split": 0.1,
                 "device": "cpu",
             },
             {
@@ -286,7 +356,11 @@ class TimesFM2Forecaster(BaseForecaster):
                     "intermediate_size": 4,
                     "head_dim": 2,
                     "num_attention_heads": 1,
+                    "context_length": 8,
+                    "horizon_length": 6,
+                    "patch_length": 2,
                 },
+                "validation_split": 0.1,
             },
         ]
 
@@ -325,3 +399,52 @@ class _CachedTimesFM2:
         self.model_ = AutoModelForTimeSeriesPrediction.from_config(config)
         self.model_ = self.model_.to(self.device)
         return self.model_
+
+
+class _TimesFM2WindowDataset:
+    """Full-window dataset for TimesFM fine-tuning.
+
+    Each item contains a fixed-length context and fixed-length target horizon.
+    Contexts are not padded, matching TimesFM's internal RevIN assumptions.
+    """
+
+    def __init__(self, series_list, context_length, horizon_length):
+        self.context_length = context_length
+        self.horizon_length = horizon_length
+        self.series_list = series_list
+        self.samples = []
+
+        min_length = context_length + horizon_length
+        for series_idx, series in enumerate(series_list):
+            for start in range(len(series) - min_length + 1):
+                self.samples.append((series_idx, start))
+
+        if not self.samples:
+            shortest = min(len(series) for series in series_list)
+            raise ValueError(
+                "Training data is too short for TimesFM fine-tuning. "
+                f"Need at least context_length + horizon_length = {min_length} "
+                f"observations, but the shortest series has {shortest}."
+            )
+
+    def __len__(self):
+        """Return length of dataset."""
+        return len(self.samples)
+
+    def __getitem__(self, i):
+        """Return data point."""
+        import torch
+
+        series_idx, start = self.samples[i]
+        series = self.series_list[series_idx]
+        target_start = start + self.context_length
+        target_end = target_start + self.horizon_length
+
+        return {
+            "past_values": torch.tensor(
+                series[start:target_start], dtype=torch.float32
+            ),
+            "future_values": torch.tensor(
+                series[target_start:target_end], dtype=torch.float32
+            ),
+        }
