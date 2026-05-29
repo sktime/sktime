@@ -69,6 +69,7 @@ class TimesFM2Forecaster(BaseForecaster):
     .. [4] https://huggingface.co/google/timesfm-2.0-500m-pytorch
     .. [5] https://huggingface.co/docs/transformers/en/model_doc/timesfm#transformers.TimesFmModelForPrediction.forward
     .. [6] https://huggingface.co/docs/transformers/en/model_doc/timesfm2_5#transformers.TimesFm2_5ModelForPrediction.forward
+    .. [7] https://huggingface.co/docs/transformers/v5.9.0/en/main_classes/trainer#transformers.TrainingArguments
 
     Examples
     --------
@@ -341,10 +342,14 @@ class TimesFM2Forecaster(BaseForecaster):
                     "head_dim": 8,
                     "num_attention_heads": 4,
                     "context_length": 8,
-                    "horizon_length": 4,
+                    "horizon_length": 6,
                     "patch_length": 2,
                 },
                 "validation_split": 0.1,
+                "training_args": {
+                    "max_steps": 1,
+                    "eval_steps": 1,
+                },
                 "device": "cpu",
             },
             {
@@ -361,6 +366,10 @@ class TimesFM2Forecaster(BaseForecaster):
                     "patch_length": 2,
                 },
                 "validation_split": 0.1,
+                "training_args": {
+                    "max_steps": 1,
+                    "eval_steps": 1,
+                },
             },
         ]
 
@@ -401,31 +410,30 @@ class _CachedTimesFM2:
         return self.model_
 
 
+def _pad_series(series, seq_len):
+    pad_length = seq_len - len(series)
+    if pad_length >= 0:
+        series = np.pad(
+            series,
+            (pad_length, 0),
+            mode="constant",
+            constant_values=0,
+        )
+    return series
+
+
 class _TimesFM2WindowDataset:
-    """Full-window dataset for TimesFM fine-tuning.
-
-    Each item contains a fixed-length context and fixed-length target horizon.
-    Contexts are not padded, matching TimesFM's internal RevIN assumptions.
-    """
-
     def __init__(self, series_list, context_length, horizon_length):
+        self.series_list = series_list
         self.context_length = context_length
         self.horizon_length = horizon_length
-        self.series_list = series_list
-        self.samples = []
 
         min_length = context_length + horizon_length
-        for series_idx, series in enumerate(series_list):
+        self.samples = []
+        for series in series_list:
+            series = _pad_series(series, min_length)
             for start in range(len(series) - min_length + 1):
-                self.samples.append((series_idx, start))
-
-        if not self.samples:
-            shortest = min(len(series) for series in series_list)
-            raise ValueError(
-                "Training data is too short for TimesFM fine-tuning. "
-                f"Need at least context_length + horizon_length = {min_length} "
-                f"observations, but the shortest series has {shortest}."
-            )
+                self.samples.append(series[start : start + min_length])
 
     def __len__(self):
         """Return length of dataset."""
@@ -435,16 +443,15 @@ class _TimesFM2WindowDataset:
         """Return data point."""
         import torch
 
-        series_idx, start = self.samples[i]
-        series = self.series_list[series_idx]
-        target_start = start + self.context_length
-        target_end = target_start + self.horizon_length
+        sample = self.samples[i]
+
+        past_values = sample[: self.context_length]
+        future_values = sample[self.context_length :]
+
+        past_values = torch.tensor(past_values, dtype=torch.float32)
+        future_values = torch.tensor(future_values, dtype=torch.float32)
 
         return {
-            "past_values": torch.tensor(
-                series[start:target_start], dtype=torch.float32
-            ),
-            "future_values": torch.tensor(
-                series[target_start:target_end], dtype=torch.float32
-            ),
+            "past_values": past_values,
+            "future_values": future_values,
         }
