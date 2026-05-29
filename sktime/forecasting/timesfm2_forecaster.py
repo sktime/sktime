@@ -93,7 +93,8 @@ class TimesFM2Forecaster(BaseForecaster):
         "authors": ["rajatsen91", "siriuz42", "geetu040"],
         # rajatsen91, siriuz42 for google-research/timesfm
         "maintainers": ["geetu040"],
-        "python_dependencies": ["torch", "transformers"],
+        "python_dependencies": ["torch", "transformers>=4.52.0"],
+        "tests:vm": True,
     }
 
     def __init__(
@@ -446,11 +447,12 @@ class TimesFM2Forecaster(BaseForecaster):
         """
         intervals = [0.9, 0.75, 0.5, 0.25, 0.1, 0.05]
         quantiles = sorted(q for p in intervals for q in ((1 - p) / 2, (1 + p) / 2))
+        quantiles = [0.1] + quantiles
         return [
             {
                 "model_path": None,
                 "config": {
-                    "architectures": ["TimesFm2ModelForPrediction"],
+                    "architectures": ["TimesFmModelForPrediction"],
                     "num_hidden_layers": 1,
                     "hidden_size": 16,
                     "intermediate_size": 16,
@@ -477,6 +479,7 @@ class TimesFM2Forecaster(BaseForecaster):
                     "intermediate_size": 4,
                     "head_dim": 2,
                     "num_attention_heads": 1,
+                    "num_key_value_heads": 1,
                     "context_length": 8,
                     "horizon_length": 6,
                     "patch_length": 2,
@@ -506,12 +509,20 @@ class _CachedTimesFM2:
         if self.model_ is not None:
             return self.model_
 
-        from transformers import AutoModelForTimeSeriesPrediction, TimesFmConfig
+        from transformers import AutoConfig, TimesFmConfig
 
         if self.model_path is not None:
-            self.model_ = AutoModelForTimeSeriesPrediction.from_pretrained(
+            config = self.config
+            if config is None:
+                config = AutoConfig.from_pretrained(self.model_path)
+            elif isinstance(config, dict):
+                config_class = _get_timesfm_config_class(config)
+                config = config_class.from_dict(config)
+
+            model_class = _get_timesfm_model_class(config)
+            self.model_ = model_class.from_pretrained(
                 self.model_path,
-                config=self.config,
+                config=config,
             )
             self.model_ = self.model_.to(self.device)
             return self.model_
@@ -520,11 +531,32 @@ class _CachedTimesFM2:
         if config is None:
             config = TimesFmConfig()
         if isinstance(config, dict):
-            config = TimesFmConfig.from_dict(config)
+            config_class = _get_timesfm_config_class(config)
+            config = config_class.from_dict(config)
 
-        self.model_ = AutoModelForTimeSeriesPrediction.from_config(config)
+        model_class = _get_timesfm_model_class(config)
+        self.model_ = model_class(config)
         self.model_ = self.model_.to(self.device)
         return self.model_
+
+
+def _get_timesfm_model_class(config):
+    """Return the TimesFM prediction class named by the config architecture."""
+    import transformers
+
+    architectures = getattr(config, "architectures", None) or [
+        "TimesFmModelForPrediction"
+    ]
+    return getattr(transformers, architectures[0])
+
+
+def _get_timesfm_config_class(config):
+    """Return the TimesFM config class named by a config dict architecture."""
+    import transformers
+
+    architectures = config.get("architectures") or ["TimesFmModelForPrediction"]
+    config_class_name = architectures[0].replace("ModelForPrediction", "Config")
+    return getattr(transformers, config_class_name)
 
 
 def _prepare_series_list(data):
