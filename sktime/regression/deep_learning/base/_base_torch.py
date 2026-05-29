@@ -167,10 +167,23 @@ class BaseDeepRegressorTorch(BaseRegressor):
 
             # Compute metrics if any
             if self._metrics_objects:
+                import copy
+
                 import torch
 
+                # Networks output shape (batch_size, 1) while sktime targets are
+                # (batch_size,). Metrics expect y_pred to be in the same shape
+                # as outputs.
+                if (
+                    y_pred.ndim == 2
+                    and y_pred.shape[1] == 1
+                    and outputs.ndim == 1
+                    and y_pred.shape[0] == outputs.shape[0]
+                ):
+                    y_pred = y_pred.squeeze(-1)
                 with torch.no_grad():
-                    for metric_name, metric_obj in self._metrics_objects.items():
+                    for metric_name, metric_template in self._metrics_objects.items():
+                        metric_obj = copy.deepcopy(metric_template)
                         metric_value = metric_obj(y_pred, outputs)
                         metric_values[metric_name].append(metric_value.item())
 

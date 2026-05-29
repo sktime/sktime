@@ -239,9 +239,12 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {
+            "batch_size": 2,
             "metrics": (
                 "MeanSquaredError",
-                _safe_import("torchmetrics.R2Score")(),
+                _safe_import("torchmetrics.regression.R2Score")(
+                    multioutput="uniform_average"
+                ),
             ),
         }
         params2 = {
