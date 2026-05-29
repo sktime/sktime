@@ -36,7 +36,7 @@ class TimesFM2Forecaster(BaseForecaster):
         Fraction of data reserved for validation. This parameter is retained for
         compatibility with Hugging Face training-style interfaces; the current
         zero-shot implementation does not fine-tune the model.
-    args : transformers.TrainingArguments or dict, optional (default=None)
+    training_args : transformers.TrainingArguments or dict, optional (default=None)
         Training arguments placeholder for future fine-tuning support. Not used
         by the current zero-shot implementation.
     compute_loss_func : callable, optional (default=None)
@@ -91,7 +91,7 @@ class TimesFM2Forecaster(BaseForecaster):
         model_path="google/timesfm-2.5-200m-transformers",
         config=None,
         validation_split=0.2,
-        args=None,
+        training_args=None,
         compute_loss_func=None,
         compute_metrics=None,
         callbacks=None,
@@ -100,7 +100,7 @@ class TimesFM2Forecaster(BaseForecaster):
         self.model_path = model_path
         self.config = config
         self.validation_split = validation_split
-        self.args = args
+        self.training_args = training_args
         self.compute_loss_func = compute_loss_func
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
