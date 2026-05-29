@@ -246,6 +246,7 @@ class LagLlamaForecaster(BaseForecaster):
         "capability:pretrain": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:unequal_length": False,
         "authors": ["pranavvp16"],
         "maintainers": ["pranavvp16"],
         "python_version": "<3.14",
@@ -819,7 +820,7 @@ class LagLlamaForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")

@@ -15,7 +15,11 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _GlobalForecastingDeprecationMixin,
+)
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
 
@@ -29,7 +33,7 @@ Trainer = _safe_import("transformers.Trainer")
 TrainingArguments = _safe_import("transformers.TrainingArguments")
 
 
-class PatchTSTForecaster(_BaseGlobalForecaster):
+class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """Interface for the PatchTST forecaster.
 
     This forecaster interfaces the Huggingface library's PatchTST model for
@@ -254,16 +258,8 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         "python_dependencies": ["transformers", "torch", "accelerate"],
         # estimator type
         # --------------
-        "X_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
@@ -274,6 +270,8 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "property:randomness": "stochastic",
+        "capability:random_state": False,
         # Tests and CI tags
         # -----------------
         "tests:vm": True,
@@ -309,7 +307,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         if self.model_path is None and self.fit_strategy != "full":
             raise ValueError(f"model_path={model_path} requires fit_strategy=='full'")
 
-    def _fit(self, y, fh, X=None):
+    def _fit(self, y, X=None, fh=None):
         """Fits the model.
 
         Parameters
@@ -436,7 +434,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
 
         return self
 
-    def _predict(self, y, X=None, fh=None):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -451,7 +449,7 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here. If using a pre-trained
             model, ensure that the prediction_length of the model matches the passed fh.
         y : sktime time series object, required
@@ -462,19 +460,14 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         y_pred : sktime time series object
             pandas DataFrame
         """
-        if y is None:
-            y = self._y
+        y = self._y
         if fh is None:
             fh = self.fh_
         else:
             fh = fh.to_relative(self.cutoff)
         y_columns = y.columns
         y_index_names = list(y.index.names)
-        # multi-index conversion
-        if isinstance(y.index, pd.MultiIndex):
-            _y = _frame2numpy(y)
-        else:
-            _y = np.expand_dims(y.values, axis=0)
+        _y = np.expand_dims(y.values, axis=0)
 
         _y = torch.tensor(_y).float().to(self.model.device)
 
@@ -599,24 +592,6 @@ class PatchTSTForecaster(_BaseGlobalForecaster):
         return params_set
 
 
-def _same_index(data):
-    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
-        lambda x: x.index.get_level_values(-1)
-    )
-    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
-        "All series must has the same index"
-    )
-    return data.iloc[0], len(data.iloc[0])
-
-
-def _frame2numpy(data):
-    idx, length = _same_index(data)
-    arr = np.array(data.values, dtype=np.float32).reshape(
-        (-1, length, len(data.columns))
-    )
-    return arr
-
-
 # copied from the PytorchDataset module from hf_transformers_forecaster.py
 class PyTorchDataset(Dataset):
     """Dataset for use in sktime deep learning forecasters."""
@@ -637,11 +612,7 @@ class PyTorchDataset(Dataset):
         self.context_length = context_length
         self.prediction_length = prediction_length
 
-        # multi-index conversion
-        if isinstance(y.index, pd.MultiIndex):
-            self.y = _frame2numpy(y)
-        else:
-            self.y = np.expand_dims(y.values, axis=0)
+        self.y = np.expand_dims(y.values, axis=0)
 
         self.n_sequences, self.n_timestamps, _ = self.y.shape
         self.single_length = (

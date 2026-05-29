@@ -144,6 +144,7 @@ class MyForecaster(BaseForecaster):
         # do not put anything else in __init__,
         # use __post_init__ for any further initialization logic
 
+    # todo: add any post-init logic here, otherwise delete this method
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 
@@ -151,8 +152,10 @@ class MyForecaster(BaseForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
         """
         # todo: optional, parameter checking or coercion should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
