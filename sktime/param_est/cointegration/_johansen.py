@@ -1,7 +1,7 @@
 # needs more parameters from the original
 """Parameter estimation for cointegration."""
 
-author = ["PBormann"]
+author = ["OldPatrick"]
 all = ["JohansenCointegration"]
 
 import warnings
@@ -17,7 +17,7 @@ class JohansenCointegration(BaseParamFitter):
     Direct interface to ``statsmodels.tsa.vector_ar.vecm``.
 
     The Johansen Cointegration test is a test solely used in Vector Error
-    Correction Models (VECM) to determine the occurence of a long-term relationship
+    Correction Models (VECM) to determine the occurrence of a long-term relationship
     (cointegration rank) between two time series or several long-term relationships
     in case of multiple time-series. The idea of the underlying test is to estimate,
     if such (a) relationship(s) exist(s). In case there is a relationship (or several),
@@ -121,7 +121,7 @@ class JohansenCointegration(BaseParamFitter):
         "capability:missing_values": False,
         "capability:multivariate": True,
         "capability:pairwise": True,
-        "authors": "PBormann",
+        "authors": "OldPatrick",
         "python_dependencies": "statsmodels",
     }
 

@@ -5,6 +5,8 @@
 __author__ = ["fkiraly"]
 __all__ = ["TransformIf"]
 
+import operator
+
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
@@ -171,7 +173,15 @@ class TransformIf(_DelegatedTransformer):
         if condition == "bool":
             cond_bool = param_val
         elif condition in [">=", ">", "==", "!=", "<", "<="]:
-            cond_bool = eval(f"{param_val} {condition} {condition_value}")
+            op_dict = {
+                ">=": operator.ge,
+                ">": operator.gt,
+                "==": operator.eq,
+                "!=": operator.ne,
+                "<": operator.lt,
+                "<=": operator.le,
+            }
+            cond_bool = op_dict[condition](param_val, condition_value)
         else:
             raise ValueError(
                 f"unsupported value for parameter 'condition' found in "

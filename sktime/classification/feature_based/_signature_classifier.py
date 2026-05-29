@@ -33,9 +33,11 @@ class SignatureClassifier(BaseClassifier):
 
     Note that the final classifier used on the UEA datasets involved tuning
     the hyper-parameters:
-        - ``depth`` over [1, 2, 3, 4, 5, 6]
-        - ``window_depth`` over [2, 3, 4]
-        - RandomForestClassifier hyper-parameters.
+
+    - ``depth`` over [1, 2, 3, 4, 5, 6]
+    - ``window_depth`` over [2, 3, 4]
+    - ``RandomForestClassifier`` hyper-parameters.
+
     as these were found to be the most dataset dependent hyper-parameters.
 
     Thus, we recommend always tuning *at least* these parameters to any given
@@ -100,6 +102,8 @@ class SignatureClassifier(BaseClassifier):
         # --------------
         "capability:multivariate": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "deterministic",
         "classifier_type": "feature",
         # testing configuration
         # ---------------------
@@ -137,15 +141,25 @@ class SignatureClassifier(BaseClassifier):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self.signature_method = SignatureTransformer(
-            augmentation_list,
-            window_name,
-            window_depth,
-            window_length,
-            window_step,
-            rescaling,
-            sig_tfm,
-            depth,
+            self.augmentation_list,
+            self.window_name,
+            self.window_depth,
+            self.window_length,
+            self.window_step,
+            self.rescaling,
+            self.sig_tfm,
+            self.depth,
         ).signature_method
         self.pipeline = None
 

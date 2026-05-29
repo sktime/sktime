@@ -254,11 +254,12 @@ class _DartsRegressionAdapter(BaseForecaster):
         Parameters
         ----------
         y : pd.DataFrame
-            if self.get_tag("scitype:y")=="univariate":
+            - if self.get_tag("capability:multivariate") == False:
                 guaranteed to have a single column
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+            - if self.get_tag("capability:multivariate") == True:
+                no restrictions apply
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             For darts models `fh` is not used,
             the steps ahead for prediction is determined by `output_chunk_length`.
         X : pd.DataFrame, optional (default=None)
@@ -272,7 +273,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         endogenous_actuals = self.convert_dataframe_to_timeseries(y)
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
         # single-target variable for univariate prediction
-        if endogenous_actuals.width > 1 and self.get_tag("scitype:y") == "univariate":
+        if endogenous_actuals.width > 1 and not self.get_tag("capability:multivariate"):
             raise ValueError(
                 "Multi-target prediction is not supported by the quantile loss."
                 " Please provide a single-target variable."
@@ -305,7 +306,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             The forecasting horizon value should be less than the value
             of ``output_chunk_length`` fitted to the model, otherwise the prediction
             result will be from auto-regression.
@@ -575,7 +576,7 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.

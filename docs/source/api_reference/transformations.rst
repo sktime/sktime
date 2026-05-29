@@ -86,14 +86,6 @@ Pipeline building - Broadcasting and apply-map
     ColumnwiseTransformer
     TransformByLevel
 
-.. currentmodule:: sktime.transformations.panel.compose
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ColumnTransformer
-
 .. currentmodule:: sktime.transformations.series.func_transform
 
 .. autosummary::
@@ -965,3 +957,27 @@ efficient and should be preferred:
     NonNegativeOptimalReconciler
     OptimalReconciler
     TopdownReconciler
+
+
+Domain Specific Transformations
+-------------------------------
+
+These transformers are designed for specific domains and inputs.
+They compute features that are related to a domain of application.
+
+Energy, weather and climate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClearSky
+
+.. currentmodule:: sktime.transformations.series.degree_day
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DegreeDayFeatures
