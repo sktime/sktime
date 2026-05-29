@@ -467,9 +467,18 @@ class _TimesFM2WindowDataset:
         min_length = context_length + horizon_length
         self.samples = []
         for series in series_list:
+            if len(series) <= horizon_length:
+                continue
             series = _pad_series(series, min_length)
             for start in range(len(series) - min_length + 1):
                 self.samples.append(series[start : start + min_length])
+
+        if not self.samples:
+            raise ValueError(
+                "No training samples could be generated. "
+                f"Each series must have length greater than horizon_length "
+                f"({horizon_length})."
+            )
 
     def __len__(self):
         """Return length of dataset."""
