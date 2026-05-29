@@ -94,7 +94,7 @@ class TimesFM2Forecaster(BaseForecaster):
         "authors": ["rajatsen91", "siriuz42", "geetu040"],
         # rajatsen91, siriuz42 for google-research/timesfm
         "maintainers": ["geetu040"],
-        "python_dependencies": ["torch", "transformers>=4.52.0"],
+        "python_dependencies": ["transformers[torch]>=4.52.0"],
         "tests:vm": True,
     }
 
