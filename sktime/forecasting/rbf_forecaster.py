@@ -107,6 +107,12 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         "capability:missing_values": False,
         "capability:pred_int": False,
         "capability:pretrain": True,
+        "pretrain:attributes": (
+            "network",
+            "n_pretrain_instances_",
+            "_pretrain_pred_len",
+            "_fh_length",
+        ),
     }
 
     def __init__(
@@ -456,7 +462,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         if hasattr(self, "pred_len") and self.pred_len is not None:
             return int(self.pred_len)
         elif fh is not None:
-            if isinstance(fh, (int, float)):
+            if isinstance(fh, int | float):
                 return int(fh)
             return int(list(fh)[-1])
         else:

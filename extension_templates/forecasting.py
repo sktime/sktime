@@ -158,6 +158,13 @@ class MyForecaster(BaseForecaster):
         # if True, implement _pretrain and optionally _pretrain_update below
         # enables the pretrain -> fit -> predict workflow for global learning
         #
+        # pretrain:attributes = names of attributes containing pretrained state
+        "pretrain:attributes": (),
+        # valid values: tuple or list of strings
+        # if capability:pretrain is True, prefer listing all static pretrained
+        # attributes here, e.g. ("global_mean_", "network")
+        # use _register_pretrained_attrs for dynamically determined attributes
+        #
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages
         # ----------------------------------------------------------------------------
@@ -390,7 +397,9 @@ class MyForecaster(BaseForecaster):
         private _pretrain containing the core logic, called from pretrain
 
         Writes to self:
-            Sets pretrained model attributes ending in "_".
+            Sets pretrained model attributes declared in the
+            "pretrain:attributes" tag or registered dynamically via
+            _register_pretrained_attrs.
 
         Parameters
         ----------
@@ -410,11 +419,14 @@ class MyForecaster(BaseForecaster):
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
         #
-        # any pretrained model parameters should be written to attributes ending in "_"
-        #   these will be automatically tracked by the base class
-        #   and accessible via get_pretrained_params()
+        # any static pretrained model parameters should be declared in the
+        # "pretrain:attributes" tag and are accessible via get_pretrained_params()
         #
         # example:
+        #   # in _tags:
+        #   "pretrain:attributes": ("global_mean_", "n_pretrain_instances_")
+        #
+        #   # in _pretrain:
         #   self.global_mean_ = y.values.mean()
         #   self.n_pretrain_instances_ = len(y.index.droplevel(-1).unique())
 

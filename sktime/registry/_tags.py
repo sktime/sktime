@@ -1078,6 +1078,38 @@ class capability__pretrain(_BaseTag):
     }
 
 
+class pretrain__attributes(_BaseTag):
+    """Attributes that contain pretrained state.
+
+    - String name: ``"pretrain:attributes"``
+    - Developer-facing metadata tag
+    - Values: tuple or list of strings
+    - Example: ``("model_", "network", "_pretrain_prediction_length_")``
+    - Default: ``()``
+
+    The ``pretrain:attributes`` tag declares attribute names that should be
+    tracked as pretrained state after ``pretrain``. These attributes are
+    preserved by forecaster ``reset``, ``clone``, and ``set_params`` operations
+    that preserve pretrained state.
+
+    Attribute names may be public or private, and do not need to end in
+    ``"_"``. Missing attributes are ignored at inspection time, which allows
+    optional pretrained attributes that are only created for some parameter
+    configurations.
+
+    If the tag is empty, ``BaseForecaster`` falls back to legacy auto-detection
+    of newly-created public attributes ending in ``"_"`` and emits a warning.
+    """
+
+    _tags = {
+        "tag_name": "pretrain:attributes",
+        "parent_type": "forecaster",
+        "tag_type": "object",
+        "short_descr": "attributes that contain pretrained state",
+        "user_facing": False,
+    }
+
+
 class capability__non_contiguous_X(_BaseTag):
     """Capability: the forecaster can handle non-contiguous exogenous data.
 
@@ -3827,7 +3859,7 @@ def check_tag_is_valid(tag_name, tag_value):
 
     if tag_type[0] == "list" and tag_type[1] == "str":
         msg = f"{tag_name} must be str or list of str, found {tag_value}"
-        if not isinstance(tag_value, (str, list)):
+        if not isinstance(tag_value, str | list):
             raise ValueError(msg)
         if isinstance(tag_value, list):
             if not all(isinstance(x, str) for x in tag_value):

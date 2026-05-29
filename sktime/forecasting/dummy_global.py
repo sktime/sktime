@@ -71,6 +71,13 @@ class DummyGlobalForecaster(BaseForecaster):
 
     _tags = {
         "capability:pretrain": True,
+        "pretrain:attributes": (
+            "global_mean_",
+            "global_std_",
+            "n_pretrain_instances_",
+            "n_pretrain_timepoints_",
+            "mean_by_index_",
+        ),
         "capability:multivariate": True,
         "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
         "requires-fh-in-fit": False,
@@ -109,7 +116,7 @@ class DummyGlobalForecaster(BaseForecaster):
         self.global_mean_ = float(np.nanmean(values))
         self.global_std_ = float(np.nanstd(values))
 
-        if isinstance(y, (pd.Series, pd.DataFrame)) and isinstance(
+        if isinstance(y, pd.Series | pd.DataFrame) and isinstance(
             y.index, pd.MultiIndex
         ):
             # Panel or hierarchical data with MultiIndex

@@ -700,7 +700,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_pred = estimator_instance.update_predict(
             y_test, cv=cv, update_params=update_params
         )
-        assert isinstance(y_pred, (pd.Series, pd.DataFrame))
+        assert isinstance(y_pred, pd.Series | pd.DataFrame)
         expected = _get_expected_index_for_update_predict(
             y_test, fh_int_oos, step_length, initial_window
         )
@@ -1012,6 +1012,24 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 f"capability:pretrain=True but does not override _pretrain method"
             )
 
+    def test_pretrain_attributes_tag_contract(self, estimator_instance):
+        """Test that pretrain:attributes tag has valid type."""
+        if not estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        attrs = estimator_instance._get_pretrain_attributes()
+
+        assert isinstance(attrs, list), (
+            f"{estimator_instance.__class__.__name__}._get_pretrain_attributes() "
+            "must return a list"
+        )
+        assert all(isinstance(attr, str) for attr in attrs), (
+            f"{estimator_instance.__class__.__name__} tag "
+            "'pretrain:attributes' must contain only strings"
+        )
+
     def test_pretrain_state_transitions(self, estimator_instance, n_columns):
         """Test that pretrain() correctly transitions state.
 
@@ -1146,6 +1164,90 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 f"Pretrained attribute {attr} was removed by fit(). "
                 f"Attributes before fit: {pretrained_attrs_before}, "
                 f"after fit: {pretrained_attrs_after}"
+            )
+
+    def test_pretrain_reset_preserves_state(self, estimator_instance, n_columns):
+        """Test reset() preserves pretrained state by default."""
+        if not estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        fh = self._pretrain_fh(estimator_instance)
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,),
+            min_timepoints=10,
+            max_timepoints=10,
+            n_columns=n_columns,
+        )
+        estimator_instance.pretrain(y_panel, fh=fh)
+
+        pretrained_params_before = estimator_instance.get_pretrained_params()
+        pretrained_attrs_before = list(pretrained_params_before.keys())
+        assert len(pretrained_attrs_before) > 0, (
+            "Expected pretrained attributes after pretrain()"
+        )
+
+        estimator_instance.reset()
+
+        assert estimator_instance.state == "pretrained", (
+            f"State after reset should be 'pretrained', got {estimator_instance.state}"
+        )
+
+        pretrained_params_after = estimator_instance.get_pretrained_params()
+        for attr in pretrained_attrs_before:
+            assert attr in pretrained_params_after, (
+                f"Pretrained attribute {attr} was removed by reset(). "
+                f"Attributes before reset: {pretrained_attrs_before}, "
+                f"after reset: {list(pretrained_params_after.keys())}"
+            )
+
+    def test_pretrain_set_params_preserves_state(self, estimator_instance, n_columns):
+        """Test set_params() preserves pretrained state by default."""
+        if not estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        params = estimator_instance.get_params(deep=False)
+        if not params:
+            return None
+
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        fh = self._pretrain_fh(estimator_instance)
+
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,),
+            min_timepoints=10,
+            max_timepoints=10,
+            n_columns=n_columns,
+        )
+        estimator_instance.pretrain(y_panel, fh=fh)
+
+        pretrained_params_before = estimator_instance.get_pretrained_params()
+        pretrained_attrs_before = list(pretrained_params_before.keys())
+        assert len(pretrained_attrs_before) > 0, (
+            "Expected pretrained attributes after pretrain()"
+        )
+
+        param_name, param_value = next(iter(params.items()))
+        estimator_instance.set_params(**{param_name: param_value})
+
+        assert estimator_instance.state == "pretrained", (
+            f"State after set_params should be 'pretrained', "
+            f"got {estimator_instance.state}"
+        )
+
+        pretrained_params_after = estimator_instance.get_pretrained_params()
+        for attr in pretrained_attrs_before:
+            assert attr in pretrained_params_after, (
+                f"Pretrained attribute {attr} was removed by set_params(). "
+                f"Attributes before set_params: {pretrained_attrs_before}, "
+                f"after set_params: {list(pretrained_params_after.keys())}"
             )
 
     def test_pretrain_rejects_single_series(self, estimator_instance, n_columns):

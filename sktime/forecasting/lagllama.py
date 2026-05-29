@@ -244,6 +244,11 @@ class LagLlamaForecaster(BaseForecaster):
         "capability:missing_values": False,
         "capability:insample": False,
         "capability:pretrain": True,
+        "pretrain:attributes": (
+            "estimator_",
+            "predictor_",
+            "_pretrain_prediction_length_",
+        ),
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:unequal_length": False,
@@ -1088,7 +1093,7 @@ class LagLlamaForecaster(BaseForecaster):
             if hasattr(self, "_y_metadata") and "feature_names" in self._y_metadata:
                 # BaseForecaster sets this during fit; for unnamed Series this is [0]
                 featnames = self._y_metadata.get("feature_names", None)
-                if isinstance(featnames, (list, tuple)) and len(featnames) > 0:
+                if isinstance(featnames, list | tuple) and len(featnames) > 0:
                     var_name = featnames[0]
             if var_name is None:
                 # fallback to stored fit columns (may be None for Series name=None)

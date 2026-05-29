@@ -298,3 +298,264 @@ class TestDummyGlobalForecaster:
         assert cloned_inner._state == "pretrained"
         assert hasattr(cloned_inner, "global_mean_")
         np.testing.assert_almost_equal(cloned_inner.global_mean_, pretrain_mean)
+
+    def test_reset_preserves_pretrained_attrs(self):
+        """Test reset preserves pretrained attributes by default."""
+        forecaster = DummyGlobalForecaster(strategy="mean")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+
+        forecaster.reset()
+
+        assert forecaster._state == "pretrained"
+        assert hasattr(forecaster, "global_mean_")
+        np.testing.assert_almost_equal(forecaster.global_mean_, pretrain_mean)
+
+    def test_reset_can_discard_pretrained_attrs(self):
+        """Test reset can explicitly discard pretrained attributes."""
+        forecaster = DummyGlobalForecaster(strategy="mean")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+
+        forecaster.reset(keep_pretrained=False)
+
+        assert forecaster._state == "new"
+        assert not hasattr(forecaster, "global_mean_")
+        assert not hasattr(forecaster, "_pretrained_attrs")
+
+    def test_set_params_preserves_pretrained_attrs_by_default(self):
+        """Test set_params preserves pretrained attributes by default."""
+        forecaster = DummyGlobalForecaster(strategy="mean")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+
+        forecaster.set_params(strategy="last")
+
+        assert forecaster.strategy == "last"
+        assert forecaster._state == "pretrained"
+        assert hasattr(forecaster, "global_mean_")
+        np.testing.assert_almost_equal(forecaster.global_mean_, pretrain_mean)
+
+    def test_set_params_can_discard_pretrained_attrs(self):
+        """Test set_params can explicitly discard pretrained attributes."""
+        forecaster = DummyGlobalForecaster(strategy="mean")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+
+        forecaster.set_params(strategy="last", _keep_pretrained=False)
+
+        assert forecaster.strategy == "last"
+        assert forecaster._state == "new"
+        assert not hasattr(forecaster, "global_mean_")
+        assert not hasattr(forecaster, "_pretrained_attrs")
+
+    def test_reset_after_fit_preserves_only_pretrained_attrs(self):
+        """Test reset after fit removes fitted attrs but keeps pretrained attrs."""
+        forecaster = DummyGlobalForecaster(strategy="last")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+        assert hasattr(forecaster, "last_value_")
+
+        forecaster.reset()
+
+        assert forecaster._state == "pretrained"
+        assert hasattr(forecaster, "global_mean_")
+        assert not hasattr(forecaster, "last_value_")
+        np.testing.assert_almost_equal(forecaster.global_mean_, pretrain_mean)
+
+    def test_set_params_after_fit_preserves_only_pretrained_attrs(self):
+        """Test set_params after fit removes fitted attrs but keeps pretrained attrs."""
+        forecaster = DummyGlobalForecaster(strategy="last")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+
+        y_train = _make_series(n_columns=1, n_timepoints=20)
+        forecaster.fit(y_train, fh=[1, 2, 3])
+        assert hasattr(forecaster, "last_value_")
+
+        forecaster.set_params(strategy="mean")
+
+        assert forecaster.strategy == "mean"
+        assert forecaster._state == "pretrained"
+        assert hasattr(forecaster, "global_mean_")
+        assert not hasattr(forecaster, "last_value_")
+        np.testing.assert_almost_equal(forecaster.global_mean_, pretrain_mean)
+
+    def test_clone_uses_pretrained_attr_copy_hook(self):
+        """Test clone delegates pretrained attr copying to the forecaster hook."""
+
+        class HookedDummyGlobalForecaster(DummyGlobalForecaster):
+            def _copy_pretrained_attr(self, attr_name, attr_value, memo=None):
+                if attr_name == "global_mean_":
+                    self.copied_attr_name_ = attr_name
+                    return attr_value + 1
+                return super()._copy_pretrained_attr(attr_name, attr_value, memo=memo)
+
+        forecaster = HookedDummyGlobalForecaster(strategy="mean")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+        pretrain_mean = forecaster.global_mean_
+
+        cloned = forecaster.clone()
+
+        assert forecaster.copied_attr_name_ == "global_mean_"
+        assert cloned._state == "pretrained"
+        np.testing.assert_almost_equal(cloned.global_mean_, pretrain_mean + 1)
+
+    def test_pretrain_attributes_tag_allows_non_underscore_private_attrs(self):
+        """Test declared attrs need not be public or end in underscore."""
+
+        class ExplicitAttrForecaster(DummyGlobalForecaster):
+            _tags = {
+                **DummyGlobalForecaster._tags,
+                "pretrain:attributes": ("network", "_private_pretrained"),
+            }
+
+            def _pretrain(self, y, X=None, fh=None):
+                self.network = {"weights": [1, 2, 3]}
+                self._private_pretrained = {"metadata": 42}
+                return self
+
+        forecaster = ExplicitAttrForecaster()
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+
+        assert forecaster._pretrained_attrs == ["network", "_private_pretrained"]
+
+        forecaster.reset()
+
+        assert forecaster._state == "pretrained"
+        assert forecaster.network == {"weights": [1, 2, 3]}
+        assert forecaster._private_pretrained == {"metadata": 42}
+
+        cloned = forecaster.clone()
+
+        assert cloned._state == "pretrained"
+        assert cloned.network == {"weights": [1, 2, 3]}
+        assert cloned._private_pretrained == {"metadata": 42}
+
+    def test_pretrain_attributes_empty_tag_warns_and_uses_fallback(self):
+        """Test empty tag keeps legacy fallback but emits a warning."""
+
+        class LegacyAttrForecaster(DummyGlobalForecaster):
+            _tags = {
+                **DummyGlobalForecaster._tags,
+                "pretrain:attributes": (),
+            }
+
+        forecaster = LegacyAttrForecaster()
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        with pytest.warns(UserWarning, match="does not declare"):
+            forecaster.pretrain(y_panel)
+
+        assert "global_mean_" in forecaster._pretrained_attrs
+        assert "global_std_" in forecaster._pretrained_attrs
+        assert "n_pretrain_instances_" in forecaster._pretrained_attrs
+        assert "n_pretrain_timepoints_" in forecaster._pretrained_attrs
+
+    def test_pretrain_attributes_empty_tag_warning_independent_of_capability(self):
+        """Test fallback warning is tied to fallback use, not the capability tag."""
+
+        class LegacyAttrForecaster(DummyGlobalForecaster):
+            _tags = {
+                **DummyGlobalForecaster._tags,
+                "capability:pretrain": False,
+                "pretrain:attributes": (),
+            }
+
+        forecaster = LegacyAttrForecaster()
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        with pytest.warns(UserWarning, match="does not declare"):
+            forecaster.pretrain(y_panel)
+
+    def test_pretrain_attributes_rejects_string_tag(self):
+        """Test pretrain:attributes must not be a bare string."""
+
+        class InvalidAttrForecaster(DummyGlobalForecaster):
+            _tags = {
+                **DummyGlobalForecaster._tags,
+                "pretrain:attributes": "global_mean_",
+            }
+
+        forecaster = InvalidAttrForecaster()
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        with pytest.raises(TypeError, match="list or tuple of strings"):
+            forecaster.pretrain(y_panel)
+
+    def test_pretrain_attributes_rejects_non_string_entries(self):
+        """Test pretrain:attributes entries must be strings."""
+
+        class InvalidAttrForecaster(DummyGlobalForecaster):
+            _tags = {
+                **DummyGlobalForecaster._tags,
+                "pretrain:attributes": ("global_mean_", 1),
+            }
+
+        forecaster = InvalidAttrForecaster()
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+
+        with pytest.raises(TypeError, match="only strings"):
+            forecaster.pretrain(y_panel)
+
+    def test_register_pretrained_attrs_supports_dynamic_attrs(self):
+        """Test dynamic pretrained attrs can be registered at runtime."""
+
+        class DynamicAttrForecaster(DummyGlobalForecaster):
+            _tags = {
+                **DummyGlobalForecaster._tags,
+                "pretrain:attributes": ("static_state",),
+            }
+
+            def _pretrain(self, y, X=None, fh=None):
+                self.static_state = {"static": True}
+                self.dynamic_state = {"dynamic": True}
+                self._register_pretrained_attrs("dynamic_state")
+                return self
+
+        forecaster = DynamicAttrForecaster()
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
+        )
+        forecaster.pretrain(y_panel)
+
+        assert forecaster._pretrained_attrs == ["dynamic_state", "static_state"]
+
+        forecaster.reset()
+
+        assert forecaster._state == "pretrained"
+        assert forecaster.static_state == {"static": True}
+        assert forecaster.dynamic_state == {"dynamic": True}

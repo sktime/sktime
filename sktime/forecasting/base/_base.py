@@ -65,6 +65,7 @@ from sktime.datatypes import (
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base._pretrained_mixin import _PretrainedStateMixin
 from sktime.utils.datetime import _shift
 from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
@@ -82,7 +83,7 @@ def _coerce_to_list(obj):
         return obj
 
 
-class BaseForecaster(_PredictProbaMixin, BaseEstimator):
+class BaseForecaster(_PretrainedStateMixin, _PredictProbaMixin, BaseEstimator):
     """Base forecaster template class.
 
     The base forecaster specifies the methods and method signatures that all forecasters
@@ -110,6 +111,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
         "capability:missing_values": False,  # can estimator handle missing data?
         "capability:non_contiguous_X": True,  # support non-contiguous X?
+        "pretrain:attributes": (),  # attribute names containing pretrained state
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
@@ -178,6 +180,37 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         * any soft dependency imports in the constructor
         """
         pass
+
+    def _copy_pretrained_attr(self, attr_name, attr_value, memo=None):
+        """Copy a pretrained attribute for ``clone``.
+
+        Subclasses may override this hook for framework-specific copies, for
+        example state-dict based copies of Torch or HuggingFace model objects.
+        """
+        return deepcopy(attr_value, memo)
+
+    def _get_pretrain_attributes(self):
+        """Return declared pretrained attribute names as a list of strings."""
+        attrs = self.get_tag(
+            "pretrain:attributes", tag_value_default=(), raise_error=False
+        )
+
+        if attrs is None:
+            return []
+
+        if not isinstance(attrs, list | tuple):
+            raise TypeError(
+                f"{type(self).__name__} tag 'pretrain:attributes' must be a "
+                f"list or tuple of strings, but found {type(attrs).__name__}."
+            )
+
+        if not all(isinstance(attr, str) for attr in attrs):
+            raise TypeError(
+                f"{type(self).__name__} tag 'pretrain:attributes' must contain "
+                "only strings."
+            )
+
+        return list(attrs)
 
     @classmethod
     def _get_clone_plugins(cls):
@@ -1079,8 +1112,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         Writes to self:
 
-            * Sets pretrained model attributes ending in ``"_"``.
-              These are inspectable via ``get_pretrained_params``.
+            * Sets pretrained model attributes. These are inspectable via
+              ``get_pretrained_params``.
             * Sets ``self.state`` to ``"pretrained"``.
             * Sets ``self._pretrained_attrs`` to list of pretrained attribute
               names (as strings).
@@ -1168,6 +1201,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         if fh is not None and not isinstance(fh, ForecastingHorizon):
             _fh = ForecastingHorizon(fh)
 
+        declared_attrs = self._get_pretrain_attributes()
+        attrs_before = set(dir(self))
+
         if self._state == "new":
             self._pretrain(y=y_inner, X=X_inner, fh=_fh)
         else:
@@ -1176,15 +1212,27 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         if not hasattr(self, "_pretrained_attrs"):
             self._pretrained_attrs = []
 
-        # Track new pretrained attributes (extend, not append, to avoid nested lists)
-        new_attrs = [
-            a
-            for a in dir(self)
-            if a.endswith("_")
-            and not a.startswith("_")
-            and a not in self._pretrained_attrs
-        ]
-        self._pretrained_attrs.extend(new_attrs)
+        if declared_attrs:
+            new_attrs = declared_attrs
+        else:
+            warn(
+                f"{type(self).__name__} does not declare the "
+                '"pretrain:attributes" tag. Falling back to automatic detection '
+                'of newly-created public attributes ending in "_". This fallback '
+                "may miss valid pretrained state.",
+                obj=self,
+                stacklevel=2,
+            )
+            attrs_after = set(dir(self))
+            new_attrs = [
+                a
+                for a in attrs_after - attrs_before
+                if a.endswith("_") and not a.startswith("_")
+            ]
+
+        for attr in new_attrs:
+            if attr not in self._pretrained_attrs:
+                self._pretrained_attrs.append(attr)
 
         self._state = "pretrained"
         return self
@@ -1193,9 +1241,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """Get pretrained parameters of this estimator.
 
         Returns a dictionary of attributes that were set during ``pretrain``.
-        These are attributes ending in ``"_"`` that appeared on the estimator
-        after ``pretrain`` was called, and are tracked separately from the
-        fitted parameters set by ``fit``.
+        These are attributes declared via the ``"pretrain:attributes"`` tag,
+        registered dynamically via ``_register_pretrained_attrs``, or detected
+        by the transitional legacy fallback in ``pretrain``. They are tracked
+        separately from the fitted parameters set by ``fit``.
 
         State required:
             Requires state to be ``"pretrained"`` or ``"fitted"``
@@ -1217,9 +1266,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         -------
         params : dict
             Dictionary of pretrained parameter names mapped to their values.
-            Keys are attribute names ending in ``"_"`` that were set during
-            pretraining. Returns empty dict if estimator has not been
-            pretrained.
+            Keys are attribute names tracked as pretrained state. Returns empty
+            dict if estimator has not been pretrained.
 
             If ``deep=True``, also contains keys/value pairs of nested
             estimators' pretrained parameters, indexed as
@@ -1657,7 +1705,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # we want residuals, so fh must be the index of y
         # if data frame: take directly from y
         # to avoid issues with _set_fh, we convert to relative if self.fh is
-        if isinstance(y, (pd.DataFrame, pd.Series)):
+        if isinstance(y, pd.DataFrame | pd.Series):
             fh = ForecastingHorizon(y.index, is_relative=False, freq=self._cutoff)
             if self._fh is not None and self.fh.is_relative:
                 fh = fh.to_relative(self._cutoff)
@@ -2739,7 +2787,7 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
         raise ValueError(f"`y_preds` must be a list, but found: {type(y_preds)}")
     if len(y_preds) == 0:
         return pd.DataFrame(columns=cutoffs)
-    if not isinstance(y_preds[0], (pd.DataFrame, pd.Series)):
+    if not isinstance(y_preds[0], pd.DataFrame | pd.Series):
         raise ValueError("y_preds must be a list of pd.Series or pd.DataFrame")
     ylen = len(y_preds[0])
     ytype = type(y_preds[0])
