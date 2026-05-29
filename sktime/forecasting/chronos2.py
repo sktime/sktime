@@ -82,7 +82,8 @@ class Chronos2Forecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": False,
         "capability:missing_values": False,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": False,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
@@ -268,7 +269,7 @@ class Chronos2Forecaster(BaseForecaster):
         pred_tensor = predictions[0]
         quantiles = self.model_pipeline.quantiles
         median_idx = quantiles.index(0.5)
-        point_forecast = pred_tensor[:, median_idx, :].numpy()
+        point_forecast = pred_tensor[:, median_idx, :].detach().cpu().numpy()
 
         index = (
             ForecastingHorizon(range(1, prediction_length + 1))
@@ -287,6 +288,230 @@ class Chronos2Forecaster(BaseForecaster):
         dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
         return pred_df.loc[dateindex]
 
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Compute/return quantile forecasts.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon.
+        X : pd.DataFrame, optional
+            Future exogenous covariates.
+        alpha : list of float, optional
+            A list of probabilities at which quantile forecasts are computed.
+            If None, uses the model's default quantiles.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+            second level being the quantile forecasts for each alpha.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+            from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+        """
+        import transformers
+
+        self._ensure_model_pipeline_loaded()
+        transformers.set_seed(self._seed)
+
+        prediction_length = int(max(fh.to_relative(self.cutoff)))
+
+        context_length = self._config["context_length"]
+        if context_length is None:
+            context_length = self.model_pipeline.model_context_length
+
+        context = self._context
+        input_dict = {"target": context}
+
+        if self._X is not None:
+            actual_len = context.shape[1]
+            past_X = self._X.values[-actual_len:]
+            input_dict["past_covariates"] = {
+                col: past_X[:, i] for i, col in enumerate(self._X.columns)
+            }
+
+        if X is not None:
+            if self._X is None:
+                raise ValueError(
+                    "X was not provided in fit but is provided in predict. "
+                    "To use future covariates, provide past covariate values "
+                    "in fit as well."
+                )
+            future_vals = X.values[:prediction_length]
+            input_dict["future_covariates"] = {
+                col: future_vals[:, i] for i, col in enumerate(X.columns)
+            }
+
+        predictions = self.model_pipeline.predict(
+            [input_dict],
+            prediction_length=prediction_length,
+            batch_size=self._config["batch_size"],
+            context_length=context_length,
+            cross_learning=self._config["cross_learning"],
+            limit_prediction_length=self._config["limit_prediction_length"],
+        )
+
+        pred_tensor = predictions[0]
+        model_quantiles = self.model_pipeline.quantiles
+
+        # Use model's quantiles if alpha is None
+        if alpha is None:
+            alpha = model_quantiles
+        
+        # Round to avoid floating-point precision issues
+        # e.g. (1 - 0.9) / 2 == 0.04999...99 instead of 0.05
+        alpha_rounded = [round(a, 10) for a in alpha]
+        model_quantiles_rounded = [round(q, 10) for q in model_quantiles]
+
+        quantile_indices = []
+        for a, a_rounded in zip(alpha, alpha_rounded):
+            if a_rounded not in model_quantiles_rounded:
+                raise ValueError(
+                    f"Requested quantile {a} not available in model. "
+                    f"Available quantiles: {model_quantiles}"
+                )
+            quantile_indices.append(model_quantiles_rounded.index(a_rounded))
+
+        # Extract quantile predictions
+        quantile_forecasts = pred_tensor[:, quantile_indices, :].detach().cpu().numpy()
+
+        # Build index for forecasts
+        index = (
+            ForecastingHorizon(range(1, prediction_length + 1))
+            .to_absolute(self._cutoff)
+            ._values
+        )
+        pred_out = fh.get_expected_pred_idx(context, cutoff=self.cutoff)
+
+        # Build multi-index columns: (variable, quantile)
+        var_names = self._get_varnames()
+        columns = pd.MultiIndex.from_product(
+            [var_names, alpha],
+            names=["variable", "quantile"]
+        )
+
+        # Reshape: (prediction_length, n_quantiles * n_variables)
+        # Each variable's quantiles should be consecutive
+        n_vars = len(var_names)
+        n_quantiles = len(alpha)
+        reshaped = np.zeros((prediction_length, n_vars * n_quantiles))
+        
+        for i, var_idx in enumerate(range(n_vars)):
+            for j, q_idx in enumerate(quantile_indices):
+                col_idx = i * n_quantiles + j
+                reshaped[:, col_idx] = quantile_forecasts[var_idx, j, :]
+
+        pred_df = pd.DataFrame(
+            reshaped,
+            index=index,
+            columns=columns,
+        )
+        pred_df.index.names = self._y_index_names
+
+        dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
+        return pred_df.loc[dateindex]
+
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """Compute/return interval forecasts.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon.
+        X : pd.DataFrame, optional
+            Future exogenous covariates.
+        coverage : list of float, optional
+            Nominal coverage(s) of predictive interval(s).
+            If None, uses [0.9] (90% coverage).
+
+        Returns
+        -------
+        intervals : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+            second level coverage fractions, third level is "lower" or "upper".
+            Row index is fh, with additional (upper) levels equal to instance levels,
+            from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+        """
+        if coverage is None:
+            coverage = [0.9]
+
+        # Convert coverage to quantiles
+        alphas_for_intervals = []
+        for c in coverage:
+            lower_alpha = round((1 - c) / 2, 10)
+            upper_alpha = round(1 - lower_alpha, 10)
+            alphas_for_intervals.extend([lower_alpha, upper_alpha])
+
+        # Get quantile predictions
+        quantile_pred = self._predict_quantiles(fh=fh, X=X, alpha=alphas_for_intervals)
+
+        # Restructure to interval format
+        var_names = self._get_varnames()
+        
+        # Build multi-index columns: (variable, coverage, bound)
+        columns = pd.MultiIndex.from_product(
+            [var_names, coverage, ["lower", "upper"]],
+            names=["variable", "coverage", "bound"]
+        )
+
+        interval_data = []
+        for var in var_names:
+            for c in coverage:
+                lower_alpha = round((1 - c) / 2, 10)
+                upper_alpha = round(1 - lower_alpha, 10)
+                
+                lower_vals = quantile_pred[(var, lower_alpha)].values
+                upper_vals = quantile_pred[(var, upper_alpha)].values
+                
+                interval_data.append(lower_vals)
+                interval_data.append(upper_vals)
+
+        interval_df = pd.DataFrame(
+            np.column_stack(interval_data),
+            index=quantile_pred.index,
+            columns=columns,
+        )
+
+        return interval_df
+
+    def _predict_proba(self, fh, X=None, marginal=True):
+        from skpro.distributions.empirical import Empirical
+
+        # Get all available quantiles from the model
+        quantile_pred = self._predict_quantiles(fh=fh, X=X, alpha=None)
+
+        var_names = self._get_varnames()
+        model_quantiles = self.model_pipeline.quantiles
+        n_quantiles = len(model_quantiles)
+        n_timepoints = len(quantile_pred)
+
+        # Build a DataFrame with MultiIndex (sample, timepoint) as index
+        # Empirical expects spl as pd.DataFrame with
+        # rows = pd.MultiIndex (sample_idx, time_idx), cols = variables
+        time_index = quantile_pred.index
+
+        spl_index = pd.MultiIndex.from_product(
+            [range(n_quantiles), time_index],
+            names=["sample", *time_index.names],
+        )
+
+        spl_data = np.zeros((n_quantiles * n_timepoints, len(var_names)))
+
+        for i, var in enumerate(var_names):
+            for j, q in enumerate(model_quantiles):
+                spl_data[j * n_timepoints : (j + 1) * n_timepoints, i] = (
+                    quantile_pred[(var, q)].values
+                )
+
+        spl_df = pd.DataFrame(spl_data, index=spl_index, columns=pd.Index(var_names))
+
+        pred_dist = Empirical(
+            spl_df,
+            time_indep=marginal,
+        )
+        
+        return pred_dist
+    
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
