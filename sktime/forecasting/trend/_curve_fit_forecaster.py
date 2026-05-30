@@ -76,7 +76,7 @@ class CurveFitForecaster(BaseForecaster):
     _tags = {
         "authors": ["benheid"],
         "maintainers": ["benheid"],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
@@ -150,7 +150,7 @@ class CurveFitForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon,
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Ignored in predict
 

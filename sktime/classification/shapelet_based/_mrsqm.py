@@ -84,6 +84,16 @@ class MrSQM(_DelegatedClassifier):
         self.sfa_norm = sfa_norm
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # construct the delegate - direct delegation to MrSQMClassifier
         from mrsqm import MrSQMClassifier
 
