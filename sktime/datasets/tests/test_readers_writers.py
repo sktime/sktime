@@ -981,6 +981,53 @@ def test_load_from_long_incorrect_format(tmpdir):
 
 
 @pytest.mark.parametrize(
+    "column_dtypes",
+    [
+        {
+            "case_id": "int32",
+            "dim_id": "int32",
+            "reading_id": "int32",
+            "value": "float32",
+        },
+        {
+            "case_id": "Int64",
+            "dim_id": "Int64",
+            "reading_id": "Int64",
+            "value": "float32",
+        },
+    ],
+)
+def test_load_from_long_accepts_compatible_dtypes(tmpdir, column_dtypes):
+    """Test long loader accepts integer-like ids and numeric values."""
+    dataframe = generate_example_long_table()
+    dataframe.columns = ["case_id", "dim_id", "reading_id", "value"]
+    for col, dtype in column_dtypes.items():
+        dataframe[col] = dataframe[col].astype(dtype)
+
+    dataframe_path = tmpdir.join("data.csv")
+    dataframe.to_csv(dataframe_path, index=False)
+
+    nested_dataframe = load_from_long_to_dataframe(dataframe_path)
+    assert isinstance(nested_dataframe, pd.DataFrame)
+
+
+def test_load_from_long_rejects_incompatible_dtypes(tmpdir):
+    """Test long loader rejects non-integer id columns."""
+    dataframe = generate_example_long_table()
+    dataframe.columns = ["case_id", "dim_id", "reading_id", "value"]
+    dataframe["case_id"] = dataframe["case_id"].astype("object")
+    dataframe.loc[dataframe.index[0], "case_id"] = "bad_id"
+
+    dataframe_path = tmpdir.join("data.csv")
+    dataframe.to_csv(dataframe_path, index=False)
+
+    with pytest.raises(
+        ValueError, match="one or more data columns contains data of an incorrect type"
+    ):
+        load_from_long_to_dataframe(dataframe_path)
+
+
+@pytest.mark.parametrize(
     "input_path, return_type, output_df",
     [
         (
