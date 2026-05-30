@@ -46,6 +46,22 @@ class SlopeTransformer(BaseTransformer):
         self.num_intervals = num_intervals
         super().__init__()
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+
+        Returns
+        -------
+        params : list of dicts
+        """
+        params1 = {}
+        params2 = {"num_intervals": 3}
+        return [params1, params2]
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
