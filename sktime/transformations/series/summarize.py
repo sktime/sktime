@@ -300,12 +300,22 @@ class WindowSummarizer(BaseTransformer):
             columns={"index": "summarizer"},
             inplace=True,
         )
-        func_dict = func_dict.dropna(axis=0, how="any")
+        # func_dict = func_dict.dropna(axis=0, how="any")
+        # # Identify lags (since they can follow special notation)
+        # lags = func_dict["summarizer"] == "lag"
+        # FIXED: Add .copy() to ensure func_dict is not a view, avoiding ChainedAssignment warnings
+        func_dict = func_dict.dropna(axis=0, how="any").copy()
         # Identify lags (since they can follow special notation)
         lags = func_dict["summarizer"] == "lag"
         # Convert lags to default list notation with window_length 1
+        # boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
+        # func_dict["window"] = func_dict["window"].astype("object", copy=False)
+        # func_dict.loc[lags, "window"] = boost_lag
+        # self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
+        # Convert lags to default list notation with window_length 1
         boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
-        func_dict["window"] = func_dict["window"].astype("object", copy=False)
+        # FIXED: Use .loc and remove copy=False to satisfy Copy-on-Write
+        func_dict.loc[:, "window"] = func_dict["window"].astype("object")
         func_dict.loc[lags, "window"] = boost_lag
         self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
@@ -496,16 +506,16 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         name = summarizer
 
     if name == "lag":
-        feat.rename(
-            columns={feat.columns[0]: name + "_" + str(window[0])},
-            inplace=True,
+        # FIXED: Avoid inplace=True to prevent warnings on views
+        feat = feat.rename(
+            columns={feat.columns[0]: name + "_" + str(window[0])}
         )
     else:
-        feat.rename(
+        # FIXED: Avoid inplace=True to prevent warnings on views
+        feat = feat.rename(
             columns={
                 feat.columns[0]: name + "_" + "_".join([str(item) for item in window])
-            },
-            inplace=True,
+            }
         )
     return feat
 
