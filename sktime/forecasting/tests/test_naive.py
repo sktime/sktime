@@ -483,3 +483,122 @@ def test_insample_with_numpy_input():
     forecaster.fit(y)
     y_pred = forecaster.predict(np.arange(0, 10))
     assert len(y_pred) == 10
+
+
+N_TRAIN = 36
+FH = [1, 2, 3]
+STRATEGIES = ["mean", "drift"]
+
+
+def _make_series(n, seed=42):
+    rng = np.random.default_rng(seed)
+    values = rng.normal(loc=100.0, scale=10.0, size=n)
+    index = pd.period_range("2000-01", periods=n, freq="M")
+    return pd.Series(values, index=index)
+
+
+@pytest.mark.parametrize("strategy", STRATEGIES)
+@pytest.mark.parametrize("chunk_size", [1, 3, 12])
+@pytest.mark.parametrize("window_length", [None, 12])
+def test_update_equals_fit_on_full_data(strategy, chunk_size, window_length):
+    """Test incremental update produces the same forecast as fit on full data."""
+    full_series = _make_series(N_TRAIN + chunk_size * 3)
+    y_train = full_series.iloc[:N_TRAIN]
+    y_updates = full_series.iloc[N_TRAIN:]
+
+    ref = NaiveForecaster(strategy=strategy, window_length=window_length)
+    ref.fit(pd.concat([y_train, y_updates]))
+    y_pred_ref = ref.predict(fh=FH)
+
+    cand = NaiveForecaster(strategy=strategy, window_length=window_length)
+    cand.fit(y_train)
+    n_updates = len(y_updates)
+    for start in range(0, n_updates, chunk_size):
+        cand.update(y_updates.iloc[start : start + chunk_size])
+    y_pred_cand = cand.predict(fh=FH)
+
+    np.testing.assert_allclose(
+        y_pred_cand.values,
+        y_pred_ref.values,
+        rtol=1e-10,
+        err_msg=(
+            f"strategy={strategy!r}, window_length={window_length}, "
+            f"chunk_size={chunk_size}: update() prediction differs from fit()."
+        ),
+    )
+
+
+@pytest.mark.parametrize("strategy", STRATEGIES)
+def test_cutoff_advances_correctly_after_update(strategy):
+    """Test that self.cutoff equals the last index seen after every update()."""
+    y = _make_series(24)
+    y_train, y_update = y.iloc[:18], y.iloc[18:]
+
+    fc = NaiveForecaster(strategy=strategy)
+    fc.fit(y_train)
+    assert fc.cutoff[0] == y_train.index[-1]
+
+    fc.update(y_update)
+    assert fc.cutoff[0] == y_update.index[-1]
+
+
+@pytest.mark.parametrize("strategy", STRATEGIES)
+def test_single_observation_update(strategy):
+    """Test that update() with exactly one new observation does not raise."""
+    y = _make_series(20)
+    fc = NaiveForecaster(strategy=strategy)
+    fc.fit(y.iloc[:18])
+    fc.update(y.iloc[18:19])
+    pred = fc.predict(fh=[1])
+    assert len(pred) == 1
+    assert not np.isnan(pred.values[0])
+
+
+@pytest.mark.parametrize("strategy", STRATEGIES)
+def test_rolling_window_size_invariant(strategy):
+    """Test that window buffer never exceeds window_length after many updates."""
+    window_length = 6
+    y = _make_series(50)
+    fc = NaiveForecaster(strategy=strategy, window_length=window_length)
+    fc.fit(y.iloc[:20])
+    for i in range(20, 50):
+        fc.update(y.iloc[i : i + 1])
+    if strategy == "mean":
+        assert len(fc._window_mean) <= window_length
+    elif strategy == "drift":
+        assert len(fc._window_drift) <= window_length
+
+
+def test_mean_strategy_nan_robustness():
+    """Test that the mean strategy handles NaN values in update chunks."""
+    y = _make_series(20)
+    y_update = y.iloc[18:20].copy()
+    y_update.iloc[0] = np.nan
+
+    fc = NaiveForecaster(strategy="mean")
+    fc.fit(y.iloc[:18])
+    fc.update(y_update)
+    pred = fc.predict(fh=[1, 2])
+    assert not np.any(np.isnan(pred.values))
+
+
+def test_drift_increasing_series_has_positive_slope():
+    """Test drift forecast on an increasing series exceeds the last value."""
+    index = pd.period_range("2000", periods=24, freq="M")
+    y = pd.Series(np.arange(1.0, 25.0), index=index)
+
+    fc = NaiveForecaster(strategy="drift")
+    fc.fit(y.iloc[:20])
+    fc.update(y.iloc[20:])
+    pred = fc.predict(fh=[1, 2, 3])
+    assert np.all(pred.values > y.iloc[-1])
+
+
+def test_last_strategy_single_update_does_not_raise():
+    """Ensure the fallback last strategy survives an update call."""
+    y = _make_series(20)
+    fc = NaiveForecaster(strategy="last")
+    fc.fit(y.iloc[:18])
+    fc.update(y.iloc[18:19])
+    pred = fc.predict(fh=[1])
+    assert len(pred) == 1

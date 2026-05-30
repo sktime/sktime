@@ -15,6 +15,7 @@ __author__ = [
 ]
 
 import math
+from collections import deque
 
 import numpy as np
 import pandas as pd
@@ -26,8 +27,6 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.utils.seasonality import _pivot_sp, _unpivot_sp
-from sktime.utils.validation import check_window_length
-from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.warnings import warn
 
 
@@ -129,6 +128,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             "IlyasMoutawwakil",
             "fkiraly",
             "bethrice44",
+            "Mohit25f101",
         ],
         # estimator type
         # --------------
@@ -155,149 +155,222 @@ class NaiveForecaster(_BaseWindowForecaster):
         if self.strategy in ("last", "mean"):
             self.set_tags(**{"capability:missing_values": True})
 
-    def _fit(self, y, X, fh):
-        """Fit to training data.
+    def _fit(self, y, X=None, fh=None):
+        """Fit the forecaster and initialise sufficient-statistic state."""
+        self._update_state_from_y(y.values)
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update sufficient-statistic state with new observations.
 
         Parameters
         ----------
         y : pd.Series
-            Target time series to which to fit the forecaster.
-        fh : int, list or np.array, default=None
-            The forecasters horizon with the steps ahead to predict.
-        X : pd.DataFrame, default=None
-            Exogenous variables are ignored.
+            New observations to incorporate.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables; ignored by NaiveForecaster.
+        update_params : bool, optional (default=True)
+            Whether to update internal state.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : NaiveForecaster
         """
-        # X_train is ignored
-        sp = self.sp or 1
-
-        n_timepoints = y.shape[0]
-
-        if self.strategy in ("last", "mean"):
-            # check window length is greater than sp for seasonal mean or seasonal last
-            if self.window_length is not None and sp != 1:
-                if self.window_length < sp:
-                    raise ValueError(
-                        f"The `window_length`: "
-                        f"{self.window_length} is smaller than "
-                        f"`sp`: {sp}."
-                    )
-            self.window_length_ = check_window_length(self.window_length, n_timepoints)
-            self.sp_ = check_sp(sp)
-
-            #  if not given, set default window length
-            if self.window_length is None:
-                self.window_length_ = len(y)
-
+        new_values = y.values
+        if self.strategy == "last":
+            self._update_state_last(new_values)
+        elif self.strategy == "mean":
+            self._update_state_mean(new_values)
         elif self.strategy == "drift":
-            if sp != 1:
-                warn(
-                    "For the `drift` strategy, the `sp` value will be ignored.",
-                    obj=self,
-                )
-            # window length we need for forecasts is just the
-            # length of seasonal periodicity
-            self.window_length_ = check_window_length(self.window_length, n_timepoints)
-            if self.window_length is None:
-                self.window_length_ = len(y)
-            if self.window_length == 1:
-                raise ValueError(
-                    f"For the `drift` strategy, "
-                    f"the `window_length`: {self.window_length} "
-                    f"value must be greater than one."
-                )
-
-        else:
-            allowed_strategies = ("last", "mean", "drift")
-            raise ValueError(
-                f"Unknown strategy: {self.strategy}. Expected "
-                f"one of: {allowed_strategies}."
-            )
-
-        # check window length
-        if self.window_length_ > len(y):
-            param = "sp" if self.strategy == "last" and sp != 1 else "window_length_"
-            raise ValueError(
-                f"The {param}: {self.window_length_} is larger than "
-                f"the training series."
-            )
-
+            self._update_state_drift(new_values)
         return self
+
+    def _update_state_from_y(self, values):
+        """Initialise sufficient statistics from a full value array.
+
+        Parameters
+        ----------
+        values : np.ndarray, shape (n,)
+            Full training series values.
+        """
+        sp = self.sp if self.sp is not None else 1
+        if self.strategy == "last":
+            self._init_state_last(values, self.window_length, sp)
+        elif self.strategy == "mean":
+            self._init_state_mean(values, self.window_length)
+        elif self.strategy == "drift":
+            self._init_state_drift(values, self.window_length)
+
+    def _init_state_last(self, values, window_length, sp):
+        """Initialise rolling window buffer for the ``last`` strategy.
+
+        Parameters
+        ----------
+        values : np.ndarray, shape (n,)
+            Full series values.
+        window_length : int or None
+            Rolling window size; None means expanding.
+        sp : int
+            Seasonal periodicity.
+        """
+        if window_length is None:
+            self._window_last = deque(values, maxlen=None)
+        else:
+            effective = window_length * sp
+            self._window_last = deque(values[-effective:], maxlen=effective)
+
+    def _update_state_last(self, new_values):
+        """Append new observations to the ``last`` strategy window.
+
+        Parameters
+        ----------
+        new_values : np.ndarray, shape (k,)
+            New observations.
+        """
+        self._window_last.extend(new_values)
+
+    def _init_state_mean(self, values, window_length):
+        """Initialise running mean state for the ``mean`` strategy.
+
+        Parameters
+        ----------
+        values : np.ndarray, shape (n,)
+            Full series values.
+        window_length : int or None
+            Rolling window size; None means expanding.
+        """
+        if window_length is not None:
+            self._window_mean = deque(values[-window_length:], maxlen=window_length)
+        else:
+            self._window_mean = deque(values, maxlen=None)
+        valid = np.array(self._window_mean)
+        valid = valid[~np.isnan(valid)]
+        self._mean_n = len(valid)
+        self._mean_sum = float(valid.sum()) if self._mean_n > 0 else 0.0
+
+    def _update_state_mean(self, new_values):
+        """Update running mean with new observations.
+
+        Parameters
+        ----------
+        new_values : np.ndarray, shape (k,)
+            New observations.
+        """
+        for val in new_values:
+            if (
+                self._window_mean.maxlen is not None
+                and len(self._window_mean) == self._window_mean.maxlen
+            ):
+                evicted = self._window_mean[0]
+                if not np.isnan(evicted):
+                    self._mean_sum -= evicted
+                    self._mean_n -= 1
+            self._window_mean.append(val)
+            if not np.isnan(val):
+                self._mean_sum += val
+                self._mean_n += 1
+
+    def _init_state_drift(self, values, window_length):
+        """Initialise first/last bookkeeping for the ``drift`` strategy.
+
+        Parameters
+        ----------
+        values : np.ndarray, shape (n,)
+            Full series values.
+        window_length : int or None
+            Rolling window size; None means expanding.
+        """
+        if window_length is not None:
+            self._window_drift = deque(values[-window_length:], maxlen=window_length)
+        else:
+            self._window_drift = deque(values, maxlen=None)
+        self._drift_first = float(self._window_drift[0])
+        self._drift_last = float(self._window_drift[-1])
+        self._drift_n = len(self._window_drift)
+
+    def _update_state_drift(self, new_values):
+        """Update first/last bookkeeping for the ``drift`` strategy.
+
+        Parameters
+        ----------
+        new_values : np.ndarray, shape (k,)
+            New observations.
+        """
+        for val in new_values:
+            if (
+                self._window_drift.maxlen is not None
+                and len(self._window_drift) == self._window_drift.maxlen
+            ):
+                self._window_drift.append(val)
+                self._drift_first = float(self._window_drift[0])
+            else:
+                self._window_drift.append(val)
+            self._drift_last = float(val)
+            self._drift_n = len(self._window_drift)
 
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        """Calculate predictions for use in predict."""
-        last_window, _ = self._get_last_window()
-        fh = fh.to_relative(self.cutoff)
+        """Compute point forecasts from the current sufficient-statistic state."""
+        fh_int = fh.to_relative(self.cutoff)
+        horizon = np.array(fh_int)
+        sp = self.sp if self.sp is not None else 1
+        if self.strategy == "last":
+            return self._predict_last(horizon, sp)
+        if self.strategy == "mean":
+            return self._predict_mean(horizon, sp)
+        if self.strategy == "drift":
+            return self._predict_drift(horizon)
+        raise ValueError(f"Unknown strategy: {self.strategy!r}")
 
-        strategy = self.strategy
-        sp = self.sp or 1
+    def _predict_last(self, horizon, sp):
+        """Return ``last`` strategy forecasts."""
+        window = np.array(self._window_last)
+        n = len(window)
+        preds = np.empty(len(horizon))
+        for i, h in enumerate(horizon):
+            idx = (n - sp + (h - 1) % sp) % n
+            preds[i] = window[idx]
+        return preds
 
-        # if last window only contains missing values, return nan
-        if np.all(np.isnan(last_window)) or len(last_window) == 0:
-            return self._predict_nan(fh)
+    def _predict_mean(self, horizon, sp):
+        """Return ``mean`` strategy forecasts."""
+        if sp == 1:
+            mean_val = self._mean_sum / self._mean_n if self._mean_n > 0 else np.nan
+            return np.full(len(horizon), mean_val)
 
-        elif strategy == "last" or (strategy == "drift" and self.window_length_ == 1):
-            if sp == 1:
-                last_valid_value = last_window[
-                    (~np.isnan(last_window))[0::sp].cumsum().argmax()
-                ]
-                return np.repeat(last_valid_value, len(fh))
+        # Compute seasonal means for sp > 1 in O(1) time
+        window = np.array(self._window_mean)
+        window_len = len(window)
+        remainder = window_len % sp
+        pad_width = sp - remainder if remainder > 0 else 0
 
-            else:
-                # reshape last window, one column per season
-                last_window = self._reshape_last_window_for_sp(last_window)
-
-                # select last non-NaN row for every column
-                y_pred = last_window[
-                    (~np.isnan(last_window)).cumsum(0).argmax(0).T,
-                    range(last_window.shape[1]),
-                ]
-
-                # tile prediction according to seasonal periodicity
-                y_pred = self._tile_seasonal_prediction(y_pred, fh)
-
-        elif strategy == "mean":
-            if sp == 1:
-                return np.repeat(np.nanmean(last_window), len(fh))
-
-            else:
-                # reshape last window, one column per season
-                last_window = self._reshape_last_window_for_sp(last_window)
-
-                # compute seasonal mean, averaging over non-NaN rows for every column
-                y_pred = np.nanmean(last_window, axis=0)
-
-                # tile prediction according to seasonal periodicity
-                y_pred = self._tile_seasonal_prediction(y_pred, fh)
-
-        elif strategy == "drift":
-            if self.window_length_ != 1:
-                if np.any(np.isnan(last_window[[0, -1]])):
-                    raise ValueError(
-                        f"For {strategy},"
-                        f"first and last elements in the last "
-                        f"window must not be a missing value."
-                    )
-                else:
-                    # formula for slope
-                    slope = (last_window[-1] - last_window[0]) / (
-                        self.window_length_ - 1
-                    )
-
-                    # get zero-based index by subtracting the minimum
-                    fh_idx = fh.to_indexer(self.cutoff)
-
-                    # linear extrapolation
-                    y_pred = last_window[-1] + (fh_idx + 1) * slope
+        if pad_width > 0:
+            padded_window = np.hstack([np.full(pad_width, np.nan), window])
         else:
-            raise ValueError(f"unknown strategy {strategy} provided to NaiveForecaster")
+            padded_window = window
 
-        return y_pred
+        last_window_2d = padded_window.reshape(-1, sp)
+
+        # Calculate mean for each season, ignoring NaNs
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            seasonal_means = np.nanmean(last_window_2d, axis=0)
+
+        preds = np.empty(len(horizon))
+        for i, h in enumerate(horizon):
+            idx = (h - 1) % sp
+            preds[i] = seasonal_means[idx]
+        return preds
+
+    def _predict_drift(self, horizon):
+        """Return ``drift`` strategy forecasts."""
+        if self._drift_n < 2:
+            return np.full(len(horizon), self._drift_last)
+        slope = (self._drift_last - self._drift_first) / (self._drift_n - 1)
+        return self._drift_last + slope * np.array(horizon, dtype=float)
 
     def _reshape_last_window_for_sp(self, last_window):
         """Reshape the 1D last window into a 2D last window, prepended with NaN values.
@@ -607,6 +680,28 @@ class NaiveForecaster(_BaseWindowForecaster):
             pred_var = pd.DataFrame(marginal_vars, index=fh_idx)
 
         return pred_var
+
+    def _update_state_drift(self, new_values):
+        """Update first/last bookkeeping for the ``drift`` strategy.
+
+        Parameters
+        ----------
+        new_values : np.ndarray, shape (k,)
+            New observations.
+        """
+        if not hasattr(self, "_window_drift"):
+            self._init_state_drift(self._y.values, self.window_length_)
+        for val in new_values:
+            if (
+                self._window_drift.maxlen is not None
+                and len(self._window_drift) == self._window_drift.maxlen
+            ):
+                self._window_drift.append(val)
+                self._drift_first = float(self._window_drift[0])
+            else:
+                self._window_drift.append(val)
+            self._drift_last = float(val)
+            self._drift_n = len(self._window_drift)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
