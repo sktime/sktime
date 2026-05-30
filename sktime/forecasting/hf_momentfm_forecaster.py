@@ -430,7 +430,6 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 f"number of multivariate time series {self._y_shape[1]} "
                 "used to train the model in fit."
             )
-            pass
         # transpose it to change it into (C, S) size
         y_ = y_.transpose(0, 2, 1)
         # returns a timeseriesoutput object
