@@ -542,8 +542,8 @@ class BaseBenchmark:
                 )
             )
 
-        if results_path is not None:
-            results.save()
+            if results_path is not None:
+                results.save()
         return results.to_dataframe()
 
     def _generate_experiments(self):
