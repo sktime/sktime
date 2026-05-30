@@ -126,7 +126,7 @@ class _PmdArimaAdapter(BaseForecaster):
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
         y_pred.name = self._y_name
-        y_pred.index = fh_abs
+        y_pred.index = fh.get_expected_pred_idx(cutoff=self.cutoff)
         return y_pred
 
     def _predict_in_sample(
