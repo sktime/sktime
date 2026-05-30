@@ -90,6 +90,9 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         ``"gelu"``.
     dropout_rate : float, optional (default=0.1)
         Dropout rate applied after each hidden layer. A value of 0 disables dropout.
+    random_state : int or None, default=None
+        Sets the random seed for the DataLoader shuffle, ensuring reproducible
+        training. If None, results may differ between runs.
     """
 
     _tags = {
@@ -128,6 +131,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         pred_len=None,
         activation="relu",
         dropout_rate=0.1,
+        random_state=None,
     ):
         self.window_length = window_length
         self.hidden_size = hidden_size
@@ -146,11 +150,13 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         self.mode = mode
         self.pred_len = pred_len
         self.device = device
+        self.random_state = random_state
 
         super().__init__(
             batch_size=batch_size,
             optimizer=optimizer,
             lr=lr,
+            random_state=random_state,
         )
 
     def __post_init__(self):
@@ -273,7 +279,12 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         y_tensor = torch.FloatTensor(y_train).to(self._device)
 
         dataset = TensorDataset(X_tensor, y_tensor)
-        dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+        gen = torch.Generator()
+        if self.random_state is not None:
+            gen.manual_seed(self.random_state)
+        dataloader = DataLoader(
+            dataset, batch_size=self.batch_size, shuffle=True, generator=gen
+        )
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -443,7 +454,12 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             datasets.append(TensorDataset(X_tensor, y_tensor))
 
         combined_dataset = ConcatDataset(datasets)
-        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
+        gen = torch.Generator()
+        if self.random_state is not None:
+            gen.manual_seed(self.random_state)
+        return DataLoader(
+            combined_dataset, self.batch_size, shuffle=True, generator=gen
+        )
 
     def _get_pretrain_pred_len(self, fh):
         """Get prediction length for pretraining.
@@ -581,6 +597,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                 "mode": "ar",
                 "activation": "relu",
                 "dropout_rate": 0.1,
+                "random_state": 42,
             },
             {
                 "window_length": 5,

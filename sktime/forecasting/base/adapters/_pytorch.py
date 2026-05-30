@@ -48,6 +48,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:multivariate": True,
         "capability:exogenous": False,
+        "capability:random_state": True,
     }
 
     def __init__(
@@ -60,6 +61,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         optimizer=None,
         optimizer_kwargs=None,
         lr=0.001,
+        random_state=None,
     ):
         self.num_epochs = num_epochs
         self.batch_size = batch_size
@@ -69,6 +71,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
+        self.random_state = random_state
 
         super().__init__()
 
@@ -249,7 +252,12 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         ]
 
         combined_dataset = ConcatDataset(datasets)
-        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
+        gen = torch.Generator()
+        if self.random_state is not None:
+            gen.manual_seed(self.random_state)
+        return DataLoader(
+            combined_dataset, self.batch_size, shuffle=True, generator=gen
+        )
 
     def _get_pretrain_pred_len(self, fh):
         """Get prediction length for pretraining.
@@ -412,7 +420,10 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
                 fh=self.network.pred_len,
             )
 
-        return DataLoader(dataset, self.batch_size, shuffle=True)
+        gen = torch.Generator()
+        if self.random_state is not None:
+            gen.manual_seed(self.random_state)
+        return DataLoader(dataset, self.batch_size, shuffle=True, generator=gen)
 
     def build_pytorch_pred_dataloader(self, y, fh):
         """Build PyTorch DataLoader for prediction."""

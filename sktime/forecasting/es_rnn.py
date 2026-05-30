@@ -111,6 +111,9 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         Defines the network output dimension, default=3
     lr : int
         Learning rate for training
+    random_state : int or None, default=None
+        Sets the random seed for the DataLoader shuffle, ensuring reproducible
+        training. If None, results may differ between runs.
 
     References
     ----------
@@ -162,6 +165,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         criterion_kwargs=None,
         custom_dataset_train=None,
         custom_dataset_pred=None,
+        random_state=None,
     ) -> None:
         super().__init__()
         self.hidden_size = hidden_size
@@ -181,6 +185,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.custom_dataset_train = custom_dataset_train
         self.custom_dataset_pred = custom_dataset_pred
         self.lr = lr
+        self.random_state = random_state
         if _check_soft_dependencies("torch", severity="none"):
             import torch
 
@@ -241,7 +246,10 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
                 stride=self.stride,
             )
 
-        return DataLoader(dataset, self.batch_size, shuffle=True)
+        gen = torch.Generator()
+        if self.random_state is not None:
+            gen.manual_seed(self.random_state)
+        return DataLoader(dataset, self.batch_size, shuffle=True, generator=gen)
 
     def build_pytorch_pred_dataloader(self, y, fh):
         """Build PyTorch DataLoader for prediction."""
@@ -280,7 +288,12 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             for series in all_series
         ]
         combined_dataset = ConcatDataset(datasets)
-        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
+        gen = torch.Generator()
+        if self.random_state is not None:
+            gen.manual_seed(self.random_state)
+        return DataLoader(
+            combined_dataset, self.batch_size, shuffle=True, generator=gen
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -310,6 +323,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             "window": 3,
             "pred_len": 3,
             "num_epochs": 1,
+            "random_state": 42,
         }
         params2 = {
             "hidden_size": 10,

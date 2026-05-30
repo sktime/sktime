@@ -88,6 +88,10 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
     RIN : bool, default=False
         Flag to enable or disable the use of RevIN (Reversible Instance Normalization).
 
+    random_state : int or None, default=None
+        Sets the random seed for the DataLoader shuffle, ensuring reproducible
+        training. If None, results may differ between runs.
+
     Raises
     ------
     AssertionError
@@ -160,6 +164,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         positionalE=False,
         modified=True,
         RIN=False,
+        random_state=None,
     ):
         self.seq_len = seq_len
         self.pred_len = pred_len
@@ -184,6 +189,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         self.positionalE = positionalE
         self.modified = modified
         self.RIN = RIN
+        self.random_state = random_state
 
         super().__init__(
             num_epochs=num_epochs,
@@ -192,6 +198,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
+            random_state=random_state,
         )
 
     def __post_init__(self):
@@ -268,6 +275,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
+                "random_state": 42,
             },
             {
                 "seq_len": 16,

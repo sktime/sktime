@@ -92,6 +92,9 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         Minimum change in the validation loss to consider as an improvement.
     val_split : float, optional (default=0.2)
         Fraction of the data to use for validation.
+    random_state : int or None, default=None
+        Sets the random seed for the DataLoader shuffle, ensuring reproducible
+        training. If None, results may differ between runs.
 
     References
     ----------
@@ -155,6 +158,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         patience=5,
         delta=0.0001,
         val_split=0.2,
+        random_state=None,
     ):
         self.n_coupling_layers = n_coupling_layers
         self.hidden_dim_size = hidden_dim_size
@@ -180,7 +184,8 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         self.patience = patience
         self.delta = delta
         self.val_split = val_split
-        super().__init__(num_epochs, batch_size, lr=lr)
+        self.random_state = random_state
+        super().__init__(num_epochs, batch_size, lr=lr, random_state=random_state)
 
     def _fit(self, y, fh, X=None):
         """Fit forecaster to training data.
@@ -264,7 +269,12 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         dataset = self._prepare_data(
             y[:split_index], X[:split_index] if X is not None else None
         )
-        data_loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+        gen = torch.Generator()
+        if self.random_state is not None:
+            gen.manual_seed(self.random_state)
+        data_loader = DataLoader(
+            dataset, batch_size=self.batch_size, shuffle=True, generator=gen
+        )
 
         val_data_loader_nll = None
         if self.val_split > 0:
@@ -421,8 +431,11 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
 
         self.n_cond_features = n_cond_features
         combined_dataset = ConcatDataset(datasets)
+        gen = torch.Generator()
+        if self.random_state is not None:
+            gen.manual_seed(self.random_state)
         data_loader = DataLoader(
-            combined_dataset, batch_size=self.batch_size, shuffle=True
+            combined_dataset, batch_size=self.batch_size, shuffle=True, generator=gen
         )
 
         self.network = self._build_network(None)
@@ -477,8 +490,11 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             )
 
         combined_dataset = ConcatDataset(datasets)
+        gen = torch.Generator()
+        if self.random_state is not None:
+            gen.manual_seed(self.random_state)
         data_loader = DataLoader(
-            combined_dataset, batch_size=self.batch_size, shuffle=True
+            combined_dataset, batch_size=self.batch_size, shuffle=True, generator=gen
         )
 
         self.optimizer = self._instantiate_optimizer()
@@ -636,6 +652,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                 "init_param_f_statistic": [1, 1],
                 "deterministic": True,
                 "val_split": 0.5,
+                "random_state": 42,
             },
             {
                 "f_statistic": _test_function,
