@@ -403,7 +403,10 @@ def _calendar_dummies(x, funcs):
         cd = getattr(date_sequence, funcs)
     cd = pd.DataFrame(cd)
     cd = cd.rename(columns={cd.columns[0]: funcs})
-    cd[funcs] = np.int64(cd[funcs])
+    # Use .assign() to avoid FutureWarning from pandas Copy-on-Write (CoW).
+    # Direct item assignment cd[funcs] = ... on a DataFrame that may be a view
+    # triggers ChainedAssignmentError in pandas >= 2.0 with CoW mode enabled.
+    cd = cd.assign(**{funcs: np.int64(cd[funcs])})
     return cd
 
 
