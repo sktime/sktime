@@ -21,8 +21,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
-from sktime.base import BaseEstimator
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.detection.base import BaseDetector
 
 __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
@@ -311,7 +310,9 @@ class SegmentationMixin:
         return labels
 
 
-class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
+# SegmentationMixin is retained to keep to_clusters() and to_classification()
+# available as convenience methods for users working with change_points_ directly.
+class InformationGainSegmentation(SegmentationMixin, BaseDetector):
     """Information Gain based Temporal Segmentation (IGTS) Estimator.
 
     IGTS is a n unsupervised method for segmenting multivariate time series
@@ -387,16 +388,10 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         "authors": "lmmentel",
         # estimator type
         # --------------
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "task": "segmentation",
         "learning_type": "unsupervised",
-        # CI and test flags
-        # -----------------
-        "tests:skip_all": True,  # todo: fix non-conformance
-        "tests:skip_by_name": [
-            "test_inheritance",
-            "test_create_test_instance",
-        ],
+        "capability:multivariate": True,
     }
 
     def __init__(
@@ -407,7 +402,6 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         self.k_max = k_max
         self.step = step
 
-        _check_estimator_deps(self)
         super().__init__()
 
         self._adaptee = IGTS(
@@ -415,68 +409,43 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
             step=step,
         )
 
-    def fit(self, X: npt.ArrayLike, y: npt.ArrayLike = None):
-        """Fit method for compatibility with sklearn-type estimator interface.
-
-        It sets the internal state of the estimator and returns the initialized
-        instance.
+    def _fit(self, X, y=None):
+        """Fit to training data.
 
         Parameters
         ----------
-        X: array_like
-            2D ``array_like`` representing time series with sequence index along
-            the first dimension and value series as columns.
-
-        y: array_like
-            Placeholder for compatibility with sklearn-api, not used, default=None.
+        X: pd.DataFrame
+            Time series with sequence index along rows and value series as columns.
+        y: None
+            Placeholder for compatibility with sklearn-api, not used.
         """
-        return self
+        if isinstance(X, pd.DataFrame):
+            X = X.values
 
-    def predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
-        """Perform segmentation.
+        if X.shape[1] == 1:
+            X = np.hstack([X, X.max() - X])
 
-        Parameters
-        ----------
-        X: array_like
-            2D ``array_like`` representing time series with sequence index along
-            the first dimension and value series as columns.
-
-        y: array_like
-            Placeholder for compatibility with sklearn-api, not used, default=None.
-
-        Returns
-        -------
-        y_pred : array_like
-            1D array with predicted segmentation of the same size as the first
-            dimension of X. The numerical values represent distinct segments
-            labels for each of the data points.
-        """
         self.change_points_ = self._adaptee.find_change_points(X)
         self.intermediate_results_ = self._adaptee.intermediate_results_
-        return self.to_clusters(self.change_points_)
+        return self
 
-    def fit_predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
+    def _predict(self, X) -> pd.Series:
         """Perform segmentation.
-
-        A convenience method for compatibility with sklearn-like api.
 
         Parameters
         ----------
-        X: array_like
-            2D ``array_like`` representing time series with sequence index along
-            the first dimension and value series as columns.
-
-        y: array_like
-            Placeholder for compatibility with sklearn-api, not used, default=None.
+        X: pd.DataFrame
+            Time series with sequence index along rows and value series as columns.
 
         Returns
         -------
-        y_pred : array_like
-            1D array with predicted segmentation of the same size as the first
-            dimension of X. The numerical values represent distinct segments
-            labels for each of the data points.
+        y_pred : pd.Series with pd.IntervalIndex
+            Sparse segment format: one row per segment, index contains the
+            left-closed intervals, values are integer segment labels (0, 1, ...).
         """
-        return self.fit(X=X, y=y).predict(X=X, y=y)
+        cps = self.change_points_
+        index = pd.IntervalIndex.from_arrays(cps[:-1], cps[1:], closed="left")
+        return pd.Series(range(len(cps) - 1), index=index, dtype="int64")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

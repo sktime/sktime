@@ -64,9 +64,10 @@ def test_InformationGainSegmentation(multivariate_mean_shift):
     """Test the InformationGainSegmentation."""
     igts = InformationGainSegmentation(k_max=3, step=1)
     assert igts.get_params() == {"k_max": 3, "step": 1}
-    pred = igts.fit_predict(multivariate_mean_shift)
+    igts.fit(multivariate_mean_shift)
+    dense = igts.transform(multivariate_mean_shift)
     assert np.array_equal(
-        pred,
+        dense["labels"].to_numpy(),
         np.array(
             [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3], dtype=np.int32
         ),
