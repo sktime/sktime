@@ -1300,6 +1300,7 @@ class capability__unequal_length(_BaseTag):
             "classifier",
             "clusterer",
             "early_classifier",
+            "forecaster",
             "regressor",
             "transformer",
             "transformer-pairwise-panel",
@@ -3723,12 +3724,6 @@ ESTIMATOR_TAG_REGISTER = [
         "can transformer handle multivariate series? True = no",
     ),
     (
-        "univariate-metric",  # -> capability:multivariate, invert
-        "metric",
-        "bool",
-        "Does the metric only work on univariate y data?",
-    ),
-    (
         "handles-missing-data",  # -> capability:missing_values
         "estimator",
         "bool",
@@ -3739,23 +3734,10 @@ ESTIMATOR_TAG_REGISTER = [
     # ---------------------------
     # the following tags are to be deprecated or removed
     (
-        "capability:pred_var",  # redundant with capability:pred_int
-        # because if one of the proba methods is available, all others are too
-        "forecaster",
-        "bool",
-        "does the forecaster implement predict_variance?",
-    ),
-    (
         "capability:global_forecasting",
         ["forecaster"],
         "bool",
         "can the estimator make global forecasting?",
-    ),
-    (
-        "python_dependencies_alias",
-        "object",
-        "dict",
-        "deprecated tag for dependency import aliases",
     ),
     (
         "ignores-exogeneous-X",
