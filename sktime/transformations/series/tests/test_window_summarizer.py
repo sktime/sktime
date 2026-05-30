@@ -378,3 +378,204 @@ def test_windowsummarizer_bfill_respects_multiindex_groups():
         assert pd.isna(group.iloc[2][lag_1_col]), (
             f"Group {name} row 3 lag_1 should be NaN but got {group.iloc[2][lag_1_col]}"
         )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_min_periods_backwards_compatibility():
+    """Test that min_periods=None uses window_length (backwards compatible)."""
+    y = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]})
+
+    # Both should produce identical results
+    ws_default = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]]},
+        n_jobs=1,
+    )
+
+    ws_explicit_none = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]]},
+        n_jobs=1,
+        min_periods=None,
+    )
+
+    result_default = ws_default.fit_transform(y)
+    result_explicit = ws_explicit_none.fit_transform(y)
+
+    pd.testing.assert_frame_equal(result_default, result_explicit)
+
+    expected = pd.Series([np.nan, np.nan, np.nan, 2.0, 3.0], name="a_mean_1_3")
+    pd.testing.assert_series_equal(result_default["a_mean_1_3"], expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_min_periods_one_allows_partial_windows():
+    """Test that min_periods=1 allows computation with partial windows."""
+    y = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]})
+
+    ws = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]]},
+        n_jobs=1,
+        min_periods=1,
+    )
+
+    result = ws.fit_transform(y)
+
+    expected = pd.Series([np.nan, 1.0, 1.5, 2.0, 3.0], name="a_mean_1_3")
+    pd.testing.assert_series_equal(result["a_mean_1_3"], expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_min_periods_mixed_lag_and_rolling_no_error():
+    """Test min_periods with mixed lag and rolling features."""
+    y = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]})
+
+    ws = WindowSummarizer(
+        lag_feature={"lag": [1], "mean": [[1, 3]]},
+        n_jobs=1,
+        min_periods=2,
+    )
+
+    result = ws.fit_transform(y)
+
+    expected = pd.DataFrame(
+        {
+            "a_lag_1": [np.nan, 1.0, 2.0, 3.0, 4.0],
+            "a_mean_1_3": [np.nan, np.nan, 1.5, 2.0, 3.0],
+        }
+    )
+
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "min_periods, error_message",
+    [
+        (0, "min_periods must be >= 1"),
+        (-1, "min_periods must be >= 1"),
+        (5, "cannot exceed window_length"),
+        (1.5, "min_periods must be an integer >= 1 or None"),
+        ("2", "min_periods must be an integer >= 1 or None"),
+    ],
+)
+def test_min_periods_validation(min_periods, error_message):
+    """Test invalid min_periods values raise informative errors."""
+    y = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]})
+
+    ws = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]]},
+        min_periods=min_periods,
+        n_jobs=1,
+    )
+    with pytest.raises(ValueError, match=error_message):
+        ws.fit_transform(y)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_min_periods_regression_prevents_na_propagation_in_rolling():
+    """Regression test for issue #9362 with NaN values in forecast horizon."""
+    X = pd.DataFrame(
+        {
+            "feature1": [1, 2, 3, 4, 5, np.nan, np.nan, np.nan],
+            "feature2": [10, 20, 30, 40, 50, np.nan, np.nan, np.nan],
+        }
+    )
+
+    ws_default = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]], "lag": [1]},
+        target_cols=["feature1", "feature2"],
+        truncate="bfill",
+        n_jobs=1,
+    )
+
+    ws_mp1 = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]], "lag": [1]},
+        target_cols=["feature1", "feature2"],
+        truncate="bfill",
+        n_jobs=1,
+        min_periods=1,
+    )
+
+    Xt_default = ws_default.fit_transform(X)
+    Xt_mp1 = ws_mp1.fit_transform(X)
+
+    mean_cols = ["feature1_mean_1_3", "feature2_mean_1_3"]
+
+    assert Xt_default.loc[[6, 7], mean_cols].isna().all().all()
+
+    expected_tail = pd.DataFrame(
+        {
+            "feature1_mean_1_3": [4.0, 4.5, 5.0],
+            "feature2_mean_1_3": [40.0, 45.0, 50.0],
+        },
+        index=[5, 6, 7],
+    )
+
+    pd.testing.assert_frame_equal(Xt_mp1.loc[[5, 6, 7], mean_cols], expected_tail)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_min_periods_reduces_truncate_start():
+    """Test that truncate_start is reduced when min_periods < window_length.
+
+    With min_periods=1 and window_length=3, valid values can appear at row 1
+    instead of row 3, reducing truncate_start from 3 to 1.
+    """
+    y = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]})
+
+    ws = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]]},
+        n_jobs=1,
+        min_periods=1,
+        truncate="bfill",
+    )
+
+    ws.fit(y)
+
+    assert ws.truncate_start == 1
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(WindowSummarizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_min_periods_validation_in_fit_not_parallel():
+    """Test that invalid min_periods raises error in fit, not during transform.
+
+    This ensures errors are raised synchronously with clear context,
+    avoiding RemoteTraceback wrapping from parallel execution.
+    """
+    y = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0]})
+
+    ws = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]]},
+        min_periods=5,
+        n_jobs=2,
+    )
+
+    with pytest.raises(ValueError, match="cannot exceed window_length"):
+        ws.fit(y)
+
+    ws_no_fit = WindowSummarizer(
+        lag_feature={"mean": [[1, 3]]},
+        min_periods=5,
+        n_jobs=2,
+    )
+    assert not hasattr(ws_no_fit, "_min_periods")
