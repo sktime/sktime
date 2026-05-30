@@ -74,6 +74,7 @@ class MyCatalogue(BaseCatalogue):
     def __init__(self, parama, paramb="default", paramc=None):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
+
         # todo: write any hyper-parameters and components to self
         self.parama = parama
         self.paramb = paramb
