@@ -295,10 +295,8 @@ class WindowSummarizer(BaseTransformer):
             func_dict, id_vars="index", value_name="window", ignore_index=False
         )
         func_dict.sort_index(inplace=True)
-        func_dict.drop("variable", axis=1, inplace=True)
-        func_dict.rename(
-            columns={"index": "summarizer"},
-            inplace=True,
+        func_dict = func_dict.drop("variable", axis=1)
+        func_dict = func_dict.rename(columns={"index": "summarizer"}
         )
         func_dict = func_dict.dropna(axis=0, how="any")
         # Identify lags (since they can follow special notation)
