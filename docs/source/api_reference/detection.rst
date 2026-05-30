@@ -22,6 +22,9 @@ and can be listed using ``sktime.registry.all_tags``.
 Composition
 -----------
 
+Composition tools can wrap detectors to build pipelines or to post-process
+their outputs, for example by enforcing a minimum segment length.
+
 .. currentmodule:: sktime.detection.compose
 
 .. autosummary::
@@ -30,6 +33,7 @@ Composition
 
     DetectorPipeline
     DetectorAsTransformer
+    EnsureMinLengthSegments
 
 
 Change Point Detection
