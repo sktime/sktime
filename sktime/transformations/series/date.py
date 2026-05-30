@@ -368,13 +368,22 @@ def _calendar_dummies(x, funcs):
         x_columns = col_names.intersection(["year", "quarter", "week"]).to_list()
         x_columns.append("date_sequence")
         df = x.copy(deep=True)
+        # df = df[x_columns]
+        # if "year" not in x_columns:
+        #     df["year"] = df["date_sequence"].dt.year
+        # if "quarter" not in x_columns:
+        #     df["quarter"] = df["date_sequence"].dt.quarter
+        # if "week" not in x_columns:
+        #     df["week"] = df["date_sequence"].dt.isocalendar()["week"]
+
         df = df[x_columns]
         if "year" not in x_columns:
-            df["year"] = df["date_sequence"].dt.year
+            df.loc[:, "year"] = df["date_sequence"].dt.year # FIXED: Added .loc
         if "quarter" not in x_columns:
-            df["quarter"] = df["date_sequence"].dt.quarter
+            df.loc[:, "quarter"] = df["date_sequence"].dt.quarter # FIXED: Added .loc
         if "week" not in x_columns:
-            df["week"] = df["date_sequence"].dt.isocalendar()["week"]
+            df.loc[:, "week"] = df["date_sequence"].dt.isocalendar()["week"] # FIXED: Added .loc
+            
         df["qdate"] = (
             df["date_sequence"] + pd.tseries.offsets.DateOffset(days=1)
         ) - pd.tseries.offsets.QuarterBegin(startingMonth=1)
@@ -401,9 +410,14 @@ def _calendar_dummies(x, funcs):
         cd = date_sequence.day_of_week > 4
     else:
         cd = getattr(date_sequence, funcs)
+    # cd = pd.DataFrame(cd)
+    # cd = cd.rename(columns={cd.columns[0]: funcs})
+    # cd[funcs] = np.int64(cd[funcs])
+    # return cd
     cd = pd.DataFrame(cd)
     cd = cd.rename(columns={cd.columns[0]: funcs})
-    cd[funcs] = np.int64(cd[funcs])
+    # FIXED: Use .loc to avoid ChainedAssignment warning during casting
+    cd.loc[:, funcs] = cd[funcs].astype(np.int64)
     return cd
 
 
@@ -420,8 +434,10 @@ def _prep_dummies(DUMMIES):
 
     Includes defining function call names and ranking of date information based on
     frequency (e.g. year has a lower frequency than week).
+
     """
-    DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0])
+    # FIXED: Create explicit copy to prevent ChainedAssignment warnings downstream
+    DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0]).copy()
 
     date_order = [
         "year",
@@ -436,11 +452,19 @@ def _prep_dummies(DUMMIES):
     ]
 
     DUMMIES["fourier"] = DUMMIES["child"] + "_in_" + DUMMIES["parent"]
+    # DUMMIES["dummy"] = DUMMIES["child"] + "_of_" + DUMMIES["parent"]
+    # DUMMIES.loc[DUMMIES["dummy"] == "year_of_year", "dummy"] = "year"
+    # DUMMIES.loc[DUMMIES["dummy_func"] == "is_weekend", ["dummy", "fourier"]] = (
+    #     "is_weekend"
+    # )
     DUMMIES["dummy"] = DUMMIES["child"] + "_of_" + DUMMIES["parent"]
     DUMMIES.loc[DUMMIES["dummy"] == "year_of_year", "dummy"] = "year"
-    DUMMIES.loc[DUMMIES["dummy_func"] == "is_weekend", ["dummy", "fourier"]] = (
-        "is_weekend"
-    )
+    # FIXED: Split multi-column assignment to be explicit for Copy-on-Write
+    mask_weekend = DUMMIES["dummy_func"] == "is_weekend"
+    DUMMIES.loc[mask_weekend, "dummy"] = "is_weekend"
+    DUMMIES.loc[mask_weekend, "fourier"] = "is_weekend"
+
+    
 
     DUMMIES["child"] = (
         DUMMIES["child"].astype("category").cat.reorder_categories(date_order)
