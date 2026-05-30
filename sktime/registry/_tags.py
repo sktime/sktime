@@ -1229,8 +1229,6 @@ class capability__multivariate(_BaseTag):
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: ``univariate-only``  (transformations, note: boolean is inverted)
-    - Alias: ``univariate-metric`` (performance metrics, note: boolean is inverted)
 
     If the tag is ``True``, the estimator can handle multivariate time series,
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
