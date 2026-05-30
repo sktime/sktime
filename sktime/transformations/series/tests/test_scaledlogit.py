@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """ScaledLogit transform unit tests."""
 
-__author__ = ["ltsaprounis"]
+__author__ = ["ltsaprounis", "Akanksha Trehun"]
 
 import numpy as np
 import pytest
@@ -62,3 +62,31 @@ def test_scaledlogit_bound_errors(lower, upper, message):
     with pytest.warns(RuntimeWarning):
         ScaledLogitTransformer(lower, upper).fit_transform(y)
         warn(message, RuntimeWarning)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ScaledLogitTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "lower, upper",
+    [
+        (0, 70),   # lower_bound=0 is falsy — triggered the bug
+        (0, 1),    # probability scale, lower=0
+        (-10, 0),  # upper_bound=0 is falsy — triggered the bug
+    ],
+)
+def test_scaledlogit_zero_bound_uses_scaled_logit(lower, upper):
+    """Regression test: zero-valued bounds must use the scaled-logit branch.
+
+    Failure case in bug #10003: `if self.upper_bound and self.lower_bound` was
+    falsy when either bound was 0, causing the wrong transform branch to execute.
+    """
+    X = np.linspace(lower + 1e-3, upper - 1e-3, 10).reshape(1, -1)
+    t = ScaledLogitTransformer(lower_bound=lower, upper_bound=upper)
+    Xt = t.fit_transform(X)
+    expected = np.log((X - lower) / (upper - X))
+    np.testing.assert_allclose(Xt, expected, atol=1e-10)
+
+    X_inv = t.inverse_transform(Xt)
+    np.testing.assert_allclose(X_inv, X, atol=1e-10)
