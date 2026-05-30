@@ -281,7 +281,7 @@ def _mock_llm(_messages, _model, _api_params):
             {
                 "name": "Naive last",
                 "spec": 'NaiveForecaster(strategy="last")',
-                "reason": "A simple baseline that often performs decently."
+                "reason": "A simple baseline that often performs decently.",
             }
         ]
     )
