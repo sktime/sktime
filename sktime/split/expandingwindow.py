@@ -35,7 +35,8 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
     .. math:: [t_1, t_1 + w), [t_1, t_1 + w + s), [t_1, t_1 + w + 2s), \ldots
 
-    where :math:`w` is the initial window length and :math:`s` is the step length.
+    where :math:`w` is the value of ``initial_window`` and :math:`s` is the
+    value of ``step_length``.
 
     The test windows are defined by forecasting horizons
     relative to the end of the training windows.
@@ -43,10 +44,11 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     The test window will contain as many indices
     as there are forecasting horizons provided to the ``fh`` argument.
 
-    For a forecasting horizon :math:`(h_1,\ldots,h_H)`, the test indices for the
-    n-th split will consist of the indices :math:`(k_n+h_1,\ldots,k_n+h_H)`,
-    where :math:`k_n = t_1 + w + (n - 1) \cdot s`
-    is the end of the n-th training window.
+    For ``fh`` equal to the forecasting horizon :math:`(h_1,\ldots,h_H)`, the
+    test indices for the n-th split will consist of the indices
+    :math:`(k_n+h_1,\ldots,k_n+h_H)`, where
+    :math:`k_n = t_1 + w + (n - 1) \cdot s` is the end of the n-th training
+    window.
 
     The number of splits is determined by the total length of the time series,
     up until the last test window that lies within the observed time indices,
