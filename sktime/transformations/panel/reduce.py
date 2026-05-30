@@ -80,8 +80,8 @@ class TimeBinner(BaseTransformer):
     This estimator converts nested pandas dataframe containing
     time-series/panel data with numpy arrays or pandas Series in
     dataframe cells into a tabular pandas dataframe with only primitives in
-    cells. The primitives are calculated based on Intervals defined
-    by the IntervalIndex and aggregated by aggfunc.
+    cells. The primitives are calculated based on intervals defined
+    by the IntervalIndex and aggregated by ``aggfunc``.
 
     This is useful for transforming time-series/panel data
     into a format that is accepted by standard validation learning
@@ -90,11 +90,21 @@ class TimeBinner(BaseTransformer):
     Parameters
     ----------
     idx : pd.IntervalIndex
-        IntervalIndex defining intervals considered by aggfunc
-    aggfunc : callable
+        IntervalIndex defining intervals considered by aggfunc.
+    aggfunc : callable, optional (default=None)
         Function used to aggregate the values in intervals.
-        Should have signature 1D -> float and defaults
-        to mean if None
+        Should have signature 1D -> float and defaults to mean if None.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.datasets import load_basic_motions
+    >>> from sktime.transformations.panel.reduce import TimeBinner
+    >>> X, y = load_basic_motions(return_X_y=True)
+    >>> idx = pd.interval_range(start=0, end=100, freq=20, closed="left")
+    >>> transformer = TimeBinner(idx=idx)
+    >>> Xt = transformer.fit_transform(X)
+    >>> Xt.shape
     """
 
     _tags = {
