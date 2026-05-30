@@ -138,6 +138,7 @@ class Lag(BaseTransformer):
         "capability:unequal_length:removes": False,
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
+        "capability:update": True, #update flag
         "remember_data": True,  # remember all data seen as _X
         # CI and test flags
         # -----------------

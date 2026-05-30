@@ -138,6 +138,8 @@ class BaseTransformer(BaseEstimator):
         # is transform result always guaranteed to contain no missing values?
         "capability:categorical_in_X": True,
         "capability:categorical_in_y": True,
+        #is update supported (default=False)
+        "capability:update": False,
         # does the transformer apply hierarchical reconciliation?
         "remember_data": False,  # whether all data seen is remembered as self._X
         "python_version": None,  # PEP 440 python version specifier to limit versions
