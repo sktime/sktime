@@ -155,7 +155,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "authors": ["rajatsen91", "geetu040"],
         # rajatsen91 for google-research/timesfm
         "maintainers": ["geetu040"],
-        "python_version": ">=3.10,<3.11",
+        "python_version": ">=3.10,<3.13",
         "python_dependencies": [
             "tensorflow",
             "einshape",
