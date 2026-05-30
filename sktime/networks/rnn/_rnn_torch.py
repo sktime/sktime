@@ -3,9 +3,10 @@
 __authors__ = ["RecreationalMath"]
 __all__ = ["RNNNetworkTorch"]
 
+from collections.abc import Callable
+
 import numpy as np
 
-# from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.dependencies import _safe_import
 
 # handling soft dependencies for Torch modules
@@ -28,7 +29,8 @@ class RNNNetworkTorch(NNModule):
         E.g., setting n_layers=2 would mean stacking two RNNs together to form
         a stacked RNN, with the second RNN taking in outputs of the first RNN
         and computing the final results.
-    activation : str or None, default = None
+    activation : str or None or an instance of activation functions defined in
+        torch.nn, default = None
         Activation function used in the fully connected output layer. List of supported
         activation functions: ['sigmoid', 'softmax', 'logsoftmax', 'logsigmoid'].
         If None, then no activation function is applied.
@@ -71,7 +73,7 @@ class RNNNetworkTorch(NNModule):
         num_classes: int,
         hidden_dim: int = 6,
         n_layers: int = 1,
-        activation: str | None = None,
+        activation: str | None | Callable = None,
         activation_hidden: str = "relu",
         bias: bool = False,
         init_weights: bool = True,
@@ -80,6 +82,7 @@ class RNNNetworkTorch(NNModule):
         bidirectional: bool = False,
         random_state: int = 0,
     ):
+        super().__init__()
         self.input_size = input_size
         self.random_state = random_state
         self.hidden_dim = hidden_dim
@@ -91,7 +94,6 @@ class RNNNetworkTorch(NNModule):
         self.bias = bias
         self.dropout = dropout
         self.bidirectional = bidirectional
-        super().__init__()
 
         # Checking input dimensions
         if isinstance(self.input_size, int):
@@ -133,8 +135,8 @@ class RNNNetworkTorch(NNModule):
             in_features=self.hidden_dim * (2 if self.bidirectional else 1),
             out_features=self.num_classes,
         )
-        # to handle the case when num_classes = 1 for regression
-        if self.activation:
+        self._activation = None
+        if self.activation is not None:
             self._activation = self._instantiate_activation()
         if self.init_weights:
             self.apply(self._init_weights)
@@ -173,7 +175,7 @@ class RNNNetworkTorch(NNModule):
         if self.fc_dropout:
             out = self.out_dropout(out)
         out = self.fc(out)
-        if self.activation:
+        if self._activation is not None:
             out = self._activation(out)
         return out
 
