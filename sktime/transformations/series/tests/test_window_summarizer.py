@@ -169,10 +169,10 @@ Xtmvar_none = ["GNPDEFL_lag_3", "GNPDEFL_lag_6", "GNP", "UNEMP", "ARMED", "POP"]
         (None, None, "y_train", None, None),
         (None, ["a_lag_1"], "y_pd", None, None),
         (kwargs_custom, ["a_count_gt100_3_2"], "y_pd", None, None),
-        (kwargs_alternames, ["0_lag_3", "0_lag_6"], "y_train", None, "bfill"),
+        (kwargs_alternames, ["None_lag_3", "None_lag_6"], "y_train", None, "bfill"),
         (
             kwargs_variant,
-            ["0_mean_1_7", "0_mean_8_7", "0_cov_1_28"],
+            ["None_mean_1_7", "None_mean_8_7", "None_cov_1_28"],
             "y_train",
             None,
             None,
