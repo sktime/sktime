@@ -157,7 +157,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "CAPA",
         "CNTCNetwork",
         "CircularBinarySegmentation",
-        "ClaSPTransformer",
         "ClearSky",
         "ContractableBOSS",
         "DOBIN",
