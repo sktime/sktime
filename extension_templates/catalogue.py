@@ -70,7 +70,28 @@ class MyCatalogue(BaseCatalogue):
         "info:source": "DOI",
     }
 
-    # implement this
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        # todo: optional, parameter checking or coercion should happen here
+        # if writes derived values to self, should *not* overwrite self.paramc etc
+        # instead, write to self._paramc, self._newparam (starting with _)
+        # example of handling conditional parameters or mutable defaults:
+        if self.paramc is None:
+            from sktime.somewhere import MyOtherEstimator
+
+            self._paramc = MyOtherEstimator(foo=42)
+        else:
+            # estimators should be cloned to avoid side effects
+            self._paramc = self.paramc.clone()
+
+    # TODO: implement this
     def _get(self):
         """Return the catalogue mapping of category -> list of items.
 
