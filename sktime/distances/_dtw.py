@@ -4,8 +4,14 @@ from typing import Any
 
 import numpy as np
 
+from sktime.distances._dtw_numba import (
+    _cost_matrix,
+    _lb_keogh_distance,
+    _lb_keogh_envelope,
+)
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.base._types import DistanceAlignmentPathCallable
+from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 
 class _DtwDistance(NumbaDistance):
@@ -59,6 +65,9 @@ class _DtwDistance(NumbaDistance):
         window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
+        lb_radius: float = None,
+        early_abandoning: bool = False,
+        best_known_distance: float = np.inf,
         **kwargs: Any,
     ) -> DistanceAlignmentPathCallable:
         """Create a no_python compiled dtw path distance callable.
@@ -85,6 +94,12 @@ class _DtwDistance(NumbaDistance):
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
             be infinity.
+        lb_radius : float, optional
+            Radius for LB_Keogh lower bound calculation.
+        early_abandoning : bool, optional
+            Enable early abandoning to terminate early when cost exceeds threshold.
+        best_known_distance : float, optional
+            Best-known distance to use as the early abandoning threshold.
         kwargs: any
             extra kwargs.
 
@@ -102,13 +117,17 @@ class _DtwDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
         """
         from sktime.distances._distance_alignment_paths import compute_min_return_path
-        from sktime.distances._dtw_numba import _cost_matrix
-        from sktime.distances.lower_bounding import resolve_bounding_matrix
         from sktime.utils.numba.njit import njit
 
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
+        # Check LB_Keogh if enabled
+        if lb_radius is not None:
+            lb_distance = _lb_keogh_distance(x, y, _lb_keogh_envelope(y, x, lb_radius))
+            if lb_distance > best_known_distance:
+                # Return a dummy callable if LB_Keogh distance exceeds the threshold
+                return lambda _x, _y: ([], np.inf, None)
 
         if return_cost_matrix is True:
 
@@ -117,9 +136,21 @@ class _DtwDistance(NumbaDistance):
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> tuple[list, float, np.ndarray]:
-                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
+                cost_matrix = _cost_matrix(
+                    _x, _y, _bounding_matrix, best_known_distance=best_known_distance
+                )
+                if np.isinf(cost_matrix).all():
+                    return (
+                        list(np.empty((0, 2), dtype=np.int64)),
+                        float(np.inf),
+                        cost_matrix,
+                    )
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
-                return path, cost_matrix[-1, -1], cost_matrix
+                return (
+                    list(np.array(path, dtype=np.int64)),
+                    float(cost_matrix[-1, -1]),
+                    cost_matrix,
+                )
 
         else:
 
@@ -128,9 +159,11 @@ class _DtwDistance(NumbaDistance):
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> tuple[list, float]:
-                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
+                cost_matrix = _cost_matrix(
+                    _x, _y, _bounding_matrix, best_known_distance=best_known_distance
+                )
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
-                return path, cost_matrix[-1, -1]
+                return list(path), float(cost_matrix[-1, -1])
 
         return numba_dtw_distance_alignment_path
 
@@ -141,6 +174,9 @@ class _DtwDistance(NumbaDistance):
         window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
+        lb_radius: float = None,
+        early_abandoning: bool = False,
+        best_known_distance: float = np.inf,
         **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled dtw distance callable.
@@ -165,6 +201,12 @@ class _DtwDistance(NumbaDistance):
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
             be infinity.
+        lb_radius : float, optional
+            Radius for LB_Keogh lower bound calculation.
+        early_abandoning : bool, optional
+            Enable early abandoning to terminate early when cost exceeds threshold.
+        best_known_distance : float, optional
+            Best-known distance to use as the early abandoning threshold.
         kwargs: any
             extra kwargs.
 
@@ -181,20 +223,26 @@ class _DtwDistance(NumbaDistance):
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """
-        from sktime.distances._dtw_numba import _cost_matrix
-        from sktime.distances.lower_bounding import resolve_bounding_matrix
         from sktime.utils.numba.njit import njit
 
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
+        # Check LB_Keogh if enabled
+        if lb_radius is not None:
+            lb_distance = _lb_keogh_distance(x, y, _lb_keogh_envelope(y, x, lb_radius))
+            if lb_distance > best_known_distance:
+                # Return a dummy callable if LB_Keogh distance exceeds the threshold
+                return lambda _x, _y: np.inf
 
         @njit(cache=True)
         def numba_dtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
         ) -> float:
-            cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
+            cost_matrix = _cost_matrix(
+                +_x, _y, _bounding_matrix, best_known_distance=best_known_distance
+            )
             return cost_matrix[-1, -1]
 
         return numba_dtw_distance
