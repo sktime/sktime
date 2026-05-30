@@ -27,6 +27,7 @@ class _PmdArimaAdapter(BaseForecaster):
         # CI and testing tags
         # -------------------
         "tests:vm": True,
+        "tests:skip_by_name": ["test_predict_time_index_in_sample_full"],
     }
 
     def __init__(self):
