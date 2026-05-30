@@ -80,6 +80,7 @@ class RNNNetworkTorch(NNModule):
         bidirectional: bool = False,
         random_state: int = 0,
     ):
+        super().__init__()
         self.input_size = input_size
         self.random_state = random_state
         self.hidden_dim = hidden_dim
@@ -91,7 +92,6 @@ class RNNNetworkTorch(NNModule):
         self.bias = bias
         self.dropout = dropout
         self.bidirectional = bidirectional
-        super().__init__()
 
         # Checking input dimensions
         if isinstance(self.input_size, int):
