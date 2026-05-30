@@ -56,6 +56,9 @@ class TimesFM2Forecaster(BaseForecaster):
         fine-tuning.
     callbacks : list, optional (default=None)
         Hugging Face Trainer callbacks used during fine-tuning.
+    peft_config : peft.PeftConfig, optional (default=None)
+        Configuration for parameter-efficient fine-tuning. If provided, the
+        loaded TimesFM model is wrapped with PEFT during ``pretrain``.
     device : str, default="cpu"
         Device on which to run the model, for example ``"cpu"``, ``"cuda"``,
         or ``"cuda:0"``.
@@ -108,6 +111,7 @@ class TimesFM2Forecaster(BaseForecaster):
         compute_loss_func=None,
         compute_metrics=None,
         callbacks=None,
+        peft_config=None,
         device="cpu",
     ):
         self.model_path = model_path
@@ -118,6 +122,7 @@ class TimesFM2Forecaster(BaseForecaster):
         self.compute_loss_func = compute_loss_func
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
+        self.peft_config = peft_config
         self.device = device
 
         super().__init__()
@@ -412,20 +417,19 @@ class TimesFM2Forecaster(BaseForecaster):
             model_path=self.model_path,
             config=self.config,
             device=self.device,
+            peft_config=self.peft_config,
         ).load()
 
         return self.model_
 
     def _get_unique_key(self):
-        return str(
-            sorted(
-                {
-                    "model_path": self.model_path,
-                    "config": self.config,
-                    "device": self.device,
-                }.items()
-            )
-        )
+        key = {
+            "model_path": self.model_path,
+            "config": self.config,
+            "device": self.device,
+            "peft_config": self.peft_config,
+        }
+        return str(sorted(key.items()))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -499,10 +503,11 @@ class TimesFM2Forecaster(BaseForecaster):
 class _CachedTimesFM2:
     """Cached TimesFM 2.5 model instance."""
 
-    def __init__(self, key, model_path, config, device):
+    def __init__(self, key, model_path, config, peft_config, device):
         self.key = key
         self.model_path = model_path
         self.config = config
+        self.peft_config = peft_config
         self.device = device
         self.model_ = None
 
@@ -510,10 +515,12 @@ class _CachedTimesFM2:
         if self.model_ is not None:
             return self.model_
 
-        from transformers import TimesFmConfig
+        from transformers import AutoConfig, TimesFmConfig
 
         if self.model_path is not None:
             config = self.config
+            if config is None:
+                config = AutoConfig.from_pretrained(self.model_path)
             if isinstance(config, dict):
                 config_class = _get_timesfm_config_class(config)
                 config = config_class.from_dict(config)
@@ -523,20 +530,30 @@ class _CachedTimesFM2:
                 self.model_path,
                 config=config,
             )
-            self.model_ = self.model_.to(self.device)
-            return self.model_
+        else:
+            config = self.config
+            if config is None:
+                config = TimesFmConfig()
+            if isinstance(config, dict):
+                config_class = _get_timesfm_config_class(config)
+                config = config_class.from_dict(config)
 
-        config = self.config
-        if config is None:
-            config = TimesFmConfig()
-        if isinstance(config, dict):
-            config_class = _get_timesfm_config_class(config)
-            config = config_class.from_dict(config)
+            model_class = _get_timesfm_model_class(config)
+            self.model_ = model_class(config)
 
-        model_class = _get_timesfm_model_class(config)
-        self.model_ = model_class(config)
         self.model_ = self.model_.to(self.device)
+
+        if self.peft_config is not None:
+            self.model_ = self._wrap_with_peft()
+
         return self.model_
+
+    def _wrap_with_peft(self):
+        _check_soft_dependencies("peft", severity="error")
+
+        from peft import get_peft_model
+
+        return get_peft_model(self.model_, deepcopy(self.peft_config))
 
 
 def _get_timesfm_model_class(config):
