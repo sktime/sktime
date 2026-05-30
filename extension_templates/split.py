@@ -160,6 +160,7 @@ class MySplitter(BaseSplitter):
         # example 2: cloning tags from component estimator component_estimator
         #   self.clone_tags(self.component_estimator, ["capability:missing_values"])
 
+    # todo: add any post-init logic here, otherwise delete this method
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 

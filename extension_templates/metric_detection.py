@@ -122,6 +122,7 @@ class MyMetric(BaseDetectionMetric):
         # example 2: cloning tags from component estimator component_estimator
         #   self.clone_tags(self.component_estimator, ["capability:missing_values"])
 
+    # todo: add any post-init logic here, otherwise delete this method
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 
@@ -129,7 +130,6 @@ class MyMetric(BaseDetectionMetric):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # todo: optional, parameter checking or coercion should happen here
