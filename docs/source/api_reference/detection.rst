@@ -83,6 +83,14 @@ Window-based Anomaly Detection
 
     HampelDetector
 
+.. currentmodule:: sktime.detection.lstm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LSTMAD
+
 Foundation Model-based Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
