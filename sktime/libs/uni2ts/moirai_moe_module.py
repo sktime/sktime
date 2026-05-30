@@ -1,3 +1,18 @@
+#  Copyright (c) 2024, Salesforce, Inc.
+#  SPDX-License-Identifier: Apache-2
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 from functools import partial
 
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -15,7 +30,7 @@ if _check_soft_dependencies("torch", severity="none"):
         RotaryProjection,
     )
     from .module.transformer import TransformerEncoder
-    from .module.ts_embed import MultiInSizeLinear
+    from .module.ts_embed import FeatLinear, MultiInSizeLinear
 else:
 
     class nn:
@@ -29,7 +44,7 @@ else:
 if _check_soft_dependencies("huggingface_hub", severity="none"):
     from huggingface_hub import PyTorchModelHubMixin
 else:
-    # Create Dummy class
+
     class PyTorchModelHubMixin:
         def __init__(self):
             pass
@@ -38,13 +53,11 @@ else:
             """Implement dummy version of __init_subclass__."""
             pass
 
-        pass
-
 
 if _check_soft_dependencies("einops", severity="none"):
     from .module.packed_scaler import PackedNOPScaler, PackedStdScaler
 
-from .common.torch_util import mask_fill, packed_attention_mask
+from .common.torch_util import packed_causal_attention_mask
 
 
 def encode_distr_output(
@@ -71,7 +84,7 @@ def decode_distr_output(config) -> DistributionOutput:
     return instantiate(config, _convert_="all")
 
 
-class MoiraiModule(
+class MoiraiMoEModule(
     nn.Module,
     PyTorchModelHubMixin,
     coders={DistributionOutput: (encode_distr_output, decode_distr_output)},
@@ -80,8 +93,9 @@ class MoiraiModule(
         self,
         distr_output: DistributionOutput,
         d_model: int,
+        d_ff: int,
         num_layers: int,
-        patch_sizes: tuple[int, ...],  # tuple[int, ...] | list[int]
+        patch_sizes: tuple,  # tuple[int, ...]
         max_seq_len: int,
         attn_dropout_p: float,
         dropout_p: float,
@@ -94,9 +108,16 @@ class MoiraiModule(
         self.max_seq_len = max_seq_len
         self.scaling = scaling
 
-        self.mask_encoding = nn.Embedding(num_embeddings=1, embedding_dim=d_model)
         self.scaler = PackedStdScaler() if scaling else PackedNOPScaler()
         self.in_proj = MultiInSizeLinear(
+            in_features_ls=patch_sizes,
+            out_features=d_model,
+        )
+        self.res_proj = MultiInSizeLinear(
+            in_features_ls=patch_sizes,
+            out_features=d_model,
+        )
+        self.feat_proj = FeatLinear(
             in_features_ls=patch_sizes,
             out_features=d_model,
         )
@@ -109,6 +130,7 @@ class MoiraiModule(
             dropout_p=dropout_p,
             norm_layer=RMSNorm,
             activation=F.silu,
+            use_moe=True,
             use_glu=True,
             use_qk_norm=True,
             var_attn_bias_layer=partial(BinaryAttentionBias),
@@ -120,7 +142,7 @@ class MoiraiModule(
             ),
             shared_var_attn_bias=False,
             shared_time_qk_proj=True,
-            d_ff=None,
+            d_ff=d_ff,
         )
         self.distr_output = distr_output
         self.param_proj = self.distr_output.get_param_proj(d_model, patch_sizes)
@@ -135,28 +157,7 @@ class MoiraiModule(
         prediction_mask,
         patch_size,
     ):
-        """
-        Define the forward pass of MoiraiModule.
-
-        This method expects processed inputs.
-
-        1. Apply scaling to observations
-        2. Project from observations to representations
-        3. Replace prediction window with learnable mask
-        4. Apply transformer layers
-        5. Project from representations to distribution parameters
-        6. Return distribution object
-
-        :param target: input data
-        :param observed_mask: binary mask for missing values, 1 if observed, 0 otherwise
-        :param sample_id: indices indicating the sample index (for packing)
-        :param time_id: indices indicating the time index
-        :param variate_id: indices indicating the variate index
-        :param prediction_mask: binary mask for prediction horizon,
-        1 if part of the horizon, 0 otherwise
-        :param patch_size: patch size for each token
-        :return: predictive distribution
-        """
+        """Define the forward pass of MoiraiMoEModule."""
         loc, scale = self.scaler(
             target,
             observed_mask * ~prediction_mask.unsqueeze(-1),
@@ -164,27 +165,19 @@ class MoiraiModule(
             variate_id,
         )
         scaled_target = (target - loc) / scale
-        reprs = self.in_proj(scaled_target, patch_size)
-        masked_reprs = mask_fill(reprs, prediction_mask, self.mask_encoding.weight)
+
+        in_reprs = self.in_proj(scaled_target, patch_size)
+        in_reprs = F.silu(in_reprs)
+        in_reprs = self.feat_proj(in_reprs, patch_size)
+        res_reprs = self.res_proj(scaled_target, patch_size)
+        reprs = in_reprs + res_reprs
+
         reprs = self.encoder(
-            masked_reprs,
-            packed_attention_mask(sample_id),
+            reprs,
+            packed_causal_attention_mask(sample_id, time_id),
             time_id=time_id,
             var_id=variate_id,
         )
         distr_param = self.param_proj(reprs, patch_size)
         distr = self.distr_output.distribution(distr_param, loc=loc, scale=scale)
         return distr
-
-    @classmethod
-    def _load_as_pickle(cls, model, model_file, map_location, strict):
-        import torch
-
-        state_dict = torch.load(
-            model_file,
-            map_location=torch.device(map_location),
-            weights_only=False,
-        )
-        model.load_state_dict(state_dict, strict=strict)
-        model.eval()
-        return model

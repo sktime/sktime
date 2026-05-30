@@ -1,30 +1,27 @@
-"""Adapter for using MOIRAI Forecasters."""
-
-import sys
-from unittest.mock import patch
+"""Adapter for using MOIRAI-MoE Forecasters."""
 
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
+from sktime.forecasting.base import _BaseGlobalForecaster
 
-__author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
+__author__ = ["gorold", "chenghaoliu89", "liu-jc", "priyanshuharshbodhi1"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
 
 
-class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
-    """MOIRAI Forecasters.
+class MoiraiMoEForecaster(_BaseGlobalForecaster):
+    """
+    Adapter for using MOIRAI-MoE Forecasters.
 
     Parameters
     ----------
     checkpoint_path : str, default=None
-        Path to the checkpoint of the model.
-        Supported weights are available at [1]_.
+        Path to the checkpoint of the model. Supported weights are available at [1]_.
     context_length : int, default=200
-        Length of the context window, time points the model will take as input
-        for inference.
-    patch_size : int, default=32
-        Time steps to perform patching with.
+        Length of the context window, time points the model will take as input.
+    patch_size : int, default=16
+        Patch size for tokenization. Unlike the standard MOIRAI model, this must be
+        an integer (no "auto" mode).
     num_samples : int, default=100
         Number of samples to draw.
     map_location : str, default=None
@@ -41,9 +38,9 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         fit and predict on it. The broadcasting is happening inside automatically,
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from ``predict``
-        use_source_package : bool, default=False
+    use_source_package : bool, default=False
         If True, the model and configuration will be loaded directly from the source
-        package ``uni2ts.models.moirai``. This is useful if you
+        package ``uni2ts.models.moirai_moe``. This is useful if you
         want to bypass the local version of the package or when working in an
         environment where the latest updates from the source package are needed.
         If False, the model and configuration will be loaded from the local
@@ -52,46 +49,58 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.forecasting.moirai_forecaster import MOIRAIForecaster
+    >>> from sktime.forecasting.moirai_moe_forecaster import MoiraiMoEForecaster
     >>> import pandas as pd
     >>> import numpy as np
-    >>> morai_forecaster = MOIRAIForecaster(
-    ...     checkpoint_path=f"sktime/moirai-1.0-R-small"
+    >>> moirai_moe_forecaster = MoiraiMoEForecaster(  # doctest: +SKIP
+    ...     checkpoint_path="Salesforce/moirai-moe-1.0-R-small"
     ... )
     >>> y = np.random.normal(0, 1, (30, 2))
     >>> X = y * 2 + np.random.normal(0, 1, (30,1))
     >>> index = pd.date_range("2020-01-01", periods=30, freq="D")
     >>> y = pd.DataFrame(y, index=index)
     >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)
-    >>> morai_forecaster.fit(y, X=X)
-    MOIRAIForecaster(checkpoint_path='sktime/moirai-1.0-R-small')
-    >>> X_test = pd.DataFrame(
-    ...     np.random.normal(0, 1, (10, 2)),
-    ...     columns=["x1", "x2"],
-    ...     index=pd.date_range("2020-01-31", periods=10, freq="D"),
+    >>> moirai_moe_forecaster.fit(y, X=X)  # doctest: +SKIP
+    MoiraiMoEForecaster(checkpoint_path='Salesforce/moirai-moe-1.0-R-small')
+    >>> X_test = pd.DataFrame(np.random.normal(0, 1, (10, 2)),
+    ...                      columns=["x1", "x2"],
+    ...                      index=pd.date_range("2020-01-31", periods=10, freq="D"),
     ... )
-    >>> forecast = morai_forecaster.predict(fh=range(1, 11), X=X_test)
+    >>> forecast = moirai_moe_forecaster.predict(  # doctest: +SKIP
+    ...     fh=range(1, 11), X=X_test
+    ... )
+
+    Notes
+    -----
+    Requires Python < 3.14. GluonTS uses Pydantic V1, which is incompatible
+    with Python 3.14+ (PEP 649/749 lazy annotation evaluation).
 
     References
     ----------
-    .. [1] https://huggingface.co/collections/sktime/moirai-variations-66ba3bc9f1dfeeafaed3b974
-    .. [2] https://pypi.org/project/uni2ts/1.1.0/
+    .. [1] https://huggingface.co/collections/Salesforce/moirai-moe-67c8b4d6196e0d0a2e15de37
+    .. [2] https://pypi.org/project/uni2ts/
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
+        "authors": [
+            "gorold",
+            "chenghaoliu89",
+            "liu-jc",
+            "priyanshuharshbodhi1",
+        ],
         # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
-        "maintainers": ["pranavvp16"],
+        "maintainers": ["priyanshuharshbodhi1"],
+        # gluonts uses pydantic v1, incompatible with Python 3.14+ (PEP 649/749)
         "python_version": "<3.14",
         "python_dependencies": [
             "gluonts",
             "torch",
             "einops",
             "huggingface_hub",
-            "hf-xet",
             "safetensors",
+            "hf-xet",
             "lightning",
             "hydra-core",
         ],
@@ -113,19 +122,16 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
-        "capability:unequal_length": False,
-        "property:randomness": "stochastic",
         # CI and test flags
         # -----------------
-        # "tests:vm": True, # skip all tests temporarily, issue tracked in #10083
-        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
+        "tests:vm": True,
     }
 
     def __init__(
         self,
         checkpoint_path: str,
         context_length=200,
-        patch_size=32,
+        patch_size=16,
         num_samples=100,
         num_feat_dynamic_real=None,
         num_past_feat_dynamic_real=None,
@@ -136,6 +142,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         batch_size=32,
         use_source_package=False,
     ):
+        super().__init__()
         self.checkpoint_path = checkpoint_path
         self.context_length = context_length
         self.patch_size = patch_size
@@ -148,13 +155,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self.deterministic = deterministic
         self.batch_size = batch_size
         self.use_source_package = use_source_package
-        super().__init__()
 
-    def __dynamic_tags__(self):
-        """Dynamic tag setter logic for setting tag values conditional on parameters.
-
-        This method should be used for setting dynamic tags only.
-        """
         if self.broadcasting:
             self.set_tags(
                 **{
@@ -164,46 +165,36 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 }
             )
 
-    # Apply a patch for redirecting imports to sktime.libs.uni2ts
-    if sys.version_info < (3, 14) and _check_soft_dependencies(
-        ["lightning", "huggingface_hub"], severity="none"
-    ):
-        import sktime
-        from sktime.libs.uni2ts.forecast import MoiraiForecast
+    def _instantiate_patched_model(self, model_kwargs):
+        """Instantiate the model from the vendor package."""
+        import sys
 
-        @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
-        def _instantiate_patched_model(self, model_kwargs):
-            """Instantiate the model from the vendor package."""
-            import huggingface_hub.constants
+        import sktime.libs.uni2ts as _uni2ts_mod
 
-            huggingface_hub.constants.HF_HUB_DISABLE_XET = True
+        sys.modules.setdefault("uni2ts", _uni2ts_mod)
+        from sktime.libs.uni2ts.moirai_moe_forecast import MoiraiMoEForecast
 
-            from sktime.libs.uni2ts.forecast import MoiraiForecast
+        if self.checkpoint_path.startswith("Salesforce"):
+            from sktime.libs.uni2ts.moirai_moe_module import MoiraiMoEModule
 
-            if self.checkpoint_path.startswith("Salesforce"):
-                from sktime.libs.uni2ts.moirai_module import MoiraiModule
+            model_kwargs["module"] = MoiraiMoEModule.from_pretrained(
+                self.checkpoint_path
+            )
+            return MoiraiMoEForecast(**model_kwargs)
+        else:
+            from huggingface_hub import hf_hub_download
 
-                model_kwargs["module"] = MoiraiModule.from_pretrained(
-                    self.checkpoint_path
-                )
-                return MoiraiForecast(**model_kwargs)
-            else:
-                from huggingface_hub import hf_hub_download
+            model_kwargs["checkpoint_path"] = hf_hub_download(
+                repo_id=self.checkpoint_path, filename="model.ckpt"
+            )
+            return MoiraiMoEForecast.load_from_checkpoint(**model_kwargs)
 
-                model_kwargs["checkpoint_path"] = hf_hub_download(
-                    repo_id=self.checkpoint_path, filename="model.ckpt"
-                )
-                return MoiraiForecast.load_from_checkpoint(
-                    **model_kwargs, weights_only=False
-                )
-
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         if fh is not None:
             prediction_length = max(fh.to_relative(self.cutoff))
         else:
             prediction_length = 1
 
-        # Set feature dimensions based on X if not already set
         if self.num_feat_dynamic_real is None:
             if X is not None:
                 self.num_feat_dynamic_real = X.shape[1]
@@ -223,30 +214,28 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "past_feat_dynamic_real_dim": self.num_past_feat_dynamic_real,
         }
 
-        # Load model from source package
         if self.use_source_package:
             if _check_soft_dependencies("uni2ts", severity="none"):
-                from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
+                from uni2ts.model.moirai_moe import MoiraiMoEForecast, MoiraiMoEModule
 
                 if self.checkpoint_path.startswith("Salesforce"):
-                    model_kwargs["module"] = MoiraiModule.from_pretrained(
+                    model_kwargs["module"] = MoiraiMoEModule.from_pretrained(
                         self.checkpoint_path
                     )
-                    self.model = MoiraiForecast(**model_kwargs)
+                    self.model = MoiraiMoEForecast(**model_kwargs)
                 else:
                     from huggingface_hub import hf_hub_download
 
                     model_kwargs["checkpoint_path"] = hf_hub_download(
                         repo_id=self.checkpoint_path, filename="model.ckpt"
                     )
-                    self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
+                    self.model = MoiraiMoEForecast.load_from_checkpoint(**model_kwargs)
                     self.model.to(self.map_location)
-        # Load model from sktime
         else:
             self.model = self._instantiate_patched_model(model_kwargs)
             self.model.to(self.map_location)
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, y=None, X=None):
         if self.deterministic:
             import torch
 
@@ -260,7 +249,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         if min(fh._values) < 0:
             raise NotImplementedError(
-                "The MORAI adapter is not supporting insample predictions."
+                "The MoiraiMoE adapter is not supporting insample predictions."
             )
 
         _y = self._y.copy()
@@ -269,7 +258,15 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             _X = self._X.copy()
 
         # Zero shot case with X and fit data as context
-        _use_fit_data_as_context = X is not None
+        _use_fit_data_as_context = False
+        if X is not None and y is None:
+            _use_fit_data_as_context = True
+
+        # Override to data in fit as new timeseries is passed
+        elif y is not None:
+            _y = y.copy()
+            if X is not None:
+                _X = X.copy()
 
         if isinstance(_y, pd.Series):
             target = [_y.name]
@@ -277,7 +274,6 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         else:
             target = _y.columns
 
-        # Store the original index and target name
         self._target_name = target
         self._len_of_targets = len(target)
 
@@ -312,13 +308,12 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 )
             else:
                 future_length = 0
-        # check whether the index is a PeriodIndex
+
         if isinstance(pred_df.index, pd.PeriodIndex):
             time_idx = self.return_time_index(pred_df)
             pred_df.index = time_idx.to_timestamp()
             pred_df.index.freq = None
 
-        # Check if the index is a range index
         if self._is_range_index:
             pred_df.index = self.handle_range_index(pred_df.index)
 
@@ -373,7 +368,6 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 predictions.index = predictions.index.set_levels(
                     levels=timepoints.unique(), level=-1
                 )
-                # Convert str type to int
                 predictions.index = predictions.index.map(lambda x: (int(x[0]), x[1]))
             else:
                 predictions.index = timepoints
@@ -387,36 +381,21 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
-        """
+        """Return testing parameter settings for the estimator."""
         return [
             {
                 "deterministic": True,
-                "checkpoint_path": "sktime/moirai-1.0-R-small",
+                "checkpoint_path": "Salesforce/moirai-moe-1.0-R-small",
             },
             {
                 "deterministic": True,
-                "checkpoint_path": "Salesforce/moirai-1.0-R-small",
+                "checkpoint_path": "Salesforce/moirai-moe-1.0-R-small",
+                "context_length": 100,
             },
         ]
 
     def _get_prediction_df(self, forecast_iter, df_config):
         def handle_series_prediction(forecast, target):
-            # Renames the predicted column to the target column name
             pred = forecast.mean_ts
             if target[0] is not None:
                 return pred.rename(target[0])
@@ -424,7 +403,6 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 return pred
 
         def handle_panel_predictions(forecasts_it, df_config):
-            # Convert all panel forecasts to a single panel dataframe
             panels = []
             for forecast in forecasts_it:
                 df = forecast.mean_ts.reset_index()
@@ -438,7 +416,6 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         forecasts = list(forecast_iter)
 
-        # Assuming all forecasts_it are either series or panel type.
         if forecasts[0].item_id is None:
             return handle_series_prediction(forecasts[0], df_config["target"])
         else:
@@ -471,13 +448,10 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         if _check_soft_dependencies("gluonts", severity="none"):
             from gluonts.dataset.pandas import PandasDataset
 
-        # Add original target to config
         df_config = {
             "target": self._target_name,
         }
 
-        # PandasDataset expects non-multiindex dataframe with item_id
-        # and timepoints
         if isinstance(df.index, pd.MultiIndex):
             if None in df.index.names:
                 df.index.names = ["item_id", "timepoints"]
@@ -486,7 +460,6 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             timepoints = df.index.names[-1]
             df_config["timepoints"] = timepoints
 
-            # Reset index to create a non-multiindex dataframe
             df = df.reset_index()
             df.set_index(timepoints, inplace=True)
 
@@ -508,85 +481,8 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         return dataset, df_config
 
-    # def _extend_df(self, df, _y, X=None):
-    #     """Extend the input dataframe up to the timepoints that need to be predicted.
-    #
-    #     Parameters
-    #     ----------
-    #     df : pd.DataFrame
-    #         Input data that needs to be extended
-    #     X : pd.DataFrame, default=None
-    #         Assumes that X has future timepoints and is
-    #         concatenated to the input data,
-    #         if X is present in the input, but None here the values of X are assumed
-    #         to be 0 in future timepoints that need to be predicted.
-    #     is_range_index : bool, default=False
-    #         If True, the index is a range index.
-    #     is_period_index : bool, default=False
-    #         If True, the index is a period index.
-    #
-    #     Returns
-    #     -------
-    #     pd.DataFrame
-    #         Extended dataframe with future timepoints.
-    #     """
-    #     index = self.return_time_index(df)
-    #
-    #     # Extend the index to the future timepoints
-    #     # respective to index last seen
-    #
-    #     if self._is_range_index:
-    #         pred_index = pd.RangeIndex(
-    #             self.cutoff[0] + 1, self.cutoff[0] + max(self.fh._values)
-    #         )
-    #     elif self._is_period_index:
-    #         pred_index = pd.period_range(
-    #             self.cutoff[0],
-    #             periods=max(self.fh._values) + 1,
-    #             freq=index.freq,
-    #         )[1:]
-    #     else:
-    #         pred_index = pd.date_range(
-    #             self.cutoff[0],
-    #             periods=max(self.fh._values) + 1,
-    #             freq=self.infer_freq(index),
-    #         )[1:]
-    #
-    #     if isinstance(df.index, pd.MultiIndex):
-    #         # Works for any number of levels in the MultiIndex
-    #         index_levels = [
-    #             df.index.get_level_values(i).unique()
-    #             for i in range(df.index.nlevels - 1)
-    #         ]
-    #         index_levels.append(pred_index)
-    #         new_index = pd.MultiIndex.from_product(index_levels, names=df.index.names)
-    #     else:
-    #         new_index = pred_index
-    #
-    #     df_y = pd.DataFrame(columns=_y.columns, index=new_index)
-    #     df_y.fillna(0, inplace=True)
-    #     pred_df = pd.concat([df_y, X], axis=1)
-    #     extended_df = pd.concat([df, pred_df])
-    #     extended_df = extended_df.sort_index()
-    #     extended_df.fillna(0, inplace=True)
-    #
-    #     return extended_df, df_y
-
     def infer_freq(self, index):
-        """
-        Infer frequency of the index.
-
-        Parameters
-        ----------
-        index: pd.Index
-            Index of the time series data.
-
-        Notes
-        -----
-        Uses only first 3 values of the index to infer the frequency.
-        As `freq=None` is returned in case of multiindex timepoints.
-
-        """
+        """Infer frequency of the index."""
         if isinstance(index, pd.PeriodIndex):
             return index.freq
         freq = pd.infer_freq(index[:3])
@@ -626,11 +522,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         return False
 
     def handle_range_index(self, index):
-        """
-        Convert RangeIndex to Dummy DatetimeIndex.
-
-        As gluonts PandasDataset expects a DatetimeIndex.
-        """
+        """Convert RangeIndex to Dummy DatetimeIndex."""
         start_date = "2010-01-01"
         if isinstance(index, pd.MultiIndex):
             n_periods = index.levels[-1].size
@@ -652,42 +544,33 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         return y, is_converted
 
     def _convert_hierarchical_to_panel(self, df):
-        # Flatten the MultiIndex to a panel type DataFrame
         data = df.copy()
         flattened_index = [("*".join(map(str, x[:-1])), x[-1]) for x in data.index]
-        # Create a new MultiIndex with the flattened level and the last level unchanged
         data.index = pd.MultiIndex.from_tuples(
             flattened_index, names=["Flattened_Level", data.index.names[-1]]
         )
         return data
 
     def _convert_panel_to_hierarchical(self, df, original_index_names=None):
-        # Store the original index names
         if original_index_names is None:
             original_index_names = df.index.names
 
-        # Reset the index to get 'Flattened_Level' as a column
         data = df.reset_index()
 
-        # Split the 'Flattened_Level' column into multiple columns
         split_levels = data["Flattened_Level"].str.split("*", expand=True)
         split_levels.columns = original_index_names[:-1]
-        # Get the names of the split levels as a list of column names
         index_names = split_levels.columns.tolist()
 
-        # Combine the split levels with the rest of the data
         data_converted = pd.concat(
             [split_levels, data.drop(columns=["Flattened_Level"])], axis=1
         )
 
-        # Get the last index name if it exists, otherwise use a default name
         last_index_name = (
             original_index_names[-1]
             if original_index_names[-1] is not None
             else "timepoints"
         )
 
-        # Set the new index with the split levels and the last index name
         data_converted = data_converted.set_index(index_names + [last_index_name])
 
         return data_converted
