@@ -837,7 +837,6 @@ class TransformedTargetForecaster(_Pipeline):
         reference to pairs in ``steps_`` that precede ``forecaster_``
     transformers_post_ : list of tuples (str, transformer) of sktime transformers
         reference to pairs in ``steps_`` that succeed ``forecaster_``
-
     Examples
     --------
     >>> from sktime.datasets import load_airline
@@ -845,19 +844,21 @@ class TransformedTargetForecaster(_Pipeline):
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.transformations.series.detrend import Detrender
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+
     >>> y = load_airline()
 
-        Example 1: string/estimator pairs
-
+    # Create pipeline with preprocessing and forecasting model
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer(method="mean")),
     ...     ("detrender", Detrender()),
     ...     ("forecaster", NaiveForecaster(strategy="drift")),
     ... ])
+
+    # Fit the model
     >>> pipe.fit(y)
-    TransformedTargetForecaster(...)
-    >>> y_pred = pipe.predict(fh=[1,2,3])
+
+    # Predict next 3 time steps
+    >>> y_pred = pipe.predict(fh=[1, 2, 3])
 
         Example 2: without strings
 
