@@ -112,6 +112,7 @@ def _inverse_diff(X, lags, X_diff_seq=None):
     X_diff_seq : list of pd.Series or pd.DataFrame
         elements must match type, columns and index type of X
         length must be equal or longer than length of lags
+   
 
     Returns
     -------
@@ -221,6 +222,11 @@ class Differencer(BaseTransformer):
         "latest" : estimator only remembers latest X necessary for future reconstruction
             inverses at any time stamps after fit are correct, but not past time stamps
         "none" : estimator does not remember any X, inverse is direct cumsum
+        min_value : float, optional, default=None
+        Minimum value for the differenced data. Values smaller than this will be replaced by this value.
+
+        max_value : float, optional, default=None
+        Maximum value for the differenced data. Values larger than this will be replaced by this value.
 
     Examples
     --------
@@ -259,10 +265,12 @@ class Differencer(BaseTransformer):
 
     VALID_NA_HANDLING_STR = ["drop_na", "keep_na", "fill_zero"]
 
-    def __init__(self, lags=1, na_handling="fill_zero", memory="all"):
+    def __init__(self, lags=1, na_handling="fill_zero", memory="all", min_value=None, max_value=None):
         self.lags = lags
         self.na_handling = self._check_na_handling(na_handling)
         self.memory = memory
+        self.min_value = min_value
+        self.max_value = max_value
 
         self._X = None
         self._lags = _check_lags(self.lags)
@@ -366,6 +374,9 @@ class Differencer(BaseTransformer):
         else:
             new_index = Xt.index.intersection(X_orig_index)
             Xt = Xt.loc[new_index]
+
+        if self.min_value is not None or self.max_value is not None:
+            Xt = Xt.clip(lower=self.min_value, upper=self.max_value)    
 
         return Xt
 
