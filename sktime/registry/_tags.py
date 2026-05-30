@@ -3560,7 +3560,7 @@ ESTIMATOR_TAG_REGISTER = [
         "which scitypes does X internally support?",
     ),
     (
-        "scitype:y",  # -> capability:multivariate
+        "scitype:y",
         # the scitype:y tag should be kept but for separate use,
         # a list of the internal scitypes supported by the estimator
         # or the base scitype of the target data

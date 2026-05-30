@@ -67,7 +67,7 @@ class XLSTMForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.Series",
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:exogenous": False,
         "capability:missing_values": False,
         # CI and testing tags
