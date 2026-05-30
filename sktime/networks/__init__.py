@@ -8,6 +8,7 @@ __all__ = [
     "CNNNetworkTorch",
     "RNNNetwork",
     "RNNNetworkTorch",
+    "MLPAutoencoderTorch",
 ]
 
 from sktime.networks.cnn import (
@@ -18,3 +19,5 @@ from sktime.networks.rnn import (
     RNNNetwork,
     RNNNetworkTorch,
 )
+
+from sktime.networks.autoencoder import MLPAutoencoderTorch
