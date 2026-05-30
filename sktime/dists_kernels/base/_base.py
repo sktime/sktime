@@ -108,6 +108,9 @@ class BasePairwiseTransformer(BaseEstimator):
         """
         _check_estimator_deps(self)
 
+        if not self.get_tag("fit_is_empty", True):
+            self.check_is_fitted()
+
         X = self._pairwise_table_x_check(X)
 
         if X2 is None:
@@ -443,6 +446,9 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         # solution: add tag for optional python dependencies and appropriate checks
         _check_estimator_deps(self, severity="warning")
 
+        if not self.get_tag("fit_is_empty", True):
+            self.check_is_fitted()
+
         X = self._pairwise_panel_x_check(X)
 
         if X2 is None:
@@ -504,6 +510,9 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         # would prevent that slower usage without numba
         # solution: add tag for optional python dependencies and appropriate checks
         _check_estimator_deps(self, severity="warning")
+
+        if not self.get_tag("fit_is_empty", True):
+            self.check_is_fitted()
 
         import numpy as np
 

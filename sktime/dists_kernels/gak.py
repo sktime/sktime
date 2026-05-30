@@ -23,6 +23,11 @@ class GAKernel(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         ``-1`` means using all processors. See scikit-learns'
         `Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>`_
         for more details.
+    random_state : int, RandomState instance or None, optional, default=None
+        If `int`, random_state is the seed used by the random number generator;
+        If `RandomState` instance, random_state is the random number generator;
+        If `None`, the random number generator is the `RandomState` instance used
+        by `np.random`.
     verbose : int, optional, default=0
         The verbosity level: if non zero, progress messages are printed.
         Above 50, the output is sent to stdout.
@@ -44,16 +49,21 @@ class GAKernel(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         # --------------
         "symmetric": True,
         "pwtrafo_type": "kernel",
+        "capability:random_state": True,
     }
+
+    _inner_params = ["sigma", "n_jobs", "verbose"]
 
     def __init__(
         self,
         sigma=1.0,
         n_jobs=None,
+        random_state=None,
         verbose=0,
     ):
         self.sigma = sigma
         self.n_jobs = n_jobs
+        self.random_state = random_state
         self.verbose = verbose
 
         super().__init__()
@@ -73,7 +83,9 @@ class GAKernel(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
             from tslearn.metrics import sigma_gak
 
             X_tslearn = self._coerce_df_list_to_list_of_arr(X)
-            self.sigma_ = float(sigma_gak(X_tslearn))
+            self.sigma_ = float(sigma_gak(X_tslearn, random_state=self.random_state))
+            if self.sigma_ == 0.0:
+                self.sigma_ = 1.0
         return self
 
     @classmethod
