@@ -238,10 +238,10 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         Dropout rate to apply to the gru output layer. default is 0.0
     bidirectional : bool
         If True, then the GRU is bidirectional, default is False.
-    conv_layers : list, optional (default=None)
+    conv_layers : list, optional (default=None=[128, 256, 128])
         List of integers specifying the number of filters in each convolutional layer.
         If None, ``[128, 256, 128]`` is used.
-    kernel_sizes : list, optional (default=None)
+    kernel_sizes : list, optional (default=None=[7, 5, 3])
         List of integers specifying the kernel size in each convolutional layer.
         If None, ``[7, 5, 3]`` is used.
     num_epochs : int, optional (default=10)
@@ -434,6 +434,9 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
                 "kernel_sizes": [7, 5, 3],
                 "num_epochs": 2,
                 "optimizer": "Adam",
+                # optimizer_kwargs must round-trip unchanged; previously it was
+                # overwritten in __init__, violating the sklearn init contract (#10208)
+                "optimizer_kwargs": {"betas": (0.9, 0.999)},
                 "lr": 0.01,
                 "verbose": False,
                 "random_state": 0,
