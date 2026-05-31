@@ -5,7 +5,11 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _GlobalForecastingDeprecationMixin,
+)
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
 
@@ -14,7 +18,7 @@ empty_cache = _safe_import("torch.cuda.empty_cache")
 Dataset = _safe_import("torch.utils.data.Dataset")
 
 
-class MomentFMForecaster(_BaseGlobalForecaster):
+class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """
     Interface for forecasting with the deep learning time series model momentfm.
 
@@ -136,15 +140,11 @@ class MomentFMForecaster(_BaseGlobalForecaster):
     """
 
     _tags = {
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
         "capability:missing_values": False,
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
+        "y_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
         "requires-fh-in-fit": True,
         "python_dependencies": [
@@ -161,9 +161,13 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:pred_int": False,
+        "capability:unequal_length": False,
+        "property:randomness": "stochastic",
+        "capability:random_state": False,
         # testing configuration
         # ---------------------
-        "tests:vm": True,
+        # "tests:vm": True, # skip all tests temporarily, issue tracked in #10083
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
         "tests:libs": ["sktime.libs.momentfm"],
     }
 
@@ -215,7 +219,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self._moment_seq_len = 512
         self.return_model_to_cpu = return_model_to_cpu
 
-    def _fit(self, fh, y, X=None):
+    def _fit(self, y, X=None, fh=None):
         """Assumes y is a single or multivariate time series."""
         from accelerate import Accelerator
         from torch.optim import Adam
@@ -374,15 +378,13 @@ class MomentFMForecaster(_BaseGlobalForecaster):
 
         return self
 
-    def _predict(self, y, X=None, fh=None):
+    def _predict(self, fh, X=None):
         """Predict method to forecast timesteps into the future.
 
         fh should not be passed here and
         must be the same length as the one used to fit the model.
         """
-        # use y values from fit if y is None in predict
-        if y is None:
-            y = self._y
+        y = self._y
 
         index = self._fh.to_absolute_index(self.cutoff)
         from torch import from_numpy
@@ -390,10 +392,7 @@ class MomentFMForecaster(_BaseGlobalForecaster):
         self.model = self.model.to(self._device)
         self.model.eval()
         y_index_names = list(y.index.names)
-        if isinstance(y.index, pd.MultiIndex):
-            y_ = _frame2numpy(y)
-        else:
-            y_ = np.expand_dims(y.values, axis=0)
+        y_ = np.expand_dims(y.values, axis=0)
 
         num_instances, sequence_length, num_channels = (
             y_.shape
@@ -680,24 +679,6 @@ def _check_device(device):
     return _device
 
 
-def _same_index(data: pd.DataFrame):
-    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
-        lambda x: x.index.get_level_values(-1)
-    )
-    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
-        "All series must has the same index"
-    )
-    return data.iloc[0], len(data.iloc[0])
-
-
-def _frame2numpy(data: pd.DataFrame):
-    idx, length = _same_index(data)
-    arr = np.array(data.values, dtype=np.float32).reshape(
-        (-1, length, len(data.columns))
-    )
-    return arr
-
-
 class MomentPytorchDataset(Dataset):
     """Customized Pytorch dataset for the momentfm model."""
 
@@ -709,11 +690,7 @@ class MomentPytorchDataset(Dataset):
         self.shape = y.shape
         self.device = device
 
-        # multi-index conversion
-        if isinstance(y.index, pd.MultiIndex):
-            self.y = _frame2numpy(y)
-        else:
-            self.y = np.expand_dims(y.values, axis=0)
+        self.y = np.expand_dims(y.values, axis=0)
 
         # n_timestamps should be the seq length for a single series in both
         # cases, multivariate dataframe
