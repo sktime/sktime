@@ -101,6 +101,11 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
         "capability:missing_values": False,
         "capability:insample": False,
         "capability:global_forecasting": True,
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._neuralforecast"],
     }
 
     def __init__(
