@@ -118,8 +118,9 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:pred_int": True,
+        "capability:unequal_length": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -405,7 +406,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "capability:exogenous": False,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
     }
 
     def __init__(
@@ -699,8 +701,9 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:pred_int": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
@@ -978,8 +981,9 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:pred_int": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(

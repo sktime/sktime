@@ -4,16 +4,19 @@
 __author__ = ["rajatsen91", "geetu040"]
 # rajatsen91 for google-research/timesfm
 
-import os
 
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _GlobalForecastingDeprecationMixin,
+)
 from sktime.utils.singleton import _multiton
 
 
-class TimesFMForecaster(_BaseGlobalForecaster):
+class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
 
     TimesFM (Time Series Foundation Model) is a pretrained time-series foundation model
@@ -66,9 +69,12 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         on your specific use case,
         although it is recommended to follow these guidelines for optimal results.
 
-    repo_id : str, optional (default="google/timesfm-1.0-200m")
+    repo_id : str or None, optional (default="google/timesfm-1.0-200m")
         The identifier for the model repository.
         The default model is the 200M parameter version.
+        If None, the model is initialized from random weights and no checkpoint is
+        downloaded or restored. Random initialization is supported for the vendored
+        sktime TimesFM implementation, i.e. when ``use_source_package=False``.
     input_patch_len : int, optional (default=32)
         The fixed length of input patches that the model processes.
         This parameter is fixed to 1280 for the 200M model and should not be changed.
@@ -140,7 +146,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
     ...     horizon_len=8,
     ... ) # doctest: +SKIP
     >>>
-    >>> # train and predict
+    >>> # fit sets the context, predict uses it
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
@@ -153,23 +159,23 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "maintainers": ["geetu040"],
         "python_version": ">=3.10,<3.11",
         "python_dependencies": [
-            "tensorflow",
-            "einshape",
-            "jax",
-            "praxis",
-            "huggingface-hub",
-            "paxml",
-            "utilsforecast",
+            "einshape>=1.0.0",
+            "numpy>=1.26.4",
+            "pandas>=2.1.4",
+            "paxml>=1.4.0",
+            "utilsforecast>=0.1.10",
+            "jax[cuda12]>=0.4.26",
+            "jaxlib>=0.4.26",
+            "huggingface-hub[cli]>=0.23.0",
+            "scikit-learn>=1.2.2",
+            "typer>=0.12.3",
+            "wandb>=0.17.5",
         ],
         "env_marker": "sys_platform=='linux'",
         # estimator type
         # --------------
-        "y_inner_mtype": [
-            "pd.Series",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "scitype:y": "univariate",
+        "y_inner_mtype": "pd.Series",
+        "capability:multivariate": False,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
@@ -179,6 +185,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -244,13 +251,20 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 }
             )
 
-        # Set environment variables for JAX backend based on CPU, GPU, or TPU
-        os.environ["JAX_PLATFORM_NAME"] = backend
-        os.environ["JAX_PLATFORMS"] = backend
-
         super().__init__()
 
-    def _fit(self, y, X, fh):
+    def __getstate__(self):
+        """Return state for pickling, excluding unpickleable TimesFM model."""
+        state = self.__dict__.copy()
+        if "tfm" in state:
+            state["tfm"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state, TimesFM model will be reloaded on next use."""
+        self.__dict__.update(state)
+
+    def _fit(self, y, X=None, fh=None):
         if fh is None and self.horizon_len is None:
             raise ValueError(
                 "Both 'fh' and 'horizon_len' cannot be None. Provide at least one."
@@ -272,12 +286,17 @@ class TimesFMForecaster(_BaseGlobalForecaster):
             context_multiple = (len(y) // self.input_patch_len) + 1
             self._context_len = context_multiple * self.input_patch_len
 
-        self.tfm = _CachedTimesFM(
+        self.context = y
+        self.tfm = self._load_model()
+
+    def _load_model(self):
+        """Load TimesFM model via multiton cache."""
+        return _CachedTimesFM(
             key=self._get_unique_timesfm_key(),
             timesfm_kwargs=self._get_timesfm_kwargs(),
             use_source_package=self.use_source_package,
             repo_id=self.repo_id,
-        ).load_from_checkpoint()
+        ).load()
 
     def _get_timesfm_kwargs(self):
         """Get the kwargs for TimesFM model."""
@@ -305,7 +324,7 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         }
         return str(sorted(kwargs_plus_repo_id.items()))
 
-    def _predict(self, fh, X, y=None):
+    def _predict(self, fh, X=None):
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
@@ -317,54 +336,30 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 " when initializing the model or try another forecasting horizon."
             )
 
-        _y = y if self._global_forecasting else self._y
+        context = self.context
+        context_np = np.expand_dims(context.values, axis=0)
+        # context_np.shape: (batch_size, n_timestamps)
 
-        # multi-index conversion goes here
-        if isinstance(_y.index, pd.MultiIndex):
-            hist = _frame2numpy(_y).squeeze(2)
-        else:
-            hist = np.expand_dims(_y.values, axis=0)
+        if not hasattr(self, "tfm") or self.tfm is None:
+            self.tfm = self._load_model()
 
-        # hist.shape: (batch_size, n_timestamps)
-
-        pred, _ = self.tfm.forecast(hist)
+        pred, _ = self.tfm.forecast(context_np)
 
         # converting pred datatype
 
         batch_size, n_timestamps = pred.shape
 
-        if isinstance(_y.index, pd.MultiIndex):
-            ins = np.array(list(np.unique(_y.index.droplevel(-1)).repeat(n_timestamps)))
-            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
-
-            idx = (
-                ForecastingHorizon(range(1, n_timestamps + 1), freq=self.fh.freq)
-                .to_absolute(self._cutoff)
-                ._values.tolist()
-                * pred.shape[0]
-            )
-            index = pd.MultiIndex.from_arrays(
-                ins + [idx],
-                names=_y.index.names,
-            )
-            pred = pd.DataFrame(
-                # batch_size * num_timestamps
-                pred.ravel(),
-                index=index,
-                columns=_y.columns,
-            )
-        else:
-            index = (
-                ForecastingHorizon(range(1, n_timestamps + 1))
-                .to_absolute(self._cutoff)
-                ._values
-            )
-            pred = pd.Series(
-                # batch_size * num_timestamps
-                pred.ravel(),
-                index=index,
-                name=_y.name,
-            )
+        index = (
+            ForecastingHorizon(range(1, n_timestamps + 1))
+            .to_absolute(self._cutoff)
+            ._values
+        )
+        pred = pd.Series(
+            # batch_size * num_timestamps
+            pred.ravel(),
+            index=index,
+            name=context.name,
+        )
 
         absolute_horizons = fh.to_absolute_index(self.cutoff)
         dateindex = pred.index.get_level_values(-1).map(
@@ -399,12 +394,22 @@ class TimesFMForecaster(_BaseGlobalForecaster):
                 "horizon_len": 128,
                 "freq": 0,
                 "verbose": False,
+                "repo_id": None,
+                "output_patch_len": 32,
+                "num_layers": 1,
+                "model_dims": 16,
+                "per_core_batch_size": 1,
             },
             {
                 "context_len": 64,
                 "horizon_len": 32,
                 "freq": 0,
                 "verbose": False,
+                "repo_id": None,
+                "output_patch_len": 32,
+                "num_layers": 1,
+                "model_dims": 16,
+                "per_core_batch_size": 1,
             },
         ]
         params_no_broadcasting = [
@@ -412,24 +417,6 @@ class TimesFMForecaster(_BaseGlobalForecaster):
         ]
         test_params.extend(params_no_broadcasting)
         return test_params
-
-
-def _same_index(data):
-    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
-        lambda x: x.index.get_level_values(-1)
-    )
-    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
-        "All series must has the same index"
-    )
-    return data.iloc[0], len(data.iloc[0])
-
-
-def _frame2numpy(data):
-    idx, length = _same_index(data)
-    arr = np.array(data.values, dtype=np.float32).reshape(
-        (-1, length, len(data.columns))
-    )
-    return arr
 
 
 @_multiton
@@ -447,7 +434,7 @@ class _CachedTimesFM:
         self.use_source_package = use_source_package
         self.tfm = None
 
-    def load_from_checkpoint(self):
+    def load(self):
         if self.tfm is None:
             if self.use_source_package:
                 from timesfm import TimesFm
@@ -455,6 +442,14 @@ class _CachedTimesFM:
                 from sktime.libs.timesfm import TimesFm
 
             self.tfm = TimesFm(**self.timesfm_kwargs)
-            self.tfm.load_from_checkpoint(repo_id=self.repo_id)
+            if self.repo_id is not None:
+                self.tfm.load_from_checkpoint(repo_id=self.repo_id)
+            else:
+                if not hasattr(self.tfm, "init_from_random_weights"):
+                    raise NotImplementedError(
+                        "repo_id=None requires the vendored TimesFM "
+                        "implementation. Set use_source_package=False."
+                    )
+                self.tfm.init_from_random_weights()
 
         return self.tfm
