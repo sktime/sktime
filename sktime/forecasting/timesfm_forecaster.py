@@ -296,7 +296,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             timesfm_kwargs=self._get_timesfm_kwargs(),
             use_source_package=self.use_source_package,
             repo_id=self.repo_id,
-        ).load()
+        ).load_from_checkpoint()
 
     def _get_timesfm_kwargs(self):
         """Get the kwargs for TimesFM model."""
@@ -434,7 +434,7 @@ class _CachedTimesFM:
         self.use_source_package = use_source_package
         self.tfm = None
 
-    def load(self):
+    def load_from_checkpoint(self):
         if self.tfm is None:
             if self.use_source_package:
                 from timesfm import TimesFm
