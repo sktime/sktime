@@ -136,8 +136,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:exogenous": False,
-        "scitype:y": "univariate",
-        "capability:pred_var": True,
+        "capability:multivariate": False,
         "capability:pred_int": True,
         # CI and test flags
         # -----------------
@@ -163,7 +162,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, default=None
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, default=None
             Exogenous variables are ignored.
 
@@ -688,12 +687,11 @@ class NaiveVariance(BaseForecaster):
         "authors": ["fkiraly", "bethrice44"],
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
-        "capability:pred_var": True,
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):
