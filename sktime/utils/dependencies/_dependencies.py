@@ -109,20 +109,24 @@ def _get_lowest_compatible_python_version(estimator):
     str
         Lowest compatible Python version, e.g. "3.11".
     """
-    spec = estimator.get_class_tag(
-        "python_version",
-    )
+    spec = estimator.get_class_tag("python_version")
 
-    spec = ">=3.11" if spec is None else spec
+    # fallback if tag is missing
+    if spec is None:
+        return "3.11"
 
     spec_set = SpecifierSet(spec)
 
-    lower_bounds = [Version(s.version) for s in spec_set if s.operator in (">=", "==")]
+    lower_bounds = []
 
-    if not lower_bounds:
-        raise ValueError(
-            f"Could not determine lowest compatible Python version from "
-            f"specifier '{spec}'."
-        )
+    for s in spec_set:
+        if s.operator == ">=":
+            lower_bounds.append(Version(s.version))
+        elif s.operator == "==":
+            lower_bounds.append(Version(s.version))
 
-    return str(min(lower_bounds))
+    if lower_bounds:
+        return str(max(lower_bounds))
+
+    # no lower bound specified, e.g. "<3.14"
+    return "3.11"
