@@ -117,6 +117,59 @@ class _ArpsDcaBase(BaseForecaster):
             values = index.astype("int64").to_numpy()
         return values.astype(float).reshape(-1)
 
+    def _get_qi_init(self, q):
+        """Return initial rate guess from data or constructor parameter."""
+        if self.qi_init is not None:
+            return float(self.qi_init)
+        return float(max(q[0], 1e-10))
+
+    @staticmethod
+    def _estimate_di_from_data(q, t):
+        """Rough nominal decline rate from endpoint ratio, if data is declining."""
+        if len(q) < 2:
+            return None
+        t_span = float(t[-1] - t[0])
+        if t_span <= 0:
+            return None
+        q0, q1 = float(q[0]), float(q[-1])
+        if q0 <= 0 or q1 <= 0 or q1 >= q0:
+            return None
+        di_est = -np.log(q1 / q0) / t_span
+        if not np.isfinite(di_est) or di_est <= 0:
+            return None
+        return di_est
+
+    def _get_di_init(self, q, t):
+        """Return initial decline rate guess from data or constructor parameter."""
+        di_est = self._estimate_di_from_data(q, t)
+        if di_est is not None:
+            return max(di_est, 1e-10)
+        return self.di_init
+
+    def _fit_curve_params(self, t, q):
+        """Fit decline curve parameters, falling back to initial guesses on failure."""
+        p0 = np.asarray(self._get_p0(q, t), dtype=float)
+        try:
+            popt, pcov = curve_fit(
+                self._rate_func,
+                t,
+                q,
+                p0=p0,
+                bounds=self._get_bounds(),
+                maxfev=50000,
+            )
+            return popt, pcov, True
+        except (RuntimeError, ValueError):
+            n_params = len(p0)
+            warnings.warn(
+                f"{type(self).__name__}: curve_fit did not converge; "
+                "using initial parameter guesses. "
+                "Probabilistic forecasts are disabled.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            return p0, np.full((n_params, n_params), np.inf), False
+
     def _fit(self, y, X, fh):
         """Fit the decline curve model to training data.
 
@@ -138,17 +191,14 @@ class _ArpsDcaBase(BaseForecaster):
         t = t_all - self.t0_
         q = y.iloc[:, 0].values.astype(float)
 
-        popt, pcov = curve_fit(
-            self._rate_func,
-            t,
-            q,
-            p0=self._get_p0(q),
-            bounds=self._get_bounds(),
-            maxfev=10000,
-        )
+        self.set_tags(**{"capability:pred_int": True})
+        popt, pcov, converged = self._fit_curve_params(t, q)
 
         self.params_ = popt
         self.params_cov_ = pcov
+
+        if not converged:
+            self.set_tags(**{"capability:pred_int": False})
 
         t_last = t[-1]
         q_last_obs = q[-1]
@@ -366,9 +416,8 @@ class ArpsExponential(_ArpsDcaBase):
     def _cum_func(t, qi, Di):
         return (qi / Di) * (1 - np.exp(-Di * t))
 
-    def _get_p0(self, q):
-        qi_init = float(q[0]) if self.qi_init is None else self.qi_init
-        return [qi_init, self.di_init]
+    def _get_p0(self, q, t):
+        return [self._get_qi_init(q), self._get_di_init(q, t)]
 
     def _get_bounds(self):
         return ([0.0, 1e-10], [np.inf, np.inf])
@@ -486,9 +535,8 @@ class ArpsHyperbolic(_ArpsDcaBase):
         u = 1.0 + b * Di * t
         return (qi / (Di * (b - 1.0))) * (np.power(u, (b - 1.0) / b) - 1.0)
 
-    def _get_p0(self, q):
-        qi_init = float(q[0]) if self.qi_init is None else self.qi_init
-        return [qi_init, self.di_init, self.b_init]
+    def _get_p0(self, q, t):
+        return [self._get_qi_init(q), self._get_di_init(q, t), self.b_init]
 
     def _get_bounds(self):
         return ([0.0, 1e-10, 1e-10], [np.inf, np.inf, np.inf])
@@ -603,9 +651,8 @@ class ArpsHarmonic(_ArpsDcaBase):
     def _cum_func(t, qi, Di):
         return (qi / Di) * np.log1p(Di * t)
 
-    def _get_p0(self, q):
-        qi_init = float(q[0]) if self.qi_init is None else self.qi_init
-        return [qi_init, self.di_init]
+    def _get_p0(self, q, t):
+        return [self._get_qi_init(q), self._get_di_init(q, t)]
 
     def _get_bounds(self):
         return ([0.0, 1e-10], [np.inf, np.inf])
