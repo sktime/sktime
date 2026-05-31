@@ -277,13 +277,15 @@ def _parse_blueprints(response_text):
 def _mock_llm(_messages, _model, _api_params):
     """Mock LLM callable for testing — returns a single naive blueprint."""
     return json.dumps(
-        [
-            {
-                "name": "Naive last",
-                "spec": 'NaiveForecaster(strategy="last")',
-                "reason": "A simple baseline that often performs decently.",
-            }
-        ]
+        {
+            "blueprints": [
+                {
+                    "name": "Naive last",
+                    "spec": 'NaiveForecaster(strategy="last")',
+                    "reason": "A simple baseline that often performs decently.",
+                }
+            ]
+        }
     )
 
 
