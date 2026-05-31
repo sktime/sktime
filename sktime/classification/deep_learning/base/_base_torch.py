@@ -8,7 +8,6 @@ import abc
 from collections.abc import Callable
 
 import numpy as np
-from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.preprocessing import LabelEncoder
 
 from sktime.classification.base import BaseClassifier
@@ -83,6 +82,14 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         "tests:vm": True,
     }
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.metrics is not None:
+            self.set_tags(**{"tests:python_dependencies": "torchmetrics"})
+
     def __init__(
         self: "BaseDeepClassifierPytorch",
         num_epochs: int = 16,
@@ -130,9 +137,6 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             torchManual_seed = _safe_import("torch.manual_seed")
             torchManual_seed(self.random_state)
 
-        if self.metrics:
-            _check_soft_dependencies("torchmetrics", severity="error")
-
         # validate activation function w.r.t. criterion specified
         self._validate_activation_criterion()
         # post this function call,
@@ -152,8 +156,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
     def _fit(self, X, y):
         if self.random_state is not None:
-            torchManual_seed = _safe_import("torch.manual_seed")
-            torchManual_seed(self.random_state)
+            import torch
+
+            torch.manual_seed(self.random_state)
 
         y = self._encode_y(y)
 
@@ -608,7 +613,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     metrics_dict[metric] = metric_class(**kwargs)
                 else:
                     raise ValueError(
-                        f"Unknown metric: {metric}. Please pass one of the available "
+                        f"Error in constructing torch based classifier "
+                        f"{type(self).__name__}, "
+                        f"unknown metric: {metric}. Please pass one of the available "
                         f"classification metrics from torchmetrics or check the metric "
                         f"name. See https://lightning.ai/docs/torchmetrics/stable/"
                     )

@@ -8,7 +8,6 @@ import abc
 from collections.abc import Callable
 
 import numpy as np
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.regression.base import BaseRegressor
 from sktime.utils.dependencies import _safe_import
@@ -79,6 +78,14 @@ class BaseDeepRegressorTorch(BaseRegressor):
         "tests:vm": True,
     }
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.metrics is not None:
+            self.set_tags(**{"tests:python_dependencies": "torchmetrics"})
+
     def __init__(
         self: "BaseDeepRegressorTorch",
         num_epochs: int = 16,
@@ -123,9 +130,6 @@ class BaseDeepRegressorTorch(BaseRegressor):
         if self.random_state is not None:
             torchManual_seed = _safe_import("torch.manual_seed")
             torchManual_seed(self.random_state)
-
-        if self.metrics:
-            _check_soft_dependencies("torchmetrics", severity="error")
 
         # optimizers, criterions, callbacks will be instantiated in
         # _instantiate_optimizer, _instantiate_criterion & _instantiate_callbacks
@@ -431,7 +435,9 @@ class BaseDeepRegressorTorch(BaseRegressor):
                     metrics_dict[metric] = metric_class()
                 else:
                     raise ValueError(
-                        f"Unknown metric: {metric}. Please pass one of the available "
+                        f"Error in constructing torch based regressor "
+                        f"{type(self).__name__}, "
+                        f"unknown metric: {metric}. Please pass one of the available "
                         f"metrics from torchmetrics or check the metric name. "
                         f"See https://lightning.ai/docs/torchmetrics/stable/"
                     )
