@@ -192,8 +192,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     ForecastingRandomizedSearchCV(...)
     >>> y_pred = rscv.predict(fh)
 
-        Advanced randomized search with a ``scipy.stats`` distribution for a
-        continuous hyperparameter, on a pipeline forecaster:
+    Advanced randomized search with a ``scipy.stats`` distribution for a
+    continuous hyperparameter, on a pipeline forecaster:
 
     >>> from scipy.stats import randint
     >>> from sktime.datasets import load_shampoo_sales
