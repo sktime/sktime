@@ -142,19 +142,20 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         self.lr = lr
         self.criterion_kwargs = criterion_kwargs
 
-        # used to difrentiate between user passed "SGD"
-        # and the default "SGD" with kwargs
         self.optim = optim
         self.optim_kwargs = optim_kwargs
 
-        self.optimizer = optim
-        self.optimizer_kwargs = optim_kwargs
-
-        # default case
-        if self.optim is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
+        # compute the effective optimizer settings as local variables, so that
+        # only the declared parameters are stored as attributes (sklearn init
+        # contract); the base class stores the effective values passed below.
+        # used to differentiate between user passed "SGD"
+        # and the default "SGD" with kwargs (see #10208)
+        optimizer = optim
+        optimizer_kwargs = optim_kwargs
+        if optim is None:
+            optimizer = "SGD"
+            if optimizer_kwargs is None:
+                optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
 
         if len(self.filter_sizes) != len(self.kernel_sizes):
             raise ValueError(
@@ -169,8 +170,8 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             activation=self.activation,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
-            optimizer=self.optimizer,
-            optimizer_kwargs=self.optimizer_kwargs,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
             lr=self.lr,
