@@ -2,6 +2,8 @@
 
 from importlib.util import find_spec
 
+from packaging.specifiers import SpecifierSet
+from packaging.version import Version
 from skbase.utils.dependencies._dependencies import (
     _check_soft_dependencies,
     _get_installed_packages,
@@ -13,6 +15,7 @@ __all__ = [
     "_check_mlflow_dependencies",
     "_check_soft_dependencies",
     "_get_installed_packages",
+    "_get_lowest_compatible_python_version",
     "_raise_at_severity",
 ]
 
@@ -92,3 +95,34 @@ def _check_mlflow_dependencies(msg=None, severity="error"):
     MLFLOW_DEPS = [["mlflow", "mlflow-skinny"]]
 
     return _check_soft_dependencies(MLFLOW_DEPS, msg=msg, severity=severity)
+
+
+def _get_lowest_compatible_python_version(estimator):
+    """Get the lowest Python version compatible with an estimator.
+
+    Parameters
+    ----------
+    estimator : sktime estimator class
+
+    Returns
+    -------
+    str
+        Lowest compatible Python version, e.g. "3.11".
+    """
+    spec = estimator.get_class_tag(
+        "python_version",
+    )
+
+    spec = ">=3.11" if spec is None else spec
+
+    spec_set = SpecifierSet(spec)
+
+    lower_bounds = [Version(s.version) for s in spec_set if s.operator in (">=", "==")]
+
+    if not lower_bounds:
+        raise ValueError(
+            f"Could not determine lowest compatible Python version from "
+            f"specifier '{spec}'."
+        )
+
+    return str(min(lower_bounds))

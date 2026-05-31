@@ -31,20 +31,32 @@ jobs:
       - name: Install sktime
         run: pip install .[dev]
 
-      - name: Get all forecasters
+      - name: Get all forecasters and Python versions
         id: get
         run: |
           python - <<EOF
           import json
           from sktime.registry import all_estimators
 
+          from sktime.utils.dependencies._dependencies import _get_lowest_compatible_python_version
+
           forecasters = all_estimators("forecaster")
-          names = [name for name, _ in forecasters]
+
+          matrix_data = []
+          for name, est_class in forecasters:
+              py_ver = _get_lowest_compatible_python_version(est_class)
+
+              matrix_data.append({
+                  "name": name,
+                  "python_version": py_ver
+              })
+
+          output_json = json.dumps(matrix_data)
 
           with open("forecasters.json", "w") as f:
-              json.dump(names, f)
+              f.write(output_json)
 
-          print(json.dumps(names))
+          print(output_json)
           EOF
 
           echo "forecasters=$(cat forecasters.json)" >> $GITHUB_OUTPUT
@@ -64,7 +76,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.forecaster.python_version }}
 
       - name: Install sktime
         run: pip install .[dev]
@@ -74,7 +86,7 @@ jobs:
           python - <<EOF
           from sktime.registry import deps
 
-          name = "${{ matrix.forecaster }}"
+          name = "${{ matrix.forecaster.name }}"
           d = deps(name, include_test_deps=True)
 
           if d:
@@ -93,7 +105,7 @@ jobs:
           from sktime.registry import all_estimators
           from sktime.utils.estimator_checks import check_estimator
 
-          name = "${{ matrix.forecaster }}"
+          name = "${{ matrix.forecaster.name }}"
           print(f"Running test for: {name}")
 
           forecasters = dict(all_estimators("forecaster"))
