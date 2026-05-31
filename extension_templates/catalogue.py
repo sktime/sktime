@@ -70,6 +70,42 @@ class MyCatalogue(BaseCatalogue):
         "info:source": "DOI",
     }
 
+    # todo: add any hyper-parameters and components to constructor
+    def __init__(self, parama, paramb="default", paramc=None):
+        # estimators should precede parameters
+        #  if estimators have default values, set None and initialize below
+
+        # todo: write any hyper-parameters and components to self
+        self.parama = parama
+        self.paramb = paramb
+        # IMPORTANT: the self.params should never be overwritten or mutated from now on
+        # for handling defaults etc, write to other attributes, e.g., self._paramc
+        self.paramc = paramc
+
+        # leave this as is
+        super().__init__()
+
+        # do not put anything else in __init__,
+        # use __dynamic_tags__ for dynamic tag setting
+        # use __post_init__ for any further initialization logic
+
+    # todo: add if there is dynamic tag setting logic, otherwise delete this method
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        # todo: if tags of estimator depend on component tags, set these here
+        #  typically only needed if estimator is a composite
+        #  tags set here apply to the instance, and override the class tags
+        #
+        # example 1: conditional setting of a tag based on parameter foo
+        # if self.foo == 42:
+        #   self.set_tags(**{"capability:missing_values": True})
+        # example 2: cloning tags from component estimator component_estimator
+        #   self.clone_tags(self.component_estimator, ["capability:missing_values"])
+
+    # todo: add any post-init logic here, otherwise delete this method
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 
