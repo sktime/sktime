@@ -338,7 +338,7 @@ def _generate_time_series_plot_base64(y):
     base64_img : str
         Base64-encoded PNG image.
     """
-    _check_soft_dependencies("matplotlib", object="LLMBlueprintForecaster plotting")
+    _check_soft_dependencies("matplotlib", obj="AutoResearchForecaster plotting")
 
     import matplotlib.pyplot as plt
 
@@ -438,7 +438,7 @@ def _get_image_description(y):
     return basic_desc, base64_img
 
 
-class LLMBlueprintForecaster(BaseForecaster):
+class AutoResearchForecaster(BaseForecaster):
     """Forecaster that uses an LLM to generate and refine sktime pipeline blueprints.
 
     Inspired by Karpathy's autoresearch project, this forecaster:
@@ -504,11 +504,11 @@ class LLMBlueprintForecaster(BaseForecaster):
 
     Examples
     --------
-    >>> from sktime_autoresearch import LLMBlueprintForecaster
+    >>> from sktime_autoresearch import AutoResearchForecaster
     >>> from sktime.datasets import load_airline
     >>> from sktime.split import SingleWindowSplitter
     >>> y = load_airline()
-    >>> forecaster = LLMBlueprintForecaster(  # doctest: +SKIP
+    >>> forecaster = AutoResearchForecaster(  # doctest: +SKIP
     ...     cv=SingleWindowSplitter(fh=[1, 2, 3]),
     ...     model="openai/gpt-4o-mini",
     ...     n_iterations=2,
