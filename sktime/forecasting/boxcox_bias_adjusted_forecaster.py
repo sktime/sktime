@@ -52,8 +52,12 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "sanskarmodi8",
+        # estimator type
+        # --------------
         "capability:pred_int": True,
-        "capability:pred_var": True,
     }
 
     def __init__(self, forecaster, lambda_fixed=None):

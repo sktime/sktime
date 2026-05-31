@@ -16,10 +16,10 @@ class DummyGlobalForecaster(BaseForecaster):
     of all time series in the pretrain set, then predicts that
     mean for all future time points.
 
-    Useful for:
+    Useful as:
 
-    - Testing the pretraining API
-    - Baseline comparisons for global forecasting models
+    - Simple baseline for global forecasting
+    - Test case for the pretraining API
     - Educational examples
 
     Parameters
@@ -27,10 +27,10 @@ class DummyGlobalForecaster(BaseForecaster):
     strategy : str, one of {"mean", "last", "mean_by_index"}, default="mean"
         Strategy for prediction:
 
-        - "mean": predict mean of all values in pretrain set
-        - "last": predict last value from fit data
-        - "mean_by_index": predict mean computed per time index across pretrain series.
-          Useful for cold start scenarios where pattern by index matters.
+        - ``"mean"``: predict mean of all values in pretrain set
+        - ``"last"``: predict last value from fit data
+        - ``"mean_by_index"``: predict mean computed per time index across pretraining
+          series. Useful for cold start scenarios where pattern by index matters.
 
     Attributes
     ----------
@@ -71,7 +71,7 @@ class DummyGlobalForecaster(BaseForecaster):
 
     _tags = {
         "capability:pretrain": True,
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
         "requires-fh-in-fit": False,
         "capability:pred_int": False,
