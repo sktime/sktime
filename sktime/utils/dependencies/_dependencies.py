@@ -1,5 +1,6 @@
 """Utility to check soft dependency imports, and raise warnings or errors."""
 
+from importlib.metadata import metadata
 from importlib.util import find_spec
 
 from packaging.specifiers import SpecifierSet
@@ -97,8 +98,21 @@ def _check_mlflow_dependencies(msg=None, severity="error"):
     return _check_soft_dependencies(MLFLOW_DEPS, msg=msg, severity=severity)
 
 
+def _get_lowest_bound(spec):
+    """Extract the lowest version allowed by a specifier string."""
+    spec_set = SpecifierSet(spec)
+
+    lower_bounds = []
+
+    for s in spec_set:
+        if s.operator in {">=", "==", ">"}:
+            lower_bounds.append(Version(s.version))
+
+    return max(lower_bounds) if lower_bounds else None
+
+
 def _get_lowest_compatible_python_version(estimator):
-    """Get the lowest Python version compatible with an estimator.
+    """Get the lowest Python version compatible with an estimator and sktime.
 
     Parameters
     ----------
@@ -111,22 +125,11 @@ def _get_lowest_compatible_python_version(estimator):
     """
     spec = estimator.get_class_tag("python_version")
 
-    # fallback if tag is missing
-    if spec is None:
-        return "3.11"
+    sktime_spec = metadata("sktime")["Requires-Python"]
 
-    spec_set = SpecifierSet(spec)
+    sktime_lower = _get_lowest_bound(sktime_spec)
+    estimator_lower = _get_lowest_bound(spec) if spec is not None else None
 
-    lower_bounds = []
+    candidates = [v for v in [sktime_lower, estimator_lower] if v is not None]
 
-    for s in spec_set:
-        if s.operator == ">=":
-            lower_bounds.append(Version(s.version))
-        elif s.operator == "==":
-            lower_bounds.append(Version(s.version))
-
-    if lower_bounds:
-        return str(max(lower_bounds))
-
-    # no lower bound specified, e.g. "<3.14"
-    return "3.11"
+    return str(max(candidates))
