@@ -1,5 +1,19 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Interface for the HuggingFace TimesFM-2.x forecasting model series."""
+"""TimesFM-2 forecaster adapter for ``sktime``.
+
+This module provides an ``sktime`` forecaster wrapping the Hugging Face
+``transformers`` implementation of Google Research TimesFM-2 models
+(TimesFM-2.0 and TimesFM-2.5). It supports:
+
+- zero-shot prediction through :meth:`fit` + :meth:`predict`
+- global pretraining on panel/hierarchical data through :meth:`pretrain`
+- quantile prediction through :meth:`predict_quantiles`
+- optional PEFT wrapping during model loading
+
+The adapter intentionally keeps the estimator API aligned with ``sktime`` while
+delegating model loading, forward passes, and optional training to
+``transformers`` classes.
+"""
 
 __author__ = ["rajatsen91", "siriuz42", "geetu040"]
 # rajatsen91 for google-research/timesfm
@@ -19,64 +33,88 @@ from sktime.utils.singleton import _multiton
 
 
 class TimesFM2Forecaster(BaseForecaster):
-    """TimesFM-2.x forecaster via Hugging Face transformers.
+    """TimesFM-2.x forecaster via Hugging Face ``transformers``.
 
-    TimesFM is a pretrained time-series foundation model developed by
-    Google Research for zero-shot forecasting. This forecaster wraps the
-    Hugging Face ``transformers`` implementation of TimesFM-2.x and exposes
-    it through the sktime forecasting interface.
+    This forecaster wraps TimesFM-2 prediction models from Hugging Face and
+    exposes them through the ``sktime`` forecasting interface.
+
+    Two primary workflows are supported:
+
+    1. ``fit`` for zero-shot inference setup (loads model and stores history).
+    2. ``pretrain`` for global fine-tuning on panel/hierarchical data.
+
+    Notes
+    -----
+    - Prediction is bounded by ``model.config.horizon_length``. Requested
+      forecast steps beyond this limit raise ``ValueError``.
+    - Quantile prediction is only available for quantiles present in
+      ``model.config.quantiles``.
+    - Loaded models are cached via a multiton helper keyed by model-loading
+      inputs to avoid repeated model instantiation.
+    - For pickling, ``model_`` is excluded from serialized state and reloaded
+      lazily after unpickling.
 
     Parameters
     ----------
     model_path : str, default="google/timesfm-2.5-200m-transformers"
-        Hugging Face model identifier or local path to a TimesFM-2.x checkpoint.
-        If ``None``, a model is initialized from ``config`` or from the default
-        ``transformers.TimesFmConfig``.
-    config : transformers.TimesFmConfig or dict, optional (default=None)
-        Configuration passed to the Hugging Face model loader. If ``model_path``
-        is not ``None``, this overrides or supplies the model configuration in
-        ``from_pretrained``. If ``model_path`` is ``None``, it is used to
-        initialize the model from configuration.
+        Hugging Face repository identifier or local path to a TimesFM checkpoint.
+        If ``None``, a model is created from ``config`` (or default
+        ``transformers.TimesFmConfig``).
+    config : transformers.PretrainedConfig or dict, optional (default=None)
+        Model configuration used for loading/initialization.
+
+        - If ``model_path`` is not ``None``:
+          passed to ``from_pretrained(..., config=config)``.
+        - If ``model_path`` is ``None``:
+          used to instantiate a model from configuration.
+
+        If provided as ``dict``, the architecture entry (for example
+        ``"TimesFmModelForPrediction"`` or ``"TimesFm2_5ModelForPrediction"``)
+        is used to infer the config class.
     forward_kwargs : dict, optional (default=None)
-        Keyword arguments passed directly to the Hugging Face model forward
-        method during inference. See the Hugging Face TimesFM forward
-        documentation for supported model-specific options such as
-        ``forecast_context_len``, ``truncate_negative``, or
-        ``force_flip_invariance``.
-        See [5]_ for TimesFM-2.0 and [6]_ for TimesFM-2.5.
-    validation_split : float, default=0.2
-        Fraction of data reserved for validation when ``training_args`` is
-        supplied. If ``None``, no validation dataset is passed to the Hugging
-        Face Trainer.
-    training_args : transformers.TrainingArguments or dict, optional (default=None)
-        Training arguments for Hugging Face Trainer.
-        Custom loss function passed to Hugging Face Trainer during fine-tuning.
-    compute_metrics : callable or list of callable, optional (default=None)
-        Metric function or functions passed to Hugging Face Trainer during
-        fine-tuning.
+        Additional keyword arguments forwarded to ``model(...)`` during
+        :meth:`predict` and :meth:`predict_quantiles`.
+    validation_split : float or None, default=0.2
+        Fraction of data reserved for evaluation when :meth:`pretrain` is used.
+        If ``None``, no evaluation dataset is created.
+    training_args : dict, optional (default=None)
+        Keyword arguments used to construct ``transformers.TrainingArguments``
+        in :meth:`pretrain`.
+    compute_loss_func : callable, optional (default=None)
+        Optional custom loss function passed to ``transformers.Trainer``.
+    compute_metrics : callable or dict, optional (default=None)
+        Metrics callback(s) passed to ``transformers.Trainer``.
     callbacks : list, optional (default=None)
-        Hugging Face Trainer callbacks used during fine-tuning.
+        Trainer callbacks passed to ``transformers.Trainer``.
     peft_config : peft.PeftConfig, optional (default=None)
-        Configuration for parameter-efficient fine-tuning. If provided, the
-        loaded TimesFM model is wrapped with PEFT during ``pretrain``.
+        If provided, wraps the loaded base model with PEFT using
+        ``peft.get_peft_model``.
     device : str, default="cpu"
-        Device on which to run the model, for example ``"cpu"``, ``"cuda"``,
-        or ``"cuda:0"``.
+        Device string used to move the loaded model, for example ``"cpu"``,
+        ``"cuda"``, or ``"cuda:0"``.
 
     References
     ----------
     .. [1] Das, A., Kong, W., Sen, R., and Zhou, Y. (2024).
-       A decoder-only foundation model for time-series forecasting. CoRR.
-       https://arxiv.org/abs/2310.10688
-    .. [2] https://github.com/google-research/timesfm
-    .. [3] https://huggingface.co/google/timesfm-2.5-200m-transformers
-    .. [4] https://huggingface.co/google/timesfm-2.0-500m-pytorch
-    .. [5] https://huggingface.co/docs/transformers/en/model_doc/timesfm#transformers.TimesFmModelForPrediction.forward
-    .. [6] https://huggingface.co/docs/transformers/en/model_doc/timesfm2_5#transformers.TimesFm2_5ModelForPrediction.forward
-    .. [7] https://huggingface.co/docs/transformers/v5.9.0/en/main_classes/trainer#transformers.TrainingArguments
+       *A Decoder-only Foundation Model for Time-series Forecasting*.
+       CoRR. https://arxiv.org/abs/2310.10688
+    .. [2] Google Research TimesFM repository:
+       https://github.com/google-research/timesfm
+    .. [3] TimesFM-2.5 model card:
+       https://huggingface.co/google/timesfm-2.5-200m-transformers
+    .. [4] TimesFM-2.0 model card:
+       https://huggingface.co/google/timesfm-2.0-500m-pytorch
+    .. [5] TimesFM-2.0 forward API:
+       https://huggingface.co/docs/transformers/en/model_doc/timesfm#transformers.TimesFmModelForPrediction.forward
+    .. [6] TimesFM-2.5 forward API:
+       https://huggingface.co/docs/transformers/en/model_doc/timesfm2_5#transformers.TimesFm2_5ModelForPrediction.forward
+    .. [7] Trainer/TrainingArguments docs:
+       https://huggingface.co/docs/transformers/en/main_classes/trainer
 
     Examples
     --------
+    Basic zero-shot forecasting from a pretrained checkpoint:
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
     >>> y = load_airline()
@@ -86,6 +124,58 @@ class TimesFM2Forecaster(BaseForecaster):
     ... )  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+
+    Quantile prediction using model-supported alphas:
+
+    >>> forecaster = TimesFM2Forecaster(device="cpu")  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> q_pred = forecaster.predict_quantiles(  # doctest: +SKIP
+    ...     fh=[1, 2, 3],
+    ...     alpha=[0.1, 0.5, 0.9],
+    ... )
+
+    Initialize from config only (no pretrained checkpoint):
+
+    >>> cfg = {
+    ...     "architectures": ["TimesFmModelForPrediction"],
+    ...     "num_hidden_layers": 1,
+    ...     "hidden_size": 16,
+    ...     "intermediate_size": 16,
+    ...     "head_dim": 8,
+    ...     "num_attention_heads": 4,
+    ...     "context_length": 8,
+    ...     "horizon_length": 6,
+    ...     "patch_length": 2,
+    ...     "quantiles": [0.1, 0.5, 0.9],
+    ... }
+    >>> forecaster = TimesFM2Forecaster(  # doctest: +SKIP
+    ...     model_path=None,
+    ...     config=cfg,
+    ...     device="cpu",
+    ... )
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2])  # doctest: +SKIP
+
+    Global pretraining on panel data:
+
+    >>> from sktime.datasets import load_tecator
+    >>> y_panel = load_tecator(return_type="pd-multiindex")  # doctest: +SKIP
+    >>> y_panel = y_panel.drop(columns=["class_val"])  # doctest: +SKIP
+    >>> forecaster = TimesFM2Forecaster(  # doctest: +SKIP
+    ...     model_path="google/timesfm-2.5-200m-transformers",
+    ...     training_args={"max_steps": 1, "eval_steps": 1},
+    ...     validation_split=0.1,
+    ... )
+    >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
+
+    Optional PEFT wrapping (requires ``peft``):
+
+    >>> from peft import LoraConfig  # doctest: +SKIP
+    >>> peft_cfg = LoraConfig(r=8, lora_alpha=16)  # doctest: +SKIP
+    >>> forecaster = TimesFM2Forecaster(  # doctest: +SKIP
+    ...     peft_config=peft_cfg,
+    ...     training_args={"max_steps": 1, "eval_steps": 1},
+    ... )
     """
 
     _tags = {
@@ -182,10 +272,11 @@ class TimesFM2Forecaster(BaseForecaster):
             )
         elif self.validation_split is not None:
             warn(
-                "Could not create a TimesFM validation dataset because the "
-                "validation split is shorter than context_length + horizon_length "
-                f"({len(y_eval)} < {context_length + horizon_length}). "
-                "Training will continue without evaluation.",
+                "Skipping TimesFM evaluation dataset creation: validation split "
+                "length is smaller than context_length + horizon_length "
+                f"(observed={len(y_eval)}, required>="
+                f"{context_length + horizon_length}). Training continues "
+                "without evaluation.",
                 stacklevel=2,
             )
 
@@ -281,10 +372,11 @@ class TimesFM2Forecaster(BaseForecaster):
         horizon_length = self.model_.config.horizon_length
         if np.max(preds_idx) >= horizon_length:
             raise ValueError(
-                "The requested forecasting horizon extends beyond the TimesFM "
-                f"model horizon_length. The maximum requested relative horizon "
-                f"is {np.max(preds_idx) + 1}, but model.config.horizon_length is "
-                f"{horizon_length}."
+                "Requested forecasting horizon exceeds TimesFM model capacity: "
+                f"max requested step={np.max(preds_idx) + 1}, "
+                f"configured horizon_length={horizon_length}. "
+                "Use a shorter horizon or a model/config with a larger "
+                "horizon_length."
             )
 
         past_values = self.context_
@@ -355,10 +447,11 @@ class TimesFM2Forecaster(BaseForecaster):
         preds_idx = fh._values.values - 1
         if np.max(preds_idx) >= horizon_length:
             raise ValueError(
-                "The requested forecasting horizon extends beyond the TimesFM "
-                f"model horizon_length. The maximum requested relative horizon "
-                f"is {np.max(preds_idx) + 1}, but model.config.horizon_length is "
-                f"{horizon_length}."
+                "Requested forecasting horizon exceeds TimesFM model capacity: "
+                f"max requested step={np.max(preds_idx) + 1}, "
+                f"configured horizon_length={horizon_length}. "
+                "Use a shorter horizon or a model/config with a larger "
+                "horizon_length."
             )
 
         if alpha is None:
@@ -367,8 +460,8 @@ class TimesFM2Forecaster(BaseForecaster):
         quantiles = [round(i, 3) for i in quantiles]
         if not set(alpha).issubset(set(quantiles)):
             raise ValueError(
-                "The requested quantiles are different than the ones in config "
-                f"alpha: {alpha} and valid quantiles in config: {quantiles}"
+                "Requested quantiles are not all available in model config: "
+                f"requested={alpha}, available={quantiles}."
             )
         quantiles_idx = np.array([quantiles.index(i) for i in alpha])
 
@@ -398,17 +491,42 @@ class TimesFM2Forecaster(BaseForecaster):
         return pred_quantiles
 
     def __getstate__(self):
-        """Return state for pickling, excluding the model object."""
+        """Return pickle state without materializing the model object.
+
+        Returns
+        -------
+        state : dict
+            Estimator state dictionary with ``model_`` set to ``None`` when
+            present, so pickling does not include large/unpickleable model state.
+        """
         state = self.__dict__.copy()
         if "model_" in state:
             state["model_"] = None
         return state
 
     def __setstate__(self, state):
-        """Restore state; the model will be reloaded on next prediction."""
+        """Restore estimator state after unpickling.
+
+        Parameters
+        ----------
+        state : dict
+            State dictionary produced by :meth:`__getstate__`.
+
+        Notes
+        -----
+        Model weights are reloaded lazily on first subsequent model access.
+        """
         self.__dict__.update(state)
 
     def _load_model(self):
+        """Load or retrieve a cached TimesFM model instance.
+
+        Returns
+        -------
+        model : transformers.PreTrainedModel
+            Loaded model on ``self.device``. If ``self.model_`` already exists,
+            it is returned directly.
+        """
         if hasattr(self, "model_") and self.model_ is not None:
             return self.model_
 
@@ -423,6 +541,14 @@ class TimesFM2Forecaster(BaseForecaster):
         return self.model_
 
     def _get_unique_key(self):
+        """Build cache key for the multiton model loader.
+
+        Returns
+        -------
+        key : str
+            Deterministic string representation of model-loading attributes used
+            by :class:`_CachedTimesFM2`.
+        """
         key = {
             "model_path": self.model_path,
             "config": self.config,
@@ -501,7 +627,26 @@ class TimesFM2Forecaster(BaseForecaster):
 
 @_multiton
 class _CachedTimesFM2:
-    """Cached TimesFM 2.5 model instance."""
+    """Multiton-backed cache wrapper for a loaded TimesFM model.
+
+    Instances are keyed externally (via :class:`TimesFM2Forecaster`) so that
+    repeated forecasters with equivalent loading parameters can share a single
+    model instance in memory.
+
+    Parameters
+    ----------
+    key : str
+        Multiton key (stored for traceability).
+    model_path : str or None
+        Model identifier/path for ``from_pretrained``. If ``None``, create model
+        from config only.
+    config : transformers.PretrainedConfig or dict or None
+        Configuration used for model loading/creation.
+    peft_config : peft.PeftConfig or None
+        Optional PEFT wrapping configuration.
+    device : str
+        Device to move the created model to.
+    """
 
     def __init__(self, key, model_path, config, peft_config, device):
         self.key = key
@@ -512,6 +657,20 @@ class _CachedTimesFM2:
         self.model_ = None
 
     def load(self):
+        """Load model if needed and return cached instance.
+
+        Returns
+        -------
+        model : transformers.PreTrainedModel
+            Loaded TimesFM prediction model on ``self.device``.
+
+        Notes
+        -----
+        - If ``model_path`` is set, loads weights via ``from_pretrained``.
+        - If ``model_path`` is ``None``, initializes from config.
+        - If ``peft_config`` is provided, wraps the model with PEFT after base
+          loading and device placement.
+        """
         if self.model_ is not None:
             return self.model_
 
@@ -549,6 +708,18 @@ class _CachedTimesFM2:
         return self.model_
 
     def _wrap_with_peft(self):
+        """Wrap loaded model with PEFT.
+
+        Returns
+        -------
+        model : torch.nn.Module
+            PEFT-wrapped model.
+
+        Raises
+        ------
+        ModuleNotFoundError
+            If ``peft`` is not installed.
+        """
         _check_soft_dependencies("peft", severity="error")
 
         from peft import get_peft_model
@@ -557,7 +728,24 @@ class _CachedTimesFM2:
 
 
 def _get_timesfm_model_class(config):
-    """Return the TimesFM prediction class named by the config architecture."""
+    """Resolve TimesFM prediction model class from a config object.
+
+    Parameters
+    ----------
+    config : transformers.PretrainedConfig
+        Config object expected to contain ``architectures``.
+
+    Returns
+    -------
+    model_class : type
+        ``transformers`` model class referenced by ``config.architectures[0]``.
+
+    Notes
+    -----
+    Defaults to ``TimesFmModelForPrediction`` when ``architectures`` is unset.
+    For TimesFM-2.5 architecture, a soft dependency warning is emitted for
+    ``transformers>=5.3.0``.
+    """
     import transformers
 
     architectures = getattr(config, "architectures", None) or [
@@ -569,7 +757,24 @@ def _get_timesfm_model_class(config):
 
 
 def _get_timesfm_config_class(config):
-    """Return the TimesFM config class named by a config dict architecture."""
+    """Resolve TimesFM config class from a config dictionary.
+
+    Parameters
+    ----------
+    config : dict
+        Config dictionary with optional ``architectures`` entry.
+
+    Returns
+    -------
+    config_class : type
+        Matching ``transformers`` config class.
+
+    Notes
+    -----
+    Maps ``*ModelForPrediction`` architecture names to ``*Config``.
+    For TimesFM-2.5 architecture, a soft dependency warning is emitted for
+    ``transformers>=5.3.0``.
+    """
     import transformers
 
     architectures = config.get("architectures") or ["TimesFmModelForPrediction"]
@@ -580,6 +785,19 @@ def _get_timesfm_config_class(config):
 
 
 def _prepare_series_list(data):
+    """Convert panel/hierarchical DataFrame into list of 1D numpy series.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        MultiIndex time series table where the last index level is time.
+
+    Returns
+    -------
+    series_list : list of np.ndarray
+        Flattened list of univariate instance-column series, each as a
+        ``numpy`` array.
+    """
     instance_levels = list(range(data.index.nlevels - 1))
     groupby_level = instance_levels[0] if len(instance_levels) == 1 else instance_levels
 
@@ -592,6 +810,21 @@ def _prepare_series_list(data):
 
 
 def _pad_series(series, seq_len):
+    """Left-pad a series with zeros to at least a target length.
+
+    Parameters
+    ----------
+    series : np.ndarray
+        Input 1D numeric series.
+    seq_len : int
+        Required minimum sequence length.
+
+    Returns
+    -------
+    padded : np.ndarray
+        ``series`` left-padded with zeros if ``len(series) < seq_len``;
+        otherwise unchanged.
+    """
     pad_length = seq_len - len(series)
     if pad_length >= 0:
         series = np.pad(
@@ -604,6 +837,30 @@ def _pad_series(series, seq_len):
 
 
 class PyTorchDataset:
+    """Sliding-window dataset for TimesFM pretraining with ``transformers.Trainer``.
+
+    Each sample is a contiguous window of length
+    ``context_length + horizon_length`` split into:
+
+    - ``past_values`` (context part)
+    - ``future_values`` (target horizon part)
+
+    Parameters
+    ----------
+    series_list : list of np.ndarray
+        List of 1D training series.
+    context_length : int
+        Number of historical points in each sample.
+    horizon_length : int
+        Number of forecast points in each sample.
+
+    Raises
+    ------
+    ValueError
+        If no valid training samples can be generated. This happens when all
+        input series have length ``<= horizon_length``.
+    """
+
     def __init__(self, series_list, context_length, horizon_length):
         self.series_list = series_list
         self.context_length = context_length
@@ -620,17 +877,35 @@ class PyTorchDataset:
 
         if not self.samples:
             raise ValueError(
-                "No training samples could be generated. "
-                f"Each series must have length greater than horizon_length "
-                f"({horizon_length})."
+                "No training samples were generated for TimesFM pretraining. "
+                "Provide at least one series with length greater than "
+                f"horizon_length (horizon_length={horizon_length})."
             )
 
     def __len__(self):
-        """Return length of dataset."""
+        """Return number of generated samples.
+
+        Returns
+        -------
+        int
+            Dataset size.
+        """
         return len(self.samples)
 
     def __getitem__(self, i):
-        """Return data point."""
+        """Return one training sample as tensors.
+
+        Parameters
+        ----------
+        i : int
+            Sample index.
+
+        Returns
+        -------
+        sample : dict
+            Dictionary with keys ``past_values`` and ``future_values``, both
+            ``torch.float32`` tensors.
+        """
         import torch
 
         sample = self.samples[i]
