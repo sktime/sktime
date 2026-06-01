@@ -490,34 +490,6 @@ class TimesFM2Forecaster(BaseForecaster):
 
         return pred_quantiles
 
-    def __getstate__(self):
-        """Return pickle state without materializing the model object.
-
-        Returns
-        -------
-        state : dict
-            Estimator state dictionary with ``model_`` set to ``None`` when
-            present, so pickling does not include large/unpickleable model state.
-        """
-        state = self.__dict__.copy()
-        if "model_" in state:
-            state["model_"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore estimator state after unpickling.
-
-        Parameters
-        ----------
-        state : dict
-            State dictionary produced by :meth:`__getstate__`.
-
-        Notes
-        -----
-        Model weights are reloaded lazily on first subsequent model access.
-        """
-        self.__dict__.update(state)
-
     def _load_model(self):
         """Load or retrieve a cached TimesFM model instance.
 
