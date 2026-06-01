@@ -101,7 +101,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         if sum(forecaster_indicator) != 1:
             raise TypeError(
                 f"exactly one forecaster must be contained in the chain, "
-                f"but found {forecaster_indicator.count('forecaster')}"
+                f"but found {sum(forecaster_indicator)}"
             )
 
         est_scitypes = [scitype(x) for x in estimators]
@@ -889,6 +889,7 @@ class TransformedTargetForecaster(_Pipeline):
         "capability:missing_values": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
+        "capability:unequal_length": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?

@@ -6,6 +6,8 @@ __all__ = ["BaseCatalogue"]
 
 from abc import abstractmethod
 
+from skbase.utils.dependencies import _check_estimator_deps
+
 from sktime.base import BaseObject
 from sktime.registry import craft
 
@@ -27,6 +29,20 @@ class BaseCatalogue(BaseObject):
     def __init__(self):
         super().__init__()
         self._cached_objects = None
+
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     @abstractmethod
     def _get(self):
