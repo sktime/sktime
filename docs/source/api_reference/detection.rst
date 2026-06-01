@@ -96,6 +96,14 @@ Anomaly detection using foundational models.
 
     MomentFMAnomalyDetector
 
+.. currentmodule:: sktime.detection.tspulse
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSPulseAnomalyDetector
+
 Reduction to Tabular Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
