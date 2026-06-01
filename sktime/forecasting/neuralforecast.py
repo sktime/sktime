@@ -179,6 +179,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
@@ -585,6 +586,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
@@ -976,6 +978,7 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
@@ -1378,6 +1381,7 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
@@ -1778,6 +1782,7 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
