@@ -164,7 +164,7 @@ class TimesFM2Forecaster(BaseForecaster):
             y_train = y
             y_eval = None
 
-        train = _TimesFM2WindowDataset(
+        train = PyTorchDataset(
             series_list=_prepare_series_list(y_train),
             context_length=context_length,
             horizon_length=horizon_length,
@@ -175,7 +175,7 @@ class TimesFM2Forecaster(BaseForecaster):
             self.validation_split is not None
             and len(y_eval) >= context_length + horizon_length
         ):
-            eval = _TimesFM2WindowDataset(
+            eval = PyTorchDataset(
                 series_list=_prepare_series_list(y_eval),
                 context_length=context_length,
                 horizon_length=horizon_length,
@@ -603,7 +603,7 @@ def _pad_series(series, seq_len):
     return series
 
 
-class _TimesFM2WindowDataset:
+class PyTorchDataset:
     def __init__(self, series_list, context_length, horizon_length):
         self.series_list = series_list
         self.context_length = context_length
