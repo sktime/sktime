@@ -71,7 +71,16 @@ class _ArpsDcaBase(BaseForecaster):
     }
 
     def __init__(
-        self, qi_init, di_init, b_init, n_samples, random_state, output, anchor, base_np
+        self,
+        qi_init,
+        di_init,
+        b_init,
+        n_samples,
+        random_state,
+        output,
+        anchor,
+        base_np,
+        max_fit_retries,
     ):
         self.qi_init = qi_init
         self.di_init = di_init
@@ -81,6 +90,7 @@ class _ArpsDcaBase(BaseForecaster):
         self.output = output
         self.anchor = anchor
         self.base_np = base_np
+        self.max_fit_retries = max_fit_retries
         super().__init__()
 
     def __post_init__(self):
@@ -146,9 +156,11 @@ class _ArpsDcaBase(BaseForecaster):
             return max(di_est, 1e-10)
         return self.di_init
 
-    def _fit_curve_params(self, t, q):
-        """Fit decline curve parameters, falling back to initial guesses on failure."""
-        p0 = np.asarray(self._get_p0(q, t), dtype=float)
+    def _fit_curve_params(self, t, q, p0):
+        """Single curve fit attempt with given initial parameters.
+
+        Returns (popt, pcov, converged). Does not warn on failure.
+        """
         try:
             popt, pcov = curve_fit(
                 self._rate_func,
@@ -161,13 +173,6 @@ class _ArpsDcaBase(BaseForecaster):
             return popt, pcov, True
         except (RuntimeError, ValueError):
             n_params = len(p0)
-            warnings.warn(
-                f"{type(self).__name__}: curve_fit did not converge; "
-                "using initial parameter guesses. "
-                "Probabilistic forecasts are disabled.",
-                RuntimeWarning,
-                stacklevel=2,
-            )
             return p0, np.full((n_params, n_params), np.inf), False
 
     def _fit(self, y, X, fh):
@@ -186,19 +191,36 @@ class _ArpsDcaBase(BaseForecaster):
         -------
         self : reference to self
         """
+        self._pred_int_available_ = True
+
         t_all = self._index_to_float_array(y.index)
         self.t0_ = float(t_all[0])
         t = t_all - self.t0_
         q = y.iloc[:, 0].values.astype(float)
 
-        self.set_tags(**{"capability:pred_int": True})
-        popt, pcov, converged = self._fit_curve_params(t, q)
+        p0 = np.asarray(self._get_p0(q, t), dtype=float)
+        popt, pcov, converged = self._fit_curve_params(t, q, p0)
+
+        if not converged and self.max_fit_retries > 0:
+            rng = np.random.default_rng(self.random_state)
+            for _ in range(self.max_fit_retries):
+                perturb = np.exp(rng.uniform(-np.log(2), np.log(2), size=len(p0)))
+                popt, pcov, converged = self._fit_curve_params(t, q, p0 * perturb)
+                if converged:
+                    break
+
+        if not converged:
+            warnings.warn(
+                f"{type(self).__name__}: curve_fit did not converge after "
+                f"{self.max_fit_retries + 1} attempt(s); using initial parameter "
+                "guesses. Probabilistic forecasts will return naive intervals.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            self._pred_int_available_ = False
 
         self.params_ = popt
         self.params_cov_ = pcov
-
-        if not converged:
-            self.set_tags(**{"capability:pred_int": False})
 
         t_last = t[-1]
         q_last_obs = q[-1]
@@ -215,15 +237,15 @@ class _ArpsDcaBase(BaseForecaster):
             self.anchor_scale_ = 1.0
             self.anchor_shift_ = 0.0
 
-        if np.any(np.isinf(pcov)):
+        if converged and np.any(np.isinf(pcov)):
             warnings.warn(
                 f"{type(self).__name__}: parameter covariance matrix contains "
-                "infinite values; probabilistic forecasts are disabled. "
+                "infinite values. Probabilistic forecasts will return naive intervals. "
                 "Try providing better initial guesses via qi_init and di_init.",
                 RuntimeWarning,
                 stacklevel=2,
             )
-            self.set_tags(**{"capability:pred_int": False})
+            self._pred_int_available_ = False
 
         return self
 
@@ -278,6 +300,22 @@ class _ArpsDcaBase(BaseForecaster):
         """
         fh_abs = fh.to_absolute_index(self.cutoff)
         t = self._index_to_float_array(fh_abs) - self.t0_
+
+        if not self._pred_int_available_:
+            warnings.warn(
+                f"{type(self).__name__}: probabilistic forecasts unavailable; "
+                "returning point forecast as naive prediction intervals.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            func = self._rate_func if self.output == "rate" else self._cum_func
+            y_point = self._apply_forecast_transforms(func(t, *self.params_))
+            varnames = self._get_varnames()
+            col_index = pd.MultiIndex.from_product([varnames, alpha])
+            y_arr = np.asarray(y_point).reshape(-1, 1)
+            return pd.DataFrame(
+                np.tile(y_arr, len(alpha)), index=fh_abs, columns=col_index
+            )
 
         rng = np.random.default_rng(self.random_state)
 
@@ -373,6 +411,11 @@ class ArpsExponential(_ArpsDcaBase):
         Last-observation anchoring: ``"multiplicative"``, ``"additive"``, or ``False``.
     base_np : float, default=0.0
         Cumulative production offset added when ``output="cumulative"``.
+    max_fit_retries : int, default=3
+        Number of additional fitting attempts with perturbed initial parameters
+        if the first attempt fails to converge. Set to 0 to disable retries.
+        If all attempts fail, naive (degenerate) prediction intervals are returned
+        with a warning.
 
     Examples
     --------
@@ -396,6 +439,7 @@ class ArpsExponential(_ArpsDcaBase):
         output="rate",
         anchor=False,
         base_np=0.0,
+        max_fit_retries=3,
     ):
         super().__init__(
             qi_init=qi_init,
@@ -406,6 +450,7 @@ class ArpsExponential(_ArpsDcaBase):
             output=output,
             anchor=anchor,
             base_np=base_np,
+            max_fit_retries=max_fit_retries,
         )
 
     @staticmethod
@@ -490,6 +535,11 @@ class ArpsHyperbolic(_ArpsDcaBase):
         Last-observation anchoring: ``"multiplicative"``, ``"additive"``, or ``False``.
     base_np : float, default=0.0
         Cumulative production offset added when ``output="cumulative"``.
+    max_fit_retries : int, default=3
+        Number of additional fitting attempts with perturbed initial parameters
+        if the first attempt fails to converge. Set to 0 to disable retries.
+        If all attempts fail, naive (degenerate) prediction intervals are returned
+        with a warning.
 
     Examples
     --------
@@ -514,6 +564,7 @@ class ArpsHyperbolic(_ArpsDcaBase):
         output="rate",
         anchor=False,
         base_np=0.0,
+        max_fit_retries=3,
     ):
         super().__init__(
             qi_init=qi_init,
@@ -524,6 +575,7 @@ class ArpsHyperbolic(_ArpsDcaBase):
             output=output,
             anchor=anchor,
             base_np=base_np,
+            max_fit_retries=max_fit_retries,
         )
 
     @staticmethod
@@ -608,6 +660,11 @@ class ArpsHarmonic(_ArpsDcaBase):
         Last-observation anchoring: ``"multiplicative"``, ``"additive"``, or ``False``.
     base_np : float, default=0.0
         Cumulative production offset added when ``output="cumulative"``.
+    max_fit_retries : int, default=3
+        Number of additional fitting attempts with perturbed initial parameters
+        if the first attempt fails to converge. Set to 0 to disable retries.
+        If all attempts fail, naive (degenerate) prediction intervals are returned
+        with a warning.
 
     Examples
     --------
@@ -631,6 +688,7 @@ class ArpsHarmonic(_ArpsDcaBase):
         output="rate",
         anchor=False,
         base_np=0.0,
+        max_fit_retries=3,
     ):
         super().__init__(
             qi_init=qi_init,
@@ -641,6 +699,7 @@ class ArpsHarmonic(_ArpsDcaBase):
             output=output,
             anchor=anchor,
             base_np=base_np,
+            max_fit_retries=max_fit_retries,
         )
 
     @staticmethod
