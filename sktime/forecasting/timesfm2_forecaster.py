@@ -293,7 +293,7 @@ class TimesFM2Forecaster(BaseForecaster):
         past_values = past_values.to(self.model_.dtype)
         past_values = past_values.to(self.model_.device)
 
-        forward_kwargs = {} if self.forward_kwargs is None else self.forward_kwargs
+        forward_kwargs = {} if not self.forward_kwargs else self.forward_kwargs
         output = self.model_(past_values=past_values, **forward_kwargs)
 
         preds = output.mean_predictions
@@ -377,7 +377,7 @@ class TimesFM2Forecaster(BaseForecaster):
         past_values = past_values.to(self.model_.dtype)
         past_values = past_values.to(self.model_.device)
 
-        forward_kwargs = {} if self.forward_kwargs is None else self.forward_kwargs
+        forward_kwargs = {} if not self.forward_kwargs else self.forward_kwargs
         output = self.model_(past_values=past_values, **forward_kwargs)
 
         preds = output.full_predictions
@@ -519,7 +519,7 @@ class _CachedTimesFM2:
 
         if self.model_path is not None:
             config = self.config
-            if config is None:
+            if not config:
                 config = AutoConfig.from_pretrained(self.model_path)
             if isinstance(config, dict):
                 config_class = _get_timesfm_config_class(config)
@@ -532,7 +532,7 @@ class _CachedTimesFM2:
             )
         else:
             config = self.config
-            if config is None:
+            if not config:
                 config = TimesFmConfig()
             if isinstance(config, dict):
                 config_class = _get_timesfm_config_class(config)
