@@ -104,6 +104,8 @@ class NeuralProphet(BaseForecaster):
         "authors": ["vedantag17"],
         "maintainers": ["vedantag17"],
         "python_dependencies": ["neuralprophet", "setuptools"],
+        # neuralprophet causes a C-level segfault on Windows + Python 3.13+
+        "env_marker": 'platform_system != "Windows" or python_version < "3.13"',
         "capability:exogenous": True,
         "capability:missing_values": True,
         "y_inner_mtype": "pd.Series",
