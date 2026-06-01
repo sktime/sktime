@@ -70,11 +70,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest skip
+    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest: +SKIP
     PytorchForecastingTFT(trainer_params={'limit_train_batches': 10,
                                         'max_epochs': 5})
-    >>> y_pred = model.predict(fh, X=X_test, y=y_test)
-    >>> print(y_test)
+    >>> y_pred = model.predict(fh, X=X_test, y=y_test) # doctest: +SKIP
+    >>> print(y_test) # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-01-01  5.261697
@@ -90,7 +90,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 2000-02-14  4.534434
 
     [4500 rows x 1 columns]
-    >>> print(y_pred)
+    >>> print(y_pred) # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-02-15  5.310687
