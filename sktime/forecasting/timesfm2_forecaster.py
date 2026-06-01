@@ -153,8 +153,6 @@ class TimesFM2Forecaster(BaseForecaster):
     ...     config=cfg,
     ...     device="cpu",
     ... )
-    >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2])  # doctest: +SKIP
 
     Global pretraining on panel data:
 
@@ -165,6 +163,7 @@ class TimesFM2Forecaster(BaseForecaster):
     ...     model_path="google/timesfm-2.5-200m-transformers",
     ...     training_args={"max_steps": 1, "eval_steps": 1},
     ...     validation_split=0.1,
+    ...     config={"context_length": 32, "horizon_length": 8},
     ... )
     >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
 
