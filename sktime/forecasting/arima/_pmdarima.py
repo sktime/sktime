@@ -710,7 +710,10 @@ class ARIMA(_PmdArimaAdapter):
         "capability:missing_values": True,
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_predict_time_index_with_X"],  # bug report #9081
+        "tests:skip_by_name": [
+            "test_predict_time_index_with_X",  # bug report #9081
+            "test_predict_time_index_in_sample_full",  # bug report #10299
+        ],
     }
 
     SARIMAX_KWARGS_KEYS = [

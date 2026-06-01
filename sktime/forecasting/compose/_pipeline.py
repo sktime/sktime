@@ -101,7 +101,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         if sum(forecaster_indicator) != 1:
             raise TypeError(
                 f"exactly one forecaster must be contained in the chain, "
-                f"but found {forecaster_indicator.count('forecaster')}"
+                f"but found {sum(forecaster_indicator)}"
             )
 
         est_scitypes = [scitype(x) for x in estimators]

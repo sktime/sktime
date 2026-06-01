@@ -31,6 +31,8 @@ class _StatsForecastAdapter(BaseForecaster):
         # CI and test dependencies
         # ------------------------
         "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._statsforecast"],
     }
 
     def __init__(self):
