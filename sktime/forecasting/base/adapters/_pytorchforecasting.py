@@ -84,6 +84,11 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._pytorchforecasting"],
     }
 
     def __init__(

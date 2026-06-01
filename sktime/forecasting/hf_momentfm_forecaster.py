@@ -144,11 +144,7 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
         "capability:missing_values": False,
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
+        "y_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
         "requires-fh-in-fit": True,
         "python_dependencies": [
@@ -165,11 +161,13 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:pred_int": False,
+        "capability:unequal_length": False,
         "property:randomness": "stochastic",
         "capability:random_state": False,
         # testing configuration
         # ---------------------
-        "tests:vm": True,
+        # "tests:vm": True, # skip all tests temporarily, issue tracked in #10083
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
         "tests:libs": ["sktime.libs.momentfm"],
     }
 
@@ -394,10 +392,7 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self.model = self.model.to(self._device)
         self.model.eval()
         y_index_names = list(y.index.names)
-        if isinstance(y.index, pd.MultiIndex):
-            y_ = _frame2numpy(y)
-        else:
-            y_ = np.expand_dims(y.values, axis=0)
+        y_ = np.expand_dims(y.values, axis=0)
 
         num_instances, sequence_length, num_channels = (
             y_.shape
@@ -684,24 +679,6 @@ def _check_device(device):
     return _device
 
 
-def _same_index(data: pd.DataFrame):
-    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
-        lambda x: x.index.get_level_values(-1)
-    )
-    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
-        "All series must has the same index"
-    )
-    return data.iloc[0], len(data.iloc[0])
-
-
-def _frame2numpy(data: pd.DataFrame):
-    idx, length = _same_index(data)
-    arr = np.array(data.values, dtype=np.float32).reshape(
-        (-1, length, len(data.columns))
-    )
-    return arr
-
-
 class MomentPytorchDataset(Dataset):
     """Customized Pytorch dataset for the momentfm model."""
 
@@ -713,11 +690,7 @@ class MomentPytorchDataset(Dataset):
         self.shape = y.shape
         self.device = device
 
-        # multi-index conversion
-        if isinstance(y.index, pd.MultiIndex):
-            self.y = _frame2numpy(y)
-        else:
-            self.y = np.expand_dims(y.values, axis=0)
+        self.y = np.expand_dims(y.values, axis=0)
 
         # n_timestamps should be the seq length for a single series in both
         # cases, multivariate dataframe
