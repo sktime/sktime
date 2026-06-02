@@ -71,6 +71,20 @@ class TimesFM2Forecaster(BaseForecaster):
         If provided as ``dict``, the architecture entry (for example
         ``"TimesFmModelForPrediction"`` or ``"TimesFm2_5ModelForPrediction"``)
         is used to infer the config class.
+    device_map : str, dict, int, or torch.device, default="cpu"
+        Device placement following the ``transformers`` ``device_map`` naming
+        convention, for example ``"cpu"``, ``"cuda"``, ``"cuda:0"``, or
+        ``"auto"``.
+    dtype : torch.dtype or str, optional (default=None)
+        Data type used for model loading, following the ``transformers``
+        ``dtype`` convention, for example ``torch.float16``,
+        ``torch.bfloat16``, or ``"auto"``.
+    quantization_config : transformers.quantizers.HfQuantizer, optional
+        Valid quantization configuration object compatible with
+        ``transformers.PreTrainedModel.from_pretrained``.
+    peft_config : peft.PeftConfig, optional (default=None)
+        If provided, wraps the loaded base model with PEFT using
+        ``peft.get_peft_model``.
     forward_kwargs : dict, optional (default=None)
         Additional keyword arguments forwarded to ``model(...)`` during
         :meth:`predict` and :meth:`predict_quantiles`.
@@ -86,20 +100,6 @@ class TimesFM2Forecaster(BaseForecaster):
         Metrics callback(s) passed to ``transformers.Trainer``.
     callbacks : list, optional (default=None)
         Trainer callbacks passed to ``transformers.Trainer``.
-    peft_config : peft.PeftConfig, optional (default=None)
-        If provided, wraps the loaded base model with PEFT using
-        ``peft.get_peft_model``.
-    device_map : str, dict, int, or torch.device, default="cpu"
-        Device placement following the ``transformers`` ``device_map`` naming
-        convention, for example ``"cpu"``, ``"cuda"``, ``"cuda:0"``, or
-        ``"auto"``.
-    dtype : torch.dtype or str, optional (default=None)
-        Data type used for model loading, following the ``transformers``
-        ``dtype`` convention, for example ``torch.float16``,
-        ``torch.bfloat16``, or ``"auto"``.
-    quantization_config : transformers.quantizers.HfQuantizer, optional
-        Valid quantization configuration object compatible with
-        ``transformers.PreTrainedModel.from_pretrained``.
 
     References
     ----------
@@ -204,29 +204,29 @@ class TimesFM2Forecaster(BaseForecaster):
         self,
         model_path="google/timesfm-2.5-200m-transformers",
         config=None,
+        device_map="cpu",
+        dtype=None,
+        quantization_config=None,
+        peft_config=None,
         forward_kwargs=None,
         validation_split=0.2,
         training_args=None,
         compute_loss_func=None,
         compute_metrics=None,
         callbacks=None,
-        peft_config=None,
-        device_map="cpu",
-        dtype=None,
-        quantization_config=None,
     ):
         self.model_path = model_path
         self.config = config
+        self.device_map = device_map
+        self.dtype = dtype
+        self.quantization_config = quantization_config
+        self.peft_config = peft_config
         self.forward_kwargs = forward_kwargs
         self.validation_split = validation_split
         self.training_args = training_args
         self.compute_loss_func = compute_loss_func
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
-        self.peft_config = peft_config
-        self.device_map = device_map
-        self.dtype = dtype
-        self.quantization_config = quantization_config
 
         super().__init__()
 
