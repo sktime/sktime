@@ -89,9 +89,10 @@ class TimesFM2Forecaster(BaseForecaster):
     peft_config : peft.PeftConfig, optional (default=None)
         If provided, wraps the loaded base model with PEFT using
         ``peft.get_peft_model``.
-    device : str, default="cpu"
-        Device string used to move the loaded model, for example ``"cpu"``,
-        ``"cuda"``, or ``"cuda:0"``.
+    device_map : str, dict, int, or torch.device, default="cpu"
+        Device placement following the ``transformers`` ``device_map`` naming
+        convention, for example ``"cpu"``, ``"cuda"``, ``"cuda:0"``, or
+        ``"auto"``.
 
     References
     ----------
@@ -120,14 +121,14 @@ class TimesFM2Forecaster(BaseForecaster):
     >>> y = load_airline()
     >>> forecaster = TimesFM2Forecaster(
     ...     model_path="google/timesfm-2.5-200m-transformers",
-    ...     device="cpu",
+    ...     device_map="cpu",
     ... )  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
     Quantile prediction using model-supported alphas:
 
-    >>> forecaster = TimesFM2Forecaster(device="cpu")  # doctest: +SKIP
+    >>> forecaster = TimesFM2Forecaster(device_map="cpu")  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> q_pred = forecaster.predict_quantiles(  # doctest: +SKIP
     ...     fh=[1, 2, 3],
@@ -151,7 +152,7 @@ class TimesFM2Forecaster(BaseForecaster):
     >>> forecaster = TimesFM2Forecaster(  # doctest: +SKIP
     ...     model_path=None,
     ...     config=cfg,
-    ...     device="cpu",
+    ...     device_map="cpu",
     ... )
 
     Global pretraining on panel data:
@@ -201,7 +202,7 @@ class TimesFM2Forecaster(BaseForecaster):
         compute_metrics=None,
         callbacks=None,
         peft_config=None,
-        device="cpu",
+        device_map="cpu",
     ):
         self.model_path = model_path
         self.config = config
@@ -212,7 +213,7 @@ class TimesFM2Forecaster(BaseForecaster):
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
         self.peft_config = peft_config
-        self.device = device
+        self.device_map = device_map
 
         super().__init__()
 
@@ -495,8 +496,8 @@ class TimesFM2Forecaster(BaseForecaster):
         Returns
         -------
         model : transformers.PreTrainedModel
-            Loaded model on ``self.device``. If ``self.model_`` already exists,
-            it is returned directly.
+            Loaded model according to ``self.device_map``. If ``self.model_``
+            already exists, it is returned directly.
         """
         if hasattr(self, "model_") and self.model_ is not None:
             return self.model_
@@ -505,7 +506,7 @@ class TimesFM2Forecaster(BaseForecaster):
             key=self._get_unique_key(),
             model_path=self.model_path,
             config=self.config,
-            device=self.device,
+            device_map=self.device_map,
             peft_config=self.peft_config,
         ).load()
 
@@ -523,7 +524,7 @@ class TimesFM2Forecaster(BaseForecaster):
         key = {
             "model_path": self.model_path,
             "config": self.config,
-            "device": self.device,
+            "device_map": self.device_map,
             "peft_config": self.peft_config,
         }
         return str(sorted(key.items()))
@@ -570,7 +571,7 @@ class TimesFM2Forecaster(BaseForecaster):
                     "max_steps": 1,
                     "eval_steps": 1,
                 },
-                "device": "cpu",
+                "device_map": "cpu",
             },
             {
                 "model_path": None,
@@ -615,16 +616,16 @@ class _CachedTimesFM2:
         Configuration used for model loading/creation.
     peft_config : peft.PeftConfig or None
         Optional PEFT wrapping configuration.
-    device : str
-        Device to move the created model to.
+    device_map : str, dict, int, or torch.device
+        Device placement for loading models.
     """
 
-    def __init__(self, key, model_path, config, peft_config, device):
+    def __init__(self, key, model_path, config, peft_config, device_map):
         self.key = key
         self.model_path = model_path
         self.config = config
         self.peft_config = peft_config
-        self.device = device
+        self.device_map = device_map
         self.model_ = None
 
     def load(self):
@@ -633,7 +634,7 @@ class _CachedTimesFM2:
         Returns
         -------
         model : transformers.PreTrainedModel
-            Loaded TimesFM prediction model on ``self.device``.
+            Loaded TimesFM prediction model according to ``self.device_map``.
 
         Notes
         -----
@@ -659,6 +660,7 @@ class _CachedTimesFM2:
             self.model_ = model_class.from_pretrained(
                 self.model_path,
                 config=config,
+                device_map=self.device_map,
             )
         else:
             config = self.config
@@ -670,8 +672,7 @@ class _CachedTimesFM2:
 
             model_class = _get_timesfm_model_class(config)
             self.model_ = model_class(config)
-
-        self.model_ = self.model_.to(self.device)
+            self.model_ = self.model_.to(self.device_map)
 
         if self.peft_config is not None:
             self.model_ = self._wrap_with_peft()
