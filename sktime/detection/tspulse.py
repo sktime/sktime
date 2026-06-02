@@ -28,11 +28,9 @@ class TSPulseAnomalyDetector(BaseDetector):
     time point with the Hugging Face ``TimeSeriesAnomalyDetectionPipeline`` for
     zero-shot detection.
 
-    ``DatetimeIndex`` on ``X`` is recommended: it is copied into an internal
-    timestamp column. If
-    ``X`` has no ``DatetimeIndex``, a synthetic daily timestamp column is
-    added. The internal timestamp column name is reserved; do not use
-    ``"__TSPULSE_TIMESTAMP_COL__"`` as a feature column name.
+    ``DatetimeIndex`` on ``X`` is required: it is copied into an internal
+    timestamp column. If ``X`` has no ``DatetimeIndex``, a synthetic daily
+    timestamp column is added.
 
     Implementation adapted from [1].
 
@@ -294,7 +292,7 @@ class TSPulseAnomalyDetector(BaseDetector):
                 start="2020-01-01", periods=len(pipeline_df), freq="D"
             )
 
-        # The tsfm_public pipeline expects at least (context_length + 1) rows and
+        # The tsfm_public pipeline expects at least (context_length + 1) rows
         required_len = int(getattr(self._model.config, "context_length", 0)) + 1
         if required_len > 1 and len(pipeline_df) < required_len:
             pad_len = required_len - len(pipeline_df)
