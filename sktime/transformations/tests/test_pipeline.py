@@ -17,7 +17,7 @@ mean_transformer = TabularToSeriesAdaptor(
     FunctionTransformer(func=np.mean, validate=False)
 )
 std_transformer = TabularToSeriesAdaptor(
-    FunctionTransformer(func=np.mean, validate=False)
+    FunctionTransformer(func=np.std, validate=False)
 )
 
 

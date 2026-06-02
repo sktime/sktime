@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.base import BaseObject
 from sktime.classification.tests._expected_outputs import (
     basic_motions_proba,
     unit_test_proba,
@@ -19,7 +20,7 @@ from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 
 class ClassifierFixtureGenerator(BaseFixtureGenerator):
@@ -180,18 +181,21 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             return None
 
         # if numba is not installed, some estimators may still try to construct
-        # numba dependent estimators in results_eomparison
+        # numba dependent estimators in results_comparison
         # if that is the case, we skip the test
-        try:
-            # we only use the first estimator instance for testing
-            estimator_instance = estimator_class.create_test_instance(
-                parameter_set="results_comparison"
-            )
-        except ModuleNotFoundError as e:
-            if not _check_soft_dependencies("numba", severity="none"):
-                return None
-            else:
-                raise e
+        if not _check_estimator_deps(estimator_class, severity="none"):
+            return None
+
+        estimator_instance = estimator_class.create_test_instance(
+            parameter_set="results_comparison"
+        )
+
+        if estimator_instance.is_composite():
+            # if the estimator is a composite, we set random state for all components
+            for sub_estimator in estimator_instance.get_params(deep=True).values():
+                if isinstance(sub_estimator, BaseObject):
+                    if not _check_estimator_deps(sub_estimator, severity="none"):
+                        return None
 
         # set random seed if possible
         if "random_state" in estimator_instance.get_params().keys():

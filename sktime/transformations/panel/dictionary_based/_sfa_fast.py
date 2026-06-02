@@ -166,65 +166,66 @@ class SFAFast(BaseTransformer):
         return_pandas_data_series=False,
         n_jobs=1,
     ):
-        self.words = []
-        self.breakpoints = []
-
-        # we cannot select more than window_size many letters in a word
         self.word_length = word_length
-
         self.alphabet_size = alphabet_size
         self.window_size = window_size
-
         self.norm = norm
         self.lower_bounding = lower_bounding
-        self.inverse_sqrt_win_size = (
-            1.0 / math.sqrt(window_size) if not lower_bounding else 1.0
-        )
-
         self.remove_repeat_words = remove_repeat_words
-
         self.save_words = save_words
-
         self.binning_method = binning_method
         self.anova = anova
         self.variance = variance
-
         self.bigrams = bigrams
         self.skip_grams = skip_grams
         self.n_jobs = n_jobs
+        self.feature_selection = feature_selection
+        self.max_feature_count = max_feature_count
+        self.p_threshold = p_threshold
+        self.return_sparse = return_sparse
+        self.return_pandas_data_series = return_pandas_data_series
+        self.random_state = random_state
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self.words = []
+        self.breakpoints = []
+
+        window_size = self.window_size
+        lower_bounding = self.lower_bounding
+
+        self.inverse_sqrt_win_size = (
+            1.0 / math.sqrt(window_size) if not lower_bounding else 1.0
+        )
 
         self.n_instances = 0
         self.series_length = 0
         self.letter_bits = 0
 
         # Feature selection part
-        self.feature_selection = feature_selection
-        self.max_feature_count = max_feature_count
         self.feature_count = 0
         self.relevant_features = None
-
-        # feature selection is applied based on the chi-squared test.
-        self.p_threshold = p_threshold
-
-        self.return_sparse = return_sparse
-        self.return_pandas_data_series = return_pandas_data_series
-
-        self.random_state = random_state
 
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
             n_jobs = multiprocessing.cpu_count()
         else:
             n_jobs = self.n_jobs
 
-        super().__init__()
-        # super raises numba import exception if not available
-        # so now we know we can use numba
-
         from numba import set_num_threads
 
         set_num_threads(n_jobs)
 
-        if not return_pandas_data_series:
+        if not self.return_pandas_data_series:
             self.set_config(**{"output_conversion": "off"})
 
     def fit_transform(self, X, y=None):

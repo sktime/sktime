@@ -17,6 +17,19 @@ from sktime.catalogues.base import BaseCatalogue
 from sktime.registry import scitype
 from sktime.utils.unique_str import _make_strings_unique
 
+# Scitype groupings — defined once, used everywhere
+_DATASET_SCITYPES = {"dataset_classification", "dataset_forecasting"}
+_METRIC_SCITYPES = {"metric_forecasting", "metric_tabular", "metric_proba_tabular"}
+_SPLITTER_SCITYPES = {"splitter", "splitter_tabular"}
+_ESTIMATOR_SCITYPES = {"classifier", "forecaster"}
+
+# Maps scitype → which collection to add to (for single objects)
+_SCTYPE_TO_COLLECTION = {
+    **dict.fromkeys(_DATASET_SCITYPES, "_datasets"),
+    **dict.fromkeys(_METRIC_SCITYPES, "_metrics"),
+    **dict.fromkeys(_SPLITTER_SCITYPES, "_cv_splitters"),
+}
+
 
 def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
     """Check if estimator is initialised BaseEstimator object."""
@@ -306,51 +319,157 @@ class BaseBenchmark:
         """Register a task to the benchmark."""
         raise NotImplementedError("This method must be implemented by a subclass.")
 
-    def add(self, *args, **kwargs):
-        """Add estimators, tasks, datasets, metrics, CV splitters, or catalogues.
+    def add(self, *args):
+        """Add estimators, task components, full task tuples, or catalogues.
 
-        Supports:
-            - Single estimator or list/dict of estimators
-            - Task components (datasets, metrics, CV splitters)
-            - Full task tuples (dataset, metric, CV splitter)
-            - Catalogues
+        Objects are interpreted based on their ``scitype`` and added to the
+        benchmark accordingly. Multiple objects can be provided in a single call.
+
+        Supported inputs include estimators, datasets, metrics, CV splitters,
+        task tuples, and catalogues.
+
+        Parameters
+        ----------
+        *args : object
+            Objects to add. Supported patterns are:
+
+            - estimator
+                Estimator with scitype "classifier" or "forecaster".
+
+            - dict
+                Dictionary of estimators where keys are custom `estimator_id`s and
+                values are the estimators.
+
+            - list
+                List of estimators. `estimator_id`s are generated automatically using
+                the estimator's class name.
+
+            - dataset
+                Object with scitype `dataset_classification` or
+                `dataset_forecasting`.
+
+            - metric
+                Object with scitype `metric_forecasting`, `metric_tabular`, or
+                `metric_proba_tabular`.
+
+            - cv_splitter
+                Object with scitype "splitter" or "splitter_tabular".
+
+            - (dataset, metric, splitter)
+                Tuple specifying a full task. Must contain exactly one dataset, one
+                metric, and one splitter.
+
+            - catalogue
+                Instance of ``BaseCatalogue``. All contained objects are added
+                recursively.
+
+        Notes
+        -----
+        - Task tuples are order-invariant; roles are inferred via ``scitype``.
+        - Duplicate datasets, metrics, and splitters are ignored.
+
+        Raises
+        ------
+        TypeError
+            If:
+
+            - a tuple has unsupported length (e.g., not length 3 for task tuples)
+            - a task tuple does not contain exactly one dataset, metric, and splitter
+            - duplicate scitypes are present in a task tuple
+            - an object has an unrecognized ``scitype``
+
+        Examples
+        --------
+        >>> benchmark = ClassificationBenchmark()
+
+        Add an estimator:
+        >>> benchmark.add(DummyClassifier())
+
+        Add components individually:
+        >>> benchmark.add(ArrowHead())
+        >>> benchmark.add(accuracy_score)
+        >>> benchmark.add(KFold(n_splits=3))
+
+        Add a task tuple (order does not matter):
+        >>> benchmark.add((accuracy_score, ArrowHead(), KFold(n_splits=3)))
+
+        Add a dictionary of estimators with custom IDs:
+        >>> benchmark.add(
+        ...     {
+        ...         "dummy": DummyClassifier(),
+        ...         "knn": KNeighborsClassifier(),
+        ...     }
+        ... )
+
+        Add a list of estimators (IDs generated automatically):
+        >>> benchmark.add([DummyClassifier(), KNeighborsClassifier()])
+
+        Add multiple objects:
+        >>> benchmark.add(
+        ...     {"dummy_1": DummyClassifier()},
+        ...     (ArrowHead(), accuracy_score, KFold(n_splits=3)),
+        ... )
         """
         for obj in args:
-            # catalogue
             if isinstance(obj, BaseCatalogue):
                 for category in obj.available_categories():
                     for item in obj.get(category, as_object=True):
                         self.add(item)
-                continue
 
-            # tuple of (dataset, metric, splitter)
-            if isinstance(obj, tuple) and len(obj) == 3:
-                dataset, metric, splitter = obj
-                self._datasets.append(dataset)
-                self._metrics.append(metric)
-                self._cv_splitters.append(splitter)
-                continue
-
-            # single object type (estimators or one of the tasks)
-            sctype = scitype(obj)
-            if sctype in ["classifier", "forecaster"]:
+            elif isinstance(obj, (dict, list)):
                 self.add_estimator(obj)
-            elif sctype in ["dataset_classification", "dataset_forecasting"]:
-                self._datasets.append(obj)
-            elif sctype in [
-                "metric_forecasting",
-                "metric_tabular",
-                "metric_proba_tabular",
-            ]:
-                self._metrics.append(obj)
-            elif sctype in ["splitter", "splitter_tabular"]:
-                self._cv_splitters.append(obj)
-            elif sctype == "catalogue":
-                self.add(obj)
+
+            elif isinstance(obj, tuple):
+                self._add_task_tuple(obj)
+
             else:
+                sctype = scitype(obj)
+                if sctype in _ESTIMATOR_SCITYPES:
+                    self.add_estimator(obj)
+                elif sctype in _SCTYPE_TO_COLLECTION:
+                    self._add_unique(getattr(self, _SCTYPE_TO_COLLECTION[sctype]), obj)
+                else:
+                    raise TypeError(
+                        f"Unrecognized object type: {type(obj)} (scitype: {sctype})"
+                    )
+
+    def _add_task_tuple(self, obj):
+        """Parse and register a 3-tuple task (dataset, metric, splitter)."""
+        if len(obj) != 3:
+            raise TypeError(
+                f"Unsupported tuple format of length {len(obj)}. "
+                "Expected task tuple of length 3."
+            )
+
+        # Map scitype group → (slot_name, collection_attr)
+        SLOT_MAP = {
+            **dict.fromkeys(_DATASET_SCITYPES, ("dataset", "_datasets")),
+            **dict.fromkeys(_METRIC_SCITYPES, ("metric", "_metrics")),
+            **dict.fromkeys(_SPLITTER_SCITYPES, ("splitter", "_cv_splitters")),
+        }
+
+        slots = {}  # slot_name → item
+        for item in obj:
+            st = scitype(item)
+            if st not in SLOT_MAP:
                 raise TypeError(
-                    f"Unrecognized object type: {type(obj)} (scitype: {sctype})"
+                    f"Unrecognized object in task tuple: {type(item)} (scitype: {st})"
                 )
+            slot_name, _ = SLOT_MAP[st]
+            if slot_name in slots:
+                raise TypeError(f"Multiple {slot_name}s provided in tuple")
+            slots[slot_name] = (item, SLOT_MAP[st][1])
+
+        if len(slots) != 3:
+            missing = {"dataset", "metric", "splitter"} - slots.keys()
+            raise TypeError(f"Task tuple missing: {', '.join(missing)}")
+
+        for item, collection_attr in slots.values():
+            self._add_unique(getattr(self, collection_attr), item)
+
+    def _add_unique(self, collection, item):
+        if item not in collection:
+            collection.append(item)
 
     def register_stored_tasks(self):
         """Register stored tasks from global DATASETS, METRICS, CV_SPLITTERS."""

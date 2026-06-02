@@ -142,7 +142,7 @@ class ARDL(_StatsModelsAdapter):
         continuing through the end of prediction, forecasted endogenous
         values will be used instead. Datetime-like objects are not
         interpreted as offsets. They are instead used to find the index
-        location of ``dynamic`` which is then used to to compute the offset.
+        location of ``dynamic`` which is then used to compute the offset.
 
     Notes
     -----
@@ -398,6 +398,10 @@ class ARDL(_StatsModelsAdapter):
             self._fitted_forecaster = self._forecaster.model.fit(
                 cov_type=self.cov_type, cov_kwds=self.cov_kwds, use_t=self.use_t
             )
+
+        self._y_index0 = y.index[0]
+        self._y_name = y.name
+
         return self
 
     def summary(self):
@@ -420,7 +424,7 @@ class ARDL(_StatsModelsAdapter):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
@@ -434,7 +438,7 @@ class ARDL(_StatsModelsAdapter):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
 
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        start, end = fh.to_absolute_int(self._y_index0, self.cutoff)[[0, -1]]
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute_index(self.cutoff)
@@ -442,7 +446,7 @@ class ARDL(_StatsModelsAdapter):
         y_pred = self._fitted_forecaster.predict(
             start=start, end=end, exog=self._X, exog_oos=X, fixed_oos=self.fixed_oos
         )
-        y_pred.name = self._y.name
+        y_pred.name = self._y_name
         return y_pred.loc[valid_indices]
 
     def _update(self, y, X=None, update_params=True):

@@ -353,9 +353,7 @@ def optuna_param_grids():
 
 
 def optuna_samplers():
-    try:
-        _check_soft_dependencies("optuna", severity="error")
-    except ModuleNotFoundError:
+    if not _check_soft_dependencies("optuna", severity="none"):
         return [None]
     else:
         import optuna
@@ -366,8 +364,6 @@ def optuna_samplers():
             optuna.samplers.QMCSampler(seed=42),
             # optuna.samplers.CmaEsSampler(seed=42),
         ]
-        if hasattr(optuna.samplers, "CmaEsSampler"):
-            samplers.append(optuna.samplers.CmaEsSampler(seed=42))
         return samplers
 
 

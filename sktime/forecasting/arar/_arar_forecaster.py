@@ -475,7 +475,6 @@ class ARARForecaster(BaseForecaster):
         "capability:exogenous": False,
         "capability:missing_values": False,
         "capability:pred_int": True,
-        "capability:pred_var": False,
         "capability:insample": False,
     }
 

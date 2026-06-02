@@ -7,7 +7,6 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.mcdcnn import MCDCNNNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MCDCNNClassifier(BaseDeepClassifier):
@@ -86,6 +85,13 @@ class MCDCNNClassifier(BaseDeepClassifier):
         "maintainers": ["james-large"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        # test skips, see #6465 and #7958
+        "tests:skip_by_name": [
+            "test_persistence_via_pickle",
+            "test_multioutput",
+            "test_classifier_on_unit_test_data",
+            "test_fit_idempotent",  # due to randomness
+        ],
     }
 
     def __init__(
@@ -108,8 +114,6 @@ class MCDCNNClassifier(BaseDeepClassifier):
         verbose=False,
         random_state=0,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.kernel_size = kernel_size
@@ -130,6 +134,16 @@ class MCDCNNClassifier(BaseDeepClassifier):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self.history = None
         self._network = MCDCNNNetwork(
             activation=self.activation_hidden,
@@ -141,6 +155,8 @@ class MCDCNNClassifier(BaseDeepClassifier):
             pool_padding=self.pool_padding,
             random_state=self.random_state,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

@@ -28,6 +28,7 @@ import pandas as pd
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.utils.adapters._safe_call import _method_has_arg
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation.series import check_series
 
 
@@ -88,17 +89,25 @@ class BaseDetector(BaseEstimator):
     }
 
     def __init__(self):
-        self._is_fitted = False
-
-        self._X = None
-        self._Y = None
-
-        task = self.get_tag("task")
-        learning_type = self.get_tag("learning_type")
-
         super().__init__()
 
-        self.set_tags(**{"task": task, "learning_type": learning_type})
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated DetectorPipeline.
@@ -173,6 +182,8 @@ class BaseDetector(BaseEstimator):
         Creates fitted model that updates attributes ending in "_". Sets
         _is_fitted flag to True.
         """
+        _check_estimator_deps(self)
+
         # input checks and conversions for X
         X_inner = self._check_X(X)
 
@@ -657,23 +668,6 @@ class BaseDetector(BaseEstimator):
         -------
         Y : pd.Series
             Labels for sequence X exact format depends on detection type.
-        """
-        raise NotImplementedError("abstract method")
-
-    def _transform_scores(self, X):
-        """Return scores for predicted labels on test/deployment data.
-
-        core logic
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Time series subject to detection, which will be assigned labels or scores.
-
-        Returns
-        -------
-        scores : pd.DataFrame with same index as X
-            Scores for sequence ``X``.
         """
         raise NotImplementedError("abstract method")
 

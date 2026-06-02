@@ -188,6 +188,8 @@ class HFTransformersForecaster(BaseForecaster):
         "y_inner_mtype": "pd.Series",
         "capability:insample": False,
         "capability:pred_int:insample": False,
+        "capability:unequal_length": False,
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     def __init__(

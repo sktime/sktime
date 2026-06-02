@@ -41,7 +41,7 @@ class BaseDataset(BaseObject):
 
     def __init__(self):
         super().__init__()
-        _check_estimator_deps(self)
+        _check_estimator_deps(self, severity="warning")
 
     def load(self, *args):
         """Load the dataset.
@@ -59,6 +59,8 @@ class BaseDataset(BaseObject):
         tuple, of same length as args, if args is length 2 or longer
             data containers corresponding to strings in args, in same order
         """
+        _check_estimator_deps(self)
+
         if len(args) == 0:
             args = ("X", "y")
         self._check_args(*args)

@@ -32,6 +32,7 @@ import numpy as np
 
 from sktime.base import BaseEstimator
 from sktime.classification import BaseClassifier
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 class BaseEarlyClassifier(BaseEstimator):
@@ -101,6 +102,7 @@ class BaseEarlyClassifier(BaseEstimator):
         self._converter_store_y = {}
 
         super().__init__()
+        _check_estimator_deps(self, severity="warning")
 
     def fit(self, X, y):
         """Fit time series classifier to training data.

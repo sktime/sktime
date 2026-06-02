@@ -300,10 +300,18 @@ class AutoTS(BaseForecaster):
         self.verbose = verbose
         self.n_jobs = n_jobs
 
-        # leave this as is
         super().__init__()
 
-        # import inside method to avoid hard dependency
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         from autots import AutoTS as _autots
 
         self._ModelClass = _autots

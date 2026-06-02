@@ -17,11 +17,10 @@
 import itertools
 import math
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("jax", severity="none"):
-    import jax
-    import jax.numpy as jnp
+jax = _safe_import("jax")
+jnp = _safe_import("jax.numpy")
 
 import numpy as np
 from sklearn import preprocessing

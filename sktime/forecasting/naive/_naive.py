@@ -137,7 +137,6 @@ class NaiveForecaster(_BaseWindowForecaster):
         "capability:missing_values": True,
         "capability:exogenous": False,
         "capability:multivariate": False,
-        "capability:pred_var": True,
         "capability:pred_int": True,
         # CI and test flags
         # -----------------
@@ -693,7 +692,6 @@ class NaiveVariance(BaseForecaster):
         "capability:missing_values": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
-        "capability:pred_var": True,
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):

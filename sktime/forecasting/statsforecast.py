@@ -945,7 +945,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         Parameters
         ----------
         fh : ForecastingHorizon or None
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         y : pd.Series
             The time series data used for fitting.
 
@@ -970,7 +970,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         Parameters
         ----------
         fh : ForecastingHorizon or None
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         y : pd.Series
             The time series data used for fitting.
         """

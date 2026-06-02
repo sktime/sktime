@@ -206,7 +206,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             return ESRNN().pin_ball()
 
     def _build_network(self, fh):
-        self.input_shape = self._y.shape[-1]
+        self.input_shape = self._y_metadata["n_features"]
         return ESRNN(
             self.input_shape,
             self.hidden_size,

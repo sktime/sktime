@@ -1,11 +1,10 @@
 """Multi Layer Perceptron (MLP) (minus the final output layer) in TensorFlow."""
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MLPNetwork(BaseDeepNetwork):
-    """Establish the network structure for a MLP.
+    """Simple MLP Network.
 
     Adapted from the implementation from source code
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mlp.py
@@ -60,7 +59,26 @@ class MLPNetwork(BaseDeepNetwork):
         n_layers=3,
         hidden_dim=500,
     ):
-        _check_dl_dependencies(severity="error")
+        self.activation = activation
+        self.random_state = random_state
+        self.dropout = dropout
+        self.n_layers = n_layers
+        self.hidden_dim = hidden_dim
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        dropout = self.dropout
+        n_layers = self.n_layers
+        hidden_dim = self.hidden_dim
         # Validate dropout length against n_layers at init time
         if isinstance(dropout, tuple):
             if len(dropout) != n_layers + 1:
@@ -88,12 +106,6 @@ class MLPNetwork(BaseDeepNetwork):
                 "`hidden_dim` should be an int or a list/tuple of ints. "
                 f"But found the type to be: {type(hidden_dim)}"
             )
-        self.activation = activation
-        self.random_state = random_state
-        self.dropout = dropout
-        self.n_layers = n_layers
-        self.hidden_dim = hidden_dim
-        super().__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.

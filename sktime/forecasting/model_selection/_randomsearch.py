@@ -170,6 +170,57 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         and at least one of the two is applicable.
         In this case, the other attributes are not present in self,
         only in the fields of forecasters_.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_shampoo_sales
+    >>> from sktime.forecasting.model_selection import ForecastingRandomizedSearchCV
+    >>> from sktime.split import ExpandingWindowSplitter
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_shampoo_sales()
+    >>> fh = [1, 2, 3]
+    >>> cv = ExpandingWindowSplitter(fh=fh)
+    >>> forecaster = NaiveForecaster()
+    >>> param_distributions = {"strategy": ["last", "mean", "drift"]}
+    >>> rscv = ForecastingRandomizedSearchCV(
+    ...     forecaster=forecaster,
+    ...     param_distributions=param_distributions,
+    ...     cv=cv,
+    ...     n_iter=3,
+    ...     random_state=42)
+    >>> rscv.fit(y)
+    ForecastingRandomizedSearchCV(...)
+    >>> y_pred = rscv.predict(fh)
+
+    Advanced randomized search with a ``scipy.stats`` distribution for a
+    continuous hyperparameter, on a pipeline forecaster:
+
+    >>> from scipy.stats import randint
+    >>> from sktime.datasets import load_shampoo_sales
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.forecasting.model_selection import ForecastingRandomizedSearchCV
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.split import ExpandingWindowSplitter
+    >>> from sktime.transformations.series.detrend import Detrender
+    >>> y = load_shampoo_sales()
+    >>> pipe = TransformedTargetForecaster(steps=[
+    ...     ("detrender", Detrender()),
+    ...     ("forecaster", NaiveForecaster(strategy="mean"))])
+    >>> param_distributions = {
+    ...     "forecaster__window_length": randint(2, 12),
+    ...     "forecaster__strategy": ["mean", "last", "drift"],
+    ... }
+    >>> cv = ExpandingWindowSplitter(
+    ...     initial_window=18, step_length=6, fh=[1, 2, 3])
+    >>> rscv = ForecastingRandomizedSearchCV(
+    ...     forecaster=pipe,
+    ...     param_distributions=param_distributions,
+    ...     cv=cv,
+    ...     n_iter=5,
+    ...     random_state=42)
+    >>> rscv.fit(y)
+    ForecastingRandomizedSearchCV(...)
+    >>> y_pred = rscv.predict(fh=[1, 2, 3])
     """
 
     _tags = {

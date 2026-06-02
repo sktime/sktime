@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.inceptiontime import InceptionTimeNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class InceptionTimeRegressor(BaseDeepRegressor):
@@ -82,8 +81,6 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         activation_hidden="relu",
         activation_inception="linear",
     ):
-        _check_dl_dependencies(severity="error")
-
         self.verbose = verbose
 
         # predefined
@@ -106,19 +103,31 @@ class InceptionTimeRegressor(BaseDeepRegressor):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         network_params = {
-            "n_filters": n_filters,
-            "use_residual": use_residual,
-            "use_bottleneck": use_bottleneck,
-            "bottleneck_size": bottleneck_size,
-            "depth": depth,
-            "kernel_size": kernel_size,
-            "random_state": random_state,
-            "activation": activation_hidden,
-            "activation_inception": activation_inception,
+            "n_filters": self.n_filters,
+            "use_residual": self.use_residual,
+            "use_bottleneck": self.use_bottleneck,
+            "bottleneck_size": self.bottleneck_size,
+            "depth": self.depth,
+            "kernel_size": self.kernel_size,
+            "random_state": self.random_state,
+            "activation": self.activation_hidden,
+            "activation_inception": self.activation_inception,
         }
 
         self._network = InceptionTimeNetwork(**network_params)
+
+        super().__post_init__()
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

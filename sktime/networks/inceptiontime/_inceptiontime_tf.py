@@ -1,7 +1,6 @@
 """Inception Time."""
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class InceptionTimeNetwork(BaseDeepNetwork):
@@ -58,9 +57,6 @@ class InceptionTimeNetwork(BaseDeepNetwork):
             List of available keras activation functions:
             https://keras.io/api/layers/activations/
         """
-        _check_dl_dependencies(severity="error")
-        super().__init__()
-
         self.activation = activation
         self.activation_inception = activation_inception
         self.n_filters = n_filters
@@ -70,6 +66,8 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         self.kernel_size = kernel_size
         self.bottleneck_size = bottleneck_size
         self.random_state = random_state
+
+        super().__init__()
 
     def _inception_module(self, input_tensor, activation, activation_output, stride=1):
         from tensorflow import keras

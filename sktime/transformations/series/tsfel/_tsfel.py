@@ -118,16 +118,25 @@ class TSFELTransformer(BaseTransformer):
         verbose=1,
         kwargs=None,
     ):
-        # Call super().__init__() first to check soft dependencies
-        super().__init__()
-
-        self.domain_strings = ["statistical", "temporal", "spectral", "fractal"]
         self.features = features
         self.fs = fs
         self.window_size = window_size
         self.overlap = overlap
         self.verbose = verbose
         self.kwargs = kwargs
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self.domain_strings = ["statistical", "temporal", "spectral", "fractal"]
 
         # Validate features after initialization
         self._validate_features()

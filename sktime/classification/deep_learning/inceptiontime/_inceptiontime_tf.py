@@ -9,7 +9,6 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.inceptiontime import InceptionTimeNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class InceptionTimeClassifier(BaseDeepClassifier):
@@ -138,8 +137,6 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         activation_hidden="relu",
         activation_inception="linear",
     ):
-        _check_dl_dependencies(severity="error")
-
         # predefined
         self.activation = activation
         self.activation_hidden = activation_hidden
@@ -161,19 +158,31 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         network_params = {
             "activation": self.activation_hidden,
             "activation_inception": self.activation_inception,
-            "n_filters": n_filters,
-            "use_residual": use_residual,
-            "use_bottleneck": use_bottleneck,
-            "bottleneck_size": bottleneck_size,
-            "depth": depth,
-            "kernel_size": kernel_size,
-            "random_state": random_state,
+            "n_filters": self.n_filters,
+            "use_residual": self.use_residual,
+            "use_bottleneck": self.use_bottleneck,
+            "bottleneck_size": self.bottleneck_size,
+            "depth": self.depth,
+            "kernel_size": self.kernel_size,
+            "random_state": self.random_state,
         }
 
         self._network = InceptionTimeNetwork(**network_params)
+
+        super().__post_init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

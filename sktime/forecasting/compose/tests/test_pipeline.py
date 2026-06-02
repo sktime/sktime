@@ -735,7 +735,7 @@ def test_transformed_target_forecaster_predict_proba_delegates():
         """Mock forecaster that natively returns Empirical distribution."""
 
         _tags = {
-            "scitype:y": "univariate",
+            "capability:multivariate": False,
             "y_inner_mtype": "pd.DataFrame",
             "requires-fh-in-fit": False,
             "capability:pred_int": True,

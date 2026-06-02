@@ -79,11 +79,24 @@ class MCDCNNNetworkTorch(NNModule):
         self.activation_hidden = activation_hidden
         self.dense_units = dense_units
         self.num_classes = num_classes
+        self.kernel_sizes = kernel_sizes
+        self.pool_size = pool_size
+        self.filter_sizes = filter_sizes
+        self.conv_padding = conv_padding
+        self.pool_padding = pool_padding
 
         super().__init__()
 
         nnConv1d = _safe_import("torch.nn.Conv1d")
         nnModuleList = _safe_import("torch.nn.ModuleList")
+
+        filter_sizes = self.filter_sizes
+        kernel_sizes = self.kernel_sizes
+        conv_padding = self.conv_padding
+        pool_size = self.pool_size
+        pool_padding = self.pool_padding
+        activation = self.activation
+        activation_hidden = self.activation_hidden
 
         self.conv_layers = nnModuleList()
         for i in range(len(filter_sizes)):

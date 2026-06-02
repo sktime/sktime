@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for johansen parameter estimator."""
 
-__author__ = ["PBormann"]
+__author__ = ["OldPatrick"]
 
 import numpy as np
 import pandas as pd

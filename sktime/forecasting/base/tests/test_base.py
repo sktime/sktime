@@ -172,7 +172,7 @@ def test_vectorization_series_to_panel_proba(method, mtype):
     elif method in ["predict_var"]:
         expected_mtype = "pd-multiindex"
     else:
-        RuntimeError(f"bug in test, unreachable state, method {method} queried")
+        raise RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
     valid, _, _ = check_is_mtype(
         y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"
@@ -212,7 +212,7 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     elif method in ["predict_var"]:
         expected_mtype = "pd_multiindex_hier"
     else:
-        RuntimeError(f"bug in test, unreachable state, method {method} queried")
+        raise RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
     valid, _, _ = check_is_mtype(
         y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"

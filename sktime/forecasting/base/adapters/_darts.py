@@ -259,7 +259,7 @@ class _DartsRegressionAdapter(BaseForecaster):
             - if self.get_tag("capability:multivariate") == True:
                 no restrictions apply
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             For darts models `fh` is not used,
             the steps ahead for prediction is determined by `output_chunk_length`.
         X : pd.DataFrame, optional (default=None)
@@ -306,7 +306,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             The forecasting horizon value should be less than the value
             of ``output_chunk_length`` fitted to the model, otherwise the prediction
             result will be from auto-regression.
@@ -576,7 +576,7 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.

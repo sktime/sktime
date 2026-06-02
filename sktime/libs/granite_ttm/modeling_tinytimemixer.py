@@ -917,6 +917,20 @@ class TinyTimeMixerPreTrainedModel(PreTrainedModel):
     base_model_prefix = "model"
     main_input_name = "past_values"
     supports_gradient_checkpointing = False
+    # TTM does not tie any weights, but transformers>=5.0 looks up
+    # ``all_tied_weights_keys`` during ``from_pretrained``. In v5, this
+    # attribute is populated via ``post_init``, which TTM does not always
+    # invoke (``config.post_init`` defaults to False). We define it as a
+    # class-level empty dict so the attribute is always resolvable.
+    #
+    # Compatibility:
+    # - transformers<5.0: attribute is unused (no-op). 4.x ``PreTrainedModel``
+    #   uses ``_tied_weights_keys`` (list) and ``tie_weights()`` instead, so
+    #   the new attribute does not collide with any 4.x code path.
+    # - transformers>=5.0: ``post_init`` performs ``self.all_tied_weights_keys
+    #   = ...`` (instance-level), so the class-level default is only used as
+    #   fallback and is not mutated.
+    all_tied_weights_keys: dict = {}
 
     def _init_weights(self, module):
         """Initialize weights."""
