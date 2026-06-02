@@ -163,7 +163,7 @@ def _get_tag_fixture():
     # just picked a few valid tags to try out as valid str return_tags args:
     test_str_as_arg = [
         "X-y-must-have-same-index",
-        "capability:pred_var",
+        "capability:pred_int",
         "skip-inverse-transform",
     ]
 
