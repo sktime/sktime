@@ -185,7 +185,10 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 model_kwargs["checkpoint_path"] = hf_hub_download(
                     repo_id=self.checkpoint_path, filename="model.ckpt"
                 )
-                return MoiraiForecast.load_from_checkpoint(**model_kwargs)
+                # Setting weights_only=False is required to load unpickled globals in PyTorch >= 2.6
+                return MoiraiForecast.load_from_checkpoint(
+                    **model_kwargs, weights_only=False
+                )
 
     def _fit(self, y, X=None, fh=None):
         if fh is not None:
