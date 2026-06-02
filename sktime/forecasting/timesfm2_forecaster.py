@@ -35,8 +35,8 @@ from sktime.utils.singleton import _multiton
 class TimesFM2Forecaster(BaseForecaster):
     """TimesFM-2.x forecaster via Hugging Face ``transformers``.
 
-    This forecaster wraps TimesFM-2 prediction models from Hugging Face and
-    exposes them through the ``sktime`` forecasting interface.
+    This forecaster wraps TimesFM-2 prediction models [1]_, [2]_ from Hugging
+    Face and exposes them through the ``sktime`` forecasting interface.
 
     Two primary workflows are supported:
 
@@ -58,8 +58,9 @@ class TimesFM2Forecaster(BaseForecaster):
     ----------
     model_path : str, default="google/timesfm-2.5-200m-transformers"
         Hugging Face repository identifier or local path to a TimesFM checkpoint.
-        If ``None``, a model is created from ``config`` (or default
-        ``transformers.TimesFmConfig``).
+        Defaults to the TimesFM-2.5 checkpoint [3]_; TimesFM-2.0 checkpoints
+        are also supported [4]_. If ``None``, a model is created from
+        ``config`` (or default ``transformers.TimesFmConfig``).
     config : transformers.PretrainedConfig or dict, optional (default=None)
         Model configuration used for loading/initialization.
 
@@ -81,25 +82,26 @@ class TimesFM2Forecaster(BaseForecaster):
         ``torch.bfloat16``, or ``"auto"``.
     quantization_config : transformers.quantizers.HfQuantizer, optional
         Valid quantization configuration object compatible with
-        ``transformers.PreTrainedModel.from_pretrained``.
+        ``transformers.PreTrainedModel.from_pretrained`` [8]_.
     peft_config : peft.PeftConfig, optional (default=None)
         If provided, wraps the loaded base model with PEFT using
         ``peft.get_peft_model``.
     forward_kwargs : dict, optional (default=None)
         Additional keyword arguments forwarded to ``model(...)`` during
-        :meth:`predict` and :meth:`predict_quantiles`.
+        :meth:`predict` and :meth:`predict_quantiles`; see the TimesFM-2.0 [5]_
+        and TimesFM-2.5 [6]_ forward APIs.
     validation_split : float or None, default=0.2
         Fraction of data reserved for evaluation when :meth:`pretrain` is used.
         If ``None``, no evaluation dataset is created.
     training_args : dict, optional (default=None)
         Keyword arguments used to construct ``transformers.TrainingArguments``
-        in :meth:`pretrain`.
+        in :meth:`pretrain` [7]_.
     compute_loss_func : callable, optional (default=None)
-        Optional custom loss function passed to ``transformers.Trainer``.
+        Optional custom loss function passed to ``transformers.Trainer`` [7]_.
     compute_metrics : callable or dict, optional (default=None)
-        Metrics callback(s) passed to ``transformers.Trainer``.
+        Metrics callback(s) passed to ``transformers.Trainer`` [7]_.
     callbacks : list, optional (default=None)
-        Trainer callbacks passed to ``transformers.Trainer``.
+        Trainer callbacks passed to ``transformers.Trainer`` [7]_.
 
     References
     ----------
