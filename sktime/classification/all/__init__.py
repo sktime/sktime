@@ -16,10 +16,15 @@ from sktime.registry import all_estimators
 est_tuples = all_estimators(estimator_types="classifier", return_names=True)
 est_names, ests = zip(*est_tuples)
 
+safe_est_names = []
 for i, x in enumerate(est_tuples):
-    exec(f"{x[0]} = ests[{i}]")
+    name = x[0]
+    if not name.isidentifier():
+        continue
+    globals()[name] = ests[i]
+    safe_est_names.append(name)
 
-__all__ = list(est_names) + [
+__all__ = safe_est_names + [
     "pd",
     "np",
     "load_gunpoint",
