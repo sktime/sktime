@@ -25,23 +25,14 @@ class TSPulseAnomalyDetector(BaseDetector):
     """Anomaly detector wrapping IBM TSPulse via granite-tsfm.
 
     Loads a pretrained ``TSPulseForReconstruction`` checkpoint and scores each
-    time point with the Hugging Face ``TimeSeriesAnomalyDetectionPipeline``.
-    No task-specific training is performed: ``fit`` records column names and
-    channel count, then loads the model; scores come from zero-shot
-    reconstruction error (and optionally one-step forecast error).
+    time point with the Hugging Face ``TimeSeriesAnomalyDetectionPipeline`` for
+    zero-shot detection.
 
-    Input ``X`` must be a ``pd.DataFrame`` of numeric series columns. A
     ``DatetimeIndex`` on ``X`` is recommended: it is copied into an internal
-    timestamp column (spacing is described by ``X.index.inferred_freq``). If
+    timestamp column. If
     ``X`` has no ``DatetimeIndex``, a synthetic daily timestamp column is
     added. The internal timestamp column name is reserved; do not use
     ``"__TSPULSE_TIMESTAMP_COL__"`` as a feature column name.
-
-    ``predict`` returns integer positions where scores exceed
-    ``anomaly_threshold`` (or the ``anomaly_percentile`` of scores when the
-    threshold is ``None``). ``predict_scores`` returns continuous pipeline
-    scores in ``[0, 1]`` (one value per time point, aggregated across variables
-    when ``X`` is multivariate).
 
     Implementation adapted from [1].
 
