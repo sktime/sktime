@@ -733,61 +733,61 @@ class _CachedTimesFM2:
         if self.model_ is not None:
             return self.model_
 
-        from transformers import AutoConfig, TimesFmConfig
-
         if self.model_path is not None:
-            config = self.config
-            if not config:
-                config = AutoConfig.from_pretrained(self.model_path)
-            if isinstance(config, dict):
-                config_class = _get_timesfm_config_class(config)
-                config = config_class.from_dict(config)
-
-            model_class = _get_timesfm_model_class(config)
-            self.model_ = model_class.from_pretrained(
-                self.model_path,
-                config=config,
-                device_map=self.device_map,
-                dtype=self.dtype,
-                quantization_config=self.quantization_config,
-            )
+            self.model_ = self._load_from_path()
         else:
-            config = self.config
-            if not config:
-                config = TimesFmConfig()
-            if isinstance(config, dict):
-                config_class = _get_timesfm_config_class(config)
-                config = config_class.from_dict(config)
-
-            model_class = _get_timesfm_model_class(config)
-            self.model_ = model_class(config)
-            self.model_ = self.model_.to(self.device_map)
-            if self.dtype is not None:
-                self.model_ = self.model_.to(dtype=self.dtype)
-
-        if self.peft_config is not None:
-            self.model_ = self._wrap_with_peft()
+            self.model_ = self._load_randomly()
 
         return self.model_
 
-    def _wrap_with_peft(self):
-        """Wrap loaded model with PEFT.
+    def _load_from_path(self):
+        """Load TimesFM model weights from ``self.model_path``."""
+        from transformers import AutoConfig
 
-        Returns
-        -------
-        model : torch.nn.Module
-            PEFT-wrapped model.
+        config = self.config
+        if not config:
+            config = AutoConfig.from_pretrained(self.model_path)
+        if isinstance(config, dict):
+            config_class = _get_timesfm_config_class(config)
+            config = config_class.from_dict(config)
 
-        Raises
-        ------
-        ModuleNotFoundError
-            If ``peft`` is not installed.
-        """
-        _check_soft_dependencies("peft", severity="error")
+        model_class = _get_timesfm_model_class(config)
 
-        from peft import get_peft_model
+        model = model_class.from_pretrained(
+            self.model_path,
+            config=config,
+            device_map=self.device_map,
+            dtype=self.dtype,
+            quantization_config=self.quantization_config,
+        )
 
-        return get_peft_model(self.model_, deepcopy(self.peft_config))
+        if self.peft_config is not None and _check_soft_dependencies(
+            "peft", severity="error"
+        ):
+            from peft import get_peft_model
+
+            model = get_peft_model(self.model, deepcopy(self.peft_config))
+
+        return model
+
+    def _load_randomly(self):
+        """Initialize a TimesFM model randomly from config."""
+        from transformers import TimesFmConfig
+
+        config = self.config
+        if not config:
+            config = TimesFmConfig()
+        if isinstance(config, dict):
+            config_class = _get_timesfm_config_class(config)
+            config = config_class.from_dict(config)
+
+        model_class = _get_timesfm_model_class(config)
+        model = model_class(config)
+        model = model.to(self.device_map)
+        if self.dtype is not None:
+            model = model.to(dtype=self.dtype)
+
+        return model
 
 
 def _get_timesfm_model_class(config):
