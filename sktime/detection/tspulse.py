@@ -169,7 +169,7 @@ class TSPulseAnomalyDetector(BaseDetector):
         "learning_type": "unsupervised",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
-        "capability:missing_data": False,
+        "capability:missing_values": False,
         "fit_is_empty": False,
         "python_version": ">=3.11",
         "python_dependencies": [
@@ -271,9 +271,24 @@ class TSPulseAnomalyDetector(BaseDetector):
         return pd.Series(anomaly_indices, dtype="int64")
 
     def _predict_scores(self, X):
+        # predict_scores does not call self._check_X(X)
+        # so, calling here manually
+        if isinstance(X, pd.Series):
+            X = self._check_X(X)
+
         result = self._run_pipeline(X)
-        scores = result["anomaly_score"].to_numpy()
-        return pd.Series(scores, index=X.index)
+        scores = np.asarray(result["anomaly_score"]).reshape(-1)
+
+        # Align any padded pipeline output back to X length.
+        n = len(X)
+        if scores.size > n:
+            scores = scores[-n:]
+        elif scores.size < n:
+            scores = np.pad(
+                scores, (n - scores.size, 0), mode="constant", constant_values=0.0
+            )
+
+        return pd.Series(scores.astype("float64", copy=False), index=X.index)
 
     def _transform_scores(self, X):
         scores = self._predict_scores(X)
@@ -287,16 +302,40 @@ class TSPulseAnomalyDetector(BaseDetector):
             pipeline_df[TIMESTAMP_COL] = pd.date_range(
                 start="2020-01-01", periods=len(pipeline_df), freq="D"
             )
+
+        # The tsfm_public pipeline expects at least (context_length + 1) rows and
+        required_len = int(getattr(self._model.config, "context_length", 0)) + 1
+        if required_len > 1 and len(pipeline_df) < required_len:
+            pad_len = required_len - len(pipeline_df)
+            first_row = pipeline_df.iloc[[0]].drop(
+                columns=[TIMESTAMP_COL], errors="ignore"
+            )
+            pad_block = pd.concat([first_row] * pad_len, ignore_index=True)
+
+            # Build timestamps for the padded prefix.
+            if isinstance(X.index, pd.DatetimeIndex):
+                freq = X.index.inferred_freq or "D"
+                first_ts = pd.to_datetime(
+                    np.asarray(pipeline_df[TIMESTAMP_COL]).reshape(-1)[0]
+                )
+                start = first_ts - pd.tseries.frequencies.to_offset(freq) * pad_len
+                pad_ts = pd.date_range(start=start, periods=pad_len, freq=freq)
+            else:
+                first_ts = pd.to_datetime(
+                    np.asarray(pipeline_df[TIMESTAMP_COL]).reshape(-1)[0]
+                )
+                start = first_ts - pd.Timedelta(days=pad_len)
+                pad_ts = pd.date_range(start=start, periods=pad_len, freq="D")
+
+            pad_block[TIMESTAMP_COL] = pad_ts
+            pipeline_df = pd.concat([pad_block, pipeline_df], axis=0)
+
         result = self._pipeline(
             pipeline_df,
             batch_size=self.batch_size,
             predictive_score_smoothing=self.predictive_score_smoothing,
+            target_columns=self._target_columns,
         )
-        if len(result) != len(X):
-            raise RuntimeError(
-                "TSPulse pipeline returned unexpected length "
-                f"{len(result)} for input length {len(X)}."
-            )
         return result
 
     def _build_pipeline(self, model, target_columns):
