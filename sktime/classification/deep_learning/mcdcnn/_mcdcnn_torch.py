@@ -142,19 +142,11 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         self.lr = lr
         self.criterion_kwargs = criterion_kwargs
 
-        # used to difrentiate between user passed "SGD"
+        # used to differentiate between user passed "SGD"
         # and the default "SGD" with kwargs
+        # stored as-is to comply with sklearn __init__ parameter storage contract
         self.optim = optim
         self.optim_kwargs = optim_kwargs
-
-        self.optimizer = optim
-        self.optimizer_kwargs = optim_kwargs
-
-        # default case
-        if self.optim is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
 
         if len(self.filter_sizes) != len(self.kernel_sizes):
             raise ValueError(
@@ -169,14 +161,27 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             activation=self.activation,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
-            optimizer=self.optimizer,
-            optimizer_kwargs=self.optimizer_kwargs,
+            optimizer=optim,
+            optimizer_kwargs=optim_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
         )
+
+    def _instantiate_optimizer(self):
+        if self.optim is None:
+            from sktime.utils.dependencies import _safe_import
+
+            SGD = _safe_import("torch.optim.SGD")
+            return SGD(
+                self.network.parameters(),
+                lr=self.lr,
+                momentum=0.9,
+                weight_decay=0.0005,
+            )
+        return super()._instantiate_optimizer()
 
     def _build_network(self, X, y):
         """Build the MCDCNN network with output layer for classification.
