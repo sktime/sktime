@@ -125,68 +125,119 @@ class TimesFM2Forecaster(BaseForecaster):
 
     Examples
     --------
-    Basic zero-shot forecasting from a pretrained checkpoint:
+    Simple zero-shot forecasting with TimesFM-2.5:
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
     >>> y = load_airline()
-    >>> forecaster = TimesFM2Forecaster(
-    ...     model_path="google/timesfm-2.5-200m-transformers",
-    ...     device_map="cpu",
-    ... )  # doctest: +SKIP
+    >>> # By default, loads google/timesfm-2.5-200m-transformers.
+    >>> forecaster = TimesFM2Forecaster()  # doctest: +SKIP
+    >>> # fit loads the model weights and stores the forecasting context.
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
-    Quantile prediction using model-supported alphas:
+    Simple zero-shot forecasting with TimesFM-2.0:
 
-    >>> forecaster = TimesFM2Forecaster(device_map="cpu")  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
+    >>> y = load_airline()
+    >>> # Loads google/timesfm-2.0-500m-pytorch.
+    >>> forecaster = TimesFM2Forecaster(  # doctest: +SKIP
+    ...     model_path="google/timesfm-2.0-500m-pytorch",
+    ...     forward_kwargs={"forecast_context_len": 1024},
+    ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> q_pred = forecaster.predict_quantiles(  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+
+    Quantile prediction:
+
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
+    >>> y = load_airline()
+    >>> forecaster = TimesFM2Forecaster()  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> # Select only quantiles available in the model config.
+    >>> y_pred = forecaster.predict_quantiles(  # doctest: +SKIP
     ...     fh=[1, 2, 3],
     ...     alpha=[0.1, 0.5, 0.9],
     ... )
 
-    Initialize from config only (no pretrained checkpoint):
+    Reduced-memory inference with dtype and quantization settings:
 
-    >>> cfg = {
-    ...     "architectures": ["TimesFmModelForPrediction"],
-    ...     "num_hidden_layers": 1,
-    ...     "hidden_size": 16,
-    ...     "intermediate_size": 16,
-    ...     "head_dim": 8,
-    ...     "num_attention_heads": 4,
-    ...     "context_length": 8,
-    ...     "horizon_length": 6,
-    ...     "patch_length": 2,
-    ...     "quantiles": [0.1, 0.5, 0.9],
-    ... }
-    >>> forecaster = TimesFM2Forecaster(  # doctest: +SKIP
-    ...     model_path=None,
-    ...     config=cfg,
-    ...     device_map="cpu",
-    ... )
-
-    Global pretraining on panel data:
-
-    >>> from sktime.datasets import load_tecator
-    >>> y_panel = load_tecator(return_type="pd-multiindex")  # doctest: +SKIP
-    >>> y_panel = y_panel.drop(columns=["class_val"])  # doctest: +SKIP
+    >>> import torch  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
+    >>> from transformers import QuantoConfig  # doctest: +SKIP
+    >>> y = load_airline()
     >>> forecaster = TimesFM2Forecaster(  # doctest: +SKIP
     ...     model_path="google/timesfm-2.5-200m-transformers",
-    ...     training_args={"max_steps": 1, "eval_steps": 1},
-    ...     validation_split=0.1,
-    ...     config={"context_length": 32, "horizon_length": 8},
+    ...     device_map="auto",
+    ...     dtype=torch.bfloat16,
+    ...     quantization_config=QuantoConfig(weights="int8"),
     ... )
-    >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
-    Optional PEFT wrapping (requires ``peft``):
+    Global training with a PEFT configuration:
 
     >>> from peft import LoraConfig  # doctest: +SKIP
-    >>> peft_cfg = LoraConfig(r=8, lora_alpha=16)  # doctest: +SKIP
-    >>> forecaster = TimesFM2Forecaster(  # doctest: +SKIP
-    ...     peft_config=peft_cfg,
-    ...     training_args={"max_steps": 1, "eval_steps": 1},
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> y_panel = _make_hierarchical(  # doctest: +SKIP
+    ...     hierarchy_levels=(3,),
+    ...     min_timepoints=128,
+    ...     max_timepoints=400,
     ... )
+    >>> y = load_airline()
+    >>> forecaster = TimesFM2Forecaster(  # doctest: +SKIP
+    ...     model_path="google/timesfm-2.5-200m-transformers",
+    ...     peft_config=LoraConfig(
+    ...         r=8,
+    ...         lora_alpha=32,
+    ...         target_modules=["q_proj", "v_proj"],
+    ...         lora_dropout=0.01,
+    ...     ),
+    ... )
+    >>> # Training happens on hierarchical data.
+    >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+
+    Global training on a randomly initialized model with custom config:
+
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> y_panel = _make_hierarchical(  # doctest: +SKIP
+    ...     hierarchy_levels=(3,),
+    ...     min_timepoints=128,
+    ...     max_timepoints=400,
+    ... )
+    >>> y = load_airline()
+    >>> forecaster = TimesFM2Forecaster(  # doctest: +SKIP
+    ...     model_path=None,
+    ...     config={
+    ...         "architectures": ["TimesFmModelForPrediction"],
+    ...         "num_hidden_layers": 1,
+    ...         "hidden_size": 16,
+    ...         "intermediate_size": 16,
+    ...         "head_dim": 8,
+    ...         "num_attention_heads": 4,
+    ...         "context_length": 8,
+    ...         "horizon_length": 6,
+    ...         "patch_length": 2,
+    ...         "quantiles": [0.25, 0.5, 0.75],
+    ...     },
+    ...     validation_split=0.1,
+    ...     training_args={
+    ...         "max_steps": 1,
+    ...         "eval_steps": 1,
+    ...     },
+    ... )
+    >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
