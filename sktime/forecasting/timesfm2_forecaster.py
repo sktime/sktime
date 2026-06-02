@@ -93,6 +93,10 @@ class TimesFM2Forecaster(BaseForecaster):
         Device placement following the ``transformers`` ``device_map`` naming
         convention, for example ``"cpu"``, ``"cuda"``, ``"cuda:0"``, or
         ``"auto"``.
+    dtype : torch.dtype or str, optional (default=None)
+        Data type used for model loading, following the ``transformers``
+        ``dtype`` convention, for example ``torch.float16``,
+        ``torch.bfloat16``, or ``"auto"``.
 
     References
     ----------
@@ -203,6 +207,7 @@ class TimesFM2Forecaster(BaseForecaster):
         callbacks=None,
         peft_config=None,
         device_map="cpu",
+        dtype=None,
     ):
         self.model_path = model_path
         self.config = config
@@ -214,6 +219,7 @@ class TimesFM2Forecaster(BaseForecaster):
         self.callbacks = callbacks
         self.peft_config = peft_config
         self.device_map = device_map
+        self.dtype = dtype
 
         super().__init__()
 
@@ -391,7 +397,7 @@ class TimesFM2Forecaster(BaseForecaster):
         preds = output.mean_predictions
         preds = preds.ravel()
         preds = preds[preds_idx]
-        preds = preds.detach().cpu().numpy()
+        preds = preds.detach().float().cpu().numpy()
         preds = pd.Series(
             preds,
             index=fh.to_absolute(self._cutoff)._values,
@@ -477,7 +483,7 @@ class TimesFM2Forecaster(BaseForecaster):
         preds = preds.squeeze(0)
         preds = preds[preds_idx]
         preds = preds[:, quantiles_idx]
-        preds = preds.detach().cpu().numpy()
+        preds = preds.detach().float().cpu().numpy()
 
         index = fh.to_absolute(self._cutoff)._values
         name = self.context_.name if self.context_.name is not None else 0
@@ -496,8 +502,9 @@ class TimesFM2Forecaster(BaseForecaster):
         Returns
         -------
         model : transformers.PreTrainedModel
-            Loaded model according to ``self.device_map``. If ``self.model_``
-            already exists, it is returned directly.
+            Loaded model according to ``self.device_map`` and
+            ``self.dtype``. If ``self.model_`` already exists, it is
+            returned directly.
         """
         if hasattr(self, "model_") and self.model_ is not None:
             return self.model_
@@ -507,6 +514,7 @@ class TimesFM2Forecaster(BaseForecaster):
             model_path=self.model_path,
             config=self.config,
             device_map=self.device_map,
+            dtype=self.dtype,
             peft_config=self.peft_config,
         ).load()
 
@@ -525,6 +533,7 @@ class TimesFM2Forecaster(BaseForecaster):
             "model_path": self.model_path,
             "config": self.config,
             "device_map": self.device_map,
+            "dtype": self.dtype,
             "peft_config": self.peft_config,
         }
         return str(sorted(key.items()))
@@ -618,14 +627,25 @@ class _CachedTimesFM2:
         Optional PEFT wrapping configuration.
     device_map : str, dict, int, or torch.device
         Device placement for loading models.
+    dtype : torch.dtype or str or None
+        Data type used for model loading.
     """
 
-    def __init__(self, key, model_path, config, peft_config, device_map):
+    def __init__(
+        self,
+        key,
+        model_path,
+        config,
+        peft_config,
+        device_map,
+        dtype,
+    ):
         self.key = key
         self.model_path = model_path
         self.config = config
         self.peft_config = peft_config
         self.device_map = device_map
+        self.dtype = dtype
         self.model_ = None
 
     def load(self):
@@ -634,7 +654,8 @@ class _CachedTimesFM2:
         Returns
         -------
         model : transformers.PreTrainedModel
-            Loaded TimesFM prediction model according to ``self.device_map``.
+            Loaded TimesFM prediction model according to ``self.device_map``
+            and ``self.dtype``.
 
         Notes
         -----
@@ -661,6 +682,7 @@ class _CachedTimesFM2:
                 self.model_path,
                 config=config,
                 device_map=self.device_map,
+                dtype=self.dtype,
             )
         else:
             config = self.config
@@ -673,6 +695,8 @@ class _CachedTimesFM2:
             model_class = _get_timesfm_model_class(config)
             self.model_ = model_class(config)
             self.model_ = self.model_.to(self.device_map)
+            if self.dtype is not None:
+                self.model_ = self.model_.to(dtype=self.dtype)
 
         if self.peft_config is not None:
             self.model_ = self._wrap_with_peft()
