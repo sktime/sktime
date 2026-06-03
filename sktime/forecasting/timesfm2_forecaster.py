@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""TimesFM-2 forecaster adapter for ``sktime``.
+"""TimesFM-2 forecaster for ``sktime``.
 
 This module provides an ``sktime`` forecaster wrapping the Hugging Face
 ``transformers`` implementation of Google Research TimesFM-2 models
@@ -8,11 +8,9 @@ This module provides an ``sktime`` forecaster wrapping the Hugging Face
 - zero-shot prediction through :meth:`fit` + :meth:`predict`
 - global pretraining on panel/hierarchical data through :meth:`pretrain`
 - quantile prediction through :meth:`predict_quantiles`
-- optional PEFT wrapping during model loading
-
-The adapter intentionally keeps the estimator API aligned with ``sktime`` while
-delegating model loading, forward passes, and optional training to
-``transformers`` classes.
+- Hugging Face ``device_map`` and ``dtype`` model-loading options
+- optional quantized pretrained model loading
+- optional PEFT wrapping for pretrained models
 """
 
 __author__ = ["rajatsen91", "siriuz42", "geetu040"]
@@ -49,10 +47,15 @@ class TimesFM2Forecaster(BaseForecaster):
       forecast steps beyond this limit raise ``ValueError``.
     - Quantile prediction is only available for quantiles present in
       ``model.config.quantiles``.
+    - ``device_map`` and ``dtype`` are supported for both pretrained loading
+      and config-only initialization. For pretrained loading, they are passed
+      to ``from_pretrained``; for config-only initialization, they are applied
+      after model construction.
+    - ``quantization_config`` and ``peft_config`` are applied only when loading
+      a pretrained model from ``model_path``. They are not used for config-only
+      initialization with ``model_path=None``.
     - Loaded models are cached via a multiton helper keyed by model-loading
       inputs to avoid repeated model instantiation.
-    - For pickling, ``model_`` is excluded from serialized state and reloaded
-      lazily after unpickling.
 
     Parameters
     ----------
@@ -81,15 +84,19 @@ class TimesFM2Forecaster(BaseForecaster):
         ``dtype`` convention, for example ``torch.float16``,
         ``torch.bfloat16``, or ``"auto"``.
     quantization_config : transformers.quantizers.HfQuantizer, optional
-        Valid quantization configuration object compatible with
-        ``transformers.PreTrainedModel.from_pretrained`` [8]_.
+        Valid quantization configuration object compatible with pretrained
+        loading through ``transformers.PreTrainedModel.from_pretrained`` [8]_.
+        Applied only when ``model_path`` is not ``None``; ignored for
+        config-only initialization with ``model_path=None``.
     forward_kwargs : dict, optional (default=None)
         Additional keyword arguments forwarded to ``model(...)`` during
         :meth:`predict` and :meth:`predict_quantiles`; see the TimesFM-2.0 [5]_
         and TimesFM-2.5 [6]_ forward APIs.
     peft_config : peft.PeftConfig, optional (default=None)
-        If provided, wraps the loaded base model with PEFT using
-        ``peft.get_peft_model``.
+        If provided, wraps the loaded pretrained base model with PEFT using
+        ``peft.get_peft_model``. Applied only when ``model_path`` is not
+        ``None``; ignored for config-only initialization with
+        ``model_path=None``.
     validation_split : float or None, default=0.2
         Fraction of data reserved for evaluation when :meth:`pretrain` is used.
         If ``None``, no evaluation dataset is created.
@@ -106,7 +113,7 @@ class TimesFM2Forecaster(BaseForecaster):
     References
     ----------
     .. [1] Das, A., Kong, W., Sen, R., and Zhou, Y. (2024).
-       *A Decoder-only Foundation Model for Time-series Forecasting*.
+       A Decoder-only Foundation Model for Time-series Forecasting.
        CoRR. https://arxiv.org/abs/2310.10688
     .. [2] Google Research TimesFM repository:
        https://github.com/google-research/timesfm
@@ -162,7 +169,7 @@ class TimesFM2Forecaster(BaseForecaster):
     ...     alpha=[0.1, 0.5, 0.9],
     ... )
 
-    Reduced-memory inference with dtype and quantization settings:
+    Reduced-memory inference with device placement, dtype, and quantization:
 
     >>> import torch  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
@@ -178,7 +185,7 @@ class TimesFM2Forecaster(BaseForecaster):
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
-    Global training with a PEFT configuration:
+    Global training with a PEFT-wrapped pretrained model:
 
     >>> from peft import LoraConfig  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
@@ -205,6 +212,9 @@ class TimesFM2Forecaster(BaseForecaster):
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
     Global training on a randomly initialized model with custom config:
+    ``device_map`` and ``dtype`` can still be applied in this path, but
+    ``quantization_config`` and ``peft_config`` require a pretrained
+    ``model_path`` and are ignored when ``model_path=None``.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
@@ -686,7 +696,7 @@ class _CachedTimesFM2:
     dtype : torch.dtype or str or None
         Data type used for model loading.
     quantization_config : transformers.quantizers.HfQuantizer or None
-        Quantization configuration used for model loading.
+        Quantization configuration used for pretrained model loading.
     """
 
     def __init__(
@@ -719,10 +729,13 @@ class _CachedTimesFM2:
 
         Notes
         -----
-        - If ``model_path`` is set, loads weights via ``from_pretrained``.
+        - If ``model_path`` is set, loads weights via ``from_pretrained`` with
+          ``device_map``, ``dtype``, and optional ``quantization_config``.
         - If ``model_path`` is ``None``, initializes from config.
-        - If ``peft_config`` is provided, wraps the model with PEFT after base
-          loading and device placement.
+        - If ``peft_config`` is provided with a pretrained ``model_path``,
+          wraps the model with PEFT after base loading and device placement.
+        - ``quantization_config`` and ``peft_config`` are not applied in the
+          config-only initialization path.
         """
         if self.model_ is not None:
             return self.model_
@@ -735,7 +748,11 @@ class _CachedTimesFM2:
         return self.model_
 
     def _load_from_path(self):
-        """Load TimesFM model weights from ``self.model_path``."""
+        """Load pretrained TimesFM weights from ``self.model_path``.
+
+        This path applies ``device_map``, ``dtype``, ``quantization_config``,
+        and optional PEFT wrapping.
+        """
         from transformers import AutoConfig
 
         config = self.config
@@ -760,12 +777,16 @@ class _CachedTimesFM2:
         ):
             from peft import get_peft_model
 
-            model = get_peft_model(self.model, deepcopy(self.peft_config))
+            model = get_peft_model(model, deepcopy(self.peft_config))
 
         return model
 
     def _load_randomly(self):
-        """Initialize a TimesFM model randomly from config."""
+        """Initialize a TimesFM model from config without pretrained weights.
+
+        This path applies ``device_map`` and ``dtype`` after model construction.
+        It does not apply ``quantization_config`` or ``peft_config``.
+        """
         from transformers import TimesFmConfig
 
         config = self.config
