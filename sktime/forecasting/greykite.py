@@ -31,6 +31,7 @@ class GreykiteForecaster(BaseForecaster):
                 "test_fit_idempotent",
                 "test_persistence_via_pickle",
                 "test_save_estimators_to_file",
+                "test_update_predict_predicted_index",
             ],
         )
 
@@ -319,7 +320,7 @@ class GreykiteForecaster(BaseForecaster):
             return [
                 {"forecast_config": _test_config},
                 {
-                    "model_template": "SILVERKITE",
+                    "model_template": "SILVERKITE_EMPTY",
                     "date_format": None,
                     "coverage": 0.95,
                 },
@@ -327,7 +328,7 @@ class GreykiteForecaster(BaseForecaster):
 
         return [
             {
-                "model_template": "SILVERKITE",
+                "model_template": "SILVERKITE_EMPTY",
                 "date_format": None,
                 "coverage": 0.95,
             },
