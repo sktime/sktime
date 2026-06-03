@@ -7,10 +7,10 @@ from sktime.catalogues.base import BaseCatalogue
 
 
 class BakeOffCatalogue(BaseCatalogue):
-    """TSC Bake off 2017 catalogue.
+    """TSC Bake-off 2017 catalogue.
 
     Catalogue of datasets, classifiers, metrics, and CV splitters used in the
-    2017 Time Series Classification (TSC) Bake Off.
+    2017 Time Series Classification (TSC) Bake-off.
 
     Notes
     -----

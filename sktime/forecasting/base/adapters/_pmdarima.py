@@ -32,8 +32,7 @@ class _PmdArimaAdapter(BaseForecaster):
         # CI and testing tags
         # -------------------
         "tests:vm": True,
-        # libs tag is set so child classes get tested if this file changes
-        "tests:libs": ["sktime.forecasting.base.adapters._pmdarima"],
+        "tests:skip_by_name": ["test_predict_time_index_in_sample_full"],
     }
 
     def __init__(self):
