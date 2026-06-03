@@ -6,7 +6,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.cntc import CNTCNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class CNTCRegressor(BaseDeepRegressor):
@@ -32,6 +31,13 @@ class CNTCRegressor(BaseDeepRegressor):
         number of lstm units in the CLSTM arm.
     dense_size : int, default = 64
         dimension of dense layer in CNTC.
+    dropout : float or tuple of floats, default = (0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1)
+        dropout rate(s), in the range [0, 1).
+        If a single float is provided, the same dropout rate is applied to all layers.
+        If a tuple is provided, it should have 7 values corresponding to:
+        (conv1_dropout, rnn1_dropout, conv2_dropout, lstm_dropout,
+         avg_dropout, att_dropout, mlp_dropout)
+        where mlp_dropout is applied to both MLP layers.
     random_state : int or None, default=None
         Seed for random number generation.
     verbose : boolean, default = False
@@ -97,6 +103,7 @@ class CNTCRegressor(BaseDeepRegressor):
         rnn_size=64,
         lstm_size=8,
         dense_size=64,
+        dropout=(0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1),
         callbacks=None,
         verbose=False,
         loss="mean_squared_error",
@@ -106,8 +113,6 @@ class CNTCRegressor(BaseDeepRegressor):
         activation_hidden="relu",
         activation_attention="sigmoid",
     ):
-        _check_dl_dependencies(severity="error")
-
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.activation_attention = activation_attention
@@ -116,6 +121,7 @@ class CNTCRegressor(BaseDeepRegressor):
         self.rnn_size = rnn_size
         self.lstm_size = lstm_size
         self.dense_size = dense_size
+        self.dropout = dropout
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -126,11 +132,24 @@ class CNTCRegressor(BaseDeepRegressor):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self._network = CNTCNetwork(
             activation=self.activation_hidden,
             activation_attention=self.activation_attention,
             random_state=self.random_state,
+            dropout=self.dropout,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

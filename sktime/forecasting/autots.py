@@ -214,10 +214,10 @@ class AutoTS(BaseForecaster):
         "python_version": ">=3.6",
         # estimator type
         # --------------
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "capability:exogenous": False,  # TODO: add capability
+        "capability:exogenous": True,
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:pred_int": True,
@@ -300,10 +300,18 @@ class AutoTS(BaseForecaster):
         self.verbose = verbose
         self.n_jobs = n_jobs
 
-        # leave this as is
         super().__init__()
 
-        # import inside method to avoid hard dependency
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         from autots import AutoTS as _autots
 
         self._ModelClass = _autots
@@ -311,8 +319,8 @@ class AutoTS(BaseForecaster):
     def _fit(
         self,
         y: pd.DataFrame,
+        X: pd.DataFrame | None = None,
         fh: ForecastingHorizon | None = None,
-        X: pd.DataFrame | None = None,  # noqa: F841
     ):
         """Fits the model to the provided data.
 
@@ -322,14 +330,17 @@ class AutoTS(BaseForecaster):
         Parameters
         ----------
         y : pd.DataFrame
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+            Time series to fit.
+
+            - if ``self.get_tag("capability:multivariate") == False``:
+              guaranteed to have a single column
+            - if ``self.get_tag("capability:multivariate") == True``:
+              no restrictions apply
+        X : pd.DataFrame, optional (default=None)
+            Exogeneous time series to fit to.
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead  to predict.
             Required (non-optional) here.
-        X : pd.DataFrame, optional (default=None)
-            Exogeneous time series to fit to.
 
         Returns
         -------
@@ -343,7 +354,7 @@ class AutoTS(BaseForecaster):
         self._fh = fh
         self._instantiate_model()
         try:
-            self.forecaster_.fit(df=y_date)
+            self.forecaster_.fit(df=y_date, future_regressor=X)
         except Exception as e:
             raise e
         return self
@@ -372,7 +383,8 @@ class AutoTS(BaseForecaster):
         y_date = self._y_date
 
         values = self.forecaster_.predict(
-            forecast_length=self._get_forecast_length()
+            forecast_length=self._get_forecast_length(),
+            future_regressor=X,
         ).forecast.values
 
         cutoff = self._fh_cutoff_transformation(y_date)
@@ -694,6 +706,7 @@ class AutoTS(BaseForecaster):
         prediction = self.forecaster_.predict(
             forecast_length=self._get_forecast_length(),
             prediction_interval=coverage_list,
+            future_regressor=X,
         )
 
         cutoff = self._fh_cutoff_transformation(y_date)
