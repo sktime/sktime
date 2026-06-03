@@ -1,20 +1,28 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Timer-S1 forecaster adapter for ``sktime``.
 
-This module provides an ``sktime`` forecaster wrapping the Hugging Face
-``transformers`` implementation of Timer-S1. It supports:
+This module provides an ``sktime`` forecaster wrapping the local Timer-S1
+``transformers`` model implementation. It supports:
 
 - zero-shot prediction through :meth:`fit` + :meth:`predict`
 - quantile prediction through :meth:`predict_quantiles`
 
+Model training and fine-tuning are not supported at the moment, though they may
+be added in future. Calling :meth:`fit` only loads the model and stores the
+observed series as forecasting context.
+
 The adapter intentionally keeps the estimator API aligned with ``sktime`` while
-delegating model loading and forward passes to ``transformers`` classes.
+delegating model loading and forward passes to Timer-S1 ``transformers`` model
+classes.
 """
 
 __author__ = ["WenWeiTHU", "geetu040"]
 # WenWeiTHU for bytedance-research/Timer-S1
 
 __all__ = ["TimerS1Forecaster"]
+
+from copy import deepcopy
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -30,12 +38,17 @@ class TimerS1Forecaster(BaseForecaster):
     Face and exposes them through the ``sktime`` forecasting interface.
 
     The primary workflow is ``fit`` for zero-shot inference setup, which loads
-    the model and stores history.
+    the model and stores history. It does not train or fine-tune model weights.
+    Passing ``model_path=None`` initializes a Timer-S1 model from ``config``
+    instead of loading pretrained weights. These random weights cannot be
+    trained through this estimator at the moment and are mainly useful for tests
+    or local experimentation.
 
     Notes
     -----
-    - Prediction is bounded by ``model.config.horizon_length``. Requested
-      forecast steps beyond this limit raise ``ValueError``.
+    - Timer-S1 training is currently not supported, but may be added in future.
+      The estimator performs only zero-shot forecasting from a loaded or
+      randomly initialized model.
     - Quantile prediction is only available for quantiles present in
       ``model.config.quantiles``.
     - Loaded models are cached via a multiton helper keyed by model-loading
@@ -49,16 +62,12 @@ class TimerS1Forecaster(BaseForecaster):
     model_path : str, default="bytedance-research/Timer-S1"
         Hugging Face repository identifier or local path to a Timer-S1 checkpoint.
         If ``None``, a model is created from ``config``.
-    config : transformers.PretrainedConfig or dict, optional (default=None)
-        Model configuration used for loading/initialization.
-
-        - If ``model_path`` is not ``None``:
-          passed to ``from_pretrained(..., config=config)``.
-        - If ``model_path`` is ``None``:
-          used to instantiate a model from configuration.
-
-        If provided as ``dict``, the architecture entry is used to infer the
-        config class.
+    config : TimerS1Config or dict, optional (default=None)
+        Model configuration used when ``model_path=None``. If provided as a
+        ``dict``, it is converted with ``TimerS1Config.from_dict``. If ``None``
+        and ``model_path=None``, the default ``TimerS1Config`` is used. This
+        path creates random weights; the estimator does not currently provide
+        training for those weights.
     device_map : str, dict, int, or torch.device, default="cpu"
         Device placement following the ``transformers`` ``device_map`` naming
         convention, for example ``"cpu"``, ``"cuda"``, ``"cuda:0"``, or
@@ -71,8 +80,11 @@ class TimerS1Forecaster(BaseForecaster):
         Valid quantization configuration object compatible with
         ``transformers.PreTrainedModel.from_pretrained`` [3]_.
     forward_kwargs : dict, optional (default=None)
-        Additional keyword arguments forwarded to ``model(...)`` during
+        Additional keyword arguments forwarded to ``model.generate(...)`` during
         :meth:`predict` and :meth:`predict_quantiles`.
+    deterministic : bool, default=False
+        Whether point predictions should reset the ``transformers`` random seed
+        before generation. Currently this is applied in predict methods.
 
     References
     ----------
@@ -125,6 +137,24 @@ class TimerS1Forecaster(BaseForecaster):
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
+    Randomly initialized local model, useful for tests or local experimentation.
+    This model is not trained by ``fit``; the weights stay random and should not
+    be used as a trained forecaster:
+
+    >>> from sktime.forecasting.timer_s1_forecaster import TimerS1Forecaster
+    >>> forecaster = TimerS1Forecaster(  # doctest: +SKIP
+    ...     model_path=None,
+    ...     config={
+    ...         "hidden_size": 16,
+    ...         "intermediate_size": 16,
+    ...         "num_attention_heads": 4,
+    ...         "num_experts": 4,
+    ...         "num_hidden_layers": 1,
+    ...         "num_mtp_tokens": 1,
+    ...     },
+    ...     deterministic=True,
+    ... )
+
     Quantile prediction:
 
     >>> from sktime.datasets import load_airline
@@ -160,6 +190,7 @@ class TimerS1Forecaster(BaseForecaster):
         dtype=None,
         quantization_config=None,
         forward_kwargs=None,
+        deterministic=False,
     ):
         self.model_path = model_path
         self.config = config
@@ -167,13 +198,17 @@ class TimerS1Forecaster(BaseForecaster):
         self.dtype = dtype
         self.quantization_config = quantization_config
         self.forward_kwargs = forward_kwargs
+        self.deterministic = deterministic
 
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
+        """Load the model and store history for zero-shot forecasting.
 
         private _fit containing the core logic, called from fit
+
+        This method does not train or fine-tune Timer-S1 weights. Training may
+        be added in future.
 
         Writes to self:
             Sets fitted model attributes ending in "_".
@@ -232,6 +267,10 @@ class TimerS1Forecaster(BaseForecaster):
             Point predictions
         """
         import torch
+        import transformers
+
+        if self.deterministic:
+            transformers.set_seed(42)
 
         self.model_ = self._load_model()
 
@@ -303,6 +342,10 @@ class TimerS1Forecaster(BaseForecaster):
                 at quantile probability in second col index, for the row index.
         """
         import torch
+        import transformers
+
+        if self.deterministic:
+            transformers.set_seed(42)
 
         self.model_ = self._load_model()
 
@@ -414,16 +457,37 @@ class TimerS1Forecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return [
-            {
-                "model_path": "../hf-repos/Timer-S1-test",
+        intervals = [0.9, 0.75, 0.5, 0.25, 0.1, 0.05]
+        quantiles = sorted(q for p in intervals for q in ((1 - p) / 2, (1 + p) / 2))
+        quantiles = [0.1] + quantiles
+
+        test_params = []
+
+        test_param_1 = {
+            "model_path": None,
+            "config": {
+                "hidden_size": 16,
+                "intermediate_size": 16,
+                "num_attention_heads": 4,
+                "num_experts": 4,
+                "num_hidden_layers": 1,
+                "num_mtp_tokens": 1,
+                "quantiles": quantiles,
+                "use_cache": False,
             },
+            "deterministic": True,
+        }
+        test_params.append(test_param_1)
+
+        test_param_2 = test_param_1.copy()
+        test_param_2.update(
             {
-                "model_path": "../hf-repos/Timer-S1-test",
-                "dtype": "float32",
                 "forward_kwargs": {"revin": True},
-            },
-        ]
+            }
+        )
+        test_params.append(test_param_2)
+
+        return test_params
 
 
 @_multiton
@@ -480,35 +544,25 @@ class _CachedTimerS1:
         Notes
         -----
         - If ``model_path`` is set, loads weights via ``from_pretrained``.
-        - If ``model_path`` is ``None``, initializes from config.
+        - If ``model_path`` is ``None``, initializes from config with random
+          weights. These weights are not trained by the estimator.
         """
         if self.model_ is not None:
             return self.model_
 
         if self.model_path is not None:
             self.model_ = self._load_from_path()
-        # else:
-        #     self.model_ = self._load_randomly()
+        else:
+            self.model_ = self._load_randomly()
 
         return self.model_
 
     def _load_from_path(self):
         """Load Timer-S1 model weights from ``self.model_path``."""
-        from transformers import AutoConfig, AutoModelForCausalLM
+        from sktime.libs.timer_s1 import TimerS1ForPrediction
 
-        config = self.config
-        if not config:
-            config = AutoConfig.from_pretrained(self.model_path, trust_remote_code=True)
-        # if isinstance(config, dict):
-        #     config_class = _get_timesfm_config_class(config)
-        #     config = config_class.from_dict(config)
-
-        # model_class = _get_timesfm_model_class(config)
-        model_class = AutoModelForCausalLM
-
-        model = model_class.from_pretrained(
+        model = TimerS1ForPrediction.from_pretrained(
             self.model_path,
-            config=config,
             device_map=self.device_map,
             dtype=self.dtype,
             quantization_config=self.quantization_config,
@@ -519,68 +573,26 @@ class _CachedTimerS1:
 
     def _load_randomly(self):
         """Initialize a Timer-S1 model randomly from config."""
-        config = self.config
-        if not config:
-            raise ValueError("A Timer-S1 config is required when model_path is None.")
-        if isinstance(config, dict):
-            config_class = _get_timer_s1_config_class(config)
-            config = config_class.from_dict(config)
+        from sktime.libs.timer_s1 import TimerS1Config, TimerS1ForPrediction
 
-        model_class = _get_timer_s1_model_class(config)
-        model = model_class(config)
+        warn(
+            "Initializing Timer-S1 from config creates random weights. "
+            "Timer-S1 training is not supported by this estimator at the "
+            "moment, so these weights will stay random and are only suitable "
+            "for tests or local experimentation.",
+            UserWarning,
+            stacklevel=2,
+        )
+
+        config = deepcopy(self.config)
+        if not config:
+            config = TimerS1Config()
+        if isinstance(config, dict):
+            config = TimerS1Config.from_dict(config)
+
+        model = TimerS1ForPrediction(config)
         model = model.to(self.device_map)
         if self.dtype is not None:
             model = model.to(dtype=self.dtype)
 
         return model
-
-
-def _get_timer_s1_model_class(config):
-    """Resolve Timer-S1 prediction model class from a config object.
-
-    Parameters
-    ----------
-    config : transformers.PretrainedConfig
-        Config object expected to contain ``architectures``.
-
-    Returns
-    -------
-    model_class : type
-        ``transformers`` model class referenced by ``config.architectures[0]``.
-
-    Notes
-    -----
-    The config must define an architecture available in ``transformers``.
-    """
-    import transformers
-
-    architectures = getattr(config, "architectures", None)
-    if not architectures:
-        raise ValueError("Timer-S1 config must define an architecture.")
-    return getattr(transformers, architectures[0])
-
-
-def _get_timer_s1_config_class(config):
-    """Resolve Timer-S1 config class from a config dictionary.
-
-    Parameters
-    ----------
-    config : dict
-        Config dictionary with optional ``architectures`` entry.
-
-    Returns
-    -------
-    config_class : type
-        Matching ``transformers`` config class.
-
-    Notes
-    -----
-    Maps ``*ModelForPrediction`` architecture names to ``*Config``.
-    """
-    import transformers
-
-    architectures = config.get("architectures")
-    if not architectures:
-        raise ValueError("Timer-S1 config must define an architecture.")
-    config_class_name = architectures[0].replace("ModelForPrediction", "Config")
-    return getattr(transformers, config_class_name)
