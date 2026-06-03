@@ -17,28 +17,57 @@
 import math
 from dataclasses import dataclass
 
-from sktime.utils.dependencies import _safe_import
+from sktime.utils.dependencies import _check_soft_dependencies
 
 from .configuration_TimerS1 import TimerS1Config
 from .ts_generation_mixin import TSGenerationMixin
 
-torch = _safe_import("torch")
-F = _safe_import("torch.nn.functional")
-nn = _safe_import("torch.nn")
+if _check_soft_dependencies("torch", "transformers", severity="none"):
+    import torch
+    import torch.nn.functional as F
+    from torch import nn
+    from transformers import Cache, DynamicCache, PreTrainedModel
+    from transformers.activations import ACT2FN
+    from transformers.modeling_attn_mask_utils import (
+        _prepare_4d_causal_attention_mask,
+    )
+    from transformers.modeling_outputs import (
+        MoeCausalLMOutputWithPast,
+        MoeModelOutputWithPast,
+    )
+else:
 
-Cache = _safe_import("transformers.Cache")
-DynamicCache = _safe_import("transformers.DynamicCache")
-PreTrainedModel = _safe_import("transformers.PreTrainedModel")
-ACT2FN = _safe_import("transformers.activations.ACT2FN")
-_prepare_4d_causal_attention_mask = _safe_import(
-    "transformers.modeling_attn_mask_utils._prepare_4d_causal_attention_mask"
-)
-MoeCausalLMOutputWithPast = _safe_import(
-    "transformers.modeling_outputs.MoeCausalLMOutputWithPast"
-)
-MoeModelOutputWithPast = _safe_import(
-    "transformers.modeling_outputs.MoeModelOutputWithPast"
-)
+    class _TimerS1DependencyStub:
+        """Placeholder base used when TimerS1 soft dependencies are unavailable."""
+
+    class _TimerS1NNStub:
+        """Minimal ``torch.nn`` placeholder for import-time class definitions."""
+
+        Module = object
+
+    class _TimerS1TorchStub:
+        """Minimal ``torch`` placeholder for import-time annotations."""
+
+        Tensor = object
+        FloatTensor = object
+        LongTensor = object
+        nn = _TimerS1NNStub
+
+    def _prepare_4d_causal_attention_mask(*args, **kwargs):
+        raise ModuleNotFoundError(
+            "TimerS1 model execution requires the optional dependencies "
+            "'torch' and 'transformers'."
+        )
+
+    torch = _TimerS1TorchStub()
+    F = None
+    nn = _TimerS1NNStub
+    Cache = _TimerS1DependencyStub
+    DynamicCache = _TimerS1DependencyStub
+    PreTrainedModel = _TimerS1DependencyStub
+    ACT2FN = {}
+    MoeCausalLMOutputWithPast = _TimerS1DependencyStub
+    MoeModelOutputWithPast = _TimerS1DependencyStub
 
 
 @dataclass

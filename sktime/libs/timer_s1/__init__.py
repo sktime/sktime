@@ -216,5 +216,15 @@ All code contained is released under the license below.
    limitations under the License.
 """
 
-from sktime.libs.timer_s1.configuration_TimerS1 import TimerS1Config
-from sktime.libs.timer_s1.modeling_TimerS1 import TimerS1ForPrediction
+from sktime.utils.dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("torch", "transformers", severity="none"):
+    from sktime.libs.timer_s1.configuration_TimerS1 import TimerS1Config
+    from sktime.libs.timer_s1.modeling_TimerS1 import TimerS1ForPrediction
+else:
+
+    class TimerS1Config:
+        """Placeholder for TimerS1Config."""
+
+    class TimerS1ForPrediction:
+        """Placeholder for TimerS1ForPrediction."""
