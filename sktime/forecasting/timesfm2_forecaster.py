@@ -83,13 +83,13 @@ class TimesFM2Forecaster(BaseForecaster):
     quantization_config : transformers.quantizers.HfQuantizer, optional
         Valid quantization configuration object compatible with
         ``transformers.PreTrainedModel.from_pretrained`` [8]_.
-    peft_config : peft.PeftConfig, optional (default=None)
-        If provided, wraps the loaded base model with PEFT using
-        ``peft.get_peft_model``.
     forward_kwargs : dict, optional (default=None)
         Additional keyword arguments forwarded to ``model(...)`` during
         :meth:`predict` and :meth:`predict_quantiles`; see the TimesFM-2.0 [5]_
         and TimesFM-2.5 [6]_ forward APIs.
+    peft_config : peft.PeftConfig, optional (default=None)
+        If provided, wraps the loaded base model with PEFT using
+        ``peft.get_peft_model``.
     validation_split : float or None, default=0.2
         Fraction of data reserved for evaluation when :meth:`pretrain` is used.
         If ``None``, no evaluation dataset is created.
@@ -260,8 +260,8 @@ class TimesFM2Forecaster(BaseForecaster):
         device_map="cpu",
         dtype=None,
         quantization_config=None,
-        peft_config=None,
         forward_kwargs=None,
+        peft_config=None,
         validation_split=0.2,
         training_args=None,
         compute_loss_func=None,
@@ -273,8 +273,8 @@ class TimesFM2Forecaster(BaseForecaster):
         self.device_map = device_map
         self.dtype = dtype
         self.quantization_config = quantization_config
-        self.peft_config = peft_config
         self.forward_kwargs = forward_kwargs
+        self.peft_config = peft_config
         self.validation_split = validation_split
         self.training_args = training_args
         self.compute_loss_func = compute_loss_func
