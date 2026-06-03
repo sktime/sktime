@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Timer-S1 forecaster adapter for ``sktime``.
+"""Timer-S1 forecaster for ``sktime``.
 
 This module provides an ``sktime`` forecaster wrapping the local Timer-S1
 ``transformers`` model implementation. It supports:
@@ -10,10 +10,6 @@ This module provides an ``sktime`` forecaster wrapping the local Timer-S1
 Model training and fine-tuning are not supported at the moment, though they may
 be added in future. Calling :meth:`fit` only loads the model and stores the
 observed series as forecasting context.
-
-The adapter intentionally keeps the estimator API aligned with ``sktime`` while
-delegating model loading and forward passes to Timer-S1 ``transformers`` model
-classes.
 """
 
 __author__ = ["WenWeiTHU", "geetu040"]
