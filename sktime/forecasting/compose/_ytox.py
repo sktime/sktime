@@ -31,6 +31,21 @@ class YToXForecaster(BaseForecaster):
     y_subset_B : list of str, or list of int
         The subset of variables from `y` to be forecasted by `forecaster_B` and used as
         exogenous features for `forecaster_A`.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.compose import YToXForecaster
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.datasets import load_longley
+    >>> y, X = load_longley()
+    >>> forecaster = YToXForecaster(
+    ...     forecaster_A=NaiveForecaster(),
+    ...     forecaster_B=NaiveForecaster(),
+    ...     y_subset_B=["POP"]
+    ... )
+    >>> forecaster.fit(y, X=X, fh=[1, 2, 3])
+    YToXForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3], X=X)
     """
 
     _tags = {
