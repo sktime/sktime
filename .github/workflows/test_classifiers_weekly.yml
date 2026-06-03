@@ -3,7 +3,7 @@ name: weekly classifiers test
 on:
   schedule:
     # Runs every Saturday at 03:00 UTC
-    - cron: "0 3 * * 6"
+    - cron: "0 5 * * 6"
 
   workflow_dispatch:
 
@@ -31,20 +31,32 @@ jobs:
       - name: Install sktime
         run: pip install .[dev]
 
-      - name: Get all classifiers
+      - name: Get all classifiers and Python versions
         id: get
         run: |
           python - <<EOF
           import json
           from sktime.registry import all_estimators
 
+          from sktime.utils.dependencies._dependencies import _get_lowest_compatible_python_version
+
           classifiers = all_estimators("classifier")
-          names = [name for name, _ in classifiers]
+
+          matrix_data = []
+          for name, est_class in classifiers:
+              py_ver = _get_lowest_compatible_python_version(est_class)
+
+              matrix_data.append({
+                  "name": name,
+                  "python_version": py_ver
+              })
+
+          output_json = json.dumps(matrix_data)
 
           with open("classifiers.json", "w") as f:
-              json.dump(names, f)
+              f.write(output_json)
 
-          print(json.dumps(names))
+          print(output_json)
           EOF
 
           echo "classifiers=$(cat classifiers.json)" >> $GITHUB_OUTPUT
@@ -64,7 +76,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.classifier.python_version }}
 
       - name: Install sktime
         run: pip install .[dev]
@@ -74,7 +86,7 @@ jobs:
           python - <<EOF
           from sktime.registry import deps
 
-          name = "${{ matrix.classifier }}"
+          name = "${{ matrix.classifier.name }}"
           d = deps(name, include_test_deps=True)
 
           if d:
@@ -93,7 +105,7 @@ jobs:
           from sktime.registry import all_estimators
           from sktime.utils.estimator_checks import check_estimator
 
-          name = "${{ matrix.classifier }}"
+          name = "${{ matrix.classifier.name }}"
           print(f"Running test for: {name}")
 
           classifiers = dict(all_estimators("classifier"))
