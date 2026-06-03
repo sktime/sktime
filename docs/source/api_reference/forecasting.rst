@@ -671,6 +671,14 @@ Pre-trained and foundation models
 
     TimerForecaster
 
+.. currentmodule:: sktime.forecasting.timer_s1
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimerS1Forecaster
+
 .. currentmodule:: sktime.forecasting.timesfm_forecaster
 
 .. autosummary::
