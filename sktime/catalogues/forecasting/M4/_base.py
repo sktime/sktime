@@ -37,24 +37,25 @@ class _BaseM4CompetitionCatalogue(BaseCatalogue):
     _dataset_name = None
     _metric_name = None
     _base_forecasters = [
-        ("Naive_1", "NaiveForecaster(strategy='last')"),
-        ("SES", "ExponentialSmoothing(trend=None, seasonal=None)"),
-        ("Holt", "ExponentialSmoothing(trend='add', seasonal=None)"),
-        ("Damped", "ExponentialSmoothing(trend='add', damped_trend=True)"),
-        ("Theta", "ThetaForecaster()"),
-        ("AutoARIMA", "AutoARIMA()"),
-        ("AutoETS", "AutoETS()"),
-        (
-            "Comb",
-            "EnsembleForecaster("
-            "    ["
-            "        ('ses', ExponentialSmoothing(trend=None)),"
-            "        ('holt', ExponentialSmoothing(trend='add')),"
-            "        ('damped', ExponentialSmoothing(trend='add', damped_trend=True)),"
-            "    ],"
-            "    aggfunc='mean',"
-            ")",
-        ),
+        {"Naive_1": "NaiveForecaster(strategy='last')"},
+        {"SES": "ExponentialSmoothing(trend=None, seasonal=None)"},
+        {"Holt": "ExponentialSmoothing(trend='add', seasonal=None)"},
+        {"Damped": "ExponentialSmoothing(trend='add', damped_trend=True)"},
+        {"Theta": "ThetaForecaster()"},
+        {"AutoARIMA": "AutoARIMA()"},
+        {"AutoETS": "AutoETS()"},
+        {
+            "Comb": (
+                "EnsembleForecaster("
+                "    ["
+                "        ('ses', ExponentialSmoothing(trend=None)),"
+                "        ('holt', ExponentialSmoothing(trend='add')),"
+                "        ('damped', ExponentialSmoothing(trend='add', damped_trend=True)),"  # noqa: E501
+                "    ],"
+                "    aggfunc='mean',"
+                ")"
+            )
+        },
     ]
 
     _specific_forecasters = []

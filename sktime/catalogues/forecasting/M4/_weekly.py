@@ -24,4 +24,6 @@ class M4CompetitionCatalogueWeekly(_BaseM4CompetitionCatalogue):
         "MeanAbsolutePercentageError(symmetric=True)",
         "MeanAbsoluteScaledError()",
     ]
-    _specific_forecasters = [("Naive_S", "NaiveForecaster(strategy='last', sp=52)")]
+    _specific_forecasters = [
+        {"Naive_S": "NaiveForecaster(strategy='last', sp=52)"},
+    ]
