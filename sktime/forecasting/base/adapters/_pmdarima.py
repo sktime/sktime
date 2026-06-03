@@ -16,17 +16,24 @@ class _PmdArimaAdapter(BaseForecaster):
     """Base class for interfacing pmdarima."""
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "hyang1996", "kejsitake", "fkiraly"],
         "maintainers": "hyang1996",
+        "python_dependencies": ["pmdarima"],
+        # estimator type
+        # --------------
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
-        "python_dependencies": ["pmdarima"],
+        "capability:non_contiguous_X": False,
         # CI and testing tags
         # -------------------
         "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._pmdarima"],
     }
 
     def __init__(self):
@@ -56,6 +63,7 @@ class _PmdArimaAdapter(BaseForecaster):
             X = X.loc[y.index]
         self._forecaster = self._instantiate_model()
         self._forecaster.fit(y, X=X)
+        self._y_name = y.name
         return self
 
     def _update(self, y, X=None, update_params=True):
@@ -122,7 +130,7 @@ class _PmdArimaAdapter(BaseForecaster):
 
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
-        y_pred.name = self._get_varnames()[0]
+        y_pred.name = self._y_name
         y_pred.index = fh_abs
         return y_pred
 
