@@ -64,3 +64,4 @@ from sktime.classification.deep_learning.tapnet import (
 )
 from sktime.classification.deep_learning.tsai.inceptiontimeplus import (
     InceptionTimePlusClassifier,
+)
