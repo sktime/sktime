@@ -34,18 +34,18 @@ class YToXForecaster(BaseForecaster):
 
     Examples
     --------
+    >>> import pandas as pd
     >>> from sktime.forecasting.compose import YToXForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.datasets import load_longley
-    >>> y, X = load_longley()
+    >>> y = pd.DataFrame({"A": [1, 2, 3, 4], "B": [4, 3, 2, 1]})
     >>> forecaster = YToXForecaster(
     ...     forecaster_A=NaiveForecaster(),
     ...     forecaster_B=NaiveForecaster(),
-    ...     y_subset_B=["POP"]
+    ...     y_subset_B=["B"]
     ... )
-    >>> forecaster.fit(y, X=X, fh=[1, 2, 3])
+    >>> forecaster.fit(y, fh=[1, 2])
     YToXForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3], X=X)
+    >>> y_pred = forecaster.predict(fh=[1, 2])
     """
 
     _tags = {
@@ -151,4 +151,9 @@ class YToXForecaster(BaseForecaster):
             "forecaster_B": NaiveForecaster(),
             "y_subset_B": [0],
         }
-        return params1
+        params2 = {
+            "forecaster_A": NaiveForecaster(strategy="mean"),
+            "forecaster_B": NaiveForecaster(strategy="last"),
+            "y_subset_B": [0],
+        }
+        return [params1, params2]
