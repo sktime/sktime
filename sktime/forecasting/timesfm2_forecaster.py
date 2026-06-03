@@ -399,6 +399,25 @@ class TimesFM2Forecaster(BaseForecaster):
         self.model_ = self._load_model()
         self.context_ = y
 
+    def _validate_predict_fh(self, fh):
+        """Return relative forecasting horizon indices after capacity validation."""
+        if fh is None:
+            fh = self.fh
+        fh = fh.to_relative(self.cutoff)
+        preds_idx = fh._values.values - 1
+
+        horizon_length = self.model_.config.horizon_length
+        if np.max(preds_idx) >= horizon_length:
+            raise ValueError(
+                "Requested forecasting horizon exceeds TimesFM model capacity: "
+                f"max requested step={np.max(preds_idx) + 1}, "
+                f"configured horizon_length={horizon_length}. "
+                "Use a shorter horizon or a model/config with a larger "
+                "horizon_length."
+            )
+
+        return fh, preds_idx
+
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
@@ -430,20 +449,7 @@ class TimesFM2Forecaster(BaseForecaster):
 
         self.model_ = self._load_model()
 
-        if fh is None:
-            fh = self.fh
-        fh = fh.to_relative(self.cutoff)
-        preds_idx = fh._values.values - 1
-
-        horizon_length = self.model_.config.horizon_length
-        if np.max(preds_idx) >= horizon_length:
-            raise ValueError(
-                "Requested forecasting horizon exceeds TimesFM model capacity: "
-                f"max requested step={np.max(preds_idx) + 1}, "
-                f"configured horizon_length={horizon_length}. "
-                "Use a shorter horizon or a model/config with a larger "
-                "horizon_length."
-            )
+        fh, preds_idx = self._validate_predict_fh(fh)
 
         past_values = self.context_
         past_values = np.expand_dims(past_values, axis=0)
@@ -503,22 +509,10 @@ class TimesFM2Forecaster(BaseForecaster):
 
         self.model_ = self._load_model()
 
-        horizon_length = self.model_.config.horizon_length
         quantiles = self.model_.config.quantiles
         past_values = self.context_
 
-        if fh is None:
-            fh = self.fh
-        fh = fh.to_relative(self.cutoff)
-        preds_idx = fh._values.values - 1
-        if np.max(preds_idx) >= horizon_length:
-            raise ValueError(
-                "Requested forecasting horizon exceeds TimesFM model capacity: "
-                f"max requested step={np.max(preds_idx) + 1}, "
-                f"configured horizon_length={horizon_length}. "
-                "Use a shorter horizon or a model/config with a larger "
-                "horizon_length."
-            )
+        fh, preds_idx = self._validate_predict_fh(fh)
 
         if alpha is None:
             alpha = quantiles
