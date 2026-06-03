@@ -117,7 +117,12 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         centers=None,
         gamma=1.0,
         rbf_type="gaussian",
-        hidden_layers=[64, 32],
+        # Mutable list literals as defaults are shared across instances
+        # (Python evaluates defaults once at definition time). Use ``None``
+        # and resolve in ``_build_network`` so each call gets a fresh list,
+        # and so ``get_params``/``clone`` round-trip the user's input —
+        # see #10208 / #9971.
+        hidden_layers=None,
         optimizer="adam",
         lr=0.01,
         epochs=100,
@@ -208,6 +213,12 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         """
         output_size = fh if self.mode == "direct" else 1
 
+        # Resolve the architecture default at use-time so ``self.hidden_layers``
+        # mirrors what the caller passed (``None`` if unset) — see #10208.
+        hidden_layers = (
+            self.hidden_layers if self.hidden_layers is not None else [64, 32]
+        )
+
         return RBFNetwork(
             input_size=self.window_length,
             hidden_size=self.hidden_size,
@@ -215,7 +226,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             centers=self.centers,
             gamma=self.gamma,
             rbf_type=self.rbf_type,
-            hidden_layers=self.hidden_layers,
+            hidden_layers=hidden_layers,
             mode=self.mode,
             activation=self.activation,
             dropout_rate=self.dropout_rate,

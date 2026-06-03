@@ -303,8 +303,12 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         dropout: float = 0.0,
         gru_dropout: float = 0.0,
         bidirectional: bool = False,
-        conv_layers: list = [128, 256, 128],
-        kernel_sizes: list = [7, 5, 3],
+        # Defaults are stored as ``None`` and resolved inside ``_build_network``
+        # so that (1) we don't share a mutable list literal across instances and
+        # (2) ``get_params``/``clone`` see exactly what the caller passed —
+        # required by the sklearn ``__init__`` contract.
+        conv_layers: list = None,
+        kernel_sizes: list = None,
         # base classifier specific
         num_epochs: int = 10,
         batch_size: int = 8,
@@ -331,7 +335,10 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         self.criterion = criterion
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
-        self.optimizer_kwargs = {"betas": (0.9, 0.999)} if optimizer == "Adam" else {}
+        # Store ``optimizer_kwargs`` exactly as passed; computed defaults are
+        # resolved at use-time below to satisfy sklearn's __init__ contract
+        # (``get_params`` must round-trip).
+        self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -340,17 +347,31 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         self.input_size = None
         self.numclasses = None
 
+        # Resolve the Adam-specific default for the underlying parent class
+        # without mutating the public attribute. ``self.optimizer_kwargs``
+        # remains exactly what the user supplied so ``get_params``/``clone``
+        # round-trip.
+        resolved_optimizer_kwargs = optimizer_kwargs
+        if resolved_optimizer_kwargs is None and optimizer == "Adam":
+            resolved_optimizer_kwargs = {"betas": (0.9, 0.999)}
+
         super().__init__(
             num_epochs=num_epochs,
             optimizer=optimizer,
             criterion=criterion,
             batch_size=batch_size,
             criterion_kwargs=criterion_kwargs,
-            optimizer_kwargs=optimizer_kwargs,
+            optimizer_kwargs=resolved_optimizer_kwargs,
             lr=lr,
             verbose=verbose,
             random_state=random_state,
         )
+        # Restore the user-passed value: ``BaseDeepClassifierPyTorch.__init__``
+        # writes ``self.optimizer_kwargs = resolved_optimizer_kwargs``, but
+        # the sklearn ``__init__`` contract requires ``self.optimizer_kwargs``
+        # to mirror what the caller of ``GRUFCNNClassifier`` supplied — see
+        # #10208.
+        self.optimizer_kwargs = optimizer_kwargs
 
         self.criterions = {}
 
@@ -360,6 +381,18 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         # n_instances, n_dims, n_timesteps = X.shape
         self.numclasses = len(np.unique(y))
         _, self.input_size, _ = X.shape
+        # Resolve the architecture defaults at use-time so that the public
+        # ``self.conv_layers`` / ``self.kernel_sizes`` attributes mirror what
+        # the user passed in (``None`` if unset). The previous code stored
+        # the lists as the default value of the parameter, which both shared
+        # state across instances (mutable default) and broke
+        # ``get_params``/``clone`` round-trips.
+        conv_layers = (
+            self.conv_layers if self.conv_layers is not None else [128, 256, 128]
+        )
+        kernel_sizes = (
+            self.kernel_sizes if self.kernel_sizes is not None else [7, 5, 3]
+        )
         return GRUFCNN(
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
@@ -371,8 +404,8 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
             dropout=self.dropout,
             gru_dropout=self.gru_dropout,
             bidirectional=self.bidirectional,
-            conv_layers=self.conv_layers,
-            kernel_sizes=self.kernel_sizes,
+            conv_layers=conv_layers,
+            kernel_sizes=kernel_sizes,
         )
 
     @classmethod
