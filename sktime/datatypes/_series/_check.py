@@ -908,8 +908,8 @@ class SeriesGluontsList(ScitypeSeries):
     * target values: the ``"target"`` value is array-like and contains the
       observed values of the series.
     * variables: columns of the ``"target"`` array correspond to variables.
-    * variable names: feature names are generated as ``"value_0"``,
-      ``"value_1"``, ..., ``"value_n"``.
+    * variable names: feature names are assigned as ``"value_{k}"``,
+      where ``k`` is the feature column index.
     * time index: GluonTS represents timing through the start date and
       frequency metadata rather than an explicit index on each observation.
 
