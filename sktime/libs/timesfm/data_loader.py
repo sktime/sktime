@@ -19,10 +19,9 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 from sktime.libs.timesfm import time_features
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("tensorflow", severity="none"):
-    import tensorflow as tf
+tf = _safe_import("tensorflow")
 
 # avoid another dependency
 # from absl import logging
