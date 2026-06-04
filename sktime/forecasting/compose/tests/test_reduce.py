@@ -724,9 +724,28 @@ def test_make_reduction_proba():
 
     assert y_pred.shape == y_test.shape
 
-    # Ensure strategy="recursive" falls back to "direct" for proba regressors
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"])
+    or not _check_soft_dependencies("skpro", severity="none"),
+    reason="run test only if reduce module has changed",
+)
+def test_make_reduction_proba_recursive_fallback():
+    """Test that make_reduction falls back to direct for skpro proba regressors.
+
+    Regression test for issue #6737: passing strategy="recursive" with a skpro
+    probabilistic regressor should silently fall back to strategy="direct", since
+    recursive reduction is not supported for probabilistic regressors.
+    """
+    from skpro.regression.dummy import DummyProbaRegressor
+
+    forecaster_direct = make_reduction(DummyProbaRegressor(), strategy="direct")
     forecaster_recursive = make_reduction(DummyProbaRegressor(), strategy="recursive")
-    assert type(forecaster_recursive) is type(forecaster)
+
+    assert type(forecaster_recursive) is type(forecaster_direct), (
+        "make_reduction with strategy='recursive' and a proba regressor should "
+        "fall back to the same forecaster type as strategy='direct'."
+    )
 
 
 @pytest.mark.skipif(
