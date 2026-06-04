@@ -259,8 +259,16 @@ class LagLlamaForecaster(BaseForecaster):
         "capability:pretrain": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
-        # test and CI tags
-        # ----------------
+        "capability:unequal_length": False,
+        "authors": ["pranavvp16"],
+        "maintainers": ["pranavvp16"],
+        "python_version": "<3.14",
+        "python_dependencies": [
+            "gluonts>=0.14.0",
+            "torch",
+            "lightning>=2.0",
+            "huggingface_hub",
+        ],
         "tests:vm": True,
         "tests:libs": ["sktime.libs.lag_llama"],
     }
