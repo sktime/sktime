@@ -117,7 +117,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         centers=None,
         gamma=1.0,
         rbf_type="gaussian",
-        hidden_layers=[64, 32],
+        hidden_layers=None,
         optimizer="adam",
         lr=0.01,
         epochs=100,
@@ -208,6 +208,9 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         """
         output_size = fh if self.mode == "direct" else 1
 
+        # Apply mutable default here (not in __init__) to satisfy sklearn contract
+        hidden_layers = self.hidden_layers if self.hidden_layers is not None else [64, 32]
+
         return RBFNetwork(
             input_size=self.window_length,
             hidden_size=self.hidden_size,
@@ -215,7 +218,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             centers=self.centers,
             gamma=self.gamma,
             rbf_type=self.rbf_type,
-            hidden_layers=self.hidden_layers,
+            hidden_layers=hidden_layers,
             mode=self.mode,
             activation=self.activation,
             dropout_rate=self.dropout_rate,

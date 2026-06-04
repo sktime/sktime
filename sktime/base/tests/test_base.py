@@ -111,6 +111,35 @@ def test_get_class_tag():
     assert child_tag_defaultNone is None, msg
 
 
+def test_get_class_tag_default_when_value_is_none():
+    """Test that get_class_tag returns tag_value_default when stored value is None.
+
+    Regression test for #10305.
+
+    In sktime, None is used as a sentinel meaning "not set" for many tags
+    (e.g. python_version, python_dependencies). When the stored value is None
+    and the caller supplies a non-None tag_value_default, the default should
+    be returned rather than None.
+    """
+    from sktime.forecasting.naive import NaiveForecaster
+
+    # python_version is defined on BaseObject._tags with value None,
+    # so NaiveForecaster inherits it as None ("unset").
+    # tag_value_default should be returned in this case.
+    result = NaiveForecaster.get_class_tag(
+        tag_name="python_version", tag_value_default=">=3.8"
+    )
+    assert result == ">=3.8", (
+        "get_class_tag should return tag_value_default when stored tag value is None"
+    )
+
+    # When tag_value_default is None (the default), None should still be returned.
+    result_none_default = NaiveForecaster.get_class_tag(tag_name="python_version")
+    assert result_none_default is None, (
+        "get_class_tag should return None when tag value is None and no default given"
+    )
+
+
 def test_get_tags():
     """Tests get_tags method of BaseObject for correctness.
 

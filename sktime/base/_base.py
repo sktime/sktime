@@ -548,6 +548,11 @@ class TagAliaserMixin(_TagAliaserMixin):
         tag_val = super().get_class_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
+        # In sktime, None is used as a sentinel meaning "not set" for many tags
+        # (e.g. python_version, python_dependencies).  If the stored value is
+        # None and the caller supplied a non-None default, honour the default.
+        if tag_val is None and tag_value_default is not None:
+            return tag_value_default
         return tag_val
 
     def get_tag(self, tag_name, tag_value_default=None, raise_error=True):

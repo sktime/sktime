@@ -142,19 +142,22 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         self.lr = lr
         self.criterion_kwargs = criterion_kwargs
 
-        # used to difrentiate between user passed "SGD"
-        # and the default "SGD" with kwargs
+        # Store exactly as passed — required by sklearn __init__ contract.
+        # get_params() / clone() / set_params() depend on this.
         self.optim = optim
         self.optim_kwargs = optim_kwargs
 
-        self.optimizer = optim
-        self.optimizer_kwargs = optim_kwargs
+        # Derived values used internally; not stored on self so they don't
+        # pollute get_params() output.
+        _optimizer = optim if optim is not None else "SGD"
+        _optimizer_kwargs = optim_kwargs
+        if optim is None and optim_kwargs is None:
+            _optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
 
-        # default case
-        if self.optim is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
+        # Expose as readable attributes without breaking sklearn contract.
+        # These shadow the passed values only when defaults are applied.
+        self.optimizer = _optimizer
+        self.optimizer_kwargs = _optimizer_kwargs
 
         if len(self.filter_sizes) != len(self.kernel_sizes):
             raise ValueError(
