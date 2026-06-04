@@ -5,9 +5,6 @@
 __author__ = ["vedantag17"]
 __all__ = ["NeuralProphet"]
 
-import numpy as np
-import pandas as pd
-
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 
@@ -243,6 +240,7 @@ class NeuralProphet(BaseForecaster):
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data."""
+        import pandas as pd
         from neuralprophet import NeuralProphet as _NeuralProphet
 
         # Convert PeriodIndex to DatetimeIndex if needed
@@ -340,6 +338,9 @@ class NeuralProphet(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
+        import numpy as np
+        import pandas as pd
+
         absolute_fh = self.fh.to_absolute(self.cutoff)
         fh_index = absolute_fh.to_pandas()
 
