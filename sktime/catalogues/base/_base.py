@@ -15,7 +15,6 @@ from sktime.registry import craft
 class BaseCatalogue(BaseObject):
     """Base class for catalogue objects.
 
-    ```
     A catalogue is a curated collection of objects grouped by category,
     such as datasets, estimators, metrics, or cross-validation splitters.
 
@@ -131,14 +130,6 @@ class BaseCatalogue(BaseObject):
             Category names contained in the catalogue.
         """
         return list(self._get_catalogue().keys())
-
-    def clear_cache(self):
-        """Clear cached catalogue contents and resolved objects.
-
-        This method is primarily intended for testing and development.
-        """
-        self._cached_catalogue = None
-        self._cached_objects = {}
 
     def __len__(self):
         """Return the total number of catalogue entries.
