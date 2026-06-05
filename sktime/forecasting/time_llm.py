@@ -246,6 +246,18 @@ class TimeLLMForecaster(BaseForecaster):
 
         return y_pred
 
+    def __getstate__(self):
+        """Return state for pickling, excluding unpickleable TimeLLM model."""
+        state = self.__dict__.copy()
+
+        if "model_" in state:
+            state["model_"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state, TimeLLM model will be reloaded on next use."""
+        self.__dict__.update(state)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
