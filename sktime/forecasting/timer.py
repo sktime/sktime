@@ -78,7 +78,7 @@ class TimerForecaster(BaseForecaster):
         "authors": ["PewterZz"],
         "maintainers": "PewterZz",
         "python_dependencies": [
-            "transformers>=4.40,<4.45",
+            "transformers~=4.40",
             "torch",
         ],
         "python_version": ">=3.13",
