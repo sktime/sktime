@@ -81,6 +81,7 @@ class TimerForecaster(BaseForecaster):
             "transformers>=4.40,<4.41",
             "torch",
         ],
+        "python_version": "<3.13",
         # estimator type
         # --------------
         "capability:multivariate": False,
