@@ -18,17 +18,6 @@ ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
 class BaseDeepRegressorTorch(BaseRegressor):
     """Abstract base class for the PyTorch neural network regressors.
 
-    Notes
-    -----
-        Subclasses can opt into estimator-level activation validation by defining:
-
-        - ``_validate_activation_vars``: iterable of attribute names to validate
-        - ``_supported_<attribute_name>``: iterable of allowed string values for each
-            attribute listed in ``_validate_activation_vars``
-
-        This allows future estimators to validate any number of activation-related
-        parameters without adding new base-class arguments.
-
     Parameters
     ----------
     num_epochs : int, default = 16
