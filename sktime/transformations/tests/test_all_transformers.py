@@ -235,6 +235,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         X = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
         y = pd.DataFrame({"var_1": [i for i in range(17)]})
 
+        # breakpoint()
         if (
             estimator_instance.get_tag("capability:categorical_in_X")
             and not estimator_instance.is_composite()

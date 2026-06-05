@@ -101,9 +101,10 @@ class TemporianTransformer(BaseTransformer):
         timestamps_col = X_noindex.columns[0]
         evset = tp.from_pandas(X_noindex, timestamps=timestamps_col)
 
-        function = tp.compile(self.function) if self.compile else self.function
+        # function = tp.compile(self.function) if self.compile else self.function
 
-        res = function(evset)
+        # breakpoint()
+        res = self.function(evset)
         if not isinstance(res, tp.EventSet):
             raise TypeError(
                 f"Expected return type to be an EventSet but received a {type(res)}"
@@ -151,8 +152,10 @@ class TemporianTransformer(BaseTransformer):
 
 
 def _test_function_single_op(evset):
-    return evset + 1
+    import temporian as tp
+    return evset.cast(tp.int32) + 1
 
 
 def _test_function_many_ops(evset):
-    return evset.simple_moving_average(10).lag(10).resample(evset)
+    import temporian as tp
+    return evset.cast(tp.float32).simple_moving_average(10).lag(10).resample(evset)
