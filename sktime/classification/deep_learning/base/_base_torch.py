@@ -133,7 +133,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         # post this function call,
         # self._validated_criterion and self._validated_activation are used
         # and self.criterion and self.activation are ignored
-        self._instantiate_activations()
+        self._callable_activations = self._instantiate_activations()
         # optimizers, criterions, callbacks will be instantiated in
         # _instantiate_optimizer, _instantiate_criterion & _instantiate_callbacks
         # methods respectively
@@ -186,19 +186,29 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
 
     def _instantiate_activations(self):
+        """Instantiate the activations to be used during training/inference.
+
+        Uses ``_instantiate_activation_vars`` to determine the attribute names
+        of activations to instantiate.
+
+        Returns
+        -------
+        callable_activations : dict[str, torch.nn.Module | None]
+            A dictionary of activation functions, keyed by the attribute name.
+        """
         import torch
 
-        self._callable_activations: dict[str, torch.nn.Module | None] = {}
+        callable_activations: dict[str, torch.nn.Module | None] = {}
         for activation_var in self._instantiate_activation_vars:
             activation = getattr(self, activation_var)
             if activation_var == "activation":
                 activation = self._validated_activation
 
             if activation is None:
-                self._callable_activations[activation_var] = None
+                callable_activations[activation_var] = None
                 continue
             if isinstance(activation, torch.nn.Module):
-                self._callable_activations[activation_var] = activation
+                callable_activations[activation_var] = activation
                 continue
             elif not isinstance(activation, str):
                 raise TypeError(
@@ -215,9 +225,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     "weighted-sum-nonlinearity for list of valid activation functions."
                 )
 
-            self._callable_activations[activation_var] = _safe_import(
+            callable_activations[activation_var] = _safe_import(
                 f"torch.nn.{activation}"
             )()
+        return callable_activations
 
     def _validate_activation_criterion(self):
         """Validate activation function in the output layer w.r.t. criterion specified.
