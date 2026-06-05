@@ -1,18 +1,26 @@
 """PyTorch implementation of the Timer forecasting model."""
 
-import torch
-import torch.nn.functional as F
-from torch import nn
-from transformers import Cache, DynamicCache, PreTrainedModel
-from transformers.activations import ACT2FN
-from transformers.modeling_attn_mask_utils import _prepare_4d_causal_attention_mask
-from transformers.modeling_outputs import (
-    MoeCausalLMOutputWithPast,
-    MoeModelOutputWithPast,
-)
+from sktime.utils.dependencies import _safe_import
 
 from .configuration_timer import TimerConfig
 from .ts_generation_mixin import TSGenerationMixin
+
+torch = _safe_import("torch")
+F = _safe_import("torch.nn.functional")
+nn = _safe_import("torch.nn")
+Cache = _safe_import("transformers.Cache")
+DynamicCache = _safe_import("transformers.DynamicCache")
+PreTrainedModel = _safe_import("transformers.PreTrainedModel")
+ACT2FN = _safe_import("transformers.activations.ACT2FN")
+_prepare_4d_causal_attention_mask = _safe_import(
+    "transformers.modeling_attn_mask_utils._prepare_4d_causal_attention_mask"
+)
+MoeCausalLMOutputWithPast = _safe_import(
+    "transformers.modeling_outputs.MoeCausalLMOutputWithPast"
+)
+MoeModelOutputWithPast = _safe_import(
+    "transformers.modeling_outputs.MoeModelOutputWithPast"
+)
 
 
 def rotate_half(x):

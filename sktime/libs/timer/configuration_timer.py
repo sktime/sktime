@@ -1,6 +1,8 @@
 """Configuration for Timer forecasting models."""
 
-from transformers import PretrainedConfig
+from sktime.utils.dependencies import _safe_import
+
+PretrainedConfig = _safe_import("transformers.PretrainedConfig")
 
 
 class TimerConfig(PretrainedConfig):
