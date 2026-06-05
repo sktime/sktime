@@ -53,8 +53,6 @@ class GreykiteForecaster(BaseForecaster):
         The fitted Greykite forecaster.
     _forecast : pandas.DataFrame
         The forecast result from the Greykite model.
-    _X : pandas.DataFrame
-        The exogenous variables, if provided.
 
     Examples
     --------
@@ -75,10 +73,11 @@ class GreykiteForecaster(BaseForecaster):
 
     _tags = {
         "capability:multivariate": False,  # Handles univariate targets here.
-        "capability:exogenous": True,  # Can handle exogenous variables.
+        # Exogenous variables are NOT supported: greykite's exogenous feature
+        # pipeline is memory-intensive and causes OOM in CI
+        "capability:exogenous": False,
         "capability:missing_values": True,  # Handles missing data.
         "y_inner_mtype": "pd.Series",  # Expected input type for y.
-        "X_inner_mtype": "pd.DataFrame",  # Expected input type for X.
         "requires-fh-in-fit": True,  # Forecasting horizon is required in fit.
         "capability:pred_int": False,  # Can produce prediction intervals.
         "capability:unequal_length": False,
@@ -97,7 +96,6 @@ class GreykiteForecaster(BaseForecaster):
             "test_save_estimators_to_file",
             "test_update_predict_predicted_index",
         ],
-        # "tests:vm": True, # skip all tests temporarily, issue tracked in #10083
     }
 
     def __init__(
@@ -215,13 +213,9 @@ class GreykiteForecaster(BaseForecaster):
         # Preserve the series name so _predict can return a named Series.
         self._y_name_ = y.name
         # Convert y into a DataFrame with columns "ts" and "y".
+        # Exogenous variables (X) are not used: capability:exogenous is False,
+        # so sktime's base class will always pass X=None here.
         df = pd.DataFrame({"ts": y.index, "y": y.values})
-
-        # If exogenous variables X are provided, merge them into the DataFrame.
-        if X is not None:
-            for col in X.columns:
-                df[col] = X[col].values
-            self._X = X.copy()
 
         # Create the forecast configuration if not already provided.
         # Use a shallow copy so that setting forecast_horizon does not mutate
