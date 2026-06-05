@@ -54,21 +54,22 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
     >>> from sktime.forecasting.moirai_forecaster import MOIRAIForecaster
     >>> import pandas as pd
     >>> import numpy as np
-    >>> morai_forecaster = MOIRAIForecaster(
-    ...     checkpoint_path=f"sktime/moirai-1.0-R-small"
+    >>> morai_forecaster = MOIRAIForecaster(  # doctest: +SKIP
+    ...     checkpoint_path="sktime/moirai-1.0-R-small"
     ... )
-    >>> y = np.random.normal(0, 1, (30, 2))
-    >>> X = y * 2 + np.random.normal(0, 1, (30,1))
-    >>> index = pd.date_range("2020-01-01", periods=30, freq="D")
-    >>> y = pd.DataFrame(y, index=index)
-    >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)
-    >>> morai_forecaster.fit(y, X=X)
+    >>> y = np.random.normal(0, 1, (30, 2))  # doctest: +SKIP
+    >>> X = y * 2 + np.random.normal(0, 1, (30,1))  # doctest: +SKIP
+    >>> index = pd.date_range("2020-01-01", periods=30, freq="D")  # doctest: +SKIP
+    >>> y = pd.DataFrame(y, index=index)  # doctest: +SKIP
+    >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)  # doctest: +SKIP
+    >>> morai_forecaster.fit(y, X=X)  # doctest: +SKIP
     MOIRAIForecaster(checkpoint_path='sktime/moirai-1.0-R-small')
-    >>> X_test = pd.DataFrame(np.random.normal(0, 1, (10, 2)),
-    ...                      columns=["x1", "x2"],
-    ...                      index=pd.date_range("2020-01-31", periods=10, freq="D"),
+    >>> X_test = pd.DataFrame(  # doctest: +SKIP
+    ...     np.random.normal(0, 1, (10, 2)),
+    ...     columns=["x1", "x2"],
+    ...     index=pd.date_range("2020-01-31", periods=10, freq="D"),
     ... )
-    >>> forecast = morai_forecaster.predict(fh=range(1, 11), X=X_test)
+    >>> forecast = morai_forecaster.predict(fh=range(1, 11), X=X_test)  # doctest: +SKIP
 
     References
     ----------
@@ -161,7 +162,65 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
         def _instantiate_patched_model(self, model_kwargs):
             """Instantiate the model from the vendor package."""
+            import torch
+
+            from sktime.libs.uni2ts.distribution.log_normal import LogNormalOutput
+            from sktime.libs.uni2ts.distribution.mixture import MixtureOutput
+            from sktime.libs.uni2ts.distribution.negative_binomial import (
+                NegativeBinomialOutput,
+            )
+            from sktime.libs.uni2ts.distribution.normal import (
+                NormalFixedScaleOutput,
+                NormalOutput,
+            )
+            from sktime.libs.uni2ts.distribution.student_t import StudentTOutput
             from sktime.libs.uni2ts.forecast import MoiraiForecast
+            from sktime.libs.uni2ts.loss.packed.distribution import PackedNLLLoss
+
+            # PyTorch 2.6+ defaults weights_only=True in torch.load, blocking
+            # unpickling of custom classes unless registered as safe globals.
+            # The checkpoint stores classes under "uni2ts.*" module paths, but
+            # sktime vendors them under "sktime.libs.uni2ts.*".
+            #
+            # PyTorch 2.12+ stores safe globals in a set and resolves
+            # cls.__module__ at unpickling time (not at add-time), so the
+            # tuple form (cls, "uni2ts.path.ClassName") must be used to
+            # specify the exact path stored in the checkpoint.
+            # PyTorch 2.6-2.11 resolves cls.__module__ at add-time, so we
+            # temporarily patch __module__ before calling add_safe_globals.
+            if hasattr(torch.serialization, "add_safe_globals"):
+                import torch._weights_only_unpickler as _wou
+
+                _cls_path_pairs = [
+                    (MixtureOutput, "uni2ts.distribution.mixture.MixtureOutput"),
+                    (NormalOutput, "uni2ts.distribution.normal.NormalOutput"),
+                    (
+                        NormalFixedScaleOutput,
+                        "uni2ts.distribution.normal.NormalFixedScaleOutput",
+                    ),
+                    (LogNormalOutput, "uni2ts.distribution.log_normal.LogNormalOutput"),
+                    (
+                        NegativeBinomialOutput,
+                        "uni2ts.distribution.negative_binomial.NegativeBinomialOutput",
+                    ),
+                    (StudentTOutput, "uni2ts.distribution.student_t.StudentTOutput"),
+                    (
+                        PackedNLLLoss,
+                        "uni2ts.loss.packed.distribution.PackedNLLLoss",
+                    ),
+                ]
+                # Use tuple form if supported (PyTorch 2.12+)
+                if hasattr(_wou, "_get_user_allowed_globals"):
+                    torch.serialization.add_safe_globals(_cls_path_pairs)
+                else:
+                    # Fallback for PyTorch 2.6-2.11: patch __module__ at add-time
+                    _safe_classes = [cls for cls, _ in _cls_path_pairs]
+                    _orig_modules = {cls: cls.__module__ for cls in _safe_classes}
+                    for cls, path in _cls_path_pairs:
+                        cls.__module__ = ".".join(path.split(".")[:-1])
+                    torch.serialization.add_safe_globals(_safe_classes)
+                    for cls in _safe_classes:
+                        cls.__module__ = _orig_modules[cls]
 
             if self.checkpoint_path.startswith("Salesforce"):
                 from sktime.libs.uni2ts.moirai_module import MoiraiModule
@@ -301,11 +360,37 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 )
             else:
                 future_length = 0
-        # check whether the index is a PeriodIndex
+        # check whether the index is a PeriodIndex; store freq to restore later
+        _period_freq = None
         if isinstance(pred_df.index, pd.PeriodIndex):
             time_idx = self.return_time_index(pred_df)
+            _period_freq = time_idx.freq
+            # Keep the natural DatetimeIndex freq from to_timestamp() so that
+            # gluonts can infer the frequency. Setting freq=None breaks gluonts
+            # internal infer_freq for short series (< 3 time points).
             pred_df.index = time_idx.to_timestamp()
-            pred_df.index.freq = None
+
+        # For non-consecutive fh (e.g. fh=[2,5]) the future X only has rows at
+        # those positions, leaving gaps that gluonts rejects as non-uniform.
+        # Reindex to fill all intermediate steps and set future_length=max(fh).
+        if _use_fit_data_as_context and not self._is_range_index:
+            if not isinstance(pred_df.index, pd.MultiIndex):
+                # Use the RAW freq from the index for pd.date_range, NOT the
+                # gluonts-mapped version. 'MS' (month-start) must stay 'MS';
+                # mapping to 'M' would produce month-END dates that don't align.
+                if hasattr(pred_df.index, "freq") and pred_df.index.freq is not None:
+                    _raw_freq_str = pred_df.index.freqstr
+                else:
+                    _raw_freq_str = (
+                        pd.infer_freq(pred_df.index[:3]) if len(pred_df) >= 3 else None
+                    )
+                if _raw_freq_str is not None:
+                    full_idx = pd.date_range(
+                        pred_df.index[0], pred_df.index[-1], freq=_raw_freq_str
+                    )
+                    if len(full_idx) > len(pred_df):
+                        pred_df = pred_df.reindex(full_idx, fill_value=0)
+                        future_length = int(max(fh._values))
 
         # Check if the index is a range index
         if self._is_range_index:
@@ -334,6 +419,19 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 )
             else:
                 predictions.index = predictions.index.to_timestamp()
+        elif _period_freq is not None:
+            # We converted pred_df from PeriodIndex to DatetimeIndex; gluonts
+            # may return DatetimeIndex predictions. Convert back to PeriodIndex
+            # so that pred_out (which has PeriodIndex) can index into predictions.
+            if isinstance(predictions.index, pd.MultiIndex):
+                dt_level = predictions.index.get_level_values(-1)
+                if isinstance(dt_level, pd.DatetimeIndex):
+                    predictions.index = predictions.index.set_levels(
+                        levels=dt_level.to_period(_period_freq).unique(),
+                        level=-1,
+                    )
+            elif isinstance(predictions.index, pd.DatetimeIndex):
+                predictions.index = predictions.index.to_period(_period_freq)
         if _is_hierarchical:
             predictions = self._convert_panel_to_hierarchical(
                 predictions, _y.index.names
@@ -357,7 +455,13 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 predictions.index = timepoints
 
         if _use_fit_data_as_context:
-            predictions = predictions.loc[first_seen_index:]
+            # first_seen_index may be a Period; convert to match predictions.index
+            _fsi = first_seen_index
+            if _period_freq is not None and not isinstance(_fsi, pd.Period):
+                _fsi = pd.Period(_fsi, freq=_period_freq)
+            elif _period_freq is None and isinstance(_fsi, pd.Period):
+                _fsi = _fsi.to_timestamp()
+            predictions = predictions.loc[_fsi:]
 
         predictions = predictions.loc[pred_out]
         predictions.index = pred_out
@@ -476,11 +580,13 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
                 future_length=forecast_horizon,
             )
         else:
+            freq = self.infer_freq(df.index)
             dataset = PandasDataset(
                 df,
                 target=target,
                 feat_dynamic_real=dynamic_features,
                 future_length=forecast_horizon,
+                freq=freq,
             )
 
         return dataset, df_config
@@ -564,9 +670,30 @@ class MOIRAIForecaster(_BaseGlobalForecaster):
         As `freq=None` is returned in case of multiindex timepoints.
 
         """
+        # Mapping from pandas DatetimeIndex freq aliases (produced by
+        # PeriodIndex.to_timestamp()) to gluonts-compatible freq strings.
+        _offset_to_period = {
+            "MS": "M",
+            "ME": "M",
+            "QS": "Q",
+            "QE": "Q",
+            "QS-OCT": "Q",
+            "YS": "Y",
+            "AS": "Y",
+            "YE": "Y",
+            "AE": "Y",
+        }
         if isinstance(index, pd.PeriodIndex):
             return index.freq
-        return pd.infer_freq(index[:3])
+        # Prefer the freq attribute already set on the index (e.g. by to_timestamp())
+        if hasattr(index, "freq") and index.freq is not None:
+            freq_str = index.freqstr
+            return _offset_to_period.get(freq_str, freq_str)
+        # Fall back to inferring from the first 3 values
+        freq = pd.infer_freq(index[:3]) if len(index) >= 3 else None
+        if freq is not None:
+            return _offset_to_period.get(freq, freq)
+        return freq
 
     def return_time_index(self, df):
         """Return the time index, given any type of index."""
