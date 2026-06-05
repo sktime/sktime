@@ -115,8 +115,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "property:randomness": "stochastic",
         # CI and test flags
         # -----------------
-        # "tests:vm": True, # skip all tests temporarily, issue tracked in #10083
-        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
+        "tests:vm": True,
     }
 
     def __init__(
