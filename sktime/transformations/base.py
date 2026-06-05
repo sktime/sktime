@@ -649,7 +649,6 @@ class BaseTransformer(BaseEstimator):
 
         # if no vectorization needed, we call _transform directly
         if not vectorization_needed:
-            # breakpoint()
             Xt = self._transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict

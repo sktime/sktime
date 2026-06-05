@@ -480,7 +480,12 @@ def test_multioutput_direct_equivalence_tabular_linear_regression(fh):
 
     Regressor should produce same predictions
     """
-    y, X = make_forecasting_problem(make_X=True)
+    # we need to fix the seed here otherwise we'll run into flaky test for
+    # older scipy/sklearn versions most likely due to the design matrix
+    # being close to rank-deficient, which makes the least-squares
+    # solution non-unique and therefore sensitive to small numerical
+    # differences in the underlying LAPACK implementation
+    y, X = make_forecasting_problem(make_X=True, random_state=68)
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
     estimator = LinearRegression()

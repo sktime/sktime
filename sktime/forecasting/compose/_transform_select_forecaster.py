@@ -70,7 +70,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     # Importing the methods which can generate data of specific categories
     depending on their variance and average demand intervals.
 
-    >>> from sktime.transformations.series.tests.test_adi_cv import (
+    >>> from sktime.transformations.tests.test_adi_cv import (
     ...     _generate_erratic_series)
 
     # The forecaster is defined which accepts a dictionary of forecasters,
