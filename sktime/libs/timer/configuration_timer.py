@@ -1,4 +1,3 @@
-from typing import List
 from transformers import PretrainedConfig
 
 
@@ -11,7 +10,7 @@ class TimerConfig(PretrainedConfig):
         input_token_len: int = 1,
         hidden_size: int = 1024,
         intermediate_size: int = 2048,
-        output_token_lens: List[int] = [1, 8, 32, 64],
+        output_token_lens: list[int] = [1, 8, 32, 64],
         num_hidden_layers: int = 8,
         num_attention_heads: int = 8,
         hidden_act: str = "silu",
