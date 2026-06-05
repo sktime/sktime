@@ -142,34 +142,45 @@ class TimeLLMForecaster(BaseForecaster):
         else:
             self._pred_len = self.pred_len
 
-        # Create a unique key for the current model configuration
-        key = self._get_unique_time_llm_key()
-
-        # Load or reuse cached model with the same key
-        self.model_ = _CachedTimeLLM(
-            key=key,
-            time_llm_kwargs={
-                "task_name": self.task_name,
-                "pred_len": self._pred_len,
-                "seq_len": self.seq_len,
-                "llm_model": self.llm_model,
-                "llm_layers": self.llm_layers,
-                "llm_dim": self.llm_dim,
-                "patch_len": self.patch_len,
-                "stride": self.stride,
-                "d_model": self.d_model,
-                "d_ff": self.d_ff,
-                "n_heads": self.n_heads,
-                "dropout": self.dropout,
-                "enc_in": y.shape[1],
-                "prompt_domain": self.prompt_domain,
-            },
-        ).load_model()
-
-        self.model_ = self.model_.to(self.device_)
-        self.model_ = self.model_.to(torch.bfloat16)
+        self._enc_in = y.shape[1]
+        self.model_ = self._load_model()
 
         self.last_values = y
+
+    def _load_model(self):
+        """Load Time-LLM model via multiton cache."""
+        if hasattr(self, "model_") and self.model_ is not None:
+            return self.model_
+
+        model = _CachedTimeLLM(
+            key=self._get_unique_time_llm_key(),
+            time_llm_kwargs=self._get_time_llm_kwargs(),
+        ).load_model()
+
+        model = model.to(self.device_)
+        model = model.to(torch.bfloat16)
+        self.model_ = model
+
+        return self.model_
+
+    def _get_time_llm_kwargs(self):
+        """Get the kwargs for Time-LLM model."""
+        return {
+            "task_name": self.task_name,
+            "pred_len": self._pred_len,
+            "seq_len": self.seq_len,
+            "llm_model": self.llm_model,
+            "llm_layers": self.llm_layers,
+            "llm_dim": self.llm_dim,
+            "patch_len": self.patch_len,
+            "stride": self.stride,
+            "d_model": self.d_model,
+            "d_ff": self.d_ff,
+            "n_heads": self.n_heads,
+            "dropout": self.dropout,
+            "enc_in": self._enc_in,
+            "prompt_domain": self.prompt_domain,
+        }
 
     def _get_unique_time_llm_key(self):
         """Get unique key for Time-LLM model to use in multiton."""
@@ -226,6 +237,8 @@ class TimeLLMForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
+        self.model_ = self._load_model()
+
         X_tensor = (
             torch.tensor(self.last_values.values).reshape(1, -1, 1).to(self.device_)
         )
