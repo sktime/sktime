@@ -8,6 +8,7 @@ __all__ = [
     "ConditionalDeseasonalizer",
     "STLTransformer",
     "MSTL",
+    "X13ArimaSeats",
 ]
 
 from sktime.transformations.series.detrend._deseasonalize import (
@@ -16,4 +17,5 @@ from sktime.transformations.series.detrend._deseasonalize import (
     STLTransformer,
 )
 from sktime.transformations.series.detrend._detrend import Detrender
+from sktime.transformations.series.detrend._x13 import X13ArimaSeats
 from sktime.transformations.series.detrend.mstl import MSTL
