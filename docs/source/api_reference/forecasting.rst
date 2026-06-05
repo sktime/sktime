@@ -695,6 +695,14 @@ Pre-trained and foundation models
 
     TotoForecaster
 
+.. currentmodule:: sktime.forecasting.patch_tsmixer
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PatchTSMixerForecaster
+
 Intermittent time series forecasters
 ------------------------------------
 
