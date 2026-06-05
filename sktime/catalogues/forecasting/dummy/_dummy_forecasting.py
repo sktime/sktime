@@ -21,8 +21,7 @@ class DummyForecastingCatalogue(BaseCatalogue):
     def _get(self):
         """Return a dict of items (datasets, forecasters, metrics)."""
         datasets = [
-            "cif_2016_dataset",
-            "hospital_dataset",
+            "Airline",
         ]
 
         forecasters = [{"NaiveForecaster": "NaiveForecaster(strategy='last')"}]
@@ -34,7 +33,7 @@ class DummyForecastingCatalogue(BaseCatalogue):
         ]
 
         all_objects = {
-            "dataset": [f"ForecastingData('{dataset}')" for dataset in datasets],
+            "dataset": datasets,
             "forecaster": forecasters,
             "metric": metrics,
             "cv_splitter": cv_splitters,
