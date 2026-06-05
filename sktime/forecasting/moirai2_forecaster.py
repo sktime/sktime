@@ -104,6 +104,7 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
         # CI and test flags
         # -----------------
         "tests:vm": True,
@@ -170,13 +171,14 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
             prediction_length = 1
 
         if self.num_feat_dynamic_real is None:
-            if X is not None:
-                self.num_feat_dynamic_real = X.shape[1]
-            else:
-                self.num_feat_dynamic_real = 0
+            self._num_feat_dynamic_real = X.shape[1] if X is not None else 0
+        else:
+            self._num_feat_dynamic_real = self.num_feat_dynamic_real
 
         if self.num_past_feat_dynamic_real is None:
-            self.num_past_feat_dynamic_real = 0
+            self._num_past_feat_dynamic_real = 0
+        else:
+            self._num_past_feat_dynamic_real = self.num_past_feat_dynamic_real
 
         if isinstance(y, pd.DataFrame):
             target_dim = y.shape[1]
@@ -187,8 +189,8 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
             "prediction_length": prediction_length,
             "context_length": self.context_length,
             "target_dim": target_dim,
-            "feat_dynamic_real_dim": self.num_feat_dynamic_real,
-            "past_feat_dynamic_real_dim": self.num_past_feat_dynamic_real,
+            "feat_dynamic_real_dim": self._num_feat_dynamic_real,
+            "past_feat_dynamic_real_dim": self._num_past_feat_dynamic_real,
         }
 
         if self.use_source_package:
@@ -243,10 +245,10 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
         else:
             target = _y.columns
 
-        self._target_name = target
-        self._len_of_targets = len(target)
+        _target_name = target
+        _len_of_targets = len(target)
 
-        target = [f"target_{i}" for i in range(self._len_of_targets)]
+        target = [f"target_{i}" for i in range(_len_of_targets)]
         _y.columns = target
 
         future_length = 0
@@ -257,8 +259,8 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
             _X.columns = feat_dynamic_real
 
         pred_df = pd.concat([_y, _X], axis=1)
-        self._is_range_index = self.check_range_index(pred_df)
-        self._is_period_index = self.check_period_index(pred_df)
+        _is_range_index = self.check_range_index(pred_df)
+        _is_period_index = self.check_period_index(pred_df)
 
         if _use_fit_data_as_context:
             future_length = self._get_future_length(X)
@@ -281,10 +283,10 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
             pred_df.index = time_idx.to_timestamp()
             pred_df.index.freq = None
 
-        if self._is_range_index:
+        if _is_range_index:
             pred_df.index = self.handle_range_index(pred_df.index)
 
-        if _use_fit_data_as_context and not self._is_range_index:
+        if _use_fit_data_as_context and not _is_range_index:
             if not isinstance(pred_df.index, pd.MultiIndex):
                 raw_freq = pd.infer_freq(pred_df.index[:3])
                 if raw_freq is not None:
@@ -301,7 +303,7 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
             _is_hierarchical = True
 
         ds_test, df_config = self.create_pandas_dataset(
-            pred_df, target, feat_dynamic_real, future_length
+            pred_df, target, feat_dynamic_real, future_length, _target_name
         )
 
         predictor = self.model.create_predictor(batch_size=self.batch_size)
@@ -325,7 +327,7 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
 
         pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
 
-        if self._is_range_index:
+        if _is_range_index:
             timepoints = self.return_time_index(predictions)
             timepoints = timepoints.to_timestamp()
             timepoints = (timepoints - pd.Timestamp("2010-01-01")).map(
@@ -335,7 +337,19 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
                 predictions.index = predictions.index.set_levels(
                     levels=timepoints.unique(), level=-1
                 )
-                predictions.index = predictions.index.map(lambda x: (int(x[0]), x[1]))
+
+                # _convert_panel_to_hierarchical, so we skip the cast entirely.
+                if not _is_hierarchical:
+
+                    def _safe_int(val):
+                        try:
+                            return int(val)
+                        except (ValueError, TypeError):
+                            return val
+
+                    predictions.index = predictions.index.map(
+                        lambda x: (_safe_int(x[0]), x[1])
+                    )
             else:
                 predictions.index = timepoints
 
@@ -387,14 +401,14 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
             return handle_panel_predictions(forecasts, df_config)
 
     def create_pandas_dataset(
-        self, df, target, dynamic_features=None, forecast_horizon=0
+        self, df, target, dynamic_features=None, forecast_horizon=0, target_name=None
     ):
         """Create a gluonts PandasDataset from the input data."""
         if _check_soft_dependencies("gluonts", severity="none"):
             from gluonts.dataset.pandas import PandasDataset
 
         df_config = {
-            "target": self._target_name,
+            "target": target_name,
         }
 
         if isinstance(df.index, pd.MultiIndex):
