@@ -1,10 +1,13 @@
+"""Generation helpers for continuous time-series tokens."""
+
 import warnings
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import torch
 from transformers import GenerationMixin, LogitsProcessorList, StoppingCriteriaList
 from transformers.generation import EosTokenCriteria, validate_stopping_criteria
+from transformers.generation.streamers import BaseStreamer
 from transformers.generation.utils import (
     GenerateDecoderOnlyOutput,
     GenerateEncoderDecoderOutput,
@@ -14,8 +17,13 @@ from transformers.generation.utils import (
 )
 from transformers.utils import ModelOutput
 
+if TYPE_CHECKING:
+    from transformers import PreTrainedModel
+
 
 class TSGenerationMixin(GenerationMixin):
+    """Generation mixin adapted for continuous time-series forecasts."""
+
     @torch.no_grad()
     def generate(
         self,
@@ -32,6 +40,7 @@ class TSGenerationMixin(GenerationMixin):
         negative_prompt_attention_mask: torch.Tensor | None = None,
         **kwargs,
     ) -> GenerateOutput | torch.LongTensor:
+        """Generate future time-series values."""
         if len(inputs.shape) == 2:
             batch_size, cur_len = inputs.shape
             if cur_len < self.config.input_token_len:
@@ -76,6 +85,7 @@ class TSGenerationMixin(GenerationMixin):
         streamer: Optional["BaseStreamer"] = None,
         **model_kwargs,
     ) -> GenerateNonBeamOutput | torch.Tensor:
+        """Run greedy generation for continuous time-series tokens."""
         input_ids = input_ids.to(self.device)
         batch_size, cur_len = input_ids.shape
         # init values
@@ -90,7 +100,8 @@ class TSGenerationMixin(GenerationMixin):
         if max_length is not None:
             warnings.warn(
                 "`max_length` is deprecated in this function, use"
-                " `stopping_criteria=StoppingCriteriaList([MaxLengthCriteria(max_length=max_length)])` instead.",
+                " `stopping_criteria=StoppingCriteriaList(["
+                "MaxLengthCriteria(max_length=max_length)])` instead.",
                 UserWarning,
             )
             stopping_criteria = validate_stopping_criteria(
@@ -105,7 +116,7 @@ class TSGenerationMixin(GenerationMixin):
             stopping_criteria.append(EosTokenCriteria(eos_token_id=eos_token_id))
         else:
             # remove when the method is totally private
-            # need to get `eos_token_id` and add stopping criteria, so that generation does not go forever
+            # Get `eos_token_id` and add stopping criteria to cap generation.
             eos_token_id = [
                 criteria.eos_token_id.tolist()
                 for criteria in stopping_criteria
@@ -152,7 +163,7 @@ class TSGenerationMixin(GenerationMixin):
             () if (return_dict_in_generate and output_hidden_states) else None
         )
 
-        # if model is an encoder-decoder, retrieve encoder attention weights and hidden states
+        # Retrieve encoder attention weights and hidden states if needed.
         if return_dict_in_generate and self.config.is_encoder_decoder:
             encoder_attentions = (
                 model_kwargs["encoder_outputs"].get("attentions")
@@ -233,7 +244,8 @@ class TSGenerationMixin(GenerationMixin):
             if eos_token_id is not None:
                 if pad_token_id is None:
                     raise ValueError(
-                        "If `eos_token_id` is defined, make sure that `pad_token_id` is defined."
+                        "If `eos_token_id` is defined, make sure that "
+                        "`pad_token_id` is defined."
                     )
                 next_tokens = next_tokens * unfinished_sequences + pad_token_id * (
                     1 - unfinished_sequences
@@ -295,6 +307,7 @@ class TSGenerationMixin(GenerationMixin):
         is_encoder_decoder: bool = False,
         standardize_cache_format: bool = False,
     ) -> dict[str, Any]:
+        """Update cached generation kwargs after a forecasting step."""
         # update past_key_values
         model_kwargs["past_key_values"] = self._extract_past_from_model_output(
             outputs, standardize_cache_format=standardize_cache_format

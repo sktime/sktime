@@ -1,7 +1,11 @@
+"""Configuration for Timer forecasting models."""
+
 from transformers import PretrainedConfig
 
 
 class TimerConfig(PretrainedConfig):
+    """Configuration class for Timer models."""
+
     model_type = "timer"
     keys_to_ignore_at_inference = ["past_key_values"]
 

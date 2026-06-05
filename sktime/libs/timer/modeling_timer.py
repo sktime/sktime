@@ -1,3 +1,5 @@
+"""PyTorch implementation of the Timer forecasting model."""
+
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -14,12 +16,14 @@ from .ts_generation_mixin import TSGenerationMixin
 
 
 def rotate_half(x):
+    """Rotate half of the hidden dimensions for rotary embeddings."""
     x1 = x[..., : x.shape[-1] // 2]
     x2 = x[..., x.shape[-1] // 2 :]
     return torch.cat((-x2, x1), dim=-1)
 
 
 def apply_rotary_pos_emb(q, k, cos, sin, position_ids, unsqueeze_dim=1):
+    """Apply rotary position embeddings to query and key states."""
     cos = cos[position_ids].unsqueeze(unsqueeze_dim)
     sin = sin[position_ids].unsqueeze(unsqueeze_dim)
     q_embed = (q * cos) + (rotate_half(q) * sin)
@@ -28,12 +32,15 @@ def apply_rotary_pos_emb(q, k, cos, sin, position_ids, unsqueeze_dim=1):
 
 
 class TimerPatchEmbedding(nn.Module):
+    """Embed fixed-length time-series patches."""
+
     def __init__(self, config: TimerConfig):
         super().__init__()
         self.input_token_len = config.input_token_len
         self.emb = nn.Linear(config.input_token_len, config.hidden_size, bias=False)
 
     def forward(self, hidden_state: torch.Tensor):
+        """Return patch embeddings for the input time series."""
         hidden_state = hidden_state.unfold(
             dimension=-1, size=self.input_token_len, step=self.input_token_len
         )
@@ -41,6 +48,8 @@ class TimerPatchEmbedding(nn.Module):
 
 
 class TimerPointEmbedding(nn.Module):
+    """Embed point tokens with a gated projection."""
+
     def __init__(self, config: TimerConfig):
         super().__init__()
         self.emb_layer = nn.Linear(
@@ -52,11 +61,14 @@ class TimerPointEmbedding(nn.Module):
         self.act_fn = ACT2FN[config.hidden_act]
 
     def forward(self, x):
+        """Return gated point embeddings."""
         emb = self.act_fn(self.gate_layer(x)) * self.emb_layer(x)
         return emb
 
 
 class TimeMoeRotaryEmbedding(torch.nn.Module):
+    """Rotary positional embedding cache for Timer attention."""
+
     def __init__(self, dim, max_position_embeddings=10000, base=10000, device=None):
         super().__init__()
         self.dim = dim
@@ -85,12 +97,13 @@ class TimeMoeRotaryEmbedding(torch.nn.Module):
         ).type_as(self.inv_freq)
 
         freqs = torch.outer(t, self.inv_freq)
-        # Different from paper, but it uses a different permutation in order to obtain the same calculation
+        # Uses a different permutation from the paper for the same calculation.
         emb = torch.cat((freqs, freqs), dim=-1)
         self.register_buffer("cos_cached", emb.cos().to(dtype), persistent=False)
         self.register_buffer("sin_cached", emb.sin().to(dtype), persistent=False)
 
     def forward(self, x, seq_len=None):
+        """Return cached rotary embedding tensors for the requested length."""
         # x: [bs, num_attention_heads, seq_len, head_size]
         if seq_len > self.max_seq_len_cached:
             self._set_cos_sin_cache(seq_len=seq_len, device=x.device, dtype=x.dtype)
@@ -102,6 +115,8 @@ class TimeMoeRotaryEmbedding(torch.nn.Module):
 
 
 class TimerAttention(nn.Module):
+    """Multi-head causal self-attention used by Timer."""
+
     def __init__(self, config: TimerConfig, layer_idx: int | None = None):
         super().__init__()
         self.layer_idx = layer_idx
@@ -126,6 +141,7 @@ class TimerAttention(nn.Module):
         output_attentions: bool = False,
         **kwargs,
     ) -> tuple[torch.Tensor, torch.Tensor | None, tuple[torch.Tensor] | None]:
+        """Apply self-attention to hidden states."""
         bsz, q_len, _ = hidden_states.size()
 
         query_states = self.q_proj(hidden_states)
@@ -174,6 +190,8 @@ class TimerAttention(nn.Module):
 
 
 class TimerMLP(nn.Module):
+    """Feed-forward network used in Timer decoder layers."""
+
     def __init__(self, hidden_size: int, intermediate_size: int, hidden_act: str):
         super().__init__()
         self.hidden_size = hidden_size
@@ -184,12 +202,15 @@ class TimerMLP(nn.Module):
         self.act_fn = ACT2FN[hidden_act]
 
     def forward(self, hidden_state):
+        """Apply the gated feed-forward network."""
         return self.down_proj(
             self.act_fn(self.gate_proj(hidden_state)) * self.up_proj(hidden_state)
         )
 
 
 class TimerDecoderLayer(nn.Module):
+    """Single Timer decoder block."""
+
     def __init__(self, config: TimerConfig, layer_idx: int):
         super().__init__()
         self.self_attn = TimerAttention(config, layer_idx)
@@ -217,6 +238,7 @@ class TimerDecoderLayer(nn.Module):
         torch.FloatTensor | None,
         torch.FloatTensor | None,
     ]:
+        """Run one decoder block."""
         residual = hidden_states
 
         # Self Attention
@@ -246,6 +268,8 @@ class TimerDecoderLayer(nn.Module):
 
 
 class TimerPreTrainedModel(PreTrainedModel):
+    """Base class for Timer pretrained models."""
+
     config_class = TimerConfig
     base_model_prefix = "model"
     supports_gradient_checkpointing = True
@@ -268,6 +292,8 @@ class TimerPreTrainedModel(PreTrainedModel):
 
 
 class TimerModel(TimerPreTrainedModel):
+    """Timer decoder model without prediction heads."""
+
     def __init__(self, config: TimerConfig):
         super().__init__(config)
         self.embed_layer = TimerPatchEmbedding(config)
@@ -292,6 +318,7 @@ class TimerModel(TimerPreTrainedModel):
         output_hidden_states: bool | None = None,
         return_dict: bool | None = None,
     ) -> tuple | MoeModelOutputWithPast:
+        """Run the Timer decoder model."""
         # input_ids is the input of time series, its shape is [batch_size, seq_len]
         output_attentions = (
             output_attentions
@@ -312,7 +339,8 @@ class TimerModel(TimerPreTrainedModel):
         # retrieve input_ids and inputs_embeds
         if input_ids is not None and inputs_embeds is not None:
             raise ValueError(
-                "You cannot specify both decoder_input_ids and decoder_inputs_embeds at the same time"
+                "You cannot specify both decoder_input_ids and "
+                "decoder_inputs_embeds at the same time"
             )
         elif input_ids is not None:
             batch_size, seq_length = input_ids.shape
@@ -428,6 +456,8 @@ class TimerModel(TimerPreTrainedModel):
 
 
 class TimerForPrediction(TimerPreTrainedModel, TSGenerationMixin):
+    """Timer model with forecasting heads."""
+
     def __init__(self, config: TimerConfig):
         super().__init__(config)
         self.config = config
@@ -444,9 +474,11 @@ class TimerForPrediction(TimerPreTrainedModel, TSGenerationMixin):
         self.post_init()
 
     def set_decoder(self, decoder):
+        """Set the underlying decoder model."""
         self.model = decoder
 
     def get_decoder(self):
+        """Return the underlying decoder model."""
         return self.model
 
     def forward(
@@ -465,6 +497,7 @@ class TimerForPrediction(TimerPreTrainedModel, TSGenerationMixin):
         max_output_length: int | None = None,
         revin: bool | None = False,
     ) -> tuple | MoeCausalLMOutputWithPast:
+        """Run Timer forecasting or training loss computation."""
         output_attentions = (
             output_attentions
             if output_attentions is not None
@@ -544,6 +577,7 @@ class TimerForPrediction(TimerPreTrainedModel, TSGenerationMixin):
         )
 
     def calc_ar_loss(self, predictions, labels, loss_masks, output_token_len):
+        """Calculate autoregressive forecasting loss."""
         seq_len = predictions.shape[1] * self.config.input_token_len
         labels = labels[:, : seq_len - self.config.input_token_len + output_token_len]
         shift_labels = labels.unfold(
@@ -569,6 +603,7 @@ class TimerForPrediction(TimerPreTrainedModel, TSGenerationMixin):
         revin=True,
         **kwargs,
     ):
+        """Prepare model inputs for autoregressive generation."""
         # Omit tokens covered by past_key_values
         if past_key_values is not None:
             if isinstance(past_key_values, Cache):
@@ -584,20 +619,19 @@ class TimerForPrediction(TimerPreTrainedModel, TSGenerationMixin):
                 max_cache_length = None
 
             # Keep only the unprocessed tokens:
-            # 1 - If the length of the attention_mask exceeds the length of input_ids, then we are in a setting where
-            # some of the inputs are exclusively passed as part of the cache (e.g. when passing input_embeds as
-            # input)
+            # 1 - If attention_mask is longer than input_ids, some inputs are
+            # passed exclusively as part of the cache, e.g. input_embeds.
             if attention_mask is not None and attention_mask.shape[1] > (
                 input_ids.shape[1] // self.config.input_token_len
             ):
                 input_ids = input_ids[:, -(attention_mask.shape[1] - past_length) :]
-            # 2 - If the past_length is smaller than input_ids', then input_ids holds all input tokens. We can discard
-            # input_ids based on the past_length.
+            # 2 - If past_length is smaller than input_ids, then input_ids
+            # holds all input tokens. Discard the cached prefix.
             elif past_length < (input_ids.shape[1] // self.config.input_token_len):
                 input_ids = input_ids[:, past_length * self.config.input_token_len :]
-            # 3 - Otherwise (past_length >= (input_ids.shape[1] // self.config.input_token_len)), let's assume input_ids only has unprocessed tokens.
+            # 3 - Otherwise, assume input_ids has only unprocessed tokens.
 
-            # If we are about to go beyond the maximum cache length, we need to crop the input attention mask.
+            # Crop the input attention mask before exceeding max cache length.
             if (
                 max_cache_length is not None
                 and attention_mask is not None
@@ -616,7 +650,7 @@ class TimerForPrediction(TimerPreTrainedModel, TSGenerationMixin):
                     :, -(input_ids.shape[1] // self.config.input_token_len) :
                 ]
 
-        # if `inputs_embeds` are passed, we only want to use them in the 1st generation step
+        # Use `inputs_embeds` only in the first generation step.
         if inputs_embeds is not None and past_key_values is None:
             model_inputs = {"inputs_embeds": inputs_embeds}
         else:
