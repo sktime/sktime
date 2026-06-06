@@ -75,8 +75,8 @@ class BaseCatalogue(BaseObject):
         Each catalogue entry must be one of the following:
 
         * ``str`` - a specification resolvable via ``craft``.
-        * ``dict[str, Any]`` - mapping of display names to objects or
-        specifications.
+        * ``dict[str, Any]`` - mapping of human-given names to objects or
+        string specifications.
         * object - an already-instantiated object or callable.
 
         The returned catalogue is cached after the first access and should
