@@ -14,7 +14,6 @@ from sktime.catalogues.forecasting import (
     M4CompetitionCatalogueYearly,
 )
 
-
 __all__ = [
     "BakeOffCatalogue",
     "DummyClassificationCatalogue",
