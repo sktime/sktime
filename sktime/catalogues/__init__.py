@@ -1,6 +1,9 @@
 """Collections of estimators, datasets, and metrics."""
 
-from sktime.catalogues.classification import DummyClassificationCatalogue
+from sktime.catalogues.classification import (
+    BakeOffCatalogue,
+    DummyClassificationCatalogue,
+)
 from sktime.catalogues.forecasting import (
     DummyForecastingCatalogue,
     M4CompetitionCatalogueDaily,
@@ -12,6 +15,7 @@ from sktime.catalogues.forecasting import (
 )
 
 __all__ = [
+    "BakeOffCatalogue",
     "DummyClassificationCatalogue",
     "DummyForecastingCatalogue",
     "M4CompetitionCatalogueHourly",
