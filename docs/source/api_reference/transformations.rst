@@ -431,6 +431,7 @@ Detrending and Decomposition
     ConditionalDeseasonalizer
     STLTransformer
     mstl.MSTL
+    X13ArimaSeats
 
 .. currentmodule:: sktime.transformations.series.vmd
 
