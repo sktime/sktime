@@ -68,19 +68,43 @@ class BaseCatalogue(BaseObject):
         Returns
         -------
         dict[str, list]
-            Mapping from category names to lists of catalogue entries.
+            Dictionary mapping category names to lists of catalogue entries.
+
+            Keys are category names defined by the catalogue (for example,
+            ``"forecaster"``, ``"classifier"``, ``"dataset"``, ``"metric"``,
+            ``"cv_splitter"``, etc.). Values are lists containing the entries
+            belonging to that category.
+
+            Each entry may be one of the following:
+
+            * ``str`` - a specification resolvable via ``craft``.
+            * ``dict[str, Any]`` - mapping of human-given names to object
+            specifications or objects.
+            * object - an already-instantiated object or callable.
+
+            For example, a forecasting catalogue may return:
+
+            {
+                "dataset": ["Airline"],
+                "forecaster": [
+                    {"NaiveForecaster":
+                        "NaiveForecaster(strategy='last')"}
+                ],
+                "metric": [
+                    "MeanAbsoluteError()",
+                    "MeanAbsolutePercentageError()",
+                ],
+                "cv_splitter": [
+                    "ExpandingWindowSplitter("
+                    "initial_window=12, step_length=6, fh=6)"
+                ],
+            }
 
         Notes
         -----
-        Each catalogue entry must be one of the following:
-
-        * ``str`` - a specification resolvable via ``craft``.
-        * ``dict[str, Any]`` - mapping of human-given names to objects or
-        string specifications.
-        * object - an already-instantiated object or callable.
-
-        The returned catalogue is cached after the first access and should
-        therefore be deterministic.
+        The returned catalogue is cached after the first access. Implementations
+        should therefore return deterministic contents and must not rely on
+        repeated invocation.
         """
 
     def get(self, object_type="all", as_object=False):
