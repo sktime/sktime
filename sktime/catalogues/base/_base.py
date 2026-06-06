@@ -100,15 +100,25 @@ class BaseCatalogue(BaseObject):
             Whether to resolve catalogue specifications into objects.
 
             If ``False``, display names or specification strings or
-            dict of {display_name: specification_string} are returned.
+            dict of {human_given_name: specification_string} are returned.
 
             If ``True``, catalogue entries are resolved using ``craft``
-            and returned as instantiated objects or dict of {display_name: object}.
+            and returned as instantiated objects or dict of {human_given_name: object}.
 
         Returns
         -------
         list
             Catalogue entries matching the requested category.
+
+            If ``as_object=False``, entries are returned as display names.
+            Specification strings remain unchanged, objects are converted to
+            display names, and dictionary entries are returned as mappings of
+            human-given names to specification strings.
+
+            If ``as_object=True``, entries are returned as resolved
+            objects. String specifications are instantiated via ``craft``,
+            dictionary entries are returned as mappings of human-given names to
+            resolved objects, and object entries are returned unchanged.
         """
         catalogue = self._get_catalogue()
 
@@ -127,7 +137,9 @@ class BaseCatalogue(BaseObject):
         Returns
         -------
         list[str]
-            Category names contained in the catalogue.
+            Names of all categories defined by the catalogue. Each name can be
+            passed to ``get`` via the ``object_type`` parameter to retrieve the
+            corresponding catalogue entries.
         """
         return list(self._get_catalogue().keys())
 
@@ -169,7 +181,10 @@ class BaseCatalogue(BaseObject):
         Returns
         -------
         dict[str, list]
-            Validated catalogue contents.
+            Catalogue contents grouped by category. Dictionary keys are category
+            names (for example, ``"forecaster"``, ``"dataset"``, etc.), and values
+            are lists of catalogue entries belonging to that category. The returned
+            catalogue has been validated and cached.
         """
         if self._cached_catalogue is None:
             catalogue = self._get()
@@ -271,7 +286,9 @@ class BaseCatalogue(BaseObject):
         Returns
         -------
         list
-            Matching catalogue entries.
+            Catalogue entries belonging to the requested category. If
+            ``object_type="all"``, entries from all categories are returned in a
+            single flattened list.
         """
         if object_type == "all":
             return [
@@ -335,7 +352,12 @@ class BaseCatalogue(BaseObject):
         Returns
         -------
         list
-            Resolved objects.
+            Catalogue entries resolved to concrete objects.
+
+            String specifications are instantiated using ``craft``. Dictionary
+            entries are returned as mappings whose keys are human-given names and
+            whose values are resolved objects. Entries that are already objects
+            are returned unchanged. Results are cached per ``object_type``.
         """
         if object_type not in self._cached_objects:
             self._cached_objects[object_type] = [
@@ -355,7 +377,12 @@ class BaseCatalogue(BaseObject):
         Returns
         -------
         Any
-            Resolved object.
+            Resolved representation of the catalogue entry.
+
+            String entries are instantiated using ``craft``.
+            Dictionary entries are returned as mappings from human-given names to
+            resolved objects.
+            Existing objects are returned unchanged.
         """
         if isinstance(item, str):
             return craft(item)
