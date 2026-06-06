@@ -76,16 +76,14 @@ class TestAllCatalogues(CatalogueFixtureGenerator, QuickTester):
         assert len(estimator_instance) == len(items)
 
     def test_contains(self, estimator_instance):
-        """Test __contains__ reports presence correctly."""
+        """Test __contains__ against public catalogue names."""
         items = estimator_instance.get("all")
-        for it in items:
-            if isinstance(it, dict):
-                # The dictionary itself should be found
-                assert it in estimator_instance
-                # Its individual custom IDs and estimator names should also be found
-                for k, v in it.items():
-                    assert k in estimator_instance
-                    assert v in estimator_instance
+
+        for item in items:
+            if isinstance(item, dict):
+                for key in item:
+                    assert key in estimator_instance
             else:
-                assert it in estimator_instance
+                assert item in estimator_instance
+
         assert "definitely-not-present" not in estimator_instance

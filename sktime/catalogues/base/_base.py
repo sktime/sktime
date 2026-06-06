@@ -6,6 +6,8 @@ __all__ = ["BaseCatalogue"]
 
 from abc import abstractmethod
 
+from skbase.utils.dependencies import _check_estimator_deps
+
 from sktime.base import BaseObject
 from sktime.registry import craft
 
@@ -28,15 +30,29 @@ class BaseCatalogue(BaseObject):
         super().__init__()
         self._cached_objects = None
 
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        pass
+
     @abstractmethod
     def _get(self):
         """Get the default items for this catalogue. Implemented by subclasses.
 
         Returns
         -------
-        dict
-            Dictionary of categories containing lists of item names/ids, dicts,
-            or objects.
+        list[str] or list[tuple[str, str]]
+            List of item specification strings, or list of tuples where the
+            first element is the name/ID and the second is the specification string.
         """
         pass
 
@@ -57,8 +73,9 @@ class BaseCatalogue(BaseObject):
 
         Returns
         -------
-        list[str] or list[Any]
-            List of specification names (default) or object instances.
+        list[str] or list[Any] or list[tuple[str, Any]]
+            List of specification names (default), object instances, or
+            tuples of (name, object instance) if the catalogue entry was a tuple.
         """
         names_dict = self._get()
 
