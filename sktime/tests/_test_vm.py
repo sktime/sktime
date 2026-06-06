@@ -41,6 +41,10 @@ def run_test_vm(cls_name):
         )
         return
 
+    if cls.get_class_tag("tests:skip_all", False):
+        print(f"Skipping estimator: {cls} due to tests:skip_all tag.")
+        return
+
     if _check_soft_dependencies("torch", severity="none"):
         # disable mps for macos runners if torch is available
         if platform.system() == "Darwin":

@@ -70,11 +70,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest skip
+    >>> model.fit(y=y_train, X=X_train, fh=fh)  # doctest: +SKIP
     PytorchForecastingTFT(trainer_params={'limit_train_batches': 10,
                                         'max_epochs': 5})
-    >>> y_pred = model.predict(fh, X=X_test, y=y_test)
-    >>> print(y_test)
+    >>> y_pred = model.predict(fh, X=X_test, y=y_test)  # doctest: +SKIP
+    >>> print(y_test)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-01-01  5.261697
@@ -90,7 +90,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 2000-02-14  4.534434
 
     [4500 rows x 1 columns]
-    >>> print(y_pred)
+    >>> print(y_pred)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-02-15  5.310687
@@ -357,11 +357,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, fh=fh) # doctest skip
+    >>> model.fit(y=y_train, fh=fh)  # doctest: +SKIP
     PytorchForecastingNBeats(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
-    >>> y_pred = model.predict(fh, y=y_test)
-    >>> print(y_test)
+    >>> y_pred = model.predict(fh, y=y_test)  # doctest: +SKIP
+    >>> print(y_test)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-01-01  6.308914
@@ -377,7 +377,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 2000-02-14  5.243385
 
     [4500 rows x 1 columns]
-    >>> print(y_pred)
+    >>> print(y_pred)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-02-15  5.167375
@@ -653,11 +653,11 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest skip
+    >>> model.fit(y=y_train, X=X_train, fh=fh)  # doctest: +SKIP
     PytorchForecastingDeepAR(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
-    >>> y_pred = model.predict(fh, X=X_test, y=y_test)
-    >>> print(y_test)
+    >>> y_pred = model.predict(fh, X=X_test, y=y_test)  # doctest: +SKIP
+    >>> print(y_test)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-01-01  5.006716
@@ -673,7 +673,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 2000-02-14  5.482842
 
     [4500 rows x 1 columns]
-    >>> print(y_pred)
+    >>> print(y_pred)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-02-15  4.919366
@@ -916,7 +916,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
     >>> # split X, y data for train and test
-    >>> x = data["c0", "c1"]
+    >>> x = data[["c0", "c1"]]
     >>> y = data["c2"].to_frame()
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
@@ -933,11 +933,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest skip
+    >>> model.fit(y=y_train, X=X_train, fh=fh)  # doctest: +SKIP
     PytorchForecastingNHiTS(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
-    >>> y_pred = model.predict(fh, X=X_test, y=y_test)
-    >>> print(y_test)
+    >>> y_pred = model.predict(fh, X=X_test, y=y_test)  # doctest: +SKIP
+    >>> print(y_test)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-01-01  8.184178
@@ -953,7 +953,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 2000-02-14  5.454403
 
     [4500 rows x 1 columns]
-    >>> print(y_pred)
+    >>> print(y_pred)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-02-15  5.764410
