@@ -8,7 +8,6 @@ from sklearn.model_selection import check_cv
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection._base import BaseGridSearch
-from sktime.performance_metrics.base import BaseMetric
 from sktime.split.base import BaseSplitter
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
@@ -107,7 +106,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
 
     refit : bool, optional (default=True)
         Whether to refit the forecaster with the best parameters on the entire data.
-    
+
         * True = refit the forecaster with the best parameters
           on the entire data in ``fit``
         * False = no refitting takes place. The forecaster cannot be used to predict.

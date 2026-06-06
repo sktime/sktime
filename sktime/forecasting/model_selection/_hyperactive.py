@@ -96,7 +96,7 @@ class ForecastingOptCV(_DelegatedForecaster):
 
     refit : bool, optional (default=True)
         Whether to refit the forecaster with the best parameters on the entire data.
-    
+
         * True = refit the forecaster with the best parameters
           on the entire data in ``fit``
         * False = no refitting takes place. The forecaster cannot be used to predict.
