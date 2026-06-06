@@ -430,10 +430,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
 
         for metric in metrics_list:
             if isinstance(metric, str):
-                if hasattr(torchmetrics, metric):
-                    metric_class = getattr(torchmetrics, metric)
-                    metrics_dict[metric] = metric_class()
-                else:
+                if not hasattr(torchmetrics, metric):
                     raise ValueError(
                         f"Error in constructing torch based regressor "
                         f"{type(self).__name__}, "
@@ -441,6 +438,8 @@ class BaseDeepRegressorTorch(BaseRegressor):
                         f"metrics from torchmetrics or check the metric name. "
                         f"See https://lightning.ai/docs/torchmetrics/stable/"
                     )
+                metric_class = getattr(torchmetrics, metric)
+                metrics_dict[metric] = metric_class()
             elif isinstance(metric, Callable):
                 metric_name = metric.__class__.__name__
                 metrics_dict[metric_name] = metric
