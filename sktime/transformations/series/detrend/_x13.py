@@ -39,6 +39,20 @@ class X13ArimaSeats(BaseTransformer):
         If True, returns a DataFrame containing the components:
         'seasadj' (seasonally adjusted), 'trend', 'seasonal', and 'irregular'.
         If False, returns only the seasonally adjusted series.
+
+    See Also
+    --------
+    Detrender
+    Deseasonalizer
+    STLTransformer
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>> from sktime.transformations.series.detrend import X13ArimaSeats  # doctest: +SKIP
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> transformer = X13ArimaSeats()  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
     """
 
     _tags = {
