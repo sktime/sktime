@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
+pytest.importorskip("statsmodels")
+
 from sktime.transformations.series.detrend._x13 import X13ArimaSeats
 
 

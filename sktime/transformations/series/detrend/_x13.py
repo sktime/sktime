@@ -56,14 +56,10 @@ class X13ArimaSeats(BaseTransformer):
         "transform-returns-same-time-index": True,
         "capability:multivariate": False,
         "fit_is_empty": False,
-        "python_dependencies": "statsmodels",
         "capability:inverse_transform": True,
         "capability:inverse_transform:exact": False,
         "skip-inverse-transform": False,
         "capability:categorical_in_X": False,
-        # CI and test flags
-        # -----------------
-        "tests:skip_all": True,
     }
 
     def __init__(
@@ -92,54 +88,7 @@ class X13ArimaSeats(BaseTransformer):
         self._X = None
         super().__init__()
 
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y."""
-        from statsmodels.tsa.x13 import x13_arima_analysis
-
-        self._X = X
-
-        try:
-            self.results_ = x13_arima_analysis(
-                X,
-                maxorder=self.maxorder,
-                maxdiff=self.maxdiff,
-                diff=self.diff,
-                log=self.log,
-                outlier=self.outlier,
-                trading=self.trading,
-                forecast_years=self.forecast_years,
-                x12path=self.x12path,
-                prefer_x13=self.prefer_x13,
-            )
-        except Exception as e:
-            if (
-                "x12a" in str(e)
-                or "x13as" in str(e)
-                or "executable" in str(e).lower()
-                or "find" in str(e).lower()
-            ):
-                raise FileNotFoundError(
-                    "X-13ARIMA-SEATS executable not found. Please download the X-13 binary "
-                    "from the U.S. Census Bureau website and set the X13PATH environment "
-                    "variable, or pass the absolute path to the x12path parameter of the transformer."
-                ) from e
-            raise e
-
-        # Store component series
-        self.seasadj_ = self.results_.seasadj
-        self.trend_ = self.results_.trend
-        self.seasonal_ = self.results_.seasonal
-        self.irregular_ = self.results_.irregular
-
-        return self
-
-    def _transform(self, X, y=None):
-        """Transform X."""
-        # If transforming the fitted data, return cached results
-        if X.index.equals(self._X.index):
-            return self._make_return_object(X)
-
-        # Otherwise fit and transform on new data
+    def _run_x13(self, X):
         from statsmodels.tsa.x13 import x13_arima_analysis
 
         try:
@@ -168,7 +117,29 @@ class X13ArimaSeats(BaseTransformer):
                     "variable, or pass the absolute path to the x12path parameter of the transformer."
                 ) from e
             raise e
+        return results
 
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y."""
+        self._X = X
+        self.results_ = self._run_x13(X)
+
+        # Store component series
+        self.seasadj_ = self.results_.seasadj
+        self.trend_ = self.results_.trend
+        self.seasonal_ = self.results_.seasonal
+        self.irregular_ = self.results_.irregular
+
+        return self
+
+    def _transform(self, X, y=None):
+        """Transform X."""
+        # If transforming the fitted data, return cached results
+        if X.index.equals(self._X.index):
+            return self._make_return_object(X)
+
+        # Otherwise run fresh on new data
+        results = self._run_x13(X)
         return self._make_return_object(X, results)
 
     def _inverse_transform(self, X, y=None):
@@ -229,6 +200,9 @@ class X13ArimaSeats(BaseTransformer):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
+        from sktime.utils.dependencies import _check_soft_dependencies
+        if not _check_soft_dependencies("statsmodels", severity="none"):
+            return []
         return [
             {"outlier": False},
             {"return_components": True},
