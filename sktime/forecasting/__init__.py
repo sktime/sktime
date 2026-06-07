@@ -24,8 +24,8 @@ def __getattr__(name):
         new_name = _MODULE_ALIASES[name]
 
         warnings.warn(
-            f"sktime.forecasting.{name} is deprecated and has been renamed to "
-            f"sktime.forecasting.{new_name}; please update your imports.",
+            f"{__name__}.{name} is deprecated and has been renamed to "
+            f"{__name__}.{new_name}; please update your imports.",
             FutureWarning,
             stacklevel=2,
         )
