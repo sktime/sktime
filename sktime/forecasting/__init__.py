@@ -12,7 +12,12 @@ _MODULE_ALIASES = {
     "boxcox_bias_adjusted_forecaster": "boxcox_biasadj",
     "conditional_invertible_neural_network": "cinn",
     "hf_momentfm_forecaster": "momentfm",
+    "hf_transformers_forecaster": "hf_transformers",
+    "rbf_forecaster": "rbf",
+    "timesfm_forecaster": "timesfm",
 }
+# TODO 2.0.0: remove deprecation and aliasing logic in 2.0 release
+# imports do not need to be updated in the codebase
 
 
 def __getattr__(name):
