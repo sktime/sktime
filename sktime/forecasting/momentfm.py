@@ -131,7 +131,7 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.forecasting.hf_momentfm_forecaster import MomentFMForecaster
+    >>> from sktime.forecasting.momentfm import MomentFMForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> forecaster = MomentFMForecaster(seq_len = 2)

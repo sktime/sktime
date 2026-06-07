@@ -120,7 +120,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.forecasting.timesfm_forecaster import TimesFMForecaster
+    >>> from sktime.forecasting.timesfm import TimesFMForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> forecaster = TimesFMForecaster(
@@ -130,7 +130,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
-    >>> from sktime.forecasting.timesfm_forecaster import TimesFMForecaster
+    >>> from sktime.forecasting.timesfm import TimesFMForecaster
     >>> from sktime.datasets import load_tecator
     >>>
     >>> # load multi-index dataset
