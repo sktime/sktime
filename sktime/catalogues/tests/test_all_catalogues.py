@@ -88,7 +88,7 @@ class TestAllCatalogues(CatalogueFixtureGenerator, QuickTester):
         assert len(estimator_instance) == len(estimator_instance.get("all"))
 
     def test_contains(self, estimator_instance):
-        """__contains__ should recognise names returned by get('all')."""
+        """Test __contains__ against public catalogue names."""
         items = estimator_instance.get("all")
 
         for item in items:
