@@ -5,8 +5,6 @@
 __author__ = ["mloning"]
 __all__ = ["MatrixProfileTransformer"]
 
-import sys
-
 from sktime.transformations.base import BaseTransformer
 
 
@@ -60,9 +58,6 @@ class MatrixProfileTransformer(BaseTransformer):
         # testing configuration
         # ---------------------
         "tests:vm": True,  # run in VM due to dependency requirement stumpy
-        # stumpy/numba segfaults on Windows in the test VM (exit code 139),
-        # so skip all tests there while keeping coverage on other platforms
-        "tests:skip_all": sys.platform == "win32",
     }
 
     def __init__(self, window_length=3):
