@@ -13,6 +13,8 @@ _MODULE_ALIASES = {
     "conditional_invertible_neural_network": "cinn",
     "hf_momentfm_forecaster": "momentfm",
     "hf_transformers_forecaster": "hf_transformers",
+    "hf_moirai_forecaster": "moirai",
+    "pykan_forecaster": "pykan",
     "rbf_forecaster": "rbf",
     "timesfm_forecaster": "timesfm",
 }
