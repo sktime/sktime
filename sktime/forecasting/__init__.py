@@ -1,5 +1,6 @@
 """Forecasting models."""
 
+import sys
 import warnings
 from importlib import import_module
 
@@ -17,6 +18,10 @@ _MODULE_ALIASES = {
 }
 # TODO 2.0.0: remove deprecation and aliasing logic in 2.0 release
 # imports do not need to be updated in the codebase
+
+
+for _module, _new_name in _MODULE_ALIASES.items():
+    sys.modules[f"{__name__}.{_module}"] = import_module(f".{_new_name}", __name__)
 
 
 def __getattr__(name):
