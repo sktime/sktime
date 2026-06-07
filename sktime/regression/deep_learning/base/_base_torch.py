@@ -121,7 +121,10 @@ class BaseDeepRegressorTorch(BaseRegressor):
             torchManual_seed = _safe_import("torch.manual_seed")
             torchManual_seed(self.random_state)
 
-        self._callable_activations = self._instantiate_activations()
+        activation_map = {}
+        for var in self._instantiate_activation_vars:
+            activation_map[var] = getattr(self, var, None)
+        self._callable_activations = self._instantiate_activations(activation_map)
 
         # optimizers, criterions, callbacks will be instantiated in
         # _instantiate_optimizer, _instantiate_criterion & _instantiate_callbacks
@@ -169,11 +172,15 @@ class BaseDeepRegressorTorch(BaseRegressor):
         if self.verbose:
             print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
 
-    def _instantiate_activations(self):
-        """Instantiate the activations to be used during training/inference.
+    def _instantiate_activations(
+        self, activations: dict[str, str | Callable | None]
+    ) -> dict[str, object | None]:
+        """Instantiate PyTorch activations from string or module specifications.
 
-        Uses ``_instantiate_activation_vars`` to determine the attribute names
-        of activations to instantiate.
+        Parameters
+        ----------
+        activations : dict[str, str | Callable | None]
+            Mapping from activation attribute names to activation specifications.
 
         Returns
         -------
@@ -183,8 +190,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         import torch
 
         callable_activations: dict[str, torch.nn.Module | None] = {}
-        for activation_var in self._instantiate_activation_vars:
-            activation = getattr(self, activation_var)
+        for activation_var, activation in activations.items():
             if activation is None:
                 callable_activations[activation_var] = None
                 continue
@@ -197,9 +203,43 @@ class BaseDeepRegressorTorch(BaseRegressor):
                     f"But got {type(activation)} instead."
                 )
 
-            if not _safe_import(f"torch.nn.{activation}"):
+            lc_to_uc = {
+                "elu": "ELU",
+                "hardshrink": "Hardshrink",
+                "hardsigmoid": "Hardsigmoid",
+                "hardtanh": "Hardtanh",
+                "hardswish": "Hardswish",
+                "leakyrelu": "LeakyReLU",
+                "logsigmoid": "LogSigmoid",
+                "multiheadattention": "MultiheadAttention",
+                "prelu": "PReLU",
+                "relu": "ReLU",
+                "relu6": "ReLU6",
+                "rrelu": "RReLU",
+                "selu": "SELU",
+                "celu": "CELU",
+                "gelu": "GELU",
+                "sigmoid": "Sigmoid",
+                "silu": "SiLU",
+                "mish": "Mish",
+                "softplus": "Softplus",
+                "softshrink": "Softshrink",
+                "softsign": "Softsign",
+                "tanh": "Tanh",
+                "tanhshrink": "Tanhshrink",
+                "threshold": "Threshold",
+                "glu": "GLU",
+                "softmin": "Softmin",
+                "softmax": "Softmax",
+                "softmax2d": "Softmax2d",
+                "logsoftmax": "LogSoftmax",
+                "adaptivelogsoftmaxwithloss": "AdaptiveLogSoftmaxWithLoss",
+            }
+
+            uc_activation = lc_to_uc.get(activation, activation)
+            if not _safe_import(f"torch.nn.{uc_activation}"):
                 raise ValueError(
-                    f"Activation '{activation}' is not a valid PyTorch activation"
+                    f"Activation '{uc_activation}' is not a valid PyTorch activation"
                     "function in torch.nn module. Please pass a valid PyTorch"
                     "activation function in torch.nn module. Refer "
                     "https://pytorch.org/docs/stable/nn.html#non-linear-activations-"
@@ -207,7 +247,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
                 )
 
             callable_activations[activation_var] = _safe_import(
-                f"torch.nn.{activation}"
+                f"torch.nn.{uc_activation}"
             )()
         return callable_activations
 
