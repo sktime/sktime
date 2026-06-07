@@ -161,6 +161,17 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 }
             )
 
+    def __getstate__(self):
+        """Return state for pickling, excluding the unpickleable torch model."""
+        state = self.__dict__.copy()
+        if "model" in state:
+            state["model"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state from unpickled state dictionary."""
+        self.__dict__.update(state)
+
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
     if _check_soft_dependencies(["lightning", "huggingface_hub"], severity="none"):
         import sktime
@@ -250,26 +261,34 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         else:
             prediction_length = 1
 
-        # Set feature dimensions based on X if not already set
         if self.num_feat_dynamic_real is None:
-            if X is not None:
-                self.num_feat_dynamic_real = X.shape[1]
-            else:
-                self.num_feat_dynamic_real = 0
+            self._num_feat_dynamic_real = X.shape[1] if X is not None else 0
+        else:
+            self._num_feat_dynamic_real = self.num_feat_dynamic_real
 
         if self.num_past_feat_dynamic_real is None:
-            self.num_past_feat_dynamic_real = 0
+            self._num_past_feat_dynamic_real = 0
+        else:
+            self._num_past_feat_dynamic_real = self.num_past_feat_dynamic_real
 
+        self.model = self._load_model(prediction_length)
+
+    def _get_model_kwargs(self, prediction_length):
+        """Return MOIRAI model kwargs from fitted estimator state."""
         model_kwargs = {
             "prediction_length": prediction_length,
             "context_length": self.context_length,
             "patch_size": self.patch_size,
             "num_samples": self.num_samples,
             "target_dim": self.target_dim,
-            "feat_dynamic_real_dim": self.num_feat_dynamic_real,
-            "past_feat_dynamic_real_dim": self.num_past_feat_dynamic_real,
+            "feat_dynamic_real_dim": self._num_feat_dynamic_real,
+            "past_feat_dynamic_real_dim": self._num_past_feat_dynamic_real,
         }
+        return model_kwargs
 
+    def _load_model(self, prediction_length):
+        """Load the MOIRAI model from source or the vendored sktime copy."""
+        model_kwargs = self._get_model_kwargs(prediction_length)
         # Load model from source package
         if self.use_source_package:
             if _check_soft_dependencies("uni2ts", severity="none"):
@@ -279,29 +298,34 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                     model_kwargs["module"] = MoiraiModule.from_pretrained(
                         self.checkpoint_path
                     )
-                    self.model = MoiraiForecast(**model_kwargs)
+                    return MoiraiForecast(**model_kwargs)
                 else:
                     from huggingface_hub import hf_hub_download
 
                     model_kwargs["checkpoint_path"] = hf_hub_download(
                         repo_id=self.checkpoint_path, filename="model.ckpt"
                     )
-                    self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
-                    self.model.to(self.map_location)
+                    model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
+                    model.to(self.map_location)
+                    return model
         # Load model from sktime
         else:
-            self.model = self._instantiate_patched_model(model_kwargs)
-            self.model.to(self.map_location)
+            model = self._instantiate_patched_model(model_kwargs)
+            model.to(self.map_location)
+            return model
 
     def _predict(self, fh, X=None):
+        if fh is None:
+            fh = self.fh
+        fh = fh.to_relative(self.cutoff)
+
+        if getattr(self, "model", None) is None:
+            self.model = self._load_model(max(fh._values))
+
         if self.deterministic:
             import torch
 
             torch.manual_seed(42)
-
-        if fh is None:
-            fh = self.fh
-        fh = fh.to_relative(self.cutoff)
 
         self.model.hparams.prediction_length = max(fh._values)
 
@@ -324,11 +348,12 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         else:
             target = _y.columns
 
-        # Store the original index and target name
-        self._target_name = target
-        self._len_of_targets = len(target)
+        # Use local variables for predict-time state so that _predict
+        # does not add new keys to __dict__ (sktime non-state-changing contract).
+        _target_name = target
+        _len_of_targets = len(target)
 
-        target = [f"target_{i}" for i in range(self._len_of_targets)]
+        target = [f"target_{i}" for i in range(_len_of_targets)]
         _y.columns = target
 
         future_length = 0
@@ -341,8 +366,8 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             _X.columns = feat_dynamic_real
 
         pred_df = pd.concat([_y, _X], axis=1)
-        self._is_range_index = self.check_range_index(pred_df)
-        self._is_period_index = self.check_period_index(pred_df)
+        _is_range_index = self.check_range_index(pred_df)
+        _is_period_index = self.check_period_index(pred_df)
 
         if _use_fit_data_as_context:
             future_length = self._get_future_length(X)
@@ -372,7 +397,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # For non-consecutive fh (e.g. fh=[2,5]) the future X only has rows at
         # those positions, leaving gaps that gluonts rejects as non-uniform.
         # Reindex to fill all intermediate steps and set future_length=max(fh).
-        if _use_fit_data_as_context and not self._is_range_index:
+        if _use_fit_data_as_context and not _is_range_index:
             if not isinstance(pred_df.index, pd.MultiIndex):
                 # Use the RAW freq from the index for pd.date_range, NOT the
                 # gluonts-mapped version. 'MS' (month-start) must stay 'MS';
@@ -392,7 +417,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                         future_length = int(max(fh._values))
 
         # Check if the index is a range index
-        if self._is_range_index:
+        if _is_range_index:
             pred_df.index = self.handle_range_index(pred_df.index)
 
         _is_hierarchical = False
@@ -401,7 +426,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             _is_hierarchical = True
 
         ds_test, df_config = self.create_pandas_dataset(
-            pred_df, target, feat_dynamic_real, future_length
+            pred_df, target, feat_dynamic_real, future_length, _target_name
         )
 
         predictor = self.model.create_predictor(batch_size=self.batch_size)
@@ -438,7 +463,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
 
-        if self._is_range_index:
+        if _is_range_index:
             timepoints = self.return_time_index(predictions)
             timepoints = timepoints.to_timestamp()
             timepoints = (timepoints - pd.Timestamp("2010-01-01")).map(
@@ -526,7 +551,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             return handle_panel_predictions(forecasts, df_config)
 
     def create_pandas_dataset(
-        self, df, target, dynamic_features=None, forecast_horizon=0
+        self, df, target, dynamic_features=None, forecast_horizon=0, target_name=None
     ):
         """Create a gluonts PandasDataset from the input data.
 
@@ -540,6 +565,8 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             List of dynamic features.
         forecast_horizon : int, default=0
             Forecast horizon.
+        target_name : list or Index, default=None
+            Original target column names (before renaming), stored in df_config.
 
         Returns
         -------
@@ -554,7 +581,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         # Add original target to config
         df_config = {
-            "target": self._target_name,
+            "target": target_name,
         }
 
         # PandasDataset expects non-multiindex dataframe with item_id
