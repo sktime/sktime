@@ -3,7 +3,6 @@
 import warnings
 from importlib import import_module
 
-
 # alias dictionary to map old module names to new module names
 # if an old module name is queried, imports work, but
 # a deprecation warning is issued to update the import statement
