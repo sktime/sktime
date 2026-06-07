@@ -98,7 +98,7 @@ class TimerS1Forecaster(BaseForecaster):
     Simple zero-shot forecasting with the default Timer-S1 checkpoint:
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.timer_s1_forecaster import TimerS1Forecaster
+    >>> from sktime.forecasting.timer_s1 import TimerS1Forecaster
     >>> y = load_airline()
     >>> # By default, loads bytedance-research/Timer-S1.
     >>> forecaster = TimerS1Forecaster()  # doctest: +SKIP
@@ -109,7 +109,7 @@ class TimerS1Forecaster(BaseForecaster):
 
     >>> import torch  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.timer_s1_forecaster import TimerS1Forecaster
+    >>> from sktime.forecasting.timer_s1 import TimerS1Forecaster
     >>> from transformers import BitsAndBytesConfig  # doctest: +SKIP
     >>> y = load_airline()
     >>> forecaster = TimerS1Forecaster(  # doctest: +SKIP
@@ -125,7 +125,7 @@ class TimerS1Forecaster(BaseForecaster):
     Loading a quantized smaller model directly:
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.timer_s1_forecaster import TimerS1Forecaster
+    >>> from sktime.forecasting.timer_s1 import TimerS1Forecaster
     >>> y = load_airline()
     >>> forecaster = TimerS1Forecaster(  # doctest: +SKIP
     ...     model_path="geetu040/Timer-S1-quantized-4bit",
@@ -137,7 +137,7 @@ class TimerS1Forecaster(BaseForecaster):
     This model is not trained by ``fit``; the weights stay random and should not
     be used as a trained forecaster:
 
-    >>> from sktime.forecasting.timer_s1_forecaster import TimerS1Forecaster
+    >>> from sktime.forecasting.timer_s1 import TimerS1Forecaster
     >>> forecaster = TimerS1Forecaster(  # doctest: +SKIP
     ...     model_path=None,
     ...     config={
@@ -154,7 +154,7 @@ class TimerS1Forecaster(BaseForecaster):
     Quantile prediction:
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.timer_s1_forecaster import TimerS1Forecaster
+    >>> from sktime.forecasting.timer_s1 import TimerS1Forecaster
     >>> y = load_airline()
     >>> forecaster = TimerS1Forecaster(  # doctest: +SKIP
     ...     model_path="geetu040/Timer-S1-quantized-4bit",
