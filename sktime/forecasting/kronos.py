@@ -1,0 +1,315 @@
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Kronos forecaster for ``sktime``."""
+
+__author__ = ["shiyu-coder", "geetu040"]
+# shiyu-coder for shiyu-coder/Kronos
+
+__all__ = ["KronosForecaster"]
+
+from copy import deepcopy
+
+import numpy as np
+import pandas as pd
+
+from sktime.forecasting.base import BaseForecaster
+from sktime.utils.singleton import _multiton
+
+
+class KronosForecaster(BaseForecaster):
+    """Kronos zero-shot forecaster for financial K-line/OHLC data.
+
+    This forecaster wraps Kronos [1]_, a foundation model for financial market
+    data [2]_, through the ``sktime`` forecasting interface. This implementation
+    is inference-only and uses the upstream ``KronosPredictor`` preprocessing
+    and autoregressive inference path internally.
+
+    Parameters
+    ----------
+    model_path : str, default="NeoQuasar/Kronos-small"
+        Hugging Face repository identifier or local path for the Kronos model.
+        The default is the Kronos-mini checkpoint [3]_. Other released
+        checkpoints include Kronos-small [4]_ and Kronos-base [5]_.
+    tokenizer_path : str, default="NeoQuasar/Kronos-Tokenizer-base"
+        Hugging Face repository identifier or local path for the Kronos tokenizer.
+        The default is the Kronos-Tokenizer-base checkpoint [6]_. The released
+        2k tokenizer is also available [7]_.
+    device : str, default="cpu"
+        Device used for model and tokenizer inference.
+    columns : list of str or None, default=None
+        Optional positional mapping from columns in ``y`` to Kronos internal
+        columns. Positions map to ``"open"``, ``"high"``, ``"low"``,
+        ``"close"``, ``"volume"``, and ``"amount"``. If provided, at least the
+        first four OHLC columns are required; volume and amount are optional. If
+        ``None``, literal open/high/low/close names are used when present,
+        otherwise the first four numeric columns are used as OHLC. Literal
+        volume/amount columns are used when present.
+    clip : float, default=5.0
+        Input normalization clipping value passed to ``KronosPredictor``.
+    predict_kwargs : dict or None, default=None
+        Additional keyword arguments passed directly to ``KronosPredictor.predict``.
+        Examples are ``T``, ``top_k``, ``top_p``, ``sample_count``, and
+        ``verbose``.
+    deterministic : bool, default=False
+        Whether predictions should reset the PyTorch random seed before
+        autoregressive sampling.
+
+    Notes
+    -----
+    ``KronosForecaster`` expects financial K-line style data. The input ``y``
+    should contain OHLC columns, and may optionally contain volume and amount.
+    For relative forecasting horizons with datetime-like indices, provide a
+    sensible regular index/frequency so future timestamps line up with the data.
+    If the calendar is irregular, pass an absolute forecasting horizon.
+
+    References
+    ----------
+    .. [1] Kronos GitHub repository:
+       https://github.com/shiyu-coder/Kronos
+    .. [2] Lin, Z., Xia, Y., Liu, Z., Zhang, S., Wang, J., Yang, C., Dong, Q.,
+       Liu, H., Jiang, H., Wang, S., Xiong, X., and Zhao, B. (2025).
+       Kronos: A Foundation Model for the Language of Financial Markets.
+       arXiv. https://arxiv.org/abs/2508.02739
+    .. [3] Kronos-mini model card:
+       https://huggingface.co/NeoQuasar/Kronos-mini
+    .. [4] Kronos-small model card:
+       https://huggingface.co/NeoQuasar/Kronos-small
+    .. [5] Kronos-base model card:
+       https://huggingface.co/NeoQuasar/Kronos-base
+    .. [6] Kronos-Tokenizer-base model card:
+       https://huggingface.co/NeoQuasar/Kronos-Tokenizer-base
+    .. [7] Kronos-Tokenizer-2k model card:
+       https://huggingface.co/NeoQuasar/Kronos-Tokenizer-2k
+    """
+
+    _tags = {
+        "y_inner_mtype": "pd.DataFrame",
+        "capability:multivariate": True,
+        "capability:exogenous": False,
+        "requires-fh-in-fit": False,
+        "capability:insample": True,
+        "capability:pretrain": False,
+        "authors": ["shiyu-coder", "geetu040"],
+        "maintainers": ["geetu040"],
+        "python_dependencies": ["torch", "einops", "huggingface_hub", "tqdm"],
+        "tests:vm": True,
+        "tests:libs": ["sktime.libs.kronos"],
+    }
+
+    _kronos_columns = ["open", "high", "low", "close", "volume", "amount"]
+
+    def __init__(
+        self,
+        model_path="NeoQuasar/Kronos-small",
+        tokenizer_path="NeoQuasar/Kronos-Tokenizer-base",
+        device="cpu",
+        columns=None,
+        clip=5.0,
+        predict_kwargs=None,
+        deterministic=False,
+    ):
+        self.model_path = model_path
+        self.tokenizer_path = tokenizer_path
+        self.device = device
+        self.columns = columns
+        self.clip = clip
+        self.predict_kwargs = predict_kwargs
+        self.deterministic = deterministic
+
+        super().__init__()
+
+    def _fit(self, y, X=None, fh=None):
+        """Load Kronos and store historical context."""
+        self.context_ = y.copy()
+        self.max_context_ = len(self.context_)
+
+        self.column_mapping_ = self._resolve_column_mapping(y)
+        self.output_columns_ = []
+        for internal in self._kronos_columns:
+            original = self.column_mapping_.get(internal)
+            if (
+                original is not None
+                and original in y.columns
+                and original not in self.output_columns_
+            ):
+                self.output_columns_.append(original)
+
+        self.tokenizer_, self.model_ = self._load_kronos()
+
+    def _predict(self, fh, X=None):
+        """Forecast out-of-sample values at ``fh``."""
+        df = pd.DataFrame(index=self.context_.index)
+        for internal, original in self.column_mapping_.items():
+            df[internal] = self.context_[original].to_numpy()
+
+        x_timestamp = pd.Series(
+            self.context_.index
+        )
+        y_timestamp = pd.Series(
+            fh.to_absolute(self.cutoff).to_pandas().values
+        )
+
+        from sktime.libs.kronos import KronosPredictor
+        import torch
+
+        if self.deterministic:
+            torch.manual_seed(42)
+            if torch.cuda.is_available():
+                torch.cuda.manual_seed_all(42)
+
+        predictor = KronosPredictor(
+            self.model_,
+            self.tokenizer_,
+            device=self.device,
+            max_context=self.max_context_,
+            clip=self.clip,
+        )
+        predict_kwargs = deepcopy(self.predict_kwargs) if self.predict_kwargs else {}
+        pred_df = predictor.predict(
+            df=df,
+            x_timestamp=x_timestamp,
+            y_timestamp=y_timestamp,
+            pred_len=len(y_timestamp),
+            **predict_kwargs,
+        )
+
+        out = pd.DataFrame(index=pred_df.index)
+        for internal in self._kronos_columns:
+            original = self.column_mapping_.get(internal)
+            if (
+                original in self.output_columns_
+                and original not in out.columns
+                and internal in pred_df.columns
+            ):
+                out[original] = pred_df[internal]
+        out = out[self.output_columns_]
+
+        return out
+
+    def _resolve_column_mapping(self, y):
+        """Resolve input columns to Kronos internal OHLCVA columns."""
+        mapping = {}
+
+        if self.columns is not None:
+            if not isinstance(self.columns, list):
+                raise ValueError("columns must be a list of column names or None.")
+            if len(self.columns) < 4 or len(self.columns) > len(self._kronos_columns):
+                raise ValueError(
+                    "columns must contain 4 to 6 items, ordered as open, high, "
+                    "low, close, volume, amount."
+                )
+            missing = [col for col in self.columns if col not in y.columns]
+            if missing:
+                raise ValueError(f"columns contains values missing from y: {missing}.")
+            mapping.update(zip(self._kronos_columns, self.columns))
+        elif all(col in y.columns for col in self._kronos_columns[:4]):
+            for col in self._kronos_columns[:4]:
+                mapping[col] = col
+        else:
+            numeric_cols = y.select_dtypes(include=[np.number]).columns.tolist()
+            if len(numeric_cols) == 0:
+                raise ValueError(
+                    "KronosForecaster requires open/high/low/close columns, "
+                    "a columns mapping, or at least one numeric column."
+                )
+            if len(numeric_cols) < 4:
+                numeric_cols = [
+                    numeric_cols[i % len(numeric_cols)] for i in range(4)
+                ]
+            for internal, original in zip(self._kronos_columns[:4], numeric_cols[:4]):
+                mapping[internal] = original
+
+        if self.columns is None:
+            for col in self._kronos_columns[4:]:
+                if col in y.columns:
+                    mapping[col] = col
+
+        return mapping
+
+    def _load_kronos(self):
+        """Load or retrieve cached Kronos tokenizer/model."""
+        if hasattr(self, "model_") and hasattr(self, "tokenizer_"):
+            return self.tokenizer_, self.model_
+
+        tokenizer, model = _CachedKronos(
+            key=self._get_unique_key(),
+            model_path=self.model_path,
+            tokenizer_path=self.tokenizer_path,
+            device=self.device,
+        ).load()
+
+        return tokenizer, model
+
+    def _get_unique_key(self):
+        """Build cache key for the multiton model loader."""
+        key = {
+            "model_path": self.model_path,
+            "tokenizer_path": self.tokenizer_path,
+            "device": self.device,
+        }
+        return str(sorted(key.items()))
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator."""
+        return [
+            {
+                "model_path": "NeoQuasar/Kronos-mini",
+                "tokenizer_path": "NeoQuasar/Kronos-Tokenizer-2k",
+                "deterministic": True,
+            },
+            {
+                "model_path": "NeoQuasar/Kronos-mini",
+                "tokenizer_path": "NeoQuasar/Kronos-Tokenizer-2k",
+                "device": "cpu",
+                "columns": None,
+                "clip": 5.0,
+                "deterministic": True,
+                "predict_kwargs": {
+                    "T": 0.8,
+                    "sample_count": 1,
+                    "top_k": 1,
+                    "top_p": 1.0,
+                    "verbose": False,
+                },
+            }
+        ]
+
+
+@_multiton
+class _CachedKronos:
+    """Multiton-backed cache wrapper for Kronos model/tokenizer pairs."""
+
+    def __init__(
+        self,
+        key,
+        model_path,
+        tokenizer_path,
+        device,
+    ):
+        self.key = key
+        self.model_path = model_path
+        self.tokenizer_path = tokenizer_path
+        self.device = device
+        self.tokenizer_ = None
+        self.model_ = None
+
+    def load(self):
+        """Load tokenizer and model if needed and return cached pair."""
+        if self.tokenizer_ is not None and self.model_ is not None:
+            return self.tokenizer_, self.model_
+
+        self.tokenizer_ = self._load_tokenizer()
+        self.model_ = self._load_model()
+        self.tokenizer_ = self.tokenizer_.to(self.device).eval()
+        self.model_ = self.model_.to(self.device).eval()
+        return self.tokenizer_, self.model_
+
+    def _load_tokenizer(self):
+        from sktime.libs.kronos import KronosTokenizer
+
+        return KronosTokenizer.from_pretrained(self.tokenizer_path)
+
+    def _load_model(self):
+        from sktime.libs.kronos import Kronos
+
+        return Kronos.from_pretrained(self.model_path)
