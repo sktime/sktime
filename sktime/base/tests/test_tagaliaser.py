@@ -82,3 +82,24 @@ def test_tag_aliaser():
     assert all_tags_cls["old_tag_2"] == "new_tag_2_value"
     assert all_tags_cls["new_tag_3"] == "old_tag_3_value"
     assert all_tags_cls["old_tag_3"] == "old_tag_3_value"
+
+
+class NoneTagTestClass(_BaseObject):
+    """Class for testing tag_value_default when tag value is None."""
+
+    _tags = {"none_tag": None, "real_tag": "real_value"}
+
+
+def test_get_class_tag_default_when_none():
+    """Regression test for #10305: tag_value_default ignored when tag is None."""
+    assert NoneTagTestClass.get_class_tag("none_tag", "fallback") == "fallback"
+    assert NoneTagTestClass.get_class_tag("none_tag") is None
+    assert NoneTagTestClass.get_class_tag("real_tag", "fallback") == "real_value"
+
+
+def test_get_tag_default_when_none():
+    """Regression test for #10305: tag_value_default ignored when tag is None."""
+    obj = NoneTagTestClass()
+    assert obj.get_tag("none_tag", "fallback") == "fallback"
+    assert obj.get_tag("none_tag") is None
+    assert obj.get_tag("real_tag", "fallback") == "real_value"
