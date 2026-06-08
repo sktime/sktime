@@ -6,7 +6,6 @@ __author__ = ["mloning", "fkiraly"]
 
 
 from functools import reduce
-from typing import Union
 
 import numpy as np
 import pytest
@@ -23,7 +22,7 @@ from sktime.forecasting.model_selection import (
     ForecastingRandomizedSearchCV,
     ForecastingSkoptSearchCV,
 )
-from sktime.forecasting.model_selection._tune import BaseGridSearch
+from sktime.forecasting.model_selection._base import BaseGridSearch
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import (
     TEST_N_ITERS,
@@ -42,6 +41,7 @@ from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
@@ -106,7 +106,8 @@ def _create_hierarchical_data(n_columns=1):
 # estimator fixtures used for tuning
 # set_tags in NaiveForecaster ensures that it is univariate and broadcasts
 # this is currently the case, but a future improved NaiveForecaster may reduce coverage
-NAIVE = NaiveForecaster(strategy="mean").set_tags(**{"scitype:y": "univariate"})
+capability_multivariate_tag = {"capability:multivariate": False}
+NAIVE = NaiveForecaster(strategy="mean").set_tags(**capability_multivariate_tag)
 NAIVE_GRID = {"window_length": TEST_WINDOW_LENGTHS_INT}
 PIPE = TransformedTargetForecaster(
     [
@@ -329,39 +330,101 @@ def test_skoptcv_multiple_forecaster():
     assert len(sscv.cv_results_) == 5
 
 
-@pytest.mark.xfail
+@pytest.fixture(scope="module")
+def optuna_param_grids():
+    if _check_soft_dependencies("optuna"):
+        import optuna
+
+        PIPE_GRID_OPTUNA = {
+            "transformer__forecaster__degree": optuna.distributions.IntDistribution(
+                1, 2
+            ),
+            "forecaster__strategy": optuna.distributions.CategoricalDistribution(
+                ["last", "mean"]
+            ),
+        }
+        NAIVE_GRID_OPTUNA = {
+            "window_length": optuna.distributions.IntDistribution(
+                *TEST_WINDOW_LENGTHS_INT
+            )
+        }
+
+        return {"NAIVE": NAIVE_GRID_OPTUNA, "PIPE": PIPE_GRID_OPTUNA}
+
+
+def optuna_samplers():
+    if not _check_soft_dependencies("optuna", severity="none"):
+        return [None]
+    else:
+        import optuna
+
+        samplers = [
+            None,
+            optuna.samplers.NSGAIISampler(seed=42),
+            optuna.samplers.QMCSampler(seed=42),
+            # optuna.samplers.CmaEsSampler(seed=42),
+        ]
+        return samplers
+
+
+forecasters_optuna_test = {
+    "NAIVE": NAIVE,
+    "PIPE": PIPE,
+}
+
+
 @pytest.mark.skipif(
     not run_test_for_class(ForecastingOptunaSearchCV),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize(
-    "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
-)
 @pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("error_score", ERROR_SCORES)
 @pytest.mark.parametrize("cv", CVs)
+@pytest.mark.parametrize(
+    "forecaster_key, grid_key", [("NAIVE", "NAIVE"), ("PIPE", "PIPE")]
+)
 @pytest.mark.parametrize("n_iter", TEST_N_ITERS)
-@pytest.mark.parametrize("random_state", TEST_RANDOM_SEEDS)
-def test_optuna(forecaster, param_grid, cv, scoring, error_score, n_iter, random_state):
-    """Test TuneForecastingOptunaCV.
+@pytest.mark.parametrize("sampler", optuna_samplers())
+def test_optuna(
+    forecaster_key,
+    grid_key,  # This will be either "NAIVE" or "PIPE"
+    cv,
+    scoring,
+    error_score,
+    n_iter,
+    sampler,
+    optuna_param_grids,  # Fixture providing parameter grids
+):
+    """Test ForecastingOptunaSearchCV.
 
-    Tests that TuneForecastingOptunaCV successfully searches the parameter
+    Tests that ForecastingOptunaSearchCV successfully searches the parameter
     distributions to identify the best parameter set
     """
     y, X = load_longley()
+    param_grid = optuna_param_grids[grid_key]
+    forecaster = forecasters_optuna_test[forecaster_key]
+
     rscv = ForecastingOptunaSearchCV(
         forecaster,
         param_grid=param_grid,
         cv=cv,
         scoring=scoring,
         error_score=error_score,
+        sampler=sampler,
+        n_evals=n_iter,
     )
     rscv.fit(y, X)
 
-    param_distributions = list(
-        ParameterSampler(param_grid, n_iter, random_state=random_state)
+    param_distributions = rscv.cv_results_.params.to_list()
+    _check_cv(
+        forecaster,
+        rscv,
+        cv,
+        param_distributions,
+        y,
+        X,
+        scoring,
     )
-    _check_cv(forecaster, rscv, cv, param_distributions, y, X, scoring)
     _check_fitted_params_keys(rscv.get_fitted_params())
 
 
@@ -436,7 +499,7 @@ def test_return_n_best_forecasters(Forecaster, return_n_best_forecasters, kwargs
     searchCV.fit(y, X)
     if return_n_best_forecasters == -1:
 
-        def calculate_total_combinations(param_grid: Union[list[dict], dict]):
+        def calculate_total_combinations(param_grid: list[dict] | dict):
             if isinstance(param_grid, dict):
                 return reduce(lambda x, y: x * y, [len(x) for x in param_grid.values()])
             elif isinstance(param_grid, list):

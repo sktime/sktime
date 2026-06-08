@@ -6,7 +6,7 @@ import pytest
 
 from sktime.datasets import generate_example_long_table, make_multi_index_dataframe
 from sktime.datatypes._adapter import convert_from_multiindex_to_listdataset
-from sktime.datatypes._panel._check import are_columns_nested, is_nested_dataframe
+from sktime.datatypes._panel._check import _is_nested_dataframe, are_columns_nested
 from sktime.datatypes._panel._convert import (
     from_2d_array_to_nested,
     from_3d_numpy_to_2d_array,
@@ -83,7 +83,7 @@ def test_from_3d_numpy_to_nested(n_instances, n_columns, n_timepoints):
     nested = from_3d_numpy_to_nested(array)
 
     # check types and shapes
-    assert is_nested_dataframe(nested)
+    assert _is_nested_dataframe(nested)
     assert nested.shape == (n_instances, n_columns)
     assert nested.iloc[0, 0].shape[0] == n_timepoints
 
@@ -186,7 +186,7 @@ def test_from_multi_index_to_nested(n_instances, n_columns, n_timepoints):
         mi_df, instance_index="case_id", cells_as_numpy=False
     )
 
-    assert is_nested_dataframe(nested_df)
+    assert _is_nested_dataframe(nested_df)
     assert nested_df.shape == (n_instances, n_columns)
     assert (nested_df.columns == mi_df.columns).all()
 
@@ -220,7 +220,7 @@ def test_from_nested_to_multi_index(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_is_nested_dataframe(n_instances, n_columns, n_timepoints):
-    """Test is_nested_dataframe for correctness."""
+    """Test _is_nested_dataframe for correctness."""
     array = np.random.normal(size=(n_instances, n_columns, n_timepoints))
     nested, _ = make_classification_problem(n_instances, n_columns, n_timepoints)
     zero_df = pd.DataFrame(np.zeros_like(nested))
@@ -230,10 +230,10 @@ def test_is_nested_dataframe(n_instances, n_columns, n_timepoints):
         n_instances=n_instances, n_timepoints=n_timepoints, n_columns=n_columns
     )
 
-    assert not is_nested_dataframe(array)
-    assert not is_nested_dataframe(mi_df)
-    assert is_nested_dataframe(nested)
-    assert is_nested_dataframe(nested_heterogenous)
+    assert not _is_nested_dataframe(array)
+    assert not _is_nested_dataframe(mi_df)
+    assert _is_nested_dataframe(nested)
+    assert _is_nested_dataframe(nested_heterogenous)
 
 
 @pytest.mark.skipif(
@@ -249,7 +249,7 @@ def test_from_2d_array_to_nested(n_instances, n_columns, n_timepoints):
     X_2d = rng.standard_normal((n_instances, n_timepoints))
     nested_df = from_2d_array_to_nested(X_2d)
 
-    assert is_nested_dataframe(nested_df)
+    assert _is_nested_dataframe(nested_df)
     assert nested_df.shape == (n_instances, 1)
 
 
@@ -267,7 +267,7 @@ def test_from_long_to_nested(n_instances, n_columns, n_timepoints):
     )
     nested_df = from_long_to_nested(X_long)
 
-    assert is_nested_dataframe(nested_df)
+    assert _is_nested_dataframe(nested_df)
     assert nested_df.shape == (n_instances, n_columns)
 
 

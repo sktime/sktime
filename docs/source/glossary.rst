@@ -26,8 +26,10 @@ sktime.
         ``Panel`` scitype. Data containers can be checked for compliance with
         a given mtype using the :func:`sktime.datatypes.check_is_mtype` function;
         all mtypes can be listed in ``sktime.datatypes.MTYPE_REGISTER``.
-        For more details on the general concept, see
-        `the datatypes and datasets user guide <https://www.sktime.net/en/stable/examples/AA_datatypes_and_datasets.html>`_.
+        For more details on the general concept, and precise specifications, see the
+        :ref:`data_format` and
+        the datatypes and datasets user guide (example notebook AA),
+        here: :ref:`examples`.
 
     scitype
         Short for scientific type, denotes the abstract type of an ``sktime`` object,
@@ -47,9 +49,10 @@ sktime.
         Compliance with concrete implementations of data scitypes can be checked using
         the ``sktime.datatypes.check_is_scitype`` utility; for estimators, compliance
         is checked using ``sktime.utils.check_estimator``.
-        For more details on data scitpyes, see :term:`mtype`.
+        For more details on data mtpyes, see :term:`mtype`.
+        For exact specifications of data scitypes, see the :ref:`data_format`.
         For more details on estimator scitypes, see the user guides on individual
-        learning tasks.
+        learning tasks, here: :ref:`examples`.
 
     Scientific type
         See :term:`scitype`.
@@ -152,7 +155,7 @@ sktime.
         A learning task focused on labeling the timepoints of a time series. This includes the related tasks of outlier detection, anomaly detection, change point detection and segmentation.
 
     Panel time series
-        A form of time series data where the same time series are observed observed for multiple observational units. The observed series may consist of :term:`univariate time series` or
+        A form of time series data where the same time series are observed for multiple observational units. The observed series may consist of :term:`univariate time series` or
         :term:`multivariate time series`. Accordingly, the data varies across time, observational unit and series (i.e. variables).
 
     Univariate time series
@@ -241,3 +244,25 @@ sktime.
     Time series decomposition:
         A technique used to separate a time series into its underlying components, such as trend, seasonality, and noise.
         This can be useful for understanding the patterns in the data and for modeling each component separately.
+
+    Pretraining
+        A two-phase training workflow for forecasters that support global learning
+        across multiple time series. In the first phase, ``pretrain(y_panel)`` learns
+        shared patterns from :term:`panel time series` or hierarchical data and sets
+        the estimator :term:`state <Estimator state>` to ``"pretrained"``.
+        In the second phase, ``fit(y_series)`` fine-tunes or sets context on a
+        specific series without resetting the pretrained weights.
+        Whether a forecaster supports pretraining is indicated by the
+        ``capability:pretrain`` :term:`tag`.
+        See the :ref:`forecasting API reference <forecasting_ref>` for a list of
+        forecasters that support pretraining.
+
+    Estimator state
+        The lifecycle phase of an :term:`estimator`, accessible via the ``state``
+        property. Forecasters have three possible states:
+        ``"new"`` (after construction), ``"pretrained"`` (after ``pretrain``),
+        and ``"fitted"`` (after ``fit``).
+        An estimator must be in the ``"fitted"`` state before ``predict`` and
+        related methods can be called.
+        :term:`Pretraining` transitions from ``"new"`` to ``"pretrained"``, and
+        ``fit`` transitions to ``"fitted"`` from any prior state.

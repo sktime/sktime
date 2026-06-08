@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements automatic and manually exponential time series smoothing models."""
 
-__author__ = ["hyang1996"]
+__author__ = ["hyang1996", "sabasiddique1"]
 __all__ = ["AutoETS"]
 
 import warnings
@@ -10,7 +10,6 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -143,7 +142,7 @@ class AutoETS(_StatsModelsAdapter):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
     random_state : int, RandomState instance or None, optional ,
-        default=None – If int, random_state is the seed used by the random
+        default=None - If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
         RandomState instance used by np.random.
@@ -180,14 +179,16 @@ class AutoETS(_StatsModelsAdapter):
         # --------------
         "authors": ["hyang1996"],
         "maintainers": ["hyang1996"],
-        # "python_dependencies": "statmodels" - inherited from _StatsModelsAdapter
+        "python_dependencies": ["statsmodels", "joblib"],
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -268,7 +269,13 @@ class AutoETS(_StatsModelsAdapter):
                 )
 
     def _fit_forecaster(self, y, X=None):
+        from joblib import Parallel, delayed
         from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
+
+        try:
+            from statsmodels.tools.sm_exceptions import ConvergenceWarning
+        except Exception:
+            ConvergenceWarning = None
 
         # Select model automatically
         if self.auto:
@@ -347,15 +354,35 @@ class AutoETS(_StatsModelsAdapter):
                     freq=self.freq,
                     missing=self.missing,
                 )
-                _fitted_forecaster = _forecaster.fit(
-                    start_params=self.start_params,
-                    maxiter=self.maxiter,
-                    full_output=self.full_output,
-                    disp=self.disp,
-                    callback=self.callback,
-                    return_params=self.return_params,
-                )
-                return _forecaster, _fitted_forecaster
+                converged = True
+                with warnings.catch_warnings(record=True) as caught_warnings:
+                    if ConvergenceWarning is None:
+                        warnings.simplefilter("always")
+                    else:
+                        warnings.simplefilter("always", ConvergenceWarning)
+                    _fitted_forecaster = _forecaster.fit(
+                        start_params=self.start_params,
+                        maxiter=self.maxiter,
+                        full_output=self.full_output,
+                        disp=self.disp,
+                        callback=self.callback,
+                        return_params=self.return_params,
+                    )
+                if ConvergenceWarning is not None and any(
+                    issubclass(warning.category, ConvergenceWarning)
+                    for warning in caught_warnings
+                ):
+                    converged = False
+                elif ConvergenceWarning is None and any(
+                    "converg" in str(getattr(w.category, "__name__", "")).lower()
+                    or "converg" in str(getattr(w.message, "")).lower()
+                    for w in caught_warnings
+                ):
+                    converged = False
+                mle_retvals = getattr(_fitted_forecaster, "mle_retvals", None)
+                if isinstance(mle_retvals, dict) and "converged" in mle_retvals:
+                    converged = converged and bool(mle_retvals["converged"])
+                return _forecaster, _fitted_forecaster, converged
 
             # Fit models
             _fitted_results = Parallel(n_jobs=self.n_jobs)(
@@ -370,16 +397,19 @@ class AutoETS(_StatsModelsAdapter):
             _ic_list = []
             for result in _fitted_results:
                 ic = getattr(result[1], self.information_criterion)
-                if self.ignore_inf_ic and np.isinf(ic):
+                converged = result[2]
+                if not converged:
+                    _ic_list.append(np.nan)
+                elif self.ignore_inf_ic and np.isinf(ic):
                     _ic_list.append(np.nan)
                 else:
                     _ic_list.append(ic)
 
             # Select best model based on information criterion
             if np.all(np.isnan(_ic_list)) or len(_ic_list) == 0:
-                # if all models have infinite IC raise an error
+                # if all models have infinite IC or failed to converge raise an error
                 raise ValueError(
-                    "None of the fitted models have finite %s"
+                    "None of the fitted models have finite %s or converged fits"
                     % self.information_criterion
                 )
             else:
@@ -423,7 +453,7 @@ class AutoETS(_StatsModelsAdapter):
         Parameters
         ----------
         fh : ForecastingHorizon
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
@@ -434,14 +464,14 @@ class AutoETS(_StatsModelsAdapter):
         y_pred : pd.Series
             Returns series of predicted values.
         """
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        start, end = fh.to_absolute_int(self._y_index0, self.cutoff)[[0, -1]]
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute_index(self.cutoff)
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
-        y_pred.name = self._y.name
+        y_pred.name = self._y_name
         return y_pred.loc[valid_indices]
 
     @staticmethod

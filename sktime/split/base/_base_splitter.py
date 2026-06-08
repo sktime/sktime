@@ -5,7 +5,6 @@
 __author__ = ["fkiraly", "khrapovs", "mateuja", "mloning"]
 
 from collections.abc import Iterator
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -22,6 +21,7 @@ from sktime.split.base._common import (
     SPLIT_GENERATOR_TYPE,
     SPLIT_TYPE,
 )
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation import NON_FLOAT_WINDOW_LENGTH_TYPES
 from sktime.utils.validation.forecasting import check_fh
 
@@ -73,7 +73,7 @@ class BaseSplitter(BaseObject):
     by the timedelta `window_length`,
     and then the integer position of the resulting datetime
     is considered to be the training window start.
-    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, unit="D")`,
+    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, freq="D")`,
     we have `y[cutoff] = pd.Timestamp("2021-01-10")`,
     and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
     which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
@@ -100,6 +100,9 @@ class BaseSplitter(BaseObject):
         # whether the splitter splits by time, or by instance
         "authors": "sktime developers",  # author(s) of the object
         "maintainers": "sktime developers",  # current maintainer(s) of the object
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -111,6 +114,24 @@ class BaseSplitter(BaseObject):
         self.fh = fh
 
         super().__init__()
+
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`.
@@ -371,7 +392,7 @@ class BaseSplitter(BaseObject):
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
                 "or with MultiIndex and last(-1) level an sktime compatible time index."
                 f" Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
-                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " See the forecasting tutorial examples/01_forecasting.ipynb, or"
                 " the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
                 "If you think y is already in an sktime supported input format, "
                 "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
@@ -384,7 +405,7 @@ class BaseSplitter(BaseObject):
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
                 "or with MultiIndex and last(-1) level an sktime compatible time index."
                 f" Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
-                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " See the forecasting tutorial examples/01_forecasting.ipynb, or"
                 " the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
                 "If you think y is already in an sktime supported input format, "
                 "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
@@ -404,7 +425,7 @@ class BaseSplitter(BaseObject):
 
         return y_inner, y_mtype, y_inner_mtype
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
 
         Parameters
@@ -422,7 +443,7 @@ class BaseSplitter(BaseObject):
         """
         return len(list(self.split(y)))
 
-    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
+    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Parameters

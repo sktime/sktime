@@ -40,6 +40,7 @@ Forecasting
     examples/01a_forecasting_sklearn.ipynb
     examples/01b_forecasting_proba.ipynb
     examples/01c_forecasting_hierarchical_global.ipynb
+    examples/forecasting/pretraining.ipynb
 
 Time Series Classification, Regression, Clustering
 ==================================================
@@ -48,9 +49,6 @@ Time Series Classification, Regression, Clustering
     :glob:
 
     examples/02_classification.ipynb
-    examples/02a_classification_multivariate_cnn.ipynb
-    examples/02b_classification_multivariate_lstmfcn.ipynb
-    examples/02c_classification_multivariate_inceptiontime.ipynb
 
 Transformations, pipelines
 ==========================
@@ -68,6 +66,7 @@ Changepoint, Anomaly or Outlier Detection
 .. nbgallery::
     :glob:
 
+    examples/07_detection_anomaly_changepoints.ipynb
     examples/annotation/*
 
 Time series Distances, Kernels, Alignment
@@ -92,5 +91,6 @@ Benchmarking
 .. nbgallery::
     :glob:
 
-    examples/04_benchmarking.ipynb
-    examples/04_benchmarking_v2.ipynb
+    examples/04_benchmarking_classifiers.ipynb
+    examples/04_benchmarking_forecasters.ipynb
+    examples/04_benchmarking_legacy.ipynb

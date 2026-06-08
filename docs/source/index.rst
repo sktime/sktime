@@ -6,7 +6,7 @@ Welcome to sktime
 
 A unified framework for machine learning with time series.
 
-.. topic:: Register as a user, or voter for sktime committees!
+.. topic:: Register as a user!
 
     Prioritized bugfixes, shape the tech roadmap and governance policy.
     `Register here <https://forms.gle/eVuzrCjKDRupxawL7>`_

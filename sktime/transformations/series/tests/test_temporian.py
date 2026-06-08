@@ -205,6 +205,7 @@ def test_change_sampling():
         _ = transformer.fit_transform(X=X)
 
 
+@pytest.mark.xfail(reason="Known bug #7080.")
 @pytest.mark.skipif(
     not run_test_for_class(TemporianTransformer),
     reason="run test only if softdeps are present and incrementally (if requested)",

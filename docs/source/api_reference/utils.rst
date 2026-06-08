@@ -115,6 +115,9 @@ Plotting
     plot_series
     plot_lags
     plot_correlations
+    plot_windows
+    plot_interval
+    plot_calibration
 
 Estimator Validity Checking
 ---------------------------

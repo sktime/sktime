@@ -21,7 +21,7 @@ class _TweDistance(NumbaDistance):
     ----------
     .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
-    Intelligence. 31 (2): 306–318.
+    Intelligence. 31 (2): 306-318.
     """
 
     def _distance_alignment_path_factory(
@@ -89,10 +89,11 @@ class _TweDistance(NumbaDistance):
         from sktime.distances.lower_bounding import resolve_bounding_matrix
         from sktime.utils.numba.njit import njit
 
+        if bounding_matrix is None:
+            bounding_matrix = np.zeros((x.shape[1] + 1, y.shape[1] + 1))
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
-
         if return_cost_matrix is True:
 
             @njit(cache=True)

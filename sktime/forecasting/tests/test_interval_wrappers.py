@@ -44,9 +44,6 @@ def test_wrapper_series_mtype(wrapper, override_y_mtype, mtype):
     We do this with a trick: the vanilla NaiveForecaster can accept both; we mimic a
     "pd.DataFrame only" forecaster by restricting its y_inner_mtype tag to pd.Series.
     """
-    if mtype == "gluonts_ListDataset_series":
-        return None
-
     y = load_airline()
     y = convert_to(y, to_type=mtype)
 

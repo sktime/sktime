@@ -29,7 +29,7 @@ def _generate_fixture_tuples():
 
         conv_mat = _conversions_defined(scitype)
 
-        mtypes = scitype_to_mtype(scitype, softdeps="exclude")
+        mtypes = scitype_to_mtype(scitype, softdeps="present")
 
         if len(mtypes) == 0:
             # if there are no mtypes, this must have been reached by mistake/bug
@@ -123,6 +123,9 @@ def test_convert(scitype, from_mtype, to_mtype, fixture_index):
             to_type=to_mtype,
             as_scitype=scitype,
         )
+
+        print(f"Converted: \n{converted_fixture_i}")
+        print(f"Ground Truth: \n{to_fixture[0]}")
 
         equals, deep_equals_msg = deep_equals(
             converted_fixture_i,

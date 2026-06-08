@@ -1,47 +1,65 @@
 """Contextual Time-series Neural Classifier for TSC."""
 
-__author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNTCClassifier"]
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cntc import CNTCNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class CNTCClassifier(BaseDeepClassifier):
     """Contextual Time-series Neural Classifier (CNTC), as described in [1].
 
-    Parameters
-    ----------
-    n_epochs       : int, default = 2000
-        the number of epochs to train the model
-    batch_size      : int, default = 16
-        the number of samples per gradient update.
-    filter_sizes    : tuple of shape (2), default = (16, 8)
-        filter sizes for CNNs in CCNN arm.
-    kernel_sizes     : two-tuple, default = (1, 1)
-        the length of the 1D convolution window for
-        CNNs in CCNN arm.
-    rnn_size        : int, default = 64
-        number of rnn units in the CCNN arm.
-    lstm_size       : int, default = 8
-        number of lstm units in the CLSTM arm.
-    dense_size      : int, default = 64
-        dimension of dense layer in CNTC.
-    random_state    : int or None, default=None
-        Seed for random number generation.
-    verbose         : boolean, default = False
-        whether to output extra information
-    loss            : string, default="mean_squared_error"
-        fit parameter for the keras model
-    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
-    metrics         : list of strings, default=["accuracy"],
-
-    Notes
-    -----
     Adapted from the implementation from Fullah et. al
     https://github.com/AmaduFullah/CNTC_MODEL/blob/master/cntc.ipynb
+
+    Parameters
+    ----------
+    activation : string or a tf callable, default="softmax"
+        Activation function used in the output layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_attention : string, default = "sigmoid"
+        Activation function inside the self attention module;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    n_epochs : int, default = 2000
+        the number of epochs to train the model
+    batch_size : int, default = 16
+        the number of samples per gradient update.
+    filter_sizes : tuple of shape (2), default = (16, 8)
+        filter sizes for CNNs in CCNN arm.
+    kernel_sizes : two-tuple, default = (1, 1)
+        the length of the 1D convolution window for
+        CNNs in CCNN arm.
+    rnn_size : int, default = 64
+        number of rnn units in the CCNN arm.
+    lstm_size : int, default = 8
+        number of lstm units in the CLSTM arm.
+    dense_size : int, default = 64
+        dimension of dense layer in CNTC.
+    dropout : float or tuple of floats, default = (0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1)
+        dropout rate(s), in the range [0, 1).
+        If a single float is provided, the same dropout rate is applied to all layers.
+        If a tuple is provided, it should have 7 values corresponding to:
+        (conv1_dropout, rnn1_dropout, conv2_dropout, lstm_dropout,
+         avg_dropout, att_dropout, mlp_dropout)
+        where mlp_dropout is applied to both MLP layers.
+    random_state : int or None, default=None
+        Seed for random number generation.
+    verbose : boolean, default = False
+        whether to output extra information
+    loss : string, default="mean_squared_error"
+        fit parameter for the keras model
+    optimizer : keras.optimizer, default=keras.optimizers.Adam(),
+    metrics : list of strings, default=["accuracy"],
+    callbacks : list of keras.callbacks, default = None,
 
     References
     ----------
@@ -73,9 +91,27 @@ class CNTCClassifier(BaseDeepClassifier):
     """
 
     _tags = {
-        "authors": ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"],
+        "authors": [
+            "AmaduFullah",
+            "James-Large",
+            "Withington",
+            "TonyBagnall",
+            "AurumnPegasus",
+            "noxthot",
+        ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
-        "python_dependencies": ["tensorflow", "keras-self-attention"],
+        "python_dependencies": ["tensorflow"],
+        # testing configuration
+        # ---------------------
+        "tests:libs": ["sktime.networks.cntc"],
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+        ],
+        # Run tests in a dedicated VM due to sporadic crashes and possible
+        # memory leaks (see #8518)
+        "tests:vm": True,
     }
 
     def __init__(
@@ -87,19 +123,25 @@ class CNTCClassifier(BaseDeepClassifier):
         rnn_size=64,
         lstm_size=8,
         dense_size=64,
+        dropout=(0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1),
         callbacks=None,
         verbose=False,
         loss="categorical_crossentropy",
         metrics=None,
         random_state=0,
+        activation="softmax",
+        activation_attention="sigmoid",
+        activation_hidden="relu",
     ):
-        _check_dl_dependencies(severity="error")
-
+        self.activation = activation
+        self.activation_attention = activation_attention
+        self.activation_hidden = activation_hidden
         self.kernel_sizes = kernel_sizes  # used plural
         self.filter_sizes = filter_sizes  # used plural
         self.rnn_size = rnn_size
         self.lstm_size = lstm_size
         self.dense_size = dense_size
+        self.dropout = dropout
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -110,20 +152,35 @@ class CNTCClassifier(BaseDeepClassifier):
 
         super().__init__()
 
-        self._network = CNTCNetwork()
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self._network = CNTCNetwork(
+            activation=self.activation_hidden,
+            activation_attention=self.activation_attention,
+            random_state=self.random_state,
+            dropout=self.dropout,
+        )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
 
         In sktime, time series are stored in numpy arrays of shape (d,m), where d
-        is the number of dimensions, m is the series length. Keras/tensorflow assume
-        data is in shape (m,d). This method also assumes (m,d). Transpose should
-        happen in fit.
+        is the number of dimensions, m is the series length.
 
         Parameters
         ----------
         input_shape : tuple
-            The shape of the data fed into the input layer, should be (m,d)
+            The shape of the data fed into the input layer, should be (d,m)
         n_classes: int
             The number of classes, which becomes the size of the output layer
 
@@ -136,7 +193,7 @@ class CNTCClassifier(BaseDeepClassifier):
         metrics = ["accuracy"] if self.metrics is None else self.metrics
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(units=n_classes, activation="softmax")(
+        output_layer = keras.layers.Dense(units=n_classes, activation=self.activation)(
             output_layer
         )
 
@@ -227,11 +284,7 @@ class CNTCClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        if self.callbacks is None:
-            self._callbacks = []
         y_onehot = self._convert_y_to_keras(y)
-        # Transpose to conform to Keras input style.
-        X = X.transpose(0, 2, 1)
 
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
@@ -245,7 +298,7 @@ class CNTCClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
         return self
 
@@ -275,8 +328,6 @@ class CNTCClassifier(BaseDeepClassifier):
         """
         import numpy as np
 
-        # Transpose to work correctly with keras
-        X = X.transpose((0, 2, 1))
         X2 = self.prepare_input(X)
         probs = self.model_.predict([X2, X, X], self.batch_size, **kwargs)
 
@@ -286,3 +337,52 @@ class CNTCClassifier(BaseDeepClassifier):
             probs = np.hstack([1 - probs, probs])
         probs = probs / probs.sum(axis=1, keepdims=1)
         return probs
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
+        """
+        param0 = {"n_epochs": 10, "batch_size": 4}
+        param1 = {
+            "n_epochs": 10,
+            "batch_size": 4,
+            "rnn_size": 16,
+            "lstm_size": 16,
+        }
+
+        params = [param0, param1]
+
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies("tensorflow", severity="none"):
+            from tensorflow import keras
+
+            param_callbacks = {
+                "n_epochs": 10,
+                "batch_size": 4,
+                "callbacks": [
+                    keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)
+                ],
+            }
+            params.append(param_callbacks)
+
+        return params

@@ -5,23 +5,28 @@ import abc
 import functools
 from copy import deepcopy
 from inspect import signature
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _GlobalForecastingDeprecationMixin,
+)
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 __all__ = ["_NeuralForecastAdapter"]
-__author__ = ["yarnabrina", "geetu040", "pranavvp16"]
+__author__ = ["yarnabrina", "geetu040", "pranavvp16", "XinyuWuu"]
 
 _SUPPORTED_LOCAL_SCALAR_TYPES = Literal[
     "standard", "robust", "robust-iqr", "minmax", "boxcox"
 ]
 
 
-class _NeuralForecastAdapter(BaseForecaster):
+class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """Base adapter class for NeuralForecast models.
 
     Parameters
@@ -48,6 +53,19 @@ class _NeuralForecastAdapter(BaseForecaster):
         print processing steps during fit
     verbose_predict : bool (default=False)
         print processing steps during predict
+    broadcasting : bool (default=False)
+        if True, a model will be fit per time series.
+        Panels, e.g., multiindex data input, will be broadcasted to single series,
+        and for each single series, one copy of this forecaster will be applied.
+
+    Attributes
+    ----------
+    n_trainable_params_ : int or None
+        Number of trainable parameters summed across all underlying PyTorch models,
+        set after ``fit``. ``None`` if ``_forecaster.models`` is not iterable.
+    n_total_params_ : int or None
+        Total number of parameters summed across all underlying PyTorch models,
+        set after ``fit``. ``None`` if ``_forecaster.models`` is not iterable.
 
     Notes
     -----
@@ -61,28 +79,43 @@ class _NeuralForecastAdapter(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["yarnabrina", "geetu040", "pranavvp16"],
+        "authors": ["yarnabrina", "geetu040", "pranavvp16", "XinyuWuu"],
         "maintainers": ["yarnabrina"],
         "python_version": ">=3.8",
         "python_dependencies": ["neuralforecast"],
         # estimator type
         # --------------
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
-        "scitype:y": "univariate",
+        "y_inner_mtype": [
+            "pd.Series",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "capability:multivariate": False,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:insample": False,
+        "capability:global_forecasting": True,
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._neuralforecast"],
     }
 
     def __init__(
         self: "_NeuralForecastAdapter",
-        freq: Union[str, int] = "auto",
-        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
-        futr_exog_list: Optional[list[str]] = None,
+        freq: str | int = "auto",
+        local_scaler_type: _SUPPORTED_LOCAL_SCALAR_TYPES | None = None,
+        futr_exog_list: list[str] | None = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
+        broadcasting: bool = False,
     ) -> None:
         self.freq = freq
         self.local_scaler_type = local_scaler_type
@@ -91,6 +124,7 @@ class _NeuralForecastAdapter(BaseForecaster):
 
         self.verbose_fit = verbose_fit
         self.verbose_predict = verbose_predict
+        self.broadcasting = broadcasting
 
         super().__init__()
 
@@ -103,7 +137,15 @@ class _NeuralForecastAdapter(BaseForecaster):
 
         self.needs_X = self.algorithm_exogenous_support and bool(self.futr_exog_list)
 
-        self.set_tags(**{"ignores-exogeneous-X": not self.needs_X})
+        self.set_tags(**{"capability:exogenous": self.needs_X})
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.Series",
+                    "X_inner_mtype": "pd.DataFrame",
+                    "capability:global_forecasting": False,
+                }
+            )
 
     @functools.cached_property
     @abc.abstractmethod
@@ -136,7 +178,7 @@ class _NeuralForecastAdapter(BaseForecaster):
 
         - future exogenous columns (``futr_exog_list``) - used from ``__init__``
         - historical exogenous columns (``hist_exog_list``) - not supported
-        - statis exogenous columns (``stat_exog_list``) - not supported
+        - static exogenous columns (``stat_exog_list``) - not supported
         - custom model name (``alias``) - used from ``algorithm_name``
         """
 
@@ -208,6 +250,47 @@ class _NeuralForecastAdapter(BaseForecaster):
             "trainer_kwargs": instance_trainer_parameters,
         }
 
+    def _get_validated_input_size(
+        self: "_NeuralForecastAdapter",
+        input_size: int,
+        inference_input_size: int | None = None,
+    ) -> int:
+        """Validate input_size for neuralforecast v3+ compatibility.
+
+        In neuralforecast v3.0.0+, input_size is required for recurrent models
+        (RNN, LSTM, GRU, DilatedRNN) and the default -1 may cause issues with
+        short time series. This method handles the transition by using
+        inference_input_size as fallback, or a sensible default.
+
+        Parameters
+        ----------
+        input_size : int
+            The input_size parameter value.
+        inference_input_size : int, optional
+            The inference_input_size parameter value, used as fallback.
+
+        Returns
+        -------
+        int
+            Validated input_size value.
+        """
+        if _check_soft_dependencies("neuralforecast>=3.0.0", severity="none"):
+            if input_size == -1:
+                # Fall back to inference_input_size if available and not -1
+                if inference_input_size is not None and inference_input_size != -1:
+                    return inference_input_size
+                # Auto-default to 2 for v3+ to handle short time series in tests
+                # and provide a smoother v2->v3 transition
+                warn(
+                    "neuralforecast>=3.0.0 requires 'input_size' to be set "
+                    "explicitly for recurrent models. Using default input_size=2. "
+                    "Consider setting 'input_size' explicitly for your data.",
+                    obj=self,
+                    stacklevel=2,
+                )
+                return 2
+        return input_size
+
     def _instantiate_model(self: "_NeuralForecastAdapter", fh: ForecastingHorizon):
         """Instantiate the model."""
         exogenous_parameters = (
@@ -228,8 +311,11 @@ class _NeuralForecastAdapter(BaseForecaster):
 
         from neuralforecast import NeuralForecast
 
+        # Use keyword arguments for better forward compatibility
         model = NeuralForecast(
-            [algorithm_instance], self._freq, local_scaler_type=self.local_scaler_type
+            models=[algorithm_instance],
+            freq=self._freq,
+            local_scaler_type=self.local_scaler_type,
         )
 
         return model
@@ -237,8 +323,8 @@ class _NeuralForecastAdapter(BaseForecaster):
     def _fit(
         self: "_NeuralForecastAdapter",
         y: pandas.Series,
-        X: Optional[pandas.DataFrame],
-        fh: ForecastingHorizon,
+        X: pandas.DataFrame | None = None,
+        fh: ForecastingHorizon | None = None,
     ) -> "_NeuralForecastAdapter":
         """Fit forecaster to training data.
 
@@ -252,7 +338,7 @@ class _NeuralForecastAdapter(BaseForecaster):
         y : sktime time series object
             guaranteed to have a single column/variable
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : sktime time series object, optional (default=None)
             guaranteed to have at least one column/variable
             Exogeneous time series to fit to.
@@ -288,19 +374,18 @@ class _NeuralForecastAdapter(BaseForecaster):
         # | Index                   | B2.2.1    |
         # | Index (Missing)         | B2.2.2    |
         # | Other                   | unreached |
-
+        y_time_index = y.index.get_level_values(-1)
         if self.freq != "auto":  # A: freq is given as non-auto
             self._freq = self.freq
         elif fh.freq:  # B1: freq is inferred from fh
             self._freq = fh.freq
-        elif isinstance(y.index, pandas.DatetimeIndex):  # B2.1: y is date-like
+        elif isinstance(y_time_index, pandas.DatetimeIndex):  # B2.1: y is date-like
             raise ValueError(
                 f"Error in {self.__class__.__name__}, could not interpret freq, try "
                 "passing freq in model initialization or use a valid offset in index"
             )
         else:  # B2.2: y is not date-like
-            diffs = np.unique(np.diff(y.index))
-
+            diffs = np.unique(np.diff(np.unique(y_time_index)))
             if diffs.shape[0] > 1:  # B2.2.1: non-equispaced integers
                 raise ValueError(
                     f"Error in {self.__class__.__name__}, could not interpret freq, try"
@@ -310,18 +395,20 @@ class _NeuralForecastAdapter(BaseForecaster):
             else:  # B2.2.2: equispaced integers
                 self._freq = int(diffs[-1])  # converts numpy.int64 to int
 
-        train_indices = y.index
-        if isinstance(train_indices, pandas.PeriodIndex):
-            train_indices = train_indices.to_timestamp(
-                freq=pandas.tseries.frequencies.to_offset(self._freq)
-            )
+        if isinstance(y_time_index, pandas.PeriodIndex):
+            self._is_PeriodIndex = True
+            train_indices = self._handle_PeriodIndex(y)
+        else:
+            self._is_PeriodIndex = False
+            train_indices = y.index
+
+        id_int, id_time = self._get_id_idx(train_indices)
 
         train_data = {
-            self.id_col: 1,
-            self.time_col: train_indices.to_numpy(),
-            self.target_col: y.to_numpy(),
+            self.id_col: id_int,
+            self.time_col: id_time,
+            self.target_col: y.to_numpy().flatten(),
         }
-
         if self.futr_exog_list and X is None:
             raise ValueError("Missing exogeneous data, 'futr_exog_list' is non-empty.")
 
@@ -333,15 +420,67 @@ class _NeuralForecastAdapter(BaseForecaster):
 
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
         self._forecaster = self._instantiate_model(maximum_forecast_horizon)
-
         self._forecaster.fit(df=train_dataset, verbose=self.verbose_fit)
+
+        # Store the number of trainable and total parameters
+        if hasattr(self._forecaster.models, "__iter__"):
+            torch_models = self._forecaster.models
+            self.n_trainable_params_ = sum(
+                sum(p.numel() for p in model.parameters() if p.requires_grad)
+                for model in torch_models
+            )
+            self.n_total_params_ = sum(
+                sum(p.numel() for p in model.parameters()) for model in torch_models
+            )
+        else:
+            self.n_trainable_params_ = None
+            self.n_total_params_ = None
 
         return self
 
+    def _get_id_idx(self, indices: pandas.Index):
+        """Get instance index (id_int) and time index (id_time) from a pandas.Index.
+
+        For a single time series, the instance index (id_int) will be a integer 1.
+        For multiIndex, the id_int will be a string concat of all instance levels.
+        """
+        if not isinstance(indices, pandas.MultiIndex):
+            id_int = 1
+            id_time = indices.to_numpy()
+        else:
+            id_idx = indices.to_frame().values
+            # with ("h0":"h0_0", "h1":"h1_1") as instance index,
+            # the id_int would be "h0_1h1_1"
+            id_int = id_idx[:, :-1].sum(axis=1)
+            id_time = indices.get_level_values(-1)
+        return id_int, id_time
+
+    def _handle_PeriodIndex(self, data):
+        indices = data.index
+        if not isinstance(indices, pandas.MultiIndex):
+            indices = indices.to_timestamp(
+                freq=pandas.tseries.frequencies.to_offset(self._freq)
+            )
+        else:
+            time_idx = indices.get_level_values(-1).to_timestamp(
+                freq=pandas.tseries.frequencies.to_offset(self._freq)
+            )
+            indices = np.hstack(
+                (
+                    np.array(indices.to_list())[:, :-1],
+                    np.array(time_idx.to_list()).reshape(-1, 1),
+                )
+            )
+            indices = pandas.MultiIndex.from_arrays(
+                [indices[:, i] for i in range(indices.shape[1])]
+            )
+
+        return indices
+
     def _predict(
         self: "_NeuralForecastAdapter",
-        fh: Optional[ForecastingHorizon],
-        X: Optional[pandas.DataFrame],
+        fh: ForecastingHorizon | None,
+        X: pandas.DataFrame | None = None,
     ) -> pandas.Series:
         """Forecast time series at future horizon.
 
@@ -357,7 +496,7 @@ class _NeuralForecastAdapter(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -375,28 +514,39 @@ class _NeuralForecastAdapter(BaseForecaster):
         del fh  # to avoid being detected as unused by ``vulture`` etc.
 
         predict_parameters: dict = {"verbose": self.verbose_predict}
+        y = self._y
 
-        # this block is probably unnecessary, but kept to be safe
-        # the check in fit ensures X is passed if futr_exog_list is non-empty
-        # base framework should ensure X is passed in predict in that case
         if self.futr_exog_list and X is None:
             raise ValueError("Missing exogeneous data, 'futr_exog_list' is non-empty.")
 
         if self.futr_exog_list:
-            predict_indices = X.index
-            if isinstance(predict_indices, pandas.PeriodIndex):
-                predict_indices = predict_indices.to_timestamp(
-                    freq=pandas.tseries.frequencies.to_offset(self._freq)
-                )
+            X_time_index = X.index.get_level_values(-1)
+            if isinstance(X_time_index, pandas.PeriodIndex):
+                predict_indices = self._handle_PeriodIndex(X)
+            else:
+                predict_indices = X.index
 
-            predict_data = {self.id_col: 1, self.time_col: predict_indices.to_numpy()}
+            id_int, id_time = self._get_id_idx(predict_indices)
+            predict_data = {self.id_col: id_int, self.time_col: id_time}
 
             for column in self.futr_exog_list:
                 predict_data[column] = X[column].to_numpy()
 
             predict_dataset = pandas.DataFrame(data=predict_data)
-
             predict_parameters["futr_df"] = predict_dataset
+
+        if not self.futr_exog_list:
+            y_time_index = y.index.get_level_values(-1)
+            if isinstance(y_time_index, pandas.PeriodIndex):
+                predict_indices = self._handle_PeriodIndex(y)
+            else:
+                predict_indices = y.index
+
+            id_int, id_time = self._get_id_idx(predict_indices)
+            predict_data = {self.id_col: id_int, self.time_col: id_time}
+
+            predict_data[self.target_col] = y.to_numpy().flatten()
+            predict_parameters["df"] = pandas.DataFrame(data=predict_data)
 
         model_forecasts = self._forecaster.predict(**predict_parameters)
 
@@ -411,15 +561,59 @@ class _NeuralForecastAdapter(BaseForecaster):
         if len(prediction_column_names) > 1:
             raise NotImplementedError("Multiple prediction columns are not supported.")
 
-        model_point_predictions = model_forecasts[prediction_column_names[0]].to_numpy()
+        # use str index names to avoid None as index names
+        # which cause problems when reindex
+        new_index_names = [f"_new_idx_name_{i}" for i in range(len(y.index.names))]
 
-        absolute_horizons = self.fh.to_absolute_index(self.cutoff)
-        horizon_positions = self.fh.to_indexer(self.cutoff)
+        if isinstance(y, pandas.DataFrame):
+            id_idx = np.array(y.index.to_list())
+            id_int = id_idx[:, :-1].sum(axis=1)
+            ins = id_idx[:, :-1]
 
-        final_predictions = pandas.Series(
-            model_point_predictions[horizon_positions],
-            index=absolute_horizons,
-            name=self._y.name,
+            # Create a mapping from unique_id to original index level values
+            # Use DataFrame with unique_id as a regular column for proper merging
+            id_ins = pandas.DataFrame(data=ins, columns=new_index_names[:-1])
+            id_ins[self.id_col] = id_int
+            # Keep only unique combinations of instance info
+            id_ins = id_ins.drop_duplicates(subset=[self.id_col])
+
+            # neuralforecast v3 returns unique_id and ds as columns, not index
+            # Merge predictions with instance info on unique_id
+            final_predictions = pandas.merge(
+                model_forecasts,
+                id_ins,
+                on=self.id_col,
+                how="left",
+            )
+
+            if self._is_PeriodIndex:
+                time_idx = pandas.DatetimeIndex(final_predictions[self.time_col])
+                time_idx = time_idx.to_period(
+                    freq=pandas.tseries.frequencies.to_offset(self._freq)
+                )
+                final_predictions[self.time_col] = time_idx
+            final_predictions = final_predictions.rename(
+                columns={
+                    self.time_col: new_index_names[-1],
+                    prediction_column_names[0]: y.columns[0],
+                },
+            )
+            # Drop the unique_id column as it's only used for internal mapping
+            final_predictions = final_predictions.drop(columns=[self.id_col])
+            final_predictions = final_predictions.set_index(new_index_names)
+        else:
+            model_point_predictions = model_forecasts[
+                prediction_column_names[0]
+            ].to_numpy()
+            absolute_horizons = self.fh.to_absolute_index(self.cutoff)
+            horizon_positions = self.fh.to_indexer(self.cutoff)
+            final_predictions = pandas.Series(
+                model_point_predictions[horizon_positions],
+                index=absolute_horizons,
+                name=y.name,
+            )
+        # restore index names
+        final_predictions.index = final_predictions.index.rename(
+            y.index.names[0] if len(y.index.names) == 1 else y.index.names
         )
-
         return final_predictions

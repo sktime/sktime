@@ -18,8 +18,6 @@ class AutoREG(_StatsModelsAdapter):
 
     Parameters
     ----------
-    endog : array_like
-        A 1-d endogenous response variable. The dependent variable.
     lags : {None, int, list[int]}
         The number of lags to include in the model if an integer or the
         list of lag indices to include.  For example, [1, 4] will only
@@ -37,10 +35,6 @@ class AutoREG(_StatsModelsAdapter):
         Flag indicating whether to include seasonal dummies in the model. If
         seasonal is True and trend includes 'c', then the first period
         is excluded from the seasonal terms.
-    exog : array_like, optional
-        Exogenous variables to include in the model. Must have the same number
-        of observations as endog and should be aligned so that endog[i] is
-        regressed on exog[i].
     hold_back : {None, int}
         Initial observations to exclude from the estimation sample.  If None,
         then hold_back is equal to the maximum lag in the model.  Set to a
@@ -51,7 +45,7 @@ class AutoREG(_StatsModelsAdapter):
         the model.
     period : {None, int}
         The period of the data. Only used if seasonal is True. This parameter
-        can be omitted if using a pandas object for endog that contains a
+        can be omitted if using a pandas object  that contains a
         recognized frequency.
     missing : str
         Available options are 'none', 'drop', and 'raise'. If 'none', no nan
@@ -95,16 +89,18 @@ class AutoREG(_StatsModelsAdapter):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["jonathanbechtel", "mgazian000", "CTFallon"],
+        "authors": ["bashtage", "jonathanbechtel", "mgazian000", "CTFallon"],
+        # bashtage for implementation in statsmodels
         "maintainers": ["jonathanbechtel", "mgazian000", "CTFallon"],
         "python_dependencies": "statsmodels>=0.13.0",
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
-        "scitype:y": "univariate",
-        "ignores-exogeneous-X": False,
+        "capability:multivariate": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(
@@ -153,13 +149,15 @@ class AutoREG(_StatsModelsAdapter):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to fit to.
@@ -205,7 +203,7 @@ class AutoREG(_StatsModelsAdapter):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
@@ -218,7 +216,7 @@ class AutoREG(_StatsModelsAdapter):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
 
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        start, end = fh.to_absolute_int(self._y_index0, self.cutoff)[[0, -1]]
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute_index(self.cutoff)
@@ -226,11 +224,9 @@ class AutoREG(_StatsModelsAdapter):
         y_pred = self._fitted_forecaster.predict(
             start=start, end=end, exog=self._X, exog_oos=X, dynamic=self.dynamic
         )
-        y_pred.name = self._y.name
+        y_pred.name = self._y_name
 
         return y_pred.loc[valid_indices]
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

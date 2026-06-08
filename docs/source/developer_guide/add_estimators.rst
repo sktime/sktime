@@ -39,7 +39,7 @@ directory of ``sktime``.
 Usually, the scitype of a given estimator is directly determined by what the estimator does.
 This is also, often, explicitly signposted in publications related to the estimator.
 For instance, most textbooks mention ARIMA in the context of forecasting, so in that hypothetical situation
-it makeas sense to consider the "forecaster" template.
+it makes sense to consider the "forecaster" template.
 Then, inspect the template and check whether the methods of the class map clearly onto routines of the estimator.
 If not, another template might be more appropriate.
 
@@ -176,7 +176,7 @@ A useful workflow for using ``check_estimator`` to debug an estimator is as foll
 
 1. Run ``check_estimator(MyEstimator)`` to find failing tests
 2. Subset to failing tests or fixtures using ``fixtures_to_run`` or ``tests_to_run``
-3. If the failure is not obvious, set ``raise_exceptions=True`` to raise the exception and inspecet the traceback.
+3. If the failure is not obvious, set ``raise_exceptions=True`` to raise the exception and inspect the traceback.
 4. If the failure is still not clear, use advanced debuggers on the line of code with ``check_estimator``.
 
 Running the test suite in a repository clone

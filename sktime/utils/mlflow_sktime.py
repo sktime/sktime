@@ -528,7 +528,7 @@ def _save_model(model, path, serialization_format):
 
     if serialization_format not in SUPPORTED_SERIALIZATION_FORMATS:
         raise MlflowException(
-            message="Unrecognized serialization format: " f"{serialization_format}.",
+            message=f"Unrecognized serialization format: {serialization_format}.",
             error_code=INTERNAL_ERROR,
         )
     model.save(path=path, serialization_format=serialization_format)

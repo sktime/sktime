@@ -7,10 +7,12 @@ The :mod:`sktime.regression` module contains algorithms and composition tools fo
 
 All regressors in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="regressor"``, optionally filtered by tags.
-Valid tags can be listed using ``sktime.registry.all_tags``.
+
+Valid tags are listed in :ref:`the regressor tags API reference <panel_tags>`,
+and can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
-`Estimator Search Page <https://www.sktime.net/en/latest/estimator_overview.html>`_
+:doc:`Estimator Search Page </estimator_overview>`
 (select "regresser" in the "Estimator type" dropdown).
 
 
@@ -55,20 +57,29 @@ Deep learning
 .. currentmodule:: sktime.regression.deep_learning
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    CNNRegressor
-    CNTCRegressor
-    FCNRegressor
-    InceptionTimeRegressor
-    LSTMFCNRegressor
-    MACNNRegressor
-    MCDCNNRegressor
-    MLPRegressor
-    SimpleRNNRegressor
-    ResNetRegressor
-    TapNetRegressor
+    cnn.CNNRegressor
+    cnn.CNNRegressorTorch
+    cntc.CNTCRegressor
+    fcn.FCNRegressor
+    inceptiontime.InceptionTimeRegressor
+    inceptiontime.InceptionTimeRegressorTorch
+    lstmfcn.LSTMFCNRegressor
+    lstmfcn.LSTMFCNRegressorTorch
+    macnn.MACNNRegressor
+    macnn.MACCNNRegressorTorch
+    mcdcnn.MCDCNNRegressor
+    mcdcnn.MCDCNNRegressorTorch
+    mlp.MLPRegressor
+    mlp.MLPRegressorTorch
+    resnet.ResNetRegressor
+    rnn.SimpleRNNRegressor
+    rnn.SimpleRNNRegressorTorch
+    tapnet.TapNetRegressor
+    tapnet.TapNetRegressorTorch
 
 Distance-based
 --------------

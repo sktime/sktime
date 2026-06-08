@@ -54,7 +54,7 @@ class FreshPRINCE(BaseClassifier):
     References
     ----------
     .. [1] Christ, Maximilian, et al. "Time series feature extraction on basis of
-        scalable hypothesis tests (tsfresh–a python package)." Neurocomputing 307
+        scalable hypothesis tests (tsfresh-a python package)." Neurocomputing 307
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
 
@@ -119,6 +119,10 @@ class FreshPRINCE(BaseClassifier):
         self._tsfresh = None
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.

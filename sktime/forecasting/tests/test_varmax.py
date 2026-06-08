@@ -11,14 +11,7 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.varmax import VARMAX
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-
-np.random.seed(13455)
-index = pd.date_range(start="2020-01", end="2021-12", freq="M")
-df = pd.DataFrame(
-    np.random.randint(0, 100, size=(23, 3)),
-    columns=list("ABC"),
-    index=pd.PeriodIndex(index),
-)
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skip(reason="undiagnosed failure, see #6260")
@@ -32,6 +25,20 @@ def test_VARMAX_against_statsmodels():
     with default variables.
     """
     from statsmodels.tsa.api import VARMAX as _VARMAX
+
+    pandas2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
+    if pandas2:
+        freq = "ME"
+    else:
+        freq = "M"
+
+    np.random.seed(13455)
+    index = pd.date_range(start="2020-01", end="2021-12", freq=freq)
+    df = pd.DataFrame(
+        np.random.randint(0, 100, size=(23, 3)),
+        columns=list("ABC"),
+        index=pd.PeriodIndex(index),
+    )
 
     train, _ = temporal_train_test_split(df.astype("float64"))
     y = train[["A", "B"]]
@@ -61,6 +68,20 @@ def test_VARMAX_against_statsmodels_with_exog():
     with exogenous input.
     """
     from statsmodels.tsa.api import VARMAX as _VARMAX
+
+    pandas2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
+    if pandas2:
+        freq = "ME"
+    else:
+        freq = "M"
+
+    np.random.seed(13455)
+    index = pd.date_range(start="2020-01", end="2021-12", freq=freq)
+    df = pd.DataFrame(
+        np.random.randint(0, 100, size=(23, 3)),
+        columns=list("ABC"),
+        index=pd.PeriodIndex(index),
+    )
 
     train, test = temporal_train_test_split(df.astype("float64"))
     y_train, X_train = train[["A", "B"]], train[["C"]]

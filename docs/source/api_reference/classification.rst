@@ -7,10 +7,12 @@ The :mod:`sktime.classification` module contains algorithms and composition tool
 
 All classifiers in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="classifier"``, optionally filtered by tags.
-Valid tags can be listed using ``sktime.registry.all_tags``.
+
+Valid tags are listed in :ref:`the classifier tags API reference <panel_tags>`,
+and can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
-`Estimator Search Page <https://www.sktime.net/en/latest/estimator_overview.html>`_
+:doc:`Estimator Search Page </estimator_overview>`
 (select "classifier" in the "Estimator type" dropdown).
 
 
@@ -38,6 +40,7 @@ Model selection and tuning
     :template: class.rst
 
     TSCGridSearchCV
+    TSCOptCV
 
 Ensembles
 ---------
@@ -58,20 +61,46 @@ Deep learning
 .. currentmodule:: sktime.classification.deep_learning
 
 .. autosummary::
+    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    CNNClassifier
-    CNTCClassifier
-    FCNClassifier
-    LSTMFCNClassifier
-    InceptionTimeClassifier
-    MACNNClassifier
-    MLPClassifier
-    MCDCNNClassifier
-    ResNetClassifier
-    SimpleRNNClassifier
-    TapNetClassifier
+    convtimenet.ConvTimeNetClassifier
+    cnn.CNNClassifier
+    cnn.CNNClassifierTorch
+    cntc.CNTCClassifier
+    fcn.FCNClassifier
+    gru.GRUClassifier
+    gru.GRUFCNNClassifier
+    inceptiontime.InceptionTimeClassifier
+    inceptiontime.InceptionTimeClassifierTorch
+    lstmfcn.LSTMFCNClassifier
+    lstmfcn.LSTMFCNClassifierTorch
+    macnn.MACNNClassifier
+    macnn.MACCNNClassifierTorch
+    mcdcnn.MCDCNNClassifier
+    mcdcnn.MCDCNNClassifierTorch
+    mlp.MLPClassifier
+    mvts_transformer.MVTSTransformerClassifier
+    resnet.ResNetClassifier
+    rnn.SimpleRNNClassifier
+    rnn.SimpleRNNClassifierTorch
+    tapnet.TapNetClassifier
+    tapnet.TapNetClassifierTorch
+
+Foundation models
+-----------------
+
+.. currentmodule:: sktime.classification.foundation_models
+
+.. autosummary::
+    :recursive:
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MantisClassifier
+    MomentFMClassifier
+    TSPulseClassifier
 
 Dictionary-based
 ----------------

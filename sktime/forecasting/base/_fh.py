@@ -6,10 +6,10 @@ __author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
-from typing import Optional
 
 import numpy as np
 import pandas as pd
+from pandas import Timedelta
 from pandas.tseries.frequencies import to_offset
 
 from sktime.utils.datetime import _coerce_duration_to_int
@@ -30,7 +30,7 @@ from sktime.utils.validation.series import (
 )
 from sktime.utils.warnings import _suppress_pd22_warning
 
-VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
+VALID_FORECASTING_HORIZON_TYPES = int | list | np.ndarray | pd.Index
 
 DELEGATED_METHODS = (
     "__sub__",
@@ -170,14 +170,14 @@ def _check_freq(obj):
     elif isinstance(obj, (pd.Period, pd.Index)):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
-        with _suppress_pd22_warning:
+        with _suppress_pd22_warning():
             offset = to_offset(obj)
         return offset
     else:
         return None
 
 
-def _extract_freq_from_cutoff(x) -> Optional[str]:
+def _extract_freq_from_cutoff(x) -> str | None:
     """Extract frequency string from cutoff.
 
     Parameters
@@ -201,14 +201,17 @@ class ForecastingHorizon:
     ----------
     values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
         Values of forecasting horizon
+
     is_relative : bool, optional (default=None)
+
         - If True, a relative ForecastingHorizon is created:
-                values are relative to end of training series.
+          values are relative to end of training series.
         - If False, an absolute ForecastingHorizon is created:
-                values are absolute.
+          values are absolute.
         - if None, the flag is determined automatically:
-            relative, if values are of supported relative index type
-            absolute, if not relative and values of supported absolute index type
+          relative, if values are of supported relative index type
+          absolute, if not relative and values of supported absolute index type
+
     freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
         object carrying frequency information on values
         ignored unless values is without inferable freq
@@ -400,7 +403,7 @@ class ForecastingHorizon:
             freq_from_self = None
 
         if freq_from_self is not None and freq_from_obj is not None:
-            with _suppress_pd22_warning:
+            with _suppress_pd22_warning():
                 freqs_unequal = freq_from_self != freq_from_obj
             if freqs_unequal:
                 raise ValueError(
@@ -671,6 +674,78 @@ class ForecastingHorizon:
             relative = self.to_relative(cutoff)
             return relative - relative.to_pandas()[0]
 
+    def _is_contiguous(self) -> bool:
+        """Check if a forecasting horizon is contiguous.
+
+        A contiguous forecasting horizon has no gaps - all time points
+        between the minimum and maximum are present.
+
+        The method handles four types of forecasting horizons:
+
+        1. **Integer index** (relative or absolute): Checks if all integers
+        between min and max are present.
+        2. **PeriodIndex** (absolute only): Converts periods to integer ordinals
+        and checks contiguity. Always checkable due to built-in frequency.
+        3. **DatetimeIndex** (absolute only): Requires frequency information
+        to determine contiguity. Returns False if frequency is unavailable.
+        4. **TimedeltaIndex** (relative only): Infers the step size from the
+        minimum difference between consecutive values and checks if all
+        intermediate steps are present.
+
+        Returns
+        -------
+        bool
+            True if fh values form a contiguous sequence, False otherwise.
+            Returns False for DatetimeIndex when frequency information is
+            not available.
+        """
+        values = self.to_pandas()
+
+        # Edge case: empty or single element is always contiguous
+        if len(values) <= 1:
+            return True
+
+        # Case 1: Integer index (relative or absolute)
+        if is_integer_index(values):
+            sorted_vals = np.sort(values.to_numpy())
+            expected_len = sorted_vals[-1] - sorted_vals[0] + 1
+            return len(values) == expected_len
+
+        # Case 2: TimedeltaIndex (relative only)
+        if isinstance(values, pd.TimedeltaIndex):
+            sorted_vals = values.sort_values()
+            diffs = sorted_vals[1:] - sorted_vals[:-1]
+            min_diff = diffs.min()
+            # Check if all timedeltas are present with min_diff spacing
+            expected_steps = (sorted_vals[-1] - sorted_vals[0]) / min_diff
+            return len(values) == (expected_steps + 1)
+
+        # Case 3: PeriodIndex (absolute only)
+        if isinstance(values, pd.PeriodIndex):
+            int_values = values.astype("int64")
+            sorted_vals = np.sort(int_values)
+            expected_len = sorted_vals[-1] - sorted_vals[0] + 1
+            return len(values) == expected_len
+
+        # Case 4: DatetimeIndex (absolute only)
+        if isinstance(values, pd.DatetimeIndex):
+            sorted_vals = values.sort_values()
+            # Try to get freq from self first, then from values
+            freq = self._freq if hasattr(self, "_freq") else None
+            if freq is None and hasattr(values, "freq"):
+                freq = values.freq
+
+            if freq is not None:
+                expected = pd.date_range(
+                    start=sorted_vals[0], end=sorted_vals[-1], freq=freq
+                )
+                return len(values) == len(expected)
+            else:
+                # unknown how to determine, treat as non-contiguous for safety
+                return False
+
+        return False
+
     def get_expected_pred_idx(self, y=None, cutoff=None, sort_by_time=False):
         """Construct DataFrame Index expected in y_pred, return of _predict.
 
@@ -685,6 +760,7 @@ class ForecastingHorizon:
             If cutoff is not provided, is computed from ``y`` via ``get_cutoff``.
         sort_by_time : bool, optional (default=False)
             for MultiIndex returns, whether to sort by time index (level -1)
+
             - If True, result Index is sorted by time index (level -1)
             - If False, result Index is sorted overall
 
@@ -806,29 +882,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh._freq)
             cutoff = _coerce_to_period(cutoff, freq=fh._freq)
 
-        # TODO: 0.32.0:
-        # Check at every minor release whether lower pandas bound >=0.15.0
-        # if yes, can remove the workaround in the "else" condition and the check
-        #
-        # context:
-        # there is a bug in pandas
-        # that requires a workaround when computing index diff below
-        # bug report: https://github.com/pandas-dev/pandas/issues/45999
-        # fix, present from 1.5.0 on: https://github.com/pandas-dev/pandas/pull/46006
-        #
-        # example with bug and workaround:
-        # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
-        # periods - periods[0]
-        # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
-        # [v - periods[0] for v in periods]
-        # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
-        #
-        # Below checks pandas version
-        # "if" branch has code that is expected to work
-        # "else" has the workaround for versions strictly lower than pandas 1.5.0
-        pandas_version_with_bugfix = _check_soft_dependencies(
-            "pandas>=1.5.0", severity="none"
-        )
+        pandas_version_with_bugfix = _is_pandas_arithmetic_bug_fixed()
         if pandas_version_with_bugfix:
             relative = absolute - cutoff
         else:
@@ -868,7 +922,6 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         cutoff = cutoff.index
         relative = fh.to_pandas()
         _check_cutoff(cutoff, relative)
-        is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
 
         # remember timezone to restore it later
         if hasattr(cutoff, "tz"):
@@ -876,32 +929,41 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         else:
             old_tz = None
 
-        if is_timestamp:
-            # coerce to pd.Period for reliable arithmetic operations and
-            # computations of time deltas
-            cutoff = _coerce_to_period(cutoff, freq=fh._freq)
+        def _to_offset(r):
+            if isinstance(r, Timedelta):
+                return r
+            else:
+                return r * to_offset(fh.freq)
 
-        if isinstance(cutoff, pd.Index):
-            cutoff = cutoff[[0] * len(relative)]
-
-        absolute = cutoff + relative
+        is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
+        is_timelike = isinstance(cutoff, (pd.PeriodIndex, pd.DatetimeIndex))
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
-            try:
-                absolute = absolute.to_timestamp(fh._freq)
+            # preserve the format of DatetimeIndex, see #5186
+            absolute = [cutoff[0] + _to_offset(r) for r in relative]
             # this try-except block is a workaround for what seems like a bug in pandas
             # when trying to convert a PeriodIndex to a DatetimeIndex with a frequency
             # of type month-begin, which should be supported, a ValueError is raised
             # see issue #6752 for details
-            except ValueError as e:
-                if "not supported" in str(e):
-                    absolute = absolute.to_timestamp()
+            try:
+                absolute = pd.DatetimeIndex(absolute, freq=fh.freq)
+            except ValueError as e:  # freq can not be set if missing values exist
+                if "not conform" in str(e):
+                    absolute = pd.DatetimeIndex(absolute)
                 else:
                     raise e
+        else:
+            if isinstance(cutoff, pd.Index):
+                cutoff = cutoff[[0] * len(relative)]
+            # pandas bugfix patch
+            if not _is_pandas_arithmetic_bug_fixed() and is_timelike:
+                absolute = type(cutoff)(cutoff.to_list() + relative, freq=fh._freq)
+            else:
+                absolute = cutoff + relative
 
         if old_tz is not None:
-            absolute = absolute.tz_localize(old_tz)
+            absolute = absolute.tz_convert(old_tz)
 
         return fh._new(absolute, is_relative=False, freq=fh.freq)
 
@@ -976,3 +1038,28 @@ def _index_range(relative, cutoff):
         # coerce back to DatetimeIndex after operation
         absolute = absolute.to_timestamp(cutoff.freqstr)
     return absolute
+
+
+def _is_pandas_arithmetic_bug_fixed():
+    """Check if pandas supports correct arithmetic without a workaround."""
+    # TODO: 0.41.0:
+    # Check at every minor release whether lower pandas bound >=1.5.0
+    # if yes, can remove the workaround in the "else" condition and the check
+    #
+    # context:
+    # there is a bug in pandas
+    # that requires a workaround when computing index diff below
+    # bug report: https://github.com/pandas-dev/pandas/issues/45999
+    # fix, present from 1.5.0 on: https://github.com/pandas-dev/pandas/pull/46006
+    #
+    # example with bug and workaround:
+    # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
+    # periods - periods[0]
+    # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
+    # [v - periods[0] for v in periods]
+    # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
+    #
+    # Below checks pandas version
+    # "True" represents that is expected to work
+    # "False" has the workaround for versions strictly lower than pandas 1.5.0
+    return _check_soft_dependencies("pandas>=1.5.0", severity="none")

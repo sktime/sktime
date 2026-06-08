@@ -8,7 +8,6 @@ __author__ = ["MatthewMiddlehurst"]
 __all__ = ["SupervisedIntervals"]
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn import preprocessing
 from sklearn.utils import check_random_state
 
@@ -92,7 +91,12 @@ class SupervisedIntervals(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["MatthewMiddlehurst"],
+        "python_dependencies": ["numba", "joblib"],
+        # estimator type
+        # --------------
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": False,
@@ -101,7 +105,9 @@ class SupervisedIntervals(BaseTransformer):
         "fit_is_empty": False,
         "capability:unequal_length": False,
         "requires_y": True,
-        "python_dependencies": "numba",
+        "capability:categorical_in_X": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -190,6 +196,8 @@ class SupervisedIntervals(BaseTransformer):
                 then the return is a `Panel` object of type `pd-multiindex`
                 Example: i-th instance of the output is the i-th window running over `X`
         """
+        from joblib import Parallel, delayed
+
         from sktime.utils.numba.general import z_normalise_series_3d
 
         self.reset()
@@ -242,6 +250,8 @@ class SupervisedIntervals(BaseTransformer):
         return X_out
 
     def _fit(self, X, y=None):
+        from joblib import Parallel, delayed
+
         from sktime.utils.numba.general import z_normalise_series_3d
 
         y = self._fit_setup(X, y)
@@ -274,6 +284,8 @@ class SupervisedIntervals(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
+        from joblib import Parallel, delayed
+
         transform = Parallel(
             n_jobs=self._n_jobs, backend=self.parallel_backend, prefer="threads"
         )(

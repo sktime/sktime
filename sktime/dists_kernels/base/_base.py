@@ -34,7 +34,9 @@ __author__ = ["fkiraly"]
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes._dtypekind import DtypeKind
 from sktime.datatypes._series_as_panel import convert_Series_to_Panel
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 class BasePairwiseTransformer(BaseEstimator):
@@ -61,6 +63,7 @@ class BasePairwiseTransformer(BaseEstimator):
 
     def __init__(self):
         super().__init__()
+        _check_estimator_deps(self, severity="warning")
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -103,6 +106,8 @@ class BasePairwiseTransformer(BaseEstimator):
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
+        _check_estimator_deps(self)
+
         X = self._pairwise_table_x_check(X)
 
         if X2 is None:
@@ -136,6 +141,7 @@ class BasePairwiseTransformer(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
+        _check_estimator_deps(self)
         self.reset()
         self._is_fitted = True
         return self
@@ -199,6 +205,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
     def __init__(self):
         super().__init__()
+        _check_estimator_deps(self, severity="warning")
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -409,6 +416,14 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X[i] and X2[j]
         """
+        # todo: handle optional dependencies here properly
+        # this should be severity = "error", but:
+        # currently, numba based distances work without numba but are slower
+        # the "numba" dependency is optional, making this an "error" severity
+        # would prevent that slower usage without numba
+        # solution: add tag for optional python dependencies and appropriate checks
+        _check_estimator_deps(self, severity="warning")
+
         X = self._pairwise_panel_x_check(X)
 
         if X2 is None:
@@ -463,6 +478,14 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         diag: np.array of shape [n]
             i-th entry contains distance/kernel between X[i] and X[i]
         """
+        # todo: handle optional dependencies here properly
+        # this should be severity = "error", but:
+        # currently, numba based distances work without numba but are slower
+        # the "numba" dependency is optional, making this an "error" severity
+        # would prevent that slower usage without numba
+        # solution: add tag for optional python dependencies and appropriate checks
+        _check_estimator_deps(self, severity="warning")
+
         import numpy as np
 
         from sktime.datatypes._vectorize import VectorizedDF
@@ -479,6 +502,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
+        _check_estimator_deps(self)
         # no fitting logic, but in case fit is called or expected
         self.reset()
         self._is_fitted = True
@@ -503,7 +527,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             usually df-list, list of pd.DataFrame, unless overridden
         """
         check_res = check_is_scitype(
-            X, ["Series", "Panel"], return_metadata=[], var_name=var_name
+            X, ["Series", "Panel"], return_metadata=["feature_kind"], var_name=var_name
         )
         X_valid = check_res[0]
         metadata = check_res[2]
@@ -517,6 +541,12 @@ class BasePairwiseTransformerPanel(BaseEstimator):
                 " See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
             )
             raise TypeError(msg)
+
+        if DtypeKind.CATEGORICAL in metadata["feature_kind"]:
+            raise TypeError(
+                "Pairwise transformers do not support categorical features in "
+                f"{var_name}."
+            )
 
         X_scitype = metadata["scitype"]
 

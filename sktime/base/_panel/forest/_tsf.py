@@ -16,10 +16,8 @@ __all__ = [
 ]
 
 import math
-from typing import Optional
 
 import numpy as np
-from joblib import Parallel, delayed
 from numpy.random import RandomState
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
@@ -36,7 +34,7 @@ class BaseTimeSeriesForest:
         min_interval=3,
         n_estimators=200,
         n_jobs=1,
-        inner_series_length: Optional[int] = None,
+        inner_series_length: int | None = None,
         random_state=None,
     ):
         super().__init__(
@@ -91,6 +89,8 @@ class BaseTimeSeriesForest:
         self : object
             An fitted instance of the classifier
         """
+        from joblib import Parallel, delayed
+
         from sktime.base._base import _clone_estimator
 
         X = X.squeeze(1)
@@ -143,7 +143,7 @@ def _get_intervals(
     min_interval: int,
     series_length: int,
     rng: RandomState,
-    inner_series_length: Optional[int] = None,
+    inner_series_length: int | None = None,
 ) -> np.ndarray:
     """Generate random intervals for given parameters.
 

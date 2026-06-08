@@ -10,8 +10,9 @@ How to use this implementation template to implement a new estimator:
 - make a copy of the template in a suitable location, give it a descriptive name.
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
-- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, cutoff, _fh,
-    _cutoff, _converter_store_y, forecasters_, _tags, _tags_dynamic, _is_vectorized
+- do not write to reserved variables: is_fitted, _is_fitted, _state,
+    _pretrained_attrs, _X, _y, cutoff, _fh, _cutoff, _converter_store_y,
+    forecasters_, _tags, _tags_dynamic, _is_vectorized
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
@@ -20,17 +21,19 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting         - _fit(self, y, X=None, fh=None)
     forecasting     - _predict(self, fh=None, X=None)
 
-Optional implements:
+Optional methods to implement:
     updating                    - _update(self, y, X=None, update_params=True):
     predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
     OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
     predicting variance         - _predict_var(self, fh, X=None, cov=False)
     distribution forecast       - _predict_proba(self, fh, X=None)
     fitted parameter inspection - _get_fitted_params()
+    pretraining (1st batch)     - _pretrain(self, y, X=None, fh=None)
+    pretraining (update)        - _pretrain_update(self, y, X=None, fh=None)
 
 Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
@@ -64,13 +67,8 @@ class MyForecaster(BaseForecaster):
         descriptive explanation of parama
     paramb : string, optional (default='default')
         descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
+    paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
-    and so on
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
     and so on
     """
 
@@ -83,6 +81,8 @@ class MyForecaster(BaseForecaster):
     #   y_inner_mtype should be changed to pd.DataFrame
     # other tags are "safe defaults" which can usually be left as-is
     _tags = {
+        # tags and full specifications are available in the tag API reference
+        # https://www.sktime.net/en/stable/api_reference/tags.html
         # to list all valid tags with description, use sktime.registry.all_tags
         #   all_tags(estimator_types="forecaster", as_dataframe=True)
         #
@@ -101,21 +101,20 @@ class MyForecaster(BaseForecaster):
         #   in that case, X/y are passed through without conversion if on the list
         #   if not on the list, converted to the first entry of the same scitype
         #
-        # scitype:y controls whether internal y can be univariate/multivariate
+        # capability:multivariate controls whether inner y can be multivariate
         # if multivariate is not valid, applies vectorization over variables
-        "scitype:y": "univariate",
-        # valid values: "univariate", "multivariate", "both"
-        #   "univariate": inner _fit, _predict, etc, receive only univariate series
-        #   "multivariate": inner methods receive only series with 2 or more variables
-        #   "both": inner methods can see series with any number of variables
+        "capability:multivariate": False,
+        # valid values: True, False
+        #   False: inner _fit, _predict, etc, receive only univariate series
+        #   True: inner methods work with series with any number of variables
         #
         # capability tags: properties of the estimator
         # --------------------------------------------
         #
-        # ignores-exogeneous-X = does estimator ignore the exogeneous X?
-        "ignores-exogeneous-X": False,
-        # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
-        # CAVEAT: if tag is set to True, inner methods always see X=None
+        # capability:exogenous = does estimator use exogeneous X nontrivially?
+        "capability:exogenous": True,
+        # valid values: boolean False (ignores X), True (uses X in non-trivial manner)
+        # CAVEAT: if tag is set to False, inner methods always see X=None
         #
         # requires-fh-in-fit = is forecasting horizon always required in fit?
         "requires-fh-in-fit": True,
@@ -133,7 +132,7 @@ class MyForecaster(BaseForecaster):
         # if not None, raises exception if X.index, y.index level -1 is not of that type
         #
         # handles-missing-data = can estimator handle missing data?
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if y or X passed contain missing data (nans)
         #
@@ -152,6 +151,12 @@ class MyForecaster(BaseForecaster):
         # valid values: boolean True (yes), False (no)
         # only needs to be set if capability:pred_int is True
         # if False, exception raised if proba methods are called with in-sample fh
+        #
+        # capability:pretrain = does forecaster support pretraining on panel data?
+        "capability:pretrain": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, implement _pretrain and optionally _pretrain_update below
+        # enables the pretrain -> fit -> predict workflow for global learning
         #
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages
@@ -194,41 +199,64 @@ class MyForecaster(BaseForecaster):
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
+    def __init__(self, parama, paramb="default", paramc=None):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
 
         # todo: write any hyper-parameters and components to self
-        self.est = est
         self.parama = parama
         self.paramb = paramb
-        self.paramc = paramc
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
-        # for handling defaults etc, write to other attributes, e.g., self._parama
-        # for estimators, initialize a clone, e.g., self.est_ = est.clone()
+        # for handling defaults etc, write to other attributes, e.g., self._paramc
+        self.paramc = paramc
 
         # leave this as is
         super().__init__()
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
+        # do not put anything else in __init__,
+        # use __dynamic_tags__ for dynamic tag setting
+        # use __post_init__ for any further initialization logic
 
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.estimator = MyDefaultEstimator()
+    # todo: add if there is dynamic tag setting logic, otherwise delete this method
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
 
+        This method should be used for setting dynamic tags only.
+        """
         # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
+        #  typically only needed if estimator is a composite
+        #  tags set here apply to the instance, and override the class tags
         #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
+        # example 1: conditional setting of a tag based on parameter foo
+        # if self.foo == 42:
+        #   self.set_tags(**{"capability:missing_values": True})
+        # example 2: cloning tags from component estimator component_estimator
+        #   self.clone_tags(self.component_estimator, ["capability:missing_values"])
+
+    # todo: add any post-init logic here, otherwise delete this method
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        # todo: optional, parameter checking or coercion should happen here
+        # if writes derived values to self, should *not* overwrite self.paramc etc
+        # instead, write to self._paramc, self._newparam (starting with _)
+        # example of handling conditional parameters or mutable defaults:
+        if self.paramc is None:
+            from sktime.somewhere import MyOtherEstimator
+
+            self._paramc = MyOtherEstimator(foo=42)
+        else:
+            # estimators should be cloned to avoid side effects
+            self._paramc = self.paramc.clone()
 
     # todo: implement this, mandatory
     def _fit(self, y, X, fh):
@@ -244,16 +272,17 @@ class MyForecaster(BaseForecaster):
         y : sktime time series object
             guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X :  sktime time series object, optional (default=None)
+        X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series to fit to.
 
@@ -329,13 +358,14 @@ class MyForecaster(BaseForecaster):
         Parameters
         ----------
         y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -349,6 +379,70 @@ class MyForecaster(BaseForecaster):
 
         # implement here
         # IMPORTANT: avoid side effects to X, fh
+
+    # todo: consider implementing this, optional
+    # if not implementing, delete the _pretrain and _pretrain_update methods
+    # requires setting the tag "capability:pretrain" to True
+    # pretrain receives panel or hierarchical data (MultiIndex DataFrame)
+    # and should learn global patterns shared across instances
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain forecaster on panel/global data (first batch).
+
+        private _pretrain containing the core logic, called from pretrain
+
+        Writes to self:
+            Sets pretrained model attributes ending in "_".
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex (guaranteed Panel or Hierarchical)
+            Panel or hierarchical time series data to pretrain on.
+            The last index level is time, all other levels identify instances.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series.
+        fh : ForecastingHorizon or None, optional (default=None)
+            Forecasting horizon.
+
+        Returns
+        -------
+        self : reference to self
+        """
+
+        # implement here
+        # IMPORTANT: avoid side effects to y, X, fh
+        #
+        # any pretrained model parameters should be written to attributes ending in "_"
+        #   these will be automatically tracked by the base class
+        #   and accessible via get_pretrained_params()
+        #
+        # example:
+        #   self.global_mean_ = y.values.mean()
+        #   self.n_pretrain_instances_ = len(y.index.droplevel(-1).unique())
+
+    # todo: consider implementing this, optional
+    # if not implementing, delete this method (default calls _pretrain)
+    def _pretrain_update(self, y, X=None, fh=None):
+        """Update pretrained forecaster with additional panel data.
+
+        private _pretrain_update, called from pretrain when already pretrained.
+        Default implementation calls _pretrain. Override for incremental logic.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex (guaranteed Panel or Hierarchical)
+            Additional panel data to learn from.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series.
+        fh : ForecastingHorizon or None, optional (default=None)
+            Forecasting horizon.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # default: just call _pretrain again
+        # override for incremental/online pretraining
+        return self._pretrain(y=y, X=X, fh=fh)
 
     # todo: consider implementing this, optional
     # if not implementing, delete the _update_predict_single method

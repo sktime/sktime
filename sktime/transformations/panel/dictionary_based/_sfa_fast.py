@@ -28,92 +28,90 @@ class SFAFast(BaseTransformer):
     """Symbolic Fourier Approximation (SFA) Transformer.
 
     Overview: for each series:
-        run a sliding window across the series
-        for each window
-            shorten the series with DFT
-            discretise the shortened series into bins set by MFC
-            form a word from these discrete values
-    by default SFA produces a single word per series (window_size=0)
+    run a sliding window across the series;
+    for each window, shorten the series with DFT;
+    discretise the shortened series into bins set by MFC;
+    form a word from these discrete values,
+    by default SFA produces a single word per series (window_size=0);
     if a window is used, it forms a histogram of counts of words.
 
     Parameters
     ----------
-        word_length:         int, default = 8
-            length of word to shorten window to (using PAA)
+    word_length:         int, default = 8
+        length of word to shorten window to (using PAA)
 
-        alphabet_size:       int, default = 4
-            number of values to discretise each value to
+    alphabet_size:       int, default = 4
+        number of values to discretise each value to
 
-        window_size:         int, default = 12
-            size of window for sliding. Input series
-            length for whole series transform
+    window_size:         int, default = 12
+        size of window for sliding. Input series
+        length for whole series transform
 
-        norm:                boolean, default = False
-            mean normalise words by dropping first fourier coefficient
+    norm:                boolean, default = False
+        mean normalise words by dropping first fourier coefficient
 
-        binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans",
-                              "quantile"},
-                             default="equi-depth"
-            the binning method used to derive the breakpoints.
+    binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans",
+                            "quantile"},
+                            default="equi-depth"
+        the binning method used to derive the breakpoints.
 
-        anova:               boolean, default = False
-            If True, the Fourier coefficient selection is done via a one-way
-            ANOVA test. If False, the first Fourier coefficients are selected.
-            Only applicable if labels are given
+    anova:               boolean, default = False
+        If True, the Fourier coefficient selection is done via a one-way
+        ANOVA test. If False, the first Fourier coefficients are selected.
+        Only applicable if labels are given
 
-        variance:               boolean, default = False
-            If True, the Fourier coefficient selection is done via the largest
-            variance. If False, the first Fourier coefficients are selected.
-            Only applicable if labels are given
+    variance:               boolean, default = False
+        If True, the Fourier coefficient selection is done via the largest
+        variance. If False, the first Fourier coefficients are selected.
+        Only applicable if labels are given
 
-        save_words:          boolean, default = False
-            whether to save the words generated for each series (default False)
+    save_words:          boolean, default = False
+        whether to save the words generated for each series (default False)
 
-        bigrams:             boolean, default = False
-            whether to create bigrams of SFA words
+    bigrams:             boolean, default = False
+        whether to create bigrams of SFA words
 
-        feature_selection: {"chi2", "none", "random"}, default: chi2
-            Sets the feature selections strategy to be used. Chi2 reduces the number
-            of words significantly and is thus much faster (preferred). Random also
-            reduces the number significantly. None applies not feature selectiona and
-            yields large bag of words, e.g. much memory may be needed.
+    feature_selection: {"chi2", "none", "random"}, default: chi2
+        Sets the feature selections strategy to be used. Chi2 reduces the number
+        of words significantly and is thus much faster (preferred). Random also
+        reduces the number significantly. None applies not feature selectiona and
+        yields large bag of words, e.g. much memory may be needed.
 
-        p_threshold:  int, default=0.05 (disabled by default)
-            If feature_selection=chi2 is chosen, feature selection is applied based on
-            the chi-squared test. This is the p-value threshold to use for chi-squared
-            test on bag-of-words (lower means more strict). 1 indicates that the test
-            should not be performed.
+    p_threshold:  int, default=0.05 (disabled by default)
+        If feature_selection=chi2 is chosen, feature selection is applied based on
+        the chi-squared test. This is the p-value threshold to use for chi-squared
+        test on bag-of-words (lower means more strict). 1 indicates that the test
+        should not be performed.
 
-        max_feature_count:  int, default=256
-            If feature_selection=random is chosen, this parameter defines the number of
-            randomly chosen unique words used.
+    max_feature_count:  int, default=256
+        If feature_selection=random is chosen, this parameter defines the number of
+        randomly chosen unique words used.
 
-        skip_grams:     boolean, default = False
-            whether to create skip-grams of SFA words
+    skip_grams:     boolean, default = False
+        whether to create skip-grams of SFA words
 
-        remove_repeat_words: boolean, default = False
-            whether to use numerosity reduction (default False)
+    remove_repeat_words: boolean, default = False
+        whether to use numerosity reduction (default False)
 
-        return_sparse:  boolean, default=True
-            if set to true, a scipy sparse matrix will be returned as BOP model.
-            If set to false a dense array will be returned as BOP model. Sparse
-            arrays are much more compact.
+    return_sparse:  boolean, default=True
+        if set to true, a scipy sparse matrix will be returned as BOP model.
+        If set to false a dense array will be returned as BOP model. Sparse
+        arrays are much more compact.
 
-        n_jobs:     int, optional, default = 1
-            The number of jobs to run in parallel for both `transform`.
-            ``-1`` means using all processors.
+    n_jobs:     int, optional, default = 1
+        The number of jobs to run in parallel for both `transform`.
+        ``-1`` means using all processors.
 
-        return_pandas_data_series:          boolean, default = False
-            set to true to return Pandas Series as a result of transform.
-            setting to true reduces speed significantly but is required for
-            automatic test.
+    return_pandas_data_series:          boolean, default = False
+        set to true to return Pandas Series as a result of transform.
+        setting to true reduces speed significantly but is required for
+        automatic test.
 
     Attributes
     ----------
     breakpoints: = []
     num_insts = 0
     num_atts = 0
-
 
     References
     ----------
@@ -124,7 +122,7 @@ class SFAFast(BaseTransformer):
 
     _tags = {
         "authors": ["patrickzib"],
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -134,6 +132,16 @@ class SFAFast(BaseTransformer):
         "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
         "requires_y": True,  # does y need to be passed in fit?
         "python_dependencies": ["numba", "scipy"],
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": [
+            # SFAFast transformer requires nested dataframe for X.
+            "test_categorical_X_raises_error",
+            "test_categorical_y_raises_error",
+            "test_categorical_X_passes",
+        ],
     }
 
     def __init__(
@@ -158,65 +166,66 @@ class SFAFast(BaseTransformer):
         return_pandas_data_series=False,
         n_jobs=1,
     ):
-        self.words = []
-        self.breakpoints = []
-
-        # we cannot select more than window_size many letters in a word
         self.word_length = word_length
-
         self.alphabet_size = alphabet_size
         self.window_size = window_size
-
         self.norm = norm
         self.lower_bounding = lower_bounding
-        self.inverse_sqrt_win_size = (
-            1.0 / math.sqrt(window_size) if not lower_bounding else 1.0
-        )
-
         self.remove_repeat_words = remove_repeat_words
-
         self.save_words = save_words
-
         self.binning_method = binning_method
         self.anova = anova
         self.variance = variance
-
         self.bigrams = bigrams
         self.skip_grams = skip_grams
         self.n_jobs = n_jobs
+        self.feature_selection = feature_selection
+        self.max_feature_count = max_feature_count
+        self.p_threshold = p_threshold
+        self.return_sparse = return_sparse
+        self.return_pandas_data_series = return_pandas_data_series
+        self.random_state = random_state
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self.words = []
+        self.breakpoints = []
+
+        window_size = self.window_size
+        lower_bounding = self.lower_bounding
+
+        self.inverse_sqrt_win_size = (
+            1.0 / math.sqrt(window_size) if not lower_bounding else 1.0
+        )
 
         self.n_instances = 0
         self.series_length = 0
         self.letter_bits = 0
 
         # Feature selection part
-        self.feature_selection = feature_selection
-        self.max_feature_count = max_feature_count
         self.feature_count = 0
         self.relevant_features = None
-
-        # feature selection is applied based on the chi-squared test.
-        self.p_threshold = p_threshold
-
-        self.return_sparse = return_sparse
-        self.return_pandas_data_series = return_pandas_data_series
-
-        self.random_state = random_state
 
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
             n_jobs = multiprocessing.cpu_count()
         else:
             n_jobs = self.n_jobs
 
-        super().__init__()
-        # super raises numba import exception if not available
-        # so now we know we can use numba
-
         from numba import set_num_threads
 
         set_num_threads(n_jobs)
 
-        if not return_pandas_data_series:
+        if not self.return_pandas_data_series:
             self.set_config(**{"output_conversion": "off"})
 
     def fit_transform(self, X, y=None):

@@ -32,6 +32,7 @@ import numpy as np
 
 from sktime.base import BaseEstimator
 from sktime.classification import BaseClassifier
+from sktime.utils.dependencies import _check_estimator_deps
 
 
 class BaseEarlyClassifier(BaseEstimator):
@@ -70,6 +71,7 @@ class BaseEarlyClassifier(BaseEstimator):
         "has_nans",
         "is_univariate",
         "is_equal_length",
+        "feature_kind",
     ]
 
     # attribute name where vectorized estimators are stored
@@ -85,7 +87,6 @@ class BaseEarlyClassifier(BaseEstimator):
         self.n_classes_ = 0
         self.fit_time_ = 0
         self._class_dictionary = {}
-        self._threads_to_use = 1
         """An array containing the state info for each decision in X from update and
         predict methods.
 
@@ -101,6 +102,7 @@ class BaseEarlyClassifier(BaseEstimator):
         self._converter_store_y = {}
 
         super().__init__()
+        _check_estimator_deps(self, severity="warning")
 
     def fit(self, X, y):
         """Fit time series classifier to training data.

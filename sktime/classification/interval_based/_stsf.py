@@ -10,7 +10,6 @@ __all__ = ["SupervisedTimeSeriesForest"]
 import math
 
 import numpy as np
-from joblib import Parallel, delayed
 from scipy import signal, stats
 from sklearn.base import clone
 from sklearn.preprocessing import StandardScaler
@@ -89,10 +88,13 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         # packaging info
         # --------------
         "authors": "MatthewMiddlehurst",
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "interval",
     }
 
@@ -117,6 +119,10 @@ class SupervisedTimeSeriesForest(BaseClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
@@ -136,6 +142,8 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         -------
         self : object
         """
+        from joblib import Parallel, delayed
+
         X = X.squeeze(1)
 
         self.n_instances_, self.series_length_ = X.shape
@@ -213,6 +221,8 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         output : np.ndarray of shape = (n_instances, n_classes)
             Predicted probabilities
         """
+        from joblib import Parallel, delayed
+
         X = X.squeeze(1)
 
         _, X_p = signal.periodogram(X)

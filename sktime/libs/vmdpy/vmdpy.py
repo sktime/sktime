@@ -1,8 +1,10 @@
 """Python implementation of the Variational Mode Decomposition method."""
 
+import math
+
 import numpy as np
 
-__author__ = ["vrcarva"]
+__author__ = ["vrcarva", "LorchZachery", "danferns"]
 
 
 def VMD(f, alpha, tau, K, DC, init, tol):
@@ -48,15 +50,14 @@ def VMD(f, alpha, tau, K, DC, init, tol):
         IEEE Transactions on Signal Processing, vol. 62, no. 3, pp. 531-544, Feb.1,
         2014, doi: 10.1109/TSP.2013.2288675.
     """  # noqa: E501
-    if len(f) % 2:
-        f = f[:-1]
-
+    f = np.array(f)
     # Period and sampling frequency of input signal
     fs = 1.0 / len(f)
 
-    ltemp = len(f) // 2
-    fMirr = np.append(np.flip(f[:ltemp], axis=0), f)
-    fMirr = np.append(fMirr, np.flip(f[-ltemp:], axis=0))
+    T = len(f)
+    fMirr = np.array(np.flip(f[0 : math.ceil(T / 2)]))
+    fMirr = np.append(fMirr, f)
+    fMirr = np.append(fMirr, np.flip(f[math.ceil(T / 2) :]))
 
     # Time Domain 0 to T (of mirrored signal)
     T = len(fMirr)

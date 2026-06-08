@@ -8,7 +8,6 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def _check_fh(fh, cutoff):
@@ -110,12 +109,20 @@ class HCrystalBallAdapter(BaseForecaster):
         # --------------
         "authors": "MichalChromcak",
         "maintainers": "MichalChromcak",
-        "python_dependencies": "hcrystalball",
+        "python_dependencies": ["hcrystalball", "setuptools<82"],
+        "tests:python_dependencies": ["statsmodels"],
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
+        "capability:unequal_length": False,
+        # test and CI flags
+        # -----------------
+        # "tests:vm": True,  # skip all tests temporarily, issue tracked in #10083
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
+        # "tests:skip_by_name": ["test_get_test_params_coverage"],
+        # old package with secondary dependencies
     }
 
     def __init__(self, model):
@@ -177,12 +184,11 @@ class HCrystalBallAdapter(BaseForecaster):
         -------
         params : dict or list of dict
         """
-        if _check_soft_dependencies("hcrystalball", severity="none"):
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies(["hcrystalball", "statsmodels"], severity="none"):
             from hcrystalball.wrappers import HoltSmoothingWrapper
 
-            params = {"model": HoltSmoothingWrapper()}
+            return {"model": HoltSmoothingWrapper()}
 
-        else:
-            params = {"model": 42}
-
-        return params
+        return {"model": 42}

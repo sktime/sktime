@@ -16,14 +16,20 @@ class _ProphetAdapter(BaseForecaster):
     """Base class for interfacing prophet and neuralprophet."""
 
     _tags = {
-        "authors": ["mloning", "aiwalter", "fkiraly"],
-        "ignores-exogeneous-X": False,
+        "authors": ["bletham", "tcuongd", "mloning", "aiwalter", "fkiraly"],
+        # bletham and tcuongd for prophet/fbprophet
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
-        "python_dependencies": ["prophet", "numpy<2.0"],
+        "python_dependencies": "prophet",
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._fbprophet"],
     }
 
     def _convert_int_to_date(self, y):
@@ -62,7 +68,7 @@ class _ProphetAdapter(BaseForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -87,13 +93,22 @@ class _ProphetAdapter(BaseForecaster):
         df.index.name = "ds"
         df = df.reset_index()
 
-        # Add seasonality/seasonalities
+        # Add seasonality/seasonalities and collect condition names
+        condition_names = []
         if self.add_seasonality:
             if isinstance(self.add_seasonality, dict):
                 self._forecaster.add_seasonality(**self.add_seasonality)
+                if (
+                    condition_name := self.add_seasonality.get("condition_name", None)
+                ) is not None:
+                    condition_names.append(condition_name)
             elif isinstance(self.add_seasonality, list):
                 for seasonality in self.add_seasonality:
                     self._forecaster.add_seasonality(**seasonality)
+                    if (
+                        condition_name := seasonality.get("condition_name", None)
+                    ) is not None:
+                        condition_names.append(condition_name)
 
         # Add country holidays
         if self.add_country_holidays:
@@ -103,7 +118,8 @@ class _ProphetAdapter(BaseForecaster):
         if X is not None:
             X = X.copy()
             df, X = _merge_X(df, X)
-            for col in X.columns:
+            regressor_names = (col for col in X.columns if col not in condition_names)
+            for col in regressor_names:
                 self._forecaster.add_regressor(col)
 
         # Add floor and bottom when growth is logistic
@@ -163,7 +179,7 @@ class _ProphetAdapter(BaseForecaster):
         Parameters
         ----------
         fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
         X : pd.DataFrame, optional
@@ -203,7 +219,7 @@ class _ProphetAdapter(BaseForecaster):
         y_pred.reset_index(inplace=True)
         y_pred.index = y_pred["ds"].values
         y_pred.drop("ds", axis=1, inplace=True)
-        y_pred.columns = self._y.columns
+        y_pred.columns = self._get_varnames()
 
         if self.y_index_was_int_ or self.y_index_was_period_:
             y_pred.index = self.fh.to_absolute_index(cutoff=self.cutoff)
@@ -299,7 +315,7 @@ class _ProphetAdapter(BaseForecaster):
         """
         fitted_params = {}
         for name in ["k", "m", "sigma_obs"]:
-            fitted_params[name] = self._forecaster.params[name][0][0]
+            fitted_params[name] = self._forecaster.params[name].flatten()[0]
         for name in ["delta", "beta"]:
             fitted_params[name] = self._forecaster.params[name][0]
         return fitted_params

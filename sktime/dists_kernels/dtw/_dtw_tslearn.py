@@ -60,6 +60,9 @@ class DtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         # --------------
         "symmetric": True,
         "pwtrafo_type": "distance",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -133,9 +136,15 @@ class SoftDtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["rtavenar", "yanncabanes", "fkiraly"],
+        # rtavenar, yanncabanes credit for interfaced code
+        "python_dependencies": "tslearn>=0.6.2",
+        # estimator type
+        # --------------
         "symmetric": True,
         "pwtrafo_type": "distance",
-        "python_dependencies": "tslearn>=0.6.2",
     }
 
     _inner_params = ["gamma"]

@@ -20,7 +20,7 @@ from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
 
-# TODO: fix this in 0.32.0
+# TODO: fix this in 0.41.0
 # base class should have been changed to BaseEarlyClassifier
 class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     """Probability Threshold Early Classifier.
@@ -84,6 +84,8 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -107,6 +109,10 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         self._classification_points = []
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         m = getattr(self.estimator, "predict_proba", None)
@@ -302,9 +308,9 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         """
         from sktime.classification.dummy import DummyClassifier
         from sktime.classification.feature_based import Catch22Classifier
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from sktime.utils.dependencies import _check_estimator_deps
 
-        if _check_soft_dependencies("numba", severity="none"):
+        if _check_estimator_deps(Catch22Classifier, severity="none"):
             est = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=2))
         else:
             est = DummyClassifier()

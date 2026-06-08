@@ -99,6 +99,8 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             "nested_univ",
             "numpy3D",
         ],
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
@@ -257,17 +259,17 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
+        from sktime.classification.distance_based import (
+            KNeighborsTimeSeriesClassifier,
+        )
         from sktime.classification.dummy import DummyClassifier
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from sktime.classification.kernel_based import RocketClassifier
+        from sktime.utils.dependencies import _check_estimator_deps
 
         params0 = {"classifiers": [DummyClassifier()]}
 
-        if _check_soft_dependencies("numba", severity="none"):
-            from sktime.classification.distance_based import (
-                KNeighborsTimeSeriesClassifier,
-            )
-            from sktime.classification.kernel_based import RocketClassifier
-
+        ests = [KNeighborsTimeSeriesClassifier, RocketClassifier]
+        if _check_estimator_deps(ests, severity="none"):
             params1 = {
                 "classifiers": [
                     KNeighborsTimeSeriesClassifier.create_test_instance(),

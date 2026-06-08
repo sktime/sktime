@@ -2,17 +2,16 @@
 
 __author__ = ["chrisholder", "TonyBagnall"]
 from collections.abc import Callable
-from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
 
 from sktime.clustering.metrics.medoids import medoids
-from sktime.clustering.partitioning import TimeSeriesLloyds
+from sktime.clustering.partitioning import BaseTimeSeriesLloyds
 from sktime.distances import pairwise_distance
 
 
-class TimeSeriesKMedoids(TimeSeriesLloyds):
+class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
     """Time series K-medoids implementation.
 
     Parameters
@@ -82,18 +81,28 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         # --------------
         "authors": ["chrisholder", "TonyBagnall"],
         "python_dependencies": "numba",
+        # estimator type
+        # --------------
+        "capability:out_of_sample": True,
+        "capability:predict": True,
+        "capability:predict_proba": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Union[str, Callable] = "random",
-        metric: Union[str, Callable] = "dtw",
+        init_algorithm: str | Callable = "random",
+        metric: str | Callable = "dtw",
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-6,
         verbose: bool = False,
-        random_state: Union[int, RandomState] = None,
+        random_state: int | RandomState = None,
         distance_params: dict = None,
     ):
         self._precomputed_pairwise = None

@@ -6,11 +6,9 @@ Interval based TSF classifier, extracts basic summary features from random inter
 __author__ = ["kkoziara", "luiszugasti", "kanand77"]
 __all__ = ["TimeSeriesForestClassifier"]
 
-from typing import Optional
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 
@@ -109,17 +107,20 @@ class TimeSeriesForestClassifier(
         # --------------
         "authors": ["kkoziara", "luiszugasti", "kanand77"],
         "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "capability:feature_importance": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
         self,
         min_interval=3,
         n_estimators=200,
-        inner_series_length: Optional[int] = None,
+        inner_series_length: int | None = None,
         n_jobs=1,
         random_state=None,
     ):
@@ -192,6 +193,8 @@ class TimeSeriesForestClassifier(
         output : np.ndarray of shape = (n_instances, n_classes)
             Predicted probabilities
         """
+        from joblib import Parallel, delayed
+
         X = X.squeeze(1)
         y_probas = Parallel(n_jobs=self.n_jobs)(
             delayed(_predict_single_classifier_proba)(
@@ -236,7 +239,12 @@ class TimeSeriesForestClassifier(
         if parameter_set == "results_comparison":
             return {"n_estimators": 10}
         else:
-            return {"n_estimators": 2}
+            param1 = {"n_estimators": 2, "min_interval": 5}
+            param2 = {
+                "n_estimators": 5,
+                "min_interval": 4,
+            }
+            return [param1, param2]
 
     def _extract_feature_importance_by_feature_type_per_tree(
         self, tree_feature_importance: np.array, feature_type: str

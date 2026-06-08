@@ -12,6 +12,7 @@ __author__ = ["mloning", "fkiraly"]
 import pkgutil
 import re
 from importlib import import_module
+from unittest.mock import patch
 
 import pytest
 
@@ -25,7 +26,7 @@ from sktime.utils.dependencies import _check_python_version, _check_soft_depende
 # excludes estimators, only for soft dependencies used in non-estimator modules
 SOFT_DEPENDENCIES = {
     "sktime.benchmarking.evaluation": ["matplotlib"],
-    "sktime.benchmarking.experiments": ["tsfresh", "esig"],
+    "sktime.benchmarking.experiments": ["tsfresh"],
     "sktime.classification.deep_learning": ["tensorflow"],
     "sktime.regression.deep_learning": ["tensorflow"],
     "sktime.networks": ["tensorflow"],
@@ -83,15 +84,16 @@ def is_soft_dep_missing_message(msg):
     missing_version_msg = "to be present in the python environment, with version"
     cond1 = missing_version_msg in msg
     # message if dependency is missing entirely
-    missing_dep_entirely_msg = (
-        "is a soft dependency and not included in the base sktime installation"
-    )
+    missing_dep_entirely_msg = "requires package"
     cond2 = missing_dep_entirely_msg in msg
     # special message for deep learning dependencies
     error_msg_dl = "required for deep learning"
     cond3 = error_msg_dl in msg
+    # message if environment marker not satisfied
+    error_msg_marker = "packaging marker"
+    cond4 = error_msg_marker in msg
 
-    return cond1 or cond2 or cond3
+    return cond1 or cond2 or cond3 or cond4
 
 
 @pytest.mark.parametrize("module", modules)
@@ -144,9 +146,8 @@ def _coerce_list_of_str(obj):
 
 
 def _get_soft_deps(est):
-    """Return soft dependencies of an estimator, as list of str and its alias."""
+    """Return soft dependencies of an estimator, as list of str."""
     softdeps = est.get_class_tag("python_dependencies", None)
-    softdeps_aliases = est.get_class_tag("python_dependencies_aliases", None)
     softdeps = _coerce_list_of_str(softdeps)
     if softdeps is None:
         raise RuntimeError(
@@ -154,14 +155,14 @@ def _get_soft_deps(est):
             f" but {est.__name__} has {softdeps}"
         )
     else:
-        return softdeps, softdeps_aliases
+        return softdeps
 
 
-def _is_in_env(modules, module_aliases):
+def _is_in_env(modules):
     """Return whether all modules in list of str modules are installed in env."""
     modules = _coerce_list_of_str(modules)
     try:
-        _check_soft_dependencies(modules, package_import_alias=module_aliases)
+        _check_soft_dependencies(modules)
         return True
     except ModuleNotFoundError:
         return False
@@ -198,49 +199,72 @@ est_pyok_without_soft_dep = [est for est in est_without_soft_dep if _python_comp
 @pytest.mark.parametrize("estimator", est_python_incompatible)
 def test_python_error(estimator):
     """Test that estimators raise error if python version is wrong."""
-    try:
-        estimator.create_test_instance()
-    except ModuleNotFoundError as e:
-        error_msg = str(e)
+    import warnings
 
-        # Check if appropriate exception with useful error message is raised as
-        # defined in the `_check_python` function
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+
+        # Should NOT raise anymore
+        estimator.create_test_instance()
+
+        # Ensure a warning was raised
+        if not w:
+            pyspec = estimator.get_class_tag("python_version", None)
+            raise RuntimeError(
+                f"Estimator {estimator.__name__} has python version bound "
+                f"{pyspec} according to tags, but does not raise a warning for "
+                f"incompatible python environments."
+            )
+
+        # Check warning message content
         expected_error_msg = "requires python version to be"
-        if expected_error_msg not in error_msg:
+        messages = [str(warning.message) for warning in w]
+        if not any(expected_error_msg in msg for msg in messages):
             pyspec = estimator.get_class_tag("python_version", None)
             raise RuntimeError(
                 f"Estimator {estimator.__name__} has python version bound "
                 f"{pyspec} according to tags, but does not raise an appropriate "
-                f"error message on __init__ for incompatible python environments. "
+                f"warning message for incompatible python environments. "
                 f"Likely reason is that __init__ does not call super().__init__."
-            ) from e
+            )
 
 
 @pytest.mark.parametrize("estimator", est_pyok_with_soft_dep)
 def test_softdep_error(estimator):
     """Test that estimators raise error if required soft dependencies are missing."""
-    softdeps, softdeps_alias = _get_soft_deps(estimator)
-    if not _is_in_env(softdeps, softdeps_alias):
-        try:
-            estimator.create_test_instance()
-        except ModuleNotFoundError as e:
-            error_msg = str(e)
+    import warnings
 
-            if not is_soft_dep_missing_message(error_msg):
+    softdeps = _get_soft_deps(estimator)
+    if not _is_in_env(softdeps):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+
+            # This should NOT raise anymore
+            estimator.create_test_instance()
+
+            # Check that at least one warning was raised
+            if not w:
+                raise RuntimeError(
+                    f"Estimator {estimator.__name__} has soft dependency requirements "
+                    f"{softdeps} according to tags, but does not raise a warning when "
+                    f"those requirements are unmet."
+                )
+
+            # Optionally validate warning message content
+            messages = [str(warning.message) for warning in w]
+            if not any(is_soft_dep_missing_message(msg) for msg in messages):
                 raise RuntimeError(
                     f"Estimator {estimator.__name__} has soft dependency requirements, "
                     f"{softdeps} according to tags, but does not raise an appropriate "
-                    f"error message on __init__, when those requirements are unmet. "
-                    f"Likely reason is that __init__ does not call super().__init__,"
-                    f" or imports super().__init__ only after an attempted import."
-                ) from e
+                    f"warning message when those requirements are unmet."
+                )
 
 
 @pytest.mark.parametrize("estimator", est_pyok_with_soft_dep)
 def test_est_construct_if_softdep_available(estimator):
     """Test that estimators construct if required soft dependencies are there."""
-    softdeps, softdeps_alias = _get_soft_deps(estimator)
-    if _is_in_env(softdeps, softdeps_alias):
+    softdeps = _get_soft_deps(estimator)
+    if _is_in_env(softdeps):
         try:
             estimator.create_test_instance()
         except ModuleNotFoundError as e:
@@ -323,3 +347,53 @@ def test_est_fit_without_modulenotfound(estimator):
             f'to the "python_dependencies" tag, and python version bounds should be'
             f' added to the "python_version" tag. Exception text: {error_msg}'
         ) from e
+
+
+@patch("skbase.utils.dependencies._dependencies.sys")
+@pytest.mark.parametrize(
+    "mock_release_version, prereleases, expect_exception",
+    [
+        (True, True, False),
+        (True, False, True),
+        (False, False, False),
+        (False, True, False),
+    ],
+)
+def test_check_python_version(
+    mock_sys, mock_release_version, prereleases, expect_exception
+):
+    from sktime.base import BaseObject
+
+    if mock_release_version:
+        mock_sys.version = "3.8.1rc"
+    else:
+        mock_sys.version = "3.8.1"
+
+    class DummyObjectClass(BaseObject):
+        _tags = {
+            "python_version": ">=3.7.1",  # PEP 440 version specifier, e.g., ">=3.7"
+            "python_dependencies": None,  # PEP 440 dependency strs, e.g., "pandas>=1.0"
+            "env_marker": None,  # PEP 508 environment marker, e.g., "os_name=='posix'"
+        }
+        """Define dummy class to test set_tags."""
+
+    dummy_object_instance = DummyObjectClass()
+
+    try:
+        _check_python_version(dummy_object_instance, prereleases=prereleases)
+    except ModuleNotFoundError as exception:
+        expected_msg = (
+            f"{type(dummy_object_instance).__name__} requires python version "
+            f"to be {dummy_object_instance.get_tag('python_version')}, "
+            f"but system python version is {mock_sys.version}. "
+            "This is due to the release candidate status of your system Python."
+        )
+
+        if not expect_exception or exception.msg != expected_msg:
+            # Throw Error since exception is not expected or has not the correct message
+            raise AssertionError(
+                "ModuleNotFoundError should be NOT raised by:",
+                f"\n\t - mock_release_version: {mock_release_version},",
+                f"\n\t - prereleases: {prereleases},",
+                f"\nERROR MESSAGE: {exception.msg}",
+            ) from exception

@@ -17,13 +17,20 @@ class _TbatsAdapter(BaseForecaster):
     """Base class for interfacing tbats forecasting algorithms."""
 
     _tags = {
-        "authors": ["mloning", "aiwalter", "k1m190r", "fkiraly"],
-        "ignores-exogeneous-X": True,
+        "authors": ["cotterpl", "mloning", "aiwalter", "k1m190r", "fkiraly"],
+        # cotterpl for tbats package
+        "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
-        "python_dependencies": "tbats",
+        "capability:missing_values": False,
+        # todo 0.41.0: check whether numpy and scipy bounds are still needed
+        "python_dependencies": ["tbats", "numpy<2", "scipy<1.16"],
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._tbats"],
     }
 
     def __init__(
@@ -88,7 +95,7 @@ class _TbatsAdapter(BaseForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables (ignored)
 

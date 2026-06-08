@@ -37,11 +37,11 @@ class SAX(BaseTransformer):
     .. [1] Keogh, E., Chakrabarti, K., Pazzani, M., and Mehrotra, S.
         Dimensionality Reduction for Fast Similarity Search
         in Large Time Series Databases.
-        Knowledge and Information Systems 3, 263–286 (2001).
+        Knowledge and Information Systems 3, 263-286 (2001).
         https://doi.org/10.1007/PL00011669
     .. [2] Lin, J., Keogh, E., Wei, L., and Lonardi, S.
         Experiencing SAX: A Novel Symbolic Representation of Time Series.
-        Data Mining and Knowledge Discovery 15, 107–144 (2007).
+        Data Mining and Knowledge Discovery 15, 107-144 (2007).
         https://doi.org/10.1007/s10618-007-0064-z
 
     Examples
@@ -66,11 +66,11 @@ class SAX(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "np.ndarray",
         "y_inner_mtype": "None",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "requires_y": False,
         "fit_is_empty": True,
         "capability:inverse_transform": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
     }
 
     def __init__(self, word_size=8, alphabet_size=5, frame_size=0):
@@ -128,7 +128,10 @@ class SAX(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = {"word_size": 4, "alphabet_size": 5}
+        params = [
+            {"word_size": 4, "alphabet_size": 5},
+            {"word_size": 8, "alphabet_size": 6, "frame_size": 2},
+        ]
         return params
 
     def _check_params(self):

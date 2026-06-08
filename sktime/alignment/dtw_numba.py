@@ -14,7 +14,7 @@ class AlignerDtwNumba(BaseAligner):
     Interface to simple dynamic time warping (DTW) alignment,
     and the following weighted/derivative versions:
 
-    * WDTW - weighted dynamic tyme warping - ``weighted=True, derivative=False`
+    * WDTW - weighted dynamic time warping - ``weighted=True, derivative=False`
     * DDTW - derivative dynamic time warping - ``weighted=False, derivative=True``
     * WDDTW - weighted derivative dynamic time
       warping - ``weighted=True, derivative=True``
@@ -128,6 +128,9 @@ class AlignerDtwNumba(BaseAligner):
         "capability:distance-matrix": True,  # does compute/return distance matrix?
         "capability:unequal_length": False,  # can align sequences of unequal length?
         "X_inner_mtype": "numpy3D",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

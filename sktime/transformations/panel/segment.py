@@ -17,13 +17,17 @@ class IntervalSegmenter(BaseTransformer):
 
     Parameters
     ----------
-    intervals : int, np.ndarray or list of np.ndarrays with one for each
-    column of input data.
-        Intervals to generate.
+    intervals : int, np.ndarray or list of np.ndarrays
+        Number or positions of intervals to generate.
+
         - If int, intervals gives the number of generated intervals.
         - If ndarray, 2d np.ndarray [n_intervals, 2] with rows giving
-        intervals, the first column giving start points,
-        and the second column giving end points of intervals
+          intervals, the first column giving start points,
+          and the second column giving end points of intervals
+        - If list of ndarrays, applied to each column of X, where
+          each entry in the list is a 2d np.ndarray
+          [n_intervals, 2] with rows giving intervals, the first column giving
+          start points, and the second column giving end points of intervals.
 
     Examples
     --------
@@ -37,7 +41,7 @@ class IntervalSegmenter(BaseTransformer):
 
     _tags = {
         "authors": "mloning",
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -196,7 +200,7 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         # which mtype do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",
         # which mtypes do _fit/_predict support for y?
-        "univariate-only": True,
+        "capability:multivariate": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -204,6 +208,7 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "capability:unequal_length:removes": True,
+        "tests:skip_all": True,
         # is transform result always guaranteed to be equal length (and series)?
     }
 
@@ -264,8 +269,7 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
 
         # Compute random intervals for each column.
         # TODO if multiple columns are passed, introduce option to compute
-        #  one set of shared intervals,
-        #  or rely on ColumnTransformer?
+        #  one set of shared intervals
         if self.n_intervals == "random":
             if self.min_length is not None or self.max_length is not None:
                 raise ValueError(
@@ -412,7 +416,7 @@ class SlidingWindowSegmenter(BaseTransformer):
     """
 
     _tags = {
-        "univariate-only": True,
+        "capability:multivariate": False,
         "fit_is_empty": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -516,7 +520,7 @@ def _get_n_from_n_timepoints(n_timepoints, n="sqrt"):
     # check input: n_timepoints
     if not np.issubdtype(type(n_timepoints), np.dtype(int).type):
         raise ValueError(
-            f"`n_timepoints` must be an integer, but found: " f"{type(n_timepoints)}"
+            f"`n_timepoints` must be an integer, but found: {type(n_timepoints)}"
         )
     if not n_timepoints >= 1:
         raise ValueError(f"`n_timepoints` must be >= 1, but found: {n_timepoints}")

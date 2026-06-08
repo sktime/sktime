@@ -89,7 +89,7 @@ convert_dict.update(convert_dict_Proba)
 def convert(
     obj,
     from_type: str,
-    to_type: str,
+    to_type: str | list[str],
     as_scitype: str = None,
     store=None,
     store_behaviour: str = None,
@@ -141,6 +141,10 @@ def convert(
     )
 
     # input type checks
+    if not (
+        isinstance(to_type, list) and all(isinstance(item, str) for item in to_type)
+    ) and not isinstance(to_type, str):
+        raise TypeError("to_type must be a str or list of str")
     if not isinstance(from_type, str):
         raise TypeError("from_type must be a str")
     if as_scitype is None:
@@ -190,8 +194,8 @@ def convert(
 # conversion based on queryable type to specified target
 def convert_to(
     obj,
-    to_type: str,
-    as_scitype: str = None,
+    to_type: str | list[str],
+    as_scitype: str | list[str] = None,
     store=None,
     store_behaviour: str = None,
     return_to_mtype: bool = False,

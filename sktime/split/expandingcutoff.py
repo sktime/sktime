@@ -8,7 +8,6 @@ __all__ = [
     "ExpandingCutoffSplitter",
 ]
 
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -54,13 +53,19 @@ class ExpandingCutoffSplitter(BaseSplitter):
     functions as an iloc indexer. When an int index is paired with a positive int
     cutoff, the cutoff serves as a loc indexer. If the int cutoff is negative, it
     functions as an iloc indexer.
+
+    For example for ``cutoff = 10``, ``step_length = 1`` and ``fh = [1, 2, 3, 4, 5, 6]``
+    here is a representation of the folds:
+
+    ```
                           c
-                          |
     |---------------------|----fh----|------|
     | * * * * * * * * * * x x x x x x - - - |
     | * * * * * * * * * * * x x x x x x - - |
     | * * * * * * * * * * * * x x x x x x - |
     | * * * * * * * * * * * * * x x x x x x |
+
+    ```
 
     ``c`` = cutoff date or index.
 
@@ -119,10 +124,9 @@ class ExpandingCutoffSplitter(BaseSplitter):
         """
         if fh is None:
             fh = self._fh
-        offset = fh.to_numpy().max() + 1
         for cutoff in self.get_cutoffs(y):
             train_window = np.arange(0, cutoff + 1, step=1)
-            test_window = np.arange(cutoff + 1, cutoff + offset, step=1)
+            test_window = cutoff + fh
             yield train_window, test_window
 
     def _validate_y(self, y):
@@ -160,7 +164,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
                 )
         return index
 
-    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
+    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Parameters
@@ -183,7 +187,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
         cutoff_index = self._get_first_cutoff_index(y)
         cutoffs = np.array([cutoff_index])
         offset = fh.to_numpy().max()
-        while cutoff_index + offset < len(y) - 1:
+        while cutoff_index + offset + step_length < len(y):
             cutoff_index += step_length
             cutoffs = np.append(cutoffs, cutoff_index)
         return cutoffs

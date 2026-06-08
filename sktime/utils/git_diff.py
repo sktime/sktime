@@ -59,15 +59,21 @@ def is_module_changed(module_str):
 
     If a child module has changed, the parent module is considered changed as well.
 
+    If the module cannot be found, it is considered changed.
+
     Parameters
     ----------
     module_str : str
         module string, e.g., sktime.forecasting.naive
     """
-    module_file_path = get_path_from_module(module_str)
-    cmd = f"git diff remotes/origin/main -- {module_file_path}"
     try:
-        output = subprocess.check_output(cmd, shell=True, text=True)
+        module_file_path = get_path_from_module(module_str)
+    except ImportError:
+        # if the file cannot be found, we consider it changed
+        return True
+    cmd = ["git", "diff", "remotes/origin/main", "--", module_file_path]
+    try:
+        output = subprocess.check_output(cmd, shell=False, text=True, encoding="utf-8")  # noqa: S603
         return bool(output)
     except subprocess.CalledProcessError:
         return True
@@ -107,11 +113,11 @@ def get_changed_lines(file_path, only_indented=True):
     -------
     list of str : changed or added lines on current branch
     """
-    cmd = f"git diff remotes/origin/main -- {file_path}"
+    cmd = ["git", "diff", "remotes/origin/main", "--", file_path]
 
     try:
         # Run 'git diff' command to get the changes in the specified file
-        result = subprocess.check_output(cmd, shell=True, text=True)
+        result = subprocess.check_output(cmd, shell=False, text=True)  # noqa: S603
 
         # if only indented lines are requested, add space to start_chars
         start_chars = "+"
@@ -152,7 +158,7 @@ def _get_packages_with_changed_specs():
     -------
     tuple of str : names of packages with changed or added specs
     """
-    from packaging.requirements import Requirement
+    from packaging.requirements import InvalidRequirement, Requirement
 
     changed_lines = get_changed_lines("pyproject.toml")
 
@@ -175,8 +181,12 @@ def _get_packages_with_changed_specs():
         if ";" in req:
             req = req.split(";")[0]
 
-        pkg = Requirement(req).name
-        packages.append(pkg)
+        try:  # deal with lines that are not package requirement strings
+            pkg = Requirement(req).name
+        except InvalidRequirement:
+            continue
+        else:
+            packages.append(pkg)
 
     # make unique
     packages = tuple(set(packages))

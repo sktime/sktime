@@ -17,10 +17,11 @@ mean_transformer = TabularToSeriesAdaptor(
     FunctionTransformer(func=np.mean, validate=False)
 )
 std_transformer = TabularToSeriesAdaptor(
-    FunctionTransformer(func=np.mean, validate=False)
+    FunctionTransformer(func=np.std, validate=False)
 )
 
 
+@pytest.mark.xfail(reason="due to changes in sklearn pipelines, use sktime instead")
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.transformations"]),
     reason="test only if anything in sktime.transformations module has changed",

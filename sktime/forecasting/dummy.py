@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Dummy forecasters."""
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "RobKuebler"]
 
 import pandas as pd
 
@@ -43,6 +43,7 @@ class ForecastKnownValues(BaseForecaster):
 
     Examples
     --------
+    >>> import pandas as pd
     >>> y_known = pd.DataFrame(range(100))
     >>> y_train = y_known[:24]
     >>>
@@ -60,14 +61,17 @@ class ForecastKnownValues(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["fkiraly"],
+        "authors": ["fkiraly", "RobKuebler"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "scitype:y": "both",
-        "ignores-exogeneous-X": True,
+        "capability:multivariate": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, y_known, method=None, fill_value=None, limit=None):
@@ -101,15 +105,17 @@ class ForecastKnownValues(BaseForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
@@ -138,7 +144,7 @@ class ForecastKnownValues(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
@@ -154,16 +160,21 @@ class ForecastKnownValues(BaseForecaster):
         fh_abs = fh.to_absolute_index(self.cutoff)
 
         try:
+            idx = self._y.index
+            if isinstance(idx, pd.MultiIndex):
+                unique_levels = idx.droplevel(-1).unique()
+                fh_abs = pd.MultiIndex.from_tuples(
+                    ((*level, time) for level in unique_levels for time in fh_abs),
+                    names=idx.names,
+                )
+
             y_pred = self._y_known.reindex(fh_abs, **reindex_params)
             y_pred = y_pred.reindex(self._y.columns, axis=1, **reindex_params)
         # TypeError happens if indices are incompatible types
         except TypeError:
-            if self.fill_value is None:
-                y_pred = pd.DataFrame(index=fh_abs, columns=self._y.columns)
-            else:
-                y_pred = pd.DataFrame(
-                    self.fill_value, index=fh_abs, columns=self._y.columns
-                )
+            y_pred = pd.DataFrame(
+                self.fill_value, index=fh_abs, columns=self._y.columns
+            )
 
         return y_pred
 

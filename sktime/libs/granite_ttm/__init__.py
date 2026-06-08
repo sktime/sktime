@@ -1,6 +1,8 @@
 """Python implementation TinyTimeMixer Foundation Model.
 
 Unofficial fork of the ``ibm-granite/granite-tsfm`` package, maintained in ``sktime``.
+This implementation is intended as a temporary solution, until the authors
+release a dedicated package.
 
 sktime migration: 2024, July
 Version 0.2.3 release: 2024, July (wgifford)

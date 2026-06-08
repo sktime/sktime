@@ -10,6 +10,7 @@ import pandas as pd
 
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
+from sktime.utils._estimator_html_repr import _VisualBlock
 from sktime.utils.multiindex import rename_multiindex
 from sktime.utils.validation.series import check_series
 
@@ -126,7 +127,11 @@ class ColumnEnsembleTransformer(
         "y_inner_mtype": PANDAS_MTYPES,
         "fit_is_empty": False,
         "capability:unequal_length": True,
-        "handles-missing-data": True,
+        "capability:missing_values": True,
+        "visual_block_kind": "parallel",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
@@ -165,10 +170,11 @@ class ColumnEnsembleTransformer(
                 "transform-returns-same-time-index",
                 "capability:unequal_length",
                 "capability:unequal_length:removes",
-                "handles-missing-data",
+                "capability:missing_values",
                 "capability:missing_values:removes",
                 "scitype:transform-output",
                 "scitype:transform-labels",
+                "capability:categorical_in_X",
             ]
             self.clone_tags(transformers, tags_to_clone)
         else:
@@ -188,9 +194,14 @@ class ColumnEnsembleTransformer(
             self._anytagis_then_set(
                 "capability:unequal_length:removes", False, True, l_transformers
             )
-            self._anytagis_then_set("handles-missing-data", False, True, l_transformers)
+            self._anytagis_then_set(
+                "capability:missing_values", False, True, l_transformers
+            )
             self._anytagis_then_set(
                 "capability:missing_values:removes", False, True, l_transformers
+            )
+            self._anytagis_then_set(
+                "capability:categorical_in_X", True, False, l_transformers
             )
 
             # must be all the same, currently not checking
@@ -213,7 +224,7 @@ class ColumnEnsembleTransformer(
 
     @_transformers.setter
     def _transformers(self, value):
-        if len(value) == 1 and isinstance(value, BaseTransformer):
+        if isinstance(value, BaseTransformer):
             self.transformers = value
         elif len(value) == 1 and isinstance(value, list):
             self.transformers = value[0][1]
@@ -366,6 +377,14 @@ class ColumnEnsembleTransformer(
 
         return [params1, params2, params3]
 
+    def _sk_visual_block_(self):
+        transformers = self._transformers + [("remainder", self.remainder)]
+
+        names, transformers = zip(*transformers)
+        return _VisualBlock(
+            self.get_tag(tag_name="visual_block_kind"), transformers, names=names
+        )
+
 
 class ColumnwiseTransformer(BaseTransformer):
     """Apply a transformer columnwise to multivariate series.
@@ -413,24 +432,31 @@ class ColumnwiseTransformer(BaseTransformer):
         "X_inner_mtype": "pd.DataFrame",
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
     }
 
     def __init__(self, transformer, columns=None):
         self.transformer = transformer
         self.columns = columns
+
         super().__init__()
 
+        from sktime.registry import coerce_scitype
+
+        self._transformer = coerce_scitype(transformer, "transformer")
+
+        # Clone tags from the internal transformer (guaranteed to be sktime)
         tags_to_clone = [
             "y_inner_mtype",
             "capability:inverse_transform",
-            "handles-missing-data",
+            "capability:missing_values",
             "X-y-must-have-same-index",
             "transform-returns-same-time-index",
             "skip-inverse-transform",
+            "capability:categorical_in_X",
         ]
-        self.clone_tags(transformer, tag_names=tags_to_clone)
+        self.clone_tags(self._transformer, tag_names=tags_to_clone)
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -467,9 +493,10 @@ class ColumnwiseTransformer(BaseTransformer):
         # fit by iterating over columns
         self.transformers_ = {}
         for colname in self.columns_:
-            transformer = self.transformer.clone()
+            transformer = self._transformer.clone()
             self.transformers_[colname] = transformer
             self.transformers_[colname].fit(X[colname], y)
+
         return self
 
     def _transform(self, X, y=None):
@@ -581,9 +608,14 @@ class ColumnwiseTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sklearn.preprocessing import StandardScaler
+
         from sktime.transformations.series.detrend import Detrender
 
-        return {"transformer": Detrender()}
+        params1 = {"transformer": Detrender()}
+        params2 = {"transformer": StandardScaler()}
+
+        return [params1, params2]
 
 
 def _check_columns(z, selected_columns):

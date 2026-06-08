@@ -45,10 +45,10 @@ class _DtwDistance(NumbaDistance):
     mining Proceedings of 5th SIAM International Conference on Data Mining, 2005
     .. [2] Sakoe H. and Chiba S.: Dynamic programming algorithm optimization for
     spoken word recognition. IEEE Transactions on Acoustics, Speech, and Signal
-    Processing 26(1):43–49, 1978
+    Processing 26(1):43-49, 1978
     .. [3] Itakura F: Minimum prediction residual principle applied to speech
     recognition. IEEE Transactions on Acoustics, Speech, and Signal Processing 23(
-    1):67–72, 1975
+    1):67-72, 1975
     """
 
     def _distance_alignment_path_factory(
@@ -72,15 +72,15 @@ class _DtwDistance(NumbaDistance):
             First time series.
         y: np.ndarray (2d array of shape (d,m2)).
             Second time series.
-        return_cost_matrix: bool, defaults = False
+        return_cost_matrix: bool, default=False
             Boolean that when true will also return the cost matrix.
-        window: Float, defaults = None
+        window: float, default=None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
-        itakura_max_slope: float, defaults = None
+        itakura_max_slope: float, default=None
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding). Must be between 0 and 1.
-        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), default=None
             Custom bounding matrix to use. If defined then other lower_bounding params
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
@@ -154,13 +154,13 @@ class _DtwDistance(NumbaDistance):
             First time series.
         y: np.ndarray (2d array of shape (d,m2)).
             Second time series.
-        window: Float, defaults = None
+        window: float, default=None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
-        itakura_max_slope: float, defaults = None
+        itakura_max_slope: float, default=None
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding). Must be between 0 and 1.
-        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), default=None
             Custom bounding matrix to use. If defined then other lower_bounding params
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should

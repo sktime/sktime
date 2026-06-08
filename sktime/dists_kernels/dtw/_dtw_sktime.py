@@ -2,7 +2,6 @@
 
 __author__ = ["fkiraly"]
 
-from typing import Union
 
 import numpy as np
 
@@ -16,7 +15,7 @@ class DtwDist(BasePairwiseTransformerPanel):
     Interface to simple dynamic time warping (DTW) distance,
     and the following weighted/derivative versions:
 
-    * WDTW - weighted dynamic tyme warping - ``weighted=True, derivative=False`
+    * WDTW - weighted dynamic time warping - ``weighted=True, derivative=False`
     * DDTW - derivative dynamic time warping - ``weighted=False, derivative=True``
     * WDDTW - weighted derivative dynamic time
       warping - ``weighted=True, derivative=True``
@@ -132,14 +131,17 @@ class DtwDist(BasePairwiseTransformerPanel):
         "symmetric": True,  # all the distances are symmetric
         "X_inner_mtype": "numpy3D",
         "capability:unequal_length": False,  # can dist handle unequal length panels?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
         self,
         weighted: bool = False,
         derivative: bool = False,
-        window: Union[int, None] = None,
-        itakura_max_slope: Union[float, None] = None,
+        window: int | None = None,
+        itakura_max_slope: float | None = None,
         bounding_matrix: np.ndarray = None,
         g: float = 0.0,
     ):

@@ -46,8 +46,9 @@ def _weighted_cost_matrix(
     cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
     cost_matrix[0, 0] = 0.0
 
+    wv_len = max(x_size, y_size)
     weight_vector = np.array(
-        [1 / (1 + np.exp(-g * (i - x_size / 2))) for i in range(0, x_size)]
+        [1 / (1 + np.exp(-g * (i - wv_len / 2))) for i in range(0, wv_len)]
     )
 
     for i in range(x_size):

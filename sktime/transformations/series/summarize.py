@@ -6,7 +6,6 @@ __author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut", "BensHamza"]
 __all__ = ["SummaryTransformer", "WindowSummarizer", "SplitterSummarizer"]
 
 import pandas as pd
-from joblib import Parallel, delayed
 
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
 from sktime.transformations.base import BaseTransformer
@@ -122,7 +121,6 @@ class WindowSummarizer(BaseTransformer):
             an estimator that can correctly deal with observations with missing values,
             "bfill" will fill the NAs by carrying the first observation backwards.
 
-
     Attributes
     ----------
     truncate_start : int
@@ -195,6 +193,7 @@ class WindowSummarizer(BaseTransformer):
         # --------------
         "authors": ["danbartl", "grzegorzrut", "ltsaprounis"],
         "maintainers": ["danbartl"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
@@ -208,14 +207,24 @@ class WindowSummarizer(BaseTransformer):
             "pd_multiindex_hier",
         ],  # which mtypes do _fit/_predict support for X?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:multivariate": True,  # can the transformer handle multivariate X?
+        "capability:missing_values": True,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
         "remember_data": True,  # remember all data seen as _X
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        # reason for skip: known side effects on multivariate arguments; see #2072
+        "tests:skip_by_name": [
+            "test_methods_have_no_side_effects",
+            "test_categorical_X_passes",  # some cases support categorical data,
+            # so we conservatively set the capability tag to True,
+            # even if it fails in standard cases like np.mean
+        ],
     }
 
     def __init__(
@@ -296,7 +305,7 @@ class WindowSummarizer(BaseTransformer):
         lags = func_dict["summarizer"] == "lag"
         # Convert lags to default list notation with window_length 1
         boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
-        func_dict.loc[:, "window"] = func_dict["window"].astype("object")
+        func_dict["window"] = func_dict["window"].astype("object", copy=False)
         func_dict.loc[lags, "window"] = boost_lag
         self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
@@ -313,6 +322,8 @@ class WindowSummarizer(BaseTransformer):
         -------
         transformed version of X
         """
+        from joblib import Parallel, delayed
+
         idx = X.index
         X = X.combine_first(self._X)
 
@@ -470,9 +481,14 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         raise ValueError("The provided summarizer is not callable.")
     feat = pd.DataFrame(feat)
 
-    # Handle backfill
     if bfill is True:
-        feat = feat.bfill()
+        if isinstance(Z, pd.core.groupby.GroupBy):
+            if Z.keys is not None:
+                feat = feat.groupby(Z.keys).bfill()
+            else:
+                feat = feat.groupby(level=Z.level).bfill()
+        else:
+            feat = feat.bfill()
 
     if callable(summarizer):
         name = summarizer.__name__
@@ -633,6 +649,7 @@ class SummaryTransformer(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
+        "capability:categorical_in_X": False,
     }
 
     def __init__(

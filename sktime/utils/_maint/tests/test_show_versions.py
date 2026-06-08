@@ -27,22 +27,14 @@ def test_deps_info():
     assert isinstance(deps_info_default, dict)
     assert set(deps_info_default.keys()) == set(DEFAULT_DEPS_TO_SHOW)
 
-    PKG_IMPORT_ALIAS = {"scikit-learn": "sklearn", "scikit-base": "skbase"}
     KEY_ALIAS = {"sklearn": "scikit-learn", "skbase": "scikit-base"}
 
     for key in DEFAULT_DEPS_TO_SHOW:
         pkg_name = KEY_ALIAS.get(key, key)
-        key_is_available = _check_soft_dependencies(
-            pkg_name,
-            severity="none",
-            package_import_alias=PKG_IMPORT_ALIAS,
-        )
+        key_is_available = _check_soft_dependencies(pkg_name, severity="none")
         assert (deps_info_default[key] is None) != key_is_available
         if key_is_available:
-            assert _check_soft_dependencies(
-                f"{pkg_name}=={deps_info_default[key]}",
-                package_import_alias=PKG_IMPORT_ALIAS,
-            )
+            assert _check_soft_dependencies(f"{pkg_name}=={deps_info_default[key]}")
         deps_single_key = _get_deps_info([key])
         assert set(deps_single_key.keys()) == {key}
 

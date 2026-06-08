@@ -12,7 +12,6 @@ from math import floor
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from sklearn.base import clone
 
 from sktime.datatypes import MTYPE_LIST_SERIES, convert, convert_to
@@ -123,16 +122,20 @@ class ConformalIntervals(BaseForecaster):
         # packaging info
         # --------------
         "authors": ["fkiraly", "bethrice44"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
-        "ignores-exogeneous-X": False,
+        "capability:missing_values": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "X_inner_mtype": MTYPE_LIST_SERIES,
         "y_inner_mtype": MTYPE_LIST_SERIES,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     ALLOWED_METHODS = [
@@ -171,8 +174,8 @@ class ConformalIntervals(BaseForecaster):
 
         tags_to_clone = [
             "requires-fh-in-fit",
-            "ignores-exogeneous-X",
-            "handles-missing-data",
+            "capability:exogenous",
+            "capability:missing_values",
             "X-y-must-have-same-index",
             "enforce_index_type",
         ]
@@ -228,7 +231,7 @@ class ConformalIntervals(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -411,6 +414,8 @@ class ConformalIntervals(BaseForecaster):
             if sample_frac is passed this will have NaN values for 1 - sample_frac
             fraction of the matrix
         """
+        from joblib import Parallel, delayed
+
         y = convert_to(y, ["pd.Series", "pd-multiindex", "pd_multiindex_hier"])
 
         # vectorize over multiindex if y is hierarchical

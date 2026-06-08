@@ -5,6 +5,8 @@
 __author__ = ["fkiraly"]
 __all__ = ["TransformIf"]
 
+import operator
+
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
@@ -94,9 +96,12 @@ class TransformIf(_DelegatedTransformer):
         "X_inner_mtype": CORE_MTYPES,
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
         "capability:inverse_transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -127,7 +132,7 @@ class TransformIf(_DelegatedTransformer):
 
         super().__init__()
 
-        self.clone_tags(if_estimator, tag_names=["univariate-only"])
+        self.clone_tags(if_estimator, tag_names=["capability:multivariate"])
         if_scitypes = mtype_to_scitype(if_estimator.get_tag("X_inner_mtype"))
         valid_scitypes = [
             x for x in ALL_TIME_SERIES_MTYPES if mtype_to_scitype(x) in if_scitypes
@@ -168,7 +173,15 @@ class TransformIf(_DelegatedTransformer):
         if condition == "bool":
             cond_bool = param_val
         elif condition in [">=", ">", "==", "!=", "<", "<="]:
-            cond_bool = eval(f"{param_val} {condition} {condition_value}")
+            op_dict = {
+                ">=": operator.ge,
+                ">": operator.gt,
+                "==": operator.eq,
+                "!=": operator.ne,
+                "<": operator.lt,
+                "<=": operator.le,
+            }
+            cond_bool = op_dict[condition](param_val, condition_value)
         else:
             raise ValueError(
                 f"unsupported value for parameter 'condition' found in "
@@ -205,13 +218,13 @@ class TransformIf(_DelegatedTransformer):
         -------
         self : a fitted instance of the estimator
         """
-        from sktime.registry import scitype
+        from sktime.registry import is_scitype
 
         if_estimator_ = self.if_estimator.clone()
 
-        if scitype(if_estimator_) == "forecaster":
+        if is_scitype(if_estimator_, "forecaster"):
             self.if_estimator_ = if_estimator_.fit(y=X, X=y)
-        elif scitype(if_estimator_) == "transformer":
+        elif is_scitype(if_estimator_, "transformer"):
             self.if_estimator_ = if_estimator_.fit(X=X, y=y)
         else:
             try:

@@ -8,7 +8,11 @@ import pytest
 from sktime.datasets import load_airline
 from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.tests._config import TEST_OOS_FHS, VALID_INDEX_FH_COMBINATIONS
-from sktime.split import TemporalTrainTestSplitter, temporal_train_test_split
+from sktime.split import (
+    ForecastingHorizonSplitter,
+    TemporalTrainTestSplitter,
+    temporal_train_test_split,
+)
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.series import _make_series
@@ -89,7 +93,13 @@ def test_temporal_train_test_split_float_only_y():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([TemporalTrainTestSplitter, temporal_train_test_split]),
+    not run_test_for_class(
+        [
+            ForecastingHorizonSplitter,
+            TemporalTrainTestSplitter,
+            temporal_train_test_split,
+        ]
+    ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_temporal_train_test_split_int_only_y():

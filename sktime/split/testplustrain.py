@@ -6,7 +6,6 @@ __author__ = ["fkiraly"]
 
 __all__ = ["TestPlusTrainSplitter"]
 
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -95,7 +94,7 @@ class TestPlusTrainSplitter(BaseSplitter):
             y_test_self = y_train_inner.union(y_test_inner)
             yield y_train_self, y_test_self
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
 
         This will always be equal to the number of splits

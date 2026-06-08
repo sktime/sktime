@@ -13,12 +13,14 @@ For notebook examples, see the :ref:`examples`.
 
 For a list of object and estimator tags, see :ref:`tags_ref`.
 
+For a list of object and estimator types, see :ref:`estimator_types_ref`.
+
 .. include:: includes/api_css.rst
 
 .. toctree::
     :maxdepth: 1
 
-    api_reference/base
+    api_reference/data_format
     api_reference/forecasting
     api_reference/transformations
     api_reference/classification
@@ -29,11 +31,14 @@ For a list of object and estimator tags, see :ref:`tags_ref`.
     api_reference/performance_metrics
     api_reference/split
     api_reference/alignment
-    api_reference/annotation
+    api_reference/detection
     api_reference/datasets
-    api_reference/data_format
     api_reference/deployment
     api_reference/utils
+    api_reference/base
     api_reference/exceptions
     api_reference/tags
+    api_reference/estimator_types
     api_reference/pipeline
+    api_reference/benchmarking
+    api_reference/catalogues

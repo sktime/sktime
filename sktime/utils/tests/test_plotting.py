@@ -88,7 +88,7 @@ def test_plot_series_runs_without_error(series_to_plot):
     if isinstance(series_to_plot, pd.Series):
         labels = ["Series 1"]
     elif isinstance(series_to_plot, tuple):
-        labels = [f"Series {i+1}" for i in range(len(series_to_plot))]
+        labels = [f"Series {i + 1}" for i in range(len(series_to_plot))]
     _plot_series(series_to_plot, labels=labels)
     plt.gcf().canvas.draw_idle()
     plt.close()
@@ -378,5 +378,67 @@ def test_plot_correlations_arguments(y_airline, lags, suptitle, series_title):
     plot_correlations(
         y_airline, lags=lags, suptitle=suptitle, series_title=series_title
     )
+    plt.gcf().canvas.draw_idle()
+    plt.close()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(plot_series)
+    or not _check_soft_dependencies("matplotlib", severity="none"),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_plotting_dataframe_with_unused_levels():
+    """After subsetting, pd.DataFrame keeps information about unused levels."""
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    from sktime.forecasting.var import VAR
+
+    y_train = pd.DataFrame(np.random.rand(100, 3), columns=["x1", "x2", "x3"])
+    forecaster = VAR(maxlags=1)
+    forecaster.fit(y_train)
+    y_pred = forecaster.predict(fh=range(1, 10))
+    coverage = 0.9
+    y_pred_ints1 = forecaster.predict_interval(coverage=coverage)
+    variable_to_plot = "x1"
+    pred_interval = y_pred_ints1[[variable_to_plot]].copy()
+
+    matplotlib.use("agg")
+    plot_series(
+        y_train[[variable_to_plot]],
+        y_pred[[variable_to_plot]],
+        pred_interval=pred_interval,
+    )
+    plt.gcf().canvas.draw_idle()
+    plt.close()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(plot_series)
+    or not _check_soft_dependencies("matplotlib", severity="none"),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_plotting_basic_dataframe():
+    """This example is based on the notebook 01_forecasting.ipynb."""
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    from sktime.datasets import load_airline
+    from sktime.forecasting.theta import ThetaForecaster
+
+    # until fit, identical with the simple workflow
+    y = load_airline()
+
+    fh = np.arange(1, 13)
+
+    forecaster = ThetaForecaster(sp=12)
+    forecaster.fit(y, fh=fh)
+
+    coverage = 0.9
+    y_pred_ints = forecaster.predict_interval(coverage=coverage)
+    y_pred = forecaster.predict()
+
+    matplotlib.use("agg")
+    plot_series(y, y_pred, labels=["y", "y_pred"], pred_interval=y_pred_ints)
     plt.gcf().canvas.draw_idle()
     plt.close()

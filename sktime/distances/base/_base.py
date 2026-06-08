@@ -81,7 +81,7 @@ class NumbaDistance:
         The no_python compiled distance will be in the form:
         Callable[[np.ndarray, np.ndarray], float]. #
 
-        This can then be used to to calculate distances efficiently or can be used
+        This can then be used to calculate distances efficiently or can be used
         inside other no_python functions.
 
         Parameters

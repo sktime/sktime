@@ -11,7 +11,31 @@ from sktime.utils.dependencies import _check_soft_dependencies
 simple_spec = "NaiveForecaster()"
 simple_spec_with_dep = "VAR(trend='ct')"
 
-pipe_spec = """
+pipe_spec_no_deps = """
+pipe = TransformedTargetForecaster(steps=[
+    ("imputer", Imputer()),
+    ("forecaster", NaiveForecaster())])
+cv = ExpandingWindowSplitter(
+    initial_window=24,
+    step_length=12,
+    fh=[1, 2, 3])
+
+return ForecastingGridSearchCV(
+    forecaster=pipe,
+    param_grid=[{
+        "forecaster": [NaiveForecaster(sp=12)],
+        "forecaster__strategy": ["drift", "last", "mean"],
+    },
+    {
+        "imputer__method": ["mean", "drift"],
+        "forecaster": [NaiveForecaster(sp=12)],
+    },
+    ],
+    cv=cv,
+    )
+"""
+
+pipe_spec_with_deps = """
 pipe = TransformedTargetForecaster(steps=[
     ("imputer", Imputer()),
     ("forecaster", NaiveForecaster())])
@@ -40,15 +64,18 @@ return ForecastingGridSearchCV(
     )
 """
 
-dunder_spec = "Detrender(ExponentialSmoothing(sp=12)) * ARIMA()"
-
-specs = [simple_spec, simple_spec_with_dep, pipe_spec, dunder_spec]
-
-
-@pytest.mark.skipif(
-    not _check_soft_dependencies(["statsmodels", "pmdarima"], severity="none"),
-    reason="skip test if required soft dependencies not available",
+dunder_spec_no_deps = "Imputer() * NaiveForecaster()"
+dunder_spec_with_deps = (
+    "Detrender(ExponentialSmoothing(sp=12)) * LTSFLinearForecaster()"
 )
+
+specs = [simple_spec, pipe_spec_no_deps, dunder_spec_no_deps]
+
+
+if _check_soft_dependencies(["statsmodels", "prophet"], severity="none"):
+    specs += [simple_spec_with_dep, pipe_spec_with_deps, dunder_spec_with_deps]
+
+
 @pytest.mark.parametrize("spec", specs)
 def test_craft(spec):
     """Check that crafting works and is inverse to str coercion."""
@@ -66,16 +93,19 @@ def test_deps(spec):
     """Check that deps retrieves the correct requirement sets."""
     # should return length 0 list since has no deps
     assert deps(simple_spec) == []
+    assert deps(pipe_spec_no_deps) == []
+    assert deps(dunder_spec_no_deps) == []
 
     # should correctly find the single dependency
     assert deps(simple_spec_with_dep) == ["statsmodels"]
 
     # has multiple estimators with "statsmodels",
     # this should be returned like this and not as ["statsmodels", "statsmodels"]
-    assert deps(pipe_spec) == ["statsmodels"]
+    assert deps(pipe_spec_with_deps) == ["statsmodels"]
 
     # example with two dependencies, should be identified, order does not matter
-    assert set(deps(dunder_spec)) == {"statsmodels", "pmdarima"}
+    expected_deps = {"statsmodels", "torch"}
+    assert set(deps(dunder_spec_with_deps)) == expected_deps
 
 
 def test_imports():
@@ -84,13 +114,40 @@ def test_imports():
     assert imports(simple_spec) == simple_spec_imports
 
     pipe_imports = (
-        "from sktime.forecasting.compose._pipeline import TransformedTargetForecast"
+        "from sktime.forecasting.compose import TransformedTargetForecast"
         "er\nfrom sktime.forecasting.exp_smoothing import ExponentialSmoothing\nfrom"
-        " sktime.forecasting.model_selection._tune import ForecastingGridSearch"
+        " sktime.forecasting.model_selection import ForecastingGridSearch"
         "CV\nfrom sktime.forecasting.naive import NaiveForecaster\nfrom sktime.fore"
         "casting.naive import NaiveForecaster\nfrom sktime.forecasting.theta impor"
         "t ThetaForecaster\nfrom sktime.split.expandingwindow import "
         "ExpandingWindowSplitter\nfrom sktime.transformations.series.impute import "
         "Imputer"
     )
-    assert imports(pipe_spec) == pipe_imports
+    assert imports(pipe_spec_with_deps) == pipe_imports
+
+
+def test_deps_with_disjunction():
+    """Check that deps retrieves the correct requirement set for disjunctions."""
+    assert set(deps("DartsXGBModel")) == {"xgboost", "u8darts>=0.29"}
+
+
+def test_sklearn_imports():
+    """Check that sklearn estimators can be crafted."""
+    from sktime.registry._lookup_sklearn import _all_sklearn_estimators
+
+    sklearn_estimators = dict(_all_sklearn_estimators())
+
+    from sklearn.ensemble import RandomForestRegressor
+
+    assert craft("RandomForestRegressor()").__class__ == RandomForestRegressor
+    rf_instance = craft("RandomForestRegressor(n_estimators=10)")
+    assert isinstance(rf_instance, RandomForestRegressor)
+    assert craft("RandomForestRegressor(n_estimators=10)").n_estimators == 10
+
+    for est_name in ["StandardScaler", "KNeighborsClassifier", "RandomForestRegressor"]:
+        assert est_name in sklearn_estimators.keys()
+
+        est_spec = f"{est_name}()"
+        est_obj = craft(est_spec)
+
+        assert est_obj.__class__.__name__ == est_name

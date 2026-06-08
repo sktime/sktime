@@ -598,7 +598,7 @@ def _FC_LocalSimple_mean3_stderr(
 
 @njit(fastmath=True, cache=True)
 def _CO_trev_1_num(series, smin, smax, smean, std, outlier_series, ac, acfz):
-    # Time-reversibility statistic, ((x_t+1 − x_t)^3)_t.
+    # Time-reversibility statistic, ((x_t+1 - x_t)^3)_t.
     X = series
     y = np.zeros(len(X) - 1)
     for i in range(len(y)):

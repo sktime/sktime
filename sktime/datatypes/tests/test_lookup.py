@@ -2,20 +2,28 @@
 
 __author__ = ["fkiraly"]
 
-import pytest
-
 from sktime.datatypes._registry import (
-    MTYPE_REGISTER,
     MTYPE_SOFT_DEPS,
+    generate_mtype_register,
     mtype_to_scitype,
     scitype_to_mtype,
 )
 from sktime.utils.dependencies import _check_soft_dependencies
 
-MTYPE_SCITYPE_PAIRS = [(k[0], k[1]) for k in MTYPE_REGISTER]
+
+def pytest_generate_tests(metafunc):
+    register = generate_mtype_register()
+    if "mtype" in metafunc.fixturenames and "scitype" in metafunc.fixturenames:
+        mtypes_scitypes = [(k[0], k[1]) for k in register]
+        metafunc.parametrize("mtype, scitype", mtypes_scitypes)
+    elif "mtype" in metafunc.fixturenames:
+        mtypes = [k[0] for k in register]
+        metafunc.parametrize("mtype", mtypes)
+    elif "scitype" in metafunc.fixturenames:
+        scitypes = [k[1] for k in register]
+        metafunc.parametrize("scitype", scitypes)
 
 
-@pytest.mark.parametrize("mtype, scitype", MTYPE_SCITYPE_PAIRS)
 def test_mtype_to_scitype(mtype, scitype):
     """Tests that mtype_to_scitype yields the correct output for a string.
 
@@ -50,17 +58,16 @@ def test_mtype_to_scitype_list():
     AssertionError mtype_to_scitype does not convert mtype to scitype
     Exception if any is raised by mtype_to_scitype
     """
+    MTYPE_REGISTER = generate_mtype_register()
     mtype_list = [k[0] for k in MTYPE_REGISTER]
     expected_scitype_list = [k[1] for k in MTYPE_REGISTER]
     result = mtype_to_scitype(mtype_list)
     msg = (
-        "mtype_to_scitype does not correctly convert list of mtypes"
-        " to list of scitypes"
+        "mtype_to_scitype does not correctly convert list of mtypes to list of scitypes"
     )
     assert result == expected_scitype_list, msg
 
 
-@pytest.mark.parametrize("mtype, scitype", MTYPE_SCITYPE_PAIRS)
 def test_scitype_to_mtype(mtype, scitype):
     """Tests that scitype_to_mtype yields the correct output for a string.
 
