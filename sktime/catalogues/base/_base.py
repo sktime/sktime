@@ -67,9 +67,44 @@ class BaseCatalogue(BaseObject):
 
         Returns
         -------
-        list[str] or list[tuple[str, str]]
-            List of item specification strings, or list of tuples where the
-            first element is the name/ID and the second is the specification string.
+        dict[str, list]
+            Dictionary mapping category names to lists of catalogue entries.
+
+            Keys are category names defined by the catalogue (for example,
+            ``"forecaster"``, ``"classifier"``, ``"dataset"``, ``"metric"``,
+            ``"cv_splitter"``, etc.). Values are lists containing the entries
+            belonging to that category.
+
+            Each entry may be one of the following:
+
+            * ``str`` - a specification resolvable via ``craft``.
+            * ``dict[str, Any]`` - mapping of human-given names to object
+            specifications or objects.
+            * object - an already-instantiated object or callable.
+
+            For example, a forecasting catalogue may return:
+
+            {
+                "dataset": ["Airline"],
+                "forecaster": [
+                    {"NaiveForecaster":
+                        "NaiveForecaster(strategy='last')"}
+                ],
+                "metric": [
+                    "MeanAbsoluteError()",
+                    "MeanAbsolutePercentageError()",
+                ],
+                "cv_splitter": [
+                    "ExpandingWindowSplitter("
+                    "initial_window=12, step_length=6, fh=6)"
+                ],
+            }
+
+        Notes
+        -----
+        The returned catalogue is cached after the first access. Implementations
+        should therefore return deterministic contents and must not rely on
+        repeated invocation.
         """
 
     def get(self, object_type="all", as_object=False):
@@ -96,9 +131,18 @@ class BaseCatalogue(BaseObject):
 
         Returns
         -------
-        list[str] or list[Any] or list[tuple[str, Any]]
-            List of specification names (default), object instances, or
-            tuples of (name, object instance) if the catalogue entry was a tuple.
+        list
+            Catalogue entries matching the requested category.
+
+            If ``as_object=False``, entries are returned as display names.
+            Specification strings remain unchanged, objects are converted to
+            display names, and dictionary entries are returned as mappings of
+            human-given names to specification strings.
+
+            If ``as_object=True``, entries are returned as resolved
+            objects. String specifications are instantiated via ``craft``,
+            dictionary entries are returned as mappings of human-given names to
+            resolved objects, and object entries are returned unchanged.
         """
         catalogue = self._get_catalogue()
 
