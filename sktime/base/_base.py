@@ -548,7 +548,7 @@ class TagAliaserMixin(_TagAliaserMixin):
         tag_val = super().get_class_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
-        return tag_val
+        return tag_val if tag_val is not None else tag_value_default
 
     def get_tag(self, tag_name, tag_value_default=None, raise_error=True):
         """Get tag value from instance, with tag level inheritance and overrides.
@@ -670,7 +670,7 @@ class TagAliaserMixin(_TagAliaserMixin):
             tag_value_default=tag_value_default,
             raise_error=raise_error,
         )
-        return tag_val
+        return tag_val if tag_val is not None else tag_value_default
 
     def set_tags(self, **tag_dict):
         """Set instance level tag overrides to given values.
