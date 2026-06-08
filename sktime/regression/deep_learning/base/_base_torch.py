@@ -14,6 +14,39 @@ from sktime.utils.dependencies import _safe_import
 
 ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
 
+LC_TO_UC_ACTIVATIONS = {
+    "elu": "ELU",
+    "hardshrink": "Hardshrink",
+    "hardsigmoid": "Hardsigmoid",
+    "hardtanh": "Hardtanh",
+    "hardswish": "Hardswish",
+    "leakyrelu": "LeakyReLU",
+    "logsigmoid": "LogSigmoid",
+    "multiheadattention": "MultiheadAttention",
+    "prelu": "PReLU",
+    "relu": "ReLU",
+    "relu6": "ReLU6",
+    "rrelu": "RReLU",
+    "selu": "SELU",
+    "celu": "CELU",
+    "gelu": "GELU",
+    "sigmoid": "Sigmoid",
+    "silu": "SiLU",
+    "mish": "Mish",
+    "softplus": "Softplus",
+    "softshrink": "Softshrink",
+    "softsign": "Softsign",
+    "tanh": "Tanh",
+    "tanhshrink": "Tanhshrink",
+    "threshold": "Threshold",
+    "glu": "GLU",
+    "softmin": "Softmin",
+    "softmax": "Softmax",
+    "softmax2d": "Softmax2d",
+    "logsoftmax": "LogSoftmax",
+    "adaptivelogsoftmaxwithloss": "AdaptiveLogSoftmaxWithLoss",
+}
+
 
 class BaseDeepRegressorTorch(BaseRegressor):
     """Abstract base class for the PyTorch neural network regressors.
@@ -203,40 +236,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
                     f"But got {type(activation)} instead."
                 )
 
-            lc_to_uc = {
-                "elu": "ELU",
-                "hardshrink": "Hardshrink",
-                "hardsigmoid": "Hardsigmoid",
-                "hardtanh": "Hardtanh",
-                "hardswish": "Hardswish",
-                "leakyrelu": "LeakyReLU",
-                "logsigmoid": "LogSigmoid",
-                "multiheadattention": "MultiheadAttention",
-                "prelu": "PReLU",
-                "relu": "ReLU",
-                "relu6": "ReLU6",
-                "rrelu": "RReLU",
-                "selu": "SELU",
-                "celu": "CELU",
-                "gelu": "GELU",
-                "sigmoid": "Sigmoid",
-                "silu": "SiLU",
-                "mish": "Mish",
-                "softplus": "Softplus",
-                "softshrink": "Softshrink",
-                "softsign": "Softsign",
-                "tanh": "Tanh",
-                "tanhshrink": "Tanhshrink",
-                "threshold": "Threshold",
-                "glu": "GLU",
-                "softmin": "Softmin",
-                "softmax": "Softmax",
-                "softmax2d": "Softmax2d",
-                "logsoftmax": "LogSoftmax",
-                "adaptivelogsoftmaxwithloss": "AdaptiveLogSoftmaxWithLoss",
-            }
-
-            uc_activation = lc_to_uc.get(activation, activation)
+            uc_activation = LC_TO_UC_ACTIVATIONS.get(activation, activation)
             if not _safe_import(f"torch.nn.{uc_activation}"):
                 raise ValueError(
                     f"Activation '{uc_activation}' is not a valid PyTorch activation"
