@@ -34,49 +34,80 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         The forecaster to tune, must implement the sktime forecaster interface.
         sklearn regressors can be used, but must first be converted to forecasters
         via one of the reduction compositors, e.g., via ``make_reduction``
-    cv : cross-validation generator or an iterable
-        Splitter used for generating validation folds.
-        e.g. ExpandingWindowSplitter()
+
+    cv : sktime time series splitter
+        Re-sampling strategy for cross-validation, must be an instance of a sktime
+        time series splitter, e.g. ``SlidingWindowSplitter()``
+
     param_grid : dict of optuna samplers
         Dictionary with parameters names as keys and lists of parameter distributions
         from which to sample parameter values.
         e.g. {"forecaster": optuna.distributions.CategoricalDistribution(
         (STLForecaster(), ThetaForecaster())}
-    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
+
+    scoring : sktime metric (BaseMetric), str, or callable, optional (default=MAPE)
         scoring metric to use in tuning the forecaster
 
         * sktime metric objects (BaseMetric) descendants can be searched
-        with the ``registry.all_estimators`` search utility,
-        for instance via ``all_estimators("metric", as_dataframe=True)``
+          with the ``registry.all_estimators`` search utility,
+          for instance via ``all_estimators("metric", as_dataframe=True)``
 
         * If callable, must have signature
-        ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
-        assuming np.ndarrays being of the same length, and lower being better.
-        Metrics in sktime.performance_metrics.forecasting are all of this form.
+          ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
+          with ``np.ndarray`` being of the same length, and lower being better.
 
         * If str, uses registry.resolve_alias to resolve to one of the above.
-        Valid strings are valid registry.craft specs, which include
-        string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
-        and keys of registry.ALIAS_DICT referring to metrics.
+          Valid strings are valid registry.craft specs, which include
+          string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
+          and keys of registry.ALIAS_DICT referring to metrics.
 
-        * If None, defaults to MeanAbsolutePercentageError()
+        * If None, defaults to ``MeanAbsolutePercentageError()``
 
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         data ingestion strategy in fitting cv, passed to ``evaluate`` internally
         defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = a new copy of the forecaster is fitted to each training window
-        "update" = forecaster is updated with training window data, in sequence provided
-        "no-update_params" = fit to first training window, re-used without fit or update
-    refit : bool, default=True
-        Refit an estimator using the best found parameters on the whole dataset.
-    verbose : int, default=0
-        Controls the verbosity: the higher, the more messages.
+
+        * ``"refit"`` = a new copy of the forecaster is fitted to each training window
+        * ``"update"`` = forecaster is updated with training window data,
+          in sequence provided
+        * ``"no-update_params"`` = fit to first training window,
+          re-used without fit or update
+
+    update_behaviour : str, optional, default = "full_refit"
+        one of {"full_refit", "inner_only", "no_update"}
+        behaviour of the forecaster when calling update
+
+        * ``"full_refit"`` = both tuning parameters and inner estimator refit on
+          all data seen
+        * ``"inner_only"`` = tuning parameters are not re-tuned, inner estimator is
+          updated
+        * ``"no_update"`` = neither tuning parameters nor inner estimator are updated
+
+    refit : bool, optional (default=True)
+        Whether to refit the forecaster with the best parameters on the entire data.
+
+        * True = refit the forecaster with the best parameters
+          on the entire data in ``fit``
+        * False = no refitting takes place. The forecaster cannot be used to predict.
+          This is to be used to tune the hyperparameters, and then use the estimator
+          as a parameter estimator, e.g.,
+          via ``get_fitted_params`` or ``PluginParamsForecaster``.
+
+    verbose: int, optional (default=0)
+        Verbosity level. The higher, the more messages.
+
     return_n_best_forecasters : int, default=1
         Number of best forecasters to return.
+
     backend : str, default="loky"
         Backend to use when running the fit.
-    update_behaviour : str, default="full_refit"
-        Determines how to update the forecaster during fitting.
+
+        Backend must be one supported by ``optuna``:
+
+        * "loky" (default): joblib's LokyBackend.
+        * "threading": joblib's ThreadingBackend.
+        * "multiprocessing": joblib's MultiprocessingBackend.
+
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
     n_evals : int, default=100
@@ -178,11 +209,11 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         param_grid,
         scoring=None,
         strategy="refit",
+        update_behaviour="full_refit",
         refit=True,
         verbose=0,
         return_n_best_forecasters=1,
         backend="loky",
-        update_behaviour="full_refit",
         error_score=np.nan,
         n_evals=100,
         sampler=None,
