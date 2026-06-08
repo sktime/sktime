@@ -173,7 +173,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         # as classification metrics require num_classes as an argument
         self.num_classes = len(np.unique(y))
         # instantiate metrics
-        self._metrics_objects = self._instantiate_metrics()
+        self._metrics_objects = self._instantiate_metrics(
+            self.metrics, self.num_classes
+        )
         # build dataloader
         dataloader = self._build_dataloader(X, y)
 
@@ -572,11 +574,23 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                 f"But got {type(self._validated_criterion)} instead."
             )
 
-    def _instantiate_metrics(self):
+    def _instantiate_metrics(self, metrics, num_classes):
         """Instantiate metrics to be computed during training.
 
         Metrics are computed from the torchmetrics library. If no metrics are passed,
         returns None.
+
+        Parameters
+        ----------
+        metrics : None or str or Callable or tuple of str and/or Callable
+            Metrics to compute during training. If None, no metrics are computed beyond
+            the loss. Metrics are computed from torchmetrics library.
+            If a string/Callable is passed, it must be one of the metrics defined in
+            https://lightning.ai/docs/torchmetrics/stable/
+            Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
+        num_classes : int
+            The number of classes in the dataset.
+            This is required for classification metrics.
 
         Returns
         -------
@@ -591,15 +605,15 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         TypeError
             If metric is neither a string nor a callable.
         """
-        if self.metrics is None:
+        if metrics is None:
             return None
 
         torchmetrics = _safe_import("torchmetrics")
 
-        if not isinstance(self.metrics, tuple):
-            metrics_list = (self.metrics,)
+        if not isinstance(metrics, tuple):
+            metrics_list = (metrics,)
         else:
-            metrics_list = self.metrics
+            metrics_list = metrics
 
         metrics_dict = {}
 
@@ -614,7 +628,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                         f"name. See https://lightning.ai/docs/torchmetrics/stable/"
                     )
                 metric_class = getattr(torchmetrics, metric)
-                kwargs = {"task": "multiclass", "num_classes": self.num_classes}
+                kwargs = {"task": "multiclass", "num_classes": num_classes}
                 if metric in ("F1Score", "Precision", "Recall"):
                     kwargs["average"] = "macro"
                 metrics_dict[metric] = metric_class(**kwargs)

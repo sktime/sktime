@@ -148,7 +148,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         # instantiate callbacks (learning rate schedulers)
         self._schedulers = self._instantiate_schedulers()
         # instantiate metrics
-        self._metrics_objects = self._instantiate_metrics()
+        self._metrics_objects = self._instantiate_metrics(self.metrics)
         # build dataloader
         dataloader = self._build_dataloader(X, y)
 
@@ -397,11 +397,20 @@ class BaseDeepRegressorTorch(BaseRegressor):
                 f"But got {type(self.criterion)} instead."
             )
 
-    def _instantiate_metrics(self):
+    def _instantiate_metrics(self, metrics):
         """Instantiate metrics to be computed during training.
 
         Metrics are computed from the torchmetrics library. If no metrics are passed,
         returns None.
+
+        Parameters
+        ----------
+        metrics : None or str or Callable or tuple of str and/or Callable
+            Metrics to compute during training. If None, no metrics are computed beyond
+            the loss. Metrics are computed from torchmetrics library.
+            If a string/Callable is passed, it must be one of the metrics defined in
+            https://lightning.ai/docs/torchmetrics/stable/
+            Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
 
         Returns
         -------
@@ -416,15 +425,15 @@ class BaseDeepRegressorTorch(BaseRegressor):
         TypeError
             If metric is neither a string nor a callable.
         """
-        if self.metrics is None:
+        if metrics is None:
             return None
 
         torchmetrics = _safe_import("torchmetrics")
 
-        if not isinstance(self.metrics, tuple):
-            metrics_list = (self.metrics,)
+        if not isinstance(metrics, tuple):
+            metrics_list = (metrics,)
         else:
-            metrics_list = self.metrics
+            metrics_list = metrics
 
         metrics_dict = {}
 
