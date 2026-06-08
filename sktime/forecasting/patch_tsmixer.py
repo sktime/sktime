@@ -7,7 +7,6 @@ __all__ = ["PatchTSMixerForecaster"]
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
-from skbase.utils.stdout_mute import StdoutMute
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
@@ -332,8 +331,8 @@ class PatchTSMixerForecaster(BaseForecaster):
             eval_dataset=eval_dataset,
             callbacks=self.callbacks,
         )
-        with StdoutMute():
-            trainer.train()
+        trainer.train()
+
         self.model = trainer.model
         self.model.eval()
         return self
