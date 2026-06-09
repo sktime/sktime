@@ -10,6 +10,7 @@ from sktime.detection._capa import CAPA
 from sktime.detection._circular_binseg import CircularBinarySegmentation
 from sktime.detection._moving_window import MovingWindow
 from sktime.detection._stat_threshold_anomaliser import StatThresholdAnomaliser
+from sktime.tests.test_switch import run_test_module_changed
 
 SEGMENT_ANOMALY_DETECTORS = [
     CAPA,
@@ -33,6 +34,10 @@ def _make_anomaly_data(n=200, shift=15.0, seed=42):
     return X
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.detection"),
+    reason="Test only runs when detection module has changed",
+)
 @pytest.mark.parametrize("Detector", SEGMENT_ANOMALY_DETECTORS)
 def test_anomaly_detector_predict_returns_intervals(Detector):
     """All segment anomaly detectors should return DataFrame with Interval ilocs."""
@@ -47,6 +52,10 @@ def test_anomaly_detector_predict_returns_intervals(Detector):
         assert hasattr(result["ilocs"].iloc[0], "right")
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.detection"),
+    reason="Test only runs when detection module has changed",
+)
 @pytest.mark.parametrize("Detector", TRANSFORM_TESTABLE_DETECTORS)
 def test_anomaly_detector_transform_returns_dense(Detector):
     """All segment anomaly detectors' transform should return dense labels."""
@@ -59,6 +68,10 @@ def test_anomaly_detector_transform_returns_dense(Detector):
     assert len(labels) == len(X)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.detection"),
+    reason="Test only runs when detection module has changed",
+)
 def test_stat_threshold_anomaliser_stat_lower_above_upper():
     """Test StatThresholdAnomaliser rejects stat_lower > stat_upper."""
     with pytest.raises(ValueError, match="must be less than or equal to stat_upper"):

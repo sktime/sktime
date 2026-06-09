@@ -11,6 +11,7 @@ from sktime.detection._capa import CAPA
 from sktime.detection._change_scores._from_cost import ChangeScore
 from sktime.detection._compose import PenalisedScore
 from sktime.detection._costs import L1Cost, L2Cost, MultivariateGaussianCost
+from sktime.tests.test_switch import run_test_module_changed
 
 
 def _make_anomaly_data(
@@ -23,6 +24,10 @@ def _make_anomaly_data(
     return X
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.detection"),
+    reason="Test only runs when detection module has changed",
+)
 class TestCAPADetection:
     """Tests for CAPA anomaly detection quality."""
 
@@ -123,6 +128,10 @@ class TestCAPADetection:
         assert len(result) == 0
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.detection"),
+    reason="Test only runs when detection module has changed",
+)
 class TestCAPAValidation:
     """Tests for CAPA parameter and input validation."""
 

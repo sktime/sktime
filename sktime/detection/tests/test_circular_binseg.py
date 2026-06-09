@@ -9,6 +9,7 @@ import pytest
 from sktime.detection._change_scores._from_cost import ChangeScore
 from sktime.detection._circular_binseg import CircularBinarySegmentation
 from sktime.detection._costs import L2Cost
+from sktime.tests.test_switch import run_test_module_changed
 
 
 def _make_anomaly_data(
@@ -21,18 +22,30 @@ def _make_anomaly_data(
     return X
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.detection"),
+    reason="Test only runs when detection module has changed",
+)
 def test_cbs_invalid_score_string():
     """Test CBS rejects a string as anomaly_score."""
     with pytest.raises(ValueError, match="anomaly_score"):
         CircularBinarySegmentation("l2")
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.detection"),
+    reason="Test only runs when detection module has changed",
+)
 def test_cbs_invalid_score_change_score():
     """Test CBS rejects a ChangeScore as anomaly_score."""
     with pytest.raises(ValueError, match="anomaly_score"):
         CircularBinarySegmentation(ChangeScore(L2Cost()))
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.detection"),
+    reason="Test only runs when detection module has changed",
+)
 def test_cbs_detects_anomaly():
     """Test CBS detects a clear segment anomaly."""
     X = _make_anomaly_data(n=100, anomaly_start=30, anomaly_end=50, shift=20.0)
@@ -45,6 +58,10 @@ def test_cbs_detects_anomaly():
     assert found
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.detection"),
+    reason="Test only runs when detection module has changed",
+)
 def test_cbs_multiple_anomalies():
     """Test CBS detects multiple non-overlapping anomalies."""
     rng = np.random.default_rng(42)
@@ -59,6 +76,10 @@ def test_cbs_multiple_anomalies():
     assert all(hasattr(a, "left") for a in anomalies)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.detection"),
+    reason="Test only runs when detection module has changed",
+)
 def test_cbs_empty_result():
     """Test CBS with very high penalty produces no anomalies."""
     rng = np.random.default_rng(42)
