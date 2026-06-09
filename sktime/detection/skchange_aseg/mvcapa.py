@@ -1,11 +1,11 @@
-"""The subset multivariate collective and point anomalies (MVCAPA) algorithm."""
+"""Compatibility wrapper for MVCAPA."""
 
-from sktime.detection.base import BaseDetector
-from sktime.utils.dependencies import _placeholder_record
+import numpy as np
+
+from sktime.detection._skchange.anomaly_detectors import CAPA
 
 
-@_placeholder_record(["skchange.anomaly_detectors", "skchange.anomaly_detectors.capa"])
-class MVCAPA(BaseDetector):
+class MVCAPA(CAPA):
     """MVCAPA = Multivariate collective and point anomaly detection, from skchange.
 
     Redirects to ``skchange.anomaly_detectors.mvcapa``.
@@ -51,16 +51,16 @@ class MVCAPA(BaseDetector):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> from skchange.anomaly_detectors import MVCAPA
-    >>> from skchange.datasets.generate import generate_anomalous_data
-    >>> n = 300
-    >>> means = [np.array([8.0, 0.0, 0.0]), np.array([2.0, 3.0, 5.0])]
-    >>> df = generate_anomalous_data(
-    >>>     n, anomalies=[(100, 120), (250, 300)], means=means, random_state=3
-    >>> )
-    >>> detector = MVCAPA()
-    >>> detector.fit_predict(df)
+    >>> import numpy as np  # doctest: +SKIP
+    >>> from skchange.anomaly_detectors import MVCAPA  # doctest: +SKIP
+    >>> from skchange.datasets.generate import generate_anomalous_data  # doctest: +SKIP
+    >>> n = 300  # doctest: +SKIP
+    >>> means = [np.array([8.0, 0.0, 0.0]), np.array([2.0, 3.0, 5.0])]  # doctest: +SKIP
+    >>> df = generate_anomalous_data(  # doctest: +SKIP
+    ...     n, anomalies=[(100, 120), (250, 300)], means=means, random_state=3
+    ... )  # doctest: +SKIP
+    >>> detector = MVCAPA()  # doctest: +SKIP
+    >>> detector.fit_predict(df)  # doctest: +SKIP
       anomaly_interval anomaly_columns
     0       [100, 120)             [0]
     1       [250, 300)       [2, 1, 0]
@@ -70,21 +70,6 @@ class MVCAPA(BaseDetector):
     The MVCAPA algorithm assumes the input data is centered before fitting and
     predicting.
     """
-
-    _tags = {
-        # packaging info
-        # --------------
-        "authors": ["Tveten"],
-        "maintainers": ["Tveten"],
-        "python_dependencies": "skchange>=0.6.0",
-        # estimator type
-        # --------------
-        "task": "segmentation",
-        "learning_type": "unsupervised",
-        "capability:missing_values": False,
-        "capability:multivariate": True,
-        "fit_is_empty": False,
-    }
 
     def __init__(
         self,
@@ -97,6 +82,9 @@ class MVCAPA(BaseDetector):
         min_segment_length: int = 2,
         max_segment_length: int = 1000,
         ignore_point_anomalies: bool = False,
+        segment_saving=None,
+        segment_penalty=None,
+        find_affected_components: bool = True,
     ):
         self.collective_saving = collective_saving
         self.point_saving = point_saving
@@ -107,4 +95,51 @@ class MVCAPA(BaseDetector):
         self.min_segment_length = min_segment_length
         self.max_segment_length = max_segment_length
         self.ignore_point_anomalies = ignore_point_anomalies
-        super().__init__()
+        self.segment_saving = segment_saving
+        self.segment_penalty = segment_penalty
+        self.find_affected_components = find_affected_components
+
+        segment_saving = collective_saving if segment_saving is None else segment_saving
+        segment_penalty = (
+            self._resolve_penalty(
+                collective_penalty,
+                collective_penalty_scale,
+                default_name="combined",
+            )
+            if segment_penalty is None
+            else segment_penalty
+        )
+        point_penalty_resolved = self._resolve_penalty(
+            point_penalty,
+            point_penalty_scale,
+            default_name="sparse",
+        )
+
+        super().__init__(
+            segment_saving=segment_saving,
+            segment_penalty=segment_penalty,
+            point_saving=point_saving,
+            point_penalty=point_penalty_resolved,
+            min_segment_length=min_segment_length,
+            max_segment_length=max_segment_length,
+            ignore_point_anomalies=ignore_point_anomalies,
+            find_affected_components=find_affected_components,
+        )
+
+    @staticmethod
+    def _resolve_penalty(penalty, scale: float, default_name: str):
+        if isinstance(penalty, str):
+            if penalty == default_name:
+                return None
+            raise ValueError(
+                "Only default string penalties are supported by this compatibility "
+                f"wrapper: expected '{default_name}', got '{penalty}'."
+            )
+
+        if penalty is None:
+            return None
+
+        if np.isscalar(penalty):
+            return penalty * scale
+
+        return np.asarray(penalty) * scale
