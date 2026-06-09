@@ -199,14 +199,33 @@ class KronosForecaster(BaseForecaster):
         return out
 
     def _to_timestamps(self, index):
-        """Return datetime-like timestamps for Kronos from ``index``."""
+        """Convert an sktime prediction index into timestamps for Kronos.
+
+        Kronos does not use the index labels directly. The upstream predictor
+        extracts calendar fields such as minute, hour, weekday, day, and month
+        through pandas ``.dt`` accessors. That means integer and range indexes
+        need a small translation layer before they can be passed in.
+
+        Datetime-like indexes keep their own calendar. Other indexes are treated
+        as step numbers on a synthetic regular calendar, using ``start`` and
+        ``freq``. This keeps the fallback deterministic and lets non-time indexes
+        still describe valid 5 minute bars by position.
+        """
         if isinstance(index, pd.PeriodIndex):
+            # Periods are time-aware, but Kronos expects timestamp-like values
+            # for the `.dt` fields it builds internally.
             timestamp = index.to_timestamp()
         elif isinstance(index, pd.DatetimeIndex):
+            # Already exactly what Kronos wants.
             timestamp = index
         else:
-            # The fallback date is arbitrary; Kronos consumes calendar fields,
-            # while freq controls the spacing.
+            # For plain integer/range indexes, use the labels as bar numbers.
+            # This is better than just making `periods=len(index)` because the
+            # forecast index can have gaps like [2, 5], and those gaps should
+            # show up in the generated timestamps too.
+            #
+            # The date itself is not sacred. It is only an anchor so Kronos can
+            # get minute/hour/day features; `freq` is what controls spacing.
             start = pd.Timestamp(self.start)
             offset = pd.tseries.frequencies.to_offset(self.freq)
             index_values = np.asarray(index, dtype=int)
@@ -215,10 +234,22 @@ class KronosForecaster(BaseForecaster):
         return pd.Series(timestamp)
 
     def _resolve_column_mapping(self, y):
-        """Resolve input columns to Kronos internal OHLCVA columns."""
+        """Resolve user columns to Kronos' expected OHLCVA column names.
+
+        The vendored predictor is fairly strict internally: it wants columns
+        named ``open``, ``high``, ``low``, ``close``, and optionally ``volume``
+        and ``amount``. sktime users may pass those exact names, pass a manual
+        positional mapping, or just pass numeric columns in a generic DataFrame.
+
+        This method keeps that translation in one place. It also records when
+        we had to make a pragmatic fallback choice, so the rest of the forecaster
+        can always build the Kronos input frame in the same internal format.
+        """
         mapping = {}
 
         if self.columns is not None:
+            # Explicit mapping wins. If the user provides it, assume they know
+            # which columns are open/high/low/close and validate only the shape.
             if not isinstance(self.columns, list):
                 raise ValueError("columns must be a list of column names or None.")
             if len(self.columns) < 4 or len(self.columns) > len(self._kronos_columns):
@@ -231,9 +262,15 @@ class KronosForecaster(BaseForecaster):
                 raise ValueError(f"columns contains values missing from y: {missing}.")
             mapping.update(zip(self._kronos_columns, self.columns))
         elif all(col in y.columns for col in self._kronos_columns[:4]):
+            # Best common case: the input already uses the names Kronos expects.
             for col in self._kronos_columns[:4]:
                 mapping[col] = col
         else:
+            # Last resort for sktime estimator checks and generic user data.
+            # Kronos is an OHLC model, but the sktime interface should still be
+            # able to run on a numeric DataFrame. Reusing columns is not ideal
+            # market data semantics, but it is a deterministic fallback and lets
+            # the model path exercise without inventing fake values elsewhere.
             numeric_cols = y.select_dtypes(include=[np.number]).columns.tolist()
             if len(numeric_cols) == 0:
                 raise ValueError(
@@ -246,6 +283,8 @@ class KronosForecaster(BaseForecaster):
                 mapping[internal] = original
 
         if self.columns is None:
+            # Volume/amount are optional upstream. Only pass them through when
+            # they are really present; the Kronos predictor fills missing ones.
             for col in self._kronos_columns[4:]:
                 if col in y.columns:
                     mapping[col] = col
