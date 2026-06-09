@@ -101,9 +101,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
 
     Examples
     --------
-    >>> from sktime.forecasting.conditional_invertible_neural_network import (
-    ...     CINNForecaster,
-    ... )
+    >>> from sktime.forecasting.cinn import CINNForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> model = CINNForecaster(window_size=100) # doctest: +SKIP
