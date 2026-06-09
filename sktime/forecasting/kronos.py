@@ -135,7 +135,13 @@ class KronosForecaster(BaseForecaster):
         "capability:pretrain": False,
         "authors": ["shiyu-coder", "geetu040"],
         "maintainers": ["geetu040"],
-        "python_dependencies": ["torch", "einops", "huggingface_hub", "tqdm"],
+        "python_dependencies": [
+            "torch",
+            "einops",
+            "huggingface_hub",
+            "tqdm",
+            "safetensors",
+        ],
         "tests:vm": True,
         "tests:libs": ["sktime.libs.kronos"],
     }
