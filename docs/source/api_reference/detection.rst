@@ -75,6 +75,14 @@ Window-based Anomaly Detection
 
     SubLOF
 
+.. currentmodule:: sktime.detection.hampel
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HampelDetector
+
 Foundation Model-based Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

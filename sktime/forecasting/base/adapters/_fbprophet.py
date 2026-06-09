@@ -25,6 +25,11 @@ class _ProphetAdapter(BaseForecaster):
         "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
         "python_dependencies": "prophet",
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._fbprophet"],
     }
 
     def _convert_int_to_date(self, y):
@@ -63,7 +68,7 @@ class _ProphetAdapter(BaseForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -174,7 +179,7 @@ class _ProphetAdapter(BaseForecaster):
         Parameters
         ----------
         fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
         X : pd.DataFrame, optional
@@ -214,7 +219,7 @@ class _ProphetAdapter(BaseForecaster):
         y_pred.reset_index(inplace=True)
         y_pred.index = y_pred["ds"].values
         y_pred.drop("ds", axis=1, inplace=True)
-        y_pred.columns = self._y.columns
+        y_pred.columns = self._get_varnames()
 
         if self.y_index_was_int_ or self.y_index_was_period_:
             y_pred.index = self.fh.to_absolute_index(cutoff=self.cutoff)

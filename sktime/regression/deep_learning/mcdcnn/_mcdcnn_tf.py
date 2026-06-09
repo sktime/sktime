@@ -7,7 +7,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.mcdcnn import MCDCNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MCDCNNRegressor(BaseDeepRegressor):
@@ -107,8 +106,6 @@ class MCDCNNRegressor(BaseDeepRegressor):
         verbose=False,
         random_state=0,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.kernel_size = kernel_size
@@ -129,6 +126,16 @@ class MCDCNNRegressor(BaseDeepRegressor):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self.history = None
         self._network = MCDCNNNetwork(
             kernel_size=self.kernel_size,
@@ -140,6 +147,8 @@ class MCDCNNRegressor(BaseDeepRegressor):
             random_state=self.random_state,
             activation=self.activation_hidden,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
