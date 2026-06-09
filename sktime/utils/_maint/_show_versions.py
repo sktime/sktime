@@ -54,23 +54,17 @@ DEFAULT_DEPS_TO_SHOW = [
 ]
 
 
-def _get_deps_info(deps=None, source="distributions"):
+def _get_deps_info(deps=None):
     """Overview of the installed version of main dependencies.
+
+        Uses ``importlib.distributions``.
+        Strings in deps are assumed to be PEP 440 package strings,
+        e.g., ``scikit-learn``, not ``sklearn``.
 
     Parameters
     ----------
     deps : optional, list of strings with package names
         if None, behaves as deps = ["sktime"].
-
-    source : str, optional one of "distributions" (default) or "import"
-        source of version information
-
-        * "distributions" - uses importlib.distributions. In this case,
-          strings in deps are assumed to be PEP 440 package strings,
-          e.g., scikit-learn, not sklearn.
-        * "import" - uses the __version__ attribute of the module.
-          In this case, strings in deps are assumed to be import names,
-          e.g., sklearn, not scikit-learn.
 
     Returns
     -------
