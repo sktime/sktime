@@ -609,6 +609,14 @@ Pre-trained and foundation models
 
     HFTransformersForecaster
 
+.. currentmodule:: sktime.forecasting.kronos
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KronosForecaster
+
 .. currentmodule:: sktime.forecasting.lagllama
 
 .. autosummary::
