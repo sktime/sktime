@@ -27,8 +27,8 @@ class KronosForecaster(BaseForecaster):
     ----------
     model_path : str, default="NeoQuasar/Kronos-small"
         Hugging Face repository identifier or local path for the Kronos model.
-        The default is the Kronos-mini checkpoint [3]_. Other released
-        checkpoints include Kronos-small [4]_ and Kronos-base [5]_.
+        The default is the Kronos-small checkpoint [4]_. Other released
+        checkpoints include Kronos-mini [3]_ and Kronos-base [5]_.
     tokenizer_path : str, default="NeoQuasar/Kronos-Tokenizer-base"
         Hugging Face repository identifier or local path for the Kronos tokenizer.
         The default is the Kronos-Tokenizer-base checkpoint [6]_. The released
