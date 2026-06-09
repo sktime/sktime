@@ -48,26 +48,9 @@ from sktime.utils._testing.estimator_checks import (
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 from sktime.utils.deep_equals import deep_equals
-from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
-
-
-def _hyperparam_compare_uses_deep_equals(val):
-    """Whether hyperparameter values need deep_equals instead of joblib.hash.
-
-    joblib.hash is unreliable for pandas objects and for nested structures
-    containing callable torchmetrics metrics (e.g. metrics=("MSE", R2Score())).
-    """
-    if isinstance(val, (pd.DataFrame, pd.Series)):
-        return True
-    if _check_soft_dependencies("torchmetrics", severity="none"):
-        torchmetrics_metric = _safe_import("torchmetrics.Metric")
-        if isinstance(val, torchmetrics_metric):
-            return True
-        if isinstance(val, (tuple, list)):
-            return any(_hyperparam_compare_uses_deep_equals(v) for v in val)
-    return False
 
 
 def subsample_by_version_os(x):
@@ -1509,9 +1492,8 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 "the parameter %s from %s to %s during fit."
                 % (estimator.__class__.__name__, param_name, original_value, new_value)
             )
-            # joblib.hash has problems with pandas and nested torchmetrics metrics;
-            # use deep_equals for those, joblib.hash otherwise.
-            if _hyperparam_compare_uses_deep_equals(original_value):
+            # joblib.hash has problems with pandas objects, so we use deep_equals then
+            if isinstance(original_value, (pd.DataFrame, pd.Series)):
                 assert deep_equals(new_value, original_value), msg
             elif _check_soft_dependencies("joblib", severity="none"):
                 from joblib import hash
