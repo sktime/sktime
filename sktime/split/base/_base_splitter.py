@@ -21,6 +21,7 @@ from sktime.split.base._common import (
     SPLIT_GENERATOR_TYPE,
     SPLIT_TYPE,
 )
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation import NON_FLOAT_WINDOW_LENGTH_TYPES
 from sktime.utils.validation.forecasting import check_fh
 
@@ -113,6 +114,24 @@ class BaseSplitter(BaseObject):
         self.fh = fh
 
         super().__init__()
+
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`.

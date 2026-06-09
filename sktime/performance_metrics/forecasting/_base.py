@@ -831,8 +831,8 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
     """Adapter for numpy metrics."""
 
     # all descendants should have a func class attribute
-    #   of signature func(y_true: np.ndarray, y_pred: np.darray, multioutput: bool)
-    #   additional optional args: y_train: np.darray, y_pred_benchmark: np.darray
+    #   of signature func(y_true: np.ndarray, y_pred: np.ndarray, multioutput: bool)
+    #   additional optional args: y_train: np.ndarray, y_pred_benchmark: np.ndarray
     #                       further args that are parameters
     #       all np.ndarray should be 2D
     # func should return 1D np.ndarray if multioutput="raw_values", otherwise float

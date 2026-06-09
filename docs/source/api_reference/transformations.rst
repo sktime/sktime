@@ -86,14 +86,6 @@ Pipeline building - Broadcasting and apply-map
     ColumnwiseTransformer
     TransformByLevel
 
-.. currentmodule:: sktime.transformations.panel.compose
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ColumnTransformer
-
 .. currentmodule:: sktime.transformations.series.func_transform
 
 .. autosummary::

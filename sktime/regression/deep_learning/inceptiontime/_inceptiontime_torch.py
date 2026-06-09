@@ -37,15 +37,15 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         Size of the bottleneck layer
     depth : int, default=6
         Number of inception modules to stack
-    activation : str or None, default=None
+    activation : str or Callable or None, default=None
         Activation function used for the final output layer.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu', None
-    activation_hidden : str, default="relu"
+        Recommended: 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU', 'SELU', 'GELU', None
+    activation_hidden : str or Callable, default="ReLU"
         Activation function used for hidden layers (output from inception modules).
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    activation_inception : str or None, default=None
+        Recommended: 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU', 'SELU', 'GELU'
+    activation_inception : str or Callable or None, default=None
         Activation function used inside the inception modules.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu', None
+        Recommended: 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU', 'SELU', 'GELU', None
     optimizer : case insensitive str or None or an instance of optimizers
         defined in torch.optim, default = "Adam"
         The optimizer to use for training the model.
@@ -100,6 +100,12 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         "capability:random_state": True,
     }
 
+    _instantiate_activation_vars = (
+        "activation",
+        "activation_hidden",
+        "activation_inception",
+    )
+
     def __init__(
         self: "InceptionTimeRegressorTorch",
         num_epochs: int = 1500,
@@ -111,9 +117,9 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         use_bottleneck: bool = True,
         bottleneck_size: int = 32,
         depth: int = 6,
-        activation: str | None = None,
-        activation_hidden: str = "relu",
-        activation_inception: str | None = None,
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable = "ReLU",
+        activation_inception: str | Callable | None = None,
         optimizer: str | None | Callable = "Adam",
         optimizer_kwargs: dict | None = None,
         criterion: str | None | Callable = "MSELoss",
@@ -148,24 +154,36 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         self.verbose = verbose
         self.random_state = random_state
 
+        super().__init__(
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            criterion=criterion,
+            criterion_kwargs=criterion_kwargs,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            callbacks=callbacks,
+            callback_kwargs=callback_kwargs,
+            lr=lr,
+            verbose=verbose,
+            random_state=random_state,
+        )
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # input_size to be inferred from the data
         # and will be set in _build_network
         self.input_size = None
         self.num_classes = 1  # because regression
 
-        super().__init__(
-            num_epochs=self.num_epochs,
-            batch_size=self.batch_size,
-            criterion=self.criterion,
-            criterion_kwargs=self.criterion_kwargs,
-            optimizer=self.optimizer,
-            optimizer_kwargs=self.optimizer_kwargs,
-            callbacks=self.callbacks,
-            callback_kwargs=self.callback_kwargs,
-            lr=self.lr,
-            verbose=self.verbose,
-            random_state=self.random_state,
-        )
+        super().__post_init__()
 
     def _build_network(self, X):
         """Build the InceptionTime network.
@@ -199,9 +217,9 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
             kernel_size=self.kernel_size,
             random_state=self.random_state,
             init_weights=self.init_weights,
-            activation=self.activation,
-            activation_hidden=self.activation_hidden,
-            activation_inception=self.activation_inception,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
+            activation_inception=self._callable_activations["activation_inception"],
         )
 
     @classmethod
