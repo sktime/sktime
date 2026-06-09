@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-from tqdm import trange
 
 from sktime.libs.kronos.module import (
     BSQuantizer,
@@ -15,6 +14,7 @@ from sktime.libs.kronos.module import (
 )
 from sktime.utils.dependencies import _safe_import
 
+trange = _safe_import("tqdm.trange")
 torch = _safe_import("torch")
 nn = _safe_import("torch.nn")
 F = _safe_import("torch.nn.functional")
