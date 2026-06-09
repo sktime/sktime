@@ -47,15 +47,15 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         Size of the bottleneck layer.
     depth : int, default=6
         Number of inception modules to stack.
-    activation: str or None, default=None
+    activation: str or callable or None, default=None
         Activation function used for the final output layer.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu', None
-    activation_hidden : str, default="relu"
+        Recommended: 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU', 'SELU', 'GELU', None
+    activation_hidden : str or callable, default="ReLU"
         Activation function used for hidden layers (output from inception modules).
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    activation_inception : str or None, default=None
+        Recommended: 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU', 'SELU', 'GELU'
+    activation_inception : str or callable or None, default=None
         Activation function used inside the inception modules.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu', None
+        Recommended: 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU', 'SELU', 'GELU', None
     optimizer : case insensitive str or None or an instance of optimizers
         defined in torch.optim, default = "Adam"
         The optimizer to use for training the model.
@@ -129,6 +129,12 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         "capability:random_state": True,
     }
 
+    _instantiate_activation_vars = (
+        "activation",
+        "activation_hidden",
+        "activation_inception",
+    )
+
     def __init__(
         self: "InceptionTimeClassifierTorch",
         num_epochs: int = 1500,
@@ -140,9 +146,9 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         use_bottleneck: bool = True,
         bottleneck_size: int = 32,
         depth: int = 6,
-        activation: str | None = None,
-        activation_hidden: str = "relu",
-        activation_inception: str | None = None,
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable = "ReLU",
+        activation_inception: str | Callable | None = None,
         optimizer: str | None | Callable = "Adam",
         optimizer_kwargs: dict | None = None,
         criterion: str | None | Callable = "CrossEntropyLoss",
@@ -244,9 +250,9 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
             depth=self.depth,
             kernel_size=self.kernel_size,
             random_state=self.random_state,
-            activation=self._validated_activation,
-            activation_hidden=self.activation_hidden,
-            activation_inception=self.activation_inception,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
+            activation_inception=self._callable_activations["activation_inception"],
             init_weights=self.init_weights,
         )
 
