@@ -89,6 +89,41 @@ class KronosForecaster(BaseForecaster):
        https://huggingface.co/NeoQuasar/Kronos-Tokenizer-base
     .. [7] Kronos-Tokenizer-2k model card:
        https://huggingface.co/NeoQuasar/Kronos-Tokenizer-2k
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.kronos import KronosForecaster
+    >>> url = (
+    ...     "https://raw.githubusercontent.com/shiyu-coder/Kronos/"
+    ...     "refs/heads/master/tests/data/regression_input.csv"
+    ... )
+    >>> df = pd.read_csv(  # doctest: +SKIP
+    ...     url,
+    ...     parse_dates=["timestamps"],
+    ...     index_col="timestamps",
+    ... )
+    >>> lookback, pred_len = 400, 120
+    >>> y = df.iloc[:lookback]  # doctest: +SKIP
+    >>> fh = ForecastingHorizon(  # doctest: +SKIP
+    ...     df.index[lookback : lookback + pred_len],
+    ...     is_relative=False,
+    ... )
+    >>> forecaster = KronosForecaster(  # doctest: +SKIP
+    ...     model_path="NeoQuasar/Kronos-small",
+    ...     tokenizer_path="NeoQuasar/Kronos-Tokenizer-base",
+    ...     device="cpu",
+    ...     deterministic=True,
+    ...     predict_kwargs={
+    ...         "T": 0.8,
+    ...         "top_k": 1,
+    ...         "top_p": 1.0,
+    ...         "sample_count": 1,
+    ...         "verbose": False,
+    ...     },
+    ... )
+    >>> y_pred = forecaster.fit(y).predict(fh=fh)  # doctest: +SKIP
     """
 
     _tags = {
