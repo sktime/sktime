@@ -43,6 +43,16 @@ class KronosForecaster(BaseForecaster):
         ``None``, literal open/high/low/close names are used when present,
         otherwise the first four numeric columns are used as OHLC. Literal
         volume/amount columns are used when present.
+    freq : str or pandas offset, default="5min"
+        Frequency used to synthesize timestamps for Kronos when the training
+        index is not a ``pd.PeriodIndex`` or ``pd.DatetimeIndex``. The default
+        is five minutes because Kronos is designed for financial K-line/OHLC
+        data, where five-minute intraday bars are a common default granularity.
+    start : str or pd.Timestamp, default="2000-01-01"
+        Start timestamp used with ``freq`` to synthesize timestamps for Kronos
+        when the training index is not datetime-like. The default date is
+        arbitrary; it provides deterministic calendar fields for Kronos while
+        keeping the synthetic timestamp path independent of the original index.
     clip : float, default=5.0
         Input normalization clipping value passed to ``KronosPredictor``.
     predict_kwargs : dict or None, default=None
@@ -103,6 +113,8 @@ class KronosForecaster(BaseForecaster):
         tokenizer_path="NeoQuasar/Kronos-Tokenizer-base",
         device="cpu",
         columns=None,
+        freq="5min",
+        start="2000-01-01",
         clip=5.0,
         predict_kwargs=None,
         deterministic=False,
@@ -111,6 +123,8 @@ class KronosForecaster(BaseForecaster):
         self.tokenizer_path = tokenizer_path
         self.device = device
         self.columns = columns
+        self.freq = freq
+        self.start = start
         self.clip = clip
         self.predict_kwargs = predict_kwargs
         self.deterministic = deterministic
@@ -141,15 +155,14 @@ class KronosForecaster(BaseForecaster):
         for internal, original in self.column_mapping_.items():
             df[internal] = self.context_[original].to_numpy()
 
-        x_timestamp = pd.Series(
-            self.context_.index
-        )
-        y_timestamp = pd.Series(
-            fh.to_absolute(self.cutoff).to_pandas().values
-        )
+        x_index = self.context_.index
+        y_index = fh.to_absolute_index(self.cutoff)
+        x_timestamp = self._to_timestamps(x_index)
+        y_timestamp = self._to_timestamps(y_index)
+
+        import torch
 
         from sktime.libs.kronos import KronosPredictor
-        import torch
 
         if self.deterministic:
             torch.manual_seed(42)
@@ -172,7 +185,7 @@ class KronosForecaster(BaseForecaster):
             **predict_kwargs,
         )
 
-        out = pd.DataFrame(index=pred_df.index)
+        out = pd.DataFrame(index=y_index)
         for internal in self._kronos_columns:
             original = self.column_mapping_.get(internal)
             if (
@@ -180,10 +193,26 @@ class KronosForecaster(BaseForecaster):
                 and original not in out.columns
                 and internal in pred_df.columns
             ):
-                out[original] = pred_df[internal]
+                out[original] = pred_df[internal].to_numpy()
         out = out[self.output_columns_]
 
         return out
+
+    def _to_timestamps(self, index):
+        """Return datetime-like timestamps for Kronos from ``index``."""
+        if isinstance(index, pd.PeriodIndex):
+            timestamp = index.to_timestamp()
+        elif isinstance(index, pd.DatetimeIndex):
+            timestamp = index
+        else:
+            # The fallback date is arbitrary; Kronos consumes calendar fields,
+            # while freq controls the spacing.
+            start = pd.Timestamp(self.start)
+            offset = pd.tseries.frequencies.to_offset(self.freq)
+            index_values = np.asarray(index, dtype=int)
+            timestamp = [start + int(value) * offset for value in index_values]
+
+        return pd.Series(timestamp)
 
     def _resolve_column_mapping(self, y):
         """Resolve input columns to Kronos internal OHLCVA columns."""
@@ -212,9 +241,7 @@ class KronosForecaster(BaseForecaster):
                     "a columns mapping, or at least one numeric column."
                 )
             if len(numeric_cols) < 4:
-                numeric_cols = [
-                    numeric_cols[i % len(numeric_cols)] for i in range(4)
-                ]
+                numeric_cols = [numeric_cols[i % len(numeric_cols)] for i in range(4)]
             for internal, original in zip(self._kronos_columns[:4], numeric_cols[:4]):
                 mapping[internal] = original
 
@@ -271,7 +298,7 @@ class KronosForecaster(BaseForecaster):
                     "top_p": 1.0,
                     "verbose": False,
                 },
-            }
+            },
         ]
 
 
