@@ -16,11 +16,30 @@ from sktime.utils.dependencies import _safe_import
 
 trange = _safe_import("tqdm.trange")
 torch = _safe_import("torch")
-nn = _safe_import("torch.nn")
+nn = _safe_import("torch.nn", return_object="None")
 F = _safe_import("torch.nn.functional")
+
+if nn is None:
+
+    class _DummyModule:
+        pass
+
+    class nn:
+        Module = _DummyModule
+
+
 PyTorchModelHubMixin = _safe_import(
-    "huggingface_hub.PyTorchModelHubMixin", pkg_name="huggingface_hub"
+    "huggingface_hub.PyTorchModelHubMixin",
+    pkg_name="huggingface_hub",
+    return_object="None",
 )
+
+if PyTorchModelHubMixin is None:
+
+    class PyTorchModelHubMixin:
+        def __init_subclass__(cls, *args, **kwargs):
+            pass
+
 
 __all__ = [
     "Kronos",

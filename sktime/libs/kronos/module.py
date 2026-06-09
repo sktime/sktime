@@ -5,9 +5,19 @@ import math
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
-nn = _safe_import("torch.nn")
+nn = _safe_import("torch.nn", return_object="None")
 F = _safe_import("torch.nn.functional")
 Function = _safe_import("torch.autograd.Function")
+
+if nn is None:
+
+    class _DummyModule:
+        pass
+
+    class nn:
+        Module = _DummyModule
+
+
 rearrange = _safe_import("einops.rearrange", pkg_name="einops")
 reduce = _safe_import("einops.reduce", pkg_name="einops")
 
