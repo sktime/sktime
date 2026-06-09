@@ -1,27 +1,22 @@
-"""The collective and point anomalies (CAPA) algorithm."""
+"""The subset multivariate collective and point anomalies (MVCAPA) algorithm."""
 
 from sktime.detection.base import BaseDetector
 from sktime.utils.dependencies import _placeholder_record
 
 
 @_placeholder_record(["skchange.anomaly_detectors", "skchange.anomaly_detectors.capa"])
-class CAPA(BaseDetector):
-    """CAPA = Collective and point anomaly detection, from skchange.
+class MVCAPA(BaseDetector):
+    """MVCAPA = Multivariate collective and point anomaly detection, from skchange.
 
-    Redirects to ``skchange.anomaly_detectors.CAPA``.
+    Redirects to ``skchange.anomaly_detectors.mvcapa``.
 
-    An efficient implementation of the CAPA algorithm [1]_ for anomaly detection.
-    It is implemented using the 'savings' formulation of the problem given in [2]_ and
-    [3]_.
-
-    ``CAPA`` can be applied to both univariate and multivariate data, but does not infer
-    the subset of affected components for each anomaly in the multivariate case. See
-    ``MVCAPA`` if such inference is desired.
+    An efficient implementation of the MVCAPA algorithm [1]_ for anomaly detection.
 
     Parameters
     ----------
     collective_saving : BaseSaving or BaseCost, optional (default=L2Cost(0.0))
         The saving function to use for collective anomaly detection.
+        Only univariate savings are permitted (see the `evaluation_type` attribute).
         If a ``BaseCost`` is given, the saving function is constructed from the cost.
         The cost must have a fixed parameter that represents the baseline cost.
     point_saving : BaseSaving or BaseCost, optional (default=L2Cost(0.0))
@@ -29,47 +24,51 @@ class CAPA(BaseDetector):
         minimum size of 1 are permitted.
         If a ``BaseCost`` is given, the saving function is constructed from the cost.
         The cost must have a fixed parameter that represents the baseline cost.
-    collective_penalty_scale : float, optional (default=2.0)
+    collective_penalty : str or Callable, optional, default="combined"
+        Penalty function to use for collective anomalies. If a string, must be one of
+        "dense", "sparse", "intermediate" or "combined". If a Callable, must be a
+        function returning a penalty and per-component penalties, given n, p, n_params
+        and scale.
+    collective_penalty_scale : float, optional, default=1.0
         Scaling factor for the collective penalty.
-    point_penalty_scale : float, optional (default=2.0)
+    point_penalty : str or Callable, optional, default="sparse"
+        Penalty function to use for point anomalies. See ``collective_penalty``.
+    point_penalty_scale : float, optional, default=1.0
         Scaling factor for the point penalty.
-    min_segment_length : int, optional (default=2)
+    min_segment_length : int, optional, default=2
         Minimum length of a segment.
-    max_segment_length : int, optional (default=1000)
+    max_segment_length : int, optional, default=1000
         Maximum length of a segment.
-    ignore_point_anomalies : bool, optional (default=False)
+    ignore_point_anomalies : bool, optional, default=False
         If True, detected point anomalies are not returned by `predict`. I.e., only
-        collective anomalies are returned. If False, point anomalies are included in the
-        output as collective anomalies of length 1.
-
-    See Also
-    --------
-    MVCAPA : Multivariate CAPA with subset inference.
+        collective anomalies are returned.
 
     References
     ----------
-    .. [1] Fisch, A. T., Eckley, I. A., & Fearnhead, P. (2022). A linear time method\
-        for the detection of collective and point anomalies. Statistical Analysis and\
-        DataMining: The ASA Data Science Journal, 15(4), 494-508.
-
-    .. [2] Fisch, A. T., Eckley, I. A., & Fearnhead, P. (2022). Subset multivariate\
-        collective and point anomaly detection. Journal of Computational and Graphical\
-        Statistics, 31(2), 574-585.
-
-    .. [3] Tveten, M., Eckley, I. A., & Fearnhead, P. (2022). Scalable change-point and\
-        anomaly detection in cross-correlated data with an application to condition\
-        monitoring. The Annals of Applied Statistics, 16(2), 721-743.
+    .. [1] Fisch, A. T., Eckley, I. A., & Fearnhead, P. (2022). Subset multivariate
+       collective and point anomaly detection. Journal of Computational and Graphical
+       Statistics, 31(2), 574-585.
 
     Examples
     --------
-    >>> from skchange.anomaly_detectors import CAPA
-    >>> from skchange.datasets.generate import generate_alternating_data
-    >>> df = generate_alternating_data(n_segments=5, mean=10, segment_length=100)
-    >>> detector = CAPA()
+    >>> import numpy as np
+    >>> from skchange.anomaly_detectors import MVCAPA
+    >>> from skchange.datasets.generate import generate_anomalous_data
+    >>> n = 300
+    >>> means = [np.array([8.0, 0.0, 0.0]), np.array([2.0, 3.0, 5.0])]
+    >>> df = generate_anomalous_data(
+    >>>     n, anomalies=[(100, 120), (250, 300)], means=means, random_state=3
+    >>> )
+    >>> detector = MVCAPA()
     >>> detector.fit_predict(df)
-    0    [100, 200)
-    1    [300, 400)
-    Name: anomaly_interval, dtype: interval
+      anomaly_interval anomaly_columns
+    0       [100, 120)             [0]
+    1       [250, 300)       [2, 1, 0]
+
+    Notes
+    -----
+    The MVCAPA algorithm assumes the input data is centered before fitting and
+    predicting.
     """
 
     _tags = {
@@ -91,7 +90,9 @@ class CAPA(BaseDetector):
         self,
         collective_saving=None,
         point_saving=None,
+        collective_penalty="combined",
         collective_penalty_scale: float = 2.0,
+        point_penalty="sparse",
         point_penalty_scale: float = 2.0,
         min_segment_length: int = 2,
         max_segment_length: int = 1000,
@@ -99,7 +100,9 @@ class CAPA(BaseDetector):
     ):
         self.collective_saving = collective_saving
         self.point_saving = point_saving
+        self.collective_penalty = collective_penalty
         self.collective_penalty_scale = collective_penalty_scale
+        self.point_penalty = point_penalty
         self.point_penalty_scale = point_penalty_scale
         self.min_segment_length = min_segment_length
         self.max_segment_length = max_segment_length

@@ -171,6 +171,12 @@ class HFTransformersForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["benheid", "geetu040"],
+        "maintainers": ["benheid", "geetu040"],
+        # estimator type
+        # --------------
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
