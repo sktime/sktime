@@ -40,7 +40,7 @@ class KinematicFeatures(BaseTransformer):
 
     Parameters
     ----------
-    features : str or list of str, optional, default=["v_abs", "a_abs", "c_abs"]
+    features : str or list of str, optional, default=["v_abs", "a_abs", "curv"]
         list of features to compute, possible features:
 
         * "v" - vector of velocity
@@ -48,6 +48,14 @@ class KinematicFeatures(BaseTransformer):
         * "a" - vector of acceleration
         * "a_abs" - absolute acceleration
         * "curv" - curvature
+
+    remember_data : str, optional, default="none"
+        Whether to remember historical data for future transforms.
+        Possible values:
+
+        * "none" - does not remember any historical data.
+        * "last" - remembers the last 2 data points seen.
+        * "all" - remembers all historical data points seen.
 
     Examples
     --------
@@ -74,16 +82,18 @@ class KinematicFeatures(BaseTransformer):
         "y_inner_mtype": "None",
         "capability:multivariate": True,
         "requires_y": False,
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
         "capability:categorical_in_X": False,
+        "remember_data": False,
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, features=None):
+    def __init__(self, features=None, remember_data="none"):
         self.features = features
+        self.remember_data = remember_data
         if features is None:
             self._features = ["v_abs", "a_abs", "curv"]
         elif isinstance(features, str):
@@ -92,6 +102,70 @@ class KinematicFeatures(BaseTransformer):
             self._features = features
 
         super().__init__()
+
+        if remember_data == "none":
+            self.set_tags(**{"fit_is_empty": True, "remember_data": False})
+        else:
+            self.set_tags(**{"fit_is_empty": False, "remember_data": False})
+            # we set remember_data to False to manage history manually
+            # as BaseTransformer handles it in a way that is not flexible enough
+            # for "last" vs "all"
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing core logic, called from fit
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to be transformed
+        y : ignored, present for interface compliance
+
+        Returns
+        -------
+        self: reference to self
+        """
+        self._remember_data(X)
+        return self
+
+    def _update(self, X, y=None):
+        """Update transformer with X and y.
+
+        private _update containing core logic, called from update
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to update transformer with
+        y : ignored, present for interface compliance
+
+        Returns
+        -------
+        self: reference to self
+        """
+        self._remember_data(X)
+        return self
+
+    def _remember_data(self, X):
+        """Remember data for future transforms."""
+        from sktime.datatypes import update_data
+
+        remember_data = self.remember_data
+
+        if remember_data == "none":
+            return
+
+        if remember_data == "all":
+            if not hasattr(self, "_X_history"):
+                self._X_history = X
+            else:
+                self._X_history = update_data(self._X_history, X_new=X)
+        elif remember_data == "last":
+            if not hasattr(self, "_X_history"):
+                self._X_history = X.iloc[-2:]
+            else:
+                self._X_history = update_data(self._X_history, X_new=X).iloc[-2:]
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -108,8 +182,15 @@ class KinematicFeatures(BaseTransformer):
         -------
         transformed version of X
         """
+        from sktime.datatypes import update_data
+
         features = self._features
         res = pd.DataFrame()
+
+        if self.remember_data != "none" and hasattr(self, "_X_history"):
+            X_full = update_data(self._X_history, X_new=X)
+        else:
+            X_full = X
 
         def prepend_cols(df, prefix):
             df.columns = [f"{prefix}__{col}" for col in df.columns]
@@ -128,31 +209,32 @@ class KinematicFeatures(BaseTransformer):
 
         def feature_query(queries):
             """Boolean, whether any of the features in queries is being asked for."""
-            if queries is str:
+            if isinstance(queries, str):
                 return queries in features
             else:
                 return any([x in features for x in queries])
 
         if feature_query(["v", "v_abs", "curv"]):
-            v_frame = X.diff()
-            v_frame = prepend_cols(v_frame, "v")
+            v_frame = X_full.diff()
             if feature_query(["v"]):
-                res = pd.concat([res, v_frame], axis=1)
+                v_frame_cols = prepend_cols(v_frame.copy(), "v")
+                res = pd.concat([res, v_frame_cols.loc[X.index]], axis=1)
             if feature_query(["v_abs"]):
                 vabs_frame = abs_rows(v_frame, "v_abs")
-                vabs_frame.iloc[0] = np.nan
-                res = pd.concat([res, vabs_frame], axis=1)
+                res = pd.concat([res, vabs_frame.loc[X.index]], axis=1)
 
         if feature_query(["a", "a_abs", "curv"]):
-            a_frame = X.diff().diff()
-            a_frame = prepend_cols(a_frame, "a")
+            # we need v_frame for a_frame
+            if not feature_query(["v", "v_abs", "curv"]):
+                v_frame = X_full.diff()
+
+            a_frame = v_frame.diff()
             if feature_query(["a"]):
-                res = pd.concat([res, a_frame], axis=1)
+                a_frame_cols = prepend_cols(a_frame.copy(), "a")
+                res = pd.concat([res, a_frame_cols.loc[X.index]], axis=1)
             if feature_query(["a_abs"]):
                 aabs_frame = abs_rows(a_frame, "a_abs")
-                aabs_frame.iloc[0] = np.nan
-                aabs_frame.iloc[1] = np.nan
-                res = pd.concat([res, aabs_frame], axis=1)
+                res = pd.concat([res, aabs_frame.loc[X.index]], axis=1)
 
         if feature_query(["curv"]):
             vsq_frame = absq_rows(v_frame)
@@ -162,8 +244,8 @@ class KinematicFeatures(BaseTransformer):
             cross_term = cross_term.reshape(-1, 1)
             curv_arr = (curv_arr - cross_term) / (vsq_frame.values**3)
             curv_arr = np.abs(curv_arr) ** 0.5
-            curv_frame = pd.DataFrame(curv_arr, columns=["curv"], index=X.index)
-            res = pd.concat([res, curv_frame], axis=1)
+            curv_frame = pd.DataFrame(curv_arr, columns=["curv"], index=X_full.index)
+            res = pd.concat([res, curv_frame.loc[X.index]], axis=1)
 
         return res
 
@@ -189,4 +271,6 @@ class KinematicFeatures(BaseTransformer):
         """
         params1 = {}
         params2 = {"features": ["v", "a"]}
-        return [params1, params2]
+        params3 = {"features": ["v", "a"], "remember_data": "last"}
+        params4 = {"features": ["v_abs", "curv"], "remember_data": "all"}
+        return [params1, params2, params3, params4]
