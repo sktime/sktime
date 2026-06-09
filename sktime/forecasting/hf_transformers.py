@@ -189,6 +189,9 @@ class HFTransformersForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:unequal_length": False,
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
