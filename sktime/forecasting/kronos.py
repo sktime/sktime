@@ -116,11 +116,10 @@ class KronosForecaster(BaseForecaster):
     ...     device="cpu",
     ...     deterministic=True,
     ...     predict_kwargs={
-    ...         "T": 0.8,
-    ...         "top_k": 1,
-    ...         "top_p": 1.0,
+    ...         "T": 1.0,
+    ...         "top_p": 0.9,
     ...         "sample_count": 1,
-    ...         "verbose": False,
+    ...         "verbose": True,
     ...     },
     ... )
     >>> y_pred = forecaster.fit(y).predict(fh=fh)  # doctest: +SKIP
