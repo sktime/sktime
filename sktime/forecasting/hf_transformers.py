@@ -79,7 +79,7 @@ class HFTransformersForecaster(BaseForecaster):
     --------
     **Using a Pretrained Model from Hugging Face**
 
-    >>> from sktime.forecasting.hf_transformers_forecaster import (
+    >>> from sktime.forecasting.hf_transformers import (
     ...     HFTransformersForecaster,
     ... )
     >>> from sktime.datasets import load_airline
@@ -105,7 +105,7 @@ class HFTransformersForecaster(BaseForecaster):
 
     **Using PEFT for Fine-Tuning**
 
-    >>> from sktime.forecasting.hf_transformers_forecaster import (
+    >>> from sktime.forecasting.hf_transformers import (
     ...     HFTransformersForecaster,
     ... ) # doctest: +SKIP
     >>> from sktime.datasets import load_airline # doctest: +SKIP
@@ -141,7 +141,7 @@ class HFTransformersForecaster(BaseForecaster):
 
     >>> from sktime.datasets import load_airline
     >>> from transformers import AutoformerConfig, AutoformerForPrediction
-    >>> from sktime.forecasting.hf_transformers_forecaster import (
+    >>> from sktime.forecasting.hf_transformers import (
     ...     HFTransformersForecaster
     ... )
     >>> y = load_airline()
@@ -225,6 +225,7 @@ class HFTransformersForecaster(BaseForecaster):
 
         if isinstance(self.model_path, PreTrainedModel):
             self.model = self.model_path
+            self.info = {"mismatched_keys": []}
             config = self.model.config
 
         else:
@@ -312,6 +313,12 @@ class HFTransformersForecaster(BaseForecaster):
         # Prepare training arguments
         training_args = deepcopy(self.training_args)
         training_args["label_names"] = ["future_values"]
+        # evaluation_strategy was renamed to eval_strategy in transformers 4.41.0
+        if _check_soft_dependencies("transformers>=4.41.0", severity="none"):
+            if "evaluation_strategy" in training_args:
+                training_args["eval_strategy"] = training_args.pop(
+                    "evaluation_strategy"
+                )
         training_args = TrainingArguments(**training_args)
 
         # Handle fine-tuning strategy
