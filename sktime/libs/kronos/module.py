@@ -1,3 +1,5 @@
+"""Internal neural network components for the Kronos implementation."""
+
 import math
 
 import torch
@@ -5,6 +7,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange, reduce
 from torch.autograd import Function
+
+__all__ = []
 
 
 class DifferentiableEntropyFunction(Function):
@@ -54,7 +58,8 @@ class BinarySphericalQuantizer(nn.Module):
         l2_norm=True,
         inv_temperature=1,
     ):
-        """
+        """Initialize binary spherical quantization.
+
         Paper link: https://arxiv.org/pdf/2406.07548.pdf
         Here we use the official implementation of the BinarySphericalQuantizer.
         """
@@ -156,14 +161,15 @@ class BinarySphericalQuantizer(nn.Module):
         )
 
     def soft_entropy_loss(self, z):
-        # if we divide the code in subgroups of size group_size, the codebook will be of size 2 ** group_size
+        # Divide the code in subgroups of size group_size. The codebook
+        # will be of size 2 ** group_size.
         # the sub-code is the last group_size bits of the full code
         group_code_book = self.group_codebook / (
             self.embed_dim**0.5 if self.l2_norm else 1
         )
         divided_z = rearrange(z, "... (g c) -> ... g c", c=self.group_size)
 
-        # we calculate the distance between the divided_z and the codebook for each subgroup
+        # Calculate the distance between divided_z and the codebook for each subgroup.
         distance = -2 * torch.einsum(
             "... g c, d c ->... g d", divided_z, group_code_book
         )
@@ -198,9 +204,11 @@ class BinarySphericalQuantizer(nn.Module):
         return persample_entropy.mean()
 
     def codes_to_indexes(self, zhat):
-        """Converts a `code` to an index in the codebook.
+        """Convert a code to an index in the codebook.
+
         Args:
-            zhat: A tensor of shape (B, ..., C) containing the codes. must be in {-1, 1}
+            zhat: A tensor of shape (B, ..., C) containing the codes. Must be
+                in {-1, 1}.
         """
         assert zhat.shape[-1] == self.embed_dim, (
             f"Expected {self.embed_dim} dimensions, got {zhat.shape[-1]}"
@@ -208,9 +216,11 @@ class BinarySphericalQuantizer(nn.Module):
         return ((zhat + 1) / 2 * self.basis).sum(axis=-1).to(torch.int64)
 
     def codes_to_group_indexes(self, zhat):
-        """Converts a `code` to a list of indexes (in groups) in the codebook.
+        """Convert a code to grouped indexes in the codebook.
+
         Args:
-            zhat: A tensor of shape (B, ..., C) containing the codes. must be in {-1, 1}
+            zhat: A tensor of shape (B, ..., C) containing the codes. Must be
+                in {-1, 1}.
         """
         zhat_in_group = rearrange(zhat, "b ... (g c) -> b ... g c", c=self.group_size)
         return ((zhat_in_group + 1) / 2 * self.group_basis).sum(axis=-1).to(torch.int64)
@@ -493,9 +503,14 @@ class HierarchicalEmbedding(nn.Module):
         nn.init.normal_(self.emb_s2.weight, mean=0, std=d_model**-0.5)
 
     def split_token(self, token_ids: torch.Tensor, s2_bits: int):
-        """Inputs:
-        token_ids (torch.Tensor): Composite token IDs of shape [batch_size, seq_len] or [N], each in range [0, 2^(s1_bits + s2_bits) - 1].
-        s2_bits (int): Number of low bits used for the fine token (s2).
+        """Split composite token IDs into coarse and fine token IDs.
+
+        Parameters
+        ----------
+        token_ids : torch.Tensor
+            Composite token IDs of shape ``[batch_size, seq_len]`` or ``[N]``.
+        s2_bits : int
+            Number of low bits used for the fine token.
         """
         assert isinstance(s2_bits, int) and s2_bits > 0, (
             "s2_bits must be a positive integer"
@@ -508,11 +523,13 @@ class HierarchicalEmbedding(nn.Module):
         return s1_ids, s2_ids
 
     def forward(self, token_ids):
-        """Inputs:
-        token_ids:
-            - tuple or list: (s1_ids, s2_ids), each of shape [batch_size, seq_len], or
-            - torch.Tensor: composite token IDs of shape [batch_size, seq_len], which will be split into (s1_ids, s2_ids) internally.
-        Output: [batch_size, seq_len, d_model]
+        """Embed hierarchical token IDs.
+
+        Parameters
+        ----------
+        token_ids : tuple, list, or torch.Tensor
+            Either ``(s1_ids, s2_ids)`` or composite token IDs of shape
+            ``[batch_size, seq_len]``.
         """
         if isinstance(token_ids, tuple) or isinstance(token_ids, list):
             s1_ids, s2_ids = token_ids
@@ -532,8 +549,14 @@ class DependencyAwareLayer(nn.Module):
         self.norm = RMSNorm(d_model)
 
     def forward(self, hidden_states, sibling_embed, key_padding_mask=None):
-        """hidden_states: [batch, seq_len, d_model]
-        sibling_embed: Embedding from another subtoken
+        """Apply dependency-aware cross attention.
+
+        Parameters
+        ----------
+        hidden_states : torch.Tensor
+            Hidden states with shape ``[batch, seq_len, d_model]``.
+        sibling_embed : torch.Tensor
+            Embedding from another subtoken.
         """
         attn_out = self.cross_attn(
             query=sibling_embed,
@@ -613,7 +636,7 @@ class DualHead(nn.Module):
 
 class FixedEmbedding(nn.Module):
     def __init__(self, c_in, d_model):
-        super(FixedEmbedding, self).__init__()
+        super().__init__()
 
         w = torch.zeros(c_in, d_model).float()
         w.require_grad = False
@@ -635,7 +658,7 @@ class FixedEmbedding(nn.Module):
 
 class TemporalEmbedding(nn.Module):
     def __init__(self, d_model, learn_pe):
-        super(TemporalEmbedding, self).__init__()
+        super().__init__()
 
         minute_size = 60
         hour_size = 24

@@ -1,38 +1,36 @@
+"""Kronos model, tokenizer, and predictor implementation."""
+
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from huggingface_hub import PyTorchModelHubMixin
 from tqdm import trange
 
-from sktime.libs.kronos.module import *
+from sktime.libs.kronos.module import (
+    BSQuantizer,
+    DependencyAwareLayer,
+    DualHead,
+    HierarchicalEmbedding,
+    RMSNorm,
+    TemporalEmbedding,
+    TransformerBlock,
+)
+
+__all__ = [
+    "Kronos",
+    "KronosPredictor",
+    "KronosTokenizer",
+    "auto_regressive_inference",
+    "calc_time_stamps",
+    "sample_from_logits",
+    "top_k_top_p_filtering",
+]
 
 
 class KronosTokenizer(nn.Module, PyTorchModelHubMixin):
-    """
-    KronosTokenizer module for tokenizing input data using a hybrid quantization approach.
-
-    This tokenizer utilizes a combination of encoder and decoder Transformer blocks
-    along with the Binary Spherical Quantization (BSQuantizer) to compress and decompress input data.
-
-    Args:
-           d_in (int): Input dimension.
-           d_model (int): Model dimension.
-           n_heads (int): Number of attention heads.
-           ff_dim (int): Feed-forward dimension.
-           n_enc_layers (int): Number of encoder layers.
-           n_dec_layers (int): Number of decoder layers.
-           ffn_dropout_p (float): Dropout probability for feed-forward networks.
-           attn_dropout_p (float): Dropout probability for attention mechanisms.
-           resid_dropout_p (float): Dropout probability for residual connections.
-           s1_bits (int): Number of bits for the pre token in BSQuantizer.
-           s2_bits (int): Number of bits for the post token in BSQuantizer.
-           beta (float): Beta parameter for BSQuantizer.
-           gamma0 (float): Gamma0 parameter for BSQuantizer.
-           gamma (float): Gamma parameter for BSQuantizer.
-           zeta (float): Zeta parameter for BSQuantizer.
-           group_size (int): Group size parameter for BSQuantizer.
-
-    """
+    """Tokenize K-line features with binary spherical quantization."""
 
     def __init__(
         self,
@@ -114,21 +112,7 @@ class KronosTokenizer(nn.Module, PyTorchModelHubMixin):
         )  # BSQuantizer module
 
     def forward(self, x):
-        """
-        Forward pass of the KronosTokenizer.
-
-        Args:
-            x (torch.Tensor): Input tensor of shape (batch_size, seq_len, d_in).
-
-        Returns
-        -------
-            tuple: A tuple containing:
-                - tuple: (z_pre, z) - Reconstructed outputs from decoder with s1_bits and full codebook respectively,
-                         both of shape (batch_size, seq_len, d_in).
-                - torch.Tensor: bsq_loss - Loss from the BSQuantizer.
-                - torch.Tensor: quantized - Quantized representation from BSQuantizer.
-                - torch.Tensor: z_indices - Indices from the BSQuantizer.
-        """
+        """Run tokenizer reconstruction and quantization."""
         z = self.embed(x)
 
         for layer in self.encoder:
@@ -158,17 +142,7 @@ class KronosTokenizer(nn.Module, PyTorchModelHubMixin):
         return (z_pre, z), bsq_loss, quantized, z_indices
 
     def indices_to_bits(self, x, half=False):
-        """
-        Converts indices to bit representations and scales them.
-
-        Args:
-            x (torch.Tensor): Indices tensor.
-            half (bool, optional): Whether to process only half of the codebook dimension. Defaults to False.
-
-        Returns
-        -------
-            torch.Tensor: Bit representation tensor.
-        """
+        """Convert indices to scaled bit representations."""
         if half:
             x1 = x[0]  # Assuming x is a tuple of indices if half is True
             x2 = x[1]
@@ -190,17 +164,7 @@ class KronosTokenizer(nn.Module, PyTorchModelHubMixin):
         return x
 
     def encode(self, x, half=False):
-        """
-        Encodes the input data into quantized indices.
-
-        Args:
-            x (torch.Tensor): Input tensor of shape (batch_size, seq_len, d_in).
-            half (bool, optional): Whether to use half quantization in BSQuantizer. Defaults to False.
-
-        Returns
-        -------
-            torch.Tensor: Quantized indices from BSQuantizer.
-        """
+        """Encode input data into quantized indices."""
         z = self.embed(x)
         for layer in self.encoder:
             z = layer(z)
@@ -212,17 +176,7 @@ class KronosTokenizer(nn.Module, PyTorchModelHubMixin):
         return z_indices
 
     def decode(self, x, half=False):
-        """
-        Decodes quantized indices back to the input data space.
-
-        Args:
-            x (torch.Tensor): Quantized indices tensor.
-            half (bool, optional): Whether the indices were generated with half quantization. Defaults to False.
-
-        Returns
-        -------
-            torch.Tensor: Reconstructed output tensor of shape (batch_size, seq_len, d_in).
-        """
+        """Decode quantized indices back to the input data space."""
         quantized = self.indices_to_bits(x, half)
         z = self.post_quant_embed(quantized)
         for layer in self.decoder:
@@ -232,22 +186,7 @@ class KronosTokenizer(nn.Module, PyTorchModelHubMixin):
 
 
 class Kronos(nn.Module, PyTorchModelHubMixin):
-    """
-    Kronos Model.
-
-    Args:
-        s1_bits (int): Number of bits for pre tokens.
-        s2_bits (int): Number of bits for post tokens.
-        n_layers (int): Number of Transformer blocks.
-        d_model (int): Dimension of the model's embeddings and hidden states.
-        n_heads (int): Number of attention heads in the MultiheadAttention layers.
-        ff_dim (int): Dimension of the feedforward network in the Transformer blocks.
-        ffn_dropout_p (float): Dropout probability for the feedforward network.
-        attn_dropout_p (float): Dropout probability for the attention layers.
-        resid_dropout_p (float): Dropout probability for residual connections.
-        token_dropout_p (float): Dropout probability for token embeddings.
-        learn_te (bool): Whether to use learnable temporal embeddings.
-    """
+    """Kronos autoregressive token model."""
 
     def __init__(
         self,
@@ -320,21 +259,7 @@ class Kronos(nn.Module, PyTorchModelHubMixin):
         use_teacher_forcing=False,
         s1_targets=None,
     ):
-        """
-        Args:
-            s1_ids (torch.Tensor): Input tensor of s1 token IDs. Shape: [batch_size, seq_len]
-            s2_ids (torch.Tensor): Input tensor of s2 token IDs. Shape: [batch_size, seq_len]
-            stamp (torch.Tensor, optional): Temporal stamp tensor. Shape: [batch_size, seq_len]. Defaults to None.
-            padding_mask (torch.Tensor, optional): Mask for padding tokens. Shape: [batch_size, seq_len]. Defaults to None.
-            use_teacher_forcing (bool, optional): Whether to use teacher forcing for s1 decoding. Defaults to False.
-            s1_targets (torch.Tensor, optional): Target s1 token IDs for teacher forcing. Shape: [batch_size, seq_len]. Defaults to None.
-
-        Returns
-        -------
-            Tuple[torch.Tensor, torch.Tensor]:
-                - s1 logits: Logits for s1 token predictions. Shape: [batch_size, seq_len, s1_vocab_size]
-                - s2_logits: Logits for s2 token predictions, conditioned on s1. Shape: [batch_size, seq_len, s2_vocab_size]
-        """
+        """Run a full forward pass over s1 and s2 token IDs."""
         x = self.embedding([s1_ids, s2_ids])
         if stamp is not None:
             time_embedding = self.time_emb(stamp)
@@ -364,24 +289,7 @@ class Kronos(nn.Module, PyTorchModelHubMixin):
         return s1_logits, s2_logits
 
     def decode_s1(self, s1_ids, s2_ids, stamp=None, padding_mask=None):
-        """
-        Decodes only the s1 tokens.
-
-        This method performs a forward pass to predict only s1 tokens. It returns the s1 logits
-        and the context representation from the Transformer, which can be used for subsequent s2 decoding.
-
-        Args:
-            s1_ids (torch.Tensor): Input tensor of s1 token IDs. Shape: [batch_size, seq_len]
-            s2_ids (torch.Tensor): Input tensor of s2 token IDs. Shape: [batch_size, seq_len]
-            stamp (torch.Tensor, optional): Temporal stamp tensor. Shape: [batch_size, seq_len]. Defaults to None.
-            padding_mask (torch.Tensor, optional): Mask for padding tokens. Shape: [batch_size, seq_len]. Defaults to None.
-
-        Returns
-        -------
-            Tuple[torch.Tensor, torch.Tensor]:
-                - s1 logits: Logits for s1 token predictions. Shape: [batch_size, seq_len, s1_vocab_size]
-                - context: Context representation from the Transformer. Shape: [batch_size, seq_len, d_model]
-        """
+        """Decode only the s1 tokens."""
         x = self.embedding([s1_ids, s2_ids])
         if stamp is not None:
             time_embedding = self.time_emb(stamp)
@@ -397,22 +305,7 @@ class Kronos(nn.Module, PyTorchModelHubMixin):
         return s1_logits, x
 
     def decode_s2(self, context, s1_ids, padding_mask=None):
-        """
-        Decodes the s2 tokens, conditioned on the context and s1 tokens.
-
-        This method decodes s2 tokens based on a pre-computed context representation (typically from `decode_s1`)
-        and the s1 token IDs. It uses the dependency-aware layer and the conditional s2 head to predict s2 tokens.
-
-        Args:
-            context (torch.Tensor): Context representation from the transformer (output of decode_s1).
-                                     Shape: [batch_size, seq_len, d_model]
-            s1_ids (torch.Tensor): Input tensor of s1 token IDs. Shape: [batch_size, seq_len]
-            padding_mask (torch.Tensor, optional): Mask for padding tokens. Shape: [batch_size, seq_len]. Defaults to None.
-
-        Returns
-        -------
-            torch.Tensor: s2 logits. Shape: [batch_size, seq_len, s2_vocab_size]
-        """
+        """Decode s2 tokens conditioned on context and s1 tokens."""
         sibling_embed = self.embedding.emb_s1(s1_ids)
         x2 = self.dep_layer(context, sibling_embed, key_padding_mask=padding_mask)
         return self.head.cond_forward(x2)
@@ -425,15 +318,7 @@ def top_k_top_p_filtering(
     filter_value: float = -float("Inf"),
     min_tokens_to_keep: int = 1,
 ):
-    """Filter a distribution of logits using top-k and/or nucleus (top-p) filtering
-    Args:
-        logits: logits distribution shape (batch size, vocabulary size)
-        if top_k > 0: keep only top k tokens with highest probability (top-k filtering).
-        if top_p < 1.0: keep the top tokens with cumulative probability >= top_p (nucleus filtering).
-            Nucleus filtering is described in Holtzman et al. (http://arxiv.org/abs/1904.09751)
-        Make sure we keep at least min_tokens_to_keep per batch example in the output
-    From: https://gist.github.com/thomwolf/1a5a29f6962089e871b94cbd09daf317
-    """
+    """Filter logits using top-k and/or nucleus top-p filtering."""
     if top_k > 0:
         top_k = min(max(top_k, min_tokens_to_keep), logits.size(-1))  # Safety check
         # Remove all tokens with a probability less than the last token of the top-k
@@ -445,12 +330,12 @@ def top_k_top_p_filtering(
         sorted_logits, sorted_indices = torch.sort(logits, descending=True)
         cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
 
-        # Remove tokens with cumulative probability above the threshold (token with 0 are kept)
+        # Remove tokens with cumulative probability above the threshold.
         sorted_indices_to_remove = cumulative_probs > top_p
         if min_tokens_to_keep > 1:
-            # Keep at least min_tokens_to_keep (set to min_tokens_to_keep-1 because we add the first one below)
+            # Keep at least min_tokens_to_keep. The first one is added below.
             sorted_indices_to_remove[..., :min_tokens_to_keep] = 0
-        # Shift the indices to the right to keep also the first token above the threshold
+        # Shift right to keep the first token above the threshold.
         sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
         sorted_indices_to_remove[..., 0] = 0
 
@@ -465,6 +350,7 @@ def top_k_top_p_filtering(
 def sample_from_logits(
     logits, temperature=1.0, top_k=None, top_p=None, sample_logits=True
 ):
+    """Sample token IDs from logits."""
     logits = logits / temperature
     if top_k is not None or top_p is not None:
         if top_k > 0 or top_p < 1.0:
@@ -495,6 +381,7 @@ def auto_regressive_inference(
     sample_count=5,
     verbose=False,
 ):
+    """Generate future token reconstructions autoregressively."""
     with torch.no_grad():
         x = torch.clip(x, -clip, clip)
 
@@ -600,6 +487,7 @@ def auto_regressive_inference(
 
 
 def calc_time_stamps(x_timestamp):
+    """Calculate Kronos calendar features from timestamps."""
     time_df = pd.DataFrame()
     time_df["minute"] = x_timestamp.dt.minute
     time_df["hour"] = x_timestamp.dt.hour
@@ -610,6 +498,8 @@ def calc_time_stamps(x_timestamp):
 
 
 class KronosPredictor:
+    """Preprocess OHLC data and run Kronos inference."""
+
     def __init__(self, model, tokenizer, device=None, max_context=512, clip=5):
         self.tokenizer = tokenizer
         self.model = model
@@ -637,6 +527,7 @@ class KronosPredictor:
     def generate(
         self, x, x_stamp, y_stamp, pred_len, T, top_k, top_p, sample_count, verbose
     ):
+        """Generate normalized predictions from normalized inputs."""
         x_tensor = torch.from_numpy(np.array(x).astype(np.float32)).to(self.device)
         x_stamp_tensor = torch.from_numpy(np.array(x_stamp).astype(np.float32)).to(
             self.device
@@ -675,6 +566,7 @@ class KronosPredictor:
         sample_count=1,
         verbose=True,
     ):
+        """Predict one OHLC time series."""
         if not isinstance(df, pd.DataFrame):
             raise ValueError("Input must be a pandas DataFrame.")
 
@@ -735,25 +627,7 @@ class KronosPredictor:
         sample_count=1,
         verbose=True,
     ):
-        """
-        Perform parallel (batch) prediction on multiple time series. All series must have the same historical length and prediction length (pred_len).
-
-        Args:
-            df_list (List[pd.DataFrame]): List of input DataFrames, each containing price columns and optional volume/amount columns.
-            x_timestamp_list (List[pd.DatetimeIndex or Series]): List of timestamps corresponding to historical data, length should match the number of rows in each DataFrame.
-            y_timestamp_list (List[pd.DatetimeIndex or Series]): List of future prediction timestamps, length should equal pred_len.
-            pred_len (int): Number of prediction steps.
-            T (float): Sampling temperature.
-            top_k (int): Top-k filtering threshold.
-            top_p (float): Top-p (nucleus sampling) threshold.
-            sample_count (int): Number of parallel samples per series, automatically averaged internally.
-            verbose (bool): Whether to display autoregressive progress.
-
-        Returns
-        -------
-            List[pd.DataFrame]: List of prediction results in the same order as input, each DataFrame contains
-                                `open, high, low, close, volume, amount` columns, indexed by corresponding `y_timestamp`.
-        """
+        """Predict multiple OHLC time series in one batch."""
         # Basic validation
         if (
             not isinstance(df_list, (list, tuple))
@@ -761,11 +635,13 @@ class KronosPredictor:
             or not isinstance(y_timestamp_list, (list, tuple))
         ):
             raise ValueError(
-                "df_list, x_timestamp_list, y_timestamp_list must be list or tuple types."
+                "df_list, x_timestamp_list, and y_timestamp_list must be list "
+                "or tuple types."
             )
         if not (len(df_list) == len(x_timestamp_list) == len(y_timestamp_list)):
             raise ValueError(
-                "df_list, x_timestamp_list, y_timestamp_list must have consistent lengths."
+                "df_list, x_timestamp_list, and y_timestamp_list must have "
+                "consistent lengths."
             )
 
         num_series = len(df_list)
@@ -784,7 +660,8 @@ class KronosPredictor:
                 raise ValueError(f"Input at index {i} is not a pandas DataFrame.")
             if not all(col in df.columns for col in self.price_cols):
                 raise ValueError(
-                    f"DataFrame at index {i} is missing price columns {self.price_cols}."
+                    f"DataFrame at index {i} is missing price columns "
+                    f"{self.price_cols}."
                 )
 
             df = df.copy()
@@ -794,9 +671,13 @@ class KronosPredictor:
             if self.amt_vol not in df.columns and self.vol_col in df.columns:
                 df[self.amt_vol] = df[self.vol_col] * df[self.price_cols].mean(axis=1)
 
-            if df[self.price_cols + [self.vol_col, self.amt_vol]].isnull().values.any():
+            has_nan = (
+                df[self.price_cols + [self.vol_col, self.amt_vol]].isnull().values.any()
+            )
+            if has_nan:
                 raise ValueError(
-                    f"DataFrame at index {i} contains NaN values in price or volume columns."
+                    f"DataFrame at index {i} contains NaN values in price "
+                    "or volume columns."
                 )
 
             x_timestamp = x_timestamp_list[i]
@@ -813,11 +694,13 @@ class KronosPredictor:
 
             if x.shape[0] != x_stamp.shape[0]:
                 raise ValueError(
-                    f"Inconsistent lengths at index {i}: x has {x.shape[0]} vs x_stamp has {x_stamp.shape[0]}."
+                    f"Inconsistent lengths at index {i}: x has {x.shape[0]} "
+                    f"vs x_stamp has {x_stamp.shape[0]}."
                 )
             if y_stamp.shape[0] != pred_len:
                 raise ValueError(
-                    f"y_timestamp length at index {i} should equal pred_len={pred_len}, got {y_stamp.shape[0]}."
+                    f"y_timestamp length at index {i} should equal "
+                    f"pred_len={pred_len}, got {y_stamp.shape[0]}."
                 )
 
             x_mean, x_std = np.mean(x, axis=0), np.std(x, axis=0)
@@ -833,14 +716,16 @@ class KronosPredictor:
             seq_lens.append(x_norm.shape[0])
             y_lens.append(y_stamp.shape[0])
 
-        # Require all series to have consistent historical and prediction lengths for batch processing
+        # Require consistent historical and prediction lengths for batch processing.
         if len(set(seq_lens)) != 1:
             raise ValueError(
-                f"Parallel prediction requires all series to have consistent historical lengths, got: {seq_lens}"
+                "Parallel prediction requires consistent historical lengths, "
+                f"got: {seq_lens}"
             )
         if len(set(y_lens)) != 1:
             raise ValueError(
-                f"Parallel prediction requires all series to have consistent prediction lengths, got: {y_lens}"
+                "Parallel prediction requires consistent prediction lengths, "
+                f"got: {y_lens}"
             )
 
         x_batch = np.stack(x_list, axis=0).astype(np.float32)  # (B, seq_len, feat)
