@@ -2,10 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from huggingface_hub import PyTorchModelHubMixin
 from tqdm import trange
 
 from sktime.libs.kronos.module import (
@@ -16,6 +12,14 @@ from sktime.libs.kronos.module import (
     RMSNorm,
     TemporalEmbedding,
     TransformerBlock,
+)
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+F = _safe_import("torch.nn.functional")
+PyTorchModelHubMixin = _safe_import(
+    "huggingface_hub.PyTorchModelHubMixin", pkg_name="huggingface_hub"
 )
 
 __all__ = [

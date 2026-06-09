@@ -2,11 +2,14 @@
 
 import math
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from einops import rearrange, reduce
-from torch.autograd import Function
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+F = _safe_import("torch.nn.functional")
+Function = _safe_import("torch.autograd.Function")
+rearrange = _safe_import("einops.rearrange", pkg_name="einops")
+reduce = _safe_import("einops.reduce", pkg_name="einops")
 
 __all__ = []
 
