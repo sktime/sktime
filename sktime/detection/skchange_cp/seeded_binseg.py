@@ -1,5 +1,9 @@
-"""Seeded binary segmentation algorithm, from skchange (vendored)."""
+"""Deprecated. Use ``from sktime.detection import SeededBinarySegmentation``.
 
-from sktime._vendor.skchange.change_detectors import SeededBinarySegmentation
+This module is kept for backward compatibility and will be removed in a future
+release. SeededBinarySegmentation has been natively merged into sktime.
+"""
+
+from sktime.detection._seeded_binseg import SeededBinarySegmentation
 
 __all__ = ["SeededBinarySegmentation"]
