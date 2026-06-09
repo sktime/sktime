@@ -1,15 +1,9 @@
 #!/usr/bin/env python3 -u
 # License: BSD 3 clause
-"""Utility methods to print system info for debugging.
+"""Utility methods to print system info for debugging."""
 
-adapted from
-:func: `sklearn.show_versions`
-"""
-
-__author__ = ["mloning", "fkiraly"]
 __all__ = ["show_versions"]
 
-import importlib
 import platform
 import sys
 
