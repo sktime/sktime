@@ -37,8 +37,8 @@ def _get_sys_info():
 DEFAULT_DEPS_TO_SHOW = [
     "pip",
     "sktime",
-    "sklearn",
-    "skbase",
+    "scikit-learn",
+    "scikit-base",
     "numpy",
     "scipy",
     "pandas",
@@ -90,36 +90,13 @@ def _get_deps_info(deps=None, source="distributions"):
     if deps is None:
         deps = ["sktime"]
 
-    if source == "distributions":
-        from sktime.utils.dependencies._dependencies import _get_installed_packages
+    from skbase.utils.dependencies._dependencies import _get_installed_packages
 
-        KEY_ALIAS = {"sklearn": "scikit-learn", "skbase": "scikit-base"}
-
-        pkgs = _get_installed_packages()
-
-        deps_info = {}
-        for modname in deps:
-            pkg_name = KEY_ALIAS.get(modname, modname)
-            deps_info[modname] = pkgs.get(pkg_name, None)
-
-        return deps_info
-
-    def get_version(module):
-        return getattr(module, "__version__", None)
+    pkgs = _get_installed_packages()
 
     deps_info = {}
-
     for modname in deps:
-        try:
-            if modname in sys.modules:
-                mod = sys.modules[modname]
-            else:
-                mod = importlib.import_module(modname)
-        except ImportError:
-            deps_info[modname] = None
-        else:
-            ver = get_version(mod)
-            deps_info[modname] = ver
+        deps_info[modname] = pkgs.get(modname, None)
 
     return deps_info
 

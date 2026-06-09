@@ -4,7 +4,6 @@ from importlib.util import find_spec
 
 from skbase.utils.dependencies._dependencies import (
     _check_soft_dependencies,
-    _get_installed_packages,
     _raise_at_severity,
 )
 
