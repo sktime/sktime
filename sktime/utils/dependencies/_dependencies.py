@@ -11,7 +11,6 @@ __all__ = [
     "_check_dl_dependencies",
     "_check_mlflow_dependencies",
     "_check_soft_dependencies",
-    "_get_installed_packages",
     "_raise_at_severity",
 ]
 
