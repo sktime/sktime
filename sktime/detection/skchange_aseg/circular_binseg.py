@@ -1,5 +1,9 @@
-"""Circular binary segmentation algorithm, from skchange (vendored)."""
+"""Deprecated. Use ``from sktime.detection import CircularBinarySegmentation``.
 
-from sktime._vendor.skchange.anomaly_detectors import CircularBinarySegmentation
+This module is kept for backward compatibility and will be removed in a future
+release. CircularBinarySegmentation has been natively merged into sktime.
+"""
+
+from sktime.detection._circular_binseg import CircularBinarySegmentation
 
 __all__ = ["CircularBinarySegmentation"]

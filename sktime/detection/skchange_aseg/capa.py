@@ -1,5 +1,9 @@
-"""The collective and point anomalies (CAPA) algorithm, from skchange (vendored)."""
+"""Deprecated. Please use ``from sktime.detection import CAPA`` instead.
 
-from sktime._vendor.skchange.anomaly_detectors import CAPA
+This module is kept for backward compatibility and will be removed in a future
+release. The CAPA algorithm has been natively merged into sktime.
+"""
+
+from sktime.detection._capa import CAPA
 
 __all__ = ["CAPA"]

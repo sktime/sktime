@@ -1,5 +1,9 @@
-"""The pruned exact linear time (PELT) algorithm, from skchange (vendored)."""
+"""Deprecated. Please use ``from sktime.detection import PELT`` instead.
 
-from sktime._vendor.skchange.change_detectors import PELT
+This module is kept for backward compatibility and will be removed in a future
+release. The PELT algorithm has been natively merged into sktime.
+"""
+
+from sktime.detection._pelt import PELT
 
 __all__ = ["PELT"]
