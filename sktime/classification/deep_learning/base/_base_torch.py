@@ -574,6 +574,54 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                 f"But got {type(self._validated_criterion)} instead."
             )
 
+    def _instantiate_metric(self, metric, torchmetrics, num_classes):
+        """Instantiate a single classification metric from torchmetrics.
+
+        Parameters
+        ----------
+        metric : str or Callable
+            Metric name from torchmetrics or a metric instance.
+        torchmetrics : module
+            The torchmetrics module.
+        num_classes : int
+            The number of classes in the dataset.
+
+        Returns
+        -------
+        metric_name : str
+            Name to use as the key in the metrics dictionary.
+        metric_instance : Callable
+            The instantiated metric object.
+
+        Raises
+        ------
+        ValueError
+            If an unknown metric name is passed.
+        TypeError
+            If metric is neither a string nor a callable.
+        """
+        if isinstance(metric, str):
+            if not hasattr(torchmetrics, metric):
+                raise ValueError(
+                    f"Error in constructing torch based classifier "
+                    f"{type(self).__name__}, "
+                    f"unknown metric: {metric}. Please pass one of the available "
+                    f"classification metrics from torchmetrics or check the metric "
+                    f"name. See https://lightning.ai/docs/torchmetrics/stable/"
+                )
+            metric_class = getattr(torchmetrics, metric)
+            kwargs = {"task": "multiclass", "num_classes": num_classes}
+            if metric in ("F1Score", "Precision", "Recall"):
+                kwargs["average"] = "macro"
+            return metric, metric_class(**kwargs)
+        if isinstance(metric, Callable):
+            return metric.__class__.__name__, metric
+        raise TypeError(
+            "`metrics` can either be None, a str or a tuple of str "
+            "representing metrics from torchmetrics, or an instance of a "
+            f"torchmetrics metric. But got {type(metric)} instead."
+        )
+
     def _instantiate_metrics(self, metrics, num_classes):
         """Instantiate metrics to be computed during training.
 
@@ -616,31 +664,11 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             metrics_list = metrics
 
         metrics_dict = {}
-
         for metric in metrics_list:
-            if isinstance(metric, str):
-                if not hasattr(torchmetrics, metric):
-                    raise ValueError(
-                        f"Error in constructing torch based classifier "
-                        f"{type(self).__name__}, "
-                        f"unknown metric: {metric}. Please pass one of the available "
-                        f"classification metrics from torchmetrics or check the metric "
-                        f"name. See https://lightning.ai/docs/torchmetrics/stable/"
-                    )
-                metric_class = getattr(torchmetrics, metric)
-                kwargs = {"task": "multiclass", "num_classes": num_classes}
-                if metric in ("F1Score", "Precision", "Recall"):
-                    kwargs["average"] = "macro"
-                metrics_dict[metric] = metric_class(**kwargs)
-            elif isinstance(metric, Callable):
-                metric_name = metric.__class__.__name__
-                metrics_dict[metric_name] = metric
-            else:
-                raise TypeError(
-                    "`metrics` can either be None, a str or a tuple of str "
-                    "representing metrics from torchmetrics, or an instance of a "
-                    f"torchmetrics metric. But got {type(metric)} instead."
-                )
+            metric_name, metric_instance = self._instantiate_metric(
+                metric, torchmetrics, num_classes
+            )
+            metrics_dict[metric_name] = metric_instance
 
         return metrics_dict if metrics_dict else None
 

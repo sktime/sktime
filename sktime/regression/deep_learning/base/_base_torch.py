@@ -397,6 +397,49 @@ class BaseDeepRegressorTorch(BaseRegressor):
                 f"But got {type(self.criterion)} instead."
             )
 
+    def _instantiate_metric(self, metric, torchmetrics):
+        """Instantiate a single regression metric from torchmetrics.
+
+        Parameters
+        ----------
+        metric : str or Callable
+            Metric name from torchmetrics or a metric instance.
+        torchmetrics : module
+            The torchmetrics module.
+
+        Returns
+        -------
+        metric_name : str
+            Name to use as the key in the metrics dictionary.
+        metric_instance : Callable
+            The instantiated metric object.
+
+        Raises
+        ------
+        ValueError
+            If an unknown metric name is passed.
+        TypeError
+            If metric is neither a string nor a callable.
+        """
+        if isinstance(metric, str):
+            if not hasattr(torchmetrics, metric):
+                raise ValueError(
+                    f"Error in constructing torch based regressor "
+                    f"{type(self).__name__}, "
+                    f"unknown metric: {metric}. Please pass one of the available "
+                    f"metrics from torchmetrics or check the metric name. "
+                    f"See https://lightning.ai/docs/torchmetrics/stable/"
+                )
+            metric_class = getattr(torchmetrics, metric)
+            return metric, metric_class()
+        if isinstance(metric, Callable):
+            return metric.__class__.__name__, metric
+        raise TypeError(
+            "`metrics` can either be None, a str or a tuple of str "
+            "representing metrics from torchmetrics, or an instance of a "
+            f"torchmetrics metric. But got {type(metric)} instead."
+        )
+
     def _instantiate_metrics(self, metrics):
         """Instantiate metrics to be computed during training.
 
@@ -436,28 +479,11 @@ class BaseDeepRegressorTorch(BaseRegressor):
             metrics_list = metrics
 
         metrics_dict = {}
-
         for metric in metrics_list:
-            if isinstance(metric, str):
-                if not hasattr(torchmetrics, metric):
-                    raise ValueError(
-                        f"Error in constructing torch based regressor "
-                        f"{type(self).__name__}, "
-                        f"unknown metric: {metric}. Please pass one of the available "
-                        f"metrics from torchmetrics or check the metric name. "
-                        f"See https://lightning.ai/docs/torchmetrics/stable/"
-                    )
-                metric_class = getattr(torchmetrics, metric)
-                metrics_dict[metric] = metric_class()
-            elif isinstance(metric, Callable):
-                metric_name = metric.__class__.__name__
-                metrics_dict[metric_name] = metric
-            else:
-                raise TypeError(
-                    "`metrics` can either be None, a str or a tuple of str "
-                    "representing metrics from torchmetrics, or an instance of a "
-                    f"torchmetrics metric. But got {type(metric)} instead."
-                )
+            metric_name, metric_instance = self._instantiate_metric(
+                metric, torchmetrics
+            )
+            metrics_dict[metric_name] = metric_instance
 
         return metrics_dict if metrics_dict else None
 
