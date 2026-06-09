@@ -215,9 +215,11 @@ class KronosForecaster(BaseForecaster):
             # Periods are time-aware, but Kronos expects timestamp-like values
             # for the `.dt` fields it builds internally.
             timestamp = index.to_timestamp()
+
         elif isinstance(index, pd.DatetimeIndex):
             # Already exactly what Kronos wants.
             timestamp = index
+
         else:
             # For plain integer/range indexes, use the labels as bar numbers.
             # This is better than just making `periods=len(index)` because the
@@ -250,41 +252,49 @@ class KronosForecaster(BaseForecaster):
         if self.columns is not None:
             # Explicit mapping wins. If the user provides it, assume they know
             # which columns are open/high/low/close and validate only the shape.
-            if not isinstance(self.columns, list):
-                raise ValueError("columns must be a list of column names or None.")
+
             if len(self.columns) < 4 or len(self.columns) > len(self._kronos_columns):
                 raise ValueError(
                     "columns must contain 4 to 6 items, ordered as open, high, "
                     "low, close, volume, amount."
                 )
+
             missing = [col for col in self.columns if col not in y.columns]
             if missing:
                 raise ValueError(f"columns contains values missing from y: {missing}.")
+
             mapping.update(zip(self._kronos_columns, self.columns))
+
         elif all(col in y.columns for col in self._kronos_columns[:4]):
             # Best common case: the input already uses the names Kronos expects.
             for col in self._kronos_columns[:4]:
                 mapping[col] = col
+
         else:
             # Last resort for sktime estimator checks and generic user data.
             # Kronos is an OHLC model, but the sktime interface should still be
             # able to run on a numeric DataFrame. Reusing columns is not ideal
             # market data semantics, but it is a deterministic fallback and lets
             # the model path exercise without inventing fake values elsewhere.
+
             numeric_cols = y.select_dtypes(include=[np.number]).columns.tolist()
+
             if len(numeric_cols) == 0:
                 raise ValueError(
                     "KronosForecaster requires open/high/low/close columns, "
                     "a columns mapping, or at least one numeric column."
                 )
+
             if len(numeric_cols) < 4:
                 numeric_cols = [numeric_cols[i % len(numeric_cols)] for i in range(4)]
+
             for internal, original in zip(self._kronos_columns[:4], numeric_cols[:4]):
                 mapping[internal] = original
 
         if self.columns is None:
             # Volume/amount are optional upstream. Only pass them through when
             # they are really present; the Kronos predictor fills missing ones.
+
             for col in self._kronos_columns[4:]:
                 if col in y.columns:
                     mapping[col] = col
