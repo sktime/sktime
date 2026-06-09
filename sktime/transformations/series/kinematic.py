@@ -82,14 +82,23 @@ class KinematicFeatures(BaseTransformer):
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, features=None):
+    def __init__(self, features=None, remember_data="last"):
         self.features = features
+        self.remember_data = remember_data
+        
         if features is None:
             self._features = ["v_abs", "a_abs", "curv"]
         elif isinstance(features, str):
             self._features = [features]
         else:
             self._features = features
+
+        # Add a safety check for the new parameter
+        if self.remember_data not in ["last", "all", "none"]:
+            raise ValueError(
+                'remember_data must be one of "last", "all", or "none", '
+                f'but found: {self.remember_data}'
+            )
 
         super().__init__()
 
@@ -110,6 +119,28 @@ class KinematicFeatures(BaseTransformer):
         """
         features = self._features
         res = pd.DataFrame()
+
+        # --- HISTORY MEMORY LOGIC START ---
+        # 1. Retrieve historical data if it was saved in a previous run
+        X_history = getattr(self, "_X_history", None)
+        
+        # 2. Prepend history to X to calculate accurate kinematics across chunk borders
+        if X_history is not None and not X_history.empty and self.remember_data != "none":
+            X_calc = pd.concat([X_history, X])
+            history_len = len(X_history)
+        else:
+            X_calc = X.copy()
+            history_len = 0
+
+        # 3. Save the current data as history for the NEXT time transform is called
+        if self.remember_data == "all":
+            self._X_history = X_calc.copy()
+        elif self.remember_data == "last":
+            # We only need a maximum of 2 historical points to calculate acceleration/jerk
+            self._X_history = X_calc.iloc[-2:].copy()
+        else:
+            self._X_history = None
+        # --- HISTORY MEMORY LOGIC END ---
 
         def prepend_cols(df, prefix):
             df.columns = [f"{prefix}__{col}" for col in df.columns]
@@ -133,8 +164,9 @@ class KinematicFeatures(BaseTransformer):
             else:
                 return any([x in features for x in queries])
 
+        # NOTE: Replaced X.diff() with X_calc.diff() so math utilizes history
         if feature_query(["v", "v_abs", "curv"]):
-            v_frame = X.diff()
+            v_frame = X_calc.diff()
             v_frame = prepend_cols(v_frame, "v")
             if feature_query(["v"]):
                 res = pd.concat([res, v_frame], axis=1)
@@ -144,7 +176,7 @@ class KinematicFeatures(BaseTransformer):
                 res = pd.concat([res, vabs_frame], axis=1)
 
         if feature_query(["a", "a_abs", "curv"]):
-            a_frame = X.diff().diff()
+            a_frame = X_calc.diff().diff()
             a_frame = prepend_cols(a_frame, "a")
             if feature_query(["a"]):
                 res = pd.concat([res, a_frame], axis=1)
@@ -162,8 +194,15 @@ class KinematicFeatures(BaseTransformer):
             cross_term = cross_term.reshape(-1, 1)
             curv_arr = (curv_arr - cross_term) / (vsq_frame.values**3)
             curv_arr = np.abs(curv_arr) ** 0.5
-            curv_frame = pd.DataFrame(curv_arr, columns=["curv"], index=X.index)
+            # NOTE: Index updated to X_calc to match arrays
+            curv_frame = pd.DataFrame(curv_arr, columns=["curv"], index=X_calc.index) 
             res = pd.concat([res, curv_frame], axis=1)
+
+        # --- FINAL CLEANUP START ---
+        # Slice off the historical rows we prepended so the output length matches the input X perfectly
+        if history_len > 0:
+            res = res.iloc[history_len:]
+        # --- FINAL CLEANUP END ---
 
         return res
 
