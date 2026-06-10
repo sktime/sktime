@@ -11,7 +11,6 @@ import pandas as pd
 
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.split.base._common import (
     ACCEPTED_Y_TYPES,
     DEFAULT_FH,
@@ -458,7 +457,7 @@ class BaseSplitter(BaseObject):
         """
         raise NotImplementedError("abstract method")
 
-    def get_fh(self) -> ForecastingHorizon:
+    def get_fh(self):
         """Return the forecasting horizon.
 
         Returns
