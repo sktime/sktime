@@ -855,13 +855,13 @@ Agentic Forecasting
 
 Agentic forecasters use generative AI and/or reasoning to decide how to forecast.
 
-.. currentmodule:: sktime.forecasting
+.. currentmodule:: sktime.forecasting.agentic
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    LLMBlueprintForecaster
+    AutoResearchForecaster
 
 Model Evaluation (Backtesting)
 ------------------------------
