@@ -2,11 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from huggingface_hub import PyTorchModelHubMixin
-from tqdm import trange
 
 from sktime.libs.windfm.module import (
     BSQuantizer,
@@ -17,6 +12,38 @@ from sktime.libs.windfm.module import (
     RMSNorm,
     TransformerBlock,
 )
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn", return_object="None")
+F = _safe_import("torch.nn.functional")
+PyTorchModelHubMixin = _safe_import(
+    "huggingface_hub.PyTorchModelHubMixin", return_object="None"
+)
+trange = _safe_import("tqdm.trange")
+
+if nn is None:
+
+    class nn:
+        """Minimal ``torch.nn`` placeholder."""
+
+        class Module:
+            """Minimal ``torch.nn.Module`` placeholder."""
+
+            pass
+
+
+if PyTorchModelHubMixin is None:
+
+    class PyTorchModelHubMixin:
+        """Minimal ``huggingface_hub.PyTorchModelHubMixin`` placeholder."""
+
+        def __init__(self):
+            pass
+
+        def __init_subclass__(cls, *args, **kwargs) -> None:
+            """Implement dummy version of __init_subclass__."""
+            pass
 
 
 class WindFMTokenizer(nn.Module, PyTorchModelHubMixin):

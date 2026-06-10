@@ -3,11 +3,22 @@
 import math
 
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from einops import rearrange, reduce
-from torch.autograd import Function
+
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn", return_object="None")
+F = _safe_import("torch.nn.functional")
+rearrange = _safe_import("einops.rearrange")
+reduce = _safe_import("einops.reduce")
+Function = _safe_import("torch.autograd.Function")
+
+if nn is None:
+
+    class nn:
+        """Minimal ``torch.nn`` placeholder."""
+
+        Module = object
 
 
 class DifferentiableEntropyFunction(Function):
