@@ -151,7 +151,7 @@ class LLM1StepAgentForecaster(_DelegatedForecaster):
             "test_get_fitted_params",  # skipped due to tag handling
             # tags are set in _fit and not in advance due to the opennecess of the
             # LLM selection, which makes them unavailable in __init__
-        ]
+        ],
     }
 
     # _DelegatedForecaster delegates _predict, _update, _predict_interval, etc.
