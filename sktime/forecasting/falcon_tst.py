@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.singleton import _multiton
 
 
 class FalconTSTForecaster(BaseForecaster):
@@ -101,14 +102,63 @@ class FalconTSTForecaster(BaseForecaster):
         if hasattr(self, "model_") and self.model_ is not None:
             return self.model_
 
-        if self.model_path is not None:
-            self.model_ = self._load_model_from_path()
-        else:
-            self.model_ = self._load_model_from_config()
+        self.model_ = _CachedFalconTST(
+            key=self._get_unique_key(),
+            model_path=self.model_path,
+            config=self.config,
+            device_map=self.device_map,
+            dtype=self.dtype,
+            quantization_config=self.quantization_config,
+        ).load()
 
         return self.model_
 
-    def _load_model_from_path(self):
+    def _get_unique_key(self):
+        """Build cache key for the multiton model loader."""
+        key = {
+            "model_path": self.model_path,
+            "config": self.config,
+            "device_map": self.device_map,
+            "dtype": self.dtype,
+            "quantization_config": self.quantization_config,
+        }
+        return str(sorted(key.items()))
+
+
+@_multiton
+class _CachedFalconTST:
+    """Multiton-backed cache wrapper for a loaded Falcon-TST model."""
+
+    def __init__(
+        self,
+        key,
+        model_path,
+        config,
+        device_map,
+        dtype,
+        quantization_config,
+    ):
+        self.key = key
+        self.model_path = model_path
+        self.config = config
+        self.device_map = device_map
+        self.dtype = dtype
+        self.quantization_config = quantization_config
+        self.model_ = None
+
+    def load(self):
+        """Load model if needed and return cached instance."""
+        if self.model_ is not None:
+            return self.model_
+
+        if self.model_path is not None:
+            self.model_ = self._load_from_path()
+        else:
+            self.model_ = self._load_randomly()
+
+        return self.model_
+
+    def _load_from_path(self):
         """Load pretrained Falcon-TST weights from ``self.model_path``."""
         from sktime.libs.falcon_tst import FalconTSTForPrediction
 
@@ -124,7 +174,7 @@ class FalconTSTForecaster(BaseForecaster):
             **model_kwargs,
         )
 
-    def _load_model_from_config(self):
+    def _load_randomly(self):
         """Initialize a Falcon-TST model from config without pretrained weights."""
         from sktime.libs.falcon_tst import FalconTSTConfig, FalconTSTForPrediction
 
@@ -146,6 +196,19 @@ class FalconTSTForecaster(BaseForecaster):
         model = FalconTSTForPrediction(config)
         model = model.to(self.device_map)
         if self.dtype is not None:
-            model = model.to(dtype=self.dtype)
+            dtype = _coerce_torch_dtype(self.dtype)
+            if dtype is not None:
+                model = model.to(dtype=dtype)
 
         return model
+
+
+def _coerce_torch_dtype(dtype):
+    """Coerce string dtype names to ``torch.dtype`` for local initialization."""
+    if dtype == "auto":
+        return None
+    if isinstance(dtype, str):
+        import torch
+
+        return getattr(torch, dtype)
+    return dtype
