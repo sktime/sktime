@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.tsfel import TSFELTransformer
+from sktime.transformations.tsfel import TSFELTransformer
 from sktime.utils._testing.series import _make_series
 
 

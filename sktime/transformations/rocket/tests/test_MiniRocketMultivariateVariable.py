@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_japanese_vowels
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.rocket import MiniRocketMultivariateVariable
+from sktime.transformations.rocket import MiniRocketMultivariateVariable
 
 
 @pytest.mark.skipif(

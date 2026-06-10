@@ -12,7 +12,7 @@ import pytest
 
 from sktime.datatypes import get_examples
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.lag import Lag
+from sktime.transformations.lag import Lag
 from sktime.utils._testing.series import _make_series
 
 # some examples with range vs time index, univariate vs multivariate (mv)

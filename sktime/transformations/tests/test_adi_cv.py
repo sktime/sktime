@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.adi_cv import ADICVTransformer
+from sktime.transformations.adi_cv import ADICVTransformer
 
 
 def _generate_smooth_series(size: int = 750, seed: int = 42):

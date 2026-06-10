@@ -5,7 +5,7 @@ import pytest
 from sklearn.utils.validation import check_random_state
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.hidalgo import Hidalgo
+from sktime.transformations.hidalgo import Hidalgo
 
 # generate dataset
 np.random.seed(10002)

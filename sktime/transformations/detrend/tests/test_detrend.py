@@ -8,7 +8,7 @@ from sktime.datasets import load_airline
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.forecasting.trend.tests.test_trend import get_expected_polynomial_coefs
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.detrend import Detrender
+from sktime.transformations.detrend import Detrender
 
 __author__ = ["mloning", "KishManani"]
 __all__ = []

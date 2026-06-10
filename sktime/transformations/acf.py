@@ -3,7 +3,7 @@
 """Auto-correlation transformations.
 
 Module
-:mod: ``sktime.transformations.series`` implements auto-correlation
+:mod: ``sktime.transformations`` implements auto-correlation
 transformers.
 """
 
@@ -59,7 +59,7 @@ class AutoCorrelationTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.acf import AutoCorrelationTransformer
+    >>> from sktime.transformations.acf import AutoCorrelationTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()  # doctest: +SKIP
     >>> transformer = AutoCorrelationTransformer(n_lags=12)  # doctest: +SKIP
@@ -198,7 +198,7 @@ class PartialAutoCorrelationTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
+    >>> from sktime.transformations.acf import PartialAutoCorrelationTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()  # doctest: +SKIP
     >>> transformer = PartialAutoCorrelationTransformer(n_lags=12)  # doctest: +SKIP

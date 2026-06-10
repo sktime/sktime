@@ -49,7 +49,7 @@ class DilationMappingTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.dilation_mapping import \
+    >>> from sktime.transformations.dilation_mapping import \
     ...     DilationMappingTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()

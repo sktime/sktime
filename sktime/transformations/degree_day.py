@@ -65,7 +65,7 @@ class DegreeDayFeatures(BaseTransformer):
     Basic usage with explicit max/min temperature columns:
 
     import pandas as pd
-    from sktime.transformations.series.degree_day import DegreeDayFeatures
+    from sktime.transformations.degree_day import DegreeDayFeatures
     X = pd.DataFrame(
     ...     {"high": [60, 70, 90], "low": [40, 60, 70]},
     ...     index=pd.to_datetime(["2025-01-01", "2025-01-02", "2025-01-03"]),

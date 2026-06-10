@@ -61,7 +61,7 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.transformations.series.augmenter import WhiteNoiseAugmenter
+    >>> from sktime.transformations.augmenter import WhiteNoiseAugmenter
     >>> X = np.array([1, 2, 3, 4, 5])
     >>> augmenter = WhiteNoiseAugmenter(scale=0.5, random_state=42)
     >>> augmenter.fit(X)
@@ -143,7 +143,7 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.transformations.series.augmenter import ReverseAugmenter
+    >>> from sktime.transformations.augmenter import ReverseAugmenter
     >>> X = pd.Series([1,2,3,4,5])
     >>> augmenter = ReverseAugmenter()
     >>> Xt = augmenter.fit_transform(X)
@@ -178,7 +178,7 @@ class InvertAugmenter(_AugmenterTags, BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.augmenter import InvertAugmenter
+    >>> from sktime.transformations.augmenter import InvertAugmenter
     >>> import pandas as pd
     >>> X = pd.Series([1,2,3,4,5])
     >>> augmenter = InvertAugmenter()

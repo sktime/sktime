@@ -47,7 +47,7 @@ class ClaSPTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.clasp import ClaSPTransformer
+    >>> from sktime.transformations.clasp import ClaSPTransformer
     >>> from sktime.detection.clasp import find_dominant_window_sizes
     >>> from sktime.datasets import load_electric_devices_segmentation
     >>> X, true_period_size, true_cps = load_electric_devices_segmentation()
@@ -104,7 +104,7 @@ class ClaSPTransformer(BaseTransformer):
             ClaSP of the single time series as output
             with length as (n-window_length+1)
         """
-        from sktime.transformations.series._clasp_numba import clasp
+        from sktime.transformations._clasp_numba import clasp
 
         scoring_metric_call = self._check_scoring_metric(self.scoring_metric)
 
@@ -132,7 +132,7 @@ class ClaSPTransformer(BaseTransformer):
             _roc_auc_score, if scoring_metric = "ROC_AUC"
             _binary_f1_score, if scoring_metric = "F1"
         """
-        from sktime.transformations.series._clasp_numba import (
+        from sktime.transformations._clasp_numba import (
             _binary_f1_score,
             _roc_auc_score,
         )

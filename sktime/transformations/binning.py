@@ -47,7 +47,7 @@ class TimeBinAggregate(BaseTransformer):
     Examples
     --------
     from sktime.datatypes import get_examples
-    from sktime.transformations.series.binning import TimeBinAggregate
+    from sktime.transformations.binning import TimeBinAggregate
 
     bins = [0, 2, 4]
     X = get_examples("pd.DataFrame")[0]

@@ -7,7 +7,7 @@ import pytest
 
 from sktime.datasets import load_basic_motions
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series import augmenter as aug
+from sktime.transformations import augmenter as aug
 
 
 def _load_test_data():

@@ -41,7 +41,7 @@ class HurstExponentTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.hurst import HurstExponentTransformer
+    >>> from sktime.transformations.hurst import HurstExponentTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = HurstExponentTransformer()

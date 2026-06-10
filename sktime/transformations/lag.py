@@ -85,7 +85,7 @@ class Lag(BaseTransformer):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.lag import Lag
+    >>> from sktime.transformations.lag import Lag
     >>> X = load_airline()
 
         Single lag will yield a time series with the same variables:
@@ -111,8 +111,8 @@ class Lag(BaseTransformer):
         pipeline with the Imputer:
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.impute import Imputer
-    >>> from sktime.transformations.series.lag import Lag
+    >>> from sktime.transformations.impute import Imputer
+    >>> from sktime.transformations.lag import Lag
     >>> X = load_airline()
     >>>
     >>> t = Lag([2, 4, -1]) * Imputer("nearest")
@@ -415,7 +415,7 @@ class ReducerTransform(BaseTransformer):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.lag import Lag
+    >>> from sktime.transformations.lag import Lag
     >>> X = load_airline()
 
     Single lag will yield a time series with the same variables:
@@ -440,8 +440,8 @@ class ReducerTransform(BaseTransformer):
     To deal with the NAs, pipeline with the Imputer:
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.impute import Imputer
-    >>> from sktime.transformations.series.lag import Lag
+    >>> from sktime.transformations.impute import Imputer
+    >>> from sktime.transformations.lag import Lag
     >>> X = load_airline()
     >>>
     >>> t = Lag([2, 4, -1]) * Imputer("nearest")
@@ -488,7 +488,7 @@ class ReducerTransform(BaseTransformer):
         self.impute_method = impute_method
 
         if isinstance(impute_method, str):
-            from sktime.transformations.series.impute import Imputer
+            from sktime.transformations.impute import Imputer
 
             self._impute_method = Imputer(method=impute_method)
         elif impute_method is None:

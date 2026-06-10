@@ -5,7 +5,7 @@ import pytest
 from sktime.datasets import load_basic_motions
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.padder import PaddingTransformer
+from sktime.transformations.padder import PaddingTransformer
 
 
 @pytest.mark.skipif(

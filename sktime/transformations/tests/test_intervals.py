@@ -6,8 +6,8 @@ from numpy import testing
 
 from sktime.datasets import load_basic_motions
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.random_intervals import RandomIntervals
-from sktime.transformations.panel.supervised_intervals import SupervisedIntervals
+from sktime.transformations.random_intervals import RandomIntervals
+from sktime.transformations.supervised_intervals import SupervisedIntervals
 
 
 @pytest.mark.skipif(

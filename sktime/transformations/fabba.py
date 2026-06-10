@@ -136,7 +136,7 @@ class FABBA(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.fabba import FABBA
+    >>> from sktime.transformations.fabba import FABBA
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = FABBA(

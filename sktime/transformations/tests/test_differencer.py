@@ -11,7 +11,7 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.difference import Differencer
+from sktime.transformations.difference import Differencer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
 y_airline = load_airline()
@@ -167,7 +167,7 @@ def test_differencer_cutoff():
     from sktime.forecasting.compose import TransformedTargetForecaster, YfromX
     from sktime.forecasting.model_selection import ForecastingGridSearchCV
     from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
-    from sktime.transformations.series.difference import Differencer
+    from sktime.transformations.difference import Differencer
 
     y, X = load_longley()
 
@@ -241,7 +241,7 @@ def test_differencer_inverse_does_not_memorize():
     from sktime.forecasting.base import ForecastingHorizon
     from sktime.forecasting.naive import NaiveForecaster
     from sktime.split import temporal_train_test_split
-    from sktime.transformations.series.difference import Differencer
+    from sktime.transformations.difference import Differencer
 
     y = load_airline()
 

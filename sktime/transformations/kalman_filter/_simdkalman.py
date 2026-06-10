@@ -90,7 +90,7 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
     >>> import numpy as np
     >>> import time
     >>> from sktime.utils._testing.panel import make_transformer_problem
-    >>> from sktime.transformations.series.kalman_filter import (
+    >>> from sktime.transformations.kalman_filter import (
     ...     KalmanFilterTransformerPK,
     ...     KalmanFilterTransformerSIMD,
     ... )

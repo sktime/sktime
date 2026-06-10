@@ -129,7 +129,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+    >>> from sktime.transformations.adapt import TabularToSeriesAdaptor
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -484,7 +484,7 @@ class PandasTransformAdaptor(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.adapt import PandasTransformAdaptor
+    >>> from sktime.transformations.adapt import PandasTransformAdaptor
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
 

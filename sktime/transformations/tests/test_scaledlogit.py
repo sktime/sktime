@@ -8,7 +8,7 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.scaledlogit import ScaledLogitTransformer
+from sktime.transformations.scaledlogit import ScaledLogitTransformer
 from sktime.utils.warnings import warn
 
 TEST_SERIES = np.array([30, 40, 60])

@@ -3,11 +3,11 @@
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel.signature_based._rescaling import (
+from sktime.transformations.signature_based._rescaling import (
     _rescale_path,
     _rescale_signature,
 )
-from sktime.transformations.panel.signature_based._window import _window_getter
+from sktime.transformations.signature_based._window import _window_getter
 
 
 class _WindowSignatureTransform(BaseTransformer):

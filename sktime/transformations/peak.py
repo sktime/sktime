@@ -133,7 +133,7 @@ class PeakTimeFeature(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.peak import PeakTimeFeature  # doctest: +SKIP
+    >>> from sktime.transformations.peak import PeakTimeFeature  # doctest: +SKIP
     >>> from sktime.datasets import   # doctest: +SKIP
     >>> y = load_solar()  # doctest: +SKIP
     >>> y = y.tz_localize(None)  # doctest: +SKIP

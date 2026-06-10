@@ -31,7 +31,7 @@ class MatrixProfileTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.matrix_profile import \
+    >>> from sktime.transformations.matrix_profile import \
     MatrixProfileTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()

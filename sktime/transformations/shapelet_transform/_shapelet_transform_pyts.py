@@ -111,7 +111,7 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.shapelet_transform import (
+    >>> from sktime.transformations.shapelet_transform import (
     ...     ShapeletTransformPyts
     ... )
     >>> from sktime.datasets import load_unit_test

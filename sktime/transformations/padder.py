@@ -26,7 +26,7 @@ class PaddingTransformer(BaseTransformer):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.transformations.panel.padder import PaddingTransformer
+    >>> from sktime.transformations.padder import PaddingTransformer
     >>>
     >>> # Create a sample nested DataFrame with unequal length time series
     >>> data = {

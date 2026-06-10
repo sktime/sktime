@@ -146,7 +146,7 @@ class DateTimeFeatures(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.date import DateTimeFeatures
+    >>> from sktime.transformations.date import DateTimeFeatures
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
 

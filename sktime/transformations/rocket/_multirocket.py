@@ -76,7 +76,7 @@ class MultiRocket(BaseTransformer):
 
     Examples
     --------
-     >>> from sktime.transformations.panel.rocket import Rocket
+     >>> from sktime.transformations.rocket import Rocket
      >>> from sktime.datasets import load_unit_test
      >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
      >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
@@ -177,7 +177,7 @@ class MultiRocket(BaseTransformer):
         """
         from numba import get_num_threads, set_num_threads
 
-        from sktime.transformations.panel.rocket._multirocket_numba import _transform
+        from sktime.transformations.rocket._multirocket_numba import _transform
 
         X = X.astype(np.float64)
         X = convert(X, from_type="numpy3D", to_type="numpyflat", as_scitype="Panel")
@@ -211,7 +211,7 @@ class MultiRocket(BaseTransformer):
         return pd.DataFrame(X)
 
     def _get_parameter(self, X):
-        from sktime.transformations.panel.rocket._multirocket_numba import (
+        from sktime.transformations.rocket._multirocket_numba import (
             _fit_biases,
             _fit_dilations,
             _quantiles,

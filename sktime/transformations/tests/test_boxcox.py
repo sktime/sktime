@@ -10,7 +10,7 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.transformations.boxcox import BoxCoxTransformer
 
 
 @pytest.mark.skipif(

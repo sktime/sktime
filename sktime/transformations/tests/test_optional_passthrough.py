@@ -6,7 +6,7 @@ from pandas.testing import assert_series_equal
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import OptionalPassthrough
-from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.transformations.boxcox import BoxCoxTransformer
 from sktime.utils._testing.series import _make_series
 
 

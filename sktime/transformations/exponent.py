@@ -51,7 +51,7 @@ class ExponentTransformer(BaseTransformer):
     LogTransformer :
         Transformer input data using natural log. Can help normalize data and
         compress variance of the series.
-    sktime.transformations.series.exponent.SqrtTransformer :
+    sktime.transformations.exponent.SqrtTransformer :
         Transform input data by taking its square root. Can help compress
         variance of input series.
 
@@ -62,7 +62,7 @@ class ExponentTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = ExponentTransformer()
@@ -226,7 +226,7 @@ class SqrtTransformer(ExponentTransformer):
     LogTransformer :
         Transformer input data using natural log. Can help normalize data and
         compress variance of the series.
-    sktime.transformations.series.exponent.ExponentTransformer :
+    sktime.transformations.exponent.ExponentTransformer :
         Transform input data by raising it to an exponent. Can help compress
         variance of series if a fractional exponent is supplied.
 
@@ -237,7 +237,7 @@ class SqrtTransformer(ExponentTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.exponent import SqrtTransformer
+    >>> from sktime.transformations.exponent import SqrtTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = SqrtTransformer()

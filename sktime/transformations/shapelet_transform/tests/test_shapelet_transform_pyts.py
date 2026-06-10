@@ -6,7 +6,7 @@ from numpy import testing
 
 from sktime.datasets import load_unit_test
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.shapelet_transform import ShapeletTransformPyts
+from sktime.transformations.shapelet_transform import ShapeletTransformPyts
 
 
 @pytest.mark.skipif(

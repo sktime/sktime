@@ -4,7 +4,7 @@ import pytest
 
 from sktime.datasets import load_basic_motions
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.channel_selection import ElbowClassPairwise
+from sktime.transformations.channel_selection import ElbowClassPairwise
 
 
 @pytest.mark.skipif(

@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.tsfeatures import TSFeaturesTransformer
+from sktime.transformations.tsfeatures import TSFeaturesTransformer
 from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.series import _make_series
 

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.sax import SAX
+from sktime.transformations.sax import SAX
 
 
 # Check that exception is raised for bad size values.

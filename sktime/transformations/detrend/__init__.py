@@ -10,10 +10,10 @@ __all__ = [
     "MSTL",
 ]
 
-from sktime.transformations.series.detrend._deseasonalize import (
+from sktime.transformations.detrend._deseasonalize import (
     ConditionalDeseasonalizer,
     Deseasonalizer,
     STLTransformer,
 )
-from sktime.transformations.series.detrend._detrend import Detrender
-from sktime.transformations.series.detrend.mstl import MSTL
+from sktime.transformations.detrend._detrend import Detrender
+from sktime.transformations.detrend.mstl import MSTL

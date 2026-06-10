@@ -44,7 +44,7 @@ class HPFilter(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.hpfilter import HPFilter # doctest: +SKIP
+    >>> from sktime.transformations.hpfilter import HPFilter # doctest: +SKIP
     >>> import pandas as pd # doctest: +SKIP
     >>> import statsmodels.api as sm # doctest: +SKIP
     >>> dta = sm.datasets.macrodata.load_pandas().data # doctest: +SKIP

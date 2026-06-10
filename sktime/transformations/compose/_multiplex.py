@@ -59,7 +59,7 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.compose import MultiplexTransformer
-    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.impute import Imputer
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
     >>> from sktime.split import ExpandingWindowSplitter
@@ -181,7 +181,7 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
         -------
         params : dict or list of dict
         """
-        from sktime.transformations.series.impute import Imputer
+        from sktime.transformations.impute import Imputer
 
         # test with 2 simple detrend transformations with selected_transformer
         params1 = {

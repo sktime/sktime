@@ -32,7 +32,7 @@ class IntervalSegmenter(BaseTransformer):
     Examples
     --------
     >>> from sktime.utils._testing.panel import _make_panel
-    >>> from sktime.transformations.panel.segment import IntervalSegmenter
+    >>> from sktime.transformations.segment import IntervalSegmenter
 
     >>> X = _make_panel()
     >>> t = IntervalSegmenter()

@@ -4,7 +4,7 @@
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.adapt import PandasTransformAdaptor
+from sktime.transformations.adapt import PandasTransformAdaptor
 from sktime.utils._testing.series import _make_series
 
 params_list = PandasTransformAdaptor.get_test_params()

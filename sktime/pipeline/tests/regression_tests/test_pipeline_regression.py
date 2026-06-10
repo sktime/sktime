@@ -11,11 +11,11 @@ from sktime.pipeline.pipeline import Pipeline
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.compose import Id
-from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.transformations.series.detrend import Detrender
-from sktime.transformations.series.difference import Differencer
-from sktime.transformations.series.exponent import ExponentTransformer
-from sktime.transformations.series.lag import Lag
+from sktime.transformations.boxcox import BoxCoxTransformer
+from sktime.transformations.detrend import Detrender
+from sktime.transformations.difference import Differencer
+from sktime.transformations.exponent import ExponentTransformer
+from sktime.transformations.lag import Lag
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
 from sktime.utils.dependencies import _check_soft_dependencies
 

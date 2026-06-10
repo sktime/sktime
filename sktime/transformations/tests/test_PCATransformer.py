@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.pca import PCATransformer
+from sktime.transformations.pca import PCATransformer
 from sktime.utils._testing.panel import _make_nested_from_array
 
 

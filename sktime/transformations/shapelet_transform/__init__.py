@@ -6,10 +6,10 @@ __all__ = [
     "ShapeletTransformPyts",
 ]
 
-from sktime.transformations.panel.shapelet_transform._shapelet_transform import (
+from sktime.transformations.shapelet_transform._shapelet_transform import (
     RandomShapeletTransform,
     ShapeletTransform,
 )
-from sktime.transformations.panel.shapelet_transform._shapelet_transform_pyts import (
+from sktime.transformations.shapelet_transform._shapelet_transform_pyts import (
     ShapeletTransformPyts,
 )

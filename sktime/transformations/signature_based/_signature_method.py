@@ -3,10 +3,10 @@
 from sklearn.pipeline import Pipeline
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel.signature_based._augmentations import (
+from sktime.transformations.signature_based._augmentations import (
     _make_augmentation_pipeline,
 )
-from sktime.transformations.panel.signature_based._compute import (
+from sktime.transformations.signature_based._compute import (
     _WindowSignatureTransform,
 )
 
@@ -78,7 +78,7 @@ class SignatureTransformer(BaseTransformer):
         "capability:categorical_in_X": False,  # can estimator handle categorical data?
         # testing configuration
         # ---------------------
-        "tests:libs": ["sktime.transformations.panel.signature_based"],
+        "tests:libs": ["sktime.transformations.signature_based"],
         "tests:vm": True,
     }
 

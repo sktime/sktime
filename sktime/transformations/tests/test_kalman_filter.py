@@ -8,7 +8,7 @@ import pytest
 from numpy.testing import assert_array_almost_equal
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.kalman_filter import (
+from sktime.transformations.kalman_filter import (
     KalmanFilterTransformerFP,
     KalmanFilterTransformerPK,
     KalmanFilterTransformerSIMD,

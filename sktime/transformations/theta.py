@@ -52,7 +52,7 @@ class ThetaLinesTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.theta import ThetaLinesTransformer
+    >>> from sktime.transformations.theta import ThetaLinesTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = ThetaLinesTransformer([0, 0.25, 0.5, 0.75])

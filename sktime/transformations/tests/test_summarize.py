@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.summarize import (
+from sktime.transformations.summarize import (
     ALLOWED_SUM_FUNCS,
     SummaryTransformer,
 )

@@ -47,7 +47,7 @@ class SeasonalDummiesOneHot(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.dummies import SeasonalDummiesOneHot
+    >>> from sktime.transformations.dummies import SeasonalDummiesOneHot
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = SeasonalDummiesOneHot()

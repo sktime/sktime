@@ -128,7 +128,7 @@ class BaseDetector(BaseEstimator):
         """
         from sktime.detection.compose import DetectorPipeline
         from sktime.transformations.base import BaseTransformer
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other

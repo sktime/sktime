@@ -11,7 +11,7 @@ import pytest
 from sktime.forecasting.tests._config import TEST_SPS
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.detrend import Deseasonalizer
+from sktime.transformations.detrend import Deseasonalizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 MODELS = ["additive", "multiplicative"]
@@ -95,7 +95,7 @@ def test_deseasonalizer_in_pipeline():
     from sktime.datasets import load_airline
     from sktime.forecasting.compose import TransformedTargetForecaster
     from sktime.forecasting.theta import ThetaForecaster
-    from sktime.transformations.series.detrend import Deseasonalizer
+    from sktime.transformations.detrend import Deseasonalizer
 
     all_df = load_airline().to_frame()
 
@@ -118,7 +118,7 @@ def test_deseasonalizer_in_pipeline():
 def test_stl_inverse(return_components):
     """Test STLtransformer inverse_transform."""
     from sktime.datasets import load_airline
-    from sktime.transformations.series.detrend import STLTransformer
+    from sktime.transformations.detrend import STLTransformer
 
     X = load_airline()
     transformer = STLTransformer(sp=12, return_components=return_components)

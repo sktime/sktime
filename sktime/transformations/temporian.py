@@ -29,7 +29,7 @@ class TemporianTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.temporian import TemporianTransformer
+    >>> from sktime.transformations.temporian import TemporianTransformer
     >>> import temporian as tp  # doctest: +SKIP
     >>>
     >>> def function(evset):  # doctest: +SKIP

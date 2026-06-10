@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_basic_motions
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.rocket import MiniRocketMultivariate
+from sktime.transformations.rocket import MiniRocketMultivariate
 
 
 @pytest.mark.skipif(

@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.dummies import SeasonalDummiesOneHot
+from sktime.transformations.dummies import SeasonalDummiesOneHot
 from sktime.utils.dependencies import _check_soft_dependencies
 
 

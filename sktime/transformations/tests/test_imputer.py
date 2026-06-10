@@ -9,7 +9,7 @@ from sktime.datatypes import get_examples
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import TransformByLevel
-from sktime.transformations.series.impute import Imputer
+from sktime.transformations.impute import Imputer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
 

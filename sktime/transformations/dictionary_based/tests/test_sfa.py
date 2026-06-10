@@ -8,7 +8,7 @@ import pytest
 from sktime.datasets import load_gunpoint
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.dictionary_based._sfa import SFA
+from sktime.transformations.dictionary_based._sfa import SFA
 
 
 @pytest.mark.skipif(
@@ -67,7 +67,7 @@ def test_dft_mft(use_fallback_dft, norm):
     ).fit(X, y)
 
     if use_fallback_dft:
-        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+        from sktime.transformations.dictionary_based._sfa_numba import (
             _discrete_fourier_transform,
         )
 

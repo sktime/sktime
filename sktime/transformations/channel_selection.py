@@ -163,7 +163,7 @@ class ElbowClassSum(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.channel_selection import ElbowClassSum
+    >>> from sktime.transformations.channel_selection import ElbowClassSum
     >>> from sktime.utils._testing.panel import make_classification_problem
     >>> X, y = make_classification_problem(n_columns=3, n_classes=3, random_state=42)
     >>> cs = ElbowClassSum()
@@ -345,7 +345,7 @@ class ElbowClassPairwise(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.channel_selection import ElbowClassPairwise
+    >>> from sktime.transformations.channel_selection import ElbowClassPairwise
     >>> from sktime.utils._testing.panel import make_classification_problem
     >>> X, y = make_classification_problem(n_columns=3, n_classes=3, random_state=42)
     >>> cs = ElbowClassPairwise()

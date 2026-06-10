@@ -11,7 +11,7 @@ from scipy.stats import linregress
 
 from sktime.datasets import load_airline
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.theta import ThetaLinesTransformer
+from sktime.transformations.theta import ThetaLinesTransformer
 
 
 @pytest.mark.skipif(

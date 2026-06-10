@@ -224,7 +224,7 @@ class Differencer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.difference import Differencer
+    >>> from sktime.transformations.difference import Differencer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = Differencer(lags=[1, 12])

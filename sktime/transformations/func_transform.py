@@ -52,20 +52,20 @@ class FunctionTransformer(BaseTransformer):
 
     See Also
     --------
-    sktime.transformations.series.boxcox.LogTransformer :
+    sktime.transformations.boxcox.LogTransformer :
         Transformer input data using natural log. Can help normalize data and
         compress variance of the series.
-    sktime.transformations.series.exponent.ExponentTransformer :
+    sktime.transformations.exponent.ExponentTransformer :
         Transform input data by raising it to an exponent. Can help compress
         variance of series if a fractional exponent is supplied.
-    sktime.transformations.series.exponent.SqrtTransformer :
+    sktime.transformations.exponent.SqrtTransformer :
         Transform input data by taking its square root. Can help compress
         variance of input series.
 
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.transformations.series.func_transform import FunctionTransformer
+    >>> from sktime.transformations.func_transform import FunctionTransformer
     >>> transformer = FunctionTransformer(np.log1p, np.expm1)
     >>> X = np.array([[0, 1], [2, 3]])
     >>> transformer.fit_transform(X)

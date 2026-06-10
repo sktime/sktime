@@ -7,7 +7,7 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.detrend.mstl import MSTL
+from sktime.transformations.detrend.mstl import MSTL
 
 
 @pytest.mark.skipif(

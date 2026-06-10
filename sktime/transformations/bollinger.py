@@ -36,7 +36,7 @@ class Bollinger(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.bollinger import Bollinger
+    >>> from sktime.transformations.bollinger import Bollinger
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = Bollinger(window=12, k=1)

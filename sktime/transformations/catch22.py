@@ -27,7 +27,7 @@ def get_methods_dict(which="all"):
         Order of the features is the same as in the original Catch-22 implementation,
         22 is mean, 23 is standard deviation (as in catch-24).
     """
-    from sktime.transformations.panel._catch22_numba import (
+    from sktime.transformations._catch22_numba import (
         _catch24_mean,
         _catch24_std,
         _CO_Embed2_Dist_tau_d_expfit_meandiff,
@@ -432,7 +432,7 @@ class Catch22(BaseTransformer):
         Xt : np.ndarray of size [1, n_features], where n_features is the
             number of features requested, containing Catch22/24 features for X.
         """
-        from sktime.transformations.panel._catch22_numba import (
+        from sktime.transformations._catch22_numba import (
             _ac_first_zero,
             _autocorr,
             _normalise_series,

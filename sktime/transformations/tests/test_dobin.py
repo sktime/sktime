@@ -7,7 +7,7 @@ import pytest
 from sklearn.preprocessing import MinMaxScaler, RobustScaler
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.dobin import DOBIN
+from sktime.transformations.dobin import DOBIN
 
 
 @pytest.mark.skipif(

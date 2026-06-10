@@ -72,7 +72,7 @@ class MultiRocketMultivariate(BaseTransformer):
 
     Examples
     --------
-     >>> from sktime.transformations.panel.rocket import Rocket
+     >>> from sktime.transformations.rocket import Rocket
      >>> from sktime.datasets import load_basic_motions
      >>> X_train, y_train = load_basic_motions(split="train") # doctest: +SKIP
      >>> X_test, y_test = load_basic_motions(split="test") # doctest: +SKIP
@@ -186,7 +186,7 @@ class MultiRocketMultivariate(BaseTransformer):
         """
         from numba import get_num_threads, set_num_threads
 
-        from sktime.transformations.panel.rocket._multirocket_multi_numba import (
+        from sktime.transformations.rocket._multirocket_multi_numba import (
             _transform,
         )
 
@@ -219,7 +219,7 @@ class MultiRocketMultivariate(BaseTransformer):
         return pd.DataFrame(X)
 
     def _get_parameter(self, X):
-        from sktime.transformations.panel.rocket._multirocket_multi_numba import (
+        from sktime.transformations.rocket._multirocket_multi_numba import (
             _fit_biases,
             _fit_dilations,
             _quantiles,

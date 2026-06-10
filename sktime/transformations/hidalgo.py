@@ -70,7 +70,7 @@ class Hidalgo(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.hidalgo import Hidalgo
+    >>> from sktime.transformations.hidalgo import Hidalgo
     >>> import numpy as np
     >>> np.random.seed(123)
     >>> X = np.random.rand(10,3)

@@ -63,7 +63,7 @@ class MiniRocketMultivariate(BaseTransformer):
 
     Examples
     --------
-     >>> from sktime.transformations.panel.rocket import MiniRocketMultivariate
+     >>> from sktime.transformations.rocket import MiniRocketMultivariate
      >>> from sktime.datasets import load_basic_motions
      >>> X_train, y_train = load_basic_motions(split="train")
      >>> X_test, y_test = load_basic_motions(split="test") # doctest: +SKIP
@@ -133,7 +133,7 @@ class MiniRocketMultivariate(BaseTransformer):
         -------
         self
         """
-        from sktime.transformations.panel.rocket._minirocket_multi_numba import (
+        from sktime.transformations.rocket._minirocket_multi_numba import (
             _fit_multi,
         )
 
@@ -169,7 +169,7 @@ class MiniRocketMultivariate(BaseTransformer):
         """
         from numba import get_num_threads, set_num_threads
 
-        from sktime.transformations.panel.rocket._minirocket_multi_numba import (
+        from sktime.transformations.rocket._minirocket_multi_numba import (
             _transform_multi,
         )
 

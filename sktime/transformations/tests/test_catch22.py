@@ -6,8 +6,8 @@ from numpy import testing
 
 from sktime.datasets import load_basic_motions
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.catch22 import Catch22
-from sktime.transformations.panel.catch22wrapper import Catch22Wrapper
+from sktime.transformations.catch22 import Catch22
+from sktime.transformations.catch22wrapper import Catch22Wrapper
 
 
 @pytest.mark.skipif(
@@ -1422,7 +1422,7 @@ def test_feature_names():
 
     Safety measure to avoid accidental changes to the feature names, or their order.
     """
-    from sktime.transformations.panel.catch22 import FEATURE_NAMES, feature_names
+    from sktime.transformations.catch22 import FEATURE_NAMES, feature_names
 
     expected_feature_names = [
         "DN_HistogramMode_5",

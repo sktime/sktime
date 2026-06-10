@@ -10,7 +10,7 @@ import pytest
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.subset import ColumnSelect, IndexSubset
+from sktime.transformations.subset import ColumnSelect, IndexSubset
 
 
 @pytest.mark.skipif(

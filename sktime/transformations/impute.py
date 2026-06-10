@@ -81,7 +81,7 @@ class Imputer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.impute import Imputer
     >>> from sktime.datasets import load_airline
     >>> from sktime.split import temporal_train_test_split
     >>> y = load_airline()

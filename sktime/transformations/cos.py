@@ -23,7 +23,7 @@ class CosineTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.cos import CosineTransformer
+    >>> from sktime.transformations.cos import CosineTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = CosineTransformer()

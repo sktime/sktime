@@ -35,7 +35,7 @@ class DistanceFeatures(BaseTransformer):
     Examples
     --------
     >>> from sktime.datasets import load_unit_test
-    >>> from sktime.transformations.panel.compose_distance import DistanceFeatures
+    >>> from sktime.transformations.compose_distance import DistanceFeatures
     >>> X_train, _ = load_unit_test(return_X_y=True, split="train")
     >>> X, _ = load_unit_test(return_X_y=True, split="test")
     >>> trafo = DistanceFeatures()

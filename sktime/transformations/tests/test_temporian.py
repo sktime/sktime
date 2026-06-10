@@ -14,7 +14,7 @@ import pytest
 from sktime.datasets import load_solar
 from sktime.datatypes import get_examples
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.temporian import TemporianTransformer
+from sktime.transformations.temporian import TemporianTransformer
 
 
 @pytest.mark.skipif(

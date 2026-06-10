@@ -48,7 +48,7 @@ class TSFELTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.tsfel import TSFELTransformer
+    >>> from sktime.transformations.tsfel import TSFELTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> # Extract all statistical domain features

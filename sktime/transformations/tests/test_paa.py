@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.paa import PAA
+from sktime.transformations.paa import PAA
 
 
 # Check that exception is raised for bad frames values.

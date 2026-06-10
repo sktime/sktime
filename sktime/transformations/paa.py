@@ -37,7 +37,7 @@ class PAA(BaseTransformer):
     Examples
     --------
     >>> from numpy import arange
-    >>> from sktime.transformations.series.paa import PAA
+    >>> from sktime.transformations.paa import PAA
 
     >>> X = arange(10)
     >>> paa = PAA(frames=3)

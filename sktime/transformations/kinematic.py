@@ -53,7 +53,7 @@ class KinematicFeatures(BaseTransformer):
     --------
     >>> import numpy as np
     >>> import pandas as pd
-    >>> from sktime.transformations.series.kinematic import KinematicFeatures
+    >>> from sktime.transformations.kinematic import KinematicFeatures
 
     >>> traj3d = pd.DataFrame(columns=["x", "y", "z"])
     >>> traj3d["x"] = pd.Series(np.sin(np.arange(200)/100))

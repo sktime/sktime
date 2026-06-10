@@ -28,7 +28,7 @@ class TruncationTransformer(BaseTransformer):
     Examples
     --------
     Truncate only unequal length panels in data:
-    >>> from sktime.transformations.panel.truncation import TruncationTransformer
+    >>> from sktime.transformations.truncation import TruncationTransformer
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical(same_cutoff=False)
     >>> tt = TruncationTransformer()
@@ -37,7 +37,7 @@ class TruncationTransformer(BaseTransformer):
     >>> X_transformed = tt.transform(X)
 
     Truncate each panel to first 5 elements:
-    >>> from sktime.transformations.panel.truncation import TruncationTransformer
+    >>> from sktime.transformations.truncation import TruncationTransformer
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical(same_cutoff=False)
     >>> tt = TruncationTransformer(upper=5)
@@ -46,7 +46,7 @@ class TruncationTransformer(BaseTransformer):
     >>> X_transformed = tt.transform(X)
 
     Pick range from index 1 (inclusively) to 3 (exclusively):
-    >>> from sktime.transformations.panel.truncation import TruncationTransformer
+    >>> from sktime.transformations.truncation import TruncationTransformer
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical(same_cutoff=False)
     >>> tt = TruncationTransformer(lower=1, upper=3)

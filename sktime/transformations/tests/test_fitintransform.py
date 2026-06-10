@@ -11,7 +11,7 @@ from pandas.testing import assert_series_equal
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import FitInTransform
-from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.transformations.boxcox import BoxCoxTransformer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 

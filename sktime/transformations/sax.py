@@ -5,7 +5,7 @@ import numpy as np
 from scipy.stats import norm, zscore
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.paa import PAA
+from sktime.transformations.paa import PAA
 
 
 class SAX(BaseTransformer):
@@ -47,7 +47,7 @@ class SAX(BaseTransformer):
     Examples
     --------
     >>> from numpy import arange
-    >>> from sktime.transformations.series.sax import SAX
+    >>> from sktime.transformations.sax import SAX
 
     >>> X = arange(10)
     >>> sax = SAX(word_size=3, alphabet_size=5)

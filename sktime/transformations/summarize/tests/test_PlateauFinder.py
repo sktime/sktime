@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.summarize import PlateauFinder
+from sktime.transformations.summarize import PlateauFinder
 
 
 @pytest.mark.skipif(

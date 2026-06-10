@@ -75,7 +75,7 @@ class TransformIf(_DelegatedTransformer):
     --------
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.compose import TransformIf
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.detrend import Deseasonalizer
     >>> from sktime.datasets import load_airline
     >>>
     >>> y = load_airline()  # doctest: +SKIP
@@ -286,7 +286,7 @@ class TransformIf(_DelegatedTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.param_est.fixed import FixedParams
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.boxcox import BoxCoxTransformer
 
         params1 = {
             "if_estimator": BoxCoxTransformer(),

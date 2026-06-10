@@ -17,8 +17,8 @@ from sktime.forecasting.base.adapters._pytorch import (
 from sktime.forecasting.trend import CurveFitForecaster
 from sktime.networks.cinn import CINNNetwork
 from sktime.transformations.merger import Merger
-from sktime.transformations.series.fourier import FourierFeatures
-from sktime.transformations.series.summarize import WindowSummarizer
+from sktime.transformations.fourier import FourierFeatures
+from sktime.transformations.summarize import WindowSummarizer
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")

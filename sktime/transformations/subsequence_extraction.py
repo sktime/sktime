@@ -54,7 +54,7 @@ class SubsequenceExtractionTransformer(BaseTransformer):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.transformations.series.subsequence_extraction import (
+    >>> from sktime.transformations.subsequence_extraction import (
     ...     SubsequenceExtractionTransformer
     ... )
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical

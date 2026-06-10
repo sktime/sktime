@@ -12,7 +12,7 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.summarize import SummaryTransformer
+from sktime.transformations.summarize import SummaryTransformer
 
 
 class RandomIntervals(BaseTransformer):

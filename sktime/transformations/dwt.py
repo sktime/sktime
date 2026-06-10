@@ -23,7 +23,7 @@ class DWTTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.dwt import DWTTransformer
+    >>> from sktime.transformations.dwt import DWTTransformer
     >>> from sktime.datasets import load_airline
     >>> from sktime.datatypes import convert
     >>>

@@ -13,7 +13,7 @@ import pytest
 
 # Local imports (within sktime).
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.degree_day import DegreeDayFeatures
+from sktime.transformations.degree_day import DegreeDayFeatures
 
 ###############################################################################
 # Test helpers.

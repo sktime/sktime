@@ -8,9 +8,9 @@ from sklearn.preprocessing import FunctionTransformer
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import FeatureUnion
-from sktime.transformations.panel.reduce import Tabularizer
-from sktime.transformations.panel.segment import RandomIntervalSegmenter
-from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.transformations.reduce import Tabularizer
+from sktime.transformations.segment import RandomIntervalSegmenter
+from sktime.transformations.summarize import RandomIntervalFeatureExtractor
 from sktime.utils._testing.panel import (
     _make_nested_from_array,
     make_classification_problem,

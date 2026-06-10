@@ -63,7 +63,7 @@ class MiniRocket(BaseTransformer):
 
     Examples
     --------
-     >>> from sktime.transformations.panel.rocket import MiniRocket
+     >>> from sktime.transformations.rocket import MiniRocket
      >>> from sktime.datasets import load_unit_test
      >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
      >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
@@ -122,7 +122,7 @@ class MiniRocket(BaseTransformer):
         -------
         self
         """
-        from sktime.transformations.panel.rocket._minirocket_numba import _fit
+        from sktime.transformations.rocket._minirocket_numba import _fit
 
         random_state = (
             np.int32(self.random_state) if isinstance(self.random_state, int) else None
@@ -160,7 +160,7 @@ class MiniRocket(BaseTransformer):
         """
         from numba import get_num_threads, set_num_threads
 
-        from sktime.transformations.panel.rocket._minirocket_numba import _transform
+        from sktime.transformations.rocket._minirocket_numba import _transform
 
         X = X[:, 0, :].astype(np.float32)
 

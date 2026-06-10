@@ -229,7 +229,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     --------
     >>> from sklearn.model_selection import train_test_split
     >>> from sktime.datasets import load_arrow_head
-    >>> from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
+    >>> from sktime.transformations.tsfresh import TSFreshFeatureExtractor
     >>> X, y = load_arrow_head(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
     >>> ts_eff = TSFreshFeatureExtractor(
@@ -449,7 +449,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     --------
     >>> from sklearn.model_selection import train_test_split
     >>> from sktime.datasets import load_arrow_head
-    >>> from sktime.transformations.panel.tsfresh import (
+    >>> from sktime.transformations.tsfresh import (
     ...     TSFreshRelevantFeatureExtractor
     ... )
     >>> X, y = load_arrow_head(return_X_y=True)

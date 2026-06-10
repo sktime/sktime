@@ -44,7 +44,7 @@ class HampelFilter(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.outlier_detection import HampelFilter
+    >>> from sktime.transformations.outlier_detection import HampelFilter
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = HampelFilter(window_length=10)

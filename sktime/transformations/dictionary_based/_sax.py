@@ -7,7 +7,7 @@ import pandas as pd
 import scipy.stats
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel.dictionary_based import PAAlegacy as PAA
+from sktime.transformations.dictionary_based import PAAlegacy as PAA
 
 __author__ = ["MatthewMiddlehurst"]
 

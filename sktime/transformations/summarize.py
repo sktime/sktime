@@ -139,7 +139,7 @@ class WindowSummarizer(BaseTransformer):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.transformations.series.summarize import WindowSummarizer
+    >>> from sktime.transformations.summarize import WindowSummarizer
     >>> from sktime.datasets import load_airline, load_longley
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon
@@ -627,7 +627,7 @@ class SummaryTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    >>> from sktime.transformations.summarize import SummaryTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = SummaryTransformer()
@@ -823,8 +823,8 @@ class SplitterSummarizer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.summarize import SplitterSummarizer
-    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    >>> from sktime.transformations.summarize import SplitterSummarizer
+    >>> from sktime.transformations.summarize import SummaryTransformer
     >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()

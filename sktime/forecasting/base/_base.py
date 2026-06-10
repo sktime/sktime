@@ -216,7 +216,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         from sktime.forecasting.compose import TransformedTargetForecaster
         from sktime.transformations.base import BaseTransformer
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -248,7 +248,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         from sktime.forecasting.compose import TransformedTargetForecaster
         from sktime.transformations.base import BaseTransformer
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -280,7 +280,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         from sktime.forecasting.compose import ForecastingPipeline
         from sktime.transformations.base import BaseTransformer
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -335,7 +335,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             last
             if only one item is passed in ``key``, only ``columns1`` is applied to input
         """
-        from sktime.transformations.series.subset import ColumnSelect
+        from sktime.transformations.subset import ColumnSelect
 
         def is_noneslice(obj):
             res = isinstance(obj, slice)

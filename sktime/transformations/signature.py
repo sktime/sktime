@@ -54,7 +54,7 @@ class SignatureMoments(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.signature import SignatureMoments
+    >>> from sktime.transformations.signature import SignatureMoments
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = SignatureMoments(degree=2, use_index=True)

@@ -41,7 +41,7 @@ class CFFilter(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.cffilter import CFFilter # doctest: +SKIP
+    >>> from sktime.transformations.cffilter import CFFilter # doctest: +SKIP
     >>> import pandas as pd # doctest: +SKIP
     >>> import statsmodels.api as sm # doctest: +SKIP
     >>> dta = sm.datasets.macrodata.load_pandas().data # doctest: +SKIP

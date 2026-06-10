@@ -9,7 +9,7 @@ from pandas.testing import assert_frame_equal, assert_index_equal
 
 from sktime.datasets import load_airline
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.fourier import FourierFeatures
+from sktime.transformations.fourier import FourierFeatures
 
 Y = load_airline()
 Y_datetime = deepcopy(Y)

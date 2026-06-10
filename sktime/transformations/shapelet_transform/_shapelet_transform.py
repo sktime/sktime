@@ -1055,7 +1055,7 @@ class RandomShapeletTransform(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.shapelet_transform import (
+    >>> from sktime.transformations.shapelet_transform import (
     ...     RandomShapeletTransform
     ... )
     >>> from sktime.datasets import load_unit_test
@@ -1158,7 +1158,7 @@ class RandomShapeletTransform(BaseTransformer):
         from joblib import Parallel, delayed
         from numba.typed.typedlist import List
 
-        from sktime.transformations.panel._shapelet_transform_numba import (
+        from sktime.transformations._shapelet_transform_numba import (
             _merge_shapelets,
             _remove_identical_shapelets,
             _remove_self_similar_shapelets,
@@ -1311,7 +1311,7 @@ class RandomShapeletTransform(BaseTransformer):
         """
         from joblib import Parallel, delayed
 
-        from sktime.transformations.panel._shapelet_transform_numba import (
+        from sktime.transformations._shapelet_transform_numba import (
             _online_shapelet_distance,
         )
 
@@ -1357,7 +1357,7 @@ class RandomShapeletTransform(BaseTransformer):
         return {"max_shapelets": 5, "n_shapelet_samples": 50, "batch_size": 20}
 
     def _extract_random_shapelet(self, X, y, i, shapelets, max_shapelets_per_class):
-        from sktime.transformations.panel._shapelet_transform_numba import (
+        from sktime.transformations._shapelet_transform_numba import (
             _find_shapelet_quality,
         )
         from sktime.utils.numba.general import z_normalise_series

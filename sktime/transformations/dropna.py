@@ -43,7 +43,7 @@ class DropNA(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.dropna import DropNA
+    >>> from sktime.transformations.dropna import DropNA
     >>> import pandas as pd
     >>> import numpy as np
     >>> X = pd.DataFrame({'a': [1, 2, np.nan, 4], 'b': [5, np.nan, 7, 8]})

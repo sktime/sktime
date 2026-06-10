@@ -87,7 +87,7 @@ class FourierFeatures(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.fourier import FourierFeatures
+    >>> from sktime.transformations.fourier import FourierFeatures
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = FourierFeatures(sp_list=[12, "Y"], fourier_terms_list=[4, 1])
@@ -371,7 +371,7 @@ class FourierTransform(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.fourier import FourierTransform
+    >>> from sktime.transformations.fourier import FourierTransform
     >>> from sktime.datasets import load_airline
     >>> X = load_airline()
     >>> transformer = FourierTransform()

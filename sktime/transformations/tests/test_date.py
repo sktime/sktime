@@ -12,7 +12,7 @@ from pandas.testing import assert_frame_equal
 from sktime.datasets import load_airline, load_longley, load_PBS_dataset
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.date import DateTimeFeatures
+from sktime.transformations.date import DateTimeFeatures
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
 

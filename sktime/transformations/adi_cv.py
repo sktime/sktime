@@ -71,7 +71,7 @@ class ADICVTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.adi_cv import ADICVTransformer
+    >>> from sktime.transformations.adi_cv import ADICVTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = ADICVTransformer()

@@ -10,7 +10,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.time_since import TimeSince
+from sktime.transformations.time_since import TimeSince
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
 

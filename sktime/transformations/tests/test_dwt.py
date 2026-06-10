@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.dwt import DWTTransformer
+from sktime.transformations.dwt import DWTTransformer
 from sktime.utils._testing.panel import _make_nested_from_array
 
 

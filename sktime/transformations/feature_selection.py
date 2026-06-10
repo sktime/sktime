@@ -64,7 +64,7 @@ class FeatureSelection(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.feature_selection import FeatureSelection
+    >>> from sktime.transformations.feature_selection import FeatureSelection
     >>> from sktime.datasets import load_longley
     >>> y, X = load_longley()
     >>> transformer = FeatureSelection(method="feature-importances", n_columns=3)

@@ -28,7 +28,7 @@ class IndexSubset(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.subset import IndexSubset
+    >>> from sktime.transformations.subset import IndexSubset
     >>> from sktime.datasets import load_airline
     >>> X = load_airline()[0:32]
     >>> y = load_airline()[24:42]
@@ -147,7 +147,7 @@ class ColumnSelect(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.subset import ColumnSelect
+    >>> from sktime.transformations.subset import ColumnSelect
     >>> from sktime.datasets import load_longley
     >>> X = load_longley()[1]
     >>> transformer =  ColumnSelect(columns=["GNPDEFL", "POP", "FOO"])

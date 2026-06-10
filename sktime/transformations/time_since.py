@@ -58,7 +58,7 @@ class TimeSince(BaseTransformer):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.time_since import TimeSince
+    >>> from sktime.transformations.time_since import TimeSince
     >>> X = load_airline()
 
         Create a single column with time elapsed since start date of time series.

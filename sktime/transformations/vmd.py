@@ -92,7 +92,7 @@ class VmdTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.vmd import VmdTransformer  # doctest: +SKIP
+    >>> from sktime.transformations.vmd import VmdTransformer  # doctest: +SKIP
     >>> from sktime.datasets import load_solar  # doctest: +SKIP
     >>> y = load_solar()  # doctest: +SKIP
     >>> transformer = VmdTransformer()  # doctest: +SKIP

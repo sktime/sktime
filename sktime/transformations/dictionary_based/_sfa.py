@@ -319,7 +319,7 @@ class SFA(BaseTransformer):
         from numba import types
         from numba.typed import Dict
 
-        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+        from sktime.transformations.dictionary_based._sfa_numba import (
             _create_word,
         )
 
@@ -521,7 +521,7 @@ class SFA(BaseTransformer):
         return np.sort(breakpoints, axis=1)
 
     def _binning_dft(self, series, num_windows_per_inst):
-        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+        from sktime.transformations.dictionary_based._sfa_numba import (
             _discrete_fourier_transform,
         )
 
@@ -592,7 +592,7 @@ class SFA(BaseTransformer):
         return dft[start:]
 
     def _mft(self, series):
-        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+        from sktime.transformations.dictionary_based._sfa_numba import (
             _calc_incremental_mean_std,
             _discrete_fourier_transform,
             _get_phis,
@@ -694,7 +694,7 @@ class SFA(BaseTransformer):
         from numba import types
         from numba.typed import Dict
 
-        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+        from sktime.transformations.dictionary_based._sfa_numba import (
             _shorten_words,
         )
 
@@ -784,7 +784,7 @@ class SFA(BaseTransformer):
         return False
 
     def _add_to_pyramid(self, bag, word, last_word, window_ind):
-        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+        from sktime.transformations.dictionary_based._sfa_numba import (
             _add_level,
             _add_level_typed,
         )
@@ -841,7 +841,7 @@ class SFA(BaseTransformer):
         return word
 
     def _create_bigram_words(self, word_raw, word):
-        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+        from sktime.transformations.dictionary_based._sfa_numba import (
             _create_bigram_word,
         )
 
@@ -855,7 +855,7 @@ class SFA(BaseTransformer):
         return (word << self.word_bits) | other_word
 
     def _shorten_words(self, word, word_len):
-        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+        from sktime.transformations.dictionary_based._sfa_numba import (
             _shorten_word_large,
         )
 

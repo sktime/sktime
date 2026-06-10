@@ -9,7 +9,7 @@ import pandas as pd
 
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel.segment import RandomIntervalSegmenter
+from sktime.transformations.segment import RandomIntervalSegmenter
 from sktime.utils.pandas import df_map
 
 

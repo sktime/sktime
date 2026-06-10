@@ -6,7 +6,7 @@ from sktime.datasets import load_basic_motions
 from sktime.datatypes import get_examples
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.truncation import TruncationTransformer
+from sktime.transformations.truncation import TruncationTransformer
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
 

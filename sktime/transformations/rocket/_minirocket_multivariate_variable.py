@@ -61,7 +61,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.rocket import MiniRocketMultivariateVariable
+    >>> from sktime.transformations.rocket import MiniRocketMultivariateVariable
     >>> from sktime.datasets import load_japanese_vowels
     >>> # load multivariate and unequal length dataset
     >>> X_train, _ = load_japanese_vowels(split="train", return_X_y=True)
@@ -180,7 +180,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
             If any multivariate series_length in X is < 9 and
             pad_value_short_series is set to None
         """
-        from sktime.transformations.panel.rocket._minirocket_multi_var_numba import (
+        from sktime.transformations.rocket._minirocket_multi_var_numba import (
             _fit_multi_var,
         )
 
@@ -260,7 +260,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         """
         from numba import get_num_threads, set_num_threads
 
-        from sktime.transformations.panel.rocket._minirocket_multi_var_numba import (
+        from sktime.transformations.rocket._minirocket_multi_var_numba import (
             _transform_multi_var,
         )
 

@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_gunpoint
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.rocket import MultiRocket
+from sktime.transformations.rocket import MultiRocket
 
 
 @pytest.mark.skipif(

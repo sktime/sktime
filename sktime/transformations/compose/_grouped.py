@@ -132,7 +132,7 @@ class TransformByLevel(_DelegatedTransformer):
         -------
         params : dict or list of dict
         """
-        from sktime.transformations.series.time_since import TimeSince
+        from sktime.transformations.time_since import TimeSince
 
         groupbys = ["local", "panel", "global"]
 

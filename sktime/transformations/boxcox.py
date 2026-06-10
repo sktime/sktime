@@ -139,10 +139,10 @@ class BoxCoxTransformer(BaseTransformer):
     LogTransformer :
         Transformer input data using natural log. Can help normalize data and
         compress variance of the series.
-    sktime.transformations.series.exponent.ExponentTransformer :
+    sktime.transformations.exponent.ExponentTransformer :
         Transform input data by raising it to an exponent. Can help compress
         variance of series if a fractional exponent is supplied.
-    sktime.transformations.series.exponent.SqrtTransformer :
+    sktime.transformations.exponent.SqrtTransformer :
         Transform input data by taking its square root. Can help compress
         variance of input series.
 
@@ -155,7 +155,7 @@ class BoxCoxTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
+    >>> from sktime.transformations.boxcox import BoxCoxTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = BoxCoxTransformer()
@@ -367,10 +367,10 @@ class LogTransformer(BaseTransformer):
     BoxCoxTransformer :
         Applies Box-Cox power transformation. Can help normalize data and
         compress variance of the series.
-    sktime.transformations.series.exponent.ExponentTransformer :
+    sktime.transformations.exponent.ExponentTransformer :
         Transform input data by raising it to an exponent. Can help compress
         variance of series if a fractional exponent is supplied.
-    sktime.transformations.series.exponent.SqrtTransformer :
+    sktime.transformations.exponent.SqrtTransformer :
         Transform input data by taking its square root. Can help compress
         variance of input series.
 
@@ -380,7 +380,7 @@ class LogTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.boxcox import LogTransformer
+    >>> from sktime.transformations.boxcox import LogTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> transformer = LogTransformer()

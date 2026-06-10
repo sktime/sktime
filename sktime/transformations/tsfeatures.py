@@ -70,7 +70,7 @@ class TSFeaturesTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.tsfeatures import TSFeaturesTransformer
+    >>> from sktime.transformations.tsfeatures import TSFeaturesTransformer
     >>> from sktime.utils._testing.series import _make_series
     >>> X = _make_series()
     >>> transformer = TSFeaturesTransformer()

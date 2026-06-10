@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.panel.signature_based._augmentations import (
+from sktime.transformations.signature_based._augmentations import (
     _AddTime,
     _BasePoint,
     _CumulativeSum,

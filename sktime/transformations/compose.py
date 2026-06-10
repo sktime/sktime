@@ -24,7 +24,7 @@ class ColumnConcatenator(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.compose import ColumnConcatenator # noqa: E501
+    >>> from sktime.transformations.compose import ColumnConcatenator # noqa: E501
     >>> import numpy as np
     >>> data = np.array([[1, 2, 3],
     ...                  [4, 5, 6],

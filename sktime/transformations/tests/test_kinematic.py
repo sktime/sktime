@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.kinematic import KinematicFeatures
+from sktime.transformations.kinematic import KinematicFeatures
 
 
 @pytest.mark.skipif(

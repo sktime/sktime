@@ -44,7 +44,7 @@ class HOG1DTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.hog1d import HOG1DTransformer
+    >>> from sktime.transformations.hog1d import HOG1DTransformer
     >>> from sktime.datasets import load_arrow_head
     >>>
     >>> X, y = load_arrow_head(return_X_y=True)

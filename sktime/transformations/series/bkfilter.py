@@ -20,7 +20,7 @@ class BKFilter(BaseTransformer):
     This is a wrapper around the ``bkfilter`` function from ``statsmodels``.
     (see ``statsmodels.tsa.filters.bk_filter.bkfilter``).
 
-    The Baxter-King filter is intended for economic and econometric time series
+    The Baxter-King filter is intended cfor economic and econometric time series
     data and deals with the periodicity of the business cycle. Applying their
     band-pass filter to a series will produce a new series that does not contain
     fluctuations at a higher or lower frequency than those of the business cycle.

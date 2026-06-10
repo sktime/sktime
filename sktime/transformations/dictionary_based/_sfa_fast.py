@@ -230,7 +230,7 @@ class SFAFast(BaseTransformer):
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it."""
-        from sktime.transformations.panel.dictionary_based._sfa_fast_numba import (
+        from sktime.transformations.dictionary_based._sfa_fast_numba import (
             _transform_case,
             remove_repeating_words,
         )
@@ -332,7 +332,7 @@ class SFAFast(BaseTransformer):
         from numba.typed import Dict
         from scipy.sparse import csr_matrix
 
-        from sktime.transformations.panel.dictionary_based._sfa_fast_numba import (
+        from sktime.transformations.dictionary_based._sfa_fast_numba import (
             _transform_case,
             create_bag_transform,
         )
@@ -393,7 +393,7 @@ class SFAFast(BaseTransformer):
         from numba.typed import Dict
         from scipy.sparse import csr_matrix
 
-        from sktime.transformations.panel.dictionary_based._sfa_fast_numba import (
+        from sktime.transformations.dictionary_based._sfa_fast_numba import (
             create_bag_feature_selection,
             create_bag_none,
             create_feature_names,
@@ -477,7 +477,7 @@ class SFAFast(BaseTransformer):
         return bag_of_words
 
     def _binning(self, X, y=None):
-        from sktime.transformations.panel.dictionary_based._sfa_fast_numba import (
+        from sktime.transformations.dictionary_based._sfa_fast_numba import (
             _binning_dft,
         )
 
@@ -598,7 +598,7 @@ class SFAFast(BaseTransformer):
         return np.sort(breakpoints, axis=1)
 
     def _shorten_bags(self, word_len, y):
-        from sktime.transformations.panel.dictionary_based._sfa_fast_numba import (
+        from sktime.transformations.dictionary_based._sfa_fast_numba import (
             shorten_words,
         )
 

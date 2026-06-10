@@ -10,7 +10,7 @@ import pytest
 
 from sktime.datasets import load_longley
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.dropna import DropNA
+from sktime.transformations.dropna import DropNA
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
 

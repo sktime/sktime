@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel import catch22
+from sktime.transformations import catch22
 
 
 class Catch22Wrapper(BaseTransformer):

@@ -160,7 +160,7 @@ class BaseParamFitter(BaseEstimator):
         from sktime.param_est.compose import ParamFitterPipeline
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
 
         # behaviour is implemented only if other inherits from BaseTransformer
         #  in that case, distinctions arise from whether self or other is a pipeline

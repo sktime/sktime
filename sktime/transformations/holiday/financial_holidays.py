@@ -49,7 +49,7 @@ class FinancialHolidaysTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.holiday import FinancialHolidaysTransformer
+    >>> from sktime.transformations.holiday import FinancialHolidaysTransformer
     >>>
     >>> import numpy
     >>> data = numpy.random.default_rng(seed=0).random(size=365)

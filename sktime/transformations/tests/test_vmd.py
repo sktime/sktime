@@ -12,7 +12,7 @@ from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.trend import TrendForecaster
 from sktime.libs.vmdpy import VMD
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.vmd import VmdTransformer
+from sktime.transformations.vmd import VmdTransformer
 
 
 def _generate_vmd_testdata(T=1000, f_1=2, f_2=24, f_3=288, noise=0.1):

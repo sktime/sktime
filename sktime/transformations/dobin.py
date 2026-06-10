@@ -58,7 +58,7 @@ class DOBIN(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.dobin import DOBIN  # doctest: +SKIP
+    >>> from sktime.transformations.dobin import DOBIN  # doctest: +SKIP
     >>> from sklearn.preprocessing import MinMaxScaler  # doctest: +SKIP
     >>> import numpy as np  # doctest: +SKIP
     >>> import pandas as pd  # doctest: +SKIP

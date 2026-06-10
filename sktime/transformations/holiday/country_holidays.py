@@ -53,7 +53,7 @@ class CountryHolidaysTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.holiday import CountryHolidaysTransformer
+    >>> from sktime.transformations.holiday import CountryHolidaysTransformer
     >>>
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()

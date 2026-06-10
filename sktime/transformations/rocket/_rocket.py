@@ -53,7 +53,7 @@ class Rocket(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.rocket import Rocket
+    >>> from sktime.transformations.rocket import Rocket
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
     >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
@@ -110,7 +110,7 @@ class Rocket(BaseTransformer):
         -------
         self
         """
-        from sktime.transformations.panel.rocket._rocket_numba import _generate_kernels
+        from sktime.transformations.rocket._rocket_numba import _generate_kernels
 
         _, self.n_columns, n_timepoints = X.shape
         self.kernels = _generate_kernels(
@@ -133,7 +133,7 @@ class Rocket(BaseTransformer):
         """
         from numba import get_num_threads, set_num_threads
 
-        from sktime.transformations.panel.rocket._rocket_numba import _apply_kernels
+        from sktime.transformations.rocket._rocket_numba import _apply_kernels
 
         if self.normalise:
             X = (X - X.mean(axis=-1, keepdims=True)) / (
