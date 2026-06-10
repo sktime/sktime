@@ -1,9 +1,9 @@
+import sys
+
 import numpy as np
 import pandas as pd
 import torch
 from huggingface_hub import PyTorchModelHubMixin
-import sys
-
 from tqdm import trange
 
 sys.path.append("../")
@@ -37,8 +37,25 @@ class WindFMTokenizer(nn.Module, PyTorchModelHubMixin):
 
     """
 
-    def __init__(self, d_in, d_model, n_heads, ff_dim, n_enc_layers, n_dec_layers, ffn_dropout_p, attn_dropout_p, resid_dropout_p, s1_bits, s2_bits, beta, gamma0, gamma, zeta, group_size):
-
+    def __init__(
+        self,
+        d_in,
+        d_model,
+        n_heads,
+        ff_dim,
+        n_enc_layers,
+        n_dec_layers,
+        ffn_dropout_p,
+        attn_dropout_p,
+        resid_dropout_p,
+        s1_bits,
+        s2_bits,
+        beta,
+        gamma0,
+        gamma,
+        zeta,
+        group_size,
+    ):
         super().__init__()
         self.d_in = d_in
         self.d_model = d_model
@@ -52,24 +69,52 @@ class WindFMTokenizer(nn.Module, PyTorchModelHubMixin):
 
         self.s1_bits = s1_bits
         self.s2_bits = s2_bits
-        self.codebook_dim = s1_bits + s2_bits # Total dimension of the codebook after quantization
+        self.codebook_dim = (
+            s1_bits + s2_bits
+        )  # Total dimension of the codebook after quantization
         self.embed = nn.Linear(self.d_in, self.d_model)
         self.head = nn.Linear(self.d_model, self.d_in)
 
         # Encoder Transformer Blocks
-        self.encoder = nn.ModuleList([
-            TransformerBlock(self.d_model, self.n_heads, self.ff_dim, self.ffn_dropout_p, self.attn_dropout_p, self.resid_dropout_p)
-            for _ in range(self.enc_layers - 1)
-        ])
+        self.encoder = nn.ModuleList(
+            [
+                TransformerBlock(
+                    self.d_model,
+                    self.n_heads,
+                    self.ff_dim,
+                    self.ffn_dropout_p,
+                    self.attn_dropout_p,
+                    self.resid_dropout_p,
+                )
+                for _ in range(self.enc_layers - 1)
+            ]
+        )
         # Decoder Transformer Blocks
-        self.decoder = nn.ModuleList([
-            TransformerBlock(self.d_model, self.n_heads, self.ff_dim, self.ffn_dropout_p, self.attn_dropout_p, self.resid_dropout_p)
-            for _ in range(self.dec_layers - 1)
-        ])
-        self.quant_embed = nn.Linear(in_features=self.d_model, out_features=self.codebook_dim) # Linear layer before quantization
-        self.post_quant_embed_pre = nn.Linear(in_features=self.s1_bits, out_features=self.d_model) # Linear layer after quantization (pre part - s1 bits)
-        self.post_quant_embed = nn.Linear(in_features=self.codebook_dim, out_features=self.d_model) # Linear layer after quantization (full codebook)
-        self.tokenizer = BSQuantizer(self.s1_bits, self.s2_bits, beta, gamma0, gamma, zeta, group_size) # BSQuantizer module
+        self.decoder = nn.ModuleList(
+            [
+                TransformerBlock(
+                    self.d_model,
+                    self.n_heads,
+                    self.ff_dim,
+                    self.ffn_dropout_p,
+                    self.attn_dropout_p,
+                    self.resid_dropout_p,
+                )
+                for _ in range(self.dec_layers - 1)
+            ]
+        )
+        self.quant_embed = nn.Linear(
+            in_features=self.d_model, out_features=self.codebook_dim
+        )  # Linear layer before quantization
+        self.post_quant_embed_pre = nn.Linear(
+            in_features=self.s1_bits, out_features=self.d_model
+        )  # Linear layer after quantization (pre part - s1 bits)
+        self.post_quant_embed = nn.Linear(
+            in_features=self.codebook_dim, out_features=self.d_model
+        )  # Linear layer after quantization (full codebook)
+        self.tokenizer = BSQuantizer(
+            self.s1_bits, self.s2_bits, beta, gamma0, gamma, zeta, group_size
+        )  # BSQuantizer module
 
     def forward(self, x):
         """
@@ -78,7 +123,8 @@ class WindFMTokenizer(nn.Module, PyTorchModelHubMixin):
         Args:
             x (torch.Tensor): Input tensor of shape (batch_size, seq_len, d_in).
 
-        Returns:
+        Returns
+        -------
             tuple: A tuple containing:
                 - tuple: (z_pre, z) - Reconstructed outputs from decoder with s1_bits and full codebook respectively,
                          both of shape (batch_size, seq_len, d_in).
@@ -91,11 +137,13 @@ class WindFMTokenizer(nn.Module, PyTorchModelHubMixin):
         for layer in self.encoder:
             z = layer(z)
 
-        z = self.quant_embed(z) # (B, T, codebook)
+        z = self.quant_embed(z)  # (B, T, codebook)
 
         bsq_loss, quantized, z_indices = self.tokenizer(z)
 
-        quantized_pre = quantized[:, :, :self.s1_bits] # Extract the first part of quantized representation (s1_bits)
+        quantized_pre = quantized[
+            :, :, : self.s1_bits
+        ]  # Extract the first part of quantized representation (s1_bits)
         z_pre = self.post_quant_embed_pre(quantized_pre)
 
         z = self.post_quant_embed(quantized)
@@ -120,22 +168,27 @@ class WindFMTokenizer(nn.Module, PyTorchModelHubMixin):
             x (torch.Tensor): Indices tensor.
             half (bool, optional): Whether to process only half of the codebook dimension. Defaults to False.
 
-        Returns:
+        Returns
+        -------
             torch.Tensor: Bit representation tensor.
         """
         if half:
-            x1 = x[0] # Assuming x is a tuple of indices if half is True
+            x1 = x[0]  # Assuming x is a tuple of indices if half is True
             x2 = x[1]
-            mask = 2 ** torch.arange(self.codebook_dim//2, device=x1.device, dtype=torch.long) # Create a mask for bit extraction
-            x1 = (x1.unsqueeze(-1) & mask) != 0 # Extract bits for the first half
-            x2 = (x2.unsqueeze(-1) & mask) != 0 # Extract bits for the second half
-            x = torch.cat([x1, x2], dim=-1) # Concatenate the bit representations
+            mask = 2 ** torch.arange(
+                self.codebook_dim // 2, device=x1.device, dtype=torch.long
+            )  # Create a mask for bit extraction
+            x1 = (x1.unsqueeze(-1) & mask) != 0  # Extract bits for the first half
+            x2 = (x2.unsqueeze(-1) & mask) != 0  # Extract bits for the second half
+            x = torch.cat([x1, x2], dim=-1)  # Concatenate the bit representations
         else:
-            mask = 2 ** torch.arange(self.codebook_dim, device=x.device, dtype=torch.long) # Create a mask for bit extraction
-            x = (x.unsqueeze(-1) & mask) != 0 # Extract bits
+            mask = 2 ** torch.arange(
+                self.codebook_dim, device=x.device, dtype=torch.long
+            )  # Create a mask for bit extraction
+            x = (x.unsqueeze(-1) & mask) != 0  # Extract bits
 
-        x = x.float() * 2 - 1 # Convert boolean to bipolar (-1, 1)
-        q_scale = 1. / (self.codebook_dim ** 0.5) # Scaling factor
+        x = x.float() * 2 - 1  # Convert boolean to bipolar (-1, 1)
+        q_scale = 1.0 / (self.codebook_dim**0.5)  # Scaling factor
         x = x * q_scale
         return x
 
@@ -147,7 +200,8 @@ class WindFMTokenizer(nn.Module, PyTorchModelHubMixin):
             x (torch.Tensor): Input tensor of shape (batch_size, seq_len, d_in).
             half (bool, optional): Whether to use half quantization in BSQuantizer. Defaults to False.
 
-        Returns:
+        Returns
+        -------
             torch.Tensor: Quantized indices from BSQuantizer.
         """
         z = self.embed(x)
@@ -166,7 +220,8 @@ class WindFMTokenizer(nn.Module, PyTorchModelHubMixin):
             x (torch.Tensor): Quantized indices tensor.
             half (bool, optional): Whether the indices were generated with half quantization. Defaults to False.
 
-        Returns:
+        Returns
+        -------
             torch.Tensor: Reconstructed output tensor of shape (batch_size, seq_len, d_in).
         """
         quantized = self.indices_to_bits(x, half)
@@ -195,7 +250,20 @@ class WindFM(nn.Module, PyTorchModelHubMixin):
         learn_te (bool): Whether to use learnable temporal embeddings.
     """
 
-    def __init__(self, s1_bits, s2_bits, n_layers, d_model, n_heads, ff_dim, ffn_dropout_p, attn_dropout_p, resid_dropout_p, token_dropout_p, learn_te):
+    def __init__(
+        self,
+        s1_bits,
+        s2_bits,
+        n_layers,
+        d_model,
+        n_heads,
+        ff_dim,
+        ffn_dropout_p,
+        attn_dropout_p,
+        resid_dropout_p,
+        token_dropout_p,
+        learn_te,
+    ):
         super().__init__()
         self.s1_bits = s1_bits
         self.s2_bits = s2_bits
@@ -209,34 +277,50 @@ class WindFM(nn.Module, PyTorchModelHubMixin):
         self.resid_dropout_p = resid_dropout_p
         self.token_dropout_p = token_dropout_p
 
-        self.s1_vocab_size = 2 ** self.s1_bits
+        self.s1_vocab_size = 2**self.s1_bits
         self.token_drop = nn.Dropout(self.token_dropout_p)
         self.embedding = HierarchicalEmbedding(self.s1_bits, self.s2_bits, self.d_model)
         self.time_emb = FourierTemporalEmbedding(self.d_model)
-        self.transformer = nn.ModuleList([
-            TransformerBlock(self.d_model, self.n_heads, self.ff_dim, self.ffn_dropout_p, self.attn_dropout_p, self.resid_dropout_p)
-            for _ in range(self.n_layers)
-        ])
+        self.transformer = nn.ModuleList(
+            [
+                TransformerBlock(
+                    self.d_model,
+                    self.n_heads,
+                    self.ff_dim,
+                    self.ffn_dropout_p,
+                    self.attn_dropout_p,
+                    self.resid_dropout_p,
+                )
+                for _ in range(self.n_layers)
+            ]
+        )
         self.norm = RMSNorm(self.d_model)
         self.dep_layer = DependencyAwareLayer(self.d_model)
         self.head = DualHead(self.s1_bits, self.s2_bits, self.d_model)
         self.apply(self._init_weights)
 
     def _init_weights(self, module):
-
         if isinstance(module, nn.Linear):
             nn.init.xavier_normal_(module.weight)
             if module.bias is not None:
                 nn.init.zeros_(module.bias)
         elif isinstance(module, nn.Embedding):
-            nn.init.normal_(module.weight, mean=0, std=self.embedding.d_model ** -0.5)
+            nn.init.normal_(module.weight, mean=0, std=self.embedding.d_model**-0.5)
         elif isinstance(module, nn.LayerNorm):
             nn.init.ones_(module.weight)
             nn.init.zeros_(module.bias)
         elif isinstance(module, RMSNorm):
             nn.init.ones_(module.weight)
 
-    def forward(self, s1_ids, s2_ids, stamp=None, padding_mask=None, use_teacher_forcing=False, s1_targets=None):
+    def forward(
+        self,
+        s1_ids,
+        s2_ids,
+        stamp=None,
+        padding_mask=None,
+        use_teacher_forcing=False,
+        s1_targets=None,
+    ):
         """
         Args:
             s1_ids (torch.Tensor): Input tensor of s1 token IDs. Shape: [batch_size, seq_len]
@@ -246,7 +330,8 @@ class WindFM(nn.Module, PyTorchModelHubMixin):
             use_teacher_forcing (bool, optional): Whether to use teacher forcing for s1 decoding. Defaults to False.
             s1_targets (torch.Tensor, optional): Target s1 token IDs for teacher forcing. Shape: [batch_size, seq_len]. Defaults to None.
 
-        Returns:
+        Returns
+        -------
             Tuple[torch.Tensor, torch.Tensor]:
                 - s1 logits: Logits for s1 token predictions. Shape: [batch_size, seq_len, s1_vocab_size]
                 - s2_logits: Logits for s2 token predictions, conditioned on s1. Shape: [batch_size, seq_len, s2_vocab_size]
@@ -268,10 +353,14 @@ class WindFM(nn.Module, PyTorchModelHubMixin):
             sibling_embed = self.embedding.emb_s1(s1_targets)
         else:
             s1_probs = F.softmax(s1_logits.detach(), dim=-1)
-            sample_s1_ids = torch.multinomial(s1_probs.view(-1, self.s1_vocab_size), 1).view(s1_ids.shape)
+            sample_s1_ids = torch.multinomial(
+                s1_probs.view(-1, self.s1_vocab_size), 1
+            ).view(s1_ids.shape)
             sibling_embed = self.embedding.emb_s1(sample_s1_ids)
 
-        x2 = self.dep_layer(x, sibling_embed, key_padding_mask=padding_mask) # Dependency Aware Layer: Condition on s1 embeddings
+        x2 = self.dep_layer(
+            x, sibling_embed, key_padding_mask=padding_mask
+        )  # Dependency Aware Layer: Condition on s1 embeddings
         s2_logits = self.head.cond_forward(x2)
         return s1_logits, s2_logits
 
@@ -288,7 +377,8 @@ class WindFM(nn.Module, PyTorchModelHubMixin):
             stamp (torch.Tensor, optional): Temporal stamp tensor. Shape: [batch_size, seq_len]. Defaults to None.
             padding_mask (torch.Tensor, optional): Mask for padding tokens. Shape: [batch_size, seq_len]. Defaults to None.
 
-        Returns:
+        Returns
+        -------
             Tuple[torch.Tensor, torch.Tensor]:
                 - s1 logits: Logits for s1 token predictions. Shape: [batch_size, seq_len, s1_vocab_size]
                 - context: Context representation from the Transformer. Shape: [batch_size, seq_len, d_model]
@@ -320,7 +410,8 @@ class WindFM(nn.Module, PyTorchModelHubMixin):
             s1_ids (torch.torch.Tensor): Input tensor of s1 token IDs. Shape: [batch_size, seq_len]
             padding_mask (torch.Tensor, optional): Mask for padding tokens. Shape: [batch_size, seq_len]. Defaults to None.
 
-        Returns:
+        Returns
+        -------
             torch.Tensor: s2 logits. Shape: [batch_size, seq_len, s2_vocab_size]
         """
         sibling_embed = self.embedding.emb_s1(s1_ids)
@@ -329,11 +420,11 @@ class WindFM(nn.Module, PyTorchModelHubMixin):
 
 
 def top_k_top_p_filtering(
-        logits,
-        top_k: int = 0,
-        top_p: float = 1.0,
-        filter_value: float = -float("Inf"),
-        min_tokens_to_keep: int = 1,
+    logits,
+    top_k: int = 0,
+    top_p: float = 1.0,
+    filter_value: float = -float("Inf"),
+    min_tokens_to_keep: int = 1,
 ):
     """Filter a distribution of logits using top-k and/or nucleus (top-p) filtering
     Args:
@@ -365,12 +456,16 @@ def top_k_top_p_filtering(
         sorted_indices_to_remove[..., 0] = 0
 
         # scatter sorted tensors to original indexing
-        indices_to_remove = sorted_indices_to_remove.scatter(1, sorted_indices, sorted_indices_to_remove)
+        indices_to_remove = sorted_indices_to_remove.scatter(
+            1, sorted_indices, sorted_indices_to_remove
+        )
         logits[indices_to_remove] = filter_value
         return logits
 
 
-def sample_from_logits(logits, temperature=1.0, top_k=None, top_p=None, sample_logits=True):
+def sample_from_logits(
+    logits, temperature=1.0, top_k=None, top_p=None, sample_logits=True
+):
     logits = logits / temperature
     if top_k is not None or top_p is not None:
         if top_k > 0 or top_p < 1.0:
@@ -386,7 +481,21 @@ def sample_from_logits(logits, temperature=1.0, top_k=None, top_p=None, sample_l
     return x
 
 
-def auto_regressive_inference(tokenizer, model, x, x_stamp, y_stamp, max_lookback, pred_len, clip=5, T=1.0, top_k=0, top_p=0.99, sample_count=5, verbose=False):
+def auto_regressive_inference(
+    tokenizer,
+    model,
+    x,
+    x_stamp,
+    y_stamp,
+    max_lookback,
+    pred_len,
+    clip=5,
+    T=1.0,
+    top_k=0,
+    top_p=0.99,
+    sample_count=5,
+    verbose=False,
+):
     with torch.no_grad():
         batch_size = x.size(0)
         initial_seq_len = x.size(1)
@@ -394,9 +503,21 @@ def auto_regressive_inference(tokenizer, model, x, x_stamp, y_stamp, max_lookbac
         device = x.device
         x = torch.clip(x, -clip, clip)
 
-        x_repeated = x.unsqueeze(1).repeat(1, sample_count, 1, 1).reshape(-1, x.size(1), x.size(2))
-        x_stamp_repeated = x_stamp.unsqueeze(1).repeat(1, sample_count, 1, 1).reshape(-1, x_stamp.size(1), x_stamp.size(2))
-        y_stamp_repeated = y_stamp.unsqueeze(1).repeat(1, sample_count, 1, 1).reshape(-1, y_stamp.size(1), y_stamp.size(2))
+        x_repeated = (
+            x.unsqueeze(1)
+            .repeat(1, sample_count, 1, 1)
+            .reshape(-1, x.size(1), x.size(2))
+        )
+        x_stamp_repeated = (
+            x_stamp.unsqueeze(1)
+            .repeat(1, sample_count, 1, 1)
+            .reshape(-1, x_stamp.size(1), x_stamp.size(2))
+        )
+        y_stamp_repeated = (
+            y_stamp.unsqueeze(1)
+            .repeat(1, sample_count, 1, 1)
+            .reshape(-1, y_stamp.size(1), y_stamp.size(2))
+        )
 
         full_stamps = torch.cat([x_stamp_repeated, y_stamp_repeated], dim=1).to(device)
 
@@ -405,12 +526,12 @@ def auto_regressive_inference(tokenizer, model, x, x_stamp, y_stamp, max_lookbac
         full_x_token_s1 = torch.zeros(
             (batch_size * sample_count, full_seq_len),
             dtype=initial_x_token[0].dtype,
-            device=device
+            device=device,
         )
         full_x_token_s2 = torch.zeros(
             (batch_size * sample_count, full_seq_len),
             dtype=initial_x_token[1].dtype,
-            device=device
+            device=device,
         )
 
         full_x_token_s1[:, :initial_seq_len] = initial_x_token[0]
@@ -430,20 +551,26 @@ def auto_regressive_inference(tokenizer, model, x, x_stamp, y_stamp, max_lookbac
             input_tokens_s2 = full_x_token_s2[:, start_idx:end_idx]
             current_stamp = full_stamps[:, start_idx:end_idx, :]
 
-            s1_logits, context = model.decode_s1(input_tokens_s1, input_tokens_s2, current_stamp)
+            s1_logits, context = model.decode_s1(
+                input_tokens_s1, input_tokens_s2, current_stamp
+            )
             s1_logits = s1_logits[:, -1, :]
-            sample_pre = sample_from_logits(s1_logits, temperature=T, top_k=top_k, top_p=top_p, sample_logits=True)
+            sample_pre = sample_from_logits(
+                s1_logits, temperature=T, top_k=top_k, top_p=top_p, sample_logits=True
+            )
 
             s2_logits = model.decode_s2(context, sample_pre)
             s2_logits = s2_logits[:, -1, :]
-            sample_post = sample_from_logits(s2_logits, temperature=T, top_k=top_k, top_p=top_p, sample_logits=True)
+            sample_post = sample_from_logits(
+                s2_logits, temperature=T, top_k=top_k, top_p=top_p, sample_logits=True
+            )
 
             full_x_token_s1[:, current_pos] = sample_pre.squeeze(1)
             full_x_token_s2[:, current_pos] = sample_post.squeeze(1)
 
         final_tokens_to_decode = [
             full_x_token_s1[:, -max_lookback:].contiguous(),
-            full_x_token_s2[:, -max_lookback:].contiguous()
+            full_x_token_s2[:, -max_lookback:].contiguous(),
         ]
 
         z = tokenizer.decode(final_tokens_to_decode, half=True)
@@ -456,51 +583,89 @@ def auto_regressive_inference(tokenizer, model, x, x_stamp, y_stamp, max_lookbac
 
 def calc_time_stamps(x_timestamp):
     time_df = pd.DataFrame()
-    time_df['minute'] = x_timestamp.dt.minute
-    time_df['hour'] = x_timestamp.dt.hour
-    time_df['weekday'] = x_timestamp.dt.weekday
-    time_df['day'] = x_timestamp.dt.day
-    time_df['month'] = x_timestamp.dt.month
+    time_df["minute"] = x_timestamp.dt.minute
+    time_df["hour"] = x_timestamp.dt.hour
+    time_df["weekday"] = x_timestamp.dt.weekday
+    time_df["day"] = x_timestamp.dt.day
+    time_df["month"] = x_timestamp.dt.month
     return time_df
 
 
 class WindFMPredictor:
-
     def __init__(self, model, tokenizer, device="cuda:0", max_context=512, clip=5):
         self.tokenizer = tokenizer
         self.model = model
         self.max_context = max_context
         self.clip = clip
-        self.feature_cols = ['wind_speed', 'wind_direction', 'power', 'density', 'temperature', 'pressure']
-        self.time_cols = ['minute', 'hour', 'weekday', 'day', 'month']
+        self.feature_cols = [
+            "wind_speed",
+            "wind_direction",
+            "power",
+            "density",
+            "temperature",
+            "pressure",
+        ]
+        self.time_cols = ["minute", "hour", "weekday", "day", "month"]
         self.device = device
 
         self.tokenizer = self.tokenizer.to(self.device)
         self.model = self.model.to(self.device)
 
-    def generate(self, x, x_stamp, y_stamp, pred_len, T, top_k, top_p, sample_count, verbose):
-
+    def generate(
+        self, x, x_stamp, y_stamp, pred_len, T, top_k, top_p, sample_count, verbose
+    ):
         x_tensor = torch.from_numpy(np.array(x).astype(np.float32)).to(self.device)
-        x_stamp_tensor = torch.from_numpy(np.array(x_stamp).astype(np.float32)).to(self.device)
-        y_stamp_tensor = torch.from_numpy(np.array(y_stamp).astype(np.float32)).to(self.device)
+        x_stamp_tensor = torch.from_numpy(np.array(x_stamp).astype(np.float32)).to(
+            self.device
+        )
+        y_stamp_tensor = torch.from_numpy(np.array(y_stamp).astype(np.float32)).to(
+            self.device
+        )
 
-        preds = auto_regressive_inference(self.tokenizer, self.model, x_tensor, x_stamp_tensor, y_stamp_tensor, self.max_context, pred_len,
-                                          self.clip, T, top_k, top_p, sample_count, verbose)
+        preds = auto_regressive_inference(
+            self.tokenizer,
+            self.model,
+            x_tensor,
+            x_stamp_tensor,
+            y_stamp_tensor,
+            self.max_context,
+            pred_len,
+            self.clip,
+            T,
+            top_k,
+            top_p,
+            sample_count,
+            verbose,
+        )
         preds = preds[:, -pred_len:, :]
         return preds
 
-    def predict(self, df, x_timestamp, y_timestamp, pred_len, T=1.0, top_k=0, top_p=0.9, sample_count=1, verbose=True):
-
+    def predict(
+        self,
+        df,
+        x_timestamp,
+        y_timestamp,
+        pred_len,
+        T=1.0,
+        top_k=0,
+        top_p=0.9,
+        sample_count=1,
+        verbose=True,
+    ):
         if not isinstance(df, pd.DataFrame):
             raise ValueError("Input must be a pandas DataFrame.")
 
         if not all(col in df.columns for col in self.feature_cols):
-            raise ValueError(f"Feature columns {self.feature_cols} not found in DataFrame.")
+            raise ValueError(
+                f"Feature columns {self.feature_cols} not found in DataFrame."
+            )
 
         df = df.copy()
 
         if df[self.feature_cols].isnull().values.any():
-            raise ValueError("Input DataFrame contains NaN values in price or volume columns.")
+            raise ValueError(
+                "Input DataFrame contains NaN values in price or volume columns."
+            )
 
         x_time_df = calc_time_stamps(x_timestamp)
         y_time_df = calc_time_stamps(y_timestamp)
@@ -518,7 +683,9 @@ class WindFMPredictor:
         x_stamp = x_stamp[np.newaxis, :]
         y_stamp = y_stamp[np.newaxis, :]
 
-        preds = self.generate(x, x_stamp, y_stamp, pred_len, T, top_k, top_p, sample_count, verbose)
+        preds = self.generate(
+            x, x_stamp, y_stamp, pred_len, T, top_k, top_p, sample_count, verbose
+        )
 
         preds = preds.squeeze(0)
         preds = preds * (x_std + 1e-6) + x_mean
@@ -527,5 +694,9 @@ class WindFMPredictor:
         preds = preds[:, -pred_len:, 2]
         preds = np.swapaxes(preds, 0, 1)  # (pred_len, sample_count)
 
-        pred_df = pd.DataFrame(preds, columns=[f'pred-{i}' for i in range(preds.shape[1])], index=y_timestamp)
+        pred_df = pd.DataFrame(
+            preds,
+            columns=[f"pred-{i}" for i in range(preds.shape[1])],
+            index=y_timestamp,
+        )
         return pred_df

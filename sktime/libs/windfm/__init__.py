@@ -33,13 +33,13 @@ SOFTWARE.
 """
 
 from sktime.libs.windfm.windfm import (
-	WindFMTokenizer,
-	WindFM,
-	WindFMPredictor,
+    WindFM,
+    WindFMPredictor,
+    WindFMTokenizer,
 )
 
 __all__ = [
-	"WindFMTokenizer",
-	"WindFM",
-	"WindFMPredictor",
+    "WindFMTokenizer",
+    "WindFM",
+    "WindFMPredictor",
 ]
