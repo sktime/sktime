@@ -599,6 +599,14 @@ Pre-trained and foundation models
 
     Chronos2Forecaster
 
+.. currentmodule:: sktime.forecasting.flowstate
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FlowStateForecaster
+
 .. currentmodule:: sktime.forecasting.hf_transformers_forecaster
 
 .. autosummary::
@@ -694,14 +702,6 @@ Pre-trained and foundation models
     :template: class.rst
 
     TotoForecaster
-
-.. currentmodule:: sktime.forecasting.flowstate
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    FlowStateForecaster
 
 Intermittent time series forecasters
 ------------------------------------
