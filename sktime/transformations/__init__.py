@@ -19,7 +19,6 @@ for _module in _MODULES_FLATTENED:
 
 def __getattr__(name):
     if name in _MODULES_FLATTENED:
-
         warnings.warn(
             f"{__name__}.{name} is deprecated, please import directly from "
             f"{__name__} instead. Same for deeper imports, e.g., "
