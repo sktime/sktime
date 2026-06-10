@@ -156,7 +156,7 @@ class WindowSummarizer(BaseTransformer):
     >>> transformer = WindowSummarizer(**kwargs)
     >>> y_transformed = transformer.fit_transform(y)
 
-    Example with transforming multiple columns of exogeneous features
+    Example with transforming multiple columns of exogenous features
 
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
@@ -172,7 +172,7 @@ class WindowSummarizer(BaseTransformer):
     >>> pipe_return = pipe.fit(y_train, X_train)
     >>> y_pred1 = pipe_return.predict(fh=fh, X=X_test)
 
-    Example with transforming multiple columns of exogeneous features
+    Example with transforming multiple columns of exogenous features
     as well as the y column
 
     >>> Z_train = pd.concat([X_train, y_train], axis=1)
