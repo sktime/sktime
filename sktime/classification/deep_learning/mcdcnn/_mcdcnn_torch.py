@@ -71,6 +71,12 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         order they are passed. If None, then no learning rate scheduler is used.
     callback_kwargs : dict or None, optional (default=None)
         The keyword arguments to be passed to the callbacks.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "Accuracy", "F1Score", "Precision", "Recall"
     lr : float, optional (default=0.01)
         The learning rate to use for the optimizer.
     verbose : bool, optional (default=False)
@@ -122,6 +128,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         optim_kwargs: dict | None = None,
         callbacks: str | tuple[str, ...] | None = None,
         callback_kwargs: dict | None = None,
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.01,
         verbose: bool = False,
         random_state: int = 0,
@@ -142,6 +149,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         self.verbose = verbose
         self.random_state = random_state
         self.callback_kwargs = callback_kwargs
+        self.metrics = metrics
         self.lr = lr
         self.criterion_kwargs = criterion_kwargs
 
@@ -176,6 +184,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             optimizer_kwargs=self.optimizer_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
+            metrics=self.metrics,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
