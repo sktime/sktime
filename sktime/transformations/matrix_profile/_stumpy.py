@@ -12,7 +12,8 @@ class MatrixProfileTransformer(BaseTransformer):
     """Calculate the matrix profile of a time series.
 
     Takes as input a single time series dataset and returns the matrix profile
-    for that time series dataset. The matrix profile is a vector that stores the
+    for that time series dataset, as a time series.
+    The matrix profile is a vector that stores the
     z-normalized Euclidean distance between any subsequence within a
     time series and its nearest neighbor.
 

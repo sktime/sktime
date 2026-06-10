@@ -193,11 +193,14 @@ def _stomp_self(ts, m):
     return mp
 
 
-class MatrixProfile(BaseTransformer):
+class MatrixProfileFeatures(BaseTransformer):
     """Return the matrix profile and index profile for each time series of a dataset.
 
+    Transforms a time series to a feature vector containing the matrix profile
+    and index profile for each time series.
+
     Example of use:
-    # Xt = MatrixProfile(m).transform(X)
+    # Xt = MatrixProfileFeatures(m).transform(X)
     X, a pandas DataFrame, is the the dataset.
     m, an integer, is the desired subsequence length to be used.
     Xt is the transformed X, i.e., a pandas DataFrame with the same number
