@@ -8,7 +8,7 @@ __all__ = ["TransformIf"]
 import operator
 
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
-from sktime.transformations.base import _DelegatedTransformer, BaseTransformer
+from sktime.transformations.base import BaseTransformer, _DelegatedTransformer
 from sktime.transformations.compose._common import CORE_MTYPES
 from sktime.transformations.compose._id import Id
 
