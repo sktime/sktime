@@ -1,10 +1,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Kronos forecaster for ``sktime``."""
+"""WindFM forecaster for ``sktime``."""
 
 __author__ = ["shiyu-coder", "geetu040"]
-# shiyu-coder for shiyu-coder/Kronos
+# shiyu-coder for shiyu-coder/WindFM
 
-__all__ = ["KronosForecaster"]
+__all__ = ["WindFMForecaster"]
 
 from copy import deepcopy
 
@@ -15,28 +15,28 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.utils.singleton import _multiton
 
 
-class KronosForecaster(BaseForecaster):
-    """Kronos zero-shot forecaster for financial K-line/OHLC data.
+class WindFMForecaster(BaseForecaster):
+    """WindFM zero-shot forecaster for financial K-line/OHLC data.
 
-    This forecaster wraps Kronos [1]_, a foundation model for financial market
+    This forecaster wraps WindFM [1]_, a foundation model for financial market
     data [2]_, through the ``sktime`` forecasting interface. This implementation
-    is inference-only and uses the upstream ``KronosPredictor`` preprocessing
+    is inference-only and uses the upstream ``WindFMPredictor`` preprocessing
     and autoregressive inference path internally.
 
     Parameters
     ----------
-    model_path : str, default="NeoQuasar/Kronos-small"
-        Hugging Face repository identifier or local path for the Kronos model.
-        The default is the Kronos-small checkpoint [4]_. Other released
-        checkpoints include Kronos-mini [3]_ and Kronos-base [5]_.
-    tokenizer_path : str, default="NeoQuasar/Kronos-Tokenizer-base"
-        Hugging Face repository identifier or local path for the Kronos tokenizer.
-        The default is the Kronos-Tokenizer-base checkpoint [6]_. The released
+    model_path : str, default="NeoQuasar/WindFM-small"
+        Hugging Face repository identifier or local path for the WindFM model.
+        The default is the WindFM-small checkpoint [4]_. Other released
+        checkpoints include WindFM-mini [3]_ and WindFM-base [5]_.
+    tokenizer_path : str, default="NeoQuasar/WindFM-Tokenizer-base"
+        Hugging Face repository identifier or local path for the WindFM tokenizer.
+        The default is the WindFM-Tokenizer-base checkpoint [6]_. The released
         2k tokenizer is also available [7]_.
     device : str, default="cpu"
         Device used for model and tokenizer inference.
     columns : list of str or None, default=None
-        Optional positional mapping from columns in ``y`` to Kronos internal
+        Optional positional mapping from columns in ``y`` to WindFM internal
         columns. Positions map to ``"open"``, ``"high"``, ``"low"``,
         ``"close"``, ``"volume"``, and ``"amount"``. If provided, at least the
         first four OHLC columns are required; volume and amount are optional. If
@@ -44,19 +44,19 @@ class KronosForecaster(BaseForecaster):
         otherwise the first four numeric columns are used as OHLC. Literal
         volume/amount columns are used when present.
     freq : str or pandas offset, default="5min"
-        Frequency used to synthesize timestamps for Kronos when the training
+        Frequency used to synthesize timestamps for WindFM when the training
         index is not a ``pd.PeriodIndex`` or ``pd.DatetimeIndex``. The default
-        is five minutes because Kronos is designed for financial K-line/OHLC
+        is five minutes because WindFM is designed for financial K-line/OHLC
         data, where five-minute intraday bars are a common default granularity.
     start : str or pd.Timestamp, default="2000-01-01"
-        Start timestamp used with ``freq`` to synthesize timestamps for Kronos
+        Start timestamp used with ``freq`` to synthesize timestamps for WindFM
         when the training index is not datetime-like. The default date is
-        arbitrary; it provides deterministic calendar fields for Kronos while
+        arbitrary; it provides deterministic calendar fields for WindFM while
         keeping the synthetic timestamp path independent of the original index.
     clip : float, default=5.0
-        Input normalization clipping value passed to ``KronosPredictor``.
+        Input normalization clipping value passed to ``WindFMPredictor``.
     predict_kwargs : dict or None, default=None
-        Additional keyword arguments passed directly to ``KronosPredictor.predict``.
+        Additional keyword arguments passed directly to ``WindFMPredictor.predict``.
         Examples are ``T``, ``top_k``, ``top_p``, ``sample_count``, and
         ``verbose``.
     deterministic : bool, default=False
@@ -65,7 +65,7 @@ class KronosForecaster(BaseForecaster):
 
     Notes
     -----
-    ``KronosForecaster`` expects financial K-line style data. The input ``y``
+    ``WindFMForecaster`` expects financial K-line style data. The input ``y``
     should contain OHLC columns, and may optionally contain volume and amount.
     For relative forecasting horizons with datetime-like indices, provide a
     sensible regular index/frequency so future timestamps line up with the data.
@@ -73,30 +73,30 @@ class KronosForecaster(BaseForecaster):
 
     References
     ----------
-    .. [1] Kronos GitHub repository:
-       https://github.com/shiyu-coder/Kronos
+    .. [1] WindFM GitHub repository:
+       https://github.com/shiyu-coder/WindFM
     .. [2] Lin, Z., Xia, Y., Liu, Z., Zhang, S., Wang, J., Yang, C., Dong, Q.,
        Liu, H., Jiang, H., Wang, S., Xiong, X., and Zhao, B. (2025).
-       Kronos: A Foundation Model for the Language of Financial Markets.
+       WindFM: A Foundation Model for the Language of Financial Markets.
        arXiv. https://arxiv.org/abs/2508.02739
-    .. [3] Kronos-mini model card:
-       https://huggingface.co/NeoQuasar/Kronos-mini
-    .. [4] Kronos-small model card:
-       https://huggingface.co/NeoQuasar/Kronos-small
-    .. [5] Kronos-base model card:
-       https://huggingface.co/NeoQuasar/Kronos-base
-    .. [6] Kronos-Tokenizer-base model card:
-       https://huggingface.co/NeoQuasar/Kronos-Tokenizer-base
-    .. [7] Kronos-Tokenizer-2k model card:
-       https://huggingface.co/NeoQuasar/Kronos-Tokenizer-2k
+    .. [3] WindFM-mini model card:
+       https://huggingface.co/NeoQuasar/WindFM-mini
+    .. [4] WindFM-small model card:
+       https://huggingface.co/NeoQuasar/WindFM-small
+    .. [5] WindFM-base model card:
+       https://huggingface.co/NeoQuasar/WindFM-base
+    .. [6] WindFM-Tokenizer-base model card:
+       https://huggingface.co/NeoQuasar/WindFM-Tokenizer-base
+    .. [7] WindFM-Tokenizer-2k model card:
+       https://huggingface.co/NeoQuasar/WindFM-Tokenizer-2k
 
     Examples
     --------
     >>> import pandas as pd
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.kronos import KronosForecaster
+    >>> from sktime.forecasting.windfm import WindFMForecaster
     >>> url = (
-    ...     "https://raw.githubusercontent.com/shiyu-coder/Kronos/"
+    ...     "https://raw.githubusercontent.com/shiyu-coder/WindFM/"
     ...     "refs/heads/master/tests/data/regression_input.csv"
     ... )
     >>> df = pd.read_csv(  # doctest: +SKIP
@@ -110,9 +110,9 @@ class KronosForecaster(BaseForecaster):
     ...     df.index[lookback : lookback + pred_len],
     ...     is_relative=False,
     ... )
-    >>> forecaster = KronosForecaster(  # doctest: +SKIP
-    ...     model_path="NeoQuasar/Kronos-small",
-    ...     tokenizer_path="NeoQuasar/Kronos-Tokenizer-base",
+    >>> forecaster = WindFMForecaster(  # doctest: +SKIP
+    ...     model_path="NeoQuasar/WindFM-small",
+    ...     tokenizer_path="NeoQuasar/WindFM-Tokenizer-base",
     ...     device="cpu",
     ...     deterministic=True,
     ...     predict_kwargs={
@@ -142,15 +142,15 @@ class KronosForecaster(BaseForecaster):
             "safetensors",
         ],
         "tests:vm": True,
-        "tests:libs": ["sktime.libs.kronos"],
+        "tests:libs": ["sktime.libs.windfm"],
     }
 
-    _kronos_columns = ["open", "high", "low", "close", "volume", "amount"]
+    _windfm_columns = ["open", "high", "low", "close", "volume", "amount"]
 
     def __init__(
         self,
-        model_path="NeoQuasar/Kronos-small",
-        tokenizer_path="NeoQuasar/Kronos-Tokenizer-base",
+        model_path="NeoQuasar/WindFM-small",
+        tokenizer_path="NeoQuasar/WindFM-Tokenizer-base",
         device="cpu",
         columns=None,
         freq="5min",
@@ -207,7 +207,7 @@ class KronosForecaster(BaseForecaster):
 
         self.column_mapping_ = self._resolve_column_mapping(y)
         self.output_columns_ = []
-        for internal in self._kronos_columns:
+        for internal in self._windfm_columns:
             original = self.column_mapping_.get(internal)
             if (
                 original is not None
@@ -216,7 +216,7 @@ class KronosForecaster(BaseForecaster):
             ):
                 self.output_columns_.append(original)
 
-        self.tokenizer_, self.model_ = self._load_kronos()
+        self.tokenizer_, self.model_ = self._load_windfm()
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -256,14 +256,14 @@ class KronosForecaster(BaseForecaster):
 
         import torch
 
-        from sktime.libs.kronos import KronosPredictor
+        from sktime.libs.windfm import WindFMPredictor
 
         if self.deterministic:
             torch.manual_seed(42)
             if torch.cuda.is_available():
                 torch.cuda.manual_seed_all(42)
 
-        predictor = KronosPredictor(
+        predictor = WindFMPredictor(
             self.model_,
             self.tokenizer_,
             device=self.device,
@@ -280,7 +280,7 @@ class KronosForecaster(BaseForecaster):
         )
 
         out = pd.DataFrame(index=y_index)
-        for internal in self._kronos_columns:
+        for internal in self._windfm_columns:
             original = self.column_mapping_.get(internal)
             if (
                 original in self.output_columns_
@@ -293,9 +293,9 @@ class KronosForecaster(BaseForecaster):
         return out
 
     def _to_timestamps(self, index):
-        """Convert an sktime prediction index into timestamps for Kronos.
+        """Convert an sktime prediction index into timestamps for WindFM.
 
-        Kronos does not use the index labels directly. The upstream predictor
+        WindFM does not use the index labels directly. The upstream predictor
         extracts calendar fields such as minute, hour, weekday, day, and month
         through pandas ``.dt`` accessors. That means integer and range indexes
         need a small translation layer before they can be passed in.
@@ -306,12 +306,12 @@ class KronosForecaster(BaseForecaster):
         still describe valid 5 minute bars by position.
         """
         if isinstance(index, pd.PeriodIndex):
-            # Periods are time-aware, but Kronos expects timestamp-like values
+            # Periods are time-aware, but WindFM expects timestamp-like values
             # for the `.dt` fields it builds internally.
             timestamp = index.to_timestamp()
 
         elif isinstance(index, pd.DatetimeIndex):
-            # Already exactly what Kronos wants.
+            # Already exactly what WindFM wants.
             timestamp = index
 
         else:
@@ -320,7 +320,7 @@ class KronosForecaster(BaseForecaster):
             # forecast index can have gaps like [2, 5], and those gaps should
             # show up in the generated timestamps too.
             #
-            # The date itself is not sacred. It is only an anchor so Kronos can
+            # The date itself is not sacred. It is only an anchor so WindFM can
             # get minute/hour/day features; `freq` is what controls spacing.
             start = pd.Timestamp(self.start)
             offset = pd.tseries.frequencies.to_offset(self.freq)
@@ -330,7 +330,7 @@ class KronosForecaster(BaseForecaster):
         return pd.Series(timestamp)
 
     def _resolve_column_mapping(self, y):
-        """Resolve user columns to Kronos' expected OHLCVA column names.
+        """Resolve user columns to WindFM' expected OHLCVA column names.
 
         The vendored predictor is fairly strict internally: it wants columns
         named ``open``, ``high``, ``low``, ``close``, and optionally ``volume``
@@ -339,7 +339,7 @@ class KronosForecaster(BaseForecaster):
 
         This method keeps that translation in one place. It also records when
         we had to make a pragmatic fallback choice, so the rest of the forecaster
-        can always build the Kronos input frame in the same internal format.
+        can always build the WindFM input frame in the same internal format.
         """
         mapping = {}
 
@@ -347,7 +347,7 @@ class KronosForecaster(BaseForecaster):
             # Explicit mapping wins. If the user provides it, assume they know
             # which columns are open/high/low/close and validate only the shape.
 
-            if len(self.columns) < 4 or len(self.columns) > len(self._kronos_columns):
+            if len(self.columns) < 4 or len(self.columns) > len(self._windfm_columns):
                 raise ValueError(
                     "columns must contain 4 to 6 items, ordered as open, high, "
                     "low, close, volume, amount."
@@ -357,16 +357,16 @@ class KronosForecaster(BaseForecaster):
             if missing:
                 raise ValueError(f"columns contains values missing from y: {missing}.")
 
-            mapping.update(zip(self._kronos_columns, self.columns))
+            mapping.update(zip(self._windfm_columns, self.columns))
 
-        elif all(col in y.columns for col in self._kronos_columns[:4]):
-            # Best common case: the input already uses the names Kronos expects.
-            for col in self._kronos_columns[:4]:
+        elif all(col in y.columns for col in self._windfm_columns[:4]):
+            # Best common case: the input already uses the names WindFM expects.
+            for col in self._windfm_columns[:4]:
                 mapping[col] = col
 
         else:
             # Last resort for sktime estimator checks and generic user data.
-            # Kronos is an OHLC model, but the sktime interface should still be
+            # WindFM is an OHLC model, but the sktime interface should still be
             # able to run on a numeric DataFrame. Reusing columns is not ideal
             # market data semantics, but it is a deterministic fallback and lets
             # the model path exercise without inventing fake values elsewhere.
@@ -375,32 +375,32 @@ class KronosForecaster(BaseForecaster):
 
             if len(numeric_cols) == 0:
                 raise ValueError(
-                    "KronosForecaster requires open/high/low/close columns, "
+                    "WindFMForecaster requires open/high/low/close columns, "
                     "a columns mapping, or at least one numeric column."
                 )
 
             if len(numeric_cols) < 4:
                 numeric_cols = [numeric_cols[i % len(numeric_cols)] for i in range(4)]
 
-            for internal, original in zip(self._kronos_columns[:4], numeric_cols[:4]):
+            for internal, original in zip(self._windfm_columns[:4], numeric_cols[:4]):
                 mapping[internal] = original
 
         if self.columns is None:
             # Volume/amount are optional upstream. Only pass them through when
-            # they are really present; the Kronos predictor fills missing ones.
+            # they are really present; the WindFM predictor fills missing ones.
 
-            for col in self._kronos_columns[4:]:
+            for col in self._windfm_columns[4:]:
                 if col in y.columns:
                     mapping[col] = col
 
         return mapping
 
-    def _load_kronos(self):
-        """Load or retrieve cached Kronos tokenizer/model."""
+    def _load_windfm(self):
+        """Load or retrieve cached WindFM tokenizer/model."""
         if hasattr(self, "model_") and hasattr(self, "tokenizer_"):
             return self.tokenizer_, self.model_
 
-        tokenizer, model = _CachedKronos(
+        tokenizer, model = _CachedWindFM(
             key=self._get_unique_key(),
             model_path=self.model_path,
             tokenizer_path=self.tokenizer_path,
@@ -439,13 +439,13 @@ class KronosForecaster(BaseForecaster):
         """
         return [
             {
-                "model_path": "NeoQuasar/Kronos-mini",
-                "tokenizer_path": "NeoQuasar/Kronos-Tokenizer-2k",
+                "model_path": "NeoQuasar/WindFM-mini",
+                "tokenizer_path": "NeoQuasar/WindFM-Tokenizer-2k",
                 "deterministic": True,
             },
             {
-                "model_path": "NeoQuasar/Kronos-mini",
-                "tokenizer_path": "NeoQuasar/Kronos-Tokenizer-2k",
+                "model_path": "NeoQuasar/WindFM-mini",
+                "tokenizer_path": "NeoQuasar/WindFM-Tokenizer-2k",
                 "device": "cpu",
                 "columns": None,
                 "clip": 5.0,
@@ -462,8 +462,8 @@ class KronosForecaster(BaseForecaster):
 
 
 @_multiton
-class _CachedKronos:
-    """Multiton-backed cache wrapper for Kronos model/tokenizer pairs."""
+class _CachedWindFM:
+    """Multiton-backed cache wrapper for WindFM model/tokenizer pairs."""
 
     def __init__(
         self,
@@ -491,11 +491,11 @@ class _CachedKronos:
         return self.tokenizer_, self.model_
 
     def _load_tokenizer(self):
-        from sktime.libs.kronos import KronosTokenizer
+        from sktime.libs.windfm import WindFMTokenizer
 
-        return KronosTokenizer.from_pretrained(self.tokenizer_path)
+        return WindFMTokenizer.from_pretrained(self.tokenizer_path)
 
     def _load_model(self):
-        from sktime.libs.kronos import Kronos
+        from sktime.libs.windfm import WindFM
 
-        return Kronos.from_pretrained(self.model_path)
+        return WindFM.from_pretrained(self.model_path)
