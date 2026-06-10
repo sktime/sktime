@@ -880,7 +880,7 @@ class property__randomness(_BaseTag):
 # -----------
 
 
-class capability__exogeneous(_BaseTag):
+class capability__exogenous(_BaseTag):
     """Capability: the forecaster can use exogenous data.
 
     The tag is currently named ``ignores-exogeneous-X``, and will be renamed.
@@ -1149,7 +1149,7 @@ class requires_fh_in_fit(_BaseTag):
 
     For instance, direct reduction to tabular regression
     requires the ``fh`` as it is used by the fitting algorithm to lag the endogeneous
-    against the exogeneous data. In contrast, recursive reduction to tabular regression
+    against the exogenous data. In contrast, recursive reduction to tabular regression
     does not require the ``fh`` in ``fit``, as only the prediction step
     requires the forecasting horizon, when applying the fitted tabular regression model
     by sliding it forward over the ``fh`` steps.
