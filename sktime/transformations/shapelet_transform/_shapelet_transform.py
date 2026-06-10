@@ -1158,7 +1158,9 @@ class RandomShapeletTransform(BaseTransformer):
         from joblib import Parallel, delayed
         from numba.typed.typedlist import List
 
-        from sktime.transformations._shapelet_transform_numba import (
+        numba_src = sktime.transformations.shapelet_transform._shapelet_transform_numba
+
+        from numba_src import (
             _merge_shapelets,
             _remove_identical_shapelets,
             _remove_self_similar_shapelets,
@@ -1311,7 +1313,7 @@ class RandomShapeletTransform(BaseTransformer):
         """
         from joblib import Parallel, delayed
 
-        from sktime.transformations._shapelet_transform_numba import (
+        from sktime.transformations.shapelet_transform._shapelet_transform_numba import (
             _online_shapelet_distance,
         )
 
@@ -1357,9 +1359,9 @@ class RandomShapeletTransform(BaseTransformer):
         return {"max_shapelets": 5, "n_shapelet_samples": 50, "batch_size": 20}
 
     def _extract_random_shapelet(self, X, y, i, shapelets, max_shapelets_per_class):
-        from sktime.transformations._shapelet_transform_numba import (
-            _find_shapelet_quality,
-        )
+        numba_src = sktime.transformations.shapelet_transform._shapelet_transform_numba
+        from numba_src import _find_shapelet_quality
+
         from sktime.utils.numba.general import z_normalise_series
 
         rs = 255 if self.random_state == 0 else self.random_state
