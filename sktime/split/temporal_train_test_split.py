@@ -28,7 +28,7 @@ def temporal_train_test_split(
     """Split time series data containers into a single train/test split.
 
     Creates a single train/test split of endogenous time series ``y``,
-    an optionally exogeneous time series ``X``.
+    an optionally exogenous time series ``X``.
 
     Splits time series ``y`` into a single temporally ordered train and test split.
     The split is based on ``test_size`` and ``train_size`` parameters,
