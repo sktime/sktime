@@ -13,7 +13,6 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.split.base import BaseSplitter
 from sktime.split.base._common import (
     ACCEPTED_Y_TYPES,
-    FORECASTING_HORIZON_TYPES,
     SPLIT_ARRAY_TYPE,
     SPLIT_GENERATOR_TYPE,
     _check_fh,
@@ -102,7 +101,7 @@ class BaseWindowSplitter(BaseSplitter):
 
     def __init__(
         self,
-        fh: FORECASTING_HORIZON_TYPES,
+        fh,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES,

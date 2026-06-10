@@ -16,7 +16,6 @@ from sktime.datatypes._utilities import get_index_for_series
 from sktime.split.base import BaseSplitter
 from sktime.split.base._common import (
     ACCEPTED_Y_TYPES,
-    FORECASTING_HORIZON_TYPES,
     SPLIT_GENERATOR_TYPE,
     _check_fh,
     _check_inputs_for_compatibility,
@@ -102,11 +101,7 @@ class SingleWindowSplitter(BaseSplitter):
     [(array([3, 4, 5]), array([7, 9]))]
     """
 
-    def __init__(
-        self,
-        fh: FORECASTING_HORIZON_TYPES,
-        window_length: ACCEPTED_WINDOW_LENGTH_TYPES | None = None,
-    ) -> None:
+    def __init__(self, fh, window_length=None):
         _check_inputs_for_compatibility(args=[fh, window_length])
         super().__init__(fh=fh, window_length=window_length)
 

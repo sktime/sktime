@@ -15,7 +15,6 @@ from sktime.split.base._common import (
     ACCEPTED_Y_TYPES,
     DEFAULT_FH,
     DEFAULT_WINDOW_LENGTH,
-    FORECASTING_HORIZON_TYPES,
     PANDAS_MTYPES,
     SPLIT_GENERATOR_TYPE,
     SPLIT_TYPE,
@@ -106,7 +105,7 @@ class BaseSplitter(BaseObject):
 
     def __init__(
         self,
-        fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
+        fh=DEFAULT_FH,
         window_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
         self.window_length = window_length
