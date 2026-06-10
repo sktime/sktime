@@ -601,6 +601,14 @@ Pre-trained and foundation models
 
     Chronos2Forecaster
 
+.. currentmodule:: sktime.forecasting.falcon_tst
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FalconTSTForecaster
+
 .. currentmodule:: sktime.forecasting.hf_transformers
 
 .. autosummary::
@@ -608,6 +616,14 @@ Pre-trained and foundation models
     :template: class.rst
 
     HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.kronos
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KronosForecaster
 
 .. currentmodule:: sktime.forecasting.lagllama
 
@@ -849,6 +865,19 @@ Model selection and tuning
     ForecastingOptCV
     ForecastingSkoptSearchCV
     ForecastingOptunaSearchCV
+
+Agentic Forecasting
+-------------------
+
+Forecasters that use generative AI and/or agentic reasoning to decide how to forecast.
+
+.. currentmodule:: sktime.forecasting.agentic
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AutoResearchForecaster
 
 Model Evaluation (Backtesting)
 ------------------------------
