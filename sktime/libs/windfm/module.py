@@ -1,3 +1,5 @@
+"""Neural network modules used by the WindFM forecaster."""
+
 import math
 
 import numpy as np
@@ -9,8 +11,11 @@ from torch.autograd import Function
 
 
 class DifferentiableEntropyFunction(Function):
+    """Compute differentiable entropy over binary quantizer codes."""
+
     @staticmethod
     def forward(ctx, zq, basis, K, eps):
+        """Evaluate entropy and store tensors for gradient computation."""
         zb = (zq + 1) / 2
         zi = ((zb * basis).sum(-1)).to(torch.int64)
         cnt = torch.scatter_reduce(
@@ -28,6 +33,7 @@ class DifferentiableEntropyFunction(Function):
 
     @staticmethod
     def backward(ctx, grad_output):
+        """Backpropagate through the differentiable entropy estimate."""
         zq, zi, prob = ctx.saved_tensors
         grad_array = -grad_output * (torch.log(prob) + 1) / zi.numel() / ctx.K
         reord_grad = grad_array[zi.flatten()].reshape(zi.shape)
@@ -36,10 +42,13 @@ class DifferentiableEntropyFunction(Function):
 
 
 def codebook_entropy(zq, basis, K, eps=1e-4):
+    """Return differentiable entropy for quantized codebook entries."""
     return DifferentiableEntropyFunction.apply(zq, basis, K, eps)
 
 
 class BinarySphericalQuantizer(nn.Module):
+    """Quantize embeddings with binary spherical quantization."""
+
     def __init__(
         self,
         embed_dim,
@@ -55,7 +64,8 @@ class BinarySphericalQuantizer(nn.Module):
         l2_norm=True,
         inv_temperature=1,
     ):
-        """
+        """Initialize the binary spherical quantizer.
+
         Paper link: https://arxiv.org/pdf/2406.07548.pdf
         Here we use the official implementation of the BinarySphericalQuantizer.
         """
@@ -94,9 +104,10 @@ class BinarySphericalQuantizer(nn.Module):
         group_codebook = self.indexes_to_codes(group_codes).float()[:, -group_size:]
         self.register_buffer("group_codebook", group_codebook, persistent=False)
 
-        self.soft_entropy = soft_entropy  # soft_entropy: Sec 3.2 of https://arxiv.org/pdf/1911.05894.pdf
+        self.soft_entropy = soft_entropy
 
     def quantize(self, z):
+        """Map continuous embeddings to bipolar binary codes."""
         assert z.shape[-1] == self.embed_dim, (
             f"Expected {self.embed_dim} dimensions, got {z.shape[-1]}"
         )
@@ -109,6 +120,7 @@ class BinarySphericalQuantizer(nn.Module):
         return z + (zhat - z).detach()
 
     def forward(self, z):
+        """Quantize embeddings and return loss metrics."""
         # if self.input_format == 'bchw':
         #     z = rearrange(z, 'b c h w -> b h w c')
         zq = self.quantize(z)
@@ -154,14 +166,16 @@ class BinarySphericalQuantizer(nn.Module):
         )
 
     def soft_entropy_loss(self, z):
-        # if we divide the code in subgroups of size group_size, the codebook will be of size 2 ** group_size
+        """Compute entropy penalties with soft subgroup assignments."""
+        # If the code is divided into subgroups of size group_size, the
+        # codebook has size 2 ** group_size.
         # the sub-code is the last group_size bits of the full code
         group_code_book = self.group_codebook / (
             self.embed_dim**0.5 if self.l2_norm else 1
         )
         divided_z = rearrange(z, "... (g c) -> ... g c", c=self.group_size)
 
-        # we calculate the distance between the divided_z and the codebook for each subgroup
+        # Calculate distances between divided_z and the codebook for each subgroup.
         distance = -2 * torch.einsum(
             "... g c, d c ->... g d", divided_z, group_code_book
         )
@@ -188,6 +202,7 @@ class BinarySphericalQuantizer(nn.Module):
         return per_sample_entropy, codebook_entropy.sum(), avg_prob
 
     def get_hard_per_sample_entropy(self, zb_by_sample):
+        """Estimate per-sample entropy from hard binary assignments."""
         probs_per_dim = zb_by_sample.sum(1) / zb_by_sample.shape[1]
         persample_entropy = -probs_per_dim * torch.log(probs_per_dim + 1e-8) - (
             1 - probs_per_dim
@@ -196,7 +211,8 @@ class BinarySphericalQuantizer(nn.Module):
         return persample_entropy.mean()
 
     def codes_to_indexes(self, zhat):
-        """Converts a `code` to an index in the codebook.
+        """Convert a code to an index in the codebook.
+
         Args:
             zhat: A tensor of shape (B, ..., C) containing the codes. must be in {-1, 1}
         """
@@ -206,7 +222,8 @@ class BinarySphericalQuantizer(nn.Module):
         return ((zhat + 1) / 2 * self.basis).sum(axis=-1).to(torch.int64)
 
     def codes_to_group_indexes(self, zhat):
-        """Converts a `code` to a list of indexes (in groups) in the codebook.
+        """Convert a code to a list of grouped indexes in the codebook.
+
         Args:
             zhat: A tensor of shape (B, ..., C) containing the codes. must be in {-1, 1}
         """
@@ -229,6 +246,7 @@ class BinarySphericalQuantizer(nn.Module):
         return codes_non_centered * 2 - 1
 
     def get_entropy(self, count, dim=-1, eps=1e-4, normalize=True):
+        """Compute entropy from counts or probabilities."""
         if normalize:
             probs = (count + eps) / (count + eps).sum(dim=dim, keepdim=True)
         else:
@@ -237,6 +255,7 @@ class BinarySphericalQuantizer(nn.Module):
         return H
 
     def get_group_codebook_entry(self, group_indices):
+        """Return quantized vectors for grouped codebook indexes."""
         z_q = self.group_indexes_to_codes(group_indices)
         q_scale = 1.0 / (self.embed_dim**0.5) if self.l2_norm else 1.0
         z_q = z_q * q_scale
@@ -247,6 +266,7 @@ class BinarySphericalQuantizer(nn.Module):
         return z_q
 
     def get_codebook_entry(self, indices):
+        """Return quantized vectors for codebook indexes."""
         z_q = self.indexes_to_codes(indices)
         q_scale = 1.0 / (self.embed_dim**0.5) if self.l2_norm else 1.0
         z_q = z_q * q_scale
@@ -258,6 +278,8 @@ class BinarySphericalQuantizer(nn.Module):
 
 
 class BSQuantizer(nn.Module):
+    """Wrap binary spherical quantization for two-part WindFM tokens."""
+
     def __init__(self, s1_bits, s2_bits, beta, gamma0, gamma, zeta, group_size):
         super().__init__()
         self.codebook_dim = s1_bits + s2_bits
@@ -268,6 +290,7 @@ class BSQuantizer(nn.Module):
         )
 
     def bits_to_indices(self, bits):
+        """Convert bipolar bits to integer token indexes."""
         bits = (bits >= 0).to(torch.long)
         indices = 2 ** torch.arange(
             0,
@@ -279,6 +302,7 @@ class BSQuantizer(nn.Module):
         return (bits * indices).sum(-1)
 
     def forward(self, z, half=False):
+        """Normalize and quantize latent embeddings."""
         z = F.normalize(z, dim=-1)
         quantized, bsq_loss, metrics = self.bsq(z)
         if half:
@@ -291,6 +315,8 @@ class BSQuantizer(nn.Module):
 
 
 class RMSNorm(torch.nn.Module):
+    """Root mean square layer normalization."""
+
     def __init__(self, dim: int, eps: float = 1e-5):
         super().__init__()
         self.eps = eps
@@ -300,11 +326,14 @@ class RMSNorm(torch.nn.Module):
         return x * torch.rsqrt(torch.mean(x * x, dim=-1, keepdim=True) + self.eps)
 
     def forward(self, x):
+        """Apply RMS normalization with a learned scale."""
         output = self._norm(x.float()).type_as(x)
         return output * self.weight
 
 
 class FeedForward(nn.Module):
+    """Gated feed-forward network used in transformer blocks."""
+
     def __init__(self, d_model, ff_dim, ffn_dropout_p=0.0):
         super().__init__()
 
@@ -314,10 +343,13 @@ class FeedForward(nn.Module):
         self.ffn_dropout = nn.Dropout(ffn_dropout_p)
 
     def forward(self, x):
+        """Apply the gated feed-forward transformation."""
         return self.ffn_dropout(self.w2(F.silu(self.w1(x)) * self.w3(x)))
 
 
 class RotaryPositionalEmbedding(nn.Module):
+    """Rotary positional embedding for attention queries and keys."""
+
     def __init__(self, dim):
         super().__init__()
         inv_freq = 1.0 / (10000 ** (torch.arange(0, dim, 2).float() / dim))
@@ -337,6 +369,7 @@ class RotaryPositionalEmbedding(nn.Module):
         return self.cos_cached, self.sin_cached
 
     def forward(self, q, k):
+        """Apply rotary position encoding to query and key tensors."""
         cos, sin = self._update_cos_sin_cache(q, q.shape[-2])
         return (
             (q * cos) + (self._rotate_half(q) * sin),
@@ -358,6 +391,7 @@ def scaled_dot_product_attention(
     scale=None,
     training=True,
 ) -> torch.Tensor:
+    """Compute scaled dot-product attention with optional masks."""
     L, S = query.size(-2), key.size(-2)
     scale_factor = 1 / math.sqrt(query.size(-1)) if scale is None else scale
     attn_bias = torch.zeros(L, S, dtype=query.dtype).to(query.device)
@@ -385,6 +419,8 @@ def scaled_dot_product_attention(
 
 
 class MultiHeadAttentionWithRoPE(nn.Module):
+    """Causal multi-head self-attention with rotary embeddings."""
+
     def __init__(self, d_model, n_heads, attn_dropout_p=0.0, resid_dropout_p=0.0):
         super().__init__()
         self.d_model = d_model
@@ -400,6 +436,7 @@ class MultiHeadAttentionWithRoPE(nn.Module):
         self.resid_dropout = nn.Dropout(resid_dropout_p)
 
     def forward(self, x, key_padding_mask=None):
+        """Apply causal self-attention to a sequence."""
         batch_size, seq_len, _ = x.shape
 
         q = (
@@ -449,6 +486,8 @@ class MultiHeadAttentionWithRoPE(nn.Module):
 
 
 class MultiHeadCrossAttentionWithRoPE(nn.Module):
+    """Cross-attention layer with rotary embeddings."""
+
     def __init__(self, d_model, n_heads, attn_dropout_p=0.0, resid_dropout=0.0):
         super().__init__()
         self.d_model = d_model
@@ -464,6 +503,7 @@ class MultiHeadCrossAttentionWithRoPE(nn.Module):
         self.resid_dropout = nn.Dropout(resid_dropout)
 
     def forward(self, query, key, value, key_padding_mask=None):
+        """Attend from query states to key and value states."""
         batch_size, q_len, _ = query.shape
         _, seq_len, _ = key.shape
 
@@ -512,6 +552,8 @@ class MultiHeadCrossAttentionWithRoPE(nn.Module):
 
 
 class HierarchicalEmbedding(nn.Module):
+    """Fuse first- and second-stage token embeddings."""
+
     def __init__(self, s1_bits, s2_bits, d_model=256):
         super().__init__()
         self.s1_bits = s1_bits
@@ -529,7 +571,8 @@ class HierarchicalEmbedding(nn.Module):
         nn.init.normal_(self.emb_s2.weight, mean=0, std=d_model**-0.5)
 
     def forward(self, token_ids):
-        """Inputs:
+        """Embed hierarchical token IDs.
+
         token_ids: [batch_size, seq_len] token ID
         Output: [batch_size, seq_len, d_model]
         """
@@ -543,6 +586,8 @@ class HierarchicalEmbedding(nn.Module):
 
 
 class DependencyAwareLayer(nn.Module):
+    """Condition hidden states on sibling token embeddings."""
+
     def __init__(self, d_model, n_heads=4, attn_dropout_p=0.0, resid_dropout=0.0):
         super().__init__()
         self.cross_attn = MultiHeadCrossAttentionWithRoPE(
@@ -551,7 +596,9 @@ class DependencyAwareLayer(nn.Module):
         self.norm = RMSNorm(d_model)
 
     def forward(self, hidden_states, sibling_embed, key_padding_mask=None):
-        """hidden_states: [batch, seq_len, d_model]
+        """Apply dependency-aware cross-attention.
+
+        hidden_states: [batch, seq_len, d_model]
         sibling_embed: Embedding from another subtoken
         """
         attn_out = self.cross_attn(
@@ -564,6 +611,8 @@ class DependencyAwareLayer(nn.Module):
 
 
 class TransformerBlock(nn.Module):
+    """Transformer block with RMS normalization and RoPE attention."""
+
     def __init__(
         self,
         d_model,
@@ -582,6 +631,7 @@ class TransformerBlock(nn.Module):
         self.ffn = FeedForward(d_model, ff_dim, ffn_dropout_p)
 
     def forward(self, x, key_padding_mask=None):
+        """Apply attention and feed-forward residual blocks."""
         residual = x
         x = self.norm1(x)
         attn_out = self.self_attn(x, key_padding_mask=key_padding_mask)
@@ -595,6 +645,8 @@ class TransformerBlock(nn.Module):
 
 
 class DualHead(nn.Module):
+    """Prediction heads for first- and second-stage WindFM tokens."""
+
     def __init__(self, s1_bits, s2_bits, d_model):
         super().__init__()
         self.vocab_s1 = 2**s1_bits
@@ -605,6 +657,7 @@ class DualHead(nn.Module):
     def compute_loss(
         self, s1_logits, s2_logits, s1_targets, s2_targets, padding_mask=None
     ):
+        """Compute averaged cross-entropy for both token heads."""
         if padding_mask is not None:
             valid_mask = padding_mask == 0
             s1_logits = s1_logits[valid_mask]
@@ -624,18 +677,23 @@ class DualHead(nn.Module):
         return ce_loss, ce_s1, ce_s2
 
     def forward(self, x):
+        """Project hidden states to first-stage token logits."""
         return self.proj_s1(x)
 
     def cond_forward(self, x2):
+        """Project conditioned hidden states to second-stage token logits."""
         return self.proj_s2(x2)
 
 
 class FourierFeatureEmbedding(nn.Module):
+    """Embed scalar time features with Fourier features."""
+
     def __init__(self, d_model, n_fourier_features):
-        """
+        """Initialize the Fourier feature embedding.
+
         d_model: The dimension of the output embedding.
         n_fourier_features: The number of fourier features to use (sin and cos pairs).
-                            The input to the linear layer will be 2 * n_fourier_features.
+            The input to the linear layer will be 2 * n_fourier_features.
         """
         super().__init__()
         self.d_model = d_model
@@ -646,6 +704,7 @@ class FourierFeatureEmbedding(nn.Module):
         self.projection = nn.Linear(2 * n_fourier_features, d_model)
 
     def forward(self, t):
+        """Encode normalized scalar values as Fourier features."""
         # t: normalized in [0, 1]
         # shape: [batch_size, seq_len]
 
@@ -665,13 +724,16 @@ class FourierFeatureEmbedding(nn.Module):
 
 
 class FourierTemporalEmbedding(nn.Module):
+    """Combine Fourier embeddings for calendar time components."""
+
     def __init__(self, d_model, n_fourier_features=10):
-        """
+        """Initialize temporal Fourier embeddings.
+
         d_model: The dimension of the model.
         n_fourier_features: Number of Fourier features for each time component.
-                            A good starting point is 10.
+            A good starting point is 10.
         """
-        super(FourierTemporalEmbedding, self).__init__()
+        super().__init__()
 
         self.minute_embed = FourierFeatureEmbedding(d_model, n_fourier_features)
         self.hour_embed = FourierFeatureEmbedding(d_model, n_fourier_features)
@@ -680,9 +742,11 @@ class FourierTemporalEmbedding(nn.Module):
         self.month_embed = FourierFeatureEmbedding(d_model, n_fourier_features)
 
     def normalize(self, val, max_val):
+        """Normalize a temporal component by its maximum value."""
         return val / max_val
 
     def forward(self, x):
+        """Embed minute, hour, weekday, day, and month features."""
         # x: input tensor of shape [batch_size, seq_len, 5]
         # Columns: 0:minute, 1:hour, 2:weekday, 3:day, 4:month
 

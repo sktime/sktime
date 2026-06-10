@@ -1,21 +1,29 @@
-import sys
+"""WindFM tokenizer, neural model, and prediction utilities."""
 
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from huggingface_hub import PyTorchModelHubMixin
 from tqdm import trange
 
-sys.path.append("../")
-from model.module import *
+from sktime.libs.windfm.module import (
+    BSQuantizer,
+    DependencyAwareLayer,
+    DualHead,
+    FourierTemporalEmbedding,
+    HierarchicalEmbedding,
+    RMSNorm,
+    TransformerBlock,
+)
 
 
 class WindFMTokenizer(nn.Module, PyTorchModelHubMixin):
-    """
-    WindFMTokenizer module for tokenizing input data using a hybrid quantization approach.
+    """Tokenize input data with a hybrid quantization approach.
 
     This tokenizer utilizes a combination of encoder and decoder Transformer blocks
-    along with the Binary Spherical Quantization (BSQuantizer) to compress and decompress input data.
+    and Binary Spherical Quantization (BSQuantizer) to compress input data.
 
     Args:
            d_in (int): Input dimension.
@@ -126,8 +134,9 @@ class WindFMTokenizer(nn.Module, PyTorchModelHubMixin):
         Returns
         -------
             tuple: A tuple containing:
-                - tuple: (z_pre, z) - Reconstructed outputs from decoder with s1_bits and full codebook respectively,
-                         both of shape (batch_size, seq_len, d_in).
+                - tuple: (z_pre, z) - Reconstructed outputs from decoder with
+                  s1_bits and full codebook respectively, both of shape
+                  (batch_size, seq_len, d_in).
                 - torch.Tensor: bsq_loss - Loss from the BSQuantizer.
                 - torch.Tensor: quantized - Quantized representation from BSQuantizer.
                 - torch.Tensor: z_indices - Indices from the BSQuantizer.
@@ -161,12 +170,12 @@ class WindFMTokenizer(nn.Module, PyTorchModelHubMixin):
         return (z_pre, z), bsq_loss, quantized, z_indices
 
     def indices_to_bits(self, x, half=False):
-        """
-        Converts indices to bit representations and scales them.
+        """Convert indices to bit representations and scale them.
 
         Args:
             x (torch.Tensor): Indices tensor.
-            half (bool, optional): Whether to process only half of the codebook dimension. Defaults to False.
+            half (bool, optional): Whether to process only half of the
+                codebook dimension. Defaults to False.
 
         Returns
         -------
@@ -193,12 +202,12 @@ class WindFMTokenizer(nn.Module, PyTorchModelHubMixin):
         return x
 
     def encode(self, x, half=False):
-        """
-        Encodes the input data into quantized indices.
+        """Encode the input data into quantized indices.
 
         Args:
             x (torch.Tensor): Input tensor of shape (batch_size, seq_len, d_in).
-            half (bool, optional): Whether to use half quantization in BSQuantizer. Defaults to False.
+            half (bool, optional): Whether to use half quantization in
+                BSQuantizer. Defaults to False.
 
         Returns
         -------
@@ -213,16 +222,17 @@ class WindFMTokenizer(nn.Module, PyTorchModelHubMixin):
         return z_indices
 
     def decode(self, x, half=False):
-        """
-        Decodes quantized indices back to the input data space.
+        """Decode quantized indices back to the input data space.
 
         Args:
             x (torch.Tensor): Quantized indices tensor.
-            half (bool, optional): Whether the indices were generated with half quantization. Defaults to False.
+            half (bool, optional): Whether the indices were generated with
+                half quantization. Defaults to False.
 
         Returns
         -------
-            torch.Tensor: Reconstructed output tensor of shape (batch_size, seq_len, d_in).
+            torch.Tensor: Reconstructed output tensor of shape
+                (batch_size, seq_len, d_in).
         """
         quantized = self.indices_to_bits(x, half)
         z = self.post_quant_embed(quantized)
@@ -321,20 +331,29 @@ class WindFM(nn.Module, PyTorchModelHubMixin):
         use_teacher_forcing=False,
         s1_targets=None,
     ):
-        """
+        """Return logits for both WindFM token stages.
+
         Args:
-            s1_ids (torch.Tensor): Input tensor of s1 token IDs. Shape: [batch_size, seq_len]
-            s2_ids (torch.Tensor): Input tensor of s2 token IDs. Shape: [batch_size, seq_len]
-            stamp (torch.Tensor, optional): Temporal stamp tensor. Shape: [batch_size, seq_len]. Defaults to None.
-            padding_mask (torch.Tensor, optional): Mask for padding tokens. Shape: [batch_size, seq_len]. Defaults to None.
-            use_teacher_forcing (bool, optional): Whether to use teacher forcing for s1 decoding. Defaults to False.
-            s1_targets (torch.Tensor, optional): Target s1 token IDs for teacher forcing. Shape: [batch_size, seq_len]. Defaults to None.
+            s1_ids (torch.Tensor): Input s1 token IDs with shape
+                [batch_size, seq_len].
+            s2_ids (torch.Tensor): Input s2 token IDs with shape
+                [batch_size, seq_len].
+            stamp (torch.Tensor, optional): Temporal stamp tensor with shape
+                [batch_size, seq_len]. Defaults to None.
+            padding_mask (torch.Tensor, optional): Padding mask with shape
+                [batch_size, seq_len]. Defaults to None.
+            use_teacher_forcing (bool, optional): Whether to use teacher forcing
+                for s1 decoding. Defaults to False.
+            s1_targets (torch.Tensor, optional): Target s1 token IDs for teacher
+                forcing with shape [batch_size, seq_len]. Defaults to None.
 
         Returns
         -------
             Tuple[torch.Tensor, torch.Tensor]:
-                - s1 logits: Logits for s1 token predictions. Shape: [batch_size, seq_len, s1_vocab_size]
-                - s2_logits: Logits for s2 token predictions, conditioned on s1. Shape: [batch_size, seq_len, s2_vocab_size]
+                - s1 logits: token predictions with shape
+                  [batch_size, seq_len, s1_vocab_size].
+                - s2 logits: predictions conditioned on s1 with shape
+                  [batch_size, seq_len, s2_vocab_size].
         """
         x = self.embedding([s1_ids, s2_ids])
         if stamp is not None:
@@ -365,23 +384,28 @@ class WindFM(nn.Module, PyTorchModelHubMixin):
         return s1_logits, s2_logits
 
     def decode_s1(self, s1_ids, s2_ids, stamp=None, padding_mask=None):
-        """
-        Decodes only the s1 tokens.
+        """Decode only the s1 tokens.
 
-        This method performs a forward pass to predict only s1 tokens. It returns the s1 logits
-        and the context representation from the Transformer, which can be used for subsequent s2 decoding.
+        This method performs a forward pass to predict only s1 tokens. It returns
+        the s1 logits and context representation for subsequent s2 decoding.
 
         Args:
-            s1_ids (torch.Tensor): Input tensor of s1 token IDs. Shape: [batch_size, seq_len]
-            s2_ids (torch.Tensor): Input tensor of s2 token IDs. Shape: [batch_size, seq_len]
-            stamp (torch.Tensor, optional): Temporal stamp tensor. Shape: [batch_size, seq_len]. Defaults to None.
-            padding_mask (torch.Tensor, optional): Mask for padding tokens. Shape: [batch_size, seq_len]. Defaults to None.
+            s1_ids (torch.Tensor): Input s1 token IDs with shape
+                [batch_size, seq_len].
+            s2_ids (torch.Tensor): Input s2 token IDs with shape
+                [batch_size, seq_len].
+            stamp (torch.Tensor, optional): Temporal stamp tensor with shape
+                [batch_size, seq_len]. Defaults to None.
+            padding_mask (torch.Tensor, optional): Padding mask with shape
+                [batch_size, seq_len]. Defaults to None.
 
         Returns
         -------
             Tuple[torch.Tensor, torch.Tensor]:
-                - s1 logits: Logits for s1 token predictions. Shape: [batch_size, seq_len, s1_vocab_size]
-                - context: Context representation from the Transformer. Shape: [batch_size, seq_len, d_model]
+                - s1 logits: token predictions with shape
+                  [batch_size, seq_len, s1_vocab_size].
+                - context: transformer representation with shape
+                  [batch_size, seq_len, d_model].
         """
         x = self.embedding([s1_ids, s2_ids])
         if stamp is not None:
@@ -398,17 +422,18 @@ class WindFM(nn.Module, PyTorchModelHubMixin):
         return s1_logits, x
 
     def decode_s2(self, context, s1_ids, padding_mask=None):
-        """
-        Decodes the s2 tokens, conditioned on the context and s1 tokens.
+        """Decode s2 tokens conditioned on context and s1 tokens.
 
-        This method decodes s2 tokens based on a pre-computed context representation (typically from `decode_s1`)
-        and the s1 token IDs. It uses the dependency-aware layer and the conditional s2 head to predict s2 tokens.
+        This method decodes s2 tokens from a pre-computed context
+        representation and the s1 token IDs.
 
         Args:
-            context (torch.Tensor): Context representation from the transformer (output of decode_s1).
-                                     Shape: [batch_size, seq_len, d_model]
-            s1_ids (torch.torch.Tensor): Input tensor of s1 token IDs. Shape: [batch_size, seq_len]
-            padding_mask (torch.Tensor, optional): Mask for padding tokens. Shape: [batch_size, seq_len]. Defaults to None.
+            context (torch.Tensor): Context representation from the transformer
+                with shape [batch_size, seq_len, d_model].
+            s1_ids (torch.Tensor): Input s1 token IDs with shape
+                [batch_size, seq_len].
+            padding_mask (torch.Tensor, optional): Padding mask with shape
+                [batch_size, seq_len]. Defaults to None.
 
         Returns
         -------
@@ -426,12 +451,14 @@ def top_k_top_p_filtering(
     filter_value: float = -float("Inf"),
     min_tokens_to_keep: int = 1,
 ):
-    """Filter a distribution of logits using top-k and/or nucleus (top-p) filtering
+    """Filter logits with top-k and/or nucleus top-p filtering.
+
     Args:
         logits: logits distribution shape (batch size, vocabulary size)
         if top_k > 0: keep only top k tokens with highest probability (top-k filtering).
-        if top_p < 1.0: keep the top tokens with cumulative probability >= top_p (nucleus filtering).
-            Nucleus filtering is described in Holtzman et al. (http://arxiv.org/abs/1904.09751)
+        if top_p < 1.0: keep tokens with cumulative probability >= top_p.
+            Nucleus filtering is described in Holtzman et al.
+            (http://arxiv.org/abs/1904.09751)
         Make sure we keep at least min_tokens_to_keep per batch example in the output
     From: https://gist.github.com/thomwolf/1a5a29f6962089e871b94cbd09daf317
     """
@@ -446,12 +473,12 @@ def top_k_top_p_filtering(
         sorted_logits, sorted_indices = torch.sort(logits, descending=True)
         cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
 
-        # Remove tokens with cumulative probability above the threshold (token with 0 are kept)
+        # Remove tokens with cumulative probability above the threshold.
         sorted_indices_to_remove = cumulative_probs > top_p
         if min_tokens_to_keep > 1:
-            # Keep at least min_tokens_to_keep (set to min_tokens_to_keep-1 because we add the first one below)
+            # Keep at least min_tokens_to_keep.
             sorted_indices_to_remove[..., :min_tokens_to_keep] = 0
-        # Shift the indices to the right to keep also the first token above the threshold
+        # Shift right to keep the first token above the threshold.
         sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
         sorted_indices_to_remove[..., 0] = 0
 
@@ -466,6 +493,7 @@ def top_k_top_p_filtering(
 def sample_from_logits(
     logits, temperature=1.0, top_k=None, top_p=None, sample_logits=True
 ):
+    """Sample token IDs from logits after optional filtering."""
     logits = logits / temperature
     if top_k is not None or top_p is not None:
         if top_k > 0 or top_p < 1.0:
@@ -496,6 +524,7 @@ def auto_regressive_inference(
     sample_count=5,
     verbose=False,
 ):
+    """Generate future samples autoregressively from tokenized context."""
     with torch.no_grad():
         batch_size = x.size(0)
         initial_seq_len = x.size(1)
@@ -582,6 +611,7 @@ def auto_regressive_inference(
 
 
 def calc_time_stamps(x_timestamp):
+    """Create WindFM temporal stamp features from datetime values."""
     time_df = pd.DataFrame()
     time_df["minute"] = x_timestamp.dt.minute
     time_df["hour"] = x_timestamp.dt.hour
@@ -592,6 +622,8 @@ def calc_time_stamps(x_timestamp):
 
 
 class WindFMPredictor:
+    """Run WindFM forecasting from pandas inputs."""
+
     def __init__(self, model, tokenizer, device="cuda:0", max_context=512, clip=5):
         self.tokenizer = tokenizer
         self.model = model
@@ -614,6 +646,7 @@ class WindFMPredictor:
     def generate(
         self, x, x_stamp, y_stamp, pred_len, T, top_k, top_p, sample_count, verbose
     ):
+        """Generate normalized forecast samples for prepared arrays."""
         x_tensor = torch.from_numpy(np.array(x).astype(np.float32)).to(self.device)
         x_stamp_tensor = torch.from_numpy(np.array(x_stamp).astype(np.float32)).to(
             self.device
@@ -652,6 +685,7 @@ class WindFMPredictor:
         sample_count=1,
         verbose=True,
     ):
+        """Predict wind power samples for a DataFrame and forecast timestamps."""
         if not isinstance(df, pd.DataFrame):
             raise ValueError("Input must be a pandas DataFrame.")
 
