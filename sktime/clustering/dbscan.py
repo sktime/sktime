@@ -135,8 +135,7 @@ class TimeSeriesDBSCAN(BaseClusterer):
 
         super().__init__()
 
-        # Import the the list of supported distances
-        from sktime.base._panel.knn import DISTANCES_SUPPORTED
+        from sktime.distances import DISTANCES_SUPPORTED
 
         # Input check for supported distance strings, as in _BaseKnnTimeSeriesEstimator
         if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:
