@@ -354,7 +354,7 @@ def test_forecasting_pipeline_dunder_endog():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_forecasting_pipeline_dunder_exog():
-    """Test forecasting pipeline dunder for exogeneous transformation."""
+    """Test forecasting pipeline dunder for exogenous transformation."""
     y = _make_series()
     y_train, y_test = temporal_train_test_split(y)
     X = _make_series(n_columns=2)

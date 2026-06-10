@@ -43,10 +43,10 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
         - "auto": as per original implementation, ``"same"`` is passed if
           ``input_shape[0] < 60`` in the input layer, and ``"valid"`` otherwise.
         - "valid", "same", and other values are passed directly to ``Conv1D``
-    activation : str or None, default = None
+    activation : str or Callable or None, default = None
         Activation for the output layer.
-    activation_hidden : str, default = "sigmoid"
-        Activation for hidden conv layers: "sigmoid", "relu" or "tanh".
+    activation_hidden : str or Callable, default = "Sigmoid"
+        Activation for hidden conv layers: "Sigmoid", "ReLU" or "Tanh".
     optimizer : str or callable, default = "Adam"
         Optimizer to use. Same as TF default (Adam).
     optimizer_kwargs : dict or None, default = None
@@ -104,8 +104,8 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
         filter_sizes: tuple[int, ...] = (6, 12),
         use_bias: bool = True,
         padding: str = "auto",
-        activation: str | None = None,
-        activation_hidden: str = "sigmoid",
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable = "Sigmoid",
         optimizer: str | None | Callable = "Adam",
         optimizer_kwargs: dict | None = None,
         criterion: str | None | Callable = "MSELoss",
@@ -185,9 +185,9 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
             kernel_sizes=self.kernel_sizes,
             avg_pool_size=self.avg_pool_size,
             filter_sizes=self.filter_sizes,
-            activation_hidden=self.activation_hidden,
             use_bias=self.use_bias,
-            activation=self.activation,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             padding=self.padding,
             init_weights=self.init_weights,
             random_state=self.random_state,
@@ -211,7 +211,7 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
             "num_epochs": 10,
             "batch_size": 4,
             "avg_pool_size": 4,
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
         }
         params2 = {
             "num_epochs": 12,
