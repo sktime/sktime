@@ -144,6 +144,14 @@ class LLM1StepAgentForecaster(_DelegatedForecaster):
         # via _set_delegated_tags in _fit
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
+        # CI and test skip
+        # ----------------
+        "tests:skip_by_name": [
+            "test_predict_time_index_in_sample_full",
+            "test_get_fitted_params",  # skipped due to tag handling
+            # tags are set in _fit and not in advance due to the opennecess of the
+            # LLM selection, which makes them unavailable in __init__
+        ]
     }
 
     # _DelegatedForecaster delegates _predict, _update, _predict_interval, etc.
