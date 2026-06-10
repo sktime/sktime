@@ -96,39 +96,53 @@ class WindFMForecaster(BaseForecaster):
     Examples
     --------
     >>> import pandas as pd
+    >>> import torch  # doctest: +SKIP
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.windfm import WindFMForecaster
-    >>> url = (
+    >>> df = pd.read_csv(
     ...     "https://raw.githubusercontent.com/shiyu-coder/WindFM/"
-    ...     "refs/heads/master/tests/data/regression_input.csv"
+    ...     "refs/heads/master/examples/data/121522.csv",
+    ...     parse_dates=["time"],
+    ...     index_col="time",
     ... )
-    >>> df = pd.read_csv(  # doctest: +SKIP
-    ...     url,
-    ...     parse_dates=["timestamps"],
-    ...     index_col="timestamps",
-    ... )
-    >>> lookback, pred_len = 400, 120
-    >>> y = df["power"].iloc[:lookback]  # doctest: +SKIP
-    >>> X = df[  # doctest: +SKIP
-    ...     ["wind_speed", "wind_direction", "density", "temperature", "pressure"]
-    ... ].iloc[:lookback]
-    >>> fh = ForecastingHorizon(  # doctest: +SKIP
+    >>> lookback, pred_len = 240, 80
+    >>> covariate_cols = [
+    ...     "wind_speed",
+    ...     "wind_direction",
+    ...     "density",
+    ...     "temperature",
+    ...     "pressure",
+    ... ]
+    >>> y_train = df["power"].iloc[:lookback]
+    >>> X_train = df[covariate_cols].iloc[:lookback]
+    >>> fh = ForecastingHorizon(
     ...     df.index[lookback : lookback + pred_len],
     ...     is_relative=False,
     ... )
+    >>> device = "cuda:0" if torch.cuda.is_available() else "cpu"  # doctest: +SKIP
     >>> forecaster = WindFMForecaster(  # doctest: +SKIP
     ...     model_path="NeoQuasar/WindFM",
     ...     tokenizer_path="NeoQuasar/WindFM-Tokenizer",
-    ...     device="cpu",
+    ...     # robust variants:
+    ...     # model_path="NeoQuasar/WindFM-robust",
+    ...     # tokenizer_path="NeoQuasar/WindFM-Tokenizer-robust",
+    ...     device=device,
     ...     deterministic=True,
     ...     predict_kwargs={
     ...         "T": 1.0,
+    ...         "top_k": 0,
     ...         "top_p": 0.9,
-    ...         "sample_count": 1,
+    ...         "sample_count": 100,
     ...         "verbose": True,
     ...     },
     ... )
-    >>> y_pred = forecaster.fit(y, X=X).predict(fh=fh)  # doctest: +SKIP
+    >>> forecaster.fit(y_train, X=X_train)  # doctest: +SKIP
+    WindFMForecaster(...)
+    >>> y_pred = forecaster.predict(fh=fh)  # doctest: +SKIP
+    >>> y_quantiles = forecaster.predict_quantiles(  # doctest: +SKIP
+    ...     fh=fh,
+    ...     alpha=[0.1, 0.5, 0.9],
+    ... )
     """
 
     _tags = {
