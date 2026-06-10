@@ -24,8 +24,9 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
     activation : str or None or an instance of activation functions defined in
         torch.nn, default = None
         Activation function used in the fully connected output layer.
-    activation_hidden : str, default = "relu"
-        The activation function applied inside the RNN. Can be either 'tanh' or 'relu'.
+    activation_hidden : str or Callable, default = "ReLU"
+        The activation function applied inside the RNN. Recommended callable instance
+        of 'ReLU', 'Tanh'.
         Because currently PyTorch only supports these two activations inside the RNN.
         https://docs.pytorch.org/docs/stable/generated/torch.nn.RNN.html#torch.nn.RNN
     bias : bool, default = True
@@ -69,6 +70,12 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
     lr : float, default = 0.001
         The learning rate to use for the optimizer.
     verbose : bool, default = False
@@ -102,8 +109,8 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
         # model specific
         hidden_dim: int = 6,
         n_layers: int = 1,
-        activation: str | None | Callable = None,
-        activation_hidden: str = "relu",
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable = "ReLU",
         bias: bool = True,
         init_weights: bool = True,
         dropout: float = 0.0,
@@ -118,6 +125,7 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
         criterion_kwargs: dict = None,
         optimizer_kwargs: dict = None,
         callback_kwargs: dict | None = None,  # currently only schedulers supported
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int = 0,
@@ -140,6 +148,7 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
         self.optimizer_kwargs = optimizer_kwargs
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
+        self.metrics = metrics
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -153,6 +162,7 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
             optimizer_kwargs=self.optimizer_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
+            metrics=self.metrics,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
@@ -192,20 +202,14 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
         model : RNNNetworkTorch instance
             The constructed RNN network.
         """
-        if len(X.shape) != 3:
-            raise ValueError(
-                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
-                f"but got shape {X.shape}. Please ensure your input data is "
-                "properly formatted."
-            )
         # n_instances, n_dims, n_timesteps = X.shape
         _, self.input_size, _ = X.shape
         return RNNNetworkTorch(
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
             n_layers=self.n_layers,
-            activation=self.activation,
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             bias=self.bias,
             num_classes=self.num_classes,
             init_weights=self.init_weights,
@@ -242,7 +246,7 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
             "hidden_dim": 5,
             "n_layers": 1,
             "activation": None,
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,

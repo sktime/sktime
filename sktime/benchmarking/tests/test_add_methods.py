@@ -1,4 +1,4 @@
-"""Tests for Different Ways to Add Tasks."""
+"""Tests for add API in benchmarking."""
 
 __author__ = ["jgyasu"]
 
