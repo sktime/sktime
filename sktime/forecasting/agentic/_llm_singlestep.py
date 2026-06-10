@@ -11,7 +11,7 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
 class LLM1StepAgentForecaster(_DelegatedForecaster):
-    """Forecaster that uses a single-step LLM or agent to select an sktime model.
+    r"""Forecaster that uses a single-step LLM or agent to select an sktime model.
 
     Uses a large language model as an orchestrator to analyze time series
     metadata, select the most appropriate sktime forecasting model, and
