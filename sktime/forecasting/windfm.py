@@ -16,12 +16,12 @@ from sktime.utils.singleton import _multiton
 
 
 class WindFMForecaster(BaseForecaster):
-    """WindFM zero-shot forecaster for financial K-line/OHLC data.
+    """WindFM zero-shot forecaster for wind power data.
 
-    This forecaster wraps WindFM [1]_, a foundation model for financial market
-    data [2]_, through the ``sktime`` forecasting interface. This implementation
-    is inference-only and uses the upstream ``WindFMPredictor`` preprocessing
-    and autoregressive inference path internally.
+    This forecaster wraps WindFM [1]_, a foundation model for wind power
+    forecasting [2]_, through the ``sktime`` forecasting interface. This
+    implementation is inference-only and uses the upstream ``WindFMPredictor``
+    preprocessing and autoregressive inference path internally.
 
     Parameters
     ----------
@@ -36,18 +36,15 @@ class WindFMForecaster(BaseForecaster):
     device : str, default="cpu"
         Device used for model and tokenizer inference.
     columns : list of str or None, default=None
-        Optional positional mapping from columns in ``y`` to WindFM internal
-        columns. Positions map to ``"open"``, ``"high"``, ``"low"``,
-        ``"close"``, ``"volume"``, and ``"amount"``. If provided, at least the
-        first four OHLC columns are required; volume and amount are optional. If
-        ``None``, literal open/high/low/close names are used when present,
-        otherwise the first four numeric columns are used as OHLC. Literal
-        volume/amount columns are used when present.
-    freq : str or pandas offset, default="5min"
+        Optional mapping from columns in ``X`` to WindFM weather covariates.
+        If provided, it must contain five entries ordered as ``"wind_speed"``,
+        ``"wind_direction"``, ``"density"``, ``"temperature"``, and
+        ``"pressure"``. If ``None``, ``X`` must contain the literal WindFM
+        covariate names.
+    freq : str or pandas offset, default="1h"
         Frequency used to synthesize timestamps for WindFM when the training
         index is not a ``pd.PeriodIndex`` or ``pd.DatetimeIndex``. The default
-        is five minutes because WindFM is designed for financial K-line/OHLC
-        data, where five-minute intraday bars are a common default granularity.
+        is one hour, matching the example data distributed by WindFM.
     start : str or pd.Timestamp, default="2000-01-01"
         Start timestamp used with ``freq`` to synthesize timestamps for WindFM
         when the training index is not datetime-like. The default date is
@@ -65,11 +62,15 @@ class WindFMForecaster(BaseForecaster):
 
     Notes
     -----
-    ``WindFMForecaster`` expects financial K-line style data. The input ``y``
-    should contain OHLC columns, and may optionally contain volume and amount.
-    For relative forecasting horizons with datetime-like indices, provide a
-    sensible regular index/frequency so future timestamps line up with the data.
-    If the calendar is irregular, pass an absolute forecasting horizon.
+    ``WindFMForecaster`` expects ``y`` to contain the target wind power series
+    and ``X`` to contain the historical weather covariates required by WindFM:
+    wind speed, wind direction, density, temperature, and pressure. WindFM
+    generates sample paths internally; this wrapper returns the median across
+    those samples as a point forecast.
+
+    WindFM was trained with UTC timestamps. If the input index is not
+    datetime-like, synthetic timestamps are generated from ``start`` and
+    ``freq``.
 
     References
     ----------
@@ -102,7 +103,10 @@ class WindFMForecaster(BaseForecaster):
     ...     index_col="timestamps",
     ... )
     >>> lookback, pred_len = 400, 120
-    >>> y = df.iloc[:lookback]  # doctest: +SKIP
+    >>> y = df["power"].iloc[:lookback]  # doctest: +SKIP
+    >>> X = df[  # doctest: +SKIP
+    ...     ["wind_speed", "wind_direction", "density", "temperature", "pressure"]
+    ... ].iloc[:lookback]
     >>> fh = ForecastingHorizon(  # doctest: +SKIP
     ...     df.index[lookback : lookback + pred_len],
     ...     is_relative=False,
@@ -119,15 +123,18 @@ class WindFMForecaster(BaseForecaster):
     ...         "verbose": True,
     ...     },
     ... )
-    >>> y_pred = forecaster.fit(y).predict(fh=fh)  # doctest: +SKIP
+    >>> y_pred = forecaster.fit(y, X=X).predict(fh=fh)  # doctest: +SKIP
     """
 
     _tags = {
-        "y_inner_mtype": "pd.DataFrame",
-        "capability:multivariate": True,
-        "capability:exogenous": False,
+        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": "pd.DataFrame",
+        "X-y-must-have-same-index": True,
+        "capability:multivariate": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
-        "capability:insample": True,
+        "capability:insample": False,
+        "capability:pred_int": False,
         "capability:pretrain": False,
         "authors": ["shiyu-coder", "geetu040"],
         "maintainers": ["geetu040"],
@@ -142,7 +149,14 @@ class WindFMForecaster(BaseForecaster):
         "tests:libs": ["sktime.libs.windfm"],
     }
 
-    _windfm_columns = ["open", "high", "low", "close", "volume", "amount"]
+    _target_col = "power"
+    _covariate_cols = [
+        "wind_speed",
+        "wind_direction",
+        "density",
+        "temperature",
+        "pressure",
+    ]
 
     def __init__(
         self,
@@ -150,7 +164,7 @@ class WindFMForecaster(BaseForecaster):
         tokenizer_path="NeoQuasar/WindFM-Tokenizer",
         device="cpu",
         columns=None,
-        freq="5min",
+        freq="1h",
         start="2000-01-01",
         clip=5.0,
         predict_kwargs=None,
@@ -169,104 +183,38 @@ class WindFMForecaster(BaseForecaster):
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
+        """Fit forecaster to target power and historical weather covariates."""
+        if X is None:
+            raise ValueError(
+                "WindFMForecaster requires X with wind_speed, wind_direction, "
+                "density, temperature, and pressure columns."
+            )
 
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
-
-        Parameters
-        ----------
-        y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
-
-            * if self.get_tag("capability:multivariate")==False:
-              guaranteed to be univariate (e.g., single-column for DataFrame)
-            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
-              the method should handle uni- and multivariate y appropriately
-
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X : sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
-
-        Returns
-        -------
-        self : reference to self
-        """
-        self.context_ = y.copy()
-        self.max_context_ = len(self.context_)
-
-        self.column_mapping_ = self._resolve_column_mapping(y)
-        self.output_columns_ = []
-        for internal in self._windfm_columns:
-            original = self.column_mapping_.get(internal)
-            if (
-                original is not None
-                and original in y.columns
-                and original not in self.output_columns_
-            ):
-                self.output_columns_.append(original)
-
+        self.y_name_ = y.name if y.name is not None else self._target_col
+        self.y_context_ = y.copy()
+        self.X_context_ = X.copy()
+        self.max_context_ = len(self.y_context_)
+        self.column_mapping_ = self._resolve_column_mapping(self.X_context_)
         self.tokenizer_, self.model_ = self._load_windfm()
+        return self
 
     def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
+        """Forecast target power at future horizon."""
+        df = self._make_windfm_frame()
 
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X : sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-
-        Returns
-        -------
-        y_pred : sktime time series object
-            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
-            Point predictions
-        """
-        df = pd.DataFrame(index=self.context_.index)
-        for internal, original in self.column_mapping_.items():
-            df[internal] = self.context_[original].to_numpy()
-
-        x_index = self.context_.index
+        x_index = self.y_context_.index
         y_index = fh.to_absolute_index(self.cutoff)
         x_timestamp = self._to_timestamps(x_index)
         y_timestamp = self._to_timestamps(y_index)
 
         import torch
 
-        from sktime.libs.windfm import WindFMPredictor
-
         if self.deterministic:
             torch.manual_seed(42)
             if torch.cuda.is_available():
                 torch.cuda.manual_seed_all(42)
 
-        predictor = WindFMPredictor(
-            self.model_,
-            self.tokenizer_,
-            device=self.device,
-            max_context=self.max_context_,
-            clip=self.clip,
-        )
+        predictor = self._make_predictor()
         predict_kwargs = deepcopy(self.predict_kwargs) if self.predict_kwargs else {}
         pred_df = predictor.predict(
             df=df,
@@ -276,18 +224,20 @@ class WindFMForecaster(BaseForecaster):
             **predict_kwargs,
         )
 
-        out = pd.DataFrame(index=y_index)
-        for internal in self._windfm_columns:
-            original = self.column_mapping_.get(internal)
-            if (
-                original in self.output_columns_
-                and original not in out.columns
-                and internal in pred_df.columns
-            ):
-                out[original] = pred_df[internal].to_numpy()
-        out = out[self.output_columns_]
+        point_pred = pred_df.median(axis=1).to_numpy()
+        return pd.Series(point_pred, index=y_index, name=self.y_name_)
 
-        return out
+    def _make_predictor(self):
+        """Instantiate the upstream WindFM predictor."""
+        from sktime.libs.windfm import WindFMPredictor
+
+        return WindFMPredictor(
+            self.model_,
+            self.tokenizer_,
+            device=self.device,
+            max_context=self.max_context_,
+            clip=self.clip,
+        )
 
     def _to_timestamps(self, index):
         """Convert an sktime prediction index into timestamps for WindFM.
@@ -326,70 +276,34 @@ class WindFMForecaster(BaseForecaster):
 
         return pd.Series(timestamp)
 
-    def _resolve_column_mapping(self, y):
-        """Resolve user columns to WindFM' expected OHLCVA column names.
+    def _make_windfm_frame(self):
+        """Build the upstream WindFM input frame from y and X."""
+        df = pd.DataFrame(index=self.y_context_.index)
+        for internal, original in self.column_mapping_.items():
+            df[internal] = self.X_context_[original].to_numpy()
+        df[self._target_col] = self.y_context_.to_numpy()
+        feature_cols = (
+            self._covariate_cols[:2] + [self._target_col] + self._covariate_cols[2:]
+        )
+        return df[feature_cols]
 
-        The vendored predictor is fairly strict internally: it wants columns
-        named ``open``, ``high``, ``low``, ``close``, and optionally ``volume``
-        and ``amount``. sktime users may pass those exact names, pass a manual
-        positional mapping, or just pass numeric columns in a generic DataFrame.
-
-        This method keeps that translation in one place. It also records when
-        we had to make a pragmatic fallback choice, so the rest of the forecaster
-        can always build the WindFM input frame in the same internal format.
-        """
-        mapping = {}
-
-        if self.columns is not None:
-            # Explicit mapping wins. If the user provides it, assume they know
-            # which columns are open/high/low/close and validate only the shape.
-
-            if len(self.columns) < 4 or len(self.columns) > len(self._windfm_columns):
-                raise ValueError(
-                    "columns must contain 4 to 6 items, ordered as open, high, "
-                    "low, close, volume, amount."
-                )
-
-            missing = [col for col in self.columns if col not in y.columns]
-            if missing:
-                raise ValueError(f"columns contains values missing from y: {missing}.")
-
-            mapping.update(zip(self._windfm_columns, self.columns))
-
-        elif all(col in y.columns for col in self._windfm_columns[:4]):
-            # Best common case: the input already uses the names WindFM expects.
-            for col in self._windfm_columns[:4]:
-                mapping[col] = col
-
-        else:
-            # Last resort for sktime estimator checks and generic user data.
-            # WindFM is an OHLC model, but the sktime interface should still be
-            # able to run on a numeric DataFrame. Reusing columns is not ideal
-            # market data semantics, but it is a deterministic fallback and lets
-            # the model path exercise without inventing fake values elsewhere.
-
-            numeric_cols = y.select_dtypes(include=[np.number]).columns.tolist()
-
-            if len(numeric_cols) == 0:
-                raise ValueError(
-                    "WindFMForecaster requires open/high/low/close columns, "
-                    "a columns mapping, or at least one numeric column."
-                )
-
-            if len(numeric_cols) < 4:
-                numeric_cols = [numeric_cols[i % len(numeric_cols)] for i in range(4)]
-
-            for internal, original in zip(self._windfm_columns[:4], numeric_cols[:4]):
-                mapping[internal] = original
-
+    def _resolve_column_mapping(self, X):
+        """Resolve X columns to WindFM's weather covariate names."""
         if self.columns is None:
-            # Volume/amount are optional upstream. Only pass them through when
-            # they are really present; the WindFM predictor fills missing ones.
+            mapping = {col: col for col in self._covariate_cols}
+        else:
+            if not isinstance(self.columns, list):
+                raise ValueError("columns must be a list of five column names or None.")
+            if len(self.columns) != len(self._covariate_cols):
+                raise ValueError(
+                    "columns must contain five items ordered as wind_speed, "
+                    "wind_direction, density, temperature, pressure."
+                )
+            mapping = dict(zip(self._covariate_cols, self.columns))
 
-            for col in self._windfm_columns[4:]:
-                if col in y.columns:
-                    mapping[col] = col
-
+        missing = [col for col in mapping.values() if col not in X.columns]
+        if missing:
+            raise ValueError(f"columns contains values missing from X: {missing}.")
         return mapping
 
     def _load_windfm(self):
@@ -436,13 +350,13 @@ class WindFMForecaster(BaseForecaster):
         """
         return [
             {
-                "model_path": "NeoQuasar/WindFM-mini",
-                "tokenizer_path": "NeoQuasar/WindFM-Tokenizer-2k",
+                "model_path": "NeoQuasar/WindFM",
+                "tokenizer_path": "NeoQuasar/WindFM-Tokenizer",
                 "deterministic": True,
             },
             {
-                "model_path": "NeoQuasar/WindFM-mini",
-                "tokenizer_path": "NeoQuasar/WindFM-Tokenizer-2k",
+                "model_path": "NeoQuasar/WindFM",
+                "tokenizer_path": "NeoQuasar/WindFM-Tokenizer",
                 "device": "cpu",
                 "columns": None,
                 "clip": 5.0,
