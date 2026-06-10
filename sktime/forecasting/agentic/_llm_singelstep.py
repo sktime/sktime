@@ -2,7 +2,7 @@
 """Implements LLM-based agent forecaster for automated model selection."""
 
 __author__ = ["yash-sangwan"]
-__all__ = ["LLMAgentForecaster"]
+__all__ = ["LLM1StepAgentForecaster"]
 
 import json
 
@@ -10,7 +10,7 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
-class LLMAgentForecaster(_DelegatedForecaster):
+class LLM1StepAgentForecaster(_DelegatedForecaster):
     """Forecaster that uses a single-step LLM or agent to select an sktime model.
 
     Uses a large language model as an orchestrator to analyze time series
@@ -105,7 +105,7 @@ class LLMAgentForecaster(_DelegatedForecaster):
 
     Examples
     --------
-    >>> from sktime.forecasting.compose import LLMAgentForecaster
+    >>> from sktime.forecasting.compose import LLMSingleStepAgentForecaster
     >>> from sktime.datasets import load_airline
     >>> import json
     >>> def mock_llm(prompt):
@@ -115,12 +115,12 @@ class LLMAgentForecaster(_DelegatedForecaster):
     ...         "reasoning": "Simple baseline for demo.",
     ...     })
     >>> y = load_airline()  # doctest: +SKIP
-    >>> forecaster = LLMAgentForecaster(
+    >>> forecaster = LLMSingleStepAgentForecaster(
     ...     llm_backend=mock_llm,
     ...     query="Pick a simple baseline model",
     ... )  # doctest: +SKIP
     >>> forecaster.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
-    LLMAgentForecaster(...)
+    LLMSingleStepAgentForecaster(...)
     >>> y_pred = forecaster.predict()  # doctest: +SKIP
     """
 
