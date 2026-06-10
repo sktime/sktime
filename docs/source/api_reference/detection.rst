@@ -149,7 +149,6 @@ Segment anomaly detectors identify anomalous segment.
     capa.CAPA
     circular_binseg.CircularBinarySegmentation
     stat_threshold.StatThresholdAnomaliser
-    mvcapa.MVCAPA
 
 Naive Baselines
 ^^^^^^^^^^^^^^^
