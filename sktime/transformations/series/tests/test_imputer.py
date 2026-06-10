@@ -3,6 +3,7 @@
 """Unit tests of Imputer functionality."""
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.datatypes import get_examples
@@ -101,6 +102,28 @@ def test_impute_multiindex(method):
     imp_tbl = TransformByLevel(Imputer(method=method))
     df_imp_tbl = imp_tbl.fit_transform(df)
     assert np.array_equal(df_imp, df_imp_tbl, equal_nan=True)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_imputer_missing_values_zero():
+    """Imputer with missing_values=0 must replace zeros, not silently skip them.
+
+    Regression test for GH #10017: ``if self.missing_values:`` was falsy for
+    integer zero, so zeros were never marked as NaN and never imputed.
+    """
+    idx = pd.date_range("2000", periods=5, freq="ME")
+    y = pd.DataFrame({"a": [1.0, 0.0, 3.0, 0.0, 5.0]}, index=idx)
+
+    imp = Imputer(method="mean", missing_values=0)
+    y_imp = imp.fit_transform(y)
+
+    assert not (y_imp == 0).any().any(), (
+        "zeros should have been replaced but are still present in the output"
+    )
+    assert not y_imp.isna().any().any(), "imputed output must not contain NaN"
 
 
 @pytest.mark.skipif(

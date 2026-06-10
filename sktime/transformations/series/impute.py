@@ -160,7 +160,7 @@ class Imputer(BaseTransformer):
                 }
             )
 
-        if method in "forecaster":
+        if method == "forecaster":
             self.set_tags(**{"y_inner_mtype": ["pd.DataFrame"]})
 
     def _fit(self, X, y=None):
@@ -224,7 +224,7 @@ class Imputer(BaseTransformer):
         X = X.copy()
 
         # replace missing_values with np.nan
-        if self.missing_values:
+        if self.missing_values is not None:
             X = X.replace(to_replace=self.missing_values, value=np.nan)
 
         if not _has_missing_values(X):
