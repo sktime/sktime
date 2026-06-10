@@ -22,11 +22,7 @@ from sktime.split.base._common import (
     _get_end,
     _get_train_window_via_endpoint,
 )
-from sktime.utils.validation import (
-    ACCEPTED_WINDOW_LENGTH_TYPES,
-    array_is_int,
-    check_window_length,
-)
+from sktime.utils.validation import array_is_int, check_window_length
 
 
 class SingleWindowSplitter(BaseSplitter):
