@@ -104,9 +104,6 @@ EXCLUDED_TESTS = {
     "DynamicFactor": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
-    "ARIMA": [
-        "test_predict_time_index_in_sample_full",  # refer to #4765
-    ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
     "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
@@ -154,9 +151,7 @@ EXCLUDED_TESTS = {
 # exclude tests but keyed by test name
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
-        "CAPA",
         "CNTCNetwork",
-        "CircularBinarySegmentation",
         "ClaSPTransformer",
         "ClearSky",
         "ContractableBOSS",
@@ -188,7 +183,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MUSE",
         "MVCAPA",
         "MatrixProfile",
-        "MovingWindow",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
@@ -196,7 +190,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "PAA",
         "PAAlegacy",
         "PCATransformer",
-        "PELT",
         "PaddingTransformer",
         "PlateauFinder",
         "Prophetverse",
@@ -211,13 +204,11 @@ EXCLUDED_TESTS_BY_TEST = {
         "SAXlegacy",
         "SFA",
         "SFAFast",
-        "SeededBinarySegmentation",
         "ShapeletTransform",
         "ShapeletTransformClassifier",
         "SlidingWindowSegmenter",
         "SlopeTransformer",
         "StackingForecaster",
-        "StatThresholdAnomaliser",
         "SummaryClassifier",
         "SupervisedTimeSeriesForest",
         "TEASER",
