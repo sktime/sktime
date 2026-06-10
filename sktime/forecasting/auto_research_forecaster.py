@@ -473,11 +473,13 @@ class AutoResearchForecaster(BaseForecaster):
         raw response text. Primarily useful for testing without an API key.
     description_method : str, default="basic"
         Method for generating dataset description for the LLM. Options:
+
         - "basic": Text-only statistics (length, frequency, mean, std, etc.)
         - "described_plot": Generates a plot and uses a vision LLM to describe it,
           combined with basic statistics.
         - "image": Generates a plot and provides it as an image to the blueprint
           generation LLM (requires vision-capable model).
+
         Vision-based methods ("described_plot", "image") require a model that
         supports image input, which is checked during initialization.
 
