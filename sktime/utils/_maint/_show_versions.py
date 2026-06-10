@@ -78,13 +78,17 @@ def _get_deps_info(deps=None):
     if deps is None:
         deps = ["sktime"]
 
-    from skbase.utils.dependencies._dependencies import _get_installed_packages
+    from skbase.utils.dependencies._dependencies import (
+        _get_installed_packages,
+        _norm_pkgname,
+    )
 
-    pkgs = _get_installed_packages()
+    pkgs = _get_installed_packages(lowercase=True)
 
     deps_info = {}
     for modname in deps:
-        deps_info[modname] = pkgs.get(modname, None)
+        modname_norm = _norm_pkgname(modname)
+        deps_info[modname] = pkgs.get(modname_norm, None)
 
     return deps_info
 
