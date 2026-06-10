@@ -242,10 +242,6 @@ class FalconTSTForecaster(BaseForecaster):
         forecast_horizon = np.max(preds_idx) + 1
 
         past_values = self.context_.to_numpy()
-        is_univariate = past_values.shape[1] == 1
-        if is_univariate:
-            past_values = past_values[:, 0]
-
         past_values = np.expand_dims(past_values, axis=0)
         past_values = torch.from_numpy(past_values)
         past_values = past_values.to(self.model_.dtype)
@@ -256,18 +252,17 @@ class FalconTSTForecaster(BaseForecaster):
             forecast_horizon=forecast_horizon,
             revin=self.revin,
         )
+
         preds = output.detach().float().cpu().numpy()
-
-        index = fh.to_absolute(self._cutoff)._values
-        if is_univariate:
-            preds = preds.squeeze(axis=0)
-            preds = preds[preds_idx]
-            name = self._converter_store_y.get("name", self.context_.columns[0])
-            return pd.Series(preds, index=index, name=name)
-
         preds = preds.squeeze(axis=0)
         preds = preds[preds_idx, :]
-        return pd.DataFrame(preds, index=index, columns=self.context_.columns)
+        preds = pd.DataFrame(
+            preds,
+            index=fh.to_absolute(self._cutoff)._values,
+            columns=self.context_.columns,
+        )
+
+        return preds
 
     def _load_model(self):
         """Load or retrieve a cached Falcon-TST model instance.
