@@ -35,12 +35,14 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
         The kernel sizes of Conv1D layers within each MACNN Block.
     reduction : int, default=16
         The factor by which the first dense layer of a MACNN Block will be divided by.
-    activation : str or None, default=None
+    activation : str or Callable or None, default=None
         Activation function used for hidden layers.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    activation_hidden : str, default="relu"
+        Recommended Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
+        'SELU', 'GELU', None
+    activation_hidden : str or Callable or None, default="ReLU"
         Activation function used for the hidden layers.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
+        Recommended Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
+        'SELU', 'GELU', None
     num_epochs : int, default=1500
         The number of epochs to train the model.
     batch_size : int, default=4
@@ -109,8 +111,8 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
         filter_sizes: tuple = (64, 128, 256),
         kernel_sizes: tuple = (3, 6, 12),
         reduction: int = 16,
-        activation: str | None = None,
-        activation_hidden: str = "relu",
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable | None = "ReLU",
         # base regressor specific
         num_epochs: int = 1500,
         batch_size: int = 4,
@@ -195,8 +197,8 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
             filter_sizes=self.filter_sizes,
             kernel_sizes=self.kernel_sizes,
             reduction=self.reduction,
-            activation=self.activation,
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             init_weights=self.init_weights,
             random_state=self.random_state,
         )
@@ -224,7 +226,7 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
             "kernel_sizes": (3, 6, 12),
             "reduction": 16,
             "activation": None,
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
             "num_epochs": 50,
             "batch_size": 4,
             "optimizer": "RMSprop",
@@ -246,7 +248,7 @@ class MACNNRegressorTorch(BaseDeepRegressorTorch):
             "kernel_sizes": (3, 6, 12),
             "reduction": 8,
             "activation": None,
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
             "num_epochs": 50,
             "batch_size": 4,
             "optimizer": "RMSprop",
