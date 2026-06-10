@@ -382,7 +382,7 @@ class PELT(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.detection._pelt import PELT
+    >>> from sktime.detection.pelt import PELT
     >>> from sktime.detection._costs._l2_cost import L2Cost
     >>> import numpy as np
     >>> X = np.concatenate([np.zeros(50), 10 * np.ones(50)])

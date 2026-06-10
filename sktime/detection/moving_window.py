@@ -160,7 +160,7 @@ class MovingWindow(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.detection._moving_window import MovingWindow
+    >>> from sktime.detection.moving_window import MovingWindow
     >>> import numpy as np
     >>> X = np.concatenate([np.zeros(100), 10*np.ones(100), np.zeros(100)])
     >>> det = MovingWindow(bandwidth=20, penalty=20)

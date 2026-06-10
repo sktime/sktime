@@ -198,7 +198,7 @@ class SeededBinarySegmentation(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.detection._seeded_binseg import SeededBinarySegmentation
+    >>> from sktime.detection.seeded_binseg import SeededBinarySegmentation
     >>> import numpy as np
     >>> X = np.concatenate([np.zeros(100), 10*np.ones(100), np.zeros(100)])
     >>> det = SeededBinarySegmentation(penalty=30)

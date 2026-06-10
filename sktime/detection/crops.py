@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.detection._formatters import format_changepoints
-from sktime.detection._pelt import (
+from sktime.detection.pelt import (
     _run_pelt,
     _run_pelt_min_segment_length_one,
     _run_pelt_with_step_size,
@@ -179,7 +179,7 @@ class CROPS(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.detection._crops import CROPS
+    >>> from sktime.detection.crops import CROPS
     >>> from sktime.detection._costs._l2_cost import L2Cost
     >>> import numpy as np
     >>> X = np.concatenate([np.zeros(50), 10*np.ones(50)])

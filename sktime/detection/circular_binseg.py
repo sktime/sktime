@@ -13,7 +13,7 @@ from sktime.detection._compose import PenalisedScore
 from sktime.detection._costs._l2_cost import L2Cost
 from sktime.detection._formatters import format_segments
 from sktime.detection._penalties import make_bic_penalty
-from sktime.detection._seeded_binseg import make_seeded_intervals
+from sktime.detection.seeded_binseg import make_seeded_intervals
 from sktime.detection._utils import (
     as_2d_array,
     check_data,
@@ -242,7 +242,7 @@ class CircularBinarySegmentation(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.detection import CircularBinarySegmentation
+    >>> from sktime.detection.circular_binseg import CircularBinarySegmentation
     >>> import numpy as np, pandas as pd
     >>> rng = np.random.default_rng(42)
     >>> X = pd.DataFrame(rng.standard_normal((75, 1)))
