@@ -425,9 +425,9 @@ class _CachedFalconTST:
 
         kwargs = {}
         if self.device_map is not None:
-            kwargs["device_map"]: self.device_map
+            kwargs["device_map"] = self.device_map
         if self.quantization_config is not None:
-            kwargs["quantization_config"]: self.quantization_config
+            kwargs["quantization_config"] = self.quantization_config
 
         model = FalconTSTForPrediction.from_pretrained(self.model_path, **kwargs)
 
