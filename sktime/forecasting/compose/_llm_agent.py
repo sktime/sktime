@@ -11,12 +11,13 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
 class LLMAgentForecaster(_DelegatedForecaster):
-    """Forecaster that uses an LLM to select and configure an sktime model.
+    """Forecaster that uses an LLM or agent to select and configure an sktime model.
 
     Uses a large language model as an orchestrator to analyze time series
     metadata, select the most appropriate sktime forecasting model, and
-    configure its hyperparameters. The LLM does not forecast directly ---
-    it delegates the actual forecasting to the selected sktime-native model.
+    configure its hyperparameters. The LLM or agent does not forecast directly,
+    it delegates the actual forecasting to the selected sktime-native model that
+    it instantiates and fits on the data.
 
     The selected model and its configuration are determined during ``fit``.
     All subsequent ``predict``, ``update``, and probabilistic forecasting
@@ -46,6 +47,37 @@ class LLMAgentForecaster(_DelegatedForecaster):
         Custom prompt template for the LLM. If None, a default template is used.
         The template may contain the placeholders ``{metadata}``,
         ``{estimators}``, and ``{query}`` which are filled during ``fit``.
+
+        The default template is:
+
+        .. code-block:: text
+
+            "You are an expert time series data scientist. Your task is to select "
+            "the single best forecasting model for the dataset described below and "
+            "configure its hyperparameters.\n"
+            "## User objective\n{query}\n"
+            "## Time series metadata\n{metadata}\n"
+            "## Available forecasters\n{estimators}\n"
+            "## Instructions\n"
+            "1. Analyse the metadata and the user objective.\n"
+            "2. Select exactly ONE forecaster from the list above.\n"
+            "3. Choose appropriate hyperparameters for that forecaster.\n"
+            "4. Explain your reasoning briefly.\n"
+            "## Required output format\n"
+            "Return ONLY a single raw JSON object "
+            "(no markdown fences, no commentary outside the JSON). "
+            "The JSON must have exactly three keys:\n"
+            '{"class_name": "<ClassName>", "kwargs": {...}, "reasoning": "..."}'
+
+    metadata_extactor : callable, optional (default=None)
+        Custom function to extract metadata from the training data for the LLM prompt.
+        If None, a default extractor is used that gathers descriptive statistics,
+        shape information, and other structural properties of the time series.
+
+        Must have signature ``func(y, X, fh) -> dict`` where y, X, fh are arguments
+        as passed to ``_fit``, after coercion of ``fh`` to ``ForecastingHorizon``.
+
+        The resulting dict must be json-dumpable, and is passed to the LLM context.
 
     Attributes
     ----------
@@ -112,11 +144,13 @@ class LLMAgentForecaster(_DelegatedForecaster):
         query,
         estimators=None,
         prompt_template=None,
+        metadata_extractor=None,
     ):
         self.llm_backend = llm_backend
         self.query = query
         self.estimators = estimators
         self.prompt_template = prompt_template
+        self.metadata_extractor = metadata_extractor
 
         super().__init__()
 
@@ -273,7 +307,11 @@ class LLMAgentForecaster(_DelegatedForecaster):
         import re
 
         # --- context gathering ---
-        metadata = self._extract_metadata(y, X, fh)
+        if self.metadata_extractor is not None:
+            metadata = self.metadata_extractor(y, X, fh)
+        else:
+            metadata = self._extract_metadata(y, X, fh)
+
         estimator_scope, self._estimator_registry = self._get_estimator_scope()
 
         # --- prompt construction ---
