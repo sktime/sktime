@@ -144,7 +144,7 @@ class FalconTSTForecaster(BaseForecaster):
         "authors": ["Harryx2019", "figolyd", "geetu040"],
         # Hongjie Xia (Harryx2019), Yiding Liu (figolyd) for ant-intl/Falcon-TST
         "maintainers": ["geetu040"],
-        "python_dependencies": ["transformers[torch]>=4.40,<4.41"],
+        "python_dependencies": ["transformers[torch]>=4.23.0,<5.0.0"],
         "tests:vm": True,
     }
 
