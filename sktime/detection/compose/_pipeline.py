@@ -401,7 +401,3 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         params3 = {"steps": [Detrender(), lof]}
 
         return [params1, params2, params3]
-
-
-# todo 1.0.0 - remove alias, i.e., remove this line
-AnnotatorPipeline = DetectorPipeline

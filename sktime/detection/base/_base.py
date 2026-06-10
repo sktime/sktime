@@ -73,8 +73,7 @@ class BaseDetector(BaseEstimator):
         "python_dependencies": None,  # str or list of str, package soft dependencies
         # estimator tags
         # --------------
-        # todo 1.0.0 - remove series-annotator
-        "object_type": ["detector", "series-annotator"],  # type of object
+        "object_type": "detector",
         "learning_type": "None",  # supervised, unsupervised
         "task": "None",  # anomaly_detection, change_point_detection, segmentation
         "capability:multivariate": False,
