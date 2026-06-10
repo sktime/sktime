@@ -1295,9 +1295,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             if tag in ALIAS_DICT:
                 # todo 1.0.0: remove this exception once forecaster tag deprecation done
                 object_type = estimator_instance.get_tag("object_type")
-                # special case: "scitype:y" deprecated only for forecasters
-                if tag == "scitype:y" and not object_type == "forecaster":
-                    break
                 msg = (
                     f"{estimator_instance} has deprecated tag: {tag!r} - "
                     f"please follow deprecation guide from sktime release notes "
