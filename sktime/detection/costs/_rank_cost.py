@@ -6,7 +6,7 @@ __author__ = ["johannvk"]
 
 import numpy as np
 
-from sktime.detection._costs._base import BaseCost
+from sktime.detection.costs._base import BaseCost
 
 
 def _rank_cost(segment_starts, segment_ends, centered_data_ranks, pinv_rank_cov):

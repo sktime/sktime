@@ -6,7 +6,7 @@ __author__ = ["Tveten"]
 
 import numpy as np
 
-from sktime.detection._costs._base import BaseCost
+from sktime.detection.costs._base import BaseCost
 from sktime.detection._utils import check_mean, check_var, col_cumsum, truncate_below
 
 

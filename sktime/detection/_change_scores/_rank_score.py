@@ -6,7 +6,7 @@ __author__ = ["johannvk"]
 
 import numpy as np
 
-from sktime.detection._costs._rank_cost import _compute_ranks_and_pinv_cdf_cov
+from sktime.detection.costs._rank_cost import _compute_ranks_and_pinv_cdf_cov
 from sktime.detection.base._base_interval_scorer import BaseIntervalScorer
 
 

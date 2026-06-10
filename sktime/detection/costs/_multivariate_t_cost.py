@@ -7,8 +7,8 @@ __author__ = ["johannvk"]
 import numpy as np
 import pandas as pd
 
-from sktime.detection._costs._base import BaseCost
-from sktime.detection._costs._multivariate_gaussian_cost import (
+from sktime.detection.costs._base import BaseCost
+from sktime.detection.costs._multivariate_gaussian_cost import (
     _gaussian_cost_fixed_params,
     _gaussian_cost_mle_params,
 )

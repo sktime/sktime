@@ -6,7 +6,7 @@ __author__ = ["johannvk", "Tveten"]
 
 import numpy as np
 
-from sktime.detection._costs._base import BaseCost
+from sktime.detection.costs._base import BaseCost
 from sktime.detection._utils import (
     CovType,
     MeanType,

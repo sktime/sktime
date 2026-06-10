@@ -5,7 +5,7 @@
 __author__ = ["Tveten"]
 
 
-from sktime.detection._costs._base import BaseCost
+from sktime.detection.costs._base import BaseCost
 from sktime.detection._utils import check_mean, col_cumsum
 
 
