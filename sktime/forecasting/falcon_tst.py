@@ -16,7 +16,77 @@ from sktime.utils.singleton import _multiton
 
 
 class FalconTSTForecaster(BaseForecaster):
-    """Falcon-TST forecaster via Hugging Face ``transformers``."""
+    """Falcon-TST forecaster via Hugging Face ``transformers``.
+
+    This forecaster wraps Falcon-TST prediction models [1]_, [2]_ from Hugging
+    Face and exposes them through the ``sktime`` forecasting interface.
+    ``fit`` loads the model and stores the observed series as forecasting
+    context; it does not train or fine-tune Falcon-TST weights.
+
+    Parameters
+    ----------
+    model_path : str, default="ant-intl/Falcon-TST_Large"
+        Hugging Face repository identifier or local path to a Falcon-TST
+        checkpoint. If ``None``, a model is created from ``config`` with random
+        weights.
+    config : FalconTSTConfig or dict, optional (default=None)
+        Model configuration used when ``model_path=None``. If provided as a
+        ``dict``, it is converted with ``FalconTSTConfig.from_dict``.
+    device_map : str, dict, int, or torch.device, default="cpu"
+        Device placement used for model loading or local initialization.
+    dtype : torch.dtype or str, optional (default=None)
+        Data type used for model loading, for example ``torch.float16``,
+        ``torch.bfloat16``, or ``"auto"``.
+    quantization_config : transformers.quantizers.HfQuantizer, optional
+        Quantization configuration compatible with
+        ``transformers.PreTrainedModel.from_pretrained``.
+    revin : bool, default=True
+        Whether to use RevIN normalization during Falcon-TST prediction.
+
+    Notes
+    -----
+    - Falcon-TST training and fine-tuning are not supported by this estimator.
+    - Falcon-TST supports multivariate targets, handled as channels.
+    - Exogenous data and quantile prediction are not supported.
+    - Loaded models are cached by model-loading inputs to avoid repeated model
+      instantiation.
+
+    References
+    ----------
+    .. [1] Falcon-TST repository:
+       https://github.com/AntGroup/Falcon-TST
+    .. [2] Falcon-TST model card:
+       https://huggingface.co/ant-intl/Falcon-TST_Large
+
+    Examples
+    --------
+    Univariate zero-shot forecasting:
+
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.falcon_tst import FalconTSTForecaster
+    >>> y = load_airline()
+    >>> forecaster = FalconTSTForecaster()  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+
+    Multivariate zero-shot forecasting:
+
+    >>> from sktime.forecasting.falcon_tst import FalconTSTForecaster
+    >>> y = y.to_frame("a").assign(b=lambda x: x["a"])  # doctest: +SKIP
+    >>> forecaster = FalconTSTForecaster(revin=False)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+
+    Quantized loading:
+
+    >>> import torch  # doctest: +SKIP
+    >>> from transformers import BitsAndBytesConfig  # doctest: +SKIP
+    >>> forecaster = FalconTSTForecaster(  # doctest: +SKIP
+    ...     device_map="auto",
+    ...     dtype=torch.bfloat16,
+    ...     quantization_config=BitsAndBytesConfig(load_in_8bit=True),
+    ... )
+    """
 
     _tags = {
         "y_inner_mtype": "pd.DataFrame",
@@ -124,6 +194,40 @@ class FalconTSTForecaster(BaseForecaster):
         }
         return str(sorted(key.items()))
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator."""
+        config = {
+            "num_hidden_layers": 1,
+            "hidden_size": 4,
+            "ffn_hidden_size": 8,
+            "num_attention_heads": 1,
+            "seq_length": 8,
+            "shared_patch_size": 2,
+            "patch_size_list": [4],
+            "expert_num_layers": 1,
+            "multi_forecast_head_list": [2],
+            "autoregressive_step_list": [1],
+            "num_experts": 1,
+            "moe_router_topk": 1,
+            "moe_ffn_hidden_size": 8,
+            "moe_shared_expert_intermediate_size": 8,
+            "use_cpu_initialization": True,
+        }
+        return [
+            {
+                "model_path": None,
+                "config": config,
+                "device_map": "cpu",
+            },
+            {
+                "model_path": None,
+                "config": config,
+                "device_map": "cpu",
+                "revin": False,
+            },
+        ]
+
 
 @_multiton
 class _CachedFalconTST:
@@ -210,5 +314,6 @@ def _coerce_torch_dtype(dtype):
     if isinstance(dtype, str):
         import torch
 
+        dtype = dtype.removeprefix("torch.")
         return getattr(torch, dtype)
     return dtype
