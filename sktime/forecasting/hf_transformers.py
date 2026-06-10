@@ -192,6 +192,7 @@ class HFTransformersForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        "tests:python_dependencies": ["peft"],
     }
 
     def __init__(
