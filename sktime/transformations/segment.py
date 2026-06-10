@@ -7,8 +7,7 @@ import pandas as pd
 from sklearn.utils import check_random_state
 
 from sktime.datatypes._utilities import get_time_index
-from sktime.transformations._delegate import _DelegatedTransformer
-from sktime.transformations.base import BaseTransformer
+from sktime.transformations.base import _DelegatedTransformer, BaseTransformer
 from sktime.utils.validation import check_window_length
 
 

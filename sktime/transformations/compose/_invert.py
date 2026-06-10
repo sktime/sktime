@@ -5,7 +5,7 @@
 __author__ = ["fkiraly"]
 __all__ = ["InvertTransform"]
 
-from sktime.transformations._delegate import _DelegatedTransformer
+from sktime.transformations.base import _DelegatedTransformer
 from sktime.utils.warnings import warn
 
 

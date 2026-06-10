@@ -2,7 +2,7 @@
 """Implements compositors for performing transformations by group."""
 
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
-from sktime.transformations._delegate import _DelegatedTransformer
+from sktime.transformations.base import _DelegatedTransformer
 from sktime.utils.warnings import warn
 
 __author__ = ["fkiraly"]

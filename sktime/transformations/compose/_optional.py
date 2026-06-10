@@ -5,7 +5,7 @@
 __author__ = ["aiwalter", "fkiraly"]
 __all__ = ["OptionalPassthrough"]
 
-from sktime.transformations._delegate import _DelegatedTransformer
+from sktime.transformations.base import _DelegatedTransformer
 from sktime.transformations.compose._common import CORE_MTYPES
 from sktime.transformations.compose._id import Id
 
