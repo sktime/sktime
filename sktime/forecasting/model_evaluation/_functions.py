@@ -282,7 +282,16 @@ def _evaluate_window(x, meta):
                 temp_result[result_key] = [score]
 
         # get cutoff
-        cutoff = forecaster.cutoff
+        if global_mode:
+            # in global mode, cutoff should reflect y_hist (per-fold history),
+            # not the global y_train which may span more timepoints
+            if isinstance(y_hist.index, pd.MultiIndex):
+                last_time = y_hist.index.get_level_values(-1).max()
+            else:
+                last_time = y_hist.index[-1]
+            cutoff = pd.Index([last_time])
+        else:
+            cutoff = forecaster.cutoff
 
     except Exception as e:
         if error_score == "raise":
