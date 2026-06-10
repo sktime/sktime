@@ -862,6 +862,7 @@ Forecasters that use generative AI and/or agentic reasoning to decide how to for
     :template: class.rst
 
     AutoResearchForecaster
+    LLM1StepAgentForecaster
 
 Model Evaluation (Backtesting)
 ------------------------------
