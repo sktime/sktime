@@ -96,16 +96,6 @@ class FalconTSTForecaster(BaseForecaster):
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
-    Multivariate zero-shot forecasting with RevIN disabled:
-
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.falcon_tst import FalconTSTForecaster
-    >>> y_uni = load_airline()  # doctest: +SKIP
-    >>> y = y_uni.to_frame("a").assign(b=lambda x: x["a"])  # doctest: +SKIP
-    >>> forecaster = FalconTSTForecaster(revin=False)  # doctest: +SKIP
-    >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
-
     Reduced-memory inference with device placement, dtype, and quantization:
 
     >>> import torch  # doctest: +SKIP
@@ -182,14 +172,72 @@ class FalconTSTForecaster(BaseForecaster):
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data."""
+        """Load the model and store history for zero-shot forecasting.
+
+        private _fit containing the core logic, called from fit
+
+        This method does not train or fine-tune Falcon-TST weights.
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
+        Parameters
+        ----------
+        y : sktime time series object
+            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+            Time series to which to fit the forecaster.
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions
+              apply, the method should handle uni- and multivariate y
+              appropriately
+
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here if self.get_tag("requires-fh-in-fit")
+            == True. Otherwise, if not passed in _fit, guaranteed to be passed
+            in _predict.
+        X : sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series to fit to.
+
+        Returns
+        -------
+        self : reference to self
+        """
         self.model_ = self._load_model()
         self.context_ = y
 
         return self
 
     def _predict(self, fh, X):
-        """Forecast time series at future horizon."""
+        """Forecast time series at future horizon.
+
+        private _predict containing the core logic, called from predict
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here.
+        X : sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast.
+
+        Returns
+        -------
+        y_pred : sktime time series object
+            should be of the same type as seen in _fit, as in "y_inner_mtype"
+            tag. Point predictions.
+        """
         import torch
 
         self.model_ = self._load_model()
@@ -229,7 +277,15 @@ class FalconTSTForecaster(BaseForecaster):
         return pd.DataFrame(preds, index=index, columns=self.context_.columns)
 
     def _load_model(self):
-        """Load a Falcon-TST model instance."""
+        """Load or retrieve a cached Falcon-TST model instance.
+
+        Returns
+        -------
+        model : transformers.PreTrainedModel
+            Loaded model according to ``self.device_map`` and
+            ``self.dtype``. If ``self.model_`` already exists, it is
+            returned directly.
+        """
         if hasattr(self, "model_") and self.model_ is not None:
             return self.model_
 
@@ -245,7 +301,14 @@ class FalconTSTForecaster(BaseForecaster):
         return self.model_
 
     def _get_unique_key(self):
-        """Build cache key for the multiton model loader."""
+        """Build cache key for the multiton model loader.
+
+        Returns
+        -------
+        key : str
+            Deterministic string representation of model-loading attributes used
+            by :class:`_CachedFalconTST`.
+        """
         key = {
             "model_path": self.model_path,
             "config": self.config,
@@ -257,7 +320,25 @@ class FalconTSTForecaster(BaseForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator."""
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If
+            no special parameters are defined for a value, will return
+            `"default"` set. There are currently no reserved values for
+            forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class. Each dict is a
+            parameter set to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test
+            instance. `create_test_instance` uses the first (or only)
+            dictionary in `params`.
+        """
         config = {
             "num_hidden_layers": 1,
             "hidden_size": 4,
@@ -292,7 +373,28 @@ class FalconTSTForecaster(BaseForecaster):
 
 @_multiton
 class _CachedFalconTST:
-    """Multiton-backed cache wrapper for a loaded Falcon-TST model."""
+    """Multiton-backed cache wrapper for a loaded Falcon-TST model.
+
+    Instances are keyed externally (via :class:`FalconTSTForecaster`) so that
+    repeated forecasters with equivalent loading parameters can share a single
+    model instance in memory.
+
+    Parameters
+    ----------
+    key : str
+        Multiton key (stored for traceability).
+    model_path : str or None
+        Model identifier/path for ``from_pretrained``. If ``None``, create model
+        from config only.
+    config : transformers.PretrainedConfig or dict or None
+        Configuration used for model loading/creation.
+    device_map : str, dict, int, or torch.device
+        Device placement for loading models.
+    dtype : torch.dtype or str or None
+        Data type used for model loading.
+    quantization_config : transformers.quantizers.HfQuantizer or None
+        Quantization configuration used for model loading.
+    """
 
     def __init__(
         self,
@@ -312,7 +414,20 @@ class _CachedFalconTST:
         self.model_ = None
 
     def load(self):
-        """Load model if needed and return cached instance."""
+        """Load model if needed and return cached instance.
+
+        Returns
+        -------
+        model : transformers.PreTrainedModel
+            Loaded Falcon-TST prediction model according to ``self.device_map``,
+            ``self.dtype``, and ``self.quantization_config``.
+
+        Notes
+        -----
+        - If ``model_path`` is set, loads weights via ``from_pretrained``.
+        - If ``model_path`` is ``None``, initializes from config with random
+          weights. These weights are not trained by the estimator.
+        """
         if self.model_ is not None:
             return self.model_
 
@@ -324,7 +439,7 @@ class _CachedFalconTST:
         return self.model_
 
     def _load_from_path(self):
-        """Load pretrained Falcon-TST weights from ``self.model_path``."""
+        """Load Falcon-TST model weights from ``self.model_path``."""
         from sktime.libs.falcon_tst import FalconTSTForPrediction
 
         model_kwargs = {
@@ -334,13 +449,15 @@ class _CachedFalconTST:
         if self.dtype is not None:
             model_kwargs["torch_dtype"] = self.dtype
 
-        return FalconTSTForPrediction.from_pretrained(
+        model = FalconTSTForPrediction.from_pretrained(
             self.model_path,
             **model_kwargs,
         )
 
+        return model
+
     def _load_randomly(self):
-        """Initialize a Falcon-TST model from config without pretrained weights."""
+        """Initialize a Falcon-TST model randomly from config."""
         from sktime.libs.falcon_tst import FalconTSTConfig, FalconTSTForPrediction
 
         warn(
