@@ -274,6 +274,8 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
             "n_filters": 8,
             "depth": 3,
             "num_epochs": 10,
+            "activation_hidden": "LeakyReLU",
+            "activation_inception": "Tanh",
             "batch_size": 2,
         }
         params2 = {
@@ -299,7 +301,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
                 {
                     "activation_inception": torch.nn.Tanh(),
                     "activation_hidden": torch.nn.ReLU(inplace=False),
-                    "activation": "softmax",
+                    "activation": None,
                 }
             )
         return params
