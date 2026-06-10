@@ -534,7 +534,7 @@ class ReducerTransform(BaseTransformer):
         # edge case of no reduction features - prepare to return all-zeros matrix
         if len(lags) == 0 and y is None:
             warn(
-                "no lags specified and no exogeneous data present, "
+                "no lags specified and no exogenous data present, "
                 "empty reduction X. Returning all-zeros X.",
                 obj=self,
             )

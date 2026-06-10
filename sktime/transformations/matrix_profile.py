@@ -42,7 +42,7 @@ class MatrixProfileTransformer(BaseTransformer):
         # packaging info
         # --------------
         "authors": ["seanlaw", "NimaSarajpoor", "mloning"],
-        "python_dependencies": ["stumpy", "numpy<2"],
+        "python_dependencies": ["stumpy", "numpy"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",

@@ -1852,7 +1852,7 @@ class _ReducerMixin:
 
 
 class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
-    """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
+    """Direct reduction forecaster, incl single-output, multi-output, exogenous Dir.
 
     Implements direct reduction, of forecasting to tabular regression.
 
@@ -1865,7 +1865,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     Algorithm details:
 
-    In ``fit``, given endogeneous time series ``y`` and possibly exogeneous ``X``:
+    In ``fit``, given endogeneous time series ``y`` and possibly exogenous ``X``:
     fits ``estimator`` to feature-label pairs as defined as follows.
 
     * if ``X_treatment = "concurrent"``:
@@ -1882,7 +1882,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
       estimator is fitted as a multi-output estimator (for all ``h_j``
       simultaneously)
 
-    In ``predict``, given possibly exogeneous ``X``, at cutoff time ``c``,
+    In ``predict``, given possibly exogenous ``X``, at cutoff time ``c``,
 
     * if ``X_treatment = "concurrent"``:
       applies fitted estimators' predict to
@@ -2314,13 +2314,13 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
 
 class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
-    """Recursive reduction forecaster, incl exogeneous Rec.
+    """Recursive reduction forecaster, incl exogenous Rec.
 
     Implements recursive reduction, of forecasting to tabular regression.
 
     Algorithm details:
 
-    In ``fit``, given endogeneous time series ``y`` and possibly exogeneous ``X``:
+    In ``fit``, given endogeneous time series ``y`` and possibly exogenous ``X``:
         fits ``estimator`` to feature-label pairs as defined as follows.
 
         features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_size)``, if provided:
@@ -2328,7 +2328,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         labels = ``y(t+1)``
         ranging over all ``t`` where the above have been observed (are in the index)
 
-    In ``predict``, given possibly exogeneous ``X``, at cutoff time ``c``,
+    In ``predict``, given possibly exogenous ``X``, at cutoff time ``c``,
         applies fitted estimators' predict to
         feature = ``y(c)``, ``y(c-1)``, ..., ``y(c-window_size)``, if provided:
         ``X(c+1)``
@@ -2741,12 +2741,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
-    """Simple reduction predicting endogeneous from concurrent exogeneous variables.
+    """Simple reduction predicting endogeneous from concurrent exogenous variables.
 
     Tabulates all seen ``X`` and ``y`` by time index and applies
     tabular supervised regression.
 
-    In ``fit``, given endogeneous time series ``y`` and exogeneous ``X``:
+    In ``fit``, given endogeneous time series ``y`` and exogenous ``X``:
     fits ``estimator`` to feature-label pairs as defined as follows.
 
     features = :math:`y(t)`, labels: :math:`X(t)`
@@ -2759,7 +2759,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     uses ``estimator`` to predict :math:`y(t)`, from labels: :math:`X(t)`,
     passing on the ``predict_interval`` etc arguments.
 
-    If no exogeneous data is provided, will predict the mean of ``y`` seen in ``fit``.
+    If no exogenous data is provided, will predict the mean of ``y`` seen in ``fit``.
 
     In order to use a fit not on the entire historical data
     and update periodically, combine this with ``UpdateRefitsEvery``.

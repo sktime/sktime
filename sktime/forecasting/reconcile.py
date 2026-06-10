@@ -101,7 +101,7 @@ class ReconcilerForecaster(BaseForecaster):
         # estimator type
         # --------------
         "capability:multivariate": False,  # which y are fine? False/True
-        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": [
             "pd.DataFrame",

@@ -513,7 +513,7 @@ ARIMA_MODELS = [ARIMA, AutoARIMA]
 )
 @pytest.mark.parametrize("cls", ARIMA_MODELS)
 def test_evaluate_bigger_X(cls):
-    """Check that evaluating ARIMA models with exogeneous X works.
+    """Check that evaluating ARIMA models with exogenous X works.
 
     Example adapted from bug report #3657.
     """

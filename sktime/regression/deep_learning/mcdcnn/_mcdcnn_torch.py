@@ -34,11 +34,11 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         layers.
     pool_padding : str or None, optional (default="same")
         The type of padding to be applied to pooling layers.
-    activation : str or callable or None, optional (default=None)
+    activation : str or Callable or None, optional (default=None)
         The activation function to apply at the output.
         List of available activation functions:
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
-    activation_hidden : string or callable, default="relu"
+    activation_hidden : str or Callable, default="ReLU"
         Activation function used in the hidden layers.
         List of available activation functions:
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
@@ -106,7 +106,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         conv_padding: str | None = "same",
         pool_padding: str | None = "same",
         activation: str | None | Callable = None,
-        activation_hidden: str | Callable = "relu",
+        activation_hidden: str | Callable = "ReLU",
         use_bias: bool = True,
         criterion: str | None | Callable = "MSELoss",
         criterion_kwargs: dict | None = None,
@@ -204,8 +204,8 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             conv_padding=self.conv_padding,
             pool_padding=self.pool_padding,
             random_state=self.random_state,
-            activation=self.activation,
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             use_bias=self.use_bias,
         )
 
@@ -252,7 +252,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             "dense_units": 1,
             "conv_padding": "same",
             "pool_padding": "same",
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
             "use_bias": False,
             "optim": "Adam",
             "optim_kwargs": {"weight_decay": 0.001},

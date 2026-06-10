@@ -850,6 +850,19 @@ Model selection and tuning
     ForecastingSkoptSearchCV
     ForecastingOptunaSearchCV
 
+Agentic Forecasting
+-------------------
+
+Forecasters that use generative AI and/or agentic reasoning to decide how to forecast.
+
+.. currentmodule:: sktime.forecasting.agentic
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AutoResearchForecaster
+
 Model Evaluation (Backtesting)
 ------------------------------
 

@@ -29,12 +29,14 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
         Controls dropout rate of LSTM layer
     attention : bool, default=False
         If True, uses attention mechanism before LSTM layer
-    activation : str or None, default=None
+    activation : str or Callable or None, default=None
         Activation function used in the output layer.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    activation_hidden : str, default="relu"
+        Recommended Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
+        'SELU', 'GELU', None
+    activation_hidden : str or Callable or None, default="ReLU"
         Activation function used for hidden layers.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
+        Recommended Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
+        'SELU', 'GELU', None
     num_epochs : int, default=2000
         The number of epochs to train the model.
     batch_size : int, default=128
@@ -110,8 +112,8 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
         lstm_size: int = 8,
         dropout: float = 0.8,
         attention: bool = False,
-        activation: str | None = None,
-        activation_hidden: str = "relu",
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable | None = "ReLU",
         # base classifier specific
         num_epochs: int = 2000,
         batch_size: int = 128,
@@ -204,8 +206,8 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
             lstm_size=self.lstm_size,
             dropout=self.dropout,
             attention=self.attention,
-            activation=self.activation,
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             init_weights=self.init_weights,
             random_state=self.random_state,
         )

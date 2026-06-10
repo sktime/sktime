@@ -28,10 +28,10 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
         Dropout rate for the LSTM layer.
     dilation : int, default = 1
         Dilation value.
-    activation : str or None or callable, default = None
+    activation : str or Callable or None, default = None
         Activation function to use in the output layer. If callable, it must
         accept and return a torch tensor.
-    activation_hidden : str, default = "leaky_relu"
+    activation_hidden : str or Callable, default = "LeakyReLU"
         Activation function to use in the hidden layers.
     use_rp : bool, default = True
         Whether to use random projections.
@@ -124,8 +124,8 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
         dropout: float = 0.5,
         lstm_dropout: float = 0.8,
         dilation: int = 1,
-        activation: str | None | Callable = None,
-        activation_hidden: str = "leaky_relu",
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable = "LeakyReLU",
         use_rp: bool = True,
         rp_group: int = 3,
         rp_alpha: float = 2.0,
@@ -220,18 +220,12 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
              An instance of the TapNetNetworkTorch class initialized with the
              appropriate parameters.
         """
-        if len(X.shape) != 3:
-            raise ValueError(
-                f"Expected 3D input X with shape (n_instances, n_dims, series_length), "
-                f"but got shape {X.shape}. Please ensure your input data is "
-                "properly formatted."
-            )
         self.input_size = X.shape
         return TapNetNetworkTorch(
             input_size=self.input_size,
             num_classes=self.num_classes,
-            activation=self.activation,
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             kernel_size=self.kernel_size,
             layers=self.layers,
             filter_sizes=self.filter_sizes,
