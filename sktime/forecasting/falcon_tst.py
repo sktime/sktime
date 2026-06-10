@@ -47,8 +47,8 @@ class FalconTSTForecaster(BaseForecaster):
     - Exogenous data and quantile prediction are not supported.
     - Loaded models are cached via a multiton helper keyed by model-loading
       inputs to avoid repeated model instantiation.
-    - For reduced-memory loading, use ``dtype`` and ``quantization_config``,
-      or a pre-quantized checkpoint.
+    - For reduced-memory loading, use ``quantization_config`` or a
+      pre-quantized checkpoint.
 
     Parameters
     ----------
@@ -65,10 +65,6 @@ class FalconTSTForecaster(BaseForecaster):
         Device placement following the ``transformers`` ``device_map`` naming
         convention, for example ``"cpu"``, ``"cuda"``, ``"cuda:0"``, or
         ``"auto"``.
-    dtype : torch.dtype or str, optional (default=None)
-        Data type used for model loading, following the ``transformers``
-        ``dtype`` convention, for example ``torch.float16``,
-        ``torch.bfloat16``, or ``"auto"``.
     quantization_config : transformers.quantizers.HfQuantizer, optional
         Valid quantization configuration object compatible with
         ``transformers.PreTrainedModel.from_pretrained`` [3]_.
@@ -96,9 +92,8 @@ class FalconTSTForecaster(BaseForecaster):
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
-    Reduced-memory inference with device placement, dtype, and quantization:
+    Reduced-memory inference with device placement and quantization:
 
-    >>> import torch  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.falcon_tst import FalconTSTForecaster
     >>> from transformers import BitsAndBytesConfig  # doctest: +SKIP
@@ -106,7 +101,6 @@ class FalconTSTForecaster(BaseForecaster):
     >>> forecaster = FalconTSTForecaster(  # doctest: +SKIP
     ...     model_path="ant-intl/Falcon-TST_Large",
     ...     device_map="auto",
-    ...     dtype=torch.bfloat16,
     ...     quantization_config=BitsAndBytesConfig(load_in_8bit=True),
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
@@ -159,14 +153,12 @@ class FalconTSTForecaster(BaseForecaster):
         model_path="ant-intl/Falcon-TST_Large",
         config=None,
         device_map="cpu",
-        dtype=None,
         quantization_config=None,
         revin=True,
     ):
         self.model_path = model_path
         self.config = config
         self.device_map = device_map
-        self.dtype = dtype
         self.quantization_config = quantization_config
         self.revin = revin
 
@@ -283,9 +275,8 @@ class FalconTSTForecaster(BaseForecaster):
         Returns
         -------
         model : transformers.PreTrainedModel
-            Loaded model according to ``self.device_map`` and
-            ``self.dtype``. If ``self.model_`` already exists, it is
-            returned directly.
+            Loaded model according to ``self.device_map``. If ``self.model_``
+            already exists, it is returned directly.
         """
         if hasattr(self, "model_") and self.model_ is not None:
             return self.model_
@@ -295,7 +286,6 @@ class FalconTSTForecaster(BaseForecaster):
             model_path=self.model_path,
             config=self.config,
             device_map=self.device_map,
-            dtype=self.dtype,
             quantization_config=self.quantization_config,
         ).load()
 
@@ -314,7 +304,6 @@ class FalconTSTForecaster(BaseForecaster):
             "model_path": self.model_path,
             "config": self.config,
             "device_map": self.device_map,
-            "dtype": self.dtype,
             "quantization_config": self.quantization_config,
         }
         return str(sorted(key.items()))
@@ -392,8 +381,6 @@ class _CachedFalconTST:
         Configuration used for model loading/creation.
     device_map : str, dict, int, or torch.device
         Device placement for loading models.
-    dtype : torch.dtype or str or None
-        Data type used for model loading.
     quantization_config : transformers.quantizers.HfQuantizer or None
         Quantization configuration used for model loading.
     """
@@ -404,14 +391,12 @@ class _CachedFalconTST:
         model_path,
         config,
         device_map,
-        dtype,
         quantization_config,
     ):
         self.key = key
         self.model_path = model_path
         self.config = config
         self.device_map = device_map
-        self.dtype = dtype
         self.quantization_config = quantization_config
         self.model_ = None
 
@@ -422,7 +407,7 @@ class _CachedFalconTST:
         -------
         model : transformers.PreTrainedModel
             Loaded Falcon-TST prediction model according to ``self.device_map``,
-            ``self.dtype``, and ``self.quantization_config``.
+            and ``self.quantization_config``.
 
         Notes
         -----
@@ -447,7 +432,6 @@ class _CachedFalconTST:
         model = FalconTSTForPrediction.from_pretrained(
             self.model_path,
             device_map=self.device_map,
-            torch_dtype=self.dtype,
             quantization_config=self.quantization_config,
         )
 
@@ -474,7 +458,5 @@ class _CachedFalconTST:
 
         model = FalconTSTForPrediction(config)
         model = model.to(self.device_map)
-        if self.dtype is not None:
-            model = model.to(dtype=self.dtype)
 
         return model
