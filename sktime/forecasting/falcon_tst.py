@@ -141,8 +141,6 @@ class FalconTSTForecaster(BaseForecaster):
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:insample": False,
-        "capability:pred_int": False,
-        "capability:pretrain": False,
         "authors": ["Harryx2019", "figolyd", "geetu040"],
         # Hongjie Xia (Harryx2019), Yiding Liu (figolyd) for ant-intl/Falcon-TST
         "maintainers": ["geetu040"],
