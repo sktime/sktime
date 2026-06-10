@@ -132,7 +132,6 @@ class LLM1StepAgentForecaster(_DelegatedForecaster):
         # pass-through to inner forecaster, no conversion at this level
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
-        "scitype:y": "both",
         # --- capability tags ---
         # permissive at this level; inner forecaster validates during its own fit
         "requires-fh-in-fit": False,
@@ -140,6 +139,7 @@ class LLM1StepAgentForecaster(_DelegatedForecaster):
         "capability:missing_values": True,
         "capability:exogenous": True,
         "capability:insample": True,
+        "capability:multivariate": True,
         # conservative defaults; updated dynamically after inner fit
         # via _set_delegated_tags in _fit
         "capability:pred_int": False,
