@@ -19,15 +19,15 @@ import pytest
 
 from sktime.datatypes import check_is_scitype, get_examples, mtype_to_scitype
 from sktime.tests.test_switch import run_test_module_changed
+from sktime.transformations.boxcox import BoxCoxTransformer
 from sktime.transformations.compose import FitInTransform
+from sktime.transformations.exponent import ExponentTransformer
 from sktime.transformations.padder import PaddingTransformer
+from sktime.transformations.summarize import SummaryTransformer
 from sktime.transformations.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
-from sktime.transformations.boxcox import BoxCoxTransformer
-from sktime.transformations.exponent import ExponentTransformer
-from sktime.transformations.summarize import SummaryTransformer
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformHierarchicalMultivariate,

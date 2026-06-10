@@ -10,8 +10,8 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.pipeline.pipeline import Pipeline
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.transformations.compose import Id
 from sktime.transformations.boxcox import BoxCoxTransformer
+from sktime.transformations.compose import Id
 from sktime.transformations.detrend import Detrender
 from sktime.transformations.difference import Differencer
 from sktime.transformations.exponent import ExponentTransformer

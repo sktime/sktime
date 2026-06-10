@@ -299,9 +299,9 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         """
         from sktime.dists_kernels.compose import PwTrafoPanelPipeline
         from sktime.dists_kernels.dummy import ConstantPwTrafoPanel
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
-        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # when other is an integer or float, treat it as constant distance/kernel

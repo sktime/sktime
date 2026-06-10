@@ -12,6 +12,7 @@ from sktime.datasets import load_airline, load_unit_test
 from sktime.datatypes import get_examples
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.bootstrap import STLBootstrapTransformer
+from sktime.transformations.boxcox import LogTransformer
 from sktime.transformations.compose import (
     FeatureUnion,
     InvertTransform,
@@ -19,10 +20,9 @@ from sktime.transformations.compose import (
     OptionalPassthrough,
     TransformerPipeline,
 )
-from sktime.transformations.padder import PaddingTransformer
-from sktime.transformations.boxcox import LogTransformer
 from sktime.transformations.exponent import ExponentTransformer
 from sktime.transformations.impute import Imputer
+from sktime.transformations.padder import PaddingTransformer
 from sktime.transformations.subset import ColumnSelect
 from sktime.transformations.summarize import SummaryTransformer
 from sktime.transformations.theta import ThetaLinesTransformer

@@ -27,15 +27,15 @@ from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.compose import OptionalPassthrough, YtoX
-from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.adapt import TabularToSeriesAdaptor
 from sktime.transformations.boxcox import LogTransformer
+from sktime.transformations.compose import OptionalPassthrough, YtoX
 from sktime.transformations.detrend import Detrender
 from sktime.transformations.difference import Differencer
 from sktime.transformations.exponent import ExponentTransformer
 from sktime.transformations.feature_selection import FeatureSelection
 from sktime.transformations.fourier import FourierFeatures
+from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.impute import Imputer
 from sktime.transformations.lag import Lag
 from sktime.transformations.outlier_detection import HampelFilter

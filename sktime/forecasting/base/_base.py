@@ -215,8 +215,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             not nested, contains only non-TransformerPipeline ``sktime`` transformers
         """
         from sktime.forecasting.compose import TransformedTargetForecaster
-        from sktime.transformations.base import BaseTransformer
         from sktime.transformations.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.base import BaseTransformer
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -247,8 +247,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             not nested, contains only non-TransformerPipeline ``sktime`` steps
         """
         from sktime.forecasting.compose import TransformedTargetForecaster
-        from sktime.transformations.base import BaseTransformer
         from sktime.transformations.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.base import BaseTransformer
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -279,8 +279,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             not nested, contains only non-TransformerPipeline ``sktime`` steps
         """
         from sktime.forecasting.compose import ForecastingPipeline
-        from sktime.transformations.base import BaseTransformer
         from sktime.transformations.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.base import BaseTransformer
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
