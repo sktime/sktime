@@ -609,6 +609,14 @@ Pre-trained and foundation models
 
     FalconTSTForecaster
 
+.. currentmodule:: sktime.forecasting.flowstate
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FlowStateForecaster
+
 .. currentmodule:: sktime.forecasting.hf_transformers
 
 .. autosummary::
