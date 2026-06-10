@@ -4,15 +4,48 @@ from functools import reduce
 # ruff: noqa
 """PyTorch model definitions for Falcon-TST forecasting models."""
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from sktime.utils.dependencies import _check_soft_dependencies
 
 # import transformer_engine as te
-from torch import Tensor
-from transformers import PreTrainedModel
 
 from .configuration_FalconTST import FalconTSTConfig
+
+if _check_soft_dependencies("torch", "transformers", severity="none"):
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    from torch import Tensor
+    from transformers import PreTrainedModel
+else:
+
+    class _FalconTSTDependencyStub:
+        """Placeholder base used when Falcon-TST dependencies are unavailable."""
+
+    class _FalconTSTNNStub:
+        """Minimal ``torch.nn`` placeholder for import-time class definitions."""
+
+        Module = object
+
+    class _FalconTSTTorchStub:
+        """Minimal ``torch`` placeholder for import-time annotations."""
+
+        Tensor = object
+        nn = _FalconTSTNNStub
+
+        @staticmethod
+        def no_grad():
+            """Return a no-op decorator for import-time method definitions."""
+
+            def decorator(func):
+                return func
+
+            return decorator
+
+    torch = _FalconTSTTorchStub()
+    F = None
+    nn = _FalconTSTNNStub
+    Tensor = object
+    PreTrainedModel = _FalconTSTDependencyStub
 
 
 def _rotate_half(x: Tensor, rotary_interleaved: bool) -> Tensor:

@@ -6,7 +6,9 @@ This module defines the configuration for FalconTST, a large-scale time series f
 that utilizes Mixture of Experts (MoE) architecture with multiple patch tokenizers.
 """
 
-from transformers import PretrainedConfig
+from sktime.utils.dependencies import _safe_import
+
+PretrainedConfig = _safe_import("transformers.PretrainedConfig")
 
 
 class FalconTSTConfig(PretrainedConfig):
