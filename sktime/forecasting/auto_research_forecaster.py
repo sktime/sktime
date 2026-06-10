@@ -8,25 +8,14 @@ combination of transformers and forecasters for a given dataset.
 import base64
 import io
 import json
-import sys
-import types
 import warnings
 from time import sleep
 
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.registry import craft
-
-# Compatibility shim: skbase < 0.8 does not ship skbase.utils.doctest_run,
-# which sktime's check_estimator test suite tries to import. Inject a no-op
-# stub so the test can proceed without requiring a newer skbase.
-if "skbase.utils.doctest_run" not in sys.modules:
-    _doctest_mod = types.ModuleType("skbase.utils.doctest_run")
-    _doctest_mod.run_doctest = lambda obj, name=None, **kwargs: None
-    sys.modules["skbase.utils.doctest_run"] = _doctest_mod
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_evaluation import evaluate
+from sktime.registry import craft
 
 # ---------------------------------------------------------------------------
 # Prompt templates
@@ -338,6 +327,8 @@ def _generate_time_series_plot_base64(y):
     base64_img : str
         Base64-encoded PNG image.
     """
+    from skbase.utils.dependencies import _check_soft_dependencies
+
     _check_soft_dependencies("matplotlib", obj="AutoResearchForecaster plotting")
 
     import matplotlib.pyplot as plt
@@ -442,6 +433,7 @@ class AutoResearchForecaster(BaseForecaster):
     """Forecaster that uses an LLM to generate and refine sktime pipeline blueprints.
 
     Inspired by Karpathy's autoresearch project, this forecaster:
+
     1. Asks an LLM to propose diverse forecasting pipeline blueprints
     2. Evaluates each blueprint on a validation split of the training data
     3. Feeds results back to the LLM for iterative refinement
