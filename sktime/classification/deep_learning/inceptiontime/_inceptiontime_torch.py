@@ -283,7 +283,23 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
             "depth": 6,
             "kernel_size": 20,
             "num_epochs": 12,
+            "activation_inception": "tanh",
+            "activation_hidden": "ReLU",
             "batch_size": 4,
         }
 
-        return [params1, params2]
+        params = [params1, params2]
+
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies("torch", severity="none"):
+            import torch
+
+            params.append(
+                {
+                    "activation_inception": torch.nn.Tanh(),
+                    "activation_hidden": torch.nn.ReLU(inplace=False),
+                    "activation": "softmax",
+                }
+            )
+        return params
