@@ -202,7 +202,36 @@ class WindFMForecaster(BaseForecaster):
         super().__init__()
 
     def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to target power and historical weather covariates."""
+        """Fit forecaster to training data.
+
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
+        Parameters
+        ----------
+        y : sktime time series object
+            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+            Time series to which to fit the forecaster.
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
+            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
+        X : sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series to fit to.
+
+        Returns
+        -------
+        self : reference to self
+        """
         if X is None:
             warn(
                 "WindFMForecaster requires weather covariates in X for meaningful "
@@ -221,13 +250,69 @@ class WindFMForecaster(BaseForecaster):
         return self
 
     def _predict(self, fh, X=None):
-        """Forecast target power at future horizon."""
+        """Forecast time series at future horizon.
+
+        private _predict containing the core logic, called from predict
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+
+        Returns
+        -------
+        y_pred : sktime time series object
+            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
+            Point predictions
+        """
         pred_df, y_index = self._predict_samples(fh)
         point_pred = pred_df.median(axis=1).to_numpy()
         return pd.Series(point_pred, index=y_index, name=self.y_name_)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
-        """Forecast target power quantiles from WindFM sample paths."""
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and possibly predict_interval
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
         pred_df, y_index = self._predict_samples(fh)
 
         quantiles = np.quantile(pred_df.to_numpy(), q=alpha, axis=1).T
