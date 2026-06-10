@@ -11,7 +11,8 @@ Model training and fine-tuning are not supported. Calling :meth:`fit` only
 loads the model and stores the observed series as forecasting context.
 """
 
-__author__ = ["figolyd", "geetu040"]
+__author__ = ["Harryx2019", "figolyd", "geetu040"]
+# Hongjie Xia (Harryx2019), Yiding Liu (figolyd) for ant-intl/Falcon-TST
 
 __all__ = ["FalconTSTForecaster"]
 
@@ -142,7 +143,8 @@ class FalconTSTForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pretrain": False,
-        "authors": ["figolyd", "geetu040"],
+        "authors": ["Harryx2019", "figolyd", "geetu040"],
+        # Hongjie Xia (Harryx2019), Yiding Liu (figolyd) for ant-intl/Falcon-TST
         "maintainers": ["geetu040"],
         "python_dependencies": ["torch", "transformers", "einops"],
         "tests:vm": True,
