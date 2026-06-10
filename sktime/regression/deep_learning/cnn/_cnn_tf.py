@@ -47,9 +47,6 @@ class CNNRegressor(BaseDeepRegressor):
         Activation function used in the hidden layers.
         List of available activation functions:
         https://keras.io/api/layers/activations/
-
-        .. versionchanged:: 0.41.0
-            Default changed from ``"sigmoid"`` to ``"relu"``.
     use_bias : boolean, default = True
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)

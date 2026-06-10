@@ -21,9 +21,6 @@ class CNNNetwork(BaseDeepNetwork):
         activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
-
-        .. versionchanged:: 0.41.0
-            Default changed from ``"sigmoid"`` to ``"relu"``.
     padding : string, default = "auto"
         Controls padding logic for the convolutional layers,
         i.e. whether ``'valid'`` and ``'same'`` are passed to the ``Conv1D`` layer.

@@ -41,9 +41,6 @@ class SimpleRNNClassifier(BaseDeepClassifier):
     activation_hidden : string or a tf callable, default="tanh"
         Activation function used in the hidden layers.
         List of available activation functions: https://keras.io/api/layers/activations/
-
-        .. versionchanged:: 0.41.0
-            Default changed from ``"linear"`` to ``"tanh"``.
     use_bias : boolean, default = True
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = RMSprop(lr=0.001)

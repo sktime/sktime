@@ -18,9 +18,6 @@ class RNNNetwork(BaseDeepNetwork):
         activation function to use in the RNN layer;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
-
-        .. versionchanged:: 0.41.0
-            Default changed from ``"linear"`` to ``"tanh"``.
     dropout : float, default = 0.0
         The dropout rate for the RNN layer.
     """
