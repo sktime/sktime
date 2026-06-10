@@ -1,9 +1,9 @@
-# ruff: noqa
 """
 Configuration class for FalconTST model.
 
-This module defines the configuration for FalconTST, a large-scale time series foundation model
-that utilizes Mixture of Experts (MoE) architecture with multiple patch tokenizers.
+This module defines the configuration for FalconTST, a large-scale time series
+foundation model that utilizes Mixture of Experts (MoE) architecture with
+multiple patch tokenizers.
 """
 
 from sktime.utils.dependencies import _safe_import
@@ -15,11 +15,13 @@ class FalconTSTConfig(PretrainedConfig):
     """
     Configuration class for FalconTST model.
 
-    FalconTST is a time series foundation model that uses Mixture of Experts architecture
-    with multiple patch tokenizers for efficient time series forecasting.
+    FalconTST is a time series foundation model that uses Mixture of Experts
+    architecture with multiple patch tokenizers for efficient time series
+    forecasting.
 
-    This configuration inherits from [`PretrainedConfig`] and can be used to control the model
-    output. Read the documentation from [`PretrainedConfig`] for more information.
+    This configuration inherits from [`PretrainedConfig`] and can be used to
+    control the model output. Read the documentation from [`PretrainedConfig`]
+    for more information.
 
     Args:
         hidden_size (`int`, *optional*, defaults to 1024):
@@ -35,7 +37,8 @@ class FalconTSTConfig(PretrainedConfig):
         num_hidden_layers (`int`, *optional*, defaults to 3):
             Number of hidden layers in the transformer encoder.
         num_attention_heads (`int`, *optional*, defaults to 16):
-            Number of attention heads for each attention layer in the transformer encoder.
+            Number of attention heads for each attention layer in the
+            transformer encoder.
         mask_pad_value (`float`, *optional*, defaults to 255.0):
             Value used for padding/masking in input sequences.
         expert_num_layers (`int`, *optional*, defaults to 4):

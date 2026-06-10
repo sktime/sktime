@@ -1,13 +1,11 @@
+"""PyTorch model definitions for Falcon-TST forecasting models."""
+
 import math
 from functools import reduce
-
-# ruff: noqa
-"""PyTorch model definitions for Falcon-TST forecasting models."""
 
 from sktime.utils.dependencies import _check_soft_dependencies
 
 # import transformer_engine as te
-
 from .configuration_FalconTST import FalconTSTConfig
 
 if _check_soft_dependencies("torch", "transformers", severity="none"):
@@ -49,7 +47,7 @@ else:
 
 
 def _rotate_half(x: Tensor, rotary_interleaved: bool) -> Tensor:
-    """Change sign so the last dimension becomes [-odd, +even]
+    """Change sign so the last dimension becomes [-odd, +even].
 
     Args:
         x (Tensor): Input tensor
@@ -81,7 +79,8 @@ def _apply_rotary_pos_emb_bshd(
 
     Args:
         t (Tensor): Input tensor T is of shape [seq_length, ... , dim]
-        freqs (Tensor): Rotary Positional embedding tensor freq is of shape [seq_length, ..., dim]
+        freqs (Tensor): Rotary Positional embedding tensor freq is of shape
+            [seq_length, ..., dim]
 
     Returns
     -------
@@ -111,14 +110,14 @@ class RotaryEmbedding(nn.Module):
     """Rotary Embedding.
 
     Args:
-        kv_channels (int): Projection weights dimension in multi-head attention. Obtained
-            from transformer config
-        rotary_interleaved (bool, optional): If True, interleaved rotary position embeddings.
-            Defaults to False.
-        rotary_base (int, optional): Base period for rotary position embeddings. Defaults to
-            10000.
-        use_cpu_initialization (bool, optional): If False, initialize the inv_freq directly
-            on the GPU. Defaults to False
+        kv_channels (int): Projection weights dimension in multi-head
+            attention, obtained from transformer config.
+        rotary_interleaved (bool, optional): If True, interleaved rotary
+            position embeddings. Defaults to False.
+        rotary_base (int, optional): Base period for rotary position embeddings.
+            Defaults to 10000.
+        use_cpu_initialization (bool, optional): If False, initialize the
+            inv_freq directly on the GPU. Defaults to False.
     """
 
     def __init__(
@@ -142,9 +141,7 @@ class RotaryEmbedding(nn.Module):
         )
 
     def get_freqs_non_repeated(self, max_seq_len: int, offset: int = 0) -> Tensor:
-        """Generates matrix of frequencies based on positions in the sequence,
-        used to create positional encodings
-        """
+        """Generate matrix of frequencies based on positions in the sequence."""
         seq = (
             torch.arange(
                 max_seq_len, device=self.inv_freq.device, dtype=self.inv_freq.dtype
@@ -162,7 +159,8 @@ class RotaryEmbedding(nn.Module):
         Args:
             max_seq_len (int): Maximum size of sequence
             offset (int, optional): RoPE offset. Defaults to 0.
-            packed_seq (bool, optional): Whether to use packed sequence. Defaults to False.
+            packed_seq (bool, optional): Whether to use packed sequence.
+                Defaults to False.
 
         Returns
         -------
@@ -195,10 +193,13 @@ class RotaryEmbedding(nn.Module):
         self,
         transformer_input: Tensor,
     ) -> float:
-        """Function to get the rotary sequence length.
+        """Return the rotary sequence length.
+
         Args:
             transformer_input (Tensor): Input tensor to the transformer
-        Returns:
+
+        Returns
+        -------
             float: The rotary sequence length
         """
         rotary_seq_len = transformer_input.size(0)
@@ -206,20 +207,23 @@ class RotaryEmbedding(nn.Module):
 
 
 class IdentityOp(nn.Module):
+    """Identity operation."""
+
     def forward(self, x):
+        """Return input unchanged."""
         return x
 
 
 class RMSNorm(nn.Module):
+    """Root mean square normalization layer."""
+
     def __init__(self, hidden_size, eps=1e-5):
         super().__init__()
         self.weight = nn.Parameter(torch.ones(hidden_size))
         self.variance_epsilon = eps
 
     def forward(self, hidden_states):
-        """
-        hidden_states [bs, patch_num, d_model]
-        """
+        """Normalize hidden states of shape [bs, patch_num, d_model]."""
         input_dtype = hidden_states.dtype
         hidden_states = hidden_states.to(torch.float32)
         variance = hidden_states.pow(2).mean(-1, keepdim=True)
@@ -229,6 +233,7 @@ class RMSNorm(nn.Module):
 
 class TEDotProductAttention(nn.Module):
     """Implement the scaled dot product attention with softmax.
+
     Arguments
     ---------
         softmax_scale: The temperature to use for the softmax attention.
@@ -245,12 +250,15 @@ class TEDotProductAttention(nn.Module):
         self.drop = nn.Dropout(attention_dropout)
 
     def forward(self, q, k, v, attention_mask):
-        """Implements the multihead softmax attention.
+        """Implement the multihead softmax attention.
+
         Arguments
         ---------
-            q,k,v: The tensor containing the query, key, and value.  [seq_len, batch_size, hidden_size]
-            attention_mask: boolean mask to apply to the attention weights. True means to keep,
-                False means to mask out. [batch_size, 1, seq_len, seq_len]
+            q,k,v: The tensor containing the query, key, and value.
+                Shape: [seq_len, batch_size, hidden_size]
+            attention_mask: boolean mask to apply to the attention weights.
+                True means to keep, False means to mask out.
+                Shape: [batch_size, 1, seq_len, seq_len]
         """
         q = q.transpose(0, 1).contiguous()
         k = k.transpose(0, 1).contiguous()
@@ -273,6 +281,8 @@ class TEDotProductAttention(nn.Module):
 
 
 class SelfAttention(nn.Module):
+    """Self-attention block."""
+
     def __init__(
         self,
         config,
@@ -293,11 +303,7 @@ class SelfAttention(nn.Module):
         )
 
     def forward(self, x, attention_mask, rotary_pos_emb):
-        """
-        x: [seq_len, batch_size, hidden_size]
-        attention_mask: [batch_size, 1, seq_len, seq_len]
-        rotary_pos_emb: [seq_len, 1, 1, kv_channels(hidden_size // num_heads)]
-        """
+        """Apply self-attention to hidden states."""
         qkv = self.linear_qkv(x)
         qkv = qkv.view(qkv.size(0), qkv.size(1), self.config.num_attention_heads, -1)
         q, k, v = qkv.chunk(3, dim=-1)
@@ -315,6 +321,8 @@ class SelfAttention(nn.Module):
 
 
 class MLP(nn.Module):
+    """Feed-forward network."""
+
     def __init__(self, config, in_features):
         super().__init__()
         self.config = config
@@ -330,25 +338,29 @@ class MLP(nn.Module):
         )
 
     def forward(self, x):
+        """Apply feed-forward transformation."""
         x = self.swiglu(self.linear_fc1(x))
         x = self.linear_fc2(x)
         return x
 
     def swiglu(self, y):
-        """Performs SwiGLU (Swish-Gated Linear Unit) activation function.
+        """Perform SwiGLU activation.
 
         Args:
-            y (torch.Tensor): Input tensor to be split into two halves along the last dimension.
+            y (torch.Tensor): Input tensor to split into two halves along the
+                last dimension.
 
         Returns
         -------
-            torch.Tensor: Result of SwiGLU activation: SiLU(y1) * y2, where y1, y2 are the split halves.
+            torch.Tensor: Result of SwiGLU activation.
         """
         y_1, y_2 = torch.chunk(y, 2, -1)
         return F.silu(y_1) * y_2
 
 
 class TransformerLayer(nn.Module):
+    """Transformer layer."""
+
     def __init__(self, config, input_layernorm):
         super().__init__()
         self.config = config
@@ -361,11 +373,7 @@ class TransformerLayer(nn.Module):
         self.mlp = MLP(config, self.config.hidden_size)
 
     def forward(self, x, attention_mask, rotary_pos_emb):
-        """
-        x: [seq_len, batch_size, hidden_size]
-        attention_mask: [batch_size, 1, seq_len, seq_len]
-        rotary_pos_emb: [seq_len, 1, 1, kv_channels(hidden_size // num_heads)]
-        """
+        """Apply one transformer layer."""
         residual = x
         x = self.input_layernorm(x)
         x = self.self_attention(x, attention_mask, rotary_pos_emb)
@@ -378,6 +386,8 @@ class TransformerLayer(nn.Module):
 
 
 class FalconTSTExpert(nn.Module):
+    """Falcon-TST expert module."""
+
     def __init__(
         self, config, patch_input_size=32, expert_output_size=336, final_layernorm=True
     ):
@@ -441,11 +451,10 @@ class FalconTSTExpert(nn.Module):
         hidden_states = self.patch_embedding(
             input_data
         )  # hidden_states [batch_size, patch_num, hidden_size]
-        hidden_states = hidden_states.transpose(
-            0, 1
-        ).contiguous()  # hidden_states [patch_num, batch_size, hidden_size], To adapt to the Megatron
+        hidden_states = hidden_states.transpose(0, 1).contiguous()
+        # hidden_states: [patch_num, batch_size, hidden_size]
 
-        # Patchify the mask: only the entire time points in a patch are masked then this patch is masked
+        # Patchify mask: only fully masked patches are masked.
         attention_mask = input_mask.unfold(
             dimension=-1, size=self.patch_size, step=self.patch_size
         ).contiguous()  # [batch_size, patch_num, patch_size]
@@ -466,22 +475,27 @@ class FalconTSTExpert(nn.Module):
         return hidden_states, attention_mask, input_mask
 
     def _forward_output(self, hidden_states, output_scale=None, input_mask=None):
-        """
-        Perform a forward pass through the output layer.
+        """Perform a forward pass through the output layer.
 
         Args:
-            hidden_states (Tensor): Transformed hidden states of shape [patch_num, batch_size, hidden_size]
-            output_scale (Tensor, optional): Expert probabilities for the output layer  [batch_size]
-            input_mask (Tensor, optional): Expert input mask of shape [batch_size, seq_len], 0:mask, 1:unmask
+            hidden_states (Tensor): Transformed hidden states of shape
+                [patch_num, batch_size, hidden_size].
+            output_scale (Tensor, optional): Expert probabilities for the
+                output layer [batch_size].
+            input_mask (Tensor, optional): Expert input mask of shape
+                [batch_size, seq_len], where 0 means mask and 1 means unmask.
 
         Returns
         -------
-            expert_output (Tensor): Expert output of shape [batch_size, expert_output_size]
+            expert_output (Tensor): Expert output of shape
+                [batch_size, expert_output_size].
         """
-        # [patch_num, batch_size, hidden_size] -> [batch_size, flatten_size (patch_num * hidden_size)]
+        # [patch_num, batch_size, hidden_size] ->
+        # [batch_size, flatten_size (patch_num * hidden_size)]
         patch_num, batch_size, hidden_size = hidden_states.shape
         assert (patch_num * hidden_size) == self.flatten_size, (
-            f"patch_num ({patch_num}) * hidden_size ({hidden_size}) != flatten_size ({self.flatten_size})"
+            f"patch_num ({patch_num}) * hidden_size ({hidden_size}) != "
+            f"flatten_size ({self.flatten_size})"
         )
         hidden_states = (
             hidden_states.transpose(0, 1).reshape(-1, self.flatten_size).contiguous()
@@ -497,6 +511,7 @@ class FalconTSTExpert(nn.Module):
         return expert_output
 
     def forward(self, expert_input, rotary_pos_emb, expert_probs=None):
+        """Run expert forward pass."""
         hidden_states, attention_mask, input_mask = self._forward_patch_embedding(
             expert_input
         )
@@ -516,6 +531,8 @@ class FalconTSTExpert(nn.Module):
 
 
 class SequentialFalconTST(nn.Module):
+    """Sequential container for Falcon-TST experts."""
+
     def __init__(self, config, expert_output_size=336):
         super().__init__()
         self.config = config
@@ -533,6 +550,7 @@ class SequentialFalconTST(nn.Module):
         )
 
     def forward(self, input, routing_map, rotary_pos_emb, expert_probs):
+        """Dispatch inputs to local experts and combine their outputs."""
         expert_output_list = []
         batch_size, seq_len = input.size()
 
@@ -562,6 +580,8 @@ class SequentialFalconTST(nn.Module):
 
 
 class TopKRouter(nn.Module):
+    """Top-k router for Falcon-TST experts."""
+
     def __init__(self, config: FalconTSTConfig):
         super().__init__()
         self.config = config
@@ -576,9 +596,11 @@ class TopKRouter(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
+        """Reset router parameters."""
         nn.init.normal_(self.weight, mean=0, std=self.config.init_method_std)
 
     def routing(self, logits: torch.Tensor):
+        """Route logits to top-k experts."""
         score_function = self.config.moe_router_score_function
 
         if score_function == "softmax":
@@ -603,6 +625,7 @@ class TopKRouter(nn.Module):
         return routing_probs, routing_map
 
     def forward(self, input: torch.Tensor):
+        """Compute routing probabilities and map."""
         if self.weight.device != input.device:
             self.weight.data = self.weight.data.to(input.device)
 
@@ -616,6 +639,8 @@ class TopKRouter(nn.Module):
 
 
 class FalconTSTMoELayer(nn.Module):
+    """Mixture-of-experts layer for Falcon-TST."""
+
     def __init__(self, config, layer_number):
         super().__init__()
         self.config = config
@@ -650,19 +675,18 @@ class FalconTSTMoELayer(nn.Module):
         )
 
     def time_series_preprocess(self, input: torch.Tensor):
-        """
-        Preprocess time series(sample) for dispatch.
+        """Preprocess time series sample for dispatch.
 
-        Applies RevIN to input time series(sample), and process the input mask (0: mask, 1: unmask)
+        Applies RevIN to input time series samples, and processes the input
+        mask, where 0 means mask and 1 means unmask.
 
         Args:
-            input (torch.Tensor): The input time series (samples) to the MoE layer. [batch_size, seq_len]
+            input (torch.Tensor): Input time series samples to the MoE layer.
+                Shape: [batch_size, seq_len].
 
         Returns
         -------
-            input (torch.Tensor): The (RevIN) backcast time series (samples). [batch_size, seq_len]
-            means (torch.Tensor): The means of the non-masked backcast time series (samples). [batch_size, 1]
-            stdev (torch.Tensor): The standard deviation of the non-masked backcast time series (samples). [batch_size, 1]
+            input (torch.Tensor): Backcast time series samples.
         """
         batch_size, seq_len = input.shape
         assert seq_len == self.seq_length, (
@@ -680,19 +704,18 @@ class FalconTSTMoELayer(nn.Module):
         return input
 
     def router_and_preprocess(self, backcast: torch.Tensor):
-        """Compute and preprocess time series(sample) routing for dispatch.
+        """Compute and preprocess time series sample routing for dispatch.
 
-        This method uses the router to determine which experts to send each time series(sample) to,
-        producing routing probabilities and a mapping. It then preprocesses the
-        input time series (samples) and probabilities for the time series(sample) dispatcher. The original
-        input time series (samples) are returned as a residual connection.
+        This method uses the router to determine which experts to send each
+        time series sample to, producing routing probabilities and a mapping.
+        The original input time series samples are returned as a residual
+        connection.
         """
         # backcast [batch_size, seq_len]    means/stdev [batch_size, 1]
         backcast = self.time_series_preprocess(backcast)
 
-        residual = (
-            backcast  # residual: [batch_size, seq_len], the input to the shared experts
-        )
+        # residual: [batch_size, seq_len], the input to the shared experts
+        residual = backcast
 
         # TODO: Check the effective of the masked value to the router
         probs, routing_map = self.router(
@@ -707,22 +730,23 @@ class FalconTSTMoELayer(nn.Module):
         probs: torch.Tensor,  # [num_permuted_samples_after_dispatch]
         residual: torch.Tensor,  # [batch_size, seq_len]
         rotary_pos_emb: torch.Tensor,
-        routing_map: torch.Tensor,  # [seq_len, 1, 1, kv_channels(hidden_size // num_heads)]
+        routing_map: torch.Tensor,
     ):
-        """Computes the output of the experts on the dispatched time series(sample).
+        """Compute expert outputs on dispatched time series samples.
 
-        This method first post-processes the dispatched input to get permuted time series(sample)
-        for each expert. It then passes the time series(sample) through the local experts.
-        If a shared expert is configured and not overlapped with communication,
-        it is also applied. The output from the experts is preprocessed for the
-        combine step.
+        This method first post-processes the dispatched input to get permuted
+        time series samples for each expert. It then passes the samples through
+        the local experts. If a shared expert is configured and not overlapped
+        with communication, it is also applied.
         """
         # shared_expert_output: [batch_size, seq_len (+ pred_len)]
         shared_experts_output = self.shared_experts(residual, rotary_pos_emb)
 
-        # dispatched_input (global_input_tokens):   [num_permuted_samples_after_dispatch_postprocess(sorted), seq_len]
+        # dispatched_input (global_input_tokens):
+        # [num_permuted_samples_after_dispatch_postprocess(sorted), seq_len]
         # tokens_per_expert (global_probs):         [num_experts]
-        # permuted_probs (global_probs):            [num_permuted_samples_after_dispatch_postprocess(sorted)]
+        # permuted_probs (global_probs):
+        # [num_permuted_samples_after_dispatch_postprocess(sorted)]
 
         experts_output = self.experts(input, routing_map, rotary_pos_emb, probs)
 
@@ -733,13 +757,15 @@ class FalconTSTMoELayer(nn.Module):
         experts_output: torch.Tensor,
         shared_experts_output: torch.Tensor,
     ):
-        """Combines expert outputs via communication and adds shared expert output.
+        """Combine expert outputs and add shared expert output.
 
-        This method uses the time series(sample) dispatcher to combine the outputs from different
-        experts. It then adds the output from the shared expert if it exists.
+        This method uses the time series sample dispatcher to combine the
+        outputs from different experts. It then adds the output from the shared
+        expert if it exists.
         """
         assert experts_output.shape == shared_experts_output.shape, (
-            f"experts_output shape {experts_output.shape} doesn't equal to shared_experts_output shape:{shared_experts_output.shape}"
+            f"experts_output shape {experts_output.shape} doesn't equal "
+            f"shared_experts_output shape:{shared_experts_output.shape}"
         )
         output = experts_output + shared_experts_output
 
@@ -747,16 +773,21 @@ class FalconTSTMoELayer(nn.Module):
             output_backcast = None
             output_forecast = output
             assert output_forecast.shape[1] == self.pred_length, (
-                f"heterogeneous_moe_layer=True, expected the last moe layer's output pred len: {self.pred_length}, but got {output_forecast.shape[1]}"
+                "heterogeneous_moe_layer=True, expected the last moe layer's "
+                f"output pred len: {self.pred_length}, but got "
+                f"{output_forecast.shape[1]}"
             )
         else:
-            #  Noting: the mask time point there maybe not mask_pad_value(default:255.), it will be postprocessed
+            # The masked time point may not be mask_pad_value(default:255.);
+            # it will be postprocessed.
             output_backcast = output[:, : self.seq_length]  # [batch_size, seq_len]
 
             if self.config.do_expert_forecast:
                 output_forecast = output[:, self.seq_length :]  # [batch_size, pred_len]
                 assert output_forecast.shape[1] == self.pred_length, (
-                    f"do_expert_forecast=True, expected the last moe layer's output pred len: {self.pred_length}, but got {output_forecast.shape[1]}"
+                    "do_expert_forecast=True, expected the last moe layer's "
+                    f"output pred len: {self.pred_length}, but got "
+                    f"{output_forecast.shape[1]}"
                 )
             else:
                 output_forecast = None
@@ -770,23 +801,24 @@ class FalconTSTMoELayer(nn.Module):
         output_backcast: torch.Tensor,  # [batch_size, seq_len]
         output_forecast: torch.Tensor,  # [batch_size, pred_len]
     ):
-        """
+        """Postprocess MoE layer outputs.
+
         Args:
-            backcast (torch.Tensor): The previous layer's backcast time series (samples).                   [batch_size, seq_len]
-            forecast (torch.Tensor): The previous layer's forecast time series (samples).                   [batch_size, pred_len]
-            output_backcast (torch.Tensor): The current layer's output backcast time series (samples).      [batch_size, seq_len]
-            output_forecast (torch.Tensor): The current layer's output forecast time series (samples).      [batch_size, pred_len]
+            backcast (torch.Tensor): Previous layer backcast samples.
+            forecast (torch.Tensor): Previous layer forecast samples.
+            output_backcast (torch.Tensor): Current layer backcast samples.
+            output_forecast (torch.Tensor): Current layer forecast samples.
         """
         if output_backcast is not None:
-            # 25/8/14 @modified by xiaming replace the revin with layernorm after the moe layer
-            # And if we multiply the output_backcast with the input mask, the performance will be hurted
+            # 25/8/14 @modified by xiaming replace the revin with layernorm
+            # after the moe layer. Multiplying output_backcast with the input
+            # mask hurts performance.
             output_backcast = self.backcast_layernorm(output_backcast)  # LayerNorm
             if self.config.residual_backcast:
                 output_backcast = backcast - output_backcast
 
-            output_backcast[~self.input_mask] = (
-                self.config.mask_pad_value
-            )  # Important! Recover the mask time point back to mask_pad_value(default:255.)
+            output_backcast[~self.input_mask] = self.config.mask_pad_value
+            # Recover masked time points back to mask_pad_value(default:255.).
 
         if (
             self.config.do_expert_forecast and forecast is not None
@@ -796,6 +828,7 @@ class FalconTSTMoELayer(nn.Module):
         return output_backcast, output_forecast
 
     def forward(self, backcast, forecast, rotary_pos_emb):
+        """Run MoE layer forward pass."""
         inputs, probs, residual, routing_map = self.router_and_preprocess(backcast)
         experts_output, shared_experts_output = self.experts_compute(
             inputs, probs, residual, rotary_pos_emb, routing_map
@@ -810,6 +843,8 @@ class FalconTSTMoELayer(nn.Module):
 
 
 class FalconTSTBlock(nn.Module):
+    """Falcon-TST block."""
+
     def __init__(self, config, input_layernorm=True):
         super().__init__()
         self.config = config
@@ -827,6 +862,7 @@ class FalconTSTBlock(nn.Module):
         )
 
     def forward(self, x, rotary_pos_emb):
+        """Run block forward pass."""
         backcast = x
         forecast = None
 
@@ -840,6 +876,8 @@ class FalconTSTBlock(nn.Module):
 
 
 class FalconTSTPreTrainedModel(PreTrainedModel):
+    """Falcon-TST pretrained model base class."""
+
     config_class = FalconTSTConfig
     base_model_prefix = "model"
     supports_gradient_checkpointing = True
@@ -861,6 +899,8 @@ class FalconTSTPreTrainedModel(PreTrainedModel):
 
 
 class FalconTSTModel(FalconTSTPreTrainedModel):
+    """Falcon-TST backbone model."""
+
     def __init__(self, config: FalconTSTConfig):
         super().__init__(config)
         self.config = config
@@ -888,7 +928,7 @@ class FalconTSTModel(FalconTSTPreTrainedModel):
         input: Tensor,  # [batch_size, seq_len]
         input_mask: Tensor,  # [batch_size, seq_len] 0:mask, 1:unmask
     ):
-        """Normalization from Non-stationary Transformer"""
+        """Normalize input using Non-stationary Transformer normalization."""
         input_data = input * input_mask
         sum_per_sample = torch.sum(
             input_data, dim=1, keepdim=True
@@ -896,8 +936,9 @@ class FalconTSTModel(FalconTSTPreTrainedModel):
         count_per_sample = torch.sum(
             input_mask, dim=1, keepdim=True
         ).detach()  # [batch_size, 1], torch.int64
-        assert torch.any(count_per_sample == 0) == False, (
-            f"There is zero in count_per_sample, shape: {input[torch.where(count_per_sample.squeeze(1) == 0)[0]]}"
+        assert not torch.any(count_per_sample == 0), (
+            "There is zero in count_per_sample, shape: "
+            f"{input[torch.where(count_per_sample.squeeze(1) == 0)[0]]}"
         )
         means = sum_per_sample / count_per_sample  # [batch_size, 1]
         input_data = input_data - means
@@ -915,6 +956,7 @@ class FalconTSTModel(FalconTSTPreTrainedModel):
         return input, means, stdev
 
     def forward(self, input, revin):
+        """Run Falcon-TST forward pass."""
         batch_size, input_len = input.shape
         # realize varied input length
         if input_len > self.seq_length:
@@ -939,7 +981,8 @@ class FalconTSTModel(FalconTSTPreTrainedModel):
         # rotary_pos_emb [input_len, 1, 1, kv_channels(hidden_size // num_heads)]
         rotary_pos_emb = self.rotary_pos_emb(input_len, device=input.device)
 
-        # Step3. Do one-step inference to get mixed forecasts from multiple forecast heads
+        # Step3. Do one-step inference to get mixed forecasts from multiple
+        # forecast heads.
         # mixed_pred: [batch_size, max(multi_forecast_head)]
         mixed_pred = self._inference_step(
             input=input, input_mask=input_mask, rotary_pos_emb=rotary_pos_emb
@@ -974,6 +1017,7 @@ class FalconTSTModel(FalconTSTPreTrainedModel):
         input_mask,
         rotary_pos_emb,
     ):
+        """Run one inference step."""
         if self.config.do_base_forecast:
             base_forecast, _ = self.base_output_layer(input * input_mask)
         else:
@@ -981,7 +1025,7 @@ class FalconTSTModel(FalconTSTPreTrainedModel):
 
         decoder_backcast, decoder_forecast = self.decoder(
             input,  # [batch_size, seq_len]
-            rotary_pos_emb,  # [input_len, 1, 1, kv_channels(hidden_size // num_heads)]
+            rotary_pos_emb,
         )
 
         if self.config.do_expert_forecast:
@@ -1011,9 +1055,10 @@ class FalconTSTModel(FalconTSTPreTrainedModel):
         rotary_pos_emb,  # [seq_len, 1, 1, kv_channels(hidden_size // num_heads)]
         auto_regressive_strategy="from_long_to_short",
     ):
-        """Auto regressive prediction with [single] head"""
+        """Run auto-regressive prediction with a single head."""
         assert self.config.multi_forecast_head_type == "single", (
-            "_auto_regressive_single_head only support multi_forecast_head_type==single "
+            "_auto_regressive_single_head only support "
+            "multi_forecast_head_type==single "
         )
 
         if auto_regressive_strategy == "from_long_to_short":
@@ -1047,7 +1092,8 @@ class FalconTSTModel(FalconTSTPreTrainedModel):
                         ),
                     ],
                     dim=1,
-                )[:, -self.seq_length :].contiguous()  # 0:mask, 1:unmask
+                )[:, -self.seq_length :].contiguous()
+                # 0: mask, 1: unmask
 
                 FalconTST_forecast = self._inference_step(
                     input=input,
@@ -1070,6 +1116,8 @@ class FalconTSTModel(FalconTSTPreTrainedModel):
 
 
 class FalconTSTForPrediction(FalconTSTPreTrainedModel):
+    """Falcon-TST prediction model."""
+
     def __init__(self, config: FalconTSTConfig):
         super().__init__(config)
         self.config = config
@@ -1083,17 +1131,18 @@ class FalconTSTForPrediction(FalconTSTPreTrainedModel):
         forecast_horizon: int,
         revin: bool = True,
     ) -> torch.Tensor:
-        """
-        Generates time series forecasts autoregressively.
+        """Generate time series forecasts autoregressively.
 
         Args:
             time_series (torch.Tensor): Input time series data.
-                                        Shape: [batch_size, seq_len] or [batch_size, seq_len, channels].
+                Shape: [batch_size, seq_len] or
+                [batch_size, seq_len, channels].
             forecast_horizon (int): The number of future time steps to predict.
 
         Returns
         -------
-            torch.Tensor: The forecasted time series. Shape: [batch_size, forecast_horizon, channels].
+            torch.Tensor: Forecasted time series with shape
+                [batch_size, forecast_horizon, channels].
         """
         self.eval()
 
