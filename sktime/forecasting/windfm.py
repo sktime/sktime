@@ -25,14 +25,14 @@ class WindFMForecaster(BaseForecaster):
 
     Parameters
     ----------
-    model_path : str, default="NeoQuasar/WindFM-small"
+    model_path : str, default="NeoQuasar/WindFM"
         Hugging Face repository identifier or local path for the WindFM model.
-        The default is the WindFM-small checkpoint [4]_. Other released
-        checkpoints include WindFM-mini [3]_ and WindFM-base [5]_.
-    tokenizer_path : str, default="NeoQuasar/WindFM-Tokenizer-base"
+        The default is the WindFM checkpoint [3]_. Other released
+        checkpoints include WindFM-robust [4]_.
+    tokenizer_path : str, default="NeoQuasar/WindFM-Tokenizer"
         Hugging Face repository identifier or local path for the WindFM tokenizer.
-        The default is the WindFM-Tokenizer-base checkpoint [6]_. The released
-        2k tokenizer is also available [7]_.
+        The default is the WindFM-Tokenizer checkpoint [5]_. The released
+        WindFM-Tokenizer-robust is also available [6]_.
     device : str, default="cpu"
         Device used for model and tokenizer inference.
     columns : list of str or None, default=None
@@ -75,20 +75,17 @@ class WindFMForecaster(BaseForecaster):
     ----------
     .. [1] WindFM GitHub repository:
        https://github.com/shiyu-coder/WindFM
-    .. [2] Lin, Z., Xia, Y., Liu, Z., Zhang, S., Wang, J., Yang, C., Dong, Q.,
-       Liu, H., Jiang, H., Wang, S., Xiong, X., and Zhao, B. (2025).
-       WindFM: A Foundation Model for the Language of Financial Markets.
-       arXiv. https://arxiv.org/abs/2508.02739
-    .. [3] WindFM-mini model card:
-       https://huggingface.co/NeoQuasar/WindFM-mini
-    .. [4] WindFM-small model card:
-       https://huggingface.co/NeoQuasar/WindFM-small
-    .. [5] WindFM-base model card:
-       https://huggingface.co/NeoQuasar/WindFM-base
-    .. [6] WindFM-Tokenizer-base model card:
-       https://huggingface.co/NeoQuasar/WindFM-Tokenizer-base
-    .. [7] WindFM-Tokenizer-2k model card:
-       https://huggingface.co/NeoQuasar/WindFM-Tokenizer-2k
+    .. [2] Hang Fan, Yu Shi, Zongliang Fu, Shuo Chen, Wei Wei, Wei Xu, Jian Li (2025).
+       WindFM: An Open-Source Foundation Model for Zero-Shot Wind Power Forecasting.
+       arXiv. https://arxiv.org/abs/2509.06311
+    .. [3] WindFM model card:
+       https://huggingface.co/NeoQuasar/WindFM
+    .. [4] WindFM-robust model card:
+       https://huggingface.co/NeoQuasar/WindFM-robust
+    .. [5] WindFM-Tokenizer model card:
+       https://huggingface.co/NeoQuasar/WindFM-Tokenizer
+    .. [6] WindFM-Tokenizer-robust model card:
+       https://huggingface.co/NeoQuasar/WindFM-Tokenizer-robust
 
     Examples
     --------
@@ -111,8 +108,8 @@ class WindFMForecaster(BaseForecaster):
     ...     is_relative=False,
     ... )
     >>> forecaster = WindFMForecaster(  # doctest: +SKIP
-    ...     model_path="NeoQuasar/WindFM-small",
-    ...     tokenizer_path="NeoQuasar/WindFM-Tokenizer-base",
+    ...     model_path="NeoQuasar/WindFM",
+    ...     tokenizer_path="NeoQuasar/WindFM-Tokenizer",
     ...     device="cpu",
     ...     deterministic=True,
     ...     predict_kwargs={
@@ -149,8 +146,8 @@ class WindFMForecaster(BaseForecaster):
 
     def __init__(
         self,
-        model_path="NeoQuasar/WindFM-small",
-        tokenizer_path="NeoQuasar/WindFM-Tokenizer-base",
+        model_path="NeoQuasar/WindFM",
+        tokenizer_path="NeoQuasar/WindFM-Tokenizer",
         device="cpu",
         columns=None,
         freq="5min",
