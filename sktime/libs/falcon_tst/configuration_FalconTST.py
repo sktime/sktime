@@ -123,6 +123,7 @@ class FalconTSTConfig(PretrainedConfig):
         rope_theta: int = 1000000,
         rotary_interleaved: bool = False,
         block_input_layernorm: bool = True,
+        transformer_input_layernorm: bool = True,
         # moe configs
         num_experts: int = 4,
         moe_router_topk: int = 2,
@@ -170,6 +171,7 @@ class FalconTSTConfig(PretrainedConfig):
         self.rotary_base = rope_theta
         self.rotary_interleaved = rotary_interleaved
         self.block_input_layernorm = block_input_layernorm
+        self.transformer_input_layernorm = transformer_input_layernorm
 
         # moe configs
         self.num_moe_experts = num_experts

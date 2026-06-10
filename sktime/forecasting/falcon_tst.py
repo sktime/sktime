@@ -127,6 +127,7 @@ class FalconTSTForecaster(BaseForecaster):
     ...         "seq_length": 8,
     ...         "shared_patch_size": 2,
     ...         "patch_size_list": [4],
+    ...         "transformer_input_layernorm": True,
     ...         "expert_num_layers": 1,
     ...         "multi_forecast_head_list": [2],
     ...         "autoregressive_step_list": [1],
@@ -347,6 +348,7 @@ class FalconTSTForecaster(BaseForecaster):
             "seq_length": 8,
             "shared_patch_size": 2,
             "patch_size_list": [4],
+            "transformer_input_layernorm": True,
             "expert_num_layers": 1,
             "multi_forecast_head_list": [2],
             "autoregressive_step_list": [1],
@@ -445,9 +447,13 @@ class _CachedFalconTST:
         model = FalconTSTForPrediction.from_pretrained(
             self.model_path,
             device_map=self.device_map,
-            dtype=self.dtype,
+            torch_dtype=self.dtype,
             quantization_config=self.quantization_config,
         )
+        if self.dtype is not None and self.quantization_config is None:
+            dtype = _coerce_torch_dtype(self.dtype)
+            if dtype is not None:
+                model = model.to(dtype=dtype)
 
         return model
 
@@ -473,6 +479,20 @@ class _CachedFalconTST:
         model = FalconTSTForPrediction(config)
         model = model.to(self.device_map)
         if self.dtype is not None:
-            model = model.to(dtype=self.dtype)
+            dtype = _coerce_torch_dtype(self.dtype)
+            if dtype is not None:
+                model = model.to(dtype=dtype)
 
         return model
+
+
+def _coerce_torch_dtype(dtype):
+    """Coerce string dtype names to ``torch.dtype`` for local initialization."""
+    if dtype == "auto":
+        return None
+    if isinstance(dtype, str):
+        import torch
+
+        dtype = dtype.removeprefix("torch.")
+        return getattr(torch, dtype)
+    return dtype
