@@ -424,11 +424,13 @@ class _CachedFalconTST:
         """Load Falcon-TST model weights from ``self.model_path``."""
         from sktime.libs.falcon_tst import FalconTSTForPrediction
 
-        model = FalconTSTForPrediction.from_pretrained(
-            self.model_path,
-            device_map=self.device_map,
-            quantization_config=self.quantization_config,
-        )
+        kwargs = {}
+        if self.device_map is not None:
+            kwargs["device_map"]: self.device_map
+        if self.quantization_config is not None:
+            kwargs["quantization_config"]: self.quantization_config
+
+        model = FalconTSTForPrediction.from_pretrained(self.model_path, **kwargs)
 
         return model
 
