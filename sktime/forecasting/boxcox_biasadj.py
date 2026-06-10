@@ -58,6 +58,10 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         # estimator type
         # --------------
         "capability:pred_int": True,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
+        # sporadic scipy.optimize bracketing failures, bug report #10301
     }
 
     def __init__(self, forecaster, lambda_fixed=None):

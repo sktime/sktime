@@ -51,7 +51,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.forecasting.moirai_forecaster import MOIRAIForecaster
+    >>> from sktime.forecasting.moirai import MOIRAIForecaster
     >>> import pandas as pd
     >>> import numpy as np
     >>> morai_forecaster = MOIRAIForecaster(

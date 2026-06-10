@@ -37,12 +37,14 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         The kernel sizes of Conv1D layers within each MACNN Block.
     reduction : int, default=16
         The factor by which the first dense layer of a MACNN Block will be divided by.
-    activation : str, default=None
+    activation : str or Callable or None, default=None
         Activation function used for final output layer.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    activation_hidden : str, default="relu"
+        Recommended Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
+        'SELU', 'GELU', None
+    activation_hidden : str or Callable, default="ReLU"
         Activation function used for the hidden layers.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
+        Recommended Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
+        'SELU', 'GELU', None
     num_epochs : int, default=1500
         The number of epochs to train the model.
     batch_size : int, default=4
@@ -111,8 +113,8 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         filter_sizes: tuple = (64, 128, 256),
         kernel_sizes: tuple = (3, 6, 12),
         reduction: int = 16,
-        activation: str | None = None,
-        activation_hidden: str = "relu",
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable = "ReLU",
         # base classifier specific
         num_epochs: int = 100,
         batch_size: int = 1,
@@ -201,7 +203,8 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
             filter_sizes=self.filter_sizes,
             kernel_sizes=self.kernel_sizes,
             reduction=self.reduction,
-            activation=self._validated_activation,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             init_weights=self.init_weights,
             random_state=self.random_state,
         )
