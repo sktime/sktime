@@ -134,7 +134,7 @@ class WindFMForecaster(BaseForecaster):
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:insample": False,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
         "capability:pretrain": False,
         "authors": ["shiyu-coder", "geetu040"],
         "maintainers": ["geetu040"],
@@ -200,6 +200,20 @@ class WindFMForecaster(BaseForecaster):
 
     def _predict(self, fh, X=None):
         """Forecast target power at future horizon."""
+        pred_df, y_index = self._predict_samples(fh)
+        point_pred = pred_df.median(axis=1).to_numpy()
+        return pd.Series(point_pred, index=y_index, name=self.y_name_)
+
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Forecast target power quantiles from WindFM sample paths."""
+        pred_df, y_index = self._predict_samples(fh)
+
+        quantiles = np.quantile(pred_df.to_numpy(), q=alpha, axis=1).T
+        columns = pd.MultiIndex.from_product([[self.y_name_], alpha])
+        return pd.DataFrame(quantiles, index=y_index, columns=columns)
+
+    def _predict_samples(self, fh):
+        """Generate WindFM sample paths for a future horizon."""
         df = self._make_windfm_frame()
 
         x_index = self.y_context_.index
@@ -224,8 +238,7 @@ class WindFMForecaster(BaseForecaster):
             **predict_kwargs,
         )
 
-        point_pred = pred_df.median(axis=1).to_numpy()
-        return pd.Series(point_pred, index=y_index, name=self.y_name_)
+        return pred_df, y_index
 
     def _make_predictor(self):
         """Instantiate the upstream WindFM predictor."""
