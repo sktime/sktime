@@ -79,9 +79,7 @@ class HFTransformersForecaster(BaseForecaster):
     --------
     **Using a Pretrained Model from Hugging Face**
 
-    >>> from sktime.forecasting.hf_transformers_forecaster import (
-    ...     HFTransformersForecaster,
-    ... )
+    >>> from sktime.forecasting.hf_transformers import HFTransformersForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> forecaster = HFTransformersForecaster(
@@ -105,9 +103,7 @@ class HFTransformersForecaster(BaseForecaster):
 
     **Using PEFT for Fine-Tuning**
 
-    >>> from sktime.forecasting.hf_transformers_forecaster import (
-    ...     HFTransformersForecaster,
-    ... ) # doctest: +SKIP
+    >>> from sktime.forecasting.hf_transformers import HFTransformersForecaster
     >>> from sktime.datasets import load_airline # doctest: +SKIP
     >>> from peft import LoraConfig # doctest: +SKIP
     >>> y = load_airline() # doctest: +SKIP
@@ -141,9 +137,7 @@ class HFTransformersForecaster(BaseForecaster):
 
     >>> from sktime.datasets import load_airline
     >>> from transformers import AutoformerConfig, AutoformerForPrediction
-    >>> from sktime.forecasting.hf_transformers_forecaster import (
-    ...     HFTransformersForecaster
-    ... )
+    >>> from sktime.forecasting.hf_transformers import HFTransformersForecaster
     >>> y = load_airline()
 
     >>> # Define model configuration
@@ -177,6 +171,12 @@ class HFTransformersForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["benheid", "geetu040"],
+        "maintainers": ["benheid", "geetu040"],
+        # estimator type
+        # --------------
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
