@@ -1293,7 +1293,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         for tag in estimator_instance._get_flags(flag_attr_name="_tags"):
             if tag in ALIAS_DICT:
-                # todo 1.0.0: remove this exception once forecaster tag deprecation done
                 object_type = estimator_instance.get_tag("object_type")
                 msg = (
                     f"{estimator_instance} has deprecated tag: {tag!r} - "
