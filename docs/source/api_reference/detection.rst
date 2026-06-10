@@ -83,8 +83,8 @@ Window-based Anomaly Detection
 
     HampelDetector
 
-Foundation Model-based Anomaly Detection
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Foundation Models for Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Anomaly detection using foundational models.
 
