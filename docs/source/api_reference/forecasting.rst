@@ -609,6 +609,14 @@ Pre-trained and foundation models
 
     FalconTSTForecaster
 
+.. currentmodule:: sktime.forecasting.flowstate
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FlowStateForecaster
+
 .. currentmodule:: sktime.forecasting.hf_transformers
 
 .. autosummary::
@@ -656,6 +664,14 @@ Pre-trained and foundation models
     :template: class.rst
 
     MomentFMForecaster
+
+.. currentmodule:: sktime.forecasting.patch_tsmixer
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PatchTSMixerForecaster
 
 .. currentmodule:: sktime.forecasting.patch_tst
 
@@ -728,6 +744,7 @@ Pre-trained and foundation models
     :template: class.rst
 
     TotoForecaster
+
 
 Intermittent time series forecasters
 ------------------------------------
