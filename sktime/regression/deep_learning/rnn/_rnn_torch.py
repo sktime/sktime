@@ -24,8 +24,9 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
     activation : str or None or an instance of activation functions defined in
         torch.nn, default = None
         Activation function used in the fully connected output layer.
-    activation_hidden : str, default = "relu"
-        The activation function applied inside the RNN. Can be either 'tanh' or 'relu'.
+    activation_hidden : str or Callable, default = "ReLU"
+        The activation function applied inside the RNN. Recommended callable instance
+        of 'ReLU', 'Tanh'.
         Because currently PyTorch only supports these two activations inside the RNN.
         https://docs.pytorch.org/docs/stable/generated/torch.nn.RNN.html#torch.nn.RNN
     bias : bool, default = True
@@ -102,8 +103,8 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
         # model specific
         hidden_dim: int = 6,
         n_layers: int = 1,
-        activation: str | None | Callable = None,
-        activation_hidden: str = "relu",
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable = "ReLU",
         bias: bool = True,
         init_weights: bool = True,
         dropout: float = 0.0,
@@ -198,8 +199,8 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
             n_layers=self.n_layers,
-            activation=self.activation,
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             bias=self.bias,
             num_classes=self.num_classes,
             init_weights=self.init_weights,
@@ -236,7 +237,7 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
             "hidden_dim": 5,
             "n_layers": 1,
             "activation": None,
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
             "bias": False,
             "init_weights": True,
             "dropout": 0.0,
