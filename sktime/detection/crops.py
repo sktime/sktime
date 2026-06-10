@@ -180,7 +180,7 @@ class CROPS(BaseDetector):
     Examples
     --------
     >>> from sktime.detection.crops import CROPS
-    >>> from sktime.detection._costs._l2_cost import L2Cost
+    >>> from sktime.detection.costs._l2_cost import L2Cost
     >>> import numpy as np
     >>> X = np.concatenate([np.zeros(50), 10*np.ones(50)])
     >>> det = CROPS(cost=L2Cost(), min_penalty=0.5, max_penalty=50.0)
@@ -371,7 +371,7 @@ class CROPS(BaseDetector):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sktime.detection._costs._l2_cost import L2Cost
+        from sktime.detection.costs._l2_cost import L2Cost
 
         return [
             {
