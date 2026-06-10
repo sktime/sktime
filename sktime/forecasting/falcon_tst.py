@@ -1,7 +1,17 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Falcon-TST forecaster for ``sktime``."""
+"""Falcon-TST forecaster for ``sktime``.
 
-__author__ = ["geetu040"]
+This module provides an ``sktime`` forecaster wrapping the local Falcon-TST
+``transformers`` model implementation. It supports:
+
+- zero-shot prediction through :meth:`fit` + :meth:`predict`
+- univariate and multivariate target forecasting
+
+Model training and fine-tuning are not supported. Calling :meth:`fit` only
+loads the model and stores the observed series as forecasting context.
+"""
+
+__author__ = ["figolyd", "geetu040"]
 
 __all__ = ["FalconTSTForecaster"]
 
@@ -20,36 +30,50 @@ class FalconTSTForecaster(BaseForecaster):
 
     This forecaster wraps Falcon-TST prediction models [1]_, [2]_ from Hugging
     Face and exposes them through the ``sktime`` forecasting interface.
-    ``fit`` loads the model and stores the observed series as forecasting
-    context; it does not train or fine-tune Falcon-TST weights.
+
+    The primary workflow is ``fit`` for zero-shot inference setup, which loads
+    the model and stores history. It does not train or fine-tune model weights.
+    Passing ``model_path=None`` initializes a Falcon-TST model from ``config``
+    instead of loading pretrained weights. These random weights cannot be
+    trained through this estimator and are mainly useful for tests or local
+    experimentation.
+
+    Notes
+    -----
+    - Falcon-TST training is not supported. The estimator performs only
+      zero-shot forecasting from a loaded or randomly initialized model.
+    - Falcon-TST supports multivariate targets, handled as independent
+      channels by the model.
+    - Exogenous data and quantile prediction are not supported.
+    - Loaded models are cached via a multiton helper keyed by model-loading
+      inputs to avoid repeated model instantiation.
+    - For reduced-memory loading, use ``dtype`` and ``quantization_config``,
+      or a pre-quantized checkpoint.
 
     Parameters
     ----------
     model_path : str, default="ant-intl/Falcon-TST_Large"
         Hugging Face repository identifier or local path to a Falcon-TST
-        checkpoint. If ``None``, a model is created from ``config`` with random
-        weights.
+        checkpoint. If ``None``, a model is created from ``config``.
     config : FalconTSTConfig or dict, optional (default=None)
         Model configuration used when ``model_path=None``. If provided as a
-        ``dict``, it is converted with ``FalconTSTConfig.from_dict``.
+        ``dict``, it is converted with ``FalconTSTConfig.from_dict``. If
+        ``None`` and ``model_path=None``, the default ``FalconTSTConfig`` is
+        used. This path creates random weights; the estimator does not provide
+        training for those weights.
     device_map : str, dict, int, or torch.device, default="cpu"
-        Device placement used for model loading or local initialization.
+        Device placement following the ``transformers`` ``device_map`` naming
+        convention, for example ``"cpu"``, ``"cuda"``, ``"cuda:0"``, or
+        ``"auto"``.
     dtype : torch.dtype or str, optional (default=None)
-        Data type used for model loading, for example ``torch.float16``,
+        Data type used for model loading, following the ``transformers``
+        ``dtype`` convention, for example ``torch.float16``,
         ``torch.bfloat16``, or ``"auto"``.
     quantization_config : transformers.quantizers.HfQuantizer, optional
-        Quantization configuration compatible with
-        ``transformers.PreTrainedModel.from_pretrained``.
+        Valid quantization configuration object compatible with
+        ``transformers.PreTrainedModel.from_pretrained`` [3]_.
     revin : bool, default=True
         Whether to use RevIN normalization during Falcon-TST prediction.
-
-    Notes
-    -----
-    - Falcon-TST training and fine-tuning are not supported by this estimator.
-    - Falcon-TST supports multivariate targets, handled as channels.
-    - Exogenous data and quantile prediction are not supported.
-    - Loaded models are cached by model-loading inputs to avoid repeated model
-      instantiation.
 
     References
     ----------
@@ -57,34 +81,71 @@ class FalconTSTForecaster(BaseForecaster):
        https://github.com/AntGroup/Falcon-TST
     .. [2] Falcon-TST model card:
        https://huggingface.co/ant-intl/Falcon-TST_Large
+    .. [3] Quantization docs:
+       https://huggingface.co/docs/transformers/en/main_classes/quantization
 
     Examples
     --------
-    Univariate zero-shot forecasting:
+    Simple zero-shot forecasting with the default Falcon-TST checkpoint:
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.falcon_tst import FalconTSTForecaster
     >>> y = load_airline()
+    >>> # By default, loads ant-intl/Falcon-TST_Large.
     >>> forecaster = FalconTSTForecaster()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
-    Multivariate zero-shot forecasting:
+    Multivariate zero-shot forecasting with RevIN disabled:
 
+    >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.falcon_tst import FalconTSTForecaster
-    >>> y = y.to_frame("a").assign(b=lambda x: x["a"])  # doctest: +SKIP
+    >>> y_uni = load_airline()  # doctest: +SKIP
+    >>> y = y_uni.to_frame("a").assign(b=lambda x: x["a"])  # doctest: +SKIP
     >>> forecaster = FalconTSTForecaster(revin=False)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
-    Quantized loading:
+    Reduced-memory inference with device placement, dtype, and quantization:
 
     >>> import torch  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.falcon_tst import FalconTSTForecaster
     >>> from transformers import BitsAndBytesConfig  # doctest: +SKIP
+    >>> y = load_airline()
     >>> forecaster = FalconTSTForecaster(  # doctest: +SKIP
+    ...     model_path="ant-intl/Falcon-TST_Large",
     ...     device_map="auto",
     ...     dtype=torch.bfloat16,
     ...     quantization_config=BitsAndBytesConfig(load_in_8bit=True),
+    ... )
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+
+    Randomly initialized local model, useful for tests or local experimentation.
+    This model is not trained by ``fit``; the weights stay random and should not
+    be used as a trained forecaster:
+
+    >>> from sktime.forecasting.falcon_tst import FalconTSTForecaster
+    >>> forecaster = FalconTSTForecaster(  # doctest: +SKIP
+    ...     model_path=None,
+    ...     config={
+    ...         "num_hidden_layers": 1,
+    ...         "hidden_size": 4,
+    ...         "ffn_hidden_size": 8,
+    ...         "num_attention_heads": 1,
+    ...         "seq_length": 8,
+    ...         "shared_patch_size": 2,
+    ...         "patch_size_list": [4],
+    ...         "expert_num_layers": 1,
+    ...         "multi_forecast_head_list": [2],
+    ...         "autoregressive_step_list": [1],
+    ...         "num_experts": 1,
+    ...         "moe_router_topk": 1,
+    ...         "moe_ffn_hidden_size": 8,
+    ...         "moe_shared_expert_intermediate_size": 8,
+    ...         "use_cpu_initialization": True,
+    ...     },
     ... )
     """
 
@@ -96,7 +157,7 @@ class FalconTSTForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pretrain": False,
-        "authors": ["geetu040"],
+        "authors": ["figolyd", "geetu040"],
         "maintainers": ["geetu040"],
         "python_dependencies": ["torch", "transformers", "einops"],
         "tests:vm": True,
