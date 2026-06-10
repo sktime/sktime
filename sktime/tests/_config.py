@@ -181,7 +181,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MCDCNNRegressor",
         "MLPNetwork",
         "MUSE",
-        "MVCAPA",
         "MatrixProfile",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
