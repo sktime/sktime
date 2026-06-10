@@ -11,7 +11,7 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
 class LLMAgentForecaster(_DelegatedForecaster):
-    """Forecaster that uses an LLM or agent to select and configure an sktime model.
+    """Forecaster that uses a single-step LLM or agent to select an sktime model.
 
     Uses a large language model as an orchestrator to analyze time series
     metadata, select the most appropriate sktime forecasting model, and
@@ -19,7 +19,15 @@ class LLMAgentForecaster(_DelegatedForecaster):
     it delegates the actual forecasting to the selected sktime-native model that
     it instantiates and fits on the data.
 
-    The selected model and its configuration are determined during ``fit``.
+    The selected model and its configuration are determined during ``fit``,
+    in a single step, based on a context containing descriptive metadata about the
+    training data and a user-provided query describing the forecasting task or
+    constraints. The LLM is prompted to return a JSON object specifying the
+    class name of the selected forecaster and a dict of hyperparameters to use
+    for that forecaster. The LLM's reasoning for its selection is stored as an
+    attribute and can be accessed via the ``user_query_response`` method,
+    or the ``user_query_response_`` attribute.
+
     All subsequent ``predict``, ``update``, and probabilistic forecasting
     calls are delegated to the selected inner forecaster.
 
@@ -84,6 +92,10 @@ class LLMAgentForecaster(_DelegatedForecaster):
     forecaster_ : sktime forecaster
         The forecaster instance selected and fitted by the LLM agent.
         Set during ``fit``.
+
+    user_query_response_ : str
+        The LLM's textual reasoning for its model selection, extracted from the
+        LLM response during ``fit``.
 
     See Also
     --------
@@ -390,7 +402,7 @@ class LLMAgentForecaster(_DelegatedForecaster):
         self._set_delegated_tags(self.forecaster_)
 
         # --- store LLM reasoning ---
-        self._user_query_response = reasoning
+        self.user_query_response_ = reasoning
 
         return self
 
@@ -419,7 +431,7 @@ class LLMAgentForecaster(_DelegatedForecaster):
             If ``fit`` has not been called yet.
         """
         self.check_is_fitted()
-        return self._user_query_response
+        return self.user_query_response_
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
