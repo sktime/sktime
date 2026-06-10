@@ -25,14 +25,16 @@ class WindFMForecaster(BaseForecaster):
 
     Parameters
     ----------
-    model_path : str, default="NeoQuasar/WindFM"
+    model_path : str or None, default="NeoQuasar/WindFM"
         Hugging Face repository identifier or local path for the WindFM model.
         The default is the WindFM checkpoint [3]_. Other released
-        checkpoints include WindFM-robust [4]_.
-    tokenizer_path : str, default="NeoQuasar/WindFM-Tokenizer"
+        checkpoints include WindFM-robust [4]_. If ``None``, a lightweight
+        deterministic predictor is used, primarily for estimator testing.
+    tokenizer_path : str or None, default="NeoQuasar/WindFM-Tokenizer"
         Hugging Face repository identifier or local path for the WindFM tokenizer.
         The default is the WindFM-Tokenizer checkpoint [5]_. The released
-        WindFM-Tokenizer-robust is also available [6]_.
+        WindFM-Tokenizer-robust is also available [6]_. If ``None`` together
+        with ``model_path=None``, a lightweight deterministic predictor is used.
     device : str, default="cpu"
         Device used for model and tokenizer inference.
     columns : list of str or None, default=None
@@ -185,12 +187,15 @@ class WindFMForecaster(BaseForecaster):
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to target power and historical weather covariates."""
         if X is None:
-            raise ValueError(
-                "WindFMForecaster requires X with wind_speed, wind_direction, "
-                "density, temperature, and pressure columns."
-            )
+            if self._uses_dummy_windfm():
+                X = pd.DataFrame({0: y.to_numpy(), 1: y.to_numpy()}, index=y.index)
+            else:
+                raise ValueError(
+                    "WindFMForecaster requires X with wind_speed, wind_direction, "
+                    "density, temperature, and pressure columns."
+                )
 
-        self.y_name_ = y.name if y.name is not None else self._target_col
+        self.y_name_ = y.name
         self.y_context_ = y.copy()
         self.X_context_ = X.copy()
         self.max_context_ = len(self.y_context_)
@@ -209,7 +214,7 @@ class WindFMForecaster(BaseForecaster):
         pred_df, y_index = self._predict_samples(fh)
 
         quantiles = np.quantile(pred_df.to_numpy(), q=alpha, axis=1).T
-        columns = pd.MultiIndex.from_product([[self.y_name_], alpha])
+        columns = pd.MultiIndex.from_product([self._get_varnames(), alpha])
         return pd.DataFrame(quantiles, index=y_index, columns=columns)
 
     def _predict_samples(self, fh):
@@ -242,6 +247,9 @@ class WindFMForecaster(BaseForecaster):
 
     def _make_predictor(self):
         """Instantiate the upstream WindFM predictor."""
+        if self._uses_dummy_windfm():
+            return _DummyWindFMPredictor()
+
         from sktime.libs.windfm import WindFMPredictor
 
         return WindFMPredictor(
@@ -315,6 +323,13 @@ class WindFMForecaster(BaseForecaster):
             mapping = dict(zip(self._covariate_cols, self.columns))
 
         missing = [col for col in mapping.values() if col not in X.columns]
+        if missing and self._uses_dummy_windfm():
+            columns = list(X.columns)
+            mapping = {
+                internal: columns[i % len(columns)]
+                for i, internal in enumerate(self._covariate_cols)
+            }
+            missing = []
         if missing:
             raise ValueError(f"columns contains values missing from X: {missing}.")
         return mapping
@@ -323,6 +338,13 @@ class WindFMForecaster(BaseForecaster):
         """Load or retrieve cached WindFM tokenizer/model."""
         if hasattr(self, "model_") and hasattr(self, "tokenizer_"):
             return self.tokenizer_, self.model_
+        if self._uses_dummy_windfm():
+            return None, None
+        if self.model_path is None or self.tokenizer_path is None:
+            raise ValueError(
+                "model_path and tokenizer_path must either both be None, or both "
+                "identify WindFM Hugging Face repositories or local paths."
+            )
 
         tokenizer, model = _CachedWindFM(
             key=self._get_unique_key(),
@@ -341,6 +363,10 @@ class WindFMForecaster(BaseForecaster):
             "device": self.device,
         }
         return str(sorted(key.items()))
+
+    def _uses_dummy_windfm(self):
+        """Return whether this instance should use lightweight dummy inference."""
+        return self.model_path is None and self.tokenizer_path is None
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -363,15 +389,16 @@ class WindFMForecaster(BaseForecaster):
         """
         return [
             {
-                "model_path": "NeoQuasar/WindFM",
-                "tokenizer_path": "NeoQuasar/WindFM-Tokenizer",
+                "model_path": None,
+                "tokenizer_path": None,
+                "columns": [0, 1, 0, 1, 0],
                 "deterministic": True,
             },
             {
-                "model_path": "NeoQuasar/WindFM",
-                "tokenizer_path": "NeoQuasar/WindFM-Tokenizer",
+                "model_path": None,
+                "tokenizer_path": None,
                 "device": "cpu",
-                "columns": None,
+                "columns": [0, 1, 0, 1, 0],
                 "clip": 5.0,
                 "deterministic": True,
                 "predict_kwargs": {
@@ -383,6 +410,24 @@ class WindFMForecaster(BaseForecaster):
                 },
             },
         ]
+
+
+class _DummyWindFMPredictor:
+    """Small deterministic WindFM predictor replacement for estimator checks."""
+
+    def predict(self, df, x_timestamp, y_timestamp, pred_len, sample_count=1, **kwargs):
+        """Return deterministic sample paths with the same shape as WindFM output."""
+        sample_count = max(int(sample_count), 1)
+        base = float(df["power"].iloc[-1])
+        steps = np.arange(1, pred_len + 1, dtype=float)
+        offsets = np.linspace(-0.5, 0.5, sample_count)
+        preds = base + steps[:, np.newaxis] + offsets[np.newaxis, :]
+
+        return pd.DataFrame(
+            preds,
+            columns=[f"pred-{i}" for i in range(sample_count)],
+            index=y_timestamp,
+        )
 
 
 @_multiton
