@@ -601,6 +601,14 @@ Pre-trained and foundation models
 
     Chronos2Forecaster
 
+.. currentmodule:: sktime.forecasting.falcon_tst
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FalconTSTForecaster
+
 .. currentmodule:: sktime.forecasting.hf_transformers
 
 .. autosummary::
