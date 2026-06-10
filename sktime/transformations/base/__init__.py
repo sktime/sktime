@@ -1,11 +1,11 @@
 """Transformations base classes."""
 
 from sktime.transformations.base._base import (
+    BaseTransformer,
     _PanelToPanelTransformer,
     _PanelToTabularTransformer,
     _SeriesToPrimitivesTransformer,
     _SeriesToSeriesTransformer,
-    BaseTransformer,
 )
 from sktime.transformations.base._delegate import _DelegatedTransformer
 
