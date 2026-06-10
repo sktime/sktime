@@ -88,7 +88,7 @@ class Saving(BaseIntervalScorer):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sktime.detection._costs._l2_cost import L2Cost
+        from sktime.detection.costs._l2_cost import L2Cost
 
         return [
             {"baseline_cost": L2Cost(param=0.0)},
@@ -179,8 +179,8 @@ class LocalAnomalyScore(BaseIntervalScorer):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sktime.detection._costs._gaussian_cost import GaussianCost
-        from sktime.detection._costs._l2_cost import L2Cost
+        from sktime.detection.costs._gaussian_cost import GaussianCost
+        from sktime.detection.costs._l2_cost import L2Cost
 
         return [
             {"cost": L2Cost()},
