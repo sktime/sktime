@@ -306,17 +306,17 @@ def _torchmetrics_metric_equals_plugin(x, y, return_msg=False, deep_equals=None)
     msg : str, optional
         reason for inequality if return_msg=True
     """
+    from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
+
+    if not _check_soft_dependencies("torchmetrics", severity="none"):
+        return None
+
     if not (
         hasattr(x, "_defaults")
         and hasattr(x, "reset")
         and hasattr(type(x), "__module__")
         and type(x).__module__.startswith("torchmetrics")
     ):
-        return None
-
-    from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
-
-    if not _check_soft_dependencies("torchmetrics", severity="none"):
         return None
 
     ret = _make_ret(return_msg)
