@@ -9,7 +9,6 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from sktime.detection.costs._l2_cost import L2Cost
 from sktime.detection._formatters import format_changepoints
 from sktime.detection._penalties import make_bic_penalty
 from sktime.detection._utils import (
@@ -20,6 +19,7 @@ from sktime.detection._utils import (
     check_penalty,
 )
 from sktime.detection.base import BaseDetector
+from sktime.detection.costs._l2_cost import L2Cost
 
 # ---------------------------------------------------------------------------
 # Internal functions

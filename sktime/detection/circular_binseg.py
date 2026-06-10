@@ -13,7 +13,6 @@ from sktime.detection._compose import PenalisedScore
 from sktime.detection._costs._l2_cost import L2Cost
 from sktime.detection._formatters import format_segments
 from sktime.detection._penalties import make_bic_penalty
-from sktime.detection.seeded_binseg import make_seeded_intervals
 from sktime.detection._utils import (
     as_2d_array,
     check_data,
@@ -23,6 +22,7 @@ from sktime.detection._utils import (
     check_penalty,
 )
 from sktime.detection.base import BaseDetector
+from sktime.detection.seeded_binseg import make_seeded_intervals
 
 # ---------------------------------------------------------------------------
 # Internal helpers

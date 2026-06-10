@@ -11,13 +11,13 @@ import numpy as np
 import pandas as pd
 
 from sktime.detection._formatters import format_changepoints
+from sktime.detection._utils import as_2d_array, check_data, check_interval_scorer
+from sktime.detection.base import BaseDetector
 from sktime.detection.pelt import (
     _run_pelt,
     _run_pelt_min_segment_length_one,
     _run_pelt_with_step_size,
 )
-from sktime.detection._utils import as_2d_array, check_data, check_interval_scorer
-from sktime.detection.base import BaseDetector
 
 # ---------------------------------------------------------------------------
 # Internal helpers
