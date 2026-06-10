@@ -5,7 +5,7 @@ import pytest
 
 from sktime.datasets import load_basic_motions
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.compose import ColumnConcatenator
+from sktime.transformations.colconcat import ColumnConcatenator
 
 
 @pytest.mark.skipif(
