@@ -83,8 +83,8 @@ Window-based Anomaly Detection
 
     HampelDetector
 
-Foundation Model-based Anomaly Detection
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Foundation Models for Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Anomaly detection using foundational models.
 
@@ -95,6 +95,14 @@ Anomaly detection using foundational models.
     :template: class.rst
 
     MomentFMAnomalyDetector
+
+.. currentmodule:: sktime.detection.tspulse
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSPulseAnomalyDetector
 
 Reduction to Tabular Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
