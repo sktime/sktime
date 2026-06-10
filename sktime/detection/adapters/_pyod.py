@@ -156,7 +156,3 @@ class PyODDetector(BaseDetector):
             params0 = {"estimator": "foo"}
             params1 = {"estimator": "bar"}
         return [params0, params1]
-
-
-# todo 1.0.0 - remove alias, i.e., remove this line
-PyODAnnotator = PyODDetector
