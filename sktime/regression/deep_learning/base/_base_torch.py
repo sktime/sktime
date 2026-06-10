@@ -14,6 +14,39 @@ from sktime.utils.dependencies import _safe_import
 
 ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
 
+LC_TO_UC_ACTIVATIONS = {
+    "elu": "ELU",
+    "hardshrink": "Hardshrink",
+    "hardsigmoid": "Hardsigmoid",
+    "hardtanh": "Hardtanh",
+    "hardswish": "Hardswish",
+    "leakyrelu": "LeakyReLU",
+    "logsigmoid": "LogSigmoid",
+    "multiheadattention": "MultiheadAttention",
+    "prelu": "PReLU",
+    "relu": "ReLU",
+    "relu6": "ReLU6",
+    "rrelu": "RReLU",
+    "selu": "SELU",
+    "celu": "CELU",
+    "gelu": "GELU",
+    "sigmoid": "Sigmoid",
+    "silu": "SiLU",
+    "mish": "Mish",
+    "softplus": "Softplus",
+    "softshrink": "Softshrink",
+    "softsign": "Softsign",
+    "tanh": "Tanh",
+    "tanhshrink": "Tanhshrink",
+    "threshold": "Threshold",
+    "glu": "GLU",
+    "softmin": "Softmin",
+    "softmax": "Softmax",
+    "softmax2d": "Softmax2d",
+    "logsoftmax": "LogSoftmax",
+    "adaptivelogsoftmaxwithloss": "AdaptiveLogSoftmaxWithLoss",
+}
+
 
 class BaseDeepRegressorTorch(BaseRegressor):
     """Abstract base class for the PyTorch neural network regressors.
@@ -72,6 +105,12 @@ class BaseDeepRegressorTorch(BaseRegressor):
         "tests:vm": True,
     }
 
+    # _instantiate_activation_vars is an iterable of attribute names of activations
+    # to instantiate. In case activation attributes in subclasses are different than
+    # the default ones (activation and activation_hidden), this variable should
+    # be overridden.
+    _instantiate_activation_vars = ("activation", "activation_hidden")
+
     def __init__(
         self: "BaseDeepRegressorTorch",
         num_epochs: int = 16,
@@ -100,10 +139,25 @@ class BaseDeepRegressorTorch(BaseRegressor):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         # set random seed for torch
         if self.random_state is not None:
             torchManual_seed = _safe_import("torch.manual_seed")
             torchManual_seed(self.random_state)
+
+        activation_map = {}
+        for var in self._instantiate_activation_vars:
+            activation_map[var] = getattr(self, var, None)
+        self._callable_activations = self._instantiate_activations(activation_map)
 
         # optimizers, criterions, callbacks will be instantiated in
         # _instantiate_optimizer, _instantiate_criterion & _instantiate_callbacks
@@ -150,6 +204,52 @@ class BaseDeepRegressorTorch(BaseRegressor):
         # print loss for the epoch, if verbose is True
         if self.verbose:
             print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
+
+    def _instantiate_activations(
+        self, activations: dict[str, str | Callable | None]
+    ) -> dict[str, object | None]:
+        """Instantiate PyTorch activations from string or module specifications.
+
+        Parameters
+        ----------
+        activations : dict[str, str | Callable | None]
+            Mapping from activation attribute names to activation specifications.
+
+        Returns
+        -------
+        callable_activations : dict[str, torch.nn.Module | None]
+            A dictionary of activation functions, keyed by the attribute name.
+        """
+        import torch
+
+        callable_activations: dict[str, torch.nn.Module | None] = {}
+        for activation_var, activation in activations.items():
+            if activation is None:
+                callable_activations[activation_var] = None
+                continue
+            if isinstance(activation, torch.nn.Module):
+                callable_activations[activation_var] = activation
+                continue
+            elif not isinstance(activation, str):
+                raise TypeError(
+                    f"Activation '{activation}' should be string or a torch.nn.Module. "
+                    f"But got {type(activation)} instead."
+                )
+
+            uc_activation = LC_TO_UC_ACTIVATIONS.get(activation, activation)
+            if not _safe_import(f"torch.nn.{uc_activation}"):
+                raise ValueError(
+                    f"Activation '{uc_activation}' is not a valid PyTorch activation"
+                    "function in torch.nn module. Please pass a valid PyTorch"
+                    "activation function in torch.nn module. Refer "
+                    "https://pytorch.org/docs/stable/nn.html#non-linear-activations-"
+                    "weighted-sum-nonlinearity for list of valid activation functions."
+                )
+
+            callable_activations[activation_var] = _safe_import(
+                f"torch.nn.{uc_activation}"
+            )()
+        return callable_activations
 
     def _instantiate_schedulers(self):
         """Instantiate the schedulers to be used during training.
