@@ -280,7 +280,7 @@ class SeededBinarySegmentation(BaseDetector):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sktime.detection._costs._l2_cost import L2Cost
+        from sktime.detection.costs._l2_cost import L2Cost
 
         return [
             {"change_score": L2Cost(), "max_interval_length": 100, "penalty": 30},
