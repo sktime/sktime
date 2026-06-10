@@ -262,7 +262,7 @@ class FalconTSTForecaster(BaseForecaster):
         if is_univariate:
             preds = preds.squeeze(axis=0)
             preds = preds[preds_idx]
-            name = self.context_.columns[0]
+            name = self._converter_store_y.get("name", self.context_.columns[0])
             return pd.Series(preds, index=index, name=name)
 
         preds = preds.squeeze(axis=0)
