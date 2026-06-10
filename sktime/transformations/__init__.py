@@ -16,6 +16,8 @@ _MODULES_FLATTENED = ["series", "panel"]
 for _module in _MODULES_FLATTENED:
     sys.modules[f"{__name__}.{_module}"] = import_module(__name__)
 
+sys.modules[f"{__name__}._delegate"] = import_module(f"{__name__}.base._delegate")
+
 
 def __getattr__(name):
     if name in _MODULES_FLATTENED:
