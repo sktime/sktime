@@ -450,10 +450,6 @@ class _CachedFalconTST:
             torch_dtype=self.dtype,
             quantization_config=self.quantization_config,
         )
-        if self.dtype is not None and self.quantization_config is None:
-            dtype = _coerce_torch_dtype(self.dtype)
-            if dtype is not None:
-                model = model.to(dtype=dtype)
 
         return model
 
@@ -479,20 +475,6 @@ class _CachedFalconTST:
         model = FalconTSTForPrediction(config)
         model = model.to(self.device_map)
         if self.dtype is not None:
-            dtype = _coerce_torch_dtype(self.dtype)
-            if dtype is not None:
-                model = model.to(dtype=dtype)
+            model = model.to(dtype=self.dtype)
 
         return model
-
-
-def _coerce_torch_dtype(dtype):
-    """Coerce string dtype names to ``torch.dtype`` for local initialization."""
-    if dtype == "auto":
-        return None
-    if isinstance(dtype, str):
-        import torch
-
-        dtype = dtype.removeprefix("torch.")
-        return getattr(torch, dtype)
-    return dtype
