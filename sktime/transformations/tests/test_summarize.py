@@ -10,10 +10,8 @@ import pandas as pd
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.summarize import (
-    ALLOWED_SUM_FUNCS,
-    SummaryTransformer,
-)
+from sktime.transformations.summarize import SummaryTransformer
+from sktime.transformations.summarize._window import ALLOWED_SUM_FUNCS
 from sktime.utils._testing.series import _make_series
 
 # Test individual summary functions + lists and tuples of all summary functions
