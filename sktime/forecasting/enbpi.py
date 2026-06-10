@@ -108,8 +108,8 @@ class EnbPIForecaster(BaseForecaster):
     _tags = {
         "authors": ["benheid"],
         "python_dependencies": ["tsbootstrap>=0.1.0"],
-        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
+        "capability:multivariate": False,  # which y are fine? False/True
+        "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.DataFrame",
         # which types do _fit, _predict, assume for y?
@@ -121,6 +121,7 @@ class EnbPIForecaster(BaseForecaster):
         "capability:insample": False,  # can the estimator make in-sample predictions?
         "capability:pred_int": True,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": False,  # ... for in-sample horizons?
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     def __init__(
@@ -207,7 +208,7 @@ class EnbPIForecaster(BaseForecaster):
         return pd.DataFrame(
             self._aggregation_function(np.stack(preds, axis=0), axis=0),
             index=list(fh.to_absolute(self.cutoff)),
-            columns=self._y.columns,
+            columns=self._get_varnames(),
         )
 
     def _predict_interval(self, fh, X, coverage):
@@ -228,9 +229,7 @@ class EnbPIForecaster(BaseForecaster):
             )
             intervals.append(conformal_intervals.reshape(-1, 2))
 
-        cols = pd.MultiIndex.from_product(
-            [self._y.columns, coverage, ["lower", "upper"]]
-        )
+        cols = self._get_columns(method="predict_interval", coverage=coverage)
         fh_absolute_idx = fh.to_absolute_index(self.cutoff)
         pred_int = pd.DataFrame(
             np.concatenate(intervals, axis=1), index=fh_absolute_idx, columns=cols

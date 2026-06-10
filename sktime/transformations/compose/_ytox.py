@@ -1,4 +1,4 @@
-"""Use endogeneous as exogeneous features transformer."""
+"""Use endogeneous as exogenous features transformer."""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -9,16 +9,16 @@ from sktime.transformations.base import BaseTransformer
 
 
 class YtoX(BaseTransformer):
-    """Create exogeneous features which are a copy of the endogenous data.
+    """Create exogenous features which are a copy of the endogenous data.
 
-    Replaces exogeneous features (``X``) by endogeneous data (``y``).
+    Replaces exogenous features (``X``) by endogeneous data (``y``).
 
     To *add* instead of *replace*, use ``FeatureUnion``.
 
     Common use cases include:
 
-    * creating exogeneous variables from transformed endogenous variables
-    * creating exogeneous data from index, if no exogeneous data is available
+    * creating exogenous variables from transformed endogenous variables
+    * creating exogenous data from index, if no exogenous data is available
     * manual construction of reduction strategies, in combination with ``YfromX``
 
     Parameters
@@ -52,7 +52,7 @@ class YtoX(BaseTransformer):
     >>> # fit and forecast, using Fourier features as exogenous data
     >>> pred = pipe.fit_predict(y, fh=[1, 2, 3, 4, 5])  # doctest: +SKIP
 
-    Use case: using lagged endogenous variables as exogeneous data.
+    Use case: using lagged endogenous variables as exogenous data.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.compose import YtoX
@@ -74,7 +74,7 @@ class YtoX(BaseTransformer):
     >>> forecaster.fit(y, fh=[1])  # doctest: +SKIP
     >>> y_pred = forecaster.predict()  # doctest: +SKIP
 
-    Use case: using summarized endogenous variables as exogeneous data.
+    Use case: using summarized endogenous variables as exogenous data.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.summarize import WindowSummarizer
@@ -124,7 +124,6 @@ class YtoX(BaseTransformer):
         "capability:multivariate": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "scitype:y": "both",
         "fit_is_empty": True,
         "requires_X": False,
         "requires_y": True,
