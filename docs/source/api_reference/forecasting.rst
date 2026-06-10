@@ -853,7 +853,7 @@ Model selection and tuning
 Agentic Forecasting
 -------------------
 
-Agentic forecasters use generative AI and/or reasoning to decide how to forecast.
+Forecasters that use generative AI and/or agentic reasoning to decide how to forecast.
 
 .. currentmodule:: sktime.forecasting.agentic
 
