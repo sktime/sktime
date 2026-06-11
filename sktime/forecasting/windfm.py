@@ -149,7 +149,7 @@ class WindFMForecaster(BaseForecaster):
         "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:missing_values": False,
-        "capability:insample": False,
+        "capability:insample": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:pretrain": False,
