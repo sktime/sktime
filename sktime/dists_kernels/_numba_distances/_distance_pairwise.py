@@ -7,7 +7,7 @@ function with 1D, 2D and 3D input.
 
 import numpy as np
 
-from sktime.distances._distance import ALL_DISTANCES, pairwise_distance
+from sktime.dists_kernels._numba_distances._distance import ALL_DISTANCES, pairwise_distance
 
 assign = [(x.__name__, i) for i, x in enumerate(ALL_DISTANCES)]
 

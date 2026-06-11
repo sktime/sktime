@@ -8,14 +8,14 @@ import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
 
-from sktime.distances._distance import _METRIC_INFOS, distance, distance_factory
-from sktime.distances.base import MetricInfo, NumbaDistance
-from sktime.distances.tests._expected_results import _expected_distance_results
-from sktime.distances.tests._shared_tests import (
+from sktime.dists_kernels._numba_distances._distance import _METRIC_INFOS, distance, distance_factory
+from sktime.dists_kernels._numba_distances.base import MetricInfo, NumbaDistance
+from sktime.dists_kernels._numba_distances.tests._expected_results import _expected_distance_results
+from sktime.dists_kernels._numba_distances.tests._shared_tests import (
     _test_incorrect_parameters,
     _test_metric_parameters,
 )
-from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.dists_kernels._numba_distances.tests._utils import create_test_distance_numpy
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 from sktime.utils.dependencies import _check_soft_dependencies
 

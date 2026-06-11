@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 
-from sktime.distances.base import DistanceCallable, NumbaDistance
+from sktime.dists_kernels._numba_distances.base import DistanceCallable, NumbaDistance
 
 
 class _EuclideanDistance(NumbaDistance):
@@ -35,6 +35,6 @@ class _EuclideanDistance(NumbaDistance):
         Callable[[np.ndarray, np.ndarray], float]
             No_python compiled euclidean distance callable.
         """
-        from sktime.distances._euclidean_numba import _numba_euclidean_distance
+        from sktime.dists_kernels._numba_distances._euclidean_numba import _numba_euclidean_distance
 
         return _numba_euclidean_distance

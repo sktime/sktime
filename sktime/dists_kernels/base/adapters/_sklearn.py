@@ -107,7 +107,7 @@ class _SklearnDistanceAdapter:
         if distance_params is None:
             distance_params = {}
         if isinstance(distance, str):
-            from sktime.distances import pairwise_distance
+            from sktime.dists_kernels._numba_distances import pairwise_distance
 
             return pairwise_distance(X, X2, distance, **distance_params)
         else:

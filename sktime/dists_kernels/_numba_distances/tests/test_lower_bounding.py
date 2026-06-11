@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.distances.lower_bounding import LowerBounding
-from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.dists_kernels._numba_distances.lower_bounding import LowerBounding
+from sktime.dists_kernels._numba_distances.tests._utils import create_test_distance_numpy
 from sktime.tests.test_switch import run_test_module_changed
 
 

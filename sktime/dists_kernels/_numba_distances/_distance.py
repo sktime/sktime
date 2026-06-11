@@ -5,22 +5,22 @@ from typing import Any
 
 import numpy as np
 
-from sktime.distances._ddtw import _DdtwDistance
-from sktime.distances._dtw import _DtwDistance
-from sktime.distances._edr import _EdrDistance
-from sktime.distances._erp import _ErpDistance
-from sktime.distances._euclidean import _EuclideanDistance
-from sktime.distances._lcss import _LcssDistance
-from sktime.distances._msm import _MsmDistance
-from sktime.distances._resolve_metric import (
+from sktime.dists_kernels._numba_distances._ddtw import _DdtwDistance
+from sktime.dists_kernels._numba_distances._dtw import _DtwDistance
+from sktime.dists_kernels._numba_distances._edr import _EdrDistance
+from sktime.dists_kernels._numba_distances._erp import _ErpDistance
+from sktime.dists_kernels._numba_distances._euclidean import _EuclideanDistance
+from sktime.dists_kernels._numba_distances._lcss import _LcssDistance
+from sktime.dists_kernels._numba_distances._msm import _MsmDistance
+from sktime.dists_kernels._numba_distances._resolve_metric import (
     _resolve_dist_instance,
     _resolve_metric_to_factory,
 )
-from sktime.distances._squared import _SquaredDistance
-from sktime.distances._twe import _TweDistance
-from sktime.distances._wddtw import _WddtwDistance
-from sktime.distances._wdtw import _WdtwDistance
-from sktime.distances.base import (
+from sktime.dists_kernels._numba_distances._squared import _SquaredDistance
+from sktime.dists_kernels._numba_distances._twe import _TweDistance
+from sktime.dists_kernels._numba_distances._wddtw import _WddtwDistance
+from sktime.dists_kernels._numba_distances._wdtw import _WdtwDistance
+from sktime.dists_kernels._numba_distances.base import (
     AlignmentPathReturn,
     DistanceAlignmentPathCallable,
     DistanceCallable,
@@ -392,7 +392,7 @@ def wddtw_distance(
     2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
     """
     if compute_derivative is None:
-        from sktime.distances._ddtw_numba import average_of_slope
+        from sktime.dists_kernels._numba_distances._ddtw_numba import average_of_slope
 
         compute_derivative = average_of_slope
 
@@ -597,7 +597,7 @@ def ddtw_distance(
         1. 10.1137/1.9781611972719.1.
     """
     if compute_derivative is None:
-        from sktime.distances._ddtw_numba import average_of_slope
+        from sktime.dists_kernels._numba_distances._ddtw_numba import average_of_slope
 
         compute_derivative = average_of_slope
 
@@ -1306,7 +1306,7 @@ def ddtw_alignment_path(
         1. 10.1137/1.9781611972719.1.
     """
     if compute_derivative is None:
-        from sktime.distances._ddtw_numba import average_of_slope
+        from sktime.dists_kernels._numba_distances._ddtw_numba import average_of_slope
 
         compute_derivative = average_of_slope
 
@@ -1413,7 +1413,7 @@ def wddtw_alignment_path(
     2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
     """
     if compute_derivative is None:
-        from sktime.distances._ddtw_numba import average_of_slope
+        from sktime.dists_kernels._numba_distances._ddtw_numba import average_of_slope
 
         compute_derivative = average_of_slope
 
@@ -1957,7 +1957,7 @@ def distance(
     float
         Distance between the x and y.
     """
-    from sktime.distances._numba_utils import to_numba_timeseries
+    from sktime.dists_kernels._numba_distances._numba_utils import to_numba_timeseries
 
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
@@ -2027,7 +2027,7 @@ def distance_factory(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
     """
-    from sktime.distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
+    from sktime.dists_kernels._numba_distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
     from sktime.utils.numba.njit import njit
 
     if x is None:
@@ -2137,7 +2137,7 @@ def pairwise_distance(
     array([[256., 576.],
            [ 58., 256.]])
     """
-    from sktime.distances._numba_utils import (
+    from sktime.dists_kernels._numba_distances._numba_utils import (
         _compute_pairwise_distance,
         _make_3d_series,
     )
@@ -2220,7 +2220,7 @@ def distance_alignment_path(
         Optional return only given if return_cost_matrix = True.
         Cost matrix used to compute the distance.
     """
-    from sktime.distances._numba_utils import to_numba_timeseries
+    from sktime.dists_kernels._numba_distances._numba_utils import to_numba_timeseries
 
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
@@ -2294,7 +2294,7 @@ def distance_alignment_path_factory(
     Callable[[np.ndarray, np.ndarray], Union[np.ndarray, np.ndarray]]
         Callable for the distance path.
     """
-    from sktime.distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
+    from sktime.dists_kernels._numba_distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
     from sktime.utils.numba.njit import njit
 
     if x is None:

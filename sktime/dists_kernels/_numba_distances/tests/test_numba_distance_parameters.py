@@ -5,12 +5,12 @@ from collections.abc import Callable
 import numpy as np
 import pytest
 
-from sktime.distances import distance, distance_factory
-from sktime.distances._distance import _METRIC_INFOS
-from sktime.distances._numba_utils import to_numba_timeseries
-from sktime.distances.base import MetricInfo
-from sktime.distances.tests._expected_results import _expected_distance_results_params
-from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.dists_kernels._numba_distances import distance, distance_factory
+from sktime.dists_kernels._numba_distances._distance import _METRIC_INFOS
+from sktime.dists_kernels._numba_distances._numba_utils import to_numba_timeseries
+from sktime.dists_kernels._numba_distances.base import MetricInfo
+from sktime.dists_kernels._numba_distances.tests._expected_results import _expected_distance_results_params
+from sktime.dists_kernels._numba_distances.tests._utils import create_test_distance_numpy
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.numba.njit import njit

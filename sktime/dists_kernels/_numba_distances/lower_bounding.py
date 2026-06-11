@@ -119,7 +119,7 @@ class LowerBounding(Enum):
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """
-        from sktime.distances._lower_bounding_numba import (
+        from sktime.dists_kernels._numba_distances._lower_bounding_numba import (
             itakura_parallelogram,
             no_bounding,
             sakoe_chiba,

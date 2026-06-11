@@ -5,8 +5,8 @@ from sklearn import metrics
 
 from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.datasets import load_arrow_head, load_basic_motions, load_unit_test
-from sktime.distances import dtw_distance, erp_distance, lcss_distance
-from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.dists_kernels._numba_distances import dtw_distance, erp_distance, lcss_distance
+from sktime.dists_kernels._numba_distances.tests._utils import create_test_distance_numpy
 
 # Clustering With num custers set to 2 and transpose
 expected_rand_unit_test = {

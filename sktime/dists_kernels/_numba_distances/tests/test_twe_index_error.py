@@ -1,6 +1,6 @@
 import numpy as np
 
-from sktime.distances import twe_alignment_path
+from sktime.dists_kernels._numba_distances import twe_alignment_path
 
 
 def test_twe_alignment_path_default_bounding_matrix():
