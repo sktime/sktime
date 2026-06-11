@@ -16,14 +16,24 @@ class _PmdArimaAdapter(BaseForecaster):
     """Base class for interfacing pmdarima."""
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "hyang1996", "kejsitake", "fkiraly"],
         "maintainers": "hyang1996",
+        "python_dependencies": ["pmdarima"],
+        # estimator type
+        # --------------
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
-        "python_dependencies": ["pmdarima"],
+        "capability:non_contiguous_X": False,
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._pmdarima"],
     }
 
     def __init__(self):
@@ -41,7 +51,7 @@ class _PmdArimaAdapter(BaseForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 
@@ -53,6 +63,7 @@ class _PmdArimaAdapter(BaseForecaster):
             X = X.loc[y.index]
         self._forecaster = self._instantiate_model()
         self._forecaster.fit(y, X=X)
+        self._y_name = y.name
         return self
 
     def _update(self, y, X=None, update_params=True):
@@ -81,7 +92,7 @@ class _PmdArimaAdapter(BaseForecaster):
         Parameters
         ----------
         fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
 
@@ -119,7 +130,7 @@ class _PmdArimaAdapter(BaseForecaster):
 
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
-        y_pred.name = self._y.name
+        y_pred.name = self._y_name
         y_pred.index = fh_abs
         return y_pred
 
@@ -131,7 +142,7 @@ class _PmdArimaAdapter(BaseForecaster):
         Parameters
         ----------
         fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
 
@@ -146,9 +157,12 @@ class _PmdArimaAdapter(BaseForecaster):
             diff_order = self._forecaster.model_.order[1]
 
         # Initialize return objects
-        fh_abs = fh.to_absolute(self.cutoff).to_numpy()
+        # fh_abs_full keeps the full index (including points that cannot be forecast
+        # due to differencing); fh_abs is trimmed below when diff_order > 0.
+        fh_abs_full = fh.to_absolute(self.cutoff).to_numpy()
+        fh_abs = fh_abs_full  # may be re-assigned below
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
-        y_pred = pd.Series(index=fh_abs, dtype="float64")
+        y_pred = pd.Series(index=fh_abs_full, dtype="float64")
 
         # for in-sample predictions, pmdarima requires zero-based integer indices
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
@@ -162,8 +176,8 @@ class _PmdArimaAdapter(BaseForecaster):
             if end < start:
                 # since we might have forced `start` to surpass `end`
                 end = diff_order
-            # get rid of unforcastable points
-            fh_abs = fh_abs[fh_idx >= diff_order]
+            # get rid of unforecastable points from the active fh window
+            fh_abs = fh_abs_full[fh_idx >= diff_order]
             # reindex accordingly
             fh_idx = fh_idx[fh_idx >= diff_order] - diff_order
 
@@ -178,7 +192,9 @@ class _PmdArimaAdapter(BaseForecaster):
         if return_pred_int:
             pred_ints = []
             for a in alpha:
-                pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
+                # Use fh_abs_full so that prediction intervals have the same index
+                # length as predict() — earlier points (lost to differencing) get NaN.
+                pred_int = pd.DataFrame(index=fh_abs_full, columns=["lower", "upper"])
                 result = self._forecaster.predict_in_sample(
                     start=start,
                     end=end,
@@ -205,7 +221,7 @@ class _PmdArimaAdapter(BaseForecaster):
         Parameters
         ----------
         fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
 
