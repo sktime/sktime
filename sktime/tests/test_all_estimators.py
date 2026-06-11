@@ -1293,7 +1293,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         for tag in estimator_instance._get_flags(flag_attr_name="_tags"):
             if tag in ALIAS_DICT:
-                object_type = estimator_instance.get_tag("object_type")
                 msg = (
                     f"{estimator_instance} has deprecated tag: {tag!r} - "
                     f"please follow deprecation guide from sktime release notes "
