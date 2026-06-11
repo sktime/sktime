@@ -236,7 +236,7 @@ Forecasting
 * [ENH] reduce forecaster coupling to ``self._y`` attribute - part 2 (:pr:`9202`) :user:`fkiraly`
 * [ENH] Allow FMs to handle unequal length hierarchical data (:pr:`10125`) :user:`jgyasu`
 * [ENH] Timer: vendor architecture code into ``sktime.libs`` and fix deps (:pr:`10327`) :user:`geetu040`
-* [BUG] declare statsmodels as soft dep of ``HCrystalBallAdapter`` (:pr:`10104`) :user:`kpal002`
+* [ENH] declare ``statsmodels`` as soft dep of ``HCrystalBallAdapter`` (:pr:`10104`) :user:`kpal002`
 * [ENH] add ``tests:vm`` tag to ``HCrystalBallAdapter`` (:pr:`10243`) :user:`fkiraly`
 * [ENH] Unequal length TS test and tag for forecasters (:pr:`10078`) :user:`jgyasu`
 * [ENH] ``pandas 3`` compatibility fixes (:pr:`9821`) :user:`fkiraly`
@@ -348,6 +348,7 @@ Transformations
 * [ENH] Remove deprecated ``ColumnTransformer`` (:pr:`9979`) :user:`fkiraly`
 * [ENH] remove stale ``RowTransformer`` entries from test config (:pr:`10129`) :user:`Giggitycountless`
 * [ENH] remove upper ``numpy`` bound in ``MatrixProfileTransformer`` and address segmentation faults (:pr:`10339`) :user:`CloseChoice`
+* [ENH] Flatten ``transformations`` module (:pr:`10371`, :pr:`10168`) :user:`fkiraly`, :user:`CloseChoice`
 
 Test framework
 ^^^^^^^^^^^^^^
@@ -456,6 +457,7 @@ Maintenance
 * [MNT] all-contributors update (:pr:`10210`) :user:`github-actions[bot]`
 * [MNT] Deduplicate ``sktime.utils.dependencies`` methods (:pr:`9403`) :user:`RecreationalMath`
 * [MNT] Update Makefile install target for pyproject builds (:pr:`10244`) :user:`nvphungdev`
+* [MNT] ``1.0.0`` deprecations and change actions (:pr:`10377`) :user:`fkiraly`
 
 
 Fixes
