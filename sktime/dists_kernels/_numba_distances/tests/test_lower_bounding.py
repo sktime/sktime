@@ -150,7 +150,7 @@ def _validate_bounding(
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.distances"),
+    not run_test_module_changed("sktime.dists_kernels._numba_distances"),
     reason="Run test only if distances module has changed",
 )
 def test_lower_bounding() -> None:
@@ -181,7 +181,7 @@ def test_lower_bounding() -> None:
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.distances"),
+    not run_test_module_changed("sktime.dists_kernels._numba_distances"),
     reason="Run test only if distances module has changed",
 )
 def test_incorrect_parameters() -> None:

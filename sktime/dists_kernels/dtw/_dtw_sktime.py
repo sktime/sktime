@@ -21,7 +21,7 @@ class DtwDist(BasePairwiseTransformerPanel):
       warping - ``weighted=True, derivative=True``
 
     ``sktime`` interface to the efficient ``numba`` implementations
-    provided by ``pairwise_distance`` in ``sktime.distances``.
+    provided by ``pairwise_distance`` in ``sktime.dists_kernels._numba_distances``.
 
     This estimator provides performant implementation of time warping distances for:
     * time series of equal length

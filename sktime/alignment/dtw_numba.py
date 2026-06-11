@@ -20,9 +20,11 @@ class AlignerDtwNumba(BaseAligner):
       warping - ``weighted=True, derivative=True``
 
     ``sktime`` interface to the efficient ``numba`` implementations
-    provided by ``distance_alignment_path`` in ``sktime.distances``.
+    provided by ``distance_alignment_path``
+    in ``sktime.dists_kernels._numba_distances``.
 
     This estimator provides performant implementation of time warping for:
+
     * time series of equal length
     * the Euclidean pairwise distance
 
