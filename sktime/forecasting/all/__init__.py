@@ -58,7 +58,7 @@ from sktime.split import (
     SlidingWindowSplitter,
     temporal_train_test_split,
 )
-from sktime.transformations.series.detrend import Deseasonalizer, Detrender
+from sktime.transformations.detrend import Deseasonalizer, Detrender
 from sktime.utils.plotting import plot_series
 
 est_tuples = all_estimators(estimator_types="forecaster", return_names=True)

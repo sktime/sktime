@@ -206,7 +206,7 @@ class WindowSegmenter(BaseDetector):
         X : pd.DataFrame
             training data to fit model to, time series
         y : pd.Series, optional
-            ground truth detections for training if annotator is supervised
+            ground truth detections for training if detector is supervised
 
         Returns
         -------
@@ -284,7 +284,7 @@ class WindowSegmenter(BaseDetector):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            There are currently no reserved values for annotators.
+            There are currently no reserved values for detectors.
 
         Returns
         -------

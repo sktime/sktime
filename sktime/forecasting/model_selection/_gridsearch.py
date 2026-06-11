@@ -236,7 +236,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.theta import ThetaForecaster
-    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.impute import Imputer
     >>> y = load_shampoo_sales()
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer()),

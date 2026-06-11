@@ -33,7 +33,7 @@ class YtoX(BaseTransformer):
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.compose import YtoX
-    >>> from sktime.transformations.series.fourier import FourierFeatures
+    >>> from sktime.transformations.fourier import FourierFeatures
     >>> from sktime.forecasting.arima import ARIMA
     >>> from sktime.forecasting.compose import ForecastingPipeline
     >>>
@@ -56,8 +56,8 @@ class YtoX(BaseTransformer):
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.compose import YtoX
-    >>> from sktime.transformations.series.lag import Lag
-    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.lag import Lag
+    >>> from sktime.transformations.impute import Imputer
     >>> from sktime.forecasting.sarimax import SARIMAX
     >>>
     >>> # data with no exogenous features
@@ -77,7 +77,7 @@ class YtoX(BaseTransformer):
     Use case: using summarized endogenous variables as exogenous data.
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.summarize import WindowSummarizer
+    >>> from sktime.transformations.summarize import WindowSummarizer
     >>> from sktime.transformations.compose import YtoX
     >>> from sktime.forecasting.compose import make_reduction
     >>> from sktime.forecasting.compose import ForecastingPipeline

@@ -11,9 +11,9 @@ from sktime.clustering.compose import ClustererPipeline
 from sktime.clustering.dbscan import TimeSeriesDBSCAN
 from sktime.dists_kernels import FlatDist
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.transformations.panel.padder import PaddingTransformer
-from sktime.transformations.series.exponent import ExponentTransformer
-from sktime.transformations.series.impute import Imputer
+from sktime.transformations.exponent import ExponentTransformer
+from sktime.transformations.impute import Imputer
+from sktime.transformations.padder import PaddingTransformer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.panel import _make_panel_X
 
