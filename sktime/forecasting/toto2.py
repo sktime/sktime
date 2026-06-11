@@ -3,12 +3,12 @@
 
 # This product includes software developed at Datadog, Copyright 2025 Datadog, Inc.
 
-
 __author__ = ["siddharth7113"]
 __all__ = ["Toto2Forecaster"]
 
 import numpy as np
 import pandas as pd
+
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.singleton import _multiton
 
@@ -77,6 +77,7 @@ class Toto2Forecaster(BaseForecaster):
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=list(range(1, 1001)))  # doctest: +SKIP
     """
+
     _tags = {
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "None",
@@ -94,12 +95,12 @@ class Toto2Forecaster(BaseForecaster):
         "authors": ["siddharth7113"],
         "maintainers": ["siddharth7113"],
         "python_version": ">=3.12",
-        "python_dependencies": 	["toto-models"],
+        "python_dependencies": ["toto-models"],
         # CI and test flags
         # -----------------
         "tests:vm": True,
         # Toto-2's quantile knots are fixed at [0.1, ..., 0.9]; the proba conformance
-        # tests request other quantile levels (via TEST_ALPHAS), which _predict_quantiles
+        # tests request other levels (via TEST_ALPHAS), which _predict_quantiles
         # rejects with ValueError. These three are skipped for that reason; predict_var
         # does not request non-knot levels and is left enabled.
         "tests:skip_by_name": [
@@ -163,7 +164,7 @@ class Toto2Forecaster(BaseForecaster):
         self : reference to self
         """
         import torch
-        
+
         if self.device is None:
             self._device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
@@ -181,7 +182,7 @@ class Toto2Forecaster(BaseForecaster):
         }
 
         return self
-    
+
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
@@ -209,7 +210,6 @@ class Toto2Forecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-
         model, quantiles = self._run_forecast(fh)
         median_idx = model.output_head.knots.index(0.5)
         all_predictions = quantiles[median_idx].squeeze(0).cpu().numpy().T
@@ -232,6 +232,7 @@ class Toto2Forecaster(BaseForecaster):
             shape ``[n_quantiles, batch, n_var, horizon_padded]``
         """
         import torch
+
         torch.manual_seed(self._seed)
         model = _CachedToto2Forecaster(
             key=str((self.model_path, self._device)),
