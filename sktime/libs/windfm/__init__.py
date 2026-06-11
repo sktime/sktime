@@ -1,4 +1,4 @@
-"""Python implementation of Kronos.
+"""Python implementation of WindFM.
 
 Unofficial fork of the ``shiyu-coder/WindFM`` model code, available at
 https://github.com/shiyu-coder/WindFM.
