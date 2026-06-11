@@ -16,6 +16,11 @@ available on GitHub.
 
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 1.0.1 - 2026-06-11
+--------------------------
+
+Mini-release fixing readthedocs documentation build errors.
+
 
 Version 1.0.0 - 2026-06-11
 --------------------------
