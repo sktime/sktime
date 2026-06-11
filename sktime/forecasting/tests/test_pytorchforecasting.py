@@ -3,6 +3,7 @@
 
 import os
 
+import pandas as pd
 import pytest
 from sklearn.model_selection import train_test_split
 
@@ -21,7 +22,7 @@ from sktime.utils._testing.forecasting import (
 )
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
-__author__ = ["XinyuWu"]
+__author__ = ["XinyuWu", "Nischal1425"]
 
 
 @pytest.mark.parametrize(
@@ -109,3 +110,35 @@ def test_load_model_from_disk(model_class) -> None:
     index_pred = y_pred.iloc[:max_prediction_length].index.get_level_values(2)
     _assert_correct_pred_time_index(index_pred, cutoff, fh)
     _assert_correct_columns(y_pred, y_test)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(PytorchForecastingDeepAR),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_predict_var_with_exogenous_x():
+    """Regression test for #10376 - predict_var with future X on non-hierarchical data.
+
+    _Xy_precheck was returning only future X rows, causing _Xy_to_dataset to produce
+    an empty training dataset via LEFT join, leading to a StandardScaler crash.
+    """
+    from sktime.utils._testing.series import _make_series
+
+    RAND_SEED = 42
+    n_train = 20
+
+    y_series = _make_series(n_timepoints=n_train, random_state=RAND_SEED)
+    y = pd.DataFrame(y_series, columns=["foo"])
+
+    long_x = _make_series(n_columns=2, n_timepoints=n_train + 1, random_state=RAND_SEED)
+    X_train = long_x.iloc[:n_train]
+    X_test = long_x.iloc[n_train:]
+
+    params = PytorchForecastingDeepAR.get_test_params()[0]
+    forecaster = PytorchForecastingDeepAR(**params)
+    forecaster.fit(y=y, X=X_train, fh=1)
+
+    # should not raise ValueError: Found array with 0 sample(s)
+    pred_var = forecaster.predict_var(X=X_test)
+    assert pred_var is not None
+    assert len(pred_var) == 1
