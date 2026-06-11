@@ -16,13 +16,13 @@ _coerce_register[("transformer_tabular", "transformer")] = (
 )
 
 
-def _coerce_series_annotator_to_transformer(obj):
+def _coerce_detector_to_transformer(obj):
     from sktime.detection.compose._as_transform import DetectorAsTransformer
 
     return DetectorAsTransformer(obj)
 
 
-_coerce_register[("detector", "transformer")] = _coerce_series_annotator_to_transformer
+_coerce_register[("detector", "transformer")] = _coerce_detector_to_transformer
 
 
 def _coerce_clusterer_to_transformer(obj):
