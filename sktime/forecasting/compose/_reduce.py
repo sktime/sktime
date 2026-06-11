@@ -39,7 +39,7 @@ from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
-from sktime.transformations.series.summarize import WindowSummarizer
+from sktime.transformations.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
 from sktime.utils.multiindex import apply_method_per_series
@@ -332,7 +332,7 @@ class _Reducer(_BaseWindowForecaster):
         from sklearn.linear_model import LinearRegression
         from sklearn.pipeline import make_pipeline
 
-        from sktime.transformations.panel.reduce import Tabularizer
+        from sktime.transformations.reduce import Tabularizer
         from sktime.utils.dependencies import _check_soft_dependencies
 
         # naming convention is as follows:
@@ -1964,7 +1964,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:libs": ["sktime.transformations.series.lag"],
+        "tests:libs": ["sktime.transformations.lag"],
     }
 
     def __init__(
@@ -2037,7 +2037,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
-        from sktime.transformations.series.lag import Lag, ReducerTransform
+        from sktime.transformations.lag import Lag, ReducerTransform
         from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 
         impute_method = self.impute_method
@@ -2117,7 +2117,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _fit_multiple(self, y, X=None, fh=None):
         """Fit to training data."""
-        from sktime.transformations.series.lag import Lag, ReducerTransform
+        from sktime.transformations.lag import Lag, ReducerTransform
 
         impute_method = self.impute_method
         X_treatment = self.X_treatment
@@ -2194,7 +2194,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict_multiple(self, X=None, fh=None):
         """Fit to training data."""
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.lag import Lag
 
         if X is not None and self._X is not None:
             X_pool = X.combine_first(self._X)
@@ -2378,7 +2378,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
         # -----------------
-        "tests:libs": ["sktime.transformations.series.lag"],
+        "tests:libs": ["sktime.transformations.lag"],
     }
 
     def __init__(
@@ -2437,7 +2437,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         impute_method = self.impute_method
         if isinstance(impute_method, str):
-            from sktime.transformations.series.impute import Imputer
+            from sktime.transformations.impute import Imputer
 
             self._impute_method = Imputer(method=impute_method)
         elif impute_method is None:
@@ -2474,7 +2474,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self : reference to self
         """
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.lag import Lag
 
         impute_method = self._impute_method
 
@@ -2561,7 +2561,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     def _predict_out_of_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff)."""
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.lag import Lag
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
@@ -2631,7 +2631,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict_in_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (in past of of cutoff)."""
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.lag import Lag
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
@@ -2694,7 +2694,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         from sklearn.linear_model import LinearRegression
 
         from sktime.forecasting.compose._reduce import DirectReductionForecaster
-        from sktime.transformations.series.impute import Imputer
+        from sktime.transformations.impute import Imputer
 
         est = LinearRegression()
         forecaster_imputer = Imputer(
