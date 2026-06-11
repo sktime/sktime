@@ -399,19 +399,21 @@ class WindFMForecaster(BaseForecaster):
         df = pd.DataFrame(index=self.y_context_.index)
         for internal, original in self.column_mapping_.items():
             df[internal] = self.X_context_[original].to_numpy()
+
         df[self._target_col] = self.y_context_.to_numpy()
+
         feature_cols = (
             self._covariate_cols[:2] + [self._target_col] + self._covariate_cols[2:]
         )
+
         return df[feature_cols]
 
     def _resolve_column_mapping(self, X):
         """Resolve X columns to WindFM's weather covariate names."""
         if self.columns is None:
             mapping = {col: col for col in self._covariate_cols}
+
         else:
-            if not isinstance(self.columns, list):
-                raise ValueError("columns must be a list of five column names or None.")
             if len(self.columns) != len(self._covariate_cols):
                 raise ValueError(
                     "columns must contain five items ordered as wind_speed, "
@@ -422,11 +424,6 @@ class WindFMForecaster(BaseForecaster):
         missing = [col for col in mapping.values() if col not in X.columns]
         if missing:
             columns = list(X.columns)
-            if len(columns) == 0:
-                raise ValueError(
-                    "X must contain at least one column to reuse as placeholder "
-                    "WindFM covariates."
-                )
             missing_unique = list(dict.fromkeys(missing))
             warn(
                 "WindFMForecaster could not find the requested weather covariate "
@@ -438,6 +435,7 @@ class WindFMForecaster(BaseForecaster):
                 internal: columns[i % len(columns)]
                 for i, internal in enumerate(self._covariate_cols)
             }
+
         return mapping
 
     def _load_windfm(self):
