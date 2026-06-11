@@ -142,15 +142,13 @@ def _plot_alignment(x, y, metric, dist_kwargs: dict = None, title: str = ""):
     plt.plot(y, "g-", color="black")
 
     for positions in path:
-        try:
-            plt.plot(
-                [positions[0], positions[1]],
-                [x[positions[0]], y[positions[1]]],
-                "--",
-                color="#818587",
-            )
-        except Exception:
-            continue  # noqa: S112
+        plt.plot(
+            [positions[0], positions[1]],
+            [x[positions[0]], y[positions[1]]],
+            "--",
+            color="#818587",
+        )
+
     plt.legend()
     plt.title(title)
 
