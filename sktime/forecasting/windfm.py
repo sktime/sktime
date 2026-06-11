@@ -95,7 +95,7 @@ class WindFMForecaster(BaseForecaster):
     >>> import torch  # doctest: +SKIP
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.windfm import WindFMForecaster
-    >>> df = pd.read_csv(
+    >>> df = pd.read_csv(  # doctest: +SKIP
     ...     "https://raw.githubusercontent.com/shiyu-coder/WindFM/"
     ...     "refs/heads/master/examples/data/121522.csv",
     ...     parse_dates=["time"],
@@ -109,9 +109,9 @@ class WindFMForecaster(BaseForecaster):
     ...     "temperature",
     ...     "pressure",
     ... ]
-    >>> y_train = df["power"].iloc[:lookback]
-    >>> X_train = df[covariate_cols].iloc[:lookback]
-    >>> fh = ForecastingHorizon(
+    >>> y_train = df["power"].iloc[:lookback]  # doctest: +SKIP
+    >>> X_train = df[covariate_cols].iloc[:lookback]  # doctest: +SKIP
+    >>> fh = ForecastingHorizon(  # doctest: +SKIP
     ...     df.index[lookback : lookback + pred_len],
     ...     is_relative=False,
     ... )
