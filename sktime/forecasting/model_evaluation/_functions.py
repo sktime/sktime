@@ -216,6 +216,19 @@ def _evaluate_window(x, meta):
     y_preds_cache = dict()
     old_naming = True
     old_name_mapping = {}
+    for scitype in scoring:
+        if len(set(map(lambda metric: metric.name, scoring.get(scitype)))) != len(
+            scoring.get(scitype)
+        ):
+            old_naming = False
+        for metric in scoring.get(scitype):
+            pred_args = _get_pred_args_from_metric(scitype, metric)
+            if pred_args != {}:
+                argval = list(pred_args.values())[0]
+                old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
+                old_name_mapping[f"test_{metric.name}_{argval}"] = f"test_{metric.name}"
+                old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
+
     if fh is None:
         fh = _select_fh_from_y(y_true if global_mode else y_test)
 
@@ -240,10 +253,6 @@ def _evaluate_window(x, meta):
         # cache prediction from the first scitype and reuse it to compute other metrics
         for scitype in scoring:
             method = getattr(forecaster, pred_type[scitype])
-            if len(set(map(lambda metric: metric.name, scoring.get(scitype)))) != len(
-                scoring.get(scitype)
-            ):
-                old_naming = False
             for metric in scoring.get(scitype):
                 pred_args = _get_pred_args_from_metric(scitype, metric)
                 if pred_args == {}:
@@ -255,11 +264,6 @@ def _evaluate_window(x, meta):
                     time_key = f"{scitype}_{argval}_time"
                     result_key = f"test_{metric.name}_{argval}"
                     y_pred_key = f"y_{scitype}_{argval}"
-                    old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
-                    old_name_mapping[f"test_{metric.name}_{argval}"] = (
-                        f"test_{metric.name}"
-                    )
-                    old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
 
                 # make prediction
                 if y_pred_key not in y_preds_cache.keys():

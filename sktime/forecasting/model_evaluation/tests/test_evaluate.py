@@ -623,3 +623,42 @@ def test_evaluate_hierarchical_unequal_X_y():
     expected_cols = np.array([1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6])
     output_metrics = res.loc[:, "test_MeanAbsolutePercentageError"].values
     _assert_array_almost_equal(output_metrics, expected_cols)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([evaluate] + PROBA_METRICS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_evaluate_probabilistic_error_score():
+    """Test evaluate fallback with probabilistic metric when forecaster fails.
+
+    This is a regression test for issue #5556 to ensure that when a forecaster
+    fails during evaluation, the error_score is properly assigned to the correct
+    probabilistic metric column (e.g., 'test_PinballLoss_0.5') instead of crashing
+    or using the base metric name ('test_PinballLoss').
+    """
+
+    class _FailingForecaster(BaseForecaster):
+        _tags = {"capability:pred_int": True}
+
+        def _fit(self, y, X=None, fh=None):
+            raise ValueError("Intentional failure for regression test")
+
+        def _predict(self, fh, X=None):
+            pass
+
+    y = _make_series()
+    cv = SingleWindowSplitter(fh=[1], window_length=3)
+
+    out = evaluate(
+        forecaster=_FailingForecaster(),
+        y=y,
+        cv=cv,
+        scoring=[PinballLoss(alpha=0.1), PinballLoss(alpha=0.9)],
+        error_score=np.nan,
+    )
+
+    assert "test_PinballLoss_0.1" in out.columns
+    assert "test_PinballLoss_0.9" in out.columns
+    assert np.isnan(out["test_PinballLoss_0.1"].iloc[0])
+    assert np.isnan(out["test_PinballLoss_0.9"].iloc[0])
