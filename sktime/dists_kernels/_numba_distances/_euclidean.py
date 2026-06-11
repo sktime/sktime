@@ -35,6 +35,8 @@ class _EuclideanDistance(NumbaDistance):
         Callable[[np.ndarray, np.ndarray], float]
             No_python compiled euclidean distance callable.
         """
-        from sktime.dists_kernels._numba_distances._euclidean_numba import _numba_euclidean_distance
+        from sktime.dists_kernels._numba_distances._euclidean_numba import (
+            _numba_euclidean_distance,
+        )
 
         return _numba_euclidean_distance

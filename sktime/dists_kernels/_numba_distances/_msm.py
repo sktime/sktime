@@ -89,9 +89,13 @@ class _MsmDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
         """
-        from sktime.dists_kernels._numba_distances._distance_alignment_paths import compute_min_return_path
+        from sktime.dists_kernels._numba_distances._distance_alignment_paths import (
+            compute_min_return_path,
+        )
         from sktime.dists_kernels._numba_distances._msm_numba import _cost_matrix
-        from sktime.dists_kernels._numba_distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         if x.shape[0] > 1 or y.shape[0] > 1:
@@ -182,7 +186,9 @@ class _MsmDistance(NumbaDistance):
             If epsilon is not a float.
         """
         from sktime.dists_kernels._numba_distances._msm_numba import _cost_matrix
-        from sktime.dists_kernels._numba_distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         if x.shape[0] > 1 or y.shape[0] > 1:

@@ -4,7 +4,11 @@ from collections.abc import Callable
 
 import numpy as np
 
-from sktime.dists_kernels._numba_distances.base import DistanceCallable, MetricInfo, NumbaDistance
+from sktime.dists_kernels._numba_distances.base import (
+    DistanceCallable,
+    MetricInfo,
+    NumbaDistance,
+)
 
 
 def _resolve_dist_instance(
@@ -185,7 +189,9 @@ def _is_distance_factory_callable(metric: Callable) -> bool:
         Boolean that is true if callable is a valid distance factory and false
         if the callable is an invalid distance factory.
     """
-    from sktime.dists_kernels._numba_distances._numba_utils import is_no_python_compiled_callable
+    from sktime.dists_kernels._numba_distances._numba_utils import (
+        is_no_python_compiled_callable,
+    )
 
     is_no_python_compiled = is_no_python_compiled_callable(metric)
     if is_no_python_compiled:
@@ -214,7 +220,9 @@ def _is_no_python_distance_callable(metric: Callable) -> bool:
         Boolean that is true if callable is a valid no_python compiled distance and
         false if the callable is an invalid no_python callable.
     """
-    from sktime.dists_kernels._numba_distances._numba_utils import is_no_python_compiled_callable
+    from sktime.dists_kernels._numba_distances._numba_utils import (
+        is_no_python_compiled_callable,
+    )
 
     is_no_python_compiled = is_no_python_compiled_callable(metric)
     if not is_no_python_compiled:

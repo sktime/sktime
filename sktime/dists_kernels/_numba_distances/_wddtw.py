@@ -80,14 +80,24 @@ class _WddtwDistance(NumbaDistance):
             If the compute derivative callable is not no_python compiled.
             If the value of g is not a float
         """
-        from sktime.dists_kernels._numba_distances._distance_alignment_paths import compute_min_return_path
-        from sktime.dists_kernels._numba_distances._numba_utils import is_no_python_compiled_callable
-        from sktime.dists_kernels._numba_distances._wdtw_numba import _weighted_cost_matrix
-        from sktime.dists_kernels._numba_distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances._distance_alignment_paths import (
+            compute_min_return_path,
+        )
+        from sktime.dists_kernels._numba_distances._numba_utils import (
+            is_no_python_compiled_callable,
+        )
+        from sktime.dists_kernels._numba_distances._wdtw_numba import (
+            _weighted_cost_matrix,
+        )
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         if compute_derivative is None:
-            from sktime.dists_kernels._numba_distances._ddtw_numba import average_of_slope
+            from sktime.dists_kernels._numba_distances._ddtw_numba import (
+                average_of_slope,
+            )
 
             compute_derivative = average_of_slope
 
@@ -194,13 +204,21 @@ class _WddtwDistance(NumbaDistance):
             If the compute derivative callable is not no_python compiled.
             If the value of g is not a float
         """
-        from sktime.dists_kernels._numba_distances._numba_utils import is_no_python_compiled_callable
-        from sktime.dists_kernels._numba_distances._wdtw_numba import _weighted_cost_matrix
-        from sktime.dists_kernels._numba_distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances._numba_utils import (
+            is_no_python_compiled_callable,
+        )
+        from sktime.dists_kernels._numba_distances._wdtw_numba import (
+            _weighted_cost_matrix,
+        )
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         if compute_derivative is None:
-            from sktime.dists_kernels._numba_distances._ddtw_numba import average_of_slope
+            from sktime.dists_kernels._numba_distances._ddtw_numba import (
+                average_of_slope,
+            )
 
             compute_derivative = average_of_slope
 

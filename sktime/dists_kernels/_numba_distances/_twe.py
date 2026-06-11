@@ -84,9 +84,13 @@ class _TweDistance(NumbaDistance):
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """
-        from sktime.dists_kernels._numba_distances._distance_alignment_paths import compute_twe_return_path
+        from sktime.dists_kernels._numba_distances._distance_alignment_paths import (
+            compute_twe_return_path,
+        )
         from sktime.dists_kernels._numba_distances._twe_numba import _twe_cost_matrix
-        from sktime.dists_kernels._numba_distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         if bounding_matrix is None:
@@ -175,8 +179,13 @@ class _TweDistance(NumbaDistance):
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """
-        from sktime.dists_kernels._numba_distances._twe_numba import _twe_cost_matrix, pad_ts
-        from sktime.dists_kernels._numba_distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances._twe_numba import (
+            _twe_cost_matrix,
+            pad_ts,
+        )
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         x = pad_ts(x)

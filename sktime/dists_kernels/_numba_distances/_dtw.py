@@ -5,7 +5,9 @@ from typing import Any
 import numpy as np
 
 from sktime.dists_kernels._numba_distances.base import DistanceCallable, NumbaDistance
-from sktime.dists_kernels._numba_distances.base._types import DistanceAlignmentPathCallable
+from sktime.dists_kernels._numba_distances.base._types import (
+    DistanceAlignmentPathCallable,
+)
 
 
 class _DtwDistance(NumbaDistance):
@@ -101,9 +103,13 @@ class _DtwDistance(NumbaDistance):
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """
-        from sktime.dists_kernels._numba_distances._distance_alignment_paths import compute_min_return_path
+        from sktime.dists_kernels._numba_distances._distance_alignment_paths import (
+            compute_min_return_path,
+        )
         from sktime.dists_kernels._numba_distances._dtw_numba import _cost_matrix
-        from sktime.dists_kernels._numba_distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         _bounding_matrix = resolve_bounding_matrix(
@@ -182,7 +188,9 @@ class _DtwDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
         """
         from sktime.dists_kernels._numba_distances._dtw_numba import _cost_matrix
-        from sktime.dists_kernels._numba_distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         _bounding_matrix = resolve_bounding_matrix(

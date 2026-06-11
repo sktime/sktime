@@ -100,9 +100,15 @@ class _LcssDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
         """
-        from sktime.dists_kernels._numba_distances._distance_alignment_paths import compute_lcss_return_path
-        from sktime.dists_kernels._numba_distances._lcss_numba import _sequence_cost_matrix
-        from sktime.dists_kernels._numba_distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances._distance_alignment_paths import (
+            compute_lcss_return_path,
+        )
+        from sktime.dists_kernels._numba_distances._lcss_numba import (
+            _sequence_cost_matrix,
+        )
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         _bounding_matrix = resolve_bounding_matrix(
@@ -204,8 +210,12 @@ class _LcssDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
         """
-        from sktime.dists_kernels._numba_distances._lcss_numba import _sequence_cost_matrix
-        from sktime.dists_kernels._numba_distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances._lcss_numba import (
+            _sequence_cost_matrix,
+        )
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         _bounding_matrix = resolve_bounding_matrix(

@@ -2027,7 +2027,10 @@ def distance_factory(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
     """
-    from sktime.dists_kernels._numba_distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
+    from sktime.dists_kernels._numba_distances._numba_utils import (
+        _numba_to_timeseries,
+        to_numba_timeseries,
+    )
     from sktime.utils.numba.njit import njit
 
     if x is None:
@@ -2294,7 +2297,10 @@ def distance_alignment_path_factory(
     Callable[[np.ndarray, np.ndarray], Union[np.ndarray, np.ndarray]]
         Callable for the distance path.
     """
-    from sktime.dists_kernels._numba_distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
+    from sktime.dists_kernels._numba_distances._numba_utils import (
+        _numba_to_timeseries,
+        to_numba_timeseries,
+    )
     from sktime.utils.numba.njit import njit
 
     if x is None:

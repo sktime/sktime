@@ -99,14 +99,22 @@ class _DdtwDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If the compute derivative callable is not no_python compiled.
         """
-        from sktime.dists_kernels._numba_distances._distance_alignment_paths import compute_min_return_path
+        from sktime.dists_kernels._numba_distances._distance_alignment_paths import (
+            compute_min_return_path,
+        )
         from sktime.dists_kernels._numba_distances._dtw_numba import _cost_matrix
-        from sktime.dists_kernels._numba_distances._numba_utils import is_no_python_compiled_callable
-        from sktime.dists_kernels._numba_distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances._numba_utils import (
+            is_no_python_compiled_callable,
+        )
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         if compute_derivative is None:
-            from sktime.dists_kernels._numba_distances._ddtw_numba import average_of_slope
+            from sktime.dists_kernels._numba_distances._ddtw_numba import (
+                average_of_slope,
+            )
 
             compute_derivative = average_of_slope
 
@@ -203,12 +211,18 @@ class _DdtwDistance(NumbaDistance):
             If the compute derivative callable is not no_python compiled.
         """
         from sktime.dists_kernels._numba_distances._dtw_numba import _cost_matrix
-        from sktime.dists_kernels._numba_distances._numba_utils import is_no_python_compiled_callable
-        from sktime.dists_kernels._numba_distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances._numba_utils import (
+            is_no_python_compiled_callable,
+        )
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         if compute_derivative is None:
-            from sktime.dists_kernels._numba_distances._ddtw_numba import average_of_slope
+            from sktime.dists_kernels._numba_distances._ddtw_numba import (
+                average_of_slope,
+            )
 
             compute_derivative = average_of_slope
 
