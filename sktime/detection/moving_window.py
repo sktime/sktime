@@ -160,7 +160,7 @@ class MovingWindow(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.detection._moving_window import MovingWindow
+    >>> from sktime.detection.moving_window import MovingWindow
     >>> import numpy as np
     >>> X = np.concatenate([np.zeros(100), 10*np.ones(100), np.zeros(100)])
     >>> det = MovingWindow(bandwidth=20, penalty=20)
@@ -274,8 +274,8 @@ class MovingWindow(BaseDetector):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sktime.detection._costs._gaussian_cost import GaussianCost
-        from sktime.detection._costs._l2_cost import L2Cost
+        from sktime.detection.costs._gaussian_cost import GaussianCost
+        from sktime.detection.costs._l2_cost import L2Cost
 
         return [
             {"change_score": L2Cost(), "bandwidth": 5, "penalty": 20},

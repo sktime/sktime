@@ -7,10 +7,10 @@ import pandas as pd
 import pytest
 
 from sktime.detection._anomaly_scores._l2_saving import L2Saving
-from sktime.detection._capa import CAPA
 from sktime.detection._change_scores._from_cost import ChangeScore
 from sktime.detection._compose import PenalisedScore
-from sktime.detection._costs import L1Cost, L2Cost, MultivariateGaussianCost
+from sktime.detection.capa import CAPA
+from sktime.detection.costs import L1Cost, L2Cost, MultivariateGaussianCost
 from sktime.tests.test_switch import run_test_module_changed
 
 

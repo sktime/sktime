@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.detection._capa import CAPA
-from sktime.detection._circular_binseg import CircularBinarySegmentation
-from sktime.detection._moving_window import MovingWindow
-from sktime.detection._stat_threshold_anomaliser import StatThresholdAnomaliser
+from sktime.detection.capa import CAPA
+from sktime.detection.circular_binseg import CircularBinarySegmentation
+from sktime.detection.moving_window import MovingWindow
+from sktime.detection.stat_threshold import StatThresholdAnomaliser
 from sktime.tests.test_switch import run_test_module_changed
 
 SEGMENT_ANOMALY_DETECTORS = [

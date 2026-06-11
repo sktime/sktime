@@ -6,13 +6,13 @@ __author__ = ["johannvk"]
 
 import numpy as np
 
-from sktime.detection._costs._base import BaseCost
 from sktime.detection._utils import (
     MeanType,
     VarType,
     check_mean,
     check_non_negative_parameter,
 )
+from sktime.detection.costs._base import BaseCost
 
 
 def _laplace_log_likelihood(centered_X, scales):

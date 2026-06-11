@@ -198,7 +198,7 @@ class SeededBinarySegmentation(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.detection._seeded_binseg import SeededBinarySegmentation
+    >>> from sktime.detection.seeded_binseg import SeededBinarySegmentation
     >>> import numpy as np
     >>> X = np.concatenate([np.zeros(100), 10*np.ones(100), np.zeros(100)])
     >>> det = SeededBinarySegmentation(penalty=30)
@@ -280,7 +280,7 @@ class SeededBinarySegmentation(BaseDetector):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sktime.detection._costs._l2_cost import L2Cost
+        from sktime.detection.costs._l2_cost import L2Cost
 
         return [
             {"change_score": L2Cost(), "max_interval_length": 100, "penalty": 30},

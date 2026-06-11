@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 
 from sktime.detection._change_scores._from_cost import ChangeScore
-from sktime.detection._circular_binseg import CircularBinarySegmentation
-from sktime.detection._costs import L2Cost
+from sktime.detection.circular_binseg import CircularBinarySegmentation
+from sktime.detection.costs import L2Cost
 from sktime.tests.test_switch import run_test_module_changed
 
 

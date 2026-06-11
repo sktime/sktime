@@ -11,13 +11,13 @@ import numpy as np
 import pandas as pd
 
 from sktime.detection._formatters import format_changepoints
-from sktime.detection._pelt import (
+from sktime.detection._utils import as_2d_array, check_data, check_interval_scorer
+from sktime.detection.base import BaseDetector
+from sktime.detection.pelt import (
     _run_pelt,
     _run_pelt_min_segment_length_one,
     _run_pelt_with_step_size,
 )
-from sktime.detection._utils import as_2d_array, check_data, check_interval_scorer
-from sktime.detection.base import BaseDetector
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -179,8 +179,8 @@ class CROPS(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.detection._crops import CROPS
-    >>> from sktime.detection._costs._l2_cost import L2Cost
+    >>> from sktime.detection.crops import CROPS
+    >>> from sktime.detection.costs._l2_cost import L2Cost
     >>> import numpy as np
     >>> X = np.concatenate([np.zeros(50), 10*np.ones(50)])
     >>> det = CROPS(cost=L2Cost(), min_penalty=0.5, max_penalty=50.0)
@@ -371,7 +371,7 @@ class CROPS(BaseDetector):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sktime.detection._costs._l2_cost import L2Cost
+        from sktime.detection.costs._l2_cost import L2Cost
 
         return [
             {

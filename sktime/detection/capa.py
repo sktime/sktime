@@ -299,7 +299,7 @@ class CAPA(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.detection import CAPA
+    >>> from sktime.detection.capa import CAPA
     >>> import numpy as np, pandas as pd
     >>> rng = np.random.default_rng(42)
     >>> X = pd.DataFrame(rng.standard_normal((200, 1)))
