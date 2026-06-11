@@ -137,7 +137,7 @@ def test_mixed_algebra_dunders(X1, X2):
 )
 def test_pw_trafo_pipeline_mul_dunder(X1, X2):
     """Tests creation of pairwise panel trafo pipelines using mul dunder."""
-    from sktime.transformations.series.exponent import ExponentTransformer
+    from sktime.transformations.exponent import ExponentTransformer
 
     t3 = EditDist()
     t1 = ExponentTransformer(2)

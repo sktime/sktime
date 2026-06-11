@@ -72,7 +72,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.param_est.plugin import PluginParamsForecaster
     >>> from sktime.param_est.seasonality import SeasonalityACF
-    >>> from sktime.transformations.series.difference import Differencer
+    >>> from sktime.transformations.difference import Differencer
     >>>
     >>> y = load_airline()  # doctest: +SKIP
     >>>

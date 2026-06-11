@@ -33,7 +33,7 @@ def test_seasonality_acf():
 )
 def test_seasonality_acf_pipeline():
     """Test SeasonalityACF pipeline on airline data."""
-    from sktime.transformations.series.difference import Differencer
+    from sktime.transformations.difference import Differencer
 
     X = load_airline()
     sp_est = Differencer() * SeasonalityACF()

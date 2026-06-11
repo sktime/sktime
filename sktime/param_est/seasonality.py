@@ -74,7 +74,7 @@ class SeasonalityACF(BaseParamFitter):
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACF
-    >>> from sktime.transformations.series.difference import Differencer
+    >>> from sktime.transformations.difference import Differencer
     >>>
     >>> X = load_airline()  # doctest: +SKIP
     >>> sp_est = Differencer() * SeasonalityACF()  # doctest: +SKIP

@@ -11,7 +11,7 @@ import numpy as np
 
 from sktime.classification.base import BaseClassifier
 from sktime.classification.sklearn import RotationForest
-from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
+from sktime.transformations.tsfresh import TSFreshFeatureExtractor
 from sktime.utils.validation.panel import check_X_y
 
 

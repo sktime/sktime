@@ -21,7 +21,7 @@ from queue import PriorityQueue
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.series.clasp import ClaSPTransformer
+from sktime.transformations.clasp import ClaSPTransformer
 from sktime.utils.validation.series import check_series
 
 
