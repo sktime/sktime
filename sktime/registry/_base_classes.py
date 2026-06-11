@@ -1,54 +1,28 @@
 """Register of estimator base classes corresponding to sktime scitypes.
 
-This module exports the following:
+To add a new base class to the register,
+define a new class inheriting from ``_BaseScitypeOfObject``, fill in the tags below,
+and implement the methods below.
 
----
+Tags to fill in:
 
-BASE_CLASS_REGISTER - list of tuples
+* ``scitype_name`` : scitype shorthand string. IMPORTANT: this will be used
+  across the codebase as a unique identifier.
+* ``short_descr`` : short English description of the scitype
+* ``parent_scitype`` : parent scitype shorthand string, for scitype inheritance.
+  IF not filled in, will inherit from ``object`` scitype.
+* ``mixin`` : whether this is a mixin scitype (True) or full scitype (False).
+  Only fill in with value ``True`` if used as a mixin class.
 
-each tuple corresponds to a base class, elements as follows:
-    0 : string - scitype shorthand
-    1 : type - the base class itself
-    2 : string - plain English description of the scitype
+Class methods to implement:
 
----
+* ``get_base_class`` : should return the base class corresponding to the scitype.
+  The base class should inherit from ``sktime.base.BaseObject``, or a subclass thereof.
+* ``get_test_class`` : should return the test class for the scitype.
+  This class should follow the pattern of ``TestAll[ScitypeName]s`` classes in
+  ``sktime``.
 
-TRANSFORMER_MIXIN_REGISTER - list of tuples
-
-each tuple corresponds to a transformer mixin, elements as follows:
-    0 : string - scitype shorthand
-    1 : type - the transformer mixin itself
-    2 : string - plain English description of the scitype
-
----
-
-BASE_CLASS_SCITYPE_LIST - list of string
-    elements are 0-th entries of BASE_CLASS_REGISTER, in same order
-
----
-
-BASE_CLASS_LIST - list of classes
-    elements are 1-st entries of BASE_CLASS_REGISTER, in same order
-
----
-
-BASE_CLASS_LOOKUP - dictionary
-    keys/entries are 0/1-th entries of BASE_CLASS_REGISTER
-
----
-
-TRANSFORMER_MIXIN_SCITYPE_LIST - list of string
-    elements are 0-th entries of TRANSFORMER_MIXIN_REGISTER, in same order
-
----
-
-TRANSFORMER_MIXIN_LIST - list of string
-    elements are 1-st entries of TRANSFORMER_MIXIN_REGISTER, in same order
-
----
-
-TRANSFORMER_MIXIN_LOOKUP - dictionary
-    keys/entries are 0/1-th entries of TRANSFORMER_MIXIN_REGISTER
+For examples, see below, and follow the pattern to add new scitypes.
 """
 
 import inspect
@@ -76,7 +50,15 @@ class _BaseScitypeOfObject(BaseObject):
 
 
 class object(_BaseScitypeOfObject):
-    """Universal type for all objects."""
+    """Universal type for all objects in sktime.
+
+    All objects in sktime, including estimators, datasets, and metrics,
+    inherit from the base class documented here.
+
+    Base class: :class:`sktime.base.BaseObject`
+
+    Tutorial: :ref:`/examples/00_sktime_intro.ipynb`
+    """
 
     _tags = {
         "scitype_name": "object",
@@ -97,7 +79,15 @@ class object(_BaseScitypeOfObject):
 
 
 class estimator(_BaseScitypeOfObject):
-    """Estimator objects, i.e., objects with fit method."""
+    """Estimator objects, i.e., objects with fit method.
+
+    Estimators are objects that can be "fitted" to data. They implement
+    a ``fit`` method and store the results of the fitting process.
+
+    Base class: :class:`sktime.base.BaseEstimator`
+
+    Tutorial: :ref:`/examples/00_sktime_intro.ipynb`
+    """
 
     _tags = {
         "scitype_name": "estimator",
@@ -119,7 +109,15 @@ class estimator(_BaseScitypeOfObject):
 
 
 class aligner(_BaseScitypeOfObject):
-    """Time series aligner or sequence aligner."""
+    """Time series aligner or sequence aligner.
+
+    Aligners are objects that can align two or more time series or sequences,
+    typically by finding a mapping between their time indices or elements.
+
+    Base class: :class:`sktime.alignment.base.BaseAligner`
+
+    Tutorial: :ref:`/examples/06_distances_kernels_alignment.ipynb`
+    """
 
     _tags = {
         "scitype_name": "aligner",
@@ -141,7 +139,15 @@ class aligner(_BaseScitypeOfObject):
 
 
 class classifier(_BaseScitypeOfObject):
-    """Time series classifier."""
+    """Time series classifier.
+
+    Classifiers are estimators that can predict a categorical target
+    from one or more time series.
+
+    Base class: :class:`sktime.classification.base.BaseClassifier`
+
+    Tutorial: :ref:`/examples/02_classification.ipynb`
+    """
 
     _tags = {
         "scitype_name": "classifier",
@@ -163,7 +169,15 @@ class classifier(_BaseScitypeOfObject):
 
 
 class clusterer(_BaseScitypeOfObject):
-    """Time series clusterer."""
+    """Time series clusterer.
+
+    Clusterers are estimators that can group one or more time series
+    into clusters based on some measure of similarity.
+
+    Base class: :class:`sktime.clustering.base.BaseClusterer`
+
+    Tutorial: :ref:`/examples/clustering/partition_based_clustering.ipynb`
+    """
 
     _tags = {
         "scitype_name": "clusterer",
@@ -209,7 +223,15 @@ class early_classifier(_BaseScitypeOfObject):
 
 
 class forecaster(_BaseScitypeOfObject):
-    """Time series forecaster."""
+    """Time series forecaster.
+
+    Forecasters are estimators that can predict future values of a
+    time series from its past values and potentially other information.
+
+    Base class: :class:`sktime.forecasting.base.BaseForecaster`
+
+    Tutorial: :ref:`/examples/01_forecasting.ipynb`
+    """
 
     _tags = {
         "scitype_name": "forecaster",
@@ -228,30 +250,6 @@ class forecaster(_BaseScitypeOfObject):
         from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
 
         return TestAllForecasters
-
-
-class global_forecaster(_BaseScitypeOfObject):
-    """Global time series forecaster."""
-
-    _tags = {
-        "scitype_name": "global_forecaster",
-        "short_descr": "global time series forecaster",
-        "parent_scitype": "forecaster",
-    }
-
-    @classmethod
-    def get_base_class(cls):
-        from sktime.forecasting.base import _BaseGlobalForecaster
-
-        return _BaseGlobalForecaster
-
-    @classmethod
-    def get_test_class(cls):
-        from sktime.forecasting.tests.test_all_forecasters import (
-            TestAllGlobalForecasters,
-        )
-
-        return TestAllGlobalForecasters
 
 
 class metric(_BaseScitypeOfObject):
@@ -377,7 +375,13 @@ class param_est(_BaseScitypeOfObject):
 
 
 class regressor(_BaseScitypeOfObject):
-    """Time series regressor."""
+    """Time series regressor.
+
+    Regressors are estimators that can predict a continuous target
+    from one or more time series.
+
+    Base class: :class:`sktime.regression.base.BaseRegressor`
+    """
 
     _tags = {
         "scitype_name": "regressor",
@@ -399,7 +403,15 @@ class regressor(_BaseScitypeOfObject):
 
 
 class detector(_BaseScitypeOfObject):
-    """Detector of anomalies, outliers, or change points."""
+    """Detector of anomalies, outliers, or change points.
+
+    Detectors are estimators that can identify unusual patterns,
+    outliers, or structural changes in one or more time series.
+
+    Base class: :class:`sktime.detection.base.BaseDetector`
+
+    Tutorial: :ref:`/examples/07_detection_anomaly_changepoints.ipynb`
+    """
 
     _tags = {
         "scitype_name": "detector",
@@ -443,7 +455,16 @@ class splitter(_BaseScitypeOfObject):
 
 
 class transformer(_BaseScitypeOfObject):
-    """Time series transformer."""
+    """Time series transformer.
+
+    Transformers are estimators that can transform one or more time series
+    into a different representation, such as a feature vector or another
+    time series.
+
+    Base class: :class:`sktime.transformations.base.BaseTransformer`
+
+    Tutorial: :ref:`/examples/03_transformers.ipynb`
+    """
 
     _tags = {
         "scitype_name": "transformer",
@@ -576,6 +597,30 @@ class dataset_regression(_BaseScitypeOfObject):
         from sktime.datasets.regression._base import BaseRegressionDataset
 
         return BaseRegressionDataset
+
+
+class catalogue(_BaseScitypeOfObject):
+    """Catalogue of objects."""
+
+    _tags = {
+        "scitype_name": "catalogue",
+        "short_descr": "catalogue of datasets, estimators, cv splitters, and metrics.",
+        "parent_scitype": "object",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.catalogues.base import BaseCatalogue
+
+        return BaseCatalogue
+
+    @classmethod
+    def get_test_class(cls):
+        from sktime.catalogues.tests.test_all_catalogues import (
+            TestAllCatalogues,
+        )
+
+        return TestAllCatalogues
 
 
 class reconciler(_BaseScitypeOfObject):

@@ -35,16 +35,16 @@ Composition
 Change Point Detection
 ----------------------
 
-.. currentmodule:: sktime.detection.skchange_cp
+.. currentmodule:: sktime.detection
 
 .. autosummary::
-    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-        moving_window.MovingWindow
-        pelt.PELT
-        seeded_binseg.SeededBinarySegmentation
+    CROPS
+    MovingWindow
+    PELT
+    SeededBinarySegmentation
 
 Naive Baselines
 ^^^^^^^^^^^^^^^
@@ -74,6 +74,35 @@ Window-based Anomaly Detection
     :template: class.rst
 
     SubLOF
+
+.. currentmodule:: sktime.detection.hampel
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HampelDetector
+
+Foundation Models for Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Anomaly detection using foundational models.
+
+.. currentmodule:: sktime.detection.momentfm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MomentFMAnomalyDetector
+
+.. currentmodule:: sktime.detection.tspulse
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSPulseAnomalyDetector
 
 Reduction to Tabular Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -111,16 +140,22 @@ Time Series Segment Anomaly Detection
 
 Segment anomaly detectors identify anomalous segment.
 
-.. currentmodule:: sktime.detection.skchange_aseg
+.. currentmodule:: sktime.detection
 
 .. autosummary::
-    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    statthreshold.StatThresholdAnomaliser
-    circular_binseg.CircularBinarySegmentation
-    capa.CAPA
+    CAPA
+    CircularBinarySegmentation
+    StatThresholdAnomaliser
+
+.. currentmodule:: sktime.detection.skchange_aseg
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
     mvcapa.MVCAPA
 
 Naive Baselines

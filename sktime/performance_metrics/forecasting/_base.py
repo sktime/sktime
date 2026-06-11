@@ -96,7 +96,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         "scitype:y_pred": "pred",  # point forecasts
         "requires-y-train": False,
         "requires-y-pred-benchmark": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "lower_is_better": True,
         # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
         "inner_implements_multilevel": False,
@@ -831,8 +831,8 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
     """Adapter for numpy metrics."""
 
     # all descendants should have a func class attribute
-    #   of signature func(y_true: np.ndarray, y_pred: np.darray, multioutput: bool)
-    #   additional optional args: y_train: np.darray, y_pred_benchmark: np.darray
+    #   of signature func(y_true: np.ndarray, y_pred: np.ndarray, multioutput: bool)
+    #   additional optional args: y_train: np.ndarray, y_pred_benchmark: np.ndarray
     #                       further args that are parameters
     #       all np.ndarray should be 2D
     # func should return 1D np.ndarray if multioutput="raw_values", otherwise float
@@ -973,7 +973,7 @@ class _ScaledMetricTags:
     _tags = {
         "requires-y-train": True,
         "requires-y-pred-benchmark": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
     }
 
 

@@ -25,7 +25,7 @@ from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
-from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
+from sktime.transformations.summarize import DerivativeSlopeTransformer
 
 
 class ElasticEnsemble(BaseClassifier):
@@ -96,6 +96,8 @@ class ElasticEnsemble(BaseClassifier):
         # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "distance",
     }
 

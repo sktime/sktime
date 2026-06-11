@@ -11,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.series.summarize import SummaryTransformer
+from sktime.transformations.summarize import SummaryTransformer
 
 
 class SummaryClassifier(BaseClassifier):
@@ -72,6 +72,8 @@ class SummaryClassifier(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "deterministic",
         "classifier_type": "feature",
     }
 

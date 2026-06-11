@@ -74,7 +74,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.transformations.pca import PCATransformer
     >>> from sktime.clustering.k_means import TimeSeriesKMeans
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.clustering.compose import ClustererPipeline
@@ -122,8 +122,8 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
 
         # can handle multivariate iff: both clusterer and all transformers can
         multivariate = clusterer.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both clusterer and all transformers can,
         #   *or* transformer chain removes missing data
@@ -334,7 +334,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         # imports
         from sktime.clustering.dbscan import TimeSeriesDBSCAN
         from sktime.clustering.k_means import TimeSeriesKMeans
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.exponent import ExponentTransformer
         from sktime.utils.dependencies import _check_estimator_deps
 
         params = []
@@ -425,8 +425,8 @@ class SklearnClustererPipeline(ClustererPipeline):
     Examples
     --------
     >>> from sklearn.cluster import KMeans
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
+    >>> from sktime.transformations.summarize import SummaryTransformer
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.clustering.compose import SklearnClustererPipeline
     >>> X_train, y_train = load_unit_test(split="train")
@@ -466,7 +466,7 @@ class SklearnClustererPipeline(ClustererPipeline):
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate
-        multivariate = not self.transformers_.get_tag("univariate-only", True)
+        multivariate = self.transformers_.get_tag("capability:multivariate", False)
         # can handle missing values iff transformer chain removes missing data
         # sklearn clusterers might be able to handle missing data (but no tag there)
         # so better set the tag liberally
@@ -660,8 +660,8 @@ class SklearnClustererPipeline(ClustererPipeline):
         """
         from sklearn.cluster import KMeans
 
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.transformations.series.summarize import SummaryTransformer
+        from sktime.transformations.exponent import ExponentTransformer
+        from sktime.transformations.summarize import SummaryTransformer
 
         # example with series-to-series transformer before sklearn clusterer
         t1 = ExponentTransformer(power=2)

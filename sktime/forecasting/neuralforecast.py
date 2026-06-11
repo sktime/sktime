@@ -2,7 +2,6 @@
 """Interfaces to estimators from neuralforecast by Nixtla."""
 
 import functools
-from typing import Optional, Union
 
 from sktime.forecasting.base.adapters._neuralforecast import (
     _SUPPORTED_LOCAL_SCALAR_TYPES,
@@ -178,15 +177,16 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
         self: "NeuralForecastRNN",
-        freq: Union[str, int] = "auto",
-        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
-        futr_exog_list: Optional[list[str]] = None,
+        freq: str | int = "auto",
+        local_scaler_type: _SUPPORTED_LOCAL_SCALAR_TYPES | None = None,
+        futr_exog_list: list[str] | None = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
         input_size: int = -1,
@@ -207,17 +207,17 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         early_stop_patience_steps: int = -1,
         val_check_steps: int = 100,
         batch_size=32,
-        valid_batch_size: Optional[int] = None,
+        valid_batch_size: int | None = None,
         scaler_type: str = "robust",
         random_seed=1,
         num_workers_loader=0,
         drop_last_loader=False,
-        trainer_kwargs: Optional[dict] = None,
+        trainer_kwargs: dict | None = None,
         optimizer=None,
-        optimizer_kwargs: Optional[dict] = None,
+        optimizer_kwargs: dict | None = None,
         broadcasting: bool = False,
         lr_scheduler=None,
-        lr_scheduler_kwargs: Optional[dict] = None,
+        lr_scheduler_kwargs: dict | None = None,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -257,6 +257,18 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             broadcasting=broadcasting,
         )
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
         # initiate internal variables to avoid AttributeError in future
         self._trainer_kwargs = None
         self._loss = None
@@ -303,7 +315,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "encoder_n_layers": self.encoder_n_layers,
             "encoder_hidden_size": self.encoder_hidden_size,
@@ -355,10 +369,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",
@@ -571,15 +584,16 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
         self: "NeuralForecastLSTM",
-        freq: Union[str, int] = "auto",
-        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
-        futr_exog_list: Optional[list[str]] = None,
+        freq: str | int = "auto",
+        local_scaler_type: _SUPPORTED_LOCAL_SCALAR_TYPES | None = None,
+        futr_exog_list: list[str] | None = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
         input_size: int = -1,
@@ -599,17 +613,17 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         early_stop_patience_steps: int = -1,
         val_check_steps: int = 100,
         batch_size=32,
-        valid_batch_size: Optional[int] = None,
+        valid_batch_size: int | None = None,
         scaler_type: str = "robust",
         random_seed=1,
         num_workers_loader=0,
         drop_last_loader=False,
-        trainer_kwargs: Optional[dict] = None,
+        trainer_kwargs: dict | None = None,
         optimizer=None,
-        optimizer_kwargs: Optional[dict] = None,
+        optimizer_kwargs: dict | None = None,
         broadcasting: bool = False,
         lr_scheduler=None,
-        lr_scheduler_kwargs: Optional[dict] = None,
+        lr_scheduler_kwargs: dict | None = None,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -693,7 +707,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "encoder_n_layers": self.encoder_n_layers,
             "encoder_hidden_size": self.encoder_hidden_size,
@@ -740,10 +756,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         """
         del parameter_set
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",
@@ -961,15 +976,16 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
         self: "NeuralForecastGRU",
-        freq: Union[str, int] = "auto",
-        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
-        futr_exog_list: Optional[list[str]] = None,
+        freq: str | int = "auto",
+        local_scaler_type: _SUPPORTED_LOCAL_SCALAR_TYPES | None = None,
+        futr_exog_list: list[str] | None = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
         input_size: int = -1,
@@ -989,16 +1005,16 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         early_stop_patience_steps: int = -1,
         val_check_steps: int = 100,
         batch_size=32,
-        valid_batch_size: Optional[int] = None,
+        valid_batch_size: int | None = None,
         scaler_type: str = "robust",
         random_seed=1,
         num_workers_loader=0,
         drop_last_loader=False,
         optimizer=None,
-        optimizer_kwargs: Optional[dict] = None,
+        optimizer_kwargs: dict | None = None,
         lr_scheduler=None,
-        lr_scheduler_kwargs: Optional[dict] = None,
-        trainer_kwargs: Optional[dict] = None,
+        lr_scheduler_kwargs: dict | None = None,
+        trainer_kwargs: dict | None = None,
         broadcasting: bool = False,
     ):
         self.input_size = input_size
@@ -1084,7 +1100,9 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "encoder_n_layers": self.encoder_n_layers,
             "encoder_hidden_size": self.encoder_hidden_size,
@@ -1135,10 +1153,9 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",
@@ -1362,21 +1379,22 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
         self: "NeuralForecastDilatedRNN",
-        freq: Union[str, int] = "auto",
-        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
-        futr_exog_list: Optional[list[str]] = None,
+        freq: str | int = "auto",
+        local_scaler_type: _SUPPORTED_LOCAL_SCALAR_TYPES | None = None,
+        futr_exog_list: list[str] | None = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
         input_size: int = -1,
         inference_input_size: int = -1,
         cell_type: str = "LSTM",
-        dilations: Optional[list[list[int]]] = None,
+        dilations: list[list[int]] | None = None,
         encoder_hidden_size: int = 200,
         context_size: int = 10,
         decoder_hidden_size: int = 200,
@@ -1389,18 +1407,18 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         early_stop_patience_steps: int = -1,
         val_check_steps: int = 100,
         batch_size=32,
-        valid_batch_size: Optional[int] = None,
+        valid_batch_size: int | None = None,
         step_size: int = 1,
         scaler_type: str = "robust",
         random_seed: int = 1,
         num_workers_loader: int = 0,
         drop_last_loader: bool = False,
         optimizer=None,
-        optimizer_kwargs: Optional[dict] = None,
+        optimizer_kwargs: dict | None = None,
         lr_scheduler=None,
-        lr_scheduler_kwargs: Optional[dict] = None,
+        lr_scheduler_kwargs: dict | None = None,
         broadcasting: bool = False,
-        trainer_kwargs: Optional[dict] = None,
+        trainer_kwargs: dict | None = None,
     ):
         self.input_size = input_size
         self.inference_input_size = inference_input_size
@@ -1488,7 +1506,9 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "cell_type": self.cell_type,
             "dilations": self._dilations,
@@ -1539,10 +1559,9 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",
@@ -1761,21 +1780,22 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
     }
 
     def __init__(
         self: "NeuralForecastTCN",
-        freq: Union[str, int] = "auto",
-        local_scaler_type: Optional[_SUPPORTED_LOCAL_SCALAR_TYPES] = None,
-        futr_exog_list: Optional[list[str]] = None,
+        freq: str | int = "auto",
+        local_scaler_type: _SUPPORTED_LOCAL_SCALAR_TYPES | None = None,
+        futr_exog_list: list[str] | None = None,
         verbose_fit: bool = False,
         verbose_predict: bool = False,
         input_size: int = -1,
         inference_input_size: int = -1,
         kernel_size: int = 2,
-        dilations: Optional[list[int]] = None,
+        dilations: list[int] | None = None,
         encoder_hidden_size: int = 200,
         encoder_activation: str = "ReLU",
         context_size: int = 10,
@@ -1789,16 +1809,16 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         early_stop_patience_steps: int = -1,
         val_check_steps: int = 100,
         batch_size: int = 32,
-        valid_batch_size: Optional[int] = None,
+        valid_batch_size: int | None = None,
         scaler_type: str = "robust",
         random_seed: int = 1,
         num_workers_loader=0,
         drop_last_loader=False,
         optimizer=None,
-        optimizer_kwargs: Optional[dict] = None,
+        optimizer_kwargs: dict | None = None,
         lr_scheduler=None,
-        lr_scheduler_kwargs: Optional[dict] = None,
-        trainer_kwargs: Optional[dict] = None,
+        lr_scheduler_kwargs: dict | None = None,
+        trainer_kwargs: dict | None = None,
         broadcasting: bool = False,
     ):
         self.input_size = input_size
@@ -1887,7 +1907,9 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "kernel_size": self.kernel_size,
             "dilations": self._dilations,
@@ -1938,10 +1960,9 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",

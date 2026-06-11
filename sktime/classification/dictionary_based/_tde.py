@@ -18,7 +18,7 @@ from sklearn.kernel_ridge import KernelRidge
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFA
+from sktime.transformations.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X_y
 from sktime.utils.warnings import warn
 
@@ -34,12 +34,14 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     regressor, evaluating each with a LOOCV. It then retains "s"
     ensemble members.
     There are six primary parameters for individual classifiers:
-            - alpha: alphabet size
-            - w: window length
-            - l: word length
-            - p: normalise/no normalise
-            - h: levels
-            - b: MCB/IGB
+
+    - alpha: alphabet size
+    - w: window length
+    - l: word length
+    - p: normalise/no normalise
+    - h: levels
+    - b: MCB/IGB
+
     For any combination, an individual TDE classifier slides a window of
     length w along the series. The w length window is shortened to
     an l length word through taking a Fourier transform and keeping the
@@ -157,6 +159,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "dictionary",
     }
 
@@ -693,6 +697,8 @@ class IndividualTDE(BaseClassifier):
         # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(

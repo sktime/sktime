@@ -15,7 +15,7 @@
 
 import abc
 from collections.abc import Callable
-from typing import Any, Optional, TypeVar
+from typing import Any, TypeVar
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -135,7 +135,7 @@ class AffineTransformed(TransformedDistribution):
         base_dist,
         loc,
         scale,
-        validate_args: Optional[bool] = None,
+        validate_args: bool | None = None,
     ):
         self.loc = loc if loc is not None else 0.0
         self.scale = scale if scale is not None else 1.0
@@ -163,7 +163,7 @@ class DistributionOutput:
         distr_params,
         loc,
         scale,
-        validate_args: Optional[bool] = None,
+        validate_args: bool | None = None,
     ):
         distr = self._distribution(distr_params, validate_args=validate_args)
         if loc is not None or scale is not None:
@@ -173,7 +173,7 @@ class DistributionOutput:
     def _distribution(
         self,
         distr_params,
-        validate_args: Optional[bool] = None,
+        validate_args: bool | None = None,
     ):
         return self.distr_cls(**distr_params, validate_args=validate_args)
 

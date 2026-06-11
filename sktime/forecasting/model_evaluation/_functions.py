@@ -5,10 +5,10 @@
 __author__ = ["aiwalter", "mloning", "fkiraly", "topher-lo", "hazrulakmal"]
 __all__ = ["evaluate"]
 
+import collections.abc
 import time
 import warnings
 from copy import deepcopy
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -282,7 +282,16 @@ def _evaluate_window(x, meta):
                 temp_result[result_key] = [score]
 
         # get cutoff
-        cutoff = forecaster.cutoff
+        if global_mode:
+            # in global mode, cutoff should reflect y_hist (per-fold history),
+            # not the global y_train which may span more timepoints
+            if isinstance(y_hist.index, pd.MultiIndex):
+                last_time = y_hist.index.get_level_values(-1).max()
+            else:
+                last_time = y_hist.index[-1]
+            cutoff = pd.Index([last_time])
+        else:
+            cutoff = forecaster.cutoff
 
     except Exception as e:
         if error_score == "raise":
@@ -413,12 +422,12 @@ def evaluate(
     y,
     X=None,
     strategy: str = "refit",
-    scoring: Optional[Union[callable, list[callable]]] = None,
+    scoring: collections.abc.Callable | list[collections.abc.Callable] | None = None,
     return_data: bool = False,
-    error_score: Union[str, int, float] = np.nan,
-    backend: Optional[str] = None,
+    error_score: str | int | float = np.nan,
+    backend: str | None = None,
     cv_X=None,
-    backend_params: Optional[dict] = None,
+    backend_params: dict | None = None,
     return_model: bool = False,
     cv_global=None,
     cv_global_temporal=None,
@@ -441,7 +450,7 @@ def evaluate(
     1. Initialize the counter to ``i = 1``
     2. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
        with ``fh`` set to the absolute indices of :math:`y_{test, 1}`.
-    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
+    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogenous
         data :math:`X_{test, i}`. Predictions are made using either ``predict``,
         ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
     4. Compute the ``scoring`` function on ``y_pred`` versus :math:`y_{test, i}`
@@ -476,7 +485,7 @@ def evaluate(
     1. Initialize the counter to ``i = 1``
     2. Fit the ``forecaster`` to :math:`y_{train, i}`, :math:`X_{train, 1i`,
        with ``fh`` set to the absolute indices of :math:`y_{true, i}`.
-    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
+    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogenous
         data :math:`X_{true, i}` and the historical values :math:`y{hist, i}`.
         Predictions are made using either ``predict``,
         ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
@@ -499,20 +508,28 @@ def evaluate(
     ----------
     forecaster : sktime BaseForecaster descendant (concrete forecaster)
         sktime forecaster to benchmark
+
     cv : sktime BaseSplitter descendant
         determines split of ``y`` and possibly ``X`` into test and train folds
         y is always split according to ``cv``, see above
-        if ``cv_X`` is not passed, ``X`` splits are subset to ``loc`` equal to ``y``
-        if ``cv_X`` is passed, ``X`` is split according to ``cv_X``
+
+        * if ``cv_X`` is not passed, ``X`` splits are subset to ``loc`` equal to ``y``
+        * if ``cv_X`` is passed, ``X`` is split according to ``cv_X``
+
     y : sktime time series container
         Target (endogeneous) time series used in the evaluation experiment
     X : sktime time series container, of same mtype as y
         Exogenous time series used in the evaluation experiment
+
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = forecaster is refitted to each training window
-        "update" = forecaster is updated with training window data, in sequence provided
-        "no-update_params" = fit to first training window, re-used without fit or update
+
+        * "refit" = forecaster is refitted to each training window
+        * "update" = forecaster is updated with training window data,
+          in sequence provided
+        * "no-update_params" = fit to first training window,
+          re-used without fit or update
+
     scoring : subclass of sktime.performance_metrics.BaseMetric or list of same,
         default=None. Used to get a score function that takes y_pred and y_test
         arguments and accept y_train as keyword argument.
@@ -596,6 +613,7 @@ def evaluate(
                 forecaster.fit(y=y_train, fh=cv.fh)
                 y_pred = forecaster.predict(y=y_past)
                 metric(y_true, y_pred)
+
         cv_global_temporal:  SingleWindowSplitter, default=None
             ignored if cv_global is None. If passed, it splits the Panel temporally
             before the instance split from cv_global is applied. This avoids

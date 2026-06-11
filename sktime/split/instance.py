@@ -8,7 +8,6 @@ __all__ = [
     "InstanceSplitter",
 ]
 
-from typing import Optional
 
 import pandas as pd
 
@@ -68,7 +67,7 @@ class InstanceSplitter(BaseSplitter):
             y_test_iloc = apply_split(y, y_test_inst_iloc)
             yield y_train_iloc, y_test_iloc
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
 
         This will always be equal to the number of splits

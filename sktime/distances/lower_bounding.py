@@ -4,7 +4,6 @@ __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["LowerBounding", "resolve_bounding_matrix"]
 
 from enum import Enum
-from typing import Union
 
 import numpy as np
 
@@ -84,8 +83,8 @@ class LowerBounding(Enum):
         self,
         x: np.ndarray,
         y: np.ndarray,
-        sakoe_chiba_window_radius: Union[float, None] = None,
-        itakura_max_slope: Union[float, int, None] = None,
+        sakoe_chiba_window_radius: float | None = None,
+        itakura_max_slope: float | int | None = None,
     ) -> np.ndarray:
         """Create a bounding matrix.
 
@@ -180,8 +179,8 @@ class LowerBounding(Enum):
 def resolve_bounding_matrix(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float | None = None,
+    itakura_max_slope: float | None = None,
     bounding_matrix: np.ndarray = None,
 ) -> np.ndarray:
     """Resolve the bounding matrix parameters.

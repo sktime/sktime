@@ -142,11 +142,11 @@ class MyTransformer(BaseTransformer):
         #   in that case, X/y are passed through without conversion if on the list
         #   if not on the list, converted to the first entry of the same scitype
         #
-        # univariate-only controls whether internal X can be univariate/multivariate
-        # if True (only univariate), always applies vectorization over variables
-        "univariate-only": False,
-        # valid values: True = inner _fit, _transform receive only univariate series
-        #   False = uni- and multivariate series are passed to inner methods
+        # capability:multivariate controls whether internal X can be multivariate
+        # if False (only univariate), always applies vectorization over variables
+        "capability:multivariate": True,
+        # valid values: False = inner _fit, _transform receive only univariate series
+        #   True = uni- and multivariate series are passed to inner methods
         #
         # requires_X = does X need to be passed in fit?
         "requires_X": True,
@@ -299,7 +299,37 @@ class MyTransformer(BaseTransformer):
         # leave this as is
         super().__init__()
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
+        # do not put anything else in __init__,
+        # use __dynamic_tags__ for dynamic tag setting
+        # use __post_init__ for any further initialization logic
+
+    # todo: add if there is dynamic tag setting logic, otherwise delete this method
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        # todo: if tags of estimator depend on component tags, set these here
+        #  typically only needed if estimator is a composite
+        #  tags set here apply to the instance, and override the class tags
+        #
+        # example 1: conditional setting of a tag based on parameter foo
+        # if self.foo == 42:
+        #   self.set_tags(**{"capability:missing_values": True})
+        # example 2: cloning tags from component estimator component_estimator
+        #   self.clone_tags(self.component_estimator, ["capability:missing_values"])
+
+    # todo: add any post-init logic here, otherwise delete this method
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        # todo: optional, parameter checking or coercion should happen here
         # if writes derived values to self, should *not* overwrite self.paramc etc
         # instead, write to self._paramc, self._newparam (starting with _)
         # example of handling conditional parameters or mutable defaults:
@@ -309,17 +339,7 @@ class MyTransformer(BaseTransformer):
             self._paramc = MyOtherEstimator(foo=42)
         else:
             # estimators should be cloned to avoid side effects
-            self._paramc = paramc.clone()
-
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
+            self._paramc = self.paramc.clone()
 
     # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):
@@ -400,6 +420,7 @@ class MyTransformer(BaseTransformer):
     # if not implementing, delete the _inverse_transform method
     # inverse transform exists only if transform does not change scitype
     #  i.e., Series transformed to Series
+    # delete for Series-to-Primitives or Series-to-Panel transformers
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
 

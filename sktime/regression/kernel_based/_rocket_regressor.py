@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 from sktime.pipeline import make_pipeline
 from sktime.regression._delegate import _DelegatedRegressor
 from sktime.regression.base import BaseRegressor
-from sktime.transformations.panel.rocket import (
+from sktime.transformations.rocket import (
     MiniRocket,
     MiniRocketMultivariate,
     MultiRocket,
@@ -115,6 +115,8 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     # valid rocket strings for input validity checking

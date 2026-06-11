@@ -28,6 +28,7 @@ import numpy as np
 
 from sktime.base import BasePanelMixin
 from sktime.datatypes import VectorizedDF
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
 
 
@@ -94,6 +95,24 @@ class BaseRegressor(BasePanelMixin):
 
         super().__init__()
 
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        pass
+
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
 
@@ -111,9 +130,9 @@ class BaseRegressor(BasePanelMixin):
         (last).
         """
         from sktime.regression.compose import RegressorPipeline
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
         # behaviour is implemented only if other inherits from BaseTransformer
         #  in that case, distinctions arise from whether self or other is a pipeline
@@ -202,6 +221,8 @@ class BaseRegressor(BasePanelMixin):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        _check_estimator_deps(self)
+
         self.reset()
 
         # fit timer start

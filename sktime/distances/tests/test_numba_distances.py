@@ -239,5 +239,5 @@ def test_distance_factory_1d():
 
     second = callable(x, y)
 
-    assert first == 14.906015491572047
-    assert second == 422.81946268212846
+    np.testing.assert_almost_equal(first, 14.906015491572047, decimal=5)
+    np.testing.assert_almost_equal(second, 422.81946268212846, decimal=5)

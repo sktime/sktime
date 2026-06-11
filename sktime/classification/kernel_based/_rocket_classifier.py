@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.classification._delegate import _DelegatedClassifier
 from sktime.pipeline import make_pipeline
-from sktime.transformations.panel.rocket import (
+from sktime.transformations.rocket import (
     MiniRocket,
     MiniRocketMultivariate,
     MultiRocket,
@@ -123,6 +123,8 @@ class RocketClassifier(_DelegatedClassifier):
         # --------------
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "kernel",
     }
 

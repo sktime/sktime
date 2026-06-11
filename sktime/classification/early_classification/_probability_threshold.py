@@ -20,8 +20,10 @@ from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
 
-# TODO: fix this in 0.39.0
-# base class should have been changed to BaseEarlyClassifier
+# TODO: fix in a future version (deferred from 0.41.0)
+# base class should be changed to BaseEarlyClassifier
+# this requires refactoring _predict/_predict_proba return types from
+# np.ndarray to tuple[np.ndarray, np.ndarray] to match BaseEarlyClassifier API
 class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     """Probability Threshold Early Classifier.
 
@@ -84,6 +86,8 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(

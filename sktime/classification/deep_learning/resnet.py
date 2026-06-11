@@ -1,6 +1,5 @@
 """Residual Network (ResNet) for classification."""
 
-__author__ = ["James-Large", "AurumnPegasus", "nilesh05apr"]
 __all__ = ["ResNetClassifier"]
 
 from copy import deepcopy
@@ -9,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.resnet import ResNetNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class ResNetClassifier(BaseDeepClassifier):
@@ -20,25 +18,31 @@ class ResNetClassifier(BaseDeepClassifier):
 
     Parameters
     ----------
-    n_epochs       : int, default = 1500
+    n_epochs : int, default = 1500
         the number of epochs to train the model
-    batch_size      : int, default = 16
+    batch_size : int, default = 16
         the number of samples per gradient update.
-    random_state    : int or None, default=None
+    callbacks : list of keras.callbacks.Callback, optional (default=None)
+        List of Keras callbacks to apply during model training.
+    random_state : int or None, default=None
         Seed for random number generation.
-    verbose         : boolean, default = False
+    verbose : boolean, default = False
         whether to output extra information
-    loss            : string, default="mean_squared_error"
+    loss : string, default="mean_squared_error"
         fit parameter for the keras model
-    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
-    metrics         : list of strings, default=["accuracy"],
-    activation      : string or a tf callable, default="sigmoid"
-        Activation function used in the output linear layer.
+    optimizer : keras.optimizer, default=keras.optimizers.Adam(),
+    metrics : list of strings, default=["accuracy"],
+    activation : string or a tf callable, default="sigmoid"
+        Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
-    use_bias        : boolean, default = True
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    use_bias : boolean, default = True
         whether the layer uses a bias vector.
-    optimizer       : keras.optimizers object, default = Adam(lr=0.01)
+    optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
 
     References
@@ -60,7 +64,7 @@ class ResNetClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr"],
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
         # hfawaz for dl-4-tsc
         "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],
@@ -84,11 +88,10 @@ class ResNetClassifier(BaseDeepClassifier):
         batch_size=16,
         random_state=None,
         activation="sigmoid",
+        activation_hidden="relu",
         use_bias=True,
         optimizer=None,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.n_epochs = n_epochs
         self.callbacks = callbacks
         self.verbose = verbose
@@ -97,13 +100,29 @@ class ResNetClassifier(BaseDeepClassifier):
         self.batch_size = batch_size
         self.random_state = random_state
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self.history = None
-        self._network = ResNetNetwork(random_state=random_state)
+        self._network = ResNetNetwork(
+            activation=self.activation_hidden,
+            random_state=self.random_state,
+        )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

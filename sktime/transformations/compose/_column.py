@@ -90,8 +90,8 @@ class ColumnEnsembleTransformer(
 
         >>> import pandas as pd
         >>> from sktime.transformations.compose import ColumnEnsembleTransformer
-        >>> from sktime.transformations.series.detrend import Detrender
-        >>> from sktime.transformations.series.difference import Differencer
+        >>> from sktime.transformations.detrend import Detrender
+        >>> from sktime.transformations.difference import Differencer
         >>> from sktime.datasets import load_longley
 
     Using integers (column iloc references) for indexing:
@@ -353,8 +353,8 @@ class ColumnEnsembleTransformer(
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.boxcox import BoxCoxTransformer
+        from sktime.transformations.exponent import ExponentTransformer
 
         TRANSFORMERS = [
             ("transformer1", ExponentTransformer()),
@@ -416,7 +416,7 @@ class ColumnwiseTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.datasets import load_longley
-    >>> from sktime.transformations.series.detrend import Detrender
+    >>> from sktime.transformations.detrend import Detrender
     >>> from sktime.transformations.compose import ColumnwiseTransformer
     >>> _, X = load_longley()
     >>> transformer = ColumnwiseTransformer(Detrender())
@@ -432,15 +432,21 @@ class ColumnwiseTransformer(BaseTransformer):
         "X_inner_mtype": "pd.DataFrame",
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
     }
 
     def __init__(self, transformer, columns=None):
         self.transformer = transformer
         self.columns = columns
+
         super().__init__()
 
+        from sktime.registry import coerce_scitype
+
+        self._transformer = coerce_scitype(transformer, "transformer")
+
+        # Clone tags from the internal transformer (guaranteed to be sktime)
         tags_to_clone = [
             "y_inner_mtype",
             "capability:inverse_transform",
@@ -450,7 +456,7 @@ class ColumnwiseTransformer(BaseTransformer):
             "skip-inverse-transform",
             "capability:categorical_in_X",
         ]
-        self.clone_tags(transformer, tag_names=tags_to_clone)
+        self.clone_tags(self._transformer, tag_names=tags_to_clone)
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -487,9 +493,10 @@ class ColumnwiseTransformer(BaseTransformer):
         # fit by iterating over columns
         self.transformers_ = {}
         for colname in self.columns_:
-            transformer = self.transformer.clone()
+            transformer = self._transformer.clone()
             self.transformers_[colname] = transformer
             self.transformers_[colname].fit(X[colname], y)
+
         return self
 
     def _transform(self, X, y=None):
@@ -601,9 +608,14 @@ class ColumnwiseTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.transformations.series.detrend import Detrender
+        from sklearn.preprocessing import StandardScaler
 
-        return {"transformer": Detrender()}
+        from sktime.transformations.detrend import Detrender
+
+        params1 = {"transformer": Detrender()}
+        params2 = {"transformer": StandardScaler()}
+
+        return [params1, params2]
 
 
 def _check_columns(z, selected_columns):

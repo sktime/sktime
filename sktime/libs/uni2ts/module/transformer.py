@@ -15,7 +15,6 @@
 
 from collections.abc import Callable
 from functools import partial
-from typing import Optional
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -45,8 +44,8 @@ class TransformerEncoderLayer(nn.Module):
         self,
         self_attn: GroupedQueryAttention,
         ffn: FeedForward,
-        norm1: Optional[nn.Module],
-        norm2: Optional[nn.Module],
+        norm1: nn.Module | None,
+        norm2: nn.Module | None,
         post_attn_dropout_p: float = 0.0,
         pre_norm: bool = True,
     ):
@@ -105,8 +104,8 @@ class TransformerEncoder(nn.Module):
         self,
         d_model: int,
         num_layers: int,
-        num_heads: Optional[int] = None,
-        num_groups: Optional[int] = None,
+        num_heads: int | None = None,
+        num_groups: int | None = None,
         pre_norm: bool = True,
         attn_dropout_p: float = 0.0,
         dropout_p: float = 0.0,
@@ -122,7 +121,7 @@ class TransformerEncoder(nn.Module):
         shared_time_attn_bias: bool = False,
         shared_var_qk_proj: bool = False,
         shared_time_qk_proj: bool = False,
-        d_ff: Optional[int] = None,
+        d_ff: int | None = None,
     ):
         super().__init__()
         num_heads = num_heads or d_model // 64

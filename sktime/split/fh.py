@@ -2,8 +2,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Forecasting horizon based train test split utility function."""
 
-from typing import Optional
-
 import numpy as np
 import pandas as pd
 
@@ -78,7 +76,7 @@ class ForecastingHorizonSplitter(BaseSplitter):
 
         yield train_ix, test_ix
 
-    def get_n_splits(self, y: Optional[pd.Index] = None) -> int:
+    def get_n_splits(self, y: pd.Index | None = None) -> int:
         """Return number of splits (always 1)."""
         return 1
 

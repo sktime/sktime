@@ -2,7 +2,6 @@
 """Implements adapter for Darts models."""
 
 import abc
-from typing import Optional, Union
 
 import pandas as pd
 
@@ -12,11 +11,11 @@ from sktime.utils.warnings import warn
 
 __author__ = ["yarnabrina", "fnhirwa"]
 
-LAGS_TYPE = Optional[Union[int, list[int], dict[str, Union[int, list[int]]]]]
-PAST_LAGS_TYPE = Optional[Union[int, list[int], dict[str, Union[int, list[int]]]]]
-FUTURE_LAGS_TYPE = Optional[
-    Union[tuple[int, int], list[int], dict[str, Union[tuple[int, int], list[int]]]]
-]
+LAGS_TYPE = int | list[int] | dict[str, int | list[int]] | None
+PAST_LAGS_TYPE = int | list[int] | dict[str, int | list[int]] | None
+FUTURE_LAGS_TYPE = (
+    tuple[int, int] | list[int] | dict[str, tuple[int, int] | list[int]] | None
+)
 
 
 class _DartsRegressionAdapter(BaseForecaster):
@@ -140,14 +139,14 @@ class _DartsRegressionAdapter(BaseForecaster):
         lags: LAGS_TYPE = None,
         lags_past_covariates: PAST_LAGS_TYPE = None,
         lags_future_covariates: FUTURE_LAGS_TYPE = None,
-        output_chunk_length: Optional[int] = 1,
-        output_chunk_shift: Optional[int] = 0,
-        add_encoders: Optional[dict] = None,
+        output_chunk_length: int | None = 1,
+        output_chunk_shift: int | None = 0,
+        add_encoders: dict | None = None,
         model=None,
-        multi_models: Optional[bool] = True,
-        use_static_covariates: Optional[bool] = True,
-        past_covariates: Optional[list[str]] = None,
-        num_samples: Optional[int] = 1000,
+        multi_models: bool | None = True,
+        use_static_covariates: bool | None = True,
+        past_covariates: list[str] | None = None,
+        num_samples: int | None = 1000,
     ) -> None:
         self.lags = lags
         self.lags_past_covariates = lags_past_covariates
@@ -195,7 +194,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         return darts.TimeSeries.from_dataframe(dataset_copy)
 
     def convert_exogenous_dataset(
-        self: "_DartsRegressionModelsAdapter", dataset: Optional[pd.DataFrame]
+        self: "_DartsRegressionModelsAdapter", dataset: pd.DataFrame | None
     ):
         """Make exogenous features to ``darts`` compatible, if available.
 
@@ -242,8 +241,8 @@ class _DartsRegressionAdapter(BaseForecaster):
     def _fit(
         self: "_DartsRegressionModelsAdapter",
         y: pd.DataFrame,
-        X: Optional[pd.DataFrame],
-        fh: Optional[ForecastingHorizon],
+        X: pd.DataFrame | None,
+        fh: ForecastingHorizon | None,
     ):
         """Fit forecaster to training data.
 
@@ -255,11 +254,12 @@ class _DartsRegressionAdapter(BaseForecaster):
         Parameters
         ----------
         y : pd.DataFrame
-            if self.get_tag("scitype:y")=="univariate":
+            - if self.get_tag("capability:multivariate") == False:
                 guaranteed to have a single column
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+            - if self.get_tag("capability:multivariate") == True:
+                no restrictions apply
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             For darts models `fh` is not used,
             the steps ahead for prediction is determined by `output_chunk_length`.
         X : pd.DataFrame, optional (default=None)
@@ -273,7 +273,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         endogenous_actuals = self.convert_dataframe_to_timeseries(y)
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
         # single-target variable for univariate prediction
-        if endogenous_actuals.width > 1 and self.get_tag("scitype:y") == "univariate":
+        if endogenous_actuals.width > 1 and not self.get_tag("capability:multivariate"):
             raise ValueError(
                 "Multi-target prediction is not supported by the quantile loss."
                 " Please provide a single-target variable."
@@ -289,8 +289,8 @@ class _DartsRegressionAdapter(BaseForecaster):
 
     def _predict(
         self: "_DartsRegressionModelsAdapter",
-        fh: Optional[ForecastingHorizon],
-        X: Optional[pd.DataFrame],
+        fh: ForecastingHorizon | None,
+        X: pd.DataFrame | None,
     ):
         """Forecast time series at future horizon.
 
@@ -306,7 +306,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             The forecasting horizon value should be less than the value
             of ``output_chunk_length`` fitted to the model, otherwise the prediction
             result will be from auto-regression.
@@ -527,13 +527,13 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
         lags: LAGS_TYPE = None,
         lags_past_covariates: PAST_LAGS_TYPE = None,
         lags_future_covariates: FUTURE_LAGS_TYPE = None,
-        output_chunk_length: Optional[int] = 1,
-        output_chunk_shift: Optional[int] = 0,
-        add_encoders: Optional[dict] = None,
-        multi_models: Optional[bool] = True,
-        use_static_covariates: Optional[bool] = True,
-        past_covariates: Optional[list[str]] = None,
-        num_samples: Optional[int] = 1000,
+        output_chunk_length: int | None = 1,
+        output_chunk_shift: int | None = 0,
+        add_encoders: dict | None = None,
+        multi_models: bool | None = True,
+        use_static_covariates: bool | None = True,
+        past_covariates: list[str] | None = None,
+        num_samples: int | None = 1000,
     ) -> None:
         self.lags = lags
         self.lags_past_covariates = lags_past_covariates
@@ -564,8 +564,8 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
 
     def _predict_quantiles(
         self,
-        fh: Optional[ForecastingHorizon],
-        X: Optional[pd.DataFrame],
+        fh: ForecastingHorizon | None,
+        X: pd.DataFrame | None,
         alpha: list[float],
     ):
         """Compute/return prediction quantiles for a forecast.
@@ -576,7 +576,7 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.

@@ -447,3 +447,23 @@ def _get_all_changed_classes(vm=False):
 
     names = [name for name, est in all_estimators() if _changed_class(est)]
     return names
+
+
+@lru_cache
+def _get_all_vm_classes():
+    """Get all sktime object classes that require their own VM.
+
+    This returns all classes with the ``"tests:vm"=True`` tag,
+    regardless of whether they have changed or not.
+    This is useful for comprehensive testing in CRON jobs like test-all.
+
+    Returns
+    -------
+    tuple of strings of class names : object classes that require their own VM
+    """
+    from sktime.registry import all_estimators
+
+    # Get all estimators with tests:vm = True tag
+    vm_estimators = all_estimators(filter_tags={"tests:vm": True})
+    names = [name for name, est in vm_estimators]
+    return names

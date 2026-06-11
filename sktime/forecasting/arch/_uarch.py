@@ -159,13 +159,15 @@ class ARCH(BaseForecaster):
         "python_dependencies": "arch",
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:pred_int": True,
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -229,7 +231,7 @@ class ARCH(BaseForecaster):
         self.reindex = reindex
 
         if self.mean in ["ARX", "HARX"]:
-            self.set_tags(**{"ignores-exogeneous-X": False})
+            self.set_tags(**{"capability:exogenous": True})
 
         super().__init__()
 
@@ -381,7 +383,7 @@ class ARCH(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X :  sktime time series object, optional (default=None)
             Exogeneous time series for the forecast
         coverage : list of float (guaranteed not None and floats in [0,1] interval)
@@ -502,7 +504,7 @@ class ARCH(BaseForecaster):
         Parameters
         ----------
         fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
         type : str, optional (default="mean")
@@ -537,7 +539,7 @@ class ARCH(BaseForecaster):
         Parameters
         ----------
         fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
         type : str, optional (default="mean")

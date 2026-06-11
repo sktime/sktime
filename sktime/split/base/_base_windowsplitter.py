@@ -4,17 +4,14 @@
 
 __author__ = ["khrapovs", "mloning", "hazrulakmal"]
 
-from typing import Optional
 
 import numpy as np
 import pandas as pd
 
 from sktime.datatypes._utilities import get_index_for_series
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.split.base import BaseSplitter
 from sktime.split.base._common import (
     ACCEPTED_Y_TYPES,
-    FORECASTING_HORIZON_TYPES,
     SPLIT_ARRAY_TYPE,
     SPLIT_GENERATOR_TYPE,
     _check_fh,
@@ -34,7 +31,7 @@ from sktime.utils.validation.forecasting import check_step_length
 
 def _check_window_lengths(
     y: pd.Index,
-    fh: ForecastingHorizon,
+    fh,
     window_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
     initial_window: NON_FLOAT_WINDOW_LENGTH_TYPES,
 ) -> None:
@@ -103,7 +100,7 @@ class BaseWindowSplitter(BaseSplitter):
 
     def __init__(
         self,
-        fh: FORECASTING_HORIZON_TYPES,
+        fh,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
@@ -182,7 +179,7 @@ class BaseWindowSplitter(BaseSplitter):
         self,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         y: pd.Index,
-        fh: ForecastingHorizon,
+        fh,
     ) -> SPLIT_GENERATOR_TYPE:
         """Abstract method for sliding/expanding windows."""
         raise NotImplementedError("abstract method")
@@ -191,7 +188,7 @@ class BaseWindowSplitter(BaseSplitter):
         self,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         y: pd.Index,
-        fh: ForecastingHorizon,
+        fh,
         expanding: bool,
     ) -> SPLIT_GENERATOR_TYPE:
         """Split `y` into training and test windows.
@@ -259,7 +256,7 @@ class BaseWindowSplitter(BaseSplitter):
             train_start = start - window_length
         return train_start
 
-    def _get_start(self, y: pd.Index, fh: ForecastingHorizon) -> int:
+    def _get_start(self, y: pd.Index, fh) -> int:
         """Get the first split point."""
         # By default, the first split point is the index zero, the first
         # observation in
@@ -293,7 +290,7 @@ class BaseWindowSplitter(BaseSplitter):
                 start = np.argmin(y <= shifted_y0) if shifted_y0 >= y[start] else start
         return start
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
 
         Parameters
@@ -339,7 +336,7 @@ class BaseWindowSplitter(BaseSplitter):
             n_splits = len(self.get_cutoffs(y))
         return n_splits
 
-    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
+    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Parameters

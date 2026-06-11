@@ -1,7 +1,5 @@
 """Time series kernel kmeans."""
 
-from typing import Union
-
 import numpy as np
 from numpy.random import RandomState
 
@@ -89,6 +87,8 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         "capability:out_of_sample": True,
         "capability:predict": True,
         "capability:predict_proba": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -113,10 +113,10 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-4,
-        kernel_params: Union[dict, None] = None,
+        kernel_params: dict | None = None,
         verbose: bool = False,
-        n_jobs: Union[int, None] = None,
-        random_state: Union[int, RandomState] = None,
+        n_jobs: int | None = None,
+        random_state: int | RandomState = None,
     ):
         self.kernel = kernel
         self.n_init = n_init
@@ -154,7 +154,7 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {
+        params0 = {
             "n_clusters": 2,
             "kernel": "gak",
             "n_init": 1,
@@ -165,6 +165,19 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
             "n_jobs": 1,
             "random_state": 1,
         }
+
+        params1 = {
+            "n_clusters": 3,
+            "kernel": "gak",
+            "n_init": 2,
+            "max_iter": 2,
+            "tol": 0.001,
+            "kernel_params": {"sigma": 0.5},
+            "verbose": False,
+            "n_jobs": None,
+            "random_state": 42,
+        }
+        return [params0, params1]
 
     def _score(self, X, y=None) -> float:
         return np.abs(self.inertia_)

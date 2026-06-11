@@ -11,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sktime.base._base import _clone_estimator
 from sktime.classification._delegate import _DelegatedClassifier
 from sktime.pipeline import make_pipeline
-from sktime.transformations.panel.catch22 import Catch22
+from sktime.transformations.catch22 import Catch22
 
 
 class Catch22Classifier(_DelegatedClassifier):
@@ -92,6 +92,8 @@ class Catch22Classifier(_DelegatedClassifier):
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?

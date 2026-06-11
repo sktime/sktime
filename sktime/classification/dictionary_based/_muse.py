@@ -16,7 +16,7 @@ from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFAFast
+from sktime.transformations.dictionary_based import SFAFast
 from sktime.utils.warnings import warn
 
 
@@ -26,18 +26,17 @@ class MUSE(BaseClassifier):
     Also known as WEASLE-MUSE: implementation of multivariate version of WEASEL,
     referred to as just MUSE from [1].
 
-    Overview: Input n series length m
-     WEASEL+MUSE is a multivariate  dictionary classifier that builds a
-     bag-of-patterns using SFA for different window lengths and learns a
-     logistic regression classifier on this bag.
+    WEASEL+MUSE is a multivariate  dictionary classifier that builds a
+    bag-of-patterns using SFA for different window lengths and learns a
+    logistic regression classifier on this bag.
 
-     There are these primary parameters:
-             alphabet_size: alphabet size
-             chi2-threshold: used for feature selection to select best words
-             anova: select best l/2 fourier coefficients other than first ones
-             bigrams: using bigrams of SFA words
-             binning_strategy: the binning strategy used to disctrtize into
-                               SFA words.
+    There are these primary parameters:
+
+    * alphabet_size: alphabet size
+    * chi2-threshold: used for feature selection to select best words
+    * anova: select best l/2 fourier coefficients other than first ones
+    * bigrams: using bigrams of SFA words
+    * binning_strategy: the binning strategy used to discretize into SFA words.
 
     Parameters
     ----------
@@ -129,6 +128,8 @@ class MUSE(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "classifier_type": "dictionary",
     }

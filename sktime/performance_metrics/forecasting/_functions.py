@@ -13,7 +13,6 @@ from scipy.stats import gmean
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
-from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_consistent_length
 
 from sktime.performance_metrics.forecasting._coerce import (
@@ -25,7 +24,7 @@ from sktime.performance_metrics.forecasting._common import (
     _relative_error,
 )
 from sktime.utils.sklearn import _check_reg_targets
-from sktime.utils.stats import _weighted_geometric_mean
+from sktime.utils.stats import _weighted_geometric_mean, _weighted_percentile
 
 if sklearn.__version__ >= "1.4.0":
     from sklearn.metrics import root_mean_squared_error as _root_mean_squared_error
@@ -2760,3 +2759,80 @@ def _linex_error(y_true, y_pred, a=1.0, b=1.0):
     a_error = a * error
     linex_error = b * (np.exp(a_error) - a_error - 1)
     return linex_error
+
+
+def mean_squared_log_error(
+    y_true,
+    y_pred,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    square_root=False,
+    **kwargs,
+):
+    """Mean Squared Logarithmic Error (MSLE).
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs)
+        Ground truth (correct) target values.
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs)
+        Estimated target values.
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+    multioutput : {'raw_values', 'uniform_average'}, default='uniform_average'
+        Defines aggregating of multiple output values.
+    square_root : bool, default=False
+        Whether to take the square root of the mean squared log error.
+        If True, returns Root Mean Squared Log Error (RMSLE).
+
+    Returns
+    -------
+    loss : float or ndarray of floats
+        The computed metric value.
+    """
+    import traceback
+
+    import numpy as np
+    from sklearn.utils import check_consistent_length
+
+    # Only print if inputs are pandas objects (where the bug happens)
+    if hasattr(y_true, "index") and hasattr(y_pred, "index"):
+        # Check if indices are different
+        if not y_true.index.equals(y_pred.index):
+            print("\n🚨 DETECTED INDEX MISMATCH!")
+            print(f"y_true index: {y_true.index}")
+            print(f"y_pred index: {y_pred.index}")
+            print("🔍 CALL STACK (Who called me?):")
+            traceback.print_stack(limit=3)  # Print the last 3 callers
+
+    check_consistent_length(y_true, y_pred)
+
+    # [FIX] Force to numpy to avoid pandas index alignment causing NaNs/crashes
+    y_true_np = np.asanyarray(y_true)
+    y_pred_np = np.asanyarray(y_pred)
+
+    # Clip negative values to 0 to avoid log domain errors
+    y_true_np = np.maximum(y_true_np, 0)
+    y_pred_np = np.maximum(y_pred_np, 0)
+
+    y_true_log = np.log1p(y_true_np)
+    y_pred_log = np.log1p(y_pred_np)
+
+    squared_log_error = np.square(y_true_log - y_pred_log)
+
+    # Average across time (axis 0)
+    if horizon_weight is not None:
+        msle = np.average(squared_log_error, axis=0, weights=horizon_weight)
+    else:
+        msle = np.mean(squared_log_error, axis=0)
+
+    if square_root:
+        msle = np.sqrt(msle)
+
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return np.atleast_1d(msle)
+        if multioutput == "uniform_average":
+            return np.average(msle, weights=None)
+
+    return np.average(msle, weights=multioutput)

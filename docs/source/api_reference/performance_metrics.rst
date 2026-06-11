@@ -52,6 +52,7 @@ Percentage errors
     MeanSquaredPercentageError
     MedianSquaredPercentageError
     MeanSquaredErrorPercentage
+    MeanArctangentAbsolutePercentageError
 
 Scaled errors
 ^^^^^^^^^^^^^
@@ -88,6 +89,15 @@ Geometric errors
     GeometricMeanSquaredError
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
+
+Benchmark errors
+^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    OverallWeightedAverage
 
 Under- and over-prediction errors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

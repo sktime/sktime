@@ -40,6 +40,7 @@ Model selection and tuning
     :template: class.rst
 
     TSCGridSearchCV
+    TSCOptCV
 
 Ensembles
 ---------
@@ -64,20 +65,29 @@ Deep learning
     :toctree: auto_generated/
     :template: class.rst
 
+    convtimenet.ConvTimeNetClassifier
+    convtran.ConvTranClassifierTorch
     cnn.CNNClassifier
+    cnn.CNNClassifierTorch
     cntc.CNTCClassifier
     fcn.FCNClassifier
     gru.GRUClassifier
     gru.GRUFCNNClassifier
     inceptiontime.InceptionTimeClassifier
+    inceptiontime.InceptionTimeClassifierTorch
     lstmfcn.LSTMFCNClassifier
+    lstmfcn.LSTMFCNClassifierTorch
     macnn.MACNNClassifier
+    macnn.MACCNNClassifierTorch
     mcdcnn.MCDCNNClassifier
+    mcdcnn.MCDCNNClassifierTorch
     mlp.MLPClassifier
     mvts_transformer.MVTSTransformerClassifier
     resnet.ResNetClassifier
     rnn.SimpleRNNClassifier
+    rnn.SimpleRNNClassifierTorch
     tapnet.TapNetClassifier
+    tapnet.TapNetClassifierTorch
 
 Foundation models
 -----------------
@@ -89,8 +99,9 @@ Foundation models
     :toctree: auto_generated/
     :template: class.rst
 
+    MantisClassifier
     MomentFMClassifier
-
+    TSPulseClassifier
 
 Dictionary-based
 ----------------

@@ -4,6 +4,7 @@
 
 __all__ = [
     "ForecastingGridSearchCV",
+    "ForecastingOptCV",
     "ForecastingRandomizedSearchCV",
     "ForecastingSkoptSearchCV",
     "ForecastingOptunaSearchCV",
@@ -13,6 +14,7 @@ __all__ = [
 ]
 
 from sktime.forecasting.model_selection._gridsearch import ForecastingGridSearchCV
+from sktime.forecasting.model_selection._hyperactive import ForecastingOptCV
 from sktime.forecasting.model_selection._optuna import ForecastingOptunaSearchCV
 from sktime.forecasting.model_selection._randomsearch import (
     ForecastingRandomizedSearchCV,
@@ -77,7 +79,7 @@ def SlidingWindowSplitter(
 ):
     """Legacy export of Sliding window splitter.
 
-    DEPRECATED - use sktime.split.ExpandingWindowSplitter instead.
+    DEPRECATED - use sktime.split.SlidingWindowSplitter instead.
     """
     from warnings import warn
 

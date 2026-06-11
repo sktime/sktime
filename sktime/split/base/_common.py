@@ -3,14 +3,11 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from collections.abc import Iterator
-from typing import Union
 
 import numpy as np
 import pandas as pd
 
 from sktime.datatypes._utilities import get_window
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.validation import (
     all_inputs_are_iloc_like,
     all_inputs_are_time_like,
@@ -23,20 +20,32 @@ DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
 DEFAULT_FH = 1
 
-ACCEPTED_Y_TYPES = Union[pd.Series, pd.DataFrame, np.ndarray, pd.Index]
-FORECASTING_HORIZON_TYPES = Union[
-    Union[VALID_FORECASTING_HORIZON_TYPES], ForecastingHorizon
-]
-SPLIT_TYPE = Union[
-    tuple[pd.Series, pd.Series], tuple[pd.Series, pd.Series, pd.DataFrame, pd.DataFrame]
-]
+ACCEPTED_Y_TYPES = pd.Series | pd.DataFrame | np.ndarray | pd.Index
+SPLIT_TYPE = (
+    tuple[pd.Series, pd.Series]
+    | tuple[pd.Series, pd.Series, pd.DataFrame, pd.DataFrame]
+)
 SPLIT_ARRAY_TYPE = tuple[np.ndarray, np.ndarray]
 SPLIT_GENERATOR_TYPE = Iterator[SPLIT_ARRAY_TYPE]
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
-def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:
-    """Check and convert fh to format expected by CV splitters."""
+def _check_fh(fh):
+    """Check and convert fh to format expected by CV splitters.
+
+    Same as ``check_fh`` in ``sktime.forecasting.base._fh``,
+    with ``enforce_relative=True``.
+
+    Parameters
+    ----------
+    fh : int, timedelta, list or np.ndarray of ints or timedeltas, or ForecastingHorizon
+        Forecasting horizon to check and convert
+
+    Returns
+    -------
+    fh : ForecastingHorizon
+        Forecasting horizon in format expected by CV splitters
+    """
     return check_fh(fh, enforce_relative=True)
 
 
@@ -76,7 +85,7 @@ def _check_inputs_for_compatibility(args: list) -> None:
         raise TypeError("Unsupported combination of types")
 
 
-def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
+def _get_end(y_index: pd.Index, fh) -> int:
     """Compute the end of the last training window for a forecasting horizon.
 
     For a time series index `y_index`, `y_index[end]` will give
@@ -90,6 +99,7 @@ def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
     y_index : pd.Index
         Index of time series
     fh : int, timedelta, list or np.ndarray of ints or timedeltas
+        Forecasting horizon
 
     Returns
     -------

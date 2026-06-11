@@ -99,6 +99,8 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             "nested_univ",
             "numpy3D",
         ],
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator

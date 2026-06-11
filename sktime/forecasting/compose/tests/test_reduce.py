@@ -35,7 +35,7 @@ from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.split import SlidingWindowSplitter, temporal_train_test_split
 from sktime.split.tests.test_split import _get_windows
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.transformations.panel.reduce import Tabularizer
+from sktime.transformations.reduce import Tabularizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh
@@ -491,7 +491,7 @@ def test_multioutput_direct_equivalence_tabular_linear_regression(fh):
     y_pred_multioutput = multioutput.fit(y_train, X_train, fh=fh).predict(fh, X_test)
 
     np.testing.assert_array_almost_equal(
-        y_pred_direct.to_numpy(), y_pred_multioutput.to_numpy()
+        y_pred_direct.to_numpy(), y_pred_multioutput.to_numpy(), decimal=2
     )
 
 

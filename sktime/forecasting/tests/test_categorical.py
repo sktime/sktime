@@ -24,14 +24,14 @@ def test_dummy_est_with_categorical_capability():
     """Test that categorical data works when native support is available.
 
     This test uses the dummy forecaster with modified tags to imitate a forecaster
-    which supports categorical natively in exogeneous X for checking whether
+    which supports categorical natively in exogenous X for checking whether
     categorical data passes through the boilerplate checks without error.
     """
     y = pd.DataFrame(range(9))
 
     est = ForecastKnownValues(y)
     modified_tags = {
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:categorical_in_X": True,
     }
     est.set_tags(**modified_tags)

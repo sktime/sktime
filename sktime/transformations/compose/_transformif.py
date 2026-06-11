@@ -5,9 +5,10 @@
 __author__ = ["fkiraly"]
 __all__ = ["TransformIf"]
 
+import operator
+
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
-from sktime.transformations._delegate import _DelegatedTransformer
-from sktime.transformations.base import BaseTransformer
+from sktime.transformations.base import BaseTransformer, _DelegatedTransformer
 from sktime.transformations.compose._common import CORE_MTYPES
 from sktime.transformations.compose._id import Id
 
@@ -73,7 +74,7 @@ class TransformIf(_DelegatedTransformer):
     --------
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.compose import TransformIf
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.detrend import Deseasonalizer
     >>> from sktime.datasets import load_airline
     >>>
     >>> y = load_airline()  # doctest: +SKIP
@@ -94,7 +95,7 @@ class TransformIf(_DelegatedTransformer):
         "X_inner_mtype": CORE_MTYPES,
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
         "capability:inverse_transform": True,
         # CI and test flags
@@ -130,7 +131,7 @@ class TransformIf(_DelegatedTransformer):
 
         super().__init__()
 
-        self.clone_tags(if_estimator, tag_names=["univariate-only"])
+        self.clone_tags(if_estimator, tag_names=["capability:multivariate"])
         if_scitypes = mtype_to_scitype(if_estimator.get_tag("X_inner_mtype"))
         valid_scitypes = [
             x for x in ALL_TIME_SERIES_MTYPES if mtype_to_scitype(x) in if_scitypes
@@ -171,7 +172,15 @@ class TransformIf(_DelegatedTransformer):
         if condition == "bool":
             cond_bool = param_val
         elif condition in [">=", ">", "==", "!=", "<", "<="]:
-            cond_bool = eval(f"{param_val} {condition} {condition_value}")
+            op_dict = {
+                ">=": operator.ge,
+                ">": operator.gt,
+                "==": operator.eq,
+                "!=": operator.ne,
+                "<": operator.lt,
+                "<=": operator.le,
+            }
+            cond_bool = op_dict[condition](param_val, condition_value)
         else:
             raise ValueError(
                 f"unsupported value for parameter 'condition' found in "
@@ -276,7 +285,7 @@ class TransformIf(_DelegatedTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.param_est.fixed import FixedParams
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.boxcox import BoxCoxTransformer
 
         params1 = {
             "if_estimator": BoxCoxTransformer(),

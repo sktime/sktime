@@ -18,7 +18,7 @@ from sklearn.utils.sparsefuncs_fast import csr_row_norms
 from sklearn.utils.validation import _num_samples
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFAFast
+from sktime.transformations.dictionary_based import SFAFast
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X_y
 
@@ -140,6 +140,8 @@ class BOSSEnsemble(BaseClassifier):
         "capability:multithreading": True,
         "classifier_type": "dictionary",
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -460,12 +462,15 @@ class BOSSEnsemble(BaseClassifier):
                 "alphabet_size": 4,
             }
         else:
-            return {
+            param1 = {
                 "max_ensemble_size": 2,
                 "save_train_predictions": True,
                 "feature_selection": "none",
                 "use_boss_distance": False,
             }
+            param2 = {**param1, "feature_selection": "chi2"}
+
+        return [param1, param2]
 
 
 class IndividualBOSS(BaseClassifier):
@@ -559,6 +564,8 @@ class IndividualBOSS(BaseClassifier):
         # estimator type
         # --------------
         "capability:multithreading": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(

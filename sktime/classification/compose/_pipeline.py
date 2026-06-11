@@ -78,7 +78,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.transformations.pca import PCATransformer
     >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.classification.compose import ClassifierPipeline
@@ -124,8 +124,8 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = classifier.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both classifier and all transformers can,
         #   *or* transformer chain removes missing data
@@ -332,7 +332,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         # imports
         from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
         from sktime.classification.dummy import DummyClassifier
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.exponent import ExponentTransformer
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
@@ -418,8 +418,8 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     Examples
     --------
     >>> from sklearn.neighbors import KNeighborsClassifier
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
+    >>> from sktime.transformations.summarize import SummaryTransformer
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.classification.compose import SklearnClassifierPipeline
     >>> X_train, y_train = load_unit_test(split="train")
@@ -682,8 +682,8 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         """
         from sklearn.neighbors import KNeighborsClassifier
 
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.transformations.series.summarize import SummaryTransformer
+        from sktime.transformations.exponent import ExponentTransformer
+        from sktime.transformations.summarize import SummaryTransformer
 
         # example with series-to-series transformer before sklearn classifier
         t1 = ExponentTransformer(power=2)
