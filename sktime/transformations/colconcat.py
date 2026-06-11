@@ -44,9 +44,11 @@ class ColumnConcatenator(BaseTransformer):
     Another example with panel data.
 
     >>> from sktime.utils._testing.panel import _make_panel
-    >>> panel_data = _make_panel(n_columns = 2,
-    ...                          n_instances = 2,
-    ...                          n_timepoints = 3)
+    >>> panel_data = _make_panel(
+    ...     n_columns=2,
+    ...     n_instances=2,
+    ...     n_timepoints=3,
+    ... )
     >>> panel_data = concatenator.fit_transform(panel_data)
     """
 
