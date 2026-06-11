@@ -84,8 +84,8 @@ class EnbPIForecaster(BaseForecaster):
     >>> from sktime.forecasting.enbpi import EnbPIForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.difference import Differencer
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.difference import Differencer
+    >>> from sktime.transformations.detrend import Deseasonalizer
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> y = load_airline()
     >>> forecaster = Differencer(lags=[1]) * Deseasonalizer(sp=12) * EnbPIForecaster(
@@ -109,7 +109,7 @@ class EnbPIForecaster(BaseForecaster):
         "authors": ["benheid"],
         "python_dependencies": ["tsbootstrap>=0.1.0"],
         "capability:multivariate": False,  # which y are fine? False/True
-        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.DataFrame",
         # which types do _fit, _predict, assume for y?
