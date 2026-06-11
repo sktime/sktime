@@ -1,12 +1,11 @@
+"""Tests for penalty validation."""
+
 import numpy as np
 import pytest
-
 from sktime.detection.utils.validation.penalties import (
     check_penalty,
     check_penalty_against_data,
 )
-
-"""Tests for penalty validation."""
 
 
 @pytest.mark.parametrize(
