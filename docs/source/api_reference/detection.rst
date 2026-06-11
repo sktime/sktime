@@ -41,10 +41,10 @@ Change Point Detection
     :toctree: auto_generated/
     :template: class.rst
 
-    CROPS
-    MovingWindow
-    PELT
-    SeededBinarySegmentation
+    crops.CROPS
+    moving_window.MovingWindow
+    pelt.PELT
+    seeded_binseg.SeededBinarySegmentation
 
 Naive Baselines
 ^^^^^^^^^^^^^^^
@@ -146,17 +146,9 @@ Segment anomaly detectors identify anomalous segment.
     :toctree: auto_generated/
     :template: class.rst
 
-    CAPA
-    CircularBinarySegmentation
-    StatThresholdAnomaliser
-
-.. currentmodule:: sktime.detection.skchange_aseg
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    mvcapa.MVCAPA
+    capa.CAPA
+    circular_binseg.CircularBinarySegmentation
+    stat_threshold.StatThresholdAnomaliser
 
 Naive Baselines
 ^^^^^^^^^^^^^^^

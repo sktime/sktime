@@ -39,7 +39,7 @@ from sktime.classification.interval_based import (
 )
 from sktime.classification.kernel_based import Arsenal, RocketClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
-from sktime.transformations.series.summarize import SummaryTransformer
+from sktime.transformations.summarize import SummaryTransformer
 
 
 def set_classifier(cls, resample_id=None, train_file=False):

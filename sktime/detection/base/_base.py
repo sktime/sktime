@@ -73,8 +73,7 @@ class BaseDetector(BaseEstimator):
         "python_dependencies": None,  # str or list of str, package soft dependencies
         # estimator tags
         # --------------
-        # todo 1.0.0 - remove series-annotator
-        "object_type": ["detector", "series-annotator"],  # type of object
+        "object_type": "detector",
         "learning_type": "None",  # supervised, unsupervised
         "task": "None",  # anomaly_detection, change_point_detection, segmentation
         "capability:multivariate": False,
@@ -127,8 +126,8 @@ class BaseDetector(BaseEstimator):
             not nested, contains only non-DetectorPipeline ``sktime`` steps
         """
         from sktime.detection.compose import DetectorPipeline
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other

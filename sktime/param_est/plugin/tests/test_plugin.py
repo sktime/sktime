@@ -18,7 +18,7 @@ def test_plugin_fcst():
     from sktime.forecasting.naive import NaiveForecaster
     from sktime.param_est.fixed import FixedParams
     from sktime.param_est.plugin import PluginParamsForecaster
-    from sktime.transformations.series.difference import Differencer
+    from sktime.transformations.difference import Differencer
 
     y = load_airline()
 
@@ -68,8 +68,8 @@ def test_plugin_trafo():
     from sktime.param_est.fixed import FixedParams
     from sktime.param_est.plugin import PluginParamsTransformer
     from sktime.param_est.seasonality import SeasonalityACF
-    from sktime.transformations.series.detrend import Deseasonalizer
-    from sktime.transformations.series.difference import Differencer
+    from sktime.transformations.detrend import Deseasonalizer
+    from sktime.transformations.difference import Differencer
 
     X = load_airline()
 
