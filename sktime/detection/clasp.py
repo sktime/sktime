@@ -250,7 +250,7 @@ class ClaSPSegmentation(BaseDetector):
         X : pd.DataFrame
             Training data to fit model to (time series).
         Y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+            Ground truth annotations for training if detector is supervised.
 
         Returns
         -------
