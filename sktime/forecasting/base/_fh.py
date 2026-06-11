@@ -102,10 +102,9 @@ def _check_values(values) -> pd.Index:
     if is_in_valid_index_types(values):
         pass
 
-    # convert single integer or timedelta or dateoffset
-    # to pandas index, no further checks needed
+    # convert single integer to range index 1 ... integer, no further checks needed
     elif is_int(values):
-        values = pd.Index([values], dtype=int)
+        values = pd.Index(range(1, values + 1), dtype=int)
 
     # convert range object to pandas.RangeIndex
     # range has to be for integers, no need to separate check
