@@ -21,7 +21,6 @@ from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
 
-
 # random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
 RAND_SEED2 = 84
