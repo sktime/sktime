@@ -880,7 +880,7 @@ class property__randomness(_BaseTag):
 # -----------
 
 
-class capability__exogeneous(_BaseTag):
+class capability__exogenous(_BaseTag):
     """Capability: the forecaster can use exogenous data.
 
     The tag is currently named ``ignores-exogeneous-X``, and will be renamed.
@@ -1042,6 +1042,42 @@ class capability__pred_int__insample(_BaseTag):
     }
 
 
+class capability__pretrain(_BaseTag):
+    """Capability: the forecaster can use pretraining for global learning.
+
+    - String name: ``"capability:pretrain"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    The ``capability:pretrain`` tag indicates whether a forecaster supports
+    pretraining on global/panel data before being fit to specific time series.
+
+    If the tag is ``True``, the forecaster implements the ``pretrain`` method
+    and can be used in the following workflow:
+
+    1. ``forecaster.pretrain(y_panel)`` - learn from panel/global data
+    2. ``forecaster.fit(y_series)`` - set context or fine-tune on specific series
+    3. ``forecaster.predict(fh)`` - make predictions
+
+    The ``pretrain`` method sets the forecaster state to ``"pretrained"``,
+    and subsequent calls to ``fit`` will preserve the pretrained weights
+    (enabling fine-tuning) rather than resetting the estimator.
+
+    If the tag is ``False``, the forecaster does not support pretraining,
+    and calling ``pretrain`` will have no effect.
+    """
+
+    _tags = {
+        "tag_name": "capability:pretrain",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can use pretrain for global learning",
+        "user_facing": True,
+    }
+
+
 class capability__non_contiguous_X(_BaseTag):
     """Capability: the forecaster can handle non-contiguous exogenous data.
 
@@ -1113,7 +1149,7 @@ class requires_fh_in_fit(_BaseTag):
 
     For instance, direct reduction to tabular regression
     requires the ``fh`` as it is used by the fitting algorithm to lag the endogeneous
-    against the exogeneous data. In contrast, recursive reduction to tabular regression
+    against the exogenous data. In contrast, recursive reduction to tabular regression
     does not require the ``fh`` in ``fit``, as only the prediction step
     requires the forecasting horizon, when applying the fitted tabular regression model
     by sliding it forward over the ``fh`` steps.
@@ -1193,8 +1229,6 @@ class capability__multivariate(_BaseTag):
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: ``univariate-only``  (transformations, note: boolean is inverted)
-    - Alias: ``univariate-metric`` (performance metrics, note: boolean is inverted)
 
     If the tag is ``True``, the estimator can handle multivariate time series,
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
@@ -1264,6 +1298,7 @@ class capability__unequal_length(_BaseTag):
             "classifier",
             "clusterer",
             "early_classifier",
+            "forecaster",
             "regressor",
             "transformer",
             "transformer-pairwise-panel",
@@ -3266,8 +3301,8 @@ class visual_block_kind(_BaseTag):
     in a jupyter notebook.
 
     Meta-estimators are composites with a variable number of sub-estimators,
-    such as ``ForecastingPipeline`` or ``ColumnTransformer``, inheriting from
-    ``_HeterogenousMetaEstimator``.
+    such as ``ForecastingPipeline`` or ``ColumnEnsembleTransformer``,
+    inheriting from ``_HeterogenousMetaEstimator``.
 
     The html display is triggered by calling the ``_repr_html_`` method on any
     ``scikit-base`` estimator, which returns a html representation of the estimator,
@@ -3525,6 +3560,15 @@ ESTIMATOR_TAG_REGISTER = [
         "which scitypes does X internally support?",
     ),
     (
+        "scitype:y",
+        # the scitype:y tag should be kept but for separate use,
+        # a list of the internal scitypes supported by the estimator
+        # or the base scitype of the target data
+        ["param_est", "metric"],
+        "str",
+        "what scitype of y does the object support? must be scitype string",
+    ),
+    (
         "scitype:instancewise",
         "transformer",
         "bool",
@@ -3576,7 +3620,7 @@ ESTIMATOR_TAG_REGISTER = [
         "task",
         "detector",
         "str",
-        "subtype of series annotator, e.g., 'anomaly_detection', 'segmentation'",
+        "subtype of detector, e.g., 'anomaly_detection', 'segmentation'",
     ),
     (
         "learning_type",
@@ -3678,48 +3722,20 @@ ESTIMATOR_TAG_REGISTER = [
         "can transformer handle multivariate series? True = no",
     ),
     (
-        "univariate-metric",  # -> capability:multivariate, invert
-        "metric",
-        "bool",
-        "Does the metric only work on univariate y data?",
-    ),
-    (
         "handles-missing-data",  # -> capability:missing_values
         "estimator",
         "bool",
         "can the estimator handle missing data (NA, np.nan) in inputs?",
-    ),
-    (
-        "scitype:y",  # -> capability:multivariate
-        # the scitype:y tag should be kept but for separate use,
-        # a list of the internal scitypes supported by the estimator
-        # or the base scitype of the target data
-        "forecaster",
-        ("str", ["univariate", "multivariate", "both"]),
-        "which series type does the forecaster support? multivariate means >1 vars",
     ),
     # ---------------------------
     # to be deprecated or removed
     # ---------------------------
     # the following tags are to be deprecated or removed
     (
-        "capability:pred_var",  # redundant with capability:pred_int
-        # because if one of the proba methods is available, all others are too
-        "forecaster",
-        "bool",
-        "does the forecaster implement predict_variance?",
-    ),
-    (
         "capability:global_forecasting",
         ["forecaster"],
         "bool",
         "can the estimator make global forecasting?",
-    ),
-    (
-        "python_dependencies_alias",
-        "object",
-        "dict",
-        "deprecated tag for dependency import aliases",
     ),
     (
         "ignores-exogeneous-X",

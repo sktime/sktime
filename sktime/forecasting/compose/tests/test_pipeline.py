@@ -27,18 +27,18 @@ from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
+from sktime.transformations.adapt import TabularToSeriesAdaptor
+from sktime.transformations.boxcox import LogTransformer
 from sktime.transformations.compose import OptionalPassthrough, YtoX
+from sktime.transformations.detrend import Detrender
+from sktime.transformations.difference import Differencer
+from sktime.transformations.exponent import ExponentTransformer
+from sktime.transformations.feature_selection import FeatureSelection
+from sktime.transformations.fourier import FourierFeatures
 from sktime.transformations.hierarchical.aggregate import Aggregator
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.transformations.series.boxcox import LogTransformer
-from sktime.transformations.series.detrend import Detrender
-from sktime.transformations.series.difference import Differencer
-from sktime.transformations.series.exponent import ExponentTransformer
-from sktime.transformations.series.feature_selection import FeatureSelection
-from sktime.transformations.series.fourier import FourierFeatures
-from sktime.transformations.series.impute import Imputer
-from sktime.transformations.series.lag import Lag
-from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.transformations.impute import Imputer
+from sktime.transformations.lag import Lag
+from sktime.transformations.outlier_detection import HampelFilter
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.series import _make_series
 from sktime.utils.estimators import MockForecaster
@@ -122,8 +122,8 @@ def test_skip_inverse_transform():
 )
 def test_nesting_pipelines():
     """Test that nesting of pipelines works."""
-    from sktime.transformations.series.boxcox import LogTransformer
-    from sktime.transformations.series.detrend import Detrender
+    from sktime.transformations.boxcox import LogTransformer
+    from sktime.transformations.detrend import Detrender
     from sktime.utils._testing.scenarios_forecasting import (
         ForecasterFitPredictUnivariateWithX,
     )
@@ -354,7 +354,7 @@ def test_forecasting_pipeline_dunder_endog():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_forecasting_pipeline_dunder_exog():
-    """Test forecasting pipeline dunder for exogeneous transformation."""
+    """Test forecasting pipeline dunder for exogenous transformation."""
     y = _make_series()
     y_train, y_test = temporal_train_test_split(y)
     X = _make_series(n_columns=2)
@@ -616,7 +616,7 @@ def test_pipeline_featurizer_noexog():
 def test_pipeline_display():
     """Test that pipeline displays correctly."""
     from sktime.forecasting.compose import TransformedTargetForecaster, YfromX
-    from sktime.transformations.series.detrend import Detrender
+    from sktime.transformations.detrend import Detrender
 
     f = TransformedTargetForecaster([Detrender(), YfromX.create_test_instance()])
     f._sk_visual_block_()
@@ -656,7 +656,7 @@ def test_forecasting_pipeline_with_hierarchical_data():
     "ValueError: cannot join with no overlapping index names" error.
     """
     from sktime.forecasting.naive import NaiveForecaster
-    from sktime.transformations.series.summarize import WindowSummarizer
+    from sktime.transformations.summarize import WindowSummarizer
     from sktime.utils._testing.hierarchical import _make_hierarchical
 
     y = _make_hierarchical(
@@ -693,3 +693,162 @@ def test_forecasting_pipeline_with_hierarchical_data():
     # Checks predictions for all hierarchy levels and all forecast horizons
     expected_rows = len(y.index.droplevel(-1).unique()) * len(fh)
     assert len(y_pred) == expected_rows
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TransformedTargetForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_transformed_target_forecaster_predict_proba_delegates():
+    """Test TransformedTargetForecaster delegates predict_proba to inner forecaster.
+
+    Addresses issue #9287: TransformedTargetForecaster should delegate predict_proba
+    to the wrapped forecaster when it natively implements _predict_proba, rather than
+    silently falling back to the Normal distribution default from _PredictProbaMixin.
+
+    Two scenarios are tested:
+    1. Inner forecaster with native _predict_proba: the pipeline should delegate
+       to the inner forecaster and inverse-transform the resulting distribution,
+       returning a TransformedDistribution.
+    2. Inner forecaster without native _predict_proba (only quantiles/intervals):
+       the pipeline should fall back to the default Normal distribution.
+    """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    if not _check_soft_dependencies("skpro", severity="none"):
+        pytest.skip("skpro required for this test")
+
+    from skpro.distributions.empirical import Empirical
+    from skpro.distributions.trafo import TransformedDistribution
+
+    from sktime.forecasting.base._base import BaseForecaster
+    from sktime.transformations.exponent import ExponentTransformer
+
+    y = load_airline()
+    y_train, _ = temporal_train_test_split(y)
+    fh = [1, 2, 3]
+
+    # --- Scenario 1: inner forecaster with native _predict_proba ---
+    # Create a forecaster that natively implements _predict_proba
+    # returning a non-Normal distribution (Empirical from samples)
+    class _MockProbaForecaster(BaseForecaster):
+        """Mock forecaster that natively returns Empirical distribution."""
+
+        _tags = {
+            "capability:multivariate": False,
+            "y_inner_mtype": "pd.DataFrame",
+            "requires-fh-in-fit": False,
+            "capability:pred_int": True,
+        }
+
+        def _fit(self, y, X, fh):
+            self._y_mean = y.iloc[:, 0].mean()
+            return self
+
+        def _predict(self, fh, X):
+            index = fh.to_absolute_index(self.cutoff)
+            cols = self._get_varnames()
+            return pd.DataFrame(self._y_mean, index=index, columns=cols)
+
+        def _predict_proba(self, fh, X, marginal=True):
+            index = fh.to_absolute_index(self.cutoff)
+            cols = self._get_varnames()
+            n_samples = 50
+            # generate synthetic samples
+            samples_list = []
+            for i in range(n_samples):
+                sample = pd.DataFrame(
+                    self._y_mean + (i - 25) * 0.1,
+                    index=index,
+                    columns=cols,
+                )
+                samples_list.append(sample)
+            samples = pd.concat(
+                samples_list,
+                keys=range(n_samples),
+                names=["sample"] + index.names
+                if isinstance(index.names, list)
+                else ["sample", index.name],
+            )
+            return Empirical(samples, time_indep=marginal)
+
+    pipe_with_proba = TransformedTargetForecaster(
+        [
+            ("transformer", ExponentTransformer(power=0.5)),
+            ("forecaster", _MockProbaForecaster()),
+        ]
+    )
+    pipe_with_proba.fit(y_train, fh=fh)
+    dist_proba = pipe_with_proba.predict_proba(fh=fh)
+
+    # the result should be a TransformedDistribution wrapping the inner
+    # forecaster's distribution with the inverse transform applied lazily
+    assert isinstance(dist_proba, TransformedDistribution), (
+        "TransformedTargetForecaster should delegate to inner forecaster's "
+        "predict_proba and return a TransformedDistribution, "
+        f"but got {type(dist_proba).__name__}"
+    )
+
+    # check that quantiles from the distribution are valid numbers
+    quantiles = dist_proba.quantile([0.1, 0.5, 0.9])
+    assert not quantiles.isnull().any().any()
+    assert quantiles.shape[0] == len(fh)
+
+    # --- Scenario 2: inner forecaster without native _predict_proba ---
+    # MockForecaster only implements _predict_quantiles, not _predict_proba
+    pipe_without_proba = TransformedTargetForecaster(
+        [
+            ("transformer", ExponentTransformer(power=0.5)),
+            ("forecaster", MockForecaster()),
+        ]
+    )
+    pipe_without_proba.fit(y_train, fh=fh)
+    dist_fallback = pipe_without_proba.predict_proba(fh=fh)
+
+    # should fall back to Normal distribution (the mixin default)
+    # Normal might come from skpro or sktime, check class name
+    assert type(dist_fallback).__name__ == "Normal", (
+        "TransformedTargetForecaster without native _predict_proba should "
+        "fall back to Normal distribution, "
+        f"but got {type(dist_fallback).__name__}"
+    )
+
+    # check that quantiles from the fallback distribution are valid numbers
+    quantiles_fb = dist_fallback.quantile([0.1, 0.5, 0.9])
+    assert not quantiles_fb.isnull().any().any()
+    assert quantiles_fb.shape[0] == len(fh)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TransformedTargetForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_transformed_target_forecaster_predict_proba_dunder():
+    """Test predict_proba works with pipelines created via * operator.
+
+    Addresses issue #9287: pipelines built with transformer * forecaster
+    should also correctly delegate predict_proba.
+    """
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    if not _check_soft_dependencies("skpro", severity="none"):
+        pytest.skip("skpro required for this test")
+
+    y = load_airline()
+    y_train, _ = temporal_train_test_split(y)
+    fh = [1, 2, 3]
+
+    # create pipeline using * operator: transformer * forecaster
+    pipe = ExponentTransformer(power=0.5) * NaiveForecaster()
+    assert isinstance(pipe, TransformedTargetForecaster)
+
+    pipe.fit(y_train, fh=fh)
+    dist = pipe.predict_proba(fh=fh)
+
+    # should return a distribution object
+    assert hasattr(dist, "quantile"), "predict_proba should return a distribution"
+
+    # verify quantiles are valid
+    quantiles = dist.quantile([0.1, 0.5, 0.9])
+    assert not quantiles.isnull().any().any()
+    assert quantiles.shape[0] == len(fh)
