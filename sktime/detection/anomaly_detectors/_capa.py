@@ -433,8 +433,9 @@ class CAPA(BaseSegmentAnomalyDetector):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.detection._compose import PenalisedScore
         from sktime.detection.anomaly_scores import L2Saving
+
+        from sktime.detection._compose import PenalisedScore
         from sktime.detection.costs import L2Cost
 
         params = [
