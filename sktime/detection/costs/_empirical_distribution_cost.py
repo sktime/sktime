@@ -6,12 +6,12 @@ __author__ = ["johannvk"]
 
 import numpy as np
 
-from sktime.detection._costs._base import BaseCost
 from sktime.detection._utils import (
     check_larger_than,
     col_cumsum,
     compute_finite_difference_derivatives,
 )
+from sktime.detection.costs._base import BaseCost
 
 # ---------------------------------------------------------------------------
 # Quantile-point construction

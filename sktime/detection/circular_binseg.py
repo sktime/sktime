@@ -10,10 +10,8 @@ import pandas as pd
 
 from sktime.detection._anomaly_scores._from_cost import to_local_anomaly_score
 from sktime.detection._compose import PenalisedScore
-from sktime.detection._costs._l2_cost import L2Cost
 from sktime.detection._formatters import format_segments
 from sktime.detection._penalties import make_bic_penalty
-from sktime.detection._seeded_binseg import make_seeded_intervals
 from sktime.detection._utils import (
     as_2d_array,
     check_data,
@@ -23,6 +21,8 @@ from sktime.detection._utils import (
     check_penalty,
 )
 from sktime.detection.base import BaseDetector
+from sktime.detection.costs._l2_cost import L2Cost
+from sktime.detection.seeded_binseg import make_seeded_intervals
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -242,7 +242,7 @@ class CircularBinarySegmentation(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.detection import CircularBinarySegmentation
+    >>> from sktime.detection.circular_binseg import CircularBinarySegmentation
     >>> import numpy as np, pandas as pd
     >>> rng = np.random.default_rng(42)
     >>> X = pd.DataFrame(rng.standard_normal((75, 1)))
@@ -358,7 +358,7 @@ class CircularBinarySegmentation(BaseDetector):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sktime.detection._costs._l2_cost import L2Cost
+        from sktime.detection.costs._l2_cost import L2Cost
 
         params = [
             {"anomaly_score": L2Cost(), "penalty": 20},

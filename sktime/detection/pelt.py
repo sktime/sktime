@@ -9,7 +9,6 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from sktime.detection._costs._l2_cost import L2Cost
 from sktime.detection._formatters import format_changepoints
 from sktime.detection._penalties import make_bic_penalty
 from sktime.detection._utils import (
@@ -20,6 +19,7 @@ from sktime.detection._utils import (
     check_penalty,
 )
 from sktime.detection.base import BaseDetector
+from sktime.detection.costs._l2_cost import L2Cost
 
 # ---------------------------------------------------------------------------
 # Internal functions
@@ -382,8 +382,8 @@ class PELT(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.detection._pelt import PELT
-    >>> from sktime.detection._costs._l2_cost import L2Cost
+    >>> from sktime.detection.pelt import PELT
+    >>> from sktime.detection.costs._l2_cost import L2Cost
     >>> import numpy as np
     >>> X = np.concatenate([np.zeros(50), 10 * np.ones(50)])
     >>> detector = PELT(cost=L2Cost(), penalty=15)
@@ -508,7 +508,7 @@ class PELT(BaseDetector):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sktime.detection._costs._l2_cost import L2Cost
+        from sktime.detection.costs._l2_cost import L2Cost
 
         return [
             {"cost": L2Cost(), "min_segment_length": 5},

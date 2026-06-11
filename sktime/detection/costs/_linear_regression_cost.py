@@ -6,7 +6,7 @@ __author__ = ["johannvk"]
 
 import numpy as np
 
-from sktime.detection._costs._base import BaseCost
+from sktime.detection.costs._base import BaseCost
 
 
 def _linear_regression_cost(X_features, y_response):

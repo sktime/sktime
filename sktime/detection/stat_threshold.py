@@ -33,10 +33,8 @@ class StatThresholdAnomaliser(BaseDetector):
 
     Examples
     --------
-    >>> from sktime.detection._stat_threshold_anomaliser import (
-    ...     StatThresholdAnomaliser,
-    ... )
-    >>> from sktime.detection._moving_window import MovingWindow
+    >>> from sktime.detection.stat_threshold import StatThresholdAnomaliser
+    >>> from sktime.detection.moving_window import MovingWindow
     >>> import numpy as np, pandas as pd
     >>> rng = np.random.default_rng(42)
     >>> X = pd.DataFrame(rng.standard_normal((100, 1)))
@@ -114,7 +112,7 @@ class StatThresholdAnomaliser(BaseDetector):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        from sktime.detection._moving_window import MovingWindow
+        from sktime.detection.moving_window import MovingWindow
 
         params = [
             {
