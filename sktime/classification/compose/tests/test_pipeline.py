@@ -17,7 +17,7 @@ from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.classification", "sktime.distances"]),
+    not run_test_module_changed(["sktime.classification", "sktime.dists_kernels"]),
     reason="run test only if classification or distances code has changed",
 )
 def test_dunder_mul():
@@ -47,7 +47,7 @@ def test_dunder_mul():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.classification", "sktime.distances"]),
+    not run_test_module_changed(["sktime.classification", "sktime.dists_kernels"]),
     reason="run test only if classification or distances code has changed",
 )
 def test_mul_sklearn_autoadapt():
@@ -76,7 +76,7 @@ def test_mul_sklearn_autoadapt():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.classification", "sktime.distances"]),
+    not run_test_module_changed(["sktime.classification", "sktime.dists_kernels"]),
     reason="run test only if classification or distances code has changed",
 )
 def test_missing_unequal_tag_inference():

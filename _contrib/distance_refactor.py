@@ -5,8 +5,11 @@ from sklearn import metrics
 
 from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.datasets import load_arrow_head, load_basic_motions, load_unit_test
-from sktime.distances import dtw_distance, erp_distance, lcss_distance
-from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.dists_kernels._numba_distances import (
+    dtw_distance,
+    erp_distance,
+    lcss_distance,
+)
 
 # Clustering With num custers set to 2 and transpose
 expected_rand_unit_test = {
@@ -164,8 +167,6 @@ def generate_test_results_clusterers():
             -0.24689165,
         ]
     )
-    x = create_test_distance_numpy(10)
-    y = create_test_distance_numpy(10, random_state=2)
     curr_X = X_train[19]
 
     curr_X = curr_X.reshape((1, c1.shape[0]))
@@ -256,7 +257,6 @@ def difference_test():
     #    d2=np.transpose(d2)
     print("Shape  = ", d1.shape)
     name = "LCSS"
-    no_window = np.zeros((d1.shape[1], d2.shape[1]))
     # "wi [0.0, 0.1, 1.0],  # window
     dist1 = dist(d1, d2, window=0.0)
     print(name, " w = 0 dist = ", dist1)

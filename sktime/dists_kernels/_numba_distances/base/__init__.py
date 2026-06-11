@@ -12,8 +12,8 @@ __all__ = [
     "AlignmentPathReturn",
 ]
 
-from sktime.distances.base._base import MetricInfo, NumbaDistance
-from sktime.distances.base._types import (
+from sktime.dists_kernels._numba_distances.base._base import MetricInfo, NumbaDistance
+from sktime.dists_kernels._numba_distances.base._types import (
     AlignmentPathReturn,
     DistanceAlignmentPathCallable,
     DistanceCallable,

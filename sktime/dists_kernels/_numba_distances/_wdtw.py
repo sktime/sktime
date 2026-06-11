@@ -4,27 +4,36 @@ from typing import Any
 
 import numpy as np
 
-from sktime.distances.base import (
+from sktime.dists_kernels._numba_distances.base import (
     DistanceAlignmentPathCallable,
     DistanceCallable,
     NumbaDistance,
 )
 
 
-class _EdrDistance(NumbaDistance):
-    """Edit distance for real sequences (EDR) between two time series.
+class _WdtwDistance(NumbaDistance):
+    r"""Weighted dynamic time warping (WDTW) distance between two time series.
 
-    ERP was adapted in [1] specifically for distances between trajectories. Like LCSS,
-    EDR uses a distance threshold to define when two elements of a series match.
-    However, rather than simply count matches and look for the longest sequence,
-    ERP applies a (constant) penalty for non-matching elements
-    where gaps are inserted to create an optimal alignment.
+    WDTW uses DTW with a weighted pairwise distance matrix rather than a window. When
+    creating the distance matrix :math:'M', a weight penalty  :math:'w_{|i-j|}' for a
+    warping distance of :math:'|i-j|' is applied, so that for series
+    :math:'a = <a_1, ..., a_m>' and :math:'b=<b_1,...,b_m>',
+    .. math:: M_{i,j}=  w(|i-j|) (a_i-b_j)^2.
+    A logistic weight function, proposed in [1] is used, so that a warping of :math:'x'
+    places imposes a weighting of
+    .. math:: w(x)=\frac{w_{max}}{1+e^{-g(x-m/2)}},
+    where :math:'w_{max}' is an upper bound on the weight (set to 1), :math:'m' is
+    the series length and :math:'g' is a parameter that controls the penalty level
+    for larger warpings. The greater :math:'g' is, the greater the penalty for warping.
+    Once :math:'M' is found, standard dynamic time warping is applied.
+
+    WDTW is set up so you can use it with a bounding box in addition to the weight
+    function is so desired. This is for consistency with the other distance functions.
 
     References
     ----------
-    .. [1] Chen L, Ozsu MT, Oria V: Robust and fast similarity search for moving
-    object trajectories. In: Proceedings of the ACM SIGMOD International Conference
-    on Management of Data, 2005
+    .. [1] Jeong, Y., Jeong, M., Omitaomu, O.: Weighted dynamic time warping for time
+    series classification. Pattern Recognition 44, 2231-2240 (2011)
     """
 
     def _distance_alignment_path_factory(
@@ -32,13 +41,13 @@ class _EdrDistance(NumbaDistance):
         x: np.ndarray,
         y: np.ndarray,
         return_cost_matrix: bool = False,
-        window: float = None,
+        window: int = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        epsilon: float = None,
+        g: float = 0.05,
         **kwargs: Any,
     ) -> DistanceAlignmentPathCallable:
-        """Create a no_python compiled edr alignment path distance callable.
+        """Create a no_python compiled wdtw distance alignment path callable.
 
         Series should be shape (d, m), where d is the number of dimensions, m the series
         length. Series can be different lengths.
@@ -51,7 +60,7 @@ class _EdrDistance(NumbaDistance):
             Second time series.
         return_cost_matrix: bool, defaults = False
             Boolean that when true will also return the cost matrix.
-        window: float, defaults = None
+        window: Float, defaults = None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
@@ -62,17 +71,17 @@ class _EdrDistance(NumbaDistance):
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
             be infinity.
-        epsilon : float, defaults = None
-            Matching threshold to determine if two subsequences are considered close
-            enough to be considered 'common'. If not specified as per the original paper
-            epsilon is set to a quarter of the maximum standard deviation.
-        kwargs: Any
-            Extra kwargs.
+        g: float, defaults = 0.
+            Constant that controls the curvature (slope) of the function; that is, g
+            controls the level of penalisation for the points with larger phase
+            difference.
+        kwargs: any
+            extra kwargs.
 
         Returns
         -------
         Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, float]]
-            No_python compiled edr distance path callable.
+            No_python compiled wdtw distance path callable.
 
         Raises
         ------
@@ -81,66 +90,67 @@ class _EdrDistance(NumbaDistance):
             If the input time series do not have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
-            If epsilon is not a float.
+            If the value of g is not a float
         """
-        from sktime.distances._distance_alignment_paths import compute_min_return_path
-        from sktime.distances._edr_numba import _edr_cost_matrix
-        from sktime.distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances._distance_alignment_paths import (
+            compute_min_return_path,
+        )
+        from sktime.dists_kernels._numba_distances._wdtw_numba import (
+            _weighted_cost_matrix,
+        )
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        if epsilon is not None and not isinstance(epsilon, float):
-            raise ValueError("The value of epsilon must be a float.")
+        if not isinstance(g, float):
+            raise ValueError(
+                f"The value of g must be a float. The current value is {g}"
+            )
+
+        _bounding_matrix = resolve_bounding_matrix(
+            x, y, window, itakura_max_slope, bounding_matrix
+        )
 
         if return_cost_matrix is True:
 
             @njit(cache=True)
-            def numba_edr_distance_alignment_path(
-                _x: np.ndarray, _y: np.ndarray
+            def numba_wdtw_distance_alignment_path(
+                _x: np.ndarray,
+                _y: np.ndarray,
             ) -> tuple[list, float, np.ndarray]:
-                if epsilon is None:
-                    _epsilon = max(np.std(_x), np.std(_y)) / 4
-                else:
-                    _epsilon = epsilon
-                cost_matrix = _edr_cost_matrix(_x, _y, _bounding_matrix, _epsilon)
+                cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
-                distance = float(cost_matrix[-1, -1] / max(_x.shape[1], _y.shape[1]))
-                return path, distance, cost_matrix
+                return path, cost_matrix[-1, -1], cost_matrix
 
         else:
 
             @njit(cache=True)
-            def numba_edr_distance_alignment_path(
-                _x: np.ndarray, _y: np.ndarray
+            def numba_wdtw_distance_alignment_path(
+                _x: np.ndarray,
+                _y: np.ndarray,
             ) -> tuple[list, float]:
-                if epsilon is None:
-                    _epsilon = max(np.std(_x), np.std(_y)) / 4
-                else:
-                    _epsilon = epsilon
-                cost_matrix = _edr_cost_matrix(_x, _y, _bounding_matrix, _epsilon)
+                cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
-                distance = float(cost_matrix[-1, -1] / max(_x.shape[1], _y.shape[1]))
-                return path, distance
+                return path, cost_matrix[-1, -1]
 
-        return numba_edr_distance_alignment_path
+        return numba_wdtw_distance_alignment_path
 
     def _distance_factory(
         self,
         x: np.ndarray,
         y: np.ndarray,
-        window: float = None,
+        window: int = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        epsilon: float = None,
+        g: float = 0.05,
         **kwargs: Any,
     ) -> DistanceCallable:
-        """Create a no_python compiled edr distance callable.
-
-        Series should be shape (d, m), where d is the number of dimensions, m the series
-        length. Series can be different lengths.
+        """Create a no_python compiled wdtw distance callable.
 
         Parameters
         ----------
@@ -149,7 +159,7 @@ class _EdrDistance(NumbaDistance):
         y: np.ndarray (2d array of shape (d,m2)).
             Second time series.
         window: float, defaults = None
-            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+            Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
@@ -159,17 +169,18 @@ class _EdrDistance(NumbaDistance):
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
             be infinity.
-        epsilon : float, defaults = None
-            Matching threshold to determine if two subsequences are considered close
-            enough to be considered 'common'. If not specified as per the original paper
-            epsilon is set to a quarter of the maximum standard deviation.
+        g: float, defaults = 0.
+            Constant that controls the curvature (slope) of the function; that is, g
+            controls the level of penalisation for the points with larger phase
+            difference.
         kwargs: Any
             Extra kwargs.
+
 
         Returns
         -------
         Callable[[np.ndarray, np.ndarray], float]
-            No_python compiled edr distance callable.
+            No_python compiled wdtw distance callable.
 
         Raises
         ------
@@ -178,28 +189,31 @@ class _EdrDistance(NumbaDistance):
             If the input time series do not have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
-            If epsilon is not a float.
+            If the value of g is not a float
         """
-        from sktime.distances._edr_numba import _edr_cost_matrix
-        from sktime.distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances._wdtw_numba import (
+            _weighted_cost_matrix,
+        )
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        if epsilon is not None and not isinstance(epsilon, float):
-            raise ValueError("The value of epsilon must be a float.")
+        if not isinstance(g, float):
+            raise ValueError(
+                f"The value of g must be a float. The current value is {g}"
+            )
 
         @njit(cache=True)
-        def numba_edr_distance(_x: np.ndarray, _y: np.ndarray) -> float:
-            if np.array_equal(_x, _y):
-                return 0.0
-            if epsilon is None:
-                _epsilon = max(np.std(_x), np.std(_y)) / 4
-            else:
-                _epsilon = epsilon
-            cost_matrix = _edr_cost_matrix(_x, _y, _bounding_matrix, _epsilon)
-            return float(cost_matrix[-1, -1] / max(_x.shape[1], _y.shape[1]))
+        def numba_wdtw_distance(
+            _x: np.ndarray,
+            _y: np.ndarray,
+        ) -> float:
+            cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
+            return cost_matrix[-1, -1]
 
-        return numba_edr_distance
+        return numba_wdtw_distance

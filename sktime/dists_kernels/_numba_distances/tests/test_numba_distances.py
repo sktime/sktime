@@ -8,14 +8,22 @@ import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
 
-from sktime.distances._distance import _METRIC_INFOS, distance, distance_factory
-from sktime.distances.base import MetricInfo, NumbaDistance
-from sktime.distances.tests._expected_results import _expected_distance_results
-from sktime.distances.tests._shared_tests import (
+from sktime.dists_kernels._numba_distances._distance import (
+    _METRIC_INFOS,
+    distance,
+    distance_factory,
+)
+from sktime.dists_kernels._numba_distances.base import MetricInfo, NumbaDistance
+from sktime.dists_kernels._numba_distances.tests._expected_results import (
+    _expected_distance_results,
+)
+from sktime.dists_kernels._numba_distances.tests._shared_tests import (
     _test_incorrect_parameters,
     _test_metric_parameters,
 )
-from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.dists_kernels._numba_distances.tests._utils import (
+    create_test_distance_numpy,
+)
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -150,7 +158,7 @@ def _validate_distance_result(
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("numba", severity="none")
-    or not run_test_module_changed("sktime.distances"),  # noqa: E501
+    or not run_test_module_changed("sktime.dists_kernels._numba_distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
@@ -203,7 +211,7 @@ def test_distance(dist: MetricInfo) -> None:
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("numba", severity="none")
-    or not run_test_module_changed("sktime.distances"),  # noqa: E501
+    or not run_test_module_changed("sktime.dists_kernels._numba_distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 def test_metric_parameters():
@@ -213,7 +221,7 @@ def test_metric_parameters():
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("numba", severity="none")
-    or not run_test_module_changed("sktime.distances"),  # noqa: E501
+    or not run_test_module_changed("sktime.dists_kernels._numba_distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 def test_incorrect_parameters():
@@ -223,7 +231,7 @@ def test_incorrect_parameters():
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("numba", severity="none")
-    or not run_test_module_changed("sktime.distances"),  # noqa: E501
+    or not run_test_module_changed("sktime.dists_kernels._numba_distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 def test_distance_factory_1d():

@@ -4,7 +4,7 @@ from collections.abc import Callable
 
 import numpy as np
 
-from sktime.distances.base import DistanceCallable
+from sktime.dists_kernels._numba_distances.base import DistanceCallable
 from sktime.utils.numba.njit import njit
 
 

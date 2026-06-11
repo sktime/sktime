@@ -4,36 +4,24 @@ from typing import Any
 
 import numpy as np
 
-from sktime.distances.base import (
-    DistanceAlignmentPathCallable,
-    DistanceCallable,
-    NumbaDistance,
-)
+from sktime.dists_kernels._numba_distances.base import DistanceCallable, NumbaDistance
 
 
-class _WdtwDistance(NumbaDistance):
-    r"""Weighted dynamic time warping (WDTW) distance between two time series.
+class _TweDistance(NumbaDistance):
+    """Time Warp Edit (TWE) distance between two time series.
 
-    WDTW uses DTW with a weighted pairwise distance matrix rather than a window. When
-    creating the distance matrix :math:'M', a weight penalty  :math:'w_{|i-j|}' for a
-    warping distance of :math:'|i-j|' is applied, so that for series
-    :math:'a = <a_1, ..., a_m>' and :math:'b=<b_1,...,b_m>',
-    .. math:: M_{i,j}=  w(|i-j|) (a_i-b_j)^2.
-    A logistic weight function, proposed in [1] is used, so that a warping of :math:'x'
-    places imposes a weighting of
-    .. math:: w(x)=\frac{w_{max}}{1+e^{-g(x-m/2)}},
-    where :math:'w_{max}' is an upper bound on the weight (set to 1), :math:'m' is
-    the series length and :math:'g' is a parameter that controls the penalty level
-    for larger warpings. The greater :math:'g' is, the greater the penalty for warping.
-    Once :math:'M' is found, standard dynamic time warping is applied.
-
-    WDTW is set up so you can use it with a bounding box in addition to the weight
-    function is so desired. This is for consistency with the other distance functions.
+    The Time Warp Edit (TWE) distance is a distance measure for discrete time series
+    matching with time 'elasticity'. In comparison to other distance measures, (e.g.
+    DTW (Dynamic Time Warping) or LCS (Longest Common Subsequence Problem)), TWE is a
+    metric. Its computational time complexity is O(n^2), but can be drastically reduced
+    in some specific situation by using a corridor to reduce the search space. Its
+    memory space complexity can be reduced to O(n). It was first proposed in [1].
 
     References
     ----------
-    .. [1] Jeong, Y., Jeong, M., Omitaomu, O.: Weighted dynamic time warping for time
-    series classification. Pattern Recognition 44, 2231-2240 (2011)
+    .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
+    for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
+    Intelligence. 31 (2): 306-318.
     """
 
     def _distance_alignment_path_factory(
@@ -41,16 +29,18 @@ class _WdtwDistance(NumbaDistance):
         x: np.ndarray,
         y: np.ndarray,
         return_cost_matrix: bool = False,
-        window: int = None,
+        window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        g: float = 0.05,
+        lmbda: float = 1.0,
+        nu: float = 0.001,
+        p: int = 2,
         **kwargs: Any,
-    ) -> DistanceAlignmentPathCallable:
-        """Create a no_python compiled wdtw distance alignment path callable.
+    ) -> DistanceCallable:
+        """Create a no_python compiled twe distance callable.
 
         Series should be shape (d, m), where d is the number of dimensions, m the series
-        length. Series can be different lengths.
+        length.
 
         Parameters
         ----------
@@ -71,17 +61,20 @@ class _WdtwDistance(NumbaDistance):
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
             be infinity.
-        g: float, defaults = 0.
-            Constant that controls the curvature (slope) of the function; that is, g
-            controls the level of penalisation for the points with larger phase
-            difference.
+        lmbda: float, defaults = 1.0
+            A constant penalty that punishes the editing efforts. Must be >= 1.0.
+        nu: float, defaults = 0.001
+            A non-negative constant which characterizes the stiffness of the elastic
+            twe measure. Must be > 0.
+        p: int, defaults = 2
+            Order of the p-norm for local cost.
         kwargs: any
             extra kwargs.
 
         Returns
         -------
-        Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, float]]
-            No_python compiled wdtw distance path callable.
+        Callable[[np.ndarray, np.ndarray], float]
+            No_python compiled Dtw distance callable.
 
         Raises
         ------
@@ -90,61 +83,61 @@ class _WdtwDistance(NumbaDistance):
             If the input time series do not have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
-            If the value of g is not a float
         """
-        from sktime.distances._distance_alignment_paths import compute_min_return_path
-        from sktime.distances._wdtw_numba import _weighted_cost_matrix
-        from sktime.distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances._distance_alignment_paths import (
+            compute_twe_return_path,
+        )
+        from sktime.dists_kernels._numba_distances._twe_numba import _twe_cost_matrix
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
+        if bounding_matrix is None:
+            bounding_matrix = np.zeros((x.shape[1] + 1, y.shape[1] + 1))
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
-
-        if not isinstance(g, float):
-            raise ValueError(
-                f"The value of g must be a float. The current value is {g}"
-            )
-
-        _bounding_matrix = resolve_bounding_matrix(
-            x, y, window, itakura_max_slope, bounding_matrix
-        )
-
         if return_cost_matrix is True:
 
             @njit(cache=True)
-            def numba_wdtw_distance_alignment_path(
+            def numba_twe_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> tuple[list, float, np.ndarray]:
-                cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
-                path = compute_min_return_path(cost_matrix, _bounding_matrix)
+                cost_matrix = _twe_cost_matrix(_x, _y, _bounding_matrix, lmbda, nu, p)
+                path = compute_twe_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
 
         else:
 
             @njit(cache=True)
-            def numba_wdtw_distance_alignment_path(
+            def numba_twe_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> tuple[list, float]:
-                cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
-                path = compute_min_return_path(cost_matrix, _bounding_matrix)
+                cost_matrix = _twe_cost_matrix(_x, _y, _bounding_matrix, lmbda, nu, p)
+                path = compute_twe_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
 
-        return numba_wdtw_distance_alignment_path
+        return numba_twe_distance_alignment_path
 
     def _distance_factory(
         self,
         x: np.ndarray,
         y: np.ndarray,
-        window: int = None,
+        window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        g: float = 0.05,
+        lmbda: float = 1.0,
+        nu: float = 0.001,
+        p: int = 2,
         **kwargs: Any,
     ) -> DistanceCallable:
-        """Create a no_python compiled wdtw distance callable.
+        """Create a no_python compiled twe distance callable.
+
+        Series should be shape (d, m), where d is the number of dimensions, m the series
+        length.
 
         Parameters
         ----------
@@ -152,8 +145,8 @@ class _WdtwDistance(NumbaDistance):
             First time series.
         y: np.ndarray (2d array of shape (d,m2)).
             Second time series.
-        window: float, defaults = None
-            Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        window: Float, defaults = None
+            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
@@ -163,18 +156,20 @@ class _WdtwDistance(NumbaDistance):
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
             be infinity.
-        g: float, defaults = 0.
-            Constant that controls the curvature (slope) of the function; that is, g
-            controls the level of penalisation for the points with larger phase
-            difference.
-        kwargs: Any
-            Extra kwargs.
-
+        lmbda: float, defaults = 1.0
+            A constant penalty that punishes the editing efforts. Must be >= 1.0.
+        nu: float, defaults = 0.001
+            A non-negative constant which characterizes the stiffness of the elastic
+            twe measure. Must be > 0.
+        p: int, defaults = 2
+            Order of the p-norm for local cost.
+        kwargs: any
+            extra kwargs.
 
         Returns
         -------
         Callable[[np.ndarray, np.ndarray], float]
-            No_python compiled wdtw distance callable.
+            No_python compiled Dtw distance callable.
 
         Raises
         ------
@@ -183,27 +178,28 @@ class _WdtwDistance(NumbaDistance):
             If the input time series do not have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
-            If the value of g is not a float
         """
-        from sktime.distances._wdtw_numba import _weighted_cost_matrix
-        from sktime.distances.lower_bounding import resolve_bounding_matrix
+        from sktime.dists_kernels._numba_distances._twe_numba import (
+            _twe_cost_matrix,
+            pad_ts,
+        )
+        from sktime.dists_kernels._numba_distances.lower_bounding import (
+            resolve_bounding_matrix,
+        )
         from sktime.utils.numba.njit import njit
 
+        x = pad_ts(x)
+        y = pad_ts(y)
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        if not isinstance(g, float):
-            raise ValueError(
-                f"The value of g must be a float. The current value is {g}"
-            )
-
         @njit(cache=True)
-        def numba_wdtw_distance(
+        def numba_twe_distance(
             _x: np.ndarray,
             _y: np.ndarray,
         ) -> float:
-            cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
+            cost_matrix = _twe_cost_matrix(_x, _y, _bounding_matrix, lmbda, nu, p)
             return cost_matrix[-1, -1]
 
-        return numba_wdtw_distance
+        return numba_twe_distance

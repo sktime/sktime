@@ -5,7 +5,7 @@ from typing import Any
 
 import numpy as np
 
-from sktime.distances.base import DistanceCallable, NumbaDistance
+from sktime.dists_kernels._numba_distances.base import DistanceCallable, NumbaDistance
 
 
 class _SquaredDistance(NumbaDistance):
@@ -31,6 +31,8 @@ class _SquaredDistance(NumbaDistance):
         Callable[[np.ndarray, np.ndarray], float]
             No_python compiled Squared distance callable.
         """
-        from sktime.distances._squared_numba import _numba_squared_distance
+        from sktime.dists_kernels._numba_distances._squared_numba import (
+            _numba_squared_distance,
+        )
 
         return _numba_squared_distance

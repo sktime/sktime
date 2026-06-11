@@ -4,8 +4,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.distances.lower_bounding import LowerBounding
-from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.dists_kernels._numba_distances.lower_bounding import LowerBounding
+from sktime.dists_kernels._numba_distances.tests._utils import (
+    create_test_distance_numpy,
+)
 from sktime.tests.test_switch import run_test_module_changed
 
 
@@ -148,7 +150,7 @@ def _validate_bounding(
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.distances"),
+    not run_test_module_changed("sktime.dists_kernels._numba_distances"),
     reason="Run test only if distances module has changed",
 )
 def test_lower_bounding() -> None:
@@ -179,7 +181,7 @@ def test_lower_bounding() -> None:
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.distances"),
+    not run_test_module_changed("sktime.dists_kernels._numba_distances"),
     reason="Run test only if distances module has changed",
 )
 def test_incorrect_parameters() -> None:

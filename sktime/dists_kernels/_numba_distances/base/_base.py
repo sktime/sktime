@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 import numpy as np
 
-from sktime.distances.base._types import (
+from sktime.dists_kernels._numba_distances.base._types import (
     AlignmentPathReturn,
     DistanceAlignmentPathCallable,
     DistanceCallable,

@@ -20,7 +20,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.datatypes import convert
-from sktime.distances import (
+from sktime.dists_kernels._numba_distances import (
     dtw_distance,
     erp_distance,
     lcss_distance,

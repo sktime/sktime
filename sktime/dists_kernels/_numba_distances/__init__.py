@@ -30,7 +30,7 @@ __all__ = [
     "twe_alignment_path",
 ]
 
-from sktime.distances._distance import (
+from sktime.dists_kernels._numba_distances._distance import (
     ddtw_alignment_path,
     ddtw_distance,
     distance,
@@ -57,4 +57,4 @@ from sktime.distances._distance import (
     wdtw_alignment_path,
     wdtw_distance,
 )
-from sktime.distances.lower_bounding import LowerBounding
+from sktime.dists_kernels._numba_distances.lower_bounding import LowerBounding

@@ -7,14 +7,19 @@ from collections.abc import Callable
 import numpy as np
 import pytest
 
-from sktime.distances._distance import _METRIC_INFOS, pairwise_distance
-from sktime.distances._numba_utils import _make_3d_series
-from sktime.distances.base import MetricInfo, NumbaDistance
-from sktime.distances.tests._shared_tests import (
+from sktime.dists_kernels._numba_distances._distance import (
+    _METRIC_INFOS,
+    pairwise_distance,
+)
+from sktime.dists_kernels._numba_distances._numba_utils import _make_3d_series
+from sktime.dists_kernels._numba_distances.base import MetricInfo, NumbaDistance
+from sktime.dists_kernels._numba_distances.tests._shared_tests import (
     _test_incorrect_parameters,
     _test_metric_parameters,
 )
-from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.dists_kernels._numba_distances.tests._utils import (
+    create_test_distance_numpy,
+)
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -211,7 +216,7 @@ def _test_pw_equal_single_dists(
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("numba", severity="none")
-    or not run_test_module_changed("sktime.distances"),  # noqa: E501
+    or not run_test_module_changed("sktime.dists_kernels._numba_distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
@@ -277,7 +282,7 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("numba", severity="none")
-    or not run_test_module_changed("sktime.distances"),  # noqa: E501
+    or not run_test_module_changed("sktime.dists_kernels._numba_distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 def test_metric_parameters():
@@ -287,7 +292,7 @@ def test_metric_parameters():
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("numba", severity="none")
-    or not run_test_module_changed("sktime.distances"),  # noqa: E501
+    or not run_test_module_changed("sktime.dists_kernels._numba_distances"),  # noqa: E501
     reason="skip test if required soft dependency not available",
 )
 def test_incorrect_parameters():
