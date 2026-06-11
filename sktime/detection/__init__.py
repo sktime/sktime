@@ -14,16 +14,15 @@ _MODULES_FLATTENED = ["skchange_aseg", "skchange_cp"]
 
 
 for _module in _MODULES_FLATTENED:
-    sys.modules[f"{__name__}.{_module}"] = import_module(__name__)
+    sys.modules[f"{__name__}.{_module}"] = import_module(f"{__name__}.all")
 
 
 def __getattr__(name):
     if name in _MODULES_FLATTENED:
         warnings.warn(
             f"{__name__}.{name} is deprecated, please import directly from "
-            f"{__name__} instead. Same for deeper imports, e.g., "
-            f"an import from {__name__}.{name}.abc should be replaced by import from "
-            f"{__name__}.abc instead.",
+            f"{__name__} submodules instead, alternatively from {__name__}.all -"
+            "please see the documentation for exact import locations of estimators",
             FutureWarning,
             stacklevel=2,
         )
