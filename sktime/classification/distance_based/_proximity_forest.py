@@ -28,7 +28,7 @@ from sktime.distances import (
     wdtw_distance,
 )
 from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
+from sktime.transformations.summarize import DerivativeSlopeTransformer
 
 # todo unit tests / sort out current unit tests
 # todo logging package rather than print to screen

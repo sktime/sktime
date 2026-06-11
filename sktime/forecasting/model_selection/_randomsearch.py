@@ -224,7 +224,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     >>> from sktime.forecasting.model_selection import ForecastingRandomizedSearchCV
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.split import ExpandingWindowSplitter
-    >>> from sktime.transformations.series.detrend import Detrender
+    >>> from sktime.transformations.detrend import Detrender
     >>> y = load_shampoo_sales()
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("detrender", Detrender()),

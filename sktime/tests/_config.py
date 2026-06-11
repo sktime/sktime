@@ -182,7 +182,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MLPNetwork",
         "MUSE",
         "MVCAPA",
-        "MatrixProfile",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",

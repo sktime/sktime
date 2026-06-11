@@ -6,7 +6,7 @@ _coerce_register = dict()
 
 
 def _coerce_transformer_tabular_to_transformer(obj):
-    from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+    from sktime.transformations.adapt import TabularToSeriesAdaptor
 
     return TabularToSeriesAdaptor(obj)
 
