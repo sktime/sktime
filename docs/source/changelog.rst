@@ -77,6 +77,10 @@ BaseObject and base framework
 Forecasters
 ^^^^^^^^^^^
 
+* passing an integer ``fh`` to forecasters is now interpreted as ``range(1, fh+1)``.
+  For example, passing ``fh=3`` will forecast the next 3 periods, and is equivalent
+  to passing ``fh=[1, 2, 3]``, or ``fh=range(1, 4)``.
+
 * forecasters now possess a programmatic API point for pre-training, the ``pretrain``
   method. Global forecasters, indicated by the ``capability:pretrain`` tag,
   can be pre-trained via ``pretrain`` on global training data on which later no
@@ -254,6 +258,7 @@ Forecasting
 * [ENH] deduplicate ``ARIMA`` test skips (:pr:`10372`) :user:`fkiraly`
 * [ENH] Flowstate forecasting foundation model by IBM (:pr:`10329`) :user:`Faakhir30`
 * [ENH] PatchTSMixer Forecaster by IBM (:pr:`10330`) :user:`Faakhir30`
+* [ENH] passing ``fh: int`` to forecast ``range(1, fh + 1)`` (:pr:`10378`) :user:`fkiraly`
 
 Parameter estimation and hypothesis testing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
