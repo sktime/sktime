@@ -2201,10 +2201,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         Parameters
         ----------
         fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
-             If fh is not None and not of type ForecastingHorizon it is coerced to
-             ForecastingHorizon (e.g. in sktime.utils.validation.forecasting.check_fh)
-             In particular, if fh is of type pd.Index it is coerced via
-             ForecastingHorizon(fh, is_relative=False)
+            If fh is not None and not of type ForecastingHorizon it is coerced to
+            ForecastingHorizon (e.g. in sktime.utils.validation.forecasting.check_fh)
+            In particular, if fh is of type pd.Index it is coerced via
+            ForecastingHorizon(fh, is_relative=False)
         pred_int: Check pred_int:insample tag instead of insample tag.
 
         Returns
