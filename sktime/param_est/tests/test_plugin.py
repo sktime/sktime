@@ -12,7 +12,7 @@ from sktime.param_est.fixed import FixedParams
 from sktime.param_est.plugin import PluginParamsForecaster
 from sktime.param_est.seasonality import SeasonalityACF
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.difference import Differencer
+from sktime.transformations.difference import Differencer
 from sktime.utils.dependencies import _check_estimator_deps
 
 

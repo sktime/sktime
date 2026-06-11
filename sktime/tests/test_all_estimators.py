@@ -1293,7 +1293,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         for tag in estimator_instance._get_flags(flag_attr_name="_tags"):
             if tag in ALIAS_DICT:
-                # todo 1.0.0: remove this exception once forecaster tag deprecation done
+                # todo 1.1.0: remove this exception once forecaster tag deprecation done
+                # specifically, deprecation of the capability:multivariate aliasing
                 object_type = estimator_instance.get_tag("object_type")
                 # special case: "scitype:y" deprecated only for forecasters
                 if tag == "scitype:y" and not object_type == "forecaster":

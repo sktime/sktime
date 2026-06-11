@@ -38,8 +38,8 @@ from sktime.performance_metrics.forecasting import (
 from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLoss
 from sktime.split import SingleWindowSplitter, SlidingWindowSplitter
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.detrend import Detrender
-from sktime.transformations.series.impute import Imputer
+from sktime.transformations.detrend import Detrender
+from sktime.transformations.impute import Imputer
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
