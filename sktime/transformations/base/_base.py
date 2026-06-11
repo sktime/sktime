@@ -39,13 +39,7 @@ State:
 """
 
 __author__ = ["mloning", "fkiraly", "miraep8"]
-__all__ = [
-    "BaseTransformer",
-    "_SeriesToPrimitivesTransformer",
-    "_SeriesToSeriesTransformer",
-    "_PanelToTabularTransformer",
-    "_PanelToPanelTransformer",
-]
+__all__ = ["BaseTransformer"]
 
 from itertools import product
 
@@ -1660,71 +1654,3 @@ class BaseTransformer(BaseEstimator):
 
 # initialize dynamic docstrings
 BaseTransformer._init_dynamic_doc()
-
-
-class _SeriesToPrimitivesTransformer(BaseTransformer):
-    """Transformer base class for series to primitive(s) transforms."""
-
-    # class is temporary for downwards compatibility
-
-    # default tag values for "Series-to-Primitives"
-    _tags = {
-        "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": "Primitives",
-        # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
-    }
-
-
-class _SeriesToSeriesTransformer(BaseTransformer):
-    """Transformer base class for series to series transforms."""
-
-    # class is temporary for downwards compatibility
-
-    # default tag values for "Series-to-Series"
-    _tags = {
-        "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": "Series",
-        # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
-    }
-
-
-class _PanelToTabularTransformer(BaseTransformer):
-    """Transformer base class for panel to tabular transforms."""
-
-    # class is temporary for downwards compatibility
-
-    # default tag values for "Panel-to-Tabular"
-    _tags = {
-        "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": "Primitives",
-        # what is the scitype of y: None (not needed), Primitives, Series, Panel
-        "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
-    }
-
-
-class _PanelToPanelTransformer(BaseTransformer):
-    """Transformer base class for panel to panel transforms."""
-
-    # class is temporary for downwards compatibility
-
-    # default tag values for "Panel-to-Panel"
-    _tags = {
-        "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": "Series",
-        # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
-    }
