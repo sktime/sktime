@@ -254,7 +254,7 @@ def test_linear_extrapolation_endogenous_only(
     not run_test_module_changed(["sktime.forecasting", "sktime.split"]),
     reason="run test only if forecasting or split module has changed",
 )
-@pytest.mark.parametrize("fh", [1, 3, 5])
+@pytest.mark.parametrize("fh", [[1], [3], [5]])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 @pytest.mark.parametrize("strategy", STRATEGIES)
 @pytest.mark.parametrize("scitype", ["time-series-regressor", "tabular-regressor"])
