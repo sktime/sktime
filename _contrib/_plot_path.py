@@ -2,7 +2,10 @@
 
 import numpy as np
 
-from sktime.dists_kernels._numba_distances._distance import distance_alignment_path, pairwise_distance
+from sktime.dists_kernels._numba_distances._distance import (
+    distance_alignment_path,
+    pairwise_distance,
+)
 from sktime.utils.dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("matplotlib", severity="warning")
@@ -147,7 +150,7 @@ def _plot_alignment(x, y, metric, dist_kwargs: dict = None, title: str = ""):
                 color="#818587",
             )
         except Exception:
-            continue
+            continue  # noqa: S112
     plt.legend()
     plt.title(title)
 
