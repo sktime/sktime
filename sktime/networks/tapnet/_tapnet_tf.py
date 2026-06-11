@@ -207,7 +207,6 @@ class TapNetNetwork(BaseDeepNetwork):
         input_layer  : a keras layer
         output_layer : a keras layer
         """
-        import tensorflow as tf
         from tensorflow import keras
 
         from sktime.libs._keras_self_attention import SeqSelfAttention
@@ -279,8 +278,15 @@ class TapNetNetwork(BaseDeepNetwork):
                 rp_outputs = []
                 for i in range(self.rp_group):
                     idx = self._rng.permutation(n_dims)[: self.rp_dim]
-                    channel = keras.layers.Lambda(
-                        lambda x, idx=idx: tf.gather(x, indices=idx, axis=2)
+                    selection_matrix = np.zeros((n_dims, self.rp_dim), dtype=np.float32)
+                    selection_matrix[idx, np.arange(self.rp_dim)] = 1.0
+                    channel = keras.layers.Dense(
+                        self.rp_dim,
+                        use_bias=False,
+                        trainable=False,
+                        kernel_initializer=keras.initializers.Constant(
+                            selection_matrix
+                        ),
                     )(input_layer)
                     x_conv = _apply_conv_block(
                         channel,

@@ -337,9 +337,15 @@ class BaseDeepRegressor(BaseRegressor):
         keras_location_legacy = temp_unzip_loc / "keras"
         keras_location = temp_unzip_loc / "keras" / "model.keras"
         if keras_location.exists():
-            cls.model_ = keras.models.load_model(keras_location)
+            cls.model_ = keras.models.load_model(
+                keras_location,
+                custom_objects=cls.get_custom_objects(),
+            )
         elif keras_location_legacy.exists():
-            cls.model_ = keras.models.load_model(keras_location_legacy)
+            cls.model_ = keras.models.load_model(
+                keras_location_legacy,
+                custom_objects=cls.get_custom_objects(),
+            )
         else:
             cls.model_ = None
 
