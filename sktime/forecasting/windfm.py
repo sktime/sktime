@@ -26,18 +26,14 @@ class WindFMForecaster(BaseForecaster):
 
     Parameters
     ----------
-    model_path : str or None, default="NeoQuasar/WindFM"
+    model_path : str, default="NeoQuasar/WindFM"
         Hugging Face repository identifier or local path for the WindFM model.
         The default is the WindFM checkpoint [3]_. Other released
-        checkpoints include WindFM-robust [4]_. If ``None`` together with
-        ``tokenizer_path=None``, a lightweight randomly initialized WindFM model
-        and tokenizer are used, primarily for estimator testing.
-    tokenizer_path : str or None, default="NeoQuasar/WindFM-Tokenizer"
+        checkpoints include WindFM-robust [4]_.
+    tokenizer_path : str, default="NeoQuasar/WindFM-Tokenizer"
         Hugging Face repository identifier or local path for the WindFM tokenizer.
         The default is the WindFM-Tokenizer checkpoint [5]_. The released
-        WindFM-Tokenizer-robust is also available [6]_. If ``None`` together
-        with ``model_path=None``, a lightweight randomly initialized WindFM model
-        and tokenizer are used, primarily for estimator testing.
+        WindFM-Tokenizer-robust is also available [6]_.
     device : str, default="cpu"
         Device used for model and tokenizer inference.
     columns : list of str or None, default=None
@@ -422,28 +418,30 @@ class WindFMForecaster(BaseForecaster):
             mapping = dict(zip(self._covariate_cols, self.columns))
 
         missing = [col for col in mapping.values() if col not in X.columns]
-        if missing and self._uses_random_windfm():
+        if missing:
             columns = list(X.columns)
+            if len(columns) == 0:
+                raise ValueError(
+                    "X must contain at least one column to reuse as placeholder "
+                    "WindFM covariates."
+                )
+            missing_unique = list(dict.fromkeys(missing))
+            warn(
+                "WindFMForecaster could not find the requested weather covariate "
+                f"columns in X: {missing_unique}. Existing X columns will be reused "
+                "positionally as placeholder WindFM covariates.",
+                obj=self,
+            )
             mapping = {
                 internal: columns[i % len(columns)]
                 for i, internal in enumerate(self._covariate_cols)
             }
-            missing = []
-        if missing:
-            raise ValueError(f"columns contains values missing from X: {missing}.")
         return mapping
 
     def _load_windfm(self):
         """Load or retrieve cached WindFM tokenizer/model."""
         if hasattr(self, "model_") and hasattr(self, "tokenizer_"):
             return self.tokenizer_, self.model_
-        if self._uses_random_windfm():
-            return self._init_random_windfm()
-        if self.model_path is None or self.tokenizer_path is None:
-            raise ValueError(
-                "model_path and tokenizer_path must either both be None, or both "
-                "identify WindFM Hugging Face repositories or local paths."
-            )
 
         tokenizer, model = _CachedWindFM(
             key=self._get_unique_key(),
@@ -463,53 +461,12 @@ class WindFMForecaster(BaseForecaster):
         }
         return str(sorted(key.items()))
 
-    def _uses_random_windfm(self):
-        """Return whether this instance should use random WindFM weights."""
-        return self.model_path is None and self.tokenizer_path is None
-
     def _make_fallback_X(self, y):
         """Create placeholder covariates from y when X is omitted."""
         return pd.DataFrame(
             {col: y.to_numpy() for col in self._covariate_cols},
             index=y.index,
         )
-
-    def _init_random_windfm(self):
-        """Initialize a small random WindFM model/tokenizer pair for tests."""
-        from sktime.libs.windfm import WindFM, WindFMTokenizer
-
-        tokenizer = WindFMTokenizer(
-            d_in=6,
-            d_model=8,
-            n_heads=1,
-            ff_dim=16,
-            n_enc_layers=1,
-            n_dec_layers=1,
-            ffn_dropout_p=0.0,
-            attn_dropout_p=0.0,
-            resid_dropout_p=0.0,
-            s1_bits=2,
-            s2_bits=2,
-            beta=0.0,
-            gamma0=0.0,
-            gamma=0.0,
-            zeta=0.0,
-            group_size=4,
-        )
-        model = WindFM(
-            s1_bits=2,
-            s2_bits=2,
-            n_layers=1,
-            d_model=8,
-            n_heads=1,
-            ff_dim=16,
-            ffn_dropout_p=0.0,
-            attn_dropout_p=0.0,
-            resid_dropout_p=0.0,
-            token_dropout_p=0.0,
-            learn_te=False,
-        )
-        return tokenizer, model
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -532,14 +489,14 @@ class WindFMForecaster(BaseForecaster):
         """
         return [
             {
-                "model_path": None,
-                "tokenizer_path": None,
+                "model_path": "NeoQuasar/WindFM",
+                "tokenizer_path": "NeoQuasar/WindFM-Tokenizer",
                 "columns": [0, 1, 0, 1, 0],
                 "deterministic": True,
             },
             {
-                "model_path": None,
-                "tokenizer_path": None,
+                "model_path": "NeoQuasar/WindFM",
+                "tokenizer_path": "NeoQuasar/WindFM-Tokenizer",
                 "device": "cpu",
                 "columns": [0, 1, 0, 1, 0],
                 "clip": 5.0,
