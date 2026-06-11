@@ -74,7 +74,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.transformations.pca import PCATransformer
     >>> from sktime.clustering.k_means import TimeSeriesKMeans
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.clustering.compose import ClustererPipeline
@@ -334,7 +334,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         # imports
         from sktime.clustering.dbscan import TimeSeriesDBSCAN
         from sktime.clustering.k_means import TimeSeriesKMeans
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.exponent import ExponentTransformer
         from sktime.utils.dependencies import _check_estimator_deps
 
         params = []
@@ -425,8 +425,8 @@ class SklearnClustererPipeline(ClustererPipeline):
     Examples
     --------
     >>> from sklearn.cluster import KMeans
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
+    >>> from sktime.transformations.summarize import SummaryTransformer
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.clustering.compose import SklearnClustererPipeline
     >>> X_train, y_train = load_unit_test(split="train")
@@ -660,8 +660,8 @@ class SklearnClustererPipeline(ClustererPipeline):
         """
         from sklearn.cluster import KMeans
 
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.transformations.series.summarize import SummaryTransformer
+        from sktime.transformations.exponent import ExponentTransformer
+        from sktime.transformations.summarize import SummaryTransformer
 
         # example with series-to-series transformer before sklearn clusterer
         t1 = ExponentTransformer(power=2)
