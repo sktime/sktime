@@ -16,41 +16,43 @@ class TapNetNetwork(BaseDeepNetwork):
 
     Parameters
     ----------
-    activation_hidden : str or callable, default = "leaky_relu"
-        activation function to use in the hidden layers;
-        List of available keras activation functions:
-        https://keras.io/api/layers/activations/
-    kernel_size : tuple of int, default = (8, 5, 3)
-        specifying the length of the 1D convolution window
-    layers : tuple of int, default = (500, 300)
-        sizes of dense layers
+    dropout : float, default = 0.5
+        dropout rate for the convolutional layers, in the range [0, 1)
     filter_sizes : tuple of int, default = (256, 256, 128)
         number of convolutional filters in each conv block
-    random_state : int or None, default = None
-        seed to any needed random actions
+    kernel_size : tuple of int, default = (8, 5, 3)
+        specifying the length of the 1D convolution window
+    dilation : int, default = 1
+        dilation value
+    layers : tuple of int, default = (500, 300)
+        sizes of dense layers
+    use_rp  : bool, default = True
+        whether to use random projections
     rp_group : int, default = 3
         number of random permutation groups g for random dimension permutation
     rp_alpha : float, default = 2.0
         scale factor alpha used to compute the RDP group size:
+        ```
         rp_dim = floor(n_dims * rp_alpha / rp_group)
-    dropout : float, default = 0.5
-        dropout rate for the convolutional layers
-    lstm_dropout : float, default = 0.8
-        dropout rate for the LSTM layer
-    dilation : int, default = 1
-        dilation value
-    padding : str, default = 'same'
-        type of padding for convolution layers
-    use_rp  : bool, default = True
-        whether to use random projections
+        ```
     use_att : bool, default = True
         whether to use self attention
     use_lstm : bool, default = True
         whether to use an LSTM layer
     use_cnn : bool, default = True
         whether to use a CNN layer
+    random_state : int or None, default = None
+        seed to any needed random actions
+    padding : str, default = 'same'
+        type of padding for convolution layers
+    activation_hidden : str or callable, default = "leaky_relu"
+        activation function to use in the hidden layers;
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
+    lstm_dropout : float, default = 0.8
+        dropout rate for the LSTM layer, in the range [0, 1)
     fc_dropout : float, default = 0.0
-        dropout rate before the output layer
+        dropout rate before the output layer, in the range (0, 1]
 
     References
     ----------
@@ -61,7 +63,7 @@ class TapNetNetwork(BaseDeepNetwork):
     """
 
     _tags = {
-        "authors": ["jnrusson1", "noxthot"],
+        "authors": ["jnrusson1", "noxthot", "srupat"],
         "python_dependencies": ["tensorflow"],
     }
 

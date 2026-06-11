@@ -14,63 +14,68 @@ from sktime.utils.dependencies import _check_dl_dependencies
 class TapNetRegressor(BaseDeepRegressor):
     """Time series attentional prototype network (TapNet), as described in [1].
 
-     TapNet was initially proposed for multivariate time series
-     classification. The is an adaptation for time series regression. TapNet comprises
-     these components: random dimension permutation, multivariate time series
-     encoding, and attentional prototype learning.
+    TapNet was initially proposed for multivariate time series
+    classification. This an adaptation for time series regression. TapNet comprises
+    these components: random dimension permutation, multivariate time series
+    encoding, and attentional prototype learning.
 
     Parameters
     ----------
-    filter_sizes : array of int, default = (256, 256, 128)
-        sets the kernel size argument for each convolutional block.
-        Controls number of convolutional filters
-        and number of neurons in attention dense layers.
-    kernel_size : array of int, default = (8, 5, 3)
-        controls the size of the convolutional kernels
-    layers : array of int, default = (500, 300)
-        size of dense layers
     n_epochs : int, default = 2000
         number of epochs to train the model
     batch_size : int, default = 16
         number of samples per update
-    callbacks : list of keras.callbacks.Callback, optional (default=None)
-        List of Keras callbacks to apply during model training.
     dropout : float, default = 0.5
-        dropout rate, in the range [0, 1)
-    lstm_dropout : float, default = 0.8
-        dropout rate for the LSTM layer, in the range [0, 1)
+        dropout rate for the convolutional layers, in the range [0, 1)
+    filter_sizes : tuple of int, default = (256, 256, 128)
+        number of convolutional filters in each conv block
+    kernel_size : tuple of int, default = (8, 5, 3)
+        specifying the length of the 1D convolution window
     dilation : int, default = 1
         dilation value
+    layers : array of int, default = (500, 300)
+        sizes of dense layers
+    use_rp : bool, default = True
+        whether to use random projections
     activation : str or callable, default = "linear"
         activation function for the last output layer
         List of available activation functions: https://keras.io/api/layers/activations/
     activation_hidden : str or callable, default = "leaky_relu"
         activation function for the hidden layers
         List of available activation functions: https://keras.io/api/layers/activations/
-    loss : str, default = "mean_squared_error"
-        loss function for the classifier
-    optimizer : str or None, default = "Adam(lr=0.01)"
-        gradient updating function for the classifier
+    rp_group : int, default = 3
+        number of random permutation groups g for random dimension permutation
+    rp_alpha : float, default = 2.0
+        scale factor alpha used to compute the RDP group size:
+        ```
+        rp_dim = floor(n_dims * rp_alpha / rp_group)
+        ```
     use_bias : bool, default = True
         whether to use bias in the output dense layer
-    use_rp : bool, default = True
-        whether to use random projections
-    rp_group : int, default = 3
-        number of random permutation groups
-    rp_alpha : float, default = 2.0
-        scale factor used to compute the random permutation group size
     use_att : bool, default = True
         whether to use self attention
     use_lstm : bool, default = True
         whether to use an LSTM layer
     use_cnn : bool, default = True
         whether to use a CNN layer
+    random_state : int or None, default = None
+        seed to any needed random actions
+    padding : str, default = 'same'
+        type of padding for convolution layers
+    loss : str, default = "mean_squared_error"
+        loss function for the classifier
+    optimizer : str or None, default = "Adam(lr=0.01)"
+        gradient updating function for the classifier
+    metrics : list of str or None, default = None
+        list of metrics to be evaluated by the model during training and testing
+    callbacks : list of keras.callbacks.Callback, optional (default=None)
+        List of Keras callbacks to apply during model training.
     verbose : bool, default = False
         whether to output extra information
-    random_state : int or None, default = None
-        seed for random
+    lstm_dropout : float, default = 0.8
+        dropout rate for the LSTM layer, in the range [0, 1)
     fc_dropout : float, default = 0.0
-        dropout rate before the output layer
+        dropout rate before the output layer, in the range (0, 1]
 
     References
     ----------
