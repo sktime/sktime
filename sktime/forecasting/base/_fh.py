@@ -207,6 +207,21 @@ class ForecastingHorizon:
     values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
         Values of forecasting horizon
 
+        * int, positive: interpreted as forecasting horizon at period offsets
+          1, 2, ..., int.
+        * int, non-positive: interpreted as forecasting horizon at number of periods
+          in the past or present relative to the cutoff, with a single period offset,
+          the integer. At the default ``is_relative=True``,
+          zero is the cutoff itself, i.e., nowcasting the last observation.
+          Negative integers are interpreted as in-sample forecasting horizon values.
+        * range: interpreted as forecasting horizon with values in the range
+        * pd.Index of supported type: interpreted as forecasting horizon with values
+          as in the index. 
+        * iterable of int or pd.Timedelta or date offset:
+          interpreted as forecasting horizon with values in the iterable.
+          Whether relative or absolute forecasting horizon is determined by the
+          type of the values.
+
     is_relative : bool, optional (default=None)
 
         - If True, a relative ForecastingHorizon is created:
@@ -214,8 +229,10 @@ class ForecastingHorizon:
         - If False, an absolute ForecastingHorizon is created:
           values are absolute.
         - if None, the flag is determined automatically:
-          relative, if values are of supported relative index type
-          absolute, if not relative and values of supported absolute index type
+          relative, if values are of supported relative index type:
+          integer-like, timedelta-like, or date offset-like types.
+          absolute, if not relative and values of supported absolute index type:
+          time index types, e.g., DatetimeIndex or PeriodIndex.
 
     freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
         object carrying frequency information on values
