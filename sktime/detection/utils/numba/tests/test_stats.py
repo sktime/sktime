@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.special as sp
 import scipy.stats as st
-
 from sktime.detection.utils.numba.stats import (
     digamma,
     kurtosis,

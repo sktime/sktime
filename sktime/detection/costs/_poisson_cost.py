@@ -6,8 +6,8 @@ __author__ = ["johannvk"]
 
 import numpy as np
 
-from sktime.detection.costs._base import BaseCost
 from sktime.detection._utils import MeanType, check_non_negative_parameter
+from sktime.detection.costs._base import BaseCost
 
 
 def _poisson_log_likelihood(rate, samples):

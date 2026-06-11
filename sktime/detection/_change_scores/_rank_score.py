@@ -6,8 +6,8 @@ __author__ = ["johannvk"]
 
 import numpy as np
 
-from sktime.detection.costs._rank_cost import _compute_ranks_and_pinv_cdf_cov
 from sktime.detection.base._base_interval_scorer import BaseIntervalScorer
+from sktime.detection.costs._rank_cost import _compute_ranks_and_pinv_cdf_cov
 
 
 def _compute_sorted_ranks(centered_data_ranks, segment_start, segment_end, output):

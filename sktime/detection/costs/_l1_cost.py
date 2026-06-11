@@ -6,8 +6,8 @@ __author__ = ["johannvk"]
 
 import numpy as np
 
-from sktime.detection.costs._base import BaseCost
 from sktime.detection._utils import check_mean
+from sktime.detection.costs._base import BaseCost
 
 
 def _l1_cost_mle_location(starts, ends, X):

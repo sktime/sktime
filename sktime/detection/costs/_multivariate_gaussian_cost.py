@@ -6,7 +6,6 @@ __author__ = ["johannvk", "Tveten"]
 
 import numpy as np
 
-from sktime.detection.costs._base import BaseCost
 from sktime.detection._utils import (
     CovType,
     MeanType,
@@ -14,6 +13,7 @@ from sktime.detection._utils import (
     check_mean,
     log_det_covariance,
 )
+from sktime.detection.costs._base import BaseCost
 
 
 def _gaussian_ll_at_mle_params(X, start, end):

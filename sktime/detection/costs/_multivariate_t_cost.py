@@ -7,11 +7,6 @@ __author__ = ["johannvk"]
 import numpy as np
 import pandas as pd
 
-from sktime.detection.costs._base import BaseCost
-from sktime.detection.costs._multivariate_gaussian_cost import (
-    _gaussian_cost_fixed_params,
-    _gaussian_cost_mle_params,
-)
 from sktime.detection._utils import (
     CovType,
     MeanType,
@@ -20,6 +15,11 @@ from sktime.detection._utils import (
     check_larger_than,
     check_mean,
     col_median,
+)
+from sktime.detection.costs._base import BaseCost
+from sktime.detection.costs._multivariate_gaussian_cost import (
+    _gaussian_cost_fixed_params,
+    _gaussian_cost_mle_params,
 )
 
 # ---------------------------------------------------------------------------
