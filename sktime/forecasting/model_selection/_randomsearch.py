@@ -26,27 +26,20 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         The forecaster to tune, must implement the sktime forecaster interface.
         sklearn regressors can be used, but must first be converted to forecasters
         via one of the reduction compositors, e.g., via ``make_reduction``
-    cv : cross-validation generator or an iterable
-        e.g. SlidingWindowSplitter()
-    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-        data ingestion strategy in fitting cv, passed to ``evaluate`` internally
-        defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = a new copy of the forecaster is fitted to each training window
-        "update" = forecaster is updated with training window data, in sequence provided
-        "no-update_params" = fit to first training window, re-used without fit or update
-    update_behaviour: str, optional, default = "full_refit"
-        one of {"full_refit", "inner_only", "no_update"}
-        behaviour of the forecaster when calling update
-        "full_refit" = both tuning parameters and inner estimator refit on all data seen
-        "inner_only" = tuning parameters are not re-tuned, inner estimator is updated
-        "no_update" = neither tuning parameters nor inner estimator are updated
+
+    cv : sktime time series splitter
+        Re-sampling strategy for cross-validation, must be an instance of a sktime
+        time series splitter, e.g. ``SlidingWindowSplitter()``
+
     param_distributions : dict or list of dicts
         Dictionary with parameters names (``str``) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
-        If a list is given, it is sampled uniformly.
-        If a list of dicts is given, first a dict is sampled uniformly, and
-        then a parameter is sampled using that dict as above.
+
+        * If a list is given, it is sampled uniformly.
+        * If a list of dicts is given, first a dict is sampled uniformly, and
+          then a parameter is sampled using that dict as above.
+
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
@@ -55,37 +48,82 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         scoring metric to use in tuning the forecaster
 
         * sktime metric objects (BaseMetric) descendants can be searched
-        with the ``registry.all_estimators`` search utility,
-        for instance via ``all_estimators("metric", as_dataframe=True)``
+          with the ``registry.all_estimators`` search utility,
+          for instance via ``all_estimators("metric", as_dataframe=True)``
 
         * If callable, must have signature
-        ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
-        assuming np.ndarrays being of the same length, and lower being better.
-        Metrics in sktime.performance_metrics.forecasting are all of this form.
+          ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
+          with ``np.ndarray`` being of the same length, and lower being better.
 
         * If str, uses registry.resolve_alias to resolve to one of the above.
           Valid strings are valid registry.craft specs, which include
           string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
           and keys of registry.ALIAS_DICT referring to metrics.
 
-        * If None, defaults to MeanAbsolutePercentageError()
+        * If None, defaults to ``MeanAbsolutePercentageError()``
+
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        data ingestion strategy in fitting cv, passed to ``evaluate`` internally
+        defines the ingestion mode when the forecaster sees new data when window expands
+
+        * ``"refit"`` = a new copy of the forecaster is fitted to each training window
+        * ``"update"`` = forecaster is updated with training window data,
+          in sequence provided
+        * ``"no-update_params"`` = fit to first training window,
+          re-used without fit or update
+
+    update_behaviour : str, optional, default = "full_refit"
+        one of {"full_refit", "inner_only", "no_update"}
+        behaviour of the forecaster when calling update
+
+        * ``"full_refit"`` = both tuning parameters and inner estimator refit on
+          all data seen
+        * ``"inner_only"`` = tuning parameters are not re-tuned, inner estimator is
+          updated
+        * ``"no_update"`` = neither tuning parameters nor inner estimator are updated
 
     refit : bool, optional (default=True)
-        True = refit the forecaster with the best parameters on the entire data in fit
-        False = no refitting takes place. The forecaster cannot be used to predict.
-        This is to be used to tune the hyperparameters, and then use the estimator
-        as a parameter estimator, e.g., via get_fitted_params or PluginParamsForecaster.
-    verbose : int, optional (default=0)
+        Whether to refit the forecaster with the best parameters on the entire data.
+
+        * True = refit the forecaster with the best parameters
+          on the entire data in ``fit``
+        * False = no refitting takes place. The forecaster cannot be used to predict.
+          This is to be used to tune the hyperparameters, and then use the estimator
+          as a parameter estimator, e.g.,
+          via ``get_fitted_params`` or ``PluginParamsForecaster``.
+
+    tune_by_instance : bool, optional (default=False)
+        Whether to tune parameter by each time series instance separately,
+        in case of ``Panel`` or ``Hierarchical`` data passed to the tuning estimator.
+        Only applies if time series passed are ``Panel`` or ``Hierarchical``.
+
+        * If ``True``, clones of the forecaster will be fit to each instance separately,
+          and are available in fields of the forecasters_ attribute.
+          Has the same effect as applying ``ForecastByLevel`` wrapper to self.
+        * If ``False``, the same best parameter is selected for all instances.
+
+    tune_by_variable : bool, optional (default=False)
+        Whether to tune parameter by each time series variable separately,
+        in case of multivariate data passed to the tuning estimator.
+        Only applies if time series passed are strictly multivariate.
+
+        * If ``True``, clones of the forecaster will be fit to each variable separately,
+          and are available in fields of the forecasters_ attribute.
+          Has the same effect as applying ``ColumnEnsembleForecaster`` wrapper to self.
+        * If ``False``, the same best parameter is selected for all variables.
+
+    verbose: int, optional (default=0)
+        Verbosity level. The higher, the more messages.
+
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_.
         Set return_n_best_forecasters to -1 to return all forecasters.
 
-    random_state : int, RandomState instance or None, default=None
-        Pseudo random number generator state used for random uniform sampling
-        from lists of possible values instead of scipy.stats distributions.
-        Pass an int for reproducible output across multiple
-        function calls.
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an exception occurs in estimator fitting. If set
+        to "raise", the exception is raised. If a numeric value is given,
+        FitFailedWarning is raised.
 
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
@@ -100,27 +138,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         "threading" is unlikely to see speed ups due to the GIL and the serialization
         backend (``cloudpickle``) for "dask" and "loky" is generally more robust
         than the standard ``pickle`` library used in "multiprocessing".
-
-    error_score : "raise" or numeric, default=np.nan
-        Value to assign to the score if an exception occurs in estimator fitting. If set
-        to "raise", the exception is raised. If a numeric value is given,
-        FitFailedWarning is raised.
-    tune_by_instance : bool, optional (default=False)
-        Whether to tune parameter by each time series instance separately,
-        in case of Panel or Hierarchical data passed to the tuning estimator.
-        Only applies if time series passed are Panel or Hierarchical.
-        If True, clones of the forecaster will be fit to each instance separately,
-        and are available in fields of the forecasters_ attribute.
-        Has the same effect as applying ForecastByLevel wrapper to self.
-        If False, the same best parameter is selected for all instances.
-    tune_by_variable : bool, optional (default=False)
-        Whether to tune parameter by each time series variable separately,
-        in case of multivariate data passed to the tuning estimator.
-        Only applies if time series passed are strictly multivariate.
-        If True, clones of the forecaster will be fit to each variable separately,
-        and are available in fields of the forecasters_ attribute.
-        Has the same effect as applying ColumnEnsembleForecaster wrapper to self.
-        If False, the same best parameter is selected for all variables.
 
     backend_params : dict, optional
         additional parameters passed to the backend as config.
@@ -147,6 +164,12 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
                 down after parallelization.
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
+
+    random_state : int, RandomState instance or None, default=None
+        Pseudo random number generator state used for random uniform sampling
+        from lists of possible values instead of scipy.stats distributions.
+        Pass an int for reproducible output across multiple
+        function calls.
 
     Attributes
     ----------
@@ -239,16 +262,16 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         n_iter=10,
         scoring=None,
         strategy="refit",
-        refit=True,
-        verbose=0,
-        return_n_best_forecasters=1,
-        random_state=None,
-        backend="loky",
         update_behaviour="full_refit",
-        error_score=np.nan,
+        refit=True,
         tune_by_instance=False,
         tune_by_variable=False,
+        verbose=0,
+        return_n_best_forecasters=1,
+        error_score=np.nan,
+        backend="loky",
         backend_params=None,
+        random_state=None,
         n_jobs="deprecated",
     ):
         super().__init__(
