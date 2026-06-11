@@ -6,8 +6,8 @@ __author__ = ["johannvk"]
 
 import numpy as np
 
-from sktime.detection._costs._multivariate_gaussian_cost import MultivariateGaussianCost
 from sktime.detection.base._base_interval_scorer import BaseIntervalScorer
+from sktime.detection.costs._multivariate_gaussian_cost import MultivariateGaussianCost
 
 
 def _half_integer_digamma(twice_n):

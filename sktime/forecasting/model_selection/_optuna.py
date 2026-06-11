@@ -146,8 +146,8 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     >>> from sktime.split import temporal_train_test_split
     >>> from sklearn.preprocessing import MinMaxScaler, RobustScaler
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
-    >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-    >>> from sktime.transformations.series.detrend import Deseasonalizer, Detrender
+    >>> from sktime.transformations.adapt import TabularToSeriesAdaptor
+    >>> from sktime.transformations.detrend import Deseasonalizer, Detrender
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import STLForecaster, TrendForecaster
     >>> import optuna
