@@ -104,7 +104,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # --------------
         "object_type": "forecaster",  # type of object
         "capability:multivariate": False,  # which y are fine? False/True
-        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
@@ -118,7 +118,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
         "capability:categorical_in_X": True,
-        # does the forecaster natively support categorical in exogeneous X?
+        # does the forecaster natively support categorical in exogenous X?
         "capability:unequal_length": True,  # can forecaster handle unequal length TS?
     }
 
@@ -216,8 +216,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             not nested, contains only non-TransformerPipeline ``sktime`` transformers
         """
         from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -248,8 +248,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             not nested, contains only non-TransformerPipeline ``sktime`` steps
         """
         from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -280,8 +280,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             not nested, contains only non-TransformerPipeline ``sktime`` steps
         """
         from sktime.forecasting.compose import ForecastingPipeline
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -318,7 +318,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
     def __getitem__(self, key):
         """Magic [...] method, return forecaster with subsetted data.
 
-        First index does subsetting of exogeneous input data.
+        First index does subsetting of exogenous input data.
         Second index does subsetting of the forecast (but not of endogeneous data).
 
         Keys must be valid inputs for ``columns`` in ``ColumnSelect``.
@@ -336,7 +336,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             last
             if only one item is passed in ``key``, only ``columns1`` is applied to input
         """
-        from sktime.transformations.series.subset import ColumnSelect
+        from sktime.transformations.subset import ColumnSelect
 
         def is_noneslice(obj):
             res = isinstance(obj, slice)
@@ -1984,7 +1984,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 # replace error with encoding logic in next step.
                 raise TypeError(
                     f"Forecaster {self} does not support categorical features in "
-                    "exogeneous X."
+                    "exogenous X."
                 )
 
             X_scitype = X_metadata["scitype"]
@@ -2202,10 +2202,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         Parameters
         ----------
         fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
-             If fh is not None and not of type ForecastingHorizon it is coerced to
-             ForecastingHorizon (e.g. in sktime.utils.validation.forecasting.check_fh)
-             In particular, if fh is of type pd.Index it is coerced via
-             ForecastingHorizon(fh, is_relative=False)
+            If fh is not None and not of type ForecastingHorizon it is coerced to
+            ForecastingHorizon (e.g. in sktime.utils.validation.forecasting.check_fh)
+            In particular, if fh is of type pd.Index it is coerced via
+            ForecastingHorizon(fh, is_relative=False)
         pred_int: Check pred_int:insample tag instead of insample tag.
 
         Returns
