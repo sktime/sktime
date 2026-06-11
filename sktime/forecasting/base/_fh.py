@@ -216,7 +216,7 @@ class ForecastingHorizon:
           Negative integers are interpreted as in-sample forecasting horizon values.
         * range: interpreted as forecasting horizon with values in the range
         * pd.Index of supported type: interpreted as forecasting horizon with values
-          as in the index. 
+          as in the index.
         * iterable of int or pd.Timedelta or date offset:
           interpreted as forecasting horizon with values in the iterable.
           Whether relative or absolute forecasting horizon is determined by the
