@@ -745,6 +745,13 @@ Pre-trained and foundation models
 
     TotoForecaster
 
+.. currentmodule:: sktime.forecasting.windfm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WindFMForecaster
 
 Intermittent time series forecasters
 ------------------------------------
