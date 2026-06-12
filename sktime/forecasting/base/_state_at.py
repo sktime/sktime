@@ -72,3 +72,39 @@ class _StateAtMixin:
             # reset removed task-fitted state; with pretrained attrs
             # restored, the estimator is in the "pretrained" state tier
             self._state = "pretrained"
+
+    def _reset_at(self, state):
+        """Reset the estimator, retaining state up to ``state``.
+
+        State-aware variant of ``reset``. ``reset`` itself is unchanged
+        and always resets to the post-init state.
+
+        Parameters
+        ----------
+        state : str, "pretrained" or "new"
+            Upper bound on the retained state tier.
+
+            * ``"pretrained"``: attributes named by the
+              ``pretrain:fitted_params`` tag (fallback: runtime
+              ``_pretrained_attrs``) are restored after the reset, ending
+              in state ``"pretrained"``. Estimators without pretrain
+              capability or without pretrained state degrade to a full
+              reset, ending in state ``"new"``.
+            * ``"new"``: identical to ``reset``.
+
+        Returns
+        -------
+        self : reference to self, reset in-place.
+
+        Raises
+        ------
+        ValueError
+            If ``state`` is not one of ``"pretrained"``, ``"new"``.
+        """
+        self._check_target_state(state)
+        if not self._has_pretrain_capability() or state == "new":
+            return self.reset()
+        saved = self._save_pretrained_state()
+        self.reset()
+        self._restore_pretrained_state(saved)
+        return self
