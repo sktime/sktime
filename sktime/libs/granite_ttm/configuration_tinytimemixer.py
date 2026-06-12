@@ -2,8 +2,10 @@
 #
 """TinyTimeMixer model configuration."""
 
-from transformers.configuration_utils import PretrainedConfig
-from transformers.utils import logging
+from sktime.utils.dependencies import _safe_import
+
+PretrainedConfig = _safe_import("transformers.configuration_utils.PretrainedConfig")
+logging = _safe_import("transformers.utils.logging")
 
 logger = logging.get_logger(__name__)
 
