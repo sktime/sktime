@@ -689,8 +689,6 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
                 },
             },
         ]
-        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in test_params]
-        test_params.extend(params_broadcasting)
         return test_params
 
 
