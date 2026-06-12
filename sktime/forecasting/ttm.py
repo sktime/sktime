@@ -693,14 +693,13 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
                 "model_path": "ibm-granite/granite-timeseries-ttm-r1",
                 "revision": "main",
                 "validation_split": 0.4,
-                "fit_strategy": "full",
+                "fit_strategy": "minimal",
                 **common_params,
             },
             {
-                "model_path": "ibm-granite/granite-timeseries-ttm-r2",
-                "revision": "1024-96-r2",
+                "model_path": None,
                 "validation_split": 0.1,
-                "fit_strategy": "minimal",
+                "fit_strategy": "full",
                 **common_params,
             },
         ]
