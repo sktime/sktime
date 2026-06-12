@@ -238,6 +238,7 @@ class MIRAForecaster(BaseForecaster):
 
         from sktime.libs.mira.mira_inference import mira_predict_autoregressive_norm
         from sktime.libs.mira.utils_time_normalization import normalize_time_for_ctrope
+
         # CT-RoPE scaling
         times, _, _ = normalize_time_for_ctrope(
             time_values=times,
@@ -365,9 +366,7 @@ def _prepare_context(y, pred_len, cutoff, context_length):
     series = y.iloc[:, 0].to_numpy(dtype=np.float32)
     index = y.index
     future_index = (
-        ForecastingHorizon(range(1, pred_len + 1))
-        .to_absolute(cutoff)
-        ._values
+        ForecastingHorizon(range(1, pred_len + 1)).to_absolute(cutoff)._values
     )
 
     if context_length is not None and len(series) > context_length:
