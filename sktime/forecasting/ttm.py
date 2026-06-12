@@ -599,7 +599,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         self.model.eval()
         outputs = self.model(
             past_values=past_values,
-            observed_mask=observed_mask,
+            past_observed_mask=observed_mask,
             future_values=future_values,
         )
         pred = outputs.prediction_outputs.detach().cpu().numpy()
