@@ -60,6 +60,7 @@ if ModelOutput is None:
     class ModelOutput:
         """Dummy model output if transformers is unavailable."""
 
+
 _CONFIG_FOR_DOC = "TinyTimeMixerConfig"
 
 
