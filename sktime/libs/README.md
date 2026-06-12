@@ -17,6 +17,13 @@ This folder contains libraries directly distributed with, and maintained by, `sk
   Unofficial fork of abandoned package from June 2024 onwards,
   see [pykalman issue 109](https://github.com/pykalman/pykalman/issues/109).
 
+* `tsbootstrap` - vendored fork of [astrogilda/tsbootstrap](https://github.com/astrogilda/tsbootstrap)
+  at upstream release `v0.1.5`, under MIT license. Vendored for compatibility with
+  `sktime` while upstream dependency constraints are unresolved, see
+  [issue 9990](https://github.com/sktime/sktime/issues/9990).
+  The vendored source snapshot and commit provenance are documented in
+  `sktime/libs/tsbootstrap/VENDORED_FROM.md`.
+
 * `vmdpy` - a package implementing Variational Mode Decomposition.
   Official fork, `vmdpy` is maintained in `sktime` since August 2023.
 
