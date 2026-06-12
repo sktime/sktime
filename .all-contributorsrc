@@ -2006,6 +2006,16 @@
       "contributions": ["maintenance", "bug"]
     },
     {
+      "login": "minkeymouse",
+      "name": "minkeymouse",
+      "avatar_url": "https://avatars.githubusercontent.com/minkeymouse",
+      "profile": "https://github.com/minkeymouse",
+      "contributions": [
+        "maintenance",
+        "bug"
+      ]
+    },
+    {
       "login": "deysanjeeb",
       "name": "Sanjeeb Dey",
       "avatar_url": "https://avatars.githubusercontent.com/u/39940629?v=4",

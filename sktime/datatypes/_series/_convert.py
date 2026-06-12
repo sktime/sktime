@@ -36,7 +36,10 @@ import pandas as pd
 ##############################################################
 # methods to convert one machine type to another machine type
 ##############################################################
-from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
+from sktime.datatypes._convert_utils._coerce import (
+    _coerce_df_dtypes,
+    _coerce_series_index_to_valid,
+)
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -56,8 +59,9 @@ convert_dict = dict()
 
 
 def convert_identity(obj, store=None):
-    # coerces pandas nullable dtypes; does nothing if obj is not pandas
+    # coerces pandas nullable dtypes and series index; no-op if obj is not pandas
     obj = _coerce_df_dtypes(obj)
+    obj = _coerce_series_index_to_valid(obj)
     return obj
 
 

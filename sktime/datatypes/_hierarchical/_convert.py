@@ -2,7 +2,10 @@ __all__ = [
     "convert_dict",
 ]
 
-from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
+from sktime.datatypes._convert_utils._coerce import (
+    _coerce_df_dtypes,
+    _coerce_multiindex_time_level_to_valid,
+)
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.utils.dependencies import _check_soft_dependencies
 
@@ -28,9 +31,21 @@ def convert_identity(obj, store=None):
     return obj
 
 
+def convert_coerce_pd_multiindex_hier(obj, store=None):
+    """Coerce nullable dtypes and time level for pd_multiindex_hier self-conversion."""
+    obj = _coerce_df_dtypes(obj)
+    obj = _coerce_multiindex_time_level_to_valid(obj)
+    return obj
+
+
 # assign identity function to type conversion to self
 for tp in MTYPE_LIST_HIERARCHICAL:
     convert_dict[(tp, tp, "Hierarchical")] = convert_identity
+
+# pd_multiindex_hier self-conversion also coerces time level to valid index type
+convert_dict[("pd_multiindex_hier", "pd_multiindex_hier", "Hierarchical")] = (
+    convert_coerce_pd_multiindex_hier
+)
 
 
 if _check_soft_dependencies("dask", severity="none"):

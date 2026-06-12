@@ -40,6 +40,18 @@ def is_in_valid_absolute_index_types(x) -> bool:
     return isinstance(x, ABSOLUTE_INDEX_TYPES) or is_integer_index(x)
 
 
+def is_in_valid_or_coercible_index_types(x) -> bool:
+    """Return True if index is in VALID_INDEX_TYPES or is numeric and coercible."""
+    if is_in_valid_index_types(x):
+        return True
+    if not isinstance(x, pd.Index):
+        return False
+    try:
+        return np.issubdtype(x.dtype, np.number)
+    except (TypeError, AttributeError):
+        return False
+
+
 def _check_is_univariate(y, var_name="input"):
     """Check if series is univariate."""
     if isinstance(y, pd.DataFrame):
