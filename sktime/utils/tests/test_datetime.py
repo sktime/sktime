@@ -94,7 +94,7 @@ def test_infer_freq() -> None:
     y = pd.Series(index=index, dtype=int)
     assert infer_freq(y) == "D"
 
-    pandas2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
+    pandas2 = _check_soft_dependencies("pandas>=2.1.0", severity="none")
     if pandas2:
         m_freq = "ME"
     else:

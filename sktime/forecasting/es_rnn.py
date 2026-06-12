@@ -4,15 +4,10 @@ import numpy as np
 
 from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 from sktime.networks.es_rnn import ESRNN
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    from torch.utils.data import Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
+torch = _safe_import("torch")
+Dataset = _safe_import("torch.utils.data.Dataset")
 
 
 class ESRNNTrainDataset(Dataset):
@@ -110,7 +105,10 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
     optimizer_kwargs : dict, default=None
         keyword arguments to pass to optimizer
     window : int
-        Size of Input window, default=5
+        Size of Input window, default=10
+    pred_len : int
+        Prediction length, i.e., the number of future time steps to forecast.
+        Defines the network output dimension, default=3
     lr : int
         Learning rate for training
 
@@ -125,7 +123,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
     --------
     >>> from sktime.forecasting.es_rnn import ESRNNForecaster # doctest: +SKIP
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.boxcox import LogTransformer
+    >>> from sktime.transformations.boxcox import LogTransformer
     >>> y = load_airline()
     >>> scaler=LogTransformer()
     >>> forecaster=ESRNNForecaster(15,6,12,6,'double',20,1,32,100,'MSE')# doctest: +SKIP
@@ -139,6 +137,10 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         # packaging info
         # --------------
         "authors": ["Ankit-1204"],
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
+        "capability:pretrain": True,
     }
 
     def __init__(
@@ -149,6 +151,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         season2_length=6,
         seasonality_type="single",
         window=10,
+        pred_len=3,
         stride=1,
         batch_size=32,
         num_epochs=1000,
@@ -167,6 +170,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.season1_length = season1_length
         self.season2_length = season2_length
         self.window = window
+        self.pred_len = pred_len
         self.stride = stride
         self.batch_size = batch_size
         self.num_epochs = num_epochs
@@ -202,12 +206,11 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             return ESRNN().pin_ball()
 
     def _build_network(self, fh):
-        self.pred_len = fh
-        self.input_shape = self._y.shape[-1]
+        self.input_shape = self._y_metadata["n_features"]
         return ESRNN(
             self.input_shape,
             self.hidden_size,
-            self.pred_len,
+            fh,
             self.num_layer,
             self.season1_length,
             self.season2_length,
@@ -234,7 +237,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             dataset = ESRNNTrainDataset(
                 y=y,
                 window=self.window,
-                pred_len=self.pred_len,
+                pred_len=self.network.pred_len,
                 stride=self.stride,
             )
 
@@ -266,6 +269,19 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             self.batch_size,
         )
 
+    def _build_panel_dataloader(self, y, all_series, pred_len):
+        """Build PyTorch DataLoader for panel data pretraining."""
+        from torch.utils.data import ConcatDataset, DataLoader
+
+        datasets = [
+            ESRNNTrainDataset(
+                y=series, window=self.window, pred_len=pred_len, stride=self.stride
+            )
+            for series in all_series
+        ]
+        combined_dataset = ConcatDataset(datasets)
+        return DataLoader(combined_dataset, self.batch_size, shuffle=True)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -288,7 +304,13 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params1 = {}
+        # pred_len >= 3 because pretrain tests use fh=[1,2,3]
+        # window + pred_len < min_timepoints (10 in pretrain test data)
+        params1 = {
+            "window": 3,
+            "pred_len": 3,
+            "num_epochs": 1,
+        }
         params2 = {
             "hidden_size": 10,
             "num_layer": 5,
@@ -296,11 +318,10 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             "season2_length": 2,
             "seasonality_type": "single",
             "window": 3,
+            "pred_len": 3,
             "stride": 1,
             "batch_size": 32,
-            "num_epochs": 10,
-            "custom_dataset_train": None,
-            "custom_dataset_pred": None,
+            "num_epochs": 1,
             "optimizer": "Adam",
             "lr": 1e-3,
         }

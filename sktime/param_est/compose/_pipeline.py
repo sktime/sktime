@@ -75,7 +75,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     --------
     >>> from sktime.param_est.compose import ParamFitterPipeline
     >>> from sktime.param_est.seasonality import SeasonalityACF
-    >>> from sktime.transformations.series.difference import Differencer
+    >>> from sktime.transformations.difference import Differencer
     >>> from sktime.datasets import load_airline
     >>>
     >>> X = load_airline()
@@ -112,8 +112,8 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
 
         # can handle multivariate iff: both estimator and all transformers can
         multivariate = param_est.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both estimator and all transformers can,
         #   *or* transformer chain removes missing data
@@ -304,7 +304,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         # imports
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.exponent import ExponentTransformer
         from sktime.utils.dependencies import _check_estimator_deps
 
         t1 = ExponentTransformer(power=2)

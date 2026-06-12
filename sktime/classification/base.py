@@ -30,7 +30,6 @@ from sktime.base import BasePanelMixin
 from sktime.datatypes import VectorizedDF, check_is_scitype
 from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
-from sktime.utils.validation import check_n_jobs
 
 
 class BaseClassifier(BasePanelMixin):
@@ -64,6 +63,7 @@ class BaseClassifier(BasePanelMixin):
         "capability:multithreading": False,
         "capability:categorical_in_X": True,
         "capability:predict_proba": False,
+        "capability:class_weight": False,  # can the classifier use class weights?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "requires_cython": False,  # whether C compiler is required in env, e.g., gcc
         "authors": "sktime developers",  # author(s) of the object
@@ -94,7 +94,6 @@ class BaseClassifier(BasePanelMixin):
         self.n_classes_ = 0  # number of unique classes in y
         self.fit_time_ = 0  # time elapsed in last fit call
         self._class_dictionary = {}
-        self._threads_to_use = 1
         self._X_metadata = []  # metadata/properties of X seen in fit
 
         # required for compatibility with some sklearn interfaces
@@ -104,7 +103,24 @@ class BaseClassifier(BasePanelMixin):
         self._converter_store_y = {}
 
         super().__init__()
-        _check_estimator_deps(self)
+
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
@@ -123,9 +139,9 @@ class BaseClassifier(BasePanelMixin):
         (last).
         """
         from sktime.classification.compose import ClassifierPipeline
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
         # behaviour is implemented only if other inherits from BaseTransformer
         #  in that case, distinctions arise from whether self or other is a pipeline
@@ -210,6 +226,8 @@ class BaseClassifier(BasePanelMixin):
         -------
         self : Reference to self.
         """
+        _check_estimator_deps(self)
+
         # reset estimator at the start of fit
         self.reset()
 
@@ -260,14 +278,6 @@ class BaseClassifier(BasePanelMixin):
 
         # Convert data as dictated by the classifier tags
         X = self._convert_X(X, X_mtype)
-        multithread = self.get_tag("capability:multithreading")
-        if multithread:
-            try:
-                self._threads_to_use = check_n_jobs(self.n_jobs)
-            except NameError:
-                raise AttributeError(
-                    "self.n_jobs must be set if capability:multithreading is True"
-                )
 
         # pass coerced and checked data to inner _fit
         self._fit(X, y)

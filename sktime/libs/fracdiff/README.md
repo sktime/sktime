@@ -137,7 +137,7 @@ pipeline.fit(X, y)
 
 #### Fractional differentiation while preserving memory
 
-A transformer class [`FracdiffStat`](https://fracdiff.github.io/fracdiff/#fracdiffstat) finds the minumum order of fractional differentiation that makes time-series stationary.
+A transformer class [`FracdiffStat`](https://fracdiff.github.io/fracdiff/#fracdiffstat) finds the minimum order of fractional differentiation that makes time-series stationary.
 Differentiated time-series with this order is obtained by subsequently applying `transform` method.
 This series is interpreted as a stationary time-series keeping the maximum memory of the original time-series.
 

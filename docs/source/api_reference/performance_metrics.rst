@@ -29,6 +29,8 @@ Point forecasts - classes
 Average losses
 ^^^^^^^^^^^^^^
 
+.. currentmodule:: sktime.performance_metrics.forecasting
+
 .. autosummary::
     :toctree: auto_generated/
     :template: class_with_call.rst
@@ -41,8 +43,6 @@ Average losses
 Percentage errors
 ^^^^^^^^^^^^^^^^^
 
-.. currentmodule:: sktime.performance_metrics.forecasting
-
 .. autosummary::
     :toctree: auto_generated/
     :template: class_with_call.rst
@@ -52,9 +52,11 @@ Percentage errors
     MeanSquaredPercentageError
     MedianSquaredPercentageError
     MeanSquaredErrorPercentage
+    MeanArctangentAbsolutePercentageError
 
 Scaled errors
 ^^^^^^^^^^^^^
+
 
 .. autosummary::
     :toctree: auto_generated/
@@ -87,6 +89,15 @@ Geometric errors
     GeometricMeanSquaredError
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
+
+Benchmark errors
+^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    OverallWeightedAverage
 
 Under- and over-prediction errors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -203,19 +214,3 @@ Segment detection
     :template: function.rst
 
     RandIndex
-
-
-Legacy detection metrics
-------------------------
-
-These metrics do not follow the standard API and will be deprecated in the future.
-
-.. currentmodule:: sktime.performance_metrics.annotation
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    count_error
-    hausdorff_error
-    prediction_ratio

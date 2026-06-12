@@ -66,7 +66,9 @@ def test_all_estimators_by_scitype(estimator_scitype, return_names):
 
     assert isinstance(estimators, list)
     # there should be at least one estimator returned
-    assert len(estimators) > 0
+    # global_forecaster is deprecated with no concrete implementations
+    if estimator_scitype != "global_forecaster":
+        assert len(estimators) > 0
 
     # checks return type specification (see docstring)
     if return_names:
@@ -91,6 +93,9 @@ def test_all_tags(estimator_scitype):
     assert len(tags) > 0
 
     VALID_SCITYPES_SET = set(get_obj_scitype_list() + get_obj_scitype_list(mixin=True))
+
+    # stepout for "distribution" due to silent copy of Normal in sktime
+    VALID_SCITYPES_SET.add("distribution")
 
     # checks return type specification (see docstring)
     for tag in tags:
@@ -158,7 +163,7 @@ def _get_tag_fixture():
     # just picked a few valid tags to try out as valid str return_tags args:
     test_str_as_arg = [
         "X-y-must-have-same-index",
-        "capability:pred_var",
+        "capability:pred_int",
         "skip-inverse-transform",
     ]
 
@@ -248,12 +253,6 @@ def test_scitype_inference(estimator_scitype):
     base_class = _check_estimator_types(estimator_scitype)[0]
     all_scitypes = scitype(base_class, force_single_scitype=False, coerce_to_list=True)
     inferred_scitype = all_scitypes[0]
-
-    # stepout for detector due to rename in scitype
-    # todo 1.0.0 - remove this stepout entirely
-    if estimator_scitype == "series-annotator":
-        assert "series-annotator" in all_scitypes
-        return None
 
     assert inferred_scitype == estimator_scitype, (
         "one of scitype, _check_estimator_types is incorrect, these should be inverses"

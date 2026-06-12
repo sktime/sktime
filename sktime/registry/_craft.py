@@ -22,6 +22,7 @@ __author__ = ["fkiraly"]
 import re
 
 from sktime.registry._lookup import all_estimators
+from sktime.registry._lookup_sklearn import _all_sklearn_estimators
 
 
 def _extract_class_names(spec):
@@ -44,7 +45,7 @@ def _extract_class_names(spec):
 
     # we need to exclude expressions that look like classes per the regex
     # but aren't
-    EXCLUDE_LIST = ["True", "False"]
+    EXCLUDE_LIST = ["True", "False", "None"]
     cls_name_list = [x for x in cls_name_list if x not in EXCLUDE_LIST]
 
     return cls_name_list
@@ -53,22 +54,86 @@ def _extract_class_names(spec):
 def craft(spec):
     """Instantiate an object from the specification string.
 
+    The ``craft`` utility can be used to deserialize an estimator specification string,
+    including composites such as pipelines.
+
+    It takes a specification string and returns an ``sktime`` estimator, class,
+    or object, corresponding to that string.
+
+    Specification strings can be:
+
+    * simple expressions such as ``"NaiveForecaster"`` or ``"NaiveForecaster(sp=2)"``
+    * compositions such as ``"Deseasonalizer() * NaiveForecaster()"``
+    * a longer block of code, closing with a return statement, e.g., the string block
+
+    .. code-block:: python
+
+        deseason = Deseasonalizer()
+        naive = NaiveForecaster()
+        return deseason * naive
+
+    The ``craft`` utility is useful as a serialization / deserialization pair,
+    together with ``str`` coercion (or commandline printing) of an
+    unfitted estimator.
+
+    ``craft`` recognizes estimators present in ``sktime`` and ``scikit-learn``,
+    and base python.
+
     Parameters
     ----------
     spec : str, sktime/skbase compatible object specification
         i.e., a string that executes to construct an object if all imports were present
         imports inferred are of any classes in the scope of ``all_estimators``
-        option 1: a string that evaluates to an estimator
-        option 2: a sequence of assignments in valid python code,
-            with the object to be defined preceded by a "return"
-            assignments can use names of classes as if all imports were present
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
 
     Returns
     -------
     obj : skbase BaseObject descendant, constructed from ``spec``
         this will have the property that ``spec == str(obj)`` (up to formatting)
+
+    Examples
+    --------
+    >>> from sktime.registry import craft
+
+    Example 1: simple estimator
+
+    * serialized as the string ``"NaiveForecaster(sp=2)"``
+    * deserialized as the estimator ``NaiveForecaster(sp=2)``
+
+    >>> spec = "NaiveForecaster(sp=2)"
+    >>> est = craft(spec)
+    >>> print(est)
+    NaiveForecaster(sp=2)
+
+    Example 2: composite estimator
+
+    * serialized as the string ``"Deseasonalizer() * NaiveForecaster()"``
+    * deserialized as the estimator ``Deseasonalizer() * NaiveForecaster()``,
+      same as ``ForecastingPipeline([Deseasonalizer(), NaiveForecaster()])``
+
+    >>> spec = "Deseasonalizer() * NaiveForecaster()"
+    >>> est = craft(spec)
+
+    Example 3: longer code block
+
+    * serialized as a code block with assignments and return statement
+    * deserialized as the estimator defined in the return statement
+
+    >>> spec = '''
+    ... deseason = Deseasonalizer()
+    ... naive = NaiveForecaster()
+    ... return deseason * naive
+    ... '''
+    >>> est = craft(spec)
     """
-    register = dict(all_estimators())  # noqa: F841
+    # retrieve all estimators from sktime and sklearn for namespace resolution
+    register_sktime = dict(all_estimators())  # noqa: F841
+    register_sklearn = dict(_all_sklearn_estimators())  # noqa: F841
+    register = {**register_sklearn, **register_sktime}
 
     try:
         obj = eval(spec, globals(), register)
@@ -89,18 +154,30 @@ def build_obj():
     return obj
 
 
-def deps(spec):
+def deps(spec, include_test_deps=False):
     """Get PEP 440 dependency requirements for a craft spec.
+
+    The ``deps`` utility returns a PEP 440 compatible requirement string
+    required to construct the deserialization via ``craft``.
+
+    In case the spec includes estimators with disjunctions in their requirement
+    specifications, the first disjunctive requirement is returned, i.e.,
+    any disjunctions are resolved by picking the first dependency in the disjunction.
 
     Parameters
     ----------
     spec : str, sktime/skbase compatible object specification
-        i.e., a string that executes to construct an object if all imports were present
+        i.e., a string that executes to construct an object if all imports were present.
         imports inferred are of any classes in the scope of ``all_estimators``
-        option 1: a string that evaluates to an estimator
-        option 2: a sequence of assignments in valid python code,
-            with the object to be defined preceded by a "return"
-            assignments can use names of classes as if all imports were present
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
+
+    include_test_deps : bool, default=False
+        whether to include dependencies tagged as
+        "tests:python_dependencies" in addition to "python_dependencies"
 
     Returns
     -------
@@ -122,10 +199,31 @@ def deps(spec):
 
         new_deps = cls.get_class_tag("python_dependencies")
 
-        if isinstance(new_deps, list):
-            dep_strs += new_deps
-        elif isinstance(new_deps, str) and len(new_deps) > 0:
-            dep_strs += [new_deps]
+        def _resolve_disjunctions(dep):
+            """Resolve disjunctions in dependencies by picking first."""
+            if isinstance(dep, list):
+                return dep[0]  # pick first dependency in disjunction
+            return dep
+
+        def _coerce_dep_strs(dep):
+            """Coerce dependency tag value to list of strings."""
+            if dep is None:
+                return []
+            elif isinstance(dep, str) and len(dep) > 0:
+                return [dep]
+            elif isinstance(dep, str) and len(dep) == 0:
+                return []
+            elif isinstance(dep, list):
+                return [_resolve_disjunctions(d) for d in dep]
+            else:
+                return dep
+
+        new_deps = cls.get_class_tag("python_dependencies")
+        dep_strs += _coerce_dep_strs(new_deps)
+
+        if include_test_deps:
+            test_deps = cls.get_class_tag("tests:python_dependencies")
+            dep_strs += _coerce_dep_strs(test_deps)
 
         reqs = list(set(dep_strs))
 
@@ -135,15 +233,22 @@ def deps(spec):
 def imports(spec):
     """Get import code block for a craft spec.
 
+    The ``imports`` utility returns a full python import block,
+    as a string block, required for importing all estimators and objects occurring
+    in the ``spec`` block.
+
+    The ``imports`` utility recognizes ``sktime`` and ``scikit-learn`` objects.
+
     Parameters
     ----------
     spec : str, sktime/skbase compatible object specification
         i.e., a string that executes to construct an object if all imports were present
         imports inferred are of any classes in the scope of ``all_estimators``
-        option 1: a string that evaluates to an estimator
-        option 2: a sequence of assignments in valid python code,
-            with the object to be defined preceded by a "return"
-            assignments can use names of classes as if all imports were present
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
 
     Returns
     -------

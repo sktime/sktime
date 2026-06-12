@@ -11,7 +11,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.matrix_profile import MatrixProfile
+from sktime.transformations.matrix_profile import MatrixProfileFeatures
 
 
 class MatrixProfileClassifier(BaseClassifier):
@@ -75,6 +75,8 @@ class MatrixProfileClassifier(BaseClassifier):
         # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "distance",
     }
 
@@ -96,6 +98,10 @@ class MatrixProfileClassifier(BaseClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.
 
@@ -116,7 +122,7 @@ class MatrixProfileClassifier(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        self._transformer = MatrixProfile(m=self.subsequence_length)
+        self._transformer = MatrixProfileFeatures(m=self.subsequence_length)
         self._estimator = _clone_estimator(
             (
                 KNeighborsClassifier(n_neighbors=1)

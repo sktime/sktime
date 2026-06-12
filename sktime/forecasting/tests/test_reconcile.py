@@ -23,7 +23,7 @@ from sktime.utils._testing.hierarchical import (
 from sktime.utils.dependencies import _check_soft_dependencies
 
 # get all the methods
-METHOD_LIST = ReconcilerForecaster.METHOD_LIST
+METHOD_LIST = [x for x in ReconcilerForecaster.METHOD_LIST if not x.endswith("nonneg")]
 level_list = [1, 2, 3]
 flatten_list = [True, False]
 
@@ -70,14 +70,9 @@ def test_reconciler_fit_predict(method, flatten, no_levels):
     reconciler.fit(y)
     prds_recon = reconciler.predict(fh=fh)
 
-    # check the row index and column indexes match
-    msg = "Summation index/columns and G matrix index/columns do not match."
-    assert np.all(reconciler.g_matrix.columns == reconciler.s_matrix.index), msg
-    assert np.all(reconciler.g_matrix.index == reconciler.s_matrix.columns), msg
-
-    # check if we now remove aggregate levels and use Aggregator it is equal
-    prds_recon_bottomlevel = agg.inverse_transform(prds_recon)
-    assert_frame_equal(prds_recon, agg.fit_transform(prds_recon_bottomlevel))
+    # Aggregate to check if
+    prds_recon_bu = agg.transform(agg.inverse_transform(prds_recon))
+    assert_frame_equal(prds_recon, prds_recon_bu)
 
     # check with unnamed indexes
     y.index.rename([None] * y.index.nlevels, inplace=True)

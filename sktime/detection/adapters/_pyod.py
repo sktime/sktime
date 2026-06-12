@@ -55,6 +55,9 @@ class PyODDetector(BaseDetector):
         "python_dependencies": "pyod",
         "task": "anomaly_detection",
         "learning_type": "unsupervised",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, estimator, labels="indicator"):
@@ -73,7 +76,7 @@ class PyODDetector(BaseDetector):
         X : pd.DataFrame
             training data to fit model to, time series
         Y : pd.Series, optional
-            ground truth annotations for training if annotator is supervised
+            ground truth detections for training if detector is supervised
 
         Returns
         -------
@@ -133,7 +136,7 @@ class PyODDetector(BaseDetector):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
-            There are currently no reserved values for annotators.
+            There are currently no reserved values for detectors.
 
         Returns
         -------
@@ -153,7 +156,3 @@ class PyODDetector(BaseDetector):
             params0 = {"estimator": "foo"}
             params1 = {"estimator": "bar"}
         return [params0, params1]
-
-
-# todo 1.0.0 - remove alias, i.e., remove this line
-PyODAnnotator = PyODDetector

@@ -11,7 +11,7 @@ import numpy as np
 
 from sktime.classification.base import BaseClassifier
 from sktime.classification.sklearn import RotationForest
-from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
+from sktime.transformations.tsfresh import TSFreshFeatureExtractor
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -119,6 +119,10 @@ class FreshPRINCE(BaseClassifier):
         self._tsfresh = None
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.

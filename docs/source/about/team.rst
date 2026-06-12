@@ -37,8 +37,12 @@ Community Council Observers
      - GitHub ID
    * - Benedikt Heidrich
      - :user:`benheid`
+   * - Felipe Angelim Vieira
+     - :user:`felipeangelimvieira`
    * - Jana Schmidberger
      - :user:`janasberger`
+   * - Jigyasu
+     - :user:`jgyasu`
    * - Kiril Ralinovski
      - :user:`kirilral`
 
@@ -69,10 +73,10 @@ Core Developers
      - :user:`yarnabrina`
    * - Armaghan Shakir
      - :user:`geetu040`
+   * - Aryan Saini
+     - :user:`phoeenniixx`
    * - Benedikt Heidrich
      - :user:`benheid`
-   * - Daniel Bartling
-     - :user:`danbartl`
    * - Eric J Berger
      - :user:`ericjb`
    * - Felipe Angelim Vieira
@@ -83,22 +87,26 @@ Core Developers
      - :user:`fkiraly`
    * - Jan Beitner
      - :user:`jdb78`
+   * - Julian Fong
+     - :user:`julianfong`
    * - Hazrul Akmal
      - :user:`hazrulakmal`
-   * - Jonathan Bechtel
-     - :user:`jonathanbechtel`
+   * - Jigyasu
+     - :user:`jgyasu`
    * - Kiril Ralinovski
      - :user:`kirilral`
-   * - Lovkush Agarwal
-     - :user:`lovkush-a`
    * - Marc Rovira
      - :user:`marrov`
-   * - Mirae Parker
-     - :user:`miraep8`
+   * - Mateusz Kasprowicz
+     - :user:`mateuszkasprowicz `
+   * - Pranav Bhat
+     - :user:`PranavBhatP`
    * - Pranav Prajapati
      - :user:`pranavvp16`
    * - Sai Revanth Gowravajhala
      - :user:`SaiRevanth25`
+   * - Simon Blanke
+     - :user:`SimonBlanke`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
    * - Ugochukwu Onyeka
@@ -122,6 +130,8 @@ Former Core Developers
      - :user:`ayushmaanseth`
    * - Christopher Holder
      - :user:`chrisholder`
+   * - Daniel Bartling
+     - :user:`danbartl`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
    * - George Oastler
@@ -134,8 +144,12 @@ Former Core Developers
      - :user:`james-large`
    * - Jason Lines
      - :user:`jasonlines`
+   * - Jonathan Bechtel
+     - :user:`jonathanbechtel`
    * - Leonidas Tsaprounis
      - :user:`ltsaprounis`
+   * - Lovkush Agarwal
+     - :user:`lovkush-a`
    * - Łukasz Mentel
      - :user:`lmmentel`
    * - Markus Löning
@@ -146,6 +160,8 @@ Former Core Developers
      - :user:`matteogales`
    * - Matthew Middlehurst
      - :user:`mattewmiddlehurst`
+   * - Mirae Parker
+     - :user:`miraep8`
    * - Patrick Rockenschaub
      - :user:`prockenschaub`
    * - Patrick Schäfer

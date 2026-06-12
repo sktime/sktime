@@ -16,42 +16,30 @@
 
 import dataclasses
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("einshape", severity="none"):
-    import einshape as es
+es = _safe_import("einshape")
+jnp = _safe_import("jax.numpy")
+lax = _safe_import("jax.lax")
 
-if _check_soft_dependencies("jax", severity="none"):
-    import jax.numpy as jnp
-    from jax import lax
+base_layer = _safe_import("praxis.base_layer")
+layers = _safe_import("praxis.layers")
+pax_fiddle = _safe_import("praxis.pax_fiddle")
+py_utils = _safe_import("praxis.py_utils")
+BaseLayer = _safe_import("praxis.base_layer.BaseLayer")
+BaseModel = _safe_import("praxis.base_model.BaseModel")
+activations = _safe_import("praxis.layers.activations")
+embedding_softmax = _safe_import("praxis.layers.embedding_softmax")
+linears = _safe_import("praxis.layers.linears")
+normalizations = _safe_import("praxis.layers.normalizations")
+stochastics = _safe_import("praxis.layers.stochastics")
+transformers = _safe_import("praxis.layers.transformers")
 
-if _check_soft_dependencies("praxis", severity="none"):
-    from praxis import base_layer, layers, pax_fiddle, py_utils
-    from praxis.base_layer import BaseLayer
-    from praxis.base_model import BaseModel
-    from praxis.layers import (
-        activations,
-        embedding_softmax,
-        linears,
-        normalizations,
-        stochastics,
-        transformers,
-    )
+# PAX shortcuts
+NestedMap = py_utils.NestedMap
 
-    # PAX shortcuts
-    NestedMap = py_utils.NestedMap
-
-    LayerTpl = pax_fiddle.Config[BaseLayer]
-    template_field = base_layer.template_field
-
-else:
-
-    class BaseLayer:
-        """Dummy class if praxis is unavailable."""
-
-    class BaseModel:
-        """Dummy class if praxis is unavailable."""
-
+LayerTpl = pax_fiddle.Config[BaseLayer]
+template_field = base_layer.template_field
 
 PAD_VAL = 1123581321.0
 DEFAULT_QUANTILES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
@@ -95,16 +83,15 @@ def _shift_padded_seq(mask, seq):
 class ResidualBlock(BaseLayer):
     """ResidualBlock."""
 
-    if _check_soft_dependencies("praxis", severity="none"):
-        # These should not be changed or removed
-        input_dims: int = 0
-        hidden_dims: int = 0
-        output_dims: int = 0
-        dropout_prob: float = 0.0
-        layer_norm: bool = False
-        dropout_tpl: LayerTpl = template_field(stochastics.Dropout)
-        ln_tpl: LayerTpl = template_field(normalizations.LayerNorm)
-        act_tpl: LayerTpl = template_field(activations.Swish)
+    # These should not be changed or removed
+    input_dims: int = 0
+    hidden_dims: int = 0
+    output_dims: int = 0
+    dropout_prob: float = 0.0
+    layer_norm: bool = False
+    dropout_tpl: LayerTpl = template_field(stochastics.Dropout)
+    ln_tpl: LayerTpl = template_field(normalizations.LayerNorm)
+    act_tpl: LayerTpl = template_field(activations.Swish)
 
     def setup(self):
         """Set up."""
@@ -200,18 +187,17 @@ def _create_quantiles():
 class PatchedTimeSeriesDecoder(BaseLayer):
     """PatchedTimeSeriesDecoder."""
 
-    if _check_soft_dependencies("praxis", severity="none"):
-        # These should not be changed or removed
-        patch_len: int = 0
-        horizon_len: int = 0
-        model_dims: int = 0
-        hidden_dims: int = 0
-        quantiles: list[float] = dataclasses.field(default_factory=_create_quantiles)
-        residual_block_tpl: LayerTpl = template_field(ResidualBlock)
-        stacked_transformer_params_tpl: LayerTpl = template_field(
-            transformers.StackedTransformer
-        )
-        use_freq: bool = True
+    # These should not be changed or removed
+    patch_len: int = 0
+    horizon_len: int = 0
+    model_dims: int = 0
+    hidden_dims: int = 0
+    quantiles: list[float] = dataclasses.field(default_factory=_create_quantiles)
+    residual_block_tpl: LayerTpl = template_field(ResidualBlock)
+    stacked_transformer_params_tpl: LayerTpl = template_field(
+        transformers.StackedTransformer
+    )
+    use_freq: bool = True
 
     def setup(self):
         """Construct the model."""

@@ -25,7 +25,7 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting         - _fit(self, X, y=None)
     transformation  - _transform(self, X, y=None)
 
@@ -137,11 +137,11 @@ class MyTransformer(BaseTransformer):
         #   in that case, X/y are passed through without conversion if on the list
         #   if not on the list, converted to the first entry of the same scitype
         #
-        # univariate-only controls whether internal X can be univariate/multivariate
-        # if True (only univariate), always applies vectorization over variables
-        "univariate-only": False,
-        # valid values: True = inner _fit, _transform receive only univariate series
-        #   False = uni- and multivariate series are passed to inner methods
+        # capability:multivariate controls whether internal X can be multivariate
+        # if False (only univariate), always applies vectorization over variables
+        "capability:multivariate": True,
+        # valid values: False = inner _fit, _transform receive only univariate series
+        #   True = uni- and multivariate series are passed to inner methods
         #
         # requires_y = does y need to be passed in fit?
         "requires_y": False,
@@ -208,7 +208,21 @@ class MyTransformer(BaseTransformer):
         # leave this as is
         super().__init__()
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
+        # do not put anything else in __init__,
+        # use __post_init__ for any further initialization logic
+
+    # todo: add any post-init logic here, otherwise delete this method
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        # todo: optional, parameter checking or coercion should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
         # instead, write to self._parama, self._newparam (starting with _)
 

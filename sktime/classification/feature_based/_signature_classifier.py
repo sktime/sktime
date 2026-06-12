@@ -13,10 +13,10 @@ from sklearn.pipeline import Pipeline
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.signature_based._checks import (
+from sktime.transformations.signature_based._checks import (
     _handle_sktime_signatures,
 )
-from sktime.transformations.panel.signature_based._signature_method import (
+from sktime.transformations.signature_based._signature_method import (
     SignatureTransformer,
 )
 
@@ -33,9 +33,11 @@ class SignatureClassifier(BaseClassifier):
 
     Note that the final classifier used on the UEA datasets involved tuning
     the hyper-parameters:
-        - ``depth`` over [1, 2, 3, 4, 5, 6]
-        - ``window_depth`` over [2, 3, 4]
-        - RandomForestClassifier hyper-parameters.
+
+    - ``depth`` over [1, 2, 3, 4, 5, 6]
+    - ``window_depth`` over [2, 3, 4]
+    - ``RandomForestClassifier`` hyper-parameters.
+
     as these were found to be the most dataset dependent hyper-parameters.
 
     Thus, we recommend always tuning *at least* these parameters to any given
@@ -95,13 +97,22 @@ class SignatureClassifier(BaseClassifier):
         # --------------
         "authors": "jambo6",
         "maintainers": "jambo6",
-        "python_dependencies": ["esig", "numpy<2.0"],
-        "python_version": "<3.10",
+        "python_dependencies": ["esig"],
         # estimator type
         # --------------
         "capability:multivariate": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "deterministic",
         "classifier_type": "feature",
+        # testing configuration
+        # ---------------------
+        "tests:libs": ["sktime.transformations.signature_based"],
+        "tests:skip_by_name": [  # tagged in issue #2490
+            "test_classifier_on_unit_test_data",
+            "test_classifier_on_basic_motions",
+        ],
+        "tests:vm": True,
     }
 
     def __init__(
@@ -130,15 +141,25 @@ class SignatureClassifier(BaseClassifier):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
         self.signature_method = SignatureTransformer(
-            augmentation_list,
-            window_name,
-            window_depth,
-            window_length,
-            window_step,
-            rescaling,
-            sig_tfm,
-            depth,
+            self.augmentation_list,
+            self.window_name,
+            self.window_depth,
+            self.window_length,
+            self.window_step,
+            self.rescaling,
+            self.sig_tfm,
+            self.depth,
         ).signature_method
         self.pipeline = None
 
@@ -235,10 +256,12 @@ class SignatureClassifier(BaseClassifier):
         """
         if parameter_set == "results_comparison":
             return {"estimator": RandomForestClassifier(n_estimators=10)}
-        else:
-            return {
-                "estimator": RandomForestClassifier(n_estimators=2),
-                "augmentation_list": ("basepoint", "addtime"),
-                "depth": 1,
-                "window_name": "global",
-            }
+
+        params0 = {}
+        params1 = {
+            "estimator": RandomForestClassifier(n_estimators=2),
+            "augmentation_list": ("basepoint", "addtime"),
+            "depth": 1,
+            "window_name": "global",
+        }
+        return [params0, params1]

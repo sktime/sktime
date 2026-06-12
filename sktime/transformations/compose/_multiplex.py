@@ -7,8 +7,7 @@ __all__ = ["MultiplexTransformer"]
 
 from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
-from sktime.transformations._delegate import _DelegatedTransformer
-from sktime.transformations.base import BaseTransformer
+from sktime.transformations.base import BaseTransformer, _DelegatedTransformer
 
 
 class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
@@ -59,7 +58,7 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.compose import MultiplexTransformer
-    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.impute import Imputer
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
     >>> from sktime.split import ExpandingWindowSplitter
@@ -92,8 +91,11 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     _tags = {
         "authors": ["miraep8", "fkiraly"],
         "fit_is_empty": False,
-        "univariate-only": False,
+        "capability:multivariate": True,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # attribute for _DelegatedTransformer, which then delegates
@@ -178,7 +180,7 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
         -------
         params : dict or list of dict
         """
-        from sktime.transformations.series.impute import Imputer
+        from sktime.transformations.impute import Imputer
 
         # test with 2 simple detrend transformations with selected_transformer
         params1 = {

@@ -28,6 +28,30 @@ if not sys.platform.startswith("linux"):
     pytest.skip("Skipping MLflow tests for Windows and macOS", allow_module_level=True)
 
 
+@pytest.fixture(autouse=True)
+def mlflow_tracking_uri(tmp_path, monkeypatch):
+    """Set up isolated MLflow tracking URI for each test to avoid database conflicts."""
+    if _check_soft_dependencies("mlflow", severity="none"):
+        import logging
+
+        import mlflow
+
+        # Use a unique temporary directory for MLflow tracking
+        tracking_uri = str(tmp_path / "mlruns")
+        monkeypatch.setenv("MLFLOW_TRACKING_URI", tracking_uri)
+        # Also set it directly in mlflow to ensure it's used
+        mlflow.set_tracking_uri(tracking_uri)
+        yield tracking_uri
+        # Clean up: end any active runs
+        try:
+            mlflow.end_run()
+        except Exception as e:
+            # Ignore errors if no run is active (common in test teardown)
+            logging.debug(f"mlflow.end_run() failed (expected if no active run): {e}")
+    else:
+        yield None
+
+
 @pytest.fixture
 def model_path(tmp_path):
     """Create a temporary path to save/log model."""
@@ -605,15 +629,30 @@ def test_log_model(auto_arima_model, tmp_path, should_start_run, serialization_f
             conda_env=str(conda_env),
             serialization_format=serialization_format,
         )
-        model_uri = f"runs:/{mlflow.active_run().info.run_id}/{artifact_path}"
-        assert model_info.model_uri == model_uri
+
+        if _check_soft_dependencies("mlflow<3.0", severity="none"):
+            # MLflow 2.x format
+            assert model_info.model_uri.startswith("runs:/")
+            # Check format: runs:/run_id/artifact_path
+            uri_parts = model_info.model_uri.split("/")
+            assert len(uri_parts) >= 3
+            assert uri_parts[0] == "runs:"
+            assert uri_parts[2] == artifact_path
+        else:
+            # MLflow 3.x format
+            assert model_info.model_uri.startswith("models:/m-")
+            # Check format: models:/m-model_id
+            assert model_info.model_uri.count("/") == 1
+            assert len(model_info.model_uri) > len("models:/m-")
         reloaded_model = mlflow_sktime.load_model(
-            model_uri=model_uri,
+            model_uri=model_info.model_uri,
         )
         np.testing.assert_array_equal(
             auto_arima_model.predict(), reloaded_model.predict()
         )
-        model_path = Path(_download_artifact_from_uri(artifact_uri=model_uri))
+        model_path = Path(
+            _download_artifact_from_uri(artifact_uri=model_info.model_uri)
+        )
         model_config = Model.load(str(model_path.joinpath("MLmodel")))
         assert pyfunc.FLAVOR_NAME in model_config.flavors
     finally:

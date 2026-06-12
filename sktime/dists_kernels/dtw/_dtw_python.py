@@ -49,6 +49,10 @@ class DtwPythonDist(_DelegatedPairwiseTransformerPanel):
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
         "X_inner_mtype": "df-list",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:vm": True,  # should tests run in their own VM?
     }
 
     def __init__(

@@ -17,11 +17,10 @@
 import itertools
 import math
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("jax", severity="none"):
-    import jax
-    import jax.numpy as jnp
+jax = _safe_import("jax")
+jnp = _safe_import("jax.numpy")
 
 import numpy as np
 from sklearn import preprocessing
@@ -317,9 +316,9 @@ class BatchedInContextXRegLinear(BatchedInContextXRegBase):
         # Runs jitted version of the solvers which are quicker at the cost of
         # running jitting during the first time calling. Re-jitting happens whenever
         # new (padded) shapes are encountered.
-        # Ocassionally it helps with the speed and the accuracy if we force single
+        # Occasionally it helps with the speed and the accuracy if we force single
         # thread execution on cpu for accelerator machines:
-        # 1. Avoid moving data to accelarator memory.
+        # 1. Avoid moving data to accelerator memory.
         # 2. Avoid precision loss if any.
         with jax.default_device(device):
             x_train_raw = _to_padded_jax_array(x_train_raw)

@@ -39,18 +39,18 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines how to aggregate metric for multivariate (multioutput) data.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If array-like, values used as weights to average the errors.
-        * If ``'raw_values'``,
-          returns a full set of errors in case of multioutput input.
-        * If ``'uniform_average'``,
+        * If ``'uniform_average'`` (default),
           errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
-        Defines how to aggregate metric for hierarchical data (with levels).
+        How to aggregate the metric for hierarchical data (with levels).
 
         * If ``'uniform_average'`` (default),
           errors are mean-averaged across levels.
@@ -60,11 +60,12 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
           does not average errors across levels, hierarchy is retained.
 
     by_index : bool, default=False
-        Determines averaging over time points in direct call to metric object.
+        Controls averaging over time points in direct call to metric object.
 
-        * If False, direct call to the metric object averages over time points,
-          equivalent to a call of the``evaluate`` method.
-        * If True, direct call to the metric object evaluates the metric at each
+        * If ``False`` (default),
+          direct call to the metric object averages over time points,
+          equivalent to a call of the ``evaluate`` method.
+        * If ``True``, direct call to the metric object evaluates the metric at each
           time point, equivalent to a call of the ``evaluate_by_index`` method.
 
     See Also
@@ -108,26 +109,25 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
 
         Parameters
         ----------
-        y_true : time series in sktime compatible pandas based data container format
-            Ground truth (correct) target values
-            y can be in one of the following formats:
-            Series scitype: pd.DataFrame
-            Panel scitype: pd.DataFrame with 2-level row MultiIndex
-            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
-        y_pred :time series in sktime compatible data container format
-            Forecasted values to evaluate
-            must be of same format as y_true, same indices and columns if indexed
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
         Returns
         -------
         loss : pd.Series or pd.DataFrame
-            Calculated metric, by time point.
-            pd.Series if self.multioutput="uniform_average" or array-like
-                index is equal to index of y_true
-                entry at index i is metric at time i, averaged over variables
-            pd.DataFrame if self.multioutput="raw_values"
-                index and columns equal to those of y_true
-                i,j-th entry is metric at time i, at variable j
+            Calculated metric, by time point (default=jackknife pseudo-values).
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
         """
         multioutput = self.multioutput
 

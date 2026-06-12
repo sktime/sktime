@@ -49,9 +49,21 @@ __all__ = [
     "Longley",
     "Lynx",
     "Macroeconomic",
+    "PBS",
     "ShampooSales",
     "Solar",
     "USChange",
+    "ForecastingData",
+    "M5Dataset",
+    "ACSF1",
+    "ArrowHead",
+    "BasicMotions",
+    "GunPoint",
+    "ItalyPowerDemand",
+    "JapaneseVowels",
+    "OSULeaf",
+    "PLAID",
+    "UCRUEADataset",
 ]
 
 from sktime.datasets._data_io import (
@@ -103,10 +115,24 @@ from sktime.datasets._single_problem_loaders import (
     load_uschange,
 )
 from sktime.datasets.base import BaseDataset
+from sktime.datasets.classification import (
+    ACSF1,
+    PLAID,
+    ArrowHead,
+    BasicMotions,
+    GunPoint,
+    ItalyPowerDemand,
+    JapaneseVowels,
+    OSULeaf,
+    UCRUEADataset,
+)
 from sktime.datasets.forecasting import (
+    PBS,
     Airline,
+    ForecastingData,
     Longley,
     Lynx,
+    M5Dataset,
     Macroeconomic,
     ShampooSales,
     Solar,

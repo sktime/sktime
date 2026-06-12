@@ -70,7 +70,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.transformations.pca import PCATransformer
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.regression.compose import RegressorPipeline
     >>> from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
@@ -97,6 +97,9 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     _required_parameters = ["regressor"]
@@ -113,8 +116,8 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
         # can handle multivariate iff: both regressor and all transformers can
         multivariate = regressor.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both regressor and all transformers can,
         #   *or* transformer chain removes missing data
@@ -291,7 +294,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.exponent import ExponentTransformer
         from sktime.utils.dependencies import _check_estimator_deps
 
         t1 = ExponentTransformer(power=2)
@@ -375,8 +378,8 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     >>> from sklearn.neighbors import KNeighborsRegressor
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.regression.compose import SklearnRegressorPipeline
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
+    >>> from sktime.transformations.summarize import SummaryTransformer
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
     >>> t1 = ExponentTransformer()
@@ -417,7 +420,7 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate
-        multivariate = not self.transformers_.get_tag("univariate-only", True)
+        multivariate = self.transformers_.get_tag("capability:multivariate", False)
         # can handle missing values iff transformer chain removes missing data
         # sklearn regressors might be able to handle missing data (but no tag there)
         # so better set the tag liberally
@@ -606,8 +609,8 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         """
         from sklearn.neighbors import KNeighborsRegressor
 
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.transformations.series.summarize import SummaryTransformer
+        from sktime.transformations.exponent import ExponentTransformer
+        from sktime.transformations.summarize import SummaryTransformer
 
         # example with series-to-series transformer before sklearn regressor
         t1 = ExponentTransformer(power=2)

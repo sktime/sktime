@@ -8,7 +8,9 @@ The :mod:`sktime.forecasting` module contains algorithms and composition tools f
 
 All forecasters in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="forecaster"``, optionally filtered by tags.
-Valid tags can be listed using ``sktime.registry.all_tags``.
+
+Valid tags are listed in :ref:`the forecaster tags API reference <forecaster_tags>`,
+and can be listed using ``sktime.registry.all_tags``.
 
 A full table with tag based search is also available on the
 :doc:`Estimator Search Page </estimator_overview>`
@@ -166,6 +168,14 @@ Naive forecasters
 
     ForecastKnownValues
 
+.. currentmodule:: sktime.forecasting.dummy_global
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyGlobalForecaster
+
 Prediction intervals
 --------------------
 
@@ -215,7 +225,7 @@ Wrappers that add prediction intervals to any forecaster.
 Calibration and bias adjustment
 -------------------------------
 
-.. currentmodule:: sktime.forecasting.boxcox_bias_adjusted_forecaster
+.. currentmodule:: sktime.forecasting.boxcox_biasadj
 
 .. autosummary::
     :toctree: auto_generated/
@@ -379,6 +389,14 @@ Auto-ARIMA models
 
     StatsForecastAutoARIMA
 
+.. currentmodule:: sktime.forecasting.arar
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARARForecaster
+
 
 ARCH models
 -----------
@@ -461,6 +479,14 @@ Structural time series models
 
     DynamicFactor
 
+.. currentmodule:: sktime.forecasting.greykite
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    GreykiteForecaster
+
 Deep learning based forecasters
 -------------------------------
 
@@ -475,6 +501,16 @@ Deep learning based forecasters
     LTSFNLinearForecaster
     LTSFTransformerForecaster
 
+.. currentmodule:: sktime.forecasting.neuralprophet
+.. currentmodule:: sktime.forecasting.xlstm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    NeuralProphet
+    XLSTMForecaster
+
 .. currentmodule:: sktime.forecasting.scinet
 
 .. autosummary::
@@ -483,7 +519,15 @@ Deep learning based forecasters
 
     SCINetForecaster
 
-.. currentmodule:: sktime.forecasting.conditional_invertible_neural_network
+.. currentmodule:: sktime.forecasting.convtimenet
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ConvTimeNetForecaster
+
+.. currentmodule:: sktime.forecasting.cinn
 
 .. autosummary::
     :toctree: auto_generated/
@@ -514,7 +558,7 @@ Deep learning based forecasters
     PytorchForecastingNHiTS
     PytorchForecastingNBeats
 
-.. currentmodule:: sktime.forecasting.pykan_forecaster
+.. currentmodule:: sktime.forecasting.pykan
 
 .. autosummary::
     :toctree: auto_generated/
@@ -522,7 +566,7 @@ Deep learning based forecasters
 
     PyKANForecaster
 
-.. currentmodule:: sktime.forecasting.rbf_forecaster
+.. currentmodule:: sktime.forecasting.rbf
 
 .. autosummary::
     :toctree: auto_generated/
@@ -541,22 +585,6 @@ Deep learning based forecasters
 Pre-trained and foundation models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.forecasting.hf_transformers_forecaster
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    HFTransformersForecaster
-
-.. currentmodule:: sktime.forecasting.hf_momentfm_forecaster
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    MomentFMForecaster
-
 .. currentmodule:: sktime.forecasting.chronos
 
 .. autosummary::
@@ -565,7 +593,63 @@ Pre-trained and foundation models
 
     ChronosForecaster
 
-.. currentmodule:: sktime.forecasting.moirai_forecaster
+.. currentmodule:: sktime.forecasting.chronos2
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Chronos2Forecaster
+
+.. currentmodule:: sktime.forecasting.falcon_tst
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FalconTSTForecaster
+
+.. currentmodule:: sktime.forecasting.flowstate
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FlowStateForecaster
+
+.. currentmodule:: sktime.forecasting.hf_transformers
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HFTransformersForecaster
+
+.. currentmodule:: sktime.forecasting.kronos
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KronosForecaster
+
+.. currentmodule:: sktime.forecasting.lagllama
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LagLlamaForecaster
+
+.. currentmodule:: sktime.forecasting.mantis
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MantisForecaster
+
+.. currentmodule:: sktime.forecasting.moirai
 
 .. autosummary::
     :toctree: auto_generated/
@@ -573,13 +657,37 @@ Pre-trained and foundation models
 
     MOIRAIForecaster
 
-.. currentmodule:: sktime.forecasting.timesfm_forecaster
+.. currentmodule:: sktime.forecasting.momentfm
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    TimesFMForecaster
+    MomentFMForecaster
+
+.. currentmodule:: sktime.forecasting.patch_tsmixer
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PatchTSMixerForecaster
+
+.. currentmodule:: sktime.forecasting.patch_tst
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PatchTSTForecaster
+
+.. currentmodule:: sktime.forecasting.time_llm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeLLMForecaster
 
 .. currentmodule:: sktime.forecasting.timemoe
 
@@ -589,6 +697,38 @@ Pre-trained and foundation models
 
     TimeMoEForecaster
 
+.. currentmodule:: sktime.forecasting.timer
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimerForecaster
+
+.. currentmodule:: sktime.forecasting.timer_s1
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimerS1Forecaster
+
+.. currentmodule:: sktime.forecasting.timesfm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimesFMForecaster
+
+.. currentmodule:: sktime.forecasting.timesfm2_forecaster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimesFM2Forecaster
+
 .. currentmodule:: sktime.forecasting.ttm
 
 .. autosummary::
@@ -597,13 +737,14 @@ Pre-trained and foundation models
 
     TinyTimeMixerForecaster
 
-.. currentmodule:: sktime.forecasting.time_llm
+.. currentmodule:: sktime.forecasting.toto
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    TimeLLMForecaster
+    TotoForecaster
+
 
 Intermittent time series forecasters
 ------------------------------------
@@ -624,6 +765,14 @@ Intermittent time series forecasters
 
     StatsForecastADIDA
 
+.. currentmodule:: sktime.forecasting.tsb
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSB
+
 Ensembles and stacking
 ----------------------
 
@@ -637,6 +786,13 @@ Ensembles and stacking
     AutoEnsembleForecaster
     StackingForecaster
 
+.. currentmodule:: sktime.forecasting.residual_booster
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ResidualBoostingForecaster
 
 .. currentmodule:: sktime.forecasting.autots
 
@@ -653,6 +809,17 @@ Ensembles and stacking
     :template: class.rst
 
     MAPAForecaster
+
+Causal Forecasting
+------------------
+
+.. currentmodule:: sktime.forecasting.causal
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DoubleMLForecaster
 
 Hierarchical reconciliation
 ---------------------------
@@ -712,8 +879,22 @@ Model selection and tuning
 
     ForecastingGridSearchCV
     ForecastingRandomizedSearchCV
+    ForecastingOptCV
     ForecastingSkoptSearchCV
     ForecastingOptunaSearchCV
+
+Agentic Forecasting
+-------------------
+
+Forecasters that use generative AI and/or agentic reasoning to decide how to forecast.
+
+.. currentmodule:: sktime.forecasting.agentic
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AutoResearchForecaster
 
 Model Evaluation (Backtesting)
 ------------------------------

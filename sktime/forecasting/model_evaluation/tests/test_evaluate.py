@@ -238,7 +238,7 @@ def test_evaluate_global_mode(scoring, strategy, backend):
     params = {
         "trainer_params": {
             # the training process is not deterministic
-            # train 10 epoches to make sure loss is low enough
+            # train 10 epochs to make sure loss is low enough
             "max_epochs": 1,
         },
         "model_params": {
@@ -301,7 +301,7 @@ def test_evaluate_global_mode_with_temporal_split():
     params = {
         "trainer_params": {
             # the training process is not deterministic
-            # train 10 epoches to make sure loss is low enough
+            # train 10 epochs to make sure loss is low enough
             "max_epochs": 1,
         },
         "model_params": {
@@ -513,7 +513,7 @@ ARIMA_MODELS = [ARIMA, AutoARIMA]
 )
 @pytest.mark.parametrize("cls", ARIMA_MODELS)
 def test_evaluate_bigger_X(cls):
-    """Check that evaluating ARIMA models with exogeneous X works.
+    """Check that evaluating ARIMA models with exogenous X works.
 
     Example adapted from bug report #3657.
     """

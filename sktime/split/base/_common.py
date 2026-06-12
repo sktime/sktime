@@ -3,14 +3,11 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from collections.abc import Iterator
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 
 from sktime.datatypes._utilities import get_window
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.validation import (
     all_inputs_are_iloc_like,
     all_inputs_are_time_like,
@@ -18,26 +15,37 @@ from sktime.utils.validation import (
     is_int,
 )
 from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.series import check_equal_time_index
 
 DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
 DEFAULT_FH = 1
 
-ACCEPTED_Y_TYPES = Union[pd.Series, pd.DataFrame, np.ndarray, pd.Index]
-FORECASTING_HORIZON_TYPES = Union[
-    Union[VALID_FORECASTING_HORIZON_TYPES], ForecastingHorizon
-]
-SPLIT_TYPE = Union[
-    tuple[pd.Series, pd.Series], tuple[pd.Series, pd.Series, pd.DataFrame, pd.DataFrame]
-]
+ACCEPTED_Y_TYPES = pd.Series | pd.DataFrame | np.ndarray | pd.Index
+SPLIT_TYPE = (
+    tuple[pd.Series, pd.Series]
+    | tuple[pd.Series, pd.Series, pd.DataFrame, pd.DataFrame]
+)
 SPLIT_ARRAY_TYPE = tuple[np.ndarray, np.ndarray]
 SPLIT_GENERATOR_TYPE = Iterator[SPLIT_ARRAY_TYPE]
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
-def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:
-    """Check and convert fh to format expected by CV splitters."""
+def _check_fh(fh):
+    """Check and convert fh to format expected by CV splitters.
+
+    Same as ``check_fh`` in ``sktime.forecasting.base._fh``,
+    with ``enforce_relative=True``.
+
+    Parameters
+    ----------
+    fh : int, timedelta, list or np.ndarray of ints or timedeltas, or ForecastingHorizon
+        Forecasting horizon to check and convert
+
+    Returns
+    -------
+    fh : ForecastingHorizon
+        Forecasting horizon in format expected by CV splitters
+    """
     return check_fh(fh, enforce_relative=True)
 
 
@@ -77,7 +85,7 @@ def _check_inputs_for_compatibility(args: list) -> None:
         raise TypeError("Unsupported combination of types")
 
 
-def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
+def _get_end(y_index: pd.Index, fh) -> int:
     """Compute the end of the last training window for a forecasting horizon.
 
     For a time series index `y_index`, `y_index[end]` will give
@@ -91,6 +99,7 @@ def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
     y_index : pd.Index
         Index of time series
     fh : int, timedelta, list or np.ndarray of ints or timedeltas
+        Forecasting horizon
 
     Returns
     -------
@@ -110,45 +119,6 @@ def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
     if array_is_int(fh):
         return n_timepoints - fh_offset - 1
     return y_index.get_loc(y_index[-1] - fh_offset)
-
-
-def _split_by_fh(
-    y: ACCEPTED_Y_TYPES, fh: FORECASTING_HORIZON_TYPES, X: Optional[pd.DataFrame] = None
-) -> SPLIT_TYPE:
-    """Split time series with forecasting horizon.
-
-    Handles both relative and absolute horizons.
-    """
-    if X is not None:
-        check_equal_time_index(y, X)
-    index = y.index
-    fh = check_fh(fh, freq=index)
-    idx = fh.to_pandas()
-
-    if fh.is_relative:
-        if not fh.is_all_out_of_sample():
-            raise ValueError("`fh` must only contain out-of-sample values")
-        max_step = idx.max()
-        steps = fh.to_indexer()
-        train = index[:-max_step]
-        test = index[-max_step:]
-
-        y_test = y.loc[test[steps]]
-
-    else:
-        min_step, max_step = idx.min(), idx.max()
-        train = index[index < min_step]
-        test = index[(index <= max_step) & (min_step <= index)]
-
-        y_test = y.loc[idx]
-
-    y_train = y.loc[train]
-    if X is None:
-        return y_train, y_test
-
-    X_train = X.loc[train]
-    X_test = X.loc[test]
-    return y_train, y_test, X_train, X_test
 
 
 def _get_train_window_via_endpoint(y, train_endpoint, window_length):

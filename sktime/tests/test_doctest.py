@@ -6,7 +6,7 @@ import inspect
 import pkgutil
 from functools import lru_cache
 
-from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
+from sktime.tests._config import ONLY_CHANGED_MODULES
 from sktime.tests.test_switch import run_test_module_changed
 
 EXCLUDE_MODULES_STARTING_WITH = ("all", "test", "contrib", "mlflow")

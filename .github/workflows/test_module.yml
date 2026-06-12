@@ -10,7 +10,7 @@ jobs:
     outputs:
       module_changes: ${{ steps.filter.outputs.changes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -53,25 +53,27 @@ jobs:
               - sktime/transformations/**
   test:
     needs: detect
+    if: ${{ fromJSON(needs.detect.outputs.module_changes) != '[]' }}
     name:
     strategy:
       fail-fast: false
       matrix:
         python-version:
-          - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
           - "3.13"
+          - "3.14"
         operating-system:
-          - macos-13
+          - macos-latest
           - ubuntu-latest
+          - ubuntu-22.04-arm
           - windows-latest
         sktime-component: ${{ fromJSON(needs.detect.outputs.module_changes) }}
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: ${{ matrix.sktime-component }}, ${{ matrix.operating-system }}, ${{ matrix.python-version }}
         uses: ./.github/actions/test-component

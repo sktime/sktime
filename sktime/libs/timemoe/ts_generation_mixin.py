@@ -14,42 +14,25 @@
 """ts_generation_mixin."""
 
 import warnings
-from typing import Any, Optional, Union
+from typing import Any
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-else:
+torch = _safe_import("torch")
 
-    class torch:
-        """Dummy torch class if the torch module is not available."""
-
-        class Tensor:
-            """Dummy Tensor class if the torch module is not available."""
-
-
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import GenerationMixin, LogitsProcessorList, StoppingCriteriaList
-    from transformers.generation import EosTokenCriteria, validate_stopping_criteria
-    from transformers.generation.utils import (
-        GenerateDecoderOnlyOutput,
-        GenerateEncoderDecoderOutput,
-    )
-    from transformers.utils import ModelOutput
-else:
-
-    class GenerationMixin:
-        """Dummy GenerationMixin class if the transformers module is not available."""
-
-    class LogitsProcessorList:
-        """Dummy class if the transformers module is not available."""
-
-    class StoppingCriteriaList:
-        """Dummy class if the transformers module is not available."""
-
-    class ModelOutput:
-        """Dummy class if the transformers module is not available."""
+GenerationMixin = _safe_import("transformers.GenerationMixin")
+LogitsProcessorList = _safe_import("transformers.LogitsProcessorList")
+StoppingCriteriaList = _safe_import("transformers.StoppingCriteriaList")
+EosTokenCriteria = _safe_import("transformers.generation.EosTokenCriteria")
+validate_stopping_criteria = _safe_import(
+    "transformers.generation.validate_stopping_criteria"
+)
+GenerateDecoderOnlyOutput = _safe_import(
+    "transformers.generation.utils.GenerateDecoderOnlyOutput"
+)
+GenerateEncoderDecoderOutput = _safe_import(
+    "transformers.generation.utils.GenerateEncoderDecoderOutput"
+)
 
 
 class TSGenerationMixin(GenerationMixin):
@@ -57,17 +40,17 @@ class TSGenerationMixin(GenerationMixin):
 
     def _greedy_search(
         self,
-        input_ids: torch.Tensor,
-        logits_processor: Optional[LogitsProcessorList] = None,
-        stopping_criteria: Optional[StoppingCriteriaList] = None,
-        max_length: Optional[int] = None,
-        pad_token_id: Optional[int] = None,
-        eos_token_id: Optional[Union[int, list[int]]] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        output_scores: Optional[bool] = None,
-        output_logits: Optional[bool] = None,
-        return_dict_in_generate: Optional[bool] = None,
+        input_ids,
+        logits_processor=None,
+        stopping_criteria=None,
+        max_length: int | None = None,
+        pad_token_id: int | None = None,
+        eos_token_id: int | list[int] | None = None,
+        output_attentions: bool | None = None,
+        output_hidden_states: bool | None = None,
+        output_scores: bool | None = None,
+        output_logits: bool | None = None,
+        return_dict_in_generate: bool | None = None,
         synced_gpus: bool = False,
         streamer=None,
         **model_kwargs,
@@ -290,7 +273,7 @@ class TSGenerationMixin(GenerationMixin):
 
     def _update_model_kwargs_for_generation(
         self,
-        outputs: ModelOutput,
+        outputs,
         model_kwargs: dict[str, Any],
         horizon_length: int = 1,
         is_encoder_decoder: bool = False,

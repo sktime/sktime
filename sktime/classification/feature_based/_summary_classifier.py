@@ -11,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.series.summarize import SummaryTransformer
+from sktime.transformations.summarize import SummaryTransformer
 
 
 class SummaryClassifier(BaseClassifier):
@@ -72,6 +72,8 @@ class SummaryClassifier(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "deterministic",
         "classifier_type": "feature",
     }
 
@@ -95,6 +97,10 @@ class SummaryClassifier(BaseClassifier):
         self._transform_atts = 0
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.

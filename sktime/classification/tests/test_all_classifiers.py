@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.base import BaseObject
 from sktime.classification.tests._expected_outputs import (
     basic_motions_proba,
     unit_test_proba,
@@ -19,7 +20,7 @@ from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 
 class ClassifierFixtureGenerator(BaseFixtureGenerator):
@@ -126,7 +127,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         classname = estimator_class.__name__
 
         # if numba is not installed, some estimators may still try to construct
-        # numba dependenct estimators in results_comparison
+        # numba dependent estimators in results_comparison
         # if that is the case, we skip the test
         if classname in unit_test_proba.keys():
             parameter_set = "results_comparison"
@@ -180,18 +181,21 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             return None
 
         # if numba is not installed, some estimators may still try to construct
-        # numba dependenct estimators in results_eomparison
+        # numba dependent estimators in results_comparison
         # if that is the case, we skip the test
-        try:
-            # we only use the first estimator instance for testing
-            estimator_instance = estimator_class.create_test_instance(
-                parameter_set="results_comparison"
-            )
-        except ModuleNotFoundError as e:
-            if not _check_soft_dependencies("numba", severity="none"):
-                return None
-            else:
-                raise e
+        if not _check_estimator_deps(estimator_class, severity="none"):
+            return None
+
+        estimator_instance = estimator_class.create_test_instance(
+            parameter_set="results_comparison"
+        )
+
+        if estimator_instance.is_composite():
+            # if the estimator is a composite, we set random state for all components
+            for sub_estimator in estimator_instance.get_params(deep=True).values():
+                if isinstance(sub_estimator, BaseObject):
+                    if not _check_estimator_deps(sub_estimator, severity="none"):
+                        return None
 
         # set random seed if possible
         if "random_state" in estimator_instance.get_params().keys():
@@ -245,3 +249,27 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             assert hasattr(estimator_instance, "classifiers_")
             assert isinstance(estimator_instance.classifiers_, pd.DataFrame)
             assert estimator_instance.classifiers_.shape == (1, 2)
+
+    def test_class_weight(self, estimator_instance, scenario):
+        """Test that classifiers with class_weight handle it correctly."""
+        # Check if the estimator supports class_weight
+        if not estimator_instance.get_tag("capability:class_weight"):
+            return None
+
+        # Get training data from scenario
+        X_train = scenario.args["fit"]["X"]
+        y_train = scenario.args["fit"]["y"]
+
+        # Compute class weights (e.g. normalized inverse frequency)
+        unique, counts = np.unique(y_train, return_counts=True)
+        inv_freq = np.array([1.0 / count for count in counts])
+        norm_inv_freq = inv_freq / inv_freq.sum()
+        class_weight = {cls: w for cls, w in zip(unique, norm_inv_freq)}
+
+        # Set class_weight param
+        estimator_instance.set_params(class_weight=class_weight)
+
+        # Fit and predict to check no error is raised
+        estimator_instance.fit(X_train, y_train)
+        y_pred = estimator_instance.predict(X_train)
+        assert set(np.unique(y_pred)).issubset(set(unique))

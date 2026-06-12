@@ -1,7 +1,5 @@
 """Tests for get intervals in time series forests."""
 
-from typing import Optional
-
 import numpy as np
 import pytest
 from numpy.random import RandomState
@@ -65,7 +63,7 @@ def test_get_intervals_should_produce_as_much_interval_as_given(
     given_min_interval = min_interval
     given_series_length = inner_series_length * number_of_series
     given_rng: RandomState = RandomState(42)
-    given_inner_series_length: Optional[int] = inner_series_length
+    given_inner_series_length: int | None = inner_series_length
 
     # When
     intervals = _get_intervals(
@@ -100,7 +98,7 @@ def test_get_intervals_at_least_greater_than_min_interval_given(
     given_min_interval = min_interval
     given_series_length = inner_series_length * number_of_series
     given_rng: RandomState = RandomState(42)
-    given_inner_series_length: Optional[int] = inner_series_length
+    given_inner_series_length: int | None = inner_series_length
 
     # When
     intervals = _get_intervals(
@@ -135,7 +133,7 @@ def test_get_intervals_equals_to_inner_series_length_given_too_high_min_interval
     given_min_interval = min_interval
     given_series_length = inner_series_length * number_of_series
     given_rng: RandomState = RandomState(42)
-    given_inner_series_length: Optional[int] = inner_series_length
+    given_inner_series_length: int | None = inner_series_length
 
     # When
     intervals = _get_intervals(
@@ -170,7 +168,7 @@ def test_get_intervals_should_produce_valid_intervals(
     given_min_interval = min_interval
     given_series_length = inner_series_length * number_of_series
     given_rng: RandomState = RandomState(42)
-    given_inner_series_length: Optional[int] = inner_series_length
+    given_inner_series_length: int | None = inner_series_length
 
     # When
     intervals = _get_intervals(
@@ -206,7 +204,7 @@ def test_get_intervals_should_produce_intervals_contained_in_inner_series_bins(
     given_min_interval = min_interval
     given_series_length = inner_series_length * number_of_series
     given_rng: RandomState = RandomState(42)
-    given_inner_series_length: Optional[int] = inner_series_length
+    given_inner_series_length: int | None = inner_series_length
 
     # When
     intervals = _get_intervals(

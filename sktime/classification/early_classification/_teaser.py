@@ -104,9 +104,11 @@ class TEASER(BaseEarlyClassifier):
     """
 
     _tags = {
+        "python_dependencies": "numba",
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "python_dependencies": "numba",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -140,6 +142,10 @@ class TEASER(BaseEarlyClassifier):
         self._svm_tol = 1e-4
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         m = getattr(self.estimator, "predict_proba", None)

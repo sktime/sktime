@@ -5,23 +5,21 @@
 __author__ = ["fkiraly", "khrapovs", "mateuja", "mloning"]
 
 from collections.abc import Iterator
-from typing import Optional
 
 import numpy as np
 import pandas as pd
 
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.split.base._common import (
     ACCEPTED_Y_TYPES,
     DEFAULT_FH,
     DEFAULT_WINDOW_LENGTH,
-    FORECASTING_HORIZON_TYPES,
     PANDAS_MTYPES,
     SPLIT_GENERATOR_TYPE,
     SPLIT_TYPE,
 )
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation import NON_FLOAT_WINDOW_LENGTH_TYPES
 from sktime.utils.validation.forecasting import check_fh
 
@@ -100,17 +98,38 @@ class BaseSplitter(BaseObject):
         # whether the splitter splits by time, or by instance
         "authors": "sktime developers",  # author(s) of the object
         "maintainers": "sktime developers",  # current maintainer(s) of the object
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
         self,
-        fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
+        fh=DEFAULT_FH,
         window_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
         self.window_length = window_length
         self.fh = fh
 
         super().__init__()
+
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`.
@@ -404,7 +423,7 @@ class BaseSplitter(BaseObject):
 
         return y_inner, y_mtype, y_inner_mtype
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
 
         Parameters
@@ -422,7 +441,7 @@ class BaseSplitter(BaseObject):
         """
         return len(list(self.split(y)))
 
-    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
+    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Parameters
@@ -437,7 +456,7 @@ class BaseSplitter(BaseObject):
         """
         raise NotImplementedError("abstract method")
 
-    def get_fh(self) -> ForecastingHorizon:
+    def get_fh(self):
         """Return the forecasting horizon.
 
         Returns

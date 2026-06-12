@@ -57,7 +57,7 @@ def test_run_test_for_class():
     from sktime.forecasting.naive import NaiveForecaster
 
     # boolean flag for whether to run tests for all estimators
-    from sktime.tests.test_all_estimators import ONLY_CHANGED_MODULES
+    from sktime.tests._config import ONLY_CHANGED_MODULES
 
     # test that assumptions on being on exception list are correct
     assert "HIVECOTEV2" in EXCLUDE_ESTIMATORS  # if this fails, switch the example
@@ -102,6 +102,7 @@ def test_run_test_for_class():
         "True_changed_class",
         "True_changed_tests",
         "True_changed_framework",
+        "True_changed_libs",
     ]
 
     if not ONLY_CHANGED_MODULES:
@@ -111,7 +112,7 @@ def test_run_test_for_class():
         # otherwise, if we run, it must be due to changes in class or pyproject
         assert reason_nodep in POS_REASONS
     else:  # not run and only changed modules
-        assert reason_nodep == "False_no_change"
+        assert reason_nodep in ["False_no_change", "False_requires_vm"]
 
     # now check estimator with soft deps
     run_wdep = run_test_for_class(f_with_deps)
@@ -128,14 +129,14 @@ def test_run_test_for_class():
 
     if not dep_present:
         assert not run_wdep
-        assert reason_wdep == "False_required_deps_missing"
+        assert reason_wdep in ["False_required_deps_missing", "False_requires_vm"]
     elif not ONLY_CHANGED_MODULES:
         assert run_wdep
         assert reason_wdep == "True_run_always"
     elif run_wdep:
         assert reason_wdep in POS_REASONS
     else:  # not run and only changed modules
-        assert reason_wdep == "False_no_change"
+        assert reason_wdep in ["False_no_change", "False_requires_vm"]
 
     # now a list of estimator with exception plus one estimator
     run = run_test_for_class([f_on_excl_list, f_no_deps])
@@ -168,7 +169,7 @@ def test_run_test_for_class():
 
     if not dep_present:
         assert not run
-        assert reason == "False_required_deps_missing"
+        assert reason in ["False_required_deps_missing", "False_requires_vm"]
     elif not ONLY_CHANGED_MODULES:
         assert run
         assert reason == "True_run_always"
@@ -177,5 +178,5 @@ def test_run_test_for_class():
         assert reason_wdep == reason or reason_nodep == reason
     else:
         assert reason == "False_no_change"
-        assert reason_wdep == "False_no_change"
+        assert reason_wdep in ["False_no_change", "False_requires_vm"]
         assert reason_nodep == "False_no_change"

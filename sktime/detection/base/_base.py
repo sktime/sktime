@@ -28,6 +28,7 @@ import pandas as pd
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.utils.adapters._safe_call import _method_has_arg
+from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation.series import check_series
 
 
@@ -72,8 +73,7 @@ class BaseDetector(BaseEstimator):
         "python_dependencies": None,  # str or list of str, package soft dependencies
         # estimator tags
         # --------------
-        # todo 1.0.0 - remove series-annotator
-        "object_type": ["detector", "series-annotator"],  # type of object
+        "object_type": "detector",
         "learning_type": "None",  # supervised, unsupervised
         "task": "None",  # anomaly_detection, change_point_detection, segmentation
         "capability:multivariate": False,
@@ -88,17 +88,25 @@ class BaseDetector(BaseEstimator):
     }
 
     def __init__(self):
-        self._is_fitted = False
-
-        self._X = None
-        self._Y = None
-
-        task = self.get_tag("task")
-        learning_type = self.get_tag("learning_type")
-
         super().__init__()
 
-        self.set_tags(**{"task": task, "learning_type": learning_type})
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated DetectorPipeline.
@@ -118,8 +126,8 @@ class BaseDetector(BaseEstimator):
             not nested, contains only non-DetectorPipeline ``sktime`` steps
         """
         from sktime.detection.compose import DetectorPipeline
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -148,7 +156,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -173,6 +181,9 @@ class BaseDetector(BaseEstimator):
         Creates fitted model that updates attributes ending in "_". Sets
         _is_fitted flag to True.
         """
+        _check_estimator_deps(self)
+
+        # input checks and conversions for X
         X_inner = self._check_X(X)
 
         # skip inner _fit if fit is empty
@@ -185,10 +196,8 @@ class BaseDetector(BaseEstimator):
         self._X = X
         self._y = y
 
-        # fkiraly: insert checks/conversions here, after PR #1012 I suggest
-
         if _method_has_arg(self._fit, "y"):
-            self._fit(X=X, y=y)
+            self._fit(X=X_inner, y=y)  # X_inner is the converted X
         else:
             self._fit(X=X_inner)
 
@@ -223,7 +232,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -241,8 +250,6 @@ class BaseDetector(BaseEstimator):
         self.check_is_fitted()
 
         X_inner = self._check_X(X)
-
-        # fkiraly: insert checks/conversions here, after PR #1012 I suggest
 
         y = self._predict(X=X_inner)
 
@@ -375,7 +382,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -400,7 +407,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation, or segment clustering.
 
@@ -441,7 +448,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -466,7 +473,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
-              or ranges ot indices of ``X``, as below.
+              or ranges to indices of ``X``, as below.
             * ``"label"`` - if the task, by tags, is supervised or semi-supervised
               segmentation with labels, or segment clustering.
 
@@ -517,7 +524,17 @@ class BaseDetector(BaseEstimator):
               segments. Possible labels are integers starting from 0.
         """
         y_sparse = self.fit_predict(X, y=y)
-        y_dense = self.sparse_to_dense(y_sparse, index=X.index)
+
+        # Handle both pandas and numpy inputs
+        if hasattr(X, "index"):
+            # X is pandas DataFrame or Series
+            index = X.index
+        else:
+            # X is numpy array or other array-like without index
+            # Create a default integer index
+            index = pd.RangeIndex(len(X))
+
+        y_dense = self.sparse_to_dense(y_sparse, index=index)
         y_dense = self._coerce_to_df(y_dense, columns=["labels"])
         return y_dense
 
@@ -650,23 +667,6 @@ class BaseDetector(BaseEstimator):
         -------
         Y : pd.Series
             Labels for sequence X exact format depends on detection type.
-        """
-        raise NotImplementedError("abstract method")
-
-    def _transform_scores(self, X):
-        """Return scores for predicted labels on test/deployment data.
-
-        core logic
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Time series subject to detection, which will be assigned labels or scores.
-
-        Returns
-        -------
-        scores : pd.DataFrame with same index as X
-            Scores for sequence ``X``.
         """
         raise NotImplementedError("abstract method")
 
@@ -994,7 +994,7 @@ class BaseDetector(BaseEstimator):
               labels of segments.
         """
         if isinstance(y_dense, pd.DataFrame):
-            y_sparse = y_dense.iloc[:, 0]
+            y_dense = y_dense.iloc[:, 0]
         if not isinstance(y_dense, pd.Series):
             y_dense = pd.Series(y_dense, dtype="int64")
         if 0 in y_dense.values:

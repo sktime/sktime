@@ -44,7 +44,7 @@ class Airline(_ForecastingDatasetFromLoader):
         "is_empty": False,
         "has_nans": False,
         "has_exogenous": False,
-        "n_instances": 144,
+        "n_instances": 1,
         "n_timepoints": 144,
         "frequency": "M",
         "n_dimensions": 1,

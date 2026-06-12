@@ -41,13 +41,16 @@ class NaiveForecaster(_BaseWindowForecaster):
     is forecasted with the same strategy.
 
     Internally, this forecaster does the following:
+
     - obtains the so-called "last window", a 1D array that denotes the
       most recent time window that the forecaster is allowed to use
     - reshapes the last window into a 2D array according to the given
       seasonal periodicity (prepended with NaN values to make it fit);
     - make a prediction for each column, using the given strategy:
+
       - "last": last non-NaN row
       - "mean": np.nanmean over rows
+
     - tile the predictions using the seasonal periodicity
 
     To compute prediction quantiles, we first estimate the standard error
@@ -105,6 +108,13 @@ class NaiveForecaster(_BaseWindowForecaster):
     >>> forecaster.fit(y)
     NaiveForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>>
+    >>> # Example 2: Seasonal Naive strategy
+    >>> # The airline data is monthly, so we use sp=12 (12 months per year)
+    >>> forecaster = NaiveForecaster(strategy="last", sp=12)
+    >>> forecaster.fit(y)
+    NaiveForecaster(sp=12)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
     _tags = {
@@ -125,10 +135,12 @@ class NaiveForecaster(_BaseWindowForecaster):
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
-        "ignores-exogeneous-X": True,
-        "scitype:y": "univariate",
-        "capability:pred_var": True,
+        "capability:exogenous": False,
+        "capability:multivariate": False,
         "capability:pred_int": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):
@@ -150,7 +162,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, default=None
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, default=None
             Exogenous variables are ignored.
 
@@ -342,7 +354,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         return y_pred[fh_idx]
 
     def _predict_naive(self, fh=None, X=None):
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.lag import Lag
 
         strategy = self.strategy
         sp = self.sp
@@ -675,12 +687,11 @@ class NaiveVariance(BaseForecaster):
         "authors": ["fkiraly", "bethrice44"],
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
-        "capability:pred_var": True,
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):
@@ -691,7 +702,7 @@ class NaiveVariance(BaseForecaster):
 
         tags_to_clone = [
             "requires-fh-in-fit",
-            "ignores-exogeneous-X",
+            "capability:exogenous",
             "capability:missing_values",
             "y_inner_mtype",
             "X_inner_mtype",
@@ -846,7 +857,7 @@ class NaiveVariance(BaseForecaster):
         y : pd.Series or pd.DataFrame
             sktime compatible time series to use in computing residuals matrix
         X : pd.DataFrame
-            sktime compatible exogeneous time series to use in forecasts
+            sktime compatible exogenous time series to use in forecasts
         forecaster : sktime compatible forecaster
             forecaster to use in computing the sliding residuals
         initial_window : int

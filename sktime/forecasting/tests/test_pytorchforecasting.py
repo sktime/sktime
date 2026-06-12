@@ -87,7 +87,7 @@ def test_load_model_from_disk(model_class) -> None:
     # call fit function (no real fitting will happen)
     model.fit(y_train, X_train, fh=fh)
 
-    # verify the actual fit is skiped by checking the _trainer attribute
+    # verify the actual fit is skipped by checking the _trainer attribute
     # there should be no _trainer attribute
     try:
         model._trainer
