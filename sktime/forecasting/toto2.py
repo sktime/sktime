@@ -57,15 +57,15 @@ class Toto2Forecaster(BaseForecaster):
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
-    Probabilistic forecasting. Toto-2 only supports its fixed quantile grid
-    (0.1, 0.2, ..., 0.9); requesting other levels raises ``ValueError``:
+    Probabilistic forecasting. Toto-2 emits a fixed quantile grid (0.1, ..., 0.9);
+    other levels are obtained by linear interpolation:
 
     >>> forecaster = Toto2Forecaster(
     ...     model_path="Datadog/Toto-2.0-4m"
     ... )  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> quantiles = forecaster.predict_quantiles(
-    ...     fh=[1, 2, 3], alpha=[0.1, 0.5, 0.9]
+    >>> intervals = forecaster.predict_interval(
+    ...     fh=[1, 2, 3], coverage=0.9
     ... )  # doctest: +SKIP
 
     Long-horizon forecasting with block decoding. Block decoding only engages
@@ -99,15 +99,6 @@ class Toto2Forecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
-        # Toto-2's quantile knots are fixed at [0.1, ..., 0.9]; the proba conformance
-        # tests request other levels (via TEST_ALPHAS), which _predict_quantiles
-        # rejects with ValueError. These three are skipped for that reason; predict_var
-        # does not request non-knot levels and is left enabled.
-        "tests:skip_by_name": [
-            "test_predict_quantiles",
-            "test_predict_interval",
-            "test_predict_proba",
-        ],
     }
 
     def __init__(
@@ -329,20 +320,13 @@ class Toto2Forecaster(BaseForecaster):
 
         model, quantiles = self._run_forecast(fh)
 
-        # Toto-2 has fixed quantile grid (knots = [0.1, ..., 0.9]) and cannot
-        # produce arbitrary level.
-        # we serve only the available knots and raise for anything else,
-        # Conformance tests that request other levels are
-        # skipped via the "tests:skip_by_name" tag.
-        knots = [round(k, 3) for k in model.output_head.knots]
-        alpha = [round(a, 3) for a in alpha]
-        if not set(alpha).issubset(set(knots)):
-            raise ValueError(
-                "Toto2Forecaster only supports the fixed quantile levels "
-                f"{knots}; requested quantiles {alpha} are not all available."
-            )
+        # Toto-2 emits a fixed quantile grid (knots = [0.1, ..., 0.9]). We linearly
+        # interpolate to the requested levels; np.interp clamps levels outside the
+        # grid (e.g. 0.05, 0.95) to the nearest knot. Same approach as
+        # FlowStateForecaster / LagLlamaForecaster.
+        knots = model.output_head.knots
+        q = quantiles.squeeze(1).cpu().numpy()  # [n_quantiles, n_var, horizon_padded]
 
-        q = quantiles.squeeze(1).cpu().numpy()
         var_names = self._y.columns
         cols_idx = pd.MultiIndex.from_product([var_names, alpha])
         pred_index = fh.to_absolute(self._cutoff)._values
@@ -351,7 +335,8 @@ class Toto2Forecaster(BaseForecaster):
         pred_quantiles = pd.DataFrame(index=pred_index, columns=cols_idx)
         for i, var_name in enumerate(var_names):
             for a in alpha:
-                pred_quantiles[(var_name, a)] = q[knots.index(a), i, relative_indices]
+                col = [float(np.interp(a, knots, q[:, i, t])) for t in relative_indices]
+                pred_quantiles[(var_name, a)] = col
 
         return pred_quantiles
 
