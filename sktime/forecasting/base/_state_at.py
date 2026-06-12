@@ -108,3 +108,39 @@ class _StateAtMixin:
         self.reset()
         self._restore_pretrained_state(saved)
         return self
+
+    def _clone_at(self, state):
+        """Clone the estimator, retaining state up to ``state``.
+
+        State-aware variant of ``clone``.
+
+        Parameters
+        ----------
+        state : str, "pretrained" or "new"
+            Upper bound on the retained state tier.
+
+            * ``"pretrained"``: equivalent to ``clone()``. The
+              ``_PretrainedCloner`` clone plugin copies pretrained
+              attributes when present; without pretrained state this
+              degrades to a blank clone.
+            * ``"new"``: blank clone in post-init state, bypassing the
+              pretrained-state clone plugin. Only this estimator's own
+              plugin is bypassed; pretrained state held by component
+              estimators is governed by their own clone behavior.
+
+        Returns
+        -------
+        clone : new object of same type, without shared references to self.
+
+        Raises
+        ------
+        ValueError
+            If ``state`` is not one of ``"pretrained"``, ``"new"``.
+        """
+        self._check_target_state(state)
+        if not self._has_pretrain_capability() or state == "pretrained":
+            return self.clone()
+        self_clone = _clone(self, base_cls=BaseObject)
+        if self.get_config()["check_clone"]:
+            _check_clone(original=self, clone=self_clone)
+        return self_clone
