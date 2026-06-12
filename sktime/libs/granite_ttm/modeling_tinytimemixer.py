@@ -10,24 +10,26 @@ import copy
 import math
 from dataclasses import dataclass
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from transformers.modeling_utils import PreTrainedModel
-from transformers.time_series_utils import (
-    NegativeBinomialOutput,
-    NormalOutput,
-    StudentTOutput,
-)
-from transformers.utils import (
-    ModelOutput,
-    add_start_docstrings,
-    add_start_docstrings_to_model_forward,
-    logging,
-    replace_return_docstrings,
-)
+from sktime.utils.dependencies import _safe_import
 
 from .configuration_tinytimemixer import TinyTimeMixerConfig
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+F = _safe_import("torch.nn.functional")
+PreTrainedModel = _safe_import("transformers.modeling_utils.PreTrainedModel")
+NegativeBinomialOutput = _safe_import(
+    "transformers.time_series_utils.NegativeBinomialOutput"
+)
+NormalOutput = _safe_import("transformers.time_series_utils.NormalOutput")
+StudentTOutput = _safe_import("transformers.time_series_utils.StudentTOutput")
+ModelOutput = _safe_import("transformers.utils.ModelOutput")
+add_start_docstrings = _safe_import("transformers.utils.add_start_docstrings")
+add_start_docstrings_to_model_forward = _safe_import(
+    "transformers.utils.add_start_docstrings_to_model_forward"
+)
+replace_return_docstrings = _safe_import("transformers.utils.replace_return_docstrings")
+logging = _safe_import("transformers.utils.logging")
 
 logger = logging.get_logger(__name__)
 
