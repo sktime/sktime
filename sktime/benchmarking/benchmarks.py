@@ -3,6 +3,7 @@
 import logging
 import warnings
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import pandas as pd
 
@@ -11,6 +12,7 @@ from sktime.benchmarking._benchmarking_dataclasses import (
     ResultObject,
     TaskObject,
 )
+from sktime.benchmarking._incremental_store import IncrementalResultStore
 from sktime.benchmarking._storage_handlers import get_storage_backend
 from sktime.benchmarking._utils import _check_id_format
 from sktime.catalogues.base import BaseCatalogue
@@ -101,18 +103,46 @@ class _BenchmarkingResults:
     results: list[ResultObject] = field(default_factory=list)
 
     def __post_init__(self):
-        """Load existing results from the path."""
+        """Load existing results from the path or partial store."""
         self.storage_backend = get_storage_backend(self.path)
-        self.results = self.storage_backend(self.path).load()
+        self.incremental_store = IncrementalResultStore(self.path)
+
+        output_path = Path(self.path) if self.path is not None else None
+        if output_path is not None and output_path.exists():
+            self.results = self.storage_backend(self.path).load()
+        elif (
+            self.incremental_store.parts_dir is not None
+            and self.incremental_store.parts_dir.exists()
+        ):
+            self.results = self.incremental_store.load_results()
+        else:
+            self.results = []
 
     def update(self, new_result):
         """Update the results with a new result."""
+        self.results = [
+            result
+            for result in self.results
+            if not (
+                result.task_id == new_result.task_id
+                and result.model_id == new_result.model_id
+            )
+        ]
         self.results.append(new_result)
-        # todo: this should also update the storage backend!
+        self.incremental_store.save_result(new_result)
 
     def save(self):
-        """Save the results to a file."""
+        """Save the results to a file and remove partial result files."""
+        if self.path is None:
+            return
+
         self.storage_backend(self.path).save(self.results)
+
+        output_path = Path(self.path)
+        if not output_path.exists():
+            raise RuntimeError(f"Failed to save benchmark results to {self.path}")
+
+        self.incremental_store.cleanup()
 
     def contains(self, task_id: str, model_id: str):
         """Check if the results contain a specific task and model.
@@ -542,8 +572,8 @@ class BaseBenchmark:
                 )
             )
 
-            if results_path is not None:
-                results.save()
+        if results_path is not None:
+            results.save()
         return results.to_dataframe()
 
     def _generate_experiments(self):

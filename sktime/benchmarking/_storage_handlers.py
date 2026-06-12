@@ -132,6 +132,43 @@ class JSONStorageHandler(BaseStorageHandler):
         The path to the file to save to or load
     """
 
+    @staticmethod
+    def serialize_result(result: ResultObject) -> dict:
+        """Serialize a ResultObject to the JSON storage format."""
+        return asdict(result, pd_orient="list")
+
+    @staticmethod
+    def deserialize_result(row: dict) -> ResultObject:
+        """Deserialize a ResultObject from the JSON storage format."""
+        folds = {}
+        for fold_id, fold in row["folds"].items():
+            scores = {}
+            for score_name, score_val in fold["scores"].items():
+                if isinstance(score_val, dict):
+                    score_val = pd.DataFrame.from_records(score_val)
+                scores[score_name] = score_val
+            if "ground_truth" in fold and fold["ground_truth"]:
+                ground_truth = pd.DataFrame(fold["ground_truth"])
+            else:
+                ground_truth = None
+            if "predictions" in fold and fold["predictions"]:
+                predictions = pd.DataFrame(fold["predictions"])
+            else:
+                predictions = None
+            if "train_data" in fold and fold["train_data"]:
+                train_data = pd.DataFrame(fold["train_data"])
+            else:
+                train_data = None
+            folds[int(fold_id)] = FoldResults(
+                scores, ground_truth, predictions, train_data
+            )
+
+        return ResultObject(
+            model_id=row["model_id"],
+            task_id=row["validation_id"],
+            folds=folds,
+        )
+
     def save(self, results: list[ResultObject]):
         """Save the results to a JSON file.
 
@@ -141,7 +178,10 @@ class JSONStorageHandler(BaseStorageHandler):
             The results to save.
         """
         with open(self.path, "w") as f:
-            json.dump(list(map(lambda x: asdict(x, pd_orient="list"), results)), f)
+            json.dump(
+                [self.serialize_result(x) for x in results],
+                f,
+            )
 
     def _load(self) -> list[ResultObject]:
         """Load the results from a JSON file.
@@ -151,41 +191,10 @@ class JSONStorageHandler(BaseStorageHandler):
         list[ResultObject]
             The loaded results.
         """
-        results = []
         with open(self.path) as f:
-            results_json = json.load(f)
-        for row in results_json:
-            folds = {}
-            for fold_id, fold in row["folds"].items():
-                scores = {}
-                for score_name, score_val in fold["scores"].items():
-                    if isinstance(score_val, dict):
-                        score_val = pd.DataFrame.from_records(score_val)
-                    scores[score_name] = score_val
-                if "ground_truth" in fold and fold["ground_truth"]:
-                    ground_truth = pd.DataFrame(fold["ground_truth"])
-                else:
-                    ground_truth = None
-                if "predictions" in fold and fold["predictions"]:
-                    predictions = pd.DataFrame(fold["predictions"])
-                else:
-                    predictions = None
-                if "train_data" in fold and fold["train_data"]:
-                    train_data = pd.DataFrame(fold["train_data"])
-                else:
-                    train_data = None
-                folds[int(fold_id)] = FoldResults(
-                    scores, ground_truth, predictions, train_data
-                )
+            rows = json.load(f)
 
-            results.append(
-                ResultObject(
-                    model_id=row["model_id"],
-                    task_id=row["validation_id"],
-                    folds=folds,
-                )
-            )
-        return results
+        return [self.deserialize_result(row) for row in rows]
 
     @staticmethod
     def is_applicable(path):
