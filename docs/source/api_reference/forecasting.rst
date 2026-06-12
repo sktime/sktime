@@ -657,6 +657,14 @@ Pre-trained and foundation models
 
     MOIRAIForecaster
 
+.. currentmodule:: sktime.forecasting.mira
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MIRAForecaster
+
 .. currentmodule:: sktime.forecasting.momentfm
 
 .. autosummary::
