@@ -14,6 +14,29 @@ from sktime.benchmarking._benchmarking_dataclasses import (
 )
 
 
+def _atomic_write_text(path: Path, contents: str) -> None:
+    """Write text to *path* atomically via a temporary file."""
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w", encoding="utf-8") as file:
+        file.write(contents)
+    tmp_path.replace(path)
+
+
+def _atomic_write_path(path: Path, write_fn) -> None:
+    """Write to *path* atomically via a temporary file.
+
+    Parameters
+    ----------
+    path : Path
+        Final destination path.
+    write_fn : callable
+        Callable accepting the temporary path and writing the file contents.
+    """
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    write_fn(tmp_path)
+    tmp_path.replace(path)
+
+
 class BaseStorageHandler(abc.ABC):
     """Handles storage of benchmark results.
 
@@ -177,11 +200,9 @@ class JSONStorageHandler(BaseStorageHandler):
         results : ResultObject
             The results to save.
         """
-        with open(self.path, "w") as f:
-            json.dump(
-                [self.serialize_result(x) for x in results],
-                f,
-            )
+        path = Path(self.path)
+        contents = json.dumps([self.serialize_result(x) for x in results])
+        _atomic_write_text(path, contents)
 
     def _load(self) -> list[ResultObject]:
         """Load the results from a JSON file.
@@ -250,7 +271,10 @@ class ParquetStorageHandler(BaseStorageHandler):
         results_df = results_df.sort_values(by=["validation_id", "model_id"])
 
         results_df = results_df.reset_index(drop=True)
-        results_df.to_parquet(self.path, index=False)
+        _atomic_write_path(
+            Path(self.path),
+            lambda tmp_path: results_df.to_parquet(tmp_path, index=False),
+        )
 
     def _load(self) -> list[ResultObject]:
         """Load the results from a Parquet file.
@@ -328,7 +352,9 @@ class CSVStorageHandler(BaseStorageHandler):
         results_df = results_df.sort_values(by=["validation_id", "model_id"])
 
         results_df = results_df.reset_index(drop=True)
-        results_df.to_csv(self.path, index=False)
+        _atomic_write_path(
+            Path(self.path), lambda tmp_path: results_df.to_csv(tmp_path, index=False)
+        )
 
     def _load(self) -> list[ResultObject]:
         """Load the results from a CSV file.

@@ -9,19 +9,11 @@ import shutil
 from pathlib import Path
 
 from sktime.benchmarking._benchmarking_dataclasses import ResultObject
-from sktime.benchmarking._storage_handlers import JSONStorageHandler
+from sktime.benchmarking._storage_handlers import JSONStorageHandler, _atomic_write_text
 
 logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION = 1
-
-
-def _atomic_write_text(path: Path, contents: str) -> None:
-    """Write text to *path* atomically via a temporary file."""
-    tmp_path = path.with_suffix(path.suffix + ".tmp")
-    with open(tmp_path, "w", encoding="utf-8") as file:
-        file.write(contents)
-    tmp_path.replace(path)
 
 
 def result_key(task_id: str, model_id: str) -> str:
