@@ -50,3 +50,25 @@ class _StateAtMixin:
         if tag_attrs:
             return list(tag_attrs)
         return list(getattr(self, "_pretrained_attrs", None) or [])
+
+    def _save_pretrained_state(self):
+        """Save protected pretrained attributes before an in-place reset."""
+
+        if not getattr(self, "_pretrained_attrs", None):
+            return {}
+        attr_names = self._get_protected_pretrained_attrs()
+        saved = {a: getattr(self, a) for a in attr_names if hasattr(self, a)}
+        if saved:
+            # restore a runtime list consistent with the surviving attrs,
+            # so get_pretrained_params and the clone plugin keep working
+            saved["_pretrained_attrs"] = [a for a in attr_names if a in saved]
+        return saved
+
+    def _restore_pretrained_state(self, saved):
+        """Restore saved pretrained attributes after an in-place reset."""
+        for attr, value in saved.items():
+            setattr(self, attr, value)
+        if saved:
+            # reset removed task-fitted state; with pretrained attrs
+            # restored, the estimator is in the "pretrained" state tier
+            self._state = "pretrained"
