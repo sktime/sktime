@@ -312,6 +312,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         self.use_source_package = use_source_package
         self.fit_strategy = fit_strategy
 
+        # dummy change to trigger VM estimator tests
         if self.broadcasting:
             self.set_tags(
                 **{
