@@ -8,12 +8,11 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.libs.mira.mira_inference import mira_predict_autoregressive_norm
-from sktime.libs.mira.utils_time_normalization import normalize_time_for_ctrope
 from sktime.utils.dependencies import _safe_import
 from sktime.utils.singleton import _multiton
 
 torch = _safe_import("torch")
+
 
 class MIRAForecaster(BaseForecaster):
     """Zero-shot forecaster wrapping Microsoft MIRA via vendored ``sktime.libs.mira``.
@@ -37,9 +36,9 @@ class MIRAForecaster(BaseForecaster):
         Number of history steps passed to the model. If ``None``, uses the full
         series seen at predict time.
     time_alpha : float, default=1.0
-        ``alpha`` for ``normalize_time_for_ctrope``.
+        ``alpha`` used for CT-RoPE normalization of time values.
     time_snap_step : float, default=0.1
-        ``snap_step`` for ``normalize_time_for_ctrope`` (HF CT-RoPE temporal unit).
+        ``snap_step`` used for CT-RoPE normalization of time values.
 
     References
     ----------
@@ -79,8 +78,9 @@ class MIRAForecaster(BaseForecaster):
         "python_version": ">=3.10",
         "python_dependencies": [
             "torch",
-            "transformers",
             "torchdiffeq",
+            "transformers==4.40.1",
+            "accelerate==0.28.0",
         ],
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
@@ -165,7 +165,6 @@ class MIRAForecaster(BaseForecaster):
         """
         self.model = self._load_model()
         self.model.eval()
-        self._context = y
         return self
 
     def predict(self, fh=None, X=None, y=None):
@@ -220,20 +219,26 @@ class MIRAForecaster(BaseForecaster):
         return super().predict(fh=fh, X=X)
 
     def _predict(self, fh, X=None):
+        if self.model is None:
+            self.model = self._load_model()
+            self.model.eval()
+
         if fh is None:
             fh = self.fh
         fh_rel = fh.to_relative(self.cutoff)
         pred_len = int(np.max(fh_rel.to_numpy()))
 
         values, times = _prepare_context(
-            y=self._context,
-            fh=fh,
+            y=self._y,
+            pred_len=pred_len,
             cutoff=self.cutoff,
             context_length=self.context_length,
         )
         context_len = values.shape[1]
 
-        # CT-RoPE scaling (README / model_eval.py); not handled by mira_inference
+        from sktime.libs.mira.mira_inference import mira_predict_autoregressive_norm
+        from sktime.libs.mira.utils_time_normalization import normalize_time_for_ctrope
+        # CT-RoPE scaling
         times, _, _ = normalize_time_for_ctrope(
             time_values=times,
             attention_mask=torch.ones_like(times),
@@ -265,9 +270,9 @@ class MIRAForecaster(BaseForecaster):
             .to_absolute(self._cutoff)
             ._values
         )
-        pred_df = pd.DataFrame(values_out, index=index, columns=self._context.columns)
-        pred_df.index.names = self._context.index.names
-        pred_out = fh_rel.get_expected_pred_idx(self._context, cutoff=self.cutoff)
+        pred_df = pd.DataFrame(values_out, index=index, columns=self._y.columns)
+        pred_df.index.names = self._y.index.names
+        pred_out = fh_rel.get_expected_pred_idx(self._y, cutoff=self.cutoff)
         return pred_df.loc[pred_df.index.isin(pred_out)]
 
     @classmethod
@@ -289,7 +294,6 @@ class MIRAForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-
         return [{}, {"time_alpha": 0.5}]
 
 
@@ -334,16 +338,37 @@ def _index_as_float(index) -> np.ndarray:
     return np.arange(len(index), dtype=np.float64)
 
 
-def _prepare_context(y, fh, cutoff, context_length):
+def _prepare_context(y, pred_len, cutoff, context_length):
     """Build ``values`` and ``times`` tensors expected by ``mira_inference``.
 
-    ``mira_predict_autoregressive_norm`` expects ``values`` and ``times`` shaped
-    ``[1, context_len + pred_len]``. History comes from ``y``; future timestamps
-    come from ``fh.to_absolute(cutoff)``.
+    Parameters
+    ----------
+    y : pd.DataFrame
+        Context series passed. Must be univariate;
+    pred_len : int
+        Autoregressive rollout length; future timestamps are built for relative
+        steps: 1 .. pred_len.
+    cutoff : pandas index element or compatible
+        Last time point of the context series.
+    context_length : int or None
+        Number of trailing history steps to keep. If ``None``, all of ``y`` is used.
+
+    Returns
+    -------
+    values : torch.Tensor
+        Float32 tensor of shape (1, context_len)
+    times : torch.Tensor
+        Float32 tensor of shape (1, context_len + pred_len).
     """
+    if isinstance(y, pd.Series):
+        y = y.to_frame()
     series = y.iloc[:, 0].to_numpy(dtype=np.float32)
     index = y.index
-    future_index = fh.to_absolute(cutoff)
+    future_index = (
+        ForecastingHorizon(range(1, pred_len + 1))
+        .to_absolute(cutoff)
+        ._values
+    )
 
     if context_length is not None and len(series) > context_length:
         series = series[-context_length:]
