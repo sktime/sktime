@@ -10,27 +10,55 @@ import math
 from dataclasses import dataclass
 from typing import Optional, Tuple, Union
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from transformers.modeling_utils import PreTrainedModel
-from transformers.time_series_utils import (
-    NegativeBinomialOutput,
-    NormalOutput,
-    StudentTOutput,
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+F = _safe_import("torch.nn.functional")
+PreTrainedModel = _safe_import("transformers.modeling_utils.PreTrainedModel")
+NegativeBinomialOutput = _safe_import(
+    "transformers.time_series_utils.NegativeBinomialOutput"
 )
-from transformers.utils import (
-    ModelOutput,
-    add_start_docstrings,
-    add_start_docstrings_to_model_forward,
-    logging,
-    replace_return_docstrings,
+NormalOutput = _safe_import("transformers.time_series_utils.NormalOutput")
+StudentTOutput = _safe_import("transformers.time_series_utils.StudentTOutput")
+ModelOutput = _safe_import("transformers.utils.ModelOutput", return_object="None")
+add_start_docstrings = _safe_import(
+    "transformers.utils.add_start_docstrings", return_object="None"
+)
+add_start_docstrings_to_model_forward = _safe_import(
+    "transformers.utils.add_start_docstrings_to_model_forward", return_object="None"
+)
+logging = _safe_import("transformers.utils.logging")
+replace_return_docstrings = _safe_import(
+    "transformers.utils.replace_return_docstrings", return_object="None"
 )
 
 from .configuration_tinytimemixer import TinyTimeMixerConfig
 
 
 logger = logging.get_logger(__name__)
+
+
+def _identity_docstring_decorator(*args, **kwargs):
+    """Return a no-op decorator when transformers doc helpers are unavailable."""
+
+    def decorator(obj):
+        return obj
+
+    return decorator
+
+
+if add_start_docstrings is None:
+    add_start_docstrings = _identity_docstring_decorator
+if add_start_docstrings_to_model_forward is None:
+    add_start_docstrings_to_model_forward = _identity_docstring_decorator
+if replace_return_docstrings is None:
+    replace_return_docstrings = _identity_docstring_decorator
+
+if ModelOutput is None:
+
+    class ModelOutput:
+        """Dummy model output if transformers is unavailable."""
 
 _CONFIG_FOR_DOC = "TinyTimeMixerConfig"
 
