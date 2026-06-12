@@ -13,8 +13,13 @@ def _fit_linear_trend(time_steps, values):
     """OLS fit of a linear trend: returns (slope, intercept)."""
     mean_t = np.mean(time_steps)
     centered_t = time_steps - mean_t
-    mean_v = np.mean(values)
     denominator = np.sum(np.square(centered_t))
+    if denominator == 0.0:
+        raise ValueError(
+            "The time column has zero variance; all time values are identical. "
+            "OLS fit is not possible."
+        )
+    mean_v = np.mean(values)
     numerator = np.sum(centered_t * (values - mean_v))
     slope = numerator / denominator
     intercept = mean_v - slope * mean_t
