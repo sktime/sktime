@@ -12,11 +12,13 @@ Code is released under the MIT License. See the MIRA repository LICENSE file.
 """
 
 from sktime.libs.mira.configuration_mira import MIRAConfig
+from sktime.libs.mira.mira_inference import mira_predict_autoregressive_norm
 from sktime.libs.mira.modeling_mira import MIRAForPrediction
 from sktime.libs.mira.utils_time_normalization import normalize_time_for_ctrope
 
 __all__ = [
     "MIRAConfig",
     "MIRAForPrediction",
+    "mira_predict_autoregressive_norm",
     "normalize_time_for_ctrope",
 ]
