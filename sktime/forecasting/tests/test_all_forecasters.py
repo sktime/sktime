@@ -238,6 +238,21 @@ def _check_predict_proba(pred_dist, y_test, fh_int):
 class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     """Module level tests for all sktime forecasters."""
 
+    def test_fit_and_predict(self, estimator_instance):
+        """Test forecaster fit and predict."""
+        from sktime.datasets import Airline
+
+        estimator = estimator_instance
+
+        y = Airline().load("y")
+
+        fh = [1, 2]
+
+        estimator.fit(y, fh=fh)
+        y_pred = estimator.predict()
+
+        assert isinstance(y_pred, pd.Series)
+
     def test_get_fitted_params(self, estimator_instance, scenario):
         """Test get_fitted_params."""
         scenario.run(estimator_instance, method_sequence=["fit"])
